@@ -5,7 +5,6 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
 import { platformProjectService } from './platform-project-service'
 import {
     ActivepiecesError,

@@ -35,8 +35,7 @@ export class ConnectionsTableDataSource extends DataSource<any> {
     private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
     private pieceMetadataService: PieceMetadataService,
-    private connectionsService: AppConnectionsService,
-    private refresh$: Observable<boolean>
+    private connectionsService: AppConnectionsService
   ) {
     super();
   }
@@ -49,10 +48,7 @@ export class ConnectionsTableDataSource extends DataSource<any> {
   connect(): Observable<any[]> {
     return combineLatest({
       queryParams: this.queryParams$,
-      refresh: merge(
-        this.refresh$,
-        this.connectionsService.newConnectionCreated$
-      ),
+      refresh: merge(this.connectionsService.refreshCacheSubject),
     }).pipe(
       tap(() => {
         this.isLoading$.next(true);

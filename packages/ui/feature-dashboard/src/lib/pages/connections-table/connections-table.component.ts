@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
-import { map, Observable, startWith, Subject, tap } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 import {
   AppConnection,
   AppConnectionStatus,
@@ -39,7 +39,6 @@ export class ConnectionsTableComponent implements OnInit {
   newConnectionPiece?: PieceMetadataModelSummary;
   newConnectionDialogClosed$?: Observable<PieceMetadataModelSummary>;
   displayedColumns = ['app', 'name', 'status', 'created', 'updated', 'action'];
-  connectionDeleted$: Subject<boolean> = new Subject();
   deleteConnectionDialogClosed$?: Observable<void>;
   readonly AppConnectionStatus = AppConnectionStatus;
   constructor(
@@ -54,8 +53,7 @@ export class ConnectionsTableComponent implements OnInit {
       this.activatedRoute.queryParams,
       this.paginator,
       this.pieceMetadataService,
-      this.connectionService,
-      this.connectionDeleted$.asObservable().pipe(startWith(true))
+      this.connectionService
     );
   }
 
@@ -69,11 +67,6 @@ export class ConnectionsTableComponent implements OnInit {
       } as DeleteEntityDialogData,
     });
     this.deleteConnectionDialogClosed$ = dialogRef.beforeClosed().pipe(
-      tap((res) => {
-        if (res) {
-          this.connectionDeleted$.next(true);
-        }
-      }),
       map(() => {
         return void 0;
       })

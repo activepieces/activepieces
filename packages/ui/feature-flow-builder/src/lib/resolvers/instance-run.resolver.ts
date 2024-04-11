@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable, forkJoin, map, of, switchMap, tap } from 'rxjs';
-import { AppConnectionsService, FlowService, FoldersService } from '@activepieces/ui/common';
+import { FlowService, FoldersService } from '@activepieces/ui/common';
 import { InstanceRunService } from '@activepieces/ui/common';
 import { PopulatedFlow, FlowRun, Folder } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
@@ -23,29 +23,26 @@ export class GetInstanceRunResolver {
     private flowService: FlowService,
     private folderService: FoldersService,
     private store: Store,
-    private snackbar: MatSnackBar,
-    private appConnectionsService: AppConnectionsService
+    private snackbar: MatSnackBar
   ) { }
 
   resolve(
     snapshot: ActivatedRouteSnapshot
   ): Observable<string> {
     const runId = snapshot.paramMap.get('runId') as string;
-    const connections = this.appConnectionsService.getAll();
     const data$ = forkJoin({
       run: this.instanceRunService.get(runId),
-      connections
     })
     return data$.pipe(
-      switchMap(({ run, connections }) => {
+      switchMap(({ run }) => {
         return this.flowService.get(run.flowId, run.flowVersionId).pipe(
           switchMap((flow) => {
             if (!flow.folderId) {
-              return of({ flow: flow, run: run, connections });
+              return of({ flow: flow, run: run });
             }
             return this.folderService.get(flow.folderId).pipe(
               map((folder) => {
-                return { flow, run, folder, connections };
+                return { flow, run, folder };
               })
             );
           }),
@@ -55,7 +52,6 @@ export class GetInstanceRunResolver {
                 flow: res.flow,
                 viewMode: ViewModeEnum.VIEW_INSTANCE_RUN,
                 run: res.run,
-                appConnections: res.connections
               })
             );
             this.snackbar.openFromComponent(TestRunBarComponent, {

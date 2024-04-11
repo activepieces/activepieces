@@ -1,4 +1,4 @@
-export * from './lib/store';
+export * from './lib/utils/connections-dropdown-item';
 export * from './lib/ui-common.module';
 export * from './lib/animation/fade-in-up.animation';
 export * from './lib/animation/fade-in.animations';

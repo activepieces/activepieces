@@ -8,8 +8,7 @@ import {
 } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Store } from '@ngrx/store';
-import { catchError, Observable, of, take, tap } from 'rxjs';
+import { catchError, Observable, of, tap } from 'rxjs';
 import {
   UpsertCloudOAuth2Request,
   AppConnectionType,
@@ -22,8 +21,6 @@ import {
   AppConnectionsService,
   AuthenticationService,
   FlagService,
-  appConnectionsSelectors,
-  appConnectionsActions,
   fadeInUp400ms,
 } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
@@ -77,7 +74,6 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
   ownAuthEnabled$: Observable<boolean>;
   constructor(
     private fb: FormBuilder,
-    private store: Store,
     public dialogRef: MatDialogRef<ManagedOAuth2ConnectionDialogComponent>,
     private appConnectionsService: AppConnectionsService,
     private flagService: FlagService,
@@ -119,9 +115,7 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(
-              this.store
-                .select(appConnectionsSelectors.selectAllAppConnections)
-                .pipe(take(1)),
+              this.appConnectionsService.getAllOnce(),
               undefined
             ),
           ],
@@ -228,7 +222,6 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
       }),
       tap((connection) => {
         if (connection) {
-          this.store.dispatch(appConnectionsActions.upsert({ connection }));
           this.dialogRef.close(connection);
         }
         this.loading = false;

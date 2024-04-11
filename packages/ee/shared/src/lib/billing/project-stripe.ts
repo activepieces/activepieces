@@ -28,4 +28,4 @@ export const ProjectBillingResponse = Type.Object({
     subscription: ProjectBilling
 })
 
-export type ProjectBillingRespone = Static<typeof ProjectBillingResponse>
+export type ProjectBillingResponse = Static<typeof ProjectBillingResponse>

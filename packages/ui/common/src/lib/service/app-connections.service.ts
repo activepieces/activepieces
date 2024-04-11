@@ -1,6 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subject, map, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  combineLatest,
+  map,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import {
   SeekPage,
   AppConnectionId,
@@ -11,16 +19,34 @@ import {
 import { CURSOR_QUERY_PARAM, LIMIT_QUERY_PARAM } from '../utils/tables.utils';
 import { environment } from '../environments/environment';
 import { AuthenticationService } from './authentication.service';
+import { ProjectService } from './project.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AppConnectionsService {
+  private connections$: Observable<AppConnectionWithoutSensitiveData[]>;
+  public refreshCacheSubject: BehaviorSubject<void> = new BehaviorSubject<void>(
+    undefined
+  );
+
   constructor(
     private http: HttpClient,
-    private authenticationService: AuthenticationService
-  ) {}
-  private _newConnectionCreated$: Subject<boolean> = new Subject();
+    private authenticationService: AuthenticationService,
+    private projectService: ProjectService
+  ) {
+    this.connections$ = combineLatest({
+      project: this.projectService.currentProject$,
+      refreshCache: this.refreshCacheSubject,
+    }).pipe(
+      switchMap(({ project }) => {
+        if (!project) {
+          return [];
+        }
+        return this.list({ limit: 99999 }).pipe(map((res) => res.data));
+      })
+    );
+  }
   upsert(
     request: UpsertAppConnectionRequestBody
   ): Observable<AppConnectionWithoutSensitiveData> {
@@ -29,11 +55,25 @@ export class AppConnectionsService {
         environment.apiUrl + '/app-connections',
         request
       )
-      .pipe(tap(() => this._newConnectionCreated$.next(true)));
+      .pipe(tap(() => this.refreshCacheSubject.next()));
   }
 
-  getAll(): Observable<AppConnectionWithoutSensitiveData[]> {
-    return this.list({ limit: 99999 }).pipe(map((res) => res.data));
+  getAllOnce(): Observable<AppConnectionWithoutSensitiveData[]> {
+    return this.connections$.pipe(take(1));
+  }
+
+  getAllSubject(): Observable<AppConnectionWithoutSensitiveData[]> {
+    return this.connections$;
+  }
+
+  getAllForPieceSubject(
+    pieceName: string
+  ): Observable<AppConnectionWithoutSensitiveData[]> {
+    return this.connections$.pipe(
+      map((connections) =>
+        connections.filter((connection) => connection.pieceName === pieceName)
+      )
+    );
   }
 
   list(
@@ -62,11 +102,12 @@ export class AppConnectionsService {
   }
 
   delete(id: AppConnectionId): Observable<void> {
-    return this.http.delete<void>(
-      environment.apiUrl + '/app-connections/' + id
-    );
-  }
-  get newConnectionCreated$() {
-    return this._newConnectionCreated$.asObservable();
+    return this.http
+      .delete<void>(environment.apiUrl + '/app-connections/' + id)
+      .pipe(
+        tap(() => {
+          this.refreshCacheSubject.next();
+        })
+      );
   }
 }

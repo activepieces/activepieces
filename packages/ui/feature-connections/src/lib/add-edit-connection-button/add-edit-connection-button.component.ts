@@ -21,9 +21,8 @@ import {
   Output,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Store } from '@ngrx/store';
 import { map, Observable, of, shareReplay, switchMap, take, tap } from 'rxjs';
-import { FlagService, appConnectionsSelectors } from '@activepieces/ui/common';
+import { AppConnectionsService, FlagService } from '@activepieces/ui/common';
 import { CloudAuthConfigsService } from '../services/cloud-auth-configs.service';
 import {
   CustomAuthConnectionDialogComponent,
@@ -101,9 +100,9 @@ export class AddEditConnectionButtonComponent {
     }
   });
   constructor(
-    private store: Store,
     private dialogService: MatDialog,
     private cloudAuthConfigsService: CloudAuthConfigsService,
+    private appConnectionsService: AppConnectionsService,
     private flagService: FlagService,
     private pieceMetadataService: PieceMetadataService,
     private cd: ChangeDetectorRef
@@ -326,10 +325,7 @@ export class AddEditConnectionButtonComponent {
   }
 
   private editConnection() {
-    const allConnections$ = this.store.select(
-      appConnectionsSelectors.selectAllAppConnections
-    );
-    const currentConnection$ = allConnections$.pipe(
+    const currentConnection$ = this.appConnectionsService.getAllSubject().pipe(
       take(1),
       map((connections) => {
         const connection = connections.find(
