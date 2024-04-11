@@ -4,7 +4,7 @@ import { ProjectPlanEntity } from './project-plan.entity'
 import { DEFAULT_FREE_PLAN_LIMIT, FlowPlanLimits } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
-    apId, ErrorCode, PiecesFilterType, ProjectPlan,
+    apId, ErrorCode, ProjectPlan,
 } from '@activepieces/shared'
 
 const projectPlanRepo =
