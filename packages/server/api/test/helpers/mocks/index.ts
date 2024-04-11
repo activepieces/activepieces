@@ -6,6 +6,8 @@ import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { encryptString } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
+import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
+import { TagEntitySchema } from '../../../src/app/tags/tag-entity'
 import {
     Activity,
     ApiKey,
@@ -308,6 +310,28 @@ export const createProjectMember = (
             projectMember.status ?? faker.helpers.enumValue(ProjectMember.Status),
         created: projectMember.created ?? faker.date.recent().toISOString(),
         updated: projectMember.updated ?? faker.date.recent().toISOString(),
+    }
+}
+
+export const createMockTag = (tag?: Partial<Omit<TagEntitySchema, 'platform'>>): Omit<TagEntitySchema, 'platform'> => {
+    return {
+        id: tag?.id ?? apId(),
+        created: tag?.created ?? faker.date.recent().toISOString(),
+        updated: tag?.updated ?? faker.date.recent().toISOString(),
+        platformId: tag?.platformId ?? apId(),
+        name: tag?.name ?? faker.lorem.word(),
+    }
+}
+
+
+export const createMockPieceTag = (request: Partial<Omit<PieceTagSchema, 'platform' | 'tag'>>): Omit<PieceTagSchema, 'platform' | 'tag'> => {
+    return {
+        id: request.id ?? apId(),
+        created: request.created ?? faker.date.recent().toISOString(),
+        updated: request.updated ?? faker.date.recent().toISOString(),
+        platformId: request.platformId ?? apId(),
+        pieceName: request.pieceName ?? faker.lorem.word(),
+        tagId: request.tagId ?? apId(),
     }
 }
 

@@ -11,7 +11,7 @@
                     [formControl]="formGroup.controls.name" matInput type="text"
                     placeholder="Tag Name">
                 <mat-error *ngIf="formGroup.controls.name.invalid" i18n>
-                    Name is required
+                    Tag name is required and must only contain lowercase letters, spaces, hyphens, or underscores.
                 </mat-error>
             </mat-form-field>
         </form>

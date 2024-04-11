@@ -4,7 +4,7 @@ import {
 } from '../database/database-common'
 import { Platform, Tag } from '@activepieces/shared'
 
-type TagEntitySchema = Tag & {
+export type TagEntitySchema = Tag & {
     platform: Platform
 }
 export const TagEntity = new EntitySchema<TagEntitySchema>({

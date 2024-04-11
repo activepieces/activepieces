@@ -29,7 +29,7 @@ export class CreateTagDialogComponent {
     this.formGroup = this.fb.group({
       name: this.fb.control<string>('', {
         nonNullable: true,
-        validators: [Validators.required],
+        validators: [Validators.required, Validators.pattern(/^[a-zA-Z0-9\s_-]+$/)],
       })
     });
   }
