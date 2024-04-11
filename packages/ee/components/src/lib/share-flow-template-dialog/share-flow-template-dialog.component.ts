@@ -9,7 +9,7 @@ import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   FlagService,
-  ProjectSelectors,
+  ProjectService,
   TelemetryService,
   TemplatesService,
 } from '@activepieces/ui/common';
@@ -65,6 +65,7 @@ export class ShareFlowTemplateDialogComponent {
     private fb: FormBuilder,
     private snackbar: MatSnackBar,
     private flagsService: FlagService,
+    private projectService: ProjectService,
     private dialogService: MatDialog,
     private templatesService: TemplatesService,
     private store: Store,
@@ -80,10 +81,10 @@ export class ShareFlowTemplateDialogComponent {
           return flags[ApFlagId.TEMPLATES_PROJECT_ID] as string;
         })
       ),
-      project: this.store.select(ProjectSelectors.selectCurrentProject),
+      project: this.projectService.currentProject$,
     }).pipe(
       map(({ templateProjectId, project }) => {
-        return templateProjectId === project.id;
+        return templateProjectId === project!.id;
       })
     );
     this.form = this.fb.group({

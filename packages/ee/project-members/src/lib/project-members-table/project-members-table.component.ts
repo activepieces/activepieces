@@ -6,28 +6,17 @@ import {
 } from '@angular/core';
 import { ProjectMembersTableDataSource } from './project-members.datasource';
 import { ProjectMemberService } from '../service/project-members.service';
-import {
-  Observable,
-  Subject,
-  map,
-  startWith,
-  tap,
-  switchMap,
-  shareReplay,
-  forkJoin,
-  take,
-} from 'rxjs';
+import { Observable, Subject, map, startWith, tap, switchMap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { InviteProjectMemberDialogComponent } from '../dialogs/invite-project-member-dialog/invite-project-member.component';
 import { ProjectMemberStatus } from '@activepieces/ee-shared';
 import { BillingService, UpgradeDialogData } from '@activepieces/ee-billing-ui';
 import { UpgradeDialogComponent } from '@activepieces/ee-billing-ui';
-import { Store } from '@ngrx/store';
 import {
   ApPaginatorComponent,
   AuthenticationService,
   IsFeatureEnabledBaseComponent,
-  ProjectSelectors,
+  ProjectService,
 } from '@activepieces/ui/common';
 import { RolesDisplayNames } from '../utils';
 import { ActivatedRoute } from '@angular/router';
@@ -65,7 +54,7 @@ export class ProjectMembersTableComponent
   constructor(
     private matDialog: MatDialog,
     private billingService: BillingService,
-    private store: Store,
+    private projectService: ProjectService,
     private projectMemberService: ProjectMemberService,
     private authenticationService: AuthenticationService,
     activatedRoute: ActivatedRoute
@@ -82,35 +71,11 @@ export class ProjectMembersTableComponent
       this.activatedRoute.queryParams
     );
 
-    this.projectOwnerId$ = this.store
-      .select(ProjectSelectors.selectCurrentProjectOwnerId)
-      .pipe(take(1));
-    // TODO OPTIMIZE THIS and use role from centerlized place
-    this.isCurrentUserAdmin$ = forkJoin([
-      this.projectMemberService.list({
-        limit: 100,
-        projectId: this.authenticationService.getProjectId(),
-      }),
-      this.projectOwnerId$,
-    ]).pipe(
-      map(([members, ownerId]) => {
-        const currentUser = this.authenticationService.currentUser;
-
-        // Check if the current user is an admin
-        const isAdmin =
-          members.data.find(
-            (member) =>
-              currentUser.email === member.email &&
-              member.platformId === currentUser.platformId
-          )?.role === ProjectMemberRole.ADMIN;
-
-        // Check if the current user is the project owner
-        const isOwner = currentUser.id === ownerId;
-
-        // Return true if the user is either an admin or the owner
-        return isAdmin || isOwner;
-      }),
-      shareReplay(1)
+    this.projectOwnerId$ = this.projectService.currentProject$.pipe(
+      map((project) => project!.ownerId)
+    );
+    this.isCurrentUserAdmin$ = this.projectMemberService.isRole(
+      ProjectMemberRole.ADMIN
     );
   }
 

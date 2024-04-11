@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
   BuilderSelectors,
   LeftSideBarType,
 } from '@activepieces/ui/feature-builder-store';
 import { PopulatedFlow, ProjectWithLimits } from '@activepieces/shared';
-import { ProjectSelectors } from '@activepieces/ui/common';
+import { ProjectService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-flow-left-sidebar',
@@ -16,9 +16,11 @@ export class FlowLeftSidebarComponent implements OnInit {
   leftSideBar$: Observable<LeftSideBarType>;
   flow$: Observable<PopulatedFlow>;
   project$: Observable<ProjectWithLimits>;
-  constructor(private store: Store) {
+  constructor(private store: Store, private projectService: ProjectService) {
     this.flow$ = this.store.select(BuilderSelectors.selectCurrentFlow);
-    this.project$ = this.store.select(ProjectSelectors.selectCurrentProject);
+    this.project$ = this.projectService.currentProject$.pipe(
+      map((project) => project!)
+    );
   }
 
   ngOnInit(): void {

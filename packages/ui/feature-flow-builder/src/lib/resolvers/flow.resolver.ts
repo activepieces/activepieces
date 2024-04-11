@@ -6,9 +6,8 @@ import {
   FlowId,
   Folder,
   FlowVersion,
-  AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
-import { AppConnectionsService, AuthenticationService, FlowService, FoldersService, connections$ } from '@activepieces/ui/common';
+import { FlowService, FoldersService} from '@activepieces/ui/common';
 import {
   BuilderActions,
   ViewModeEnum,
@@ -24,8 +23,6 @@ export class GetFlowResolver {
     private flowService: FlowService,
     private folderService: FoldersService,
     private store: Store,
-    private authenticationService: AuthenticationService,
-    private appConnectionsService: AppConnectionsService
   ) {}
 
   resolve(snapshot: ActivatedRouteSnapshot): Observable<string> {
@@ -37,12 +34,10 @@ export class GetFlowResolver {
           publishedFlowVersion: Observable<FlowVersion | undefined>;
           folder: Observable<Folder | undefined>;
           flow: Observable<PopulatedFlow>;
-          connections: Observable<AppConnectionWithoutSensitiveData[]>
         } = {
           publishedFlowVersion: of(undefined),
           folder: of(undefined),
           flow: of(flow),
-          connections: connections$(this.store, this.appConnectionsService, this.authenticationService)
         };
         if (flow.folderId) {
           observables$.folder = this.folderService.get(flow.folderId);
@@ -58,7 +53,6 @@ export class GetFlowResolver {
               BuilderActions.loadInitial({
                 flow: res.flow,
                 viewMode: ViewModeEnum.BUILDING,
-                appConnections: res.connections,
                 publishedVersion: res.publishedFlowVersion,
               })
             );

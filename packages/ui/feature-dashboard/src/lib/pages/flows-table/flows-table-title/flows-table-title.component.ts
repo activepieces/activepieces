@@ -20,10 +20,10 @@ import {
   flowActionsUiInfo,
   ImportFlowDialogComponent,
   ImporFlowDialogData,
-  ProjectSelectors,
   FlowBuilderService,
   TelemetryService,
   EmbeddingService,
+  ProjectService,
 } from '@activepieces/ui/common';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -57,12 +57,13 @@ export class FlowsTableTitleComponent {
     private authenticationService: AuthenticationService,
     private matDialog: MatDialog,
     private builderService: FlowBuilderService,
+    private projectService: ProjectService,
     private telemetryService: TelemetryService,
     private embeddingService: EmbeddingService,
     private cd: ChangeDetectorRef
   ) {
-    this.currentProject$ = this.store.select(
-      ProjectSelectors.selectCurrentProject
+    this.currentProject$ = this.projectService.currentProject$.pipe(
+      map((project) => project!)
     );
     this.showAllFlows$ = this.store.select(
       FoldersSelectors.selectDisplayAllFlows

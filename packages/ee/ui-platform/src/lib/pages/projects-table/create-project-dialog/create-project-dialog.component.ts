@@ -1,5 +1,5 @@
 import { ProjectWithLimits } from '@activepieces/shared';
-import { PlatformProjectService } from '@activepieces/ui/common';
+import { ProjectService } from '@activepieces/ui/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {
   FormBuilder,
@@ -25,7 +25,7 @@ export class CreateProjectDialogComponent {
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<CreateProjectDialogComponent>,
-    private platformProjectService: PlatformProjectService
+    private projectService: ProjectService
   ) {
     this.formGroup = this.fb.group({
       displayName: this.fb.control(
@@ -42,9 +42,8 @@ export class CreateProjectDialogComponent {
   }
   createProject() {
     this.formGroup.markAllAsTouched();
-    //Create project logic
     if (this.formGroup.valid && !this.loading) {
-      this.createProject$ = this.platformProjectService
+      this.createProject$ = this.projectService
         .create({
           displayName: this.formGroup.getRawValue().displayName,
         })

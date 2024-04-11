@@ -3,6 +3,7 @@ import { promisify } from 'node:util'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
+import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from '../project-members/project-member.service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
@@ -142,11 +143,15 @@ const getOrCreateProject = async ({
 
 const getPiecesList = async ({
     piecesFilterType,
+    piecesTags,
+    platformId,
 }: UpdateProjectLimits): Promise<string[]> => {
     switch (piecesFilterType) {
         case PiecesFilterType.ALLOWED: {
-            // TODO: add tags to the list
-            throw new Error('Not implemented')
+            return pieceTagService.findByPlatformAndTags(
+                platformId,
+                piecesTags,
+            )
         }
         case PiecesFilterType.NONE: {
             return []

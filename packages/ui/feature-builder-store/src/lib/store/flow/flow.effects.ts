@@ -41,7 +41,6 @@ import {
   FlowService,
   environment,
   FlowBuilderService,
-  appConnectionsActions,
   getPropertyInitialValue,
 } from '@activepieces/ui/common';
 import { canvasActions } from '../builder/canvas/canvas.action';
@@ -60,20 +59,6 @@ export class FlowsEffects {
             flow: { ...flow, publishedFlowVersion: publishedVersion },
             run,
           })
-        );
-      }),
-      catchError((err) => {
-        console.error(err);
-        throw err;
-      })
-    );
-  });
-  initialiseConnectionsState$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(BuilderActions.loadInitial),
-      switchMap(({ appConnections }) => {
-        return of(
-          appConnectionsActions.loadInitial({ connections: appConnections })
         );
       }),
       catchError((err) => {

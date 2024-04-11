@@ -2,13 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
   FlagService,
-  ProjectSelectors,
+  ProjectService,
   environment,
 } from '@activepieces/ui/common';
 import { combineLatest, map } from 'rxjs';
-import { Store } from '@ngrx/store';
-import { ApEdition } from '@activepieces/shared';
-import { ProjectBillingRespone } from '@activepieces/ee-shared';
+import { ApEdition, assertNotNullOrUndefined } from '@activepieces/shared';
+import { ProjectBillingResponse } from '@activepieces/ee-shared';
 
 @Injectable({
   providedIn: 'root',
@@ -17,11 +16,11 @@ export class BillingService {
   constructor(
     private http: HttpClient,
     private flagService: FlagService,
-    private store: Store
+    private projectService: ProjectService
   ) {}
 
   getSubscription() {
-    return this.http.get<ProjectBillingRespone>(
+    return this.http.get<ProjectBillingResponse>(
       environment.apiUrl + '/project-billing'
     );
   }
@@ -43,10 +42,11 @@ export class BillingService {
   checkTeamMembers() {
     return combineLatest([
       this.flagService.getEdition(),
-      this.store.select(ProjectSelectors.selectCurrentProject),
+      this.projectService.currentProject$,
     ]).pipe(
       map(([value, project]) => {
         if (value === ApEdition.CLOUD) {
+          assertNotNullOrUndefined(project, 'project is null');
           return {
             exceeded: project?.usage.teamMembers >= project?.plan?.teamMembers,
             limit: project?.plan?.teamMembers,

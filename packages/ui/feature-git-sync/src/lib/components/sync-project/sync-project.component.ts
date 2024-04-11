@@ -6,10 +6,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   GenericSnackbarTemplateComponent,
   PLATFORM_RESOLVER_KEY,
-  ProjectSelectors,
+  ProjectService,
   UiCommonModule,
 } from '@activepieces/ui/common';
-import { Store } from '@ngrx/store';
 import { Platform, ProjectWithLimits } from '@activepieces/shared';
 import { SyncProjectService } from '../../services/sync-project.service';
 import { ConfigureRepoDialogComponent } from '../dialogs/configure-repo-dialog/configure-repo-dialog.component';
@@ -44,14 +43,12 @@ export class SyncProjectComponent {
   configureButtonTooltip = $localize`Upgrade to enable`;
   constructor(
     private matDialog: MatDialog,
+    private projectService: ProjectService,
     private syncProjectService: SyncProjectService,
     private snackbar: MatSnackBar,
-    private store: Store,
     private route:ActivatedRoute
   ) {
-    this.currentProject$ = this.store.select(
-      ProjectSelectors.selectCurrentProject
-    );
+    this.currentProject$ =this.projectService.currentProject$.pipe(map((project) => project!));
     this.showUpgrade = !(this.route.snapshot.data[PLATFORM_RESOLVER_KEY] as Platform).gitSyncEnabled;
     this.currentRepo$ = this.refresh$.pipe(
       switchMap(() => this.syncProjectService.get()),

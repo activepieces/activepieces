@@ -25,38 +25,40 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
     _opts,
     done,
 ) => {
-    app.post(
-        '/',
-        {
-            config: {
-                allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-                scope: EndpointScope.PLATFORM,
-            },
-            schema: {
-                tags: ['pieces'],
-                security: [SERVICE_KEY_SECURITY_OPENAPI],
-                summary: 'Add a piece to a platform',
-                description: 'Add a piece to a platform',
-                body: AddPieceRequestBody,
-                response: {
-                    [StatusCodes.CREATED]: Type.Object({}),
-                },
-            },
-        },
-        async (req, reply) => {
-            const platformId = req.principal.platform.id
-            assertPrincipalIsPlatformOwner(req.body.scope, req.principal)
-            assertProjectScopeOnlyAllowedForUser(req.body.scope, req.principal)
-            await pieceService.installPiece(
-                platformId,
-                req.principal.projectId,
-                req.body,
-            )
-            await reply.status(StatusCodes.CREATED).send({})
-        },
+
+
+    app.post('/', installPieceParams, async (req, reply) => {
+        const platformId = req.principal.platform.id
+        assertPrincipalIsPlatformOwner(req.body.scope, req.principal)
+        assertProjectScopeOnlyAllowedForUser(req.body.scope, req.principal)
+        await pieceService.installPiece(
+            platformId,
+            req.principal.projectId,
+            req.body,
+        )
+        await reply.status(StatusCodes.CREATED).send({})
+    },
     )
 
     done()
+}
+
+
+const installPieceParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
+    },
+    schema: {
+        tags: ['pieces'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        summary: 'Add a piece to a platform',
+        description: 'Add a piece to a platform',
+        body: AddPieceRequestBody,
+        response: {
+            [StatusCodes.CREATED]: Type.Object({}),
+        },
+    },
 }
 
 function assertPrincipalIsPlatformOwner(

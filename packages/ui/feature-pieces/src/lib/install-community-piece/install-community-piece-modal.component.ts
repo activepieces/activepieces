@@ -10,7 +10,6 @@ import { Observable, tap, catchError, map } from 'rxjs';
 import {
   FlagService,
   GenericSnackbarTemplateComponent,
-  PieceMetadataModel,
 } from '@activepieces/ui/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
@@ -20,6 +19,7 @@ import {
   PieceScope,
 } from '@activepieces/shared';
 import { PieceMetadataService } from '../services/piece.service';
+import { PieceMetadataModel } from '@activepieces/pieces-framework';
 
 type AddPackageFormControl = {
   packageType: FormControl<PackageType>;
