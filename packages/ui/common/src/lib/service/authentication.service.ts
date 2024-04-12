@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
@@ -8,6 +8,8 @@ import {
   ClaimTokenRequest,
   FederatedAuthnLoginResponse,
   Principal,
+  ProjectId,
+  ProjectMemberRole,
   SignInRequest,
   SignUpRequest,
   ThirdPartyAuthnProviderEnum,
@@ -30,7 +32,10 @@ export class AuthenticationService {
   public currentUserSubject: BehaviorSubject<
     AuthenticationResponse | undefined
   > = new BehaviorSubject<AuthenticationResponse | undefined>(this.currentUser);
+  public tokenChangedSubject: BehaviorSubject<string | null> =
+    new BehaviorSubject<string | null>(this.getToken());
   private jwtHelper = new JwtHelperService();
+
   constructor(
     private router: Router,
     private http: HttpClient,
@@ -41,6 +46,10 @@ export class AuthenticationService {
     return JSON.parse(
       localStorage.getItem(environment.userPropertyNameInLocalStorage) || '{}'
     );
+  }
+
+  getRole(): ProjectMemberRole | undefined {
+    return this.currentUser?.projectRole ?? undefined;
   }
 
   me(): Observable<UserWithoutPassword> {
@@ -73,6 +82,7 @@ export class AuthenticationService {
 
   saveToken(token: string) {
     localStorage.setItem(environment.jwtTokenName, token);
+    this.tokenChangedSubject.next(token);
   }
 
   saveUser(user: AuthenticationResponse, token: string) {
@@ -157,6 +167,37 @@ export class AuthenticationService {
       `${environment.apiUrl}/authn/local/reset-password`,
       req
     );
+  }
+
+  switchProject({
+    refresh,
+    projectId,
+    redirectHome,
+  }: {
+    refresh: boolean;
+    projectId: ProjectId;
+    redirectHome: boolean;
+  }): Observable<void> {
+    return this.http
+      .post<{
+        token: string;
+      }>(`${environment.apiUrl}/users/projects/${projectId}/token`, {
+        projectId,
+      })
+      .pipe(
+        tap(({ token }) => {
+          this.saveToken(token);
+          if (redirectHome) {
+            this.router.navigate(['/flows']);
+          }
+          if (refresh) {
+            setTimeout(() => {
+              window.location.reload();
+            }, 10);
+          }
+        }),
+        map(() => void 0)
+      );
   }
 
   getThirdPartyLoginUrl(provider: ThirdPartyAuthnProviderEnum) {

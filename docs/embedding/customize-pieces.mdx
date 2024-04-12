@@ -1,0 +1,33 @@
+---
+title: "Customize Pieces"
+description: ""
+icon: "puzzle"
+---
+<Snippet file="enterprise-feature.mdx" />
+
+This documentation explains how to customize access to pieces depending on projects.
+
+<Steps>
+    <Step title="Tag Pieces">
+        You can tag pieces in bulk using **Admin Console**
+
+        ![Bulk Tag](../resources/screenshots/tag-pieces.png)
+    </Step>
+    <Step title="Add Tags to Provision Token">
+        We need to specify the tags of pieces in the token, check how to generate token in [provision-users](./provision-users).
+
+        You should specify the `pieces` claim like this:
+        ```json
+        {
+            /// Other claims
+            "pieces": {
+                "filterType": "ALLOWED",
+                "tags": [ "free" ]
+            }
+        }
+        ```
+
+        Each time the token is used in the frontend, it will sync all pieces with these tags to the project. 
+        The project's pieces list will **exactly match** all pieces with these tags at the moment of using the iframe.
+    </Step>
+</Steps>

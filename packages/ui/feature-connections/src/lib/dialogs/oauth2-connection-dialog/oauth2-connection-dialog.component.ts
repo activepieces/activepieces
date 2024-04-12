@@ -8,8 +8,7 @@ import {
 } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Store } from '@ngrx/store';
-import { catchError, map, Observable, of, take, tap } from 'rxjs';
+import { catchError, map, Observable, of, tap } from 'rxjs';
 import {
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
@@ -25,9 +24,7 @@ import {
 import deepEqual from 'deep-equal';
 import {
   AuthenticationService,
-  appConnectionsSelectors,
   environment,
-  appConnectionsActions,
   fadeInUp400ms,
 } from '@activepieces/ui/common';
 import {
@@ -82,7 +79,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
   upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
   constructor(
     private fb: FormBuilder,
-    private store: Store,
     public dialogRef: MatDialogRef<OAuth2ConnectionDialogComponent>,
     private cloudAuthConfigsService: CloudAuthConfigsService,
     private appConnectionsService: AppConnectionsService,
@@ -126,9 +122,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(
-              this.store
-                .select(appConnectionsSelectors.selectAllAppConnections)
-                .pipe(take(1)),
+              this.appConnectionsService.getAllOnce(),
               undefined
             ),
           ],
@@ -173,7 +167,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       this.dialogData.pieceAuthProperty.scope!.join(' '),
       this.settingsForm.controls.props.value
     );
-    const isClientCredentails =
+    const isClientCredentials =
       this.dialogData.pieceAuthProperty.grantType ===
       OAuth2GrantType.CLIENT_CREDENTIALS;
     const newConnection: UpsertOAuth2Request = {
@@ -182,7 +176,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       pieceName: this.dialogData.pieceName,
       type: AppConnectionType.OAUTH2,
       value: {
-        code: isClientCredentails
+        code: isClientCredentials
           ? ''
           : this.settingsForm.controls.value.value!.code,
         code_challenge: this.settingsForm.controls.value.value?.code_challenge,
@@ -222,9 +216,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       }),
       tap((connection) => {
         if (connection) {
-          this.store.dispatch(
-            appConnectionsActions.upsert({ connection: connection })
-          );
           this.dialogRef.close(connection);
         }
         this.loading = false;

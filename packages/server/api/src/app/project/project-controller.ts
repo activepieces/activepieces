@@ -9,6 +9,10 @@ export const userProjectController: FastifyPluginCallbackTypebox = (
     _opts,
     done,
 ) => {
+    fastify.get('/:id', async (request) => {
+        return projectService.getOneOrThrow(request.principal.projectId)
+    })
+
     fastify.get('/', async (request) => {
         return paginationHelper.createPage(
             [await projectService.getUserProjectOrThrow(request.principal.id)],

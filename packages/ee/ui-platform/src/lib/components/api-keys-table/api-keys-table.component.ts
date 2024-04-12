@@ -63,7 +63,7 @@ export class ApiKeysTableComponent
         })
       ),
       entityName: key.displayName,
-      note: $localize`This will permanently delete the key, all existing access wil be revoked.`,
+      note: $localize`This will permanently delete the key, all existing access will be revoked.`,
     };
     const dialog = this.matDialog.open(DeleteEntityDialogComponent, {
       data: dialogData,

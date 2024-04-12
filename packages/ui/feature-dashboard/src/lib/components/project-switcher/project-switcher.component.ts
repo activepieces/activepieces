@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {
+  AuthenticationService,
   FlagService,
-  PlatformProjectService,
-  ProjectSelectors,
+  ProjectService,
 } from '@activepieces/ui/common';
 import { Observable, switchMap, map } from 'rxjs';
 import { ApFlagId, ProjectWithLimits } from '@activepieces/shared';
-import { Store } from '@ngrx/store';
 
 @Component({
   selector: 'app-project-switcher',
@@ -19,14 +18,14 @@ export class ProjectSwitcherComponent {
   projects$: Observable<ProjectWithLimits[]>;
   switchProject$?: Observable<void>;
   constructor(
-    private store: Store,
     private flagService: FlagService,
-    private projectService: PlatformProjectService
+    private projectService: ProjectService,
+    private authenticationService: AuthenticationService
   ) {
-    this.currentProject$ = this.store.select(
-      ProjectSelectors.selectCurrentProject
+    this.currentProject$ = this.projectService.currentProject$.pipe(
+      map((project) => project!)
     );
-    this.projects$ = this.store.select(ProjectSelectors.selectAllProjects);
+    this.projects$ = this.projectService.getAll();
     this.areProjectsEnabled$ = this.flagService
       .isFlagEnabled(ApFlagId.PROJECT_MEMBERS_ENABLED)
       .pipe(
@@ -40,7 +39,7 @@ export class ProjectSwitcherComponent {
       );
   }
   switchProject(projectId: string) {
-    this.switchProject$ = this.projectService.switchProject({
+    this.switchProject$ = this.authenticationService.switchProject({
       projectId,
       redirectHome: true,
       refresh: true,

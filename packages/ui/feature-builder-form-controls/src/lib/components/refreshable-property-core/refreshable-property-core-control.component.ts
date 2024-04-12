@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { PieceMetadataModel } from '@activepieces/ui/common';
 import {
   DropdownProperty,
   DropdownState,
   DynamicProperties,
   MultiSelectDropdownProperty,
+  PieceMetadataModel,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';

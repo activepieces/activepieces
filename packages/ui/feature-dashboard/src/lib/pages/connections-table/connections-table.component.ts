@@ -6,25 +6,23 @@ import {
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
-import { map, Observable, startWith, Subject, tap } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 import {
   AppConnection,
   AppConnectionStatus,
   SeekPage,
 } from '@activepieces/shared';
 import {
-  AuthenticationService,
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-  PieceMetadataModelSummary,
 } from '@activepieces/ui/common';
 import { ConnectionsTableDataSource } from './connections-table.datasource';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
 import { AppConnectionsService } from '@activepieces/ui/common';
-import { Store } from '@ngrx/store';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { NewConnectionDialogComponent } from '../../components/dialogs/new-connection-dialog/new-connection-dialog.component';
 import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 
 @Component({
   templateUrl: './connections-table.component.html',
@@ -41,14 +39,11 @@ export class ConnectionsTableComponent implements OnInit {
   newConnectionPiece?: PieceMetadataModelSummary;
   newConnectionDialogClosed$?: Observable<PieceMetadataModelSummary>;
   displayedColumns = ['app', 'name', 'status', 'created', 'updated', 'action'];
-  connectionDeleted$: Subject<boolean> = new Subject();
   deleteConnectionDialogClosed$?: Observable<void>;
   readonly AppConnectionStatus = AppConnectionStatus;
   constructor(
     private activatedRoute: ActivatedRoute,
-    private store: Store,
     private pieceMetadataService: PieceMetadataService,
-    private authenticationService: AuthenticationService,
     private connectionService: AppConnectionsService,
     private dialogService: MatDialog
   ) {}
@@ -57,11 +52,8 @@ export class ConnectionsTableComponent implements OnInit {
     this.dataSource = new ConnectionsTableDataSource(
       this.activatedRoute.queryParams,
       this.paginator,
-      this.store,
       this.pieceMetadataService,
-      this.authenticationService,
-      this.connectionService,
-      this.connectionDeleted$.asObservable().pipe(startWith(true))
+      this.connectionService
     );
   }
 
@@ -75,11 +67,6 @@ export class ConnectionsTableComponent implements OnInit {
       } as DeleteEntityDialogData,
     });
     this.deleteConnectionDialogClosed$ = dialogRef.beforeClosed().pipe(
-      tap((res) => {
-        if (res) {
-          this.connectionDeleted$.next(true);
-        }
-      }),
       map(() => {
         return void 0;
       })

@@ -4,7 +4,7 @@ import { ProjectPlanEntity } from './project-plan.entity'
 import { DEFAULT_FREE_PLAN_LIMIT, FlowPlanLimits } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
-    apId, ErrorCode, PiecesFilterType, ProjectPlan,
+    apId, ErrorCode, ProjectPlan,
 } from '@activepieces/shared'
 
 const projectPlanRepo =
@@ -73,8 +73,8 @@ async function createDefaultPlan(projectId: string, flowPlanLimit: FlowPlanLimit
     await projectPlanRepo.upsert({
         id: apId(),
         projectId,
-        pieces: [],
-        piecesFilterType: PiecesFilterType.NONE,
+        pieces: flowPlanLimit.pieces,
+        piecesFilterType: flowPlanLimit.piecesFilterType,
         tasks: flowPlanLimit.tasks,
         teamMembers: flowPlanLimit.teamMembers,
         minimumPollingInterval: flowPlanLimit.minimumPollingInterval,

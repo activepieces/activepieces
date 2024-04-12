@@ -6,8 +6,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { Store } from '@ngrx/store';
-import { catchError, Observable, of, take, tap } from 'rxjs';
+import { catchError, Observable, of, tap } from 'rxjs';
 import {
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
@@ -23,8 +22,6 @@ import deepEqual from 'deep-equal';
 import {
   AppConnectionsService,
   AuthenticationService,
-  appConnectionsActions,
-  appConnectionsSelectors,
 } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import { connectionNameRegex } from '../utils';
@@ -52,7 +49,6 @@ export class CustomAuthConnectionDialogComponent {
     @Inject(MAT_DIALOG_DATA)
     public dialogData: CustomAuthDialogData,
     private authenticationService: AuthenticationService,
-    private store: Store,
     private dialogRef: MatDialogRef<CustomAuthConnectionDialogComponent>,
     private appConnectionsService: AppConnectionsService
   ) {
@@ -84,9 +80,7 @@ export class CustomAuthConnectionDialogComponent {
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(
-              this.store
-                .select(appConnectionsSelectors.selectAllAppConnections)
-                .pipe(take(1)),
+              this.appConnectionsService.getAllOnce(),
               undefined
             ),
           ],
@@ -131,9 +125,6 @@ export class CustomAuthConnectionDialogComponent {
         }),
         tap((connection) => {
           if (connection) {
-            this.store.dispatch(
-              appConnectionsActions.upsert({ connection: connection })
-            );
             this.dialogRef.close(connection);
           }
           this.loading = false;

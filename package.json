@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.23.0",
-  "rcVersion": "0.24.0-rc.1",
+  "version": "0.24.1",
+  "rcVersion": "0.25.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -84,6 +84,7 @@
     "cli-table3": "0.6.3",
     "clipboard": "2.0.11",
     "codemirror": "5.65.14",
+    "color": "4.2.3",
     "commander": "11.1.0",
     "compare-versions": "6.1.0",
     "concat": "1.0.3",
@@ -227,6 +228,7 @@
     "@swc/helpers": "~0.5.2",
     "@trumbitta/nx-plugin-unused-deps": "1.12.1",
     "@types/bcrypt": "5.0.0",
+    "@types/color": "3.0.6",
     "@types/crypto-js": "4.1.1",
     "@types/decompress": "4.2.4",
     "@types/deep-equal": "1.0.1",

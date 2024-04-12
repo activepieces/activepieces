@@ -1,7 +1,7 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { PieceMetadataModel } from './piece-metadata-entity'
 import { pieceService } from './piece-service'
+import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { AddPieceRequestBody, PrincipalType } from '@activepieces/shared'
 
 export const communityPiecesModule: FastifyPluginAsyncTypebox = async (app) => {

@@ -6,7 +6,7 @@ import {
   ApPaginatorComponent,
   CURSOR_QUERY_PARAM,
   LIMIT_QUERY_PARAM,
-  PlatformProjectService,
+  ProjectService,
 } from '@activepieces/ui/common';
 import { Params } from '@angular/router';
 
@@ -20,7 +20,7 @@ export class ProjectsDataSource extends DataSource<Project> {
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   paginator: ApPaginatorComponent | undefined;
   constructor(
-    private projectService: PlatformProjectService,
+    private projectService: ProjectService,
     private refresh$: Observable<boolean>,
     private queryParams$: Observable<Params>,
     private isDemo: boolean

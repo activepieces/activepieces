@@ -21,6 +21,11 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
     _opts,
     done,
 ) => {
+
+    fastify.get('/:id', async (request) => {
+        return platformProjectService.getWithPlanAndUsageOrThrow(request.principal.projectId)
+    })
+
     fastify.get('/', ListProjectRequestForUser, async (request) => {
         return platformProjectService.getAll({
             ownerId: request.principal.id,

@@ -59,7 +59,6 @@ import { NgxColorsModule } from 'ngx-colors';
 import { PageTitleComponent } from './components/page-title/page-title.component';
 import { PoweredByActivepiecesComponent } from './components/powered-by-activepieces/powered-by-activepieces.component';
 import { MatSliderModule } from '@angular/material/slider';
-import { CommaSeparatedPipe } from './pipe/comma-seperated.pipe';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ImgFallbackDirective } from './directives/image-fallback.directive';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
@@ -74,7 +73,10 @@ import { LetterIconComponent } from './components/letter-icon/letter-icon.compon
 import { MatListModule } from '@angular/material/list';
 import { MatPseudoCheckboxModule } from '@angular/material/core';
 import { ControlDescriptionComponent } from './components/control-description/control-description.component';
+import { MatChipsModule } from '@angular/material/chips';
+import { ApChipsListComponent } from './components/ap-chips-list/ap-chips-list.component';
 import { ApMarkdownComponent } from './components';
+import { CommaSeparatedPipe } from './pipe/comma-separated.pipe';
 
 const exportedImports = [
   CommonModule,
@@ -84,6 +86,7 @@ const exportedImports = [
   ReactiveFormsModule,
   MatSelectModule,
   MatInputModule,
+  MatChipsModule,
   MatMenuModule,
   MatButtonModule,
   MatCardModule,
@@ -138,6 +141,7 @@ const exportedDeclarations = [
   UserAvatarComponent,
   TrackHoverDirective,
   DragDropDirective,
+  ApChipsListComponent,
   PageTitleComponent,
   PoweredByActivepiecesComponent,
   ImgFallbackDirective,
