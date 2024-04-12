@@ -36,7 +36,7 @@ export const docsCommon = {
 
   // Writes provided content to the end of an existing document
   writeToDocument: async (
-    documentId: number,
+    documentId: string,
     body: string,
     accessToken: string
   ) => {
