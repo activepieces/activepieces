@@ -63,7 +63,7 @@ export const downloadJson = (obj: any, fileName: string) => {
 };
 
 export const downloadFlow = (flow: FlowTemplate) => {
-  downloadJson(flow, flow.name);
+  downloadJson(JSON.stringify(flow, null, 2), flow.name);
 };
 
 export const jsonEditorOptionsMonaco = {
