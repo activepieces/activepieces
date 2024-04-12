@@ -265,6 +265,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="http://jonkristian.no"><img src="https://avatars.githubusercontent.com/u/13219?v=4?s=100" width="100px;" alt="Jon Kristian"/><br /><sub><b>Jon Kristian</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=jonkristian" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/cr0fters"><img src="https://avatars.githubusercontent.com/u/1754858?v=4?s=100" width="100px;" alt="cr0fters"/><br /><sub><b>cr0fters</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Acr0fters" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://bibek-timsina.com.np/"><img src="https://avatars.githubusercontent.com/u/29589003?v=4?s=100" width="100px;" alt="Bibek Timsina"/><br /><sub><b>Bibek Timsina</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Abimsina" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/szepeviktor/debian-server-tools/blob/master/CV.md"><img src="https://avatars.githubusercontent.com/u/952007?v=4?s=100" width="100px;" alt="Viktor Szépe"/><br /><sub><b>Viktor Szépe</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=szepeviktor" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
