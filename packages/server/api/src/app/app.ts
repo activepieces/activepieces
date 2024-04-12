@@ -81,6 +81,7 @@ import { pieceSyncService } from './pieces/piece-sync-service'
 import { platformModule } from './platform/platform.module'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
+import { tagsModule } from './tags/tags-module'
 import { userModule } from './user/user.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
@@ -245,6 +246,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(copilotModule)
     await app.register(platformModule)
     await app.register(formModule)
+    await app.register(tagsModule)
     await pieceSyncService.setup()
     await app.register(flowWorkerModule)
     await setupBullMQBoard(app)

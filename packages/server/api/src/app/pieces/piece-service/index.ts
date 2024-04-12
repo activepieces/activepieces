@@ -1,9 +1,8 @@
 import { engineHelper } from '../../helper/engine-helper'
 import { getEdition } from '../../helper/secret-helper'
-import { PieceMetadataModel } from '../piece-metadata-entity'
 import { pieceMetadataService } from '../piece-metadata-service'
 import { pieceServiceHooks } from './piece-service-hooks'
-import { PieceMetadata } from '@activepieces/pieces-framework'
+import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ExecutionMode, logger, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,

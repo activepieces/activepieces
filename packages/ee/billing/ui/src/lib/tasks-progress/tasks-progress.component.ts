@@ -1,13 +1,12 @@
 import { ApFlagId, TelemetryEventName } from '@activepieces/shared';
 import {
   FlagService,
-  ProjectSelectors,
+  ProjectService,
   TelemetryService,
 } from '@activepieces/ui/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 @Component({
   selector: 'app-tasks-progress',
@@ -25,13 +24,20 @@ export class TasksProgressComponent {
   constructor(
     private router: Router,
     private telemetryService: TelemetryService,
-    private flagsService: FlagService,
-    private store: Store
+    private projectService: ProjectService,
+    private flagsService: FlagService
   ) {
     this.billingEnabled$ = this.flagsService.isFlagEnabled(
       ApFlagId.SHOW_BILLING
     );
-    this.tasksStats$ = this.store.select(ProjectSelectors.selectTaskProgress);
+    this.tasksStats$ = this.projectService.currentProject$.pipe(
+      map((project) => {
+        return {
+          tasksCap: project?.plan.tasks || 0,
+          tasksExecuted: project?.usage.tasks || 0,
+        };
+      })
+    );
   }
 
   openPricingPlans() {

@@ -5,14 +5,12 @@ import importFresh from 'import-fresh'
 import { nanoid } from 'nanoid'
 import { getEdition } from '../../helper/secret-helper'
 import {
-    PieceMetadataModel,
-    PieceMetadataModelSummary,
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
 import { pieceMetadataServiceHooks } from './hooks'
 import { PieceMetadataService } from './piece-metadata-service'
 import { toPieceMetadataModelSummary } from '.'
-import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
+import { Piece, PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,

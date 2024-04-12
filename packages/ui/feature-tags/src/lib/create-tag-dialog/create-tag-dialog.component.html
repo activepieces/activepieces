@@ -1,0 +1,34 @@
+<ap-dialog-title-template>
+    Create Tag
+</ap-dialog-title-template>
+
+<mat-dialog-content>
+    <div class="ap-min-w-[470px] ap-max-w-[470px]">
+        <form autocomplete="off" class="ap-flex ap-flex-col ap-gap-2" [formGroup]="formGroup" (submit)="create()">
+            <mat-form-field class="ap-w-full" appearance="outline">
+                <mat-label>Name </mat-label>
+                <input name="name" autocomplete="doNotAutoComplete" cdkFocusInitial
+                    [formControl]="formGroup.controls.name" matInput type="text"
+                    placeholder="Tag Name">
+                <mat-error *ngIf="formGroup.controls.name.invalid" i18n>
+                    Tag name is required and must only contain lowercase letters, spaces, hyphens, or underscores.
+                </mat-error>
+            </mat-form-field>
+        </form>
+    </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic"
+            [disabled]="(loading$| async) || false" i18n>
+            Cancel
+        </ap-button>
+        <ap-button btnSize="default" type="submit" (click)="create()" [loading]="(loading$ | async) || false"
+            btnColor="primary" i18n>
+            Confirm
+        </ap-button>
+    </div>
+</mat-dialog-actions>
+<ng-container *ngIf="createTag$ | async"></ng-container>

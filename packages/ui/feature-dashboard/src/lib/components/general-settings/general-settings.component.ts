@@ -1,11 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import {
-  AuthenticationService,
-  PlatformProjectService,
-  ProjectActions,
-  ProjectSelectors,
-  UiCommonModule,
-} from '@activepieces/ui/common';
+import { ProjectService, UiCommonModule } from '@activepieces/ui/common';
 import { AsyncPipe } from '@angular/common';
 import {
   FormBuilder,
@@ -23,7 +17,6 @@ import {
   take,
   tap,
 } from 'rxjs';
-import { Store } from '@ngrx/store';
 import {
   ApFlagId,
   ProjectMemberRole,
@@ -31,6 +24,7 @@ import {
 } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
+import { ProjectMemberService } from '@activepieces/ee/project-members';
 
 interface UpdateProjectForm {
   displayName: FormControl<string>;
@@ -46,29 +40,26 @@ interface UpdateProjectForm {
   imports: [AsyncPipe, UiCommonModule],
 })
 export class GeneralSettingsComponent {
-  readonly permissionMessage = $localize` 'You don\'t have permissions to edit project settings'`;
+  readonly permissionMessage = $localize`You don\'t have permissions to edit project settings`;
   formGroup: FormGroup<UpdateProjectForm>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$: Observable<void>;
   project$: Observable<ProjectWithLimits>;
-  updateForm$: Observable<void>;
+  initForm$: Observable<boolean>;
   projectLimitsEnabled: boolean;
   canSave$: Observable<boolean>;
 
   constructor(
     private fb: FormBuilder,
-    private store: Store,
     private route: ActivatedRoute,
-    private projectService: PlatformProjectService,
-    private authenticationService: AuthenticationService,
-    private matSnackbar: MatSnackBar
+    private projectService: ProjectService,
+    private matSnackbar: MatSnackBar,
+    private projectMemberService: ProjectMemberService
   ) {
     this.projectLimitsEnabled =
       this.route.snapshot.data['flags'][ApFlagId.PROJECT_LIMITS_ENABLED];
 
-    this.canSave$ = this.authenticationService.currentUserSubject.pipe(
-      map((user) => user?.projectRole === ProjectMemberRole.ADMIN)
-    );
+    this.canSave$ = this.projectMemberService.isRole(ProjectMemberRole.ADMIN);
     const projectLimitsForm = {
       tasks: this.fb.control(
         {
@@ -104,8 +95,10 @@ export class GeneralSettingsComponent {
       ),
       ...(this.projectLimitsEnabled ? projectLimitsForm : {}),
     });
-    this.project$ = this.store.select(ProjectSelectors.selectCurrentProject);
-    this.updateForm$ = this.project$.pipe(
+    this.project$ = this.projectService.currentProject$.pipe(
+      map((project) => project!)
+    );
+    this.initForm$ = this.project$.pipe(
       tap((project) => {
         this.formGroup.patchValue({
           displayName: project.displayName,
@@ -122,7 +115,7 @@ export class GeneralSettingsComponent {
         }
       }),
       map(() => {
-        return void 0;
+        return true;
       })
     );
   }
@@ -144,11 +137,8 @@ export class GeneralSettingsComponent {
                 },
           });
         }),
-        tap((updatedProject) => {
+        tap(() => {
           this.matSnackbar.open($localize`Saved successfully`);
-          this.store.dispatch(
-            ProjectActions.updateProject({ project: updatedProject })
-          );
           this.loading$.next(false);
         }),
         catchError((error) => {

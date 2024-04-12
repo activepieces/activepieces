@@ -7,51 +7,49 @@ import {
 } from '../dialogs/push-to-git-dialog/push-to-git-dialog.component';
 import { Observable, map, switchMap, tap } from 'rxjs';
 import { GitRepo } from '@activepieces/ee-shared';
-import { Store } from '@ngrx/store';
 import { SyncProjectService } from '../../services/sync-project.service';
-import { ProjectSelectors, flowActionsUiInfo } from '@activepieces/ui/common';
+import { ProjectService, flowActionsUiInfo } from '@activepieces/ui/common';
 import { AsyncPipe } from '@angular/common';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { MatMenuItem } from '@angular/material/menu';
 
 @Component({
-    selector: 'app-push-flow-to-git-button',
-    templateUrl: './push-flow-to-git-button.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
-    imports: [
-        MatMenuItem,
-        AngularSvgIconModule,
-        AsyncPipe,
-    ],
+  selector: 'app-push-flow-to-git-button',
+  templateUrl: './push-flow-to-git-button.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [
+    MatMenuItem,
+    AngularSvgIconModule,
+    AsyncPipe,
+  ],
 })
 export class PushFlowToGitButtonComponent {
   readonly flowActionsUiInfo = flowActionsUiInfo;
 
   @Input({ required: true }) flow!: PopulatedFlow;
 
-  
+
   openPushDialog$?: Observable<void>;
-  openConfigureRepoDialog$?: Observable<GitRepo | null> ;
+  openConfigureRepoDialog$?: Observable<GitRepo | null>;
   show$: Observable<boolean>;
   constructor(
     private dialogService: MatDialog,
-    private store: Store,
+    private projectService: ProjectService,
     private gitRepoService: SyncProjectService,
   ) {
     this.show$ = this.gitRepoService.isDevelopment()
   }
 
   openPushDialog(): void {
-    this.openPushDialog$ = this.store
-      .select(ProjectSelectors.selectCurrentProject)
+    this.openPushDialog$ = this.projectService.currentProject$
       .pipe(
         switchMap((project) => {
           return this.gitRepoService.get().pipe(
             tap((repo) => {
               const data: PushToGitDialogData = {
                 flow: this.flow,
-                projectName: project.displayName,
+                projectName: project!.displayName,
                 repoId: repo!.id,
               };
               this.dialogService.open(PushToGitDialogComponent, {

@@ -9,11 +9,9 @@ import {
   of,
   shareReplay,
 } from 'rxjs';
-import {
-  OAuth2AppsService,
-  PieceMetadataModelSummary,
-} from '@activepieces/ui/common';
+import { OAuth2AppsService } from '@activepieces/ui/common';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -37,6 +35,7 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
     super();
     this.pieces$ = this.piecesService
       .listPieces({
+        includeTags: true,
         includeHidden: true,
       })
       .pipe(shareReplay(1));
@@ -73,7 +72,6 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
         if (this.withoutOAuth2Cred) {
           return of(pieces);
         }
-
         return this.oAuth2AppsService.listOAuth2AppsCredentials().pipe(
           map((apps) => {
             return pieces.map((p) => {

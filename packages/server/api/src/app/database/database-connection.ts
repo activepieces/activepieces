@@ -35,6 +35,8 @@ import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
+import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
+import { TagEntity } from '../tags/tag-entity'
 import { UserEntity } from '../user/user-entity'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { createPostgresDataSource } from './postgres-connection'
@@ -64,6 +66,8 @@ function getEntities(): EntitySchema<unknown>[] {
         PieceMetadataEntity,
         StepFileEntity,
         PlatformEntity,
+        TagEntity,
+        PieceTagEntity,
     ]
 
     switch (edition) {

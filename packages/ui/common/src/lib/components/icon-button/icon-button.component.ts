@@ -14,7 +14,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IconButtonComponent implements OnInit {
-  @Input() color: 'primary' | 'accent' | 'warn' | '' | undefined;
+  @Input() color: 'primary' | 'accent' | 'warn' | '' | 'basic' | undefined;
   @Input() width: number | undefined = 15;
   @Input() iconFilename: string | undefined;
   @Input() height: number | undefined = 15;

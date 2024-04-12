@@ -21,6 +21,7 @@ import {
 } from '@activepieces/ui/common';
 import { ApFlagId, PieceSyncMode, Platform } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
+import { SelectionModel } from '@angular/cdk/collections';
 import {
   ManagedPieceMetadataModelSummary,
   PiecesTableDataSource,
@@ -40,6 +41,7 @@ import {
 import { PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 import { PieceScope } from '@activepieces/shared';
+import { TagsService } from 'ui-feature-tags';
 
 @Component({
   selector: 'app-pieces-table',
@@ -47,7 +49,14 @@ import { PieceScope } from '@activepieces/shared';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PiecesTableComponent implements OnInit {
-  displayedColumns = ['displayName', 'packageName', 'version', 'action'];
+  displayedColumns = [
+    'select',
+    'displayName',
+    'packageName',
+    'version',
+    'tags',
+    'action',
+  ];
   title = $localize`Pieces`;
   upgradeNoteTitle = $localize`Control Pieces`;
   upgradeNote = $localize`Show the pieces that matter most to your users and hide the ones that you don't like`;
@@ -75,12 +84,22 @@ export class PiecesTableComponent implements OnInit {
   toggleCloudOAuth2$?: Observable<void>;
   featDisabledTooltipText = featureDisabledTooltip;
   isDemo = false;
+  pieceSelection = new SelectionModel<string>(true, []);
+  isAnyPieceSelected$ = this.pieceSelection.changed.pipe(
+    map(() => this.pieceSelection.selected.length > 0)
+  );
+
+  tagSelection = new SelectionModel<string>(true, []);
+  mixedTags: string[] = [];
+  saveTag$?: Observable<void>;
+
   constructor(
     private piecesService: PieceMetadataService,
     private route: ActivatedRoute,
     private platformService: PlatformService,
     private matSnackbar: MatSnackBar,
     private matDialog: MatDialog,
+    private tagService: TagsService,
     private flagService: FlagService,
     private oauth2AppsService: OAuth2AppsService
   ) {}
@@ -113,6 +132,83 @@ export class PiecesTableComponent implements OnInit {
         this.platform$.value.cloudAuthEnabled
       );
     }
+  }
+
+  updateTags(changedTags: string[]) {
+    this.saveTag$ = this.tagService
+      .tagPieces({
+        piecesName: this.pieceSelection.selected.map((piece) => piece),
+        tags: this.tagSelection.selected,
+      })
+      .pipe(
+        tap(() => this.handleUpdateTagsSuccess(changedTags)),
+        catchError((error) => this.handleErrorTagsSuccess(error))
+      );
+    this.refreshedMixed();
+  }
+
+  private handleUpdateTagsSuccess(changedTags: string[]) {
+    this.dataSource.data
+      .filter((piece) => this.pieceSelection.isSelected(piece.name))
+      .forEach((piece) => {
+        changedTags.forEach((tag) => {
+          const tagsSet = new Set(piece.tags);
+          if (this.tagSelection.isSelected(tag)) {
+            tagsSet.add(tag);
+          } else {
+            tagsSet.delete(tag);
+          }
+          piece.tags = Array.from(tagsSet);
+        });
+      });
+    this.matSnackbar.open($localize`Labels updated successfully`);
+    this.pieceSelection.clear();
+    this.tagSelection.clear();
+  }
+
+  private handleErrorTagsSuccess(error: unknown) {
+    this.matSnackbar.open($localize`Failed to update labels`);
+    console.error(error);
+    return of(undefined);
+  }
+
+  isLabelSelectedInAllPieces(label: string) {
+    return this.dataSource.data
+      .filter((piece) => this.pieceSelection.isSelected(piece.name))
+      .every((piece) => piece.tags?.includes(label));
+  }
+
+  isLabelSelectedInAnyPiece(label: string) {
+    return this.dataSource.data
+      .filter((piece) => this.pieceSelection.isSelected(piece.name))
+      .some((piece) => piece.tags?.includes(label));
+  }
+
+  togglePieceSelect(piece: ManagedPieceMetadataModelSummary) {
+    this.pieceSelection.toggle(piece.name);
+    piece.tags?.forEach((label) => {
+      if (this.isLabelSelectedInAllPieces(label)) {
+        this.tagSelection.select(label);
+      } else {
+        this.tagSelection.deselect(label);
+      }
+    });
+    this.refreshedMixed();
+  }
+
+  private refreshedMixed() {
+    const uniqueTags = new Set<string>();
+    this.dataSource.data
+      .filter((piece) => this.pieceSelection.isSelected(piece.name))
+      .forEach((piece) => {
+        piece.tags?.forEach((tag) => uniqueTags.add(tag));
+      });
+    this.mixedTags = Array.from(uniqueTags).filter((tag) => {
+      return (
+        this.isLabelSelectedInAnyPiece(tag) &&
+        !this.isLabelSelectedInAllPieces(tag)
+      );
+    });
   }
 
   sync() {
@@ -150,6 +246,26 @@ export class PiecesTableComponent implements OnInit {
         );
       })
     );
+  }
+
+  isAllSelected() {
+    const numSelected = this.pieceSelection.selected.length;
+    const numRows = this.dataSource.data.length;
+    return numSelected === numRows;
+  }
+
+  masterToggle() {
+    if (this.isAllSelected()) {
+      this.tagSelection.clear();
+      this.pieceSelection.clear();
+    } else {
+      this.dataSource.data.forEach((row) => {
+        this.pieceSelection.select(row.name);
+        row.tags?.forEach((label) => {
+          this.tagSelection.select(label);
+        });
+      });
+    }
   }
 
   togglePiece(piece: ManagedPieceMetadataModelSummary) {

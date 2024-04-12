@@ -4,7 +4,6 @@ import {
   BehaviorSubject,
   Observable,
   Subject,
-  map,
   startWith,
   tap,
 } from 'rxjs';
@@ -12,10 +11,11 @@ import { ProjectPiecesDataSource } from './project-pieces-table.datasource';
 import { InstallCommunityPieceModalComponent } from '../install-community-piece/install-community-piece-modal.component';
 import { ApFlagId, PieceScope, PieceType, ProjectMemberRole, isNil } from '@activepieces/shared';
 import { PieceMetadataService } from '../services/piece.service';
-import { AuthenticationService, DeleteEntityDialogComponent, DeleteEntityDialogData, FlagService, GenericSnackbarTemplateComponent, PieceMetadataModelSummary } from '@activepieces/ui/common';
+import { DeleteEntityDialogComponent, DeleteEntityDialogData, FlagService, GenericSnackbarTemplateComponent } from '@activepieces/ui/common';
 import { ManagePiecesDialogComponent } from '../manage-pieces-dialog/manage-pieces-dialog.component';
-import { PieceMetadataSummary } from '@activepieces/pieces-framework';
+import { PieceMetadataModelSummary, PieceMetadataSummary } from '@activepieces/pieces-framework';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ProjectMemberService } from '@activepieces/ee/project-members';
 
 @Component({
   templateUrl: './project-pieces-table.component.html',
@@ -35,16 +35,16 @@ export class ProjectPiecesTableComponent {
 
   constructor(
     private dialogService: MatDialog,
-    private authenticationService: AuthenticationService,
     private pieceMetadataService: PieceMetadataService,
     private snackBar: MatSnackBar,
     private flagService: FlagService,
+    private projectMemberService: ProjectMemberService
   ) {
     this.dataSource = new ProjectPiecesDataSource(
       this.pieceMetadataService,
       this.refreshTable$.asObservable().pipe(startWith(true))
     );
-    this.isAdmin$ = this.authenticationService.currentUserSubject.pipe(map(user => user?.projectRole === ProjectMemberRole.ADMIN))
+    this.isAdmin$ = this.projectMemberService.isRole(ProjectMemberRole.ADMIN);
     this.installPieceEnabled$ = this.flagService.isFlagEnabled(ApFlagId.INSTALL_PROJECT_PIECES_ENABLED)
     this.managePiecesEnabled$ = this.flagService.isFlagEnabled(ApFlagId.MANAGE_PROJECT_PIECES_ENABLED)
   }

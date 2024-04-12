@@ -1,6 +1,6 @@
-import { DropdownState, PiecePropertyMap } from "@activepieces/pieces-framework";
+import { DropdownState, PieceMetadataModel, PieceMetadataModelSummary, PiecePropertyMap } from "@activepieces/pieces-framework";
 import { Action, ActionType, AddPieceRequestBody, ListPiecesRequestQuery, PieceCategory, PieceOptionRequest, PieceScope, SuggestionType, Trigger, TriggerType, isNil, spreadIfDefined } from "@activepieces/shared";
-import { AuthenticationService, FlowItemDetails, PieceMetadataModel, PieceMetadataModelSummary, environment } from "@activepieces/ui/common";
+import { AuthenticationService, FlowItemDetails, environment } from "@activepieces/ui/common";
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { Observable, Subject, map, of, shareReplay } from "rxjs";
@@ -58,6 +58,7 @@ export class PieceMetadataService {
         return this.http.get<PieceMetadataModelSummary[]>(`${environment.apiUrl}/pieces`, {
             params: {
                 includeHidden: request.includeHidden ? 'true' : 'false',
+                ...spreadIfDefined('includeTags', request.includeTags),
                 ...spreadIfDefined('searchQuery', request.searchQuery),
                 ...spreadIfDefined('suggestionType', !isNil(request.searchQuery) && request.searchQuery.length > 3 ? request.suggestionType : undefined)
             }
