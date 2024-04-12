@@ -7,6 +7,7 @@ import {
 import { PieceCategory } from '@activepieces/shared';
 import { githubCreateIssueAction } from './lib/actions/create-issue';
 import { githubTriggers } from './lib/trigger';
+import { githubLockIssueAction } from './lib/actions/lock-issue';
 
 export const githubAuth = PieceAuth.OAuth2({
   required: true,
@@ -26,6 +27,7 @@ export const github = createPiece({
   auth: githubAuth,
   actions: [
     githubCreateIssueAction,
+    githubLockIssueAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.github.com',
       auth: githubAuth,
@@ -34,6 +36,13 @@ export const github = createPiece({
       }),
     }),
   ],
-  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: [
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+    'tintinthedev',
+  ],
   triggers: githubTriggers,
 });
