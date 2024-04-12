@@ -116,7 +116,7 @@ export const pastebinCommon = {
           { label: 'Inno Script', value: 'inno' },
           { label: 'INTERCAL', value: 'intercal' },
           { label: 'IO', value: 'io' },
-          { label: 'ISPF Panel Definitio...', value: 'ispfpanel' },
+          { label: 'ISPF Panel Definition...', value: 'ispfpanel' },
           { label: 'J', value: 'j' },
           { label: 'Java', value: 'java' },
           { label: 'Java 5', value: 'java5' },

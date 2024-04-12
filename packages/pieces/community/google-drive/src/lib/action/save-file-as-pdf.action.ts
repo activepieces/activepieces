@@ -52,11 +52,11 @@ export const saveFileAsPdf = createAction({
     };
     const templateBuffer = Buffer.from(result.data as any, 'base64');
 
-    const streamm = new Stream.PassThrough().end(templateBuffer);
+    const stream = new Stream.PassThrough().end(templateBuffer);
 
     const media = {
       mimeType: 'application/pdf',
-      body: streamm,
+      body: stream,
     };
 
     const file = await drive.files.create({

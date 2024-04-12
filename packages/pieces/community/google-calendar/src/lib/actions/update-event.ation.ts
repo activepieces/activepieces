@@ -85,11 +85,11 @@ export const updateEventAction = createAction({
 			eventId: eventId,
 		});
 
-		let attendeeFormatedList: calendar_v3.Schema$EventAttendee[] = [];
+		let attendeeFormattedList: calendar_v3.Schema$EventAttendee[] = [];
 		if (Array.isArray(attendees) && attendees.length > 0) {
-			attendeeFormatedList = attendees.map((email) => ({ email }));
+			attendeeFormattedList = attendees.map((email) => ({ email }));
 		} else if (currentEvent.data.attendees && Array.isArray(currentEvent.data.attendees)) {
-			attendeeFormatedList = currentEvent.data.attendees;
+			attendeeFormattedList = currentEvent.data.attendees;
 		}
 
 		const response = await calendar.events.update({
@@ -97,7 +97,7 @@ export const updateEventAction = createAction({
 			eventId: eventId,
 			requestBody: {
 				summary: title ?? currentEvent.data.summary,
-				attendees: attendeeFormatedList,
+				attendees: attendeeFormattedList,
 				description: description ?? currentEvent.data.description,
 				location: location ?? currentEvent.data.location,
 				start: start_date_time

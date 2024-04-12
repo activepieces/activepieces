@@ -18,4 +18,4 @@ jobs:
           message: |
             ### ⚠️COMMENT VISIBILITY WARNING⚠️
             Comments on closed issues are hard for our team to see.
-            If this issue is continuing with the lastest stable version of Activepieces, please open a new issue that references this one.
+            If this issue is continuing with the latest stable version of Activepieces, please open a new issue that references this one.

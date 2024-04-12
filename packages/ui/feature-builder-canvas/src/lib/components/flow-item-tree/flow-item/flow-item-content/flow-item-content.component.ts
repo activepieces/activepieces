@@ -84,7 +84,7 @@ export class FlowItemContentComponent implements OnInit {
   _selected = false;
   @Input() set selected(val: boolean) {
     if (val) {
-      this.broadcastStepOuput();
+      this.broadcastStepOutput();
     }
     this._selected = val;
   }
@@ -187,7 +187,7 @@ export class FlowItemContentComponent implements OnInit {
     }
     return of([]);
   }
-  private broadcastStepOuput() {
+  private broadcastStepOutput() {
     this.runDetailsService.currentStepResult$.next({
       stepName: this._flowItem.name,
       output: this.stepOutput,

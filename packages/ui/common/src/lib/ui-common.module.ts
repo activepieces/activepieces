@@ -59,7 +59,6 @@ import { NgxColorsModule } from 'ngx-colors';
 import { PageTitleComponent } from './components/page-title/page-title.component';
 import { PoweredByActivepiecesComponent } from './components/powered-by-activepieces/powered-by-activepieces.component';
 import { MatSliderModule } from '@angular/material/slider';
-import { CommaSeparatedPipe } from './pipe/comma-seperated.pipe';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ImgFallbackDirective } from './directives/image-fallback.directive';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
@@ -77,6 +76,7 @@ import { ControlDescriptionComponent } from './components/control-description/co
 import { MatChipsModule } from '@angular/material/chips';
 import { ApChipsListComponent } from './components/ap-chips-list/ap-chips-list.component';
 import { ApMarkdownComponent } from './components';
+import { CommaSeparatedPipe } from './pipe/comma-separated.pipe';
 
 const exportedImports = [
   CommonModule,

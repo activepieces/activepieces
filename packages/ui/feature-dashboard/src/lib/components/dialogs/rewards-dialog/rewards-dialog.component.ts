@@ -24,7 +24,7 @@ import { Observable, map, tap } from 'rxjs';
   templateUrl: './rewards-dialog.component.html',
 })
 export class RewardsDialogComponent {
-  referalItemClicked$: Observable<void>;
+  referralItemClicked$: Observable<void>;
   constructor(
     public matDialog: MatDialog,
     private telemetryService: TelemetryService,
@@ -82,16 +82,16 @@ export class RewardsDialogComponent {
     {
       cta: 'Copy Link',
       ctaEffect: () => {
-        this.referalItemClicked();
+        this.referralItemClicked();
       },
       icon: 'assets/img/custom/rewards/referals.svg',
       jobName:
-        'Refer us to 5 friends using your referral link (reward per referal)',
+        'Refer us to 5 friends using your referral link (reward per referral)',
       tasksPerMonth: '500',
     },
   ];
 
-  referalTracking() {
+  referralTracking() {
     this.telemetryService.capture({
       name: TelemetryEventName.REFERRAL_LINK_COPIED,
       payload: {
@@ -119,8 +119,8 @@ export class RewardsDialogComponent {
     this.matSnackbar.open('Referral URL copied to your clipboard.');
   }
 
-  referalItemClicked() {
-    this.referalItemClicked$ = this.flagService.getEdition().pipe(
+  referralItemClicked() {
+    this.referralItemClicked$ = this.flagService.getEdition().pipe(
       tap((ed) => {
         if (ed === ApEdition.COMMUNITY) {
           window.open(
@@ -130,7 +130,7 @@ export class RewardsDialogComponent {
           );
         } else if (ed === ApEdition.CLOUD) {
           this.copyUrl();
-          this.referalTracking();
+          this.referralTracking();
         }
       }),
       map(() => void 0)

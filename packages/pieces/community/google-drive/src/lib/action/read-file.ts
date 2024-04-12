@@ -49,12 +49,12 @@ export const readFile = createAction({
           )
         );
 
-      const extention = '.' + extension(mimeType);
+      const extension = '.' + extension(mimeType);
       const srcFileName = propsValue.fileName;
       const fileName =
         (srcFileName
-          ? srcFileName.replace(new RegExp(extention + '$'), '')
-          : propsValue.fileId) + extention;
+          ? srcFileName.replace(new RegExp(extension + '$'), '')
+          : propsValue.fileId) + extension;
       return files.write({
         fileName,
         data: Buffer.from(await download.arrayBuffer()),

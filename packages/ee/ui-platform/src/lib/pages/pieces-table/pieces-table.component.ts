@@ -272,11 +272,11 @@ export class PiecesTableComponent implements OnInit {
     if (!this.platform$) return;
 
     const pieceIncluded = !!this.platform$.value.filteredPieceNames.find(
-      (pn) => pn === piece.name
+      (on) => on === piece.name
     );
     if (pieceIncluded) {
       const newPiecesList = this.platform$.value.filteredPieceNames.filter(
-        (pn) => pn !== piece.name
+        (on) => on !== piece.name
       );
       this.platform$.next({
         ...this.platform$.value,

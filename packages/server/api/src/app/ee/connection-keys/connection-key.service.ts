@@ -24,7 +24,7 @@ import { ActivepiecesError, apId, AppConnection,
     SeekPage,
 } from '@activepieces/shared'
 
-const connectonKeyRepo = databaseConnection.getRepository(ConnectionKeyEntity)
+const connectionKeyRepo = databaseConnection.getRepository(ConnectionKeyEntity)
 
 export const connectionKeyService = {
     async getConnection({
@@ -127,7 +127,7 @@ export const connectionKeyService = {
                 format: 'pem',
             },
         })
-        const savedConnection: ConnectionKey = await connectonKeyRepo.save({
+        const savedConnection: ConnectionKey = await connectionKeyRepo.save({
             id: apId(),
             projectId,
             settings: {
@@ -159,14 +159,14 @@ export const connectionKeyService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = connectonKeyRepo
+        const queryBuilder = connectionKeyRepo
             .createQueryBuilder('connection_key')
             .where({ projectId })
         const { data, cursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<ConnectionKey>(data, cursor)
     },
     async delete(id: ConnectionKeyId): Promise<void> {
-        await connectonKeyRepo.delete({
+        await connectionKeyRepo.delete({
             id,
         })
     },
@@ -176,7 +176,7 @@ async function getConnectioName(request: {
     projectId: string
     token: string
 }): Promise<string | null> {
-    const connectionKeys = await connectonKeyRepo.findBy({
+    const connectionKeys = await connectionKeyRepo.findBy({
         projectId: request.projectId,
     })
     let connectionName: string | null = null

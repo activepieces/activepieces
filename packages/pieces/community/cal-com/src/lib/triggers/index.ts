@@ -171,9 +171,8 @@ export const triggers = [
         videoCallData: {
           type: 'daily_video',
           id: '9tJRDCRw9ESmb64SuEwU',
-          password:
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyIjoiOXRKUkRDUnc5RVNtYjY0U3VFd1UiLCJvIjp0cnVlLCJkIjoiYmJkOThhNzEtMTljOS00YmIxLWE1YzUtY2FmMWVjNWJkMTA1IiwiaWF0IjoxNjc2NzIyMjg2fQ.EomaETTsmNnG3MZt6zQG9URtrHTclZhpk88jU0du5fE',
-          url: 'https://meetco.daily.co/9tJRDCRw9ESmb64SuEwU',
+          password: 'PASSWORD',
+          url: 'https://meetco.daily.co/RANDOM',
         },
         eventTitle: '30 Min Meeting',
         eventDescription: null,
