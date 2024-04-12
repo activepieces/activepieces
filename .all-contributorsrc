@@ -955,6 +955,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "rendyt1",
+      "name": "Rendy Tan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38492810?v=4",
+      "profile": "https://github.com/rendyt1",
+      "contributions": [
+        "doc",
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
