@@ -65,7 +65,7 @@ export class EnableFederatedAuthnProviderDialogComponent {
       this.loading$.next(true);
       const platform: Platform = JSON.parse(JSON.stringify(this.data.platform));
       const formData = this.formGroup.getRawValue();
-      if (this.data.provider === 'Github') {
+      if (this.data.provider === 'GitHub') {
         platform.federatedAuthProviders.github = formData;
       }
       if (this.data.provider === 'Google') {

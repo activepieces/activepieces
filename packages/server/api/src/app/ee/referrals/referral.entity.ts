@@ -12,7 +12,7 @@ export type ReferralSchema = Referral & {
 }
 
 export const ReferralEntity = new EntitySchema<ReferralSchema>({
-    name: 'referal',
+    name: 'referral',
     columns: {
         ...BaseColumnSchemaPart,
         referredUserId: {

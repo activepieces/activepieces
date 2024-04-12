@@ -10,7 +10,7 @@
             [federatedAuthnProvider]="FederatedAuthnProviderEnum.Google"></app-configure-confederated-authn-card>
         <app-configure-confederated-authn-card [isDemo]="isDemo" [platform]="(platform$ | async) || undefined"
             (platformUpdated)="platformUpdated($event)"
-            [federatedAuthnProvider]="FederatedAuthnProviderEnum.Github"></app-configure-confederated-authn-card>
+            [federatedAuthnProvider]="FederatedAuthnProviderEnum.GitHub"></app-configure-confederated-authn-card>
         <app-configure-allowing-email-logins-card [isDemo]="isDemo" [platform]="(platform$ | async) || undefined"
             (platformUpdated)="platformUpdated($event)"></app-configure-allowing-email-logins-card>
     </div>

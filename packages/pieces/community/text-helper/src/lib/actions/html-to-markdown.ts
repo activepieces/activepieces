@@ -29,7 +29,7 @@ export const htmlToMarkdown = createAction({
         options: [
           { label: 'Default', value: 'vanilla' },
           { label: 'Original', value: 'original' },
-          { label: 'Github', value: 'github' },
+          { label: 'GitHub', value: 'github' },
         ],
       },
     }),
