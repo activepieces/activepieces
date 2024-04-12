@@ -2,7 +2,7 @@ import { flagService } from '../../flags/flag.service'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { resolvePlatformIdForRequest } from '../../platform/platform-utils'
 import { platformService } from '../../platform/platform.service'
-import { appearanceHelper } from '../helper/apperance-helper'
+import { appearanceHelper } from '../helper/appearance-helper'
 import { ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
