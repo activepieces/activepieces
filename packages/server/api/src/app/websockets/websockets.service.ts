@@ -8,11 +8,11 @@ const listener: Record<string, WebsocketListener<any>> = {}
 
 export const websocketService = {
     init(socket: Socket): void {
-        for (const [event, listener] of Object.entries(listener)) {
-            socket.on(event, listener(socket))
+        for (const [event, handler] of Object.entries(listener)) {
+            socket.on(event, handler(socket))
         }
     },
-    addListener<T>(event: WebsocketServerEvent, listener: WebsocketListener<T>): void {
-        listener[event] = listener
+    addListener<T>(event: WebsocketServerEvent, handler: WebsocketListener<T>): void {
+        listener[event] = handler
     },
 }
