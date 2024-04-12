@@ -266,6 +266,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/cr0fters"><img src="https://avatars.githubusercontent.com/u/1754858?v=4?s=100" width="100px;" alt="cr0fters"/><br /><sub><b>cr0fters</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Acr0fters" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://bibek-timsina.com.np/"><img src="https://avatars.githubusercontent.com/u/29589003?v=4?s=100" width="100px;" alt="Bibek Timsina"/><br /><sub><b>Bibek Timsina</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Abimsina" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/szepeviktor/debian-server-tools/blob/master/CV.md"><img src="https://avatars.githubusercontent.com/u/952007?v=4?s=100" width="100px;" alt="Viktor Szépe"/><br /><sub><b>Viktor Szépe</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=szepeviktor" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/rendyt1"><img src="https://avatars.githubusercontent.com/u/38492810?v=4?s=100" width="100px;" alt="Rendy Tan"/><br /><sub><b>Rendy Tan</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=rendyt1" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
