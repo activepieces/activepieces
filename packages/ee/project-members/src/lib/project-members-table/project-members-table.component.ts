@@ -6,16 +6,7 @@ import {
 } from '@angular/core';
 import { ProjectMembersTableDataSource } from './project-members.datasource';
 import { ProjectMemberService } from '../service/project-members.service';
-import {
-  Observable,
-  Subject,
-  map,
-  startWith,
-  tap,
-  switchMap,
-  shareReplay,
-  forkJoin,
-} from 'rxjs';
+import { Observable, Subject, map, startWith, tap, switchMap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { InviteProjectMemberDialogComponent } from '../dialogs/invite-project-member-dialog/invite-project-member.component';
 import { ProjectMemberStatus } from '@activepieces/ee-shared';
@@ -83,32 +74,8 @@ export class ProjectMembersTableComponent
     this.projectOwnerId$ = this.projectService.currentProject$.pipe(
       map((project) => project!.ownerId)
     );
-    // TODO OPTIMIZE THIS and use role from centerlized place
-    this.isCurrentUserAdmin$ = forkJoin([
-      this.projectMemberService.list({
-        limit: 100,
-        projectId: this.authenticationService.getProjectId(),
-      }),
-      this.projectOwnerId$,
-    ]).pipe(
-      map(([members, ownerId]) => {
-        const currentUser = this.authenticationService.currentUser;
-
-        // Check if the current user is an admin
-        const isAdmin =
-          members.data.find(
-            (member) =>
-              currentUser.email === member.email &&
-              member.platformId === currentUser.platformId
-          )?.role === ProjectMemberRole.ADMIN;
-
-        // Check if the current user is the project owner
-        const isOwner = currentUser.id === ownerId;
-
-        // Return true if the user is either an admin or the owner
-        return isAdmin || isOwner;
-      }),
-      shareReplay(1)
+    this.isCurrentUserAdmin$ = this.projectMemberService.isRole(
+      ProjectMemberRole.ADMIN
     );
   }
 

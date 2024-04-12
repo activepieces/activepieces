@@ -1,9 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import {
-  AuthenticationService,
-  ProjectService,
-  UiCommonModule,
-} from '@activepieces/ui/common';
+import { ProjectService, UiCommonModule } from '@activepieces/ui/common';
 import { AsyncPipe } from '@angular/common';
 import {
   FormBuilder,
@@ -28,6 +24,7 @@ import {
 } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
+import { ProjectMemberService } from '@activepieces/ee/project-members';
 
 interface UpdateProjectForm {
   displayName: FormControl<string>;
@@ -43,12 +40,12 @@ interface UpdateProjectForm {
   imports: [AsyncPipe, UiCommonModule],
 })
 export class GeneralSettingsComponent {
-  readonly permissionMessage = $localize` 'You don\'t have permissions to edit project settings'`;
+  readonly permissionMessage = $localize`You don\'t have permissions to edit project settings`;
   formGroup: FormGroup<UpdateProjectForm>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$: Observable<void>;
   project$: Observable<ProjectWithLimits>;
-  updateForm$: Observable<void>;
+  initForm$: Observable<boolean>;
   projectLimitsEnabled: boolean;
   canSave$: Observable<boolean>;
 
@@ -56,15 +53,13 @@ export class GeneralSettingsComponent {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private projectService: ProjectService,
-    private authenticationService: AuthenticationService,
-    private matSnackbar: MatSnackBar
+    private matSnackbar: MatSnackBar,
+    private projectMemberService: ProjectMemberService
   ) {
     this.projectLimitsEnabled =
       this.route.snapshot.data['flags'][ApFlagId.PROJECT_LIMITS_ENABLED];
 
-    this.canSave$ = this.authenticationService.currentUserSubject.pipe(
-      map((user) => user?.projectRole === ProjectMemberRole.ADMIN)
-    );
+    this.canSave$ = this.projectMemberService.isRole(ProjectMemberRole.ADMIN);
     const projectLimitsForm = {
       tasks: this.fb.control(
         {
@@ -103,7 +98,7 @@ export class GeneralSettingsComponent {
     this.project$ = this.projectService.currentProject$.pipe(
       map((project) => project!)
     );
-    this.updateForm$ = this.project$.pipe(
+    this.initForm$ = this.project$.pipe(
       tap((project) => {
         this.formGroup.patchValue({
           displayName: project.displayName,
@@ -120,7 +115,7 @@ export class GeneralSettingsComponent {
         }
       }),
       map(() => {
-        return void 0;
+        return true;
       })
     );
   }

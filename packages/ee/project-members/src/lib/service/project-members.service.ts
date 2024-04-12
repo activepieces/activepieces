@@ -1,7 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { DEFAULT_PAGE_SIZE, environment } from '@activepieces/ui/common';
+import { Observable, combineLatest, map, of, switchMap } from 'rxjs';
+import {
+  AuthenticationService,
+  DEFAULT_PAGE_SIZE,
+  ProjectService,
+  environment,
+} from '@activepieces/ui/common';
 import {
   AcceptInvitationRequest,
   AcceptProjectResponse,
@@ -9,13 +14,47 @@ import {
   ProjectMember,
   AddProjectMemberRequestBody,
 } from '@activepieces/ee-shared';
-import { SeekPage } from '@activepieces/shared';
+import { ProjectMemberRole, SeekPage } from '@activepieces/shared';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProjectMemberService {
-  constructor(private http: HttpClient) {}
+  private role$: Observable<ProjectMemberRole | null>;
+
+  constructor(
+    private http: HttpClient,
+    private authenticationService: AuthenticationService,
+    private projectService: ProjectService
+  ) {
+    this.role$ = combineLatest({
+      project: this.projectService.currentProject$,
+      user: this.authenticationService.currentUserSubject,
+    }).pipe(
+      switchMap(({ project, user }) => {
+        if (!project || !user) {
+          return of(null);
+        }
+        if (project.ownerId === user.id) {
+          return of(ProjectMemberRole.ADMIN);
+        }
+        return this.list({ projectId: project.id }).pipe(
+          map((members) => {
+            const member = members.data.find((m) => m.email === user.email);
+            return member?.role ?? null;
+          })
+        );
+      })
+    );
+  }
+
+  isRole(projectRole: ProjectMemberRole): Observable<boolean> {
+    return this.role$.pipe(map((role) => role === projectRole));
+  }
+
+  role(): Observable<ProjectMemberRole | null> {
+    return this.role$;
+  }
 
   accept(request: AcceptInvitationRequest): Observable<AcceptProjectResponse> {
     return this.http.post<AcceptProjectResponse>(

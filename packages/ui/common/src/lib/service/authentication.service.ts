@@ -9,6 +9,7 @@ import {
   FederatedAuthnLoginResponse,
   Principal,
   ProjectId,
+  ProjectMemberRole,
   SignInRequest,
   SignUpRequest,
   ThirdPartyAuthnProviderEnum,
@@ -34,6 +35,7 @@ export class AuthenticationService {
   public tokenChangedSubject: BehaviorSubject<string | null> =
     new BehaviorSubject<string | null>(this.getToken());
   private jwtHelper = new JwtHelperService();
+
   constructor(
     private router: Router,
     private http: HttpClient,
@@ -44,6 +46,10 @@ export class AuthenticationService {
     return JSON.parse(
       localStorage.getItem(environment.userPropertyNameInLocalStorage) || '{}'
     );
+  }
+
+  getRole(): ProjectMemberRole | undefined {
+    return this.currentUser?.projectRole ?? undefined;
   }
 
   me(): Observable<UserWithoutPassword> {
