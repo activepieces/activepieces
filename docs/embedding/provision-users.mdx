@@ -1,9 +1,17 @@
 ---
-title: "Generate JWT Token"
-description: "if you own SaaS, you can authenticate your users from your app to the dashboard without asking them to login"
+title: "Provision Users"
+description: "Automatically authenticate your users to your activepieces instance"
+icon: 'user'
 ---
 
 <Snippet file="enterprise-feature.mdx" />
+
+## Overview
+
+In Activepieces, there are **Projects** and **Users**. Each project is provisioned with their corresponding workspace, project, or team in your SaaS. The users are then mapped to the respective users in Activepieces.
+
+To achieve this, your backend will generate a signed token that contains all the necessary information to automatically create an user and project. If the user or project already exists, It will skip the creation and login the user directly.
+
 
 ## Step 1: Obtain Signing Key
 
@@ -11,13 +19,20 @@ You can generate a signing key by going to **Platform Settings -> Signing Keys -
 
 This will generate a public and private key pair. The public key will be used by Activepieces to verify the signature of the JWT tokens you send. The private key will be used by you to sign the JWT tokens.
 
-**Note: Please store your private key in a safe place, as it will not be stored in activepieces.**
+<Warning>
+Please store your private key in a safe place, as it will not be stored in activepieces.**
+</Warning>
 
 ## Step 2: Generate a JWT
 
 The signing key will be used to generate JWT tokens for the currently logged-in user on your website, which will then be sent to Activepieces Iframe as a query parameter to authenticate the user.
 
 To generate these tokens, you will need to add code in your backend to generate the token using the RS256 algorithm, so the JWT header would look like this:
+
+<Tip>
+To obtain the `SIGNING_KEY_ID`, refer to the signing key table and locate the value in the first column.
+</Tip>
+
 ```json
 {
   "alg": "RS256",
@@ -36,7 +51,10 @@ The signed tokens must include these claims in the payload:
   "lastName": "Doe",
   "email": "john@example.com",
   "role": "EDITOR",
-	"exp": 1856563200
+  "pieces": {
+    "filterType": "NONE"
+  },
+  "exp": 1856563200
 }
 ````
 
@@ -49,7 +67,7 @@ The signed tokens must include these claims in the payload:
 | email             | Email address of the user                        |
 | role              | Role of the user in the activepieces project (e.g., **EDITOR**, **VIEWER**)           |
 | exp               | Expiry timestamp for the token (Unix timestamp)  |
-
+| pieces            | Customize project pieces, check the section below  |
 
 You can use any JWT library to generate the token. Here is an example using the jsonwebtoken library in NodeJs:
 
@@ -70,6 +88,9 @@ let token = jwt.sign(
     lastName: "Doe",
     role: "EDITOR",
     email: "john@example.om",
+    pieces: {
+      filterType: "NONE"
+    },
     exp: currentTime + (24 * 60 * 60), // 1 day from now
   },
   process.env.ACTIVEPIECES_SIGNING_KEY,
