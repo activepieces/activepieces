@@ -303,7 +303,7 @@ describe('Authentication API', () => {
             const responseBody = response?.json()
 
             const referral = await databaseConnection
-                .getRepository('referral')
+                .getRepository('referal')
                 .findOneBy({
                     referredUserId: responseBody?.id,
                 })
