@@ -13,6 +13,7 @@ import { discordSendApprovalMessage } from './lib/actions/send-approval-message'
 import { discordSendMessageWebhook } from './lib/actions/send-message-webhook';
 import { newMessage } from './lib/trigger/new-message';
 import { discordRemoveBanFromUser } from './lib/actions/remove-ban-from-user';
+import { discordCreateGuildRole } from './lib/actions/create-guild-role';
 
 const markdown = `
 To obtain a token, follow these steps:
@@ -47,6 +48,7 @@ export const discord = createPiece({
     discordDeleteChannel,
     discordFindChannel,
     discordRemoveBanFromUser,
+    discordCreateGuildRole,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://discord.com/api/v9';
