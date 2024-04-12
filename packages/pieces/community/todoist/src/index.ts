@@ -1,5 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { todoistCreateTaskAction } from './lib/actions/create-task-action';
 import { todoistTaskCompletedTrigger } from './lib/triggers/task-completed-trigger';
@@ -25,7 +25,7 @@ export const todoist = createPiece({
       baseUrl: () => 'https://api.todoist.com/rest/v2',
       auth: todoistAuth,
       authMapping: (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),
   ],
