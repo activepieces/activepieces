@@ -12,6 +12,10 @@ import { discordDeleteChannel } from './lib/actions/delete-channel';
 import { discordSendApprovalMessage } from './lib/actions/send-approval-message';
 import { discordSendMessageWebhook } from './lib/actions/send-message-webhook';
 import { newMessage } from './lib/trigger/new-message';
+import { discordRemoveBanFromUser } from './lib/actions/remove-ban-from-user';
+import { discordCreateGuildRole } from './lib/actions/create-guild-role';
+import { discordDeleteGuildRole } from './lib/actions/delete-guild-role';
+import { discordBanGuildMember } from './lib/actions/ban-a-guild-member';
 
 const markdown = `
 To obtain a token, follow these steps:
@@ -45,6 +49,10 @@ export const discord = createPiece({
     discordCreateChannel,
     discordDeleteChannel,
     discordFindChannel,
+    discordRemoveBanFromUser,
+    discordCreateGuildRole,
+    discordDeleteGuildRole,
+    discordBanGuildMember,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://discord.com/api/v9';
@@ -56,6 +64,17 @@ export const discord = createPiece({
       },
     }),
   ],
-  authors: ["creed983","TaskMagicKyle","karimkhaleel","Abdallah-Alwarawreh","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: [
+    'creed983',
+    'TaskMagicKyle',
+    'karimkhaleel',
+    'Abdallah-Alwarawreh',
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+    'tintinthedev',
+  ],
   triggers: [newMessage],
 });

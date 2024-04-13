@@ -245,15 +245,15 @@ export const kizeoFormsCommon = {
         const results: Record<string, any> = list.properties_definition;
 
         for (let i = 0; i < Object.keys(results).length; i++) {
-          const propertieId = Object.keys(results)[i];
+          const propertyId = Object.keys(results)[i];
 
           if (Object.values(results)[i].type === 'string') {
-            properties[propertieId] = Property.ShortText({
+            properties[propertyId] = Property.ShortText({
               displayName: Object.values(results)[i].display_name,
               required: false,
             });
           } else {
-            properties[propertieId] = Property.Number({
+            properties[propertyId] = Property.Number({
               displayName: Object.values(results)[i].display_name,
               required: false,
             });

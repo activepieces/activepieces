@@ -69,7 +69,7 @@ export const filterClickupWorkspaceTasks = createAction({
     include_closed: Property.Checkbox({
       displayName: 'Include Closed',
       description:
-        'Include or excluse closed tasks. By default, they are excluded.',
+        'Include or exclude closed tasks. By default, they are excluded.',
       required: false,
       defaultValue: false,
     }),
