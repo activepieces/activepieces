@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { brilliantDirectoriesAuth } from '../..';
-import { parseDirectoryURL } from '../common/brilliant-directores-common';
+import { parseDirectoryURL } from '../common/brilliant-directories-common';
 
 export const createNewUser = createAction({
   name: 'create_new_user',

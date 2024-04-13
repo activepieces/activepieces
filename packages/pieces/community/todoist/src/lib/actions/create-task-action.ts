@@ -41,11 +41,17 @@ export const todoistCreateTaskAction = createAction({
         "Specific date in YYYY-MM-DD format relative to user's timezone",
       required: false,
     }),
+    section_id: Property.ShortText({
+      displayName: 'Section',
+      description:
+        "A section for the task. It should be a Section ID under the same project",
+      required: false,
+    }),
   },
 
   async run({ auth, propsValue }) {
     const token = auth.access_token;
-    const { project_id, content, description, labels, priority, due_date } =
+    const { project_id, content, description, labels, priority, due_date, section_id} =
       propsValue as TodoistCreateTaskRequest;
 
     assertNotNullOrUndefined(token, 'token');
@@ -58,6 +64,7 @@ export const todoistCreateTaskAction = createAction({
       labels,
       priority,
       due_date,
+      section_id
     });
   },
 });

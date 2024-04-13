@@ -31,7 +31,7 @@ const cartloomAPI = async (
 
   const arrayTest = response.body['0'];
   if (typeof arrayTest === 'undefined') {
-    // when respone is an object, it is wrapped in an array
+    // when response is an object, it is wrapped in an array
     data = [response.body];
   }
 

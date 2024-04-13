@@ -1,5 +1,6 @@
 import {
   PiecePropValueSchema,
+  Property,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
@@ -12,6 +13,7 @@ import {
 import dayjs from 'dayjs';
 import { googleDriveAuth } from '../..';
 import { common } from '../common';
+import { downloadFileFromDrive } from '../common/get-file-content';
 
 const polling: Polling<
   PiecePropValueSchema<typeof googleDriveAuth>,
@@ -41,6 +43,12 @@ export const newFile = createTrigger({
   props: {
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,
+    include_file_content: Property.Checkbox({
+      displayName: 'Include File Content',
+      description: 'Include the file content in the output. This will increase the time taken to fetch the files and might cause issues with large files.',
+      required: false,
+      defaultValue: false
+    }),
   },
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
@@ -58,18 +66,22 @@ export const newFile = createTrigger({
     });
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
+    const newFiles = await pollingHelper.poll(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
     });
+
+    return await handleFileContent(newFiles, context)
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
+    const newFiles = await pollingHelper.test(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
     });
+
+    return await handleFileContent(newFiles, context)
   },
 
   sampleData: {
@@ -77,5 +89,24 @@ export const newFile = createTrigger({
     mimeType: 'image/jpeg',
     id: '1dpv4-sKJfKRwI9qx1vWqQhEGEn3EpbI5',
     name: 'sweep.jpg',
+    link: 'https://cloud.activepieces.com/api/v1/step-files/signed?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCYm0.Xyoy5nA-S70M9JpRnvadLxUm'
   },
 });
+
+async function handleFileContent(newFiles: unknown[], context: any) {
+  const newFilesObj = JSON.parse(JSON.stringify(newFiles))
+
+  if (context.propsValue.include_file_content) {
+    const fileContentPromises: Promise<string>[] = []
+    for (const file of newFilesObj) {
+      fileContentPromises.push(downloadFileFromDrive(context.auth, context.files, file["id"], file["name"]));
+    }
+
+    const filesContent = await Promise.all(fileContentPromises)
+
+    for (let i = 0; i < newFilesObj.length; i++) {
+      newFilesObj[i].content = filesContent[i]
+    }
+  }
+  return newFilesObj
+}
