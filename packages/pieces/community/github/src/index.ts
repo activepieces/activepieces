@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { githubCreateIssueAction } from './lib/actions/create-issue';
+import { githubUnlockIssueAction } from './lib/actions/unlock-issue';
 import { githubTriggers } from './lib/trigger';
 import { githubGetIssueInformation } from './lib/actions/get-issue-information';
 import { githubCreateCommentOnAIssue } from './lib/actions/create-comment-on-a-issue';
@@ -32,6 +33,7 @@ export const github = createPiece({
     githubGetIssueInformation,
     githubCreateCommentOnAIssue,
     githubLockIssueAction,
+    githubUnlockIssueAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.github.com',
       auth: githubAuth,
