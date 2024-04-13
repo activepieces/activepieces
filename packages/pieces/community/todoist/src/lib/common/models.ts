@@ -10,6 +10,7 @@ export type TodoistCreateTaskRequest = {
   labels?: Array<string> | undefined;
   priority?: number | undefined;
   due_date?: string | undefined;
+  section_id?: string | undefined;
 };
 
 type TodoistTaskDue = {
