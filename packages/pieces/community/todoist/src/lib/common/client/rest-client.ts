@@ -39,6 +39,7 @@ export const todoistRestClient = {
       labels,
       priority,
       due_date,
+      section_id
     }: TasksCreateParams): Promise<TodoistTask> {
       const request: HttpRequest<TodoistCreateTaskRequest> = {
         method: HttpMethod.POST,
@@ -54,6 +55,7 @@ export const todoistRestClient = {
           labels,
           priority,
           due_date,
+          section_id
         },
       };
 
