@@ -19,6 +19,6 @@ export const readFile = createAction({
     }),
   },
   run: async ({ auth, propsValue, files }) => {
-    return await downloadFileFromDrive(auth, files, propsValue.fileId, propsValue.fileName)
+    return downloadFileFromDrive(auth, files, propsValue.fileId, propsValue.fileName)
   },
 });

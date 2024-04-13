@@ -62,7 +62,7 @@ export class ConfigureConfederatedAuthnCardComponent
 
     if (this.federatedAuthnProvider === 'Google') {
       delete platform.federatedAuthProviders.google;
-    } else if (this.federatedAuthnProvider === 'Github') {
+    } else if (this.federatedAuthnProvider === 'GitHub') {
       delete platform.federatedAuthProviders.github;
     }
     if (!doesPlatformHaveAtLeastOneLoginMethodEnabled(platform)) {
@@ -117,7 +117,7 @@ export class ConfigureConfederatedAuthnCardComponent
     if (this.platform) {
       $event.source.checked = this.toggleChecked;
       const federatedAuthnProviderValue =
-        this.federatedAuthnProvider === FederatedAuthnProviderEnum.Github
+        this.federatedAuthnProvider === FederatedAuthnProviderEnum.GitHub
           ? this.platform.federatedAuthProviders.github
           : this.platform.federatedAuthProviders.google;
       if (federatedAuthnProviderValue === undefined) {

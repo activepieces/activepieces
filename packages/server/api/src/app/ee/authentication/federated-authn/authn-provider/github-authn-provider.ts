@@ -17,7 +17,7 @@ function getClientIdAndSecret(platform: Platform): {
     const clientInformation = platform.federatedAuthProviders.github
     assertNotNullOrUndefined(
         clientInformation,
-        'Github information is not configured for this platform',
+        'GitHub information is not configured for this platform',
     )
     return {
         clientId: clientInformation.clientId,

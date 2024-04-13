@@ -1,25 +1,27 @@
 ---
 title: "Embed Builder"
 description: ""
+icon: "wrench"
 ---
 
-To embed Activepieces within your own web app, follow these steps:
+<Snippet file="enterprise-feature.mdx" />
 
+This documentation explains how to embed the Activepieces iframe inside your application and customize it.
 
+## Configure SDK
 
-## Step 1: Generate a JWT token
-
-Follow the instructions in the [generate jwt](./generate-jwt) page
-
-## Step 2: Configure SDK
-
-Adding the embedding sdk script will initialize an object in your window `activepieces`, it has a method `configure`, which you should call after the container has been rendered.
+Adding the embedding SDK script will initialize an object in your window called `activepieces`, which has a method called `configure` that you should call after the container has been rendered.
 <Tip>
-The following scripts shouldn't contain async or defer attributes.
+The following scripts shouldn't contain the `async` or `defer` attributes.
+</Tip>
+
+
+<Tip>
+These steps assume you have already generated a JWT token from the backend. If not, please check the [provision-users](./provision-users) page.
 </Tip>
 
 ```html
-<script src="https://cdn.activepieces.com/sdk/embed/0.2.3.js">
+<script src="https://cdn.activepieces.com/sdk/embed/0.2.4.js">
 </script>
 <script>
 activepieces.configure(

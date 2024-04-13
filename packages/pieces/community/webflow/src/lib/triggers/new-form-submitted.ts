@@ -20,7 +20,7 @@ export const webflowNewSubmission = createTrigger({
     formName: Property.ShortText({
       displayName: 'Form Name',
       required: false,
-      description: 'Copy from the form settings, or from one of the respones',
+      description: 'Copy from the form settings, or from one of the responses',
     }),
   },
   type: TriggerStrategy.WEBHOOK,
