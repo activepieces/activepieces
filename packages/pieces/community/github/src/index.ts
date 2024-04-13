@@ -9,6 +9,7 @@ import { githubCreateIssueAction } from './lib/actions/create-issue';
 import { githubTriggers } from './lib/trigger';
 import { githubGetIssueInformation } from './lib/actions/get-issue-information';
 import { githubCreateCommentOnAIssue } from './lib/actions/create-comment-on-a-issue';
+import { githubLockIssueAction } from './lib/actions/lock-issue';
 
 export const githubAuth = PieceAuth.OAuth2({
   required: true,
@@ -30,6 +31,7 @@ export const github = createPiece({
     githubCreateIssueAction,
     githubGetIssueInformation,
     githubCreateCommentOnAIssue,
+    githubLockIssueAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.github.com',
       auth: githubAuth,
