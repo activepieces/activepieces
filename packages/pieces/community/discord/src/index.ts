@@ -15,6 +15,7 @@ import { newMessage } from './lib/trigger/new-message';
 import { discordRemoveBanFromUser } from './lib/actions/remove-ban-from-user';
 import { discordCreateGuildRole } from './lib/actions/create-guild-role';
 import { discordDeleteGuildRole } from './lib/actions/delete-guild-role';
+import { discordBanGuildMember } from './lib/actions/ban-a-guild-member';
 
 const markdown = `
 To obtain a token, follow these steps:
@@ -51,6 +52,7 @@ export const discord = createPiece({
     discordRemoveBanFromUser,
     discordCreateGuildRole,
     discordDeleteGuildRole,
+    discordBanGuildMember,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://discord.com/api/v9';
