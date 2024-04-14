@@ -11,13 +11,18 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+  MatDialog,
+} from '@angular/material/dialog';
 import { catchError, Observable, of, tap } from 'rxjs';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import { BasicAuthProperty } from '@activepieces/pieces-framework';
 import {
   AppConnectionsService,
   AuthenticationService,
+  DiagnosticDialogComponent,
 } from '@activepieces/ui/common';
 import { connectionNameRegex } from '../utils';
 
@@ -48,6 +53,7 @@ export class BasicAuthConnectionDialogComponent {
     private formBuilder: FormBuilder,
     private authenticationService: AuthenticationService,
     private appConnectionsService: AppConnectionsService,
+    private dialogService: MatDialog,
     private dialogRef: MatDialogRef<BasicAuthConnectionDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
     public readonly dialogData: BasicAuthDialogData
@@ -102,12 +108,18 @@ export class BasicAuthConnectionDialogComponent {
       this.upsert$ = this.appConnectionsService.upsert(upsertRequest).pipe(
         catchError((response) => {
           console.error(response);
-          this.settingsForm.setErrors({
-            message:
-              response.error.code === ErrorCode.INVALID_APP_CONNECTION
-                ? `Connection failed: ${response.error.params.error}`
-                : 'Internal Connection error, failed please check your console.',
-          });
+
+          const hasMessage =
+            response.error?.code === ErrorCode.INVALID_APP_CONNECTION;
+          if (hasMessage) {
+            this.settingsForm.setErrors({
+              message: `Connection failed: ${response.error.params.error}`,
+            });
+          } else {
+            this.settingsForm.setErrors({
+              diagnostic: response.error.params,
+            });
+          }
           return of(null);
         }),
         tap((connection) => {
@@ -118,5 +130,13 @@ export class BasicAuthConnectionDialogComponent {
         })
       );
     }
+  }
+
+  openDiagnosticDialog(information: unknown) {
+    this.dialogService.open(DiagnosticDialogComponent, {
+      data: {
+        information,
+      },
+    });
   }
 }

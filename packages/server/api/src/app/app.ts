@@ -99,6 +99,7 @@ import {
     ActivepiecesError,
     ApEdition,
     ApEnvironment,
+    apId,
     AppConnectionWithoutSensitiveData,
     CodeSandboxType,
     ErrorCode,
@@ -113,6 +114,9 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         // Default 4MB, also set in nginx.conf
         pluginTimeout: 30000,
         bodyLimit: 4 * 1024 * 1024,
+        genReqId: () => {
+            return `req_${apId()}`
+        },
         ajv: {
             customOptions: {
                 removeAdditional: 'all',
