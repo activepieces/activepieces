@@ -31,6 +31,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
     { fragmentName: 'ApiKeys', removeOnDemo: false },
     { fragmentName: 'SSO', removeOnDemo: false },
     { fragmentName: 'AuditLog', removeOnDemo: false },
+    { fragmentName: 'Upgrades', removeOnDemo: false },
   ];
   isDemo = false;
   platform?: Platform;
