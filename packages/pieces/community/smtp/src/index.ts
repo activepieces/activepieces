@@ -44,7 +44,7 @@ export const smtpAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    try {
+        try {
       const transporter = smtpCommon.createSMTPTransport(auth);
       return new Promise((resolve, reject) => {
         transporter.verify(function (error, success) {
@@ -56,6 +56,22 @@ export const smtpAuth = PieceAuth.CustomAuth({
         });
       });
     } catch (e) {
+      const castedError = (e as Record<string, unknown>)
+      const code = castedError?.['code'];
+      switch (code) {
+        case 'EDNS':
+          return {
+            valid: false,
+            error: 'SMTP server not found or unreachable with error code: EDNS',
+          };
+        case 'CONN':
+          return {
+            valid: false,
+            error: 'SMTP server connection failed with error code: CONN',
+          };
+        default:
+          break;
+      }
       return {
         valid: false,
         error: JSON.stringify(e),
