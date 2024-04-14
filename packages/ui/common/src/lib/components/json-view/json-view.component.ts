@@ -26,7 +26,7 @@ export class JsonViewComponent {
   readonly containerMaxHeight = 600;
   readonly containerMinHeight = 100;
   containerHeight = 0;
-  @Input() isInput = false;
+  @Input() hideMaximize = false;
   @Input() title: string;
   @Input() set content(value: unknown) {
     const formattedOutput = outputLog(value, false);
@@ -54,7 +54,7 @@ export class JsonViewComponent {
   }
   copyContent() {
     copyText(this._content);
-    this.snackbar.open(`${this.isInput ? 'Input' : 'Output'} copied`);
+    this.snackbar.open(`${this.title} copied`);
   }
 
   downloadContent() {
