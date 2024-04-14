@@ -1,0 +1,22 @@
+<div class="ap-h-full ap-w-full ap-pt-2 ap-px-2">
+    <div class="ap-w-full ap-pb-2">
+        <span class="ap-typography-headline-4">Version</span>
+    </div>
+    <hr>
+    <div class="ap-w-full ap-flex ap-flex-row ap-justify-between ap-pt-2">
+        <div class="ap-w-full ap-flex ap-flex-col">
+            <span class="ap-typography-headline-6">Installed</span>
+            <span class="ap-typography-headline-4">{{currentVersion$ | async}}</span>
+        </div>
+        <div class="ap-w-full ap-flex ap-flex-col">
+            <span class="ap-typography-headline-6">Latest</span>
+            <span class="ap-typography-headline-4">{{latestVersion$ | async}}</span>
+        </div>
+        @if (message$ | async; as message){
+            <div class="ap-w-full ap-flex ap-flex-row ap-items-center">
+                <span class="ap-typography-headline-4 ap-mr-2">{{message.emoji}}</span>
+                <span class="ap-typography-headline-4">{{message.message}}</span>
+            </div>
+        }
+    </div>
+</div>
