@@ -25,6 +25,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
   readonly customDomainTabTitle = $localize`Custom Domains`;
   readonly accountManagementEmailTabTitle = $localize`Mail Server`;
   readonly tabIndexFragmentMap = [
+    { fragmentName: 'Updates', removeOnDemo: false },
     { fragmentName: 'SigningKeys', removeOnDemo: true },
     { fragmentName: 'MailServer', removeOnDemo: true },
     { fragmentName: 'CustomDomains', removeOnDemo: true },

@@ -35,6 +35,7 @@ import {
   SyncProjectComponent,
 } from '@activepieces/ui-feature-git-sync';
 import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewards-dialog.component';
+import { RewardsNoteComponent } from './components/rewards-note/rewards-note.component';
 
 @NgModule({
   imports: [
@@ -57,6 +58,7 @@ import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewa
     FormsModule,
     SyncProjectComponent,
     RewardsDialogComponent,
+    RewardsNoteComponent,
   ],
   declarations: [
     DashboardContainerComponent,

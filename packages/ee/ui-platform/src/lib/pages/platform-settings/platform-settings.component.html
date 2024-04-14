@@ -1,6 +1,9 @@
 <ap-page-title [title]="title"></ap-page-title>
 <mat-tab-group #tabs class="ap-gap-4 " dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start"
     animationDuration="0" (selectedTabChange)="tabChanged($event)">
+    <mat-tab label="Updates" bodyClass="!ap-overflow-visible">
+        <app-updates></app-updates>
+    </mat-tab>
     <mat-tab [label]="signingKeysTabTitle" *ngIf="!isDemo">
         <app-signing-keys-table [platform]="platform" [isDemo]="isDemo"></app-signing-keys-table>
     </mat-tab>

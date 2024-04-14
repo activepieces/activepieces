@@ -297,7 +297,8 @@ const engineValidateAuth = async (
         throw new ActivepiecesError({
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
             params: {
-                message: 'failed to run validateAuth',
+                message: 'Failed to run engine validate auth',
+                context: engineResponse,
             },
         })
     }
