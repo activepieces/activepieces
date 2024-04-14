@@ -117,6 +117,7 @@ export enum TelemetryEventName {
     FORMS_VIEWED = 'forms.viewed',
     FORMS_SUBMITTED = 'forms.submitted',
     REWARDS_BUTTON_CLICKED = 'rewards.button.clicked',
+    REWARDS_NOTE_SHOW_REWARDS_CLICKED = 'rewards.note.show.rewards.clicked',
     PIECE_REWARD_INSTRUCTIONS_CLICKED = 'piece.reward.instructions.clicked',
     TEMPLATE_REWARD_INSTRUCTIONS_CLICKED = 'template.reward.instructions.clicked',
     LINKED_IN_REWARD_CLICKED = 'linked.in.reward.clicked',
@@ -151,3 +152,4 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.PIECE_REWARD_INSTRUCTIONS_CLICKED, RewardInstructionsClicked>
     | BaseTelemetryEvent<TelemetryEventName.TEMPLATE_REWARD_INSTRUCTIONS_CLICKED, RewardInstructionsClicked>
     | BaseTelemetryEvent<TelemetryEventName.LINKED_IN_REWARD_CLICKED, RewardInstructionsClicked>
+    | BaseTelemetryEvent<TelemetryEventName.REWARDS_NOTE_SHOW_REWARDS_CLICKED, RewardInstructionsClicked>
