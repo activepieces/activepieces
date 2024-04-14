@@ -20,7 +20,7 @@ import { ApEdition } from '@activepieces/shared';
 import { VerifyEmailPostSignUpComponent } from './pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component';
 import { ResetPasswordComponent } from './pages/auth-actions/reset-password/reset-password.component';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
-import { EeComponentsModule } from '@activepieces/ee-components';
+import { EeComponentsModule } from 'ee-components';
 import { RedirectToDashboardIfLoggedIn } from './guards/redirect-to-dashboard-if-logged-in.guard';
 import { AuthenticationMethodsSeparatorComponent } from './components/authentication-methods-separator/authentication-methods-separator.component';
 

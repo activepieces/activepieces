@@ -1,0 +1,91 @@
+<button
+  *ngIf="show$ | async"
+  mat-menu-item
+  (click)="openDialog(dialogTemplate)"
+>
+  <div class="ap-flex ap-gap-3 ap-items-center">
+    <svg-icon
+      src="assets/img/custom/share.svg"
+      class="ap-w-[20px] ap-h-[20px]"
+      [applyClass]="true"
+    ></svg-icon>
+    <span>Share</span>
+  </div>
+</button>
+<ng-template #dialogTemplate>
+  <ap-dialog-title-template i18n>Share Template</ap-dialog-title-template>
+  <mat-dialog-content>
+    <div class="md:ap-max-w-[500px] ap-w-[500px]">
+      <div
+        class="ap-flex ap-h-[300px] ap-items-center ap-justify-center"
+        *ngIf="loading; else formTemplate"
+      >
+        <ap-loading-icon></ap-loading-icon>
+      </div>
+      <ng-template #formTemplate>
+        <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="form">
+          <ap-markdown
+            [fullWidth]="true"
+            [data]="shareTemplateMarkdown"
+            class="ap-mb-2"
+          ></ap-markdown>
+          <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label i18n>Description</mat-label>
+            <textarea
+              cdkFocusInitial
+              rows="4"
+              [formControl]="form.controls.description"
+              matInput
+            ></textarea>
+          </mat-form-field>
+          <ng-container *ngIf="isPublicTemplatesProject$ | async">
+            <mat-form-field class="ap-w-full" appearance="outline">
+              <mat-label i18n>Blog URL </mat-label>
+              <input
+                [formControl]="form.controls.blogUrl"
+                matInput
+                type="text"
+              />
+            </mat-form-field>
+            <div>
+              <div class="ap-mb-2 ap-pointer-events-none" i18n>Filters</div>
+              <div class="ap-mt-4">
+                <ap-array-form-control
+                  placeholder="Tag"
+                  [formControl]="form.controls.tags"
+                ></ap-array-form-control>
+              </div>
+            </div>
+          </ng-container>
+        </form>
+      </ng-template>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+      <ap-button
+        btnColor="basic"
+        i18n
+        mat-dialog-close
+        btnSize="default"
+        btnColor="basic"
+      >
+        Cancel
+      </ap-button>
+      <ap-button
+        btnSize="default"
+        i18n
+        type="submit"
+        btnColor="primary"
+        (buttonClicked)="submit()"
+        [loading]="loading"
+      >
+        Confirm
+      </ap-button>
+    </div>
+  </mat-dialog-actions>
+</ng-template>
+
+<ng-container *ngIf="shareFlow$ | async"></ng-container>
+<ng-container *ngIf="loadExistingTemplate$ | async"></ng-container>

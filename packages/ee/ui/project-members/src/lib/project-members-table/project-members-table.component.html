@@ -1,0 +1,111 @@
+<div class="ap-w-full ap-px-[1.875rem] ap-pt-[3.125rem]">
+  @if(!isFeatureEnabled) {
+  <div class="ap-mb-4">
+    <ap-upgrade-note
+      [featureNoteTitle]="upgradeNoteTitle"
+      [featureNote]="upgradeNote"
+    ></ap-upgrade-note>
+  </div>
+  } @else if(dataSource) {
+  <div class="ap-h-full">
+    <ap-page-title [title]="title"></ap-page-title>
+
+    <div class="ap-min-h-[70%]">
+      <table
+        mat-table
+        [dataSource]="dataSource"
+        class="ap-w-[100%]"
+        aria-label="Project Members"
+        i18n-aria-label
+      >
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef i18n>Email</th>
+          <td mat-cell *matCellDef="let member">
+            {{ member.email }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef i18n>Status</th>
+          <td mat-cell *matCellDef="let member">
+            {{ StatusDisplayNames[member.status] }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="role">
+          <th mat-header-cell *matHeaderCellDef i18n>Role</th>
+          <td mat-cell *matCellDef="let member">
+            {{ RolesDisplayNames[member.role] }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="created">
+          <th mat-header-cell *matHeaderCellDef i18n>Invited At</th>
+          <td mat-cell *matCellDef="let member">
+            {{ member.created | date : 'short' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef>
+            <div class="ap-flex ap-items-center ap-justify-end">
+              <ap-button
+                [disabled]="!isFeatureEnabled"
+                btnColor="primary"
+                [loading]="inviteLoading"
+                class="ap-mt-2"
+                [tooltipText]="isFeatureEnabled ? '' : featureDisabledTooltip"
+                btnSize="medium"
+                (buttonClicked)="openInviteMember()"
+                i18n
+                >+ Invite</ap-button
+              >
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let invitation">
+            <div class="ap-float-right ap-text-center ap-w-[4.4375rem]">
+              <ap-icon-button
+                *ngIf="
+                  (projectOwnerId$ | async) !== invitation.userId &&
+                  (isCurrentUserAdmin$ | async)
+                "
+                tooltipText="Delete Invitation"
+                i18n-tooltipText
+                iconFilename="trash.svg"
+                color="warn"
+                [width]="20"
+                [height]="20"
+                (buttonClicked)="deleteInvitation(invitation.id)"
+              ></ap-icon-button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+      <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
+        <div
+          class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-m-2"
+        >
+          <ap-loading-icon
+            height="50px"
+            width="51px"
+            [outlineLoader]="true"
+            [whiteLoader]="false"
+          >
+          </ap-loading-icon>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+  }
+  <div
+    class="ap-flex ap-justify-end ap-py-2"
+    [class.ap-hidden]="!isFeatureEnabled"
+  >
+    <ap-paginator> </ap-paginator>
+  </div>
+</div>
+<ng-container *ngIf="dialogClosed$ | async"></ng-container>
+<ng-container *ngIf="deleteInvitation$ | async"></ng-container>

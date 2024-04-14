@@ -1,0 +1,173 @@
+<ng-container *ngIf="project$ | async as project">
+  <ng-container *ngIf="billingInformation$ | async as billingInformation">
+    <div class="ap-flex ap-flex ap-items-center ap-justify-center ap-container">
+      <div
+        class="ap-flex ap-flex-col ap-justify-center ap-items-start ap-container ap-ml-8 ap-mt-[70px] ap-p-2 lg:ap-p-8 ap-flex ap-w-full ng-star-inserted"
+      >
+        <div class="ap-typography-headline-6 !ap-font-semibold ap-my-5">
+          Your Automation Plan
+        </div>
+        <div
+          class="ap-w-[100%] ap-border ap-rounded ap-border-outline ap-flex ap-flex-col ap-grow ap-flex-grow lg:ap-flex-row ap-gap-5 lg:ap-gap-0 ap-px-10 ap-py-11 ap-flex-wrap ap-divide-x-0 lg:ap-divide-x ap-divide-dividers"
+        >
+          <div class="ap-flex ap-gap-6 ap-pr-12 ap-items-center">
+            <div class="ap-relative">
+              <mat-progress-spinner
+                class="progress-success-bg !ap-absolute !ap-left-0 !ap-top-0"
+                [color]="'accent'"
+                [diameter]="50"
+                [strokeWidth]="10"
+                [mode]="'determinate'"
+                [value]="100"
+              >
+              </mat-progress-spinner>
+              <mat-progress-spinner
+                [ngClass]="{
+                  'progress-success':
+                    project.usage.tasks / project.plan.tasks <= 0.8
+                }"
+                [color]="'warn'"
+                [diameter]="50"
+                [strokeWidth]="10"
+                [mode]="'determinate'"
+                [value]="(project.usage.tasks / project.plan.tasks) * 100"
+              >
+              </mat-progress-spinner>
+            </div>
+            <div class="ap-flex ap-flex-col ap-gap-1">
+              <div
+                class="ap-typography-body-1 ap-font-semibold ap-items-center"
+              >
+                {{ project.usage.tasks }} of {{ project.plan.tasks }} Tasks
+              </div>
+              <div class="ap-typography-body-2 ap-text-description">
+                Resets at
+                {{ billingInformation.nextBillingDate | date : 'short' }}
+              </div>
+            </div>
+          </div>
+          <div class="ap-pl-16 lg:ap-px-12">
+            <div
+              class="ap-flex ap-flex-col ap-gap-1 ap-justify-center ap-h-full"
+            >
+              <div class="ap-typography-body-1 ap-font-semibold">
+                {{ project.plan.name | planName }}
+              </div>
+            </div>
+          </div>
+          <div class="ap-pl-16 lg:ap-px-12">
+            <div class="ap-flex ap-flex-col ap-gap-1">
+              <div class="ap-typography-body-1 ap-flex ap-flex-col ap-gap-1">
+                <div>
+                  <b>Sync Time:</b>
+                  {{ project.plan.minimumPollingInterval }} minute{{
+                    project.plan.minimumPollingInterval > 1 ? 's' : ''
+                  }}
+                </div>
+                <div>
+                  <b>Included Team Members:</b>
+                  {{
+                    billingInformation.subscription.includedUsers === -1
+                      ? 'Unlimited'
+                      : billingInformation.subscription.includedUsers
+                  }}
+                </div>
+                <div>
+                  <b>Included Tasks:</b>
+                  {{ billingInformation.subscription.includedTasks }}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ap-pl-16 lg:ap-px-12 ap-grow">
+            <div class="ap-flex ap-h-full ap-items-center lg:ap-justify-end">
+              <ap-button
+                btnSize="medium"
+                [btnColor]="'primary'"
+                [btnStyle]="'stroked'"
+                (buttonClicked)="openPortal()"
+                *ngIf="
+                  billingInformation.subscription.subscriptionStatus ===
+                  'active'
+                "
+                [loading]="manageLoading"
+              >
+                Manage Billing
+              </ap-button>
+              <ap-button
+                btnSize="medium"
+                [btnColor]="'primary'"
+                btnColor="primary"
+                [loading]="upgradeLoading"
+                (buttonClicked)="upgrade()"
+                *ngIf="
+                  billingInformation.subscription.subscriptionStatus !==
+                  'active'
+                "
+              >
+                <div i18n>Add Payment Details</div>
+              </ap-button>
+            </div>
+          </div>
+        </div>
+        <!----->
+
+        <!--- Hard Limit -->
+        <form
+          class="ap-flex ap-w-full ap-flex-col ap-gap-4 ap-mb-10 ap-mt-10"
+          [formGroup]="billingForm"
+        >
+          <ng-container>
+            <mat-form-field appearance="outline" class="ap-max-w-[300px]">
+              <mat-label i18n>Hard Task Limit</mat-label>
+              <input
+                matInput
+                placeholder="15000"
+                formControlName="tasks"
+                type="number"
+                max="200000"
+                min="1"
+              />
+            </mat-form-field>
+            <mat-error
+              *ngIf="billingForm.controls['tasks'].invalid"
+              style="margin-top: 0.5rem; padding: 0"
+              >The value must be larger than 0 and less than 200k. If you want
+              more, please contact support&#64;activepieces.com.</mat-error
+            >
+            <div class="ap-typography-body-2 ap-max-w-[500px]" i18n>
+              The maximum number of tasks that can be run in a month. If you
+              exceed the limit, the tasks will fail. This is useful to prevent
+              unexpected costs.
+            </div>
+          </ng-container>
+        </form>
+        <div
+          class="ap-px-4 ap-pt-4 ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-border-outline"
+        >
+          <ap-button
+            btnStyle="flat"
+            btnColor="primary"
+            (buttonClicked)="saveLimits()"
+            [disabled]="
+              billingInformation.subscription.subscriptionStatus !== 'active'
+            "
+            [matTooltip]="
+              billingInformation.subscription.subscriptionStatus === 'active'
+                ? ''
+                : 'Please upgrade to unlock the task limit.'
+            "
+          >
+            <div i18n>Save</div>
+          </ap-button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</ng-container>
+
+<ng-container *ngIf="upgrade$ | async"></ng-container>
+<ng-container *ngIf="loadInitialValue$ | async"></ng-container>
+<ng-container *ngIf="disableOrEnable$ | async"></ng-container>
+<ng-container *ngIf="openPortal$ | async"></ng-container>
+<ng-container *ngIf="updateProject$ | async"></ng-container>

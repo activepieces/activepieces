@@ -23,7 +23,7 @@ import {
   NgxMonacoEditorConfig,
 } from 'ngx-monaco-editor-v2';
 import { apMonacoTheme } from './monaco-themes/ap-monaco-theme';
-import { EeComponentsModule } from '@activepieces/ee-components';
+import { EeComponentsModule } from 'ee-components';
 import { UiFeatureAuthenticationModule } from '@activepieces/ui/feature-authentication';
 import { FormsComponent } from './modules/forms/forms.component';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';

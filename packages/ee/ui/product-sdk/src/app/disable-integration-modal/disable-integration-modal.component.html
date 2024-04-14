@@ -1,0 +1,42 @@
+<div class="modal">
+  <div class="close-button" (click)="close()">X</div>
+  <div mat-dialog-content>
+    <div [className]="'logo-container'">
+      <img
+        class="logo"
+        [src]="
+          'https://cdn.activepieces.com/pieces/' +
+          data.connection.pieceName.replace('@activepieces/piece-', '') +
+          '.png'
+        "
+      />
+    </div>
+    <div
+      class="d-column justify-content-center align-items-center intro-container"
+    >
+      <section>
+        <h1 class="intro-title text-center">
+          Are you sure you want to disconnect?
+        </h1>
+        <p class="text-center">
+          You would need to re-connect to
+          {{ data.connection.pieceName.replace('@activepieces/piece-', '') }} if
+          you decide to enable it again.
+        </p>
+      </section>
+    </div>
+  </div>
+  <div mat-dialog-actions>
+    <button mat-button (click)="close()">No Thanks</button>
+    <button
+      mat-flat-button
+      color="warn"
+      [appLoadingSpinner]="loading"
+      (click)="delete()"
+    >
+      <ng-container *ngIf="!loading"> Disable Integration </ng-container>
+    </button>
+  </div>
+</div>
+
+<ng-container *ngIf="delete$ | async"></ng-container>
