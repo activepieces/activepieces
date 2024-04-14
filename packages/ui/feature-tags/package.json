@@ -6,7 +6,7 @@
     "@angular/core": "^17.1.0",
     "@activepieces/ui/common": "0.0.2",
     "rxjs": "7.8.1",
-    "@activepieces/shared": "0.10.100",
+    "@activepieces/shared": "0.10.101",
     "@angular/cdk": "17.1.2",
     "@angular/material": "17.1.2",
     "@angular/forms": "17.1.3"
