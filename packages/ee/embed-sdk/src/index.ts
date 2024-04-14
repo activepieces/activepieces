@@ -200,6 +200,7 @@ class ActivepiecesEmbedded {
   private _createIframe({ src }: { src: string }) {
     const iframe = document.createElement('iframe');
     iframe.src = src;
+    iframe.setAttribute('allow','clipboard-read; clipboard-write');
     return iframe;
   }
 
