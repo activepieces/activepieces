@@ -299,6 +299,7 @@ export type EngineOperationFailureParams = BaseErrorParams<
 ErrorCode.ENGINE_OPERATION_FAILURE,
 {
     message: string
+    context?: unknown
 }
 >
 
