@@ -35,10 +35,7 @@ const compareVersions = (latestVersion: string, currentVersion: string) => {
   standalone: true,
   imports: [AsyncPipe],
 })
-export class UpgradesComponent
-  extends PlatformSettingsBaseComponent
-  implements OnInit
-{
+export class UpgradesComponent extends PlatformSettingsBaseComponent {
   currentVersion$?: Observable<string>;
   latestVersion$?: Observable<string>;
   message$?: Observable<{
@@ -63,6 +60,4 @@ export class UpgradesComponent
       })
     );
   }
-
-  ngOnInit(): void {}
 }
