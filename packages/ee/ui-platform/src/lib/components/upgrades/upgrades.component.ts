@@ -9,7 +9,7 @@ import semver from 'semver';
 const compareVersions = (latestVersion: string, currentVersion: string) => {
   let message = 'Up to date!';
   let needUpdate = false;
-  let emoji = '🙂';
+  let emoji = '🤩';
 
   if (semver.gt(latestVersion, currentVersion)) {
     const diff = semver.diff(latestVersion, currentVersion);
