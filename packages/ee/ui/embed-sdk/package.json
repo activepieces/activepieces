@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/ee-embed-sdk",
+  "name": "ee-embed-sdk",
   "version": "0.2.5",
   "type": "commonjs",
   "main": "./src/index.js",
