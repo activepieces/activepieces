@@ -1,0 +1,32 @@
+<ap-dialog-title-template>Upgrade</ap-dialog-title-template>
+<mat-dialog-content>
+  <div class="ap-flex ap-justify-center ap-items-center md:ap-max-w-[500px]">
+    <div class="ap-mr-2">
+      <ng-lottie
+        [options]="options"
+        width="100px"
+        class="ap-text-center"
+      ></ng-lottie>
+    </div>
+    <div class="ap-typography-body-1 ap-text-body">
+      <div *ngIf="data?.limitType === 'team'" i18n>
+        You have reached the limits of your current plan.
+        <span class="ap-font-bold"> Please upgrade to </span> ⭐ to unlock more
+        features.
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button
+      btnColor="basic"
+      mat-dialog-close
+      btnSize="default"
+      class="ap-btnColor-basic"
+    >
+      Cancel
+    </ap-button>
+  </div>
+</mat-dialog-actions>
