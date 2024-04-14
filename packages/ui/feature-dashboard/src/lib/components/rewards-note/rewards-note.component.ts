@@ -26,7 +26,8 @@ const COMPLIMENTS = [
       [style.backgroundColor]="bgColor"
     >
       <div>
-        {{ compliment }} Did you know sharing them can get you
+        {{ compliment }} Did you know sharing them with the community can get
+        you
         <a
           class="ap-cursor-pointer !ap-typography-body-1"
           (click)="openRewardsDialog()"
