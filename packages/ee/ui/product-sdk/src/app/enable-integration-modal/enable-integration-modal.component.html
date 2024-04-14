@@ -1,0 +1,85 @@
+<div class="modal">
+  <div class="close-button" (click)="close()">X</div>
+  <div mat-dialog-content>
+    <div
+      [className]="connected ? 'celebration logo-container' : 'logo-container'"
+    >
+      <img
+        class="logo"
+        [src]="
+          'https://cdn.activepieces.com/pieces/' +
+          data.credential.appName +
+          '.png'
+        "
+      />
+    </div>
+    <div
+      class="d-column justify-content-center align-items-center intro-container"
+    >
+      <section *ngIf="!connected">
+        <h1 class="intro-title text-center">
+          Connect with {{ data.credential.appName }}
+        </h1>
+        <mat-form-field
+          style="width: 100%"
+          appearance="outline"
+          *ngIf="data.credential.settings.type === AppCredentialType.API_KEY"
+        >
+          <mat-label>API Key</mat-label>
+          <input
+            matInput
+            placeholder="API Key"
+            [formControl]="secretControlForm"
+          />
+          <mat-error
+            *ngIf="secretControlForm.invalid"
+            style="margin-top: 0.5rem; padding: 0"
+          >
+            {{ errorMessage }}</mat-error
+          >
+        </mat-form-field>
+        <ng-container
+          *ngIf="
+            data.credential.appName === 'salesforce' ||
+            data.credential.appName === 'kindful'
+          "
+        >
+          <mat-checkbox [formControl]="propsForm"
+            >Is Development Environment?</mat-checkbox
+          >
+          <mat-error *ngIf="propsForm.invalid">
+            Environment is required
+          </mat-error>
+        </ng-container>
+
+        <p class="ext-center">
+          Click on the button to start the connection journey!
+        </p>
+      </section>
+      <section *ngIf="connected">
+        <h1 class="intro-title text-center">
+          Successfully connected to {{ data.credential.appName }}
+        </h1>
+        <p class="text-center">Connection journey is complete!</p>
+      </section>
+    </div>
+  </div>
+  <div mat-dialog-actions>
+    <button
+      class="btn-block"
+      mat-flat-button
+      color="primary"
+      [appLoadingSpinner]="loading"
+      (click)="connected ? close() : connect()"
+    >
+      <ng-container *ngIf="!loading">
+        <ng-container *ngIf="!connected; else closeText">
+          Connect Your Account
+        </ng-container>
+        <ng-template #closeText>Finish</ng-template>
+      </ng-container>
+    </button>
+  </div>
+</div>
+
+<ng-container *ngIf="popUpOpen$ | async"></ng-container>

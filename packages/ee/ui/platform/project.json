@@ -1,0 +1,30 @@
+{
+  "name": "ui-ee-platform",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ee/ui/platform/src",
+  "prefix": "activepieces",
+  "tags": [],
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "options": {
+        "project": "packages/ee/ui/platform/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/ee/ui/platform/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/ee/ui/platform/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  }
+}

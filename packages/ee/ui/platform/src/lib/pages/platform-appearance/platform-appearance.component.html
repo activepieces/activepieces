@@ -1,0 +1,118 @@
+<ap-upgrade-note
+  [featureNoteTitle]="upgradeNoteTitle"
+  [featureNote]="upgradeNote"
+  videoUrl="https://cdn.activepieces.com/videos/showcase/appearance.mp4"
+  *ngIf="isDemo"
+  featureKey="BRANDING"
+></ap-upgrade-note>
+
+<div *ngIf="!isDemo">
+  <ap-page-title [title]="title"></ap-page-title>
+
+  <div
+    class="ap-flex ap-flex-col ap-justify-between"
+    [style.height]="'calc(100vh - 209px)'"
+  >
+    <div>
+      <form
+        class="ap-flex ap-flex-col ap-gap-5"
+        [formGroup]="formGroup"
+        (ngSubmit)="save()"
+      >
+        <mat-form-field class="ap-max-w-[327px] ap-w-full">
+          <mat-label i18n>Name</mat-label>
+          <input
+            matInput
+            placeholder="Awesome platform"
+            [formControl]="formGroup.controls.name"
+          />
+          <mat-error *ngIf="formGroup.controls.name.invalid"
+            >Name is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field class="ap-max-w-[20.4375rem] ap-w-full">
+          <mat-label i18n>Logo URL</mat-label>
+          <input
+            placeholder="your-cdn.com/path-to-logo"
+            matInput
+            [formControl]="formGroup.controls.fullLogoUrl"
+          />
+          <mat-error *ngIf="formGroup.controls.fullLogoUrl.invalid">
+            Logo URL is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field class="ap-max-w-[20.4375rem] ap-w-full">
+          <mat-label i18n>Icon URL</mat-label>
+          <input
+            placeholder="your-cdn.com/path-to-icon"
+            matInput
+            [formControl]="formGroup.controls.logoIconUrl"
+          />
+          <mat-error *ngIf="formGroup.controls.logoIconUrl.invalid">
+            Icon URL is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field class="ap-max-w-[20.4375rem] ap-w-full">
+          <mat-label i18n>Favicon URL</mat-label>
+          <input
+            placeholder="your-cdn.com/path-to-favicon"
+            matInput
+            [formControl]="formGroup.controls.favIconUrl"
+          />
+          <mat-error *ngIf="formGroup.controls.favIconUrl.invalid">
+            Favicon URL is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field class="ap-max-w-[20.4375rem] ap-w-full">
+          <mat-label i18n>Default Language</mat-label>
+          <mat-select [formControl]="formGroup.controls.defaultLocale">
+            <mat-option
+              *ngFor="let pair of locales | objectToArray"
+              [value]="pair.key"
+            >
+              {{ pair.value }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field class="ap-max-w-[20.4375rem] ap-w-full">
+          <mat-label i18n>Theme Color</mat-label>
+          <input matInput [formControl]="formGroup.controls.primaryColor" />
+          <ngx-colors
+            class="ap-px-[40px]"
+            matSuffix
+            ngx-colors-trigger
+            [formControl]="formGroup.controls.pickerCtrl"
+            (change)="formGroup.controls.primaryColor.setValue($event)"
+          ></ngx-colors>
+          <mat-error *ngIf="formGroup.controls.primaryColor.invalid"
+            >Primary color is required
+          </mat-error>
+        </mat-form-field>
+      </form>
+    </div>
+
+    <div>
+      <div
+        class="ap-p-4 ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-border-outline"
+      >
+        <ap-button
+          [disabled]="isDemo"
+          [tooltipText]="isDemo ? featureDisabledTooltip : ''"
+          btnStyle="flat"
+          btnColor="primary"
+          i18n
+          (buttonClicked)="save()"
+          [loading]="loading"
+          >Save</ap-button
+        >
+      </div>
+    </div>
+  </div>
+
+  <ng-container *ngIf="updatePlatform$ | async"></ng-container>
+</div>

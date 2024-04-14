@@ -9,7 +9,7 @@ import { NotFoundComponent } from './modules/not-found/not-found.component';
 import {
   EmbedRedirectComponent,
   EmbeddedConnectionDialogComponent,
-} from '@activepieces/ee-components';
+} from 'ee-components';
 import { ApEdition } from '@activepieces/shared';
 import { FormsComponent } from './modules/forms/forms.component';
 
@@ -70,9 +70,7 @@ export const routes: Routes = [
   {
     path: '',
     loadChildren: () =>
-      import('@activepieces/ee/project-members').then(
-        (m) => m.EeProjectMembersModule
-      ),
+      import('ee-project-members').then((m) => m.EeProjectMembersModule),
     canActivate: [
       showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
     ],

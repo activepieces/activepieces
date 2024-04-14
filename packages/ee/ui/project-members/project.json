@@ -1,0 +1,30 @@
+{
+  "name": "ee-project-members",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ee/ui/project-members/src",
+  "prefix": "activepieces",
+  "tags": [],
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "options": {
+        "project": "packages/ee/ui/project-members/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/ee/ui/project-members/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/ee/ui/project-members/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  }
+}

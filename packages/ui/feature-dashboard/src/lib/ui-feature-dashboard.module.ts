@@ -13,14 +13,14 @@ import { FlowsTableTitleComponent } from './pages/flows-table/flows-table-title/
 import { FoldersListComponent } from './pages/flows-table/folders-list/folders-list.component';
 import { NewFolderDialogComponent } from './components/dialogs/new-folder-dialog/new-folder-dialog.component';
 import { RenameFolderDialogComponent } from './components/dialogs/rename-folder-dialog/rename-folder-dialog.component';
-import { EeBillingUiModule } from '@activepieces/ee-billing-ui';
+import { EeBillingUiModule } from 'ee-billing-ui';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { ProjectSwitcherComponent } from './components/project-switcher/project-switcher.component';
 import { TriggerTooltipPipe } from './pipes/trigger-tooltip.pipe';
 import { TriggerIconPipe } from './pipes/trigger-icon.pipe';
 import { FlowStatusPipe } from './pipes/flow-status-tooltip.pipe';
-import { EeComponentsModule } from '@activepieces/ee-components';
+import { EeComponentsModule } from 'ee-components';
 import { RenameFlowDialogComponent } from './components/dialogs/rename-flow-dialog/rename-flow-dialog.component';
 import { UiFeatureFoldersStoreModule } from '@activepieces/ui/feature-folders-store';
 import { MatDatepickerModule } from '@angular/material/datepicker';
