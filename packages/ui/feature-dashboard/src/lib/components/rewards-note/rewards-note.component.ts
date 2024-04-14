@@ -12,7 +12,7 @@ const LAST_CLOSED_KEY_LOCAL_STORAGE = 'rewardsNoteClosed';
 const COMPLIMENTS = [
   'Well done on your flows 👏',
   'Great job on your flows 🎉',
-  'Amazing Flows 🔥',
+  'Amazing flows 🔥',
 ];
 @Component({
   selector: 'app-rewards-note-component',
