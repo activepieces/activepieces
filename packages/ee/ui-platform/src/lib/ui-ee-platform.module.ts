@@ -29,7 +29,8 @@ import { EnableFederatedAuthnProviderDialogComponent } from './components/dialog
 import { ConfigureAllowingEmailLoginsCardComponent } from './components/cards/configure-allowing-email-logins-card/configure-allowing-email-logins-card.component';
 import { AuditEventTableComponent } from './components/audit-event-table/audit-event-table.component';
 import { ApplyTagsComponent } from 'ui-feature-tags';
-import { UpgradesComponent } from './components/upgrades/upgrades.component';
+import { UpdatesComponent } from './components/updates/updates.component';
+
 @NgModule({
   imports: [
     UiCommonModule,
@@ -37,7 +38,7 @@ import { UpgradesComponent } from './components/upgrades/upgrades.component';
     RouterModule.forChild(uiEePlatformRoutes),
     UiFeaturePiecesModule,
     ApplyTagsComponent,
-    UpgradesComponent,
+    UpdatesComponent,
   ],
   declarations: [
     PlatformDashboardContainerComponent,

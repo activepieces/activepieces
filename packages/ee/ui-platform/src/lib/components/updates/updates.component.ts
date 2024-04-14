@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FlagService, fadeInUp400ms } from '@activepieces/ui/common';
 import { Observable, map, combineLatest } from 'rxjs';
-import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 import { ApFlagId } from '@activepieces/shared';
 import { AsyncPipe } from '@angular/common';
 import semver from 'semver';
@@ -32,14 +31,14 @@ const compareVersions = (latestVersion: string, currentVersion: string) => {
 };
 
 @Component({
-  selector: 'app-upgrades',
-  templateUrl: './upgrades.component.html',
+  selector: 'app-updates',
+  templateUrl: './updates.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeInUp400ms],
   standalone: true,
   imports: [AsyncPipe],
 })
-export class UpgradesComponent extends PlatformSettingsBaseComponent {
+export class UpdatesComponent {
   currentVersion$?: Observable<string>;
   latestVersion$?: Observable<string>;
   message$?: Observable<{
@@ -49,7 +48,6 @@ export class UpgradesComponent extends PlatformSettingsBaseComponent {
   }>;
 
   constructor(private flagService: FlagService) {
-    super();
     this.currentVersion$ = this.flagService.getStringFlag(
       ApFlagId.CURRENT_VERSION
     );

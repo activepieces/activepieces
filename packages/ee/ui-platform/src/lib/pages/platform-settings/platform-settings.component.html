@@ -1,6 +1,9 @@
 <ap-page-title [title]="title"></ap-page-title>
 <mat-tab-group #tabs class="ap-gap-4 " dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start"
     animationDuration="0" (selectedTabChange)="tabChanged($event)">
+    <mat-tab label="Updates" bodyClass="!ap-overflow-visible">
+        <app-updates></app-updates>
+    </mat-tab>
     <mat-tab [label]="signingKeysTabTitle" *ngIf="!isDemo">
         <app-signing-keys-table [platform]="platform" [isDemo]="isDemo"></app-signing-keys-table>
     </mat-tab>
@@ -17,9 +20,6 @@
     </mat-tab>
     <mat-tab label="Audit Logs" bodyClass="!ap-overflow-visible">
         <app-audit-event-table [platform]="platform" [isDemo]="isDemo"></app-audit-event-table>
-    </mat-tab>
-    <mat-tab label="Upgrades" bodyClass="!ap-overflow-visible">
-        <app-upgrades [platform]="platform" [isDemo]="isDemo"></app-upgrades>
     </mat-tab>
 </mat-tab-group>
 <ng-container *ngIf="fragmentChanged$ | async"></ng-container>
