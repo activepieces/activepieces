@@ -1,29 +1,33 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FlagService, fadeInUp400ms } from '@activepieces/ui/common';
 import { Observable, map, combineLatest } from 'rxjs';
 import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 import { ApFlagId } from '@activepieces/shared';
 import { AsyncPipe } from '@angular/common';
+import semver from 'semver';
 
 const compareVersions = (latestVersion: string, currentVersion: string) => {
-  const latest = latestVersion.split('.').map(Number);
-  const current = currentVersion.split('.').map(Number);
+  let message = 'Up to date!';
+  let needUpdate = false;
+  let emoji = '🙂';
 
-  if (latest[1] > current[1]) {
-    return {
-      emoji: '😞',
-      message: 'Major update is available. Please update.',
-    };
-  } else if (latest[2] > current[2]) {
-    return {
-      emoji: '😞',
-      message: 'Patch update is available. Please update.',
-    };
+  if (semver.gt(latestVersion, currentVersion)) {
+    const diff = semver.diff(latestVersion, currentVersion);
+
+    if (diff === 'minor' || diff === 'major') {
+      message = 'Major update is available. Please update.';
+    } else if (diff === 'patch') {
+      message = 'Patch update is available. Please update.';
+    }
+
+    needUpdate = true;
+    emoji = '😞';
   }
 
   return {
-    emoji: '🙂',
-    message: 'Up to date!',
+    needUpdate,
+    message,
+    emoji,
   };
 };
 
@@ -39,6 +43,7 @@ export class UpgradesComponent extends PlatformSettingsBaseComponent {
   currentVersion$?: Observable<string>;
   latestVersion$?: Observable<string>;
   message$?: Observable<{
+    needUpdate: boolean;
     emoji: string;
     message: string;
   }>;
