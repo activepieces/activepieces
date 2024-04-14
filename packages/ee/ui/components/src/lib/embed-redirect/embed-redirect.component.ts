@@ -10,7 +10,7 @@ import {
   ActivepiecesClientEventName,
   ActivepiecesVendorEventName,
   ActivepiecesVendorInit,
-  jwtTokenQueryParamName,
+  _AP_JWT_TOKEN_QUERY_PARAM_NAME,
 } from 'ee-embed-sdk';
 import { AuthenticationService } from '@activepieces/ui/common';
 import { ManagedAuthService } from './managed-auth.service';
@@ -33,7 +33,9 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
   ) {}
 
   ngOnInit(): void {
-    const jwt = this.route.snapshot.queryParamMap.get(jwtTokenQueryParamName);
+    const jwt = this.route.snapshot.queryParamMap.get(
+      _AP_JWT_TOKEN_QUERY_PARAM_NAME
+    );
     if (jwt === null) {
       throw new Error('Activepieces: no provided jwt token');
     }
