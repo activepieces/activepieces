@@ -1,0 +1,77 @@
+<ap-dialog-title-template i18n>Invite Project Member </ap-dialog-title-template>
+<mat-dialog-content>
+  <div class="md:ap-max-w-[500px]">
+    <div class="ap-typography-body-1 ap-text-body ap-mb-4" i18n>
+      Type the email address of the user you want to invite.
+    </div>
+    <form
+      class="ap-flex ap-flex-col ap-gap-3"
+      [formGroup]="invitationForm"
+      (submit)="submit()"
+    >
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <input
+          [formControl]="invitationForm.controls.email"
+          cdkFocusInitial
+          matInput
+          type="email"
+          placeholder="bugs.bunny@gmail.com"
+          spellcheck="false"
+        />
+        <mat-error *ngIf="invitationForm.controls.email.invalid">
+          <ng-container
+            *ngIf="
+              invitationForm.controls.email.getError('exists');
+              else emailRequired
+            "
+          >
+            <span i18n
+              >The invited email already has an account. Please contact support
+              for assistance.</span
+            >
+          </ng-container>
+          <ng-template #emailRequired>
+            <span i18n>Email is Required</span>
+          </ng-template>
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label i18n>Role</mat-label>
+        <mat-select [formControl]="invitationForm.controls.role">
+          <ng-container *ngFor="let val of ProjectMemberRole">
+            <mat-option [value]="val.role" *ngIf="val.condition$ | async">{{
+              RolesDisplayNames[val.role]
+            }}</mat-option>
+          </ng-container>
+        </mat-select>
+      </mat-form-field>
+    </form>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button
+      btnColor="basic"
+      mat-dialog-close
+      btnSize="default"
+      btnColor="basic"
+      [disabled]="loading"
+      i18n
+    >
+      Cancel
+    </ap-button>
+    <ap-button
+      btnSize="default"
+      type="submit"
+      (click)="submit()"
+      [loading]="loading"
+      btnColor="primary"
+      i18n
+    >
+      Invite
+    </ap-button>
+  </div>
+</mat-dialog-actions>
+
+<ng-container *ngIf="inviteMember$ | async"></ng-container>

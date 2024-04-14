@@ -1,0 +1,93 @@
+{
+  "name": "product-sdk",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "packages/ee/ui/product-sdk/src",
+  "prefix": "app",
+  "targets": {
+    "bundle": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx build product-sdk && node packages/ee/ui/product-sdk/build-js.js"
+      }
+    },
+    "build": {
+      "executor": "@angular-devkit/build-angular:browser",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/ee/ui/product-sdk",
+        "index": "packages/ee/ui/product-sdk/src/index.html",
+        "main": "packages/ee/ui/product-sdk/src/main.ts",
+        "polyfills": ["zone.js"],
+        "tsConfig": "packages/ee/ui/product-sdk/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          "packages/ee/ui/product-sdk/src/favicon.ico",
+          "packages/ee/ui/product-sdk/src/assets"
+        ],
+        "styles": ["packages/ee/ui/product-sdk/src/styles.scss"],
+        "scripts": []
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "128kb",
+              "maximumError": "128kb"
+            }
+          ],
+          "outputHashing": "none"
+        },
+        "development": {
+          "buildOptimizer": false,
+          "optimization": false,
+          "vendorChunk": true,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular-devkit/build-angular:dev-server",
+      "configurations": {
+        "production": {
+          "buildTarget": "product-sdk:build:production"
+        },
+        "development": {
+          "buildTarget": "product-sdk:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "product-sdk:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@angular-devkit/build-angular:karma",
+      "options": {
+        "tsConfig": "packages/ee/ui/product-sdk/tsconfig.spec.json",
+        "karmaConfig": "packages/ee/ui/product-sdk/karma.conf.js",
+        "polyfills": ["zone.js", "zone.js/testing"],
+        "styles": [],
+        "scripts": [],
+        "assets": []
+      }
+    }
+  },
+  "tags": []
+}

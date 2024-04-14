@@ -1,0 +1,12 @@
+<div
+  class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-full ap-w-full"
+>
+  <ap-loading-icon
+    height="50px"
+    width="51px"
+    [outlineLoader]="false"
+    [whiteLoader]="false"
+  >
+  </ap-loading-icon>
+</div>
+<ng-container *ngIf="validateJWT$ | async"></ng-container>

@@ -1,21 +1,29 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import {
-  BehaviorSubject,
-  Observable,
-  Subject,
-  startWith,
-  tap,
-} from 'rxjs';
+import { BehaviorSubject, Observable, Subject, startWith, tap } from 'rxjs';
 import { ProjectPiecesDataSource } from './project-pieces-table.datasource';
 import { InstallCommunityPieceModalComponent } from '../install-community-piece/install-community-piece-modal.component';
-import { ApFlagId, PieceScope, PieceType, ProjectMemberRole, isNil } from '@activepieces/shared';
+import {
+  ApFlagId,
+  PieceScope,
+  PieceType,
+  ProjectMemberRole,
+  isNil,
+} from '@activepieces/shared';
 import { PieceMetadataService } from '../services/piece.service';
-import { DeleteEntityDialogComponent, DeleteEntityDialogData, FlagService, GenericSnackbarTemplateComponent } from '@activepieces/ui/common';
+import {
+  DeleteEntityDialogComponent,
+  DeleteEntityDialogData,
+  FlagService,
+  GenericSnackbarTemplateComponent,
+} from '@activepieces/ui/common';
 import { ManagePiecesDialogComponent } from '../manage-pieces-dialog/manage-pieces-dialog.component';
-import { PieceMetadataModelSummary, PieceMetadataSummary } from '@activepieces/pieces-framework';
+import {
+  PieceMetadataModelSummary,
+  PieceMetadataSummary,
+} from '@activepieces/pieces-framework';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ProjectMemberService } from '@activepieces/ee/project-members';
+import { ProjectMemberService } from 'ee-project-members';
 
 @Component({
   templateUrl: './project-pieces-table.component.html',
@@ -45,8 +53,12 @@ export class ProjectPiecesTableComponent {
       this.refreshTable$.asObservable().pipe(startWith(true))
     );
     this.isAdmin$ = this.projectMemberService.isRole(ProjectMemberRole.ADMIN);
-    this.installPieceEnabled$ = this.flagService.isFlagEnabled(ApFlagId.INSTALL_PROJECT_PIECES_ENABLED)
-    this.managePiecesEnabled$ = this.flagService.isFlagEnabled(ApFlagId.MANAGE_PROJECT_PIECES_ENABLED)
+    this.installPieceEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.INSTALL_PROJECT_PIECES_ENABLED
+    );
+    this.managePiecesEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.MANAGE_PROJECT_PIECES_ENABLED
+    );
   }
 
   managePieces() {
@@ -54,7 +66,7 @@ export class ProjectPiecesTableComponent {
       .open(ManagePiecesDialogComponent, {
         data: {
           pieces: this.dataSource.data.map((piece) => piece.name),
-        }
+        },
       })
       .afterClosed()
       .pipe(
@@ -112,5 +124,4 @@ export class ProjectPiecesTableComponent {
   isInstalledPiece(piece: PieceMetadataModelSummary) {
     return piece.pieceType === PieceType.CUSTOM && !isNil(piece.projectId);
   }
-
 }
