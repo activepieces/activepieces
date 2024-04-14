@@ -1,4 +1,4 @@
-<div class="ap-h-[calc(100% - 6.5625rem)] ap-px-7.5" [class.ap-hidden]="(areThereFlows$|async)===false">
+<div class="ap-h-[calc(100% - 6.5625rem)] ap-px-7.5 ap-relative ap-overflow-hidden" [class.ap-hidden]="(areThereFlows$|async)===false">
   <div class="ap-flex ap-h-full ">
     <div class=" ap-min-w-[274px] ap-max-w-[274px]" *ngIf="(hideFolders$ | async) === undefined ||(hideFolders$ | async) === false " #foldersSection>
       <div class="ap-typography-headline-5 !ap-font-semibold ap-mb-7.5 ap-mt-20" i18n>My Flows</div>
