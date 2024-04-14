@@ -52,7 +52,7 @@ export interface ActivepiecesVendorInit {
     hideFolders?: boolean;
   };
 }
-export const jwtTokenQueryParamName = "jwtToken"
+export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
 
 class ActivepiecesEmbedded {
   _prefix = '';
@@ -62,15 +62,15 @@ class ActivepiecesEmbedded {
   _hideFolders = false;
   _hideLogoInBuilder = false;
   _hideFlowNameInBuilder = false;
+  _jwtToken = '';
   _disableNavigationInBuilder = true;
-  _connectionsIframeInitialized = false;
+  readonly _CONNECTIONS_IFRAME_ID='ApConnectionsIframe';
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
   _handleVendorNavigation?: (data: { route: string }) => void;
   _handleClientNavigation?: (data: { route: string }) => void;
   _parentOrigin = window.location.origin;
-  _connectionsIframe: HTMLIFrameElement | null = null;
-  readonly MAX_CONTAINER_CHECK_COUNT = 100;
-  readonly HUNDRED_MILLISECONDS = 100;
+  readonly _MAX_CONTAINER_CHECK_COUNT = 100;
+  readonly _HUNDRED_MILLISECONDS = 100;
   configure({
     prefix,
     jwtToken,
@@ -102,13 +102,14 @@ class ActivepiecesEmbedded {
     this._hideFolders = embedding?.hideFolders ?? false;
     this._hideLogoInBuilder = embedding?.builder?.hideLogo ?? false;
     this._hideFlowNameInBuilder = embedding?.builder?.hideFlowName ?? false;
+    this._jwtToken = jwtToken;
     if (embedding?.containerId) {
       this._initializeBuilderAndDashboardIframe({
         containerSelector: `#${embedding.containerId}`,
         jwtToken
       });
     }
-    this._initializeConnectionsIframe({ jwtToken });
+    this._checkIfNewConnectionDialogClosed();
   }
 
 
@@ -134,33 +135,13 @@ class ActivepiecesEmbedded {
 
   };
 
-
-  private _initializeConnectionsIframe = ({ jwtToken }: { jwtToken: string }) => {
-
-    return this._addGracePeriodBeforeMethod({
-      condition: () => {
-        return !!document.body;
-      },
-      method: () => {
-        this._connectionsIframe = this.connectToEmbed({ jwtToken, iframeContainer: document.body, callbackAfterAuthentication: () => { this._connectionsIframeInitialized = true } });
-        const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
-        this._connectionsIframe.style.cssText = connectionsIframeStyle;
-        this._checkIfNewConnectionDialogClosed();
-      },
-      errorMessage: 'document body not found while trying to add connections iframe'
-    });
-
-  }
-
-
-
   private connectToEmbed({ jwtToken, iframeContainer, callbackAfterAuthentication }: {
     jwtToken: string,
     iframeContainer: Element,
     callbackAfterAuthentication?: () => void
   }
   ): IframeWithWindow {
-    const iframe = this._createIframe({ src: `${this._instanceUrl}/embed?${jwtTokenQueryParamName}=${jwtToken}` });
+    const iframe = this._createIframe({ src: `${this._instanceUrl}/embed?${_AP_JWT_TOKEN_QUERY_PARAM_NAME}=${jwtToken}` });
     iframeContainer.appendChild(iframe);
     if (!this._doesFrameHaveWindow(iframe)) {
       const error = 'Activepieces: iframe window not accessible';
@@ -207,26 +188,31 @@ class ActivepiecesEmbedded {
   async connect({ pieceName }: { pieceName: string }) {
 
     return this._addGracePeriodBeforeMethod({
-      errorMessage: 'connections iframe not initialized',
-      condition: () => this._connectionsIframeInitialized,
+      condition: () => {
+        return !!document.body;
+      },
       method: () => {
-        if (!this._connectionsIframe || !this._doesFrameHaveWindow(this._connectionsIframe)) {
-          console.error('Activepieces: connections iframe not found, please make sure you enabled embedded dialiogs in the configure method');
-          return;
-        }
-        const apEvent: ActivepiecesVendorRouteChanged = {
-          type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
-          data: {
-            //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
-            vendorRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}`
-          },
-        };
-        this._connectionsIframe.contentWindow.postMessage(apEvent, '*');
-        this._connectionsIframe.style.display = 'block';
-        return new Promise<ActivepiecesNewConnectionDialogClosed['data']>((resolve) => {
-          this._resolveNewConnectionDialogClosed = resolve;
-        });
-      }
+
+        const connectionsIframe = this.connectToEmbed({ jwtToken: this._jwtToken, iframeContainer: document.body, 
+          callbackAfterAuthentication: () => {
+              connectionsIframe.style.display = 'block';
+              const apEvent: ActivepiecesVendorRouteChanged = {
+                type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
+                data: {
+                  //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
+                  vendorRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}`
+                },
+              };
+              connectionsIframe.contentWindow.postMessage(apEvent, '*');
+            } });
+          const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
+          connectionsIframe.style.cssText = connectionsIframeStyle;
+          connectionsIframe.id = this._CONNECTIONS_IFRAME_ID;
+          return new Promise<ActivepiecesNewConnectionDialogClosed['data']>((resolve) => {
+            this._resolveNewConnectionDialogClosed = resolve;
+          });
+        },
+      errorMessage: 'document body not found while trying to add connections iframe'
     });
 
   }
@@ -297,17 +283,20 @@ class ActivepiecesEmbedded {
     window.addEventListener(
       'message',
       (event: MessageEvent<ActivepiecesNewConnectionDialogClosed>) => {
-        if (this._connectionsIframe && this._doesFrameHaveWindow(this._connectionsIframe)) {
-          if (
-            event.data.type === ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED
-
-          ) {
-            this._connectionsIframe.style.display = 'none';
+        if(event.data.type === ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED)
+          {
             if (this._resolveNewConnectionDialogClosed) {
               this._resolveNewConnectionDialogClosed(event.data.data)
             }
+            const connectionsIframe = document.getElementById(this._CONNECTIONS_IFRAME_ID);
+            if(connectionsIframe) {
+                connectionsIframe.remove();
+              }
+            else {
+              console.warn("Activepieces: connections iframe not found when trying to remove it ")
+              }
           }
-        }
+   
       }
     );
   }
@@ -334,7 +323,7 @@ class ActivepiecesEmbedded {
         return;
       }
       const checker = setInterval(() => {
-        if (checkCounter >= this.MAX_CONTAINER_CHECK_COUNT) {
+        if (checkCounter >= this._MAX_CONTAINER_CHECK_COUNT) {
           console.error(`Activepieces: ${errorMessage}`);
           reject(`Activepieces: ${errorMessage}`);
           return;
@@ -345,11 +334,12 @@ class ActivepiecesEmbedded {
           clearInterval(checker);
           resolve(method());
         }
-      }, this.HUNDRED_MILLISECONDS);
+      }, this._HUNDRED_MILLISECONDS);
     },);
 
   }
 
 }
+
 
 (window as any).activepieces = new ActivepiecesEmbedded();
