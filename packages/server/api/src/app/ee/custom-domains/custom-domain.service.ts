@@ -1,7 +1,7 @@
-import axios, { AxiosResponse } from 'axios'
 import { databaseConnection } from '../../database/database-connection'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { cloudflareHostnameServices } from './cloudflare-api.service'
 import { CustomDomainEntity } from './custom-domain.entity'
 import {
     CustomDomain,
@@ -22,72 +22,6 @@ export type SSLParams = {
 const customDomainRepo =
     databaseConnection.getRepository<CustomDomain>(CustomDomainEntity)
 
-const cloudflareApi = {
-    headers: {
-        'X-Auth-Email': process.env.AUTH_EMAIL,
-        'X-Auth-Key': process.env.AP_API_KEY,
-        'Content-Type': 'application/json',
-    },
-    makeUrl(customHostnameId?: string): string {
-        const BASE_URL = `https://api.cloudflare.com/client/v4/zones/${process.env.ZONE_ID}/custom_hostnames`
-        if (customHostnameId) {
-            return `${BASE_URL}/${customHostnameId}`
-        }
-        return BASE_URL
-    },
-    async createCustomHostname(request: {
-        hostname: string
-        ssl: SSLParams
-    }): Promise<AxiosResponse> {
-        return axios.post(this.makeUrl(), {
-            hostname: request.hostname,
-            ssl: {
-                ...request.ssl,
-                settings: {
-                    ciphers: ['ECDHE-RSA-AES128-GCM-SHA256', 'AES128-SHA'],
-                    early_hints: 'on',
-                    http2: 'on',
-                    min_tls_version: '1.2',
-                    tls_1_3: 'on',
-                },
-                type: 'dv', 
-                wildcard: false,
-            },
-        }, {
-            headers: this.headers,
-        })
-    },
-    async customHostnameDetails(hostname: string): Promise<AxiosResponse> {
-        return axios.get(this.makeUrl(), {
-            params: {
-                hostname,
-            },
-            headers: this.headers,
-        })
-    },
-    async listCustomHostnames(queryParams?: { [key: string]: string }): Promise<AxiosResponse> {
-        return axios.get(this.makeUrl(), {
-            params: queryParams,
-            headers: this.headers,
-        })
-    },
-    async patchCustomHostname(
-        customHostnameId: string, 
-        data?: { 
-            ssl: SSLParams 
-        },
-    ): Promise<AxiosResponse> {
-        let body = {}
-        if (data) {
-            body = data
-        }
-        return axios.patch(this.makeUrl(customHostnameId), body, { headers: this.headers })
-    },
-    async deleteCustomHostname(customHostnameId: string): Promise<AxiosResponse> {
-        return axios.delete(this.makeUrl(customHostnameId), { headers: this.headers })
-    },
-}
-
 export const customDomainService = {
     async delete(request: { id: string, platformId: string }): Promise<void> {
         try {
@@ -98,10 +32,10 @@ export const customDomainService = {
                 })
                 .getRawOne()
 
-            const hostnameDetails = await cloudflareApi.customHostnameDetails(customDomain.custom_domain_domain)
+            const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.custom_domain_domain)
 
             if (hostnameDetails.data.result.id) {
-                await cloudflareApi.deleteCustomHostname(hostnameDetails.data.result.id)
+                await cloudflareHostnameServices.delete(hostnameDetails.data.result.id)
                 await customDomainRepo.delete({
                     id: request.id,
                     platformId: request.platformId,
@@ -142,8 +76,8 @@ export const customDomainService = {
                 id: request.id,
             })
             .getRawOne()
-        const hostnameDetails = await cloudflareApi.customHostnameDetails(customDomain.custom_domain_domain)
-        const patchResult = await cloudflareApi.patchCustomHostname(hostnameDetails.data.result.id)
+        const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.custom_domain_domain)
+        const patchResult = await cloudflareHostnameServices.update(hostnameDetails.data.result.id)
         const status = patchResult.data.result.status
 
         await customDomainRepo.update({
@@ -168,7 +102,7 @@ export const customDomainService = {
                 status: CustomDomainStatus.PENDING,
             })
             
-            await cloudflareApi.createCustomHostname({ 
+            await cloudflareHostnameServices.create({ 
                 hostname: request.domain, 
                 ssl: request.ssl, 
             })
