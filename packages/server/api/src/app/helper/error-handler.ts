@@ -30,7 +30,6 @@ export const errorHandler = async (
             [ErrorCode.VALIDATION]: StatusCodes.CONFLICT,
             [ErrorCode.INVITATION_ONLY_SIGN_UP]: StatusCodes.FORBIDDEN,
             [ErrorCode.AUTHENTICATION]: StatusCodes.UNAUTHORIZED,
-            [ErrorCode.CUSTOM_DOMAIN_FAILED]: StatusCodes.BAD_REQUEST,
         }
 
         const statusCode =

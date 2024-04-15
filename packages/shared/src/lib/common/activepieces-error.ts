@@ -57,7 +57,6 @@ type ErrorParams =
     | UserIsInActiveErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
-    | CustomDomainErrorParams
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -339,10 +338,6 @@ ErrorCode.AUTHENTICATION,
 
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
-export type CustomDomainErrorParams = BaseErrorParams<ErrorCode.CUSTOM_DOMAIN_FAILED, {
-    message: string
-}>
-
 export enum ErrorCode {
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
@@ -388,5 +383,4 @@ export enum ErrorCode {
     TRIGGER_FAILED = 'TRIGGER_FAILED',
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
     VALIDATION = 'VALIDATION',
-    CUSTOM_DOMAIN_FAILED = 'CUSTOM_DOMAIN_FAILED',
 }
