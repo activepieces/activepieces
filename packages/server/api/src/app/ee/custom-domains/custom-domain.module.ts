@@ -6,7 +6,7 @@ import {
 import { HttpStatusCode } from 'axios'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { customDomainService } from './custom-domain.service'
+import { customDomainService, SSLParams } from './custom-domain.service'
 import {
     AddDomainRequest,
     ListCustomDomainsRequest,
@@ -47,6 +47,7 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
 
             const customDomain = await customDomainService.create({
                 domain: request.body.domain,
+                ssl: request.body.ssl as SSLParams,
                 platformId,
             })
 
@@ -68,6 +69,23 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
             return customDomainService.list({
                 platformId,
                 request: request.query,
+            })
+        },
+    )
+
+    app.patch(
+        '/verify/:id',
+        {
+            schema: {
+                params: GetOneRequest,
+            },
+        },
+        async (request) => {
+            const platformId = request.principal.platform.id
+            assertNotNullOrUndefined(platformId, 'platformId')
+            return customDomainService.verifyDomain({
+                id: request.params.id,
+                platformId,
             })
         },
     )
