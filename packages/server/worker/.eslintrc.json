@@ -1,24 +1,17 @@
 {
-  "extends": ["../api/.eslintrc.json"],
-  "ignorePatterns": ["!**/*"],
+  "extends": [
+    "../api/.eslintrc.json"
+  ],
   "overrides": [
     {
-      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
-      "rules": {}
-    },
-    {
-      "files": ["*.ts", "*.tsx"],
-      "rules": {}
-    },
-    {
-      "files": ["*.js", "*.jsx"],
-      "rules": {}
-    },
-    {
-      "files": ["*.json"],
-      "parser": "jsonc-eslint-parser",
-      "rules": {
-        "@nx/dependency-checks": "error"
+      "files": [
+        "*.ts",
+        "*.js"
+      ],
+      "parserOptions": {
+        "project": [
+          "packages/server/worker/tsconfig.*?.json"
+        ]
       }
     }
   ]
