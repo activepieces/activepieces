@@ -6,7 +6,7 @@ import {
 import { HttpStatusCode } from 'axios'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { customDomainService, SSLParams } from './custom-domain.service'
+import { customDomainService } from './custom-domain.service'
 import {
     AddDomainRequest,
     ListCustomDomainsRequest,
@@ -47,7 +47,6 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
 
             const customDomain = await customDomainService.create({
                 domain: request.body.domain,
-                ssl: request.body.ssl as SSLParams,
                 platformId,
             })
 
