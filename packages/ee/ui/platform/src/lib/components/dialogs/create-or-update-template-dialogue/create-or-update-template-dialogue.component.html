@@ -1,0 +1,107 @@
+<ap-dialog-title-template>
+  {{ title }}
+</ap-dialog-title-template>
+
+<mat-dialog-content class="thin-scrollbars">
+  <form
+    [formGroup]="form"
+    class="ap-max-w-[34.375rem] ap-flex ap-flex-col ap-gap-2 ap-min-w-[31.25rem]"
+  >
+    <ap-markdown
+      [fullWidth]="true"
+      [data]="shareTemplateMarkdown"
+      class="ap-mb-2"
+    ></ap-markdown>
+    <mat-form-field class="ap-w-full ap-mb-1" appearance="outline">
+      <mat-label i18n>Name</mat-label>
+      <input [formControl]="form.controls.name" matInput type="text" />
+      <mat-error *ngIf="form.controls.name.invalid" i18n
+        >Name is required</mat-error
+      >
+    </mat-form-field>
+
+    <mat-form-field class="ap-w-full ap-mb-1" appearance="outline">
+      <mat-label i18n>Description</mat-label>
+      <textarea
+        [formControl]="form.controls.description"
+        matInput
+        type="text"
+        rows="4"
+      >
+      </textarea>
+      <mat-error *ngIf="form.controls.description.invalid" i18n
+        >Description is required</mat-error
+      >
+      <mat-hint> Description can be in markdown format </mat-hint>
+    </mat-form-field>
+
+    <mat-form-field class="ap-w-full ap-mb-1">
+      <mat-label i18n>Flow template</mat-label>
+      <ap-file-upload
+        #flowInput
+        [formControl]="form.controls.file"
+        [required]="true"
+      ></ap-file-upload>
+      <ap-icon-button
+        [height]="25"
+        [width]="25"
+        iconFilename="attach.svg"
+        matSuffix
+        (buttonClicked)="flowInput.fileInput.nativeElement.click()"
+      ></ap-icon-button>
+      <mat-error *ngIf="form.controls.file.invalid" i18n
+        >Flow template is required</mat-error
+      >
+    </mat-form-field>
+    <mat-error *ngIf="invalidJson" i18n
+      >Flow template is not a valid json file</mat-error
+    >
+
+    <mat-form-field class="ap-w-full" appearance="outline">
+      <mat-label i18n>Blog Url </mat-label>
+      <input [formControl]="form.controls.blogUrl" matInput type="text" />
+    </mat-form-field>
+    <div class="ap-mb-2 ap-pointer-events-none" i18n>Tags</div>
+    <div class="ap-mt-4">
+      <ap-array-form-control
+        [formControl]="form.controls.tags"
+        placeholder="Tag"
+      ></ap-array-form-control>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button
+      btnColor="basic"
+      mat-dialog-close
+      btnSize="default"
+      btnColor="basic"
+      i18n
+    >
+      Cancel
+    </ap-button>
+    <ap-button
+      *ngIf="!data"
+      [loading]="loading"
+      (buttonClicked)="createOrUpdate()"
+      btnColor="primary"
+      btnSize="default"
+      i18n
+    >
+      Create
+    </ap-button>
+    <ap-button
+      *ngIf="data"
+      [loading]="loading"
+      (buttonClicked)="createOrUpdate()"
+      btnColor="primary"
+      btnSize="default"
+      i18n
+    >
+      Confirm
+    </ap-button>
+  </div>
+</mat-dialog-actions>
+
+<ng-container *ngIf="createTemplate$ | async"></ng-container>

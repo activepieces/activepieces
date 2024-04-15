@@ -1,0 +1,36 @@
+<ng-container *ngIf="billingEnabled$ | async">
+  <div
+    *ngIf="tasksStats$ | async as stats"
+    class="ap-flex ap-justify-center ap-typography-body-2 ap-items-center ap-rounded-md ap-border ap-border-dividers ap-border-solid ap-px-3 ap-py-2 ap-cursor-pointer hover:ap-bg-[#f5f5f5]"
+    (click)="openPricingPlans()"
+    [matTooltip]="'View Plans'"
+  >
+    <div class="ap-relative">
+      <mat-progress-spinner
+        class="progress-success-bg"
+        [color]="'accent'"
+        [diameter]="20"
+        [strokeWidth]="5"
+        [mode]="'determinate'"
+        [value]="100"
+        style="position: absolute; top: 0; left: 0"
+      >
+      </mat-progress-spinner>
+      <mat-progress-spinner
+        [ngClass]="{
+          'progress-success': stats.tasksExecuted / stats.tasksCap <= 0.8
+        }"
+        [color]="'warn'"
+        [diameter]="20"
+        [strokeWidth]="5"
+        [mode]="'determinate'"
+        [value]="(stats.tasksExecuted / stats.tasksCap) * 100"
+      >
+      </mat-progress-spinner>
+    </div>
+    <span class="ap-font-bold ap-ml-2"
+      >{{ stats.tasksExecuted }}/{{ stats.tasksCap }}</span
+    >
+    <span class="ap-ml-2">Tasks Per Month</span>
+  </div>
+</ng-container>
