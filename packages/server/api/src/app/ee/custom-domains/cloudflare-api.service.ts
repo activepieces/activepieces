@@ -1,14 +1,15 @@
 import axios, { AxiosResponse } from 'axios'
 import { SSLParams } from './custom-domain.service'
+import { system, SystemProp } from '@activepieces/server-shared'
 
 export const cloudflareHostnameServices = {
     headers: {
-        'X-Auth-Email': process.env.AUTH_EMAIL,
-        'X-Auth-Key': process.env.AP_API_KEY,
+        'X-Auth-Email': system.get(SystemProp.AUTH_EMAIL),
+        'X-Auth-Key': system.get(SystemProp.AP_API_KEY),
         'Content-Type': 'application/json',
     },
     makeUrl(customHostnameId?: string): string {
-        const BASE_URL = `https://api.cloudflare.com/client/v4/zones/${process.env.ZONE_ID}/custom_hostnames`
+        const BASE_URL = `https://api.cloudflare.com/client/v4/zones/${system.get(SystemProp.ZONE_ID)}/custom_hostnames`
         if (customHostnameId) {
             return `${BASE_URL}/${customHostnameId}`
         }
