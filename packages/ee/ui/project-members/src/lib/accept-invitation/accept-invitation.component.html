@@ -1,0 +1,18 @@
+<div class="ap-container ap-mx-auto ap-mt-10 ap-max-w-md">
+  <ng-container *ngIf="!invalidToken">
+    <p class="ap-text-2xl ap-font-bold ap-text-center" i18n>
+      Team Invitation Accepted
+    </p>
+    <p class="ap-mt-4 ap-text-lg ap-text-center ap-text-gray-700" i18n>
+      Thank you for accepting the invitation. We are redirecting you right
+      now...
+    </p>
+  </ng-container>
+  <ng-container *ngIf="invalidToken">
+    <p class="ap-mt-4 ap-text-lg ap-text-center ap-text-red-500" i18n>
+      Invalid invitation token. Please try again.
+    </p>
+  </ng-container>
+</div>
+
+<ng-container *ngIf="acceptInvitation$ | async"></ng-container>

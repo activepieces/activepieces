@@ -1,0 +1,101 @@
+<div class="ap-h-full ap-pt-2 ap-flex ap-flex-col">
+  <ap-upgrade-note
+    [insideTab]="true"
+    [featureNoteTitle]="upgradeNoteTitle"
+    [featureNote]="upgradeNote"
+    *ngIf="isDemo"
+  ></ap-upgrade-note>
+  <div class="ap-mb-4 ap-max-w-[44.6875rem]">
+    <ap-markdown
+      *ngIf="!upgradeNote"
+      [fullWidth]="true"
+      [data]="upgradeNote"
+    ></ap-markdown>
+  </div>
+
+  <form
+    [formGroup]="smtpSettingsForm"
+    class="ap-flex ap-max-w-[327px] ap-w-full ap-flex-col ap-gap-4 ap-mb-10"
+  >
+    <mat-form-field>
+      <mat-label>SMTP Sender Email</mat-label>
+      <input
+        matInput
+        [formControl]="smtpSettingsForm.controls.smtpSenderEmail"
+        placeholder="Sender@email.com"
+      />
+      <mat-error *ngIf="smtpSettingsForm.controls.smtpSenderEmail.invalid"
+        >Sender email is required</mat-error
+      >
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>SMTP Host</mat-label>
+      <input
+        matInput
+        [formControl]="smtpSettingsForm.controls.smtpHost"
+        placeholder="Server"
+      />
+      <mat-error *ngIf="smtpSettingsForm.controls.smtpHost"
+        >Host is required</mat-error
+      >
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>SMTP Port</mat-label>
+      <input
+        matInput
+        type="number"
+        [formControl]="smtpSettingsForm.controls.smtpPort"
+        placeholder="1234"
+      />
+      <mat-error *ngIf="smtpSettingsForm.controls.smtpPort.invalid"
+        >Port is required</mat-error
+      >
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>SMTP Username</mat-label>
+      <input
+        matInput
+        [formControl]="smtpSettingsForm.controls.smtpUser"
+        placeholder="Username"
+      />
+      <mat-error *ngIf="smtpSettingsForm.controls.smtpUser.invalid"
+        >Username is required</mat-error
+      >
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>SMTP Password</mat-label>
+      <input
+        matInput
+        [formControl]="smtpSettingsForm.controls.smtpPassword"
+        placeholder="Password"
+        type="password"
+      />
+      <mat-error *ngIf="smtpSettingsForm.controls.smtpPassword.invalid"
+        >Password is required</mat-error
+      >
+    </mat-form-field>
+    <mat-checkbox
+      color="primary"
+      [formControl]="smtpSettingsForm.controls.smtpUseSSL"
+      >Use SSL</mat-checkbox
+    >
+  </form>
+  <div>
+    <div
+      class="ap-px-4 ap-pt-4 ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-border-outline"
+    >
+      <ap-button
+        btnStyle="flat"
+        btnColor="primary"
+        (buttonClicked)="save()"
+        [disabled]="isDemo"
+        [tooltipText]="isDemo ? featureDisabledTooltip : ''"
+        [loading]="(loading$ | async) || false"
+      >
+        <div i18n>Save</div>
+      </ap-button>
+    </div>
+  </div>
+</div>
+<ng-container *ngIf="saving$ | async"></ng-container>

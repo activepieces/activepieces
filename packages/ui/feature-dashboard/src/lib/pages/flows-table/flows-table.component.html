@@ -1,4 +1,4 @@
-<div class="ap-h-[calc(100% - 6.5625rem)] ap-px-7.5" [class.ap-hidden]="(areThereFlows$|async)===false">
+<div class="ap-h-[calc(100% - 6.5625rem)] ap-px-7.5 ap-relative ap-overflow-hidden" [class.ap-hidden]="(areThereFlows$|async)===false">
   <div class="ap-flex ap-h-full ">
     <div class=" ap-min-w-[274px] ap-max-w-[274px]" *ngIf="(hideFolders$ | async) === undefined ||(hideFolders$ | async) === false " #foldersSection>
       <div class="ap-typography-headline-5 !ap-font-semibold ap-mb-7.5 ap-mt-20" i18n>My Flows</div>
@@ -9,6 +9,12 @@
         <div
           class=" ap-rounded ap-border ap-border-solid ap-border-dividers ap-p-[30px] ap-pb-[80px] ap-flex ap-flex-col">
           <app-flows-table-title></app-flows-table-title>
+          @if(showRewards$ | async)
+          {
+            <div class="ap-my-2">
+              <app-rewards-note-component></app-rewards-note-component>
+            </div>
+          }
           <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Flows" i18n-aria-label>
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef i18n>Name</th>

@@ -24,7 +24,7 @@ import {
 } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
-import { ProjectMemberService } from '@activepieces/ee/project-members';
+import { ProjectMemberService } from 'ee-project-members';
 
 interface UpdateProjectForm {
   displayName: FormControl<string>;

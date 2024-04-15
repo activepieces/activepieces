@@ -16,8 +16,8 @@ import {
   showBasedOnRoles,
   showPlatformSettingsGuard,
 } from '@activepieces/ui/common';
-import { PlansPageComponent } from '@activepieces/ee-billing-ui';
-import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
+import { PlansPageComponent } from 'ee-billing-ui';
+import { ProjectMembersTableComponent } from 'ee-project-members';
 import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
 import { ActivityTableComponent } from './pages/activity-table/activity-table.component';
 import { SettingsPageComponent } from './pages/settings-page/settings-page.component';
@@ -141,9 +141,7 @@ export const DashboardLayoutRouting: Routes = [
         path: 'platform',
         pathMatch: 'prefix',
         loadChildren: () =>
-          import('@activepieces/ui-ee-platform').then(
-            (res) => res.UiEePlatformModule
-          ),
+          import('ui-ee-platform').then((res) => res.UiEePlatformModule),
         canActivate: [showPlatformSettingsGuard],
       },
     ],
