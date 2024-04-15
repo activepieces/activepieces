@@ -13,10 +13,10 @@ import { ActivepiecesError, apId, ErrorCode, SeekPage } from '@activepieces/shar
 
 export type SSLParams = {
     bundleMethod: 'ubiquitous' | 'optimal' | 'force'
-    certificateAuthority: 'digicert' | 'google' | 'lets_encrypt'
+    certificateAuthority: 'lets_encrypt'
     customCertificate: string
     customKey: string
-    method: 'http' | 'txt' | 'email'
+    method: 'txt'
 }
 
 const customDomainRepo =
