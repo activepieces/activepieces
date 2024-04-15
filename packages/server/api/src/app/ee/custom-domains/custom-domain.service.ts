@@ -9,52 +9,39 @@ import {
     CustomDomainStatus,
     ListCustomDomainsRequest,
 } from '@activepieces/ee-shared'
-import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, apId, ErrorCode, SeekPage } from '@activepieces/shared'
-
-export type SSLParams = {
-    bundleMethod: 'ubiquitous' | 'optimal' | 'force'
-    certificateAuthority: 'lets_encrypt'
-    customCertificate: string
-    customKey: string
-    method: 'txt'
-}
+import { ActivepiecesError, ApEdition, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
 
 const customDomainRepo =
     databaseConnection.getRepository<CustomDomain>(CustomDomainEntity)
 
 export const customDomainService = {
     async delete(request: { id: string, platformId: string }): Promise<void> {
-        try {
-            const edition = getEdition()
-            if (edition === ApEdition.CLOUD) {
-                const customDomain = await customDomainRepo
-                    .createQueryBuilder('custom_domain')
-                    .where({
-                        id: request.id,
-                    })
-                    .getRawOne()
-                
-                const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.custom_domain_domain)
-                if (hostnameDetails.data.result.id) {
-                    await cloudflareHostnameServices.delete(hostnameDetails.data.result.id)
-                }
-            }
-            
-            await customDomainRepo.delete({
+        const edition = getEdition()
+        if (edition === ApEdition.CLOUD) {
+            const customDomain = await customDomainRepo.findOneBy({
                 id: request.id,
-                platformId: request.platformId,
             })
+
+            if (isNil(customDomain)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        entityType: 'CustomDomain',
+                        entityId: request.id,
+                    },
+                })
+            }
+                
+            const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.domain)
+            if (hostnameDetails.data.result.id) {
+                await cloudflareHostnameServices.delete(hostnameDetails.data.result.id)
+            }
         }
-        catch (e) {
-            logger.error(e)
-            throw new ActivepiecesError({
-                code: ErrorCode.CUSTOM_DOMAIN_FAILED,
-                params: {
-                    message: 'Failed to delete custom domain.',
-                },
-            })
-        }
+            
+        await customDomainRepo.delete({
+            id: request.id,
+            platformId: request.platformId,
+        })
     },
     async getOneByDomain(request: {
         domain: string
@@ -74,13 +61,21 @@ export const customDomainService = {
         platformId: string
         id: string
     }): Promise<boolean> {
-        const customDomain = await customDomainRepo
-            .createQueryBuilder('custom_domain')
-            .where({
-                id: request.id,
+        const customDomain = await customDomainRepo.findOneBy({
+            id: request.id,
+        })
+
+        if (isNil(customDomain)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'CustomDomain',
+                    entityId: request.id,
+                },
             })
-            .getRawOne()
-        const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.custom_domain_domain)
+        }
+
+        const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.domain)
         const patchResult = await cloudflareHostnameServices.update(hostnameDetails.data.result.id)
         const status = patchResult.data.result.status
 
@@ -96,35 +91,22 @@ export const customDomainService = {
     async create(request: {
         domain: string
         platformId: string
-        ssl: SSLParams
     }): Promise<CustomDomain> {
-        try {
-            const customDomain = customDomainRepo.create({
-                id: apId(),
-                domain: request.domain, 
-                platformId: request.platformId,
-                status: CustomDomainStatus.PENDING,
+        const customDomain = customDomainRepo.create({
+            id: apId(),
+            domain: request.domain, 
+            platformId: request.platformId,
+            status: CustomDomainStatus.PENDING,
+        })
+        
+        const edition = getEdition()
+        if (edition === ApEdition.CLOUD) {
+            await cloudflareHostnameServices.create({ 
+                hostname: request.domain, 
             })
-            
-            const edition = getEdition()
-            if (edition === ApEdition.CLOUD) {
-                await cloudflareHostnameServices.create({ 
-                    hostname: request.domain, 
-                    ssl: request.ssl, 
-                })
-            }
+        }
 
-            return await customDomainRepo.save(customDomain)
-        }
-        catch (e) {
-            logger.error(e)
-            throw new ActivepiecesError({
-                code: ErrorCode.CUSTOM_DOMAIN_FAILED,
-                params: {
-                    message: 'Failed to create a custom domain. Make sure you are not using domains like *.example.com and *.example.net.',
-                },
-            })
-        }
+        return customDomainRepo.save(customDomain)
     },
     async list({
         request,
