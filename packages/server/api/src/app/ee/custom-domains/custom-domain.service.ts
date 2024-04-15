@@ -1,6 +1,7 @@
 import { databaseConnection } from '../../database/database-connection'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { getEdition } from '../../helper/secret-helper'
 import { cloudflareHostnameServices } from './cloudflare-api.service'
 import { CustomDomainEntity } from './custom-domain.entity'
 import {
@@ -9,7 +10,7 @@ import {
     ListCustomDomainsRequest,
 } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, ErrorCode, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, apId, ErrorCode, SeekPage } from '@activepieces/shared'
 
 export type SSLParams = {
     bundleMethod: 'ubiquitous' | 'optimal' | 'force'
@@ -25,22 +26,25 @@ const customDomainRepo =
 export const customDomainService = {
     async delete(request: { id: string, platformId: string }): Promise<void> {
         try {
-            const customDomain = await customDomainRepo
-                .createQueryBuilder('custom_domain')
-                .where({
-                    id: request.id,
-                })
-                .getRawOne()
-
-            const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.custom_domain_domain)
-
-            if (hostnameDetails.data.result.id) {
-                await cloudflareHostnameServices.delete(hostnameDetails.data.result.id)
-                await customDomainRepo.delete({
-                    id: request.id,
-                    platformId: request.platformId,
-                })
+            const edition = getEdition()
+            if (edition === ApEdition.CLOUD) {
+                const customDomain = await customDomainRepo
+                    .createQueryBuilder('custom_domain')
+                    .where({
+                        id: request.id,
+                    })
+                    .getRawOne()
+                
+                const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.custom_domain_domain)
+                if (hostnameDetails.data.result.id) {
+                    await cloudflareHostnameServices.delete(hostnameDetails.data.result.id)
+                }
             }
+            
+            await customDomainRepo.delete({
+                id: request.id,
+                platformId: request.platformId,
+            })
         }
         catch (e) {
             logger.error(e)
@@ -102,10 +106,13 @@ export const customDomainService = {
                 status: CustomDomainStatus.PENDING,
             })
             
-            await cloudflareHostnameServices.create({ 
-                hostname: request.domain, 
-                ssl: request.ssl, 
-            })
+            const edition = getEdition()
+            if (edition === ApEdition.CLOUD) {
+                await cloudflareHostnameServices.create({ 
+                    hostname: request.domain, 
+                    ssl: request.ssl, 
+                })
+            }
 
             return await customDomainRepo.save(customDomain)
         }
