@@ -50,6 +50,14 @@ export class CreateCustomDomainDialogComponent {
       this.addCustomDomain$ = this.customDomainService
         .create({
           domain: rawData.domain,
+          ssl: {
+            // test params
+            bundleMethod: 'ubiquitous',
+            certificateAuthority: 'google',
+            customCertificate: 'jebkvdbf',
+            customKey: 'ejbjbv',
+            method: 'http',
+          },
         })
         .pipe(
           tap(() => {

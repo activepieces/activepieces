@@ -18,6 +18,13 @@ export type CustomDomain = Static<typeof CustomDomain>;
 
 export const AddDomainRequest = Type.Object({
     domain: Type.String(),
+    ssl: Type.Object({
+        bundleMethod: Type.String(),
+        certificateAuthority: Type.String(),
+        customCertificate: Type.String(),
+        customKey: Type.String(),
+        method: Type.String()
+    })
 })
 
 export type AddDomainRequest = Static<typeof AddDomainRequest>;
