@@ -1,0 +1,25 @@
+<ap-page-title [title]="title"></ap-page-title>
+<mat-tab-group #tabs class="ap-gap-4 " dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start"
+  animationDuration="0" (selectedTabChange)="tabChanged($event)">
+  <mat-tab label="Updates" bodyClass="!ap-overflow-visible">
+    <app-updates></app-updates>
+  </mat-tab>
+  <mat-tab [label]="signingKeysTabTitle" *ngIf="!isDemo">
+    <app-signing-keys-table [platform]="platform" [isDemo]="isDemo"></app-signing-keys-table>
+  </mat-tab>
+  <mat-tab [label]="accountManagementEmailTabTitle" *ngIf="!isDemo">
+    <app-smtp-settings [platform]="platform" [isDemo]="isDemo"></app-smtp-settings></mat-tab>
+  <mat-tab [label]="customDomainTabTitle" *ngIf="!isDemo">
+    <app-custom-domain-table [platform]="platform" [isDemo]="isDemo"></app-custom-domain-table>
+  </mat-tab>
+  <mat-tab [label]="apiKeysTabTitle">
+    <app-api-keys-table [platform]="platform" [isDemo]="isDemo"></app-api-keys-table>
+  </mat-tab>
+  <mat-tab label="Single Sign On" bodyClass="!ap-overflow-visible">
+    <app-sso-settings [platform]="platform" [isDemo]="isDemo"></app-sso-settings>
+  </mat-tab>
+  <mat-tab label="Audit Logs" bodyClass="!ap-overflow-visible">
+    <app-audit-event-table [platform]="platform" [isDemo]="isDemo"></app-audit-event-table>
+  </mat-tab>
+</mat-tab-group>
+<ng-container *ngIf="fragmentChanged$ | async"></ng-container>

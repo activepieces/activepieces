@@ -1,0 +1,101 @@
+<ap-dialog-title-template>
+  {{ dialogTitle }}
+</ap-dialog-title-template>
+
+<mat-dialog-content>
+  <div class="ap-w-[500px]">
+    <div *ngIf="!keyCreated">
+      <form [formGroup]="formGroup" (submit)="createKey()">
+        <mat-form-field class="ap-w-full">
+          <mat-label i18n>Name</mat-label>
+          <input
+            matInput
+            i18n-placeholder
+            placeholder="Very secret key"
+            [formControl]="formGroup.controls.displayName"
+          />
+          <mat-error
+            *ngIf="formGroup.controls.displayName.hasError('required')"
+            i18n
+            >Name is required
+          </mat-error>
+          <mat-error
+            *ngIf="formGroup.controls.displayName.hasError('invalid')"
+            i18n
+            >Name is used
+          </mat-error>
+        </mat-form-field>
+      </form>
+    </div>
+    <div *ngIf="keyCreated" class="ap-flex ap-flex-col ap-gap-4">
+      <div class="ap-typography-body-1" i18n>
+        Your signing key <b>(keep it with you)</b>:
+      </div>
+      <mat-form-field class="ap-w-full">
+        <textarea
+          readonly
+          class="ap-w-full"
+          rows="4"
+          [formControl]="signingKeyFormControl"
+          matInput
+        ></textarea>
+        <ap-icon-button
+          [width]="15"
+          [height]="15"
+          matSuffix
+          iconFilename="copy.svg"
+          tooltipText="Copy"
+          extraClasses="ap-fill-body"
+          class="ap-mr-[3.125rem]"
+          (buttonClicked)="copyKey()"
+        ></ap-icon-button>
+        <ap-icon-button
+          [width]="15"
+          [height]="15"
+          matSuffix
+          iconFilename="download.svg"
+          tooltipText="Download"
+          (buttonClicked)="downloadKey()"
+        ></ap-icon-button>
+      </mat-form-field>
+      <div class="ap-typography-body-1" i18n>
+        Read our docs to see how you will use this key to sign requests sent
+        from your app to Activepieces. You will no longer find the key on
+        Activepieces.
+      </div>
+
+      <mat-checkbox color="primary" [formControl]="confirmationControl" i18n
+        >I understand I will no longer be able to access this key here.
+      </mat-checkbox>
+    </div>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button
+      btnColor="basic"
+      *ngIf="!keyCreated"
+      mat-dialog-close
+      btnSize="default"
+      btnColor="basic"
+      i18n
+    >
+      Cancel
+    </ap-button>
+    <ap-button
+      (buttonClicked)="!keyCreated ? createKey() : close()"
+      btnColor="primary"
+      btnSize="default"
+      [loading]="
+        (loading$ | async) !== undefined && (loading$ | async) !== false
+      "
+      [disabled]="!confirmationControl.value && keyCreated"
+    >
+      <div *ngIf="keyCreated" i18n>Confirm</div>
+      <div *ngIf="!keyCreated" i18n>Create</div>
+    </ap-button>
+  </div>
+</mat-dialog-actions>
+
+<ng-container *ngIf="createSigningKey$ | async"></ng-container>
+<ng-container *ngIf="nameChanged$ | async"></ng-container>

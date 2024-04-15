@@ -1,0 +1,13 @@
+<div class="ap-hidden">
+  <app-add-edit-connection-button *ngIf="openNewConnectionsDialog$ | async as newConnectionPiece " #connectionButton
+    [transparentBackdrop]="true" btnSize="extraSmall" [isEditConnectionButton]="false"
+    [authProperty]="newConnectionPiece.auth!" [pieceName]="newConnectionPiece.name"
+    [pieceVersion]="newConnectionPiece.version" [pieceDisplayName]="newConnectionPiece.displayName"
+    (newConnection)="hideConnectionIframe($event)"
+    (newConnectionDialogClosed)="hideConnectionIframe()"></app-add-edit-connection-button>
+</div>
+<div
+  class="ap-flex cdk-overlay-dark-backdrop  ap-items-center ap-justify-center ap-h-full ap-w-full ap-bg-[transparent] ap-transition-all">
+  <svg-icon [svgStyle]="{ width: '50px', height: '50px' }" src="assets/img/custom/loading.svg"
+    class="loading-spin-animation-main !ap-fill-white" [applyClass]="true"></svg-icon>
+</div>

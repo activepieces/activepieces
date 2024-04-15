@@ -18,14 +18,8 @@
     "baseUrl": ".",
     "paths": {
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
-      "@activepieces/ee-billing-ui": ["packages/ee/billing/ui/src/index.ts"],
-      "@activepieces/ee-components": ["packages/ee/components/src/index.ts"],
-      "@activepieces/ee-embed-sdk": ["packages/ee/embed-sdk/src/index.ts"],
       "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
-      "@activepieces/ee/project-members": [
-        "packages/ee/project-members/src/index.ts"
-      ],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/piece-activecampaign": [
         "packages/pieces/community/activecampaign/src/index.ts"
@@ -583,7 +577,6 @@
       "@activepieces/ui-canvas-utils": [
         "packages/ui/canvas-utils/src/index.ts"
       ],
-      "@activepieces/ui-ee-platform": ["packages/ee/ui-platform/src/index.ts"],
       "@activepieces/ui-feature-builder-header": [
         "packages/ui/feature-builder-header/src/index.ts"
       ],
@@ -628,7 +621,12 @@
         "packages/ui/feature-templates/src/index.ts"
       ],
       "@ee/*": ["packages/ee/*"],
+      "ee-billing-ui": ["packages/ee/ui/billing/src/index.ts"],
+      "ee-components": ["packages/ee/ui/components/src/index.ts"],
+      "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
+      "ee-project-members": ["packages/ee/ui/project-members/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
+      "ui-ee-platform": ["packages/ee/ui/platform/src/index.ts"],
       "ui-feature-flow-builder": [
         "packages/ui/feature-flow-builder/src/index.ts"
       ],

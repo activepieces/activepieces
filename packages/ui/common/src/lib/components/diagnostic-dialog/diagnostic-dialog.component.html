@@ -1,0 +1,38 @@
+<ap-dialog-title-template>Report Issue</ap-dialog-title-template>
+<mat-dialog-content>
+    <div class="ap-min-w-[500px]  ap-max-h-[600px] ap-max-w-[750px] ap-mt-4">
+        @if(showSupport$ | async) {
+        <div>
+            You can report an issue by creating a topic for it <span
+                class="ap-cursor-pointer ap-text-blue-500 ap-underline"
+                (click)="openSupport()">here</span>.
+        </div>
+        }
+        <div i18n>
+            Please provide the following information when reporting an issue to support:
+        </div>
+        <div class="ap-my-4">
+            <ap-warning-box>
+                <div>
+                   <b i18n>Warning: </b>
+                   <br>
+                   <p i18n>
+                    The error below may contain credentials, please remove them before sharing it with anyone.
+                   </p> 
+                </div>
+
+            </ap-warning-box>
+        </div>
+        
+@if (enrichData$ | async; as enrichedData) {
+    <ap-json-viewer title="Error" i18n-error [hideMaximize]="true" [content]="enrichedData"></ap-json-viewer>
+}
+    </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" i18n>
+            Close
+        </ap-button>
+    </div>
+</mat-dialog-actions>

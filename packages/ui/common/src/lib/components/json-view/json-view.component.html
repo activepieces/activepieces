@@ -9,9 +9,11 @@
             [applyClass]="true" matTooltip="Download" (click)="downloadContent()"></svg-icon>
           <svg-icon class="ap-h-[16px] ap-w-[16px] ap-cursor-pointer ap-fill-body" src="/assets/img/custom/copy.svg"
             [applyClass]="true" matTooltip="Copy" (click)="copyContent()"></svg-icon>
-          <svg-icon class="ap-h-[16px] ap-w-[16px] ap-cursor-pointer" src="/assets/img/custom/maximize-black.svg"
-            [applyClass]="true" matTooltip="Expand" (click)="openModal()"></svg-icon>
-    
+            @if(!hideMaximize){
+              <svg-icon class="ap-h-[16px] ap-w-[16px] ap-cursor-pointer" src="/assets/img/custom/maximize-black.svg"
+              [applyClass]="true" matTooltip="Expand" (click)="openModal()"></svg-icon>
+            }
+         
         </div>
       </div>
           <div  [style.height]="containerHeight + 'px'">

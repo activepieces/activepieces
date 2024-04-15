@@ -5,7 +5,11 @@ import {
   UntypedFormGroup,
   Validators,
 } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+  MatDialog,
+} from '@angular/material/dialog';
 import { catchError, Observable, of, tap } from 'rxjs';
 import {
   AppConnectionType,
@@ -22,6 +26,7 @@ import deepEqual from 'deep-equal';
 import {
   AppConnectionsService,
   AuthenticationService,
+  DiagnosticDialogComponent,
 } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import { connectionNameRegex } from '../utils';
@@ -44,10 +49,12 @@ export class CustomAuthConnectionDialogComponent {
   keyTooltip =
     'The ID of this authentication definition. You will need to select this key whenever you want to reuse this authentication.';
   upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
+  openDiagnosticDialog$: Observable<void>;
   constructor(
     private fb: FormBuilder,
     @Inject(MAT_DIALOG_DATA)
     public dialogData: CustomAuthDialogData,
+    private dialogService: MatDialog,
     private authenticationService: AuthenticationService,
     private dialogRef: MatDialogRef<CustomAuthConnectionDialogComponent>,
     private appConnectionsService: AppConnectionsService
@@ -115,12 +122,17 @@ export class CustomAuthConnectionDialogComponent {
         catchError((response) => {
           console.error(response);
 
-          this.settingsForm.setErrors({
-            message:
-              response.error.code === ErrorCode.INVALID_APP_CONNECTION
-                ? `Connection failed: ${response.error.params.error}`
-                : 'Internal Connection error, failed please check your console.',
-          });
+          const hasMessage =
+            response.error?.code === ErrorCode.INVALID_APP_CONNECTION;
+          if (hasMessage) {
+            this.settingsForm.setErrors({
+              message: `Connection failed: ${response.error.params.error}`,
+            });
+          } else {
+            this.settingsForm.setErrors({
+              diagnostic: response.error.params,
+            });
+          }
           return of(null);
         }),
         tap((connection) => {
@@ -131,5 +143,13 @@ export class CustomAuthConnectionDialogComponent {
         })
       );
     }
+  }
+
+  openDiagnosticDialog(information: unknown) {
+    this.dialogService.open(DiagnosticDialogComponent, {
+      data: {
+        information,
+      },
+    });
   }
 }

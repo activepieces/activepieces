@@ -89,6 +89,7 @@ export class AddEditConnectionButtonComponent {
     name: string;
     id: string;
   }> = new EventEmitter();
+  @Input() transparentBackdrop = false;
   updateOrAddConnectionDialogClosed$: Observable<void>;
   checkConnectionLimitThenOpenDialog$: Observable<void>;
   appsAndTheirClientIds$ = this.cloudAuthConfigsService
@@ -150,6 +151,7 @@ export class AddEditConnectionButtonComponent {
     return this.dialogService
       .open(CustomAuthConnectionDialogComponent, {
         data: dialogData,
+        backdropClass: this.transparentBackdrop ? 'ap-bg-transparent' : '',
       })
       .afterClosed()
       .pipe(
@@ -178,6 +180,7 @@ export class AddEditConnectionButtonComponent {
     return this.dialogService
       .open(BasicAuthConnectionDialogComponent, {
         data: dialogData,
+        backdropClass: this.transparentBackdrop ? 'ap-bg-transparent' : '',
       })
       .afterClosed()
       .pipe(
@@ -195,6 +198,7 @@ export class AddEditConnectionButtonComponent {
     return this.dialogService
       .open(SecretTextConnectionDialogComponent, {
         data: dialogData,
+        backdropClass: this.transparentBackdrop ? 'ap-bg-transparent' : '',
       })
       .beforeClosed()
       .pipe(
@@ -256,6 +260,7 @@ export class AddEditConnectionButtonComponent {
         return this.dialogService
           .open(OAuth2ConnectionDialogComponent, {
             data,
+            backdropClass: this.transparentBackdrop ? 'ap-bg-transparent' : '',
           })
           .afterClosed()
           .pipe(
@@ -306,6 +311,9 @@ export class AddEditConnectionButtonComponent {
           return this.dialogService
             .open(ManagedOAuth2ConnectionDialogComponent, {
               data,
+              backdropClass: this.transparentBackdrop
+                ? 'ap-bg-transparent'
+                : '',
             })
             .afterClosed()
             .pipe(
@@ -374,6 +382,7 @@ export class AddEditConnectionButtonComponent {
         return this.dialogService
           .open(CustomAuthConnectionDialogComponent, {
             data: dialogData,
+            backdropClass: this.transparentBackdrop ? 'ap-bg-transparent' : '',
           })
           .afterClosed()
           .pipe(
@@ -399,6 +408,7 @@ export class AddEditConnectionButtonComponent {
         return this.dialogService
           .open(SecretTextConnectionDialogComponent, {
             data: dialogData,
+            backdropClass: this.transparentBackdrop ? 'ap-bg-transparent' : '',
           })
           .afterClosed()
           .pipe(
@@ -423,6 +433,7 @@ export class AddEditConnectionButtonComponent {
         return this.dialogService
           .open(BasicAuthConnectionDialogComponent, {
             data: dialogData,
+            backdropClass: this.transparentBackdrop ? 'ap-bg-transparent' : '',
           })
           .afterClosed()
           .pipe(
@@ -454,6 +465,9 @@ export class AddEditConnectionButtonComponent {
               return this.dialogService
                 .open(OAuth2ConnectionDialogComponent, {
                   data,
+                  backdropClass: this.transparentBackdrop
+                    ? 'ap-bg-transparent'
+                    : '',
                 })
                 .afterClosed()
                 .pipe(
@@ -478,6 +492,9 @@ export class AddEditConnectionButtonComponent {
                     return this.dialogService
                       .open(ManagedOAuth2ConnectionDialogComponent, {
                         data,
+                        backdropClass: this.transparentBackdrop
+                          ? 'ap-bg-transparent'
+                          : '',
                       })
                       .afterClosed()
                       .pipe(

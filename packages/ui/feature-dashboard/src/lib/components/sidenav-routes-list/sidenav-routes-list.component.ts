@@ -101,7 +101,7 @@ export class SidenavRoutesListComponent implements OnInit {
       caption: $localize`Settings`,
       route: 'platform/settings',
       showInSideNav$: of(true),
-      showLock$: this.demoPlatform$,
+      showLock$: of(false),
     },
   ];
   constructor(

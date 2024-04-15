@@ -1,0 +1,17 @@
+@import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
+
+$appended-to-body-z-index: 9999;
+
+.cdk-overlay-backdrop {
+  z-index: $appended-to-body-z-index !important; //higher then fixed header z-index so it comes above
+}
+
+.cdk-overlay-pane {
+  z-index: (
+    $appended-to-body-z-index + 10
+  ) !important; //higher then fixed header z-index so it comes above
+}
+
+.cdk-global-overlay-wrapper {
+  z-index: $appended-to-body-z-index !important; //higher then fixed header z-index so it comes above
+}

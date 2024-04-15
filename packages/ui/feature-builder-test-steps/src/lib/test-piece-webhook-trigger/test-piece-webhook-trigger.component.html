@@ -70,13 +70,13 @@
                     </div>
 
                     <ap-warning-box>
-                        <div class="ap-flex ap-items-center ap-gap-2 ap-ml-[-3px] ">
-                            <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">
-                            </svg-icon> <span i18n>Action Required</span>
+                        <div>
+                         
+                                <span i18n>Action Required:</span>
+                              
+                            <p>{{ simulationMessage$|async }}</p>
                         </div>
-                        <p>
-                            {{ simulationMessage$|async }}
-                        </p>
+                        
                     </ap-warning-box>
 
 
