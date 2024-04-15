@@ -284,8 +284,16 @@ export class FlowsEffects {
       ofType(...SingleFlowModifyingState),
       concatLatestFrom(() => [
         this.store.select(BuilderSelectors.selectCurrentFlow),
+        this.store.select(BuilderSelectors.selectReadOnly),
       ]),
-      concatMap(([action, flow]) => {
+      concatMap(([action, flow, isReadonly]) => {
+        if (isReadonly) {
+          console.error(
+            'Activepieces: Trying to modify a readonly flow',
+            action
+          );
+          return EMPTY;
+        }
         const genSavedId = UUID.UUID();
         let flowOperation: FlowOperationRequest;
         switch (action.type) {
