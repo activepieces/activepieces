@@ -150,7 +150,7 @@ export const customDomainService = {
             platformId: request.platformId,
             id: request.id,
         }, {
-            status,
+            status: CustomDomainStatus.ACTIVE,
         })
 
         return status
