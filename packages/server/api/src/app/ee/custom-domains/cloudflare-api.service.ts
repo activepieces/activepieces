@@ -1,15 +1,14 @@
 import axios, { AxiosResponse } from 'axios'
-import { SSLParams } from './custom-domain.service'
 import { system, SystemProp } from '@activepieces/server-shared'
 
 export const cloudflareHostnameServices = {
     headers: {
-        'X-Auth-Email': system.get(SystemProp.AUTH_EMAIL),
-        'X-Auth-Key': system.get(SystemProp.AP_API_KEY),
+        'X-Auth-Email': system.get(SystemProp.CLOUDFLARE_AUTH_EMAIL),
+        'X-Auth-Key': system.get(SystemProp.CLOUDFLARE_API_KEY),
         'Content-Type': 'application/json',
     },
     makeUrl(customHostnameId?: string): string {
-        const BASE_URL = `https://api.cloudflare.com/client/v4/zones/${system.get(SystemProp.ZONE_ID)}/custom_hostnames`
+        const BASE_URL = `https://api.cloudflare.com/client/v4/zones/${system.get(SystemProp.CLOUDFLARE_ZONE_ID)}/custom_hostnames`
         if (customHostnameId) {
             return `${BASE_URL}/${customHostnameId}`
         }
@@ -17,14 +16,15 @@ export const cloudflareHostnameServices = {
     },
     async create(request: {
         hostname: string
-        ssl: SSLParams
     }): Promise<AxiosResponse> {
         return axios.post(
             this.makeUrl(),
             {
                 hostname: request.hostname,
                 ssl: {
-                    ...request.ssl,
+                    bundleMethod: 'ubiquitous',
+                    certificateAuthority: 'lets_encrypt',
+                    method: 'txt',
                     settings: {
                         ciphers: ['ECDHE-RSA-AES128-GCM-SHA256', 'AES128-SHA'],
                         early_hints: 'on',
@@ -59,15 +59,8 @@ export const cloudflareHostnameServices = {
     },
     async update(
         customHostnameId: string,
-        data?: {
-            ssl: SSLParams
-        },
     ): Promise<AxiosResponse> {
-        let body = {}
-        if (data) {
-            body = data
-        }
-        return axios.patch(this.makeUrl(customHostnameId), body, {
+        return axios.patch(this.makeUrl(customHostnameId), {}, {
             headers: this.headers,
         })
     },
