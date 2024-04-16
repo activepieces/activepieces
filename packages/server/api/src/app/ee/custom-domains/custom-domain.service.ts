@@ -57,6 +57,34 @@ export const customDomainService = {
             platformId: request.platformId,
         })
     },
+    async getDomainValidationData(request: {
+        id: string
+    }): Promise<{
+            txtName: string
+            txtValue: string
+        }> {
+        const customDomain = await customDomainRepo.findOneBy({
+            id: request.id,
+        })
+
+        if (isNil(customDomain)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'CustomDomain',
+                    entityId: request.id,
+                },
+            })
+        }
+
+        const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.domain)
+        const validationRecord = hostnameDetails.data.result[0].ownership_verification
+
+        return {
+            txtName: validationRecord.name,
+            txtValue: validationRecord.value,
+        }
+    },
     async verifyDomain(request: {
         platformId: string
         id: string
