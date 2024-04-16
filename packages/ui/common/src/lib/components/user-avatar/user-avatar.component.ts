@@ -1,8 +1,12 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
-import { ApFlagId, ProjectWithLimits } from '@activepieces/shared';
-import { Observable, map } from 'rxjs';
+import {
+  ApFlagId,
+  ProjectMemberRole,
+  ProjectWithLimits,
+} from '@activepieces/shared';
+import { Observable, forkJoin, map } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
 import { LocalesService } from '../../service/locales.service';
 import { LocalesEnum } from '@activepieces/shared';
@@ -57,13 +61,22 @@ export class UserAvatarComponent implements OnInit {
     this.selectedProject$ = this.projectService.currentProject$;
     this.selectedLanguage =
       this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
-    this.showPlatform$ = this.flagService
-      .isFlagEnabled(ApFlagId.SHOW_PLATFORM_DEMO)
-      .pipe(
-        map((isDemo) => {
-          return isDemo || this.authenticationService.isPlatformOwner();
-        })
-      );
+    const showPlatformDemo$ = this.flagService.isFlagEnabled(
+      ApFlagId.SHOW_PLATFORM_DEMO
+    );
+    const isPlatformOwner = this.authenticationService.isPlatformOwner$();
+    this.showPlatform$ = forkJoin({
+      showPlatformDemo: showPlatformDemo$,
+      isPlatformOwner,
+    }).pipe(
+      map(({ showPlatformDemo, isPlatformOwner }) => {
+        return (
+          (showPlatformDemo || isPlatformOwner) &&
+          this.authenticationService.currentUser.projectRole !==
+            ProjectMemberRole.EXTERNAL_CUSTOMER
+        );
+      })
+    );
   }
   ngOnInit(): void {
     this.currentUserEmail = this.authenticationService.currentUser.email;

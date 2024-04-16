@@ -1,13 +1,20 @@
 import dayjs from 'dayjs'
 import { IsNull } from 'typeorm'
 import { passwordHasher } from '../authentication/lib/password-hasher'
-import { databaseConnection } from '../database/database-connection'
+import { repoFactory } from '../core/db/repo-factory'
+import { transaction } from '../core/db/transaction'
+import { projectMemberService } from '../ee/project-members/project-member.service'
+import { getEdition } from '../helper/secret-helper'
 import { UserEntity } from './user-entity'
 import {
     ActivepiecesError,
+    ApEdition,
     apId,
     ErrorCode,
     isNil,
+    PlatformId,
+    PlatformRole,
+    SeekPage,
     SignUpRequest,
     User,
     UserId,
@@ -15,7 +22,8 @@ import {
     UserStatus,
 } from '@activepieces/shared'
 
-const userRepo = databaseConnection.getRepository(UserEntity)
+
+const repo = repoFactory(UserEntity)
 
 export const userService = {
     async create(params: CreateParams): Promise<User> {
@@ -24,15 +32,51 @@ export const userService = {
         const user: NewUser = {
             id: apId(),
             ...params,
+            platformRole: params.platformRole,
             status: UserStatus.ACTIVE,
             password: hashedPassword,
         }
 
-        return userRepo.save(user)
+        return repo().save(user)
+    },
+    async update({ id, status, platformId }: UpdateParams): Promise<User> {
+        const updateResult = await repo().update(
+            {
+                id,
+                platformId,
+            },
+            {
+                status,
+            },
+        )
+        if (updateResult.affected !== 1) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'user',
+                    entityId: id,
+                },
+            })
+        }
+        return repo().findOneByOrFail({
+            id,
+            platformId,
+        })
+    },
+    async list({ platformId }: ListParams): Promise<SeekPage<User>> {
+        const users = await repo().findBy({
+            platformId,
+        })
+
+        return {
+            data: users,
+            next: null,
+            previous: null,
+        }
     },
 
     async verify({ id }: IdParams): Promise<User> {
-        const user = await userRepo.findOneByOrFail({ id })
+        const user = await repo().findOneByOrFail({ id })
         if (user.verified) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -41,17 +85,17 @@ export const userService = {
                 },
             })
         }
-        return userRepo.save({
+        return repo().save({
             ...user,
             verified: true,
         })
     },
 
     async get({ id }: IdParams): Promise<User | null> {
-        return userRepo.findOneBy({ id })
+        return repo().findOneBy({ id })
     },
     async getOneOrFail({ id }: IdParams): Promise<User> {
-        return userRepo.findOneByOrFail({ id })
+        return repo().findOneByOrFail({ id })
     },
 
     async getMetaInfo({ id }: IdParams): Promise<UserMeta | null> {
@@ -66,10 +110,32 @@ export const userService = {
             email: user.email,
             platformId: user.platformId,
             firstName: user.firstName,
+            platformRole: user.platformRole,
             lastName: user.lastName,
-            imageUrl: user.imageUrl,
-            title: user.title,
         }
+    },
+
+    async delete({ id, platformId }: DeleteParams): Promise<void> {
+        return transaction(async (entityManager) => {
+            const user = await repo(entityManager).findOneByOrFail({
+                id,
+                platformId,
+            })
+
+            const edition = getEdition()
+            if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
+                await projectMemberService.deleteAllByPlatformAndEmail({
+                    email: user.email,
+                    platformId,
+                    entityManager,
+                })
+            }
+
+            await repo(entityManager).delete({
+                id,
+                platformId,
+            })
+        })
     },
 
     async getByPlatformAndEmail({
@@ -80,7 +146,7 @@ export const userService = {
             ? { platformId }
             : { platformId: IsNull() }
 
-        return userRepo
+        return repo()
             .createQueryBuilder()
             .where(platformWhereQuery)
             .andWhere('LOWER(email) = LOWER(:email)', { email })
@@ -91,7 +157,7 @@ export const userService = {
         platformId,
         externalId,
     }: GetByPlatformAndExternalIdParams): Promise<User | null> {
-        return userRepo.findOneBy({
+        return repo().findOneBy({
             platformId,
             externalId,
         })
@@ -103,27 +169,46 @@ export const userService = {
     }: UpdatePasswordParams): Promise<void> {
         const hashedPassword = await passwordHasher.hash(newPassword)
 
-        await userRepo.update(id, {
+        await repo().update(id, {
             updated: dayjs().toISOString(),
             password: hashedPassword,
         })
     },
 
-    async updatePlatformId({
+    async addOwnerToPlatform({
         id,
         platformId,
     }: UpdatePlatformIdParams): Promise<void> {
-        await userRepo.update(id, {
+        await repo().update(id, {
             updated: dayjs().toISOString(),
+            platformRole: PlatformRole.ADMIN,
             platformId,
         })
     },
+}
+
+type DeleteParams = {
+    id: UserId
+    platformId: PlatformId
+}
+
+
+type ListParams = {
+    platformId: PlatformId
+}
+
+
+type UpdateParams = {
+    id: UserId
+    status: UserStatus
+    platformId: PlatformId
 }
 
 type CreateParams = SignUpRequest & {
     verified: boolean
     platformId: string | null
     externalId?: string
+    platformRole: PlatformRole
 }
 
 type NewUser = Omit<User, 'created' | 'updated'>

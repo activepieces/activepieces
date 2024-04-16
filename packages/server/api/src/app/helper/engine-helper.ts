@@ -43,7 +43,6 @@ import {
     FlowRunResponse,
     FlowVersion,
     PieceTrigger,
-    PlatformRole,
     PrincipalType,
     ProjectId,
     ResumeExecuteFlowOperation,
@@ -98,7 +97,6 @@ const generateWorkerToken = ({
         // TODO NOW remove this hack
         platform: {
             id: apId(),
-            role: PlatformRole.OWNER,
         },
     })
 }

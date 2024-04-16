@@ -33,8 +33,8 @@ export class UsersTableComponent {
   displayedColumns = [
     'email',
     'name',
+    'platformRole',
     'created',
-    'updated',
     'status',
     'action',
   ];

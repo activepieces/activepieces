@@ -6,7 +6,6 @@ import {
     apId,
     ErrorCode,
     isNil,
-    PlatformRole,
     PrincipalType,
 } from '@activepieces/shared'
 
@@ -38,7 +37,6 @@ export class GlobalApiKeyAuthnHandler extends BaseSecurityHandler {
             projectId: `SUPER_USER_${apId()}`,
             platform: {
                 id: `SUPER_USER_${apId()}`,
-                role: PlatformRole.MEMBER,
             },
         }
 
