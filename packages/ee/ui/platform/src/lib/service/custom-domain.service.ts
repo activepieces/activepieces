@@ -28,4 +28,10 @@ export class CustomDomainService {
       };
     }>(environment.apiUrl + `/custom-domains/`, request);
   }
+  verifyDomain(keyId: string) {
+    return this.http.patch<{ status: string }>(
+      environment.apiUrl + `/custom-domains/verify/${keyId}`,
+      {}
+    );
+  }
 }
