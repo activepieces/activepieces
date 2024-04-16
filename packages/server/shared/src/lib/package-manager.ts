@@ -97,7 +97,7 @@ export const packageManager = {
     },
 }
 
-const replaceRelativeSystemLinkWithAbsolute = async (filePath: string) => {
+const replaceRelativeSystemLinkWithAbsolute = async (filePath: string): Promise<void> => {
     try {
     // Inside the isolate sandbox, the relative path is not valid
 

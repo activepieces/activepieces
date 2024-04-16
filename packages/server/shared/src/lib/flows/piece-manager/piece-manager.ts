@@ -1,5 +1,4 @@
 import { resolve } from 'node:path'
-import { enrichErrorContext, PackageInfo, system, SystemProp } from '@activepieces/server-shared'
 import {
     getPackageAliasForPiece,
     getPackageArchivePathForPiece,
@@ -7,10 +6,12 @@ import {
     PackageType,
     PiecePackage,
 } from '@activepieces/shared'
+import { enrichErrorContext } from '../../exception-handler'
+import { PackageInfo } from '../../package-manager'
+import { system } from '../../system/system'
+import { SystemProp } from '../../system/system-prop'
 
-export const PACKAGE_ARCHIVE_PATH = resolve(
-    system.getOrThrow(SystemProp.PACKAGE_ARCHIVE_PATH),
-)
+export const PACKAGE_ARCHIVE_PATH = resolve(system.getOrThrow(SystemProp.PACKAGE_ARCHIVE_PATH))
 
 export abstract class PieceManager {
     async install({ projectPath, pieces }: InstallParams): Promise<void> {

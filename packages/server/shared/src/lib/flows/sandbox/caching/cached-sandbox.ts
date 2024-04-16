@@ -1,12 +1,17 @@
 import { mkdir, rm } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { PiecePackage, SourceCode } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
-import { pieceManager } from '../../../flows/common/piece-manager'
+import { enrichErrorContext } from '../../../exception-handler'
+import { logger } from '../../../logger'
+import { packageManager } from '../../../package-manager'
+import { system } from '../../../system/system'
+import { SystemProp } from '../../../system/system-prop'
+import { codeBuilder } from '../../code-builder'
+import { engineInstaller } from '../../engine'
+import { pieceManager } from '../../piece-manager'
 import { CachedSandboxState } from './cached-sandbox-state'
-import { enrichErrorContext, logger, packageManager, system, SystemProp } from '@activepieces/server-shared'
-import { PiecePackage, SourceCode } from '@activepieces/shared'
-import { codeBuilder, engineInstaller } from 'server-worker'
 
 export class CachedSandbox {
     private static readonly CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? resolve('dist', 'cache')
@@ -19,7 +24,8 @@ export class CachedSandbox {
     public readonly key: string
 
     constructor({ key }: CtorParams) {
-        logger.debug({ key }, '[CachedSandbox#ctor]')
+        logger.debug({ name: 'CachedSandbox#ctor', key })
+
         this.key = key
     }
 
@@ -36,7 +42,12 @@ export class CachedSandbox {
     }
 
     async init(): Promise<void> {
-        logger.debug({ key: this.key, state: this._state, activeSandboxes: this._activeSandboxCount }, '[CachedSandbox#init]')
+        logger.debug({
+            name: 'CachedSandbox#init',
+            key: this.key,
+            state: this._state,
+            activeSandboxes: this._activeSandboxCount,
+        })
 
         await this.lock.runExclusive(async (): Promise<void> => {
             if (this._state !== CachedSandboxState.CREATED) {
@@ -51,7 +62,12 @@ export class CachedSandbox {
     }
 
     async prepare({ pieces, codeSteps = [] }: PrepareParams): Promise<void> {
-        logger.debug({ key: this.key, state: this._state, activeSandboxes: this._activeSandboxCount }, '[CachedSandbox#prepare]')
+        logger.debug({
+            name: 'CachedSandbox#prepare',
+            key: this.key,
+            state: this._state,
+            activeSandboxes: this._activeSandboxCount,
+        })
 
         try {
             await this.lock.runExclusive(async (): Promise<void> => {
@@ -107,7 +123,12 @@ export class CachedSandbox {
     }
 
     async decrementActiveSandboxCount(): Promise<void> {
-        logger.debug({ key: this.key, state: this._state, activeSandboxes: this._activeSandboxCount }, '[CachedSandbox#decrementActiveSandboxCount]')
+        logger.debug({
+            name: 'CachedSandbox#decrementActiveSandboxCount',
+            key: this.key,
+            state: this._state,
+            activeSandboxes: this._activeSandboxCount,
+        })
 
         await this.lock.runExclusive((): void => {
             if (this._activeSandboxCount === 0) {
@@ -123,13 +144,12 @@ export class CachedSandbox {
     }
 
     private async buildCodeArchives(codeArchives: CodeArtifact[]): Promise<void> {
-        const buildJobs = codeArchives.map((archive) =>
-            codeBuilder.processCodeStep({
-                sourceCodeId: archive.name,
-                sourceCode: archive.sourceCode,
-                buildPath: this.path(),
-            }),
-        )
+        const buildJobs = codeArchives.map((archive) => codeBuilder.processCodeStep({
+            sourceCodeId: archive.name,
+            sourceCode: archive.sourceCode,
+            buildPath: this.path(),
+        }))
+
         await Promise.all(buildJobs)
     }
 }

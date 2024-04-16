@@ -1,5 +1,4 @@
-import { getServerUrl } from './network-utils'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { getServerUrl, system, SystemProp } from '@activepieces/server-shared'
 
 type DomainHelper = {
     constructFrontendUrlFromRequest({

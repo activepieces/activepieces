@@ -1,7 +1,8 @@
 import dns from 'node:dns/promises'
-import { FastifyRequest } from 'fastify'
-import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
+import { system } from '../system/system'
+import { SystemProp } from '../system/system-prop'
 
 const GOOGLE_DNS = '216.239.32.10'
 const PUBLIC_IP_ADDRESS_QUERY = 'o-o.myaddr.l.google.com'

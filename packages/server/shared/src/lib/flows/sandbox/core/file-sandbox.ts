@@ -1,9 +1,11 @@
 import { spawn } from 'node:child_process'
 import { cp, mkdir, readFile, rmdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
 import { EngineResponseStatus } from '@activepieces/shared'
 import fs from 'fs-extra'
+import { logger } from '../../../logger'
+import { system } from '../../../system/system'
+import { SystemProp } from '../../../system/system-prop'
 import {
     AbstractSandbox,
     ExecuteSandboxResult,
@@ -133,7 +135,7 @@ export class FileSandbox extends AbstractSandbox {
                 reject(error)
             })
 
-            process.on('close', async (code: number) => {
+            process.on('close', (code: number) => void (async (code: number): Promise<void> => {
                 if (code !== 0) {
                     reject(new Error(`Command failed with code ${code}: ${cmd}`))
                     return
@@ -149,7 +151,7 @@ export class FileSandbox extends AbstractSandbox {
                 }
 
                 resolve({ verdict: EngineResponseStatus.OK })
-            })
+            })(code))
 
             setTimeout(() => {
                 process.kill()

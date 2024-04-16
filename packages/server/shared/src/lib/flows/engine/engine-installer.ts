@@ -1,9 +1,9 @@
 import { copyFile } from 'node:fs/promises'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { logger } from '../../logger'
+import { system } from '../../system/system'
+import { SystemProp } from '../../system/system-prop'
 
-const engineExecutablePath = system.getOrThrow(
-    SystemProp.ENGINE_EXECUTABLE_PATH,
-)
+const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH)
 
 /**
  * Installs the engine executable to the given path

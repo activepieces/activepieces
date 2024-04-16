@@ -1,8 +1,10 @@
-import { Mutex } from 'async-mutex'
-import { extractProvisionCacheKey, ProvisionCacheInfo, SandBoxCacheType } from '../provisioner/sandbox-cache-key'
-import { CachedSandbox } from './cached-sandbox'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
 import { ApEnvironment, isNil } from '@activepieces/shared'
+import { Mutex } from 'async-mutex'
+import { logger } from '../../../logger'
+import { system } from '../../../system/system'
+import { SystemProp } from '../../../system/system-prop'
+import { extractProvisionCacheKey, ProvisionCacheInfo, SandBoxCacheType } from '../provisioning/sandbox-cache-key'
+import { CachedSandbox } from './cached-sandbox'
 
 const CACHED_SANDBOX_LIMIT = 1000
 
@@ -11,7 +13,7 @@ const lock: Mutex = new Mutex()
 
 const sandboxKeyCachePool = {
     async findOrCreate(cacheInfo: ProvisionCacheInfo): Promise<CachedSandbox> {
-        logger.debug(cacheInfo, '[SandboxCachePool#get]')
+        logger.debug({ name: 'SandboxCachePool#get', cacheInfo })
 
         const key = extractProvisionCacheKey(cacheInfo)
         const cachedSandbox = await lock.runExclusive((): CachedSandbox => {

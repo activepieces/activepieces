@@ -1,11 +1,10 @@
-import { ExecutionMode, system, SystemProp } from '@activepieces/server-shared'
+import { ExecutionMode, system } from '../../../system/system'
+import { SystemProp } from '../../../system/system-prop'
 import { FileSandbox } from './file-sandbox'
 import { IsolateSandbox } from './isolate-sandbox'
 
-const getSandbox = () => {
-    const executionMode = system.getOrThrow<ExecutionMode>(
-        SystemProp.EXECUTION_MODE,
-    )
+const getSandbox = (): typeof IsolateSandbox | typeof FileSandbox => {
+    const executionMode = system.getOrThrow<ExecutionMode>(SystemProp.EXECUTION_MODE)
 
     const sandbox = {
         [ExecutionMode.SANDBOXED]: IsolateSandbox,

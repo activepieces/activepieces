@@ -1,7 +1,10 @@
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
-import { fileExists, logger, system, SystemProp } from '@activepieces/server-shared'
 import { EngineResponse, EngineResponseStatus } from '@activepieces/shared'
+import { fileExists } from '../../../file-system'
+import { logger } from '../../../logger'
+import { system } from '../../../system/system'
+import { SystemProp } from '../../../system/system-prop'
 
 export abstract class AbstractSandbox {
     protected static readonly sandboxRunTimeSeconds =

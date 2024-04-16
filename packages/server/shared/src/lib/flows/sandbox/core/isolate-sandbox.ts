@@ -2,11 +2,13 @@ import { exec } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { arch, cwd } from 'node:process'
-import { logger, PiecesSource, system, SystemProp } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     EngineResponseStatus,
 } from '@activepieces/shared'
+import { logger } from '../../../logger'
+import { PiecesSource, system } from '../../../system/system'
+import { SystemProp } from '../../../system/system-prop'
 import {
     AbstractSandbox,
     ExecuteSandboxResult,

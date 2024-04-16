@@ -4,7 +4,6 @@ import {
     ApplicationEventHooks,
     CreateAuditEventParam,
 } from '../../helper/application-events'
-import { extractClientRealIp } from '../../helper/network-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { getEdition } from '../../helper/secret-helper'
@@ -16,7 +15,7 @@ import {
     ApplicationEvent,
     ApplicationEventName,
 } from '@activepieces/ee-shared'
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { extractClientRealIp, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ApEdition,
     apId,

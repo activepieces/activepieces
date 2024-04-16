@@ -4,10 +4,9 @@ import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { triggerHooks } from '../flows/trigger'
 import { dedupeService } from '../flows/trigger/dedupe'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
-import { getServerUrl } from '../helper/network-utils'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { WebhookResponse } from '@activepieces/pieces-framework'
-import { logger } from '@activepieces/server-shared'
+import { getServerUrl, logger } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, EventPayload,
     ExecutionType,
     Flow,

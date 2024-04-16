@@ -1,14 +1,15 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { fileService } from '../../../file/file.service'
-import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
-import { fileExists, packageManager } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
     PackageType,
     PiecePackage,
     PrivatePiecePackage,
 } from '@activepieces/shared'
+import { fileExists } from '../../file-system'
+import { fileService } from '../../files/file-service'
+import { packageManager } from '../../package-manager'
+import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
 
 export class RegistryPieceManager extends PieceManager {
     protected override async installDependencies({
@@ -64,8 +65,8 @@ export class RegistryPieceManager extends PieceManager {
     ): Promise<void> {
         const archiveId = piece.archiveId
 
-        const archiveFile = await fileService.getOneOrThrow({
-            fileId: archiveId,
+        const archiveData = await fileService.getData({
+            id: archiveId,
         })
 
         const archivePath = getPackageArchivePathForPiece({
@@ -74,7 +75,7 @@ export class RegistryPieceManager extends PieceManager {
         })
 
         await mkdir(dirname(archivePath), { recursive: true })
-        await writeFile(archivePath, archiveFile.data)
+        await writeFile(archivePath, archiveData)
     }
 }
 

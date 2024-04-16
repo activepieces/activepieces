@@ -1,15 +1,13 @@
-import { sandboxCachePool } from '../cache/sandbox-cache-pool'
-import { SandBoxCacheType, TypedProvisionCacheInfo } from './sandbox-cache-key'
-import { enrichErrorContext, logger } from '@activepieces/server-shared'
 import { PiecePackage, SourceCode } from '@activepieces/shared'
-import { Sandbox, sandboxManager } from 'server-worker'
+import { enrichErrorContext } from '../../../exception-handler'
+import { logger } from '../../../logger'
+import { sandboxCachePool } from '../caching/sandbox-cache-pool'
+import { Sandbox } from '../core'
+import { sandboxManager } from '../sandbox-manager'
+import { ProvisionCacheInfo, SandBoxCacheType } from './sandbox-cache-key'
 
 export const sandboxProvisioner = {
-    async provision({
-        pieces = [],
-        codeSteps = [],
-        ...cacheInfo
-    }: ProvisionParams): Promise<Sandbox> {
+    async provision({ pieces = [], codeSteps = [], ...cacheInfo }: ProvisionParams): Promise<Sandbox> {
         try {
             const cachedSandbox = await sandboxCachePool.findOrCreate(cacheInfo)
 
@@ -42,10 +40,7 @@ export const sandboxProvisioner = {
     },
 
     async release({ sandbox }: ReleaseParams): Promise<void> {
-        logger.debug(
-            { boxId: sandbox.boxId, cacheKey: sandbox.cacheKey },
-            '[SandboxProvisioner#release]',
-        )
+        logger.debug({ name: 'SandboxProvisioner#release', boxId: sandbox.boxId, cacheKey: sandbox.cacheKey })
 
         await sandboxManager.release(sandbox.boxId)
 
@@ -62,11 +57,10 @@ type CodeArtifact = {
     sourceCode: SourceCode
 }
 
-type ProvisionParams<T extends SandBoxCacheType = SandBoxCacheType> =
-  TypedProvisionCacheInfo<T> & {
-      pieces?: PiecePackage[]
-      codeSteps?: CodeArtifact[]
-  }
+type ProvisionParams<T extends SandBoxCacheType = SandBoxCacheType> = ProvisionCacheInfo<T> & {
+    pieces?: PiecePackage[]
+    codeSteps?: CodeArtifact[]
+}
 
 type ReleaseParams = {
     sandbox: Sandbox

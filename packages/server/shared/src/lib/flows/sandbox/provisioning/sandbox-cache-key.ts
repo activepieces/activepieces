@@ -1,5 +1,5 @@
-import { logger } from '@activepieces/server-shared'
 import { apId, FlowVersionId } from '@activepieces/shared'
+import { logger } from '../../../logger'
 
 export enum SandBoxCacheType {
     CODE = 'CODE',
@@ -8,7 +8,7 @@ export enum SandBoxCacheType {
     PIECE = 'PIECE',
 }
 
-export type TypedProvisionCacheInfo<
+export type ProvisionCacheInfo<
     T extends SandBoxCacheType = SandBoxCacheType,
 > = T extends SandBoxCacheType.CODE
     ? CodeProvisionCacheInfo
@@ -20,46 +20,34 @@ export type TypedProvisionCacheInfo<
                 ? PieceProvisionCacheInfo
                 : never
 
-export type ProvisionCacheInfo = TypedProvisionCacheInfo
+export const extractProvisionCacheKey = (params: ProvisionCacheInfo): string => {
+    logger.debug({ name: 'SandboxProvisioner#extractCacheKey', type: params.type })
 
-export const extractProvisionCacheKey = (
-    params: ProvisionCacheInfo,
-): string => {
-    logger.debug({ type: params.type }, '[SandboxProvisioner#extractCacheKey]')
     switch (params.type) {
         case SandBoxCacheType.CODE:
             return extractCodeCacheKey(params)
         case SandBoxCacheType.FLOW:
             return extractFlowCacheKey(params)
         case SandBoxCacheType.NONE:
-            return extractNoneCacheKey(params)
+            return extractNoneCacheKey()
         case SandBoxCacheType.PIECE:
             return extractPieceCacheKey(params)
     }
 }
 
-const extractCodeCacheKey = ({
-    sourceCodeHash,
-    name,
-    flowId,
-}: CodeProvisionCacheInfo): string => {
+const extractCodeCacheKey = ({ sourceCodeHash, name, flowId }: CodeProvisionCacheInfo): string => {
     return `CODE-sourceCodeHash-${sourceCodeHash}-name-${name}-flowId-${flowId}`
 }
 
-const extractFlowCacheKey = ({
-    flowVersionId,
-}: FlowProvisionCacheInfo): string => {
+const extractFlowCacheKey = ({ flowVersionId }: FlowProvisionCacheInfo): string => {
     return `FLOW-flowVersionId-${flowVersionId}`
 }
 
-const extractNoneCacheKey = (_params: NoneProvisionCacheInfo): string => {
+const extractNoneCacheKey = (): string => {
     return `NONE-apId-${apId()}`
 }
 
-const extractPieceCacheKey = ({
-    pieceName,
-    pieceVersion,
-}: PieceProvisionCacheInfo): string => {
+const extractPieceCacheKey = ({ pieceName, pieceVersion }: PieceProvisionCacheInfo): string => {
     return `PIECE-pieceName-${pieceName}-pieceVersion-${pieceVersion}`
 }
 
@@ -79,8 +67,7 @@ type FlowProvisionCacheInfo = BaseProvisionCacheInfo<SandBoxCacheType.FLOW> & {
 
 type NoneProvisionCacheInfo = BaseProvisionCacheInfo<SandBoxCacheType.NONE>
 
-type PieceProvisionCacheInfo =
-  BaseProvisionCacheInfo<SandBoxCacheType.PIECE> & {
-      pieceName: string
-      pieceVersion: string
-  }
+type PieceProvisionCacheInfo = BaseProvisionCacheInfo<SandBoxCacheType.PIECE> & {
+    pieceName: string
+    pieceVersion: string
+}

@@ -1,17 +1,14 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
-import { FilePieceMetadataService } from '../../../pieces/piece-metadata-service/file-piece-metadata-service'
-import { PieceManager } from './piece-manager'
-import { logger, packageManager } from '@activepieces/server-shared'
 import { PiecePackage } from '@activepieces/shared'
-
-const pieceMetadataService = FilePieceMetadataService()
+import { logger } from '../../logger'
+import { packageManager } from '../../package-manager'
+import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { PieceManager } from './piece-manager'
 
 export class LocalPieceManager extends PieceManager {
-    protected override async installDependencies(
-        params: InstallParams,
-    ): Promise<void> {
-        logger.debug(params, '[linkDependencies] params')
+    protected override async installDependencies(params: InstallParams): Promise<void> {
+        logger.debug({ name: 'LocalPieceManager#installDependencies', params })
 
         const { projectPath, pieces } = params
         const basePath = resolve(__dirname.split(`${sep}dist`)[0])
@@ -32,12 +29,13 @@ export class LocalPieceManager extends PieceManager {
         await linkFrameworkPackages(projectPath, baseLinkPath, frameworkPackages)
 
         for (const piece of pieces) {
-            const pieceMetadata = await pieceMetadataService.getOrThrow({
+            const pieceMetadata = await pieceMetadataService.get({
                 name: piece.pieceName,
-                projectId: undefined,
                 version: piece.pieceVersion,
             })
+
             await updatePackageJson(pieceMetadata.directoryPath!, frameworkPackages)
+
             await packageManager.link({
                 packageName: pieceMetadata.name,
                 path: projectPath,
