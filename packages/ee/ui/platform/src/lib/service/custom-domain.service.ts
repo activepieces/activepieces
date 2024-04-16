@@ -34,4 +34,10 @@ export class CustomDomainService {
       {}
     );
   }
+  validationData(keyId: string) {
+    return this.http.get<{
+      txtName: string;
+      txtValue: string;
+    }>(environment.apiUrl + `/custom-domains/validation/${keyId}`);
+  }
 }
