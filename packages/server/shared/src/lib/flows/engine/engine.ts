@@ -100,20 +100,20 @@ const tryParseJson = (value: unknown): unknown => {
     }
 }
 
-type EngineHelperFlowResult = FlowRunResponse
+export type EngineHelperFlowResult = FlowRunResponse
 
-type EngineHelperTriggerResult<T extends TriggerHookType = TriggerHookType> = ExecuteTriggerResponse<T>
+export type EngineHelperTriggerResult<T extends TriggerHookType = TriggerHookType> = ExecuteTriggerResponse<T>
 
-type EngineHelperPropResult =
+export type EngineHelperPropResult =
     | DropdownState<unknown>
     | Record<string, DynamicPropsValue>
 
-type EngineHelperActionResult = ExecuteActionResponse
+export type EngineHelperActionResult = ExecuteActionResponse
 
-type EngineHelperValidateAuthResult = ExecuteValidateAuthResponse
+export type EngineHelperValidateAuthResult = ExecuteValidateAuthResponse
 
 type EngineHelperCodeResult = ExecuteActionResponse
-type EngineHelperExtractPieceInformation = PieceMetadata
+export type EngineHelperExtractPieceInformation = PieceMetadata
 
 type EngineHelperResult =
     | EngineHelperFlowResult
@@ -124,12 +124,14 @@ type EngineHelperResult =
     | EngineHelperActionResult
     | EngineHelperValidateAuthResult
 
-type EngineHelperResponse<Result extends EngineHelperResult> = {
+export type EngineHelperResponse<Result extends EngineHelperResult> = {
     status: EngineResponseStatus
     result: Result
     standardError: string
     standardOutput: string
 }
+
+export type EngineConstants = 'serverUrl' | 'workerToken'
 
 type ExecuteParams = {
     operation: EngineOperationType
@@ -142,5 +144,3 @@ type ExecuteFlowParams = {
     operation: Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>
     accessToken: string
 }
-
-type EngineConstants = 'serverUrl' | 'workerToken'

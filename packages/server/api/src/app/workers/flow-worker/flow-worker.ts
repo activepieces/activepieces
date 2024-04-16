@@ -5,13 +5,11 @@ import {
     HookType,
 } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
-import { engineHelper } from '../../helper/engine-helper'
+import { generateWorkerToken } from '../../helper/engine-helper'
 import { getPiecePackage } from '../../pieces/piece-metadata-service'
-import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
-import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
 import { flowWorkerHooks } from './flow-worker-hooks'
 import { OneTimeJobData } from './job-data'
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { engine, exceptionHandler, logger, Sandbox, SandBoxCacheType, sandboxProvisioner } from '@activepieces/server-shared'
 import { Action, ActionType,
     ActivepiecesError,
     assertNotNullOrUndefined,
@@ -40,7 +38,7 @@ import { Action, ActionType,
     Trigger,
     TriggerType,
 } from '@activepieces/shared'
-import { logSerializer, Sandbox } from 'server-worker'
+import { logSerializer } from 'server-worker'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId
@@ -221,10 +219,15 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             } prepareTime=${Date.now() - startTime}ms`,
         )
 
-        const { result } = await engineHelper.executeFlow(
+        const accessToken = await generateWorkerToken({
+            projectId: jobData.projectId,
+        })
+
+        const { result } = await engine.executeFlow({
             sandbox,
-            input,
-        )
+            operation: input,
+            accessToken,
+        })
 
         if (result.status === FlowRunStatus.INTERNAL_ERROR) {
             const retryError = new ActivepiecesError({

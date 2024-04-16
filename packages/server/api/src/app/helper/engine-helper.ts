@@ -8,29 +8,34 @@ import {
 import { hashObject } from './encryption'
 import { getEdition, getWebhookSecret } from './secret-helper'
 import {
-    DropdownState,
-    DynamicPropsValue,
-    PieceMetadata,
-} from '@activepieces/pieces-framework'
-import { engine, getServerUrl, logger, Sandbox, SandBoxCacheType, sandboxProvisioner } from '@activepieces/server-shared'
+    engine,
+    EngineConstants,
+    EngineHelperActionResult,
+    EngineHelperExtractPieceInformation,
+    EngineHelperFlowResult,
+    EngineHelperPropResult,
+    EngineHelperResponse,
+    EngineHelperTriggerResult,
+    EngineHelperValidateAuthResult,
+    getServerUrl,
+    logger,
+    Sandbox,
+    SandBoxCacheType,
+    sandboxProvisioner,
+} from '@activepieces/server-shared'
 import {
     Action,
     ActionType,
     apId,
     assertNotNullOrUndefined,
     EngineOperationType,
-    EngineResponseStatus,
     EngineTestOperation,
-    ExecuteActionResponse,
     ExecuteExtractPieceMetadata,
     ExecutePropsOptions,
     ExecuteStepOperation,
     ExecuteTriggerOperation,
-    ExecuteTriggerResponse,
     ExecuteValidateAuthOperation,
-    ExecuteValidateAuthResponse,
     flowHelper,
-    FlowRunResponse,
     FlowVersion,
     PieceTrigger,
     PlatformRole,
@@ -38,58 +43,6 @@ import {
     ProjectId,
     TriggerHookType,
 } from '@activepieces/shared'
-
-type GenerateWorkerTokenParams = {
-    projectId: ProjectId
-}
-
-export type EngineHelperFlowResult = FlowRunResponse
-
-export type EngineHelperTriggerResult<
-    T extends TriggerHookType = TriggerHookType,
-> = ExecuteTriggerResponse<T>
-
-export type EngineHelperPropResult =
-  | DropdownState<unknown>
-  | Record<string, DynamicPropsValue>
-
-export type EngineHelperActionResult = ExecuteActionResponse
-
-export type EngineHelperValidateAuthResult = ExecuteValidateAuthResponse
-
-export type EngineHelperCodeResult = ExecuteActionResponse
-export type EngineHelperExtractPieceInformation = PieceMetadata
-
-export type EngineHelperResult =
-  | EngineHelperFlowResult
-  | EngineHelperTriggerResult
-  | EngineHelperPropResult
-  | EngineHelperCodeResult
-  | EngineHelperExtractPieceInformation
-  | EngineHelperActionResult
-  | EngineHelperValidateAuthResult
-
-export type EngineHelperResponse<Result extends EngineHelperResult> = {
-    status: EngineResponseStatus
-    result: Result
-    standardError: string
-    standardOutput: string
-}
-
-const generateWorkerToken = ({
-    projectId,
-}: GenerateWorkerTokenParams): Promise<string> => {
-    return accessTokenManager.generateToken({
-        id: apId(),
-        type: PrincipalType.WORKER,
-        projectId,
-        // TODO NOW remove this hack
-        platform: {
-            id: apId(),
-            role: PlatformRole.OWNER,
-        },
-    })
-}
 
 export const engineHelper = {
     async executeTrigger<T extends TriggerHookType>(
@@ -318,6 +271,19 @@ export const engineHelper = {
     },
 }
 
+export const generateWorkerToken = ({ projectId }: GenerateWorkerTokenParams): Promise<string> => {
+    return accessTokenManager.generateToken({
+        id: apId(),
+        type: PrincipalType.WORKER,
+        projectId,
+        // TODO: remove this hack
+        platform: {
+            id: apId(),
+            role: PlatformRole.OWNER,
+        },
+    })
+}
+
 async function lockPieceAction({
     projectId,
     flowVersion,
@@ -390,4 +356,7 @@ async function getSandboxForAction(
             })
     }
 }
-type EngineConstants = 'serverUrl' | 'workerToken'
+
+type GenerateWorkerTokenParams = {
+    projectId: ProjectId
+}
