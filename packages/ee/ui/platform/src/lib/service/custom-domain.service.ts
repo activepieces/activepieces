@@ -20,9 +20,12 @@ export class CustomDomainService {
     );
   }
   create(request: AddDomainRequest) {
-    return this.http.post<CustomDomain>(
-      environment.apiUrl + `/custom-domains/`,
-      request
-    );
+    return this.http.post<{
+      customDomain: CustomDomain;
+      cloudflareHostnameData: null | {
+        txtName: string;
+        txtValue: string;
+      };
+    }>(environment.apiUrl + `/custom-domains/`, request);
   }
 }
