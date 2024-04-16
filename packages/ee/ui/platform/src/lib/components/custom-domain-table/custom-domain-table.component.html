@@ -25,12 +25,11 @@
         </div>
       </th>
       <td mat-cell *matCellDef="let customDomain">
-        <div class="ap-w-[5.6875rem] ap-flex ap-flex-row ap-items-center ap-float-right ap-text-center">
+        <div class="ap-w-[5.6875rem] ap-flex ap-flex-row ap-items-center ap-justify-end ap-float-right ap-text-center">
           @if(customDomain.status==="PENDING"){
-          <ap-button btnColor="primary" btnSize="medium" (buttonClicked)="verifyDomain(customDomain)" i18n
-            [disabled]="isDemo" tooltipText="Verify Custom Domain">
-            Verify
-          </ap-button>
+          <ap-icon-button (click)="$event.stopPropagation(); verifyDomain(customDomain)" i18n-tooltipText
+            [buttonDisabled]="isDemo" tooltipText="Verify Custom Domain" iconFilename="sync.svg" [width]="20"
+            [height]="20" color="primary" [height]="16"></ap-icon-button>
           }
           <ap-icon-button (click)="$event.stopPropagation(); deleteCustomDomain(customDomain)" i18n-tooltipText
             [buttonDisabled]="isDemo" tooltipText="Delete Custom Domain" iconFilename="trash.svg" [width]="20"
