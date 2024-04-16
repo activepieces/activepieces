@@ -4,6 +4,12 @@ import { environment } from '@activepieces/ui/common';
 import { AddDomainRequest, CustomDomain } from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
 
+export type HostnameDetailsResponse = {
+  txtName: string;
+  txtValue: string;
+  hostname: string;
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -22,10 +28,7 @@ export class CustomDomainService {
   create(request: AddDomainRequest) {
     return this.http.post<{
       customDomain: CustomDomain;
-      cloudflareHostnameData: null | {
-        txtName: string;
-        txtValue: string;
-      };
+      cloudflareHostnameData: null | HostnameDetailsResponse;
     }>(environment.apiUrl + `/custom-domains/`, request);
   }
   verifyDomain(keyId: string) {
@@ -35,9 +38,8 @@ export class CustomDomainService {
     );
   }
   validationData(keyId: string) {
-    return this.http.get<{
-      txtName: string;
-      txtValue: string;
-    }>(environment.apiUrl + `/custom-domains/validation/${keyId}`);
+    return this.http.get<HostnameDetailsResponse>(
+      environment.apiUrl + `/custom-domains/validation/${keyId}`
+    );
   }
 }
