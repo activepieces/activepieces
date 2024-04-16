@@ -17,14 +17,13 @@ import {
   MatDialog,
 } from '@angular/material/dialog';
 import { catchError, Observable, of, tap } from 'rxjs';
-import { ConnectionValidator } from '../../../validators/connectionNameValidator';
 import { BasicAuthProperty } from '@activepieces/pieces-framework';
 import {
   AppConnectionsService,
   AuthenticationService,
   DiagnosticDialogComponent,
 } from '@activepieces/ui/common';
-import { connectionNameRegex, createConnectionNameControl } from '../utils';
+import { createConnectionNameControl } from '../utils';
 
 interface BasicAuthForm {
   name: FormControl<string>;
@@ -47,8 +46,6 @@ export class BasicAuthConnectionDialogComponent {
   loading = false;
   upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
   settingsForm: FormGroup<BasicAuthForm>;
-  keyTooltip =
-    'The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.';
   constructor(
     private formBuilder: FormBuilder,
     private authenticationService: AuthenticationService,

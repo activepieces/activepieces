@@ -37,7 +37,6 @@ import { StaticDropdownControlComponent } from './components/static-dropdown-con
 import { RefreshableDropdownControlComponent } from './components/refreshable-dropdown-control/refreshable-dropdown-control.component';
 import { CheckboxControlComponent } from './components/checkbox-control/checkbox-control.component';
 import { TextControlComponent } from './components/text-control/text-control.component';
-import { AbstractFormControlCasterPipe } from './pipes/abstract-form-control-caster.pipe';
 import { ConnectionsDropdownControlComponent } from './components/connections-dropdown-control/connections-dropdown-control.component';
 import { ReplaceMarkdownConstsPipe } from './pipes/replace-markdown-consts.pipe';
 import { ExtractControlErrorMessagePipe } from './pipes/extract-error-message-from-form-control.pipe';
@@ -76,7 +75,6 @@ const exportedDeclarations = [
     RefreshableDropdownControlComponent,
     CheckboxControlComponent,
     TextControlComponent,
-    AbstractFormControlCasterPipe,
     ConnectionsDropdownControlComponent,
     ReplaceMarkdownConstsPipe,
     ExtractControlErrorMessagePipe,
