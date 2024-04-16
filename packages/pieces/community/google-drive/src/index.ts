@@ -19,6 +19,7 @@ import { googleDriveSearchFolder } from './lib/action/search-folder-or-file.acti
 import { googleDriveUploadFile } from './lib/action/upload-file';
 import { newFile } from './lib/triggers/new-file';
 import { newFolder } from './lib/triggers/new-folder';
+import { setPublicAccess } from './lib/action/set-public-access';
 
 export const googleDriveAuth = PieceAuth.OAuth2({
   description: '',
@@ -34,7 +35,19 @@ export const googleDrive = createPiece({
   categories: [PieceCategory.CONTENT_AND_FILES],
   displayName: 'Google Drive',
   description: 'Cloud storage and file backup',
-  authors: ["BastienMe","ArmanGiau3","Vitalini","pfernandez98","kanarelo","Salem-Alaa","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: [
+    'BastienMe',
+    'ArmanGiau3',
+    'Vitalini',
+    'pfernandez98',
+    'kanarelo',
+    'Salem-Alaa',
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   triggers: [newFile, newFolder],
   actions: [
     googleDriveCreateNewFolder,
@@ -48,6 +61,7 @@ export const googleDrive = createPiece({
     saveFileAsPdf,
     addPermission,
     deletePermission,
+    setPublicAccess,
     createCustomApiCallAction({
       baseUrl: () => 'https://www.googleapis.com/drive/v3',
       auth: googleDriveAuth,
