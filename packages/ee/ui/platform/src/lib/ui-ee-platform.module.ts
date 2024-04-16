@@ -30,6 +30,7 @@ import { ConfigureAllowingEmailLoginsCardComponent } from './components/cards/co
 import { AuditEventTableComponent } from './components/audit-event-table/audit-event-table.component';
 import { ApplyTagsComponent } from 'ui-feature-tags';
 import { UpdatesComponent } from './components/updates/updates.component';
+import { DomainTxtValidationDialogComponent } from './components/dialogs/domain-txt-validation-dialog/domain-txt-validation-dialog.component';
 
 @NgModule({
   imports: [
@@ -51,6 +52,7 @@ import { UpdatesComponent } from './components/updates/updates.component';
     CreateApiKeyDialogComponent,
     CreateSigningKeyDialogComponent,
     CreateCustomDomainDialogComponent,
+    DomainTxtValidationDialogComponent,
     PiecesTableComponent,
     CreateOrUpdateTemplateDialogueComponent,
     EditAddPieceOAuth2CredentialsDialogComponent,
