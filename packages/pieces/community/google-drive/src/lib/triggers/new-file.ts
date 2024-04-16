@@ -86,10 +86,10 @@ export const newFile = createTrigger({
 
   sampleData: {
     kind: 'drive#file',
-    mimeType: 'image/jpeg',
+    mimeType: 'image/png',
     id: '1dpv4-sKJfKRwI9qx1vWqQhEGEn3EpbI5',
-    name: 'sweep.jpg',
-    link: 'https://cloud.activepieces.com/api/v1/step-files/signed?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCYm0.Xyoy5nA-S70M9JpRnvadLxUm'
+    name: 'google-drive.png',
+    link: 'https://cdn.activepieces.com/pieces/google-drive.png'
   },
 });
 
