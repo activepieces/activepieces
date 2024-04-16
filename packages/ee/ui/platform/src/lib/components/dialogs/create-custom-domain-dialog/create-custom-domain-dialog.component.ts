@@ -14,7 +14,10 @@ import {
   map,
   filter,
 } from 'rxjs';
-import { CustomDomainService } from '../../../service/custom-domain.service';
+import {
+  CustomDomainService,
+  HostnameDetailsResponse,
+} from '../../../service/custom-domain.service';
 import { CustomDomain } from '@activepieces/ee-shared';
 import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
@@ -32,10 +35,7 @@ export class CreateCustomDomainDialogComponent {
   loading$ = new BehaviorSubject(false);
   addCustomDomain$?: Observable<{
     customDomain: CustomDomain;
-    cloudflareHostnameData: null | {
-      txtName: string;
-      txtValue: string;
-    };
+    cloudflareHostnameData: null | HostnameDetailsResponse;
   }>;
   formGroup: FormGroup<{
     domain: FormControl<string>;

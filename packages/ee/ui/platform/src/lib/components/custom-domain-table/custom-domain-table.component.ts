@@ -9,7 +9,10 @@ import {
   DeleteEntityDialogData,
   featureDisabledTooltip,
 } from '@activepieces/ui/common';
-import { CustomDomainService } from '../../service/custom-domain.service';
+import {
+  CustomDomainService,
+  HostnameDetailsResponse,
+} from '../../service/custom-domain.service';
 import { CreateCustomDomainDialogComponent } from '../dialogs/create-custom-domain-dialog/create-custom-domain-dialog.component';
 import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 import { DomainTxtValidationDialogComponent } from '../dialogs/domain-txt-validation-dialog/domain-txt-validation-dialog.component';
@@ -27,10 +30,7 @@ export class CustomDomainTableComponent
   dataSource!: CustomDomainDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
-  validationData$?: Observable<{
-    txtName: string;
-    txtValue: string;
-  }>;
+  validationData$?: Observable<HostnameDetailsResponse>;
   featureDisabledTooltip = featureDisabledTooltip;
   upgradeNoteTitle = $localize`Unlock Custom Domain`;
   upgradeNote = $localize`Customize your domain to match your brand and provide a seamless experience for your users.`;
@@ -62,7 +62,7 @@ export class CustomDomainTableComponent
 
   verifyDomain(key: CustomDomain) {
     this.validationData$ = this.customDomainService.validationData(key.id).pipe(
-      tap(({ txtName, txtValue }) => {
+      tap(({ txtName, txtValue, hostname }) => {
         this.matDialog.open(DomainTxtValidationDialogComponent, {
           disableClose: true,
           data: {
@@ -70,6 +70,7 @@ export class CustomDomainTableComponent
             cloudflareHostnameData: {
               txtName,
               txtValue,
+              hostname,
             },
           },
         });
