@@ -30,6 +30,7 @@ export class DashboardContainerComponent {
   showPoweredByAp$: Observable<boolean>;
   showPlatform$: Observable<boolean>;
   showAdminConsoleLock$: Observable<boolean>;
+  apVersion$ = this.flagService.getRelease();
   @ViewChild('contactSalesSlideout') contactSalesSlideout: MatSidenav;
   contactSalesState$: Observable<boolean>;
 

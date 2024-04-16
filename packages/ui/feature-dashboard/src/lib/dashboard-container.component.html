@@ -8,6 +8,8 @@
             <div class="ap-flex ap-items-center  ap-my-5 ap-mx-[1.875rem]">
                 <app-project-switcher
                     *ngIf="(isInPlatformRoute$ | async) === undefined || (isInPlatformRoute$ | async) === false "></app-project-switcher>
+                
+                <span class="ap-bg-gray-100 ap-text-gray-500 ap-text-sm ap-font-semibold ap-me-2 ap-px-2.5 ap-py-0.5 ap-rounded ap-mx-[1.875rem]">v{{apVersion$ | async}}</span>
 
                 <div class="ap-typography-headline-5 !ap-font-semibold" *ngIf="(isInPlatformRoute$ | async) === true"
                     i18n>Admin Console</div>
