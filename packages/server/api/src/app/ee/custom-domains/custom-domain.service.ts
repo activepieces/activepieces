@@ -11,6 +11,12 @@ import {
 } from '@activepieces/ee-shared'
 import { ActivepiecesError, ApEdition, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
 
+type HostnameDetailsResponse = {
+    txtName: string
+    txtValue: string
+    hostname: string
+}
+
 const customDomainRepo =
     databaseConnection.getRepository<CustomDomain>(CustomDomainEntity)
 
@@ -59,10 +65,7 @@ export const customDomainService = {
     },
     async getDomainValidationData(request: {
         id: string
-    }): Promise<{
-            txtName: string
-            txtValue: string
-        }> {
+    }): Promise<HostnameDetailsResponse> {
         const customDomain = await customDomainRepo.findOneBy({
             id: request.id,
         })
@@ -78,11 +81,13 @@ export const customDomainService = {
         }
 
         const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.domain)
-        const validationRecord = hostnameDetails.data.result[0].ownership_verification
+        const record = hostnameDetails.data.result[0]
+        const validationRecord = record.ssl.validation_records[0]
 
         return {
-            txtName: validationRecord.name,
-            txtValue: validationRecord.value,
+            txtName: validationRecord.txt_name,
+            txtValue: validationRecord.txt_value,
+            hostname: record.hostname, 
         }
     },
     async verifyDomain(request: {
@@ -121,10 +126,7 @@ export const customDomainService = {
         platformId: string
     }): Promise<{
             customDomain: CustomDomain
-            cloudflareHostnameData: null | {
-                txtName: string
-                txtValue: string
-            } 
+            cloudflareHostnameData: null | HostnameDetailsResponse
         }> {
         const customDomain = customDomainRepo.create({
             id: apId(),
@@ -139,13 +141,14 @@ export const customDomainService = {
                 hostname: request.domain, 
             })
 
-            const validationRecord = createHostnameRes.data.result.ownership_verification
+            const validationRecord = createHostnameRes.data.result.ssl.validation_records[0]
 
             return {
                 customDomain: await customDomainRepo.save(customDomain),
                 cloudflareHostnameData: {
-                    txtName: validationRecord.name,
-                    txtValue: validationRecord.value,
+                    txtName: validationRecord.txt_name,
+                    txtValue: validationRecord.txt_value,
+                    hostname: validationRecord.hostname, 
                 },
             }
         }
