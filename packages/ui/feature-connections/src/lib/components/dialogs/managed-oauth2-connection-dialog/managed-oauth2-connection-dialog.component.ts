@@ -23,7 +23,6 @@ import {
   FlagService,
   fadeInUp400ms,
 } from '@activepieces/ui/common';
-import { ConnectionValidator } from '../../../validators/connectionNameValidator';
 import {
   OAuth2PopupParams,
   OAuth2PopupResponse,
@@ -34,7 +33,7 @@ import {
   OAuth2Props,
   StaticDropdownProperty,
 } from '@activepieces/pieces-framework';
-import { connectionNameRegex } from '../utils';
+import { createConnectionNameControl } from '../utils';
 
 interface AuthConfigSettings {
   name: FormControl<string>;
@@ -57,7 +56,7 @@ export type ManagedOAuth2ConnectionDialogData = {
 };
 
 @Component({
-  selector: 'app-managed-oauth2-modal',
+  selector: 'app-managed-oauth2-dialog',
   templateUrl: './managed-oauth2-connection-dialog.component.html',
   styleUrls: ['./managed-oauth2-connection-dialog.component.scss'],
   animations: [fadeInUp400ms],
@@ -103,23 +102,9 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
   ngOnInit(): void {
     const propsControls = this.createPropsFormGroup();
     this.settingsForm = this.fb.group({
-      name: new FormControl(
-        this.appConnectionsService.getConnectionNameSuggest(
-          this.dialogData.pieceName
-        ),
-        {
-          nonNullable: true,
-          validators: [
-            Validators.required,
-            Validators.pattern(connectionNameRegex),
-          ],
-          asyncValidators: [
-            ConnectionValidator.createValidator(
-              this.appConnectionsService.getAllOnce(),
-              undefined
-            ),
-          ],
-        }
+      name: createConnectionNameControl(
+        this.appConnectionsService,
+        this.dialogData.pieceName
       ),
       value: new FormControl<OAuth2PopupResponse | null>(null, {
         validators: Validators.required,
