@@ -5,12 +5,20 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { MatDialogRef } from '@angular/material/dialog';
-import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
+import { MatDialogRef, MatDialog } from '@angular/material/dialog';
+import {
+  BehaviorSubject,
+  Observable,
+  catchError,
+  tap,
+  map,
+  filter,
+} from 'rxjs';
 import { CustomDomainService } from '../../../service/custom-domain.service';
 import { CustomDomain } from '@activepieces/ee-shared';
 import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
+import { DomainTxtValidationDialogComponent } from '../domain-txt-validation-dialog/domain-txt-validation-dialog.component';
 
 @Component({
   selector: 'app-create-custom-domain-dialog',
@@ -22,7 +30,13 @@ export class CreateCustomDomainDialogComponent {
   readonly title = $localize`Add Custom Domain`;
   readonly cloudNote = $localize`Please contact support for DNS configuration and domain verification.`;
   loading$ = new BehaviorSubject(false);
-  addCustomDomain$?: Observable<CustomDomain>;
+  addCustomDomain$?: Observable<{
+    customDomain: CustomDomain;
+    cloudflareHostnameData: null | {
+      txtName: string;
+      txtValue: string;
+    };
+  }>;
   formGroup: FormGroup<{
     domain: FormControl<string>;
   }>;
@@ -31,6 +45,7 @@ export class CreateCustomDomainDialogComponent {
     private fb: FormBuilder,
     private customDomainService: CustomDomainService,
     private dialogRef: MatDialogRef<CreateCustomDomainDialogComponent>,
+    private dialog: MatDialog,
     private flagService: FlagService
   ) {
     this.edition$ = this.flagService.getEdition();
@@ -52,9 +67,21 @@ export class CreateCustomDomainDialogComponent {
           domain: rawData.domain,
         })
         .pipe(
-          tap(() => {
+          tap(({ customDomain, cloudflareHostnameData }) => {
             this.loading$.next(false);
             this.dialogRef.close(true);
+            this.edition$.pipe(
+              map((edition) => edition === ApEdition.CLOUD),
+              filter((isCloud) => isCloud),
+              tap(() => {
+                this.dialog.open(DomainTxtValidationDialogComponent, {
+                  data: {
+                    cloudflareHostnameData,
+                    domainId: customDomain.id,
+                  },
+                });
+              })
+            );
           }),
           catchError((err) => {
             this.loading$.next(false);
