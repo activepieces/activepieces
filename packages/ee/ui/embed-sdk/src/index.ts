@@ -50,6 +50,7 @@ export interface ActivepiecesVendorInit {
     hideFlowNameInBuilder?: boolean;
     disableNavigationInBuilder: boolean;
     hideFolders?: boolean;
+    customNavigationHandling?: boolean
   };
 }
 export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
@@ -66,8 +67,8 @@ class ActivepiecesEmbedded {
   _disableNavigationInBuilder = true;
   readonly _CONNECTIONS_IFRAME_ID='ApConnectionsIframe';
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
-  _handleVendorNavigation?: (data: { route: string }) => void;
-  _handleClientNavigation?: (data: { route: string }) => void;
+  _dashboardIframeWindow?: Window;
+  _navigationHandler?: (data: { route: string }) => void;
   _parentOrigin = window.location.origin;
   readonly _MAX_CONTAINER_CHECK_COUNT = 100;
   readonly _HUNDRED_MILLISECONDS = 100;
@@ -91,6 +92,7 @@ class ActivepiecesEmbedded {
         hideSidebar?: boolean;
       };
       hideFolders?: boolean;
+      navigationHandler?: (data: { route: string }) => void;
     };
   }) {
     this._prefix = prefix || '/';
@@ -106,6 +108,7 @@ class ActivepiecesEmbedded {
     this._hideLogoInBuilder = embedding?.builder?.hideLogo ?? false;
     this._hideFlowNameInBuilder = embedding?.builder?.hideFlowName ?? false;
     this._jwtToken = jwtToken;
+    this._navigationHandler = embedding?.navigationHandler;
     if (embedding?.containerId) {
       this._initializeBuilderAndDashboardIframe({
         containerSelector: `#${embedding.containerId}`,
@@ -133,8 +136,11 @@ class ActivepiecesEmbedded {
             jwtToken,
             iframeContainer,
           }).contentWindow;
-          this._checkForVendorRouteChanges(iframeWindow);
+          if(!this._navigationHandler){
+            this._checkForVendorRouteChanges(iframeWindow);
+          }
           this._checkForClientRouteChanges(iframeWindow);
+          this._dashboardIframeWindow = iframeWindow;
         }
       },
       errorMessage: 'container not found',
@@ -171,6 +177,7 @@ class ActivepiecesEmbedded {
                   hideFolders: this._hideFolders,
                   hideLogoInBuilder: this._hideLogoInBuilder,
                   hideFlowNameInBuilder: this._hideFlowNameInBuilder,
+                  customNavigationHandling: !!this._navigationHandler
                 },
               };
               iframeWindow.postMessage(apEvent, '*');
@@ -199,7 +206,6 @@ class ActivepiecesEmbedded {
         return !!document.body;
       },
       method: () => {
-
         const connectionsIframe = this.connectToEmbed({ jwtToken: this._jwtToken, iframeContainer: document.body, 
           callbackAfterAuthentication: () => {
               connectionsIframe.style.display = 'block';
@@ -223,6 +229,20 @@ class ActivepiecesEmbedded {
     });
   }
 
+
+   navigateTo({ route }: { route: string }) {
+      if(!this._dashboardIframeWindow){
+        console.error('Activepieces: dashboard iframe not found');
+        return;
+      }
+      this._dashboardIframeWindow.postMessage({
+        type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
+        data: {
+          vendorRoute: route,
+        },
+      }, '*');
+  }
+
   private _checkForClientRouteChanges = (source: Window) => {
     window.addEventListener(
       'message',
@@ -242,11 +262,16 @@ class ActivepiecesEmbedded {
           if (!routeWithPrefix.startsWith('/')) {
             routeWithPrefix = '/' + routeWithPrefix;
           }
-          if (!this._handleClientNavigation) {
-            window.history.replaceState({}, '', routeWithPrefix);
-          } else {
-            this._handleClientNavigation({ route: routeWithPrefix });
-          }
+       
+          if(this._navigationHandler)
+            {
+              window.history.replaceState({}, document.title, location.pathname);
+              this._navigationHandler({ route: routeWithPrefix });
+            }
+            else
+            {
+              window.history.replaceState({}, '', routeWithPrefix);
+            }
         }
       }
     );
@@ -257,9 +282,6 @@ class ActivepiecesEmbedded {
     setInterval(() => {
       if (currentRoute !== window.location.href) {
         currentRoute = window.location.href;
-        if (this._handleVendorNavigation) {
-          this._handleVendorNavigation({ route: currentRoute });
-        }
         const prefixStartsWithSlash = this._prefix.startsWith('/');
         const apEvent: ActivepiecesVendorRouteChanged = {
           type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
@@ -347,3 +369,4 @@ class ActivepiecesEmbedded {
 
 
 (window as any).activepieces = new ActivepiecesEmbedded();
+(window as any).ActivepiecesEmbedded =  ActivepiecesEmbedded;

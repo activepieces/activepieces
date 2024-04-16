@@ -8,6 +8,7 @@ export type EmbeddingState = {
   disableNavigationInBuilder: boolean;
   hideFolders: boolean;
   hideFlowNameInBuilder: boolean;
+  customNavigationHandling: boolean;
 };
 @Injectable({
   providedIn: 'root',
@@ -23,10 +24,14 @@ export class EmbeddingService {
       disableNavigationInBuilder: false,
       hideFolders: false,
       hideFlowNameInBuilder: false,
+      customNavigationHandling: false,
     });
   }
   getState() {
     return this.embeddingStateSubject.value;
+  }
+  getCustomeNavigationHandling() {
+    return this.embeddingStateSubject.value.customNavigationHandling;
   }
   setState(newState: EmbeddingState) {
     return this.embeddingStateSubject.next(newState);
@@ -34,6 +39,12 @@ export class EmbeddingService {
   getState$() {
     return this.embeddingStateSubject.asObservable();
   }
+  getCustomeNavigationHandling$() {
+    return this.embeddingStateSubject
+      .asObservable()
+      .pipe(map((res) => res.customNavigationHandling));
+  }
+
   getIsInEmbedding$() {
     return this.getState$().pipe(map((res) => res.isEmbedded));
   }
