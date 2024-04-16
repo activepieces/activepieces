@@ -64,10 +64,6 @@ export const UserEntity = new EntitySchema<UserSchema>({
             columns: ['platformId', 'externalId'],
             unique: true,
         },
-        {
-            name: 'idx_user_partial_unique_email_platform_id_is_null',
-            synchronize: false,
-        },
     ],
     relations: {
         projects: {
