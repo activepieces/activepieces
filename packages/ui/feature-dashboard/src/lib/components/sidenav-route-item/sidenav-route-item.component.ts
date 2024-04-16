@@ -22,6 +22,7 @@ type SideNavRoute = {
       class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer"
       [routerLink]="sideNavRoute.route ? ['/' + sideNavRoute.route] : undefined"
       (click)="sideNavRoute.effect ? sideNavRoute.effect() : null"
+      [skipLocationChange]="skipLocationChange"
     >
       <div
         routerLinkActive="ap-bg-primary-light   ap-transition ap-ease-out ap-rounded-[8px] hover:!ap-bg-primary-light !ap-fill-primary "
@@ -29,6 +30,7 @@ type SideNavRoute = {
         [routerLink]="
           sideNavRoute.route ? ['/' + sideNavRoute.route] : undefined
         "
+        [skipLocationChange]="skipLocationChange"
       >
         <svg-icon
           [applyClass]="true"
@@ -57,4 +59,5 @@ type SideNavRoute = {
 })
 export class SidenavRouteItemComponent {
   @Input({ required: true }) sideNavRoute: SideNavRoute;
+  @Input() skipLocationChange?: boolean;
 }
