@@ -23,11 +23,11 @@ import {
   FlagService,
   fadeInUp400ms,
 } from '@activepieces/ui/common';
-import { ConnectionValidator } from '../../validators/connectionNameValidator';
+import { ConnectionValidator } from '../../../validators/connectionNameValidator';
 import {
   OAuth2PopupParams,
   OAuth2PopupResponse,
-} from '../../models/oauth2-popup-params.interface';
+} from '../../../models/oauth2-popup-params.interface';
 import {
   PropertyType,
   OAuth2Property,

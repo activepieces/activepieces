@@ -17,14 +17,14 @@ import {
   MatDialog,
 } from '@angular/material/dialog';
 import { catchError, Observable, of, tap } from 'rxjs';
-import { ConnectionValidator } from '../../validators/connectionNameValidator';
+import { ConnectionValidator } from '../../../validators/connectionNameValidator';
 import { BasicAuthProperty } from '@activepieces/pieces-framework';
 import {
   AppConnectionsService,
   AuthenticationService,
   DiagnosticDialogComponent,
 } from '@activepieces/ui/common';
-import { connectionNameRegex } from '../utils';
+import { connectionNameRegex, createConnectionNameControl } from '../utils';
 
 interface BasicAuthForm {
   name: FormControl<string>;
@@ -67,23 +67,9 @@ export class BasicAuthConnectionDialogComponent {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      name: new FormControl(
-        appConnectionsService.getConnectionNameSuggest(
-          this.dialogData.pieceName
-        ),
-        {
-          nonNullable: true,
-          validators: [
-            Validators.required,
-            Validators.pattern(connectionNameRegex),
-          ],
-          asyncValidators: [
-            ConnectionValidator.createValidator(
-              this.appConnectionsService.getAllOnce(),
-              undefined
-            ),
-          ],
-        }
+      name: createConnectionNameControl(
+        this.appConnectionsService,
+        dialogData.pieceName
       ),
     });
     if (this.dialogData.connectionToUpdate) {

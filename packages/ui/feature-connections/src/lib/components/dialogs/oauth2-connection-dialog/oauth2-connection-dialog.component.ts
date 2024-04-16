@@ -30,10 +30,10 @@ import {
 import {
   OAuth2PopupParams,
   OAuth2PopupResponse,
-} from '../../models/oauth2-popup-params.interface';
-import { CloudAuthConfigsService } from '../../services/cloud-auth-configs.service';
+} from '../../../models/oauth2-popup-params.interface';
+import { CloudAuthConfigsService } from '../../../services/cloud-auth-configs.service';
 import { AppConnectionsService } from '@activepieces/ui/common';
-import { ConnectionValidator } from '../../validators/connectionNameValidator';
+import { ConnectionValidator } from '../../../validators/connectionNameValidator';
 import { connectionNameRegex } from '../utils';
 
 interface OAuth2PropertySettings {

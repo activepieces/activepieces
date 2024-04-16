@@ -28,7 +28,7 @@ import {
   AuthenticationService,
   DiagnosticDialogComponent,
 } from '@activepieces/ui/common';
-import { ConnectionValidator } from '../../validators/connectionNameValidator';
+import { ConnectionValidator } from '../../../validators/connectionNameValidator';
 import { connectionNameRegex } from '../utils';
 
 export interface CustomAuthDialogData {

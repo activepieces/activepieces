@@ -16,7 +16,7 @@ import {
   MatDialog,
 } from '@angular/material/dialog';
 import { catchError, Observable, of, tap } from 'rxjs';
-import { ConnectionValidator } from '../../validators/connectionNameValidator';
+import { ConnectionValidator } from '../../../validators/connectionNameValidator';
 
 import {
   AppConnectionsService,
