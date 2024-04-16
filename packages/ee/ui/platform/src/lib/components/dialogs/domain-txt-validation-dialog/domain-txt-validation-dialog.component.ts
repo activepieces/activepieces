@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Observable, BehaviorSubject, Subject, catchError, tap } from 'rxjs';
-import { CustomDomainService } from '../../../service/custom-domain.service';
+import {
+  CustomDomainService,
+  HostnameDetailsResponse,
+} from '../../../service/custom-domain.service';
 
 @Component({
   selector: 'app-domain-txt-validation-dialog',
@@ -11,6 +14,35 @@ import { CustomDomainService } from '../../../service/custom-domain.service';
 export class DomainTxtValidationDialogComponent {
   readonly title = $localize`Verify Custom Domain`;
   loading$ = new BehaviorSubject(false);
+
+  readonly cloudHostname = 'cloud.activepieces.com';
+  markdownInstructions = `
+  Please add the following DNS Records:
+  <br>
+  <br>
+  **CNAME Record Key**:
+  \`\`\`text
+  ${this.data.cloudflareHostnameData.hostname} 
+  \`\`\`
+  <br>
+  **CNAME Record Value**:
+  \`\`\`text
+  ${this.cloudHostname}
+  \`\`\`
+  <br>
+  <br>
+  
+  **TXT Record Key**:
+  \`\`\`text
+  ${this.data.cloudflareHostnameData.txtName}
+  \`\`\`
+  <br>
+  **TXT Record value**:
+  \`\`\`text
+  ${this.data.cloudflareHostnameData.txtValue}
+  \`\`\`
+  `;
+
   error$ = '';
   refresh$: Subject<boolean> = new Subject();
   verificationStatus$?: Observable<{ status: string }>;
@@ -20,10 +52,7 @@ export class DomainTxtValidationDialogComponent {
     @Inject(MAT_DIALOG_DATA)
     public data: {
       domainId: string;
-      cloudflareHostnameData: {
-        txtName: string;
-        txtValue: string;
-      };
+      cloudflareHostnameData: HostnameDetailsResponse;
     }
   ) {}
 

@@ -4,23 +4,12 @@
 
 <mat-dialog-content>
     <div class="ap-min-w-[470px] ap-max-w-[470px]">
-        <form class="ap-flex ap-flex-col ap-gap-2">
-            @if(error$) {
-            <mat-error i18n>
-                {{ error$ }}
-            </mat-error>
-            }
-            <mat-form-field class="ap-w-full" appearance="outline">
-                <mat-label>Certificate validation TXT name</mat-label>
-                <input name="cf-validation-txt" type="text" matInput value="{{data.cloudflareHostnameData.txtName}}"
-                    disabled />
-            </mat-form-field>
-            <mat-form-field class="ap-w-full" appearance="outline">
-                <mat-label>Certificate validation TXT value</mat-label>
-                <input name="cf-validation-txt" type="text" matInput value="{{data.cloudflareHostnameData.txtValue}}"
-                    disabled />
-            </mat-form-field>
-        </form>
+        <ap-markdown [data]="markdownInstructions"></ap-markdown>
+        @if(error$) {
+        <mat-error i18n>
+            {{ error$ }}
+        </mat-error>
+        }
     </div>
 </mat-dialog-content>
 
