@@ -34,7 +34,7 @@ export const customDomainService = {
                 
             const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.domain)
             if (hostnameDetails.data.result.id) {
-                await cloudflareHostnameServices.delete(hostnameDetails.data.result.id)
+                await cloudflareHostnameServices.delete(hostnameDetails.data.result[0].id)
             }
         }
             
@@ -60,7 +60,7 @@ export const customDomainService = {
     async verifyDomain(request: {
         platformId: string
         id: string
-    }): Promise<boolean> {
+    }): Promise<{ status: string }> {
         const customDomain = await customDomainRepo.findOneBy({
             id: request.id,
         })
@@ -76,22 +76,28 @@ export const customDomainService = {
         }
 
         const hostnameDetails = await cloudflareHostnameServices.getHostnameDetails(customDomain.domain)
-        const patchResult = await cloudflareHostnameServices.update(hostnameDetails.data.result.id)
+        const patchResult = await cloudflareHostnameServices.update(hostnameDetails.data.result[0].id)
         const status = patchResult.data.result.status
 
         await customDomainRepo.update({
             platformId: request.platformId,
             id: request.id,
         }, {
-            status: CustomDomainStatus.ACTIVE,
+            status: status !== 'pending' ? CustomDomainStatus.ACTIVE : CustomDomainStatus.PENDING,
         })
 
-        return status
+        return { status }
     },
     async create(request: {
         domain: string
         platformId: string
-    }): Promise<CustomDomain> {
+    }): Promise<{
+            customDomain: CustomDomain
+            cloudflareHostnameData: null | {
+                txtName: string
+                txtValue: string
+            } 
+        }> {
         const customDomain = customDomainRepo.create({
             id: apId(),
             domain: request.domain, 
@@ -101,12 +107,25 @@ export const customDomainService = {
         
         const edition = getEdition()
         if (edition === ApEdition.CLOUD) {
-            await cloudflareHostnameServices.create({ 
+            const createHostnameRes = await cloudflareHostnameServices.create({ 
                 hostname: request.domain, 
             })
+
+            const validationRecord = createHostnameRes.data.result.ownership_verification
+
+            return {
+                customDomain: await customDomainRepo.save(customDomain),
+                cloudflareHostnameData: {
+                    txtName: validationRecord.name,
+                    txtValue: validationRecord.value,
+                },
+            }
         }
 
-        return customDomainRepo.save(customDomain)
+        return {
+            customDomain: await customDomainRepo.save(customDomain),
+            cloudflareHostnameData: null,
+        }
     },
     async list({
         request,
