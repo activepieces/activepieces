@@ -102,8 +102,6 @@ export class RewardsDialogComponent {
     this.telemetryService.capture({
       name: TelemetryEventName.REWARDS_INSTRUCTION_CLICKED,
       payload: {
-        userId: this.authenticationService.currentUser.id,
-        email: this.authenticationService.currentUser.email,
         type,
       },
     });

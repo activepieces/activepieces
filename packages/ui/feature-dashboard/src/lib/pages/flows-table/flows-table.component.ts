@@ -246,8 +246,6 @@ export class FlowsTableComponent implements OnInit {
     this.telemetryService.capture({
       name: TelemetryEventName.REWARDS_OPENED,
       payload: {
-        email: this.authenticationService.currentUser.email,
-        userId: this.authenticationService.currentUser.id,
         source: 'rewards-button',
       },
     });
