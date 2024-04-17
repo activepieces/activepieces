@@ -50,7 +50,7 @@ export interface ActivepiecesVendorInit {
     hideFlowNameInBuilder?: boolean;
     disableNavigationInBuilder: boolean;
     hideFolders?: boolean;
-    customNavigationHandling?: boolean
+    isCustomNavigationHandlingEnabled?: boolean
   };
 }
 export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
@@ -138,11 +138,11 @@ class ActivepiecesEmbedded {
             jwtToken,
             iframeContainer,
           }).contentWindow;
+          this._dashboardAndBuilderIframeWindow = iframeWindow;
           if(!this._navigationHandler){
-            this._checkForVendorRouteChanges(iframeWindow);
+            this._checkForVendorRouteChanges();
           }
           this._checkForClientRouteChanges(iframeWindow);
-          this._dashboardAndBuilderIframeWindow = iframeWindow;
         }
       },
       errorMessage: 'container not found',
@@ -179,7 +179,7 @@ class ActivepiecesEmbedded {
                   hideFolders: this._hideFolders,
                   hideLogoInBuilder: this._hideLogoInBuilder,
                   hideFlowNameInBuilder: this._hideFlowNameInBuilder,
-                  customNavigationHandling: !!this._navigationHandler
+                  isCustomNavigationHandlingEnabled: !!this._navigationHandler
                 },
               };
               iframeWindow.postMessage(apEvent, '*');
@@ -237,12 +237,13 @@ class ActivepiecesEmbedded {
         console.error('Activepieces: dashboard iframe not found');
         return;
       }
-      this._dashboardAndBuilderIframeWindow.postMessage({
+      const event: ActivepiecesVendorRouteChanged = {
         type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
         data: {
           vendorRoute: route,
         },
-      }, '*');
+      };
+      this._dashboardAndBuilderIframeWindow.postMessage(event, '*');
   }
 
   private _checkForClientRouteChanges = (source: Window) => {
@@ -279,24 +280,19 @@ class ActivepiecesEmbedded {
     );
   };
 
-  private _checkForVendorRouteChanges = (iframeWindow: Window) => {
+  private _checkForVendorRouteChanges = () => {
     let currentRoute = window.location.href;
     setInterval(() => {
       if (currentRoute !== window.location.href) {
         currentRoute = window.location.href;
         const prefixStartsWithSlash = this._prefix.startsWith('/');
-        const apEvent: ActivepiecesVendorRouteChanged = {
-          type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
-          data: {
-            vendorRoute: this._extractRouteAfterPrefix(
-              currentRoute,
-              prefixStartsWithSlash
-                ? this._parentOrigin + this._prefix
-                : `${this._parentOrigin}/${this._prefix}`
-            ),
-          },
-        };
-        iframeWindow.postMessage(apEvent, '*');
+       const route = this._extractRouteAfterPrefix(
+        currentRoute,
+        prefixStartsWithSlash
+          ? this._parentOrigin + this._prefix
+          : `${this._parentOrigin}/${this._prefix}`
+      );
+      this.navigate({route});
       }
     }, 50);
   };

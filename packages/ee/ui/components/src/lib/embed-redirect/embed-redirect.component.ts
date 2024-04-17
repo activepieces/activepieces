@@ -75,8 +75,8 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
         prefix: event.data.data.prefix,
         disableNavigationInBuilder: event.data.data.disableNavigationInBuilder,
         hideFolders: event.data.data.hideFolders || false,
-        customNavigationHandling:
-          event.data.data.customNavigationHandling || false,
+        isCustomNavigationHandlingEnabled:
+          event.data.data.isCustomNavigationHandlingEnabled || false,
       });
       this.navigationService.navigate({
         route: [event.data.data.initialRoute],
