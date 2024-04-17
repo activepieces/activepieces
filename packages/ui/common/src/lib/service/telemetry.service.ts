@@ -35,6 +35,14 @@ export class TelemetryService {
           this.analytics = AnalyticsBrowser.load({
             writeKey: 'Znobm6clOFLZNdMFpZ1ncf6VDmlCVSmj',
           });
+          this.analytics.addSourceMiddleware(({ payload, next }) => {
+            const path = payload?.obj?.properties?.['path'];
+            const ignoredPaths = ['/embed'];
+            if (ignoredPaths.includes(path)) {
+              return;
+            }
+            next(payload);
+          });
         }
 
         const currentVersion =
