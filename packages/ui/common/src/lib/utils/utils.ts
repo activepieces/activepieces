@@ -1,5 +1,13 @@
 import { ActionType, TriggerType, isNil } from '@activepieces/shared';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
+import semver from 'semver';
+
+export const isVersionMatch = (
+  latestVersion: string,
+  currentVersion: string
+) => {
+  return semver.gt(latestVersion, currentVersion);
+};
 
 export function getDisplayNameForTrigger(triggerType: TriggerType) {
   switch (triggerType) {
