@@ -1,6 +1,11 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MarkdownModule, MarkedOptions, MarkedRenderer } from 'ngx-markdown';
+import {
+  MarkdownModule,
+  MarkedOptions,
+  MARKED_OPTIONS,
+  MarkedRenderer,
+} from 'ngx-markdown';
 import { EditableTextComponent } from './components/editable-text/editable-text.component';
 import {
   MatTooltipDefaultOptions,
@@ -184,7 +189,7 @@ export function markedOptionsFactory(): MarkedOptions {
     ...exportedImports,
     MarkdownModule.forRoot({
       markedOptions: {
-        provide: MarkedOptions,
+        provide: MARKED_OPTIONS,
         useFactory: markedOptionsFactory,
       },
     }),
