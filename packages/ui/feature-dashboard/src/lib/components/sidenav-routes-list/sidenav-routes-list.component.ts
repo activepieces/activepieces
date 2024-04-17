@@ -8,9 +8,13 @@ import {
   NavigationService,
   UiCommonModule,
 } from '@activepieces/ui/common';
-import { Observable, forkJoin, map, of, take } from 'rxjs';
+import { Observable, combineLatest, forkJoin, map, of, take } from 'rxjs';
 import { ApFlagId, ProjectMemberRole, supportUrl } from '@activepieces/shared';
-import { DashboardService, FlagService } from '@activepieces/ui/common';
+import {
+  DashboardService,
+  FlagService,
+  isVersionMatch,
+} from '@activepieces/ui/common';
 import { SidenavRouteItemComponent } from '../sidenav-route-item/sidenav-route-item.component';
 import { CommonModule } from '@angular/common';
 
@@ -21,6 +25,7 @@ type SideNavRoute = {
   effect?: () => void;
   showInSideNav$: Observable<boolean>;
   showLock$?: Observable<boolean>;
+  showNotification$?: Observable<boolean>;
 };
 
 @Component({
@@ -38,6 +43,9 @@ export class SidenavRoutesListComponent implements OnInit {
   demoPlatform$: Observable<boolean> = this.flagService.isFlagEnabled(
     ApFlagId.SHOW_PLATFORM_DEMO
   );
+  currentVersion$?: Observable<string>;
+  latestVersion$?: Observable<string>;
+  isVersionMatch$?: Observable<boolean>;
 
   readonly supportRoute: SideNavRoute = {
     caption: 'Support',
@@ -95,13 +103,13 @@ export class SidenavRoutesListComponent implements OnInit {
       showInSideNav$: of(true),
       showLock$: of(false),
     },
-
     {
       icon: 'assets/img/custom/dashboard/settings.svg',
       caption: $localize`Settings`,
       route: 'platform/settings',
       showInSideNav$: of(true),
       showLock$: of(false),
+      showNotification$: this.isVersionMatch$,
     },
   ];
   constructor(
@@ -175,6 +183,20 @@ export class SidenavRoutesListComponent implements OnInit {
         showLock$: of(false),
       },
     ];
+    this.currentVersion$ = this.flagService.getStringFlag(
+      ApFlagId.CURRENT_VERSION
+    );
+    this.latestVersion$ = this.flagService.getStringFlag(
+      ApFlagId.LATEST_VERSION
+    );
+    this.isVersionMatch$ = combineLatest({
+      currentVersion: this.currentVersion$,
+      latestVersion: this.latestVersion$,
+    }).pipe(
+      map(({ currentVersion, latestVersion }) => {
+        return isVersionMatch(latestVersion, currentVersion);
+      })
+    );
   }
   ngOnInit(): void {
     this.sideNavRoutes$ = this.dashboardService.getIsInPlatformRoute().pipe(
