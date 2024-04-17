@@ -25,7 +25,7 @@ you will get the client's browser history and viewed url with Activepieces:
         hideFolders:false,
         navigation:{
           handler: (result) => {
-            if(!window.location.href.endsWith(route.route))
+            if(!window.location.href.endsWith(result.route))
               {
                 window.history.pushState({}, "", window.location.origin + result.route);
               }
