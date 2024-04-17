@@ -54,12 +54,6 @@ export const newOrUpdatedRowTrigger = createTrigger({
 			rowHashes.push(rowHash);
 		}
 
-		console.log('SHEET VALUES');
-		console.log(sheetValues);
-
-		console.log('VALUE BUFFER');
-		console.log(rowHashes);
-
 		// store compressed values
 		await context.store.put(`${sheetId}`, rowHashes);
 
@@ -185,25 +179,3 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
 	sampleData: {},
 });
-
-// fetch stored(old) sheet rowvalues
-// const stringBuffer = (await context.store.get(`${sheetId}`)) as string;
-// const decompressedValues = await unzip(Buffer.from(stringBuffer, 'base64'));
-// const oldValues = JSON.parse(decompressedValues.toString('utf-8'));
-
-// const rowCount = Math.max(oldValues.length, currentValues.length);
-
-// check for updated cell value
-// let changedValues = [];
-// for (let i = 0; i < rowCount; i++) {
-// 	const oldRowValue = oldValues[i];
-// 	const currentRowValue = currentValues[i];
-
-// 	const columnCount = Math.max(oldRowValue.length, currentRowValue.length);
-
-// 	for (let j = 0; j < columnCount; j++) {
-//         const oldCellValue =
-//     }
-// }
-// const compressedValues = await gzip(JSON.stringify(sheetValues));
-// const stringBuffer = compressedValues.toString('base64');
