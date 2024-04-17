@@ -13,7 +13,7 @@ export const telemetry = {
         if (!telemetryEnabled) {
             return
         }
-        analytics.identify({
+        const identify = {
             userId: user.id,
             traits: {
                 email: user.email,
@@ -22,7 +22,8 @@ export const telemetry = {
                 projectId,
                 ...(await getMetadata()),
             },
-        })
+        }
+        analytics.identify(identify)
     },
     async trackProject(
         projectId: ProjectId,
@@ -40,7 +41,7 @@ export const telemetry = {
         if (!telemetryEnabled) {
             return
         }
-        analytics.track({
+        const payloadEvent = {
             userId,
             event: event.name,
             properties: {
@@ -48,7 +49,8 @@ export const telemetry = {
                 ...(await getMetadata()),
                 datetime: new Date().toISOString(),
             },
-        })
+        }
+        analytics.track(payloadEvent)
     },
 }
 
