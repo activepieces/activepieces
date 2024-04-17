@@ -1,4 +1,3 @@
-import { logger } from '@activepieces/server-shared'
 import { databaseConnection } from '../../database/database-connection'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -10,7 +9,8 @@ import {
     CustomDomainStatus,
     ListCustomDomainsRequest,
 } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApEdition, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
+import { system, SystemProp } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
 
 type HostnameDetailsResponse = {
     txtName: string
@@ -21,7 +21,7 @@ type HostnameDetailsResponse = {
 const customDomainRepo =
     databaseConnection.getRepository<CustomDomain>(CustomDomainEntity)
 
-const isCloudEdition = getEdition() === ApEdition.CLOUD
+const isCloudEdition = getEdition() === ApEdition.CLOUD && system.getOrThrow(SystemProp.ENVIRONMENT) !== ApEnvironment.TESTING
 
 export const customDomainService = {
     async delete(request: { id: string, platformId: string }): Promise<void> {
@@ -40,7 +40,7 @@ export const customDomainService = {
     },
     async getOneByIdOrThrow(id: string) {
         const customDomain = await customDomainRepo.findOneBy({
-            id: id,
+            id,
         })
 
         if (isNil(customDomain)) {
@@ -119,9 +119,9 @@ export const customDomainService = {
         domain: string
         platformId: string
     }): Promise<{
-        customDomain: CustomDomain
-        cloudflareHostnameData: null | HostnameDetailsResponse
-    }> {
+            customDomain: CustomDomain
+            cloudflareHostnameData: null | HostnameDetailsResponse
+        }> {
         const customDomain = await customDomainRepo.save({
             id: apId(),
             domain: request.domain,
@@ -132,11 +132,11 @@ export const customDomainService = {
         let cloudflareHostnameData: HostnameDetailsResponse | null = null
         if (isCloudEdition) {
             await cloudflareHostnameServices.create(request.domain)
-            let retry = 0;
+            let retry = 0
             // TODO this is hack to wait to create verification record
             while (!cloudflareHostnameData && retry < 3) {
                 cloudflareHostnameData = await customDomainService.getDomainValidationData({
-                    id: customDomain.id
+                    id: customDomain.id,
                 })
                 retry++
                 await new Promise((resolve) => setTimeout(resolve, 3000))

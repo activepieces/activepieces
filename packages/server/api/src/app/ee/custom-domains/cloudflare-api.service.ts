@@ -18,7 +18,7 @@ export const cloudflareHostnameServices = {
         return axios.post(
             this.makeUrl(),
             {
-                hostname: hostname,
+                hostname,
                 ssl: {
                     bundleMethod: 'ubiquitous',
                     certificateAuthority: 'lets_encrypt',
