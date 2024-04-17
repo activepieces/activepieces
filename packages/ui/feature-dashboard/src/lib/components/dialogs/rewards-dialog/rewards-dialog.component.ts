@@ -41,9 +41,7 @@ export class RewardsDialogComponent {
           '_blank',
           'noopener noreferrer'
         );
-        this.trackRewardsItems(
-          TelemetryEventName.TEMPLATE_REWARD_INSTRUCTIONS_CLICKED
-        );
+        this.trackRewardsItems('contribute-piece');
       },
       icon: 'assets/img/custom/dashboard/templates.svg',
       jobName: 'Contribute a Template',
@@ -57,9 +55,7 @@ export class RewardsDialogComponent {
           '_blank',
           'noopener noreferrer'
         );
-        this.trackRewardsItems(
-          TelemetryEventName.PIECE_REWARD_INSTRUCTIONS_CLICKED
-        );
+        this.trackRewardsItems('contribute-piece');
       },
       icon: 'assets/img/custom/dashboard/pieces.svg',
       jobName: 'Contribute a piece',
@@ -73,7 +69,7 @@ export class RewardsDialogComponent {
           '_blank',
           'noopener noreferrer'
         );
-        this.trackRewardsItems(TelemetryEventName.LINKED_IN_REWARD_CLICKED);
+        this.trackRewardsItems('linkedin');
       },
       icon: 'assets/img/custom/rewards/linkedin.svg',
       jobName: 'Tell your network about your experience with us on LinkedIn',
@@ -83,6 +79,7 @@ export class RewardsDialogComponent {
       cta: 'Copy Link',
       ctaEffect: () => {
         this.referralItemClicked();
+        this.trackRewardsItems('referral');
       },
       icon: 'assets/img/custom/rewards/referals.svg',
       jobName:
@@ -100,16 +97,14 @@ export class RewardsDialogComponent {
     });
   }
   trackRewardsItems(
-    eventName:
-      | TelemetryEventName.PIECE_REWARD_INSTRUCTIONS_CLICKED
-      | TelemetryEventName.TEMPLATE_REWARD_INSTRUCTIONS_CLICKED
-      | TelemetryEventName.LINKED_IN_REWARD_CLICKED
+    type: 'linkedin' | 'contribute-piece' | 'share-template' | 'referral'
   ) {
     this.telemetryService.capture({
-      name: eventName,
+      name: TelemetryEventName.REWARDS_INSTRUCTION_CLICKED,
       payload: {
         userId: this.authenticationService.currentUser.id,
         email: this.authenticationService.currentUser.email,
+        type,
       },
     });
   }

@@ -72,10 +72,11 @@ export class RewardsNoteComponent {
   openRewardsDialog() {
     this.matDialog.open(RewardsDialogComponent);
     this.telemteryService.capture({
-      name: TelemetryEventName.REWARDS_NOTE_SHOW_REWARDS_CLICKED,
+      name: TelemetryEventName.REWARDS_OPENED,
       payload: {
         email: this.authenticationService.currentUser.email,
         userId: this.authenticationService.currentUser.id,
+        source: 'note',
       },
     });
   }

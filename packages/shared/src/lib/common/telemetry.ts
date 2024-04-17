@@ -46,9 +46,9 @@ type FlowImported = {
     tab?: string
 }
 type FlowImportedUsingFile = {
- 
+
     location: 'inside dashboard' | 'inside the builder'
-   
+
 }
 
 type UpgradeClicked = {
@@ -59,16 +59,23 @@ type UpgradeClicked = {
 type UpgradePopup = {
     limitType?: 'team' | 'connections'
     limit: number
-    
+
 }
 
 type ReferralLinkCopied = {
     userId: UserId
 }
 
+type RewardButtonClicked = {
+    email: string
+    userId: string
+    source: 'note' | 'rewards-button'
+}
+
 type RewardInstructionsClicked = {
     email: string
     userId: string
+    type: 'share-template' | 'linkedin' | 'referral' | 'contribute-piece'
 }
 
 type Referral = {
@@ -116,11 +123,8 @@ export enum TelemetryEventName {
     COPILOT_GENERATED_CODE = 'copilot.code.generated',
     FORMS_VIEWED = 'forms.viewed',
     FORMS_SUBMITTED = 'forms.submitted',
-    REWARDS_BUTTON_CLICKED = 'rewards.button.clicked',
-    REWARDS_NOTE_SHOW_REWARDS_CLICKED = 'rewards.note.show.rewards.clicked',
-    PIECE_REWARD_INSTRUCTIONS_CLICKED = 'piece.reward.instructions.clicked',
-    TEMPLATE_REWARD_INSTRUCTIONS_CLICKED = 'template.reward.instructions.clicked',
-    LINKED_IN_REWARD_CLICKED = 'linked.in.reward.clicked',
+    REWARDS_OPENED = 'rewards.opened',
+    REWARDS_INSTRUCTION_CLICKED = 'rewards.instructions.clicked',
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -148,8 +152,5 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.COPILOT_GENERATED_CODE, CopilotGeneratedCode>
     | BaseTelemetryEvent<TelemetryEventName.FORMS_VIEWED, FormsViewed>
     | BaseTelemetryEvent<TelemetryEventName.FORMS_SUBMITTED, FormsViewed>
-    | BaseTelemetryEvent<TelemetryEventName.REWARDS_BUTTON_CLICKED, RewardInstructionsClicked>
-    | BaseTelemetryEvent<TelemetryEventName.PIECE_REWARD_INSTRUCTIONS_CLICKED, RewardInstructionsClicked>
-    | BaseTelemetryEvent<TelemetryEventName.TEMPLATE_REWARD_INSTRUCTIONS_CLICKED, RewardInstructionsClicked>
-    | BaseTelemetryEvent<TelemetryEventName.LINKED_IN_REWARD_CLICKED, RewardInstructionsClicked>
-    | BaseTelemetryEvent<TelemetryEventName.REWARDS_NOTE_SHOW_REWARDS_CLICKED, RewardInstructionsClicked>
+    | BaseTelemetryEvent<TelemetryEventName.REWARDS_OPENED, RewardButtonClicked>
+    | BaseTelemetryEvent<TelemetryEventName.REWARDS_INSTRUCTION_CLICKED, RewardInstructionsClicked>
