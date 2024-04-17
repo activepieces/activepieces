@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-  AuthenticationService,
   TelemetryService,
   UiCommonModule,
 } from '@activepieces/ui/common';
@@ -50,7 +49,6 @@ export class RewardsNoteComponent {
   constructor(
     private matDialog: MatDialog,
     private telemteryService: TelemetryService,
-    private authenticationService: AuthenticationService
   ) {
     const lastClosed = localStorage.getItem(LAST_CLOSED_KEY_LOCAL_STORAGE);
     const now = new Date();
@@ -74,8 +72,6 @@ export class RewardsNoteComponent {
     this.telemteryService.capture({
       name: TelemetryEventName.REWARDS_OPENED,
       payload: {
-        email: this.authenticationService.currentUser.email,
-        userId: this.authenticationService.currentUser.id,
         source: 'note',
       },
     });

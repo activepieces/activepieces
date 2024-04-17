@@ -31,28 +31,31 @@ export class TelemetryService {
   init(user: UserWithoutPassword) {
     this.flagService.getAllFlags().subscribe((flags) => {
       if (flags[ApFlagId.TELEMETRY_ENABLED] === true) {
-        this.analytics = AnalyticsBrowser.load({
-          writeKey: 'Znobm6clOFLZNdMFpZ1ncf6VDmlCVSmj',
-        });
-        posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
-          autocapture: false,
-          segment: this.analytics,
-          loaded: () => this.analytics.page(),
-        });
-
-        if (flags[ApFlagId.ENVIRONMENT] === ApEnvironment.PRODUCTION) {
-          const currentVersion =
-            (flags[ApFlagId.CURRENT_VERSION] as string) || '0.0.0';
-          const environment =
-            (flags[ApFlagId.ENVIRONMENT] as string) || '0.0.0';
-          this.analytics.identify(user.id, {
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            activepiecesVersion: currentVersion,
-            activepiecesEnvironment: environment,
+        if (!this.analytics) {
+          this.analytics = AnalyticsBrowser.load({
+            writeKey: 'Znobm6clOFLZNdMFpZ1ncf6VDmlCVSmj',
           });
         }
+
+        const currentVersion =
+          (flags[ApFlagId.CURRENT_VERSION] as string) || '0.0.0';
+        const environment = (flags[ApFlagId.ENVIRONMENT] as string) || '0.0.0';
+        this.analytics.identify(user.id, {
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          activepiecesVersion: currentVersion,
+          activepiecesEnvironment: environment,
+        });
+
+        this.analytics.ready(() => {
+          posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
+            autocapture: false,
+            capture_pageview: false,
+            segment: (window as any).analytics,
+            loaded: () => this.analytics.page(),
+          });
+        });
       }
 
       if (flags[ApFlagId.EDITION] === ApEdition.CLOUD) {
