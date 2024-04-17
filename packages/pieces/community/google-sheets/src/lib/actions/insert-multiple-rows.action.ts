@@ -80,7 +80,7 @@ export const insertMultipleRowsAction = createAction({
 
 		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
 
-		let formattedValues = [];
+		const formattedValues = [];
 
 		for (const rowInput of rowValuesInput) {
 			formattedValues.push(objectToArray(rowInput));

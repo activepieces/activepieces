@@ -99,7 +99,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
 		// const rowCount = Math.max(oldValuesHashes.length, currentValues.length);
 
-		let changedValues = [];
+		const changedValues = [];
 		const newRowHashes = [];
 
 		for (let i = 0; i < currentValues.length; i++) {
