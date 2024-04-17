@@ -61,9 +61,5 @@ activepieces.configure(
 | embedding.builder.hideFlowName | ❌ |  boolean | Hides the flow name and flow actions dropdown in the builder's header, by default it is false. |
 | embedding.dashboard.hideSidebar | ❌ | boolean | Controls the visibility of the sidebar in the dashboard, by default it is false. |
 | embedding.hideFolders | ❌ | boolean | Hides all things related to folders in both the flows table and builder by default it is false. |
-| navigation.handler  | ❌ | ({route:string}) => void | if defined the callback will be triggered each time a route in Activepieces changes, you can read more about it [here](/embedding/navigation)
-<Info>
-The way navigation works is that the iframe loading Activepieces, will read the browser URL, remove the `prefix`, and use what's left of the route to navigate within Activepieces.
+| navigation.handler  | ❌ | `({route:string}) => void`  | If defined the callback will be triggered each time a route in Activepieces changes, you can read more about it [here](/embedding/navigation)
 
-For example, if you set `automation` as the prefix and visit `/automation/connections`, SDK will open `/connections` in Activepieces.
-</Info>

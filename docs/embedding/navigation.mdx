@@ -6,12 +6,12 @@ icon: "signs-post"
 
 ## Implementation
 By default navigating within your embedded instance of Activepieces, doesn't affect the client's browser history or viewed url, however if you use the following snippet when configuring the sdk,
- you will get the client's browser history and viewed url with Activepieces:
- `
-   activepieces.configure( {
+you will get the client's browser history and viewed url with Activepieces:
+```js
+ activepieces.configure( {
       prefix: "/",
       instanceUrl:'http://localhost:4200',
-      jwtToken:"Your_token",
+      jwtToken:"GENERATED_JWT_TOKEN",
       embedding: {
         containerId: "container",
         builder:{
@@ -24,20 +24,21 @@ By default navigating within your embedded instance of Activepieces, doesn't aff
         },
         hideFolders:false,
         navigation:{
-          handler: (route:{route:string}) => {
+          handler: (result) => {
             if(!window.location.href.endsWith(route.route))
               {
-                window.history.pushState({}, "", window.location.origin + route.route);
+                window.history.pushState({}, "", window.location.origin + result.route);
               }
           }
         }
       },   
-   })
+   });
+
  window.addEventListener("popstate", () => {
     const route= activepieces.extractActivepiecesRouteFromUrl({vendorUrl: window.location.href});
     activepieces.navigate({route});
    });   
- `
+ ```
  You could implement your own custom logic using the navigation handler. 
 
 
