@@ -51,7 +51,7 @@ export class TelemetryService {
         this.analytics.ready(() => {
           posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
             autocapture: false,
-            capture_pageview: true,
+            capture_pageview: false,
             segment: (window as any).analytics,
             loaded: () => this.analytics.page(),
           });
