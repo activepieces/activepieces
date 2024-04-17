@@ -19,9 +19,6 @@
                     btnColor="white" btnStyle="stroked" btnSize="medium" (buttonClicked)="navigateToAdminConsole()"
                     i18n>
                     <div class="ap-flex ap-gap-2 ap-items-center">
-                        <svg-icon *ngIf="showAdminConsoleLock$ | async" [applyClass]="true" class="ap-fill-disable "
-                            [svgStyle]="{ width: '14px', height: '14px' }" src="assets/img/custom/lock.svg">
-                        </svg-icon>
                         <b>Admin Console</b>
                     </div>
 
@@ -42,14 +39,15 @@
         </div>
         <div class="ap-h-full"
             [class.ap-pt-7.5]="((isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false)">
-         
+
             <router-outlet></router-outlet>
             <div *ngIf="showPoweredByAp$ | async" class="ap-h-[70px] ap-w-full" #paddingForStickyNote>
             </div>
         </div>
     </mat-sidenav-content>
- 
-    <mat-sidenav #contactSalesSlideout mode="over" disableClose="true" [opened]="contactSalesState$ | async" position="end" class="ap-max-w-[600px]">
+
+    <mat-sidenav #contactSalesSlideout mode="over" disableClose="true" [opened]="contactSalesState$ | async"
+        position="end" class="ap-max-w-[600px]">
         <app-contact-sales (cancel)="closeContactSalesSlideout()"></app-contact-sales>
     </mat-sidenav>
 
@@ -61,4 +59,3 @@
         <ap-powered-by-activepieces></ap-powered-by-activepieces>
     </div>
 </div>
-
