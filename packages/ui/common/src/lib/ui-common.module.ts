@@ -1,11 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  MarkdownModule,
-  MarkedOptions,
-  MARKED_OPTIONS,
-  MarkedRenderer,
-} from 'ngx-markdown';
 import { EditableTextComponent } from './components/editable-text/editable-text.component';
 import {
   MatTooltipDefaultOptions,
@@ -82,6 +76,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { ApChipsListComponent } from './components/ap-chips-list/ap-chips-list.component';
 import { ApMarkdownComponent } from './components';
 import { CommaSeparatedPipe } from './pipe/comma-separated.pipe';
+import { MARKED_OPTIONS, MarkdownModule, MarkedRenderer } from 'ngx-markdown';
 
 const exportedImports = [
   CommonModule,
@@ -163,7 +158,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   touchendHideDelay: 0,
 };
 
-export function markedOptionsFactory(): MarkedOptions {
+export function markedOptionsFactory() {
   const renderer = new MarkedRenderer();
   const linkRenderer = renderer.link;
 
