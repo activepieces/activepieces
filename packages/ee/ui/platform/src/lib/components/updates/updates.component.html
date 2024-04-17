@@ -21,9 +21,9 @@
     </div>
     @if (message$ | async; as message){
         @if (message.needUpdate) {
-            <div class="ap-bg-primary-light ap-rounded-md ap-my-2 ap-px-2">
-                <span class="ap-typography-headline-6 ap-mr-2">Your version is behind the latest available version.</span>
-                <a class="ap-typography-headline-6 ap-text-primary ap-no-underline" href="https://www.activepieces.com/docs/install/options/overview" target="_blank">Click here to upgrade</a>
+            <div class="ap-bg-primary-light ap-rounded-md ap-p-2">
+                <span class="ap-typography-subtitle-1 ap-mr-2">Your version is behind the latest available version.</span>
+                <a class="ap-typography-subtitle-1 ap-text-primary ap-no-underline" href="https://www.activepieces.com/docs/install/options/overview" target="_blank">Click here to upgrade</a>
             </div>
         }
     }
