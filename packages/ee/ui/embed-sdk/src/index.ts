@@ -50,7 +50,6 @@ export interface ActivepiecesVendorInit {
     hideFlowNameInBuilder?: boolean;
     disableNavigationInBuilder: boolean;
     hideFolders?: boolean;
-    isCustomNavigationHandlingEnabled?: boolean
   };
 }
 export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
@@ -139,9 +138,6 @@ class ActivepiecesEmbedded {
             iframeContainer,
           }).contentWindow;
           this._dashboardAndBuilderIframeWindow = iframeWindow;
-          if(!this._navigationHandler){
-            this._checkForVendorRouteChanges();
-          }
           this._checkForClientRouteChanges(iframeWindow);
         }
       },
@@ -179,7 +175,6 @@ class ActivepiecesEmbedded {
                   hideFolders: this._hideFolders,
                   hideLogoInBuilder: this._hideLogoInBuilder,
                   hideFlowNameInBuilder: this._hideFlowNameInBuilder,
-                  isCustomNavigationHandlingEnabled: !!this._navigationHandler
                 },
               };
               iframeWindow.postMessage(apEvent, '*');
@@ -265,37 +260,19 @@ class ActivepiecesEmbedded {
           if (!routeWithPrefix.startsWith('/')) {
             routeWithPrefix = '/' + routeWithPrefix;
           }
-       
+        
           if(this._navigationHandler)
             {
-              window.history.replaceState({}, document.title, location.pathname);
+
               this._navigationHandler({ route: routeWithPrefix });
             }
-            else
-            {
-              window.history.replaceState({}, '', routeWithPrefix);
-            }
+      
         }
       }
     );
   };
 
-  private _checkForVendorRouteChanges = () => {
-    let currentRoute = window.location.href;
-    setInterval(() => {
-      if (currentRoute !== window.location.href) {
-        currentRoute = window.location.href;
-        const prefixStartsWithSlash = this._prefix.startsWith('/');
-       const route = this._extractRouteAfterPrefix(
-        currentRoute,
-        prefixStartsWithSlash
-          ? this._parentOrigin + this._prefix
-          : `${this._parentOrigin}/${this._prefix}`
-      );
-      this.navigate({route});
-      }
-    }, 50);
-  };
+
 
   private _extractRouteAfterPrefix(href: string, prefix: string) {
     return href.split(prefix)[1];
@@ -361,7 +338,13 @@ class ActivepiecesEmbedded {
         }
       }, this._HUNDRED_MILLISECONDS);
     },);
+  }
 
+  extractActivepiecesRouteFromUrl({vendorUrl}:{vendorUrl: string}) {
+    const prefixStartsWithSlash = this._prefix.startsWith('/');
+    return this._extractRouteAfterPrefix(vendorUrl,prefixStartsWithSlash
+      ? this._parentOrigin + this._prefix
+      : `${this._parentOrigin}/${this._prefix}`);
   }
 }
 

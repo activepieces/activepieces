@@ -4,17 +4,41 @@ description: ""
 icon: "signs-post"
 ---
 
-## Default Navigation 
-
-By default, our embedding sdk keeps the routes in the web app using it in sync with the routes of Activepieces, for example if your web app runs at:
-`https://your-app.com/automations` and the `prefix` you pass in the [configure method](/embedding/embed-builder#configure-sdk) is `/automations` then when you navigate in Activepieces to `/flows` the url in the browser will be
-`https://your-app.com/automations/flows`. 
-
-
-## Custom Navigation
-
-If you pass the navigation handler callback in the [configure method](/embedding/embed-builder#configure-sdk), the callback will be called every time a navigation happens within Activepieces, giving you complete control over it.
-
+## Implementation
+By default navigating within your embedded instance of Activepieces, doesn't affect the client's browser history or viewed url, however if you use the following snippet when configuring the sdk,
+ you will get the client's browser history and viewed url with Activepieces:
+ `
+   activepieces.configure( {
+      prefix: "/",
+      instanceUrl:'http://localhost:4200',
+      jwtToken:"Your_token",
+      embedding: {
+        containerId: "container",
+        builder:{
+          disableNavigation:false,
+          hideLogo: false,
+          hideFlowName: false
+        },
+        dashboard: {
+          hideSidebar:false
+        },
+        hideFolders:false,
+        navigation:{
+          handler: (route:{route:string}) => {
+            if(!window.location.href.endsWith(route.route))
+              {
+                window.history.pushState({}, "", window.location.origin + route.route);
+              }
+          }
+        }
+      },   
+   })
+ window.addEventListener("popstate", () => {
+    const route= activepieces.extractActivepiecesRouteFromUrl({vendorUrl: window.location.href});
+    activepieces.navigate({route});
+   });   
+ `
+ You could implement your own custom logic using the navigation handler. 
 
 
 ## Navigate Method

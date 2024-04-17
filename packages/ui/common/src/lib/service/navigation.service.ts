@@ -22,7 +22,7 @@ export class NavigationService {
     ) {
       this.router.navigate(params.route, {
         ...params.extras,
-        skipLocationChange: this.embeddingService.getSkipLocationChange(),
+        skipLocationChange: this.embeddingService.getIsInEmbedding(),
       });
     } else {
       const url = this.router.serializeUrl(
