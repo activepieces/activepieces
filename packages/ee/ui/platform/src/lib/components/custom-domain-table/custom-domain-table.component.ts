@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CustomDomainDataSource } from './custom-domain-table.datasource';
-import { Observable, Subject, tap } from 'rxjs';
+import { Observable, Subject, switchMap, tap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { startWith } from 'rxjs';
 import { CustomDomain } from '@activepieces/ee-shared';
@@ -26,7 +26,7 @@ export class CustomDomainTableComponent
   extends PlatformSettingsBaseComponent
   implements OnInit
 {
-  displayedColumns = ['domain', 'created', 'action'];
+  displayedColumns = ['domain', 'status', 'created', 'action'];
   dataSource!: CustomDomainDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
@@ -62,18 +62,27 @@ export class CustomDomainTableComponent
 
   verifyDomain(key: CustomDomain) {
     this.validationData$ = this.customDomainService.validationData(key.id).pipe(
-      tap(({ txtName, txtValue, hostname }) => {
-        this.matDialog.open(DomainTxtValidationDialogComponent, {
-          disableClose: true,
-          data: {
-            domainId: key.id,
-            cloudflareHostnameData: {
-              txtName,
-              txtValue,
-              hostname,
+      switchMap(({ txtName, txtValue, hostname }) => {
+        return this.matDialog
+          .open(DomainTxtValidationDialogComponent, {
+            disableClose: true,
+            data: {
+              domainId: key.id,
+              cloudflareHostnameData: {
+                txtName,
+                txtValue,
+                hostname,
+              },
             },
-          },
-        });
+          })
+          .afterClosed()
+          .pipe(
+            tap((refresh) => {
+              if (refresh) {
+                this.refresh$.next(true);
+              }
+            })
+          );
       })
     );
   }

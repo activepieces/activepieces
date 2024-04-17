@@ -14,13 +14,11 @@ export const cloudflareHostnameServices = {
         }
         return BASE_URL
     },
-    async create(request: {
-        hostname: string
-    }): Promise<AxiosResponse> {
+    async create(hostname: string): Promise<AxiosResponse> {
         return axios.post(
             this.makeUrl(),
             {
-                hostname: request.hostname,
+                hostname: hostname,
                 ssl: {
                     bundleMethod: 'ubiquitous',
                     certificateAuthority: 'lets_encrypt',

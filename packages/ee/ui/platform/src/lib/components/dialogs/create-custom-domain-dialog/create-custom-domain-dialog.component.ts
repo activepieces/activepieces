@@ -13,6 +13,7 @@ import {
   tap,
   map,
   filter,
+  switchMap,
 } from 'rxjs';
 import {
   CustomDomainService,
@@ -22,6 +23,7 @@ import { CustomDomain } from '@activepieces/ee-shared';
 import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { DomainTxtValidationDialogComponent } from '../domain-txt-validation-dialog/domain-txt-validation-dialog.component';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-create-custom-domain-dialog',
@@ -44,6 +46,7 @@ export class CreateCustomDomainDialogComponent {
   constructor(
     private fb: FormBuilder,
     private customDomainService: CustomDomainService,
+    private matsnackbar: MatSnackBar,
     private dialogRef: MatDialogRef<CreateCustomDomainDialogComponent>,
     private dialog: MatDialog,
     private flagService: FlagService
@@ -67,10 +70,10 @@ export class CreateCustomDomainDialogComponent {
           domain: rawData.domain,
         })
         .pipe(
-          tap(({ customDomain, cloudflareHostnameData }) => {
+          switchMap(({ customDomain, cloudflareHostnameData }) => {
             this.loading$.next(false);
             this.dialogRef.close(true);
-            this.edition$.pipe(
+            return this.edition$.pipe(
               map((edition) => edition === ApEdition.CLOUD),
               filter((isCloud) => isCloud),
               tap(() => {
@@ -80,11 +83,20 @@ export class CreateCustomDomainDialogComponent {
                     domainId: customDomain.id,
                   },
                 });
-              })
+              }),
+              map(() => ({ customDomain, cloudflareHostnameData }))
             );
           }),
           catchError((err) => {
             this.loading$.next(false);
+            this.matsnackbar.open(
+              $localize`Failed to add custom domain, please contact support`,
+              '',
+              {
+                duration: 5000,
+                panelClass: 'error',
+              }
+            );
             console.error(err);
             throw err;
           })

@@ -4,11 +4,8 @@
 
 <mat-dialog-content>
     <div class="ap-min-w-[470px] ap-max-w-[470px]">
-        <ap-markdown [data]="markdownInstructions"></ap-markdown>
-        @if(error$) {
-        <mat-error i18n>
-            {{ error$ }}
-        </mat-error>
+        @if(markdownInstructions$ | async; as markdown){
+        <ap-markdown [data]="markdown"></ap-markdown>
         }
     </div>
 </mat-dialog-content>
