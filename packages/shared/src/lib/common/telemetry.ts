@@ -67,14 +67,10 @@ type ReferralLinkCopied = {
 }
 
 type RewardButtonClicked = {
-    email: string
-    userId: string
     source: 'note' | 'rewards-button'
 }
 
 type RewardInstructionsClicked = {
-    email: string
-    userId: string
     type: 'share-template' | 'linkedin' | 'referral' | 'contribute-piece'
 }
 
