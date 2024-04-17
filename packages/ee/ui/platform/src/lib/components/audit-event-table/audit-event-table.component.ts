@@ -57,7 +57,6 @@ export class AuditEventTableComponent
     if (this.platform) {
       this.platform$ = new BehaviorSubject(this.platform);
     }
-    debugger;
     this.dataSource = new AuditEventDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
       this.auditEventService,
