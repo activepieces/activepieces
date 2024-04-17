@@ -67,7 +67,7 @@ class ActivepiecesEmbedded {
   _disableNavigationInBuilder = true;
   readonly _CONNECTIONS_IFRAME_ID='ApConnectionsIframe';
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
-  _dashboardIframeWindow?: Window;
+  _dashboardAndBuilderIframeWindow?: Window;
   _navigationHandler?: (data: { route: string }) => void;
   _parentOrigin = window.location.origin;
   readonly _MAX_CONTAINER_CHECK_COUNT = 100;
@@ -84,7 +84,7 @@ class ActivepiecesEmbedded {
     embedding?: {
       containerId?: string;
       builder?: {
-        disableNavigation: boolean;
+        disableNavigation?: boolean;
         hideLogo?: boolean;
         hideFlowName?: boolean;
       };
@@ -92,7 +92,9 @@ class ActivepiecesEmbedded {
         hideSidebar?: boolean;
       };
       hideFolders?: boolean;
-      navigationHandler?: (data: { route: string }) => void;
+      navigation?:{
+        handler?: (data: { route: string }) => void;
+      }
     };
   }) {
     this._prefix = prefix || '/';
@@ -108,7 +110,7 @@ class ActivepiecesEmbedded {
     this._hideLogoInBuilder = embedding?.builder?.hideLogo ?? false;
     this._hideFlowNameInBuilder = embedding?.builder?.hideFlowName ?? false;
     this._jwtToken = jwtToken;
-    this._navigationHandler = embedding?.navigationHandler;
+    this._navigationHandler = embedding?.navigation?.handler;
     if (embedding?.containerId) {
       this._initializeBuilderAndDashboardIframe({
         containerSelector: `#${embedding.containerId}`,
@@ -140,7 +142,7 @@ class ActivepiecesEmbedded {
             this._checkForVendorRouteChanges(iframeWindow);
           }
           this._checkForClientRouteChanges(iframeWindow);
-          this._dashboardIframeWindow = iframeWindow;
+          this._dashboardAndBuilderIframeWindow = iframeWindow;
         }
       },
       errorMessage: 'container not found',
@@ -230,12 +232,12 @@ class ActivepiecesEmbedded {
   }
 
 
-   navigateTo({ route }: { route: string }) {
-      if(!this._dashboardIframeWindow){
+   navigate({ route }: { route: string }) {
+      if(!this._dashboardAndBuilderIframeWindow){
         console.error('Activepieces: dashboard iframe not found');
         return;
       }
-      this._dashboardIframeWindow.postMessage({
+      this._dashboardAndBuilderIframeWindow.postMessage({
         type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
         data: {
           vendorRoute: route,
