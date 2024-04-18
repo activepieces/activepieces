@@ -60,7 +60,20 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
             return appConnectionsWithoutSensitiveData
         },
     )
+    app.post(
+        '/validate-connection-name',
+        ValidateConnectionNameRequest,
+        async (request): Promise<{
+            isValid: boolean
+            error?: string
+        }>=>{
+            return appConnectionService.validateConnectionName({
+                projectId: request.principal.projectId,
+                connectionName: request.body.connectionName,
+            })
+        },
 
+    )
     app.delete(
         '/:id',
         DeleteAppConnectionRequest,
@@ -122,6 +135,27 @@ const ListAppConnectionsRequest = {
         description: 'List app connections',
         response: {
             [StatusCodes.OK]: SeekPage(AppConnectionWithoutSensitiveData),
+        },
+    },
+}
+
+const ValidateConnectionNameRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_APP_CONNECTION,
+    },
+    schema: {
+        tags: ['app-connections'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        body: Type.Object({
+            connectionName: Type.String(),
+        }),
+        description: 'Validate app connection name',
+        response: {
+            [StatusCodes.OK]: Type.Object({
+                isValid: Type.Boolean(),
+                error: Type.Optional(Type.String()),
+            }),
         },
     },
 }

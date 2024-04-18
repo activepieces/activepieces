@@ -100,5 +100,5 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
 }, {
     description: 'App connection is a connection to an external app.',
 })
-
+export const connectionNameRegex = '[A-Za-z0-9_\\-@\\+\\.]*'
 export type AppConnectionWithoutSensitiveData = Static<typeof AppConnectionWithoutSensitiveData> & { __brand: 'AppConnectionWithoutSensitiveData' }

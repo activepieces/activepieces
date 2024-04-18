@@ -24,6 +24,7 @@ import { ActivepiecesError,
     AppConnectionStatus,
     AppConnectionType,
     AppConnectionValue,
+    connectionNameRegex,
     Cursor,
     EngineResponseStatus,
     ErrorCode,
@@ -37,6 +38,24 @@ import { ActivepiecesError,
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
 export const appConnectionService = {
+    async validateConnectionName({ connectionName, projectId }: { connectionName: string, projectId: ProjectId }): Promise<{
+        isValid: boolean
+        error: string | undefined
+    }> {
+        //test regex on connection name
+        if (!connectionName.match(connectionNameRegex)) {
+            return {
+                isValid: false,
+                error: 'Connection name is invalid',
+            }
+        }
+        const connection = await repo.findOneBy({ name: connectionName, projectId })
+        const isValid = isNil(connection)
+        return {
+            isValid,
+            error: isValid ? undefined : 'Connection name already exists',
+        }
+    },
     async upsert(params: UpsertParams): Promise<AppConnection> {
         await appConnectionsHooks
             .getHooks()
