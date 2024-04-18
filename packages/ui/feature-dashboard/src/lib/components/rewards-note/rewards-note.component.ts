@@ -1,9 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  TelemetryService,
-  UiCommonModule,
-} from '@activepieces/ui/common';
+import { TelemetryService, UiCommonModule } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import { RewardsDialogComponent } from '../dialogs/rewards-dialog/rewards-dialog.component';
 import { TelemetryEventName } from '@activepieces/shared';
@@ -48,7 +45,7 @@ export class RewardsNoteComponent {
   compliment = COMPLIMENTS[Math.floor(Math.random() * COMPLIMENTS.length)];
   constructor(
     private matDialog: MatDialog,
-    private telemteryService: TelemetryService,
+    private telemteryService: TelemetryService
   ) {
     const lastClosed = localStorage.getItem(LAST_CLOSED_KEY_LOCAL_STORAGE);
     const now = new Date();

@@ -87,7 +87,7 @@ export class FlowsTableTitleComponent {
           .create({
             projectId: this.authenticationService.getProjectId(),
             displayName: name || $localize`Untitled`,
-            folderId: res?.id,
+            folderName: res?.displayName,
           })
           .pipe(
             tap((flow) => {

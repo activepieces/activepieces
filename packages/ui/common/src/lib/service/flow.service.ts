@@ -29,7 +29,7 @@ export class FlowService {
   create(request: CreateFlowRequest): Observable<PopulatedFlow> {
     return this.http.post<PopulatedFlow>(environment.apiUrl + '/flows', {
       displayName: request.displayName,
-      folderId: request.folderId,
+      folderName: request.folderName,
       projectId: request.projectId,
     });
   }
