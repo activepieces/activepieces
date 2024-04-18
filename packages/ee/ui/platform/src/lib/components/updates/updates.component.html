@@ -34,24 +34,20 @@
         <span class=" ap-typography-headline-6 ap-font-semibold">Release Notes</span>
     </div>
     <hr>
-    <div class="ap-w-full ap-flex ap-flex-col ap-justify-between ap-pt-2 ap-mb-6">
-        <div class="ap-w-full ap-flex ap-flex-row">
-            <span class="ap-typography-subtitle-1">Version:</span>
+    <div class="ap-w-full ap-flex ap-flex-row ap-justify-between ap-pt-2 ap-mb-6">
+        <div class="ap-w-full ap-flex ap-flex-col">
+            <span class="ap-typography-subtitle-1">Version</span>
             <span class="ap-typography-subtitle-1 ap-ml-2">{{latestVersion$ | async}}</span>
         </div>
-        <div class="ap-w-full ap-flex ap-flex-row ap-my-2">
-            <span class="ap-typography-subtitle-1">Release Date:</span>
-            <span class="ap-typography-subtitle-1 ap-ml-2">{{formatDate(patchNotes['published_at'].toString())}}</span>
+        <div class="ap-w-full ap-flex ap-flex-col">
+            <span class="ap-typography-subtitle-2">Release Date</span>
+            <span class="ap-typography-subtitle-1">{{formatDate(patchNotes['published_at'].toString())}}</span>
         </div>
-        <div class="ap-w-full ap-flex ap-flex-col ap-my-2">
-            <span class="ap-typography-subtitle-1 !ap-font-semibold">What's New?</span>
-            <div class="ap-w-full ap-flex ap-flex-row ap-mt-2">
-                <span class="ap-typography-subtitle-1">🔗 Changelog:</span>
-                <a href="{{patchNotes['html_url']}}" target="_blank" class="ap-no-underline">
-                    <span class="ap-typography-subtitle-1 ap-ml-2">{{patchNotes['html_url']}}</span>
-                </a>
-            </div>
-            <div [innerHTML]="splitBody(patchNotes['body'].toString())" class="ap-w-full ap-flex ap-flex-col"></div>
+        <div class="ap-w-full ap-flex ap-flex-col">
+            <span class="ap-typography-subtitle-2">🔗 Changelog</span>
+            <a href="{{patchNotes['html_url']}}" target="_blank" class="ap-no-underline">
+                <span class="ap-typography-subtitle-1">{{patchNotes['html_url']}}</span>
+            </a>
         </div>
     </div>
     }
