@@ -1,5 +1,4 @@
-
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
@@ -7,7 +6,8 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { baseUrl } from './lib/common/common';
-import { promptCompletion } from "./lib/actions/prompt-completion";
+import { promptCompletion } from './lib/actions/prompt-completion';
+import { PieceCategory } from '@activepieces/shared';
 
 const markdownDescription = `
 Follow these instructions to get your Straico API Key:
@@ -45,12 +45,15 @@ export const straicoAuth = PieceAuth.SecretText({
 });
 
 export const straico = createPiece({
-  displayName: "Straico",
+  displayName: 'Straico',
   auth: straicoAuth,
   minimumSupportedRelease: '0.20.0',
-  logoUrl: "https://cdn.activepieces.com/pieces/straico.png",
+  logoUrl: 'https://cdn.activepieces.com/pieces/straico.png',
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
+  description: 'All-in-one generative AI platform',
   authors: ['dennisrongo'],
-  actions: [promptCompletion,
+  actions: [
+    promptCompletion,
     createCustomApiCallAction({
       auth: straicoAuth,
       baseUrl: () => baseUrl,
@@ -62,5 +65,4 @@ export const straico = createPiece({
     }),
   ],
   triggers: [],
-  
 });
