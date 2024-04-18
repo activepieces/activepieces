@@ -6,7 +6,7 @@ import {
   Output,
 } from '@angular/core';
 import { FlowItemDetails } from '@activepieces/ui/common';
-import { ActionOrTriggerName } from '../common';
+import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 
 @Component({
   selector: 'app-step-type-list',
@@ -17,7 +17,7 @@ export class StepTypeListComponent {
   @Input() typesList: FlowItemDetails[];
   @Output() typeSelected: EventEmitter<{
     flowItemDetails: FlowItemDetails;
-    suggestion?: ActionOrTriggerName;
+    suggestion?: ActionBase | TriggerBase;
   }> = new EventEmitter();
   @Input() emptyListText: string;
   @Input() showRequestPieceButton: boolean | null;

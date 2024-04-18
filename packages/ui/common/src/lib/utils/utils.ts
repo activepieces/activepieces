@@ -1,13 +1,12 @@
 import { ActionType, TriggerType, isNil } from '@activepieces/shared';
-import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
-import semver from 'semver';
-
-export const isVersionMatch = (
-  latestVersion: string,
-  currentVersion: string
-) => {
-  return semver.gt(latestVersion, currentVersion);
-};
+import {
+  ActionBase,
+  PieceMetadataModel,
+  PieceProperty,
+  PiecePropertyMap,
+  PropertyType,
+  TriggerBase,
+} from '@activepieces/pieces-framework';
 
 export function getDisplayNameForTrigger(triggerType: TriggerType) {
   switch (triggerType) {
@@ -96,4 +95,34 @@ const parseControlValue = (property: PieceProperty, value: unknown) => {
         ? value
         : JSON.stringify(value, null, 2);
   }
+};
+
+const isTrigger = (step: TriggerBase | ActionBase): step is TriggerBase => {
+  return (step as TriggerBase).type !== undefined;
+};
+export const extractAuthenticationProperty = (
+  triggerOrAction: TriggerBase | ActionBase,
+  pieceMetaData: PieceMetadataModel | undefined
+) => {
+  if (!pieceMetaData) {
+    return undefined;
+  }
+  const authProperty =
+    isTrigger(triggerOrAction) || triggerOrAction.requireAuth
+      ? pieceMetaData?.auth
+      : undefined;
+  return authProperty;
+};
+
+export const extractInitialPieceStepValuesAndValidity = (
+  properties: PiecePropertyMap
+) => {
+  const initialValues = Object.keys(properties).reduce((acc, key) => {
+    acc[key] = getPropertyInitialValue(properties[key], undefined);
+    return acc;
+  }, {} as Record<string, unknown>);
+  const valid = Object.keys(properties).reduce((acc, key) => {
+    return acc && (!properties[key]?.required || !isNil(initialValues[key]));
+  }, true);
+  return { valid, initialValues };
 };

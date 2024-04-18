@@ -3953,7 +3953,7 @@
                   "displayName": {
                     "type": "string"
                   },
-                  "folderId": {
+                  "folderName": {
                     "type": "string"
                   },
                   "projectId": {
@@ -8094,21 +8094,35 @@
                       },
                       "tasks": {
                         "type": "number"
+                      },
+                      "pieces": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "piecesFilterType": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "NONE"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "ALLOWED"
+                            ]
+                          }
+                        ]
                       }
-                    },
-                    "required": [
-                      "tasks"
-                    ]
+                    }
                   }
-                },
-                "required": [
-                  "notifyStatus",
-                  "displayName"
-                ]
+                }
               }
             }
-          },
-          "required": true
+          }
         },
         "parameters": [
           {

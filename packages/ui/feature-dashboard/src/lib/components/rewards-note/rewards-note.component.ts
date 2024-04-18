@@ -1,10 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  AuthenticationService,
-  TelemetryService,
-  UiCommonModule,
-} from '@activepieces/ui/common';
+import { TelemetryService, UiCommonModule } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import { RewardsDialogComponent } from '../dialogs/rewards-dialog/rewards-dialog.component';
 import { TelemetryEventName } from '@activepieces/shared';
@@ -49,8 +45,7 @@ export class RewardsNoteComponent {
   compliment = COMPLIMENTS[Math.floor(Math.random() * COMPLIMENTS.length)];
   constructor(
     private matDialog: MatDialog,
-    private telemteryService: TelemetryService,
-    private authenticationService: AuthenticationService
+    private telemteryService: TelemetryService
   ) {
     const lastClosed = localStorage.getItem(LAST_CLOSED_KEY_LOCAL_STORAGE);
     const now = new Date();
@@ -72,10 +67,9 @@ export class RewardsNoteComponent {
   openRewardsDialog() {
     this.matDialog.open(RewardsDialogComponent);
     this.telemteryService.capture({
-      name: TelemetryEventName.REWARDS_NOTE_SHOW_REWARDS_CLICKED,
+      name: TelemetryEventName.REWARDS_OPENED,
       payload: {
-        email: this.authenticationService.currentUser.email,
-        userId: this.authenticationService.currentUser.id,
+        source: 'note',
       },
     });
   }

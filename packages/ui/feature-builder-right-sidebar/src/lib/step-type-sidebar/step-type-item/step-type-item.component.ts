@@ -8,7 +8,7 @@ import {
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { Observable, Subject, tap } from 'rxjs';
 import { FlowItemDetails, fadeIn400ms } from '@activepieces/ui/common';
-import { ActionOrTriggerName } from '../common';
+import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 
 @Component({
   selector: 'app-step-type-item',
@@ -20,7 +20,7 @@ import { ActionOrTriggerName } from '../common';
 export class StepTypeItemComponent {
   _flowItemDetails: FlowItemDetails;
   _flowItemDetails$: Observable<FlowItemDetails | undefined>;
-  @Output() suggestionClicked = new EventEmitter<ActionOrTriggerName>();
+  @Output() suggestionClicked = new EventEmitter<ActionBase | TriggerBase>();
   @Input() clickable = true;
   @Input() set flowItemDetails(value: FlowItemDetails) {
     this._flowItemDetails = value;

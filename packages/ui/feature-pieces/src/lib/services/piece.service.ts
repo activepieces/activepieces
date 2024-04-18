@@ -104,16 +104,7 @@ export class PieceMetadataService {
                 pieceName: piece.name,
                 pieceVersion: piece.version
             },
-            suggestions: [
-                ...suggestedActions.map(action => ({
-                    name: action.name,
-                    displayName: action.displayName,
-                })),
-                ...suggestedTriggers.map(trigger => ({
-                    name: trigger.name,
-                    displayName: trigger.displayName,
-                }))
-            ]
+            suggestions: type === ActionType.PIECE ? suggestedActions : suggestedTriggers
         }
     }
 
