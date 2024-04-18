@@ -29,9 +29,10 @@ export class DashboardContainerComponent {
   currentProject$: Observable<Project>;
   showPoweredByAp$: Observable<boolean>;
   showPlatform$: Observable<boolean>;
-  showAdminConsoleLock$: Observable<boolean>;
   @ViewChild('contactSalesSlideout') contactSalesSlideout: MatSidenav;
   contactSalesState$: Observable<boolean>;
+  isVersionMatch$?: Observable<boolean>;
+  newUpdateMessage = $localize`New update available`;
 
   constructor(
     private flagService: FlagService,
@@ -61,11 +62,10 @@ export class DashboardContainerComponent {
       .getState$()
       .pipe(map((state) => !state.hideSideNav));
     this.isInPlatformRoute$ = this.dashboardService.getIsInPlatformRoute();
-    this.showAdminConsoleLock$ = this.flagService.isFlagEnabled(
-      ApFlagId.SHOW_PLATFORM_DEMO
-    );
 
     this.contactSalesState$ = this.contactSalesService.contactSalesState$;
+
+    this.isVersionMatch$ = this.flagService.isVersionMatch();
   }
 
   navigateToAdminConsole() {

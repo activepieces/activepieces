@@ -10,6 +10,7 @@ type SideNavRoute = {
   effect?: () => void;
   showInSideNav$: Observable<boolean>;
   showLock$?: Observable<boolean>;
+  showNotification$?: Observable<boolean>;
 };
 @Component({
   selector: 'app-sidenav-route-item',
@@ -45,6 +46,15 @@ type SideNavRoute = {
           src="assets/img/custom/lock.svg"
         >
         </svg-icon>
+        } @if(sideNavRoute.showNotification$ | async) {
+        <svg-icon
+          [applyClass]="true"
+          class="ap-fill-disable ap-top-[1px] ap-right-[1px] ap-absolute"
+          [svgStyle]="{ width: '14px', height: '14px' }"
+          [matTooltip]="newUpdateMessage"
+          src="assets/img/custom/notification_important.svg"
+        >
+        </svg-icon>
         }
       </div>
 
@@ -57,4 +67,6 @@ type SideNavRoute = {
 })
 export class SidenavRouteItemComponent {
   @Input({ required: true }) sideNavRoute: SideNavRoute;
+
+  readonly newUpdateMessage = $localize`New update available`;
 }

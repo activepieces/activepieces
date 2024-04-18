@@ -4,6 +4,9 @@ import { Observable, map, combineLatest } from 'rxjs';
 import { ApFlagId } from '@activepieces/shared';
 import { AsyncPipe } from '@angular/common';
 import semver from 'semver';
+import { UpdatesService, VersionRelease } from '../../service/updates.service';
+import { UiCommonModule } from '@activepieces/ui/common';
+import { ReleaseDataSource } from './release-table.datasource';
 
 const compareVersions = (latestVersion: string, currentVersion: string) => {
   let message = 'Up to date!';
@@ -36,7 +39,7 @@ const compareVersions = (latestVersion: string, currentVersion: string) => {
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeInUp400ms],
   standalone: true,
-  imports: [AsyncPipe],
+  imports: [AsyncPipe, UiCommonModule],
 })
 export class UpdatesComponent {
   currentVersion$?: Observable<string>;
@@ -46,14 +49,30 @@ export class UpdatesComponent {
     emoji: string;
     message: string;
   }>;
+  dataSource: ReleaseDataSource;
+  releases$: Observable<VersionRelease[]>;
+  displayedColumns = ['version', 'releaseDate', 'url'];
 
-  constructor(private flagService: FlagService) {
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('us', {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+    });
+  }
+
+  constructor(
+    private flagService: FlagService,
+    private updatesService: UpdatesService
+  ) {
     this.currentVersion$ = this.flagService.getStringFlag(
       ApFlagId.CURRENT_VERSION
     );
     this.latestVersion$ = this.flagService.getStringFlag(
       ApFlagId.LATEST_VERSION
     );
+    this.dataSource = new ReleaseDataSource(this.updatesService);
     this.message$ = combineLatest({
       currentVersion: this.currentVersion$,
       latestVersion: this.latestVersion$,
@@ -62,5 +81,6 @@ export class UpdatesComponent {
         return compareVersions(latestVersion, currentVersion);
       })
     );
+    this.releases$ = this.updatesService.getReleaseNotes();
   }
 }
