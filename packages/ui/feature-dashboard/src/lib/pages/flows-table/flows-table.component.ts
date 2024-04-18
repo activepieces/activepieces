@@ -244,10 +244,9 @@ export class FlowsTableComponent implements OnInit {
   openRewardsDialog() {
     this.dialogService.open(RewardsDialogComponent);
     this.telemetryService.capture({
-      name: TelemetryEventName.REWARDS_BUTTON_CLICKED,
+      name: TelemetryEventName.REWARDS_OPENED,
       payload: {
-        email: this.authenticationService.currentUser.email,
-        userId: this.authenticationService.currentUser.id,
+        source: 'rewards-button',
       },
     });
   }
