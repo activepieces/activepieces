@@ -8,6 +8,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, map, tap } from 'rxjs';
 import {
   ActivepiecesClientEventName,
+  ActivepiecesClientInit,
   ActivepiecesVendorEventName,
   ActivepiecesVendorInit,
   _AP_JWT_TOKEN_QUERY_PARAM_NAME,
@@ -49,13 +50,14 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
         tap((res) => {
           this.authenticationService.saveToken(res.token);
           this.authenticationService.updateUser({ ...res });
-          window.parent.postMessage(
-            {
-              type: ActivepiecesClientEventName.CLIENT_INIT,
+          const event: ActivepiecesClientInit = {
+            type: ActivepiecesClientEventName.CLIENT_INIT,
+            data: {
+              apJwtToken: res.token,
             },
-            '*'
-          );
+          };
 
+          window.parent.postMessage(event, '*');
           window.addEventListener('message', this.initializedVendorHandler);
         }),
         map(() => void 0)

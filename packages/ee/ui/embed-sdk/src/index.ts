@@ -6,6 +6,9 @@ export enum ActivepiecesClientEventName {
 
 export interface ActivepiecesClientInit {
   type: ActivepiecesClientEventName.CLIENT_INIT;
+  data: {
+    apJwtToken: string;
+  }
 }
 
 export interface ActivepiecesClientRouteChanged {
@@ -23,7 +26,9 @@ type IframeWithWindow = HTMLIFrameElement & { contentWindow: Window };
 
 export const NEW_CONNECTION_QUERY_PARAMS = {
   name: 'pieceName',
+  connectionName: 'connectionName',
 };
+
 export type ActivepiecesClientEvent =
   | ActivepiecesClientInit
   | ActivepiecesClientRouteChanged;
@@ -64,8 +69,10 @@ class ActivepiecesEmbedded {
   _hideLogoInBuilder = false;
   _hideFlowNameInBuilder = false;
   _jwtToken = '';
+  _apJwtToken = '';
+  _projectId = '';
   _disableNavigationInBuilder = true;
-  readonly _CONNECTIONS_IFRAME_ID='ApConnectionsIframe';
+  readonly _CONNECTIONS_IFRAME_ID = 'ApConnectionsIframe';
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
   _dashboardAndBuilderIframeWindow?: Window;
   _navigationHandler?: (data: { route: string }) => void;
@@ -92,7 +99,7 @@ class ActivepiecesEmbedded {
         hideSidebar?: boolean;
       };
       hideFolders?: boolean;
-      navigation?:{
+      navigation?: {
         handler?: (data: { route: string }) => void;
       }
     };
@@ -151,9 +158,7 @@ class ActivepiecesEmbedded {
     const iframe = this._createIframe({ src: `${this._instanceUrl}/embed?${_AP_JWT_TOKEN_QUERY_PARAM_NAME}=${jwtToken}` });
     iframeContainer.appendChild(iframe);
     if (!this._doesFrameHaveWindow(iframe)) {
-      const error = 'Activepieces: iframe window not accessible';
-      console.error(error);
-      throw new Error(error);
+      throw this._errorCreator('iframe window not accessible');
     }
     const iframeWindow = iframe.contentWindow;
     window.addEventListener(
@@ -162,6 +167,7 @@ class ActivepiecesEmbedded {
         if (event.source === iframeWindow) {
           switch (event.data.type) {
             case ActivepiecesClientEventName.CLIENT_INIT: {
+              this._apJwtToken = event.data.data.apJwtToken;
               const apEvent: ActivepiecesVendorInit = {
                 type: ActivepiecesVendorEventName.VENDOR_INIT,
                 data: {
@@ -172,7 +178,7 @@ class ActivepiecesEmbedded {
                   hideFolders: this._hideFolders,
                   hideLogoInBuilder: this._hideLogoInBuilder,
                   hideFlowNameInBuilder: this._hideFlowNameInBuilder,
-                  sdkVersion:this._sdkVersion
+                  sdkVersion: this._sdkVersion
                 },
               };
               iframeWindow.postMessage(apEvent, '*');
@@ -191,52 +197,57 @@ class ActivepiecesEmbedded {
   private _createIframe({ src }: { src: string }) {
     const iframe = document.createElement('iframe');
     iframe.src = src;
-    iframe.setAttribute('allow','clipboard-read; clipboard-write');
+    iframe.setAttribute('allow', 'clipboard-read; clipboard-write');
     return iframe;
   }
 
-  async connect({ pieceName }: { pieceName: string }) {
+  async connect({ pieceName, connectionName }: { pieceName: string, connectionName?: string }) {
     return this._addGracePeriodBeforeMethod({
       condition: () => {
         return !!document.body;
       },
-      method: () => {
-        const connectionsIframe = this.connectToEmbed({ jwtToken: this._jwtToken, iframeContainer: document.body, 
+      method: async () => {
+        if (connectionName) {
+          await this.checkIfConnectionNameIsValid(connectionName);
+        }
+        const connectionsIframe = this.connectToEmbed({
+          jwtToken: this._jwtToken, iframeContainer: document.body,
           callbackAfterAuthentication: () => {
-              connectionsIframe.style.display = 'block';
-              const apEvent: ActivepiecesVendorRouteChanged = {
-                type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
-                data: {
-                  //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
-                  vendorRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}`
-                },
-              };
-              connectionsIframe.contentWindow.postMessage(apEvent, '*');
-            } });
-          const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
-          connectionsIframe.style.cssText = connectionsIframeStyle;
-          connectionsIframe.id = this._CONNECTIONS_IFRAME_ID;
-          return new Promise<ActivepiecesNewConnectionDialogClosed['data']>((resolve) => {
-            this._resolveNewConnectionDialogClosed = resolve;
-          });
-        },
+            connectionsIframe.style.display = 'block';
+            const apEvent: ActivepiecesVendorRouteChanged = {
+              type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
+              data: {
+                //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
+                vendorRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`
+              },
+            };
+            connectionsIframe.contentWindow.postMessage(apEvent, '*');
+          }
+        });
+        const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
+        connectionsIframe.style.cssText = connectionsIframeStyle;
+        connectionsIframe.id = this._CONNECTIONS_IFRAME_ID;
+        return new Promise<ActivepiecesNewConnectionDialogClosed['data']>((resolve) => {
+          this._resolveNewConnectionDialogClosed = resolve;
+        });
+      },
       errorMessage: 'document body not found while trying to add connections iframe'
     });
   }
 
 
-   navigate({ route }: { route: string }) {
-      if(!this._dashboardAndBuilderIframeWindow){
-        console.error('Activepieces: dashboard iframe not found');
-        return;
-      }
-      const event: ActivepiecesVendorRouteChanged = {
-        type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
-        data: {
-          vendorRoute: route,
-        },
-      };
-      this._dashboardAndBuilderIframeWindow.postMessage(event, '*');
+  navigate({ route }: { route: string }) {
+    if (!this._dashboardAndBuilderIframeWindow) {
+      console.error('Activepieces: dashboard iframe not found');
+      return;
+    }
+    const event: ActivepiecesVendorRouteChanged = {
+      type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
+      data: {
+        vendorRoute: route,
+      },
+    };
+    this._dashboardAndBuilderIframeWindow.postMessage(event, '*');
   }
 
   private _checkForClientRouteChanges = (source: Window) => {
@@ -245,7 +256,7 @@ class ActivepiecesEmbedded {
       (event: MessageEvent<ActivepiecesClientRouteChanged>) => {
         if (
           event.data.type ===
-            ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED &&
+          ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED &&
           event.source === source
         ) {
           let prefixStartsWithSlash = this._prefix.startsWith('/')
@@ -258,19 +269,36 @@ class ActivepiecesEmbedded {
           if (!routeWithPrefix.startsWith('/')) {
             routeWithPrefix = '/' + routeWithPrefix;
           }
-        
-          if(this._navigationHandler)
-            {
 
-              this._navigationHandler({ route: routeWithPrefix });
-            }
-      
+          if (this._navigationHandler) {
+
+            this._navigationHandler({ route: routeWithPrefix });
+          }
+
         }
       }
     );
   };
 
 
+
+  private async checkIfConnectionNameIsValid(connectionName: string | undefined) {
+    const url = new URL(this._instanceUrl + "/api/v1/app-connections/validate-connection-name");
+    const body = {
+      connectionName: connectionName
+    };
+    const connectionValidity = (await (await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this._apJwtToken}`
+      },
+      body: JSON.stringify(body)
+    })).json());
+    if (!connectionValidity.isValid) {
+      throw this._errorCreator(connectionValidity.error);
+    }
+  }
 
   private _extractRouteAfterPrefix(href: string, prefix: string) {
     return href.split(prefix)[1];
@@ -284,20 +312,19 @@ class ActivepiecesEmbedded {
     window.addEventListener(
       'message',
       (event: MessageEvent<ActivepiecesNewConnectionDialogClosed>) => {
-        if(event.data.type === ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED)
-          {
-            if (this._resolveNewConnectionDialogClosed) {
-              this._resolveNewConnectionDialogClosed(event.data.data);
-            }
-            const connectionsIframe = document.getElementById(this._CONNECTIONS_IFRAME_ID);
-            if(connectionsIframe) {
-                connectionsIframe.remove();
-              }
-            else {
-              console.warn("Activepieces: connections iframe not found when trying to remove it ")
-              }
+        if (event.data.type === ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED) {
+          if (this._resolveNewConnectionDialogClosed) {
+            this._resolveNewConnectionDialogClosed(event.data.data);
           }
-   
+          const connectionsIframe = document.getElementById(this._CONNECTIONS_IFRAME_ID);
+          if (connectionsIframe) {
+            connectionsIframe.remove();
+          }
+          else {
+            console.warn("Activepieces: connections iframe not found when trying to remove it ")
+          }
+        }
+
       }
     );
   }
@@ -311,7 +338,7 @@ class ActivepiecesEmbedded {
     condition,
     errorMessage,
   }: {
-    method: () => void;
+    method: () => Promise<any> | void;
     condition: () => boolean;
     /**Error message to show when grace period passes */
     errorMessage: string;
@@ -338,14 +365,18 @@ class ActivepiecesEmbedded {
     },);
   }
 
-  extractActivepiecesRouteFromUrl({vendorUrl}:{vendorUrl: string}) {
+  extractActivepiecesRouteFromUrl({ vendorUrl }: { vendorUrl: string }) {
     const prefixStartsWithSlash = this._prefix.startsWith('/');
-    return this._extractRouteAfterPrefix(vendorUrl,prefixStartsWithSlash
+    return this._extractRouteAfterPrefix(vendorUrl, prefixStartsWithSlash
       ? this._parentOrigin + this._prefix
       : `${this._parentOrigin}/${this._prefix}`);
+  }
+  private _errorCreator(message: string) {
+    console.error(`Activepieces: ${message}`)
+    return new Error(`Activepieces: ${message}`);
   }
 }
 
 
 (window as any).activepieces = new ActivepiecesEmbedded();
-(window as any).ActivepiecesEmbedded =  ActivepiecesEmbedded;
+(window as any).ActivepiecesEmbedded = ActivepiecesEmbedded;

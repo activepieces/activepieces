@@ -9,6 +9,7 @@ export type EmbeddingState = {
   hideFolders: boolean;
   hideFlowNameInBuilder: boolean;
   sdkVersion?: string;
+  predefinedConnectionName?: string;
 };
 @Injectable({
   providedIn: 'root',
@@ -64,6 +65,15 @@ export class EmbeddingService {
 
   getHideFolders$() {
     return this.getState$().pipe(map((res) => res.hideFolders));
+  }
+  setPredefinedConnectionName(connectionName: string | undefined) {
+    this.setState({
+      ...this.getState(),
+      predefinedConnectionName: connectionName,
+    });
+  }
+  getPredefinedConnectionName() {
+    return this.getState().predefinedConnectionName;
   }
 
   activepiecesRouteChanged(route: string) {
