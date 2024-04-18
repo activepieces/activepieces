@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CustomDomainDataSource } from './custom-domain-table.datasource';
-import { Observable, Subject, tap } from 'rxjs';
+import { Observable, Subject, switchMap, tap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { startWith } from 'rxjs';
 import { CustomDomain } from '@activepieces/ee-shared';
@@ -9,9 +9,13 @@ import {
   DeleteEntityDialogData,
   featureDisabledTooltip,
 } from '@activepieces/ui/common';
-import { CustomDomainService } from '../../service/custom-domain.service';
+import {
+  CustomDomainService,
+  HostnameDetailsResponse,
+} from '../../service/custom-domain.service';
 import { CreateCustomDomainDialogComponent } from '../dialogs/create-custom-domain-dialog/create-custom-domain-dialog.component';
 import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
+import { DomainTxtValidationDialogComponent } from '../dialogs/domain-txt-validation-dialog/domain-txt-validation-dialog.component';
 
 @Component({
   selector: 'app-custom-domain-table',
@@ -22,10 +26,11 @@ export class CustomDomainTableComponent
   extends PlatformSettingsBaseComponent
   implements OnInit
 {
-  displayedColumns = ['domain', 'created', 'action'];
+  displayedColumns = ['domain', 'status', 'created', 'action'];
   dataSource!: CustomDomainDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
+  validationData$?: Observable<HostnameDetailsResponse>;
   featureDisabledTooltip = featureDisabledTooltip;
   upgradeNoteTitle = $localize`Unlock Custom Domain`;
   upgradeNote = $localize`Customize your domain to match your brand and provide a seamless experience for your users.`;
@@ -51,6 +56,33 @@ export class CustomDomainTableComponent
         if (res) {
           this.refresh$.next(true);
         }
+      })
+    );
+  }
+
+  verifyDomain(key: CustomDomain) {
+    this.validationData$ = this.customDomainService.validationData(key.id).pipe(
+      switchMap(({ txtName, txtValue, hostname }) => {
+        return this.matDialog
+          .open(DomainTxtValidationDialogComponent, {
+            disableClose: true,
+            data: {
+              domainId: key.id,
+              cloudflareHostnameData: {
+                txtName,
+                txtValue,
+                hostname,
+              },
+            },
+          })
+          .afterClosed()
+          .pipe(
+            tap((refresh) => {
+              if (refresh) {
+                this.refresh$.next(true);
+              }
+            })
+          );
       })
     );
   }

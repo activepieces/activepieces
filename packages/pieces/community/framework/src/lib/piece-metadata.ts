@@ -106,8 +106,8 @@ export const PieceMetadataSummary = Type.Composite([
 export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> & {
   actions: number;
   triggers: number;
-  suggestedActions?: { name: string, displayName: string }[];
-  suggestedTriggers?: { name: string, displayName: string }[];
+  suggestedActions?: ActionBase[];
+  suggestedTriggers?: TriggerBase[];
 }
 
 

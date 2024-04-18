@@ -11,6 +11,16 @@ export const http = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.20.3',
   actions: [httpSendRequestAction, httpReturnResponse],
-  authors: ["bibhuty-did-this","landonmoir","JanHolger","Salem-Alaa","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: [
+    'bibhuty-did-this',
+    'landonmoir',
+    'JanHolger',
+    'Salem-Alaa',
+    'kishanprmr',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+    'pfernandez98',
+  ],
   triggers: [],
 });

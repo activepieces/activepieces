@@ -30,7 +30,7 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            const createdFolder = await folderService.create({
+            const createdFolder = await folderService.upsert({
                 projectId: request.principal.projectId,
                 request: request.body,
             })

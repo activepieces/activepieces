@@ -68,7 +68,7 @@ export const flowFolderService = {
         await folderRepo.update(folderId, updatedFolder)
         return updatedFolder
     },
-    async create({
+    async upsert({
         projectId,
         request,
     }: {
@@ -79,17 +79,13 @@ export const flowFolderService = {
             projectId,
             displayName: request.displayName,
         })
-        if (folderWithDisplayName) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: 'Folder displayName is used' },
-            })
-        }
-        const folder = await folderRepo.save({
-            id: apId(),
+        const folderId = isNil(folderWithDisplayName) ? apId() : folderWithDisplayName.id
+        await folderRepo.upsert({
+            id: folderId,
             projectId,
             displayName: request.displayName,
-        })
+        }, ['displayName'])
+        const folder = await folderRepo.findOneByOrFail({ projectId, id: folderId })
         return {
             ...folder,
             numberOfFlows: 0,
