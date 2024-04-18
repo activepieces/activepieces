@@ -11,7 +11,7 @@ import { baseUrl } from '../common/common';
 export const promptCompletion = createAction({
   auth: straicoAuth,
   name: 'prompt_completion',
-  displayName: 'Prompt Completion',
+  displayName: 'Ask AI',
   description: 'Enables users to generate prompt completion based on a specified model.',
   props: {
     model: Property.Dropdown({
