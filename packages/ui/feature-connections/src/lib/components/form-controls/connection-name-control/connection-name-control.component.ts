@@ -13,7 +13,6 @@ import { FormControl } from '@angular/forms';
   imports: [UiCommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if( !hideConnectionName ){
     <mat-form-field class="ap-w-full" appearance="outline">
       <mat-label i18n>Name</mat-label>
       <input
@@ -36,18 +35,17 @@ import { FormControl } from '@angular/forms';
         }
       </mat-error>
     </mat-form-field>
-    }
   `,
 })
 export class ConnectionNameControlComponent implements OnInit {
   @Input({ required: true }) control!: FormControl;
-  hideConnectionName = false;
   constructor(private embeddingService: EmbeddingService) {}
   ngOnInit(): void {
-    this.hideConnectionName =
-      this.embeddingService.getPredefinedConnectionName() !== undefined;
-    if (this.hideConnectionName) {
-      this.control.setValue(this.embeddingService.getPredefinedConnectionName());
+    if (this.embeddingService.getPredefinedConnectionName() !== undefined) {
+      this.control.setValue(
+        this.embeddingService.getPredefinedConnectionName()
+      );
+      this.control.disable();
     }
   }
   readonly keyTooltip = $localize`The ID of this connection definition. You will need to select this key whenever you want to reuse this connection`;

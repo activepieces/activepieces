@@ -44,13 +44,9 @@ You can use the embedded SDK to create connections.
         </Info>
 
         <Info>
-          If `connectionName` is defined, the connection name input will be hidden and if the connection name is invalid the returned result will be an error message describing why it is invalid.
+          If `connectionName` is defined, the connection name input will be disabled and if the connection name is invalid the returned result from the connect method will be an error message describing why it is invalid.
         
-        **When connectionName is defined:**
-        ![Connections dialog using sdk connect method ](/resources/screenshots/connection-dialog-sdk.png)
-        **When connection name isn't defined:**
-        ![Connection dialog in Builder](/resources/screenshots/connection-dialog-builder.png)
-        </Info>
+         </Info>
 
         <Tip>
         You can use the `connections` piece in the builder to retrieve the created connection using its name.
