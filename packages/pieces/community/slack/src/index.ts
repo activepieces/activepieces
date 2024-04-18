@@ -23,12 +23,13 @@ import { createChannelAction } from './lib/actions/create-channel';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
-  authUrl: 'https://slack.com/oauth/v2/authorize?user_scope=search:read',
+  authUrl:
+    'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write',
   tokenUrl: 'https://slack.com/api/oauth.v2.access',
   required: true,
   scope: [
     'channels:read',
-    'channels:write',
+    'channels:manage',
     'channels:history',
     'chat:write',
     'groups:read',
@@ -41,7 +42,6 @@ export const slackAuth = PieceAuth.OAuth2({
     'files:write',
     'files:read',
     'users:read.email',
-    'users.profile:write',
   ],
 });
 
