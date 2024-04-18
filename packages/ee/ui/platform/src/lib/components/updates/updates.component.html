@@ -45,7 +45,13 @@
         </div>
         <div class="ap-w-full ap-flex ap-flex-col ap-my-2">
             <span class="ap-typography-subtitle-1 !ap-font-semibold">What's New?</span>
-            <div [innerHTML]="splitBody(patchNotes['body'].toString())" class="ap-w-full ap-flex  ap-flex-col"></div>
+            <div class="ap-w-full ap-flex ap-flex-row ap-mt-2">
+                <span class="ap-typography-subtitle-1">🔗 Changelog:</span>
+                <a href="{{patchNotes['html_url']}}" target="_blank" class="ap-no-underline">
+                    <span class="ap-typography-subtitle-1 ap-ml-2">{{patchNotes['html_url']}}</span>
+                </a>
+            </div>
+            <div [innerHTML]="splitBody(patchNotes['body'].toString())" class="ap-w-full ap-flex ap-flex-col"></div>
         </div>
     </div>
     }
