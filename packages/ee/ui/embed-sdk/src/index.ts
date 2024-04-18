@@ -6,6 +6,9 @@ export enum ActivepiecesClientEventName {
 
 export interface ActivepiecesClientInit {
   type: ActivepiecesClientEventName.CLIENT_INIT;
+  data: {
+    apJwtToken:string;
+  }
 }
 
 export interface ActivepiecesClientRouteChanged {
@@ -23,7 +26,9 @@ type IframeWithWindow = HTMLIFrameElement & { contentWindow: Window };
 
 export const NEW_CONNECTION_QUERY_PARAMS = {
   name: 'pieceName',
+  connectionName: 'connectionName',
 };
+
 export type ActivepiecesClientEvent =
   | ActivepiecesClientInit
   | ActivepiecesClientRouteChanged;
@@ -63,6 +68,8 @@ class ActivepiecesEmbedded {
   _hideLogoInBuilder = false;
   _hideFlowNameInBuilder = false;
   _jwtToken = '';
+  _apJwtToken = '';
+  _projectId = '';
   _disableNavigationInBuilder = true;
   readonly _CONNECTIONS_IFRAME_ID='ApConnectionsIframe';
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
@@ -150,9 +157,7 @@ class ActivepiecesEmbedded {
     const iframe = this._createIframe({ src: `${this._instanceUrl}/embed?${_AP_JWT_TOKEN_QUERY_PARAM_NAME}=${jwtToken}` });
     iframeContainer.appendChild(iframe);
     if (!this._doesFrameHaveWindow(iframe)) {
-      const error = 'Activepieces: iframe window not accessible';
-      console.error(error);
-      throw new Error(error);
+      throw this._errorCreator('iframe window not accessible');
     }
     const iframeWindow = iframe.contentWindow;
     window.addEventListener(
@@ -161,6 +166,7 @@ class ActivepiecesEmbedded {
         if (event.source === iframeWindow) {
           switch (event.data.type) {
             case ActivepiecesClientEventName.CLIENT_INIT: {
+              this._apJwtToken = event.data.data.apJwtToken;
               const apEvent: ActivepiecesVendorInit = {
                 type: ActivepiecesVendorEventName.VENDOR_INIT,
                 data: {
@@ -193,13 +199,15 @@ class ActivepiecesEmbedded {
     return iframe;
   }
 
-  async connect({ pieceName }: { pieceName: string }) {
+  async connect({ pieceName,connectionName }: { pieceName: string, connectionName?:string }) {
     return this._addGracePeriodBeforeMethod({
       condition: () => {
         return !!document.body;
       },
-      method: () => {
-
+      method: async () => {
+        if(connectionName){
+        await this.checkIfConnectionNameIsValid(connectionName);
+      }
         const connectionsIframe = this.connectToEmbed({ jwtToken: this._jwtToken, iframeContainer: document.body, 
           callbackAfterAuthentication: () => {
               connectionsIframe.style.display = 'block';
@@ -207,7 +215,7 @@ class ActivepiecesEmbedded {
                 type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
                 data: {
                   //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
-                  vendorRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}`
+                  vendorRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`
                 },
               };
               connectionsIframe.contentWindow.postMessage(apEvent, '*');
@@ -277,6 +285,25 @@ class ActivepiecesEmbedded {
     }, 50);
   };
 
+  private async checkIfConnectionNameIsValid(connectionName: string | undefined) {
+    const url = new URL(this._instanceUrl+  "/api/v1/app-connections/validate-connection-name");
+    const body = {
+      connectionName: connectionName
+    };
+    const connectionValidity = (await (await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this._apJwtToken}`
+      },
+      body: JSON.stringify(body) 
+    })).json());
+   if(!connectionValidity.isValid)
+    {
+      throw this._errorCreator(connectionValidity.error);
+    }
+  }
+
   private _extractRouteAfterPrefix(href: string, prefix: string) {
     return href.split(prefix)[1];
   }
@@ -316,7 +343,7 @@ class ActivepiecesEmbedded {
     condition,
     errorMessage,
   }: {
-    method: () => void;
+    method:  () => Promise<any> | void;
     condition: () => boolean;
     /**Error message to show when grace period passes */
     errorMessage: string;
@@ -342,6 +369,10 @@ class ActivepiecesEmbedded {
       }, this._HUNDRED_MILLISECONDS);
     },);
 
+  }
+  private _errorCreator(message: string) {
+    console.error(`Activepieces: ${message}`)
+    return new Error(`Activepieces: ${message}`);
   }
 }
 
