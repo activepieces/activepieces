@@ -42,7 +42,7 @@
         <ng-container matColumnDef="created">
           <th mat-header-cell *matHeaderCellDef i18n>Invited At</th>
           <td mat-cell *matCellDef="let member">
-            {{ member.created | date : 'short' }}
+            {{ member.created | apDate : 'mdhm' }}
           </td>
         </ng-container>
 

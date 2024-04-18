@@ -44,7 +44,7 @@
             </ng-container>
             <ng-container matColumnDef="releaseDate">
                 <th mat-header-cell *matHeaderCellDef i18n>Release Date</th>
-                <td mat-cell *matCellDef="let release">{{ release.releaseDate | date }}</td>
+                <td mat-cell *matCellDef="let release">{{ release.releaseDate | apDate : 'ymd' }}</td>
             </ng-container>
             <ng-container matColumnDef="url">
                 <th mat-header-cell *matHeaderCellDef i18n>Changelog</th>
