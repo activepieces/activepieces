@@ -1,0 +1,58 @@
+---
+title: "Navigation"
+description: ""
+icon: "signs-post"
+---
+
+## Implementation
+By default navigating within your embedded instance of Activepieces, doesn't affect the client's browser history or viewed url, however if you use the following snippet when configuring the sdk,
+you will get the client's browser history and viewed url with Activepieces:
+```js
+ activepieces.configure( {
+      prefix: "/",
+      instanceUrl:'INSTANCE_URL',
+      jwtToken:"GENERATED_JWT_TOKEN",
+      embedding: {
+        containerId: "container",
+        builder:{
+          disableNavigation:false,
+          hideLogo: false,
+          hideFlowName: false
+        },
+        dashboard: {
+          hideSidebar:false
+        },
+        hideFolders:false,
+        navigation:{
+          handler: (result) => {
+            if(!window.location.href.endsWith(result.route))
+              {
+                window.history.pushState({}, "", window.location.origin + result.route);
+              }
+          }
+        }
+      },   
+   });
+
+ window.addEventListener("popstate", () => {
+    const route= activepieces.extractActivepiecesRouteFromUrl({vendorUrl: window.location.href});
+    activepieces.navigate({route});
+   });   
+ ```
+ You could implement your own custom logic using the navigation handler. 
+
+
+## Navigate Method
+
+If you use `activepieces.navigate({ route: '/flows' })` this will tell the embedded sdk where to navigate to.
+
+Here is the list for routes the sdk can navigate to:
+
+| Route | Description |
+| --- | --- |
+| `/flows` | Flows table
+| `/flows/{flowId}` | Opens up a flow in the builder
+| `/runs` | Runs table
+| `/runs/{runId}` | Opens up a run in the builder
+| `/connections` | Connections table
+

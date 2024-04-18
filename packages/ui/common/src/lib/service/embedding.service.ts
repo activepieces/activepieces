@@ -8,6 +8,7 @@ export type EmbeddingState = {
   disableNavigationInBuilder: boolean;
   hideFolders: boolean;
   hideFlowNameInBuilder: boolean;
+  sdkVersion?: string;
 };
 @Injectable({
   providedIn: 'root',
@@ -28,12 +29,24 @@ export class EmbeddingService {
   getState() {
     return this.embeddingStateSubject.value;
   }
+  getIsInEmbedding() {
+    return this.embeddingStateSubject.value.isEmbedded;
+  }
   setState(newState: EmbeddingState) {
     return this.embeddingStateSubject.next(newState);
   }
   getState$() {
     return this.embeddingStateSubject.asObservable();
   }
+  getSkipLocationChange$() {
+    return this.getState$().pipe(
+      map((res) => !!res.sdkVersion && res.isEmbedded)
+    );
+  }
+  getSkipLocationChange() {
+    return !!this.getState().sdkVersion && this.getState().isEmbedded;
+  }
+
   getIsInEmbedding$() {
     return this.getState$().pipe(map((res) => res.isEmbedded));
   }

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import {
   CURSOR_QUERY_PARAM,
@@ -10,6 +10,7 @@ import {
   PAGE_SIZES,
   PREVIOUS_QUERY_PARAM,
 } from '../../utils/tables.utils';
+import { NavigationService } from '../../service';
 
 @Component({
   selector: 'ap-paginator',
@@ -21,7 +22,10 @@ export class ApPaginatorComponent implements OnInit {
   @Output() pageSizeChanged: EventEmitter<number> = new EventEmitter();
   pageSizeChanged$!: Observable<number>;
   pageSizeControl!: FormControl<number>;
-  constructor(private router: Router, private route: ActivatedRoute) {}
+  constructor(
+    private navigationService: NavigationService,
+    private route: ActivatedRoute
+  ) {}
   previous: string | null = null;
   next: string | null = null;
   ngOnInit(): void {
@@ -31,16 +35,19 @@ export class ApPaginatorComponent implements OnInit {
     this.pageSizeChanged$ = this.pageSizeControl.valueChanges.pipe(
       tap((val) => {
         this.pageSizeChanged.emit(val);
-        this.router.navigate(['.'], {
-          relativeTo: this.route,
-          queryParams: {
-            [LIMIT_QUERY_PARAM]: val,
-            [CURSOR_QUERY_PARAM]: undefined,
-            [NEXT_QUERY_PARAM]: undefined,
-            [PREVIOUS_QUERY_PARAM]: undefined,
+        this.navigationService.navigate({
+          route: ['.'],
+          extras: {
+            relativeTo: this.route,
+            queryParams: {
+              [LIMIT_QUERY_PARAM]: val,
+              [CURSOR_QUERY_PARAM]: undefined,
+              [NEXT_QUERY_PARAM]: undefined,
+              [PREVIOUS_QUERY_PARAM]: undefined,
+            },
+            queryParamsHandling: 'merge',
+            preserveFragment: true,
           },
-          queryParamsHandling: 'merge',
-          preserveFragment: true,
         });
       })
     );
@@ -52,11 +59,14 @@ export class ApPaginatorComponent implements OnInit {
       [CURSOR_QUERY_PARAM]: cursor,
     };
 
-    this.router.navigate(['.'], {
-      relativeTo: this.route,
-      queryParams: params,
-      queryParamsHandling: 'merge',
-      preserveFragment: true,
+    this.navigationService.navigate({
+      route: ['.'],
+      extras: {
+        relativeTo: this.route,
+        queryParams: params,
+        queryParamsHandling: 'merge',
+        preserveFragment: true,
+      },
     });
   }
 
