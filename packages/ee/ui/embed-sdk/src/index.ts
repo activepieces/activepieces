@@ -50,11 +50,13 @@ export interface ActivepiecesVendorInit {
     hideFlowNameInBuilder?: boolean;
     disableNavigationInBuilder: boolean;
     hideFolders?: boolean;
+    sdkVersion?: string;
   };
 }
 export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
 
 class ActivepiecesEmbedded {
+  readonly _sdkVersion = "0.2.5";
   _prefix = '';
   _initialRoute = '';
   _instanceUrl = '';
@@ -175,6 +177,7 @@ class ActivepiecesEmbedded {
                   hideFolders: this._hideFolders,
                   hideLogoInBuilder: this._hideLogoInBuilder,
                   hideFlowNameInBuilder: this._hideFlowNameInBuilder,
+                  sdkVersion:this._sdkVersion
                 },
               };
               iframeWindow.postMessage(apEvent, '*');

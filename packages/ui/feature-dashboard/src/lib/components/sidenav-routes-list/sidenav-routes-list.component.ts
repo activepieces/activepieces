@@ -36,7 +36,7 @@ export class SidenavRoutesListComponent implements OnInit {
   sideNavRoutes$: Observable<SideNavRoute[]>;
   mainDashboardRoutes: SideNavRoute[] = [];
   skipLocationChange$: Observable<boolean> =
-    this.embeddingService.getIsInEmbedding$();
+    this.embeddingService.getSkipLocationChange$();
   demoPlatform$: Observable<boolean> = this.flagService.isFlagEnabled(
     ApFlagId.SHOW_PLATFORM_DEMO
   );
