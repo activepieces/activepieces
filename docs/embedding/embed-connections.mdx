@@ -23,7 +23,8 @@ You can use the embedded SDK to create connections.
 
         | Parameter Name | Required | Type   | Description                                 |
         | -------------- | -------- | ------ | ------------------------------------------- |
-        | pieceName      | ✅       | string | The name of the piece you want to create a connection for.
+        | pieceName      | ✅      | string | The name of the piece you want to create a connection for.
+        | connectionName | ❌      | string | The name of the connection
 
         **Connect Result**
 
@@ -40,6 +41,15 @@ You can use the embedded SDK to create connections.
 
         <Info>
         `connection` is undefined if the user closes the dialog and doesn't create a connection.
+        </Info>
+
+        <Info>
+          If `connectionName` is defined, the connection name input will be hidden and if the connection name is invalid the returned result will be an error message describing why it is invalid.
+        
+        **When connectionName is defined:**
+        ![Connections dialog using sdk connect method ](/resources/screenshots/connection-dialog-sdk.png)
+        **When connection name isn't defined:**
+        ![Connection dialog in Builder](/resources/screenshots/connection-dialog-builder.png)
         </Info>
 
         <Tip>
