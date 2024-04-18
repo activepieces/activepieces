@@ -142,9 +142,13 @@ export class FlowsTableComponent implements OnInit {
   }
 
   openBuilder(flow: PopulatedFlow, event: MouseEvent) {
-    const link = '/flows/' + flow.id;
-    const newWindow = event.ctrlKey || event.which == 2 || event.button == 4;
-    this.navigationService.navigate(link, newWindow);
+    const route = ['/flows/' + flow.id];
+    const openInNewWindow =
+      event.ctrlKey || event.which == 2 || event.button == 4;
+    this.navigationService.navigate({
+      route,
+      openInNewWindow,
+    });
   }
 
   deleteFlow(flow: PopulatedFlow) {

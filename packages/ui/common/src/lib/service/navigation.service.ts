@@ -11,12 +11,24 @@ export class NavigationService {
     private router: Router
   ) {}
 
-  navigate(route: string, openInNewWindow: boolean) {
-    if (this.embeddingService.getState().isEmbedded || !openInNewWindow) {
-      this.router.navigate([route]);
+  navigate(params: {
+    openInNewWindow?: boolean;
+    route: Parameters<Router['navigate']>[0];
+    extras?: Parameters<Router['navigate']>[1];
+  }) {
+    if (
+      this.embeddingService.getState().isEmbedded ||
+      !params.openInNewWindow
+    ) {
+      this.router.navigate(params.route, {
+        ...params.extras,
+        skipLocationChange: this.embeddingService.getIsInEmbedding(),
+      });
     } else {
-      const url = this.router.serializeUrl(this.router.createUrlTree([route]));
-      window.open(url, '_blank', 'noopener');
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(params.route)
+      );
+      window.open(url, '_blank', 'noopener noreferrer');
     }
   }
 }

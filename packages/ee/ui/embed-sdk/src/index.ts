@@ -73,8 +73,8 @@ class ActivepiecesEmbedded {
   _disableNavigationInBuilder = true;
   readonly _CONNECTIONS_IFRAME_ID='ApConnectionsIframe';
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
-  _handleVendorNavigation?: (data: { route: string }) => void;
-  _handleClientNavigation?: (data: { route: string }) => void;
+  _dashboardAndBuilderIframeWindow?: Window;
+  _navigationHandler?: (data: { route: string }) => void;
   _parentOrigin = window.location.origin;
   readonly _MAX_CONTAINER_CHECK_COUNT = 100;
   readonly _HUNDRED_MILLISECONDS = 100;
@@ -90,7 +90,7 @@ class ActivepiecesEmbedded {
     embedding?: {
       containerId?: string;
       builder?: {
-        disableNavigation: boolean;
+        disableNavigation?: boolean;
         hideLogo?: boolean;
         hideFlowName?: boolean;
       };
@@ -98,6 +98,9 @@ class ActivepiecesEmbedded {
         hideSidebar?: boolean;
       };
       hideFolders?: boolean;
+      navigation?:{
+        handler?: (data: { route: string }) => void;
+      }
     };
   }) {
     this._prefix = prefix || '/';
@@ -113,6 +116,7 @@ class ActivepiecesEmbedded {
     this._hideLogoInBuilder = embedding?.builder?.hideLogo ?? false;
     this._hideFlowNameInBuilder = embedding?.builder?.hideFlowName ?? false;
     this._jwtToken = jwtToken;
+    this._navigationHandler = embedding?.navigation?.handler;
     if (embedding?.containerId) {
       this._initializeBuilderAndDashboardIframe({
         containerSelector: `#${embedding.containerId}`,
@@ -140,7 +144,7 @@ class ActivepiecesEmbedded {
             jwtToken,
             iframeContainer,
           }).contentWindow;
-          this._checkForVendorRouteChanges(iframeWindow);
+          this._dashboardAndBuilderIframeWindow = iframeWindow;
           this._checkForClientRouteChanges(iframeWindow);
         }
       },
@@ -231,6 +235,21 @@ class ActivepiecesEmbedded {
     });
   }
 
+
+   navigate({ route }: { route: string }) {
+      if(!this._dashboardAndBuilderIframeWindow){
+        console.error('Activepieces: dashboard iframe not found');
+        return;
+      }
+      const event: ActivepiecesVendorRouteChanged = {
+        type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
+        data: {
+          vendorRoute: route,
+        },
+      };
+      this._dashboardAndBuilderIframeWindow.postMessage(event, '*');
+  }
+
   private _checkForClientRouteChanges = (source: Window) => {
     window.addEventListener(
       'message',
@@ -250,40 +269,19 @@ class ActivepiecesEmbedded {
           if (!routeWithPrefix.startsWith('/')) {
             routeWithPrefix = '/' + routeWithPrefix;
           }
-          if (!this._handleClientNavigation) {
-            window.history.replaceState({}, '', routeWithPrefix);
-          } else {
-            this._handleClientNavigation({ route: routeWithPrefix });
-          }
+        
+          if(this._navigationHandler)
+            {
+
+              this._navigationHandler({ route: routeWithPrefix });
+            }
+      
         }
       }
     );
   };
 
-  private _checkForVendorRouteChanges = (iframeWindow: Window) => {
-    let currentRoute = window.location.href;
-    setInterval(() => {
-      if (currentRoute !== window.location.href) {
-        currentRoute = window.location.href;
-        if (this._handleVendorNavigation) {
-          this._handleVendorNavigation({ route: currentRoute });
-        }
-        const prefixStartsWithSlash = this._prefix.startsWith('/');
-        const apEvent: ActivepiecesVendorRouteChanged = {
-          type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
-          data: {
-            vendorRoute: this._extractRouteAfterPrefix(
-              currentRoute,
-              prefixStartsWithSlash
-                ? this._parentOrigin + this._prefix
-                : `${this._parentOrigin}/${this._prefix}`
-            ),
-          },
-        };
-        iframeWindow.postMessage(apEvent, '*');
-      }
-    }, 50);
-  };
+
 
   private async checkIfConnectionNameIsValid(connectionName: string | undefined) {
     const url = new URL(this._instanceUrl+  "/api/v1/app-connections/validate-connection-name");
@@ -368,7 +366,13 @@ class ActivepiecesEmbedded {
         }
       }, this._HUNDRED_MILLISECONDS);
     },);
+  }
 
+  extractActivepiecesRouteFromUrl({vendorUrl}:{vendorUrl: string}) {
+    const prefixStartsWithSlash = this._prefix.startsWith('/');
+    return this._extractRouteAfterPrefix(vendorUrl,prefixStartsWithSlash
+      ? this._parentOrigin + this._prefix
+      : `${this._parentOrigin}/${this._prefix}`);
   }
   private _errorCreator(message: string) {
     console.error(`Activepieces: ${message}`)
@@ -378,3 +382,4 @@ class ActivepiecesEmbedded {
 
 
 (window as any).activepieces = new ActivepiecesEmbedded();
+(window as any).ActivepiecesEmbedded =  ActivepiecesEmbedded;

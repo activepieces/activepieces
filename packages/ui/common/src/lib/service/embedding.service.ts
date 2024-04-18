@@ -29,12 +29,16 @@ export class EmbeddingService {
   getState() {
     return this.embeddingStateSubject.value;
   }
+  getIsInEmbedding() {
+    return this.embeddingStateSubject.value.isEmbedded;
+  }
   setState(newState: EmbeddingState) {
     return this.embeddingStateSubject.next(newState);
   }
   getState$() {
     return this.embeddingStateSubject.asObservable();
   }
+
   getIsInEmbedding$() {
     return this.getState$().pipe(map((res) => res.isEmbedded));
   }
