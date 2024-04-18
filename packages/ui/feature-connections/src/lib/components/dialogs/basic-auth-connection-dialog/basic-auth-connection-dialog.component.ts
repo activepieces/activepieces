@@ -64,14 +64,12 @@ export class BasicAuthConnectionDialogComponent {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      name: createConnectionNameControl(
-        this.appConnectionsService,
-        dialogData.pieceName
-      ),
+      name: createConnectionNameControl({
+        appConnectionsService: this.appConnectionsService,
+        pieceName: this.dialogData.pieceName,
+        existingConnectionName: this.dialogData.connectionToUpdate?.name,
+      }),
     });
-    if (this.dialogData.connectionToUpdate) {
-      this.settingsForm.controls.name.disable();
-    }
   }
   submit() {
     this.settingsForm.markAllAsTouched();

@@ -1,14 +1,23 @@
 import { AppConnectionsService } from '@activepieces/ui/common';
 import { FormControl, Validators } from '@angular/forms';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
-
-export const connectionNameRegex = '[A-Za-z0-9_\\-@\\+\\.]*';
-export const createConnectionNameControl = (
-  appConnectionsService: AppConnectionsService,
-  pieceName: string
-) => {
+import { connectionNameRegex } from '@activepieces/shared';
+export const createConnectionNameControl = ({
+  appConnectionsService,
+  pieceName,
+  existingConnectionName,
+}: {
+  appConnectionsService: AppConnectionsService;
+  pieceName: string;
+  existingConnectionName?: string;
+}) => {
   return new FormControl(
-    appConnectionsService.getConnectionNameSuggest(pieceName),
+    {
+      value:
+        existingConnectionName ??
+        appConnectionsService.getConnectionNameSuggest(pieceName),
+      disabled: !!existingConnectionName,
+    },
     {
       nonNullable: true,
       validators: [

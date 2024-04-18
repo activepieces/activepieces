@@ -102,20 +102,17 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
   ngOnInit(): void {
     const propsControls = this.createPropsFormGroup();
     this.settingsForm = this.fb.group({
-      name: createConnectionNameControl(
-        this.appConnectionsService,
-        this.dialogData.pieceName
-      ),
+      name: createConnectionNameControl({
+        appConnectionsService: this.appConnectionsService,
+        pieceName: this.dialogData.pieceName,
+        existingConnectionName: this.dialogData.connectionToUpdate?.name,
+      }),
       value: new FormControl<OAuth2PopupResponse | null>(null, {
         validators: Validators.required,
       }),
       props: this.fb.group(propsControls),
     });
     if (this.dialogData.connectionToUpdate) {
-      this.settingsForm.controls.name.setValue(
-        this.dialogData.connectionToUpdate.name
-      );
-      this.settingsForm.controls.name.disable();
       this.settingsForm.controls.value.setValue({ code: this.FAKE_CODE });
     }
     this.settingsForm.controls.name.markAllAsTouched();

@@ -107,10 +107,11 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      name: createConnectionNameControl(
-        this.appConnectionsService,
-        this.dialogData.pieceName
-      ),
+      name: createConnectionNameControl({
+        appConnectionsService: this.appConnectionsService,
+        pieceName: this.dialogData.pieceName,
+        existingConnectionName: this.dialogData.connectionToUpdate?.name,
+      }),
       value: new FormControl<OAuth2PopupResponse | null>(null, {
         validators: Validators.required,
       }),
@@ -126,12 +127,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     ) {
       this.settingsForm.controls.redirect_url.disable();
       this.settingsForm.controls.value.disable();
-    }
-    if (this.dialogData.connectionToUpdate) {
-      this.settingsForm.controls.name.setValue(
-        this.dialogData.connectionToUpdate.name
-      );
-      this.settingsForm.controls.name.disable();
     }
   }
   submit() {

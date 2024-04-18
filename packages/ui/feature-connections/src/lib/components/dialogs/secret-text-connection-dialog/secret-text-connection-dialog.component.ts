@@ -16,14 +16,12 @@ import {
   MatDialog,
 } from '@angular/material/dialog';
 import { catchError, Observable, of, tap } from 'rxjs';
-import { ConnectionValidator } from '../../../validators/connectionNameValidator';
-
 import {
   AppConnectionsService,
   AuthenticationService,
   DiagnosticDialogComponent,
 } from '@activepieces/ui/common';
-import { connectionNameRegex } from '../utils';
+import { createConnectionNameControl } from '../utils';
 
 interface SecretTextForm {
   secretText: FormControl<string>;
@@ -62,28 +60,12 @@ export class SecretTextConnectionDialogComponent {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      name: new FormControl(
-        appConnectionsService.getConnectionNameSuggest(
-          this.dialogData.pieceName
-        ),
-        {
-          nonNullable: true,
-          validators: [
-            Validators.required,
-            Validators.pattern(connectionNameRegex),
-          ],
-          asyncValidators: [
-            ConnectionValidator.createValidator(
-              this.appConnectionsService.getAllOnce(),
-              undefined
-            ),
-          ],
-        }
-      ),
+      name: createConnectionNameControl({
+        appConnectionsService: this.appConnectionsService,
+        pieceName: this.dialogData.pieceName,
+        existingConnectionName: this.dialogData.connectionName,
+      }),
     });
-    if (this.dialogData.connectionName) {
-      this.settingsForm.controls.name.disable();
-    }
   }
   submit() {
     this.settingsForm.markAllAsTouched();
