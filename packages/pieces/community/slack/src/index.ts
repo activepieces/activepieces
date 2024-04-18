@@ -19,6 +19,7 @@ import { searchMessages } from './lib/actions/search-messages';
 import { updateMessage } from './lib/actions/update-message';
 import { findUserByEmailAction } from './lib/actions/find-user-by-email';
 import { updateProfileAction } from './lib/actions/update-profile';
+import { createChannelAction } from './lib/actions/create-channel';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
@@ -95,6 +96,7 @@ export const slack = createPiece({
     searchMessages,
     findUserByEmailAction,
     updateMessage,
+    createChannelAction,
     updateProfileAction,
     createCustomApiCallAction({
       baseUrl: () => {
