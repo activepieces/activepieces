@@ -44,6 +44,7 @@ import {
   StepTypeSideBarProps,
 } from '@activepieces/ui/feature-builder-store';
 import {
+  extractInitialPieceStepValuesAndValidity,
   FlagService,
   FlowItemDetails,
   getDefaultDisplayNameForPiece,
@@ -52,7 +53,7 @@ import {
 } from '@activepieces/ui/common';
 import { Actions, ofType } from '@ngrx/effects';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
-import { ActionOrTriggerName } from './common';
+import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 
 @Component({
   selector: 'app-step-type-sidebar',
@@ -212,7 +213,7 @@ export class StepTypeSidebarComponent implements AfterViewInit {
     suggestion,
   }: {
     flowItemDetails: FlowItemDetails;
-    suggestion?: ActionOrTriggerName;
+    suggestion?: ActionBase | TriggerBase;
   }) {
     this.flowTypeSelected$ = forkJoin({
       currentFlow: this.store
@@ -257,7 +258,7 @@ export class StepTypeSidebarComponent implements AfterViewInit {
 
   private replaceTrigger(
     triggerDetails: FlowItemDetails,
-    suggestion?: ActionOrTriggerName
+    suggestion?: ActionBase | TriggerBase
   ) {
     const base = {
       name: 'trigger',
@@ -276,11 +277,13 @@ export class StepTypeSidebarComponent implements AfterViewInit {
           settings: undefined,
         };
         break;
-      case TriggerType.PIECE:
+      case TriggerType.PIECE: {
+        const { valid, initialValues } =
+          this.extractSuggestionInitialValueAndValidity(suggestion);
         trigger = {
           ...base,
           type: TriggerType.PIECE,
-          valid: false,
+          valid: valid,
           settings: {
             packageType:
               triggerDetails.extra?.packageType ?? PackageType.REGISTRY,
@@ -289,13 +292,14 @@ export class StepTypeSidebarComponent implements AfterViewInit {
             pieceVersion:
               triggerDetails.extra?.pieceVersion ?? 'NO_APP_VERSION',
             triggerName: suggestion?.name || '',
-            input: {},
+            input: initialValues,
             inputUiInfo: {
               currentSelectedData: '',
             },
           },
         };
         break;
+      }
     }
     this.store.dispatch(
       FlowsActions.updateTrigger({
@@ -310,7 +314,7 @@ export class StepTypeSidebarComponent implements AfterViewInit {
     actionType: ActionType,
     flowItemDetails: FlowItemDetails,
     stepLocationRelativeToParent: StepLocationRelativeToParent,
-    suggestion?: ActionOrTriggerName
+    suggestion?: ActionBase | TriggerBase
   ): AddActionRequest {
     const baseProps = {
       name: flowHelper.findAvailableStepName(flowVersion, 'step'),
@@ -362,13 +366,15 @@ export class StepTypeSidebarComponent implements AfterViewInit {
         };
       }
       case ActionType.PIECE: {
+        const { valid, initialValues } =
+          this.extractSuggestionInitialValueAndValidity(suggestion);
         return {
           parentStep: parentStep,
           stepLocationRelativeToParent: stepLocationRelativeToParent,
           action: {
             ...baseProps,
             type: ActionType.PIECE,
-            valid: false,
+            valid: valid,
             settings: {
               packageType:
                 flowItemDetails.extra?.packageType ?? PackageType.REGISTRY,
@@ -377,7 +383,7 @@ export class StepTypeSidebarComponent implements AfterViewInit {
               pieceVersion:
                 flowItemDetails.extra?.pieceVersion ?? 'NO_APP_VERSION',
               actionName: suggestion?.name,
-              input: {},
+              input: initialValues,
               inputUiInfo: {
                 customizedInputs: {},
               },
@@ -417,5 +423,16 @@ export class StepTypeSidebarComponent implements AfterViewInit {
         };
       }
     }
+  }
+  private extractSuggestionInitialValueAndValidity(
+    suggestion?: ActionBase | TriggerBase
+  ) {
+    if (!suggestion) {
+      return {
+        valid: false,
+        initialValues: {},
+      };
+    }
+    return extractInitialPieceStepValuesAndValidity(suggestion.props);
   }
 }
