@@ -17,6 +17,8 @@ import { newReactionAdded } from './lib/triggers/new-reaction-added';
 import { uploadFile } from './lib/actions/upload-file';
 import { searchMessages } from './lib/actions/search-messages';
 import { updateMessage } from './lib/actions/update-message';
+import { findUserByEmailAction } from './lib/actions/find-user-by-email';
+import { updateProfileAction } from './lib/actions/update-profile';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
@@ -33,6 +35,8 @@ export const slackAuth = PieceAuth.OAuth2({
     'users:read',
     'files:write',
     'files:read',
+    'users:read.email',
+    'users.profile:write',
   ],
 });
 
@@ -89,7 +93,9 @@ export const slack = createPiece({
     requestActionMessageAction,
     uploadFile,
     searchMessages,
+    findUserByEmailAction,
     updateMessage,
+    updateProfileAction,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://slack.com/api';
