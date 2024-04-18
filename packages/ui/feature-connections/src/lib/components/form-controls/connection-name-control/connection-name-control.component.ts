@@ -45,9 +45,9 @@ export class ConnectionNameControlComponent implements OnInit {
   constructor(private embeddingService: EmbeddingService) {}
   ngOnInit(): void {
     this.hideConnectionName =
-      this.embeddingService.getPredfinedConnectionName() !== undefined;
+      this.embeddingService.getPredefinedConnectionName() !== undefined;
     if (this.hideConnectionName) {
-      this.control.setValue(this.embeddingService.getPredfinedConnectionName());
+      this.control.setValue(this.embeddingService.getPredefinedConnectionName());
     }
   }
   readonly keyTooltip = $localize`The ID of this connection definition. You will need to select this key whenever you want to reuse this connection`;

@@ -38,7 +38,7 @@ export class EmbeddedConnectionDialogComponent {
         const pieceName = params[NEW_CONNECTION_QUERY_PARAMS.name];
         const connectionName =
           params[NEW_CONNECTION_QUERY_PARAMS.connectionName];
-        this.embeddingService.setPredfinedConnectionName(connectionName);
+        this.embeddingService.setPredefinedConnectionName(connectionName);
         if (!pieceName) {
           console.error(
             `Activepieces: pieceName and pieceVersion are required query parameters`
@@ -80,7 +80,7 @@ export class EmbeddedConnectionDialogComponent {
           type: ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED,
         };
       window.parent.postMessage(newConnectionDialogClosedEvent, '*');
-      this.embeddingService.setPredfinedConnectionName(undefined);
+      this.embeddingService.setPredefinedConnectionName(undefined);
     }
   }
 }
