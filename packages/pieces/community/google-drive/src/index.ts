@@ -20,6 +20,7 @@ import { googleDriveUploadFile } from './lib/action/upload-file';
 import { newFile } from './lib/triggers/new-file';
 import { newFolder } from './lib/triggers/new-folder';
 import { setPublicAccess } from './lib/action/set-public-access';
+import { moveFileAction } from './lib/action/move-file';
 
 export const googleDriveAuth = PieceAuth.OAuth2({
   description: '',
@@ -62,6 +63,7 @@ export const googleDrive = createPiece({
     addPermission,
     deletePermission,
     setPublicAccess,
+    moveFileAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://www.googleapis.com/drive/v3',
       auth: googleDriveAuth,
