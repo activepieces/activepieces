@@ -1,4 +1,4 @@
-import { PostHog } from 'posthog-node'
+import { Analytics } from '@segment/analytics-node'
 import { projectService } from '../project/project-service'
 import { getEdition } from './secret-helper'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
@@ -6,23 +6,24 @@ import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared'
 
 const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED)
 
-const client = new PostHog('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh')
+const analytics = new Analytics({ writeKey: '42TtMD2Fh9PEIcDO2CagCGFmtoPwOmqK' })
 
 export const telemetry = {
     async identify(user: User, projectId: ProjectId): Promise<void> {
         if (!telemetryEnabled) {
             return
         }
-        client.identify({
-            distinctId: user.id,
-            properties: {
+        const identify = {
+            userId: user.id,
+            traits: {
                 email: user.email,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 projectId,
                 ...(await getMetadata()),
             },
-        })
+        }
+        analytics.identify(identify)
     },
     async trackProject(
         projectId: ProjectId,
@@ -40,15 +41,16 @@ export const telemetry = {
         if (!telemetryEnabled) {
             return
         }
-        client.capture({
-            distinctId: userId,
+        const payloadEvent = {
+            userId,
             event: event.name,
             properties: {
                 ...event.payload,
                 ...(await getMetadata()),
                 datetime: new Date().toISOString(),
             },
-        })
+        }
+        analytics.track(payloadEvent)
     },
 }
 

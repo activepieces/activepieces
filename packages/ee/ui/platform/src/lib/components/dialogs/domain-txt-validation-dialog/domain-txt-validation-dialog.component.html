@@ -1,0 +1,26 @@
+<ap-dialog-title-template>
+    {{ title }}
+</ap-dialog-title-template>
+
+<mat-dialog-content>
+    <div class="ap-min-w-[470px] ap-max-w-[470px]">
+        @if(markdownInstructions$ | async; as markdown){
+        <ap-markdown [data]="markdown"></ap-markdown>
+        }
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic"
+            [disabled]="(loading$ | async) || false" i18n>
+            Cancel
+        </ap-button>
+        <ap-button btnSize="default" type="submit" (click)="verifyDomain()" [loading]="(loading$ | async) || false"
+            btnColor="primary" i18n>
+            Verify
+        </ap-button>
+    </div>
+</mat-dialog-actions>
+
+<ng-container *ngIf="verificationStatus$ | async"></ng-container>
