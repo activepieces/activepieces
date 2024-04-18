@@ -243,8 +243,13 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
               )
               .pipe(
                 map((metaData) => {
+                  if (
+                    res.settings.pieceName === '@activepieces/piece-webhook'
+                  ) {
+                    return `Call your webhook url.`;
+                  }
                   const trigger = metaData.triggers[res.settings.triggerName];
-                  return `Please go to ${metaData.displayName} and trigger ${trigger.displayName}`;
+                  return `Please go to ${metaData.displayName} and trigger ${trigger.displayName}.`;
                 })
               );
           }
