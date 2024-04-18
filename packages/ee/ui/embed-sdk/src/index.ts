@@ -58,7 +58,6 @@ export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
 class ActivepiecesEmbedded {
   readonly _sdkVersion = "0.2.5";
   _prefix = '';
-  _initialRoute = '';
   _instanceUrl = '';
   _hideSidebar = false;
   _hideFolders = false;
@@ -99,10 +98,6 @@ class ActivepiecesEmbedded {
     };
   }) {
     this._prefix = prefix || '/';
-    const newInitialRoute = !window.location.pathname.startsWith(this._prefix)
-      ? '/'
-      : '/' + window.location.pathname.substring(this._prefix.length);
-    this._initialRoute = newInitialRoute || '/';
     this._hideSidebar = embedding?.dashboard?.hideSidebar || false;
     this._instanceUrl = this._removeTrailingSlashes(instanceUrl);
     this._disableNavigationInBuilder =
@@ -171,7 +166,7 @@ class ActivepiecesEmbedded {
                 type: ActivepiecesVendorEventName.VENDOR_INIT,
                 data: {
                   prefix: this._prefix,
-                  initialRoute: this._initialRoute,
+                  initialRoute: "/",
                   hideSidebar: this._hideSidebar,
                   disableNavigationInBuilder: this._disableNavigationInBuilder,
                   hideFolders: this._hideFolders,
