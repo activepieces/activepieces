@@ -4,8 +4,9 @@ import { Observable, map, combineLatest } from 'rxjs';
 import { ApFlagId } from '@activepieces/shared';
 import { AsyncPipe } from '@angular/common';
 import semver from 'semver';
-import { UpdatesService } from '../../service/updates.service';
+import { UpdatesService, VersionRelease } from '../../service/updates.service';
 import { UiCommonModule } from '@activepieces/ui/common';
+import { ReleaseDataSource } from './release-table.datasource';
 
 const compareVersions = (latestVersion: string, currentVersion: string) => {
   let message = 'Up to date!';
@@ -48,9 +49,9 @@ export class UpdatesComponent {
     emoji: string;
     message: string;
   }>;
-  patchNotes$?: Observable<{
-    [key: string]: string | { [key: string]: string } | string[] | number;
-  }>;
+  dataSource: ReleaseDataSource;
+  releases$: Observable<VersionRelease[]>;
+  displayedColumns = ['version', 'releaseDate', 'url'];
 
   formatDate(dateString: string): string {
     const date = new Date(dateString);
@@ -71,6 +72,7 @@ export class UpdatesComponent {
     this.latestVersion$ = this.flagService.getStringFlag(
       ApFlagId.LATEST_VERSION
     );
+    this.dataSource = new ReleaseDataSource(this.updatesService);
     this.message$ = combineLatest({
       currentVersion: this.currentVersion$,
       latestVersion: this.latestVersion$,
@@ -79,6 +81,6 @@ export class UpdatesComponent {
         return compareVersions(latestVersion, currentVersion);
       })
     );
-    this.patchNotes$ = this.updatesService.getReleaseNotes();
+    this.releases$ = this.updatesService.getReleaseNotes();
   }
 }
