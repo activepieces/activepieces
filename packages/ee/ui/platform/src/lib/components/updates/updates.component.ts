@@ -1,8 +1,12 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { FlagService, fadeInUp400ms } from '@activepieces/ui/common';
+import {
+  ApDatePipe,
+  FlagService,
+  fadeInUp400ms,
+} from '@activepieces/ui/common';
 import { Observable, map, combineLatest } from 'rxjs';
 import { ApFlagId } from '@activepieces/shared';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, DatePipe } from '@angular/common';
 import semver from 'semver';
 import { UpdatesService, VersionRelease } from '../../service/updates.service';
 import { UiCommonModule } from '@activepieces/ui/common';
@@ -39,7 +43,8 @@ const compareVersions = (latestVersion: string, currentVersion: string) => {
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeInUp400ms],
   standalone: true,
-  imports: [AsyncPipe, UiCommonModule],
+  imports: [AsyncPipe, UiCommonModule, ApDatePipe],
+  providers: [DatePipe],
 })
 export class UpdatesComponent {
   currentVersion$?: Observable<string>;

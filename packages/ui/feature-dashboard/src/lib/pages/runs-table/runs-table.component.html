@@ -72,12 +72,12 @@
 
         <ng-container matColumnDef="started">
           <th mat-header-cell *matHeaderCellDef i18n>Started</th>
-          <td mat-cell *matCellDef="let run">{{ run.startTime | date: 'short' }}</td>
+          <td mat-cell *matCellDef="let run">{{ run.startTime | apDate: 'mdhms' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="finished">
           <th mat-header-cell *matHeaderCellDef i18n>Finished</th>
-          <td mat-cell *matCellDef="let run">{{ run.finishTime | date: 'short' }}</td>
+          <td mat-cell *matCellDef="let run">{{ run.finishTime | apDate: 'mdhms' }}</td>
         </ng-container>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef i18n>Status</th>
