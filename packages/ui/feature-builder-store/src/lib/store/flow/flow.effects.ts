@@ -31,7 +31,6 @@ import {
   flowHelper,
   FlowVersionState,
   FlowStatus,
-  isNil,
 } from '@activepieces/shared';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
@@ -41,7 +40,7 @@ import {
   FlowService,
   environment,
   FlowBuilderService,
-  getPropertyInitialValue,
+  extractInitialPieceStepValuesAndValidity,
 } from '@activepieces/ui/common';
 import { canvasActions } from '../builder/canvas/canvas.action';
 import { ViewModeActions } from '../builder/viewmode/view-mode.action';
@@ -76,16 +75,8 @@ export class FlowsEffects {
       ),
       switchMap(([{ displayName, name, properties }, step]) => {
         if (step) {
-          const initialValues = Object.keys(properties).reduce((acc, key) => {
-            acc[key] = getPropertyInitialValue(properties[key], undefined);
-            return acc;
-          }, {} as Record<string, unknown>);
-          const valid = Object.keys(properties).reduce((acc, key) => {
-            return (
-              acc && (!properties[key]?.required || !isNil(initialValues[key]))
-            );
-          }, true);
-
+          const { initialValues, valid } =
+            extractInitialPieceStepValuesAndValidity(properties);
           if (step.type === TriggerType.PIECE) {
             // TODO fix this for piece schedule
             const sampleData =
