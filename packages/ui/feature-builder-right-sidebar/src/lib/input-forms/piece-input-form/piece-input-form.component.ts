@@ -45,6 +45,9 @@ import {
 } from '@activepieces/pieces-framework';
 import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
 import { InputFormCore } from '../input-form-core';
+const isTrigger = (step: TriggerBase | ActionBase): step is TriggerBase => {
+  return (step as TriggerBase).type !== undefined;
+};
 
 @Component({
   selector: 'app-piece-input-form',
@@ -255,13 +258,14 @@ export class PieceInputFormComponent extends InputFormCore {
         pieceMetaData: PieceMetadataModel | undefined;
       }
     ) {
+      const authProperty =
+        isTrigger(triggerOrAction) || triggerOrAction.requireAuth
+          ? res.pieceMetaData?.auth
+          : undefined;
       const selected = {
         ...triggerOrAction,
         props: {
-          ...spreadIfDefined(
-            AUTHENTICATION_PROPERTY_NAME,
-            res.pieceMetaData?.auth
-          ),
+          ...spreadIfDefined(AUTHENTICATION_PROPERTY_NAME, authProperty),
           ...triggerOrAction.props,
         },
       };
