@@ -12,7 +12,7 @@
     [data]="dialogData.pieceAuthProperty.description"></ap-markdown>
   <form class="ap-pt-4 ap-flex ap-flex-col ap-gap-2 ap-max-w-[720px] ap-min-w-[420px]" [formGroup]="settingsForm"
     (keyup.enter)="submit()">
-    <app-connection-name-control [formControl]="settingsForm.controls.name"></app-connection-name-control>
+    <app-connection-name-control [control]="settingsForm.controls.name"></app-connection-name-control>
 
     <mat-form-field class="ap-w-full" appearance="outline"
       *ngIf="dialogData.pieceAuthProperty.grantType !== OAuth2GrantType.CLIENT_CREDENTIALS">

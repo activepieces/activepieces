@@ -11,7 +11,7 @@
 
   <form class="ap-flex ap-flex-col ap-gap-2 ap-min-w-[430px]" [formGroup]="settingsForm" (keyup.enter)="submit()"
     (submit)="submit()">
-    <app-connection-name-control [formControl]="settingsForm.controls.name"></app-connection-name-control>
+    <app-connection-name-control [control]="settingsForm.controls.name"></app-connection-name-control>
     <div *ngIf="dialogData.pieceAuthProperty.props" [formGroup]="settingsForm.controls.props">
       <ng-container *ngFor="let prop of dialogData.pieceAuthProperty.props |objectToArray">
         <mat-form-field *ngIf="prop.value['type'] !== PropertyType.STATIC_DROPDOWN" class="ap-w-full"

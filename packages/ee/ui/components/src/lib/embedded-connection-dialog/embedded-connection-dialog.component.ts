@@ -14,6 +14,7 @@ import {
 } from 'ee-embed-sdk';
 import { Observable, catchError, of, switchMap, tap } from 'rxjs';
 import { PieceMetadataModel } from '@activepieces/pieces-framework';
+import { EmbeddingService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'ap-embedded-connection-dialog',
@@ -29,11 +30,15 @@ export class EmbeddedConnectionDialogComponent {
   openNewConnectionsDialog$?: Observable<PieceMetadataModel | undefined>;
   constructor(
     private activatedRoute: ActivatedRoute,
-    private pieceMetadataService: PieceMetadataService
+    private pieceMetadataService: PieceMetadataService,
+    private embeddingService: EmbeddingService
   ) {
     this.openNewConnectionsDialog$ = this.activatedRoute.queryParams.pipe(
       switchMap((params) => {
         const pieceName = params[NEW_CONNECTION_QUERY_PARAMS.name];
+        const connectionName =
+          params[NEW_CONNECTION_QUERY_PARAMS.connectionName];
+        this.embeddingService.setPredfinedConnectionName(connectionName);
         if (!pieceName) {
           console.error(
             `Activepieces: pieceName and pieceVersion are required query parameters`
@@ -75,6 +80,7 @@ export class EmbeddedConnectionDialogComponent {
           type: ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED,
         };
       window.parent.postMessage(newConnectionDialogClosedEvent, '*');
+      this.embeddingService.setPredfinedConnectionName(undefined);
     }
   }
 }
