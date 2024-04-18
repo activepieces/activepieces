@@ -1,3 +1,4 @@
+import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 import {
   ActionType,
   PackageType,
@@ -17,6 +18,6 @@ export class FlowItemDetails {
       pieceName: string;
       pieceVersion: string;
     },
-    public suggestions?: { name: string; displayName: string }[]
+    public suggestions?: ActionBase[] | TriggerBase[]
   ) {}
 }
