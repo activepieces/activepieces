@@ -20,6 +20,7 @@ import { updateMessage } from './lib/actions/update-message';
 import { findUserByEmailAction } from './lib/actions/find-user-by-email';
 import { updateProfileAction } from './lib/actions/update-profile';
 import { createChannelAction } from './lib/actions/create-channel';
+import { newChannelTrigger } from './lib/triggers/new-channel';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
@@ -114,7 +115,7 @@ export const slack = createPiece({
       },
     }),
   ],
-  triggers: [newMessage, newReactionAdded],
+  triggers: [newMessage, newReactionAdded, newChannelTrigger],
 });
 
 type PayloadBody = {
