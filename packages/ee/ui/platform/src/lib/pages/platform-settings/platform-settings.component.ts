@@ -6,13 +6,9 @@ import {
 } from '@angular/core';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, combineLatest, map, tap } from 'rxjs';
-import { ApFlagId, Platform } from '@activepieces/shared';
-import {
-  FlagService,
-  PLATFORM_RESOLVER_KEY,
-  isVersionMatch,
-} from '@activepieces/ui/common';
+import { Observable, tap } from 'rxjs';
+import { Platform } from '@activepieces/shared';
+import { FlagService, PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 
 @Component({
@@ -40,8 +36,6 @@ export class PlatformSettingsComponent implements AfterViewInit {
   ];
   isDemo = false;
   platform?: Platform;
-  currentVersion$?: Observable<string>;
-  latestVersion$?: Observable<string>;
   isVersionMatch$: Observable<boolean>;
 
   constructor(
@@ -65,20 +59,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
         }
       })
     );
-    this.currentVersion$ = this.flagService.getStringFlag(
-      ApFlagId.CURRENT_VERSION
-    );
-    this.latestVersion$ = this.flagService.getStringFlag(
-      ApFlagId.LATEST_VERSION
-    );
-    this.isVersionMatch$ = combineLatest({
-      currentVersion: this.currentVersion$,
-      latestVersion: this.latestVersion$,
-    }).pipe(
-      map(({ currentVersion, latestVersion }) => {
-        return isVersionMatch(latestVersion, currentVersion);
-      })
-    );
+    this.isVersionMatch$ = this.flagService.isVersionMatch();
   }
   ngAfterViewInit(): void {
     const fragment = this.route.snapshot.fragment;

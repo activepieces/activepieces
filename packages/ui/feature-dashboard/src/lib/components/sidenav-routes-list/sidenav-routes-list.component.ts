@@ -8,13 +8,9 @@ import {
   NavigationService,
   UiCommonModule,
 } from '@activepieces/ui/common';
-import { Observable, combineLatest, forkJoin, map, of, take } from 'rxjs';
+import { Observable, forkJoin, map, of, take } from 'rxjs';
 import { ApFlagId, ProjectMemberRole, supportUrl } from '@activepieces/shared';
-import {
-  DashboardService,
-  FlagService,
-  isVersionMatch,
-} from '@activepieces/ui/common';
+import { DashboardService, FlagService } from '@activepieces/ui/common';
 import { SidenavRouteItemComponent } from '../sidenav-route-item/sidenav-route-item.component';
 import { CommonModule } from '@angular/common';
 
@@ -43,8 +39,6 @@ export class SidenavRoutesListComponent implements OnInit {
   demoPlatform$: Observable<boolean> = this.flagService.isFlagEnabled(
     ApFlagId.SHOW_PLATFORM_DEMO
   );
-  currentVersion$?: Observable<string>;
-  latestVersion$?: Observable<string>;
   isVersionMatch$?: Observable<boolean>;
 
   readonly supportRoute: SideNavRoute = {
@@ -183,20 +177,7 @@ export class SidenavRoutesListComponent implements OnInit {
         showLock$: of(false),
       },
     ];
-    this.currentVersion$ = this.flagService.getStringFlag(
-      ApFlagId.CURRENT_VERSION
-    );
-    this.latestVersion$ = this.flagService.getStringFlag(
-      ApFlagId.LATEST_VERSION
-    );
-    this.isVersionMatch$ = combineLatest({
-      currentVersion: this.currentVersion$,
-      latestVersion: this.latestVersion$,
-    }).pipe(
-      map(({ currentVersion, latestVersion }) => {
-        return isVersionMatch(latestVersion, currentVersion);
-      })
-    );
+    this.isVersionMatch$ = this.flagService.isVersionMatch();
   }
   ngOnInit(): void {
     this.sideNavRoutes$ = this.dashboardService.getIsInPlatformRoute().pipe(
