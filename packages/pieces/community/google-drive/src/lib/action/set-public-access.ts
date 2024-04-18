@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleDriveAuth } from '../../';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
+import { downloadFileFromDrive } from '../common/get-file-content';
 
 export const setPublicAccess = createAction({
   auth: googleDriveAuth,
@@ -33,8 +34,14 @@ export const setPublicAccess = createAction({
 
     const file = await drive.files.get({
       fileId: fileId,
-      fields: 'webContentLink',
+      fields: 'name,webContentLink',
     });
-    return { ...res.data, downloadUrl: file.data.webContentLink };
+    const content = await downloadFileFromDrive(
+      context.auth,
+      context.files,
+      fileId,
+      file.data.name!
+    );
+    return { ...res.data, downloadUrl: content };
   },
 });
