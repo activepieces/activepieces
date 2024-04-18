@@ -8,6 +8,7 @@
       </div>
       @if(isVersionMatch$ | async){
       <svg-icon [applyClass]="true" class="ap-fill-disable ap-ml-1" [svgStyle]="{ width: '18px', height: '18px' }"
+        [matTooltip]="newUpdateMessage"
         src="assets/img/custom/notification_important.svg">
       </svg-icon>
       }

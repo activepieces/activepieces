@@ -32,6 +32,7 @@ export class DashboardContainerComponent {
   @ViewChild('contactSalesSlideout') contactSalesSlideout: MatSidenav;
   contactSalesState$: Observable<boolean>;
   isVersionMatch$?: Observable<boolean>;
+  newUpdateMessage = $localize`New update available`;
 
   constructor(
     private flagService: FlagService,

@@ -51,6 +51,7 @@ type SideNavRoute = {
           [applyClass]="true"
           class="ap-fill-disable ap-top-[1px] ap-right-[1px] ap-absolute"
           [svgStyle]="{ width: '14px', height: '14px' }"
+          [matTooltip]="newUpdateMessage"
           src="assets/img/custom/notification_important.svg"
         >
         </svg-icon>
@@ -66,4 +67,6 @@ type SideNavRoute = {
 })
 export class SidenavRouteItemComponent {
   @Input({ required: true }) sideNavRoute: SideNavRoute;
+
+  readonly newUpdateMessage = $localize`New update available`;
 }
