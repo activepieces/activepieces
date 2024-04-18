@@ -13,18 +13,40 @@
             <span class="ap-typography-subtitle-1 ap-font-semibold">{{latestVersion$ | async}}</span>
         </div>
         @if (message$ | async; as message){
-            <div class="ap-w-full ap-flex ap-flex-row ap-items-center">
-                <span class="ap-typography-subtitle-2 ap-mr-2">{{message.emoji}}</span>
-                <span class="ap-typography-subtitle-1">{{message.message}}</span>
-            </div>
+        <div class="ap-w-full ap-flex ap-flex-row ap-items-center">
+            <span class="ap-typography-subtitle-2 ap-mr-2">{{message.emoji}}</span>
+            <span class="ap-typography-subtitle-1">{{message.message}}</span>
+        </div>
         }
     </div>
     @if (message$ | async; as message){
-        @if (message.needUpdate) {
-            <div class="ap-bg-primary-light ap-rounded-md ap-p-2">
-                <span class="ap-typography-subtitle-1 ap-mr-2">Your version is behind the latest available version.</span>
-                <a class="ap-typography-subtitle-1 ap-text-primary ap-no-underline" href="https://www.activepieces.com/docs/install/options/overview" target="_blank">Click here to upgrade</a>
-            </div>
-        }
+    @if (message.needUpdate) {
+    <div class="ap-bg-primary-light ap-rounded-md ap-my-2 ap-px-2">
+        <span class="ap-typography-headline-6 ap-mr-2">Your version is behind the latest available version.</span>
+        <a class="ap-typography-headline-6 ap-text-primary ap-no-underline"
+            href="https://www.activepieces.com/docs/install/options/overview" target="_blank">Click here to upgrade</a>
+    </div>
+    }
+    }
+
+    @if (patchNotes$ | async; as patchNotes) {
+    <div class="ap-w-full ap-pb-2">
+        <span class=" ap-typography-headline-6 ap-font-semibold">Release Notes</span>
+    </div>
+    <hr>
+    <div class="ap-w-full ap-flex ap-flex-col ap-justify-between ap-pt-2 ap-mb-6">
+        <div class="ap-w-full ap-flex ap-flex-row">
+            <span class="ap-typography-subtitle-1">Version:</span>
+            <span class="ap-typography-subtitle-1 ap-ml-2">{{latestVersion$ | async}}</span>
+        </div>
+        <div class="ap-w-full ap-flex ap-flex-row ap-my-2">
+            <span class="ap-typography-subtitle-1">Release Date:</span>
+            <span class="ap-typography-subtitle-1 ap-ml-2">{{formatDate(patchNotes['published_at'].toString())}}</span>
+        </div>
+        <div class="ap-w-full ap-flex ap-flex-col ap-my-2">
+            <span class="ap-typography-subtitle-1">What's New?</span>
+            <div [innerHTML]="splitBody(patchNotes['body'].toString())" class="ap-w-full ap-flex  ap-flex-col"></div>
+        </div>
+    </div>
     }
 </div>

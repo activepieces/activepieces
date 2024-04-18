@@ -4,6 +4,9 @@ import { Observable, map, combineLatest } from 'rxjs';
 import { ApFlagId } from '@activepieces/shared';
 import { AsyncPipe } from '@angular/common';
 import semver from 'semver';
+import { UpdatesService } from '../../service/updates.service';
+import { UiCommonModule } from '@activepieces/ui/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 const compareVersions = (latestVersion: string, currentVersion: string) => {
   let message = 'Up to date!';
@@ -36,7 +39,7 @@ const compareVersions = (latestVersion: string, currentVersion: string) => {
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeInUp400ms],
   standalone: true,
-  imports: [AsyncPipe],
+  imports: [AsyncPipe, UiCommonModule],
 })
 export class UpdatesComponent {
   currentVersion$?: Observable<string>;
@@ -46,8 +49,54 @@ export class UpdatesComponent {
     emoji: string;
     message: string;
   }>;
+  patchNotes$?: Observable<{
+    [key: string]: string | { [key: string]: string } | string[] | number;
+  }>;
 
-  constructor(private flagService: FlagService) {
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('us', {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+    });
+  }
+
+  splitBody(body: string): SafeHtml {
+    const title = (text: string) =>
+      `<span class="ap-typography-subtitle-1 ap-mt-2">${text}</span>`;
+    const point = (text: string) =>
+      `<li class="ap-typography-subtitle-1 ap-mr-2 ap-mt-1">${text}</li>`;
+    let html = '';
+    let titleTemp = '';
+
+    const sections = body.split('## Thanks')[0].split('\r\n\r\n');
+    sections.forEach((section) => {
+      if (section.startsWith('##') || section.startsWith('\r\n')) {
+        const t = title(section.split('## ')[1]);
+        if (titleTemp !== t) {
+          titleTemp = t;
+          html += '</ul>';
+        }
+        html += t;
+        html += '<ul class="ap-pl-12 ap-list-disc">';
+      } else if (section.startsWith('*')) {
+        section.split('* ').forEach((sectionPoint) => {
+          if (sectionPoint !== '') {
+            html += point(sectionPoint);
+          }
+        });
+      }
+    });
+
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  constructor(
+    private flagService: FlagService,
+    private updatesService: UpdatesService,
+    private sanitizer: DomSanitizer
+  ) {
     this.currentVersion$ = this.flagService.getStringFlag(
       ApFlagId.CURRENT_VERSION
     );
@@ -62,5 +111,6 @@ export class UpdatesComponent {
         return compareVersions(latestVersion, currentVersion);
       })
     );
+    this.patchNotes$ = this.updatesService.getReleaseNotes();
   }
 }
