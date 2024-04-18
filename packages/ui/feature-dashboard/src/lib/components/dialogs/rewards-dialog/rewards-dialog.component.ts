@@ -81,7 +81,7 @@ export class RewardsDialogComponent {
         this.referralItemClicked();
         this.trackRewardsItems('referral');
       },
-      icon: 'assets/img/custom/rewards/referals.svg',
+      icon: 'assets/img/custom/rewards/referrals.svg',
       jobName:
         'Refer us to 5 friends using your referral link (reward per referral)',
       tasksPerMonth: '500',

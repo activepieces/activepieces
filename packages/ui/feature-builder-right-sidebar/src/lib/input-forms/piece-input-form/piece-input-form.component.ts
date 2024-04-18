@@ -5,6 +5,7 @@ import {
   FlagService,
   PieceConnectionDropdownItem,
   UiCommonModule,
+  extractAuthenticationProperty,
 } from '@activepieces/ui/common';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { Store } from '@ngrx/store';
@@ -45,9 +46,6 @@ import {
 } from '@activepieces/pieces-framework';
 import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
 import { InputFormCore } from '../input-form-core';
-const isTrigger = (step: TriggerBase | ActionBase): step is TriggerBase => {
-  return (step as TriggerBase).type !== undefined;
-};
 
 @Component({
   selector: 'app-piece-input-form',
@@ -258,10 +256,11 @@ export class PieceInputFormComponent extends InputFormCore {
         pieceMetaData: PieceMetadataModel | undefined;
       }
     ) {
-      const authProperty =
-        isTrigger(triggerOrAction) || triggerOrAction.requireAuth
-          ? res.pieceMetaData?.auth
-          : undefined;
+      const authProperty = extractAuthenticationProperty(
+        triggerOrAction,
+        res.pieceMetaData
+      );
+
       const selected = {
         ...triggerOrAction,
         props: {
@@ -404,16 +403,17 @@ export class PieceInputFormComponent extends InputFormCore {
           (x) => x.name === triggerOrActionName
         );
         if (selectedTriggerOrAction) {
+          const authProperty = extractAuthenticationProperty(
+            selectedTriggerOrAction,
+            pieceMetaData
+          );
           this.store.dispatch(
             FlowsActions.newTriggerOrActionSelected({
               displayName: selectedTriggerOrAction.displayName,
               name: selectedTriggerOrAction.name,
               properties: {
                 ...selectedTriggerOrAction.props,
-                ...spreadIfDefined(
-                  AUTHENTICATION_PROPERTY_NAME,
-                  pieceMetaData?.auth
-                ),
+                ...spreadIfDefined(AUTHENTICATION_PROPERTY_NAME, authProperty),
               },
             })
           );

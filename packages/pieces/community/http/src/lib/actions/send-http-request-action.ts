@@ -13,6 +13,8 @@ import {
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import FormData from 'form-data';
 import { httpMethodDropdown } from '../common/props';
+import HttpsProxyAgent from 'https-proxy-agent';
+import axios from 'axios';
 
 export const httpSendRequestAction = createAction({
   name: 'send_request',
@@ -94,6 +96,44 @@ export const httpSendRequestAction = createAction({
         return fields;
       },
     }),
+    use_proxy: Property.Checkbox({
+      displayName: 'Use Proxy',
+      defaultValue: false,
+      description: 'Use a proxy for this request',
+      required: false,
+    }),
+    proxy_settings: Property.DynamicProperties({
+      displayName: 'Proxy Settings',
+      refreshers: ['use_proxy'],
+      required: false,
+      props: async ({ use_proxy }) => {
+        if (!use_proxy) return {};
+
+        const fields: DynamicPropsValue = {};
+
+        fields['proxy_host'] = Property.ShortText({
+          displayName: 'Proxy Host',
+          required: true,
+        });
+
+        fields['proxy_port'] = Property.Number({
+          displayName: 'Proxy Port',
+          required: true,
+        });
+
+        fields['proxy_username'] = Property.ShortText({
+          displayName: 'Proxy Username',
+          required: false,
+        });
+
+        fields['proxy_password'] = Property.ShortText({
+          displayName: 'Proxy Password',
+          required: false,
+        });
+
+        return fields;
+      },
+    }),
     timeout: Property.Number({
       displayName: 'Timeout(in seconds)',
       required: false,
@@ -108,8 +148,17 @@ export const httpSendRequestAction = createAction({
     retryOnFailure: { defaultValue: true },
   },
   async run(context) {
-    const { method, url, headers, queryParams, body, body_type, timeout, failsafe } =
-      context.propsValue;
+    const {
+      method,
+      url,
+      headers,
+      queryParams,
+      body,
+      body_type,
+      timeout,
+      failsafe,
+      use_proxy,
+    } = context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
     assertNotNullOrUndefined(url, 'URL');
@@ -134,12 +183,34 @@ export const httpSendRequestAction = createAction({
         request.body = bodyInput;
       }
     }
+
     try {
+      if (use_proxy) {
+        const proxySettings = context.propsValue.proxy_settings;
+        assertNotNullOrUndefined(proxySettings, 'Proxy Settings');
+        assertNotNullOrUndefined(proxySettings['proxy_host'], 'Proxy Host');
+        assertNotNullOrUndefined(proxySettings['proxy_port'], 'Proxy Port');
+        const httpsAgent = HttpsProxyAgent({
+          host: proxySettings['proxy_host'],
+          port: proxySettings['proxy_port'],
+          auth: proxySettings['proxy_username']
+            ? `${proxySettings['proxy_username']}:${proxySettings['proxy_password']}`
+            : undefined,
+        });
+
+        const axiosClient = axios.create({
+          httpsAgent,
+        });
+
+        const proxied_response = await axiosClient.request(request);
+        return proxied_response.data;
+      }
       return await httpClient.sendRequest(request);
     } catch (error) {
       if (failsafe) {
-        return (error as HttpError).errorMessage()
+        return (error as HttpError).errorMessage();
       }
+
       throw error;
     }
   },

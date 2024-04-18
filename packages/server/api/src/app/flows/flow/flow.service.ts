@@ -5,6 +5,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
 import { flowVersionService } from '../flow-version/flow-version.service'
+import { flowFolderService } from '../folder/folder.service'
 import { flowServiceHooks as hooks } from './flow-service-hooks'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
@@ -32,10 +33,17 @@ import {
 
 export const flowService = {
     async create({ projectId, request }: CreateParams): Promise<PopulatedFlow> {
+
+        const folderId = isNil(request.folderName) ? null : (await flowFolderService.upsert({
+            projectId,
+            request: {
+                displayName: request.folderName,
+            },
+        })).id
         const newFlow: NewFlow = {
             id: apId(),
             projectId,
-            folderId: request.folderId ?? null,
+            folderId,
             status: FlowStatus.DISABLED,
             publishedVersionId: null,
             schedule: null,

@@ -59,7 +59,6 @@ async function createFlowInProject(flow: PopulatedFlow, projectId: string): Prom
         projectId,
         request: {
             displayName: flow.version.displayName,
-            folderId: flow.folderId ?? undefined,
             projectId,
         },
     })
