@@ -99,6 +99,7 @@ async function loadPieceFromFolder(
         }
     }
     catch (ex) {
+        logger.warn({ name: 'FilePieceMetadataService#loadPieceFromFolder', message: ex }, 'Failed to load piece from folder')
         exceptionHandler.handle(ex)
     }
     return null
@@ -148,7 +149,6 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
         }): Promise<PieceMetadataModel> {
             const piecesMetadata = await loadPiecesMetadata()
             const pieceMetadata = piecesMetadata.find((p) => p.name === name)
-
             if (isNil(pieceMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.PIECE_NOT_FOUND,

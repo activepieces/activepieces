@@ -23,7 +23,7 @@ export const insertMultipleRowsAction = createAction({
 		as_string: Property.Checkbox({
 			displayName: 'As String',
 			description:
-				'Inserted values that are dates and formulas will be entered strings and have no effect',
+				'Inserted values that are dates and formulas will be entered as strings and have no effect',
 			required: false,
 		}),
 		values: Property.DynamicProperties({
