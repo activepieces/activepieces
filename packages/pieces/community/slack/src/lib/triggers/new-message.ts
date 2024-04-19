@@ -74,7 +74,12 @@ export const newMessage = createTrigger({
     };
     const response = await httpClient.sendRequest(request);
 
-    return response.body.messages;
+    return response.body.messages.map((message: any) => ({
+      ...message,
+      channel: context.propsValue.channel,
+      event_ts: '1678231735.586539',
+      channel_type: 'channel',
+    }));
   },
   run: async (context) => {
     const payloadBody = context.payload.body as PayloadBody;
