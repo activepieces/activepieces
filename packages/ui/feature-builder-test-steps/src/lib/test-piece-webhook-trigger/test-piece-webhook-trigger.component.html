@@ -49,7 +49,7 @@
                 <mat-select [formControl]="selectedDataControl" [compareWith]="dropdownCompareWithFunction">
                     <mat-option *ngFor="let res of currentResults; let idx= index" [value]="res.payload">
                         <div i18n> (Result {{currentResults.length-idx}})</div>
-                        <div class="ap-text-description ap-typography-body-2"> {{res.created | date:"mdhms"}}</div>
+                        <div class="ap-text-description ap-typography-body-2"> {{res.created | apDate:"mdhms"}}</div>
                     </mat-option>
                 </mat-select>
             </mat-form-field>
