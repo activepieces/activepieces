@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { EmbeddingService, UiCommonModule } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
+import { isNil } from '@activepieces/shared';
 
 @Component({
   selector: 'app-connection-name-control',
@@ -41,7 +42,10 @@ export class ConnectionNameControlComponent implements OnInit {
   @Input({ required: true }) control!: FormControl;
   constructor(private embeddingService: EmbeddingService) {}
   ngOnInit(): void {
-    if (this.embeddingService.getPredefinedConnectionName() !== undefined) {
+    if (
+      !isNil(this.embeddingService.getPredefinedConnectionName()) &&
+      this.embeddingService.getPredefinedConnectionName() !== ''
+    ) {
       this.control.setValue(
         this.embeddingService.getPredefinedConnectionName()
       );
