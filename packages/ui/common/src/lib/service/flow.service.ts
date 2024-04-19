@@ -1,7 +1,15 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../environments/environment';
-import { map, Observable, switchMap, tap } from 'rxjs';
+import {
+  map,
+  Observable,
+  retry,
+  switchMap,
+  tap,
+  throwError,
+  timer,
+} from 'rxjs';
 import {
   CountFlowsRequest,
   CreateFlowRequest,
@@ -119,10 +127,26 @@ export class FlowService {
     flowId: FlowId,
     operation: FlowOperationRequest
   ): Observable<PopulatedFlow> {
-    return this.http.post<PopulatedFlow>(
-      environment.apiUrl + '/flows/' + flowId,
-      operation
-    );
+    return this.http
+      .post<PopulatedFlow>(environment.apiUrl + '/flows/' + flowId, operation)
+      .pipe(
+        retry({
+          count: 3,
+          delay: (error: HttpErrorResponse, retryCount: number) => {
+            console.error(
+              'Error occurred while updating flow',
+              error,
+              retryCount
+            );
+            switch (error.status) {
+              case 0:
+                return timer(3000);
+              default:
+                return throwError(() => error);
+            }
+          },
+        })
+      );
   }
 
   listVersions(flowId: FlowId): Observable<SeekPage<FlowVersion>> {
