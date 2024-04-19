@@ -3,7 +3,7 @@ export enum ActivepiecesClientEventName {
   CLIENT_ROUTE_CHANGED = 'CLIENT_ROUTE_CHANGED',
   CLIENT_NEW_CONNECTION_DIALOG_CLOSED = 'CLIENT_NEW_CONNECTION_DIALOG_CLOSED',
 }
-
+export const connectionNameRegex = '[A-Za-z0-9_\\-@\\+\\.]*'
 export interface ActivepiecesClientInit {
   type: ActivepiecesClientEventName.CLIENT_INIT;
   data: {
@@ -61,7 +61,7 @@ export interface ActivepiecesVendorInit {
 export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
 
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.2.5";
+  readonly _sdkVersion = "0.3.0";
   _prefix = '';
   _instanceUrl = '';
   _hideSidebar = false;
@@ -283,7 +283,10 @@ class ActivepiecesEmbedded {
 
 
   private async checkIfConnectionNameIsValid(connectionName: string | undefined) {
-    const url = new URL(this._instanceUrl + "/api/v1/app-connections/validate-connection-name");
+    if (!connectionName || !connectionName.match(connectionNameRegex)) {
+      throw this._errorCreator('Connection name is invalid, it should only contain letters, numbers, and the following characters: _ - @ + .');
+    }
+    const url = new URL(this._instanceUrl + "/api/v1/app-connections");
     const body = {
       connectionName: connectionName
     };
@@ -295,8 +298,9 @@ class ActivepiecesEmbedded {
       },
       body: JSON.stringify(body)
     })).json());
-    if (!connectionValidity.isValid) {
-      throw this._errorCreator(connectionValidity.error);
+
+    if (connectionValidity.data > 0) {
+      throw this._errorCreator('Connection name already exists');
     }
   }
 

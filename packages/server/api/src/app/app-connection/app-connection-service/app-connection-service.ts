@@ -17,14 +17,14 @@ import { appConnectionsHooks } from './app-connection-hooks'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
-import { ActivepiecesError,
+import {
+    ActivepiecesError,
     apId,
     AppConnection,
     AppConnectionId,
     AppConnectionStatus,
     AppConnectionType,
     AppConnectionValue,
-    connectionNameRegex,
     Cursor,
     EngineResponseStatus,
     ErrorCode,
@@ -38,24 +38,6 @@ import { ActivepiecesError,
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
 export const appConnectionService = {
-    async validateConnectionName({ connectionName, projectId }: { connectionName: string, projectId: ProjectId }): Promise<{
-        isValid: boolean
-        error: string | undefined
-    }> {
-        //test regex on connection name
-        if (!connectionName.match(connectionNameRegex)) {
-            return {
-                isValid: false,
-                error: 'Connection name is invalid',
-            }
-        }
-        const connection = await repo.findOneBy({ name: connectionName, projectId })
-        const isValid = isNil(connection)
-        return {
-            isValid,
-            error: isValid ? undefined : 'Connection name already exists',
-        }
-    },
     async upsert(params: UpsertParams): Promise<AppConnection> {
         await appConnectionsHooks
             .getHooks()
@@ -144,6 +126,7 @@ export const appConnectionService = {
         projectId,
         pieceName,
         cursorRequest,
+        name,
         limit,
     }: ListParams): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -163,6 +146,9 @@ export const appConnectionService = {
         }
         if (!isNil(pieceName)) {
             querySelector.pieceName = pieceName
+        }
+        if (!isNil(name)) {
+            querySelector.name = name
         }
         const queryBuilder = repo
             .createQueryBuilder('app_connection')
@@ -455,6 +441,7 @@ type ListParams = {
     projectId: ProjectId
     pieceName: string | undefined
     cursorRequest: Cursor | null
+    name: string | undefined
     limit: number
 }
 

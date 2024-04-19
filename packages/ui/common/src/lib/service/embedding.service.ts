@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map } from 'rxjs';
+import semVer from 'semver';
 export type EmbeddingState = {
   isEmbedded: boolean;
   hideSideNav: boolean;
@@ -39,13 +40,26 @@ export class EmbeddingService {
   getState$() {
     return this.embeddingStateSubject.asObservable();
   }
+
+  private determineSkipLocationChange(state: EmbeddingState) {
+    if (!state.sdkVersion) {
+      return state.isEmbedded;
+    }
+    if (semVer.gte(state.sdkVersion, '0.3.0')) {
+      return false;
+    }
+    throw new Error('SDK version is not supported');
+  }
+
   getSkipLocationChange$() {
     return this.getState$().pipe(
-      map((res) => !!res.sdkVersion && res.isEmbedded)
+      map((res) => this.determineSkipLocationChange(res))
     );
   }
+
   getSkipLocationChange() {
-    return !!this.getState().sdkVersion && this.getState().isEmbedded;
+    const state = this.getState();
+    return this.determineSkipLocationChange(state);
   }
 
   getIsInEmbedding$() {
