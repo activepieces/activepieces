@@ -7,6 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable, shareReplay } from 'rxjs';
 import { environment } from '../environments/environment';
+import { gt } from 'semver';
 
 type FlagsMap = Record<string, boolean | string | object | undefined>;
 
@@ -83,6 +84,17 @@ export class FlagService {
     return this.getAllFlags().pipe(
       map((flags) => {
         return flags['TELEMETRY_ENABLED'] as boolean;
+      })
+    );
+  }
+
+  isVersionMatch(): Observable<boolean> {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return gt(
+          flags[ApFlagId.LATEST_VERSION] as string,
+          flags[ApFlagId.CURRENT_VERSION] as string
+        );
       })
     );
   }

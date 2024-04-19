@@ -472,6 +472,9 @@
       "@activepieces/piece-store": [
         "packages/pieces/community/store/src/index.ts"
       ],
+      "@activepieces/piece-straico": [
+        "packages/pieces/community/straico/src/index.ts"
+      ],
       "@activepieces/piece-stripe": [
         "packages/pieces/community/stripe/src/index.ts"
       ],

@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { UiCommonModule } from '@activepieces/ui/common';
+import { CommonModule, DatePipe } from '@angular/common';
+import { ApDatePipe, UiCommonModule } from '@activepieces/ui/common';
 import { PlansPageComponent } from './plans-page/plans-page.component';
 import { UpgradeDialogComponent } from './upgrade-dialog/upgrade-dialog.component';
 import { LottieModule } from 'ngx-lottie';
@@ -21,6 +21,7 @@ export function playerFactory() {
     MatProgressSpinnerModule,
     LottieModule.forRoot({ player: playerFactory }),
     RouterModule,
+    ApDatePipe,
   ],
   declarations: [
     PlansPageComponent,
@@ -29,5 +30,6 @@ export function playerFactory() {
     PlanNamePipe,
   ],
   exports: [PlansPageComponent, TasksProgressComponent, UpgradeDialogComponent],
+  providers: [DatePipe],
 })
 export class EeBillingUiModule {}

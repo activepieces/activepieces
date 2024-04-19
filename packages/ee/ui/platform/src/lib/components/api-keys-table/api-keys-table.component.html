@@ -30,7 +30,7 @@
       <ng-container matColumnDef="created">
         <th mat-header-cell *matHeaderCellDef i18n>Created</th>
         <td mat-cell *matCellDef="let key">
-          {{ key.created | date : 'short' }}
+          {{ key.created | apDate : 'mdhm' }}
         </td>
       </ng-container>
 

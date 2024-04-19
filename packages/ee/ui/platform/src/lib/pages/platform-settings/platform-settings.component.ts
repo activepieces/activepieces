@@ -8,8 +8,9 @@ import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { Platform } from '@activepieces/shared';
-import { PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
+import { FlagService, PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
+
 @Component({
   selector: 'app-platform-settings',
   templateUrl: './platform-settings.component.html',
@@ -24,6 +25,8 @@ export class PlatformSettingsComponent implements AfterViewInit {
   readonly AuditLogTabTitle = $localize`Audit Log`;
   readonly customDomainTabTitle = $localize`Custom Domains`;
   readonly accountManagementEmailTabTitle = $localize`Mail Server`;
+  readonly newUpdateMessage = $localize`New update available`;
+
   readonly tabIndexFragmentMap = [
     { fragmentName: 'Updates', removeOnDemo: false },
     { fragmentName: 'SigningKeys', removeOnDemo: true },
@@ -35,7 +38,13 @@ export class PlatformSettingsComponent implements AfterViewInit {
   ];
   isDemo = false;
   platform?: Platform;
-  constructor(private router: Router, private route: ActivatedRoute) {
+  isVersionMatch$: Observable<boolean>;
+
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private flagService: FlagService
+  ) {
     this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     if (this.isDemo) {
       this.tabIndexFragmentMap = this.tabIndexFragmentMap.filter(
@@ -52,6 +61,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
         }
       })
     );
+    this.isVersionMatch$ = this.flagService.isVersionMatch();
   }
   ngAfterViewInit(): void {
     const fragment = this.route.snapshot.fragment;
