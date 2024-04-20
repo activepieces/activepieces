@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { FindOperator, ILike } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
 import { decryptObject, encryptObject } from '../../helper/encryption'
 import { engineHelper } from '../../helper/engine-helper'
@@ -127,8 +128,6 @@ export const appConnectionService = {
         pieceName,
         cursorRequest,
         limit,
-        createdAfter,
-        createdBefore,
     }: ListParams): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
@@ -142,29 +141,18 @@ export const appConnectionService = {
             },
         })
 
-        const querySelector: Record<string, string> = {
+        const querySelector: Record<string, string | FindOperator<string>> = {
             projectId,
         }
         if (!isNil(pieceName)) {
-            querySelector.pieceName = pieceName
+            querySelector.pieceName = ILike(`%${pieceName}%`)
         }
         if (!isNil(connectionName)) {
-            querySelector.name = connectionName
+            querySelector.name = ILike(`%${connectionName}%`)
         }
-        let queryBuilder = repo
+        const queryBuilder = repo
             .createQueryBuilder('app_connection')
             .where(querySelector)
-
-        if (!isNil(createdAfter)) {
-            queryBuilder = queryBuilder.andWhere('app_connection.created >= :createdAfter', {
-                createdAfter,
-            })
-        }
-        if (!isNil(createdBefore)) {
-            queryBuilder = queryBuilder.andWhere('app_connection.created <= :createdBefore', {
-                createdBefore,
-            })
-        }
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const promises: Promise<AppConnection>[] = []
 
@@ -453,8 +441,6 @@ type ListParams = {
     projectId: ProjectId
     pieceName: string | undefined
     connectionName: string | undefined
-    createdAfter: string | undefined
-    createdBefore: string | undefined
     cursorRequest: Cursor | null
     limit: number
 }
