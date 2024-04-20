@@ -19,8 +19,6 @@ import {
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
-  DATE_RANGE_START_QUERY_PARAM,
-  DATE_RANGE_END_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { Params } from '@angular/router';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
@@ -64,8 +62,7 @@ export class ConnectionsTableDataSource extends DataSource<any> {
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams[CURSOR_QUERY_PARAM],
           connectionName: res.queryParams['connectionName'],
-          createdAfter: res.queryParams[DATE_RANGE_START_QUERY_PARAM],
-          createdBefore: res.queryParams[DATE_RANGE_END_QUERY_PARAM],
+          pieceName: res.queryParams['pieceName'],
         });
       }),
       catchError((err) => {

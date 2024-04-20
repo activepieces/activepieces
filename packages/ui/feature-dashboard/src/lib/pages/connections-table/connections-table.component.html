@@ -4,22 +4,16 @@
       <ap-button actionButton (buttonClicked)="openNewConnectionDialog()" btnSize="medium" btnColor="primary" i18n>+ New
         Connection</ap-button>
     </ap-page-title>
-    <div class="ap-w-full ap-items-center ap-flex ap-mb-4 ap-gap-2">
-      <mat-form-field class="ap-w-full" appearance="outline">
+    <div class="ap-w-full ap-flex ap-flex-row ap-items-center ap-gap-2">
+      <mat-form-field class="ap-w-full ap-items-center" appearance="outline">
         <mat-label i18n>Search connection by name</mat-label>
         <input matInput type="text" class="ap-w-full ap-p-2 ap-rounded-lg ap-border-solid ap-border-dividers ap-border"
-          (change)="handleOnChange($event)" />
+          [formControl]="connectionNameFilterControl" />
       </mat-form-field>
-      <mat-form-field>
-        <mat-label i18n>Filter by date</mat-label>
-        <mat-date-range-input #picker (openedStream)="picker._updateFocus('mouse')" [formGroup]="dateFormGroup"
-          [rangePicker]="runsPicker" [comparisonStart]="dateFormGroup.controls.start.value"
-          [comparisonEnd]="dateFormGroup.controls.end.value">
-          <input matStartDate placeholder="Start date" [formControl]="dateFormGroup.controls.start" i18n-placeholder>
-          <input matEndDate placeholder="End date" [formControl]="dateFormGroup.controls.end" i18n-placeholder>
-        </mat-date-range-input>
-        <mat-datepicker-toggle matIconSuffix [for]="runsPicker"></mat-datepicker-toggle>
-        <mat-date-range-picker #runsPicker></mat-date-range-picker>
+      <mat-form-field class="ap-w-full ap-items-center" appearance="outline">
+        <mat-label i18n>Search connection by piece</mat-label>
+        <input matInput type="text" class="ap-w-full ap-p-2 ap-rounded-lg ap-border-solid ap-border-dividers ap-border"
+          [formControl]="pieceNameFilterControl" />
       </mat-form-field>
     </div>
     <div class="ap-min-h-[70%]">
@@ -90,6 +84,7 @@
 </div>
 <ng-container *ngIf="deleteConnectionDialogClosed$ | async"></ng-container>
 <ng-container *ngIf="newConnectionDialogClosed$ | async"></ng-container>
+<ng-container *ngIf="filtersChanged$ | async"></ng-container>
 <div class="ap-hidden">
   <app-add-edit-connection-button *ngIf="newConnectionPiece" #connectionButton btnSize="extraSmall"
     [isEditConnectionButton]="false" [authProperty]="newConnectionPiece.auth!" [pieceName]="newConnectionPiece.name"

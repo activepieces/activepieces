@@ -12,6 +12,7 @@ import {
   tap,
   Subject,
   startWith,
+  combineLatest,
   distinctUntilChanged,
 } from 'rxjs';
 import {
@@ -24,15 +25,15 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   ApPaginatorComponent,
-  DATE_RANGE_END_QUERY_PARAM,
-  DATE_RANGE_START_QUERY_PARAM,
+  CONNECTION_NAME_QUERY_PARAM,
+  PIECE_NAME_QUERY_PARAM,
   AppConnectionsService,
 } from '@activepieces/ui/common';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { NewConnectionDialogComponent } from '../../components/dialogs/new-connection-dialog/new-connection-dialog.component';
 import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 
 @Component({
   templateUrl: './connections-table.component.html',
@@ -53,10 +54,10 @@ export class ConnectionsTableComponent implements OnInit {
   deleteConnectionDialogClosed$?: Observable<void>;
   readonly AppConnectionStatus = AppConnectionStatus;
   filtersChanged$: Observable<void>;
-  dateFormGroup = new FormGroup({
-    start: new FormControl(),
-    end: new FormControl(),
-  });
+  connectionNameFilterControl: FormControl<string | null> = new FormControl(
+    null
+  );
+  pieceNameFilterControl: FormControl<string | null> = new FormControl(null);
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
@@ -64,36 +65,31 @@ export class ConnectionsTableComponent implements OnInit {
     private connectionService: AppConnectionsService,
     private dialogService: MatDialog
   ) {
-    const startDate = this.activatedRoute.snapshot.queryParamMap.get(
-      DATE_RANGE_START_QUERY_PARAM
+    this.connectionNameFilterControl.setValue(
+      this.activatedRoute.snapshot.queryParamMap.get(
+        CONNECTION_NAME_QUERY_PARAM
+      )
     );
-    const endDate = this.activatedRoute.snapshot.queryParamMap.get(
-      DATE_RANGE_END_QUERY_PARAM
+    this.pieceNameFilterControl.setValue(
+      this.activatedRoute.snapshot.queryParamMap.get(PIECE_NAME_QUERY_PARAM)
     );
-    this.dateFormGroup.setValue({
-      start: startDate ? new Date(startDate) : null,
-      end: endDate ? new Date(endDate) : null,
-    });
   }
 
   ngOnInit(): void {
-    this.filtersChanged$ = this.dateFormGroup.valueChanges.pipe(
-      startWith(this.dateFormGroup.value),
-      distinctUntilChanged(
-        (prev, curr) => prev.start === curr.start && prev.end === curr.end
+    this.filtersChanged$ = combineLatest({
+      connectionName: this.connectionNameFilterControl.valueChanges.pipe(
+        startWith(this.connectionNameFilterControl.value)
       ),
+      pieceName: this.pieceNameFilterControl.valueChanges.pipe(
+        startWith(this.pieceNameFilterControl.value)
+      ),
+    }).pipe(
+      distinctUntilChanged(),
       tap((result) => {
-        const createdAfter = result.start ? new Date(result.start) : undefined;
-        const createdBefore = result.end ? new Date(result.end) : undefined;
-        if (createdBefore) {
-          createdBefore.setHours(23, 59, 59, 999);
-        }
         this.router.navigate(['connections'], {
           queryParams: {
-            createdAfter: createdAfter ? createdAfter.toISOString() : undefined,
-            createdBefore: createdBefore
-              ? createdBefore.toISOString()
-              : undefined,
+            connectionName: result.connectionName,
+            pieceName: result.pieceName,
           },
           queryParamsHandling: 'merge',
         });
@@ -137,22 +133,5 @@ export class ConnectionsTableComponent implements OnInit {
           });
         })
       );
-  }
-
-  handleOnChange(e: Event) {
-    const event = e.target as HTMLInputElement;
-
-    this.dataSource = new ConnectionsTableDataSource(
-      this.activatedRoute.queryParams.pipe(
-        map((res) => ({
-          ...res,
-          connectionName: event.value,
-        }))
-      ),
-      this.paginator,
-      this.pieceMetadataService,
-      this.connectionService,
-      this.refreshTableForReruns$.asObservable().pipe(startWith(true))
-    );
   }
 }
