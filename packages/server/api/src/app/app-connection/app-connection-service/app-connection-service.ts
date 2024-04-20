@@ -123,9 +123,12 @@ export const appConnectionService = {
 
     async list({
         projectId,
+        connectionName,
         pieceName,
         cursorRequest,
         limit,
+        createdAfter,
+        createdBefore,
     }: ListParams): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
@@ -145,9 +148,23 @@ export const appConnectionService = {
         if (!isNil(pieceName)) {
             querySelector.pieceName = pieceName
         }
-        const queryBuilder = repo
+        if (!isNil(connectionName)) {
+            querySelector.name = connectionName
+        }
+        let queryBuilder = repo
             .createQueryBuilder('app_connection')
             .where(querySelector)
+
+        if (!isNil(createdAfter)) {
+            queryBuilder = queryBuilder.andWhere('app_connection.created >= :createdAfter', {
+                createdAfter,
+            })
+        }
+        if (!isNil(createdBefore)) {
+            queryBuilder = queryBuilder.andWhere('app_connection.created <= :createdBefore', {
+                createdBefore,
+            })
+        }
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const promises: Promise<AppConnection>[] = []
 
@@ -435,6 +452,9 @@ type DeleteParams = {
 type ListParams = {
     projectId: ProjectId
     pieceName: string | undefined
+    connectionName: string | undefined
+    createdAfter: string | undefined
+    createdBefore: string | undefined
     cursorRequest: Cursor | null
     limit: number
 }
