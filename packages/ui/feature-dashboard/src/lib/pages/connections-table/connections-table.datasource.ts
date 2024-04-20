@@ -19,6 +19,8 @@ import {
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
+  DATE_RANGE_START_QUERY_PARAM,
+  DATE_RANGE_END_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { Params } from '@angular/router';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
@@ -35,7 +37,8 @@ export class ConnectionsTableDataSource extends DataSource<any> {
     private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
     private pieceMetadataService: PieceMetadataService,
-    private connectionsService: AppConnectionsService
+    private connectionsService: AppConnectionsService,
+    private refreshForReruns$: Observable<boolean>
   ) {
     super();
   }
@@ -48,7 +51,10 @@ export class ConnectionsTableDataSource extends DataSource<any> {
   connect(): Observable<any[]> {
     return combineLatest({
       queryParams: this.queryParams$,
-      refresh: merge(this.connectionsService.refreshCacheSubject),
+      refresh: merge(
+        this.connectionsService.refreshCacheSubject,
+        this.refreshForReruns$
+      ),
     }).pipe(
       tap(() => {
         this.isLoading$.next(true);
@@ -57,6 +63,9 @@ export class ConnectionsTableDataSource extends DataSource<any> {
         return this.connectionsService.list({
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams[CURSOR_QUERY_PARAM],
+          connectionName: res.queryParams['connectionName'],
+          createdAfter: res.queryParams[DATE_RANGE_START_QUERY_PARAM],
+          createdBefore: res.queryParams[DATE_RANGE_END_QUERY_PARAM],
         });
       }),
       catchError((err) => {
