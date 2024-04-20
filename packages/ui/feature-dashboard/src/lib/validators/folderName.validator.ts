@@ -13,7 +13,8 @@ export class FolderValidator {
         map((folder) => {
           const folderNameUsed = !!folder.find(
             (f) =>
-              f.displayName.trim() === currentName.trim() && folderId !== f.id
+              f.displayName.trim().toLowerCase() ===
+                currentName.trim().toLowerCase() && folderId !== f.id
           );
           if (folderNameUsed) {
             return { nameUsed: true };
