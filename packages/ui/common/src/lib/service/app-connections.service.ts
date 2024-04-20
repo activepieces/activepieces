@@ -16,12 +16,7 @@ import {
   ListAppConnectionsRequestQuery,
   AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
-import {
-  CURSOR_QUERY_PARAM,
-  DATE_RANGE_END_QUERY_PARAM,
-  DATE_RANGE_START_QUERY_PARAM,
-  LIMIT_QUERY_PARAM,
-} from '../utils/tables.utils';
+import { CURSOR_QUERY_PARAM, LIMIT_QUERY_PARAM } from '../utils/tables.utils';
 import { environment } from '../environments/environment';
 import { AuthenticationService } from './authentication.service';
 import { ProjectService } from './project.service';
@@ -94,11 +89,8 @@ export class AppConnectionsService {
     if (params.connectionName) {
       queryParams['connectionName'] = params.connectionName;
     }
-    if (params.createdBefore) {
-      queryParams[DATE_RANGE_END_QUERY_PARAM] = params.createdBefore;
-    }
-    if (params.createdAfter) {
-      queryParams[DATE_RANGE_START_QUERY_PARAM] = params.createdAfter;
+    if (params.pieceName) {
+      queryParams['pieceName'] = params.pieceName;
     }
     queryParams['projectId'] = this.authenticationService.getProjectId()!;
     return this.http.get<SeekPage<AppConnectionWithoutSensitiveData>>(
