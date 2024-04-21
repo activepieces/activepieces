@@ -4,10 +4,8 @@ import { FormControl } from '@angular/forms';
 @Component({
   selector: 'app-array-form-control-text-item',
   template: `
-    <div class="ap-flex ap-gap-1 ap-justify-between ap-items-start">
-      <button mat-icon-button>
-        <mat-icon class="ap-mb-1">drag_indicator</mat-icon>
-      </button>
+    <div class="ap-flex ap-gap-1 ap-justify-between ap-items-center">
+      <mat-icon matTooltip="Drag to move">drag_indicator</mat-icon>
       <div class="ap-flex-grow" #interpolatingTextControlContainer>
         <mat-form-field
           apTrackHover
@@ -33,16 +31,18 @@ import { FormControl } from '@angular/forms';
           </app-builder-autocomplete-dropdown-handler>
         </mat-form-field>
       </div>
-      <ap-button
-        btnColor="basic"
-        btnStyle="basic"
-        (buttonClicked)="removeValue.emit(idx)"
-        type="button"
-        [matTooltip]="removeItemTooltip"
-        btnSize="large"
+      <div
+        class="ap-flex ap-items-center ap-pl-2"
+        (click)="removeValue.emit(idx)"
       >
-        X
-      </ap-button>
+        <svg-icon
+          src="assets/img/custom/close.svg"
+          class="ap-w-[15px] ap-h-[15px] ap-cursor-pointer"
+          [applyClass]="true"
+          [matTooltip]="removeItemTooltip"
+        >
+        </svg-icon>
+      </div>
     </div>
   `,
 })
