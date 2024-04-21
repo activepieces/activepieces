@@ -28,7 +28,7 @@ You can use the embedded SDK to create connections.
 
         **Connect Result**
 
-        The `connect` method returns a `promise` that resolves to the following object:
+        The `connect` method returns a `promise` that resolves to the following:
 
         ```ts
         {
@@ -38,10 +38,17 @@ You can use the embedded SDK to create connections.
             }
         }
         ```
-
         <Info>
         `connection` is undefined if the user closes the dialog and doesn't create a connection.
         </Info>
+
+        Or if the `connectionName` parameter is defined, it could get rejected with an error message telling you why `connectionName` is invalid:
+        ```ts
+        {
+            error:string
+        }
+        ```
+        
 
         <Info>
           If `connectionName` is defined, the connection name input will be disabled and if the connection name is invalid the returned result from the connect method will be an error message describing why it is invalid.
