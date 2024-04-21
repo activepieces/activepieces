@@ -23,7 +23,7 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { map, Observable, of, shareReplay, switchMap, take, tap } from 'rxjs';
 import { AppConnectionsService, FlagService } from '@activepieces/ui/common';
-import { CloudAuthConfigsService } from '../services/cloud-auth-configs.service';
+import { CloudAuthConfigsService } from '../../services/cloud-auth-configs.service';
 import {
   CustomAuthConnectionDialogComponent,
   CustomAuthDialogData,

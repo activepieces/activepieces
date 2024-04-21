@@ -28,8 +28,7 @@ import {
   AuthenticationService,
   DiagnosticDialogComponent,
 } from '@activepieces/ui/common';
-import { ConnectionValidator } from '../../validators/connectionNameValidator';
-import { connectionNameRegex } from '../utils';
+import { createConnectionNameControl } from '../utils';
 
 export interface CustomAuthDialogData {
   pieceAuthProperty: CustomAuthProperty<CustomAuthProps>;
@@ -74,30 +73,13 @@ export class CustomAuthConnectionDialogComponent {
     );
 
     this.settingsForm = this.fb.group({
-      name: new FormControl(
-        this.dialogData.connectionToUpdate?.name ||
-          appConnectionsService.getConnectionNameSuggest(
-            this.dialogData.pieceName
-          ),
-        {
-          nonNullable: true,
-          validators: [
-            Validators.required,
-            Validators.pattern(connectionNameRegex),
-          ],
-          asyncValidators: [
-            ConnectionValidator.createValidator(
-              this.appConnectionsService.getAllOnce(),
-              undefined
-            ),
-          ],
-        }
-      ),
+      name: createConnectionNameControl({
+        appConnectionsService: this.appConnectionsService,
+        pieceName: this.dialogData.pieceName,
+        existingConnectionName: this.dialogData.connectionToUpdate?.name,
+      }),
       ...props,
     });
-    if (this.dialogData.connectionToUpdate) {
-      this.settingsForm.get('name')?.disable();
-    }
   }
   dropdownCompareWithFunction = (opt: any, formControlValue: any) => {
     return formControlValue && deepEqual(opt, formControlValue);

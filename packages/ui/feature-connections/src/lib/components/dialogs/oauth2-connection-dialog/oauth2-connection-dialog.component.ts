@@ -30,11 +30,10 @@ import {
 import {
   OAuth2PopupParams,
   OAuth2PopupResponse,
-} from '../../models/oauth2-popup-params.interface';
-import { CloudAuthConfigsService } from '../../services/cloud-auth-configs.service';
+} from '../../../models/oauth2-popup-params.interface';
+import { CloudAuthConfigsService } from '../../../services/cloud-auth-configs.service';
 import { AppConnectionsService } from '@activepieces/ui/common';
-import { ConnectionValidator } from '../../validators/connectionNameValidator';
-import { connectionNameRegex } from '../utils';
+import { createConnectionNameControl } from '../utils';
 
 interface OAuth2PropertySettings {
   redirect_url: FormControl<string>;
@@ -73,8 +72,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     'Copy this URL and paste it under Redirect URL in your app on the 3rd party service. Activepieces predefines this because we manage the authentication flow.';
   scopesTooltip =
     'The permissions needed to access the endpoints you plan to work with on the 3rd party service.';
-  keyTooltip =
-    'The ID of this authentication definition. You will need to select this key whenever you want to reuse this authentication.';
   hasCloudAuthCred$: Observable<boolean>;
   upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
   constructor(
@@ -110,24 +107,11 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      name: new FormControl(
-        this.appConnectionsService.getConnectionNameSuggest(
-          this.dialogData.pieceName
-        ),
-        {
-          nonNullable: true,
-          validators: [
-            Validators.required,
-            Validators.pattern(connectionNameRegex),
-          ],
-          asyncValidators: [
-            ConnectionValidator.createValidator(
-              this.appConnectionsService.getAllOnce(),
-              undefined
-            ),
-          ],
-        }
-      ),
+      name: createConnectionNameControl({
+        appConnectionsService: this.appConnectionsService,
+        pieceName: this.dialogData.pieceName,
+        existingConnectionName: this.dialogData.connectionToUpdate?.name,
+      }),
       value: new FormControl<OAuth2PopupResponse | null>(null, {
         validators: Validators.required,
       }),
@@ -143,12 +127,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     ) {
       this.settingsForm.controls.redirect_url.disable();
       this.settingsForm.controls.value.disable();
-    }
-    if (this.dialogData.connectionToUpdate) {
-      this.settingsForm.controls.name.setValue(
-        this.dialogData.connectionToUpdate.name
-      );
-      this.settingsForm.controls.name.disable();
     }
   }
   submit() {

@@ -24,25 +24,29 @@ These steps assume you have already generated a JWT token from the backend. If n
 <script src="https://cdn.activepieces.com/sdk/embed/0.2.4.js">
 </script>
 <script>
-activepieces.configure(
- {
-    prefix: "/",
-    instanceUrl:"http://your-instance-url.com",
-    jwtToken:"GENERATED_JWT_TOKEN",
-    embedding: {
-      containerId: "container",
-      builder:{
-        disableNavigation:false,
-        hideLogo: false,
-        hideFlowName: false
-      },
-      dashboard: {
-        hideSidebar:true
-      },
-      hideFolders:true
-    },   
- }
-)
+activepieces.configure({
+  prefix: "/",
+  instanceUrl: 'INSTANCE_URL',
+  jwtToken: "GENERATED_JWT_TOKEN",
+  embedding: {
+    containerId: "container",
+    builder: {
+      disableNavigation: false,
+      hideLogo: false,
+      hideFlowName: false
+    },
+    dashboard: {
+      hideSidebar: false
+    },
+    hideFolders: false,
+    navigation: {
+      handler: ({ route }) => {
+          // The iframe route has changed, make sure you check the navigation section.
+        }
+    }
+  },
+});
+
 </script>
 ```
 <Tip>
@@ -50,7 +54,9 @@ activepieces.configure(
 
  </Tip>
 
-
+<Tip>
+Please check the [navigation](./navigation.mdx) section, as it's very important to understand how navigation works and how to supply an auto-sync experience.
+</Tip>
 
 **Configure Parameters:**
 
