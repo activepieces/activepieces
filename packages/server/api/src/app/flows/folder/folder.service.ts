@@ -13,7 +13,8 @@ import {
     Folder,
     FolderDto,
     FolderId,
-    isNil, ProjectId } from '@activepieces/shared'
+    isNil, ProjectId,
+} from '@activepieces/shared'
 
 export const folderRepo = databaseConnection.getRepository(FolderEntity)
 
@@ -24,9 +25,10 @@ export const flowFolderService = {
     }: {
         projectId: ProjectId
         folderId: FolderId
-    }) {
+    }): Promise<void> {
+        const folder = await this.getOneOrThrow({ projectId, folderId })
         await folderRepo.delete({
-            id: folderId,
+            id: folder.id,
             projectId,
         })
     },
@@ -38,12 +40,9 @@ export const flowFolderService = {
         projectId: ProjectId
         folderId: FolderId
         request: CreateOrRenameFolderRequest
-    }): Promise<Folder> {
-        const folder = await folderRepo.findOneBy({
-            projectId,
-            id: folderId,
-        })
-        const folderWithDisplayName = await folderRepo.findOneBy({
+    }): Promise<FolderDto> {
+        const folder = await this.getOneOrThrow({ projectId, folderId })
+        const folderWithDisplayName = await this.getOneByDisplayNameCaseInsensitive({
             projectId,
             displayName: request.displayName,
         })
@@ -53,20 +52,15 @@ export const flowFolderService = {
                 params: { message: 'Folder displayName is used' },
             })
         }
-        if (isNil(folder)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    message: `Folder ${folderId} is not found`,
-                },
-            })
-        }
         const updatedFolder: Folder = {
             ...folder,
             displayName: request.displayName,
         }
         await folderRepo.update(folderId, updatedFolder)
-        return updatedFolder
+        return {
+            ...updatedFolder,
+            numberOfFlows: await flowService.count({ projectId, folderId }),
+        }
     },
     async upsert({
         projectId,
@@ -75,16 +69,23 @@ export const flowFolderService = {
         projectId: ProjectId
         request: CreateOrRenameFolderRequest
     }): Promise<FolderDto> {
-        const folderWithDisplayName = await folderRepo.findOneBy({
+        const folderWithDisplayName = await this.getOneByDisplayNameCaseInsensitive({
             projectId,
             displayName: request.displayName,
         })
-        const folderId = isNil(folderWithDisplayName) ? apId() : folderWithDisplayName.id
+        if (!isNil(folderWithDisplayName)) {
+            return this.update({
+                projectId,
+                folderId: folderWithDisplayName.id,
+                request,
+            })
+        }
+        const folderId = apId()
         await folderRepo.upsert({
             id: folderId,
             projectId,
             displayName: request.displayName,
-        }, ['displayName'])
+        }, ['projectId', 'displayName'])
         const folder = await folderRepo.findOneByOrFail({ projectId, id: folderId })
         return {
             ...folder,
@@ -127,6 +128,18 @@ export const flowFolderService = {
             dtosList,
             paginationResponse.cursor,
         )
+    },
+    async getOneByDisplayNameCaseInsensitive({
+        projectId,
+        displayName,
+    }: {
+        projectId: ProjectId
+        displayName: string
+    }): Promise<Folder | null> {
+        return folderRepo.createQueryBuilder('folder')
+            .where('folder.projectId = :projectId', { projectId })
+            .andWhere('LOWER(folder.displayName) = LOWER(:displayName)', { displayName })
+            .getOne()
     },
     async getOneOrThrow({
         projectId,

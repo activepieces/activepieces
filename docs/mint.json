@@ -202,7 +202,7 @@
       "group": "Build a Piece",
       "pages": [
         "developers/building-pieces/start-building",
-        "developers/setup-fork",
+        "developers/building-pieces/setup-fork",
         {
           "group": "Development Environment",
           "icon": "circle-2",
@@ -254,9 +254,10 @@
       ]
     },
     {
-      "group": "Architecture",
+      "group": "Misc",
       "pages": [
-        "developers/architecture/repo-structure"
+        "developers/misc/repo-structure",
+        "developers/misc/private-fork"
       ]
     },
     {

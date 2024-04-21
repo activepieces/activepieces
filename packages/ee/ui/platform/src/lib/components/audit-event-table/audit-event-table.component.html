@@ -65,7 +65,7 @@
       <ng-container matColumnDef="created">
         <th mat-header-cell *matHeaderCellDef i18n>Created</th>
         <td mat-cell *matCellDef="let auditEvent">
-          {{ auditEvent.created | date : 'short' }}
+          {{ auditEvent.created | apDate : 'mdhms' }}
         </td>
       </ng-container>
 

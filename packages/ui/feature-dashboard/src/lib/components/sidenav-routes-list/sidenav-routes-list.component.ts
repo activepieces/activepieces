@@ -21,6 +21,7 @@ type SideNavRoute = {
   effect?: () => void;
   showInSideNav$: Observable<boolean>;
   showLock$?: Observable<boolean>;
+  showNotification$?: Observable<boolean>;
 };
 
 @Component({
@@ -40,6 +41,7 @@ export class SidenavRoutesListComponent implements OnInit {
   demoPlatform$: Observable<boolean> = this.flagService.isFlagEnabled(
     ApFlagId.SHOW_PLATFORM_DEMO
   );
+  isVersionMatch$?: Observable<boolean>;
 
   readonly supportRoute: SideNavRoute = {
     caption: 'Support',
@@ -61,51 +63,7 @@ export class SidenavRoutesListComponent implements OnInit {
       this.openDocs();
     },
   };
-  platformDashboardRoutes: SideNavRoute[] = [
-    {
-      icon: 'assets/img/custom/dashboard/projects.svg',
-      caption: $localize`Projects`,
-      route: 'platform/projects',
-      showInSideNav$: of(true),
-      showLock$: this.demoPlatform$,
-    },
-    {
-      icon: 'assets/img/custom/dashboard/appearance.svg',
-      caption: $localize`Appearance`,
-      route: 'platform/appearance',
-      showInSideNav$: of(true),
-      showLock$: this.demoPlatform$,
-    },
-    {
-      icon: 'assets/img/custom/dashboard/pieces.svg',
-      caption: $localize`Pieces`,
-      route: 'platform/pieces',
-      showInSideNav$: of(true),
-      showLock$: this.demoPlatform$,
-    },
-    {
-      icon: 'assets/img/custom/dashboard/templates.svg',
-      caption: $localize`Templates`,
-      route: 'platform/templates',
-      showInSideNav$: of(true),
-      showLock$: this.demoPlatform$,
-    },
-    {
-      icon: 'assets/img/custom/dashboard/users.svg',
-      caption: $localize`Users`,
-      route: 'platform/users',
-      showInSideNav$: of(true),
-      showLock$: of(false),
-    },
-
-    {
-      icon: 'assets/img/custom/dashboard/settings.svg',
-      caption: $localize`Settings`,
-      route: 'platform/settings',
-      showInSideNav$: of(true),
-      showLock$: of(false),
-    },
-  ];
+  platformDashboardRoutes: SideNavRoute[] = [];
   constructor(
     public router: Router,
     private store: Store,
@@ -119,6 +77,53 @@ export class SidenavRoutesListComponent implements OnInit {
     this.logoUrl$ = this.flagServices
       .getLogos()
       .pipe(map((logos) => logos.logoIconUrl));
+    this.isVersionMatch$ = this.flagService.isVersionMatch();
+
+    this.platformDashboardRoutes = [
+      {
+        icon: 'assets/img/custom/dashboard/projects.svg',
+        caption: $localize`Projects`,
+        route: 'platform/projects',
+        showInSideNav$: of(true),
+        showLock$: this.demoPlatform$,
+      },
+      {
+        icon: 'assets/img/custom/dashboard/appearance.svg',
+        caption: $localize`Appearance`,
+        route: 'platform/appearance',
+        showInSideNav$: of(true),
+        showLock$: this.demoPlatform$,
+      },
+      {
+        icon: 'assets/img/custom/dashboard/pieces.svg',
+        caption: $localize`Pieces`,
+        route: 'platform/pieces',
+        showInSideNav$: of(true),
+        showLock$: this.demoPlatform$,
+      },
+      {
+        icon: 'assets/img/custom/dashboard/templates.svg',
+        caption: $localize`Templates`,
+        route: 'platform/templates',
+        showInSideNav$: of(true),
+        showLock$: this.demoPlatform$,
+      },
+      {
+        icon: 'assets/img/custom/dashboard/users.svg',
+        caption: $localize`Users`,
+        route: 'platform/users',
+        showInSideNav$: of(true),
+        showLock$: of(false),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/settings.svg',
+        caption: $localize`Settings`,
+        route: 'platform/settings',
+        showInSideNav$: of(true),
+        showLock$: of(false),
+        showNotification$: this.isVersionMatch$,
+      },
+    ];
     this.mainDashboardRoutes = [
       {
         icon: 'assets/img/custom/dashboard/flows.svg',

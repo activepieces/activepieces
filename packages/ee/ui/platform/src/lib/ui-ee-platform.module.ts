@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { uiEePlatformRoutes } from './lib.routes';
-import { UiCommonModule } from '@activepieces/ui/common';
+import { ApDatePipe, UiCommonModule } from '@activepieces/ui/common';
 import { PlatformDashboardContainerComponent } from './pages/platform-dashboard-container/platform-dashboard-container.component';
 import { ProjectsTableComponent } from './pages/projects-table/projects-table.component';
 import { CreateProjectDialogComponent } from './pages/projects-table/create-project-dialog/create-project-dialog.component';
@@ -40,6 +40,7 @@ import { DomainTxtValidationDialogComponent } from './components/dialogs/domain-
     UiFeaturePiecesModule,
     ApplyTagsComponent,
     UpdatesComponent,
+    ApDatePipe,
   ],
   declarations: [
     PlatformDashboardContainerComponent,
@@ -68,5 +69,6 @@ import { DomainTxtValidationDialogComponent } from './components/dialogs/domain-
     EnableFederatedAuthnProviderDialogComponent,
     ConfigureAllowingEmailLoginsCardComponent,
   ],
+  providers: [DatePipe],
 })
 export class UiEePlatformModule {}

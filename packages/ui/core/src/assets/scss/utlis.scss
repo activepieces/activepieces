@@ -212,3 +212,18 @@ ap-markdown {
   }
   fill: $description;
 }
+
+markdown {
+  div[style="position: relative;"]{
+    background: white !important;
+    border: 1px solid var(--primary-light) !important;
+    border-radius:4px; 
+  }
+}
+pre.language-text{
+    
+    width:calc(100% - 50px) !important;
+    outline:transparent !important;
+   
+    
+}
