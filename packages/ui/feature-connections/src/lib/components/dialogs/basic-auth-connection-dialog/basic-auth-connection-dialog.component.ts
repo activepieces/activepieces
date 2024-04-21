@@ -17,14 +17,13 @@ import {
   MatDialog,
 } from '@angular/material/dialog';
 import { catchError, Observable, of, tap } from 'rxjs';
-import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import { BasicAuthProperty } from '@activepieces/pieces-framework';
 import {
   AppConnectionsService,
   AuthenticationService,
   DiagnosticDialogComponent,
 } from '@activepieces/ui/common';
-import { connectionNameRegex } from '../utils';
+import { createConnectionNameControl } from '../utils';
 
 interface BasicAuthForm {
   name: FormControl<string>;
@@ -47,8 +46,6 @@ export class BasicAuthConnectionDialogComponent {
   loading = false;
   upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
   settingsForm: FormGroup<BasicAuthForm>;
-  keyTooltip =
-    'The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.';
   constructor(
     private formBuilder: FormBuilder,
     private authenticationService: AuthenticationService,
@@ -67,28 +64,12 @@ export class BasicAuthConnectionDialogComponent {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      name: new FormControl(
-        appConnectionsService.getConnectionNameSuggest(
-          this.dialogData.pieceName
-        ),
-        {
-          nonNullable: true,
-          validators: [
-            Validators.required,
-            Validators.pattern(connectionNameRegex),
-          ],
-          asyncValidators: [
-            ConnectionValidator.createValidator(
-              this.appConnectionsService.getAllOnce(),
-              undefined
-            ),
-          ],
-        }
-      ),
+      name: createConnectionNameControl({
+        appConnectionsService: this.appConnectionsService,
+        pieceName: this.dialogData.pieceName,
+        existingConnectionName: this.dialogData.connectionToUpdate?.name,
+      }),
     });
-    if (this.dialogData.connectionToUpdate) {
-      this.settingsForm.controls.name.disable();
-    }
   }
   submit() {
     this.settingsForm.markAllAsTouched();

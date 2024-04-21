@@ -16,6 +16,8 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpsertAppConnectionRequestBody,
+    ValidateConnectionNameRequestBody,
+    ValidateConnectionNameResponse,
 } from '@activepieces/shared'
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (
@@ -47,6 +49,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
             const appConnections = await appConnectionService.list({
                 projectId: request.principal.projectId,
                 pieceName,
+                name: request.query.name,
                 cursorRequest: cursor ?? null,
                 limit: limit ?? DEFAULT_PAGE_SIZE,
             })
@@ -60,6 +63,19 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
             return appConnectionsWithoutSensitiveData
         },
     )
+    app.post(
+        '/validate-connection-name',
+        ValidateConnectionNameRequest,
+        async (request, reply): Promise<ValidateConnectionNameResponse>=>{
+            const result = await  appConnectionService.validateConnectionName({
+                projectId: request.principal.projectId,
+                connectionName: request.body.connectionName,
+            })
+            if (result.error) {
+                return reply.status(StatusCodes.BAD_REQUEST).send(result)
+            }
+            return result
+        }),
 
     app.delete(
         '/:id',
@@ -122,6 +138,23 @@ const ListAppConnectionsRequest = {
         description: 'List app connections',
         response: {
             [StatusCodes.OK]: SeekPage(AppConnectionWithoutSensitiveData),
+        },
+    },
+}
+
+const ValidateConnectionNameRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_APP_CONNECTION,
+    },
+    schema: {
+        tags: ['app-connections'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        body: ValidateConnectionNameRequestBody,
+        description: 'Validate app connection name',
+        response: {
+            [StatusCodes.OK]: ValidateConnectionNameResponse,
+            [StatusCodes.BAD_REQUEST]: ValidateConnectionNameResponse,
         },
     },
 }

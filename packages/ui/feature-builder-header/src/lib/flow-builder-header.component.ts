@@ -97,11 +97,17 @@ export class FlowBuilderHeaderComponent implements OnInit {
   changeEditValue(event: boolean) {
     this.editingFlowName = event;
   }
-  redirectHome(newWindow: boolean) {
+  redirectHome(openInNewWindow: boolean) {
     if (this.router.url.includes('/runs')) {
-      this.navigationService.navigate('/runs', newWindow);
+      this.navigationService.navigate({
+        route: ['/runs'],
+        openInNewWindow,
+      });
     } else {
-      this.navigationService.navigate('/flows', newWindow);
+      this.navigationService.navigate({
+        route: ['/flows'],
+        openInNewWindow,
+      });
     }
   }
   saveFlowName(flowName: string) {
@@ -147,7 +153,9 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.deleteFlowDialogClosed$ = dialogRef.beforeClosed().pipe(
       tap((res) => {
         if (res) {
-          this.router.navigate(['/']);
+          this.navigationService.navigate({
+            route: ['/flows'],
+          });
         }
       }),
       map(() => {
@@ -168,9 +176,12 @@ export class FlowBuilderHeaderComponent implements OnInit {
       .select(FoldersSelectors.selectCurrentFolderId)
       .pipe(
         tap((folderId) => {
-          this.router.navigate(['/flows'], {
-            queryParams: {
-              folderId: folderId ? folderId : 'NULL',
+          this.navigationService.navigate({
+            route: ['/flows'],
+            extras: {
+              queryParams: {
+                folderId: folderId ? folderId : 'NULL',
+              },
             },
           });
         })

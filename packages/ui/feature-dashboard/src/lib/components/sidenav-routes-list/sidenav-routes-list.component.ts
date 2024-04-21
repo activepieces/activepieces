@@ -36,6 +36,8 @@ export class SidenavRoutesListComponent implements OnInit {
   logoUrl$: Observable<string>;
   sideNavRoutes$: Observable<SideNavRoute[]>;
   mainDashboardRoutes: SideNavRoute[] = [];
+  skipLocationChange$: Observable<boolean> =
+    this.embeddingService.getSkipLocationChange$();
   demoPlatform$: Observable<boolean> = this.flagService.isFlagEnabled(
     ApFlagId.SHOW_PLATFORM_DEMO
   );
@@ -198,8 +200,11 @@ export class SidenavRoutesListComponent implements OnInit {
   openDocs() {
     window.open('https://activepieces.com/docs', '_blank', 'noopener');
   }
-  redirectHome(newWindow: boolean) {
-    this.navigationService.navigate('/flows', newWindow);
+  redirectHome(openInNewWindow: boolean) {
+    this.navigationService.navigate({
+      route: ['/flows'],
+      openInNewWindow,
+    });
   }
 
   public isActive(route: string) {

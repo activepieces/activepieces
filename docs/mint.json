@@ -266,9 +266,10 @@
         "embedding/overview",
         "embedding/provision-users",
         "embedding/embed-builder",
+        "embedding/navigation",
         "embedding/customize-pieces",
-        "embedding/embed-connections"
-
+        "embedding/embed-connections",
+        "embedding/sdk-changelog"
       ]
     },
     {

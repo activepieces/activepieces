@@ -5,8 +5,8 @@ import { fadeInUp400ms } from '@activepieces/ui/common';
 import {
   OAuth2PopupParams,
   OAuth2PopupResponse,
-} from '../../models/oauth2-popup-params.interface';
-import { Oauth2Service } from '../../services/oauth2.service';
+} from '../../../models/oauth2-popup-params.interface';
+import { Oauth2Service } from '../../../services/oauth2.service';
 
 @Component({
   selector: 'app-o-auth2-connect-control',

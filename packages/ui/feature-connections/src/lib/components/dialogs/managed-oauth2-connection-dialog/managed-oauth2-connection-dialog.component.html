@@ -11,22 +11,7 @@
 
   <form class="ap-flex ap-flex-col ap-gap-2 ap-min-w-[430px]" [formGroup]="settingsForm" (keyup.enter)="submit()"
     (submit)="submit()">
-    <mat-form-field class="ap-w-full" appearance="outline">
-      <mat-label i18n>Name</mat-label>
-      <input placeholder="Name" cdkFocusInitial [matTooltip]="keyTooltip" formControlName="name" matInput type="text" />
-      <mat-error *ngIf="settingsForm.controls.name.invalid">
-        <ng-container *ngIf="settingsForm.controls.name.getError('required'); else patternErrorOrAlreadyUsed" i18n>
-          Name is required
-        </ng-container>
-        <ng-template #patternErrorOrAlreadyUsed>
-          <ng-container *ngIf="settingsForm.controls.name.getError('pattern')" i18n>
-            Name can only contain letters, numbers and underscores
-          </ng-container>
-          <ng-container *ngIf="settingsForm.controls.name.getError('nameUsed');" i18n>
-            Name is already used
-          </ng-container>
-        </ng-template></mat-error>
-    </mat-form-field>
+    <app-connection-name-control [control]="settingsForm.controls.name"></app-connection-name-control>
     <div *ngIf="dialogData.pieceAuthProperty.props" [formGroup]="settingsForm.controls.props">
       <ng-container *ngFor="let prop of dialogData.pieceAuthProperty.props |objectToArray">
         <mat-form-field *ngIf="prop.value['type'] !== PropertyType.STATIC_DROPDOWN" class="ap-w-full"

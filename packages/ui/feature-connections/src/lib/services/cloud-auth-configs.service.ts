@@ -6,7 +6,7 @@ import { ApEdition, ApFlagId, AppConnectionType } from '@activepieces/shared';
 import {
   PieceOAuth2DetailsMap,
   handleErrorForGettingPiecesOAuth2Details,
-} from '../add-edit-connection-button/utils';
+} from '../components/add-edit-connection-button/utils';
 
 @Injectable({
   providedIn: 'root',

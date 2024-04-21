@@ -8,11 +8,12 @@ import {
   FolderActions,
   FoldersSelectors,
 } from '@activepieces/ui/feature-folders-store';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   FoldersService,
+  NavigationService,
 } from '@activepieces/ui/common';
 import { NewFolderDialogComponent } from '../../../components/dialogs/new-folder-dialog/new-folder-dialog.component';
 import {
@@ -40,7 +41,7 @@ export class FoldersListComponent {
   constructor(
     private dialogService: MatDialog,
     private store: Store,
-    private router: Router,
+    private navigationService: NavigationService,
     private route: ActivatedRoute,
     private folderService: FoldersService
   ) {
@@ -89,10 +90,13 @@ export class FoldersListComponent {
   }
 
   clearCursorParam(folderId?: string) {
-    this.router.navigate(['.'], {
-      relativeTo: this.route,
-      queryParams: { cursor: undefined, folderId: folderId },
-      queryParamsHandling: 'merge',
+    this.navigationService.navigate({
+      route: ['.'],
+      extras: {
+        relativeTo: this.route,
+        queryParams: { cursor: undefined, folderId: folderId },
+        queryParamsHandling: 'merge',
+      },
     });
   }
   deleteFolder(folder: FolderDto) {

@@ -13,9 +13,10 @@
 
   <div class="ap-flex ap-items-center">
     <div class="ap-flex ap-items-center ap-gap-2">
-      <ap-icon-button *ngIf="showNavigation$ | async" [width]="20" [height]="20"
-        iconUrl="assets/img/custom/dashboard/home.svg" tooltipText="Home" i18n-tooltipText
-        (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
+      @if(showNavigation$ | async){
+      <ap-icon-button [width]="20" [height]="20" iconUrl="assets/img/custom/dashboard/home.svg" tooltipText="Home"
+        i18n-tooltipText (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
+      }
       @if ((hideFlowName$ | async) === false) {
       <div class="ap-flex-grow ap-flex ap-items-center ap-gap-2" #spacer>
         <ng-container *ngIf="(showNavigation$ | async) && (hideFolders$ | async) === false">

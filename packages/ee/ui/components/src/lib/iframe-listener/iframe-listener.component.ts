@@ -1,9 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  ActivepiecesClientEventName,
   ActivepiecesVendorEventName,
-  ActivepiecesClientRouteChanged,
   ActivepiecesVendorRouteChanged,
 } from 'ee-embed-sdk';
 import { EmbeddingService } from '@activepieces/ui/common';
@@ -42,9 +40,6 @@ export class IframeListenerComponent {
       const [path, queryString] = targetRoute.split('?');
       const urlSearchParams = new URLSearchParams(queryString);
       const queryParams: Record<string, unknown> = {};
-      const routeToNavigateTo =
-        queryString || path.endsWith('/') ? targetRoute : `${targetRoute}/`;
-
       urlSearchParams.forEach((value, key) => {
         queryParams[key] = value;
       });
@@ -52,14 +47,6 @@ export class IframeListenerComponent {
         queryParams,
         skipLocationChange: true,
       });
-
-      const clientRouteChangedEvent: ActivepiecesClientRouteChanged = {
-        data: {
-          route: routeToNavigateTo,
-        },
-        type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
-      };
-      window.parent.postMessage(clientRouteChangedEvent, '*');
     }
   };
 }
