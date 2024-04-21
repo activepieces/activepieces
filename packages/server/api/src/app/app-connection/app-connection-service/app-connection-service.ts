@@ -33,17 +33,17 @@ import { ActivepiecesError,
     ProjectId,
     SeekPage,
     UpsertAppConnectionRequestBody,
+    ValidateConnectionNameRequestBody,
+    ValidateConnectionNameResponse,
 } from '@activepieces/shared'
 
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
 export const appConnectionService = {
-    async validateConnectionName({ connectionName, projectId }: { connectionName: string, projectId: ProjectId }): Promise<{
-        isValid: boolean
-        error: string | undefined
-    }> {
+    async validateConnectionName({ connectionName, projectId }: ValidateConnectionNameRequestBody & { projectId: ProjectId }): Promise<ValidateConnectionNameResponse> {
         //test regex on connection name
-        if (!connectionName.match(connectionNameRegex)) {
+        const regex = new RegExp(`^${connectionNameRegex}$`)
+        if (!regex.test(connectionName)) {
             return {
                 isValid: false,
                 error: 'Connection name is invalid',

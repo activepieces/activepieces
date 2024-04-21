@@ -16,6 +16,8 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpsertAppConnectionRequestBody,
+    ValidateConnectionNameRequestBody,
+    ValidateConnectionNameResponse,
 } from '@activepieces/shared'
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (
@@ -63,14 +65,15 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
     app.post(
         '/validate-connection-name',
         ValidateConnectionNameRequest,
-        async (request): Promise<{
-            isValid: boolean
-            error?: string
-        }>=>{
-            return appConnectionService.validateConnectionName({
+        async (request, reply): Promise<ValidateConnectionNameResponse>=>{
+            const result = await  appConnectionService.validateConnectionName({
                 projectId: request.principal.projectId,
                 connectionName: request.body.connectionName,
             })
+            if (result.error) {
+                return reply.status(StatusCodes.BAD_REQUEST).send(result)
+            }
+            return result
         },
 
     )
@@ -147,15 +150,11 @@ const ValidateConnectionNameRequest = {
     schema: {
         tags: ['app-connections'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        body: Type.Object({
-            connectionName: Type.String(),
-        }),
+        body: ValidateConnectionNameRequestBody,
         description: 'Validate app connection name',
         response: {
-            [StatusCodes.OK]: Type.Object({
-                isValid: Type.Boolean(),
-                error: Type.Optional(Type.String()),
-            }),
+            [StatusCodes.OK]: ValidateConnectionNameResponse,
+            [StatusCodes.BAD_REQUEST]: ValidateConnectionNameResponse,
         },
     },
 }
