@@ -78,7 +78,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
         sdkVersion: event.data.data.sdkVersion,
       });
       this.navigationService.navigate({
-        route: ["/"],
+        route: ['/'],
       });
     }
   };

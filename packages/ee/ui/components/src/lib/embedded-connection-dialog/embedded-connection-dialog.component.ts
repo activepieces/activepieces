@@ -71,7 +71,6 @@ export class EmbeddedConnectionDialogComponent {
                 window.parent.postMessage(connectionNameIsInvalidEvent, '*');
                 return of(undefined);
               } else {
-                
                 return this.openConnectionDialog({
                   pieceName,
                   connectionName,
@@ -105,12 +104,11 @@ export class EmbeddedConnectionDialogComponent {
     pieceName: string;
     connectionName?: string;
   }) {
-    const showConnectionIframeEvent: ActivepiecesClientShowConnectionIframe =
-                  {
-                    type: ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME,
-                    data: {},
-                  };
-                window.parent.postMessage(showConnectionIframeEvent, '*');
+    const showConnectionIframeEvent: ActivepiecesClientShowConnectionIframe = {
+      type: ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME,
+      data: {},
+    };
+    window.parent.postMessage(showConnectionIframeEvent, '*');
     this.embeddingService.setPredefinedConnectionName(connectionName);
     return this.pieceMetadataService
       .getPieceMetadata(pieceName, undefined)

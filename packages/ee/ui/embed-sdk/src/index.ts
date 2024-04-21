@@ -312,8 +312,8 @@ class ActivepiecesEmbedded {
   ): frame is IframeWithWindow {
     return frame.contentWindow !== null;
   }
-  private _cleanConnectionIframe = () =>{
-  }
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  private _cleanConnectionIframe = () =>{};
   private _setConnectionIframeEventsListener() {
     const connectionRelatedMessageHandler = (event: MessageEvent<ActivepiecesNewConnectionDialogClosed | ActivepiecesClientConnectionNameIsInvalid | ActivepiecesClientShowConnectionIframe>) => {
       if(event.data.type)
