@@ -52,9 +52,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
           this.authenticationService.updateUser({ ...res });
           const event: ActivepiecesClientInit = {
             type: ActivepiecesClientEventName.CLIENT_INIT,
-            data: {
-              apJwtToken: res.token,
-            },
+            data: {},
           };
 
           window.parent.postMessage(event, '*');
@@ -80,7 +78,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
         sdkVersion: event.data.data.sdkVersion,
       });
       this.navigationService.navigate({
-        route: [event.data.data.initialRoute],
+        route: ["/"],
       });
     }
   };

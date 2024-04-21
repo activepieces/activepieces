@@ -25,6 +25,7 @@ import {
     AppConnectionStatus,
     AppConnectionType,
     AppConnectionValue,
+    connectionNameRegex,
     Cursor,
     EngineResponseStatus,
     ErrorCode,
@@ -33,11 +34,29 @@ import {
     ProjectId,
     SeekPage,
     UpsertAppConnectionRequestBody,
+    ValidateConnectionNameRequestBody,
+    ValidateConnectionNameResponse,
 } from '@activepieces/shared'
 
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
 export const appConnectionService = {
+    async validateConnectionName({ connectionName, projectId }: ValidateConnectionNameRequestBody & { projectId: ProjectId }): Promise<ValidateConnectionNameResponse> {
+        //test regex on connection name
+        const regex = new RegExp(`^${connectionNameRegex}$`)
+        if (!regex.test(connectionName)) {
+            return {
+                isValid: false,
+                error: 'Connection name is invalid',
+            }
+        }
+        const connection = await repo.findOneBy({ name: connectionName, projectId })
+        const isValid = isNil(connection)
+        return {
+            isValid,
+            error: isValid ? undefined : 'Connection name already exists',
+        }
+    },
     async upsert(params: UpsertParams): Promise<AppConnection> {
         await appConnectionsHooks
             .getHooks()

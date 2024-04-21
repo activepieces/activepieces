@@ -1,10 +1,16 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpStatusCode,
+} from '@angular/common/http';
 import {
   BehaviorSubject,
   Observable,
+  catchError,
   combineLatest,
   map,
+  of,
   switchMap,
   take,
   tap,
@@ -15,6 +21,8 @@ import {
   UpsertAppConnectionRequestBody,
   ListAppConnectionsRequestQuery,
   AppConnectionWithoutSensitiveData,
+  ValidateConnectionNameRequestBody,
+  ValidateConnectionNameResponse,
 } from '@activepieces/shared';
 import { CURSOR_QUERY_PARAM, LIMIT_QUERY_PARAM } from '../utils/tables.utils';
 import { environment } from '../environments/environment';
@@ -107,6 +115,23 @@ export class AppConnectionsService {
       .pipe(
         tap(() => {
           this.refreshCacheSubject.next();
+        })
+      );
+  }
+  validateConnectionName(
+    req: ValidateConnectionNameRequestBody
+  ): Observable<ValidateConnectionNameResponse> {
+    return this.http
+      .post<ValidateConnectionNameResponse>(
+        environment.apiUrl + '/app-connections/validate-connection-name',
+        req
+      )
+      .pipe(
+        catchError((err: HttpErrorResponse) => {
+          if (err.status === HttpStatusCode.BadRequest) {
+            return of(err.error);
+          }
+          throw err;
         })
       );
   }
