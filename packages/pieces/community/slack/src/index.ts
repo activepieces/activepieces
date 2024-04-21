@@ -17,22 +17,32 @@ import { newReactionAdded } from './lib/triggers/new-reaction-added';
 import { uploadFile } from './lib/actions/upload-file';
 import { searchMessages } from './lib/actions/search-messages';
 import { updateMessage } from './lib/actions/update-message';
+import { findUserByEmailAction } from './lib/actions/find-user-by-email';
+import { updateProfileAction } from './lib/actions/update-profile';
+import { createChannelAction } from './lib/actions/create-channel';
+import { newChannelTrigger } from './lib/triggers/new-channel';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
-  authUrl: 'https://slack.com/oauth/v2/authorize?user_scope=search:read',
+  authUrl:
+    'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write',
   tokenUrl: 'https://slack.com/api/oauth.v2.access',
   required: true,
   scope: [
     'channels:read',
+    'channels:manage',
     'channels:history',
     'chat:write',
     'groups:read',
+    'groups:write',
     'reactions:read',
     'mpim:read',
+    'mpim:write',
+    'im:write',
     'users:read',
     'files:write',
     'files:read',
+    'users:read.email',
   ],
 });
 
@@ -89,7 +99,10 @@ export const slack = createPiece({
     requestActionMessageAction,
     uploadFile,
     searchMessages,
+    findUserByEmailAction,
     updateMessage,
+    createChannelAction,
+    updateProfileAction,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://slack.com/api';
@@ -102,7 +115,7 @@ export const slack = createPiece({
       },
     }),
   ],
-  triggers: [newMessage, newReactionAdded],
+  triggers: [newMessage, newReactionAdded, newChannelTrigger],
 });
 
 type PayloadBody = {
