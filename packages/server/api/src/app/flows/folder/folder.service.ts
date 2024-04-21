@@ -52,15 +52,10 @@ export const flowFolderService = {
                 params: { message: 'Folder displayName is used' },
             })
         }
-        const updatedFolder: Folder = {
-            ...folder,
+        await folderRepo.update(folderId, {
             displayName: request.displayName,
-        }
-        await folderRepo.update(folderId, updatedFolder)
-        return {
-            ...updatedFolder,
-            numberOfFlows: await flowService.count({ projectId, folderId }),
-        }
+        })
+        return this.getOneOrThrow({ projectId, folderId })
     },
     async upsert({
         projectId,
