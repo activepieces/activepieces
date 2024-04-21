@@ -108,12 +108,13 @@ class ActivepiecesEmbedded {
     this._jwtToken = jwtToken;
     this._navigationHandler = embedding?.navigation?.handler;
     if (embedding?.containerId) {
-      this._initializeBuilderAndDashboardIframe({
+     return this._initializeBuilderAndDashboardIframe({
         containerSelector: `#${embedding.containerId}`,
         jwtToken,
       });
     }
     this._checkIfNewConnectionDialogClosed();
+    return new Promise((resolve) => {resolve({ status: "success" })});
   }
 
   private _initializeBuilderAndDashboardIframe = ({
@@ -123,23 +124,38 @@ class ActivepiecesEmbedded {
     containerSelector: string;
     jwtToken: string;
   }) => {
-    this._addGracePeriodBeforeMethod({
-      condition: () => {
-        return !!document.querySelector(containerSelector);
-      },
-      method: () => {
-        const iframeContainer = document.querySelector(containerSelector);
-        if (iframeContainer) {
-          const iframeWindow = this.connectToEmbed({
-            jwtToken,
-            iframeContainer,
-          }).contentWindow;
-          this._dashboardAndBuilderIframeWindow = iframeWindow;
-          this._checkForClientRouteChanges(iframeWindow);
-        }
-      },
-      errorMessage: 'container not found',
+    return new Promise((resolve, reject) => {
+      this._addGracePeriodBeforeMethod({
+        condition: () => {
+          return !!document.querySelector(containerSelector);
+        },
+        method: () => {
+          const iframeContainer = document.querySelector(containerSelector);
+          if (iframeContainer) {
+            const iframeWindow = this.connectToEmbed({
+              jwtToken,
+              iframeContainer,
+              callbackAfterAuthentication: ()=>{
+                resolve({ status: "success" });
+              }
+            }).contentWindow;
+            this._dashboardAndBuilderIframeWindow = iframeWindow;
+            this._checkForClientRouteChanges(iframeWindow);
+          }
+          else {
+            reject({
+              status: "error",
+              error: {
+                message: 'container not found',
+              },
+            });
+          }
+        },
+        errorMessage: 'container not found',
+      });
     });
+
+   
   };
 
   private connectToEmbed({ jwtToken, iframeContainer, callbackAfterAuthentication }: {
