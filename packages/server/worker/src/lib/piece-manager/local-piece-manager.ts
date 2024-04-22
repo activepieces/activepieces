@@ -1,8 +1,8 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
-import { PieceManager } from './piece-manager'
 import { logger, packageManager } from '@activepieces/server-shared'
 import { PackageType, PiecePackage } from '@activepieces/shared'
+import { PieceManager } from './piece-manager'
 
 
 export class LocalPieceManager extends PieceManager {
@@ -38,7 +38,8 @@ export class LocalPieceManager extends PieceManager {
                     path: projectPath,
                     linkPath: directoryPath!,
                 })
-            } else {
+            }
+            else {
                 throw new Error('Pieces in local piece manager must be of type REGISTRY.')
             }
         }

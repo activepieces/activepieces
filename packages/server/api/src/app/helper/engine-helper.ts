@@ -47,7 +47,7 @@ import {
     ResumeExecuteFlowOperation,
     TriggerHookType,
 } from '@activepieces/shared'
-import { SandBoxCacheType, Sandbox, sandboxProvisioner } from 'server-worker'
+import { Sandbox, SandBoxCacheType, sandboxProvisioner } from 'server-worker'
 
 type GenerateWorkerTokenParams = {
     projectId: ProjectId
