@@ -15,6 +15,7 @@ import { Step, StepMetaDataForMentions } from '../../model/step';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { BuilderSavingStatusEnum, CanvasState } from '../../model';
 import { StepRunResult } from '../../utils/stepRunResult';
+import { VersionHisoricalStatus } from '@activepieces/ui/common';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -366,9 +367,11 @@ const selectViewedVersionHistoricalStatus = createSelector(
   selectPublishedFlowVersion,
   selectViewedVersion,
   (draftVersionId, publishedFlowVersion, viewedFlowVersion) => {
-    if (publishedFlowVersion?.id === viewedFlowVersion.id) return 'PUBLISHED';
-    if (draftVersionId === viewedFlowVersion.id) return 'DRAFT';
-    return 'OLDER_VERSION';
+    if (publishedFlowVersion?.id === viewedFlowVersion.id)
+      return VersionHisoricalStatus.PUBLISHED;
+    if (draftVersionId === viewedFlowVersion.id)
+      return VersionHisoricalStatus.DRAFT;
+    return VersionHisoricalStatus.OLDER_VERSION;
   }
 );
 

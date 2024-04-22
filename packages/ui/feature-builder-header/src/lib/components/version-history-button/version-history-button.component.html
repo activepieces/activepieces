@@ -5,9 +5,10 @@
             [applyClass]="true"></svg-icon>
         <div i18n>Versions
         </div>
-        <div class="ap-rounded-full ap-w-[6.5px] ap-h-[6.5px] ap-bg-success-light"
-            [class.ap-bg-primary]="(versionHistoricalStatus$ | async )=== 'OLDER_VERSION'"
-            [class.ap-bg-success-light]="(versionHistoricalStatus$ | async )=== 'PUBLISHED'"
-            [class.ap-bg-warn]="(versionHistoricalStatus$ | async )=== 'DRAFT'"> </div>
+        @if((versionHistoricalStatus$ | async); as versionHistoricalStatus)
+        {
+            <ap-version-history-indicator [versionHistoricalStatus]="versionHistoricalStatus">
+            </ap-version-history-indicator>
+        }
     </div>
 </ap-button>
