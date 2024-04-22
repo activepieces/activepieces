@@ -1,3 +1,4 @@
+import { fileService } from '../../file/file.service'
 import { PieceMetadataSchema } from '../piece-metadata-entity'
 import { FastDbPieceMetadataService } from './db-piece-metadata-service'
 import { FilePieceMetadataService } from './file-piece-metadata-service'
@@ -12,6 +13,9 @@ import {
     PublicPiecePackage,
     SuggestionType,
 } from '@activepieces/shared'
+
+const pieceSource = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
+
 
 const initPieceMetadataService = (): PieceMetadataService => {
     const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
@@ -28,7 +32,7 @@ export const pieceMetadataService = initPieceMetadataService()
 
 export const getPiecePackage = async (
     projectId: string,
-    pkg: PublicPiecePackage | Omit<PrivatePiecePackage, 'archiveId'>,
+    pkg: Omit<PublicPiecePackage, 'directoryPath'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>,
 ): Promise<PiecePackage> => {
     switch (pkg.packageType) {
         case PackageType.ARCHIVE: {
@@ -37,18 +41,40 @@ export const getPiecePackage = async (
                 version: pkg.pieceVersion,
                 projectId,
             })
+            const archiveFile = await fileService.getOneOrThrow({
+                fileId: pieceMetadata.archiveId!,
+            })
             return {
                 packageType: PackageType.ARCHIVE,
                 pieceName: pkg.pieceName,
                 pieceVersion: pkg.pieceVersion,
                 pieceType: pkg.pieceType,
                 archiveId: pieceMetadata.archiveId!,
+                archive: archiveFile.data,
             }
         }
         case PackageType.REGISTRY: {
-            return pkg
+            const directoryPath = await getDirectoryPath(projectId, pkg)
+            return {
+                ...pkg,
+                directoryPath,
+            }
         }
     }
+}
+
+
+async function getDirectoryPath(projectId: string,
+    pkg: Omit<PublicPiecePackage, 'directoryPath'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>): Promise<string | undefined> {
+    if (pieceSource !== PiecesSource.FILE) {
+        return undefined
+    }
+    const pieceMetadata = await pieceMetadataService.getOrThrow({
+        name: pkg.pieceName,
+        version: pkg.pieceVersion,
+        projectId,
+    })
+    return pieceMetadata.directoryPath
 }
 
 export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | PieceMetadataModel>(
@@ -65,7 +91,7 @@ export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | Piec
             triggers: Object.keys(originalMetadata.triggers).length,
             suggestedActions: suggestionType === SuggestionType.ACTION || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
                 Object.values(pieceMetadataEntity.actions) : undefined,
-            suggestedTriggers: suggestionType === SuggestionType.TRIGGER  || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
+            suggestedTriggers: suggestionType === SuggestionType.TRIGGER || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
                 Object.values(pieceMetadataEntity.triggers) : undefined,
         }
     })

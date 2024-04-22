@@ -1,8 +1,9 @@
-import { sandboxCachePool } from '../cache/sandbox-cache-pool'
-import { SandBoxCacheType, TypedProvisionCacheInfo } from './sandbox-cache-key'
 import { enrichErrorContext, logger } from '@activepieces/server-shared'
 import { PiecePackage, SourceCode } from '@activepieces/shared'
-import { Sandbox, sandboxManager } from 'server-worker'
+import { sandboxCachePool } from '../files/sandbox-cache-pool'
+import { Sandbox } from '../index'
+import { sandboxManager } from '../sandbox-manager'
+import { SandBoxCacheType, TypedProvisionCacheInfo } from './sandbox-cache-key'
 
 export const sandboxProvisioner = {
     async provision({

@@ -7,8 +7,6 @@ import {
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { engineHelper } from '../../helper/engine-helper'
 import { getPiecePackage } from '../../pieces/piece-metadata-service'
-import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
-import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
 import { flowWorkerHooks } from './flow-worker-hooks'
 import { OneTimeJobData } from './job-data'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
@@ -40,7 +38,7 @@ import { Action, ActionType,
     Trigger,
     TriggerType,
 } from '@activepieces/shared'
-import { logSerializer, Sandbox } from 'server-worker'
+import { logSerializer, Sandbox, SandBoxCacheType, sandboxProvisioner } from 'server-worker'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId
