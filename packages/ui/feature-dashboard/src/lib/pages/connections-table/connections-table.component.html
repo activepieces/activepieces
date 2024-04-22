@@ -5,16 +5,27 @@
         Connection</ap-button>
     </ap-page-title>
     <div class="ap-w-full ap-flex ap-flex-row ap-items-center ap-gap-2">
-      <mat-form-field class="ap-w-full ap-items-center" appearance="outline">
-        <mat-label i18n>Search connection by name</mat-label>
-        <input matInput type="text" class="ap-w-full ap-p-2 ap-rounded-lg ap-border-solid ap-border-dividers ap-border"
+      <mat-form-field class="!ap-min-w-[15.625rem] ap-items-center" appearance="outline">
+        <mat-label i18n>Search by name</mat-label>
+        <input matInput type="text" class="ap-p-2 ap-rounded-lg ap-border-solid ap-border-dividers ap-border"
           [formControl]="connectionNameFilterControl" />
       </mat-form-field>
-      <mat-form-field class="ap-w-full ap-items-center" appearance="outline">
-        <mat-label i18n>Search connection by piece</mat-label>
-        <input matInput type="text" class="ap-w-full ap-p-2 ap-rounded-lg ap-border-solid ap-border-dividers ap-border"
-          [formControl]="pieceNameFilterControl" />
-      </mat-form-field>
+      <mat-form-field class="!ap-min-w-[15.625rem] ap-items-center" appearance="outline">
+        <mat-label i18n>Search by piece</mat-label>
+        <mat-select [formControl]="pieceNameFilterControl">
+          <ap-dropdown-search-control [searchControl]="searchControl"></ap-dropdown-search-control>
+          @if(allPieces | async; as allPieces ){
+          <mat-option i18n selectAll [allValues]="allPieces">
+            All
+          </mat-option>
+          }
+          @for (piece of pieces$ | async; track piece) {
+          <mat-option [value]="piece.name">
+            {{ piece.displayName }}
+          </mat-option>
+          }
+        </mat-select>
+    </mat-form-field>
     </div>
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Connections" i18n-aria-label>
@@ -71,7 +82,7 @@
         </div>
       </ng-container>
       <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
-        <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-py-8" i18n>
+        <div class="ap-flex ap-items-center ap-justify-center ap-h-[500px] ap-py-8" i18n>
           No connections created yet
         </div>
       </ng-container>
