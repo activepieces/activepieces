@@ -764,3 +764,12 @@ app-templates-dialog
 .connections-dropdown-container {
   max-height: var(--mat-form-field-container-text-line-height)
 }
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1) ;
+}
+.cdk-drop-list-dragging :not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+.drag-list:active{
+  cursor: grabbing !important;
+}
