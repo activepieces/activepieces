@@ -24,6 +24,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PopulatedFlow } from '@activepieces/shared';
 import { ControlThatUsesMentionsCoreComponent } from '../control-that-uses-mentions-core/control-that-uses-mentions-core.component';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-array-form-control',
@@ -140,8 +141,20 @@ export class ArrayFormControlComponent
     }
   }
 
-  removeValue(index: number) {
-    if (this.itemsCanBeDeleted()) {
+  drop(
+    event: CdkDragDrop<(FormControl<string> | UntypedFormGroup)[], any, any>
+  ): void {
+    moveItemInArray(
+      this.formArray.controls,
+      event.previousIndex,
+      event.currentIndex
+    );
+    this.formArray.updateValueAndValidity();
+    this.cd.markForCheck();
+  }
+
+  remove(index: number) {
+    if (index >= 0 && index < this.formArray.length) {
       this.formArray.removeAt(index);
     }
   }
