@@ -28,6 +28,11 @@ export const hubspotAuth = PieceAuth.OAuth2({
 		'crm.objects.companies.write',
 		'crm.objects.deals.read',
 		'crm.objects.deals.write',
+		'crm.objects.line_items.read',
+		'crm.schemas.line_items.read',
+		'crm.schemas.companies.read',
+		'crm.schemas.contacts.read',
+		'crm.schemas.deals.read',
 		'tickets',
 	],
 });
