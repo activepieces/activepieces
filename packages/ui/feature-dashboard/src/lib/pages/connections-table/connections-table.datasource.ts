@@ -61,7 +61,7 @@ export class ConnectionsTableDataSource extends DataSource<any> {
         return this.connectionsService.list({
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams[CURSOR_QUERY_PARAM],
-          connectionName: res.queryParams['connectionName'],
+          name: res.queryParams['name'],
           pieceName: res.queryParams['pieceName'],
         });
       }),
