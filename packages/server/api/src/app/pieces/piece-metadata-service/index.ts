@@ -1,3 +1,4 @@
+import { fileService } from '../../file/file.service'
 import { PieceMetadataSchema } from '../piece-metadata-entity'
 import { FastDbPieceMetadataService } from './db-piece-metadata-service'
 import { FilePieceMetadataService } from './file-piece-metadata-service'
@@ -28,14 +29,17 @@ export const pieceMetadataService = initPieceMetadataService()
 
 export const getPiecePackage = async (
     projectId: string,
-    pkg: PublicPiecePackage | Omit<PrivatePiecePackage, 'archiveId'>,
+    pkg: Omit<PublicPiecePackage, 'directoryPath'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>,
 ): Promise<PiecePackage> => {
+    const pieceMetadata = await pieceMetadataService.getOrThrow({
+        name: pkg.pieceName,
+        version: pkg.pieceVersion,
+        projectId,
+    })
     switch (pkg.packageType) {
         case PackageType.ARCHIVE: {
-            const pieceMetadata = await pieceMetadataService.getOrThrow({
-                name: pkg.pieceName,
-                version: pkg.pieceVersion,
-                projectId,
+            const archiveFile = await fileService.getOneOrThrow({
+                fileId: pieceMetadata.archiveId!,
             })
             return {
                 packageType: PackageType.ARCHIVE,
@@ -43,10 +47,14 @@ export const getPiecePackage = async (
                 pieceVersion: pkg.pieceVersion,
                 pieceType: pkg.pieceType,
                 archiveId: pieceMetadata.archiveId!,
+                archive: archiveFile.data,
             }
         }
         case PackageType.REGISTRY: {
-            return pkg
+            return {
+                ...pkg,
+                directoryPath: pieceMetadata.directoryPath,
+            }
         }
     }
 }

@@ -16,6 +16,7 @@ export const PrivatePiecePackage = Type.Object({
     pieceName: Type.String(),
     pieceVersion: Type.String(),
     archiveId: Type.String(),
+    archive: Type.Unknown(),
 })
 
 export type PrivatePiecePackage = Static<typeof PrivatePiecePackage>
@@ -25,6 +26,7 @@ export const PublicPiecePackage = Type.Object({
     pieceType: Type.Enum(PieceType),
     pieceName: Type.String(),
     pieceVersion: Type.String(),
+    directoryPath: Type.Union([Type.Undefined(), Type.String()]),
 })
 
 export type PublicPiecePackage = Static<typeof PublicPiecePackage>

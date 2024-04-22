@@ -1,4 +1,4 @@
-import { sandboxCachePool } from '../cache/sandbox-cache-pool'
+import { sandboxCachePool } from '../files/sandbox-cache-pool'
 import { SandBoxCacheType, TypedProvisionCacheInfo } from './sandbox-cache-key'
 import { enrichErrorContext, logger } from '@activepieces/server-shared'
 import { PiecePackage, SourceCode } from '@activepieces/shared'

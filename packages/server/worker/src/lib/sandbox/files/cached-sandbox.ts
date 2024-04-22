@@ -2,11 +2,12 @@ import { mkdir, rm } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
-import { pieceManager } from '../../../flows/common/piece-manager'
 import { CachedSandboxState } from './cached-sandbox-state'
 import { enrichErrorContext, logger, packageManager, system, SystemProp } from '@activepieces/server-shared'
 import { PiecePackage, SourceCode } from '@activepieces/shared'
-import { codeBuilder, engineInstaller } from 'server-worker'
+import { pieceManager } from '../../piece-manager'
+import { engineInstaller } from '../../engine/engine-installer'
+import { codeBuilder } from '../../code-worker/code-builder'
 
 export class CachedSandbox {
     private static readonly CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? resolve('dist', 'cache')
