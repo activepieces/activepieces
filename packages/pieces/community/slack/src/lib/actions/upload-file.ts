@@ -21,16 +21,22 @@ export const uploadFile = createAction({
       displayName: 'Title',
       required: false,
     }),
+    filename: Property.ShortText({
+      displayName: 'Filename',
+      required: false,
+    }),
   },
   async run(context) {
     const token = context.auth.access_token;
-    const { file, title } = context.propsValue;
+    const { file, title, filename } = context.propsValue;
     const formData = new FormData();
     formData.append('file', new Blob([file.data]));
     if (title !== undefined) {
       formData.append('title', title);
     }
-
+    if (filename !== undefined) {
+      formData.append('filename', filename);
+    }
     const request: HttpRequest = {
       url: `https://slack.com/api/files.upload`,
       method: HttpMethod.POST,
