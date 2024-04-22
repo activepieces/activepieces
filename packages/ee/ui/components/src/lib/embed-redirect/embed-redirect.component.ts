@@ -4,15 +4,19 @@ import {
   OnDestroy,
   OnInit,
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Observable, map, tap } from 'rxjs';
 import {
   ActivepiecesClientEventName,
+  ActivepiecesClientInit,
   ActivepiecesVendorEventName,
   ActivepiecesVendorInit,
   _AP_JWT_TOKEN_QUERY_PARAM_NAME,
 } from 'ee-embed-sdk';
-import { AuthenticationService } from '@activepieces/ui/common';
+import {
+  AuthenticationService,
+  NavigationService,
+} from '@activepieces/ui/common';
 import { ManagedAuthService } from './managed-auth.service';
 import { EmbeddingService } from '@activepieces/ui/common';
 
@@ -28,7 +32,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
     private route: ActivatedRoute,
     private managedAuthService: ManagedAuthService,
     private embedService: EmbeddingService,
-    private router: Router,
+    private navigationService: NavigationService,
     private authenticationService: AuthenticationService
   ) {}
 
@@ -46,13 +50,12 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
         tap((res) => {
           this.authenticationService.saveToken(res.token);
           this.authenticationService.updateUser({ ...res });
-          window.parent.postMessage(
-            {
-              type: ActivepiecesClientEventName.CLIENT_INIT,
-            },
-            '*'
-          );
+          const event: ActivepiecesClientInit = {
+            type: ActivepiecesClientEventName.CLIENT_INIT,
+            data: {},
+          };
 
+          window.parent.postMessage(event, '*');
           window.addEventListener('message', this.initializedVendorHandler);
         }),
         map(() => void 0)
@@ -72,9 +75,10 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
         prefix: event.data.data.prefix,
         disableNavigationInBuilder: event.data.data.disableNavigationInBuilder,
         hideFolders: event.data.data.hideFolders || false,
+        sdkVersion: event.data.data.sdkVersion,
       });
-      this.router.navigate([event.data.data.initialRoute], {
-        skipLocationChange: true,
+      this.navigationService.navigate({
+        route: ['/'],
       });
     }
   };

@@ -18,13 +18,15 @@ import { appConnectionsHooks } from './app-connection-hooks'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
-import { ActivepiecesError,
+import {
+    ActivepiecesError,
     apId,
     AppConnection,
     AppConnectionId,
     AppConnectionStatus,
     AppConnectionType,
     AppConnectionValue,
+    connectionNameRegex,
     Cursor,
     EngineResponseStatus,
     ErrorCode,
@@ -33,11 +35,29 @@ import { ActivepiecesError,
     ProjectId,
     SeekPage,
     UpsertAppConnectionRequestBody,
+    ValidateConnectionNameRequestBody,
+    ValidateConnectionNameResponse,
 } from '@activepieces/shared'
 
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
 export const appConnectionService = {
+    async validateConnectionName({ connectionName, projectId }: ValidateConnectionNameRequestBody & { projectId: ProjectId }): Promise<ValidateConnectionNameResponse> {
+        //test regex on connection name
+        const regex = new RegExp(`^${connectionNameRegex}$`)
+        if (!regex.test(connectionName)) {
+            return {
+                isValid: false,
+                error: 'Connection name is invalid',
+            }
+        }
+        const connection = await repo.findOneBy({ name: connectionName, projectId })
+        const isValid = isNil(connection)
+        return {
+            isValid,
+            error: isValid ? undefined : 'Connection name already exists',
+        }
+    },
     async upsert(params: UpsertParams): Promise<AppConnection> {
         await appConnectionsHooks
             .getHooks()
@@ -127,6 +147,7 @@ export const appConnectionService = {
         connectionName,
         pieceName,
         cursorRequest,
+        name,
         limit,
     }: ListParams): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -149,6 +170,9 @@ export const appConnectionService = {
         }
         if (!isNil(connectionName)) {
             querySelector.name = ILike(`%${connectionName}%`)
+        }
+        if (!isNil(name)) {
+            querySelector.name = name
         }
         const queryBuilder = repo
             .createQueryBuilder('app_connection')
@@ -442,6 +466,7 @@ type ListParams = {
     pieceName: string | undefined
     connectionName: string | undefined
     cursorRequest: Cursor | null
+    name: string | undefined
     limit: number
 }
 

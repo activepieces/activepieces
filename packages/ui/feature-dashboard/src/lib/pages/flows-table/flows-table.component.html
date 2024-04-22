@@ -19,7 +19,7 @@
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef i18n>Name</th>
               <td mat-cell *matCellDef="let flow"><a class="!ap-typography-body-2 !ap-no-underline !ap-text-body"
-                  (auxclick)="$event.stopPropagation()" [href]="'/flows/'+flow.id">
+                  (auxclick)="$event.stopPropagation()" >
                   {{ flow.version.displayName }}
                 </a></td>
             </ng-container>

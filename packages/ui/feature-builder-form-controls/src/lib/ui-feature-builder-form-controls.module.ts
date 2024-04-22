@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections';
 import { ArrayFormControlComponent } from './components/array-form-control/array-form-control.component';
+import { ArrayFormControlTextItemComponent } from './components/array-form-control/array-form-control-text-item.component';
 import { BranchConditionFormControlComponent } from './components/branch-condition-form-control/branch-condition-form-control.component';
 import { BranchConditionsGroupFormControlComponent } from './components/branch-conditions-group-form-control/branch-conditions-group-form-control.component';
 import { CodeArtifactFormControlComponent } from './components/code-artifact-form-control/code-artifact-form-control.component';
@@ -37,7 +38,6 @@ import { StaticDropdownControlComponent } from './components/static-dropdown-con
 import { RefreshableDropdownControlComponent } from './components/refreshable-dropdown-control/refreshable-dropdown-control.component';
 import { CheckboxControlComponent } from './components/checkbox-control/checkbox-control.component';
 import { TextControlComponent } from './components/text-control/text-control.component';
-import { AbstractFormControlCasterPipe } from './pipes/abstract-form-control-caster.pipe';
 import { ConnectionsDropdownControlComponent } from './components/connections-dropdown-control/connections-dropdown-control.component';
 import { ReplaceMarkdownConstsPipe } from './pipes/replace-markdown-consts.pipe';
 import { ExtractControlErrorMessagePipe } from './pipes/extract-error-message-from-form-control.pipe';
@@ -76,7 +76,6 @@ const exportedDeclarations = [
     RefreshableDropdownControlComponent,
     CheckboxControlComponent,
     TextControlComponent,
-    AbstractFormControlCasterPipe,
     ConnectionsDropdownControlComponent,
     ReplaceMarkdownConstsPipe,
     ExtractControlErrorMessagePipe,
@@ -88,6 +87,7 @@ const exportedDeclarations = [
   ],
   declarations: [
     ...exportedDeclarations,
+    ArrayFormControlTextItemComponent,
     AddNpmPackageModalComponent,
     CodeArtifactControlFullscreenComponent,
     MentionsListComponent,

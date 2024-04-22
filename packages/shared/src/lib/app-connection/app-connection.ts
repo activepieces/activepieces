@@ -100,5 +100,18 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
 }, {
     description: 'App connection is a connection to an external app.',
 })
-
+export const connectionNameRegex = '[A-Za-z0-9_\\-@\\+\\.]*'
 export type AppConnectionWithoutSensitiveData = Static<typeof AppConnectionWithoutSensitiveData> & { __brand: 'AppConnectionWithoutSensitiveData' }
+export const ValidateConnectionNameResponse = Type.Object({
+    isValid: Type.Boolean(),
+    error: Type.Optional(Type.String()),
+}, {
+    description: 'Response for validating connection name',
+})
+export type ValidateConnectionNameResponse = Static<typeof ValidateConnectionNameResponse>
+export const ValidateConnectionNameRequestBody = Type.Object({
+    connectionName: Type.String(),
+}, {
+    description: 'Request for validating connection name',
+})
+export type ValidateConnectionNameRequestBody = Static<typeof ValidateConnectionNameRequestBody>

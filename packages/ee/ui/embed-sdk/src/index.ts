@@ -2,10 +2,23 @@ export enum ActivepiecesClientEventName {
   CLIENT_INIT = 'CLIENT_INIT',
   CLIENT_ROUTE_CHANGED = 'CLIENT_ROUTE_CHANGED',
   CLIENT_NEW_CONNECTION_DIALOG_CLOSED = 'CLIENT_NEW_CONNECTION_DIALOG_CLOSED',
+  CLIENT_SHOW_CONNECTION_IFRAME = 'CLIENT_SHOW_CONNECTION_IFRAME',
+  CLIENT_CONNECTION_NAME_IS_INVALID = 'CLIENT_CONNECTION_NAME_IS_INVALID',
 }
-
+export const connectionNameRegex = '[A-Za-z0-9_\\-@\\+\\.]*'
 export interface ActivepiecesClientInit {
   type: ActivepiecesClientEventName.CLIENT_INIT;
+  data: Record<string,never>;
+}
+export interface ActivepiecesClientShowConnectionIframe {
+  type: ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME;
+  data: Record<string,never>;
+}
+export interface ActivepiecesClientConnectionNameIsInvalid {
+  type: ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID;
+  data: {
+    error: string;
+  };
 }
 
 export interface ActivepiecesClientRouteChanged {
@@ -23,7 +36,9 @@ type IframeWithWindow = HTMLIFrameElement & { contentWindow: Window };
 
 export const NEW_CONNECTION_QUERY_PARAMS = {
   name: 'pieceName',
+  connectionName: 'connectionName',
 };
+
 export type ActivepiecesClientEvent =
   | ActivepiecesClientInit
   | ActivepiecesClientRouteChanged;
@@ -44,19 +59,19 @@ export interface ActivepiecesVendorInit {
   type: ActivepiecesVendorEventName.VENDOR_INIT;
   data: {
     prefix: string;
-    initialRoute: string;
     hideSidebar: boolean;
     hideLogoInBuilder?: boolean;
     hideFlowNameInBuilder?: boolean;
     disableNavigationInBuilder: boolean;
     hideFolders?: boolean;
+    sdkVersion?: string;
   };
 }
 export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
 
 class ActivepiecesEmbedded {
+  readonly _sdkVersion = "0.3.0";
   _prefix = '';
-  _initialRoute = '';
   _instanceUrl = '';
   _hideSidebar = false;
   _hideFolders = false;
@@ -64,8 +79,11 @@ class ActivepiecesEmbedded {
   _hideFlowNameInBuilder = false;
   _jwtToken = '';
   _disableNavigationInBuilder = true;
-  readonly _CONNECTIONS_IFRAME_ID='ApConnectionsIframe';
+  readonly _CONNECTIONS_IFRAME_ID = 'ApConnectionsIframe';
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
+  _dashboardAndBuilderIframeWindow?: Window;
+  _navigationHandler?: (data: { route: string }) => void;
+  _rejectNewConnectionDialogClosed?: (error:unknown)=> void;
   _handleVendorNavigation?: (data: { route: string }) => void;
   _handleClientNavigation?: (data: { route: string }) => void;
   _parentOrigin = window.location.origin;
@@ -83,7 +101,7 @@ class ActivepiecesEmbedded {
     embedding?: {
       containerId?: string;
       builder?: {
-        disableNavigation: boolean;
+        disableNavigation?: boolean;
         hideLogo?: boolean;
         hideFlowName?: boolean;
       };
@@ -91,13 +109,12 @@ class ActivepiecesEmbedded {
         hideSidebar?: boolean;
       };
       hideFolders?: boolean;
+      navigation?: {
+        handler?: (data: { route: string }) => void;
+      }
     };
   }) {
     this._prefix = prefix || '/';
-    const newInitialRoute = !window.location.pathname.startsWith(this._prefix)
-      ? '/'
-      : '/' + window.location.pathname.substring(this._prefix.length);
-    this._initialRoute = newInitialRoute || '/';
     this._hideSidebar = embedding?.dashboard?.hideSidebar || false;
     this._instanceUrl = this._removeTrailingSlashes(instanceUrl);
     this._disableNavigationInBuilder =
@@ -106,13 +123,14 @@ class ActivepiecesEmbedded {
     this._hideLogoInBuilder = embedding?.builder?.hideLogo ?? false;
     this._hideFlowNameInBuilder = embedding?.builder?.hideFlowName ?? false;
     this._jwtToken = jwtToken;
+    this._navigationHandler = embedding?.navigation?.handler;
     if (embedding?.containerId) {
-      this._initializeBuilderAndDashboardIframe({
+     return this._initializeBuilderAndDashboardIframe({
         containerSelector: `#${embedding.containerId}`,
         jwtToken,
       });
     }
-    this._checkIfNewConnectionDialogClosed();
+    return new Promise((resolve) => {resolve({ status: "success" })});
   }
 
   private _initializeBuilderAndDashboardIframe = ({
@@ -122,23 +140,38 @@ class ActivepiecesEmbedded {
     containerSelector: string;
     jwtToken: string;
   }) => {
-    this._addGracePeriodBeforeMethod({
-      condition: () => {
-        return !!document.querySelector(containerSelector);
-      },
-      method: () => {
-        const iframeContainer = document.querySelector(containerSelector);
-        if (iframeContainer) {
-          const iframeWindow = this.connectToEmbed({
-            jwtToken,
-            iframeContainer,
-          }).contentWindow;
-          this._checkForVendorRouteChanges(iframeWindow);
-          this._checkForClientRouteChanges(iframeWindow);
-        }
-      },
-      errorMessage: 'container not found',
+    return new Promise((resolve, reject) => {
+      this._addGracePeriodBeforeMethod({
+        condition: () => {
+          return !!document.querySelector(containerSelector);
+        },
+        method: () => {
+          const iframeContainer = document.querySelector(containerSelector);
+          if (iframeContainer) {
+            const iframeWindow = this.connectToEmbed({
+              jwtToken,
+              iframeContainer,
+              callbackAfterAuthentication: ()=>{
+                resolve({ status: "success" });
+              }
+            }).contentWindow;
+            this._dashboardAndBuilderIframeWindow = iframeWindow;
+            this._checkForClientRouteChanges(iframeWindow);
+          }
+          else {
+            reject({
+              status: "error",
+              error: {
+                message: 'container not found',
+              },
+            });
+          }
+        },
+        errorMessage: 'container not found',
+      });
     });
+
+   
   };
 
   private connectToEmbed({ jwtToken, iframeContainer, callbackAfterAuthentication }: {
@@ -150,38 +183,37 @@ class ActivepiecesEmbedded {
     const iframe = this._createIframe({ src: `${this._instanceUrl}/embed?${_AP_JWT_TOKEN_QUERY_PARAM_NAME}=${jwtToken}` });
     iframeContainer.appendChild(iframe);
     if (!this._doesFrameHaveWindow(iframe)) {
-      const error = 'Activepieces: iframe window not accessible';
-      console.error(error);
-      throw new Error(error);
+      throw this._errorCreator('iframe window not accessible');
     }
     const iframeWindow = iframe.contentWindow;
-    window.addEventListener(
-      'message',
-      (event: MessageEvent<ActivepiecesClientEvent>) => {
-        if (event.source === iframeWindow) {
-          switch (event.data.type) {
-            case ActivepiecesClientEventName.CLIENT_INIT: {
-              const apEvent: ActivepiecesVendorInit = {
-                type: ActivepiecesVendorEventName.VENDOR_INIT,
-                data: {
-                  prefix: this._prefix,
-                  initialRoute: this._initialRoute,
-                  hideSidebar: this._hideSidebar,
-                  disableNavigationInBuilder: this._disableNavigationInBuilder,
-                  hideFolders: this._hideFolders,
-                  hideLogoInBuilder: this._hideLogoInBuilder,
-                  hideFlowNameInBuilder: this._hideFlowNameInBuilder,
-                },
-              };
-              iframeWindow.postMessage(apEvent, '*');
-              if (callbackAfterAuthentication) {
-                callbackAfterAuthentication();
-              }
-              break;
+    const initialMessageHandler =  (event: MessageEvent<ActivepiecesClientEvent>) => {
+      if (event.source === iframeWindow) {
+        switch (event.data.type) {
+          case ActivepiecesClientEventName.CLIENT_INIT: {
+            const apEvent: ActivepiecesVendorInit = {
+              type: ActivepiecesVendorEventName.VENDOR_INIT,
+              data: {
+                prefix: this._prefix,
+                hideSidebar: this._hideSidebar,
+                disableNavigationInBuilder: this._disableNavigationInBuilder,
+                hideFolders: this._hideFolders,
+                hideLogoInBuilder: this._hideLogoInBuilder,
+                hideFlowNameInBuilder: this._hideFlowNameInBuilder,
+              },
+            };
+            iframeWindow.postMessage(apEvent, '*');
+            if (callbackAfterAuthentication) {
+              callbackAfterAuthentication();
             }
+            window.removeEventListener('message', initialMessageHandler);
+            break;
           }
         }
       }
+    };
+    window.addEventListener(
+      'message',initialMessageHandler
+     
     );
     return iframe;
   }
@@ -189,38 +221,55 @@ class ActivepiecesEmbedded {
   private _createIframe({ src }: { src: string }) {
     const iframe = document.createElement('iframe');
     iframe.src = src;
-    iframe.setAttribute('allow','clipboard-read; clipboard-write');
+    iframe.setAttribute('allow', 'clipboard-read; clipboard-write');
     return iframe;
   }
 
-  async connect({ pieceName }: { pieceName: string }) {
+  async connect({ pieceName,connectionName }: { pieceName: string, connectionName?:string }) {
+    this._cleanConnectionIframe();
     return this._addGracePeriodBeforeMethod({
       condition: () => {
         return !!document.body;
       },
-      method: () => {
-
+      method: async () => {
         const connectionsIframe = this.connectToEmbed({ jwtToken: this._jwtToken, iframeContainer: document.body, 
           callbackAfterAuthentication: () => {
-              connectionsIframe.style.display = 'block';
               const apEvent: ActivepiecesVendorRouteChanged = {
                 type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
                 data: {
                   //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
-                  vendorRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}`
+                  vendorRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`
                 },
               };
               connectionsIframe.contentWindow.postMessage(apEvent, '*');
+              
             } });
           const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
           connectionsIframe.style.cssText = connectionsIframeStyle;
           connectionsIframe.id = this._CONNECTIONS_IFRAME_ID;
-          return new Promise<ActivepiecesNewConnectionDialogClosed['data']>((resolve) => {
+          this._setConnectionIframeEventsListener();
+          return new Promise<ActivepiecesNewConnectionDialogClosed['data']>((resolve,reject) => {
             this._resolveNewConnectionDialogClosed = resolve;
+            this._rejectNewConnectionDialogClosed = reject;
           });
         },
       errorMessage: 'document body not found while trying to add connections iframe'
     });
+  }
+
+
+  navigate({ route }: { route: string }) {
+    if (!this._dashboardAndBuilderIframeWindow) {
+      console.error('Activepieces: dashboard iframe not found');
+      return;
+    }
+    const event: ActivepiecesVendorRouteChanged = {
+      type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
+      data: {
+        vendorRoute: route,
+      },
+    };
+    this._dashboardAndBuilderIframeWindow.postMessage(event, '*');
   }
 
   private _checkForClientRouteChanges = (source: Window) => {
@@ -229,7 +278,7 @@ class ActivepiecesEmbedded {
       (event: MessageEvent<ActivepiecesClientRouteChanged>) => {
         if (
           event.data.type ===
-            ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED &&
+          ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED &&
           event.source === source
         ) {
           let prefixStartsWithSlash = this._prefix.startsWith('/')
@@ -242,40 +291,18 @@ class ActivepiecesEmbedded {
           if (!routeWithPrefix.startsWith('/')) {
             routeWithPrefix = '/' + routeWithPrefix;
           }
-          if (!this._handleClientNavigation) {
-            window.history.replaceState({}, '', routeWithPrefix);
-          } else {
-            this._handleClientNavigation({ route: routeWithPrefix });
+
+          if (this._navigationHandler) {
+
+            this._navigationHandler({ route: routeWithPrefix });
           }
+
         }
       }
     );
   };
 
-  private _checkForVendorRouteChanges = (iframeWindow: Window) => {
-    let currentRoute = window.location.href;
-    setInterval(() => {
-      if (currentRoute !== window.location.href) {
-        currentRoute = window.location.href;
-        if (this._handleVendorNavigation) {
-          this._handleVendorNavigation({ route: currentRoute });
-        }
-        const prefixStartsWithSlash = this._prefix.startsWith('/');
-        const apEvent: ActivepiecesVendorRouteChanged = {
-          type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
-          data: {
-            vendorRoute: this._extractRouteAfterPrefix(
-              currentRoute,
-              prefixStartsWithSlash
-                ? this._parentOrigin + this._prefix
-                : `${this._parentOrigin}/${this._prefix}`
-            ),
-          },
-        };
-        iframeWindow.postMessage(apEvent, '*');
-      }
-    }, 50);
-  };
+
 
   private _extractRouteAfterPrefix(href: string, prefix: string) {
     return href.split(prefix)[1];
@@ -285,26 +312,64 @@ class ActivepiecesEmbedded {
   ): frame is IframeWithWindow {
     return frame.contentWindow !== null;
   }
-  private _checkIfNewConnectionDialogClosed() {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  private _cleanConnectionIframe = () =>{};
+  private _setConnectionIframeEventsListener() {
+    const connectionRelatedMessageHandler = (event: MessageEvent<ActivepiecesNewConnectionDialogClosed | ActivepiecesClientConnectionNameIsInvalid | ActivepiecesClientShowConnectionIframe>) => {
+      if(event.data.type)
+        {
+        switch(event.data.type)
+          {
+            case ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED: {
+              if (this._resolveNewConnectionDialogClosed) {
+                this._resolveNewConnectionDialogClosed(event.data.data);
+              }
+              this._removeIframe(`#${this._CONNECTIONS_IFRAME_ID}`);
+              window.removeEventListener('message', connectionRelatedMessageHandler);
+              break;
+            }
+            case ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID: {
+              this._removeIframe(`#${this._CONNECTIONS_IFRAME_ID}`);
+              if(this._rejectNewConnectionDialogClosed)
+                {
+                  this._rejectNewConnectionDialogClosed(event.data.data);
+                }
+                else
+                {
+                  throw this._errorCreator(event.data.data.error);
+                }
+                window.removeEventListener('message', connectionRelatedMessageHandler);
+              break;
+            }
+            case ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME: {
+              const connectionsIframe: HTMLElement | null = document.querySelector(`#${this._CONNECTIONS_IFRAME_ID}`);
+              if(connectionsIframe)
+              {
+                connectionsIframe.style.display = 'block';
+              }
+              else {
+                throw this._errorCreator('Connections iframe not found when trying to show it')
+              }
+              break;
+            }
+          }
+        }
+      
+ 
+    }
     window.addEventListener(
       'message',
-      (event: MessageEvent<ActivepiecesNewConnectionDialogClosed>) => {
-        if(event.data.type === ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED)
-          {
-            if (this._resolveNewConnectionDialogClosed) {
-              this._resolveNewConnectionDialogClosed(event.data.data);
-            }
-            const connectionsIframe = document.getElementById(this._CONNECTIONS_IFRAME_ID);
-            if(connectionsIframe) {
-                connectionsIframe.remove();
-              }
-            else {
-              console.warn("Activepieces: connections iframe not found when trying to remove it ")
-              }
-          }
-   
-      }
+      connectionRelatedMessageHandler
     );
+    this._cleanConnectionIframe = () => {
+      window.removeEventListener('message', connectionRelatedMessageHandler);
+      this._resolveNewConnectionDialogClosed = undefined;
+      this._rejectNewConnectionDialogClosed = undefined;
+      if(document.querySelector(`#${this._CONNECTIONS_IFRAME_ID}`))
+      {
+        this._removeIframe(`#${this._CONNECTIONS_IFRAME_ID}`);
+      }
+    }
   }
 
   private _removeTrailingSlashes(str: string) {
@@ -316,7 +381,7 @@ class ActivepiecesEmbedded {
     condition,
     errorMessage,
   }: {
-    method: () => void;
+    method: () => Promise<any> | void;
     condition: () => boolean;
     /**Error message to show when grace period passes */
     errorMessage: string;
@@ -341,9 +406,33 @@ class ActivepiecesEmbedded {
         }
       }, this._HUNDRED_MILLISECONDS);
     },);
-
   }
+
+  extractActivepiecesRouteFromUrl({ vendorUrl }: { vendorUrl: string }) {
+    const prefixStartsWithSlash = this._prefix.startsWith('/');
+    return this._extractRouteAfterPrefix(vendorUrl, prefixStartsWithSlash
+      ? this._parentOrigin + this._prefix
+      : `${this._parentOrigin}/${this._prefix}`);
+  }
+  private _errorCreator(message: string) {
+    console.error(`Activepieces: ${message}`)
+    return new Error(`Activepieces: ${message}`);
+  }
+  private _removeIframe(selector: string)
+  {
+    const iframe = document.querySelector(selector);
+    if(iframe)
+    {
+      iframe.remove();
+    }
+    else {
+      console.warn(`Activepieces: iframe not found when trying to remove it`)
+    }
+  
+  }
+
 }
 
 
 (window as any).activepieces = new ActivepiecesEmbedded();
+(window as any).ActivepiecesEmbedded = ActivepiecesEmbedded;

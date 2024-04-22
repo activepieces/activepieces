@@ -1,0 +1,26 @@
+---
+title: "Repository Structure"
+description: ""
+icon: "sitemap"
+---
+
+The repository is structured as a monorepo using the NX build system, with TypeScript as the primary language. It is divided into several packages:
+
+```
+.
+├── packages
+│   ├── ui
+│   ├── server
+|   ├── ee
+│   ├── engine
+│   ├── pieces
+│   ├── shared
+
+```
+
+- `ui`: This package contains the user interface, implemented using the Angular framework.
+- `server`: This package contains the API implementation, using the Fastify framework.
+- `ee`: This package contains features that are only available in the paid edition.
+- `engine`: This package contains the logic for flow execution within the sandbox.
+- `pieces`: This package contains the implementation of triggers and actions for third-party apps.
+- `shared`: This package contains shared data models and helper functions used by the other packages.

@@ -7,7 +7,7 @@
 
   @for( route of (sideNavRoutes$ | async); track route.route) {
   @if(route.showInSideNav$ | async){
-  <app-sidenav-route-item [sideNavRoute]="route">
+  <app-sidenav-route-item  [skipLocationChange]="skipLocationChange$ | async | defaultFalse" [sideNavRoute]="route">
   </app-sidenav-route-item>
   }
 

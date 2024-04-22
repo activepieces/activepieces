@@ -1,6 +1,6 @@
 {
   "name": "ee-embed-sdk",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "type": "commonjs",
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",

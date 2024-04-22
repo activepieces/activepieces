@@ -1,0 +1,71 @@
+<ap-dialog-title-template>
+    <ng-container *ngIf="!dialogData.connectionToUpdate; else editConnectionHeader" i18n>New
+        {{dialogData.pieceDisplayName}} Connection</ng-container>
+    <ng-template #editConnectionHeader><span i18n>Reconnect</span>
+        {{dialogData!.connectionToUpdate?.name}}</ng-template>
+</ap-dialog-title-template>
+
+<mat-dialog-content>
+    <ap-markdown *ngIf="dialogData.pieceAuthProperty.description"
+        [data]="dialogData.pieceAuthProperty.description"></ap-markdown>
+    <form class="ap-pt-4 ap-flex ap-flex-col ap-gap-2 ap-max-w-[720px] ap-min-w-[420px]" [formGroup]="settingsForm"
+        (keyup.enter)="submit()" (submit)="submit()">
+        <app-connection-name-control [control]="settingsForm.controls['name'] | abstractFormControlCaster"></app-connection-name-control>
+        <ng-container *ngFor="let prop of dialogData.pieceAuthProperty.props |objectToArray">
+            <mat-form-field class="ap-w-full" appearance="outline"
+                *ngIf="prop.value.type === PropertyType.SECRET_TEXT || prop.value.type === PropertyType.SHORT_TEXT || prop.value.type === PropertyType.NUMBER ">
+                <mat-label>{{prop.value.displayName}} {{prop.value.required?'': '(Optional)'}}</mat-label>
+                <input [matTooltip]="prop.value.description||''" [formControlName]="prop.key" matInput
+                    [type]="prop.value.type === PropertyType.SECRET_TEXT? 'password':'text'" />
+                <mat-error *ngIf="settingsForm.get(prop.key)!.invalid">
+                    {{prop.value.displayName}} <span i18n>is required</span>
+                </mat-error>
+            </mat-form-field>
+            <mat-form-field class="ap-w-full" appearance="outline" *ngIf="prop.value.type === PropertyType.LONG_TEXT ">
+                <mat-label>{{prop.value.displayName}} {{prop.value.required?'': '(Optional)'}}</mat-label>
+                <textarea [matTooltip]="prop.value.description||''" [formControlName]="prop.key" matInput></textarea>
+                <mat-error *ngIf="settingsForm.get(prop.key)!.invalid">
+                    {{prop.value.displayName}} <span i18n>is required</span>
+                </mat-error>
+            </mat-form-field>
+            <ng-container *ngIf="prop.value.type === PropertyType.STATIC_DROPDOWN">
+                <mat-form-field class="ap-w-full" appearance="outline">
+                    <mat-label> {{prop.value.displayName}}</mat-label>
+                    <mat-select [formControlName]="prop.key" [matTooltip]="prop.value.description || ''"
+                        [compareWith]="dropdownCompareWithFunction">
+                        <mat-option *ngFor="let opt of prop.value.options!.options" [value]="opt.value">
+                            {{opt.label}}
+                        </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="settingsForm.controls[prop.key]!.invalid">
+                        {{prop.value.displayName}} <span i18n>is required</span>
+                    </mat-error>
+                </mat-form-field>
+            </ng-container>
+            <mat-checkbox *ngIf="prop.value.type === PropertyType.CHECKBOX" [formControlName]="prop.key" color="primary"
+                [matTooltip]="prop.value.description || ''">
+                {{ prop.value.displayName }}
+            </mat-checkbox>
+        </ng-container>
+        <mat-error *ngIf="settingsForm.getError('message')"
+            class="ap-text-left">{{settingsForm.getError('message')}}</mat-error>
+        <mat-error *ngIf="settingsForm.getError('diagnostic')" class="ap-text-left">
+            <span i18n>Unexpected error occurred, <span
+                    (click)="openDiagnosticDialog(settingsForm.getError('diagnostic'))"
+                    class="ap-cursor-pointer ap-text-blue-500 ap-underline">Report Issue</span></span>
+        </mat-error>
+    </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" i18n>
+            Cancel
+        </ap-button>
+        <ap-button cdkFocusInitial btnSize="default" (click)="submit()" btnColor="primary" type="submit"
+            [loading]="loading" i18n>
+            Save
+        </ap-button>
+    </div>
+</mat-dialog-actions>
+<ng-container *ngIf="upsert$|async"></ng-container>
