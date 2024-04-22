@@ -8,7 +8,7 @@
   <div cdkDropList [cdkDropListData]="formArray.controls" (cdkDropListDropped)="drop($event)">
     @for (objectControl of formArray.controls; track objectControl; let idx =
     $index; let isFirst = $first; let isLast = $last) {
-    <div cdkDrag class="ap-mb-4">
+    <div class="ap-mb-4">
       <app-array-form-control-text-item [class.ap-mb-4]="!isLast" [idx]="idx" [formControl]="getFormControlAtIndex(idx)"
         (removeValue)="remove($event)"></app-array-form-control-text-item>
     </div>

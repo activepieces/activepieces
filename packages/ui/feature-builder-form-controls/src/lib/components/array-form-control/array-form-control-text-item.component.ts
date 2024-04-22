@@ -4,8 +4,10 @@ import { FormControl } from '@angular/forms';
 @Component({
   selector: 'app-array-form-control-text-item',
   template: `
-    <div class="ap-flex ap-gap-1 ap-justify-between ap-items-center">
-      <mat-icon matTooltip="Drag to move">drag_indicator</mat-icon>
+    <div class="ap-flex ap-gap-1 ap-justify-between ap-items-center" cdkDrag>
+      <mat-icon matTooltip="Drag to move" cdkDragHandle
+        >drag_indicator</mat-icon
+      >
       <div class="ap-flex-grow" #interpolatingTextControlContainer>
         <mat-form-field
           apTrackHover
