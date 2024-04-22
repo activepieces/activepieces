@@ -21,29 +21,34 @@
       *ngIf="!(isLast && disabled && idx > 0)"
       [formGroup]="getPair(idx)"
     >
-      <div class="delete-btn-container">
-        <ap-icon-button
-          [width]="9"
-          [height]="9"
-          iconFilename="delete.svg"
-          *ngIf="pairs.enabled"
-          [tooltipText]="
+      <div class="delete-btn-container" >
+        <div
+          class="ap-flex ap-items-center ap-justify-center ap-h-[30px] ap-w-[30px] ap-cursor-pointer delete-btn ap-z-40 ap-transition "
+          apTrackHover
+          #deleteButton="hoverTrackerDirective"
+          [matTooltip]="
             !deleteButton.isHovered &&
             !keyInput.isHovered &&
             !valueInput.isHovered
               ? ''
-              : 'Remove Item'
+              : removeItemTooltip
           "
-          class="delete-btn ap-z-40"
-          [class.opacity-0]="
-            !deleteButton.isHovered &&
-            !keyInput.isHovered &&
-            !valueInput.isHovered
-          "
-          apTrackHover
-          #deleteButton="hoverTrackerDirective"
+           [class.opacity-0]="
+           !deleteButton.isHovered &&
+           !keyInput.isHovered &&
+           !valueInput.isHovered
+         "
           (click)="removePair(idx)"
-        ></ap-icon-button>
+        >
+          <svg-icon
+            src="assets/img/custom/close.svg"
+            class="ap-w-[15px] ap-h-[15px] "
+            [applyClass]="true"
+          >
+          </svg-icon>
+        </div>
+
+   
       </div>
 
       <input

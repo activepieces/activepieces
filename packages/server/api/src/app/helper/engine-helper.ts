@@ -7,8 +7,6 @@ import {
     getPiecePackage,
     pieceMetadataService,
 } from '../pieces/piece-metadata-service'
-import { SandBoxCacheType } from '../workers/sandbox/provisioner/sandbox-cache-key'
-import { sandboxProvisioner } from '../workers/sandbox/provisioner/sandbox-provisioner'
 import { hashObject } from './encryption'
 import { getServerUrl } from './network-utils'
 import { getEdition, getWebhookSecret } from './secret-helper'
@@ -49,7 +47,7 @@ import {
     ResumeExecuteFlowOperation,
     TriggerHookType,
 } from '@activepieces/shared'
-import { Sandbox } from 'server-worker'
+import { Sandbox, SandBoxCacheType, sandboxProvisioner } from 'server-worker'
 
 type GenerateWorkerTokenParams = {
     projectId: ProjectId
@@ -62,8 +60,8 @@ export type EngineHelperTriggerResult<
 > = ExecuteTriggerResponse<T>
 
 export type EngineHelperPropResult =
-  | DropdownState<unknown>
-  | Record<string, DynamicPropsValue>
+    | DropdownState<unknown>
+    | Record<string, DynamicPropsValue>
 
 export type EngineHelperActionResult = ExecuteActionResponse
 
@@ -73,13 +71,13 @@ export type EngineHelperCodeResult = ExecuteActionResponse
 export type EngineHelperExtractPieceInformation = PieceMetadata
 
 export type EngineHelperResult =
-  | EngineHelperFlowResult
-  | EngineHelperTriggerResult
-  | EngineHelperPropResult
-  | EngineHelperCodeResult
-  | EngineHelperExtractPieceInformation
-  | EngineHelperActionResult
-  | EngineHelperValidateAuthResult
+    | EngineHelperFlowResult
+    | EngineHelperTriggerResult
+    | EngineHelperPropResult
+    | EngineHelperCodeResult
+    | EngineHelperExtractPieceInformation
+    | EngineHelperActionResult
+    | EngineHelperValidateAuthResult
 
 export type EngineHelperResponse<Result extends EngineHelperResult> = {
     status: EngineResponseStatus
@@ -285,14 +283,9 @@ export const engineHelper = {
     ): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
         logger.debug({ operation }, '[EngineHelper#extractPieceMetadata]')
 
-        const { pieceName, pieceVersion } = operation
-        const piece = operation
-
         const sandbox = await sandboxProvisioner.provision({
-            type: SandBoxCacheType.PIECE,
-            pieceName,
-            pieceVersion,
-            pieces: [piece],
+            type: SandBoxCacheType.NONE,
+            pieces: [operation],
         })
 
         return execute(
@@ -314,8 +307,8 @@ export const engineHelper = {
         )
         const lockedFlowVersion = await lockPieceAction(operation)
         const step = flowHelper.getStep(lockedFlowVersion, operation.stepName) as
-      | Action
-      | undefined
+            | Action
+            | undefined
         assertNotNullOrUndefined(step, 'Step not found')
         const sandbox = await getSandboxForAction(
             operation.projectId,
@@ -428,7 +421,7 @@ async function getSandboxForAction(
     switch (action.type) {
         case ActionType.PIECE: {
             const { packageType, pieceType, pieceName, pieceVersion } =
-        action.settings
+                action.settings
             const piece = {
                 packageType,
                 pieceType,
