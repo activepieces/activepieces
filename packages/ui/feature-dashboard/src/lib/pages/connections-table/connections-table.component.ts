@@ -14,6 +14,8 @@ import {
   startWith,
   combineLatest,
   distinctUntilChanged,
+  BehaviorSubject,
+  debounceTime,
 } from 'rxjs';
 import {
   AppConnection,
@@ -58,6 +60,11 @@ export class ConnectionsTableComponent implements OnInit {
     null
   );
   pieceNameFilterControl: FormControl<string | null> = new FormControl(null);
+  pieces$: Observable<PieceMetadataModelSummary[]>;
+  allPieces: BehaviorSubject<string[] | undefined> = new BehaviorSubject<string[] | undefined>(undefined);
+  searchControl: FormControl<string> = new FormControl<string>('', {
+    nonNullable: true
+  });
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
@@ -65,6 +72,10 @@ export class ConnectionsTableComponent implements OnInit {
     private connectionService: AppConnectionsService,
     private dialogService: MatDialog
   ) {
+    this.searchControl.valueChanges.pipe(
+      debounceTime(800),
+      distinctUntilChanged()
+    )
     this.connectionNameFilterControl.setValue(
       this.activatedRoute.snapshot.queryParamMap.get(
         CONNECTION_NAME_QUERY_PARAM
@@ -73,6 +84,11 @@ export class ConnectionsTableComponent implements OnInit {
     this.pieceNameFilterControl.setValue(
       this.activatedRoute.snapshot.queryParamMap.get(PIECE_NAME_QUERY_PARAM)
     );
+    this.pieces$ = this.pieceMetadataService.listPieces({
+      includeHidden: true
+    }).pipe(tap(pieces => {
+      this.allPieces.next(pieces.map(piece => piece.name));
+    }))
   }
 
   ngOnInit(): void {
@@ -88,7 +104,7 @@ export class ConnectionsTableComponent implements OnInit {
       tap((result) => {
         this.router.navigate(['connections'], {
           queryParams: {
-            connectionName: result.connectionName,
+            name: result.connectionName,
             pieceName: result.pieceName,
           },
           queryParamsHandling: 'merge',
