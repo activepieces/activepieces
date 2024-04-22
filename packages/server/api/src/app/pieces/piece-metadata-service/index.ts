@@ -14,6 +14,9 @@ import {
     SuggestionType,
 } from '@activepieces/shared'
 
+const pieceSource = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
+
+
 const initPieceMetadataService = (): PieceMetadataService => {
     const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
     switch (source) {
@@ -31,13 +34,13 @@ export const getPiecePackage = async (
     projectId: string,
     pkg: Omit<PublicPiecePackage, 'directoryPath'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>,
 ): Promise<PiecePackage> => {
-    const pieceMetadata = await pieceMetadataService.getOrThrow({
-        name: pkg.pieceName,
-        version: pkg.pieceVersion,
-        projectId,
-    })
     switch (pkg.packageType) {
         case PackageType.ARCHIVE: {
+            const pieceMetadata = await pieceMetadataService.getOrThrow({
+                name: pkg.pieceName,
+                version: pkg.pieceVersion,
+                projectId,
+            })
             const archiveFile = await fileService.getOneOrThrow({
                 fileId: pieceMetadata.archiveId!,
             })
@@ -51,12 +54,27 @@ export const getPiecePackage = async (
             }
         }
         case PackageType.REGISTRY: {
+            const directoryPath = await getDirectoryPath(projectId, pkg)
             return {
                 ...pkg,
-                directoryPath: pieceMetadata.directoryPath,
+                directoryPath,
             }
         }
     }
+}
+
+
+async function getDirectoryPath(projectId: string,
+    pkg: Omit<PublicPiecePackage, 'directoryPath'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>): Promise<string | undefined> {
+    if (pieceSource !== PiecesSource.FILE) {
+        return undefined
+    }
+    const pieceMetadata = await pieceMetadataService.getOrThrow({
+        name: pkg.pieceName,
+        version: pkg.pieceVersion,
+        projectId,
+    })
+    return pieceMetadata.directoryPath
 }
 
 export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | PieceMetadataModel>(
@@ -73,7 +91,7 @@ export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | Piec
             triggers: Object.keys(originalMetadata.triggers).length,
             suggestedActions: suggestionType === SuggestionType.ACTION || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
                 Object.values(pieceMetadataEntity.actions) : undefined,
-            suggestedTriggers: suggestionType === SuggestionType.TRIGGER  || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
+            suggestedTriggers: suggestionType === SuggestionType.TRIGGER || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
                 Object.values(pieceMetadataEntity.triggers) : undefined,
         }
     })

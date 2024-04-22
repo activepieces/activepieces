@@ -1,6 +1,5 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
 import { fileExists, packageManager } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
@@ -8,6 +7,7 @@ import {
     PiecePackage,
     PrivatePiecePackage,
 } from '@activepieces/shared'
+import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
 
 export class RegistryPieceManager extends PieceManager {
     protected override async installDependencies({
