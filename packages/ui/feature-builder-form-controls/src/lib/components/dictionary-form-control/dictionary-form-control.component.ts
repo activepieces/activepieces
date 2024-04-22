@@ -29,6 +29,7 @@ export class DictionaryFormControlComponent
   extends ControlThatUsesMentionsCoreComponent
   implements ControlValueAccessor, OnInit
 {
+  removeItemTooltip = $localize`Remove item`;
   @Input() propertyDisplayName = '';
   form!: UntypedFormGroup;
   disabled = false;
@@ -96,6 +97,10 @@ export class DictionaryFormControlComponent
   removePair(indexOfPair: number) {
     if (this.pairs.length > 1) {
       this.pairs.removeAt(indexOfPair);
+      this.onChange(this.formatControlValue());
+    } else {
+      this.pairs.at(indexOfPair).get('key')?.setValue('');
+      this.pairs.at(indexOfPair).get('value')?.setValue('');
       this.onChange(this.formatControlValue());
     }
   }

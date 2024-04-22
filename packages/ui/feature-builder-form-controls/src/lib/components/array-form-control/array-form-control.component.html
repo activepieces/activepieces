@@ -5,23 +5,25 @@
     </div>
     <ng-container *ngTemplateOutlet="dynamicInputTemplate"></ng-container>
   </div>
-  <div cdkDropList [cdkDropListData]="formArray.controls" (cdkDropListDropped)="drop($event)">
+  <div cdkDropList [cdkDropListData]="formArray.controls" (cdkDropListDropped)="drop($event)" class="drag-list" > 
     @for (objectControl of formArray.controls; track objectControl; let idx =
     $index; let isFirst = $first; let isLast = $last) {
-    <div class="ap-mb-4">
-      <app-array-form-control-text-item [class.ap-mb-4]="!isLast" [idx]="idx" [formControl]="getFormControlAtIndex(idx)"
+    <div class="ap-mb-4" >
+      <app-array-form-control-text-item [class.ap-mb-4]="!isLast" [idx]="idx" [control]="formArray.controls[idx] | abstractFormControlCaster"
+        [hideTooltip]="isAnItemBeingDragged" (itemDragStateChanged)="isAnItemBeingDragged = $event"
         (removeValue)="remove($event)"></app-array-form-control-text-item>
     </div>
     } @empty {
     <div class="ap-border-dashed ap-border-2 ap-border-gray-500 ap-rounded ap-p-3 ap-text-center">
       The list is empty
     </div>
-    } @if (formArray.enabled) {
+    } 
+  </div>
+  @if (formArray.enabled) {
     <ap-button btnColor="primary" btnStyle="basic" (buttonClicked)="addValue()" type="button" btnSize="medium">
       + Add Item
     </ap-button>
     }
-  </div>
   <div class="ap-flex-grow" #spacer></div>
 </div>
 @if (updateValueOnChange$ | async) {}
