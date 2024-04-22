@@ -52,7 +52,7 @@ export const flowFolderService = {
                 params: { message: 'Folder displayName is used' },
             })
         }
-        await folderRepo.update(folderId, {
+        await folderRepo.update(folder.id, {
             displayName: request.displayName,
         })
         return this.getOneOrThrow({ projectId, folderId })
