@@ -51,7 +51,7 @@ export const uploadFile = createAction({
     };
     const response = await httpClient.sendRequest(request);
     if (!response.body.ok) {
-        throw new Error(response.body.error)
+      throw new Error(response.body.error)
     }
     return response.body;
   },
