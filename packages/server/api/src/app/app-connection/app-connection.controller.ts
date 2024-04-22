@@ -44,23 +44,21 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
     '/',
     ListAppConnectionsRequest,
     async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
-      const { connectionName, pieceName, cursor, limit } = request.query;
+      const { name, pieceName, cursor, limit } = request.query;
 
       const appConnections = await appConnectionService.list({
-        connectionName,
         pieceName,
+        name,
         projectId: request.principal.projectId,
-        pieceName,
-        name: request.query.name,
         cursorRequest: cursor ?? null,
         limit: limit ?? DEFAULT_PAGE_SIZE,
       });
 
       const appConnectionsWithoutSensitiveData: SeekPage<AppConnectionWithoutSensitiveData> =
-        {
-          ...appConnections,
-          data: appConnections.data.map(removeSensitiveData),
-        };
+      {
+        ...appConnections,
+        data: appConnections.data.map(removeSensitiveData),
+      };
 
       return appConnectionsWithoutSensitiveData;
     }

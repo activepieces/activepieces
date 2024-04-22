@@ -94,8 +94,8 @@ export class AppConnectionsService {
     if (params.limit) {
       queryParams[LIMIT_QUERY_PARAM] = params.limit;
     }
-    if (params.connectionName) {
-      queryParams['connectionName'] = params.connectionName;
+    if (params.name) {
+      queryParams['name'] = params.name;
     }
     if (params.pieceName) {
       queryParams['pieceName'] = params.pieceName;

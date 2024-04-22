@@ -144,7 +144,6 @@ export const appConnectionService = {
 
     async list({
         projectId,
-        connectionName,
         pieceName,
         cursorRequest,
         name,
@@ -168,11 +167,8 @@ export const appConnectionService = {
         if (!isNil(pieceName)) {
             querySelector.pieceName = ILike(`%${pieceName}%`)
         }
-        if (!isNil(connectionName)) {
-            querySelector.name = ILike(`%${connectionName}%`)
-        }
         if (!isNil(name)) {
-            querySelector.name = name
+            querySelector.name = ILike(`%${name}%`)
         }
         const queryBuilder = repo
             .createQueryBuilder('app_connection')
@@ -464,7 +460,6 @@ type DeleteParams = {
 type ListParams = {
     projectId: ProjectId
     pieceName: string | undefined
-    connectionName: string | undefined
     cursorRequest: Cursor | null
     name: string | undefined
     limit: number
