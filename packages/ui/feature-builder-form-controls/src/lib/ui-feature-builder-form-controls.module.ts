@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections';
 import { ArrayFormControlComponent } from './components/array-form-control/array-form-control.component';
+import { ArrayFormControlTextItemComponent } from './components/array-form-control/array-form-control-text-item.component';
 import { BranchConditionFormControlComponent } from './components/branch-condition-form-control/branch-condition-form-control.component';
 import { BranchConditionsGroupFormControlComponent } from './components/branch-conditions-group-form-control/branch-conditions-group-form-control.component';
 import { CodeArtifactFormControlComponent } from './components/code-artifact-form-control/code-artifact-form-control.component';
@@ -86,6 +87,7 @@ const exportedDeclarations = [
   ],
   declarations: [
     ...exportedDeclarations,
+    ArrayFormControlTextItemComponent,
     AddNpmPackageModalComponent,
     CodeArtifactControlFullscreenComponent,
     MentionsListComponent,
