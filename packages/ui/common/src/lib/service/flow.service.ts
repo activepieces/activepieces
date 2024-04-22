@@ -26,13 +26,15 @@ import {
   TestFlowRunRequestBody,
 } from '@activepieces/shared';
 import { AuthenticationService } from './authentication.service';
+import { NavigationService } from './navigation.service';
 @Injectable({
   providedIn: 'root',
 })
 export class FlowService {
   constructor(
     private http: HttpClient,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private navigationService: NavigationService
   ) {}
   create(request: CreateFlowRequest): Observable<PopulatedFlow> {
     return this.http.post<PopulatedFlow>(environment.apiUrl + '/flows', {
@@ -92,7 +94,10 @@ export class FlowService {
                 },
               }).pipe(
                 tap((clonedFlow: PopulatedFlow) => {
-                  window.open(`/flows/${clonedFlow.id}`, '_blank', 'noopener');
+                  this.navigationService.navigate({
+                    route: [`/flows/${clonedFlow.id}`],
+                    openInNewWindow: true,
+                  });
                 })
               );
             }),
