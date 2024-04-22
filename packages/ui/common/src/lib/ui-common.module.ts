@@ -78,6 +78,7 @@ import { ApMarkdownComponent } from './components';
 import { CommaSeparatedPipe } from './pipe/comma-separated.pipe';
 import { MARKED_OPTIONS, MarkdownModule, MarkedRenderer } from 'ngx-markdown';
 import { AbstractFormControlCasterPipe } from './pipe/abstract-form-control-caster.pipe';
+import { VersionHistoryIndicatorComponent } from './components/ap-version-status-indicator/ap-version-history-indicator.component';
 
 const exportedImports = [
   CommonModule,
@@ -112,6 +113,7 @@ const exportedImports = [
   CheckOverflowDirective,
   ControlDescriptionComponent,
   AbstractFormControlCasterPipe,
+  VersionHistoryIndicatorComponent,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,
