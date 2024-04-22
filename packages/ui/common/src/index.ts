@@ -5,6 +5,7 @@ export * from './lib/animation/fade-in.animations';
 export * from './lib/validators';
 export * from './lib/components';
 export * from './lib/utils/utils';
+export * from './lib/utils/enums';
 export * from './lib/utils/tables.utils';
 export * from './lib/models/flow-item-details';
 export * from './lib/models/flow-run.interface';
