@@ -10,8 +10,7 @@
                             <div *ngIf="version.updatedByUser" class="ap-w-[20px] ap-h-[20px]">
                                 <ap-letter-icon [letter]="version.updatedByUser!.firstName[0]" [matTooltipPosition]='"above"' [matTooltip]="version.updatedByUser!.firstName + ' ' + version.updatedByUser!.lastName + ' (' + version.updatedByUser!.email + ')'"></ap-letter-icon>
                             </div>
-                            <div class="ap-text-body">{{version.created |date:'mediumDate'
-                            }}, {{version.created |date:'shortTime' }} </div>
+                            <div class="ap-text-body">{{version.created | insideBuilderDate }} </div>
                         </div>
                         
                         <div class="ap-mt-2">

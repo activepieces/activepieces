@@ -79,6 +79,7 @@ import { CommaSeparatedPipe } from './pipe/comma-separated.pipe';
 import { MARKED_OPTIONS, MarkdownModule, MarkedRenderer } from 'ngx-markdown';
 import { AbstractFormControlCasterPipe } from './pipe/abstract-form-control-caster.pipe';
 import { VersionHistoryIndicatorComponent } from './components/ap-version-status-indicator/ap-version-history-indicator.component';
+import { InsideBuilderDatePipe } from './pipe/inside-builder-date.pipe';
 
 const exportedImports = [
   CommonModule,
@@ -114,6 +115,7 @@ const exportedImports = [
   ControlDescriptionComponent,
   AbstractFormControlCasterPipe,
   VersionHistoryIndicatorComponent,
+  InsideBuilderDatePipe,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,

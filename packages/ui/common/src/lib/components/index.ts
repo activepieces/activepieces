@@ -21,3 +21,4 @@ export * from './upload-file-control/upload-file-control.component';
 export * from './page-title/page-title.component';
 export * from './powered-by-activepieces/powered-by-activepieces.component';
 export * from './dialogs/import-flow-dialog/import-flow-dialog.component';
+export * from './ap-version-status-indicator/ap-version-history-indicator.component';
