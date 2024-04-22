@@ -27,7 +27,7 @@
     <ng-container matColumnDef="created">
       <th mat-header-cell *matHeaderCellDef i18n>Created</th>
       <td mat-cell *matCellDef="let user">
-        {{ user.created | date : 'short' }}
+        {{ user.created | apDate : 'mdhm' }}
       </td>
     </ng-container>
     <ng-container matColumnDef="status">

@@ -1,0 +1,67 @@
+<ap-dialog-title-template>
+  <ng-container *ngIf="!dialogData.connectionToUpdate; else editConnectionHeader">
+    <span i18n>New {{dialogData.pieceDisplayName}} Connection</span>
+  </ng-container>
+  <ng-template #editConnectionHeader>
+    <span i18n>Edit</span> {{dialogData.connectionToUpdate!.name}}
+  </ng-template>
+</ap-dialog-title-template>
+
+<mat-dialog-content>
+
+  <form class="ap-flex ap-flex-col ap-gap-2 ap-min-w-[430px]" [formGroup]="settingsForm" (keyup.enter)="submit()"
+    (submit)="submit()">
+    <app-connection-name-control [control]="settingsForm.controls.name"></app-connection-name-control>
+    <div *ngIf="dialogData.pieceAuthProperty.props" [formGroup]="settingsForm.controls.props">
+      <ng-container *ngFor="let prop of dialogData.pieceAuthProperty.props |objectToArray">
+        <mat-form-field *ngIf="prop.value['type'] !== PropertyType.STATIC_DROPDOWN" class="ap-w-full"
+          appearance="outline">
+          <mat-label>{{prop.value.displayName}}</mat-label>
+          <input [matTooltip]="prop.value.description || ''" [formControlName]="prop.key" matInput type="text" />
+          <mat-error *ngIf="settingsForm.controls.props.controls[prop.key]!.invalid">
+            {{prop.value.displayName}} <span i18n>is required</span></mat-error>
+        </mat-form-field>
+        <ng-container *ngIf="prop.value['type'] === PropertyType.STATIC_DROPDOWN">
+          <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label> {{prop.value.displayName}}</mat-label>
+            <mat-select [formControlName]="prop.key" [matTooltip]="prop.value.description || ''"
+              [compareWith]="dropdownCompareWithFunction">
+              <mat-option *ngFor="let opt of castToStaticDropdown(prop.value).options.options" [value]="opt.value">
+                {{opt.label}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="settingsForm.controls.props.controls[prop.key]!.invalid">
+              {{prop.value.displayName}} <span i18n>is required</span>
+            </mat-error>
+          </mat-form-field>
+        </ng-container>
+      </ng-container>
+    </div>
+    <div>
+      <app-o-auth2-connect-control [popupParams]="cloudConnectionPopupSettings" formControlName="value"
+        [settingsValid]="true"></app-o-auth2-connect-control>
+      <p @fadeInUp class="ap-typography-caption ap-text-danger"
+        *ngIf="settingsForm.controls.value.invalid && settingsForm.controls.value.touched" i18n>
+        You have to connect an account to continue
+      </p>
+    </div>
+  </form>
+  <a class="ap-cursor-pointer ap-mt-2"
+    *ngIf="!dialogData.connectionToUpdate && !isTriggerAppWebhook && (ownAuthEnabled$ | async)" (click)="useOwnCred()"
+    i18n>I
+    would like
+    to use my own
+    app credentials </a>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" i18n>
+      Cancel
+    </ap-button>
+    <ap-button btnSize="default" (click)="submit()" btnColor="primary" type="submit" [loading]="loading" i18n>
+      Save
+    </ap-button>
+  </div>
+</mat-dialog-actions>
+<ng-container *ngIf="upsert$ |async"></ng-container>

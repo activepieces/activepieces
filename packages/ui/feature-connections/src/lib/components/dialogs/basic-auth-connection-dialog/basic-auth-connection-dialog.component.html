@@ -1,0 +1,54 @@
+<ap-dialog-title-template>
+    <ng-container *ngIf="!dialogData.connectionToUpdate; else editConnectionHeader">
+        <span i18n>New {{dialogData.pieceDisplayName}} Connection</span>
+    </ng-container>
+    <ng-template #editConnectionHeader>
+        <span i18n>Edit</span> {{dialogData.connectionToUpdate!.name}}
+    </ng-template>
+</ap-dialog-title-template>
+
+<mat-dialog-content>
+    <ap-markdown *ngIf="dialogData.pieceAuthProperty.description"
+        [data]="dialogData.pieceAuthProperty.description"></ap-markdown>
+    <form class="ap-pt-4 ap-flex ap-flex-col ap-gap-2 ap-max-w-[720px] ap-min-w-[420px]" [formGroup]="settingsForm"
+        (keyup.enter)="submit()" (submit)="submit()">
+        <app-connection-name-control [control]="settingsForm.controls.name" ></app-connection-name-control>
+
+        <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label>{{dialogData.pieceAuthProperty.username.displayName}}</mat-label>
+            <input [matTooltip]="dialogData.pieceAuthProperty.username.description || ''"
+                [formControl]="settingsForm.controls.username" matInput type="text" />
+            <mat-error *ngIf="settingsForm.controls.username.invalid">
+                {{dialogData.pieceAuthProperty.username.displayName}} <span i18n>is required</span>
+            </mat-error>
+        </mat-form-field>
+
+        <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label>{{dialogData.pieceAuthProperty.password.displayName}}</mat-label>
+            <input [matTooltip]="dialogData.pieceAuthProperty.password.description || ''"
+                [formControl]="settingsForm.controls.password" matInput type="password" />
+            <mat-error *ngIf="settingsForm.controls.password.invalid">
+                {{dialogData.pieceAuthProperty.password.displayName}} <span i18n>is required</span>
+            </mat-error>
+        </mat-form-field>
+        <mat-error *ngIf="settingsForm.getError('message')"
+            class="ap-text-left">{{settingsForm.getError('message')}}</mat-error>
+        <mat-error *ngIf="settingsForm.getError('diagnostic')" class="ap-text-left">
+            <span i18n>Unexpected error occurred, <span
+                    (click)="openDiagnosticDialog(settingsForm.getError('diagnostic'))"
+                    class="ap-cursor-pointer ap-text-blue-500 ap-underline">Report Issue</span></span>
+        </mat-error>
+    </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" i18n>
+            Cancel
+        </ap-button>
+        <ap-button btnSize="default" (click)="submit()" btnColor="primary" type="submit" [loading]="loading" i18n>
+            Save
+        </ap-button>
+    </div>
+</mat-dialog-actions>
+<ng-container *ngIf="upsert$ |async"></ng-container>

@@ -104,6 +104,7 @@ export const notionCommon = {
           if (
             [
               'rollup',
+              'button',
               'files',
               'verification',
               'formula',

@@ -142,9 +142,13 @@ export class FlowsTableComponent implements OnInit {
   }
 
   openBuilder(flow: PopulatedFlow, event: MouseEvent) {
-    const link = '/flows/' + flow.id;
-    const newWindow = event.ctrlKey || event.which == 2 || event.button == 4;
-    this.navigationService.navigate(link, newWindow);
+    const route = ['/flows/' + flow.id];
+    const openInNewWindow =
+      event.ctrlKey || event.which == 2 || event.button == 4;
+    this.navigationService.navigate({
+      route,
+      openInNewWindow,
+    });
   }
 
   deleteFlow(flow: PopulatedFlow) {
@@ -244,10 +248,9 @@ export class FlowsTableComponent implements OnInit {
   openRewardsDialog() {
     this.dialogService.open(RewardsDialogComponent);
     this.telemetryService.capture({
-      name: TelemetryEventName.REWARDS_BUTTON_CLICKED,
+      name: TelemetryEventName.REWARDS_OPENED,
       payload: {
-        email: this.authenticationService.currentUser.email,
-        userId: this.authenticationService.currentUser.id,
+        source: 'rewards-button',
       },
     });
   }

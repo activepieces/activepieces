@@ -50,8 +50,8 @@ describe('Custom Domain API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
 
-            expect(responseBody.domain).toBe(request.domain)
-            expect(responseBody.status).toBe(CustomDomainStatus.ACTIVE)
+            expect(responseBody.customDomain.domain).toBe(request.domain)
+            expect(responseBody.customDomain.status).toBe(CustomDomainStatus.ACTIVE)
         })
 
         it('should fail if user is not platform owner', async () => {

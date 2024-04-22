@@ -14,7 +14,7 @@ import {
   ProjectId,
   SeekPage,
 } from '@activepieces/shared';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import {
   combineLatest,
   distinctUntilChanged,
@@ -81,7 +81,6 @@ export class RunsTableComponent implements OnInit {
   retryFlow$?: Observable<void>;
   setInitialFilters$?: Observable<void>;
   constructor(
-    private router: Router,
     private activatedRoute: ActivatedRoute,
     private flagsService: FlagService,
     private projectService: ProjectService,
@@ -161,20 +160,28 @@ export class RunsTableComponent implements OnInit {
         const createdAfter = new Date(result.date.start);
         const createdBefore = new Date(result.date.end);
         createdBefore.setHours(23, 59, 59, 999);
-        this.router.navigate(['runs'], {
-          queryParams: {
-            flowId:
-              result.flowId === this.allOptionValue ? undefined : result.flowId,
-            status:
-              result.status === this.allOptionValue ? undefined : result.status,
-            createdAfter: result.date.start
-              ? createdAfter.toISOString()
-              : undefined,
-            createdBefore: result.date.end
-              ? createdBefore.toISOString()
-              : undefined,
+        this.navigationService.navigate({
+          route: ['runs'],
+          openInNewWindow: false,
+          extras: {
+            queryParams: {
+              flowId:
+                result.flowId === this.allOptionValue
+                  ? undefined
+                  : result.flowId,
+              status:
+                result.status === this.allOptionValue
+                  ? undefined
+                  : result.status,
+              createdAfter: result.date.start
+                ? createdAfter.toISOString()
+                : undefined,
+              createdBefore: result.date.end
+                ? createdBefore.toISOString()
+                : undefined,
+            },
+            queryParamsHandling: 'merge',
           },
-          queryParamsHandling: 'merge',
         });
       }),
       map(() => undefined)
@@ -214,9 +221,13 @@ export class RunsTableComponent implements OnInit {
   }
 
   openInstanceRun(run: FlowRun, event: MouseEvent) {
-    const route = '/runs/' + run.id;
-    const newWindow = event.ctrlKey || event.which == 2 || event.button == 4;
-    this.navigationService.navigate(route, newWindow);
+    const route = ['/runs/' + run.id];
+    const openInNewWindow =
+      event.ctrlKey || event.which == 2 || event.button == 4;
+    this.navigationService.navigate({
+      route: route,
+      openInNewWindow,
+    });
   }
 
   retryFlow(run: FlowRun, strategy: FlowRetryStrategy) {

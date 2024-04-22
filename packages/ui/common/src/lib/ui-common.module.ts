@@ -77,6 +77,7 @@ import { ApChipsListComponent } from './components/ap-chips-list/ap-chips-list.c
 import { ApMarkdownComponent } from './components';
 import { CommaSeparatedPipe } from './pipe/comma-separated.pipe';
 import { MARKED_OPTIONS, MarkdownModule, MarkedRenderer } from 'ngx-markdown';
+import { AbstractFormControlCasterPipe } from './pipe/abstract-form-control-caster.pipe';
 
 const exportedImports = [
   CommonModule,
@@ -110,6 +111,7 @@ const exportedImports = [
   MatPseudoCheckboxModule,
   CheckOverflowDirective,
   ControlDescriptionComponent,
+  AbstractFormControlCasterPipe,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,

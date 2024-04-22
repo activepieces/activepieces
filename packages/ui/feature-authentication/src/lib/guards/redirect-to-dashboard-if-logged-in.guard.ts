@@ -16,9 +16,9 @@ export class RedirectToDashboardIfLoggedIn {
     }
     if (this.auth.currentUser.projectRole) {
       const route = findHomePageRouteForRole(this.auth.currentUser.projectRole);
-      this.router.navigate([route]);
+      this.router.navigate([route], { skipLocationChange: true });
     } else {
-      this.router.navigate(['/flows']);
+      this.router.navigate(['/flows'], { skipLocationChange: true });
     }
     return false;
   }

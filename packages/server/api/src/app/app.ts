@@ -47,7 +47,6 @@ import { otpModule } from './ee/otp/otp-module'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterprise-piece-metadata-service-hooks'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
-import { platformPieceServiceHooks } from './ee/pieces/service/platform-piece-service-hooks'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { projectMemberModule } from './ee/project-members/project-member.module'
 import { platformProjectModule } from './ee/projects/platform-project-module'
@@ -75,7 +74,6 @@ import { systemJobsSchedule } from './helper/system-jobs'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
-import { pieceServiceHooks } from './pieces/piece-service/piece-service-hooks'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { platformModule } from './platform/platform.module'
 import { projectModule } from './project/project-module'
@@ -323,7 +321,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
             flowWorkerHooks.setHooks(platformWorkerHooks)
             flowRunHooks.setHooks(platformRunHooks)
-            pieceServiceHooks.set(platformPieceServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
@@ -352,7 +349,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                 service: platformOAuth2Service,
             })
             eventsHooks.set(auditLogService)
-            pieceServiceHooks.set(platformPieceServiceHooks)
             flowRunHooks.setHooks(platformRunHooks)
             flowWorkerHooks.setHooks(platformWorkerHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)

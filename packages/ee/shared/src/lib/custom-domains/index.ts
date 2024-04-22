@@ -17,7 +17,9 @@ export type CustomDomain = Static<typeof CustomDomain>;
 
 
 export const AddDomainRequest = Type.Object({
-    domain: Type.String(),
+    domain: Type.String({
+        pattern: '^(?!.*\\.example\\.com$)(?!.*\\.example\\.net$).*'        
+    })
 })
 
 export type AddDomainRequest = Static<typeof AddDomainRequest>;

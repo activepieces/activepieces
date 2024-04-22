@@ -15,6 +15,7 @@ import {
 import {
     apId,
     EngineResponseStatus,
+    PackageType,
     PlatformRole,
     PrincipalType,
     ProjectMemberRole,
@@ -65,6 +66,7 @@ describe('AppConnection API', () => {
             const mockPieceMetadata = createMockPieceMetadata({
                 projectId: mockProject.id,
                 platformId: mockPlatform.id,
+                packageType: PackageType.REGISTRY,
             })
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadata])
 

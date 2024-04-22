@@ -102,12 +102,12 @@ export const common = {
       );
     q.push(`trashed = false`);
     const response = await drive.files.list({
-      q: q.join(' and '),
+      q: q.concat("mimeType!='application/vnd.google-apps.folder'").join(' and '),
       fields: 'files(id, name, mimeType, webViewLink, kind)',
       orderBy: order ?? 'createdTime asc',
       supportsAllDrives: true,
       includeItemsFromAllDrives: search?.includeTeamDrive,
-    });
+    });    
 
     return response.data.files;
   },

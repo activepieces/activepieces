@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { DashboardContainerComponent } from './dashboard-container.component';
-import { UiCommonModule } from '@activepieces/ui/common';
+import { ApDatePipe, UiCommonModule } from '@activepieces/ui/common';
 import { SidenavRoutesListComponent } from './components/sidenav-routes-list/sidenav-routes-list.component';
 import { RunsTableComponent } from './pages/runs-table/runs-table.component';
 import { FlowsTableComponent } from './pages/flows-table/flows-table.component';
@@ -59,6 +59,7 @@ import { RewardsNoteComponent } from './components/rewards-note/rewards-note.com
     SyncProjectComponent,
     RewardsDialogComponent,
     RewardsNoteComponent,
+    ApDatePipe,
   ],
   declarations: [
     DashboardContainerComponent,
@@ -76,5 +77,6 @@ import { RewardsNoteComponent } from './components/rewards-note/rewards-note.com
     ActivityTableComponent,
     ContactSalesComponent,
   ],
+  providers: [DatePipe],
 })
 export class UiFeatureDashboardModule {}
