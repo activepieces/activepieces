@@ -27,6 +27,15 @@ export const linearCreateComment = createAction({
 
     const client = makeClient(auth as string);
     const result = await client.createComment(comment);
-    return result;
+    if (result.success) {
+      const createdComment = await result.comment;
+      return {
+        success: result.success,
+        lastSyncId: result.lastSyncId,
+        comment: createdComment,
+      };
+    } else {
+      throw new Error(`Unexpected error: ${result}`)
+    }
   },
 });

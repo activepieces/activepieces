@@ -3,6 +3,7 @@ import { linearAuth } from '../../..';
 import { props } from '../../common/props';
 import { makeClient } from '../../common/client';
 import { LinearDocument } from '@linear/sdk';
+
 export const linearUpdateIssue = createAction({
   auth: linearAuth,
   name: 'linear_update_issue',
@@ -36,6 +37,15 @@ export const linearUpdateIssue = createAction({
     };
     const client = makeClient(auth as string);
     const result = await client.updateIssue(issueId, issue);
-    return result;
+    if (result.success) {
+      const updatedIssue = await result.issue;
+      return {
+        success: result.success,
+        lastSyncId: result.lastSyncId,
+        issue: updatedIssue,
+      };
+    } else {
+      throw new Error(`Unexpected error: ${result}`)
+    }
   },
 });
