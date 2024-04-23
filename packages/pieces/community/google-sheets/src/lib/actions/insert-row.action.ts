@@ -58,6 +58,15 @@ export const insertRowAction = createAction({
         : ValueInputOption.USER_ENTERED,
       values: stringifyArray(formattedValues),
     });
-    return res.body;
+
+    //Split the updatedRange string to extract the row number
+    const updatedRangeParts = res.body.updates.updatedRange.split('!');
+    const updatedRowRange = updatedRangeParts[1];
+    const updatedRowNumber = parseInt(
+      updatedRowRange.split(':')[0].substring(1),
+      10
+    );
+
+    return { ...res.body, row: updatedRowNumber };
   },
 });
