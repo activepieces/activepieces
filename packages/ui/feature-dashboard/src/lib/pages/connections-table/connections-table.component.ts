@@ -61,9 +61,11 @@ export class ConnectionsTableComponent implements OnInit {
   );
   pieceNameFilterControl: FormControl<string | null> = new FormControl(null);
   pieces$: Observable<PieceMetadataModelSummary[]>;
-  allPieces: BehaviorSubject<string[] | undefined> = new BehaviorSubject<string[] | undefined>(undefined);
+  allPieces: BehaviorSubject<string[] | undefined> = new BehaviorSubject<
+    string[] | undefined
+  >(undefined);
   searchControl: FormControl<string> = new FormControl<string>('', {
-    nonNullable: true
+    nonNullable: true,
   });
   constructor(
     private router: Router,
@@ -72,10 +74,6 @@ export class ConnectionsTableComponent implements OnInit {
     private connectionService: AppConnectionsService,
     private dialogService: MatDialog
   ) {
-    this.searchControl.valueChanges.pipe(
-      debounceTime(800),
-      distinctUntilChanged()
-    )
     this.connectionNameFilterControl.setValue(
       this.activatedRoute.snapshot.queryParamMap.get(
         CONNECTION_NAME_QUERY_PARAM
@@ -84,11 +82,24 @@ export class ConnectionsTableComponent implements OnInit {
     this.pieceNameFilterControl.setValue(
       this.activatedRoute.snapshot.queryParamMap.get(PIECE_NAME_QUERY_PARAM)
     );
-    this.pieces$ = this.pieceMetadataService.listPieces({
-      includeHidden: true
-    }).pipe(tap(pieces => {
-      this.allPieces.next(pieces.map(piece => piece.name));
-    }))
+    const allPieces$ = this.pieceMetadataService.listPieces({
+      includeHidden: true,
+    });
+    this.pieces$ = combineLatest([
+      allPieces$,
+      this.searchControl.valueChanges.pipe(
+        startWith(''),
+        debounceTime(800),
+        distinctUntilChanged()
+      ),
+    ]).pipe(
+      map(([pieces, search]) => {
+        this.allPieces.next(pieces.map((piece) => piece.name));
+        return pieces.filter((piece) =>
+          piece.name.toLowerCase().includes(search.toLowerCase())
+        );
+      })
+    );
   }
 
   ngOnInit(): void {
