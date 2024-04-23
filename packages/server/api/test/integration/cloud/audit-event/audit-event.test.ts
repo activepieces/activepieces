@@ -8,7 +8,6 @@ import {
     createMockPlatform,
     createMockProject,
     createMockUser,
-    mockBasicSetup,
 } from '../../../helpers/mocks'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 
@@ -28,27 +27,47 @@ describe('Audit Event API', () => {
     describe('List Audit event API', () => {
         it('should list audit events', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
-            const { mockOwner: mockUserTwo, mockPlatform: mockPlatformTwo } = await mockBasicSetup()
+            const mockUser1 = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser1)
 
-
-            await databaseConnection.getRepository('platform').update(mockPlatformOne.id, {
+            const mockPlatform1 = createMockPlatform({
+                ownerId: mockUser1.id,
                 auditLogEnabled: true,
             })
+            await databaseConnection.getRepository('platform').save(mockPlatform1)
+
+            const mockProject1 = createMockProject({
+                platformId: mockPlatform1.id,
+                ownerId: mockUser1.id,
+            })
+            await databaseConnection.getRepository('project').save(mockProject1)
+
+            const mockUser2 = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser2)
+
+            const mockPlatform2 = createMockPlatform({ ownerId: mockUser2.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform2)
+
+            const mockProject2 = createMockProject({
+                platformId: mockPlatform2.id,
+                ownerId: mockUser2.id,
+            })
+            await databaseConnection.getRepository('project').save(mockProject2)
+
             const testToken1 = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
+                id: mockUser1.id,
+                platform: { id: mockPlatform1.id, role: PlatformRole.OWNER },
             })
 
             const mockAuditEvents1 = [
                 createAuditEvent({
-                    platformId: mockPlatformOne.id,
-                    userId: mockUserOne.id,
+                    platformId: mockPlatform1.id,
+                    userId: mockUser1.id,
                 }),
                 createAuditEvent({
-                    platformId: mockPlatformOne.id,
-                    userId: mockUserOne.id,
+                    platformId: mockPlatform1.id,
+                    userId: mockUser1.id,
                 }),
             ]
             await databaseConnection
@@ -57,12 +76,12 @@ describe('Audit Event API', () => {
 
             const mockAuditEvents2 = [
                 createAuditEvent({
-                    platformId: mockPlatformTwo.id,
-                    userId: mockUserTwo.id,
+                    platformId: mockPlatform2.id,
+                    userId: mockUser2.id,
                 }),
                 createAuditEvent({
-                    platformId: mockPlatformTwo.id,
-                    userId: mockUserTwo.id,
+                    platformId: mockPlatform2.id,
+                    userId: mockUser2.id,
                 }),
             ]
             await databaseConnection
@@ -93,7 +112,7 @@ describe('Audit Event API', () => {
 
         it('should return forbidden if the user is not the owner', async () => {
             // arrange
-            const mockUser1 = createMockUser({ platformRole: PlatformRole.ADMIN })
+            const mockUser1 = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser1)
 
             const mockPlatform1 = createMockPlatform({ ownerId: mockUser1.id })
@@ -108,7 +127,7 @@ describe('Audit Event API', () => {
             const testToken1 = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser1.id,
-                platform: { id: mockPlatform1.id },
+                platform: { id: mockPlatform1.id, role: PlatformRole.MEMBER },
             })
 
             // act

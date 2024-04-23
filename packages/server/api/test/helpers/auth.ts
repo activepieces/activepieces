@@ -5,7 +5,7 @@ import {
     ExternalTokenPayload,
 } from '../../src/app/ee/managed-authn/lib/external-token-extractor'
 import { SigningKeyId } from '@activepieces/ee-shared'
-import { apId, Principal, PrincipalType, ProjectMemberRole } from '@activepieces/shared'
+import { apId, PlatformRole, Principal, PrincipalType, ProjectMemberRole } from '@activepieces/shared'
 
 const generateToken = ({
     payload,
@@ -33,6 +33,7 @@ export const generateMockToken = async (
         projectId: principal?.projectId ?? apId(),
         platform: principal?.platform ?? {
             id: apId(),
+            role: faker.helpers.enumValue(PlatformRole),
         },
     }
 

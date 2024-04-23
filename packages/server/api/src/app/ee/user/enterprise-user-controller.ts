@@ -3,7 +3,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { userService } from '../user-service'
+import { enterpriseUserService } from './enterprise-user-service'
 import { UpdateUserRequestBody } from '@activepieces/ee-shared'
 import {
     ApId,
@@ -14,12 +14,12 @@ import {
     UserResponse,
 } from '@activepieces/shared'
 
-export const platformUserController: FastifyPluginAsyncTypebox = async (app) => {
+export const enterpriseUserController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListUsersRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
-        return userService.list({
+        return enterpriseUserService.list({
             platformId,
         })
     })
@@ -28,10 +28,9 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
-        return userService.update({
+        return enterpriseUserService.update({
             id: req.params.id,
             platformId,
-            platformRole: req.body.platformRole,
             status: req.body.status,
         })
     })
@@ -40,7 +39,7 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
-        await userService.delete({
+        await enterpriseUserService.delete({
             id: req.params.id,
             platformId,
         })

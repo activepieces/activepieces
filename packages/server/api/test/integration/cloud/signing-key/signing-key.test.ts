@@ -8,7 +8,6 @@ import {
     createMockPlatform,
     createMockSigningKey,
     createMockUser,
-    mockBasicSetup,
 } from '../../../helpers/mocks'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 
@@ -28,12 +27,16 @@ describe('Signing Key API', () => {
     describe('Add Signing Key API', () => {
         it('Creates new Signing Key', async () => {
             // arrange
-            const { mockPlatform, mockOwner } = await mockBasicSetup()
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
+                id: mockUser.id,
+                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
             })
 
             const mockSigningKeyName = faker.lorem.word()
@@ -62,9 +65,7 @@ describe('Signing Key API', () => {
 
         it('Fails if user is not platform owner', async () => {
             // arrange
-            const mockUser = createMockUser({
-                platformRole: PlatformRole.MEMBER,
-            })
+            const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save([mockUser])
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
@@ -81,7 +82,7 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                platform: { id: mockPlatform.id },
+                platform: { id: mockPlatform.id, role: PlatformRole.MEMBER },
             })
 
             const mockSigningKeyName = faker.lorem.word()
@@ -104,9 +105,12 @@ describe('Signing Key API', () => {
     describe('Get Signing Key endpoint', () => {
         it('Finds a Signing Key by id', async () => {
             // arrange
-            const { mockPlatform, mockOwner } = await mockBasicSetup(
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
 
-            )
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
@@ -117,8 +121,8 @@ describe('Signing Key API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
+                id: mockUser.id,
+                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
             })
 
             // act
@@ -145,9 +149,7 @@ describe('Signing Key API', () => {
         it('Fail if non owner', async () => {
             // arrange
             const mockUser = createMockUser()
-            const mockUserTwo = createMockUser({
-                platformRole: PlatformRole.ADMIN,
-            })
+            const mockUserTwo = createMockUser()
             await databaseConnection
                 .getRepository('user')
                 .save([mockUser, mockUserTwo])
@@ -169,7 +171,7 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserTwo.id,
-                platform: { id: mockPlatformTwo.id },
+                platform: { id: mockPlatformTwo.id, role: PlatformRole.OWNER },
             })
 
             // act
@@ -182,16 +184,24 @@ describe('Signing Key API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
     })
 
     describe('List Signing Keys endpoint', () => {
         it('Filters Signing Keys by platform', async () => {
-   
-            const { mockPlatform: mockPlatformTwo } = await mockBasicSetup()
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            // arrange
+            const mockUserOne = createMockUser()
+            const mockUserTwo = createMockUser()
+            await databaseConnection
+                .getRepository('user')
+                .save([mockUserOne, mockUserTwo])
 
+            const mockPlatformOne = createMockPlatform({ ownerId: mockUserOne.id })
+            const mockPlatformTwo = createMockPlatform({ ownerId: mockUserTwo.id })
+            await databaseConnection
+                .getRepository('platform')
+                .save([mockPlatformOne, mockPlatformTwo])
 
             const mockSigningKeyOne = createMockSigningKey({
                 platformId: mockPlatformOne.id,
@@ -208,7 +218,7 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
+                platform: { id: mockPlatformOne.id, role: PlatformRole.OWNER },
             })
             // act
             const response = await app?.inject({

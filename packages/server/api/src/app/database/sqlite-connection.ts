@@ -39,7 +39,6 @@ import { AddMissingInputUiInfoSqlite1711412511624 } from './migration/sqlite/171
 import { AddProjectUsageColumnToPieceSqlite1711768479150 } from './migration/sqlite/1711768479150-AddProjectUsageColumnToPieceSqlite'
 import { AddTagsToPiecesSqlite1712180673961 } from './migration/sqlite/1712180673961-AddTagsToPiecesSqlite'
 import { RemoveUniqueEmailOnUser1713222892743 } from './migration/sqlite/1713222892743-RemoveUniqueEmailOnUser'
-import { AddPlatformRole1713271221154 } from './migration/sqlite/1713271221154-AddPlatformRole'
 import { AddUniqueNameToFolderSqlite1713645171373 } from './migration/sqlite/1713645171373-AddUniqueNameToFolderSqlite'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
@@ -102,7 +101,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddProjectUsageColumnToPieceSqlite1711768479150,
         AddTagsToPiecesSqlite1712180673961,
         RemoveUniqueEmailOnUser1713222892743,
-        AddPlatformRole1713271221154,
         AddUniqueNameToFolderSqlite1713645171373,
     ]
     const edition = getEdition()

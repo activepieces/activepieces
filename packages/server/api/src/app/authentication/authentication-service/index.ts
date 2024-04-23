@@ -14,7 +14,6 @@ import {
     AuthenticationResponse,
     ErrorCode,
     isNil,
-    PlatformRole,
     Project,
     TelemetryEventName,
     User,
@@ -145,7 +144,6 @@ const createUser = async (params: SignUpParams): Promise<User> => {
     try {
         const newUser: NewUser = {
             email: params.email,
-            platformRole: PlatformRole.MEMBER,
             verified: params.verified,
             status: UserStatus.ACTIVE,
             firstName: params.firstName,

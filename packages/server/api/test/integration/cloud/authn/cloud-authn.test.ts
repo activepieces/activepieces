@@ -606,6 +606,7 @@ describe('Authentication API', () => {
 
             const decodedToken = decodeToken(responseBody?.token)
             expect(decodedToken?.platform?.id).toBe(mockPlatformId)
+            expect(decodedToken?.platform?.role).toBe('OWNER')
         })
 
         it('Fails to sign in platform users if no project exists', async () => {

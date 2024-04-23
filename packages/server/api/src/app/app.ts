@@ -53,6 +53,7 @@ import { platformProjectModule } from './ee/projects/platform-project-module'
 import { referralModule } from './ee/referrals/referral.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
+import { enterpriseUserModule } from './ee/user/enterprise-user-module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
@@ -79,7 +80,6 @@ import { platformModule } from './platform/platform.module'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tagsModule } from './tags/tags-module'
-import { platformUserModule } from './user/platform/platform-user-module'
 import { userModule } from './user/user.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
@@ -251,7 +251,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(tagsModule)
     await pieceSyncService.setup()
     await app.register(flowWorkerModule)
-    await app.register(platformUserModule)
     await setupBullMQBoard(app)
 
     app.get(
@@ -306,6 +305,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
+            await app.register(enterpriseUserModule)
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
@@ -339,6 +339,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
+            await app.register(enterpriseUserModule)
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
