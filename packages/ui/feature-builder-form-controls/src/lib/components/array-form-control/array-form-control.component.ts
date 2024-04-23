@@ -57,6 +57,7 @@ export class ArrayFormControlComponent
   @Input({ required: true }) webhookPrefix: string;
   @Input({ required: true }) formPieceTriggerPrefix: string;
   @Input({ required: true }) input: Record<string, any> = {};
+  removeItemTooltip = $localize`Remove item`;
   isAnItemBeingDragged = false;
   updateValueOnChange$: Observable<void> = new Observable<void>();
   createForm(propertiesValues: Record<string, unknown> | string) {
@@ -168,9 +169,6 @@ export class ArrayFormControlComponent
     this.firstInput.focusEditor();
   }
 
-  getFormControlGroupAtIndex(c: any): FormControl {
-    return c as any;
-  }
   validate() {
     if (this.formArray.invalid) {
       return { invalid: true };
