@@ -4,7 +4,7 @@ import {
   Validators,
 } from '@activepieces/pieces-framework';
 import {
-  getGoogleSheetRows,
+  getAllGoogleSheetRows,
   googleSheetsCommon,
   labelToColumn,
 } from '../common/common';
@@ -43,56 +43,57 @@ export const findRowsAction = createAction({
     numberOfRows: Property.Number({
       displayName: 'Number of Rows',
       description:
-        'The number of rows to search ( the default is 1 if not specified )',
+        'The number of rows to return ( the default is 1 if not specified )',
       required: false,
       defaultValue: 1,
       validators: [Validators.minValue(1)],
     }),
   },
   async run({ propsValue, auth }) {
+    const spreadSheetId = propsValue.spreadsheet_id;
+    const sheetId = propsValue.sheet_id;
+    const startingRow = propsValue.startingRow ?? 1;
+    const numberOfRowsToReturn = propsValue.numberOfRows ?? 1;
+
     const sheetName = await googleSheetsCommon.findSheetName(
-      auth['access_token'],
-      propsValue['spreadsheet_id'],
-      propsValue['sheet_id']
+      auth.access_token,
+      spreadSheetId,
+      sheetId
     );
 
-    let rows = [];
-    let values = [];
-    if (!propsValue.startingRow) {
-      rows = await googleSheetsCommon.getValues(
-        propsValue.spreadsheet_id,
-        auth['access_token'],
-        propsValue.sheet_id
-      );
+    let rows = await getAllGoogleSheetRows({
+      accessToken: auth.access_token,
+      sheetName: `${sheetName}!A${startingRow}:ZZZ`,
+      spreadSheetId: spreadSheetId,
+    });
 
-      values = rows.map((row) => {
-        return row.values;
-      });
-    } else {
-      const numberOfRows = propsValue.numberOfRows ?? 1;
+    // modify row number based on starting row number
+    rows = rows.map((row) => {
+      return {
+        row: row.row + startingRow - 1,
+        values: row.values,
+      };
+    });
 
-      rows = await getGoogleSheetRows({
-        accessToken: auth['access_token'],
-        sheetName: sheetName,
-        spreadSheetId: propsValue['spreadsheet_id'],
-        rowIndex_s: propsValue['startingRow'],
-        rowIndex_e: propsValue['startingRow'] + numberOfRows - 1,
-      });
-
-      values = rows.map((row) => {
-        return row.values;
-      });
-    }
+    const values = rows.map((row) => {
+      return row.values;
+    });
 
     const matchingRows: any[] = [];
     const columnName = propsValue.columnName ? propsValue.columnName : 'A';
     const columnNumber = labelToColumn(columnName);
     const searchValue = propsValue.searchValue ?? '';
 
+    let matchedRowCount = 0;
+
     for (let i = 0; i < values.length; i++) {
       const row = values[i];
+
+      if (matchedRowCount === numberOfRowsToReturn) break;
+
       if (searchValue === '') {
         matchingRows.push(rows[i]);
+        matchedRowCount += 1;
         continue;
       }
 
@@ -105,10 +106,12 @@ export const findRowsAction = createAction({
       }
       if (propsValue.matchCase) {
         if (entry_value === searchValue) {
+          matchedRowCount += 1;
           matchingRows.push(rows[i]);
         }
       } else {
         if (entry_value.toLowerCase().includes(searchValue.toLowerCase())) {
+          matchedRowCount += 1;
           matchingRows.push(rows[i]);
         }
       }

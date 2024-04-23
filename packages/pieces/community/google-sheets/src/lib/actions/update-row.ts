@@ -45,16 +45,24 @@ export const updateRowAction = createAction({
       value === '' ? null : value
     );
     if (formattedValues.length > 0) {
-      return (
-        await googleSheetsCommon.updateGoogleSheetRow({
-          accessToken: auth['access_token'],
-          rowIndex: Number(row_id),
-          sheetName: sheetName,
-          spreadSheetId: spreadsheet_id,
-          valueInputOption: ValueInputOption.USER_ENTERED,
-          values: stringifyArray(formattedValues),
-        })
-      ).body;
+      const res = await googleSheetsCommon.updateGoogleSheetRow({
+        accessToken: auth['access_token'],
+        rowIndex: Number(row_id),
+        sheetName: sheetName,
+        spreadSheetId: spreadsheet_id,
+        valueInputOption: ValueInputOption.USER_ENTERED,
+        values: stringifyArray(formattedValues),
+      });
+
+      //Split the updatedRange string to extract the row number
+      const updatedRangeParts = res.body.updatedRange.split('!');
+      const updatedRowRange = updatedRangeParts[1];
+      const updatedRowNumber = parseInt(
+        updatedRowRange.split(':')[0].substring(1),
+        10
+      );
+
+      return { updates: { ...res.body }, row: updatedRowNumber };
     } else {
       throw Error(
         'Values passed are empty or not array ' +
