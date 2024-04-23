@@ -5,10 +5,9 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { generateMockToken } from '../../../helpers/auth'
 import {
     CLOUD_PLATFORM_ID,
-    createMockPlatform,
-    createMockProject,
     createMockTemplate,
     createMockUser,
+    mockBasicSetup,
 } from '../../../helpers/mocks'
 import {
     apId,
@@ -34,12 +33,12 @@ describe('Flow Templates', () => {
         it('should list platform templates only', async () => {
             // arrange
             const { mockPlatform, mockUser, mockPlatformTemplate } =
-        await createMockPlatformTemplate({ platformId: apId() })
+                await createMockPlatformTemplate({ platformId: apId() })
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                platform: { id: mockPlatform.id, role: PlatformRole.MEMBER },
+                platform: { id: mockPlatform.id },
             })
 
             const response = await app?.inject({
@@ -82,13 +81,12 @@ describe('Flow Templates', () => {
     describe('Delete Flow Template', () => {
         it('should not be able delete platform template as member', async () => {
             // arrange
-            const { mockPlatform, mockPlatformTemplate } =
-        await createMockPlatformTemplate({ platformId: apId() })
-            const mockUser2 = createMockUser({ platformId: mockPlatform.id })
+            const { mockUser, mockPlatform, mockPlatformTemplate } =
+                await createMockPlatformTemplate({ platformId: apId() })
             const testToken = await generateMockToken({
+                id: mockUser.id,
                 type: PrincipalType.USER,
-                id: mockUser2.id,
-                platform: { id: mockPlatform.id, role: PlatformRole.MEMBER },
+                platform: { id: mockPlatform.id },
             })
 
             const response = await app?.inject({
@@ -105,13 +103,13 @@ describe('Flow Templates', () => {
 
         it('should be able delete platform template as owner', async () => {
             // arrange
-            const { mockPlatform, mockUser, mockPlatformTemplate } =
-        await createMockPlatformTemplate({ platformId: apId() })
+            const { mockPlatform, mockOwner, mockPlatformTemplate } =
+                await createMockPlatformTemplate({ platformId: apId() })
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockUser.id,
-                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
             })
 
             const response = await app?.inject({
@@ -143,25 +141,12 @@ describe('Flow Templates', () => {
     })
 })
 
-async function createMockPlatformTemplate({
-    platformId,
-}: {
-    platformId: string
-}) {
-    const mockUser = createMockUser()
-    await databaseConnection.getRepository('user').save(mockUser)
-
-    const mockPlatform = createMockPlatform({
-        id: platformId,
-        ownerId: mockUser.id,
+async function createMockPlatformTemplate({ platformId }: { platformId: string }) {
+    const { mockOwner, mockPlatform, mockProject } = await mockBasicSetup({
+        platform: {
+            id: platformId,
+        },
     })
-    await databaseConnection.getRepository('platform').save(mockPlatform)
-
-    const mockProject = createMockProject({
-        ownerId: mockUser.id,
-        platformId: mockPlatform.id,
-    })
-    await databaseConnection.getRepository('project').save(mockProject)
 
     const mockPlatformTemplate = createMockTemplate({
         platformId: mockPlatform.id,
@@ -172,5 +157,11 @@ async function createMockPlatformTemplate({
         .getRepository('flow_template')
         .save(mockPlatformTemplate)
 
-    return { mockUser, mockPlatform, mockProject, mockPlatformTemplate }
+    const mockUser = createMockUser({
+        platformId: mockPlatform.id,
+        platformRole: PlatformRole.MEMBER,
+    })
+    await databaseConnection.getRepository('user').save(mockUser)
+
+    return { mockOwner, mockUser, mockPlatform, mockProject, mockPlatformTemplate }
 }
