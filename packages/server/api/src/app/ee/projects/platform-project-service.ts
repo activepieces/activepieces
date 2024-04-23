@@ -186,10 +186,16 @@ async function createFilters(
                     platformId,
                     email: user.email,
                 })
-                return {
-                    ...commonFilter,
-                    id: In(ids),
-                }
+                return [
+                    {
+                        ...commonFilter,
+                        id: In(ids),
+                    },
+                    {
+                        ...commonFilter,
+                        ownerId: Equal(user.id)
+                    }
+                ]
             }
         }
         default: {
