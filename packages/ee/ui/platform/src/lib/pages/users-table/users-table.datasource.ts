@@ -1,19 +1,8 @@
 import { DataSource } from '@angular/cdk/collections';
-import {
-  Observable,
-  BehaviorSubject,
-  tap,
-  switchMap,
-  map,
-  of,
-  delay,
-} from 'rxjs';
+import { Observable, BehaviorSubject, tap, switchMap, map } from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { UserResponse } from '@activepieces/shared';
-import {
-  AuthenticationService,
-  PlatformService,
-} from '@activepieces/ui/common';
+import { PlatformService } from '@activepieces/ui/common';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -25,9 +14,7 @@ export class UsersDataSource extends DataSource<UserResponse> {
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
     private refresh$: Observable<boolean>,
-    private platformService: PlatformService,
-    private authenticationService: AuthenticationService,
-    private onlyReturnAdmin: boolean
+    private platformService: PlatformService
   ) {
     super();
   }
@@ -39,16 +26,6 @@ export class UsersDataSource extends DataSource<UserResponse> {
    */
 
   connect(): Observable<UserResponse[]> {
-    if (this.onlyReturnAdmin) {
-      const admin: UserResponse = {
-        ...this.authenticationService.currentUser,
-      };
-      this.data = [admin];
-      return of(this.data).pipe(
-        delay(100),
-        tap(() => this.isLoading$.next(false))
-      );
-    }
     return combineLatest([this.refresh$]).pipe(
       tap(() => {
         this.isLoading$.next(true);

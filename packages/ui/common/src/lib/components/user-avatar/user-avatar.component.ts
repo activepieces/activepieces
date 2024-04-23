@@ -8,7 +8,7 @@ import { LocalesService } from '../../service/locales.service';
 import { LocalesEnum } from '@activepieces/shared';
 import { localesMap } from '../../utils/locales';
 import { ProjectService } from '../../service/project.service';
-
+import { showPlatformDashboard$ } from '../../utils/consts';
 @Component({
   selector: 'ap-user-avatar',
   templateUrl: './user-avatar.component.html',
@@ -57,13 +57,10 @@ export class UserAvatarComponent implements OnInit {
     this.selectedProject$ = this.projectService.currentProject$;
     this.selectedLanguage =
       this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
-    this.showPlatform$ = this.flagService
-      .isFlagEnabled(ApFlagId.SHOW_PLATFORM_DEMO)
-      .pipe(
-        map((isDemo) => {
-          return isDemo || this.authenticationService.isPlatformOwner();
-        })
-      );
+    this.showPlatform$ = showPlatformDashboard$(
+      this.authenticationService,
+      this.flagService
+    );
   }
   ngOnInit(): void {
     this.currentUserEmail = this.authenticationService.currentUser.email;
