@@ -6,8 +6,8 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockApiKey,
-    createMockPlatform,
     createMockUser,
+    mockBasicSetup,
 } from '../../../helpers/mocks'
 import { apId, PlatformRole, PrincipalType } from '@activepieces/shared'
 
@@ -26,17 +26,12 @@ afterAll(async () => {
 describe('API Key API', () => {
     describe('Create API Key API', () => {
         it('should create a new API Key', async () => {
-            // arrange
-            const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
-
-            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            const { mockOwner, mockPlatform } = await mockBasicSetup()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockUser.id,
-                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
             })
 
             const mockApiKeyName = faker.lorem.word()
@@ -72,7 +67,6 @@ describe('API Key API', () => {
                 type: PrincipalType.USER,
                 platform: {
                     id: nonExistentPlatformId,
-                    role: PlatformRole.OWNER,
                 },
             })
 
@@ -89,25 +83,18 @@ describe('API Key API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 
     describe('Delete API Key endpoint', () => {
         it('Fail if non owner', async () => {
-            // arrange
-            const mockUser = createMockUser()
-            const mockUserTwo = createMockUser()
-            await databaseConnection
-                .getRepository('user')
-                .save([mockUser, mockUserTwo])
-
-            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            const mockPlatform2 = createMockPlatform({ ownerId: mockUserTwo.id })
-            await databaseConnection
-                .getRepository('platform')
-                .save([mockPlatform, mockPlatform2])
-
+            const { mockPlatform } = await mockBasicSetup()
+            const mockUser = createMockUser({
+                platformId: mockPlatform.id,
+                platformRole: PlatformRole.MEMBER,
+            })
+            await databaseConnection.getRepository('user').save([mockUser])
             const mockApiKey = createMockApiKey({
                 platformId: mockPlatform.id,
             })
@@ -116,11 +103,10 @@ describe('API Key API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockUserTwo.id,
-                platform: { id: mockPlatform2.id, role: PlatformRole.OWNER },
+                id: mockUser.id,
+                platform: { id: mockPlatform.id },
             })
 
-            // act
             const response = await app?.inject({
                 method: 'DELETE',
                 url: `/v1/api-keys/${mockApiKey.id}`,
@@ -129,25 +115,16 @@ describe('API Key API', () => {
                 },
             })
 
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 
     describe('List API Keys endpoint', () => {
         it('Filters Signing Keys by platform', async () => {
             // arrange
-            const mockUserOne = createMockUser()
-            const mockUserTwo = createMockUser()
-            await databaseConnection
-                .getRepository('user')
-                .save([mockUserOne, mockUserTwo])
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const { mockPlatform: mockPlatformTwo } = await mockBasicSetup()
 
-            const mockPlatformOne = createMockPlatform({ ownerId: mockUserOne.id })
-            const mockPlatformTwo = createMockPlatform({ ownerId: mockUserTwo.id })
-            await databaseConnection
-                .getRepository('platform')
-                .save([mockPlatformOne, mockPlatformTwo])
 
             const mockKeyOne = createMockApiKey({
                 platformId: mockPlatformOne.id,
@@ -164,7 +141,7 @@ describe('API Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id, role: PlatformRole.OWNER },
+                platform: { id: mockPlatformOne.id },
             })
             // act
             const response = await app?.inject({

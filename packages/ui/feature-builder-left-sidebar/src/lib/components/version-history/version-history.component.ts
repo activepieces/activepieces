@@ -3,7 +3,7 @@ import {
   FlowVersionMetadata,
   SeekPage,
 } from '@activepieces/shared';
-import { FlowService } from '@activepieces/ui/common';
+import { FlowService, VersionHisoricalStatus } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   FlowsActions,
@@ -35,6 +35,7 @@ import { MatDialog } from '@angular/material/dialog';
   templateUrl: './version-history.component.html',
 })
 export class VersionHistoryComponent {
+  VersionHisoricalStatus = VersionHisoricalStatus;
   sideBarDisplayName = $localize`Versions`;
   flowVersions$: Observable<SeekPage<FlowVersionMetadata>>;
   useAsDraft$?: Observable<void>;

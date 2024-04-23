@@ -10,8 +10,7 @@
                             <div *ngIf="version.updatedByUser" class="ap-w-[20px] ap-h-[20px]">
                                 <ap-letter-icon [letter]="version.updatedByUser!.firstName[0]" [matTooltipPosition]='"above"' [matTooltip]="version.updatedByUser!.firstName + ' ' + version.updatedByUser!.lastName + ' (' + version.updatedByUser!.email + ')'"></ap-letter-icon>
                             </div>
-                            <div class="ap-text-body">{{version.created |date:'mediumDate'
-                            }}, {{version.created |date:'shortTime' }} </div>
+                            <div class="ap-text-body">{{version.created | insideBuilderDate }} </div>
                         </div>
                         
                         <div class="ap-mt-2">
@@ -25,7 +24,7 @@
 
                     <div class="ap-flex-grow"></div>
                     <ng-container *ngIf="version.id === (viewedVersion$| async)?.id">
-                        <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]">
+                        <div class="ap-flex ap-items-center ap-justify-center ap-w-[48px]">
                             <svg-icon src="assets/img/custom/eye.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
                                 i18n-matTooltip matTooltip="Viewing" [applyClass]="true"></svg-icon>
                         </div>
@@ -33,17 +32,18 @@
 
                     <ng-container
                         *ngIf="(draftVersionId$| async) === version.id && (publishedVersion$| async)?.id !== version.id">
-                        <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]">
-                            <svg-icon src="assets/img/custom/draft.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-warn"
-                                [applyClass]="true" i18n-matTooltip matTooltip="Draft"></svg-icon>
+                        <div class="ap-flex ap-items-center ap-justify-center ap-w-[48px]" i18n-matTooltip matTooltip="Draft">
+                            <ap-version-history-indicator [versionHistoricalStatus]="VersionHisoricalStatus.DRAFT" >
+
+                            </ap-version-history-indicator>
                         </div>
                     </ng-container>
 
                     <ng-container *ngIf="(publishedVersion$| async)?.id === version.id">
-                        <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]">
-                            <svg-icon src="assets/img/custom/published.svg"
-                                class="ap-w-[20px] ap-h-[20px] ap-fill-success-light" i18n-matTooltip
-                                matTooltip="Published"></svg-icon>
+                        <div class="ap-flex ap-items-center ap-justify-center ap-w-[48px]" i18n-matTooltip matTooltip="Published">
+                            <ap-version-history-indicator [versionHistoricalStatus]="VersionHisoricalStatus.PUBLISHED"  >
+
+                            </ap-version-history-indicator>
                         </div>
 
                     </ng-container>

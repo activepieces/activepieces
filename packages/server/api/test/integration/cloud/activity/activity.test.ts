@@ -171,7 +171,7 @@ describe('Activity API', () => {
             // arrange
             const mockPlatformId = apId()
             const mockOwner = createMockUser({ platformId: mockPlatformId })
-            const mockUser = createMockUser({ platformId: mockPlatformId })
+            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
             await databaseConnection.getRepository('user').save([mockOwner, mockUser])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
@@ -197,7 +197,6 @@ describe('Activity API', () => {
                 projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
-                    role: PlatformRole.MEMBER,
                 },
             })
 

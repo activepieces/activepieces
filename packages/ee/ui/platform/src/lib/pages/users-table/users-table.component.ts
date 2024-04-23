@@ -10,9 +10,8 @@ import {
 import { Observable, Subject, startWith, tap } from 'rxjs';
 import { UserResponse, UserStatus } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActivatedRoute } from '@angular/router';
-import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 import { MatDialog } from '@angular/material/dialog';
+import { EditUserDialogComponent } from '../../components/dialogs/edit-user-role-dialog/edit-user-role-dialog.component';
 
 @Component({
   selector: 'app-users-table',
@@ -21,6 +20,7 @@ import { MatDialog } from '@angular/material/dialog';
 })
 export class UsersTableComponent {
   deactivate$?: Observable<void>;
+  updateUserDialog$?: Observable<void>;
   delete$?: Observable<void>;
   activate$?: Observable<void>;
   title = $localize`Users`;
@@ -33,26 +33,21 @@ export class UsersTableComponent {
   displayedColumns = [
     'email',
     'name',
+    'platformRole',
     'created',
-    'updated',
     'status',
     'action',
   ];
-  isDemo = false;
   constructor(
     private platformService: PlatformService,
     private snackBar: MatSnackBar,
     private authenticationService: AuthenticationService,
-    private route: ActivatedRoute,
     private matDialog: MatDialog
   ) {
-    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.platformOwnerId = this.authenticationService.currentUser.id;
     this.dataSource = new UsersDataSource(
       this.refresh$.asObservable().pipe(startWith(true)),
-      this.platformService,
-      this.authenticationService,
-      this.isDemo
+      this.platformService
     );
   }
 
@@ -69,6 +64,18 @@ export class UsersTableComponent {
           });
         })
       );
+  }
+
+  updateUser(user: UserResponse) {
+    const dialogData = {
+      userId: user.id,
+      platformRole: user.platformRole,
+    };
+    this.updateUserDialog$ = this.matDialog
+      .open(EditUserDialogComponent, {
+        data: dialogData,
+      })
+      .afterClosed();
   }
 
   deleteUser(user: UserResponse) {
@@ -110,6 +117,6 @@ export class UsersTableComponent {
   }
 
   disableDeleteButton(user: UserResponse) {
-    return this.isDemo || user.id === this.platformOwnerId;
+    return user.id === this.platformOwnerId;
   }
 }
