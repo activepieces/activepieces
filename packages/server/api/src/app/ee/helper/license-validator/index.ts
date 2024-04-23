@@ -29,6 +29,7 @@ export async function enforceLimits(): Promise<void> {
             }
             await platformService.update({
                 id: oldestPlatform.id,
+                userId: oldestPlatform.ownerId,
                 showPoweredBy: license.showPoweredBy,
                 embeddingEnabled: license.embeddingEnabled,
                 ssoEnabled: license.ssoEnabled,

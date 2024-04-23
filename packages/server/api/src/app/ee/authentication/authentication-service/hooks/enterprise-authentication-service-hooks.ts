@@ -51,6 +51,11 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             platformId: platform.id,
         })
 
+        await userService.updatePlatformId({
+            id: user.id,
+            platformId: platform.id,
+        })
+
         await enforceLimits()
 
         await flagService.save({

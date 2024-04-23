@@ -4,7 +4,7 @@ import {
   ProjectMemberRole,
 } from '@activepieces/shared';
 import { AuthenticationService, FlagService } from '../service';
-import { forkJoin, map, take } from 'rxjs';
+import { map } from 'rxjs';
 
 export const unexpectedErrorMessage = $localize`An unexpected error occurred, please contact support`;
 export const codeGeneratorTooltip = $localize`Write code with assistance from AI`;
@@ -92,21 +92,17 @@ export const showPlatformDashboard$ = (
   authenticationService: AuthenticationService,
   flagsService: FlagService
 ) => {
-  const platformAdmin = authenticationService.isPlatformOwner$().pipe(take(1));
-  const showPlatformDemo = flagsService.isFlagEnabled(
-    ApFlagId.SHOW_PLATFORM_DEMO
-  );
-  return forkJoin({
-    platformAdmin,
-    showPlatformDemo,
-  }).pipe(
-    map(
-      ({ platformAdmin, showPlatformDemo }) =>
-        (showPlatformDemo || platformAdmin) &&
-        authenticationService.currentUser.projectRole !==
-          ProjectMemberRole.EXTERNAL_CUSTOMER
-    )
-  );
+  const platformAdmin = authenticationService.isPlatformOwner();
+  return flagsService
+    .isFlagEnabled(ApFlagId.SHOW_PLATFORM_DEMO)
+    .pipe(
+      map(
+        (isDemo) =>
+          (isDemo || platformAdmin) &&
+          authenticationService.currentUser.projectRole !==
+            ProjectMemberRole.EXTERNAL_CUSTOMER
+      )
+    );
 };
 /**Three colors that fits with our design system to use as backgrounds */
 export const experimentalColors = ['#f5dc83', '#ed9090', '#90edb5'];

@@ -12,7 +12,6 @@ import {
     createMockProject,
     createMockProjectMember,
     createMockUser,
-    mockBasicSetup,
 } from '../../../helpers/mocks'
 import {
     AddProjectMemberRequestBody,
@@ -144,18 +143,28 @@ describe('Project Member API', () => {
         })
 
         it('Skips sending invitation email if membership is ACTIVE', async () => {
-            const { mockOwner, mockPlatform, mockProject } = await mockBasicSetup({
-                platform: {
-                    embeddingEnabled: true,
-                },
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({
+                embeddingEnabled: true,
+                ownerId: mockUser.id,
             })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+            })
+            await databaseConnection.getRepository('project').save(mockProject)
 
             const mockToken = await generateMockToken({
-                id: mockOwner.id,
+                id: mockUser.id,
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
                 },
             })
 
@@ -189,7 +198,7 @@ describe('Project Member API', () => {
         ])('Fails if user role is %s', async (testRole) => {
             const { mockPlatform, mockProject } = await createBasicEnvironment()
 
-            const mockUser = createMockUser({ platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER })
+            const mockUser = createMockUser({ platformId: mockPlatform.id })
             await databaseConnection.getRepository('user').save(mockUser)
 
             const mockProjectMember = createMockProjectMember({
@@ -206,6 +215,7 @@ describe('Project Member API', () => {
                 projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
+                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -297,7 +307,7 @@ describe('Project Member API', () => {
                 // arrange
                 const { mockPlatform, mockProject } = await createBasicEnvironment()
 
-                const mockUser = createMockUser({ platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER })
+                const mockUser = createMockUser({ platformId: mockPlatform.id })
                 await databaseConnection.getRepository('user').save(mockUser)
 
                 const mockProjectMember = createMockProjectMember({
@@ -314,6 +324,7 @@ describe('Project Member API', () => {
                     projectId: mockProject.id,
                     platform: {
                         id: mockPlatform.id,
+                        role: PlatformRole.MEMBER,
                     },
                 })
 
@@ -334,7 +345,7 @@ describe('Project Member API', () => {
                 // arrange
                 const { mockPlatform, mockProject } = await createBasicEnvironment()
 
-                const mockUser = createMockUser({ platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER })
+                const mockUser = createMockUser({ platformId: mockPlatform.id })
                 await databaseConnection.getRepository('user').save(mockUser)
 
                 const mockProjectMember = createMockProjectMember({
@@ -351,6 +362,7 @@ describe('Project Member API', () => {
                     projectId: mockProject.id,
                     platform: {
                         id: mockPlatform.id,
+                        role: PlatformRole.MEMBER,
                     },
                 })
 
@@ -406,7 +418,7 @@ describe('Project Member API', () => {
             // arrange
             const { mockPlatform, mockProject } = await createBasicEnvironment()
 
-            const mockUser = createMockUser({ platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER })
+            const mockUser = createMockUser({ platformId: mockPlatform.id })
             await databaseConnection.getRepository('user').save(mockUser)
 
             const mockProjectMember = createMockProjectMember({
@@ -423,6 +435,7 @@ describe('Project Member API', () => {
                 projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
+                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -522,17 +535,13 @@ async function createBasicEnvironment(
     })
     await databaseConnection.getRepository('api_key').save(mockApiKey)
 
-
-    await databaseConnection.getRepository('user').update(mockUser.id, {
-        platformId: mockPlatform.id,
-        platformRole: PlatformRole.ADMIN,
-    })
     const mockUserToken = await generateMockToken({
         id: mockUser.id,
         type: PrincipalType.USER,
         projectId: mockProject.id,
         platform: {
             id: mockPlatform.id,
+            role: PlatformRole.OWNER,
         },
     })
     return {

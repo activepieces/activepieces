@@ -4,9 +4,12 @@ import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import {
+    createMockOtp,
     createMockPlatformWithOwner,
+    createMockProjectMember,
     createMockUser,
     mockBasicSetup,
+    setupMockApiKeyServiceAccount,
 } from '../../../helpers/mocks'
 import {
     apId,
@@ -48,6 +51,7 @@ describe('Enterprise User API', () => {
                 type: PrincipalType.USER,
                 platform: {
                     id: mockPlatformOne.id,
+                    role: PlatformRole.OWNER,
                 },
             })
 
@@ -73,6 +77,36 @@ describe('Enterprise User API', () => {
             expect(responseBody.data[0].password).toBeUndefined()
         })
 
+        it('Allows service accounts', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockApiKey } =
+        setupMockApiKeyServiceAccount()
+
+            await databaseConnection.getRepository('user').save([mockOwner])
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection.getRepository('api_key').save([mockApiKey])
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/users',
+                query: {
+                    platformId: mockPlatform.id,
+                },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(Object.keys(responseBody)).toHaveLength(3)
+            expect(responseBody.data).toHaveLength(1)
+            expect(responseBody.data[0].id).toBe(mockOwner.id)
+        })
+
         it('Requires principal to be platform owner', async () => {
             // arrange
 
@@ -83,6 +117,7 @@ describe('Enterprise User API', () => {
                 type: PrincipalType.USER,
                 platform: {
                     id: mockPlatform.id,
+                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -126,6 +161,7 @@ describe('Enterprise User API', () => {
                 type: PrincipalType.USER,
                 platform: {
                     id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
                 },
             })
 
@@ -158,6 +194,7 @@ describe('Enterprise User API', () => {
                 type: PrincipalType.USER,
                 platform: {
                     id: apId(),
+                    role: PlatformRole.OWNER,
                 },
             })
 
@@ -174,21 +211,56 @@ describe('Enterprise User API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('Allows service accounts to activate', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockApiKey } =
+        setupMockApiKeyServiceAccount()
+
+            const mockUser = createMockUser({
+                platformId: mockPlatform.id,
+                status: UserStatus.INACTIVE,
+            })
+
+            await databaseConnection
+                .getRepository('user')
+                .save([mockOwner, mockUser])
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection.getRepository('api_key').save([mockApiKey])
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/users/${mockUser.id}`,
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+                body: {
+                    status: UserStatus.ACTIVE,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const responseJson = response?.json()
+            expect(responseJson.id).toBe(mockUser.id)
+            expect(responseJson.password).toBeUndefined()
+            expect(responseJson.status).toBe(UserStatus.ACTIVE)
         })
 
         it('Requires principal to be platform owner', async () => {
             // arrange
             const { mockPlatform, mockOwner } = createMockPlatformWithOwner()
 
-            await databaseConnection.getRepository('user').update(mockOwner.id, {
-                platformRole: PlatformRole.MEMBER,
-            })
             const testToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
                 platform: {
                     id: mockPlatform.id,
+                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -225,6 +297,7 @@ describe('Enterprise User API', () => {
                 type: PrincipalType.USER,
                 platform: {
                     id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
                 },
             })
 
@@ -241,11 +314,81 @@ describe('Enterprise User API', () => {
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
         })
 
+        it('Removes OTP for deleted user', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockBasicSetup()
+
+            const mockEditor = createMockUser({ platformId: mockPlatform.id })
+            await databaseConnection.getRepository('user').save([mockEditor])
+
+            const mockOtp = createMockOtp({ userId: mockEditor.id })
+            await databaseConnection.getRepository('otp').save(mockOtp)
+
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
+                },
+            })
+
+            // act
+            await app?.inject({
+                method: 'DELETE',
+                url: `/v1/users/${mockEditor.id}`,
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            const otp = await databaseConnection.getRepository('otp').findOneBy({ id: mockOtp.id })
+            expect(otp).toBe(null)
+        })
+
+        it('Removes deleted user project memberships', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockProject } = await mockBasicSetup()
+
+            const mockUser = createMockUser({ platformId: mockPlatform.id })
+            await databaseConnection.getRepository('user').save([mockUser])
+
+            const mockProjectMember = createMockProjectMember({
+                email: mockUser.email,
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+            })
+            await databaseConnection.getRepository('project_member').save(mockProjectMember)
+
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
+                },
+            })
+
+            // act
+            await app?.inject({
+                method: 'DELETE',
+                url: `/v1/users/${mockUser.id}`,
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            const deletedProjectMember = await databaseConnection.getRepository('project_member').findOneBy({ id: mockProjectMember.id })
+            expect(deletedProjectMember).toBe(null)
+        })
+
         it('Fails if user is not platform owner', async () => {
             // arrange
             const { mockPlatform } = await mockBasicSetup()
 
-            const mockUser = createMockUser({ platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER })
+            const mockUser = createMockUser({ platformId: mockPlatform.id })
             await databaseConnection.getRepository('user').save([mockUser])
 
             const mockUserToken = await generateMockToken({
@@ -253,6 +396,7 @@ describe('Enterprise User API', () => {
                 type: PrincipalType.USER,
                 platform: {
                     id: mockPlatform.id,
+                    role: PlatformRole.MEMBER,
                 },
             })
 

@@ -1,6 +1,6 @@
 import { FastifyRequest } from 'fastify'
 import { BaseSecurityHandler } from '../security-handler'
-import { Principal, PrincipalType } from '@activepieces/shared'
+import { PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
 
 const ROUTE_PREFIX = '/v1/appsumo'
 
@@ -21,6 +21,7 @@ export class AppSumoAuthnHandler extends BaseSecurityHandler {
             projectId: 'app-sumo',
             platform: {
                 id: 'app-sumo',
+                role: PlatformRole.MEMBER,
             },
         }
     }

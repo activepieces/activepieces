@@ -16,6 +16,7 @@ import {
     ErrorCode,
     isNil,
     isObject,
+    PlatformRole,
     Principal,
     PrincipalType,
     Project,
@@ -71,6 +72,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             projectId: 'ANONYMOUS_' + nanoid(),
             platform: {
                 id: apiKey.platformId,
+                role: PlatformRole.OWNER,
             },
         }
 

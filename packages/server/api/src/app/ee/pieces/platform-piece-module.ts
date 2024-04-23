@@ -4,13 +4,13 @@ import {
     Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { pieceService } from '../../pieces/piece-service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import {
     ActivepiecesError,
     AddPieceRequestBody,
     EndpointScope,
     ErrorCode,
     PieceScope,
+    PlatformRole,
     Principal,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
@@ -29,7 +29,7 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
 
     app.post('/', installPieceParams, async (req, reply) => {
         const platformId = req.principal.platform.id
-        await platformMustBeOwnedByCurrentUser.call(app, req, reply)
+        assertPrincipalIsPlatformOwner(req.body.scope, req.principal)
         assertProjectScopeOnlyAllowedForUser(req.body.scope, req.principal)
         await pieceService.installPiece(
             platformId,
@@ -59,6 +59,22 @@ const installPieceParams = {
             [StatusCodes.CREATED]: Type.Object({}),
         },
     },
+}
+
+function assertPrincipalIsPlatformOwner(
+    scope: PieceScope,
+    principal: Principal,
+): void {
+    if (scope == PieceScope.PLATFORM) {
+        if (principal.platform.role !== PlatformRole.OWNER) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENGINE_OPERATION_FAILURE,
+                params: {
+                    message: 'Principal is not platform owner',
+                },
+            })
+        }
+    }
 }
 
 function assertProjectScopeOnlyAllowedForUser(

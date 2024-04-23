@@ -30,14 +30,12 @@ import {
     FlowStatus,
     isNil,
     PlatformId,
-    PlatformRole,
-    Principal,
-    PrincipalType,
     Project,
     ProjectId,
     ProjectWithLimits,
     SeekPage,
     spreadIfDefined,
+    UserId,
 } from '@activepieces/shared'
 
 const projectRepo = repoFactory(ProjectEntity)
@@ -45,12 +43,14 @@ const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
 export const platformProjectService = {
     async getAll({
-        principal,
+        ownerId,
+        platformId,
         externalId,
         cursorRequest,
         limit,
     }: {
-        principal: Principal
+        ownerId: UserId | undefined
+        platformId?: PlatformId
         externalId?: string
         cursorRequest: Cursor | null
         limit: number
@@ -65,7 +65,7 @@ export const platformProjectService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const filters = await createFilters(principal, externalId)
+        const filters = await createFilters(ownerId, platformId, externalId)
         const queryBuilder = projectRepo()
             .createQueryBuilder('project')
             .leftJoinAndMapOne(
@@ -162,51 +162,35 @@ function isCustomerPlatform(platformId: string | undefined): boolean {
     return !flagService.isCloudPlatform(platformId)
 }
 async function createFilters(
-    principal: Principal,
+    ownerId: UserId | undefined,
+    platformId?: PlatformId,
     externalId?: string | undefined,
 ) {
-    const platformId = principal.platform.id
-    const commonFilter = {
+    const extraFilter = {
         deleted: IsNull(),
         ...spreadIfDefined('platformId', platformId),
         ...spreadIfDefined('externalId', externalId),
     }
-    switch (principal.type) {
-        case PrincipalType.SERVICE: {
-            return commonFilter
-        }
-        case PrincipalType.USER: {
-            const user = await userService.getMetaInfo({ id: principal.id })
-            assertNotNullOrUndefined(user, 'User not found')
-            if (user.platformRole === PlatformRole.ADMIN) {
-                return commonFilter
-            }
-            else {
-                const ids = await getIdsOfProjects({
-                    platformId,
-                    email: user.email,
-                })
-                return {
-                    ...commonFilter,
-                    id: In(ids),
-                }
-            }
-        }
-        default: {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'INVALID_PRINCIPAL_TYPE',
-                },
-            })
-        }
+    const filters = []
+
+    if (!isNil(ownerId)) {
+        const idsOfProjects = await getIdsOfProjects(ownerId)
+        filters.push({ ownerId, ...extraFilter })
+        filters.push({ id: In(idsOfProjects), ...extraFilter })
     }
+    else {
+        assertNotNullOrUndefined(platformId, 'platformId')
+        filters.push({ ...extraFilter })
+    }
+
+    return filters
 }
 
-async function getIdsOfProjects({ platformId, email }: { platformId: string, email: string }): Promise<string[]> {
+async function getIdsOfProjects(ownerId: UserId): Promise<string[]> {
+    const user = await userService.getMetaInfo({ id: ownerId })
     const members = await projectMemberRepo().findBy({
-        email,
-        platformId: Equal(platformId),
+        email: user?.email,
+        platformId: isNil(user?.platformId) ? IsNull() : Equal(user?.platformId),
         status: Equal(ProjectMemberStatus.ACTIVE),
     })
     return members.map((member) => member.projectId)

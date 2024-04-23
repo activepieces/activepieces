@@ -14,6 +14,7 @@ import {
     ApEdition,
     ErrorCode,
     isNil,
+    PlatformRole,
     PrincipalType,
     Project,
     ProjectMemberRole,
@@ -59,6 +60,10 @@ const populateTokenWithPlatformInfo = async ({
         projectId: project.id,
         platform: {
             id: platform.id,
+            role:
+            platform.ownerId === user.id
+                ? PlatformRole.OWNER
+                : PlatformRole.MEMBER,
         },
     })
 

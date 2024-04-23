@@ -6,10 +6,11 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockCustomDomain,
-    mockBasicSetup,
+    createMockPlatform,
+    createMockUser,
 } from '../../../helpers/mocks'
 import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
-import { apId, PrincipalType } from '@activepieces/shared'
+import { apId, PlatformRole, PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -27,11 +28,16 @@ describe('Custom Domain API', () => {
     describe('Add Custom Domain API', () => {
         it('should create a new custom domain', async () => {
             // arrange
-            const { mockOwner, mockPlatform } = await mockBasicSetup()
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
+                id: mockUser.id,
+                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
             })
 
             const request: AddDomainRequest = {
@@ -56,13 +62,17 @@ describe('Custom Domain API', () => {
 
         it('should fail if user is not platform owner', async () => {
             // arrange
-            const { mockPlatform } = await mockBasicSetup()
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
 
             const nonOwnerUserId = apId()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUserId,
-                platform: { id: mockPlatform.id },
+                platform: { id: mockPlatform.id, role: PlatformRole.MEMBER },
             })
 
             const request: AddDomainRequest = {
@@ -85,22 +95,31 @@ describe('Custom Domain API', () => {
     describe('List Custom Domain API', () => {
         it('should list custom domains', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
-            const {  mockPlatform: mockPlatformTwo } = await mockBasicSetup()
+            const mockUser1 = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser1)
+
+            const mockPlatform1 = createMockPlatform({ ownerId: mockUser1.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform1)
+
+            const mockUser2 = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser2)
+
+            const mockPlatform2 = createMockPlatform({ ownerId: mockUser2.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform2)
 
             const testToken1 = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
+                id: mockUser1.id,
+                platform: { id: mockPlatform1.id, role: PlatformRole.OWNER },
             })
 
             const mockCustomDomains1 = [
                 createMockCustomDomain({
-                    platformId: mockPlatformOne.id,
+                    platformId: mockPlatform1.id,
                     domain: faker.internet.domainName(),
                 }),
                 createMockCustomDomain({
-                    platformId: mockPlatformOne.id,
+                    platformId: mockPlatform1.id,
                     domain: faker.internet.domainName(),
                 }),
             ]
@@ -110,7 +129,7 @@ describe('Custom Domain API', () => {
 
             const mockCustomDomains2 = [
                 createMockCustomDomain({
-                    platformId: mockPlatformTwo.id,
+                    platformId: mockPlatform2.id,
                     domain: faker.internet.domainName(),
                 }),
             ]
@@ -144,15 +163,20 @@ describe('Custom Domain API', () => {
     describe('Delete Custom Domain API', () => {
         it('should delete a custom domain', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
+                id: mockUser.id,
+                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
             })
 
             const customDomain = createMockCustomDomain({
-                platformId: mockPlatformOne.id,
+                platformId: mockPlatform.id,
                 domain: faker.internet.domainName(),
             })
             await databaseConnection
@@ -173,16 +197,22 @@ describe('Custom Domain API', () => {
         })
 
         it('should fail to delete a custom domain if user is not platform owner', async () => {
-            const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            // arrange
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
             const nonOwnerUserId = apId()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUserId,
-                platform: { id: mockPlatformOne.id },
+                platform: { id: mockPlatform.id, role: PlatformRole.MEMBER },
             })
 
             const customDomain = createMockCustomDomain({
-                platformId: mockPlatformOne.id,
+                platformId: mockPlatform.id,
                 domain: faker.internet.domainName(),
             })
             await databaseConnection
