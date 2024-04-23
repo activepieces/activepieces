@@ -21,12 +21,12 @@ export const createWordPressPost = createAction({
     title: Property.ShortText({
       description: 'Title of the post about to be added',
       displayName: 'Title',
-      required: true,
+      required: false,
     }),
     content: Property.LongText({
       description: 'Uses the WordPress Text Editor which supports HTML',
       displayName: 'Content',
-      required: true,
+      required: false,
     }),
     slug: Property.ShortText({
       displayName: 'Slug',
