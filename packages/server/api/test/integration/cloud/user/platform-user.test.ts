@@ -11,6 +11,7 @@ import {
     setupMockApiKeyServiceAccount,
 } from '../../../helpers/mocks'
 import {
+    PlatformRole,
     PrincipalType,
     UserStatus,
 } from '@activepieces/shared'
@@ -33,7 +34,7 @@ describe('Enterprise User API', () => {
         it('Allows service accounts', async () => {
             // arrange
             const { mockOwner, mockPlatform, mockApiKey } =
-        setupMockApiKeyServiceAccount()
+                setupMockApiKeyServiceAccount()
 
             await databaseConnection.getRepository('user').save([mockOwner])
             await databaseConnection.getRepository('platform').save([mockPlatform])
@@ -64,10 +65,47 @@ describe('Enterprise User API', () => {
 
     describe('Update user endpoint', () => {
 
+        it('Fail if not admin', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = setupMockApiKeyServiceAccount()
+
+            const mockUser = createMockUser({
+                platformId: mockPlatform.id,
+                status: UserStatus.ACTIVE,
+                platformRole: PlatformRole.MEMBER,
+            })
+
+            await databaseConnection
+                .getRepository('user')
+                .save([mockOwner, mockUser])
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+
+            const mockUserToken = await generateMockToken({
+                id: mockUser.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/users/${mockUser.id}`,
+                headers: {
+                    authorization: `Bearer ${mockUserToken}`,
+                },
+                body: {
+                    status: UserStatus.INACTIVE,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
         it('Allows service accounts to activate', async () => {
             // arrange
             const { mockOwner, mockPlatform, mockApiKey } =
-        setupMockApiKeyServiceAccount()
+                setupMockApiKeyServiceAccount()
 
             const mockUser = createMockUser({
                 platformId: mockPlatform.id,
@@ -101,11 +139,11 @@ describe('Enterprise User API', () => {
             expect(responseJson.status).toBe(UserStatus.ACTIVE)
         })
 
-     
+
     })
 
     describe('Delete user endpoint', () => {
-   
+
         it('Removes OTP for deleted user', async () => {
             // arrange
             const { mockOwner, mockPlatform } = await mockBasicSetup()

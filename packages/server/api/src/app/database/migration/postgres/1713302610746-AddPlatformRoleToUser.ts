@@ -49,6 +49,22 @@ export class AddPlatformRoleToUser1713302610746 implements MigrationInterface {
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
+
+        const adminUserIds = await queryRunner.query(`
+            SELECT id
+            FROM "user"
+            WHERE "platformRole" = 'ADMIN'
+        `)
+        const ownerIds = await queryRunner.query(`
+            SELECT "ownerId"
+            FROM "platform"
+        `)
+        const adminUserIdsSet = new Set(adminUserIds.map((u: { id: string }) => u.id))
+        const ownerIdsSet = new Set(ownerIds.map((p: { ownerId: string }) => p.ownerId))
+
+        if (adminUserIdsSet.size !== ownerIdsSet.size || !Array.from(adminUserIdsSet).every(id => ownerIdsSet.has(id))) {
+            throw new Error('Admin user IDs and owner IDs do not match')
+        }
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

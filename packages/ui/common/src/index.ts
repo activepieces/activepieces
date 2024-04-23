@@ -21,6 +21,7 @@ export * from './lib/service/project.service';
 export * from './lib/guards/show-based-on-flag.guard';
 export * from './lib/components/upgrade-note/upgrade-note.component';
 import '@angular/localize/init';
+export { showPlatformDashboard$ } from './lib/utils/consts';
 export * from './lib/pipe/abstract-form-control-caster.pipe';
 export * from './lib/pipe/ap-date.pipe';
 export * from './lib/components/diagnostic-dialog/diagnostic-dialog.component';

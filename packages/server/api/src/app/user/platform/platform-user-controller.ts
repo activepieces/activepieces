@@ -31,6 +31,7 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
         return userService.update({
             id: req.params.id,
             platformId,
+            platformRole: req.body.platformRole,
             status: req.body.status,
         })
     })

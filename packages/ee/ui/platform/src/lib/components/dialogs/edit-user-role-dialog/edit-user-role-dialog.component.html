@@ -1,0 +1,33 @@
+<ap-dialog-title-template>
+  {{ dialogTitle }}
+</ap-dialog-title-template>
+
+<mat-dialog-content>
+  <div class="ap-w-[500px]">
+    <form [formGroup]="formGroup" (submit)="updateUser()">
+      <mat-form-field class="ap-w-full">
+        <mat-label i18n>Platform Role</mat-label>
+        <mat-select i18n-placeholder [formControl]="formGroup.controls.platformRole">
+          <mat-option [value]="platformRole.MEMBER">MEMBER</mat-option>
+          <mat-option [value]="platformRole.ADMIN">ADMIN</mat-option>
+        </mat-select>
+        <mat-error *ngIf="formGroup.controls.platformRole.hasError('required')" i18n>Platform role is required
+        </mat-error>
+        <mat-error *ngIf="formGroup.controls.platformRole.hasError('invalid')" i18n>Platform Role is used
+        </mat-error>
+      </mat-form-field>
+    </form>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
+      Cancel
+    </ap-button>
+    <ap-button (buttonClicked)="updateUser()" btnColor="primary" btnSize="default" [loading]="
+        (loading$ | async) !== undefined && (loading$ | async) !== false
+      " i18n>Save</ap-button>
+  </div>
+</mat-dialog-actions>
+
+@if (updateRole$ | async) {}

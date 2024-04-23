@@ -16,6 +16,7 @@ import {
     PlatformRole,
     SeekPage,
     SignUpRequest,
+    spreadIfDefined,
     User,
     UserId,
     UserMeta,
@@ -39,16 +40,15 @@ export const userService = {
 
         return repo().save(user)
     },
-    async update({ id, status, platformId }: UpdateParams): Promise<User> {
-        const updateResult = await repo().update(
-            {
-                id,
-                platformId,
-            },
-            {
-                status,
-            },
-        )
+    async update({ id, status, platformId, platformRole }: UpdateParams): Promise<User> {
+        const updateResult = await repo().update({
+            id,
+            platformId,
+        },
+        {
+            ...spreadIfDefined('status', status),
+            ...spreadIfDefined('platformRole', platformRole),
+        })
         if (updateResult.affected !== 1) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -200,8 +200,9 @@ type ListParams = {
 
 type UpdateParams = {
     id: UserId
-    status: UserStatus
+    status?: UserStatus
     platformId: PlatformId
+    platformRole?: PlatformRole
 }
 
 type CreateParams = SignUpRequest & {

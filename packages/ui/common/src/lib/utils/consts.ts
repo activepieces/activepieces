@@ -4,7 +4,7 @@ import {
   ProjectMemberRole,
 } from '@activepieces/shared';
 import { AuthenticationService, FlagService } from '../service';
-import { forkJoin, map } from 'rxjs';
+import { forkJoin, map, take } from 'rxjs';
 
 export const unexpectedErrorMessage = $localize`An unexpected error occurred, please contact support`;
 export const codeGeneratorTooltip = $localize`Write code with assistance from AI`;
@@ -92,7 +92,7 @@ export const showPlatformDashboard$ = (
   authenticationService: AuthenticationService,
   flagsService: FlagService
 ) => {
-  const platformAdmin = authenticationService.isPlatformOwner$();
+  const platformAdmin = authenticationService.isPlatformOwner$().pipe(take(1));
   const showPlatformDemo = flagsService.isFlagEnabled(
     ApFlagId.SHOW_PLATFORM_DEMO
   );
