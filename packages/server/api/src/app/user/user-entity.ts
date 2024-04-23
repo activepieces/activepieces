@@ -36,13 +36,9 @@ export const UserEntity = new EntitySchema<UserSchema>({
             type: Boolean,
             nullable: true,
         },
-        imageUrl: {
+        platformRole: {
             type: String,
-            nullable: true,
-        },
-        title: {
-            type: String,
-            nullable: true,
+            nullable: false,
         },
         externalId: {
             type: String,

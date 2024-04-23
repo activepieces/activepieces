@@ -4,6 +4,11 @@ import { ApId } from '../common/id-generator'
 
 export type UserId = ApId
 
+export enum PlatformRole {
+    ADMIN = 'ADMIN',
+    MEMBER = 'MEMBER',
+}
+
 export enum UserStatus {
     /* user is active */
     ACTIVE = 'ACTIVE',
@@ -29,9 +34,8 @@ export const User = Type.Object({
     newsLetter: Type.Boolean(),
     password: Type.String(),
     verified: Type.Boolean(),
+    platformRole: Type.Enum(PlatformRole),
     status: Type.Enum(UserStatus),
-    imageUrl: Type.Optional(Type.String()),
-    title: Type.Optional(Type.String()),
     externalId: Type.Optional(Type.String()),
     platformId: Type.Union([ApId, Type.Null()]),
 })
@@ -43,9 +47,8 @@ export const UserMeta = Type.Object({
     email: Type.String(),
     firstName: Type.String(),
     platformId: Type.Union([ApId, Type.Null()]),
+    platformRole: Type.Enum(PlatformRole),
     lastName: Type.String(),
-    imageUrl: Type.Optional(Type.String()),
-    title: Type.Optional(Type.String()),
 })
 
 export type UserMeta = Static<typeof UserMeta>

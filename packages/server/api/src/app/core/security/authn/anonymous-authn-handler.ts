@@ -3,7 +3,6 @@ import { BaseSecurityHandler } from '../security-handler'
 import {
     apId,
     isNil,
-    PlatformRole,
     Principal,
     PrincipalType,
 } from '@activepieces/shared'
@@ -23,7 +22,6 @@ export class AnonymousAuthnHandler extends BaseSecurityHandler {
                 projectId: `ANONYMOUS_${apId()}`,
                 platform: {
                     id: `ANONYMOUS_${apId()}`,
-                    role: PlatformRole.MEMBER,
                 },
             }
         }
