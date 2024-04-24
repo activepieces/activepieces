@@ -58,7 +58,6 @@ import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 import { formModule } from './flows/flow/form/form.module'
-import { flowResponseWatcher } from './flows/flow-run/flow-response-watcher'
 import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
@@ -83,10 +82,11 @@ import { platformUserModule } from './user/platform/platform-user-module'
 import { userModule } from './user/user.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
+import { engineResponseWatcher } from './workers/flow-worker/engine-response-watcher'
 import { flowQueueConsumer } from './workers/flow-worker/flow-queue-consumer'
 import { flowWorkerHooks } from './workers/flow-worker/flow-worker-hooks'
 import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
-import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-queue'
+import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-bullboard'
 import {
     GitRepoWithoutSensitiveData,
     ProjectMember,
@@ -366,7 +366,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     app.addHook('onClose', async () => {
         await flowQueueConsumer.close()
         await systemJobsSchedule.close()
-        await flowResponseWatcher.shutdown()
+        await engineResponseWatcher.shutdown()
     })
 
     return app

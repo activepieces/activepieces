@@ -14,7 +14,7 @@ import {
     ScheduledJobData,
 } from './job-data'
 import { consumeJobsInMemory } from './queues/memory/memory-consumer'
-import { inMemoryQueueManager } from './queues/memory/memory-queue'
+import { memoryQueueManager } from './queues/memory/memory-queue'
 import { redisConsumer } from './queues/redis/redis-consumer'
 import { redisQueueManager } from './queues/redis/redis-queue'
 import { enrichErrorContext, exceptionHandler, logger, QueueMode, system, SystemProp } from '@activepieces/server-shared'
@@ -33,7 +33,7 @@ const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
 const initFlowQueueConsumer = async (): Promise<void> => {
     switch (queueMode) {
         case QueueMode.MEMORY: {
-            await inMemoryQueueManager.init()
+            await memoryQueueManager.init()
             consumeJobsInMemory().catch((e) =>
                 logger.error(e, '[FlowQueueConsumer#init] consumeJobsInMemory'),
             )

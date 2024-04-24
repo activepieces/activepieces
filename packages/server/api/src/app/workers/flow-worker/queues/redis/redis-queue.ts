@@ -1,26 +1,23 @@
-import { createBullBoard } from '@bull-board/api'
-import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
-import { FastifyAdapter } from '@bull-board/fastify'
-import basicAuth from '@fastify/basic-auth'
+
 import { DefaultJobOptions, Job, Queue } from 'bullmq'
-import { FastifyInstance } from 'fastify'
 import { createRedisClient } from '../../../../database/redis-connection'
 import { flowRepo } from '../../../../flows/flow/flow.repo'
 import { acquireLock } from '../../../../helper/lock'
-import { getEdition } from '../../../../helper/secret-helper'
-import { LATEST_JOB_DATA_SCHEMA_VERSION,
+import {
+    LATEST_JOB_DATA_SCHEMA_VERSION,
     OneTimeJobData,
     RepeatableJobType,
     ScheduledJobData,
+    WebhookJobData,
 } from '../../job-data'
 import { AddParams, JobType, QueueManager, RemoveParams } from '../queue'
-import { exceptionHandler, logger, system, SystemProp } from '@activepieces/server-shared'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ApEdition,
-    ApEnvironment,
-    ApId, ErrorCode, ExecutionType, isNil, RunEnvironment, ScheduleType } from '@activepieces/shared'
+    ApId, ErrorCode, ExecutionType, isNil, RunEnvironment, ScheduleType,
+} from '@activepieces/shared'
 
+export const WEBHOOK_JOB_QUEUE = 'webhookJobQueue'
 export const ONE_TIME_JOB_QUEUE = 'oneTimeJobs'
 export const SCHEDULED_JOB_QUEUE = 'repeatableJobs'
 
@@ -37,88 +34,25 @@ const defaultJobOptions: DefaultJobOptions = {
 
 let oneTimeJobQueue: Queue<OneTimeJobData, unknown>
 let scheduledJobQueue: Queue<ScheduledJobData, unknown>
+let webhookJobQueue: Queue<WebhookJobData, unknown>
 
 const repeatingJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
-const QUEUE_BASE_PATH = '/ui'
-
-function isQueueEnabled(): boolean {
-    const edition = getEdition()
-    if (edition === ApEdition.CLOUD) {
-        return false
-    }
-    return system.getBoolean(SystemProp.QUEUE_UI_ENABLED) ?? false
+type RedisQueueManager = QueueManager & {
+    getOneTimeJobQueue(): Queue<OneTimeJobData, unknown>
+    getScheduledJobQueue(): Queue<ScheduledJobData, unknown>
+    getWebhookJobQueue(): Queue<WebhookJobData, unknown>
 }
-
-export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
-    if (!isQueueEnabled()) {
-        return
-    }
-    const queueUsername = system.getOrThrow(SystemProp.QUEUE_UI_USERNAME)
-    const queuePassword = system.getOrThrow(SystemProp.QUEUE_UI_PASSWORD)
-    logger.info(
-        '[setupBullMQBoard] Setting up bull board, visit /ui to see the queues',
-    )
-
-    await app.register(basicAuth, {
-        validate: (username, password, _req, reply, done) => {
-            if (username === queueUsername && password === queuePassword) {
-                done()
-            }
-            else {
-                done(new Error('Unauthorized'))
-            }
-        },
-        authenticate: true,
-    })
-
-    const serverAdapter = new FastifyAdapter()
-    createBullBoard({
-        queues: [
-            new BullMQAdapter(oneTimeJobQueue),
-            new BullMQAdapter(scheduledJobQueue),
-        ],
-        serverAdapter,
-    })
-    const environment =
-        system.get(SystemProp.ENVIRONMENT) ?? ApEnvironment.DEVELOPMENT
-    switch (environment) {
-        case ApEnvironment.DEVELOPMENT:
-            serverAdapter.setBasePath(QUEUE_BASE_PATH)
-            break
-        case ApEnvironment.PRODUCTION:
-            serverAdapter.setBasePath(`/api${QUEUE_BASE_PATH}`)
-            break
-        case ApEnvironment.TESTING:
-            throw new Error('Not supported')
-    }
-
-    app.addHook('onRequest', (req, reply, next) => {
-        if (!req.routerPath.startsWith(QUEUE_BASE_PATH)) {
-            next()
-        }
-        else {
-            app.basicAuth(req, reply, function (error?: unknown) {
-                const castedError = error as { statusCode: number, name: string }
-                if (!isNil(castedError)) {
-                    void reply
-                        .code(castedError.statusCode || 500)
-                        .send({ error: castedError.name })
-                }
-                else {
-                    next()
-                }
-            })
-        }
-    })
-
-    await app.register(serverAdapter.registerPlugin(), {
-        prefix: QUEUE_BASE_PATH,
-        basePath: QUEUE_BASE_PATH,
-    })
-}
-
-export const redisQueueManager: QueueManager = {
+export const redisQueueManager: RedisQueueManager = {
+    getOneTimeJobQueue(): Queue<OneTimeJobData, unknown> {
+        return oneTimeJobQueue
+    },
+    getScheduledJobQueue(): Queue<ScheduledJobData, unknown> {
+        return scheduledJobQueue
+    },
+    getWebhookJobQueue(): Queue<WebhookJobData, unknown> {
+        return webhookJobQueue
+    },
     async init() {
         logger.info('[redisQueueManager#init] Initializing redis queues')
         oneTimeJobQueue = new Queue<OneTimeJobData, unknown, ApId>(
@@ -135,6 +69,13 @@ export const redisQueueManager: QueueManager = {
                 defaultJobOptions,
             },
         )
+        webhookJobQueue = new Queue<WebhookJobData, unknown, ApId>(
+            WEBHOOK_JOB_QUEUE,
+            {
+                connection: createRedisClient(),
+                defaultJobOptions,
+            },
+        ) 
         await migrateScheduledJobs()
     },
     async add(params: AddParams<JobType>): Promise<void> {
@@ -168,6 +109,13 @@ export const redisQueueManager: QueueManager = {
             await scheduledJobQueue.add(id, data, {
                 jobId: id,
                 delay,
+            })
+        }
+        else if (params.type === JobType.WEBHOOK) {
+            const { id, data } = params
+            await webhookJobQueue.add(id, data, {
+                jobId: id,
+                priority: params.priority === 'high' ? 1 : 2,
             })
         }
         else {

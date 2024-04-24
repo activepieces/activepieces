@@ -1,4 +1,4 @@
-import cronParser from 'cron-parser'
+
 import dayjs from 'dayjs'
 import { flowService } from '../../../../flows/flow/flow.service'
 import { flowRunRepo } from '../../../../flows/flow-run/flow-run-service'
@@ -17,6 +17,7 @@ import {
     RemoveParams,
     RenewWebhookJobAddParams,
     RepeatingJobAddParams,
+    WebhookJobAddParams,
 } from '../queue'
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { logger } from '@activepieces/server-shared'
@@ -28,42 +29,7 @@ import {
     RunEnvironment,
     TriggerType,
 } from '@activepieces/shared'
-
-function calculateNextFireForCron(
-    cronExpression: string,
-    timezone: string,
-): number | null {
-    try {
-        const options = {
-            tz: timezone,
-        }
-
-        const interval = cronParser.parseExpression(cronExpression, options)
-        const nextFireEpochMsAt = dayjs(interval.next().getTime()).unix()
-
-        return nextFireEpochMsAt
-    }
-    catch (err) {
-        logger.error(err)
-        return null
-    }
-}
-
-type RepeatableJob =
-  | RepeatingJobAddParams<JobType.REPEATING>
-  | RenewWebhookJobAddParams<JobType.REPEATING>
-
-type InMemoryQueueManager = {
-    queues: {
-        [JobType.ONE_TIME]: OneTimeJobAddParams<JobType.ONE_TIME>[]
-        [JobType.REPEATING]: (RepeatableJob & {
-            nextFireEpochMsAt: number
-        })[]
-        [JobType.DELAYED]: (DelayedJobAddParams<JobType.DELAYED> & {
-            nextFireEpochSeconds: number
-        })[]
-    }
-} & QueueManager
+import { ApMemoryQueue } from 'server-worker'
 
 type FlowWithRenewWebhook = {
     flow: Flow
@@ -73,19 +39,26 @@ type FlowWithRenewWebhook = {
     }
 }
 
-export const inMemoryQueueManager: InMemoryQueueManager = {
-    queues: {
-        ONE_TIME: [],
-        REPEATING: [],
-        DELAYED: [],
-    },
+type RepeatingJob = RepeatingJobAddParams<JobType.REPEATING> | RenewWebhookJobAddParams<JobType.REPEATING>
 
+const oneTimeQueue: ApMemoryQueue<OneTimeJobAddParams<JobType.ONE_TIME>> = new ApMemoryQueue()
+const repeatingQueue: ApMemoryQueue<RepeatingJob> = new ApMemoryQueue()
+const delayedQueue: ApMemoryQueue<DelayedJobAddParams<JobType.DELAYED>> = new ApMemoryQueue()
+const webhookQueue = new ApMemoryQueue<WebhookJobAddParams<JobType.WEBHOOK>>()
+
+type MemoryQueueManager = QueueManager & {
+    getOneTimeQueue(): ApMemoryQueue<OneTimeJobAddParams<JobType.ONE_TIME>>
+    getRepeatingQueue(): ApMemoryQueue<RepeatingJob>
+    getDelayedQueue(): ApMemoryQueue<DelayedJobAddParams<JobType.DELAYED>>
+    getWebhookQueue(): ApMemoryQueue<WebhookJobAddParams<JobType.WEBHOOK>>
+}
+
+export const memoryQueueManager: MemoryQueueManager = {
+    getOneTimeQueue: () => oneTimeQueue,
+    getRepeatingQueue: () => repeatingQueue,
+    getDelayedQueue: () => delayedQueue,
+    getWebhookQueue: () => webhookQueue,
     async init(): Promise<void> {
-        this.queues = {
-            ONE_TIME: [],
-            REPEATING: [],
-            DELAYED: [],
-        }
         const enabledFlows = await flowService.getAllEnabled()
         const enabledRepeatingFlows = enabledFlows.filter((flow) => flow.schedule)
         const enabledRenewWebhookFlows = (
@@ -190,40 +163,43 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
                 }).catch((e) => logger.error(e, '[MemoryQueue#init] add'))
             }
         })
-    // TODO add run with status RUNNING
     },
     async add(params: AddParams<JobType>): Promise<void> {
         switch (params.type) {
             case JobType.ONE_TIME: {
-                this.queues[params.type].push(params)
+                oneTimeQueue.add({
+                    id: params.id,
+                    data: params,
+                })
                 break
             }
             case JobType.REPEATING: {
-                const nextFireEpochMsAt = calculateNextFireForCron(
-                    params.scheduleOptions.cronExpression,
-                    params.scheduleOptions.timezone,
-                )
-                if (nextFireEpochMsAt) {
-                    this.queues[params.type].push({
-                        ...params,
-                        nextFireEpochMsAt,
-                    })
-                }
+                repeatingQueue.add({
+                    data: params,
+                    id: params.id,
+                    cronExpression: params.scheduleOptions.cronExpression,
+                    cronTimezone: params.scheduleOptions.timezone,
+                })
                 break
             }
             case JobType.DELAYED: {
-                this.queues[params.type].push({
-                    ...params,
-                    nextFireEpochSeconds: dayjs().add(params.delay, 'ms').unix(),
+                delayedQueue.add({
+                    id: params.id,
+                    data: params,
+                    nextFireAtEpochSeconds: dayjs().add(params.delay, 'ms').unix(),
+                })
+                break
+            }
+            case JobType.WEBHOOK: {
+                webhookQueue.add({
+                    id: params.id,
+                    data: params,
                 })
                 break
             }
         }
     },
-
     async removeRepeatingJob(params: RemoveParams): Promise<void> {
-        this.queues.REPEATING = this.queues.REPEATING.filter(
-            (job) => job.id !== params.id,
-        )
+        repeatingQueue.remove(params.id)
     },
 }
