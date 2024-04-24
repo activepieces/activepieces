@@ -22,7 +22,7 @@ type EncryptedObject = {
 
 const algorithm = 'aes-256-cbc';
 const ivLength = 16;
-const SESSION_TOKEN_KEY = '_session_token';
+const SESSION_TOKEN_KEY = 'metabase:_session_token';
 
 function encryptString(inputString: string, key: string): EncryptedObject {
   const iv = crypto.randomBytes(ivLength); // Generate a random initialization vector
