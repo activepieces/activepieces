@@ -6,10 +6,13 @@ import { FlowRendererService } from '@activepieces/ui/common';
   selector: '[appCanvasPanner]',
 })
 export class CanvasPannerDirective {
+  lasWheelPanTimeStamp = new Date().getTime();
   constructor(
     private pannerService: PannerService,
     private flowRendererService: FlowRendererService
-  ) {}
+  ) {
+    this.createWheelPannerChecker();
+  }
 
   @HostListener('mousedown', ['$event'])
   mouseDown(event: MouseEvent) {
@@ -33,6 +36,7 @@ export class CanvasPannerDirective {
           x: event.clientX,
           y: event.clientY,
         },
+        isTouchpadPanning: false,
       });
     }
   }
@@ -70,12 +74,18 @@ export class CanvasPannerDirective {
           y: event.clientY,
         },
         isPanning: true,
+        isTouchpadPanning: false,
       });
     }
     event.preventDefault();
   }
+
   @HostListener('wheel', ['$event'])
-  macPanning(event: WheelEvent) {
+  /** Handles locked panning by the normal mouse wheel horizontally and vertically and also touchpad panning on laptops */
+  wheelPanning(event: WheelEvent) {
+    if (this.skipWheelEventIfZooming(event)) {
+      return;
+    }
     if (event.target) {
       const scrollingWithinDataInsertionPopup = document
         .getElementById('mentionsDropdownContainer')
@@ -87,19 +97,33 @@ export class CanvasPannerDirective {
     }
 
     if (!this.flowRendererService.isDraggingStep) {
+      this.lasWheelPanTimeStamp = new Date().getTime();
       const lastPanningOffset = {
         x: this.pannerService.lastPanningOffset.x - event.deltaX,
         y: this.pannerService.lastPanningOffset.y - event.deltaY,
       };
       this.pannerService.setLastPanningOffset(lastPanningOffset);
       this.pannerService.setPanningState({
-        currentOffset: {
-          x: event.clientX,
-          y: event.clientY,
-        },
+        currentOffset: lastPanningOffset,
         isPanning: false,
+        isTouchpadPanning: true,
       });
     }
     event.preventDefault();
+  }
+
+  createWheelPannerChecker() {
+    setInterval(() => {
+      const now = new Date().getTime();
+      if (now - this.lasWheelPanTimeStamp > 100) {
+        this.pannerService.setPanningState({
+          ...this.pannerService.panningState,
+          isTouchpadPanning: false,
+        });
+      }
+    });
+  }
+  private skipWheelEventIfZooming(event: WheelEvent) {
+    return event.ctrlKey || event.metaKey;
   }
 }
