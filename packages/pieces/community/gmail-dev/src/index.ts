@@ -27,6 +27,7 @@ export const gmailDevAuth = PieceAuth.OAuth2({
 
 export const gmailDev = createPiece({
   displayName: 'Gmail(Developer Edition)',
+  description: 'Reading emails is a sensitive scope. This piece requires adding your own OAuth2 app to bypass approval.',
   auth: gmailDevAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/gmail-dev.png',
