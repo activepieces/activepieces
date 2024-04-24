@@ -21,7 +21,7 @@ export const storageAppendAction = createAction({
     key: Property.ShortText({
       displayName: 'Key',
       required: true,
-      validators: [Validators.maxLength(128)]
+      validators: [Validators.maxLength(128)],
     }),
     value: Property.ShortText({
       displayName: 'Value',
@@ -49,10 +49,6 @@ export const storageAppendAction = createAction({
     separator = separator.replace(/\\n/g, '\n'); // Allow newline escape sequence
     const newValue =
       oldValue + (oldValue.length > 0 ? separator : '') + appendValue;
-    return await context.store.put(
-      context.propsValue.key,
-      newValue,
-      scope
-    );
+    return await context.store.put(key, newValue, scope);
   },
 });
