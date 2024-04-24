@@ -128,6 +128,7 @@ export async function queryApiAndHandleRefresh(
     if (httpError.response.status === 401) {
       const sessionToken = await refreshSessionToken(auth);
       await storeSessionToken(sessionToken, encryptionKey as string, store);
+      request.headers!['X-Metabase-Session'] = sessionToken;
       return (await httpClient.sendRequest(request)).body;
     }
     throw error;
