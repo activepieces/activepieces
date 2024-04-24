@@ -110,6 +110,7 @@ export class AuthenticationService {
         return false;
       }
     } catch (exception_var) {
+      console.error(exception_var)
       this.logout();
       return false;
     }
