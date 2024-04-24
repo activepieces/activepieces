@@ -51,6 +51,10 @@ type FlowImportedUsingFile = {
 
 }
 
+type RequestTrialClicked = {
+    feature: string | null
+}
+
 type UpgradeClicked = {
     limitType?: 'team' | 'connections'
     limit: number
@@ -100,6 +104,8 @@ type FormsViewed = {
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     QUOTA_ALERT = 'quota.alert',
+    REQUEST_TRIAL_CLICKED = 'request.trial.clicked',
+    REQUEST_TRIAL_SUBMITTED = 'request.trial.submitted',
     UPGRADE_CLICKED = 'upgrade.clicked',
     OPENED_PRICING_FROM_DASHBOARD = 'pricing.viewed',
     UPGRADE_POPUP = 'upgrade.popup',
@@ -131,6 +137,8 @@ type BaseTelemetryEvent<T, P> = {
 export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, SignedUp>
     | BaseTelemetryEvent<TelemetryEventName.REFERRAL, Referral>
+    | BaseTelemetryEvent<TelemetryEventName.REQUEST_TRIAL_CLICKED, RequestTrialClicked>
+    | BaseTelemetryEvent<TelemetryEventName.REQUEST_TRIAL_SUBMITTED, Record<string, never>>
     | BaseTelemetryEvent<TelemetryEventName.UPGRADE_CLICKED, UpgradeClicked>
     | BaseTelemetryEvent<TelemetryEventName.UPGRADE_POPUP, UpgradePopup>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_RUN_CREATED, RunCreated>
