@@ -44,21 +44,21 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
         '/',
         ListAppConnectionsRequest,
         async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
-            const { pieceName, cursor, limit } = request.query
+            const { name, pieceName, cursor, limit } = request.query
 
             const appConnections = await appConnectionService.list({
-                projectId: request.principal.projectId,
                 pieceName,
-                name: request.query.name,
+                name,
+                projectId: request.principal.projectId,
                 cursorRequest: cursor ?? null,
                 limit: limit ?? DEFAULT_PAGE_SIZE,
             })
 
             const appConnectionsWithoutSensitiveData: SeekPage<AppConnectionWithoutSensitiveData> =
-        {
-            ...appConnections,
-            data: appConnections.data.map(removeSensitiveData),
-        }
+      {
+          ...appConnections,
+          data: appConnections.data.map(removeSensitiveData),
+      }
 
             return appConnectionsWithoutSensitiveData
         },
@@ -66,8 +66,8 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
     app.post(
         '/validate-connection-name',
         ValidateConnectionNameRequest,
-        async (request, reply): Promise<ValidateConnectionNameResponse>=>{
-            const result = await  appConnectionService.validateConnectionName({
+        async (request, reply): Promise<ValidateConnectionNameResponse> => {
+            const result = await appConnectionService.validateConnectionName({
                 projectId: request.principal.projectId,
                 connectionName: request.body.connectionName,
             })
@@ -75,8 +75,8 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
                 return reply.status(StatusCodes.BAD_REQUEST).send(result)
             }
             return result
-        }),
-
+        },
+    ),
     app.delete(
         '/:id',
         DeleteAppConnectionRequest,

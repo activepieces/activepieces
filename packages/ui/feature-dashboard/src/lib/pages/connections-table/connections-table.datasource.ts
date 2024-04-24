@@ -35,7 +35,8 @@ export class ConnectionsTableDataSource extends DataSource<any> {
     private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
     private pieceMetadataService: PieceMetadataService,
-    private connectionsService: AppConnectionsService
+    private connectionsService: AppConnectionsService,
+    private refreshForReruns$: Observable<boolean>
   ) {
     super();
   }
@@ -48,7 +49,10 @@ export class ConnectionsTableDataSource extends DataSource<any> {
   connect(): Observable<any[]> {
     return combineLatest({
       queryParams: this.queryParams$,
-      refresh: merge(this.connectionsService.refreshCacheSubject),
+      refresh: merge(
+        this.connectionsService.refreshCacheSubject,
+        this.refreshForReruns$
+      ),
     }).pipe(
       tap(() => {
         this.isLoading$.next(true);
@@ -57,6 +61,8 @@ export class ConnectionsTableDataSource extends DataSource<any> {
         return this.connectionsService.list({
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams[CURSOR_QUERY_PARAM],
+          name: res.queryParams['name'],
+          pieceName: res.queryParams['pieceName'],
         });
       }),
       catchError((err) => {

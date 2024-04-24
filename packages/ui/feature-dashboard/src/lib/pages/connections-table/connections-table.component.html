@@ -4,6 +4,29 @@
       <ap-button actionButton (buttonClicked)="openNewConnectionDialog()" btnSize="medium" btnColor="primary" i18n>+ New
         Connection</ap-button>
     </ap-page-title>
+    <div class="ap-w-full ap-flex ap-flex-row ap-items-center ap-gap-2">
+      <mat-form-field class="!ap-min-w-[15.625rem] ap-items-center" appearance="outline">
+        <mat-label i18n>Filter by name</mat-label>
+        <input matInput type="text" class="ap-p-2 ap-rounded-lg ap-border-solid ap-border-dividers ap-border"
+          [formControl]="connectionNameFilterControl" />
+      </mat-form-field>
+      <mat-form-field class="!ap-min-w-[15.625rem] ap-items-center" appearance="outline">
+        <mat-label i18n>Filter by piece</mat-label>
+        <mat-select [formControl]="pieceNameFilterControl">
+          <ap-dropdown-search-control [searchControl]="searchControl"></ap-dropdown-search-control>
+          @if(allPieces | async; as allPieces ){
+          <mat-option i18n selectAll [allValues]="allPieces">
+            All
+          </mat-option>
+          }
+          @for (piece of pieces$ | async; track piece) {
+          <mat-option [value]="piece.name">
+            {{ piece.displayName }}
+          </mat-option>
+          }
+        </mat-select>
+    </mat-form-field>
+    </div>
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Connections" i18n-aria-label>
         <ng-container matColumnDef="app">
@@ -59,7 +82,7 @@
         </div>
       </ng-container>
       <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
-        <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-py-8" i18n>
+        <div class="ap-flex ap-items-center ap-justify-center ap-h-[500px] ap-py-8" i18n>
           No connections created yet
         </div>
       </ng-container>
@@ -72,9 +95,10 @@
 </div>
 <ng-container *ngIf="deleteConnectionDialogClosed$ | async"></ng-container>
 <ng-container *ngIf="newConnectionDialogClosed$ | async"></ng-container>
+<ng-container *ngIf="filtersChanged$ | async"></ng-container>
 <div class="ap-hidden">
   <app-add-edit-connection-button *ngIf="newConnectionPiece" #connectionButton btnSize="extraSmall"
     [isEditConnectionButton]="false" [authProperty]="newConnectionPiece.auth!" [pieceName]="newConnectionPiece.name"
-    [pieceVersion]="newConnectionPiece.version" 
+    [pieceVersion]="newConnectionPiece.version"
     [pieceDisplayName]="newConnectionPiece.displayName"></app-add-edit-connection-button>
 </div>
