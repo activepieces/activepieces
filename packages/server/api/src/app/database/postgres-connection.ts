@@ -126,6 +126,7 @@ import { AddProjectUsageColumnToPiece1711768296861 } from './migration/postgres/
 import { AddPieceTags1712107871405 } from './migration/postgres/1712107871405-AddPieceTags'
 import { PiecesProjectLimits1712279318440 } from './migration/postgres/1712279318440-PiecesProjectLimits'
 import { RemoveUniqueEmailOnUser1713221809186 } from './migration/postgres/1713221809186-RemoveUniqueEmailOnUser'
+import { AddPlatformRoleToUser1713302610746 } from './migration/postgres/1713302610746-AddPlatformRoleToUser'
 import { AddUniqueNameToFolder1713643694049 } from './migration/postgres/1713643694049-AddUniqueNameToFolder'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
@@ -209,6 +210,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddProjectUsageColumnToPiece1711768296861,
         AddPieceTags1712107871405,
         RemoveUniqueEmailOnUser1713221809186,
+        AddPlatformRoleToUser1713302610746,
         AddUniqueNameToFolder1713643694049,
     ]
 

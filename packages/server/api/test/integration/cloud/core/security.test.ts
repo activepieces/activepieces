@@ -15,7 +15,6 @@ import {
     apId,
     EndpointScope,
     ErrorCode,
-    PlatformRole,
     Principal,
     PrincipalType,
 } from '@activepieces/shared'
@@ -157,7 +156,6 @@ describe('API Security', () => {
                     projectId: expect.stringMatching(/ANONYMOUS_.{21}/),
                     platform: {
                         id: mockPlatform.id,
-                        role: PlatformRole.OWNER,
                     },
                 }),
             )
@@ -205,7 +203,6 @@ describe('API Security', () => {
                     projectId: mockProject.id,
                     platform: {
                         id: mockPlatform.id,
-                        role: PlatformRole.OWNER,
                     },
                 }),
             )
@@ -253,7 +250,6 @@ describe('API Security', () => {
                     projectId: mockProject.id,
                     platform: {
                         id: mockPlatform.id,
-                        role: PlatformRole.OWNER,
                     },
                 }),
             )
@@ -303,7 +299,6 @@ describe('API Security', () => {
                     projectId: mockProject.id,
                     platform: {
                         id: mockPlatform.id,
-                        role: PlatformRole.OWNER,
                     },
                 }),
             )
@@ -509,7 +504,6 @@ describe('API Security', () => {
                 projectId: apId(),
                 platform: {
                     id: apId(),
-                    role: PlatformRole.OWNER,
                 },
             }
 
@@ -537,7 +531,6 @@ describe('API Security', () => {
                     projectId: mockPrincipal.projectId,
                     platform: {
                         id: mockPrincipal.platform.id,
-                        role: PlatformRole.OWNER,
                     },
                 }),
             )
@@ -668,7 +661,6 @@ describe('API Security', () => {
                     projectId: expect.stringMatching(/ANONYMOUS_.{21}/),
                     platform: {
                         id: expect.stringMatching(/ANONYMOUS_.{21}/),
-                        role: PlatformRole.MEMBER,
                     },
                 }),
             )

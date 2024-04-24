@@ -51,7 +51,6 @@ export const managedAuthnService = {
             projectId: project.id,
             platform: {
                 id: externalPrincipal.platformId,
-                role: PlatformRole.MEMBER,
             },
         })
         return {
@@ -109,6 +108,7 @@ const getOrCreateUser = async (
         lastName: externalLastName,
         trackEvents: true,
         newsLetter: true,
+        platformRole: PlatformRole.MEMBER,
         verified: true,
         externalId: externalUserId,
         platformId,

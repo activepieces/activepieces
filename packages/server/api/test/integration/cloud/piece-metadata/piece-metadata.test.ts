@@ -9,6 +9,7 @@ import {
     createMockPlatform,
     createMockProject,
     createMockUser,
+    mockBasicSetup,
 } from '../../../helpers/mocks'
 import { logger } from '@activepieces/server-shared'
 import {
@@ -247,7 +248,6 @@ describe('Piece Metadata API', () => {
                 id: mockUser.id,
                 platform: {
                     id: mockPlatform.id,
-                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -269,22 +269,20 @@ describe('Piece Metadata API', () => {
         })
 
         it('Should list project pieces', async () => {
-            const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save([mockUser])
-
-            const mockPlatform = createMockPlatform({
-                ownerId: mockUser.id,
-                filteredPieceNames: [],
-                filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
+            const { mockOwner, mockPlatform } = await mockBasicSetup({
+                platform: {
+                    filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
+                    filteredPieceNames: [],
+                },
             })
-            await databaseConnection.getRepository('platform').save([mockPlatform])
 
-            const mockProject = await createProjectAndPlan({
-                ownerId: mockUser.id,
+            const mockProject1 = await createProjectAndPlan({
+                ownerId: mockOwner.id,
                 platformId: mockPlatform.id,
             })
+
             const mockProject2 = await createProjectAndPlan({
-                ownerId: mockUser.id,
+                ownerId: mockOwner.id,
                 platformId: mockPlatform.id,
             })
 
@@ -292,7 +290,8 @@ describe('Piece Metadata API', () => {
             const mockPieceMetadataA = createMockPieceMetadata({
                 name: 'a',
                 pieceType: PieceType.CUSTOM,
-                projectId: mockProject.id,
+                projectId: mockProject1.id,
+                platformId: mockPlatform.id,
                 displayName: 'a',
             })
             const mockPieceMetadataB = createMockPieceMetadata({
@@ -304,6 +303,7 @@ describe('Piece Metadata API', () => {
                 name: 'c',
                 pieceType: PieceType.CUSTOM,
                 projectId: mockProject2.id,
+                platformId: mockPlatform.id,
                 displayName: 'c',
             })
             await databaseConnection
@@ -312,11 +312,10 @@ describe('Piece Metadata API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
-                id: mockUser.id,
+                projectId: mockProject1.id,
+                id: mockOwner.id,
                 platform: {
                     id: mockPlatform.id,
-                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -373,7 +372,6 @@ describe('Piece Metadata API', () => {
                 projectId: apId(),
                 platform: {
                     id: apId(),
-                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -445,7 +443,6 @@ describe('Piece Metadata API', () => {
                 projectId: apId(),
                 platform: {
                     id: apId(),
-                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -489,7 +486,6 @@ describe('Piece Metadata API', () => {
                 projectId: apId(),
                 platform: {
                     id: apId(),
-                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -514,6 +510,7 @@ describe('Piece Metadata API', () => {
 
         it('Allows filtered pieces if project filter is set to "ALLOWED"', async () => {
             // arrange
+            
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save([mockUser])
 
@@ -525,6 +522,10 @@ describe('Piece Metadata API', () => {
 
             await databaseConnection.getRepository('platform').save([mockPlatform])
 
+            await databaseConnection.getRepository('user').update(mockUser.id, {
+                platformId: mockPlatform.id,
+                platformRole: PlatformRole.ADMIN,
+            })
             const mockProject = await createProjectAndPlan({
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
@@ -551,7 +552,6 @@ describe('Piece Metadata API', () => {
                 projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
-                    role: PlatformRole.OWNER,
                 },
             })
 
@@ -585,6 +585,11 @@ describe('Piece Metadata API', () => {
 
             await databaseConnection.getRepository('platform').save([mockPlatform])
 
+            await databaseConnection.getRepository('user').update(mockUser.id, {
+                platformId: mockPlatform.id,
+                platformRole: PlatformRole.ADMIN,
+            })
+
             const mockProject = await createProjectAndPlan({
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
@@ -609,7 +614,6 @@ describe('Piece Metadata API', () => {
                 projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
-                    role: PlatformRole.OWNER,
                 },
             })
 
@@ -643,6 +647,11 @@ describe('Piece Metadata API', () => {
 
             await databaseConnection.getRepository('platform').save([mockPlatform])
 
+            await databaseConnection.getRepository('user').update(mockUser.id, {
+                platformId: mockPlatform.id,
+                platformRole: PlatformRole.ADMIN,
+            })
+            
             const mockProject = await createProjectAndPlan({
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
@@ -666,7 +675,6 @@ describe('Piece Metadata API', () => {
                 projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
-                    role: PlatformRole.OWNER,
                 },
             })
 

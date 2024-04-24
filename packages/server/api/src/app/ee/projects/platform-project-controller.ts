@@ -2,6 +2,7 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { platformProjectService } from './platform-project-service'
@@ -48,9 +49,8 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         return platformProjectService.getAll({
-            platformId,
             externalId: request.query.externalId,
-            ownerId: undefined,
+            principal: request.principal,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
         })
@@ -59,7 +59,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     app.post('/:id', UpdateProjectRequest, async (request) => {
         const project = await projectService.getOneOrThrow(request.params.id)
         const haveTokenForTheProject = request.principal.projectId === project.id
-        const ownThePlatform = request.principal.platform.role === PlatformRole.OWNER && (request.principal.platform.id === project.platformId)
+        const ownThePlatform = isPlatformAdmin(request.principal, project.platformId)
         if (!haveTokenForTheProject && !ownThePlatform) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -84,6 +84,20 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
 
         return res.status(StatusCodes.NO_CONTENT).send()
     })
+}
+
+async function isPlatformAdmin(principal: Principal, platformId: string): Promise<boolean> {
+    if (principal.platform.id !== platformId) {
+        return false
+    }
+    if (principal.type === PrincipalType.SERVICE) {
+        return true
+    }
+    const user = await userService.getMetaInfo({
+        id: principal.id,
+    })
+    assertNotNullOrUndefined(user, 'user can not be null')
+    return user.platformRole === PlatformRole.ADMIN
 }
 
 const assertProjectToDeleteIsNotPrincipalProject = (principal: Principal, projectId: string): void => {

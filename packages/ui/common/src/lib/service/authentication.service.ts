@@ -7,6 +7,7 @@ import {
   AuthenticationResponse,
   ClaimTokenRequest,
   FederatedAuthnLoginResponse,
+  PlatformRole,
   Principal,
   ProjectId,
   ProjectMemberRole,
@@ -147,9 +148,10 @@ export class AuthenticationService {
     return decodedToken?.platform?.id;
   }
 
-  isPlatformOwner(): boolean {
-    const decodedToken = this.getDecodedToken();
-    return decodedToken?.platform?.role === 'OWNER';
+  isPlatformOwner$(): Observable<boolean> {
+    return this.currentUserSubject.pipe(
+      map((user) => user?.platformRole === PlatformRole.ADMIN)
+    );
   }
 
   sendOtpEmail(req: CreateOtpRequestBody) {
