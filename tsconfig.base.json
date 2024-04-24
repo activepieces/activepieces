@@ -203,6 +203,9 @@
       "@activepieces/piece-gmail": [
         "packages/pieces/community/gmail/src/index.ts"
       ],
+      "@activepieces/piece-gmail-dev": [
+        "packages/pieces/community/gmail-dev/src/index.ts"
+      ],
       "@activepieces/piece-google-calendar": [
         "packages/pieces/community/google-calendar/src/index.ts"
       ],
