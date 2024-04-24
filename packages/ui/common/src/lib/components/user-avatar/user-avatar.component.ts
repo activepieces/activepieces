@@ -76,7 +76,6 @@ export class UserAvatarComponent implements OnInit {
   }
 
   logout() {
-    this.router.navigate(['sign-in']);
     this.authenticationService.logout();
   }
 
