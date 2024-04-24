@@ -1,9 +1,9 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { websocketService } from '../websockets/websockets.service'
+import { engineResponseWatcher } from '../workers/flow-worker/engine-response-watcher'
 import { flowVersionController } from './flow/flow-version.controller'
 import { flowController } from './flow/flow.controller'
-import { flowResponseWatcher } from './flow-run/flow-response-watcher'
 import { flowRunService } from './flow-run/flow-run-service'
 import { folderController } from './folder/folder.controller'
 import { stepRunService } from './step-run/step-run-service'
@@ -24,7 +24,7 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
                 flowVersionId: data.flowVersionId,
             })
             socket.emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, flowRun)
-            await flowResponseWatcher.listen(flowRun.id, false)
+            await engineResponseWatcher.listen(flowRun.id, false)
             socket.emit(WebsocketClientEvent.TEST_FLOW_RUN_FINISHED, flowRun)
         }
     })

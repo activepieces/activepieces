@@ -29,7 +29,8 @@ import {
     isNil,
     PopulatedFlow,
     ProjectId,
-    SeekPage, TelemetryEventName, UserId } from '@activepieces/shared'
+    SeekPage, TelemetryEventName, UserId,
+} from '@activepieces/shared'
 
 export const flowService = {
     async create({ projectId, request }: CreateParams): Promise<PopulatedFlow> {
@@ -125,6 +126,11 @@ export const flowService = {
         return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
     },
 
+    async getOneById(id: string): Promise<Flow | null> {
+        return flowRepo().findOneBy({
+            id,
+        })
+    },
     async getOne({ id, projectId, entityManager }: GetOneParams): Promise<Flow | null> {
         return flowRepo(entityManager).findOneBy({
             id,

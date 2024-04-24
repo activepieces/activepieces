@@ -4,6 +4,7 @@ import {
     OneTimeJobData,
     RenewWebhookJobData,
     RepeatingJobData,
+    WebhookJobData,
 } from '../job-data'
 import { QueueMode, system, SystemProp } from '@activepieces/server-shared'
 import { ApId, ScheduleOptions } from '@activepieces/shared'
@@ -17,6 +18,7 @@ export type QueueManager = {
 }
 
 export enum JobType {
+    WEBHOOK = 'WEBHOOK',
     ONE_TIME = 'ONE_TIME',
     REPEATING = 'REPEATING',
     DELAYED = 'DELAYED',
@@ -36,9 +38,9 @@ RepeatingJobData
 }
 
 export type RenewWebhookJobAddParams<JT extends JobType.REPEATING> =
-  BaseAddParams<JT, RenewWebhookJobData> & {
-      scheduleOptions: ScheduleOptions
-  }
+    BaseAddParams<JT, RenewWebhookJobData> & {
+        scheduleOptions: ScheduleOptions
+    }
 
 export type DelayedJobAddParams<JT extends JobType.DELAYED> = BaseAddParams<
 JT,
@@ -47,6 +49,14 @@ DelayedJobData
     delay: number
 }
 
+export type WebhookJobAddParams<JT extends JobType.WEBHOOK> = BaseAddParams<
+JT,
+WebhookJobData
+> & {
+    priority: 'high' | 'medium'
+}
+
+
 export type OneTimeJobAddParams<JT extends JobType.ONE_TIME> = BaseAddParams<
 JT,
 OneTimeJobData
@@ -54,13 +64,16 @@ OneTimeJobData
     priority: 'high' | 'medium'
 }
 
+
 export type AddParams<JT extends JobType> = JT extends JobType.ONE_TIME
     ? OneTimeJobAddParams<JT>
     : JT extends JobType.REPEATING
         ? RepeatingJobAddParams<JT> | RenewWebhookJobAddParams<JT>
         : JT extends JobType.DELAYED
             ? DelayedJobAddParams<JT>
-            : never
+            : JT extends JobType.WEBHOOK
+                ? WebhookJobAddParams<JT>
+                : never
 
 export type RemoveParams = {
     id: ApId
