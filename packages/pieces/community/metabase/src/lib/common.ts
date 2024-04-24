@@ -22,7 +22,7 @@ type EncryptedObject = {
 
 const algorithm = 'aes-256-cbc';
 const ivLength = 16;
-const SESSION_TOKEN_KEY = '_session_token';
+const SESSION_TOKEN_KEY = 'metabase:_session_token';
 
 function encryptString(inputString: string, key: string): EncryptedObject {
   const iv = crypto.randomBytes(ivLength); // Generate a random initialization vector
@@ -128,6 +128,7 @@ export async function queryApiAndHandleRefresh(
     if (httpError.response.status === 401) {
       const sessionToken = await refreshSessionToken(auth);
       await storeSessionToken(sessionToken, encryptionKey as string, store);
+      request.headers!['X-Metabase-Session'] = sessionToken;
       return (await httpClient.sendRequest(request)).body;
     }
     throw error;
