@@ -5,20 +5,75 @@
     </div>
     <ng-container *ngTemplateOutlet="dynamicInputTemplate"></ng-container>
   </div>
-  <div cdkDropList [cdkDropListData]="formArray.controls" (cdkDropListDropped)="drop($event)" class="drag-list" > 
-    @for (objectControl of formArray.controls; track objectControl; let idx =
-    $index; let isFirst = $first; let isLast = $last) {
-    <div class="ap-mb-4" >
-      <app-array-form-control-text-item [class.ap-mb-4]="!isLast" [idx]="idx" [control]="formArray.controls[idx] | abstractFormControlCaster"
-        [hideTooltip]="isAnItemBeingDragged" (itemDragStateChanged)="isAnItemBeingDragged = $event"
-        (removeValue)="remove($event)"></app-array-form-control-text-item>
+
+  @if(!!property.properties)
+  { 
+    @for(objectControl of formArray.controls; track $index){
+
+      <mat-card appearance="outlined" class="ap-my-2">
+        <mat-card-header class="ap-w-full !ap-p-3 ap-mb-1 !ap-block">
+          <mat-card-title>
+            <div
+              class="ap-flex ap-items-center ap-select-none ap-justify-between ap-h-[3rem] ap-w-full"
+            >
+              <div class="ap-mx-3 ap-typography-body-1">#{{ $index + 1 }}</div>
+              <ap-icon-button
+                *ngIf="itemsCanBeDeleted()"
+                [width]="12"
+                [height]="12"
+                iconUrl="assets/img/custom/close.svg"
+                [tooltipText]="!deleteButton.isHovered ? '' : removeItemTooltip"
+                (buttonClicked)="remove($index)"
+                apTrackHover
+                #deleteButton="hoverTrackerDirective"
+              ></ap-icon-button>
+            </div>
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="ap-flex ap-flex-col ap-gap-3">
+
+              <app-piece-properties-form
+                [stepName]="''"
+                actionOrTriggerName=""
+                [form]="objectControl | formGroupCaster"
+                [allConnectionsForPiece]="[]"
+                [pieceMetaData]="pieceMetaData"
+                [input]="input[$index] || {}"
+                [flow]="flow"
+                [webhookPrefix]="webhookPrefix"
+                [formPieceTriggerPrefix]="formPieceTriggerPrefix"
+                [propertiesMap]="property.properties"
+                [customizedInputs]="{}"
+                [hideCustomizedInputs]="true"
+                [stepMetaDataForMentions]="stepMetaDataForMentions"
+              ></app-piece-properties-form>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+
+
+    }
+
+  }
+  @else {
+    <div cdkDropList [cdkDropListData]="formArray.controls" (cdkDropListDropped)="drop($event)" class="drag-list" > 
+      @for (objectControl of formArray.controls; track objectControl; let idx =
+      $index; let isFirst = $first; let isLast = $last) {
+      <div class="ap-mb-4" >
+        <app-array-form-control-text-item [class.ap-mb-4]="!isLast" [idx]="idx" [control]="formArray.controls[idx] | abstractFormControlCaster"
+          [hideTooltip]="isAnItemBeingDragged" (itemDragStateChanged)="isAnItemBeingDragged = $event"
+          (removeValue)="remove($event)"></app-array-form-control-text-item>
+      </div>
+      } @empty {
+      <div class="ap-border-dashed ap-border-2 ap-border-gray-500 ap-rounded ap-p-3 ap-text-center">
+        The list is empty
+      </div>
+      } 
     </div>
-    } @empty {
-    <div class="ap-border-dashed ap-border-2 ap-border-gray-500 ap-rounded ap-p-3 ap-text-center">
-      The list is empty
-    </div>
-    } 
-  </div>
+  }
+
   @if (formArray.enabled) {
     <ap-button btnColor="primary" btnStyle="basic" (buttonClicked)="addValue()" type="button" btnSize="medium">
       + Add Item

@@ -44,6 +44,7 @@ import {
     PiecesFilterType,
     PieceType,
     Platform,
+    PlatformRole,
     Project,
     ProjectMemberRole,
     ProjectPlan,
@@ -69,9 +70,8 @@ export const createMockUser = (user?: Partial<User>): User => {
         password: user?.password
             ? bcrypt.hashSync(user.password, 10)
             : faker.internet.password(),
-        status: user?.status ?? faker.helpers.enumValue(UserStatus),
-        imageUrl: user?.imageUrl,
-        title: user?.title,
+        status: user?.status ?? faker.helpers.enumValue(UserStatus), 
+        platformRole: user?.platformRole ?? faker.helpers.enumValue(PlatformRole),
         verified: user?.verified ?? faker.datatype.boolean(),
         externalId: user?.externalId,
         platformId: user?.platformId ?? null,
@@ -203,6 +203,7 @@ export const createMockPlatformWithOwner = (
         ...params?.owner,
         id: mockOwnerId,
         platformId: mockPlatformId,
+        platformRole: PlatformRole.ADMIN,
     })
 
     const mockPlatform = createMockPlatform({
@@ -483,7 +484,10 @@ export const createMockActivity = (activity?: Partial<Activity>): Activity => {
 }
 
 export const mockBasicSetup = async (params?: MockBasicSetupParams): Promise<MockBasicSetup> => {
-    const mockOwner = createMockUser(params?.user)
+    const mockOwner = createMockUser({
+        ...params?.user,
+        platformRole: PlatformRole.ADMIN,
+    })
     await databaseConnection.getRepository('user').save(mockOwner)
 
     const mockPlatform = createMockPlatform({

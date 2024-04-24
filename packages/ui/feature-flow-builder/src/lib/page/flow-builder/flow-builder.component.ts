@@ -47,7 +47,7 @@ import {
   flowDisplayNameInRouteData,
 } from '../../resolvers/builder-route-data';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
-import { PannerService } from '@activepieces/ui-canvas-utils';
+import { PannerService, ZoomingService } from '@activepieces/ui-canvas-utils';
 
 @Component({
   selector: 'app-flow-builder',
@@ -100,6 +100,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     private flagService: FlagService,
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
     private websocketService: WebSocketService,
+    private zoomingService: ZoomingService
   ) {
     this.viewedVersion$ = this.store.select(BuilderSelectors.selectViewedVersion);
     this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
@@ -130,6 +131,30 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     this.rightSidebar$ = this.store.select(
       BuilderSelectors.selectCurrentRightSideBarType
     );
+  }
+
+  @HostListener('wheel', ['$event'])
+  onWheel(event: WheelEvent) {
+    if (event.ctrlKey) {
+      event.preventDefault();
+
+      const delta = Math.sign(event.deltaY);
+      if (delta === -1) {
+        this.zoomingService.setZoomingScale(
+          Math.min(
+            this.zoomingService.zoomingScale + this.zoomingService.zoomingStep,
+            this.zoomingService.maxZoom
+          )
+        );
+      } else {
+        this.zoomingService.setZoomingScale(
+          Math.max(
+            this.zoomingService.zoomingScale - this.zoomingService.zoomingStep,
+            this.zoomingService.minZoom
+          )
+        );
+      }
+    }
   }
 
   @HostListener('mousemove', ['$event'])

@@ -42,8 +42,8 @@ describe('AppConnection API', () => {
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
             const mockPlatformId = apId()
-            const mockOwner = createMockUser({ platformId: mockPlatformId })
-            const mockUser = createMockUser({ platformId: mockPlatformId })
+            const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
+            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
             await databaseConnection.getRepository('user').save([mockOwner, mockUser])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
@@ -87,7 +87,6 @@ describe('AppConnection API', () => {
                 projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
-                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -119,8 +118,8 @@ describe('AppConnection API', () => {
         it('Fails if user role is VIEWER', async () => {
             // arrange
             const mockPlatformId = apId()
-            const mockOwner = createMockUser({ platformId: mockPlatformId })
-            const mockUser = createMockUser({ platformId: mockPlatformId })
+            const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
+            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
             await databaseConnection.getRepository('user').save([mockOwner, mockUser])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
@@ -163,7 +162,6 @@ describe('AppConnection API', () => {
                 projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
-                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -207,8 +205,8 @@ describe('AppConnection API', () => {
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
             const mockPlatformId = apId()
-            const mockOwner = createMockUser({ platformId: mockPlatformId })
-            const mockUser = createMockUser({ platformId: mockPlatformId })
+            const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
+            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
             await databaseConnection.getRepository('user').save([mockOwner, mockUser])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
@@ -234,7 +232,6 @@ describe('AppConnection API', () => {
                 projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
-                    role: PlatformRole.MEMBER,
                 },
             })
 
