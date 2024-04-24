@@ -8,8 +8,8 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { telemetry } from '../../helper/telemetry.utils'
+import { engineResponseWatcher } from '../../workers/flow-worker/engine-response-watcher'
 import { flowService } from '../flow/flow.service'
-import { flowResponseWatcher } from './flow-response-watcher'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunHooks } from './flow-run-hooks'
 import { flowRunSideEffects } from './flow-run-side-effects'
@@ -276,7 +276,7 @@ export const flowRunService = {
             payload,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: flowResponseWatcher.getHandlerId(),
+            synchronousHandlerId: engineResponseWatcher.getHandlerId(),
             hookType: HookType.AFTER_LOG,
         })
     },

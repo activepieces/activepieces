@@ -193,8 +193,8 @@ async function createFilters(
                     },
                     {
                         ...commonFilter,
-                        ownerId: Equal(user.id)
-                    }
+                        ownerId: Equal(user.id),
+                    },
                 ]
             }
         }
