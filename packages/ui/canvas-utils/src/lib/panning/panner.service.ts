@@ -29,7 +29,7 @@ export class PannerService {
         y: 0,
       },
       isPanning: false,
-      isTouchpadPanning:false
+      isTouchpadPanning: false,
     });
 
   private _lastPanningOffset$: BehaviorSubject<{ x: number; y: number }> =
@@ -104,9 +104,11 @@ export class PannerService {
     return this._lastPanningOffset$.value;
   }
   get isPanning$() {
-    return this._panningState$.pipe(map((state) => state.isPanning || state.isTouchpadPanning));
+    return this._panningState$.pipe(
+      map((state) => state.isPanning || state.isTouchpadPanning)
+    );
   }
-  get isPanningWithoutTouchpad$ () {
+  get isPanningWithoutTouchpad$() {
     return this._panningState$.pipe(map((state) => state.isPanning));
   }
   get panningOffset$() {

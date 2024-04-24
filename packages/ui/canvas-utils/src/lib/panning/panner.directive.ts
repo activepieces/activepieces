@@ -79,14 +79,13 @@ export class CanvasPannerDirective {
     }
     event.preventDefault();
   }
-  
+
   @HostListener('wheel', ['$event'])
   /** Handles locked panning by the normal mouse wheel horizontally and vertically and also touchpad panning on laptops */
   wheelPanning(event: WheelEvent) {
-    if(this.skipWheelEventIfZooming(event))
-      {
-        return;
-      }
+    if (this.skipWheelEventIfZooming(event)) {
+      return;
+    }
     if (event.target) {
       const scrollingWithinDataInsertionPopup = document
         .getElementById('mentionsDropdownContainer')
@@ -125,6 +124,6 @@ export class CanvasPannerDirective {
     });
   }
   private skipWheelEventIfZooming(event: WheelEvent) {
-   return event.ctrlKey || event.metaKey;
+    return event.ctrlKey || event.metaKey;
   }
 }
