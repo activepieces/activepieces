@@ -71,6 +71,7 @@ export type WebhookJobData = {
     synchronousHandlerId?: string
     payload: EventPayload
     flowId: string
+    simulate: boolean
 }
 
 export type JobData = ScheduledJobData | OneTimeJobData | WebhookJobData

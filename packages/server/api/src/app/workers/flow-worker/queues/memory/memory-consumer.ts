@@ -1,5 +1,5 @@
-import { flowQueueConsumer } from '../../flow-queue-consumer'
-import { webhookConsumer } from '../../webook-consumer'
+import { flowQueueConsumer } from '../../consumer/flow-queue-consumer'
+import { webhookConsumer } from '../../consumer/webook-consumer'
 import { memoryQueueManager } from './memory-queue'
 import { ApSemaphore, system, SystemProp } from '@activepieces/server-shared'
 

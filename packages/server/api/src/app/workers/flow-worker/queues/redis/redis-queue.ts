@@ -17,7 +17,7 @@ import {
     ApId, ErrorCode, ExecutionType, isNil, RunEnvironment, ScheduleType,
 } from '@activepieces/shared'
 
-export const WEBHOOK_JOB_QUEUE = 'webhookJobQueue'
+export const WEBHOOK_JOB_QUEUE = 'webhookJobs'
 export const ONE_TIME_JOB_QUEUE = 'oneTimeJobs'
 export const SCHEDULED_JOB_QUEUE = 'repeatableJobs'
 

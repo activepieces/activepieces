@@ -1,10 +1,10 @@
-import { flowService } from '../../flows/flow/flow.service'
-import { flowRunService } from '../../flows/flow-run/flow-run-service'
-import { flowVersionService } from '../../flows/flow-version/flow-version.service'
-import { triggerHooks } from '../../flows/trigger'
-import { dedupeService } from '../../flows/trigger/dedupe'
-import { flowQueue } from './flow-queue'
-import { flowWorker } from './flow-worker'
+import { flowService } from '../../../flows/flow/flow.service'
+import { flowRunService } from '../../../flows/flow-run/flow-run-service'
+import { flowVersionService } from '../../../flows/flow-version/flow-version.service'
+import { triggerHooks } from '../../../flows/trigger'
+import { dedupeService } from '../../../flows/trigger/dedupe'
+import { flowQueue } from '../flow-queue'
+import { flowWorker } from '../flow-worker'
 import {
     DelayedJobData,
     OneTimeJobData,
@@ -12,11 +12,11 @@ import {
     RepeatableJobType,
     RepeatingJobData,
     ScheduledJobData,
-} from './job-data'
-import { consumeJobsInMemory } from './queues/memory/memory-consumer'
-import { memoryQueueManager } from './queues/memory/memory-queue'
-import { redisConsumer } from './queues/redis/redis-consumer'
-import { redisQueueManager } from './queues/redis/redis-queue'
+} from '../job-data'
+import { consumeJobsInMemory } from '../queues/memory/memory-consumer'
+import { memoryQueueManager } from '../queues/memory/memory-queue'
+import { redisConsumer } from '../queues/redis/redis-consumer'
+import { redisQueueManager } from '../queues/redis/redis-queue'
 import { enrichErrorContext, exceptionHandler, logger, QueueMode, system, SystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError,
     ErrorCode,

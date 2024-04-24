@@ -1,9 +1,9 @@
 import { Worker } from 'bullmq'
 
 import { createRedisClient } from '../../../../database/redis-connection'
-import { flowQueueConsumer } from '../../flow-queue-consumer'
+import { flowQueueConsumer } from '../../consumer/flow-queue-consumer'
+import { webhookConsumer } from '../../consumer/webook-consumer'
 import { OneTimeJobData, ScheduledJobData, WebhookJobData } from '../../job-data'
-import { webhookConsumer } from '../../webook-consumer'
 import { ONE_TIME_JOB_QUEUE, SCHEDULED_JOB_QUEUE, WEBHOOK_JOB_QUEUE } from './redis-queue'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApId } from '@activepieces/shared'

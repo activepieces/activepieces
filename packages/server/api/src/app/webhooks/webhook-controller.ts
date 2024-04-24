@@ -1,15 +1,14 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { tasksLimit } from '../ee/project-plan/tasks-limit'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
 import { getEdition } from '../helper/secret-helper'
-import { engineResponseWatcher } from '../workers/flow-worker/engine-response-watcher'
+import { EngineHttpResponse, engineResponseWatcher } from '../workers/flow-worker/engine-response-watcher'
 import { flowQueue } from '../workers/flow-worker/flow-queue'
 import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../workers/flow-worker/job-data'
 import { JobType } from '../workers/flow-worker/queues/queue'
-import { webhookService } from './webhook-service'
 import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -28,117 +27,84 @@ import {
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.all('/:flowId/sync', WEBHOOK_PARAMS, async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-        const flow = await getFlowOrThrow(request.params.flowId)
-        const payload = await convertRequest(request)
-        const isHandshake = await handshakeHandler(flow, payload, false, reply)
-        if (isHandshake) {
-            return
-        }
-        const requestId = apId()
-        await flowQueue.add({
-            id: requestId,
-            type: JobType.WEBHOOK,
-            data: {
-                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                requestId,
-                synchronousHandlerId: engineResponseWatcher.getHandlerId(),
-                payload,
-                flowId: flow.id,
-            },
-            priority: 'high',
+        const response = await handleWebhook({
+            request,
+            flowId: request.params.flowId,
+            async: false,
+            simulate: false,
         })
-        const response = await engineResponseWatcher.listen(requestId, true)
+        await reply
+            .status(response.status)
+            .headers(response.headers)
+            .send(response.body)
+    })
+
+    app.all('/:flowId', WEBHOOK_PARAMS, async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+        const response = await handleWebhook({
+            request,
+            flowId: request.params.flowId,
+            async: true,
+            simulate: false,
+        })
+        await reply
+            .status(response.status)
+            .headers(response.headers)
+            .send(response.body)
+    })
+
+    app.all('/', WEBHOOK_QUERY_PARAMS, async (request, reply) => {
+        const response = await handleWebhook({
+            request,
+            flowId: request.query.flowId,
+            async: true,
+            simulate: false,
+        })
+        await reply
+            .status(response.status)
+            .headers(response.headers)
+            .send(response.body)
+    })
+
+    app.all('/:flowId/simulate', WEBHOOK_PARAMS, async (request, reply) => {
+        const response = await handleWebhook({
+            request,
+            flowId: request.params.flowId,
+            async: true,
+            simulate: true,
+        })
         await reply
             .status(response.status)
             .headers(response.headers)
             .send(response.body)
     },
     )
-
-    app.all('/:flowId', WEBHOOK_PARAMS, async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-        const flow = await getFlowOrThrow(request.params.flowId)
-        const payload = await convertRequest(request)
-        const isHandshake = await handshakeHandler(flow, payload, false, reply)
-        if (isHandshake) {
-            return
-        }
-        const requestId = apId()
-        await flowQueue.add({
-            id: requestId,
-            type: JobType.WEBHOOK,
-            data: {
-                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                requestId,
-                payload,
-                flowId: flow.id,
-            },
-            priority: 'medium',
-        })
-        await reply.status(StatusCodes.OK).headers({}).send({})
-    },
-    )
-
-    app.all('/', WEBHOOK_PARAMS, async (
-        request: FastifyRequest<{ Querystring: WebhookUrlParams }>,
-        reply,
-    ) => {
-        const flow = await getFlowOrThrow(request.query.flowId)
-        const payload = await convertRequest(request)
-        const isHandshake = await handshakeHandler(flow, payload, false, reply)
-        if (isHandshake) {
-            return
-        }
-        const requestId = apId()
-        await flowQueue.add({
-            id: requestId,
-            type: JobType.WEBHOOK,
-            data: {
-                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                requestId,
-                payload,
-                flowId: flow.id,
-            },
-            priority: 'medium',
-        })
-        await reply.status(StatusCodes.OK).send()
-    },
-    )
-
-    app.all(
-        '/:flowId/simulate',
-        WEBHOOK_PARAMS,
-        async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-            logger.debug(
-                `[WebhookController#simulate] flowId=${request.params.flowId}`,
-            )
-            const flow = await getFlowOrThrow(request.params.flowId)
-            const payload = await convertRequest(request)
-            const isHandshake = await handshakeHandler(flow, payload, true, reply)
-            if (isHandshake) {
-                return
-            }
-            await webhookService.simulationCallback({
-                flow,
-                payload: {
-                    method: request.method,
-                    headers: request.headers as Record<string, string>,
-                    body: await convertBody(request),
-                    queryParams: request.query as Record<string, string>,
-                },
-            })
-            await reply.status(StatusCodes.OK).send()
-        },
-    )
 }
 
-const WEBHOOK_PARAMS = {
-    config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        skipAuth: true,
-    },
-    schema: {
-        params: WebhookUrlParams,
-    },
+async function handleWebhook({ request, flowId, async, simulate }: { request: FastifyRequest, flowId: string, async: boolean, simulate: boolean }): Promise<EngineHttpResponse> {
+    const flow = await getFlowOrThrow(flowId)
+    const payload = await convertRequest(request)
+    const requestId = apId()
+    await flowQueue.add({
+        id: requestId,
+        type: JobType.WEBHOOK,
+        data: {
+            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+            requestId,
+            synchronousHandlerId: async ? undefined : engineResponseWatcher.getHandlerId(),
+            payload,
+            flowId: flow.id,
+            simulate,
+        },
+        priority: async ? 'medium' : 'high',
+    })
+    if (async) {
+        return {
+            status: StatusCodes.OK,
+            body: {},
+            headers: {},
+        }
+    }
+    return engineResponseWatcher.listen(requestId, true)
 }
 
 async function convertRequest(request: FastifyRequest): Promise<EventPayload> {
@@ -168,33 +134,6 @@ const convertBody = async (request: FastifyRequest): Promise<unknown> => {
         return jsonResult
     }
     return request.body
-}
-
-async function handshakeHandler(
-    flow: Flow,
-    payload: EventPayload,
-    simulate: boolean,
-    reply: FastifyReply,
-): Promise<boolean> {
-    const handshakeResponse = await webhookService.handshake({
-        flow,
-        payload,
-        simulate,
-    })
-    if (!isNil(handshakeResponse)) {
-        reply = reply.status(handshakeResponse.status)
-        if (handshakeResponse.headers !== undefined) {
-            for (const header of Object.keys(handshakeResponse.headers)) {
-                reply = reply.header(
-                    header,
-                    handshakeResponse.headers[header] as string,
-                )
-            }
-        }
-        await reply.send(handshakeResponse.body)
-        return true
-    }
-    return false
 }
 
 const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
@@ -252,4 +191,24 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
     // END EE
 
     return flow
+}
+
+const WEBHOOK_PARAMS = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        skipAuth: true,
+    },
+    schema: {
+        params: WebhookUrlParams,
+    },
+}
+
+const WEBHOOK_QUERY_PARAMS = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        skipAuth: true,
+    },
+    schema: {
+        querystring: WebhookUrlParams,
+    },
 }
