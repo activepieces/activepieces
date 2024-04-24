@@ -89,7 +89,7 @@ export class ConnectionsTableComponent implements OnInit {
       allPieces$,
       this.searchControl.valueChanges.pipe(
         startWith(''),
-        debounceTime(800),
+        debounceTime(100),
         distinctUntilChanged()
       ),
     ]).pipe(
