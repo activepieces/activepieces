@@ -81,7 +81,7 @@ export class CanvasPannerDirective {
   }
   
   @HostListener('wheel', ['$event'])
-  /** Handles locked panning by the normal mouse wheel horizontally and verticall and also touchpad panning on laptops */
+  /** Handles locked panning by the normal mouse wheel horizontally and vertically and also touchpad panning on laptops */
   wheelPanning(event: WheelEvent) {
     if(this.skipWheelEventIfZooming(event))
       {
