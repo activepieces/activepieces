@@ -7,10 +7,15 @@ import {
 import {
   AuthenticationService,
   ContactSalesService,
+  FEATURES,
+  Feature,
+  FeatureKey,
 } from '@activepieces/ui/common';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { tap, map, catchError } from 'rxjs/operators';
+import { tap, map, catchError, startWith } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+
 
 @Component({
   selector: 'app-contact-sales',
@@ -19,18 +24,80 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class ContactSalesComponent {
   sendRequest$: Observable<void> | undefined;
+  updateFeatures$: Observable<void> | undefined;
   pending$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  readonly FEATURES = FEATURES;
+  contactSalesForm: FormGroup<{
+    name: FormControl<string>;
+    email: FormControl<string>;
+    domain: FormControl<string>;
+    message: FormControl<string>;
+    features: FormControl<FeatureKey[]>;
+  }>;
+  featureData$: Observable<{
+    featureCount: number;
+    selected: FeatureKey[];
+  }> = of({
+    selected: [],
+    featureCount: 0
+  });
 
   @Output() cancel = new EventEmitter<void>();
-
-  contactSalesState$: Observable<boolean>;
 
   constructor(
     public authenticationService: AuthenticationService,
     public contactSalesService: ContactSalesService,
-    private snackbar: MatSnackBar
+    private snackbar: MatSnackBar,
+    private fb: FormBuilder
   ) {
-    this.contactSalesState$ = this.contactSalesService.contactSalesState$;
+    this.contactSalesForm = this.fb.group({
+      domain: this.fb.control<string>('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.pattern('(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/?')],
+      }),
+      email: this.fb.control<string>(this.authenticationService.currentUser.email, {
+        nonNullable: true,
+        validators: [Validators.required, Validators.email],
+      }),
+      name: this.fb.control<string>(this.authenticationService.currentUser.firstName + ' ' + this.authenticationService.currentUser.lastName, {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      message: this.fb.control<string>('', {
+        nonNullable: true,
+        validators: [],
+      }),
+      features: this.fb.control<FeatureKey[]>([], {
+        nonNullable: true,
+        validators: [],
+      }),
+    });
+    this.updateFeatures$ = this.contactSalesService.selectedFeature.pipe(
+      tap((features) => {
+        this.contactSalesForm.controls.features.setValue(features);
+      }),
+      map(() => void 0)
+    );
+    this.featureData$ = this.contactSalesForm.controls.features.valueChanges.pipe(
+      startWith(this.contactSalesForm.controls.features.value),
+      map((features) => {
+        return {
+          selected: features,
+          featureCount: features.length
+        }
+      })
+    );
+  }
+
+  hasFeature(feature: Feature) {
+    return this.contactSalesForm.controls.features.value.includes(feature.key);
+  }
+
+  toggle(feature: Feature) {
+    const alreadyChecked = this.contactSalesForm.controls.features.value.includes(feature.key);
+    const newFeatures = alreadyChecked ? this.contactSalesForm.controls.features.value.filter((f) => f !== feature.key) :
+      [...this.contactSalesForm.controls.features.value, feature.key];
+    this.contactSalesForm.controls.features.setValue(newFeatures)
   }
 
   closeSlideout() {
@@ -40,7 +107,14 @@ export class ContactSalesComponent {
   submitForm() {
     if (!this.pending$.value) {
       this.pending$.next(true);
-      this.sendRequest$ = this.contactSalesService.sendRequest().pipe(
+      const { name, email, domain, message, features } = this.contactSalesForm.value;
+      this.sendRequest$ = this.contactSalesService.sendRequest({
+        name: name!,
+        email: email!,
+        domain: domain!,
+        message: message!,
+        features: features!,
+      }).pipe(
         tap((response) => {
           this.pending$.next(false);
           if (!response.status || response.status === 'success') {
