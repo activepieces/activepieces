@@ -50,6 +50,15 @@ export const linearUpdateProject = createAction({
 
     const client = makeClient(auth as string);
     const result = await client.updateProject(propsValue.project_id!, project);
-    return result;
+    if (result.success) {
+      const updatedProject = await result.project;
+      return {
+        success: result.success,
+        lastSyncId: result.lastSyncId,
+        project: updatedProject,
+      };
+    } else {
+      throw new Error(`Unexpected error: ${result}`)
+    }
   },
 });
