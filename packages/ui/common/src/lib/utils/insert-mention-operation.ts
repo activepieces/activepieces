@@ -1,3 +1,5 @@
+export const BLOT_NAME = 'apMention';
+
 export interface ApMention {
   value: string;
   serverValue: string;
@@ -6,6 +8,6 @@ export interface ApMention {
 
 export interface InsertMentionOperation {
   insert: {
-    apMention: ApMention;
+    [BLOT_NAME]: ApMention;
   };
 }

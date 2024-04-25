@@ -51,6 +51,7 @@ import {
   EnrichedStepMetaDataForMentions,
 } from '@activepieces/ui/feature-builder-store';
 import {
+  BLOT_NAME,
   InsertMentionOperation,
   UiCommonModule,
 } from '@activepieces/ui/common';
@@ -86,7 +87,7 @@ export class InterpolatingTextFormControlComponent
 {
   static nextId = 0;
   @Input() insideMatField = true;
-  formats = ['span', 'apMention'];
+  formats = ['span', BLOT_NAME];
   @Input() onlyAllowOneMentionToBeAdded = false;
   @Output() editorFocused: EventEmitter<boolean> = new EventEmitter();
   @Input({ required: true })

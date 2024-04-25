@@ -1,5 +1,5 @@
 import Quill from 'quill';
-import { ApMention } from '@activepieces/ui/common';
+import { ApMention, BLOT_NAME } from '@activepieces/ui/common';
 import { customCodeMentionDisplayName, fixSelection } from './utils';
 
 export function init() {
@@ -117,7 +117,7 @@ export function init() {
     }
   }
 
-  MentionBlot.blotName = 'apMention';
+  MentionBlot.blotName = BLOT_NAME;
   MentionBlot.tagName = 'span';
   MentionBlot.className = 'mention-content';
 
