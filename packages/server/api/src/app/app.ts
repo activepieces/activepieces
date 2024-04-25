@@ -310,10 +310,11 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(activityModule)
-            await app.register(projectBillingModule)
             await app.register(usageTrackerModule)
             await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
+            await app.register(projectBillingModule)
+
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
