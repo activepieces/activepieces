@@ -10,8 +10,10 @@ import { stepRunService } from './step-run/step-run-service'
 import { testTriggerController } from './test-trigger/test-trigger-controller'
 import { logger } from '@activepieces/server-shared'
 import { CreateStepRunRequestBody, StepRunResponse, TestFlowRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { flowWorkerController } from './flow/flow-worker.controller'
 
 export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
+    await app.register(flowWorkerController, { prefix: '/v1/worker/flows' })
     await app.register(flowVersionController, { prefix: '/v1/flows' })
     await app.register(flowController, { prefix: '/v1/flows' })
     await app.register(folderController, { prefix: '/v1/folders' })
