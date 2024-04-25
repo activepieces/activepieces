@@ -1,9 +1,5 @@
-import {
-  createAction,
-  PiecePropValueSchema,
-  Property,
-} from '@activepieces/pieces-framework';
-import { wordpressCommon, WordPressMedia } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { wordpressCommon } from '../common';
 import {
   httpClient,
   HttpMethod,
@@ -12,12 +8,13 @@ import {
 import FormData from 'form-data';
 import { wordpressAuth } from '../..';
 
-export const createWordPressPost = createAction({
+export const updateWordPressPost = createAction({
   auth: wordpressAuth,
-  name: 'create_post',
-  description: 'Create new post on WordPress',
-  displayName: 'Create Post',
+  name: 'update_post',
+  description: 'Update an existing post on WordPress.',
+  displayName: 'Update Post',
   props: {
+    post: wordpressCommon.post,
     title: Property.ShortText({
       description: 'Title of the post about to be added',
       displayName: 'Title',
@@ -61,6 +58,15 @@ export const createWordPressPost = createAction({
       throw new Error('Website url is invalid: ' + context.auth.website_url);
     }
     const requestBody: Record<string, unknown> = {};
+
+    if (context.propsValue.title) {
+      requestBody['title'] = context.propsValue.title;
+    }
+
+    if (context.propsValue.content) {
+      requestBody['content'] = context.propsValue.content;
+    }
+
     if (context.propsValue.date) {
       requestBody['date'] = context.propsValue.date;
     }
@@ -112,11 +118,12 @@ export const createWordPressPost = createAction({
       });
       requestBody['featured_media'] = uploadMediaResponse.body.id;
     }
-    requestBody['content'] = context.propsValue.content;
-    requestBody['title'] = context.propsValue.title;
-    return await httpClient.sendRequest<{ id: string; name: string }[]>({
+
+    const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.auth.website_url.trim()}/wp-json/wp/v2/posts`,
+      url: `${context.auth.website_url.trim()}/wp-json/wp/v2/posts/${
+        context.propsValue.post
+      }`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: context.auth.username,
@@ -124,5 +131,7 @@ export const createWordPressPost = createAction({
       },
       body: requestBody,
     });
+
+    return response.body;
   },
 });

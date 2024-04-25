@@ -1,4 +1,8 @@
-import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import {
+  DropdownOption,
+  PiecePropValueSchema,
+  Property,
+} from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   httpClient,
@@ -247,6 +251,68 @@ export const wordpressCommon = {
         { value: 'private', label: 'Private' },
         { value: 'trash', label: 'Trash' },
       ],
+    },
+  }),
+  post: Property.Dropdown({
+    displayName: 'Post',
+    required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+      const connection = auth as PiecePropValueSchema<typeof wordpressAuth>;
+      const websiteUrl = connection.website_url;
+      if (!connection?.username || !connection?.password || !websiteUrl) {
+        return {
+          disabled: true,
+          placeholder: 'Connect your account first',
+          options: [],
+        };
+      }
+      const postOptions: DropdownOption<number>[] = [];
+      let currentPage = 0;
+      let totalPage = 0;
+
+      do {
+        currentPage += 1;
+        const request: HttpRequest = {
+          method: HttpMethod.GET,
+          url: `${websiteUrl.trim()}/wp-json/wp/v2/posts`,
+          authentication: {
+            type: AuthenticationType.BASIC,
+            username: connection.username,
+            password: connection.password,
+          },
+          queryParams: {
+            orderby: 'date',
+            order: 'desc',
+            per_page: '50',
+            page: currentPage.toString(),
+          },
+        };
+
+        const response = await httpClient.sendRequest(request);
+        totalPage = parseInt(
+          response.headers?.['x-wp-totalpages'] as string,
+          10
+        );
+
+        postOptions.push(
+          ...response.body.map(
+            (post: { id: number; title: { rendered: string } }) => {
+              return {
+                label: post.title.rendered
+                  ? post.title.rendered
+                  : post.id.toString(),
+                value: post.id,
+              };
+            }
+          )
+        );
+      } while (totalPage !== currentPage);
+
+      return {
+        disabled: false,
+        options: postOptions,
+      };
     },
   }),
   async getPosts(params: {

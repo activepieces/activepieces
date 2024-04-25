@@ -16,6 +16,7 @@ import { createWordPressPost } from './lib/actions/create-post.action';
 import { getWordPressPost } from './lib/actions/get-post.action';
 import { wordpressCommon } from './lib/common';
 import { wordpressNewPost } from './lib/trigger/new-post.trigger';
+import { updateWordPressPost } from './lib/actions/update-post.action';
 
 const markdownPropertyDescription = `
 **Enable Basic Authentication:**
@@ -102,10 +103,19 @@ export const wordpress = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
   categories: [PieceCategory.MARKETING],
   auth: wordpressAuth,
-  authors: ["pfernandez98","Salem-Alaa","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: [
+    'pfernandez98',
+    'Salem-Alaa',
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   actions: [
     createWordPressPost,
     createWordPressPage,
+    updateWordPressPost,
     getWordPressPost,
     createCustomApiCallAction({
       baseUrl: (auth) =>
