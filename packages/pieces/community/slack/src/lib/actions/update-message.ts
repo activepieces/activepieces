@@ -6,7 +6,7 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { slackAuth } from '../..';
-import { blocks, slackChannel } from '../common/props';
+import { blocks, slackChannel, slackInfo } from '../common/props';
 
 export const updateMessage = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -15,14 +15,8 @@ export const updateMessage = createAction({
   description: 'Update an existing message',
   auth: slackAuth,
   props: {
+    info: slackInfo,
     channel: slackChannel,
-    info: Property.MarkDown({
-      value: `
-      To add the bot to the channel, please follow these steps:
-        1. Type /invite in the channel's chat.
-        2. Click on Add apps to this channel.
-        3. Search for and add the Activepieces bot.`,
-    }),
     ts: Property.ShortText({
       displayName: 'Message ts',
       description:

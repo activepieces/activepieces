@@ -1,9 +1,8 @@
 import {
-  Property,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { slackChannel } from '../common/props';
+import { slackChannel, slackInfo } from '../common/props';
 import { slackAuth } from '../../';
 import {
   AuthenticationType,
@@ -47,14 +46,8 @@ export const newMessage = createTrigger({
   displayName: 'New Message',
   description: 'Triggers when a new message is received',
   props: {
+    info: slackInfo,
     channel: slackChannel,
-    info: Property.MarkDown({
-      value: `
-      To add the bot to the channel, please follow these steps:
-        1. Type /invite in the channel's chat.
-        2. Click on Add apps to this channel.
-        3. Search for and add the Activepieces bot.`,
-    }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: sampleData,

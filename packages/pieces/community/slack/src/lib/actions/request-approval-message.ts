@@ -6,7 +6,7 @@ import {
   ExecutionType,
   PauseType,
 } from '@activepieces/shared';
-import { profilePicture, slackChannel, text, username } from '../common/props';
+import { profilePicture, slackChannel, slackInfo, text, username } from '../common/props';
 
 export const requestSendApprovalMessageAction = createAction({
   auth: slackAuth,
@@ -15,14 +15,8 @@ export const requestSendApprovalMessageAction = createAction({
   description:
     'Send approval message to a channel and then wait until the message is approved or disapproved',
   props: {
+    info: slackInfo,
     channel: slackChannel,
-    info: Property.MarkDown({
-      value: `
-      To add the bot to the channel, please follow these steps:
-        1. Type /invite in the channel's chat.
-        2. Click on Add apps to this channel.
-        3. Search for and add the Activepieces bot.`,
-    }),
     text,
     username,
     profilePicture,

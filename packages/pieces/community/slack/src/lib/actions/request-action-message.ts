@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { slackAuth } from '../..';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import {
@@ -7,6 +7,7 @@ import {
   slackChannel,
   username,
   actions,
+  slackInfo,
 } from '../common/props';
 import { requestAction } from '../common/request-action';
 
@@ -17,14 +18,8 @@ export const requestActionMessageAction = createAction({
   description:
     'Send a message in a channel and wait until an action is selected',
   props: {
+    info: slackInfo,
     channel: slackChannel,
-    info: Property.MarkDown({
-      value: `
-      To add the bot to the channel, please follow these steps:
-        1. Type /invite in the channel's chat.
-        2. Click on Add apps to this channel.
-        3. Search for and add the Activepieces bot.`,
-    }),
     text,
     actions,
     username,

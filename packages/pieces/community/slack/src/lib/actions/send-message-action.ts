@@ -4,6 +4,7 @@ import {
   slackChannel,
   username,
   blocks,
+  slackInfo,
 } from '../common/props';
 import { slackSendMessage } from '../common/utils';
 import { slackAuth } from '../../';
@@ -14,14 +15,8 @@ export const slackSendMessageAction = createAction({
   displayName: 'Send Message To A Channel',
   description: 'Send message to a channel',
   props: {
+    info: slackInfo,
     channel: slackChannel,
-    info: Property.MarkDown({
-      value: `
-      To add the bot to the channel, please follow these steps:
-        1. Type /invite in the channel's chat.
-        2. Click on Add apps to this channel.
-        3. Search for and add the Activepieces bot.`,
-    }),
     threadTs: Property.ShortText({
       displayName: 'Thread ts',
       description:
