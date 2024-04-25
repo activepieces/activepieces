@@ -6,7 +6,6 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import {assertNotNullOrUndefined} from "@activepieces/shared";
 
 export const searchMessages = createAction({
   name: 'searchMessages',
