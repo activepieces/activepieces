@@ -1,9 +1,7 @@
 export interface ApMention {
   value: string;
   serverValue: string;
-  data: {
-    logoUrl?: string;
-  };
+  logoUrl?: string;
 }
 
 export interface InsertMentionOperation {
