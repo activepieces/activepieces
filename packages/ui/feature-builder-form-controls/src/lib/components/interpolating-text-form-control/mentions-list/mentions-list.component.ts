@@ -117,9 +117,7 @@ export class MentionsListComponent implements OnInit, AfterViewInit {
         apMention: {
           serverValue: mention.value,
           value: mention.label,
-          data: {
-            logoUrl: mention.logoUrl,
-          },
+          logoUrl: mention.logoUrl,
         },
       },
     });

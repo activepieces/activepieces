@@ -1,13 +1,13 @@
+export const BLOT_NAME = 'apMention';
+
 export interface ApMention {
   value: string;
   serverValue: string;
-  data: {
-    logoUrl?: string;
-  };
+  logoUrl?: string;
 }
 
 export interface InsertMentionOperation {
   insert: {
-    apMention: ApMention;
+    [BLOT_NAME]: ApMention;
   };
 }

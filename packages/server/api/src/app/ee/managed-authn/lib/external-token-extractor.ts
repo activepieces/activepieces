@@ -17,7 +17,7 @@ export const externalTokenExtractor = {
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_BEARER_TOKEN,
                 params: {
-                    message: `signing key id is not found in the header`,
+                    message: 'signing key id is not found in the header',
                 },
             })
         }

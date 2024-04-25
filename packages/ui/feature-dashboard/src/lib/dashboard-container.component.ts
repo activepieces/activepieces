@@ -42,7 +42,8 @@ export class DashboardContainerComponent {
     public router: Router,
     private contactSalesService: ContactSalesService
   ) {
-    this.contactSalesState$ = this.contactSalesService.contactSalesState.asObservable();
+    this.contactSalesState$ =
+      this.contactSalesService.contactSalesState.asObservable();
     this.showPlatform$ = showPlatformDashboard$(
       this.authenticationService,
       this.flagService
@@ -63,7 +64,6 @@ export class DashboardContainerComponent {
       .getState$()
       .pipe(map((state) => !state.hideSideNav));
     this.isInPlatformRoute$ = this.dashboardService.getIsInPlatformRoute();
-
 
     this.isVersionMatch$ = this.flagService.isVersionMatch();
   }
