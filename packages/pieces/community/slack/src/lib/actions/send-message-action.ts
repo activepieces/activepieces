@@ -15,9 +15,17 @@ export const slackSendMessageAction = createAction({
   description: 'Send message to a channel',
   props: {
     channel: slackChannel,
+    info: Property.MarkDown({
+      value: `
+      To add the bot to the channel, please follow these steps:
+        1. Type /invite in the channel's chat.
+        2. Click on Add apps to this channel.
+        3. Search for and add the Activepieces bot.`,
+    }),
     threadTs: Property.ShortText({
       displayName: 'Thread ts',
-      description: 'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.',
+      description:
+        'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.',
       required: false,
     }),
     text: Property.LongText({

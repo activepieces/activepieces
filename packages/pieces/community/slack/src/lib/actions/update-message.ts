@@ -16,6 +16,13 @@ export const updateMessage = createAction({
   auth: slackAuth,
   props: {
     channel: slackChannel,
+    info: Property.MarkDown({
+      value: `
+      To add the bot to the channel, please follow these steps:
+        1. Type /invite in the channel's chat.
+        2. Click on Add apps to this channel.
+        3. Search for and add the Activepieces bot.`,
+    }),
     ts: Property.ShortText({
       displayName: 'Message ts',
       description:
