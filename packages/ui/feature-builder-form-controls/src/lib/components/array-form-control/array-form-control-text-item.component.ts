@@ -1,3 +1,4 @@
+import { EnrichedStepMetaDataForMentions } from '@activepieces/ui/feature-builder-store';
 import {
   Component,
   EventEmitter,
@@ -34,7 +35,7 @@ import { FormControl } from '@angular/forms';
             <mat-label>Item {{ idx + 1 }}</mat-label>
             <app-interpolating-text-form-control
               #textControl
-              [stepMetaDataForMentions]="[]"
+              [stepMetaDataForMentions]="stepMetaDataForMentions"
               [insideMatField]="false"
               [formControl]="control"
               (click)="control.enabled ? handler.showMentionsDropdown() : null"
@@ -72,6 +73,8 @@ export class ArrayFormControlTextItemComponent {
   @Input({ required: true }) hideTooltip = false;
   @Output() removeValue = new EventEmitter<number>();
   @Output() itemDragStateChanged = new EventEmitter<boolean>();
+  @Input({ required: true })
+  stepMetaDataForMentions: EnrichedStepMetaDataForMentions[] = [];
   constructor(private renderer: Renderer2) {}
   grabbingStarted() {
     this.renderer.addClass(document.body, 'dragging');

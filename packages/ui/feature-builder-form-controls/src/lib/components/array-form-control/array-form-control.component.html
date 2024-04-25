@@ -64,6 +64,7 @@
       <div class="ap-mb-4" >
         <app-array-form-control-text-item [class.ap-mb-4]="!isLast" [idx]="idx" [control]="formArray.controls[idx] | abstractFormControlCaster"
           [hideTooltip]="isAnItemBeingDragged" (itemDragStateChanged)="isAnItemBeingDragged = $event"
+          [stepMetaDataForMentions]="stepMetaDataForMentions"
           (removeValue)="remove($event)"></app-array-form-control-text-item>
       </div>
       } @empty {
