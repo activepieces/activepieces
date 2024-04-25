@@ -50,7 +50,7 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
     },
 
     async upsertJob({ job, schedule, handler }): Promise<void> {
-        logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, `Upserting job)`)
+        logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, `Upserting job`)
         if (await jobNotInQueue(job.name)) {
             logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, `Adding job to queue`)
             await addJobToQueue({

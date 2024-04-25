@@ -65,6 +65,7 @@ async function sendProjectRecords(timestamp: number): Promise<void> {
         const project = await projectService.getOneOrThrow(projectId)
         const billingPeriod = projectUsageService.getCurrentingStartPeriod(project.created)
         const usage = await projectUsageService.getUsageForBillingPeriod(projectId, billingPeriod)
+        logger.info({ projectId, tasks: usage.tasks, includedTasks: projectBilling.includedTasks }, 'Sending usage record to stripe')
         await stripe.subscriptionItems.createUsageRecord(item.id, {
             quantity: Math.max(usage.tasks - projectBilling.includedTasks, 0),
             timestamp: dayjs(timestamp).unix(),
