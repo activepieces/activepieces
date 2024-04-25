@@ -36,7 +36,7 @@
       }
     }
     &.selected-step {
-      background-color: $gray-select !important;
+      background-color: $hover !important;
       font-weight: 700;
       .step-icon {
         opacity: 1;
@@ -46,7 +46,7 @@
       }
     }
     &:hover {
-      background-color: $gray-card;
+      background-color: $hover !important;
     }
     .mat-expansion-panel-header-title {
       padding: 0px 0.9375rem 0px 1.5625rem;
@@ -58,9 +58,7 @@
     border-radius: 0px;
     box-shadow: unset !important;
   }
-  .icon-padding {
-    padding-right: 0.375rem;
-  }
+
   .iteration-index-control {
     width: 1.875rem;
     overflow: hidden;
