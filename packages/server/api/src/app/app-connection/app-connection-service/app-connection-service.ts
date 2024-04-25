@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { Equal, FindOperator, ILike } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
 import { decryptObject, encryptObject } from '../../helper/encryption'
 import { engineHelper } from '../../helper/engine-helper'
@@ -160,14 +161,14 @@ export const appConnectionService = {
             },
         })
 
-        const querySelector: Record<string, string> = {
+        const querySelector: Record<string, string | FindOperator<string>> = {
             projectId,
         }
         if (!isNil(pieceName)) {
-            querySelector.pieceName = pieceName
+            querySelector.pieceName = Equal(pieceName)
         }
         if (!isNil(name)) {
-            querySelector.name = name
+            querySelector.name = ILike(`%${name}%`)
         }
         const queryBuilder = repo
             .createQueryBuilder('app_connection')

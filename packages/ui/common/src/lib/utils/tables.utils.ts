@@ -15,5 +15,7 @@ export const STATUS_QUERY_PARAM = 'status';
 export const PREVIOUS_QUERY_PARAM = 'previous';
 export const NEXT_QUERY_PARAM = 'next';
 export const FLOW_QUERY_PARAM = 'flowId';
+export const CONNECTION_NAME_QUERY_PARAM = 'connectionName';
+export const PIECE_NAME_QUERY_PARAM = 'pieceName';
 export const DATE_RANGE_START_QUERY_PARAM = 'createdAfter';
 export const DATE_RANGE_END_QUERY_PARAM = 'createdBefore';

@@ -15,6 +15,7 @@ export type PanningState = {
     y: number;
   };
   isPanning: boolean;
+  isTouchpadPanning: boolean;
 };
 @Injectable({
   providedIn: 'root',
@@ -28,6 +29,7 @@ export class PannerService {
         y: 0,
       },
       isPanning: false,
+      isTouchpadPanning: false,
     });
 
   private _lastPanningOffset$: BehaviorSubject<{ x: number; y: number }> =
@@ -77,6 +79,7 @@ export class PannerService {
         y: (canvasHeight * zoomScale - canvasHeight) / 2.0 + DEFAULT_TOP_MARGIN,
       },
       isPanning: false,
+      isTouchpadPanning: false,
     };
     this._panningState$.next(newState);
     this.setLastPanningOffset({
@@ -101,6 +104,11 @@ export class PannerService {
     return this._lastPanningOffset$.value;
   }
   get isPanning$() {
+    return this._panningState$.pipe(
+      map((state) => state.isPanning || state.isTouchpadPanning)
+    );
+  }
+  get isPanningWithoutTouchpad$() {
     return this._panningState$.pipe(map((state) => state.isPanning));
   }
   get panningOffset$() {

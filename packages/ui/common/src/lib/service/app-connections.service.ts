@@ -94,6 +94,12 @@ export class AppConnectionsService {
     if (params.limit) {
       queryParams[LIMIT_QUERY_PARAM] = params.limit;
     }
+    if (params.name) {
+      queryParams['name'] = params.name;
+    }
+    if (params.pieceName) {
+      queryParams['pieceName'] = params.pieceName;
+    }
     queryParams['projectId'] = this.authenticationService.getProjectId()!;
     return this.http.get<SeekPage<AppConnectionWithoutSensitiveData>>(
       environment.apiUrl + '/app-connections',

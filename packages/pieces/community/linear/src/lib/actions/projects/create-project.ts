@@ -49,6 +49,15 @@ export const linearCreateProject = createAction({
 
     const client = makeClient(auth as string);
     const result = await client.createProject(project);
-    return result;
+    if (result.success) {
+      const createdProject = await result.project;
+      return {
+        success: result.success,
+        lastSyncId: result.lastSyncId,
+        project: createdProject,
+      };
+    } else {
+      throw new Error(`Unexpected error: ${result}`)
+    }
   },
 });

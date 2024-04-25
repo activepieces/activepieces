@@ -1,5 +1,5 @@
+import { StatusCodes } from 'http-status-codes'
 import { fileService } from '../../file/file.service'
-import { flowResponseWatcher } from '../../flows/flow-run/flow-response-watcher'
 import {
     flowRunService,
     HookType,
@@ -7,6 +7,7 @@ import {
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { engineHelper } from '../../helper/engine-helper'
 import { getPiecePackage } from '../../pieces/piece-metadata-service'
+import { EngineHttpResponse, engineResponseWatcher } from './engine-response-watcher'
 import { flowWorkerHooks } from './flow-worker-hooks'
 import { OneTimeJobData } from './job-data'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
@@ -29,6 +30,7 @@ import { Action, ActionType,
     FlowVersion,
     isNil,
     MAX_LOG_SIZE,
+    PauseType,
     PiecePackage,
     ProjectId,
     ResumeExecuteFlowOperation,
@@ -239,10 +241,11 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             jobData.synchronousHandlerId &&
             jobData.hookType === HookType.BEFORE_LOG
         ) {
-            await flowResponseWatcher.publish(
+            const resultHttpResponse = await getFlowResponse(result)
+            await engineResponseWatcher.publish(
                 jobData.runId,
                 jobData.synchronousHandlerId,
-                result,
+                resultHttpResponse,
             )
         }
 
@@ -266,10 +269,11 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             jobData.synchronousHandlerId &&
             jobData.hookType === HookType.AFTER_LOG
         ) {
-            await flowResponseWatcher.publish(
+            const resultHttpResponse = await getFlowResponse(result)
+            await engineResponseWatcher.publish(
                 jobData.runId,
                 jobData.synchronousHandlerId,
-                result,
+                resultHttpResponse,
             )
         }
 
@@ -413,4 +417,63 @@ type ExtractFlowPiecesParams = {
 
 export const flowWorker = {
     executeFlow,
+}
+
+
+async function getFlowResponse(
+    result: FlowRunResponse,
+): Promise<EngineHttpResponse> {
+    switch (result.status) {
+        case FlowRunStatus.PAUSED:
+            if (result.pauseMetadata && result.pauseMetadata.type === PauseType.WEBHOOK) {
+                return {
+                    status: StatusCodes.OK,
+                    body: result.pauseMetadata.response,
+                    headers: {},
+                }
+            }
+            return {
+                status: StatusCodes.NO_CONTENT,
+                body: {},
+                headers: {},
+            }
+        case FlowRunStatus.STOPPED:
+            return {
+                status: result.stopResponse?.status ?? StatusCodes.OK,
+                body: result.stopResponse?.body,
+                headers: result.stopResponse?.headers ?? {},
+            }
+        case FlowRunStatus.INTERNAL_ERROR:
+            return {
+                status: StatusCodes.INTERNAL_SERVER_ERROR,
+                body: {
+                    message: 'An internal error has occurred',
+                },
+                headers: {},
+            }
+        case FlowRunStatus.FAILED:
+            return {
+                status: StatusCodes.INTERNAL_SERVER_ERROR,
+                body: {
+                    message: 'The flow has failed and there is no response returned',
+                },
+                headers: {},
+            }
+        case FlowRunStatus.TIMEOUT:
+        case FlowRunStatus.RUNNING:
+            return {
+                status: StatusCodes.GATEWAY_TIMEOUT,
+                body: {
+                    message: 'The request took too long to reply',
+                },
+                headers: {},
+            }
+        case FlowRunStatus.SUCCEEDED:
+        case FlowRunStatus.QUOTA_EXCEEDED:
+            return {
+                status: StatusCodes.NO_CONTENT,
+                body: {},
+                headers: {},
+            }
+    }
 }
