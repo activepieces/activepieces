@@ -6,7 +6,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FlowService, InstanceRunService } from '@activepieces/ui/common';
-import { FlowRun, Cursor, PopulatedFlow } from '@activepieces/shared';
+import { FlowRun, Cursor } from '@activepieces/shared';
 import {
   BehaviorSubject,
   Observable,
@@ -15,6 +15,7 @@ import {
   mergeMap,
   scan,
   startWith,
+  take,
   tap,
   throttleTime,
 } from 'rxjs';
@@ -36,6 +37,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RunsListComponent implements OnInit {
+  readonly exitRunTooltip = $localize`Exit run`;
+  readonly viewRunTooltip = $localize`View run`;
   @ViewChild(CdkVirtualScrollViewport)
   viewport: CdkVirtualScrollViewport;
   @Input({
@@ -49,7 +52,7 @@ export class RunsListComponent implements OnInit {
   runs$!: Observable<FlowRun[]>;
   cursor: Cursor = null;
   offset$ = new BehaviorSubject<Cursor>(null);
-  showRun$?: Observable<{ flow: PopulatedFlow; run: FlowRun }>;
+  runClicked$?: Observable<void>;
   currentRun$: Observable<FlowRun | undefined>;
   isInDebugMode$: Observable<boolean>;
   constructor(
@@ -106,25 +109,33 @@ export class RunsListComponent implements OnInit {
         map((res) => res.data)
       );
   }
-  ShowRun(run: FlowRun) {
+
+  runItemClicked(run: FlowRun) {
     const run$ = this.instanceRunService.get(run.id);
     const flow$ = this.flowService.get(this.flowId, run.flowVersionId);
-    this.showRun$ = forkJoin({
+    this.runClicked$ = forkJoin({
       run: run$,
+      currentRun: this.currentRun$.pipe(take(1)),
       flow: flow$,
-    }).pipe(
-      tap((res) => {
-        this.store.dispatch(
-          canvasActions.viewRun({
-            run: res.run,
-            version: res.flow.version,
-          })
-        );
-        this.snackbar.openFromComponent(TestRunBarComponent, {
-          duration: undefined,
-        });
-      })
-    );
+    })
+      .pipe(
+        tap((res) => {
+          if (res.currentRun?.id !== res.run.id) {
+            this.store.dispatch(
+              canvasActions.viewRun({
+                run: res.run,
+                version: res.flow.version,
+              })
+            );
+            this.snackbar.openFromComponent(TestRunBarComponent, {
+              duration: undefined,
+            });
+          } else {
+            this.exitRun();
+          }
+        })
+      )
+      .pipe(map(() => void 0));
   }
   exitRun() {
     this.store.dispatch(
