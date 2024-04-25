@@ -96,7 +96,7 @@ export class ConnectionsTableComponent implements OnInit {
       map(([pieces, search]) => {
         this.allPieces.next(pieces.map((piece) => piece.name));
         return pieces.filter((piece) =>
-          piece.name.toLowerCase().includes(search.toLowerCase())
+          piece.displayName.toLowerCase().includes(search.toLowerCase())
         );
       })
     );
