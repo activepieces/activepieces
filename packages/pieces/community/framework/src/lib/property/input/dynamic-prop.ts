@@ -6,13 +6,13 @@ import { PropertyContext } from "../../context";
 import { ValidationInputType } from "../../validators/types";
 import { PropertyType } from "./property-type";
 
-const DynamicProp = Type.Union([
+export const DynamicProp = Type.Union([
   ShortTextProperty,
   StaticDropdownProperty,
   StaticMultiSelectDropdownProperty,
 ])
 
-type DynamicProp =
+export type DynamicProp =
   | ShortTextProperty<boolean>
   | StaticDropdownProperty<any, boolean>
   | StaticMultiSelectDropdownProperty<any, boolean>;
