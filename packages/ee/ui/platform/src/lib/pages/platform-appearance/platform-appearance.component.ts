@@ -9,15 +9,14 @@ import { validColorValidator } from 'ngx-colors';
 import { Platform, UpdatePlatformRequestBody } from '@activepieces/shared';
 import { Observable, map, tap } from 'rxjs';
 import {
+  APPEARANCE_DISABLED_RESOLVER_KEY,
   AuthenticationService,
   PlatformService,
-  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { localesMap } from '@activepieces/ui/common';
 import { spreadIfDefined, LocalesEnum } from '@activepieces/shared';
 import { PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
-import { APPEARANCE_DISABLED_RESOLVER_KEY } from '../../is-feature-locked.resolver';
 
 interface AppearanceForm {
   name: FormControl<string>;
@@ -40,7 +39,6 @@ export class PlatformAppearanceComponent implements OnInit {
   updatePlatform$?: Observable<void>;
   locales = localesMap;
   title = $localize`Appearance`;
-  featureDisabledTooltip = featureDisabledTooltip;
   upgradeNoteTitle = $localize`Brand Activepieces`;
   upgradeNote = $localize`Give your users an experience that looks like you by customizing the color, logo and more`;
   platform?: Platform;

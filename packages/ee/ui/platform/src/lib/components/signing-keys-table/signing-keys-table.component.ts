@@ -8,7 +8,6 @@ import { SigningKey } from '@activepieces/ee-shared';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { SigningKeysService } from '../../service/signing-keys.service';
 
@@ -22,7 +21,6 @@ export class SigningKeysTableComponent implements OnInit {
   dataSource!: SigningKeysDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
-  featureDisabledTooltip = featureDisabledTooltip;
   upgradeNoteTitle = $localize`Unlock JWT SSO`;
   upgradeNote = $localize`Streamline authenticating your users to our embedded SDK from within your SaaS application.`;
   constructor(

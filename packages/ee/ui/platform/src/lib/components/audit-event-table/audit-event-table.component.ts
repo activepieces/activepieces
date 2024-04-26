@@ -7,10 +7,7 @@ import {
 } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { startWith } from 'rxjs';
-import {
-  ApPaginatorComponent,
-  featureDisabledTooltip,
-} from '@activepieces/ui/common';
+import { ApPaginatorComponent } from '@activepieces/ui/common';
 import { AuditEventDataSource } from './audit-event-table.datasource';
 import { AuditEventService } from '../../service/audit-event-service';
 import {
@@ -40,7 +37,6 @@ export class AuditEventTableComponent implements OnInit {
   dataSource!: AuditEventDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
-  featureDisabledTooltip = featureDisabledTooltip;
   upgradeNoteTitle = $localize`Unlock Audit Logs`;
   upgradeNote = $localize`Comply with internal and external security policies by tracking activities done within your account`;
   constructor(

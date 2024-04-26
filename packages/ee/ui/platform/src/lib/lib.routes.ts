@@ -25,7 +25,7 @@ import {
   auditLogDisabledResolver,
   CUSTOM_DOMAINS_DISABLED_RESOLVER_KEY,
   customDomainsDisabledResolver,
-} from './is-feature-locked.resolver';
+} from '@activepieces/ui/common';
 
 export const uiEePlatformRoutes: Route[] = [
   {

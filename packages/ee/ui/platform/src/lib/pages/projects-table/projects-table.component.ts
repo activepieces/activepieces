@@ -14,13 +14,13 @@ import {
   AuthenticationService,
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
+  MANAGE_PROJECTS_DISABLED_RESOLVER_KEY,
   ProjectService,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StatusCodes } from 'http-status-codes';
 import { MatSidenav } from '@angular/material/sidenav';
-import { MANAGE_PROJECTS_DISABLED_RESOLVER_KEY } from '../../is-feature-locked.resolver';
 
 @Component({
   selector: 'app-projects-table',

@@ -4,6 +4,7 @@ import { startWith } from 'rxjs';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
+  MANAGE_TEMPLATES_DISABLED_RESOLVER_KEY,
   TemplatesService,
 } from '@activepieces/ui/common';
 import { TemplatesDataSource } from './templates-table.datasource';
@@ -14,7 +15,6 @@ import {
 } from '../../components/dialogs/create-or-update-template-dialogue/create-or-update-template-dialogue.component';
 import { FlowTemplate } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
-import { MANAGE_TEMPLATES_DISABLED_RESOLVER_KEY } from '../../is-feature-locked.resolver';
 
 @Component({
   selector: 'app-template-table',

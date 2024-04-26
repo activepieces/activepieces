@@ -128,12 +128,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.PROJECT_MEMBERS_ENABLED,
-                value: getEdition() !== ApEdition.COMMUNITY,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.EMAIL_AUTH_ENABLED,
                 value: true,
                 created,

@@ -10,10 +10,7 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import {
-  PlatformService,
-  featureDisabledTooltip,
-} from '@activepieces/ui/common';
+import { PlatformService } from '@activepieces/ui/common';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Platform } from '@activepieces/shared';
@@ -37,7 +34,6 @@ export class SmtpSettingsComponent implements OnInit {
   smtpSettingsForm: FormGroup<SmtpForm>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$?: Observable<void>;
-  featureDisabledTooltip = featureDisabledTooltip;
   upgradeNoteTitle = $localize`Unlock Email Settings`;
   upgradeNote = $localize`Configure your email provider settings for when you send users authentication emails or failed runs notifications.`;
   constructor(

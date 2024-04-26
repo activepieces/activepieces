@@ -15,9 +15,9 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   FlagService,
+  MANAGE_PIECES_DISABLED_RESOLVER_KEY,
   OAuth2AppsService,
   PlatformService,
-  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { ApFlagId, PieceSyncMode, Platform } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
@@ -41,7 +41,6 @@ import {
 import { PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
 import { PieceScope } from '@activepieces/shared';
 import { TagsService } from 'ui-feature-tags';
-import { MANAGE_PIECES_DISABLED_RESOLVER_KEY } from '../../is-feature-locked.resolver';
 
 @Component({
   selector: 'app-pieces-table',
@@ -82,7 +81,6 @@ export class PiecesTableComponent implements OnInit {
   addPackageDialogClosed$!: Observable<Record<string, string> | null>;
   cloudAuthToggleFormControl = new FormControl(false, { nonNullable: true });
   toggleCloudOAuth2$?: Observable<void>;
-  featDisabledTooltipText = featureDisabledTooltip;
   isLocked!: boolean;
   pieceSelection = new SelectionModel<string>(true, []);
   isAnyPieceSelected$ = this.pieceSelection.changed.pipe(

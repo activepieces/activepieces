@@ -14,7 +14,7 @@ import {
   AUDIT_LOG_DISABLED_RESOLVER_KEY,
   CUSTOM_DOMAINS_DISABLED_RESOLVER_KEY,
   SIGNING_KEY_DISABLED_RESOLVER_KEY,
-} from '../../is-feature-locked.resolver';
+} from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-platform-settings',

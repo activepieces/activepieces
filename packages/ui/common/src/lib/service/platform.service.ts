@@ -132,4 +132,8 @@ export class PlatformService {
   auditLogDisabled() {
     return this.isFeatureDisabled('auditLogEnabled');
   }
+
+  projectRolesDisabled() {
+    return this.isFeatureDisabled('projectRolesEnabled');
+  }
 }

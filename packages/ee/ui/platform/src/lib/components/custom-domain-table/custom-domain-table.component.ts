@@ -7,7 +7,6 @@ import { CustomDomain } from '@activepieces/ee-shared';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import {
   CustomDomainService,
@@ -27,7 +26,6 @@ export class CustomDomainTableComponent implements OnInit {
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
   validationData$?: Observable<HostnameDetailsResponse>;
-  featureDisabledTooltip = featureDisabledTooltip;
   upgradeNoteTitle = $localize`Unlock Custom Domain`;
   upgradeNote = $localize`Customize your domain to match your brand and provide a seamless experience for your users.`;
   constructor(

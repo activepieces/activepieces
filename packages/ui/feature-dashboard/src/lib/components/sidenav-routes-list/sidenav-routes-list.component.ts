@@ -166,9 +166,7 @@ export class SidenavRoutesListComponent implements OnInit {
           take(1),
           map((isInEmbedding) => !isInEmbedding)
         ),
-        showLock$: this.flagService
-          .isFlagEnabled(ApFlagId.PROJECT_MEMBERS_ENABLED)
-          .pipe(map((enabled) => !enabled)),
+        showLock$: this.platformService.projectRolesDisabled(),
       },
 
       {

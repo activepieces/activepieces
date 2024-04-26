@@ -6,7 +6,6 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   PlatformService,
-  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { ApiKeysService } from '../../service/api-keys.service';
 import { ApiKeysDataSource } from './api-keys-table.datasource';
@@ -24,7 +23,6 @@ export class ApiKeysTableComponent implements OnInit {
   refresh$: Subject<boolean> = new Subject();
   isLocked$?: Observable<boolean>;
   dialogClosed$?: Observable<unknown>;
-  featureDisabledTooltip = featureDisabledTooltip;
   upgradeNoteTitle = $localize`Enable API Access`;
   upgradeNote = $localize`Create and manage API keys to access Activepieces APIs.`;
   constructor(

@@ -108,7 +108,7 @@ describe('Platform API', () => {
         })
 
         it('fails if user is not owner', async () => {
-            // arrange
+        // arrange
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
 
