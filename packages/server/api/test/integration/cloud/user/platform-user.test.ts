@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
@@ -63,7 +64,129 @@ describe('Enterprise User API', () => {
 
     })
 
+    describe('Create user endpoint', () => {
+
+        it('Allows service accounts', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockApiKey } =
+                setupMockApiKeyServiceAccount()
+
+            await databaseConnection.getRepository('user').save([mockOwner])
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection.getRepository('api_key').save([mockApiKey])
+
+            const mockUserToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            const role = faker.helpers.enumValue(PlatformRole)
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/users',
+                headers: {
+                    authorization: `Bearer ${mockUserToken}`,
+                },
+                body: {
+                    email: faker.internet.email(),
+                    firstName: faker.person.firstName(),
+                    lastName: faker.person.lastName(),
+                    platformRole: role,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const json = await response?.json()
+            expect(json.id).toBeDefined()
+            expect(json.email).toBeDefined()
+            expect(json.firstName).toBeDefined()
+            expect(json.lastName).toBeDefined()
+            expect(json.platformRole).toBe(role)
+            expect(json.status).toBe(UserStatus.ACTIVE)
+            expect(json.password).toBeDefined()
+        })
+
+        it('Fail if not admin', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = setupMockApiKeyServiceAccount()
+
+            const mockUser = createMockUser({
+                platformId: mockPlatform.id,
+                status: UserStatus.ACTIVE,
+                platformRole: PlatformRole.MEMBER,
+            })
+            await databaseConnection.getRepository('user').save([mockOwner, mockUser])
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+
+            const mockUserToken = await generateMockToken({
+                id: mockUser.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/users',
+                headers: {
+                    authorization: `Bearer ${mockUserToken}`,
+                },
+                body: {
+                    email: faker.internet.email(),
+                    firstName: faker.person.firstName(),
+                    lastName: faker.person.lastName(),
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+    })
+
     describe('Update user endpoint', () => {
+
+        it('Failed if own other platform', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = setupMockApiKeyServiceAccount()
+            const { mockOwner: mockOwner2, mockPlatform: mockPlatform2 } = setupMockApiKeyServiceAccount()
+            const mockUser = createMockUser({
+                platformId: mockPlatform.id,
+                status: UserStatus.ACTIVE,
+                platformRole: PlatformRole.MEMBER,
+            })
+
+
+            await databaseConnection.getRepository('user').save([mockOwner, mockOwner2, mockUser])
+            await databaseConnection.getRepository('platform').save([mockPlatform, mockPlatform2])
+
+            const mockUserToken = await generateMockToken({
+                id: mockOwner2.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform2.id,
+                },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/users/${mockUser.id}`,
+                headers: {
+                    authorization: `Bearer ${mockUserToken}`,
+                },
+                body: {
+                    status: UserStatus.INACTIVE,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
 
         it('Fail if not admin', async () => {
             // arrange

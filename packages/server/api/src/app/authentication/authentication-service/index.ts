@@ -1,12 +1,11 @@
 import { QueryFailedError } from 'typeorm'
 import { flagService } from '../../flags/flag.service'
-import { generateRandomPassword } from '../../helper/crypto'
 import { telemetry } from '../../helper/telemetry.utils'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
 import { Provider } from './hooks/authentication-service-hooks'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { cryptoUtils, logger, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -76,7 +75,7 @@ export const authenticationService = {
             lastName: params.lastName,
             trackEvents: true,
             newsLetter: true,
-            password: await generateRandomPassword(),
+            password: await cryptoUtils.generateRandomPassword(),
             platformId: params.platformId,
         }
 

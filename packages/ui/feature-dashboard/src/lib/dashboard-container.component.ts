@@ -15,6 +15,8 @@ import { ApFlagId, Project } from '@activepieces/shared';
 
 import { Router } from '@angular/router';
 import { MatSidenav } from '@angular/material/sidenav';
+import { MatDialog } from '@angular/material/dialog';
+import { CreateUserDialogComponent } from './components/dialogs/create-user-dialog/create-user-dialog.component';
 
 @Component({
   templateUrl: './dashboard-container.component.html',
@@ -40,6 +42,7 @@ export class DashboardContainerComponent {
     private dashboardService: DashboardService,
     private authenticationService: AuthenticationService,
     public router: Router,
+    private matDialog: MatDialog,
     private contactSalesService: ContactSalesService
   ) {
     this.contactSalesState$ =
@@ -72,6 +75,9 @@ export class DashboardContainerComponent {
     this.router.navigate(['/platform']);
   }
 
+  openInviteAdminDialog() {
+    this.matDialog.open(CreateUserDialogComponent);
+  }
   navigateToProjectDashboard() {
     this.router.navigate(['/']);
   }
