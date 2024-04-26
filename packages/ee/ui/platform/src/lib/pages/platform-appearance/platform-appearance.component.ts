@@ -17,7 +17,7 @@ import { ActivatedRoute } from '@angular/router';
 import { localesMap } from '@activepieces/ui/common';
 import { spreadIfDefined, LocalesEnum } from '@activepieces/shared';
 import { PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
-import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
+import { APPEARANCE_DISABLED_RESOLVER_KEY } from '../../is-feature-locked.resolver';
 
 interface AppearanceForm {
   name: FormControl<string>;
@@ -44,15 +44,15 @@ export class PlatformAppearanceComponent implements OnInit {
   upgradeNoteTitle = $localize`Brand Activepieces`;
   upgradeNote = $localize`Give your users an experience that looks like you by customizing the color, logo and more`;
   platform?: Platform;
-  isDemo = false;
+  isLocked!: boolean;
   constructor(
     private fb: FormBuilder,
     private platformService: PlatformService,
     private authenticationService: AuthenticationService,
     private route: ActivatedRoute
   ) {
+    this.isLocked = this.route.snapshot.data[APPEARANCE_DISABLED_RESOLVER_KEY];
     this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
-    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.formGroup = this.fb.group({
       name: this.fb.control(
         {
@@ -111,9 +111,7 @@ export class PlatformAppearanceComponent implements OnInit {
     });
   }
   ngOnInit(): void {
-    if (this.isDemo) {
-      this.formGroup.disable();
-    } else if (this.platform) {
+    if (this.platform) {
       this.formGroup.patchValue({
         name: this.platform.name,
         favIconUrl: this.platform.favIconUrl,

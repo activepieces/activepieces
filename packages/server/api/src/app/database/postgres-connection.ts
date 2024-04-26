@@ -128,6 +128,7 @@ import { PiecesProjectLimits1712279318440 } from './migration/postgres/171227931
 import { RemoveUniqueEmailOnUser1713221809186 } from './migration/postgres/1713221809186-RemoveUniqueEmailOnUser'
 import { AddPlatformRoleToUser1713302610746 } from './migration/postgres/1713302610746-AddPlatformRoleToUser'
 import { AddUniqueNameToFolder1713643694049 } from './migration/postgres/1713643694049-AddUniqueNameToFolder'
+import { AddFeaturesToPlatform1714145914415 } from './migration/postgres/1714145914415-AddFeaturesToPlatform'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 
@@ -212,6 +213,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveUniqueEmailOnUser1713221809186,
         AddPlatformRoleToUser1713302610746,
         AddUniqueNameToFolder1713643694049,
+        AddFeaturesToPlatform1714145914415,
     ]
 
     const edition = getEdition()

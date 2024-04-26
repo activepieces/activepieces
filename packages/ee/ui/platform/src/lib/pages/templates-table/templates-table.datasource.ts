@@ -15,7 +15,7 @@ export class TemplatesDataSource extends DataSource<FlowTemplate> {
   constructor(
     private refresh$: Observable<boolean>,
     private templatesService: TemplatesService,
-    private fakeData: boolean
+    private isLocked: boolean
   ) {
     super();
   }
@@ -27,19 +27,14 @@ export class TemplatesDataSource extends DataSource<FlowTemplate> {
    */
 
   connect(): Observable<FlowTemplate[]> {
-    if (this.fakeData) {
-      return of([]).pipe(
-        delay(100),
-        tap(() => {
-          this.isLoading$.next(false);
-        })
-      );
-    }
     return combineLatest([this.refresh$]).pipe(
       tap(() => {
         this.isLoading$.next(true);
       }),
-      switchMap(() => {
+      switchMap((_refresh) => {
+        if (this.isLocked) {
+          return of([]).pipe(delay(1000));
+        }
         return this.templatesService.list({}).pipe(map((res) => res));
       }),
       tap((res) => {

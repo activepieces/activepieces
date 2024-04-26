@@ -1,13 +1,4 @@
 <div class="ap-w-full ap-pt-2">
-  <ap-upgrade-note
-    [insideTab]="true"
-    *ngIf="isDemo || !platform?.embeddingEnabled"
-    [featureNoteTitle]="upgradeNoteTitle"
-    [featureNote]="upgradeNote"
-    docsLink="https://www.activepieces.com/docs/embedding/embed-builder/generate-jwt#step-1-obtain-signing-key"
-  >
-  </ap-upgrade-note>
-
   <table
     mat-table
     [dataSource]="dataSource"
@@ -37,12 +28,6 @@
             btnSize="medium"
             (buttonClicked)="createKey()"
             i18n
-            [disabled]="isDemo || !platform?.embeddingEnabled"
-            [tooltipText]="
-              isDemo || !platform?.embeddingEnabled
-                ? ''
-                : featureDisabledTooltip
-            "
           >
             + New key
           </ap-button>
@@ -58,7 +43,6 @@
             [width]="20"
             [height]="20"
             color="warn"
-            [buttonDisabled]="isDemo || !platform?.embeddingEnabled"
             [height]="16"
           ></ap-icon-button>
         </div>

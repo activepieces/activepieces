@@ -11,17 +11,13 @@ import {
   featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { SigningKeysService } from '../../service/signing-keys.service';
-import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 
 @Component({
   selector: 'app-signing-keys-table',
   templateUrl: './signing-keys-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SigningKeysTableComponent
-  extends PlatformSettingsBaseComponent
-  implements OnInit
-{
+export class SigningKeysTableComponent implements OnInit {
   displayedColumns = ['id', 'displayName', 'created', 'action'];
   dataSource!: SigningKeysDataSource;
   refresh$: Subject<boolean> = new Subject();
@@ -32,14 +28,11 @@ export class SigningKeysTableComponent
   constructor(
     private matDialog: MatDialog,
     private signingKeysService: SigningKeysService
-  ) {
-    super();
-  }
+  ) {}
   ngOnInit(): void {
     this.dataSource = new SigningKeysDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
-      this.signingKeysService,
-      this.isDemo || !this.platform?.embeddingEnabled
+      this.signingKeysService
     );
   }
 

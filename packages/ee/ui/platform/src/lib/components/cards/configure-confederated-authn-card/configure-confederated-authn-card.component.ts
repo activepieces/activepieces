@@ -1,10 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
   Input,
   OnInit,
-  Output,
 } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import {
@@ -37,7 +35,6 @@ export class ConfigureConfederatedAuthnCardComponent
 {
   @Input({ required: true })
   federatedAuthnProvider!: FederatedAuthnProviderEnum;
-  @Output() platformUpdated = new EventEmitter<Platform>();
   enableFederatedAuthn$?: Observable<Platform | undefined>;
   disableFederatedAuthn$?: Observable<void>;
   toggleDisabled = false;
@@ -85,7 +82,6 @@ export class ConfigureConfederatedAuthnCardComponent
           });
         })
       );
-    this.platformUpdated.emit(platform);
     this.toggleChecked = false;
   }
   enableAuthnProvider() {
@@ -101,7 +97,6 @@ export class ConfigureConfederatedAuthnCardComponent
           tap((platform) => {
             if (platform) {
               this.toggleChecked = true;
-              this.platformUpdated.emit(platform);
               this.matSnackbar.openFromComponent(
                 GenericSnackbarTemplateComponent,
                 {

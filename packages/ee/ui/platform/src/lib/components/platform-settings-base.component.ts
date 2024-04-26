@@ -7,6 +7,5 @@ import { Platform } from '@activepieces/shared';
   template: ``,
 })
 export class PlatformSettingsBaseComponent {
-  @Input({ required: true }) isDemo = false;
   @Input() platform?: Platform;
 }

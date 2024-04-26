@@ -1,16 +1,16 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  Input,
   OnInit,
   ViewChild,
 } from '@angular/core';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { startWith } from 'rxjs';
 import {
   ApPaginatorComponent,
   featureDisabledTooltip,
 } from '@activepieces/ui/common';
-import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 import { AuditEventDataSource } from './audit-event-table.datasource';
 import { AuditEventService } from '../../service/audit-event-service';
 import {
@@ -19,17 +19,14 @@ import {
   summarizeApplicationEvent,
 } from '@activepieces/ee-shared';
 import { ActivatedRoute } from '@angular/router';
-import { Platform } from '@activepieces/shared';
 
 @Component({
   selector: 'app-audit-event-table',
   templateUrl: './audit-event-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AuditEventTableComponent
-  extends PlatformSettingsBaseComponent
-  implements OnInit
-{
+export class AuditEventTableComponent implements OnInit {
+  @Input({ required: true }) featureLocked!: boolean;
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
   displayedColumns = [
@@ -40,7 +37,6 @@ export class AuditEventTableComponent
     'projectDisplayName',
     'created',
   ];
-  platform$?: BehaviorSubject<Platform>;
   dataSource!: AuditEventDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
@@ -50,13 +46,8 @@ export class AuditEventTableComponent
   constructor(
     private auditEventService: AuditEventService,
     private activatedRoute: ActivatedRoute
-  ) {
-    super();
-  }
+  ) {}
   ngOnInit(): void {
-    if (this.platform) {
-      this.platform$ = new BehaviorSubject(this.platform);
-    }
     this.dataSource = new AuditEventDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
       this.auditEventService,

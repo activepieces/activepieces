@@ -5,7 +5,7 @@ import {
 } from '@fastify/type-provider-typebox'
 import { HttpStatusCode } from 'axios'
 import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { customDomainService } from './custom-domain.service'
 import {
     AddDomainRequest,
@@ -19,6 +19,7 @@ const GetOneRequest = Type.Object({
 type GetOneRequest = Static<typeof GetOneRequest>
 
 export const customDomainModule: FastifyPluginAsyncTypebox = async (app) => {
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.customDomainsEnabled))
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(customDomainController, { prefix: '/v1/custom-domains' })
 }

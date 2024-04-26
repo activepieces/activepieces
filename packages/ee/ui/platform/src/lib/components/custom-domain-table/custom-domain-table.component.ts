@@ -14,7 +14,6 @@ import {
   HostnameDetailsResponse,
 } from '../../service/custom-domain.service';
 import { CreateCustomDomainDialogComponent } from '../dialogs/create-custom-domain-dialog/create-custom-domain-dialog.component';
-import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 import { DomainTxtValidationDialogComponent } from '../dialogs/domain-txt-validation-dialog/domain-txt-validation-dialog.component';
 
 @Component({
@@ -22,10 +21,7 @@ import { DomainTxtValidationDialogComponent } from '../dialogs/domain-txt-valida
   templateUrl: './custom-domain-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CustomDomainTableComponent
-  extends PlatformSettingsBaseComponent
-  implements OnInit
-{
+export class CustomDomainTableComponent implements OnInit {
   displayedColumns = ['domain', 'status', 'created', 'action'];
   dataSource!: CustomDomainDataSource;
   refresh$: Subject<boolean> = new Subject();
@@ -37,14 +33,11 @@ export class CustomDomainTableComponent
   constructor(
     private matDialog: MatDialog,
     private customDomainService: CustomDomainService
-  ) {
-    super();
-  }
+  ) {}
   ngOnInit(): void {
     this.dataSource = new CustomDomainDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
-      this.customDomainService,
-      this.isDemo
+      this.customDomainService
     );
   }
   createKey() {

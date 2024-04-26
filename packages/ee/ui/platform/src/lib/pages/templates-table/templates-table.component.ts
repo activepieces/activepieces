@@ -5,7 +5,6 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   TemplatesService,
-  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { TemplatesDataSource } from './templates-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
@@ -15,7 +14,7 @@ import {
 } from '../../components/dialogs/create-or-update-template-dialogue/create-or-update-template-dialogue.component';
 import { FlowTemplate } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
-import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
+import { MANAGE_TEMPLATES_DISABLED_RESOLVER_KEY } from '../../is-feature-locked.resolver';
 
 @Component({
   selector: 'app-template-table',
@@ -28,8 +27,7 @@ export class TemplatesTableComponent {
   dataSource: TemplatesDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
-  featureDisabledTooltip = featureDisabledTooltip;
-  isDemo = false;
+  isLocked!: boolean;
   upgradeNoteTitle = $localize`Unlock Templates`;
   upgradeNote = $localize`Convert the most common automations into reusable templates 1 click away from your users`;
   constructor(
@@ -37,11 +35,12 @@ export class TemplatesTableComponent {
     private matDialog: MatDialog,
     private route: ActivatedRoute
   ) {
-    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
+    this.isLocked =
+      this.route.snapshot.data[MANAGE_TEMPLATES_DISABLED_RESOLVER_KEY];
     this.dataSource = new TemplatesDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
       this.templateService,
-      this.isDemo
+      this.isLocked
     );
   }
   create() {

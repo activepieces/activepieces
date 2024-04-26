@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  Output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Platform } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, catchError, of, tap } from 'rxjs';
@@ -22,7 +17,6 @@ import { PlatformSettingsBaseComponent } from '../../platform-settings-base.comp
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AllowedEmailDomainsListComponent extends PlatformSettingsBaseComponent {
-  @Output() platformUpdated = new EventEmitter<Platform>();
   domainsBeingRemoved: Record<string, boolean> = {};
   addDomain$?: Observable<string>;
   removeDomain$?: Observable<void>;
@@ -48,7 +42,6 @@ export class AllowedEmailDomainsListComponent extends PlatformSettingsBaseCompon
               JSON.stringify(this.platform)
             );
             platform.allowedAuthDomains.push(domain);
-            this.platformUpdated.emit(platform);
             this.matSnackbar.openFromComponent(
               GenericSnackbarTemplateComponent,
               {
@@ -76,7 +69,6 @@ export class AllowedEmailDomainsListComponent extends PlatformSettingsBaseCompon
       )
       .pipe(
         tap(() => {
-          this.platformUpdated.emit(platform);
           this.matSnackbar.openFromComponent(GenericSnackbarTemplateComponent, {
             data: `Removed <b>${domain}</b>`,
           });
@@ -88,7 +80,6 @@ export class AllowedEmailDomainsListComponent extends PlatformSettingsBaseCompon
             panelClass: 'error',
           });
           platform.allowedAuthDomains.push(domain);
-          this.platformUpdated.emit(platform);
           return of(void 0);
         })
       );

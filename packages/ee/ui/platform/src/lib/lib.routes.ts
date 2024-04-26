@@ -11,9 +11,21 @@ import { PiecesTableComponent } from './pages/pieces-table/pieces-table.componen
 import { TemplatesTableComponent } from './pages/templates-table/templates-table.component';
 import { UsersTableComponent } from './pages/users-table/users-table.component';
 import {
-  PLATFORM_DEMO_RESOLVER_KEY,
-  isPlatformDemoResolver,
-} from './is-platform-demo.resolver';
+  SIGNING_KEY_DISABLED_RESOLVER_KEY,
+  APPEARANCE_DISABLED_RESOLVER_KEY,
+  SigningKeyDisabledResolver as signingKeyDisabledResolver,
+  appearanceDisabledResolver,
+  MANAGE_PROJECTS_DISABLED_RESOLVER_KEY,
+  manageProjectsResolver,
+  MANAGE_PIECES_DISABLED_RESOLVER_KEY,
+  managePiecesResolver,
+  MANAGE_TEMPLATES_DISABLED_RESOLVER_KEY,
+  manageTemplatesResolver,
+  AUDIT_LOG_DISABLED_RESOLVER_KEY,
+  auditLogDisabledResolver,
+  CUSTOM_DOMAINS_DISABLED_RESOLVER_KEY,
+  customDomainsDisabledResolver,
+} from './is-feature-locked.resolver';
 
 export const uiEePlatformRoutes: Route[] = [
   {
@@ -32,7 +44,7 @@ export const uiEePlatformRoutes: Route[] = [
           title: $localize`Projects`,
         },
         resolve: {
-          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
+          [MANAGE_PROJECTS_DISABLED_RESOLVER_KEY]: manageProjectsResolver,
         },
       },
       {
@@ -43,7 +55,7 @@ export const uiEePlatformRoutes: Route[] = [
         },
         resolve: {
           [PLATFORM_RESOLVER_KEY]: PlatformResolver,
-          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
+          [APPEARANCE_DISABLED_RESOLVER_KEY]: appearanceDisabledResolver,
         },
       },
       {
@@ -54,7 +66,7 @@ export const uiEePlatformRoutes: Route[] = [
         },
         resolve: {
           [PLATFORM_RESOLVER_KEY]: PlatformResolver,
-          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
+          [MANAGE_PIECES_DISABLED_RESOLVER_KEY]: managePiecesResolver,
         },
       },
       {
@@ -64,7 +76,7 @@ export const uiEePlatformRoutes: Route[] = [
           title: $localize`Templates`,
         },
         resolve: {
-          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
+          [MANAGE_TEMPLATES_DISABLED_RESOLVER_KEY]: manageTemplatesResolver,
         },
       },
       {
@@ -75,7 +87,10 @@ export const uiEePlatformRoutes: Route[] = [
         },
         resolve: {
           [PLATFORM_RESOLVER_KEY]: PlatformResolver,
-          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
+          [SIGNING_KEY_DISABLED_RESOLVER_KEY]: signingKeyDisabledResolver,
+          [APPEARANCE_DISABLED_RESOLVER_KEY]: appearanceDisabledResolver,
+          [AUDIT_LOG_DISABLED_RESOLVER_KEY]: auditLogDisabledResolver,
+          [CUSTOM_DOMAINS_DISABLED_RESOLVER_KEY]: customDomainsDisabledResolver,
         },
       },
       {
@@ -83,9 +98,6 @@ export const uiEePlatformRoutes: Route[] = [
         component: UsersTableComponent,
         data: {
           title: $localize`Users`,
-        },
-        resolve: {
-          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
     ],

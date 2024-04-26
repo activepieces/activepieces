@@ -37,11 +37,11 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import {
   AppearanceService,
-  FlagService,
   TestStepService,
   FlowBuilderService,
   WebSocketService,
   FlowRendererService,
+  PlatformService,
 } from '@activepieces/ui/common';
 import {
   flowDisplayNameInRouteData,
@@ -97,13 +97,13 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     private testStepService: TestStepService,
     private flowRendererService: FlowRendererService,
     public builderService: FlowBuilderService,
-    private flagService: FlagService,
+    private platformService: PlatformService,
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
     private websocketService: WebSocketService,
     private zoomingService: ZoomingService
   ) {
     this.viewedVersion$ = this.store.select(BuilderSelectors.selectViewedVersion);
-    this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
+    this.showPoweredByAp$ = this.platformService.showPoweredByAp();
     this.dataInsertionPopupHidden$ =
       this.builderAutocompleteService.currentAutocompleteInputId$.pipe(
         switchMap((val) => {

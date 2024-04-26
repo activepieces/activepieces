@@ -11,6 +11,13 @@ export type SuccessLicenseResponse = {
     embeddingEnabled?: boolean
     gitSyncEnabled?: boolean
     auditLogEnabled?: boolean
+    customAppearanceEnabled?: boolean
+    manageProjectsEnabled?: boolean
+    managePiecesEnabled?: boolean
+    manageTemplatesEnabled?: boolean
+    apiKeysEnabled?: boolean
+    customDomainsEnabled?: boolean
+    projectRolesEnabled?: boolean
 }
 export type LicenseResponse =
   | SuccessLicenseResponse

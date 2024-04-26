@@ -15,13 +15,12 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   ProjectService,
-  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
-import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StatusCodes } from 'http-status-codes';
 import { MatSidenav } from '@angular/material/sidenav';
+import { MANAGE_PROJECTS_DISABLED_RESOLVER_KEY } from '../../is-feature-locked.resolver';
 
 @Component({
   selector: 'app-projects-table',
@@ -50,24 +49,25 @@ export class ProjectsTableComponent implements AfterViewInit {
   switchProject$: Observable<void> | undefined;
   createProject$: Observable<ProjectWithLimits | undefined> | undefined;
   updateProject$: Observable<ProjectWithLimits | undefined> | undefined;
+  isLocked: boolean;
   deleteProject$?: Observable<void>;
   title = $localize`Projects`;
-  featureDisabledTooltip = featureDisabledTooltip;
-  isDemo = false;
 
   constructor(
     private projectsService: ProjectService,
     private matDialog: MatDialog,
     private authenticationService: AuthenticationService,
     private activatedRoute: ActivatedRoute,
-    private route: ActivatedRoute
+    private router: ActivatedRoute
   ) {
-    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
+    this.isLocked = this.router.snapshot.data[
+      MANAGE_PROJECTS_DISABLED_RESOLVER_KEY
+    ] as boolean;
     this.dataSource = new ProjectsDataSource(
       this.projectsService,
       this.refreshTable$.asObservable(),
       this.activatedRoute.queryParams,
-      this.isDemo
+      this.isLocked
     );
   }
   ngAfterViewInit(): void {
@@ -139,7 +139,7 @@ export class ProjectsTableComponent implements AfterViewInit {
   disableDeleteProject(projectId: string) {
     const isCurrentActiveProject =
       projectId === this.authenticationService.getProjectId();
-    return isCurrentActiveProject || this.isDemo;
+    return isCurrentActiveProject;
   }
 
   private errorHandler(
