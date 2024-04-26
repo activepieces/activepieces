@@ -5,47 +5,6 @@
     </div>
 </div>
 <mat-menu #menu="matMenu">
-    <!-- BEGIN EE -->
-    <ng-container *ngIf="projectEnabled$ | async">
-        <ng-container *ngIf="projects$ | async as projects">
-            <ng-container *ngIf="selectedProject$ | async  as currentProject">
-                <ng-container *ngIf="projects.length > 0">
-                    <mat-menu #projectsMenu="matMenu">
-                        <ng-container *ngIf="projects$ | async as projects">
-                            <ng-container *ngIf="projects.length > 0">
-                                <ng-container *ngFor="let project of projects$ | async; let i = index">
-                                    <div mat-menu-item (click)="switchProject(project.id)">
-                                        <div class="ap-flex ap-items-center ap-w-full ap-min-w-[200px] ">
-                                            <div class="ap-max-w-[220px] ap-truncate" apCheckOverflow
-                                                (isOverflowed)="$event? overflownProjectsNames[project.displayName]=project.displayName:null"
-                                                [matTooltip]="overflownProjectsNames[project.displayName]">
-                                                {{project.displayName}}
-                                            </div>
-                                            <ng-container *ngIf="currentProject.id === project.id">
-                                                <div class="ap-flex-grow"></div>
-                                                <svg-icon src="assets/img/custom/check.svg" [applyClass]="true"
-                                                    class="ap-h-[20px] ap-w-[20px] ap-fill-primary"></svg-icon>
-                                            </ng-container>
-                                        </div>
-                                    </div>
-                                </ng-container>
-                            </ng-container>
-                        </ng-container>
-                    </mat-menu>
-                    <div mat-menu-item [matMenuTriggerFor]="projectsMenu">
-                        <div class="ap-max-w-[220px] ap-truncate"
-                            [matTooltip]="overflownProjectsNames[currentProject.displayName]">
-                            Projects ({{currentProject.displayName}})
-                        </div>
-
-                    </div>
-                </ng-container>
-            </ng-container>
-        </ng-container>
-    </ng-container>
-
-    <!-- END EE -->
-
     <div mat-menu-item [matMenuTriggerFor]="languagesList" class="ap-flex ap-items-center">
 
         <div class="ap-flex ap-items-center ap-gap-2">
@@ -77,10 +36,6 @@
         <div class="ap-text-danger" i18n>Logout</div>
     </div>
 </mat-menu>
-
-<!-- BEGIN EE -->
-<ng-container *ngIf="switchProject$ | async"></ng-container>
-<!-- END EE -->
 
 <mat-menu #languagesList="matMenu">
     <div mat-menu-item *ngFor="let pair of locales|objectToArray" (click)="redirectToLocale(pair.key)">

@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  OnInit,
-  Output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PlatformService } from '@activepieces/ui/common';
@@ -25,8 +19,6 @@ export class ConfigureAllowingEmailLoginsCardComponent
   extends PlatformSettingsBaseComponent
   implements OnInit
 {
-  @Output() platformUpdated = new EventEmitter<Platform>();
-
   toggleEmailAuthnEnabled$?: Observable<void>;
   toggleDisabled = false;
   toggleChecked = false;
@@ -49,7 +41,6 @@ export class ConfigureAllowingEmailLoginsCardComponent
       return;
     }
     this.toggleDisabled = true;
-    this.platformUpdated.emit(platform);
     this.toggleEmailAuthnEnabled$ = this.platformService
       .updatePlatform(
         { emailAuthEnabled: platform.emailAuthEnabled },

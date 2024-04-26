@@ -3,7 +3,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { apiKeyService } from './api-key-service'
 import {
     ApiKeyResponseWithoutValue,
@@ -12,6 +12,7 @@ import {
 import { ApId, assertNotNullOrUndefined, SeekPage } from '@activepieces/shared'
 
 export const apiKeyModule: FastifyPluginAsyncTypebox = async (app) => {
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.apiKeysEnabled))
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(apiKeyController, { prefix: '/v1/api-keys' })
 }

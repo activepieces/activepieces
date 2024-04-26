@@ -15,12 +15,12 @@ import { UpgradeDialogComponent } from 'ee-billing-ui';
 import {
   ApPaginatorComponent,
   AuthenticationService,
-  IsFeatureEnabledBaseComponent,
+  PROJECT_ROLE_DISABLED_RESOLVER_KEY,
   ProjectService,
 } from '@activepieces/ui/common';
 import { RolesDisplayNames } from '../utils';
 import { ActivatedRoute } from '@angular/router';
-import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
+import { ProjectMemberRole } from '@activepieces/shared';
 
 @Component({
   selector: 'app-project-members-table',
@@ -28,10 +28,7 @@ import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
   styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProjectMembersTableComponent
-  extends IsFeatureEnabledBaseComponent
-  implements OnInit
-{
+export class ProjectMembersTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
   dataSource!: ProjectMembersTableDataSource;
@@ -40,6 +37,7 @@ export class ProjectMembersTableComponent
   projectOwnerId$: Observable<string> | undefined;
   isCurrentUserAdmin$: Observable<boolean> | undefined;
   inviteLoading = false;
+  isFeatureLocked = false;
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
   displayedColumns = ['email', 'role', 'status', 'created', 'action'];
   title = $localize`Project Members`;
@@ -57,16 +55,17 @@ export class ProjectMembersTableComponent
     private projectService: ProjectService,
     private projectMemberService: ProjectMemberService,
     private authenticationService: AuthenticationService,
-    activatedRoute: ActivatedRoute
-  ) {
-    super(activatedRoute, ApFlagId.PROJECT_MEMBERS_ENABLED);
-  }
+    private activatedRoute: ActivatedRoute
+  ) {}
   ngOnInit(): void {
+    this.isFeatureLocked = this.activatedRoute.snapshot.data[
+      PROJECT_ROLE_DISABLED_RESOLVER_KEY
+    ] as boolean;
     this.dataSource = new ProjectMembersTableDataSource(
       this.authenticationService,
       this.projectMemberService,
       this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true)),
-      !this.isFeatureEnabled,
+      this.isFeatureLocked,
       this.paginator,
       this.activatedRoute.queryParams
     );

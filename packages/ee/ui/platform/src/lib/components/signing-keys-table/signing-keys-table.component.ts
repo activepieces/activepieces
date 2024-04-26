@@ -8,38 +8,29 @@ import { SigningKey } from '@activepieces/ee-shared';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { SigningKeysService } from '../../service/signing-keys.service';
-import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 
 @Component({
   selector: 'app-signing-keys-table',
   templateUrl: './signing-keys-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SigningKeysTableComponent
-  extends PlatformSettingsBaseComponent
-  implements OnInit
-{
+export class SigningKeysTableComponent implements OnInit {
   displayedColumns = ['id', 'displayName', 'created', 'action'];
   dataSource!: SigningKeysDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
-  featureDisabledTooltip = featureDisabledTooltip;
   upgradeNoteTitle = $localize`Unlock JWT SSO`;
   upgradeNote = $localize`Streamline authenticating your users to our embedded SDK from within your SaaS application.`;
   constructor(
     private matDialog: MatDialog,
     private signingKeysService: SigningKeysService
-  ) {
-    super();
-  }
+  ) {}
   ngOnInit(): void {
     this.dataSource = new SigningKeysDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
-      this.signingKeysService,
-      this.isDemo || !this.platform?.embeddingEnabled
+      this.signingKeysService
     );
   }
 

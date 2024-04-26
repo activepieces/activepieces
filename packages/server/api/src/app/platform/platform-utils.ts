@@ -1,18 +1,33 @@
 import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { getEdition } from '../helper/secret-helper'
+import { userService } from '../user/user-service'
 import { platformService } from './platform.service'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, Principal, PrincipalType } from '@activepieces/shared'
 
 const edition = getEdition()
 
+
+export const resolvePlatformIdForAuthnRequest = async (
+    userEmail: string,
+    request: FastifyRequest,
+): Promise<string | null> => {
+    const users = await userService.getUsersByEmail({
+        email: userEmail,
+    })
+    if (users.length === 1) {
+        return users[0].platformId
+    }
+    return resolvePlatformIdForRequest(request)
+}
+
 export const resolvePlatformIdForRequest = async (
     request: FastifyRequest,
 ): Promise<string | null> => {
     return (
         (await extractPlatformIdFromAuthenticatedPrincipal(request.principal)) ??
-    (await getPlatformIdForHostname(request.hostname))
+        (await getPlatformIdForHostname(request.hostname))
     )
 }
 const extractPlatformIdFromAuthenticatedPrincipal = async (

@@ -24,6 +24,13 @@ export const networkLicenseValidator: LicenseValidator = {
                 gitSyncEnabled: res.data.gitSyncEnabled,
                 ssoEnabled: res.data.ssoEnabled,
                 auditLogEnabled: res.data.auditLogEnabled,
+                customAppearanceEnabled: res.data.customAppearanceEnabled,
+                customDomainsEnabled: res.data.customDomainsEnabled,
+                manageProjectsEnabled: res.data.manageProjectsEnabled,
+                managePiecesEnabled: res.data.managePiecesEnabled,
+                manageTemplatesEnabled: res.data.manageTemplatesEnabled,
+                apiKeysEnabled: res.data.apiKeysEnabled,
+                projectRolesEnabled: res.data.projectRolesEnabled,
             }
         }
         catch (err) {

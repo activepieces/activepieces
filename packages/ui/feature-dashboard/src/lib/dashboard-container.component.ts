@@ -4,6 +4,7 @@ import {
   EmbeddingService,
   showPlatformDashboard$,
   ContactSalesService,
+  PlatformService,
 } from '@activepieces/ui/common';
 import {
   DashboardService,
@@ -11,7 +12,7 @@ import {
   environment,
 } from '@activepieces/ui/common';
 import { Observable, combineLatest, map } from 'rxjs';
-import { ApFlagId, Project } from '@activepieces/shared';
+import { Project } from '@activepieces/shared';
 
 import { Router } from '@angular/router';
 import { MatSidenav } from '@angular/material/sidenav';
@@ -39,6 +40,7 @@ export class DashboardContainerComponent {
     private embeddedService: EmbeddingService,
     private dashboardService: DashboardService,
     private authenticationService: AuthenticationService,
+    private platformService: PlatformService,
     public router: Router,
     private contactSalesService: ContactSalesService
   ) {
@@ -49,9 +51,7 @@ export class DashboardContainerComponent {
       this.flagService
     );
     this.showPoweredByAp$ = combineLatest({
-      showPoweredByAp: this.flagService.isFlagEnabled(
-        ApFlagId.SHOW_POWERED_BY_AP
-      ),
+      showPoweredByAp: this.platformService.showPoweredByAp(),
       isInPlatformRoute: this.dashboardService.getIsInPlatformRoute(),
     }).pipe(
       map((res) => {

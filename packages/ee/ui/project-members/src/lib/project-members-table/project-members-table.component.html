@@ -1,5 +1,5 @@
 <div class="ap-w-full ap-px-[1.875rem] ap-pt-[3.125rem]">
-  @if(!isFeatureEnabled) {
+  @if(isFeatureLocked) {
   <div class="ap-mb-4">
     <ap-upgrade-note
       [featureNoteTitle]="upgradeNoteTitle"
@@ -50,11 +50,9 @@
           <th mat-header-cell *matHeaderCellDef>
             <div class="ap-flex ap-items-center ap-justify-end">
               <ap-button
-                [disabled]="!isFeatureEnabled"
                 btnColor="primary"
                 [loading]="inviteLoading"
                 class="ap-mt-2"
-                [tooltipText]="isFeatureEnabled ? '' : featureDisabledTooltip"
                 btnSize="medium"
                 (buttonClicked)="openInviteMember()"
                 i18n
@@ -102,7 +100,7 @@
   }
   <div
     class="ap-flex ap-justify-end ap-py-2"
-    [class.ap-hidden]="!isFeatureEnabled"
+    [class.ap-hidden]="isFeatureLocked"
   >
     <ap-paginator> </ap-paginator>
   </div>

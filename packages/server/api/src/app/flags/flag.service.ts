@@ -43,18 +43,12 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_PLATFORM_DEMO,
-                value: [ApEdition.CLOUD, ApEdition.COMMUNITY].includes(getEdition()),
+                value: [ApEdition.CLOUD].includes(getEdition()),
                 created,
                 updated,
             },
             {
                 id: ApFlagId.OWN_AUTH2_ENABLED,
-                value: true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_GIT_SYNC,
                 value: true,
                 created,
                 updated,
@@ -134,12 +128,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.PROJECT_MEMBERS_ENABLED,
-                value: getEdition() !== ApEdition.COMMUNITY,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.EMAIL_AUTH_ENABLED,
                 value: true,
                 created,
@@ -206,12 +194,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SHOW_BLOG_GUIDE,
-                value: true,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.SANDBOX_RUN_TIME_SECONDS,
                 value: system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS),
                 created,
@@ -226,12 +208,6 @@ export const flagService = {
             {
                 id: ApFlagId.LATEST_VERSION,
                 value: latestVersion,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_POWERED_BY_AP,
-                value: false,
                 created,
                 updated,
             },

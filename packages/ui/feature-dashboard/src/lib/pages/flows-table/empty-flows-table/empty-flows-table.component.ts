@@ -12,10 +12,10 @@ import {
   TelemetryEventName,
 } from '@activepieces/shared';
 import {
-  FlagService,
   FlowService,
   TelemetryService,
   AuthenticationService,
+  PlatformService,
 } from '@activepieces/ui/common';
 import { demoTemplate } from './demo-flow-template';
 
@@ -34,10 +34,10 @@ export class EmptyFlowsTableComponent {
     private router: Router,
     private flowService: FlowService,
     private telemetryService: TelemetryService,
-    private flagService: FlagService,
+    private platformService: PlatformService,
     private authenticationService: AuthenticationService
   ) {
-    this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
+    this.showPoweredByAp$ = this.platformService.showPoweredByAp();
   }
 
   openToDemo() {

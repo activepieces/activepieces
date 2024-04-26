@@ -1,13 +1,12 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
-import { ApFlagId, ProjectWithLimits } from '@activepieces/shared';
-import { Observable, map } from 'rxjs';
+import { ApFlagId } from '@activepieces/shared';
+import { Observable } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
 import { LocalesService } from '../../service/locales.service';
 import { LocalesEnum } from '@activepieces/shared';
 import { localesMap } from '../../utils/locales';
-import { ProjectService } from '../../service/project.service';
 import { showPlatformDashboard$ } from '../../utils/consts';
 @Component({
   selector: 'ap-user-avatar',
@@ -18,12 +17,8 @@ import { showPlatformDashboard$ } from '../../utils/consts';
 export class UserAvatarComponent implements OnInit {
   showAvatarOuterCircle = false;
   currentUserEmail = '';
-  projects$: Observable<ProjectWithLimits[]>;
-  selectedProject$: Observable<ProjectWithLimits | null>;
-  switchProject$: Observable<void>;
   overflownProjectsNames: Record<string, string> = {};
   billingEnabled$: Observable<boolean>;
-  projectEnabled$: Observable<boolean>;
   showPlatform$: Observable<boolean>;
   showCommunity$: Observable<boolean>;
   locales = localesMap;
@@ -36,7 +31,6 @@ export class UserAvatarComponent implements OnInit {
     public authenticationService: AuthenticationService,
     private router: Router,
     private flagService: FlagService,
-    private projectService: ProjectService,
     private localesService: LocalesService
   ) {
     this.showCommunity$ = this.flagService.isFlagEnabled(
@@ -45,16 +39,6 @@ export class UserAvatarComponent implements OnInit {
     this.billingEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_BILLING
     );
-    this.projectEnabled$ = this.flagService.isFlagEnabled(
-      ApFlagId.PROJECT_MEMBERS_ENABLED
-    );
-    this.projects$ = this.projectService
-      .list({
-        limit: 100,
-        cursor: undefined,
-      })
-      .pipe(map((page) => page.data));
-    this.selectedProject$ = this.projectService.currentProject$;
     this.selectedLanguage =
       this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
     this.showPlatform$ = showPlatformDashboard$(
@@ -81,14 +65,6 @@ export class UserAvatarComponent implements OnInit {
 
   viewPlans() {
     this.router.navigate(['plans']);
-  }
-
-  switchProject(projectId: string) {
-    this.switchProject$ = this.authenticationService.switchProject({
-      projectId,
-      refresh: true,
-      redirectHome: false,
-    });
   }
 
   get userFirstLetter() {

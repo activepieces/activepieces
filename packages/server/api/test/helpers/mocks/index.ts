@@ -190,6 +190,13 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         showPoweredBy: platform?.showPoweredBy ?? faker.datatype.boolean(),
         showActivityLog: platform?.showActivityLog ?? faker.datatype.boolean(),
+        managePiecesEnabled: platform?.managePiecesEnabled ?? faker.datatype.boolean(),
+        manageProjectsEnabled: platform?.manageProjectsEnabled ?? faker.datatype.boolean(),
+        manageTemplatesEnabled: platform?.manageTemplatesEnabled ?? faker.datatype.boolean(),
+        customAppearanceEnabled: platform?.customAppearanceEnabled ?? faker.datatype.boolean(),
+        apiKeysEnabled: platform?.apiKeysEnabled ?? faker.datatype.boolean(),
+        customDomainsEnabled: platform?.customDomainsEnabled ?? faker.datatype.boolean(),
+        projectRolesEnabled: platform?.projectRolesEnabled ?? faker.datatype.boolean(),
     }
 }
 
@@ -493,6 +500,9 @@ export const mockBasicSetup = async (params?: MockBasicSetupParams): Promise<Moc
     const mockPlatform = createMockPlatform({
         ...params?.platform,
         ownerId: mockOwner.id,
+        auditLogEnabled: true,
+        apiKeysEnabled: true,
+        customDomainsEnabled: true,
     })
     await databaseConnection.getRepository('platform').save(mockPlatform)
 

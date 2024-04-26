@@ -6,6 +6,7 @@ import {
   AuthenticationService,
   EmbeddingService,
   NavigationService,
+  PlatformService,
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { Observable, forkJoin, map, of, take } from 'rxjs';
@@ -38,9 +39,7 @@ export class SidenavRoutesListComponent implements OnInit {
   mainDashboardRoutes: SideNavRoute[] = [];
   skipLocationChange$: Observable<boolean> =
     this.embeddingService.getSkipLocationChange$();
-  demoPlatform$: Observable<boolean> = this.flagService.isFlagEnabled(
-    ApFlagId.SHOW_PLATFORM_DEMO
-  );
+
   isVersionMatch$?: Observable<boolean>;
 
   readonly supportRoute: SideNavRoute = {
@@ -71,6 +70,7 @@ export class SidenavRoutesListComponent implements OnInit {
     private dashboardService: DashboardService,
     private navigationService: NavigationService,
     private embeddingService: EmbeddingService,
+    private platformService: PlatformService,
     private authenticationService: AuthenticationService,
     private flagService: FlagService
   ) {
@@ -85,28 +85,28 @@ export class SidenavRoutesListComponent implements OnInit {
         caption: $localize`Projects`,
         route: 'platform/projects',
         showInSideNav$: of(true),
-        showLock$: this.demoPlatform$,
+        showLock$: this.platformService.manageProjectsDisabled(),
       },
       {
         icon: 'assets/img/custom/dashboard/appearance.svg',
         caption: $localize`Appearance`,
         route: 'platform/appearance',
         showInSideNav$: of(true),
-        showLock$: this.demoPlatform$,
+        showLock$: this.platformService.customAppearanceDisabled(),
       },
       {
         icon: 'assets/img/custom/dashboard/pieces.svg',
         caption: $localize`Pieces`,
         route: 'platform/pieces',
         showInSideNav$: of(true),
-        showLock$: this.demoPlatform$,
+        showLock$: this.platformService.managePiecesDisabled(),
       },
       {
         icon: 'assets/img/custom/dashboard/templates.svg',
         caption: $localize`Templates`,
         route: 'platform/templates',
         showInSideNav$: of(true),
-        showLock$: this.demoPlatform$,
+        showLock$: this.platformService.manageTemplatesDisabled(),
       },
       {
         icon: 'assets/img/custom/dashboard/users.svg',
@@ -166,9 +166,7 @@ export class SidenavRoutesListComponent implements OnInit {
           take(1),
           map((isInEmbedding) => !isInEmbedding)
         ),
-        showLock$: this.flagService
-          .isFlagEnabled(ApFlagId.PROJECT_MEMBERS_ENABLED)
-          .pipe(map((enabled) => !enabled)),
+        showLock$: this.platformService.projectRolesDisabled(),
       },
 
       {

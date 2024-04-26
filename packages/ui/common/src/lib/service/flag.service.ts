@@ -206,9 +206,4 @@ export class FlagService {
       map((theme) => theme['materialPrimaryPalette'])
     );
   }
-  getShowPoweredByAp(): Observable<boolean> {
-    return this.getAllFlags().pipe(
-      map((flags) => flags[ApFlagId.SHOW_POWERED_BY_AP] as boolean)
-    );
-  }
 }

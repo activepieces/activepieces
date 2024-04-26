@@ -34,6 +34,13 @@ export async function enforceLimits(): Promise<void> {
                 ssoEnabled: license.ssoEnabled,
                 auditLogEnabled: license.auditLogEnabled,
                 gitSyncEnabled: license.gitSyncEnabled,
+                customDomainsEnabled: license.customDomainsEnabled,
+                customAppearanceEnabled: license.customAppearanceEnabled,
+                manageProjectsEnabled: license.manageProjectsEnabled,
+                managePiecesEnabled: license.managePiecesEnabled,
+                manageTemplatesEnabled: license.manageTemplatesEnabled,
+                apiKeysEnabled: license.apiKeysEnabled,
+                projectRolesEnabled: license.projectRolesEnabled,
             })
             break
         }

@@ -50,7 +50,14 @@ export const platformService = {
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
             gitSyncEnabled: false,
+            managePiecesEnabled: false,
+            manageTemplatesEnabled: false,
+            manageProjectsEnabled: false,
+            projectRolesEnabled: false,
             showActivityLog: false,
+            customDomainsEnabled: false,
+            apiKeysEnabled: false,
+            customAppearanceEnabled: false,
         }
 
         const savedPlatform = await repo.save(newPlatform)
@@ -106,6 +113,14 @@ export const platformService = {
                 params.enforceAllowedAuthDomains,
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
+            ...spreadIfDefined('manageProjectsEnabled', params.manageProjectsEnabled),
+            ...spreadIfDefined('managePiecesEnabled', params.managePiecesEnabled),
+            ...spreadIfDefined('manageTemplatesEnabled', params.manageTemplatesEnabled),
+            ...spreadIfDefined('apiKeysEnabled', params.apiKeysEnabled),
+            ...spreadIfDefined('projectRolesEnabled', params.projectRolesEnabled),
+            ...spreadIfDefined('customDomainsEnabled', params.customDomainsEnabled),
+            ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
+            
         }
 
         return repo.save(updatedPlatform)
@@ -159,4 +174,12 @@ type UpdateParams = UpdatePlatformRequestBody & {
     ssoEnabled?: boolean
     gitSyncEnabled?: boolean
     embeddingEnabled?: boolean
+    customDomainsEnabled?: boolean
+    customAppearanceEnabled?: boolean
+    manageProjectsEnabled?: boolean
+    managePiecesEnabled?: boolean
+    manageTemplatesEnabled?: boolean
+    apiKeysEnabled?: boolean
+    projectRolesEnabled?: boolean
+    
 }

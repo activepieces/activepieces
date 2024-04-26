@@ -5,13 +5,13 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   GenericSnackbarTemplateComponent,
-  PlatformService,
 } from '@activepieces/ui/common';
 import { Observable, Subject, startWith, tap } from 'rxjs';
 import { UserResponse, UserStatus } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { EditUserDialogComponent } from '../../components/dialogs/edit-user-role-dialog/edit-user-role-dialog.component';
+import { PlatformUserService } from '../../service/platform-user.service';
 
 @Component({
   selector: 'app-users-table',
@@ -39,7 +39,7 @@ export class UsersTableComponent {
     'action',
   ];
   constructor(
-    private platformService: PlatformService,
+    private platformUserService: PlatformUserService,
     private snackBar: MatSnackBar,
     private authenticationService: AuthenticationService,
     private matDialog: MatDialog
@@ -47,12 +47,12 @@ export class UsersTableComponent {
     this.platformOwnerId = this.authenticationService.currentUser.id;
     this.dataSource = new UsersDataSource(
       this.refresh$.asObservable().pipe(startWith(true)),
-      this.platformService
+      this.platformUserService
     );
   }
 
   deactivateUser(user: UserResponse) {
-    this.deactivate$ = this.platformService
+    this.deactivate$ = this.platformUserService
       .updateUser(user.id, { status: UserStatus.INACTIVE })
       .pipe(
         tap(() => {
@@ -79,7 +79,7 @@ export class UsersTableComponent {
   }
 
   deleteUser(user: UserResponse) {
-    const delete$ = this.platformService.deleteUser(user.id).pipe(
+    const delete$ = this.platformUserService.deleteUser(user.id).pipe(
       tap(() => {
         this.refresh$.next(true);
         this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
@@ -102,7 +102,7 @@ export class UsersTableComponent {
   }
 
   activateUser(user: UserResponse) {
-    this.activate$ = this.platformService
+    this.activate$ = this.platformUserService
       .updateUser(user.id, { status: UserStatus.ACTIVE })
       .pipe(
         tap(() => {

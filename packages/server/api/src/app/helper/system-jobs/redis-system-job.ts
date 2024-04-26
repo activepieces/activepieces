@@ -50,9 +50,9 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
     },
 
     async upsertJob({ job, schedule, handler }): Promise<void> {
-        logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, `Upserting job`)
+        logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Upserting job')
         if (await jobNotInQueue(job.name)) {
-            logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, `Adding job to queue`)
+            logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Adding job to queue')
             await addJobToQueue({
                 job,
                 schedule,
@@ -103,7 +103,7 @@ const configureJobOptions = (schedule: JobSchedule): JobsOptions => {
 }
 
 const setJobHandler = <T extends SystemJobName>({ name, handler }: SetJobHandlerParams<T>): void => {
-    logger.info({ name: 'RedisSystemJob#setJobHandler', jobName: name }, `Setting job handler`)
+    logger.info({ name: 'RedisSystemJob#setJobHandler', jobName: name }, 'Setting job handler')
     jobHandlers.set(name, handler)
 }
 

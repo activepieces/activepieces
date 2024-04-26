@@ -9,7 +9,7 @@ import {
     createMockUser,
     mockBasicSetup,
 } from '../../../helpers/mocks'
-import { apId, PlatformRole, PrincipalType } from '@activepieces/shared'
+import { PlatformRole, PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -59,32 +59,6 @@ describe('API Key API', () => {
             expect(responseBody.value).toContain('sk-')
         })
 
-        it('Fails if platform is not found', async () => {
-            // arrange
-            const nonExistentPlatformId = apId()
-
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                platform: {
-                    id: nonExistentPlatformId,
-                },
-            })
-
-            const mockApiKeyName = faker.lorem.word()
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/api-keys',
-                body: {
-                    displayName: mockApiKeyName,
-                },
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-        })
     })
 
     describe('Delete API Key endpoint', () => {

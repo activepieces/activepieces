@@ -2,7 +2,7 @@ import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { eventsHooks } from '../helper/application-events'
 import { getEdition } from '../helper/secret-helper'
-import { resolvePlatformIdForRequest } from '../platform/platform-utils'
+import { resolvePlatformIdForAuthnRequest } from '../platform/platform-utils'
 import { authenticationService } from './authentication-service'
 import { Provider } from './authentication-service/hooks/authentication-service-hooks'
 import { ApplicationEventName } from '@activepieces/ee-shared'
@@ -20,7 +20,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
     app.post('/sign-up', SignUpRequestOptions, async (request) => {
-        const platformId = await resolvePlatformIdForRequest(request)
+        const platformId = await resolvePlatformIdForAuthnRequest(request.body.email, request)
 
         const signUpResponse = await authenticationService.signUp({
             ...request.body,
@@ -42,13 +42,14 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
     })
 
     app.post('/sign-in', SignInRequestOptions, async (request) => {
-        const platformId = await resolvePlatformIdForRequest(request)
+        const platformId = await resolvePlatformIdForAuthnRequest(request.body.email, request)
         eventsHooks.get().send(request, {
             action: ApplicationEventName.SIGNED_IN,
             userId: request.principal.id,
         })
         return authenticationService.signIn({
-            ...request.body,
+            email: request.body.email,
+            password: request.body.password,
             platformId,
             provider: Provider.EMAIL,
         })
