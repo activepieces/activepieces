@@ -9,7 +9,9 @@ import {
     ApId,
     assertEqual,
     Platform,
-    PlatformWithoutSensitiveData, Principal, UpdatePlatformRequestBody
+    PlatformWithoutSensitiveData,
+    Principal,
+    UpdatePlatformRequestBody,
 } from '@activepieces/shared'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
