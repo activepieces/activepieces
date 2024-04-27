@@ -1,11 +1,10 @@
 import jwksClient from 'jwks-rsa'
-import { authenticationService } from '../../../../authentication/authentication-service'
 import { flagService } from '../../../../flags/flag.service'
 import { JwtSignAlgorithm, jwtUtils } from '../../../../helper/jwt-utils'
-import { AuthnProvider } from './authn-provider'
+import { AuthnProvider, FebderatedAuthnIdToken } from './authn-provider'
 import {
+    assertNotEqual,
     assertNotNullOrUndefined,
-    AuthenticationResponse,
     Platform,
 } from '@activepieces/shared'
 
@@ -51,7 +50,7 @@ export const googleAuthnProvider: AuthnProvider = {
         hostname,
         platform,
         authorizationCode,
-    ): Promise<AuthenticationResponse> {
+    ): Promise<FebderatedAuthnIdToken> {
         const { clientId, clientSecret } = getClientIdAndSecret(platform)
         const idToken = await exchangeCodeForIdToken(
             platform.id,
@@ -60,8 +59,7 @@ export const googleAuthnProvider: AuthnProvider = {
             clientSecret,
             authorizationCode,
         )
-        const idTokenPayload = await verifyIdToken(clientId, idToken)
-        return generateAuthenticationResponse(platform.id, idTokenPayload)
+        return verifyIdToken(clientId, idToken)
     },
 }
 
@@ -93,7 +91,7 @@ const exchangeCodeForIdToken = async (
 const verifyIdToken = async (
     clientId: string,
     idToken: string,
-): Promise<IdTokenPayload> => {
+): Promise<FebderatedAuthnIdToken> => {
     const { header } = jwtUtils.decode({ jwt: idToken })
     const signingKey = await keyLoader.getSigningKey(header.kid)
     const publicKey = signingKey.getPublicKey()
@@ -106,25 +104,12 @@ const verifyIdToken = async (
         audience: clientId,
     })
 
+    assertNotEqual(payload.email_verified, false, 'payload.email_verified', 'Email is not verified')
     return {
         email: payload.email,
-        emailVerified: payload.email_verified,
-        givenName: payload.given_name,
-        familyName: payload.family_name,
+        firstName: payload.given_name,
+        lastName: payload.family_name,
     }
-}
-
-const generateAuthenticationResponse = async (
-    platformId: string | null,
-    idTokenPayload: IdTokenPayload,
-): Promise<AuthenticationResponse> => {
-    return authenticationService.federatedAuthn({
-        email: idTokenPayload.email,
-        verified: true,
-        firstName: idTokenPayload.givenName,
-        lastName: idTokenPayload.familyName,
-        platformId,
-    })
 }
 
 type IdTokenPayloadRaw = {
@@ -135,11 +120,4 @@ type IdTokenPayloadRaw = {
     sub: string
     aud: string
     iss: string
-}
-
-type IdTokenPayload = {
-    email: string
-    emailVerified: boolean
-    givenName: string
-    familyName: string
 }

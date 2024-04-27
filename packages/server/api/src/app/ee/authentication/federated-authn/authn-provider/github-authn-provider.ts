@@ -1,10 +1,8 @@
-import { authenticationService } from '../../../../authentication/authentication-service'
 import { flagService } from '../../../../flags/flag.service'
-import { AuthnProvider } from './authn-provider'
+import { AuthnProvider, FebderatedAuthnIdToken } from './authn-provider'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
-    AuthenticationResponse,
     ErrorCode,
     isNil,
     Platform,
@@ -43,7 +41,7 @@ export const gitHubAuthnProvider: AuthnProvider = {
         hostname,
         platform,
         authorizationCode,
-    ): Promise<AuthenticationResponse> {
+    ): Promise<FebderatedAuthnIdToken> {
         const { clientId, clientSecret } = getClientIdAndSecret(platform)
         const githubAccessToken = await getGitHubAccessToken(
             platform,
@@ -52,8 +50,7 @@ export const gitHubAuthnProvider: AuthnProvider = {
             clientSecret,
             authorizationCode,
         )
-        const gitHubUserInfo = await getGitHubUserInfo(githubAccessToken)
-        return authenticateUser(platform.id, gitHubUserInfo)
+        return getGitHubUserInfo(githubAccessToken)
     },
 }
 
@@ -99,7 +96,7 @@ const getGitHubAccessToken = async (
 
 const getGitHubUserInfo = async (
     gitHubAccessToken: string,
-): Promise<GitHubUserInfo> => {
+): Promise<FebderatedAuthnIdToken> => {
     const response = await fetch('https://api.github.com/user', {
         headers: {
             Accept: 'application/vnd.github+json',
@@ -116,7 +113,8 @@ const getGitHubUserInfo = async (
     }
 
     return {
-        ...(await response.json()),
+        firstName: (await response.json()).name,
+        lastName: '',
         email: await getGitHubUserEmail(gitHubAccessToken),
     }
 }
@@ -146,20 +144,4 @@ const getGitHubUserEmail = async (
     }
     return email
 }
-const authenticateUser = async (
-    platformId: string | null,
-    gitHubUserInfo: GitHubUserInfo,
-): Promise<AuthenticationResponse> => {
-    return authenticationService.federatedAuthn({
-        email: gitHubUserInfo.email,
-        verified: true,
-        firstName: gitHubUserInfo.name,
-        lastName: '',
-        platformId,
-    })
-}
 
-type GitHubUserInfo = {
-    name: string
-    email: string
-}

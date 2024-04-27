@@ -34,7 +34,7 @@ export class PlatformService {
     private http: HttpClient,
     private flagsService: FlagService,
     private authenticationService: AuthenticationService
-  ) { }
+  ) {}
 
   updatePlatform(req: UpdatePlatformRequestBody, platformId: string) {
     return this.http
@@ -136,9 +136,9 @@ export class PlatformService {
   projectRolesDisabled() {
     return this.currentPlatform().pipe(
       map((platform) => {
-        if (!platform)
-          return true;
+        if (!platform) return true;
         return !platform.projectRolesEnabled;
-      }))
+      })
+    );
   }
 }

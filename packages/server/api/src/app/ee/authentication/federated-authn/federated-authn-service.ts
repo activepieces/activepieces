@@ -1,3 +1,5 @@
+import { authenticationService } from '../../../authentication/authentication-service'
+import { resolvePlatformIdFromEmail } from '../../../platform/platform-utils'
 import { platformService } from '../../../platform/platform.service'
 import { providers } from './authn-provider/authn-provider'
 import { AuthenticationResponse,
@@ -28,7 +30,15 @@ export const federatedAuthnService = {
     }: ClaimParams): Promise<AuthenticationResponse> {
         const provider = providers[providerName]
         const platform = await platformService.getOneOrThrow(platformId)
-        return provider.authenticate(hostname, platform, code)
+        const idToken = await provider.authenticate(hostname, platform, code)
+        const platformIdFromEmail = await resolvePlatformIdFromEmail(platformId, idToken.email)
+        return authenticationService.federatedAuthn({
+            email: idToken.email,
+            verified: true,
+            firstName: idToken.firstName,
+            lastName: idToken.lastName,
+            platformId: platformIdFromEmail,
+        })
     },
 }
 
