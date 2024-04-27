@@ -18,7 +18,7 @@ export const resolvePlatformIdFromEmail = async (
     if (!shouldResolve) {
         return platformId
     }
-    const users = await userService.getUsersByEmail({ email: userEmail, })
+    const users = await userService.getUsersByEmail({ email: userEmail })
     if (users.length === 1) {
         return users[0].platformId
     }

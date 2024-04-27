@@ -136,9 +136,11 @@ export class PlatformService {
   projectRolesDisabled() {
     return this.currentPlatform().pipe(
       map((platform) => {
-        if (!platform)
+        if (!platform) {
           return true;
+        }
         return !platform.projectRolesEnabled;
-      }))
+      })
+    );
   }
 }
