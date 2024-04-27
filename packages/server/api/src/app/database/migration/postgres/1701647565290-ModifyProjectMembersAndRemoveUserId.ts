@@ -1,10 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
+import { ApEdition } from '@activepieces/shared'
 
 export class ModifyProjectMembersAndRemoveUserId1701647565290
 implements MigrationInterface {
     name = 'ModifyProjectMembersAndRemoveUserId1701647565290'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
         ALTER TABLE "project_member"
         ADD "email" character varying
@@ -40,6 +45,9 @@ implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             DROP INDEX "public"."idx_project_member_project_id_email_platform_id"
         `)

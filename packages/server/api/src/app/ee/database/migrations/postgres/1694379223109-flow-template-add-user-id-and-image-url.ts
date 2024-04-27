@@ -1,11 +1,16 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../../../database/database-common'
 import { logger } from '@activepieces/server-shared'
+import { ApEdition } from '@activepieces/shared'
 
 export class FlowTemplateAddUserIdAndImageUrl1694379223109
 implements MigrationInterface {
     name = 'FlowTemplateAddUserIdAndImageUrl1694379223109'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(
             'ALTER TABLE "flow_template" DROP COLUMN "pinnedOrder"',
         )
@@ -32,6 +37,9 @@ implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(
             'ALTER TABLE "flow_template" DROP CONSTRAINT "fk_flow_template_user_id"',
         )
