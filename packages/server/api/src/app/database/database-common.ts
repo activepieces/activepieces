@@ -1,5 +1,7 @@
 import { EntitySchemaColumnOptions } from 'typeorm'
+import { getEdition } from '../helper/secret-helper'
 import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
+import { ApEdition } from '@activepieces/shared'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -42,4 +44,8 @@ export const BaseColumnSchemaPart = {
         type: TIMESTAMP_COLUMN_TYPE,
         updateDate: true,
     } as EntitySchemaColumnOptions,
+}
+
+export function isNotOneOfTheseEditions(editions: ApEdition[]): boolean {
+    return !editions.includes(getEdition())
 }

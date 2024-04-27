@@ -1,10 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
+import { ApEdition } from '@activepieces/shared'
 
 export class AddUserEmailToReferral1709500213947 implements MigrationInterface {
     name = 'AddUserEmailToReferral1709500213947'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "referal"
             ADD "referredUserEmail" character varying(500)
@@ -69,6 +74,9 @@ export class AddUserEmailToReferral1709500213947 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "referal" DROP CONSTRAINT "fk_referral_referring_user_id"
         `)

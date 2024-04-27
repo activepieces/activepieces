@@ -1,10 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
+import { ApEdition } from '@activepieces/shared'
 
 export class RemoveUnusedFieldsinBilling1700132368636
 implements MigrationInterface {
     name = 'RemoveUnusedFieldsinBilling1700132368636'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "project_plan" DROP COLUMN "activeFlows"
         `)
@@ -37,6 +42,9 @@ implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
         ALTER TABLE "project_usage"
         ADD "bots" integer NOT NULL DEFAULT '0'

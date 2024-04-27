@@ -1,9 +1,14 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../../../database/database-common'
+import { ApEdition } from '@activepieces/shared'
 
 export class ModifyBilling1694902537045 implements MigrationInterface {
     name = 'ModifyBilling1694902537045'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
+            return
+        }
         await queryRunner.query(
             'ALTER TABLE "project_plan" RENAME COLUMN "name" TO "flowPlanName"',
         )
@@ -25,6 +30,9 @@ export class ModifyBilling1694902537045 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
+            return
+        }
         await queryRunner.query('ALTER TABLE "project_usage" DROP COLUMN "bots"')
         await queryRunner.query(
             'ALTER TABLE "project_usage" DROP COLUMN "datasourcesSize"',

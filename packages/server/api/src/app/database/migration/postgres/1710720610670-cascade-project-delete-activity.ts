@@ -1,10 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
+import { ApEdition } from '@activepieces/shared'
 
 export class CascadeProjectDeleteToActivity1710720610670 implements MigrationInterface {
     name = 'CascadeProjectDeleteToActivity1710720610670'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "activity" DROP CONSTRAINT "fk_activity_project_id"
         `)
@@ -18,6 +23,9 @@ export class CascadeProjectDeleteToActivity1710720610670 implements MigrationInt
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "activity" DROP CONSTRAINT "fk_activity_project_id"
         `)
