@@ -1,6 +1,6 @@
 import { gitHubAuthnProvider } from './github-authn-provider'
 import { googleAuthnProvider } from './google-authn-provider'
-import { AuthenticationResponse, Platform, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
+import { Platform, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 
 export type AuthnProvider = {
     getLoginUrl: (hostname: string, platform: Platform) => Promise<string>
@@ -8,10 +8,17 @@ export type AuthnProvider = {
         hostname: string,
         platform: Platform,
         authorizationCode: string
-    ) => Promise<AuthenticationResponse>
+    ) => Promise<FebderatedAuthnIdToken>
 }
 
 export const providers: Record<ThirdPartyAuthnProviderEnum, AuthnProvider> = {
     [ThirdPartyAuthnProviderEnum.GOOGLE]: googleAuthnProvider,
     [ThirdPartyAuthnProviderEnum.GITHUB]: gitHubAuthnProvider,
+}
+
+
+export type FebderatedAuthnIdToken = {
+    email: string
+    firstName: string
+    lastName: string
 }
