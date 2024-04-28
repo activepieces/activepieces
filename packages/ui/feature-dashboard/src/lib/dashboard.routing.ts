@@ -21,6 +21,7 @@ import { PlansPageComponent } from 'ee-billing-ui';
 import { ProjectMembersTableComponent } from 'ee-project-members';
 import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
 import { ActivityTableComponent } from './pages/activity-table/activity-table.component';
+import { IssuesTableComponent } from './pages/issues-table/issues-table.component';
 import { SettingsPageComponent } from './pages/settings-page/settings-page.component';
 import { FLAGS_RESOLVE_DATA, FlagsResolver } from './resolvers/flags.resolver';
 
@@ -38,6 +39,21 @@ export const DashboardLayoutRouting: Routes = [
         path: 'runs',
         pathMatch: 'full',
         component: RunsTableComponent,
+        canActivate: [
+          showBasedOnRoles([
+            ProjectMemberRole.ADMIN,
+            ProjectMemberRole.EDITOR,
+            ProjectMemberRole.VIEWER,
+          ]),
+        ],
+      },
+      {
+        data: {
+          title: $localize`Issues`,
+        },
+        path: 'issues',
+        pathMatch: 'full',
+        component: IssuesTableComponent,
         canActivate: [
           showBasedOnRoles([
             ProjectMemberRole.ADMIN,

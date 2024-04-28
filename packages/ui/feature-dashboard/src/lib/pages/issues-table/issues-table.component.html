@@ -1,0 +1,65 @@
+<div class="ap-w-full  ap-px-[30px] ap-pt-[50px]">
+  <div class="ap-h-full">
+    <ap-page-title title="Issues" i18n-title>
+    </ap-page-title>
+  </div>
+  <div class="ap-min-h-[70%]">
+    <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="issues">
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef i18n>Status</th>
+        <td mat-cell *matCellDef="let issues"><span
+            class="ap-bg-red-100 ap-text-red-800 ap-text-xs ap-font-medium ap-me-2 ap-px-2.5 ap-py-0.5 ap-rounded-full">{{
+            statusText(issues.status) }}</span></td>
+      </ng-container>
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef i18n>Name</th>
+        <td mat-cell *matCellDef="let issues">{{ issues.flowDisplayName }}</td>
+      </ng-container>
+
+
+      <ng-container matColumnDef="count">
+        <th mat-header-cell *matHeaderCellDef i18n>Count</th>
+        <td mat-cell *matCellDef="let issues">{{ issues.count }}</td>
+      </ng-container>
+
+
+      <ng-container matColumnDef="lastSeen">
+        <th mat-header-cell *matHeaderCellDef i18n>Last Seen</th>
+        <td mat-cell *matCellDef="let issues">{{ issues.lastSeen | apDate:'mdhms' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="action">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let issues">
+
+          <div class="ap-flex ap-items-center">
+            <ap-button btnStyle="flat" btnColor="primary" btnSize="small" (click)="$event.stopPropagation()">
+              <div i18n>Mark Resolved</div>
+            </ap-button>
+          </div>
+        </td>
+      </ng-container>
+
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row [class.ap-hidden]="dataSource.isLoading$ | async" class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openRuns(row, $event)"
+      (auxclick)="openRuns(row, $event)" *matRowDef="let row; columns: displayedColumns">
+      </tr>
+    </table>
+    <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
+      <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
+        <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
+        </ap-loading-icon>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
+      <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-py-8" i18n>
+        No issues present
+      </div>
+    </ng-container>
+  </div>
+
+  <div class="ap-flex ap-justify-end ap-py-2">
+    <ap-paginator> </ap-paginator>
+  </div>
+</div>

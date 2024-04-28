@@ -19,6 +19,7 @@ import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { activityModule } from './ee/activity/activity-module'
+import { issuesModule } from './ee/issues/issues-module'
 import { analyticsModule } from './ee/analytics/analytics-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
@@ -252,6 +253,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await pieceSyncService.setup()
     await app.register(flowWorkerModule)
     await app.register(platformUserModule)
+    await app.register(issuesModule)
+
     await setupBullMQBoard(app)
 
     app.get(

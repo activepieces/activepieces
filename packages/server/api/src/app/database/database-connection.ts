@@ -7,6 +7,7 @@ import {
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { ActivityEntity } from '../ee/activity/activity-entity'
+import {IssueEntity } from '../ee/issues/issues-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
@@ -68,6 +69,7 @@ function getEntities(): EntitySchema<unknown>[] {
         PlatformEntity,
         TagEntity,
         PieceTagEntity,
+        IssueEntity,
     ]
 
     switch (edition) {
