@@ -1,11 +1,8 @@
 @import "../../../../../../core//src/assets/scss/variables.scss";
 @import "../../../../../../core/src/assets/scss/derived-variables.scss";
+
 .code-container {
   height: 100%;
-}
-
-.modal-body {
-  background: $sidebar;
 }
 
 .file-active {
@@ -32,9 +29,9 @@
   line-height: 100%;
   vertical-align: "middle";
 }
+
 .test-code-loading-container {
   position: absolute;
   left: 50%;
   top: 50%;
 }
-

@@ -280,7 +280,7 @@ $ap-theme-dark: mat.define-dark-theme(
     typography: $ap-typography,
   )
 );
-$main-theme: material-theme-helper.modify-background($ap-theme-light, $white, $white, $dividers, $body, $body);
+$main-theme: material-theme-helper.modify-background($ap-theme-light, $white, $white, $dividers, $text-color, $text-color);
 @include mat.all-component-themes($main-theme);
 .mat-tab-group {
   font-family: inherit !important;
@@ -473,14 +473,12 @@ td.mat-footer-cell:first-of-type {
 th[mat-cell] {
   @include mat.typography-level($ap-typography, "body-2");
 }
+
 th[mat-header-cell] {
   @include mat.typography-level($ap-typography, "body-2");
-  font-weight: 500;
+  font-weight: 550;
 }
 
-tr[mat-header-row] {
-  background: $gray-card;
-}
 tr.mat-header-row {
   height: 50px !important;
 }
