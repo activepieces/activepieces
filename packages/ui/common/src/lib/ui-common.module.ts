@@ -10,7 +10,7 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { StateIconComponent } from './components/status-icon/state-icon.component';
 import { LoadingIconComponent } from './components/loading-icon/loading-icon.component';
 import { ApPaginatorComponent } from './components/pagination/ap-paginator.component';
-import { NgJsonEditorModule } from 'ang-jsoneditor' ;
+import { NgJsonEditorModule } from 'ang-jsoneditor';
 import {
   MAT_FORM_FIELD_DEFAULT_OPTIONS,
   MatFormFieldModule,
@@ -31,7 +31,6 @@ import { DialogTitleTemplateComponent } from './components/dialogs/dialog-title-
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { OutputLogPipe } from './pipe/output-log.pipe';
 import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
 import { CenterMatMenuDirective } from './directives/center-mat-menu.directive';
@@ -117,7 +116,6 @@ const exportedImports = [
   AbstractFormControlCasterPipe,
   VersionHistoryIndicatorComponent,
   InsideBuilderDatePipe,
-  
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,
@@ -133,7 +131,6 @@ const exportedDeclarations = [
   IconButtonComponent,
   ApButtonComponent,
   DialogTitleTemplateComponent,
-  OutputLogPipe,
   CommaSeparatedPipe,
   DefaultFalsePipe,
   DefaultTruePipe,

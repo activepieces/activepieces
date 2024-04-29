@@ -48,14 +48,18 @@ export const flowActionsUiInfo = {
   iconSizeTailWind: 'ap-w-[20px] ap-h-[20px]',
 };
 
-export const downloadJson = (obj: any, fileName: string) => {
+export const downloadFile = (
+  obj: any,
+  fileName: string,
+  extension: 'txt' | 'json'
+) => {
   const blob = new Blob([obj], {
     type: 'application/json',
   });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${fileName}.json`;
+  link.download = `${fileName}.${extension}`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -63,7 +67,7 @@ export const downloadJson = (obj: any, fileName: string) => {
 };
 
 export const downloadFlow = (flow: FlowTemplate) => {
-  downloadJson(JSON.stringify(flow, null, 2), flow.name);
+  downloadFile(JSON.stringify(flow, null, 2), flow.name, 'json');
 };
 
 export const jsonEditorOptionsMonaco = {

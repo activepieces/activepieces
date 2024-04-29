@@ -1,15 +1,10 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { JsonViewDialogComponent } from './json-view-dialog/json-view-dialog.component';
 import { copyText } from '../../utils/tables.utils';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { downloadJson } from '../../utils/consts';
+import { downloadFile } from '../../utils/consts';
 import { FormControl } from '@angular/forms';
-import { outputLog } from '../../pipe/output-log.pipe';
 import { JsonEditorOptions } from 'ang-jsoneditor';
 
 @Component({
@@ -20,37 +15,32 @@ import { JsonEditorOptions } from 'ang-jsoneditor';
 export class JsonViewComponent {
   jsonFormController = new FormControl({});
   _content = '';
-  showText=false;
+  showText = false;
   containerHeight = 0;
+  @Input() hideTitle = false;
   @Input() hideMaximize = false;
   @Input() title: string;
-  jsonEditorOptions:JsonEditorOptions = new JsonEditorOptions();
+  jsonEditorOptions: JsonEditorOptions = new JsonEditorOptions();
   @Input() set content(value: unknown) {
-    const formattedOutput = outputLog(value, false);
-    if (formattedOutput !== this._content) {
-      this._content = formattedOutput;
-      try {
-        let controllerValue = JSON.parse(this._content);
-        if(typeof controllerValue === 'object' && controllerValue !== null){
-          this.jsonFormController.setValue(controllerValue);
-          this.showText=false;
-        }
-        else{
-         this.showText=true;
-        }
-      } catch (e) {
-        this.showText = true;
-       }
-       const contentSize = this._content.length * 2 / 1024;
-       this.jsonEditorOptions.expandAll = contentSize < 400;
+    if (typeof value === 'string') {
+      this._content = value;
+    } else {
+      this._content = JSON.stringify(value, null, 2);
     }
+    this.showText = !this.isContentAnObject(this._content);
+    if (!this.showText) {
+      this.jsonFormController.setValue(JSON.parse(this._content));
+    }
+    this.setExpandAllNodesInEditor();
   }
   editor?: unknown;
-  constructor(
-    private dialogService: MatDialog,
-    private snackbar: MatSnackBar,
-  ) {
+  constructor(private dialogService: MatDialog, private snackbar: MatSnackBar) {
     this.jsonEditorOptions.mode = 'view';
+  }
+
+  private setExpandAllNodesInEditor() {
+    const contentSize = (this._content.length * 2) / 1024;
+    this.jsonEditorOptions.expandAll = contentSize < 400;
   }
 
   openModal() {
@@ -64,7 +54,15 @@ export class JsonViewComponent {
   }
 
   downloadContent() {
-    downloadJson(this._content, this.title);
+    downloadFile(this._content, this.title, this.showText ? 'txt' : 'json');
   }
 
+  private isContentAnObject(content: string) {
+    try {
+      const value = JSON.parse(content);
+      return typeof value === 'object' && value !== null;
+    } catch (e) {
+      return false;
+    }
+  }
 }
