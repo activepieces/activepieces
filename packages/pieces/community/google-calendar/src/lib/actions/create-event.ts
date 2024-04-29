@@ -39,11 +39,7 @@ export const createEvent = createAction({
       description: 'Description of the event. You can use HTML tags here.',
       required: false,
     }),
-    colorId: Property.ShortText({
-      displayName: 'Color ID',
-      description: 'Change the color of the event.',
-      required: false,
-    }),
+    colorId: googleCalendarCommon.colorId,
     attendees: Property.Array({
       displayName: 'Attendees',
       description: 'Emails of the attendees (guests)',
@@ -120,7 +116,6 @@ export const createEvent = createAction({
       }
     }
 
-    console.log;
     const authClient = new OAuth2Client();
     authClient.setCredentials(configValue.auth);
 
