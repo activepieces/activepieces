@@ -1,6 +1,5 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   Input,
 } from '@angular/core';
@@ -8,10 +7,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { JsonViewDialogComponent } from './json-view-dialog/json-view-dialog.component';
 import { copyText } from '../../utils/tables.utils';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { downloadJson, jsonEditorOptionsMonaco } from '../../utils/consts';
+import { downloadJson } from '../../utils/consts';
 import { FormControl } from '@angular/forms';
 import { outputLog } from '../../pipe/output-log.pipe';
-import { Observable } from 'rxjs';
+import { JsonEditorOptions } from 'ang-jsoneditor';
 
 @Component({
   selector: 'ap-json-viewer',
@@ -19,33 +18,40 @@ import { Observable } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class JsonViewComponent {
-  readonly jsonEditorOptionsMonaco = jsonEditorOptionsMonaco;
-  jsonFormController = new FormControl('');
+  jsonFormController = new FormControl({});
   _content = '';
-  containerWidthChange$?: Observable<number>;
-  readonly containerMaxHeight = 600;
-  readonly containerMinHeight = 100;
+  showText=false;
   containerHeight = 0;
   @Input() hideMaximize = false;
   @Input() title: string;
+  jsonEditorOptions:JsonEditorOptions = new JsonEditorOptions();
   @Input() set content(value: unknown) {
     const formattedOutput = outputLog(value, false);
     if (formattedOutput !== this._content) {
       this._content = formattedOutput;
-      this.jsonFormController.setValue(this._content || '');
-      if (this.editor) {
-        setTimeout(() => {
-          this.resizeEditorToContent(this.editor);
-        });
-      }
+      try {
+        let controllerValue = JSON.parse(this._content);
+        if(typeof controllerValue === 'object' && controllerValue !== null){
+          this.jsonFormController.setValue(controllerValue);
+          this.showText=false;
+        }
+        else{
+         this.showText=true;
+        }
+      } catch (e) {
+        this.showText = true;
+       }
+       const contentSize = this._content.length * 2 / 1024;
+       this.jsonEditorOptions.expandAll = contentSize < 400;
     }
   }
   editor?: unknown;
   constructor(
     private dialogService: MatDialog,
     private snackbar: MatSnackBar,
-    private cd: ChangeDetectorRef
-  ) {}
+  ) {
+    this.jsonEditorOptions.mode = 'view';
+  }
 
   openModal() {
     this.dialogService.open(JsonViewDialogComponent, {
@@ -60,13 +66,5 @@ export class JsonViewComponent {
   downloadContent() {
     downloadJson(this._content, this.title);
   }
-  resizeEditorToContent(editor: any) {
-    this.editor = editor;
-    const contentHeight = editor.getContentHeight();
-    this.containerHeight = Math.max(
-      Math.min(contentHeight, this.containerMaxHeight),
-      this.containerMinHeight
-    );
-    this.cd.markForCheck();
-  }
+
 }

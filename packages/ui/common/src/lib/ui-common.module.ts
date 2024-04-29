@@ -10,6 +10,7 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { StateIconComponent } from './components/status-icon/state-icon.component';
 import { LoadingIconComponent } from './components/loading-icon/loading-icon.component';
 import { ApPaginatorComponent } from './components/pagination/ap-paginator.component';
+import { NgJsonEditorModule } from 'ang-jsoneditor' ;
 import {
   MAT_FORM_FIELD_DEFAULT_OPTIONS,
   MatFormFieldModule,
@@ -116,6 +117,7 @@ const exportedImports = [
   AbstractFormControlCasterPipe,
   VersionHistoryIndicatorComponent,
   InsideBuilderDatePipe,
+  
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,
@@ -188,6 +190,7 @@ export function markedOptionsFactory() {
 @NgModule({
   imports: [
     ...exportedImports,
+    NgJsonEditorModule,
     MarkdownModule.forRoot({
       markedOptions: {
         provide: MARKED_OPTIONS,

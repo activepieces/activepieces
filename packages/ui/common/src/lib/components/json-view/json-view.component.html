@@ -1,29 +1,40 @@
   <div >
-    <div class="ap-rounded-lg ap-border ap-border-solid ap-border-dividers " >
+    <div class="ap-rounded-lg ap-border ap-border-solid ap-border-dividers ap-overflow-hidden " >
       <div class="ap-px-4 ap-py-3 ap-flex ap-border-solid ap-border-b ap-border-dividers" >
         <div class="ap-flex-grow">
           <span class="ap-typography-subtitle-2" >{{title}}</span>
         </div>
         <div class="ap-flex ap-items-center ap-gap-2">
           <svg-icon class="ap-h-[16px] ap-w-[16px] ap-cursor-pointer" src="/assets/img/custom/download.svg"
-            [applyClass]="true" matTooltip="Download" (click)="downloadContent()"></svg-icon>
+            [applyClass]="true" i18n-matTooltip matTooltip="Download" (click)="downloadContent()"></svg-icon>
           <svg-icon class="ap-h-[16px] ap-w-[16px] ap-cursor-pointer ap-fill-body" src="/assets/img/custom/copy.svg"
-            [applyClass]="true" matTooltip="Copy" (click)="copyContent()"></svg-icon>
+            [applyClass]="true" i18n-matTooltip matTooltip="Copy" (click)="copyContent()"></svg-icon>
             @if(!hideMaximize){
               <svg-icon class="ap-h-[16px] ap-w-[16px] ap-cursor-pointer" src="/assets/img/custom/maximize-black.svg"
-              [applyClass]="true" matTooltip="Expand" (click)="openModal()"></svg-icon>
+              [applyClass]="true"i18n-matTooltip  matTooltip="Expand" (click)="openModal()"></svg-icon>
             }
          
         </div>
       </div>
-          <div  [style.height]="containerHeight + 'px'">
-            <ngx-monaco-editor class="!ap-w-full !ap-h-full " [options]="jsonEditorOptionsMonaco" 
-            [formControl]="jsonFormController" (onInit)="resizeEditorToContent($event)"
-             ></ngx-monaco-editor>
-          </div>
-     
+      @if(showText)
+      {
+        
+        <div class="ap-px-4 ap-py-2 ap-text-wrap ap-break-all "> 
+          {{_content}} 
+        </div>
+      }
+      @else {
+        <div class="ap-pl-2 ap-mb-2 thin-scrollbars">
+          <json-editor
+          [options]="jsonEditorOptions"
+          [formControl]="jsonFormController" 
+           #editor
+        ></json-editor>
+        </div>
+       
+      }
+
    
     </div>
   
   </div>
- @if(containerWidthChange$ | async){}
