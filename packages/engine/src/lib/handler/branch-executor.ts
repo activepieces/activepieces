@@ -1,4 +1,4 @@
-import { BranchAction, BranchActionSettings, BranchCondition, BranchOperator, BranchStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { Action, BranchAction, BranchActionSettings, BranchCondition, BranchOperator, BranchStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
@@ -44,6 +44,10 @@ export const branchExecutor: BaseExecutor<BranchAction> = {
                 }))
             }
 
+            if (action.parallelActions) {
+                branchExecutionContext = await runParallelTasks(action.parallelActions, branchExecutionContext, constants)
+            }
+
             return branchExecutionContext
         }
         catch (e) {
@@ -54,6 +58,26 @@ export const branchExecutor: BaseExecutor<BranchAction> = {
     },
 }
 
+async function runParallelTasks(actions: Action[], branchExecutionContext: FlowExecutorContext, constants: EngineConstants): Promise<FlowExecutorContext> {
+    const runAction = (action: Action): Promise<FlowExecutorContext> => {
+        return flowExecutor.execute({
+            action,
+            executionState: branchExecutionContext,
+            constants,
+        })
+    }
+
+    const actionFunctionsToRun = actions.map(async (action: Action) => runAction(action))
+    const actionsRunResult = await Promise.allSettled(actionFunctionsToRun)
+    const successfulContexts = actionsRunResult.filter(result => result.status === 'fulfilled').map(result => (result as PromiseFulfilledResult<FlowExecutorContext>).value)
+    
+    if (successfulContexts.length > 0) {
+        return successfulContexts[successfulContexts.length - 1]
+    }
+    else {
+        throw new Error('All parallel actions failed')
+    }
+}
 
 function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
     let orOperator = false
