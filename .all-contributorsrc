@@ -983,6 +983,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "javix64",
+      "name": "Javier HM",
+      "avatar_url": "https://avatars.githubusercontent.com/u/58471170?v=4",
+      "profile": "http://javix64.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
