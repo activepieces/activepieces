@@ -37,7 +37,7 @@ export const addAttendeesToEventAction = createAction({
     });
     const currentAttendees = currentEvent.data.attendees ?? [];
 
-    let attendeeFormattedList: calendar_v3.Schema$EventAttendee[] = [];
+    const attendeeFormattedList: calendar_v3.Schema$EventAttendee[] = [];
     attendeeFormattedList.push(...currentAttendees);
     attendeeFormattedList.push(...attendeesInput.map((email) => ({ email })));
 
