@@ -450,6 +450,7 @@ async function getSandboxForAction(
             })
         }
         case ActionType.BRANCH:
+        case ActionType.PARALLEL:
         case ActionType.LOOP_ON_ITEMS:
             return sandboxProvisioner.provision({
                 type: SandBoxCacheType.NONE,

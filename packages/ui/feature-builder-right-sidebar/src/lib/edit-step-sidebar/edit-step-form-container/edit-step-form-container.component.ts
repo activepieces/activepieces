@@ -247,6 +247,7 @@ export class EditStepFormContainerComponent {
       }
       case TriggerType.EMPTY:
       case ActionType.LOOP_ON_ITEMS:
+      case ActionType.PARALLEL:
       case ActionType.BRANCH: {
         const settings: BranchActionSettings | LoopOnItemsActionSettings = {
           ...currentStep.settings,

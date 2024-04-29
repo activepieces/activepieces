@@ -164,6 +164,7 @@ const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
     (step.type === ActionType.PIECE ||
       step.type === ActionType.CODE ||
       step.type === ActionType.BRANCH ||
+      step.type === ActionType.PARALLEL ||
       step.type === TriggerType.PIECE ||
       step.type === ActionType.LOOP_ON_ITEMS) &&
     step.settings.inputUiInfo
@@ -187,6 +188,7 @@ const selectLastTestDate = createSelector(selectCurrentStep, (step) => {
     (step.type === ActionType.PIECE ||
       step.type === ActionType.CODE ||
       step.type === ActionType.BRANCH ||
+      step.type === ActionType.PARALLEL ||
       step.type === ActionType.LOOP_ON_ITEMS) &&
     step.settings.inputUiInfo
   ) {

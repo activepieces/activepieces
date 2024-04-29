@@ -243,6 +243,7 @@ export class FlowsEffects {
                 })
               );
             case ActionType.BRANCH:
+            case ActionType.PARALLEL:
             case ActionType.CODE:
             case ActionType.LOOP_ON_ITEMS:
             case TriggerType.PIECE:

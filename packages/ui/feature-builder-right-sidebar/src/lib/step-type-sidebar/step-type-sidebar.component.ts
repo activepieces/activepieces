@@ -422,6 +422,29 @@ export class StepTypeSidebarComponent implements AfterViewInit {
           },
         };
       }
+      case ActionType.PARALLEL: {
+        return {
+          parentStep,
+          stepLocationRelativeToParent,
+          action: {
+            ...baseProps,
+            valid: false,
+            type: ActionType.PARALLEL,
+            settings: {
+              conditions: [
+                [
+                  {
+                    firstValue: '',
+                    secondValue: '',
+                    operator: undefined,
+                  }
+                ]
+              ],
+              inputUiInfo: {},
+            }
+          }
+        }
+      }
     }
   }
   private extractSuggestionInitialValueAndValidity(

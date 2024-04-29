@@ -216,6 +216,12 @@ export class FlowDrawer {
         flowDrawer = flowDrawer.mergeChild(branchDrawer);
         break;
       }
+      case ActionType.PARALLEL: {
+        const branchDrawer = BranchDrawer.handleBranchAction(step);
+        childHeight = branchDrawer.boundingBox().height;
+        flowDrawer = flowDrawer.mergeChild(branchDrawer);
+        break;
+      }
 
       default: {
         const { line, button } = drawLineComponentWithButton({

@@ -1,4 +1,6 @@
 import {
+  Action,
+  ActionType,
   BranchAction,
   StepLocationRelativeToParent,
   flowHelper,
@@ -28,18 +30,25 @@ export class BranchDrawer {
   }
   static handleBranchAction(branchStep: BranchAction): FlowDrawer {
     let resultDrawer = FlowDrawer.construct(undefined);
-    const actions = [branchStep.onSuccessAction, branchStep.onFailureAction];
-    const branchesDrawers: FlowDrawer[] = actions.map((action) =>
-      FlowDrawer.construct(action)
-    );
+    let actions: Action[] = []
+
+    if (branchStep.type === ActionType.PARALLEL) {
+      // actions = branchStep.parallelActions ? branchStep.parallelActions.map((action: Action) => action) as Action[] : []
+      actions = [branchStep.parallelActionOne, branchStep.parallelActionTwo, branchStep.parallelActionThree] as Action[]
+    } else if (branchStep.type === ActionType.BRANCH) {
+      actions = [branchStep.onSuccessAction, branchStep.onFailureAction] as Action[]
+    }
+
+    const branchesDrawers: FlowDrawer[] = actions.map(action => FlowDrawer.construct(action))
 
     const { maximumHeight, xOfFartherestLeftChild } =
       BranchDrawer.calculateDimensionsForBranch(branchesDrawers);
 
     let leftStartingPoint = xOfFartherestLeftChild;
     branchesDrawers.forEach((bd, index) => {
+      const leftSideBounding = branchStep.type === ActionType.PARALLEL ? bd.boundingBox().leftSide : Math.abs(bd.boundingBox().leftSide)
       const firstChildStepPosition = {
-        x: leftStartingPoint + Math.abs(bd.boundingBox().leftSide),
+        x: leftStartingPoint + leftSideBounding,
         y:
           FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING +
           VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
@@ -49,6 +58,7 @@ export class BranchDrawer {
         firstChildStepPosition.y + EXTRA_VERTICAL_SPACE_FOR_LINE_WITH_LABEL
       );
       const stepLocationRelativeToParent =
+        branchStep.type === ActionType.PARALLEL ? (index === 0 ? StepLocationRelativeToParent.PARALLEL_ONE : index === 1 ? StepLocationRelativeToParent.PARALLEL_TWO : StepLocationRelativeToParent.PARALLEL_THREE) :
         index == 0
           ? StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
           : StepLocationRelativeToParent.INSIDE_FALSE_BRANCH;
@@ -71,16 +81,19 @@ export class BranchDrawer {
       const label = index === 0 ? $localize`True` : $localize`False`;
       resultDrawer = resultDrawer
         .mergeChild(drawerMovedToFirstChildStep)
-        .appendLabel({
-          x: drawerMovedToFirstChildStep.steps[0].center('bottom').x,
-          y:
-            drawerMovedToFirstChildStep.steps[0].y -
-            VERTICAL_SPACE_BETWEEN_LABEL_AND_FLOW_ITEM,
-          label,
-        })
         .appendSvg(lineComponentAtStartOfBranch.line)
         .appendButton(lineComponentAtStartOfBranch.button)
         .appendSvg(afterBranchLineComponent);
+
+      if (branchStep.type === ActionType.BRANCH) {
+        resultDrawer = resultDrawer.appendLabel({
+            x: drawerMovedToFirstChildStep.steps[0].center('bottom').x,
+            y:
+              drawerMovedToFirstChildStep.steps[0].y -
+              VERTICAL_SPACE_BETWEEN_LABEL_AND_FLOW_ITEM,
+            label,
+          })
+      }
 
       if (index === 1) {
         const afterBranchButton = BranchDrawer.createAfterBranchStepButton({
@@ -127,6 +140,9 @@ export class BranchDrawer {
     stepLocationRelativeToParent: StepLocationRelativeToParent;
   }) {
     const doesBranchHaveChildren =
+    (stepLocationRelativeToParent === StepLocationRelativeToParent.PARALLEL_ONE && !!branchStep.parallelActionOne) ||
+    (stepLocationRelativeToParent === StepLocationRelativeToParent.PARALLEL_TWO && !!branchStep.parallelActionTwo) ||
+    (stepLocationRelativeToParent === StepLocationRelativeToParent.PARALLEL_THREE && !!branchStep.parallelActionThree) ||
       (stepLocationRelativeToParent ===
         StepLocationRelativeToParent.INSIDE_TRUE_BRANCH &&
         !!branchStep.onSuccessAction) ||
@@ -191,7 +207,7 @@ export class BranchDrawer {
       stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
       stepName: branchStep.name,
       type: 'small',
-      x: afterBranchLineComponent.minimumX() - BUTTON_SIZE / 2.0,
+      x: branchStep.type === ActionType.PARALLEL ? afterBranchLineComponent.maximumX() - BUTTON_SIZE / 2.0 : afterBranchLineComponent.minimumX() - BUTTON_SIZE / 2.0,
       y:
         afterBranchLineComponent.maximumY() -
         VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS / 2 -

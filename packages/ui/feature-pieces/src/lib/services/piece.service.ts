@@ -32,6 +32,13 @@ export class PieceMetadataService {
         logoUrl: '/assets/img/custom/piece/loop.svg',
     }
 
+    private PARALLEL_ITEM_DETAILS = {
+        type: ActionType.PARALLEL,
+        name: "Parallel",
+        description: 'Run multiple tasks in parallel',
+        logoUrl: '/assets/img/custom/piece/branch.svg',
+    }
+
     private EMPTY_TRIGGER_ITEM_DETAILS = {
         type: TriggerType.EMPTY,
         name: 'Empty Trigger',
@@ -42,7 +49,8 @@ export class PieceMetadataService {
     private CORE_ACTIONS_DETAILS: FlowItemDetails[] = [
         this.BRANCH_ITEM_DETAILS,
         this.LOOP_ITEM_DETAILS,
-        this.CODE_ITEM_DETAILS
+        this.CODE_ITEM_DETAILS,
+        this.PARALLEL_ITEM_DETAILS,
     ]
     private clearCache$ = new Subject<void>();
     private cachedPieceMetadata: { [key: string]: Observable<PieceMetadataModel> } = {};
@@ -174,6 +182,8 @@ export class PieceMetadataService {
         switch (step.type) {
             case ActionType.BRANCH:
                 return of(this.BRANCH_ITEM_DETAILS);
+            case ActionType.PARALLEL:
+                return of(this.PARALLEL_ITEM_DETAILS);
             case ActionType.CODE:
                 return of(this.CODE_ITEM_DETAILS);
             case ActionType.LOOP_ON_ITEMS:

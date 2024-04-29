@@ -28,6 +28,10 @@ export enum StepLocationRelativeToParent {
     INSIDE_FALSE_BRANCH = 'INSIDE_FALSE_BRANCH',
     AFTER = 'AFTER',
     INSIDE_LOOP = 'INSIDE_LOOP',
+    // TODO: need to change these!
+    PARALLEL_ONE = 'INSIDE_PARALLEL_ONE',
+    PARALLEL_TWO = 'INSIDE_PARALLEL_TWO',
+    PARALLEL_THREE = 'INSIDE_PARALLEL_THREE',
 }
 
 const optionalNextAction = Type.Object({ nextAction: Type.Optional(Action) })

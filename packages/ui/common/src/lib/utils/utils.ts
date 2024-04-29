@@ -34,6 +34,9 @@ export function getDefaultDisplayNameForPiece(
     case ActionType.BRANCH: {
       return $localize`Branch`;
     }
+    case ActionType.PARALLEL: {
+      return $localize`Run in Parallel`;
+    }
   }
 }
 

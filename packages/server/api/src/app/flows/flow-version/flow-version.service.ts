@@ -370,6 +370,7 @@ async function prepareRequest(
                         clonedRequest.request.action.settings,
                     )
                     break
+                case ActionType.PARALLEL:
                 case ActionType.BRANCH:
                     clonedRequest.request.action.valid = branchSettingsValidator.Check(
                         clonedRequest.request.action.settings,
@@ -394,6 +395,7 @@ async function prepareRequest(
                         clonedRequest.request.settings,
                     )
                     break
+                case ActionType.PARALLEL:
                 case ActionType.BRANCH:
                     clonedRequest.request.valid = branchSettingsValidator.Check(
                         clonedRequest.request.settings,

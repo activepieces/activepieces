@@ -82,6 +82,31 @@ function deleteAction(
                 }
                 break
             }
+            case ActionType.PARALLEL: {
+                // TODO: use the parallel actions array
+                if (
+                    parentStep.parallelActionOne &&
+                    parentStep.parallelActionOne.name === request.name
+                ) {
+                    const stepToUpdate: Action = parentStep.parallelActionOne
+                    parentStep.parallelActionOne = stepToUpdate.nextAction
+                }
+                if (
+                    parentStep.parallelActionTwo &&
+                    parentStep.parallelActionTwo.name === request.name
+                ) {
+                    const stepToUpdate: Action = parentStep.parallelActionTwo
+                    parentStep.parallelActionTwo = stepToUpdate.nextAction
+                }
+                if (
+                    parentStep.parallelActionThree &&
+                    parentStep.parallelActionThree.name === request.name
+                ) {
+                    const stepToUpdate: Action = parentStep.parallelActionThree
+                    parentStep.parallelActionThree = stepToUpdate.nextAction
+                }
+                break
+            }
             case ActionType.LOOP_ON_ITEMS: {
                 if (
                     parentStep.firstLoopAction &&
@@ -119,6 +144,13 @@ function traverseInternal(
             steps.push(...traverseInternal(step.onSuccessAction))
             steps.push(...traverseInternal(step.onFailureAction))
         }
+        if (step.type === ActionType.PARALLEL) {
+            // TODO: use parallel actions array
+            // steps.concat(step.parallelActions ? step.parallelActions.map((action) => traverseInternal(action)) as unknown as Action[] : [])
+            steps.push(...traverseInternal(step.parallelActionOne))
+            steps.push(...traverseInternal(step.parallelActionTwo))
+            steps.push(...traverseInternal(step.parallelActionThree))
+        }
         if (step.type === ActionType.LOOP_ON_ITEMS) {
             steps.push(...traverseInternal(step.firstLoopAction))
         }
@@ -144,6 +176,28 @@ async function transferStepAsync<T extends Step>(
         if (onFailureAction) {
             updatedStep.onFailureAction = (await transferStepAsync(
                 onFailureAction,
+                transferFunction,
+            )) as Action
+        }
+    }
+    else if (updatedStep.type === ActionType.PARALLEL) {
+        // TODO: use parallel actions array
+        const { parallelActionOne, parallelActionTwo, parallelActionThree } = updatedStep
+        if (parallelActionOne) {
+            updatedStep.parallelActionOne = (await transferStepAsync(
+                parallelActionOne,
+                transferFunction,
+            )) as Action
+        }
+        if (parallelActionTwo) {
+            updatedStep.parallelActionTwo = (await transferStepAsync(
+                parallelActionTwo,
+                transferFunction,
+            )) as Action
+        }
+        if (parallelActionThree) {
+            updatedStep.parallelActionThree = (await transferStepAsync(
+                parallelActionThree,
                 transferFunction,
             )) as Action
         }
@@ -249,6 +303,13 @@ function getAllChildSteps(action: LoopOnItemsAction | BranchAction): Action[] {
     switch (action.type) {
         case ActionType.LOOP_ON_ITEMS:
             return traverseInternal(action.firstLoopAction) as Action[]
+        case ActionType.PARALLEL:
+            // TODO: use parallel actions array
+            return [
+                ...traverseInternal(action.parallelActionOne),
+                ...traverseInternal(action.parallelActionTwo),
+                ...traverseInternal(action.parallelActionThree),
+            ] as Action[]
         default:
             return [
                 ...traverseInternal(action.onSuccessAction),
@@ -269,7 +330,7 @@ function getAllDirectChildStepsForLoop(action: LoopOnItemsAction): Action[] {
     return actions
 }
 
-function getAllDirectChildStepsForBranch(action: BranchAction, branch: 'success' | 'failure'): Action[] {
+function getAllDirectChildStepsForBranch(action: BranchAction, branch: 'success' | 'failure' | 'parallelOne' | 'parallelTwo' | 'parallelThree'): Action[] {
     const actions: Action[] = []
     if (branch === 'success') {
         let child = action.onSuccessAction
@@ -278,8 +339,30 @@ function getAllDirectChildStepsForBranch(action: BranchAction, branch: 'success'
             child = child.nextAction
         }
     }
-    else {
+    else if (branch === 'failure') {
         let child = action.onFailureAction
+        while (child) {
+            actions.push(child)
+            child = child.nextAction
+        }
+    }
+    // TODO: use parallel actions array
+    else if (branch === 'parallelOne') {
+        let child = action.parallelActionOne
+        while (child) {
+            actions.push(child)
+            child = child.nextAction
+        }
+    }
+    else if (branch === 'parallelTwo') {
+        let child = action.parallelActionTwo
+        while (child) {
+            actions.push(child)
+            child = child.nextAction
+        }
+    }
+    else {
+        let child = action.parallelActionThree
         while (child) {
             actions.push(child)
             child = child.nextAction
@@ -349,6 +432,30 @@ function updateAction(
                 parentStep.firstLoopAction = createAction(request, actions)
             }
         }
+        // TODO: use parallel actions array
+        if (parentStep.type === ActionType.PARALLEL) {
+            if (
+                parentStep.parallelActionOne &&
+                parentStep.parallelActionOne.name === request.name
+            ) {
+                const actions = extractActions(parentStep.parallelActionOne)
+                parentStep.parallelActionOne = createAction(request, actions)
+            }
+            else if (
+                parentStep.parallelActionTwo &&
+                parentStep.parallelActionTwo.name === request.name
+            ) {
+                const actions = extractActions(parentStep.parallelActionTwo)
+                parentStep.parallelActionTwo = createAction(request, actions)
+            }
+            else if (
+                parentStep.parallelActionThree &&
+                parentStep.parallelActionThree.name === request.name
+            ) {
+                const actions = extractActions(parentStep.parallelActionThree)
+                parentStep.parallelActionThree = createAction(request, actions)
+            }
+        }
         return parentStep
     })
 }
@@ -358,6 +465,9 @@ function extractActions(step: Trigger | Action): {
     onSuccessAction?: Action
     onFailureAction?: Action
     firstLoopAction?: Action
+    parallelActionOne?: Action
+    parallelActionTwo?: Action
+    parallelActionThree?: Action
 } {
     const nextAction = step.nextAction
     const onSuccessAction =
@@ -366,7 +476,14 @@ function extractActions(step: Trigger | Action): {
         step.type === ActionType.BRANCH ? step.onFailureAction : undefined
     const firstLoopAction =
         step.type === ActionType.LOOP_ON_ITEMS ? step.firstLoopAction : undefined
-    return { nextAction, onSuccessAction, onFailureAction, firstLoopAction }
+    // TODO: use parallel actions array
+    const parallelActionOne =
+        step.type === ActionType.PARALLEL ? step.parallelActionOne : undefined
+    const parallelActionTwo =
+        step.type === ActionType.PARALLEL ? step.parallelActionTwo : undefined
+    const parallelActionThree =
+        step.type === ActionType.PARALLEL ? step.parallelActionThree : undefined
+    return { nextAction, onSuccessAction, onFailureAction, firstLoopAction, parallelActionOne, parallelActionTwo, parallelActionThree }
 }
 
 function moveAction(
@@ -425,7 +542,6 @@ function addAction(
     request: AddActionRequest,
 ): FlowVersion {
     return transferFlow(flowVersion, (parentStep: Step) => {
-
         if (parentStep.name !== request.parentStep) {
             return parentStep
         }
@@ -499,6 +615,52 @@ function addAction(
                 )
             }
         }
+        else if (parentStep.type === ActionType.PARALLEL &&
+            request.stepLocationRelativeToParent) {
+            // TODO: use parallel actions array
+            if (request.stepLocationRelativeToParent ===
+                StepLocationRelativeToParent.PARALLEL_ONE) {
+                // parentStep.parallelActions = [...parentStep.parallelActions, createAction(request.action, {
+                //     nextAction: parentStep.nextAction,
+                // })]
+                parentStep.parallelActionOne = createAction(request.action, {
+                    nextAction: parentStep.parallelActionOne,
+                })
+            }
+            else if (
+                request.stepLocationRelativeToParent ===
+                StepLocationRelativeToParent.PARALLEL_TWO
+            ) {
+                parentStep.parallelActionTwo = createAction(request.action, {
+                    nextAction: parentStep.parallelActionTwo,
+                })
+            }
+            else if (
+                request.stepLocationRelativeToParent ===
+                StepLocationRelativeToParent.PARALLEL_THREE
+            ) {
+                parentStep.parallelActionThree = createAction(request.action, {
+                    nextAction: parentStep.parallelActionThree,
+                })
+            }
+            else if (
+                request.stepLocationRelativeToParent ===
+                StepLocationRelativeToParent.AFTER
+            ) {
+                parentStep.nextAction = createAction(request.action, {
+                    nextAction: parentStep.nextAction,
+                })
+            }
+            else {
+                throw new ActivepiecesError(
+                    {
+                        code: ErrorCode.FLOW_OPERATION_INVALID,
+                        params: {},
+                    },
+                    `Parallel step parernt ${request.stepLocationRelativeToParent} not found`,
+                )
+            }
+        }
         else {
             parentStep.nextAction = createAction(request.action, {
                 nextAction: parentStep.nextAction,
@@ -515,11 +677,17 @@ function createAction(
         onFailureAction,
         onSuccessAction,
         firstLoopAction,
+        parallelActionOne, // TODO: use parallel actions array  
+        parallelActionTwo,
+        parallelActionThree,
     }: {
         nextAction?: Action
         firstLoopAction?: Action
         onSuccessAction?: Action
         onFailureAction?: Action
+        parallelActionOne?: Action 
+        parallelActionTwo?: Action
+        parallelActionThree?: Action
     },
 ): Action {
     const baseProperties = {
@@ -530,6 +698,16 @@ function createAction(
     }
     let action: Action
     switch (request.type) {
+        case ActionType.PARALLEL:
+            action = {
+                ...baseProperties,
+                parallelActionOne, 
+                parallelActionTwo,
+                parallelActionThree,
+                type: ActionType.PARALLEL,
+                settings: request.settings,
+            }
+            break
         case ActionType.BRANCH:
             action = {
                 ...baseProperties,
@@ -656,6 +834,46 @@ export function getImportOperations(
                 }
                 break
             }
+            case ActionType.PARALLEL:{
+                // TODO: use parallel actions array
+                if (step.parallelActionOne) {
+                    steps.push({
+                        type: FlowOperationType.ADD_ACTION,
+                        request: {
+                            parentStep: step.name,
+                            stepLocationRelativeToParent:
+                                StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
+                            action: removeAnySubsequentAction(step.parallelActionOne),
+                        },
+                    })
+                    steps.push(...getImportOperations(step.parallelActionOne))
+                }
+                if (step.parallelActionTwo) {
+                    steps.push({
+                        type: FlowOperationType.ADD_ACTION,
+                        request: {
+                            parentStep: step.name,
+                            stepLocationRelativeToParent:
+                                StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
+                            action: removeAnySubsequentAction(step.parallelActionTwo),
+                        },
+                    })
+                    steps.push(...getImportOperations(step.parallelActionTwo))
+                }
+                if (step.parallelActionThree) {
+                    steps.push({
+                        type: FlowOperationType.ADD_ACTION,
+                        request: {
+                            parentStep: step.name,
+                            stepLocationRelativeToParent:
+                                StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
+                            action: removeAnySubsequentAction(step.parallelActionThree),
+                        },
+                    })
+                    steps.push(...getImportOperations(step.parallelActionThree))
+                }
+                break
+            }
             case ActionType.LOOP_ON_ITEMS: {
                 if (step.firstLoopAction) {
                     steps.push({
@@ -698,6 +916,13 @@ function removeAnySubsequentAction(action: Action): Action {
         }
         case ActionType.LOOP_ON_ITEMS: {
             delete clonedAction.firstLoopAction
+            break
+        }
+        case ActionType.PARALLEL: {
+            // TODO: delete clonedAction.parallelActions
+            delete clonedAction.parallelActionOne
+            delete clonedAction.parallelActionTwo
+            delete clonedAction.parallelActionThree
             break
         }
         case ActionType.PIECE:
@@ -826,7 +1051,7 @@ function replaceOldStepNameWithNewOne({ input, oldStepName, newStepName }: { inp
 }
 
 function doesActionHaveChildren(action: Action | Trigger): action is (LoopOnItemsAction | BranchAction) {
-    if (action.type === ActionType.BRANCH || action.type === ActionType.LOOP_ON_ITEMS) {
+    if (action.type === ActionType.BRANCH || action.type === ActionType.LOOP_ON_ITEMS || action.type === ActionType.PARALLEL) {
         return true
     }
     return false
@@ -880,6 +1105,29 @@ function getDirectParentStep(child: Step, parent: Trigger | Step | undefined): S
 
         }
     }
+    if (parent.type === ActionType.PARALLEL) {
+        const isChildOfBranch = isChildOf(parent, child.name)
+        if (isChildOfBranch) {
+            // TODO: use parallel actions array
+            const directParallelOneBranchChildren = getAllDirectChildStepsForBranch(parent, 'parallelOne')
+            const directParallelTwoBranchChildren = getAllDirectChildStepsForBranch(parent, 'parallelTwo')
+            const directParallelThreeBranchChildren = getAllDirectChildStepsForBranch(parent, 'parallelThree')
+
+            if (directParallelOneBranchChildren.at(-1)?.name === child.name || directParallelTwoBranchChildren.at(-1)?.name === child.name || directParallelThreeBranchChildren.at(-1)?.name === child.name) {
+                return parent
+            }
+
+            if (getDirectParentStep(child, parent.parallelActionOne)) {
+                return getDirectParentStep(child, parent.parallelActionOne)
+            } 
+            else if (getDirectParentStep(child, parent.parallelActionTwo)) {
+                return getDirectParentStep(child, parent.parallelActionTwo)
+            } 
+            else {
+                return getDirectParentStep(child, parent.parallelActionThree)
+            }
+        }
+    }
     if (parent.type === ActionType.LOOP_ON_ITEMS) {
         const isChildOfLoop = isChildOf(parent, child.name)
         if (isChildOfLoop) {
@@ -919,7 +1167,7 @@ function isStepLastChildOfParent(child: Step, trigger: Trigger): boolean {
 }
 
 function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAction {
-    return step.type === ActionType.BRANCH || step.type === ActionType.LOOP_ON_ITEMS
+    return step.type === ActionType.BRANCH || step.type === ActionType.LOOP_ON_ITEMS || step.type === ActionType.PARALLEL
 }
 export const flowHelper = {
     isValid,

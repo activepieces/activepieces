@@ -56,6 +56,28 @@ export class FlowStructureUtil {
     if (pathFromLoop) {
       return [stepToSearch, ...pathFromLoop];
     }
+    // TODO: get paths from parallel actions array
+    const pathFromActionOne = this._findPathToStep(
+      stepToFind,
+      (stepToSearch as BranchAction).parallelActionOne
+    );
+    if (pathFromActionOne) {
+      return [...pathFromActionOne];
+    }
+    const pathFromActionTwo = this._findPathToStep(
+      stepToFind,
+      (stepToSearch as BranchAction).parallelActionTwo
+    );
+    if (pathFromActionTwo) {
+      return [...pathFromActionTwo];
+    }
+    const pathFromActionThree = this._findPathToStep(
+      stepToFind,
+      (stepToSearch as BranchAction).parallelActionThree
+    );
+    if (pathFromActionThree) {
+      return [...pathFromActionThree];
+    }
 
     return undefined;
   }
@@ -108,6 +130,12 @@ export class FlowStructureUtil {
       case ActionType.LOOP_ON_ITEMS: {
         clone.firstLoopAction = undefined;
         break;
+      }
+      case ActionType.PARALLEL: {
+        clone.parallelActionOne = undefined
+        clone.parallelActionTwo = undefined
+        clone.parallelActionThree = undefined
+        break
       }
     }
     return clone;

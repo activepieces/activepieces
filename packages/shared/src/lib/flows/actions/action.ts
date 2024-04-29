@@ -9,6 +9,7 @@ export enum ActionType {
     PIECE = 'PIECE',
     LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
     BRANCH = 'BRANCH',
+    PARALLEL = 'PARALLEL',
 }
 
 const commonActionProps = {
@@ -178,7 +179,7 @@ export type BranchActionSettings = Static<typeof BranchActionSettings>
 
 export const BranchActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(ActionType.BRANCH),
+    type: Type.Union([Type.Literal(ActionType.BRANCH), Type.Literal(ActionType.PARALLEL)]),
     settings: BranchActionSettings,
 })
 
@@ -199,6 +200,10 @@ export const Action = Type.Recursive(action => Type.Union([
         nextAction: Type.Optional(action),
         onSuccessAction: Type.Optional(action),
         onFailureAction: Type.Optional(action),
+        parallelActionOne: Type.Optional(action),
+        parallelActionTwo: Type.Optional(action),
+        parallelActionThree: Type.Optional(action),
+        parallelActions: Type.Optional(Type.Array(action)),
     })]),
 ]))
 
@@ -211,7 +216,7 @@ export const SingleActionSchema = Type.Union([
 export type Action = Static<typeof Action>
 
 
-export type BranchAction = Static<typeof BranchActionSchema> & { nextAction?: Action, onFailureAction?: Action, onSuccessAction?: Action }
+export type BranchAction = Static<typeof BranchActionSchema> & { nextAction?: Action, onFailureAction?: Action, onSuccessAction?: Action, parallelActionOne?: Action, parallelActionTwo?: Action, parallelActionThree?: Action, parallelActions?: Action[] }
 
 export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema> & { nextAction?: Action, firstLoopAction?: Action }
 
