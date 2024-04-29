@@ -21,7 +21,7 @@ import { VerifyEmailPostSignUpComponent } from './pages/auth-actions/verify-emai
 import { ResetPasswordComponent } from './pages/auth-actions/reset-password/reset-password.component';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { EeComponentsModule } from 'ee-components';
-import { RedirectToDashboardIfLoggedIn } from './guards/redirect-to-dashboard-if-logged-in.guard';
+import { RedirectToDashboardIfLoggedInGuard } from './guards/redirect-to-dashboard-if-logged-in.guard';
 import { AuthenticationMethodsSeparatorComponent } from './components/authentication-methods-separator/authentication-methods-separator.component';
 
 @NgModule({
@@ -52,7 +52,7 @@ import { AuthenticationMethodsSeparatorComponent } from './components/authentica
             data: {
               title: $localize`Sign in`,
             },
-            canActivate: [RedirectToDashboardIfLoggedIn],
+            canActivate: [RedirectToDashboardIfLoggedInGuard],
           },
           {
             path: 'sign-up',
@@ -60,7 +60,7 @@ import { AuthenticationMethodsSeparatorComponent } from './components/authentica
             data: {
               title: $localize`Sign up`,
             },
-            canActivate: [RedirectToDashboardIfLoggedIn],
+            canActivate: [RedirectToDashboardIfLoggedInGuard],
           },
           {
             path: 'verify-email',
@@ -90,7 +90,7 @@ import { AuthenticationMethodsSeparatorComponent } from './components/authentica
             },
             canActivate: [
               showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
-              RedirectToDashboardIfLoggedIn,
+              RedirectToDashboardIfLoggedInGuard,
             ],
           },
         ],
