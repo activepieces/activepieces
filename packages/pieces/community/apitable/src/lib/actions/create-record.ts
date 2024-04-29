@@ -40,7 +40,7 @@ export const createRecordAction = createAction({
     const client = makeClient(
       context.auth as PiecePropValueSchema<typeof APITableAuth>
     );
-    return await client.createRecord(datasheetId as string, {
+    const response: any = await client.createRecord(datasheetId as string, {
       records: [
         {
           fields: {
@@ -49,5 +49,10 @@ export const createRecordAction = createAction({
         },
       ],
     });
+
+    if (!response.success) {
+      throw new Error(JSON.stringify(response, undefined, 2));
+    }
+    return response;
   },
 });

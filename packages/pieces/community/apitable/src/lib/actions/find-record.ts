@@ -60,7 +60,7 @@ export const findRecordAction = createAction({
     const client = makeClient(
       context.auth as PiecePropValueSchema<typeof APITableAuth>
     );
-    return await client.listRecords(
+    const response: any = await client.listRecords(
       datasheetId as string,
       prepareQuery({
         pageSize: pageSize,
@@ -71,5 +71,10 @@ export const findRecordAction = createAction({
         filterByFormula: filter,
       })
     );
+
+    if (!response.success) {
+      throw new Error(JSON.stringify(response, undefined, 2));
+    }
+    return response;
   },
 });
