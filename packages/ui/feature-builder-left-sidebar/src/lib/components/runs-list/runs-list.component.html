@@ -7,7 +7,7 @@
         <cdk-virtual-scroll-viewport class="ap-h-[calc(100vh-165px)]  ap-overflow-scroll thin-scrollbars" itemSize="48"
             (scrolledIndexChange)="nextBatch()">
 
-            <div *cdkVirtualFor="let run of runs" class="ap-min-h-[52px] hover:ap-bg-hover ap-cursor-pointer ap-px-5 ap-my-5 ap-flex ap-gap-2 ap-items-center"  (click)="runItemClicked(run)"
+            <div *cdkVirtualFor="let run of runs" class="ap-min-h-[52px] hover:ap-bg-hover ap-cursor-pointer ap-p-5 ap-flex ap-gap-2 ap-items-center"  (click)="runItemClicked(run)"
                 [matTooltip]="(currentRun$ | async)?.id !== run.id ? viewRunTooltip: exitRunTooltip"
             >
                 <ap-state-icon [size]="19" [status]="run.status" [showStatusText]="false"></ap-state-icon>
@@ -30,7 +30,6 @@
                             <svg-icon class="ap-h-[20px] ap-w-[20px]" src="/assets/img/custom/arrow-right.svg"
                             [applyClass]="true" ></svg-icon>
                         </div>
-                  
                     }
                     
                 </div>
