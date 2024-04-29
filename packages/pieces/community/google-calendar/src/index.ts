@@ -9,7 +9,7 @@ import { createEvent } from './lib/actions/create-event';
 import { createQuickCalendarEvent } from './lib/actions/create-quick-event';
 import { deleteEventAction } from './lib/actions/delete-event.action';
 import { getEvents } from './lib/actions/get-events';
-import { updateEventAction } from './lib/actions/update-event.ation';
+import { updateEventAction } from './lib/actions/update-event.action';
 import { googleCalendarCommon } from './lib/common';
 import { calendarEventChanged } from './lib/triggers/calendar-event';
 
