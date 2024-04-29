@@ -11,7 +11,7 @@ import { pieceExecutor } from './piece-executor'
 const executeFunction: Record<ActionType, BaseExecutor<Action>> = {
     [ActionType.CODE]: codeExecutor,
     [ActionType.BRANCH]: branchExecutor,
-    [ActionType.PARALLEL]: branchExecutor, // TODO: need to become the parallel executor
+    [ActionType.PARALLEL]: branchExecutor,
     [ActionType.LOOP_ON_ITEMS]: loopExecutor,
     [ActionType.PIECE]: pieceExecutor,
 }
