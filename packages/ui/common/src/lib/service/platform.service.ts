@@ -34,7 +34,7 @@ export class PlatformService {
     private http: HttpClient,
     private flagsService: FlagService,
     private authenticationService: AuthenticationService
-  ) { }
+  ) {}
 
   updatePlatform(req: UpdatePlatformRequestBody, platformId: string) {
     return this.http
