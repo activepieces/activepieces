@@ -9,7 +9,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 @Injectable({
   providedIn: 'root',
 })
-export class UserLoggedIn {
+export class UserLoggedInGuard {
   constructor(
     private auth: AuthenticationService,
     private router: Router,
