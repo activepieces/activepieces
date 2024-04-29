@@ -15,7 +15,7 @@
             " (cdkDragStarted)="rightDrawerHandleDragStarted()" (cdkDragEnded)="rightDrawHandleDragStopped()">
             <div class="knob"></div>
           </div>
-          <div class="right-side-bar-container ap-overflow-y-scroll ap-h-full" [class.!ap-overflow-y-hidden]="
+          <div class="right-side-bar-container ap-overflow-hidden ap-h-full" [class.!ap-overflow-y-hidden]="
               testingStepSectionIsRendered$ | async
             ">
             <app-flow-right-sidebar></app-flow-right-sidebar>

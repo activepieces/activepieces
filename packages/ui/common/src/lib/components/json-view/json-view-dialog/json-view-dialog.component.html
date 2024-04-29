@@ -1,10 +1,10 @@
 <ap-dialog-title-template>{{data.title}}</ap-dialog-title-template>
-<mat-dialog-content>
-    <div class="ap-min-w-[500px]  ap-h-[600px] ap-max-h-[600px] ap-max-w-[750px]">
-        <ngx-monaco-editor class="!ap-h-full !ap-w-full" [options]="jsonEditorOptionsMonaco"
-            [formControl]="jsonFormControl"></ngx-monaco-editor>
+    <div class=" ap-flex ap-flex-col ap-px-4 ap-h-[50vh] ap-overflow-scroll thin-scrollbars !ap-max-h-[950px] ap-w-[calc(100vw-257px)] ap-max-w-[1070px] ap-pb-2">
+      <ap-json-viewer
+      [hideTitle]="true"
+      [content]="data.content"
+      ></ap-json-viewer>
     </div>
-</mat-dialog-content>
 <mat-dialog-actions align="end">
     <div class="ap-flex ap-gap-2.5">
         <ap-button btnColor="basic" mat-dialog-close btnSize="default" i18n>

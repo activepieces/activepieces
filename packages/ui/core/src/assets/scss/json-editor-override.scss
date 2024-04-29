@@ -1,0 +1,28 @@
+.jsoneditor{
+    border: none !important;
+  }
+  
+  .jsoneditor-tree button.jsoneditor-collapsed
+  {
+    background-position: unset !important;
+    background-image: url("/assets/img/custom/expand_more.svg") !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+  }
+  
+  .jsoneditor-tree button.jsoneditor-expanded
+  {
+    background-position: unset !important;
+    background-image: url("/assets/img/custom/expand_less.svg") !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+  }
+  
+  
+  .jsoneditor-number, .jsoneditor-boolean, .jsoneditor-string, .jsoneditor-url {
+    color: #0d57a8 !important;
+  }
+  
+  .jsoneditor-field{
+    white-space: nowrap !important;
+  }

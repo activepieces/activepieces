@@ -3,6 +3,7 @@ import { TestStepService } from '@activepieces/ui/common';
 import {
   Observable,
   catchError,
+  delay,
   forkJoin,
   map,
   of,
@@ -34,16 +35,20 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class TestActionComponent extends TestStepCoreComponent {
   loading = false;
-  testStep$: Observable<unknown>;
-  currentStepValidity$: Observable<boolean>;
-  lastTestResult$: Observable<unknown | undefined>;
-  saveStepAfterTesting$: Observable<void>;
-  lastTestDate$: Observable<string | undefined>;
+  testStep$?: Observable<unknown>;
+  currentStepValidity$?: Observable<boolean>;
+  lastTestResult$?: Observable<unknown | undefined>;
+  saveStepAfterTesting$?: Observable<void>;
+  lastTestDate$?: Observable<string | undefined>;
   errorResponse: null | unknown = null;
   private _step?: Step;
   @Input({ required: true }) set step(val: Step) {
     if (this._step && this._step.name !== val.name) {
       this.errorResponse = null;
+      if (this.testStep$) {
+        this.loading = false;
+        this.testStep$ = undefined;
+      }
     }
     this._step = val;
   }
@@ -86,6 +91,7 @@ export class TestActionComponent extends TestStepCoreComponent {
               stepName: res.stepName,
             })
             .pipe(
+              delay(2000),
               tap((res) => {
                 this.loading = false;
                 this.testStepService.elevateResizer$.next(true);
