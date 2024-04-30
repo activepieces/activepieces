@@ -4,27 +4,29 @@ description: "Learn how to share your pieces privately."
 ---
 
 <Tip>
-This feature is only available for Paid edition, if you want to use it, please contact us at `sales@activepieces.com`.
+This feature is only available for the Paid edition. If you want to use it, please contact us at `sales@activepieces.com`.
 </Tip>
 
-This guide assume you have already created a piece, and created private fork of our repository.
+This guide assumes you have already created a piece and created a private fork of our repository.
 
 
-## Step 1
+<Steps>
+    <Step title="Build Piece">
+        Build the piece using the following command. Make sure to replace `${name}` with your piece name.
 
-Build the piece using the following command, make sure to replace `${name}` with your piece name.
+        ```bash
+        npx nx build pieces-${name}.
+        ```
+    </Step>
+    <Step title="Pack the Piece">
+        Then pack your pieces as an npm package. Make sure to replace `${name}` with your piece name.
 
-```bash
-npx nx build pieces-${name}
-```
+        ```bash
+        cd dist/packages/pieces/${name} && npm pack.
+        ```
+    </Step>
+    <Step title="Upload Tarball">
+        Upload the generated tarball inside `dist/packages/pieces/${name}` to activepieces using the interface.
+    </Step>
+</Steps>
 
-## Step 2
-
-Then pack your pieces as npm package, make sure to replace `${name}` with your piece name.
-
-```bash
-cd dist/packages/pieces/${name} && npm pack
-```
-## Step 3
-
-Upload generated tarbar inside `dist/packages/pieces/${name}` to activepieces using the interface.
