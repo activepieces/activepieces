@@ -87,7 +87,7 @@ export class InterpolatingTextFormControlComponent
 {
   static nextId = 0;
   @Input() insideMatField = true;
-  formats = ['span', BLOT_NAME];
+  formats = [BLOT_NAME];
   @Input() onlyAllowOneMentionToBeAdded = false;
   @Output() editorFocused: EventEmitter<boolean> = new EventEmitter();
   @Input({ required: true })
@@ -236,7 +236,7 @@ export class InterpolatingTextFormControlComponent
   }
 
   private removeDefaultTabKeyBinding() {
-    const module = this.editor.quillEditor.getModule('keyboard');
+    const module:any = this.editor.quillEditor.getModule('keyboard');
     delete module.bindings['9'];
   }
 
@@ -313,7 +313,7 @@ export class InterpolatingTextFormControlComponent
 
   public focusEditor() {
     setTimeout(() => {
-      this.editor.quillEditor.focus();
+      this.editor.editorElem.focus();
       const selection = window.getSelection();
       if (
         selection &&
@@ -382,8 +382,8 @@ export class InterpolatingTextFormControlComponent
       if (this.onlyAllowOneMentionToBeAdded) {
         this.editorFormControl.setValue({ ops: [mentionOp] });
       } else {
-        this.editor.quillEditor
-          .getModule('mention')
+        (this.editor.quillEditor
+          .getModule('mention') as any)
           .insertItem(mentionOp.insert.apMention, true);
       }
 

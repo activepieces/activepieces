@@ -1,9 +1,11 @@
 import Quill from 'quill';
 import { ApMention, BLOT_NAME } from '@activepieces/ui/common';
 import { customCodeMentionDisplayName, fixSelection } from './utils';
+import * as QuillMention from 'quill-mention';
 
+Quill.register({ 'modules/mention': QuillMention.default });
 export function init() {
-  const Embed = Quill.import('blots/embed');
+  const Embed: any = Quill.import('blots/embed');
 
   class MentionBlot extends Embed {
     static blotName: string;
