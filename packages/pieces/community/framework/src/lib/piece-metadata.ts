@@ -46,6 +46,7 @@ export const ActionBase = Type.Object({
   props: PiecePropertyMap,
   requireAuth: Type.Boolean(),
   errorHandlingOptions: Type.Optional(ErrorHandlingOptionsParam),
+  isBranchable: Type.Optional(Type.Boolean()),
 })
 
 export type ActionBase = {
@@ -55,6 +56,7 @@ export type ActionBase = {
   props: PiecePropertyMap,
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
+  isBranchable?: boolean;
 }
 
 export const TriggerBase = Type.Composite([

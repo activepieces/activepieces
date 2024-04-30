@@ -383,7 +383,7 @@ export class StepTypeSidebarComponent implements AfterViewInit {
               pieceVersion:
                 flowItemDetails.extra?.pieceVersion ?? 'NO_APP_VERSION',
               actionName: suggestion?.name,
-              isBranchable: flowItemDetails.extra?.isBranchable ?? false,
+              isBranchable: suggestion?.isBranchable ?? false,
               input: initialValues,
               inputUiInfo: {
                 customizedInputs: {},

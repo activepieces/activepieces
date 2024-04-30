@@ -215,7 +215,6 @@ export class FlowDrawer {
           const branchDrawer = BranchDrawer.handleBranchAction(step);
           childHeight = branchDrawer.boundingBox().height;
           flowDrawer = flowDrawer.mergeChild(branchDrawer);
-          break;
         }
         break;
       }
