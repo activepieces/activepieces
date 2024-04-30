@@ -14,7 +14,7 @@ export const resolvePlatformIdFromEmail = async (
     platformId: string | null,
     userEmail: string,
 ): Promise<string | null> => {
-    const shouldResolve = getEdition() === ApEdition.COMMUNITY || flagService.isCloudPlatform(platformId)
+    const shouldResolve = getEdition() === ApEdition.COMMUNITY
     if (!shouldResolve) {
         return platformId
     }
