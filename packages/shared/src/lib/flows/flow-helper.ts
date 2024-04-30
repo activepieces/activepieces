@@ -65,6 +65,7 @@ function deleteAction(
             parentStep.nextAction = stepToUpdate.nextAction
         }
         switch (parentStep.type) {
+            case ActionType.PIECE: 
             case ActionType.BRANCH: {
                 if (
                     parentStep.onFailureAction &&
@@ -115,7 +116,7 @@ function traverseInternal(
     const steps: (Action | Trigger)[] = []
     while (step !== undefined && step !== null) {
         steps.push(step)
-        if (step.type === ActionType.BRANCH) {
+        if (step.type === ActionType.BRANCH || (step.type === ActionType.PIECE && step.settings.isBranchable)) {
             steps.push(...traverseInternal(step.onSuccessAction))
             steps.push(...traverseInternal(step.onFailureAction))
         }
@@ -133,7 +134,7 @@ async function transferStepAsync<T extends Step>(
 ): Promise<Step> {
     const updatedStep = await transferFunction(step as T)
 
-    if (updatedStep.type === ActionType.BRANCH) {
+    if (updatedStep.type === ActionType.BRANCH || (updatedStep.type === ActionType.PIECE && updatedStep.settings.isBranchable)) {
         const { onSuccessAction, onFailureAction } = updatedStep
         if (onSuccessAction) {
             updatedStep.onSuccessAction = (await transferStepAsync(
@@ -173,7 +174,7 @@ function transferStep<T extends Step>(
     transferFunction: (step: T) => T,
 ): Step {
     const updatedStep = transferFunction(step as T)
-    if (updatedStep.type === ActionType.BRANCH) {
+    if (updatedStep.type === ActionType.BRANCH || (updatedStep.type === ActionType.PIECE && updatedStep.settings.isBranchable)) {
         const { onSuccessAction, onFailureAction } = updatedStep
         if (onSuccessAction) {
             updatedStep.onSuccessAction = transferStep(
@@ -324,7 +325,7 @@ function updateAction(
             const actions = extractActions(parentStep.nextAction)
             parentStep.nextAction = createAction(request, actions)
         }
-        if (parentStep.type === ActionType.BRANCH) {
+        if (parentStep.type === ActionType.BRANCH || (parentStep.type === ActionType.PIECE && parentStep.settings.isBranchable)) {
             if (
                 parentStep.onFailureAction &&
                 parentStep.onFailureAction.name === request.name
@@ -400,7 +401,8 @@ function moveAction(
     const clonedSourceStep: Step = JSON.parse(JSON.stringify(sourceStep))
     if (
         clonedSourceStep.type === ActionType.LOOP_ON_ITEMS ||
-        clonedSourceStep.type === ActionType.BRANCH
+        clonedSourceStep.type === ActionType.BRANCH ||
+        (clonedSourceStep.type === ActionType.PIECE && clonedSourceStep.settings.isBranchable)
     ) {
         // Don't Clone the next action for first step only
         clonedSourceStep.nextAction = undefined
@@ -462,6 +464,9 @@ function addAction(
             }
         }
         else if (
+            (parentStep.type === ActionType.PIECE &&
+            parentStep.settings.isBranchable &&
+            request.stepLocationRelativeToParent) || 
             parentStep.type === ActionType.BRANCH &&
             request.stepLocationRelativeToParent
         ) {
@@ -550,6 +555,8 @@ function createAction(
         case ActionType.PIECE:
             action = {
                 ...baseProperties,
+                onFailureAction: request.settings.isBranchable ? onFailureAction : undefined,
+                onSuccessAction: request.settings.isBranchable ? onSuccessAction : undefined,
                 type: ActionType.PIECE,
                 settings: request.settings,
             }
@@ -629,6 +636,7 @@ export function getImportOperations(
             })
         }
         switch (step.type) {
+            case ActionType.PIECE:
             case ActionType.BRANCH: {
                 if (step.onFailureAction) {
                     steps.push({
@@ -673,7 +681,6 @@ export function getImportOperations(
 
             }
             case ActionType.CODE:
-            case ActionType.PIECE:
             case TriggerType.PIECE:
             case TriggerType.EMPTY:
             {
@@ -700,7 +707,13 @@ function removeAnySubsequentAction(action: Action): Action {
             delete clonedAction.firstLoopAction
             break
         }
-        case ActionType.PIECE:
+        case ActionType.PIECE: {
+            if (clonedAction.settings.isBranchable) {
+                delete clonedAction.onSuccessAction
+                delete clonedAction.onFailureAction
+            }
+            break
+        }
         case ActionType.CODE:
             break
     }

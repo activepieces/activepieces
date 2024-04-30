@@ -418,7 +418,7 @@ async function getSandboxForAction(
 ): Promise<Sandbox> {
     switch (action.type) {
         case ActionType.PIECE: {
-            const { packageType, pieceType, pieceName, pieceVersion } =
+            const { packageType, pieceType, pieceName, pieceVersion, isBranchable } =
                 action.settings
             const piece = {
                 packageType,
@@ -426,6 +426,7 @@ async function getSandboxForAction(
                 pieceName,
                 pieceVersion,
                 projectId,
+                isBranchable,
             }
 
             return sandboxProvisioner.provision({

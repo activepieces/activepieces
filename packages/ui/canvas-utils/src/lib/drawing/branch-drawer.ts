@@ -1,5 +1,6 @@
 import {
   BranchAction,
+  PieceAction,
   StepLocationRelativeToParent,
   flowHelper,
 } from '@activepieces/shared';
@@ -26,12 +27,10 @@ export class BranchDrawer {
   private constructor() {
     throw new Error('BranchDrawer is not meant to be instantiated');
   }
-  static handleBranchAction(branchStep: BranchAction): FlowDrawer {
+  static handleBranchAction(branchStep: BranchAction | PieceAction): FlowDrawer {
     let resultDrawer = FlowDrawer.construct(undefined);
-    const actions = [branchStep.onSuccessAction, branchStep.onFailureAction];
-    const branchesDrawers: FlowDrawer[] = actions.map((action) =>
-      FlowDrawer.construct(action)
-    );
+    const actions = [branchStep.onSuccessAction, branchStep.onFailureAction]
+    const branchesDrawers: FlowDrawer[] = actions.map(action => FlowDrawer.construct(action))
 
     const { maximumHeight, xOfFartherestLeftChild } =
       BranchDrawer.calculateDimensionsForBranch(branchesDrawers);
@@ -123,7 +122,7 @@ export class BranchDrawer {
     stepLocationRelativeToParent,
   }: {
     firstChildStepPosition: Position;
-    branchStep: BranchAction;
+    branchStep: BranchAction | PieceAction;
     stepLocationRelativeToParent: StepLocationRelativeToParent;
   }) {
     const doesBranchHaveChildren =
@@ -155,7 +154,7 @@ export class BranchDrawer {
     maximumHeight,
   }: {
     drawerMovedToFirstChildStep: FlowDrawer;
-    branchStep: BranchAction;
+    branchStep: BranchAction | PieceAction;
     maximumHeight: number;
   }) {
     return drawLineComponentForStepWithChildren({
@@ -185,7 +184,7 @@ export class BranchDrawer {
     branchStep,
   }: {
     afterBranchLineComponent: SvgDrawer;
-    branchStep: BranchAction;
+    branchStep: BranchAction | PieceAction;
   }): PositionButton {
     return {
       stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,

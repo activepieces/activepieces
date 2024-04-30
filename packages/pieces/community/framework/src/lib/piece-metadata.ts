@@ -117,6 +117,7 @@ const PiecePackageMetadata = Type.Object({
   pieceType: Type.Enum(PieceType),
   packageType: Type.Enum(PackageType),
   archiveId: Type.Optional(Type.String()),
+  isBranchable: Type.Optional(Type.Boolean()),
 })
 type PiecePackageMetadata = Static<typeof PiecePackageMetadata>
 

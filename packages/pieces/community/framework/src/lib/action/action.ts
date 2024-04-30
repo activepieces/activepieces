@@ -31,6 +31,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   run: ActionRunner<PieceAuth, ActionProps>
   test?: ActionRunner<PieceAuth, ActionProps>
   requireAuth?: boolean
+  isBranchable?: boolean
   errorHandlingOptions?: ErrorHandlingOptionsParam
 }
 
@@ -43,6 +44,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends In
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
     public readonly test: ActionRunner<PieceAuth, ActionProps>,
     public readonly requireAuth: boolean,
+    public readonly isBranchable: boolean,
     public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
   ) { }
 }
@@ -66,6 +68,7 @@ export const createAction = <
     params.run,
     params.test ?? params.run,
     params.requireAuth ?? true,
+    params.isBranchable ?? false,
     params.errorHandlingOptions ?? {
       continueOnFailure: {
         defaultValue: false,

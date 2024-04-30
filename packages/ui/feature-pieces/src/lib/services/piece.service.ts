@@ -102,7 +102,8 @@ export class PieceMetadataService {
                 packageType: piece.packageType,
                 pieceType: piece.pieceType,
                 pieceName: piece.name,
-                pieceVersion: piece.version
+                pieceVersion: piece.version,
+                isBranchable: piece.isBranchable,
             },
             suggestions: type === ActionType.PIECE ? suggestedActions : suggestedTriggers
         }

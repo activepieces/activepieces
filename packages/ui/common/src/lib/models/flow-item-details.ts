@@ -17,6 +17,7 @@ export class FlowItemDetails {
       pieceType: PieceType;
       pieceName: string;
       pieceVersion: string;
+      isBranchable?: boolean;
     },
     public suggestions?: ActionBase[] | TriggerBase[]
   ) {}
