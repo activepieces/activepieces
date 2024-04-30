@@ -78,7 +78,7 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
 }
 
 const FlowRunFiltered = Type.Omit(FlowRun, ['logsFileId', 'terminationReason', 'pauseMetadata'])
-
+const FlowRunFilteredWithoutSteps = Type.Omit(FlowRunFiltered, ['steps'])
 const ListRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
@@ -89,7 +89,7 @@ const ListRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListFlowRunsRequestQuery,
         response: {
-            [StatusCodes.OK]: SeekPage(Type.Omit(FlowRunFiltered, ['steps'])),
+            [StatusCodes.OK]: SeekPage(FlowRunFilteredWithoutSteps),
         },
     },
 }
