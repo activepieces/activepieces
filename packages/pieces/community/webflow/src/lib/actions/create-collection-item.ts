@@ -1,56 +1,64 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+
 import { webflowAuth } from '../..';
-import { webflowCommon } from '../common/common';
+import { webflowProps } from '../common/props';
+import { WebflowApiClient } from '../common/client';
 
-export const webflowCreateCollectionItem = createAction({
-  auth: webflowAuth,
-  name: 'create_collection_item',
-  description: 'Create collection item',
-  displayName: 'Create an item in a collection',
-  props: {
-    site_id: webflowCommon.sitesDropdown,
-    collection_id: webflowCommon.collectionsDropdown,
-    values: webflowCommon.collectionFieldProperties,
-    is_archived: Property.Checkbox({
-      displayName: 'Is Archived',
-      description: 'Whether the item is archived or not',
-      required: false,
-    }),
-    is_draft: Property.Checkbox({
-      displayName: 'Is Draft',
-      description: 'Whether the item is a draft or not',
-      required: false,
-    }),
-  },
+export const webflowCreateCollectionItemAction = createAction({
+	auth: webflowAuth,
+	name: 'create_collection_item',
+	displayName: 'Create Collection Item',
+	description: 'Creates new collection item.',
+	props: {
+		site_id: webflowProps.site_id,
+		collection_id: webflowProps.collection_id,
+		collection_fields: webflowProps.collection_fields,
+		is_archived: Property.Checkbox({
+			displayName: 'Is Archived',
+			description: 'Whether the item is archived or not',
+			required: false,
+		}),
+		is_draft: Property.Checkbox({
+			displayName: 'Is Draft',
+			description: 'Whether the item is a draft or not',
+			required: false,
+		}),
+	},
+	async run(context) {
+		const collectionId = context.propsValue.collection_id;
+		const isArchived = context.propsValue.is_archived;
+		const isDraft = context.propsValue.is_draft;
+		const collectionInputFields = context.propsValue.collection_fields;
 
-  async run(configValue) {
-    const accessToken = configValue.auth['access_token'];
-    const collectionId = configValue.propsValue['collection_id'];
-    const isArchived = configValue.propsValue['is_archived'];
-    const isDraft = configValue.propsValue['is_draft'];
+		const client = new WebflowApiClient(context.auth.access_token);
+		const { fields: CollectionFields } = await client.getCollection(collectionId);
 
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `https://api.webflow.com/collections/${collectionId}/items`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: accessToken,
-      },
-      body: {
-        fields: configValue.propsValue['values'],
-        isArchived,
-        isDraft,
-      },
-    };
+		let formattedCollectionFields: DynamicPropsValue = {};
+		for (const field of CollectionFields) {
+			let fieldValue = collectionInputFields[field.slug];
 
-    const res = await httpClient.sendRequest<never>(request);
+			if (fieldValue !== undefined && fieldValue !== '') {
+				switch (field.type) {
+					case 'Image':
+					case 'File':
+						formattedCollectionFields[field.slug] = { url: fieldValue };
+						break;
+					case 'MultiImage':
+						formattedCollectionFields[field.slug] = fieldValue.map((url: string) => ({ url: url }));
+						break;
+					case 'Number':
+						formattedCollectionFields[field.slug] = Number(fieldValue);
+						break;
+					default:
+						formattedCollectionFields[field.slug] = fieldValue;
+				}
+			}
+		}
 
-    return res.body;
-  },
+		return await client.createCollectionItem(collectionId, {
+			isArchived,
+			isDraft,
+			fieldData: formattedCollectionFields,
+		});
+	},
 });
