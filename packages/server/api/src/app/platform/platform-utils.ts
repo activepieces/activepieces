@@ -1,6 +1,5 @@
 import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
-import { flagService } from '../flags/flag.service'
 import { getEdition } from '../helper/secret-helper'
 import { userService } from '../user/user-service'
 import { platformService } from './platform.service'
