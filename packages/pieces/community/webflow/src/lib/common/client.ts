@@ -15,7 +15,7 @@ export class WebflowApiClient {
 		query?: Record<string, string | number | string[] | undefined>,
 		body: any | undefined = undefined,
 	): Promise<any> {
-		const apiUrl = 'https://api.webflow.com/v2';
+		const apiUrl = 'https://api.webflow.com';
 		const params: QueryParams = {};
 
 		if (query) {
@@ -64,7 +64,7 @@ export class WebflowApiClient {
 
 	async updateCollectionItem(collectionId: string, itemId: string, request: Record<string, any>) {
 		return await this.makeRequest(
-			HttpMethod.PATCH,
+			HttpMethod.PUT,
 			`/collections/${collectionId}/items/${itemId}`,
 			undefined,
 			request,
@@ -119,15 +119,8 @@ export class WebflowApiClient {
 		);
 	}
 
-	async refundOrder(siteId: string, orderId: string, reason?: string) {
-		return await this.makeRequest(
-			HttpMethod.POST,
-			`/sites/${siteId}/orders/${orderId}/refund`,
-			undefined,
-			{
-				reason,
-			},
-		);
+	async refundOrder(siteId: string, orderId: string) {
+		return await this.makeRequest(HttpMethod.POST, `/sites/${siteId}/orders/${orderId}/refund`);
 	}
 
 	async listOrders(siteId: string, page: number, limit: number) {

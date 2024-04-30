@@ -24,11 +24,11 @@ export const webflowProps = {
 			const authValue = auth as PiecePropValueSchema<typeof webflowAuth>;
 			const client = new WebflowApiClient(authValue.access_token);
 
-			const { sites } = await client.listSites();
+			const sites = await client.listSites();
 
 			const options: DropdownOption<string>[] = [];
 			for (const site of sites) {
-				options.push({ label: site.displayName, value: site.id });
+				options.push({ label: site.name, value: site._id });
 			}
 
 			return {
@@ -52,11 +52,11 @@ export const webflowProps = {
 			const authValue = auth as PiecePropValueSchema<typeof webflowAuth>;
 			const client = new WebflowApiClient(authValue.access_token);
 
-			const { collections } = await client.listCollections(site_id as string);
+			const collections = await client.listCollections(site_id as string);
 
 			const options: DropdownOption<string>[] = [];
 			for (const collection of collections) {
-				options.push({ label: collection.displayName, value: collection.id });
+				options.push({ label: collection.name, value: collection._id });
 			}
 
 			return {
@@ -80,75 +80,78 @@ export const webflowProps = {
 			const { fields } = await client.getCollection(collection_id as unknown as string);
 
 			for (const field of fields) {
-				switch (field.type) {
-					case 'Option':
-						collectionFields[field.slug] = Property.StaticDropdown({
-							displayName: field.displayName,
-							required: false,
-							options: {
-								disabled: false,
-								options: field.validations.options.map((option: { name: string }) => {
-									return {
-										label: option.name,
-										value: option.name,
-									};
-								}),
-							},
-						});
-						break;
-					case 'RichText':
-					case 'Email':
-					case 'PlainText':
-					case 'Phone':
-					case 'Link':
-					case 'VideoLink':
-					case 'Color':
-					case 'Reference':
-						collectionFields[field.slug] = Property.ShortText({
-							displayName: field.displayName,
-							required: false,
-						});
-						break;
-					case 'Image':
-						collectionFields[field.slug] = Property.ShortText({
-							displayName: field.displayName,
-							required: false,
-							description:
-								' Images must be hosted on a publicly accessible URL to be uploaded via the API.The maximum file size for images is 4MB.',
-						});
-						break;
-					case 'MultiImage':
-						collectionFields[field.slug] = Property.Array({
-							displayName: field.displayName,
-							required: false,
-							description:
-								' Images must be hosted on a publicly accessible URL to be uploaded via the API.The maximum file size for images is 4MB.',
-						});
-						break;
-					case 'MultiReference':
-						collectionFields[field.slug] = Property.Array({
-							displayName: field.displayName,
-							required: false,
-						});
-						break;
-					case 'Number':
-						collectionFields[field.slug] = Property.Number({
-							displayName: field.displayName,
-							required: false,
-						});
-						break;
-					case 'DateTime':
-						collectionFields[field.slug] = Property.DateTime({
-							displayName: field.displayName,
-							required: false,
-						});
-						break;
-					case 'Switch':
-						collectionFields[field.slug] = Property.Checkbox({
-							displayName: field.displayName,
-							required: false,
-						});
-						break;
+				if (field.editable && field.slug !== '_archived' && field.slug !== '_draft') {
+					switch (field.type) {
+						case 'Option':
+							collectionFields[field.slug] = Property.StaticDropdown({
+								displayName: field.name,
+								required: field.required,
+								options: {
+									disabled: false,
+									options: field.validations.options.map((option: { name: string }) => {
+										return {
+											label: option.name,
+											value: option.name,
+										};
+									}),
+								},
+							});
+							break;
+						case 'RichText':
+						case 'Email':
+						case 'PlainText':
+						case 'Phone':
+						case 'Link':
+						case 'Video':
+						case 'Color':
+						case 'ItemRef':
+						case 'File':
+							collectionFields[field.slug] = Property.ShortText({
+								displayName: field.name,
+								required: field.required,
+							});
+							break;
+						case 'ImageRef':
+							collectionFields[field.slug] = Property.ShortText({
+								displayName: field.name,
+								required: field.required,
+								description:
+									'Images must be hosted on a publicly accessible URL to be uploaded via the API.The maximum file size for images is 4MB.',
+							});
+							break;
+						case 'Set':
+							collectionFields[field.slug] = Property.Array({
+								displayName: field.name,
+								required: field.required,
+								description:
+									' Images must be hosted on a publicly accessible URL to be uploaded via the API.The maximum file size for images is 4MB.',
+							});
+							break;
+						case 'ItemRefSet':
+							collectionFields[field.slug] = Property.Array({
+								displayName: field.name,
+								required: field.required,
+							});
+							break;
+						case 'Number':
+							collectionFields[field.slug] = Property.Number({
+								displayName: field.name,
+								required: field.required,
+							});
+							break;
+						case 'Date':
+							collectionFields[field.slug] = Property.DateTime({
+								displayName: field.name,
+								required: field.required,
+							});
+							break;
+						case 'Bool':
+							collectionFields[field.slug] = Property.Checkbox({
+								displayName: field.name,
+								required: false,
+							});
+							break;
+					}
 				}
 			}
 			return collectionFields;
@@ -178,7 +181,7 @@ export const webflowProps = {
 				page += 100;
 
 				for (const item of response.items) {
-					options.push({ label: item.fieldData.name, value: item.id });
+					options.push({ label: item.name, value: item._id });
 				}
 			} while (response.items.length > 0);
 
@@ -211,10 +214,10 @@ export const webflowProps = {
 				response = await client.listOrders(site_id as string, page, 100);
 				page += 100;
 
-				for (const orders of response.orders) {
-					options.push({ label: orders.orderId, value: orders.orderId });
+				for (const order of response) {
+					options.push({ label: order.orderId, value: order.orderId });
 				}
-			} while (response.orders.length > 0);
+			} while (response.length > 0);
 
 			return {
 				disabled: false,

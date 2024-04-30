@@ -59,9 +59,7 @@ export const webflowUpdateCollectionItem = createAction({
 		}
 
 		return await client.updateCollectionItem(collectionId, collectionItemId, {
-			isArchived,
-			isDraft,
-			fieldData: formattedCollectionFields,
+			fields: { ...formattedCollectionFields, _archived: isArchived, _draft: isDraft },
 		});
 	},
 });
