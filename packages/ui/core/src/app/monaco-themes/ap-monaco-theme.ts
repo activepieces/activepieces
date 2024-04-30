@@ -17,7 +17,7 @@ export const apMonacoTheme = {
       token: '',
     },
     {
-      foreground: getVariableValue('code-editor-red'),
+      foreground: getVariableValue('code-editor-blue'),
       token: 'string',
     },
     {
