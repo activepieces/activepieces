@@ -7,6 +7,7 @@ import {
 import {
   PieceAuth,
   createPiece,
+  Property,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { askAssistant } from './lib/actions/ask-assistant';
@@ -27,10 +28,23 @@ Follow these instructions to get your OpenAI API Key:
 It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
 `;
 
-export const openaiAuth = PieceAuth.SecretText({
+export type OpenAIAuth = {
+  apiKey: string;
+  organizationId?: string;
+};
+export const openaiAuth = PieceAuth.CustomAuth({
   description: markdownDescription,
-  displayName: 'API Key',
   required: true,
+  props: {
+    apiKey: PieceAuth.SecretText({
+      displayName: 'API Key',
+      required: true,
+    }),
+    organizationId: Property.ShortText({
+      displayName: 'Organization ID',
+      required: false,
+    }),
+  },
   validate: async (auth) => {
     try {
       await httpClient.sendRequest<{
@@ -40,7 +54,10 @@ export const openaiAuth = PieceAuth.SecretText({
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth as string,
+          token: auth.auth.apiKey,
+        },
+        headers: {
+          'OpenAI-Organization': auth.auth.organizationId,
         },
       });
       return {
@@ -49,7 +66,7 @@ export const openaiAuth = PieceAuth.SecretText({
     } catch (e) {
       return {
         valid: false,
-        error: 'Invalid API key',
+        error: 'Invalid API key or organization ID',
       };
     }
   },
@@ -80,6 +97,16 @@ export const openai = createPiece({
       },
     }),
   ],
-  authors: ["aboudzein","astorozhevsky","Willianwg","Nilesh","Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: [
+    'aboudzein',
+    'astorozhevsky',
+    'Willianwg',
+    'Nilesh',
+    'Salem-Alaa',
+    'kishanprmr',
+    'MoShizzle',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   triggers: [],
 });

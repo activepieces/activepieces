@@ -5,7 +5,7 @@ import {
   Validators,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { openaiAuth } from '../..';
+import { OpenAIAuth, openaiAuth } from '../..';
 import { sleep } from '../common/common';
 
 export const askAssistant = createAction({
@@ -29,7 +29,8 @@ export const askAssistant = createAction({
         }
         try {
           const openai = new OpenAI({
-            apiKey: auth as string,
+            apiKey: (auth as OpenAIAuth).apiKey,
+            organization: (auth as OpenAIAuth).organizationId,
           });
           const assistants = await openai.beta.assistants.list();
 
@@ -65,7 +66,8 @@ export const askAssistant = createAction({
   },
   async run({ auth, propsValue, store }) {
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.apiKey,
+      organization: auth.organizationId,
     });
     const { assistant, prompt, memoryKey } = propsValue;
     const runCheckDelay = 1000;

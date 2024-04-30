@@ -48,7 +48,8 @@ export const transcribeAction = createAction({
     form.append('language', language);
 
     const headers = {
-      Authorization: `Bearer ${context.auth}`,
+      Authorization: `Bearer ${context.auth.apiKey}`,
+      'OpenAI-Organization': context.auth.organizationId,
     };
 
     const request: HttpRequest = {
