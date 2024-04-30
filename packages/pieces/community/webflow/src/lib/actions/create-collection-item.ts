@@ -33,9 +33,9 @@ export const webflowCreateCollectionItemAction = createAction({
 		const client = new WebflowApiClient(context.auth.access_token);
 		const { fields: CollectionFields } = await client.getCollection(collectionId);
 
-		let formattedCollectionFields: DynamicPropsValue = {};
+		const formattedCollectionFields: DynamicPropsValue = {};
 		for (const field of CollectionFields) {
-			let fieldValue = collectionInputFields[field.slug];
+			const fieldValue = collectionInputFields[field.slug];
 
 			if (fieldValue !== undefined && fieldValue !== '') {
 				switch (field.type) {

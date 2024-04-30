@@ -125,12 +125,6 @@ export const webflowProps = {
 								' Images must be hosted on a publicly accessible URL to be uploaded via the API.The maximum file size for images is 4MB.',
 						});
 						break;
-					case 'Reference':
-						collectionFields[field.slug] = Property.ShortText({
-							displayName: field.displayName,
-							required: false,
-						});
-						break;
 					case 'MultiReference':
 						collectionFields[field.slug] = Property.Array({
 							displayName: field.displayName,
