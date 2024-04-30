@@ -45,6 +45,9 @@
       "@activepieces/piece-apitable": [
         "packages/pieces/community/apitable/src/index.ts"
       ],
+      "@activepieces/piece-apollo": [
+        "packages/pieces/community/apollo/src/index.ts"
+      ],
       "@activepieces/piece-approval": [
         "packages/pieces/community/approval/src/index.ts"
       ],
@@ -426,6 +429,9 @@
       ],
       "@activepieces/piece-schedule": [
         "packages/pieces/community/schedule/src/index.ts"
+      ],
+      "@activepieces/piece-segment": [
+        "packages/pieces/community/segment/src/index.ts"
       ],
       "@activepieces/piece-sendfox": [
         "packages/pieces/community/sendfox/src/index.ts"
