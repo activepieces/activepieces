@@ -18,11 +18,26 @@
     background-position: center center !important;
   }
   
-  
-  .jsoneditor-number, .jsoneditor-boolean, .jsoneditor-string, .jsoneditor-url {
-    color: #0d57a8 !important;
+:root{
+  --code-editor-purple: #770088;
+  --code-editor-green: #098658;
+  --code-editor-red : #c41a16;
+  --code-editor-blue: #0d57a8;
+}
+.jsoneditor-url {
+    color: var(--code-editor-blue) !important;
+  }
+  .jsoneditor-string {
+    color: var(--code-editor-red) !important;
   }
   
+  .jsoneditor-number {
+    color: var(--code-editor-green) !important;
+  }
+
+  .jsoneditor-boolean {
+    color: var(--code-editor-purple) !important;
+  }
   .jsoneditor-field, .jsoneditor-value{
     white-space: nowrap !important;
   }

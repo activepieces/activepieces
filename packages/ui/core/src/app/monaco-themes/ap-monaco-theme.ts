@@ -1,3 +1,13 @@
+const getVariableValue = (variableName: string) => {
+  const monacoRoot = document.querySelector('body');
+  if (monacoRoot) {
+    const varnameValue = getComputedStyle(monacoRoot).getPropertyValue(
+      `--${variableName}`
+    );
+    return varnameValue;
+  }
+  return '';
+};
 export const apMonacoTheme = {
   base: 'vs',
   inherit: true,
@@ -7,7 +17,7 @@ export const apMonacoTheme = {
       token: '',
     },
     {
-      foreground: '#c41a16',
+      foreground: getVariableValue('code-editor-red'),
       token: 'string',
     },
     {
@@ -15,7 +25,7 @@ export const apMonacoTheme = {
       token: 'constant.numeric',
     },
     {
-      foreground: '#770088',
+      foreground: getVariableValue('code-editor-purple'),
       token: 'keyword',
     },
     { token: 'type', foreground: '#000000' },
@@ -24,7 +34,7 @@ export const apMonacoTheme = {
       token: 'keyword.operator',
     },
     {
-      foreground: '#770088',
+      foreground: getVariableValue('code-editor-purple'),
       token: 'constant.language',
     },
     {
@@ -61,7 +71,7 @@ export const apMonacoTheme = {
       token: 'text source',
     },
     {
-      foreground: '#770088',
+      foreground: getVariableValue('code-editor-purple'),
       token: 'meta.tag',
     },
     {
@@ -74,7 +84,7 @@ export const apMonacoTheme = {
       token: 'support',
     },
     {
-      foreground: '#770088',
+      foreground: getVariableValue('code-editor-purple'),
       token: 'storage',
     },
     {
@@ -104,7 +114,10 @@ export const apMonacoTheme = {
       token: 'entity.name.tag',
     },
     { token: 'string.key.json', foreground: '#000000' },
-    { token: 'string.value.json', foreground: '#0d57a8' },
+    {
+      token: 'string.value.json',
+      foreground: getVariableValue('code-editor-blue'),
+    },
   ],
   colors: {
     'editor.foreground': '#0055AA',
