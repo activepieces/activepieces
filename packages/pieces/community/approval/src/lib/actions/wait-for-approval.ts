@@ -33,15 +33,10 @@ export const waitForApprovalLink = createAction({
           approved: true,
           denied: false,
         };
-      } else if (action === 'deny') {
-        return {
-          approved: false,
-          denied: true,
-        };
       } else {
         return {
           approved: false,
-          denied: false,
+          denied: true,
         };
       }
     }
