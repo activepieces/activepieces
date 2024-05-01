@@ -25,7 +25,7 @@
         </div>
         
 @if (enrichData$ | async; as enrichedData) {
-    <ap-json-viewer title="Error" i18n-error [hideMaximize]="true" [content]="enrichedData"></ap-json-viewer>
+    <ap-json-viewer viewTitle="Error" i18n-viewTitle [hideMaximize]="true" [content]="enrichedData"></ap-json-viewer>
 }
     </div>
 </mat-dialog-content>
