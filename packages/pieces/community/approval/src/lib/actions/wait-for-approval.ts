@@ -24,13 +24,26 @@ export const waitForApprovalLink = createAction({
         },
       });
 
-      return {
-        approved: true,
-      };
+      return {}
     } else {
-      return {
-        approved: ctx.resumePayload.queryParams['action'] === 'approve',
-      };
+      const action = ctx.resumePayload.queryParams['action'];
+      
+      if (action === 'approve') {
+        return {
+          approved: true,
+          denied: false,
+        };
+      } else if (action === 'deny') {
+        return {
+          approved: false,
+          denied: true,
+        };
+      } else {
+        return {
+          approved: false,
+          denied: false,
+        };
+      }
     }
   },
 });
