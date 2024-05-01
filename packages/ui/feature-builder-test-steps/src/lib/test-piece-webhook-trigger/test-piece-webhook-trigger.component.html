@@ -17,7 +17,7 @@
                     Trigger </ap-button>
             </div>
             <ng-container *ngIf="pieceSampleData$ | async as sampleData">
-                <div class="ap-typography-subtitle-2 ap-text-description" i18n>
+                <div class="ap-typography-subviewTitle-2 ap-text-description" i18n>
                     Or
                 </div>
                 <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="useMockData()" i18n>Use Mock
@@ -53,7 +53,7 @@
                     </mat-option>
                 </mat-select>
             </mat-form-field>
-            <ap-json-viewer class="json-viewer" title="Output" 
+            <ap-json-viewer class="json-viewer" viewTitle="Output" i18n-viewTitle
                 [content]="selectedDataControl.value"></ap-json-viewer>
 
 

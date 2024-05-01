@@ -19,7 +19,7 @@ export class JsonViewComponent {
   containerHeight = 0;
   @Input() hideTitle = false;
   @Input() hideMaximize = false;
-  @Input() title: string;
+  @Input() viewTitle: string;
   jsonEditorOptions: JsonEditorOptions = new JsonEditorOptions();
   @Input() set content(value: unknown) {
     if (typeof value === 'string') {
@@ -45,16 +45,16 @@ export class JsonViewComponent {
 
   openModal() {
     this.dialogService.open(JsonViewDialogComponent, {
-      data: { title: this.title, content: this._content },
+      data: { title: this.viewTitle, content: this._content },
     });
   }
   copyContent() {
     copyText(this._content);
-    this.snackbar.open(`${this.title} copied`);
+    this.snackbar.open(`${this.viewTitle} copied`);
   }
 
   downloadContent() {
-    downloadFile(this._content, this.title, this.showText ? 'txt' : 'json');
+    downloadFile(this._content, this.viewTitle, this.showText ? 'txt' : 'json');
   }
 
   private isContentAnObject(content: string) {
