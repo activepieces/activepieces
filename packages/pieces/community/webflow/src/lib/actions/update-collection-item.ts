@@ -42,12 +42,21 @@ export const webflowUpdateCollectionItem = createAction({
 
 			if (fieldValue !== undefined && fieldValue !== '') {
 				switch (field.type) {
-					case 'Image':
-					case 'File':
+					case 'ImageRef':
+					case 'FileRef':
 						formattedCollectionFields[field.slug] = { url: fieldValue };
 						break;
-					case 'MultiImage':
-						formattedCollectionFields[field.slug] = fieldValue.map((url: string) => ({ url: url }));
+					case 'Set':
+						if (fieldValue.length > 0) {
+							formattedCollectionFields[field.slug] = fieldValue.map((url: string) => ({
+								url: url,
+							}));
+						}
+						break;
+					case 'ItemRefSet':
+						if (fieldValue.length > 0) {
+							formattedCollectionFields[field.slug] = fieldValue;
+						}
 						break;
 					case 'Number':
 						formattedCollectionFields[field.slug] = Number(fieldValue);

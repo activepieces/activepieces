@@ -105,7 +105,7 @@ export const webflowProps = {
 						case 'Video':
 						case 'Color':
 						case 'ItemRef':
-						case 'File':
+						case 'FileRef':
 							collectionFields[field.slug] = Property.ShortText({
 								displayName: field.name,
 								required: field.required,

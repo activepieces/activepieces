@@ -39,11 +39,11 @@ export const webflowCreateCollectionItemAction = createAction({
 
 			if (fieldValue !== undefined && fieldValue !== '') {
 				switch (field.type) {
-					case 'Image':
-					case 'File':
+					case 'ImageRef':
+					case 'FileRef':
 						formattedCollectionFields[field.slug] = { url: fieldValue };
 						break;
-					case 'MultiImage':
+					case 'Set':
 						formattedCollectionFields[field.slug] = fieldValue.map((url: string) => ({ url: url }));
 						break;
 					case 'Number':
