@@ -7,6 +7,7 @@ import {
     ActionType,
     BranchAction,
     LoopOnItemsAction,
+    PieceAction,
     SingleActionSchema,
 } from './actions/action'
 import {
@@ -116,7 +117,7 @@ function traverseInternal(
     const steps: (Action | Trigger)[] = []
     while (step !== undefined && step !== null) {
         steps.push(step)
-        if (step.type === ActionType.BRANCH || (step.type === ActionType.PIECE && step.settings.isBranchable)) {
+        if (step.type === ActionType.BRANCH || isPieceBranched(step)) {
             steps.push(...traverseInternal(step.onSuccessAction))
             steps.push(...traverseInternal(step.onFailureAction))
         }
@@ -134,7 +135,7 @@ async function transferStepAsync<T extends Step>(
 ): Promise<Step> {
     const updatedStep = await transferFunction(step as T)
 
-    if (updatedStep.type === ActionType.BRANCH || (updatedStep.type === ActionType.PIECE && updatedStep.settings.isBranchable)) {
+    if (updatedStep.type === ActionType.BRANCH || isPieceBranched(updatedStep)) {
         const { onSuccessAction, onFailureAction } = updatedStep
         if (onSuccessAction) {
             updatedStep.onSuccessAction = (await transferStepAsync(
@@ -174,7 +175,7 @@ function transferStep<T extends Step>(
     transferFunction: (step: T) => T,
 ): Step {
     const updatedStep = transferFunction(step as T)
-    if (updatedStep.type === ActionType.BRANCH || (updatedStep.type === ActionType.PIECE && updatedStep.settings.isBranchable)) {
+    if (updatedStep.type === ActionType.BRANCH || isPieceBranched(updatedStep)) {
         const { onSuccessAction, onFailureAction } = updatedStep
         if (onSuccessAction) {
             updatedStep.onSuccessAction = transferStep(
@@ -325,7 +326,7 @@ function updateAction(
             const actions = extractActions(parentStep.nextAction)
             parentStep.nextAction = createAction(request, actions)
         }
-        if (parentStep.type === ActionType.BRANCH || (parentStep.type === ActionType.PIECE && parentStep.settings.isBranchable)) {
+        if (parentStep.type === ActionType.BRANCH || isPieceBranched(parentStep)) {
             if (
                 parentStep.onFailureAction &&
                 parentStep.onFailureAction.name === request.name
@@ -402,7 +403,7 @@ function moveAction(
     if (
         clonedSourceStep.type === ActionType.LOOP_ON_ITEMS ||
         clonedSourceStep.type === ActionType.BRANCH ||
-        (clonedSourceStep.type === ActionType.PIECE && clonedSourceStep.settings.isBranchable)
+        isPieceBranched(clonedSourceStep)
     ) {
         // Don't Clone the next action for first step only
         clonedSourceStep.nextAction = undefined
@@ -464,9 +465,7 @@ function addAction(
             }
         }
         else if (
-            (parentStep.type === ActionType.PIECE &&
-            parentStep.settings.isBranchable &&
-            request.stepLocationRelativeToParent) || 
+            isPieceBranched(parentStep) || 
             parentStep.type === ActionType.BRANCH &&
             request.stepLocationRelativeToParent
         ) {
@@ -555,8 +554,8 @@ function createAction(
         case ActionType.PIECE:
             action = {
                 ...baseProperties,
-                onFailureAction: request.settings.isBranchable ? onFailureAction : undefined,
-                onSuccessAction: request.settings.isBranchable ? onSuccessAction : undefined,
+                onFailureAction: isPieceBranched(request) ? onFailureAction : undefined,
+                onSuccessAction: isPieceBranched(request) ? onSuccessAction : undefined,
                 type: ActionType.PIECE,
                 settings: request.settings,
             }
@@ -708,7 +707,7 @@ function removeAnySubsequentAction(action: Action): Action {
             break
         }
         case ActionType.PIECE: {
-            if (clonedAction.settings.isBranchable) {
+            if (clonedAction.settings.outputs && clonedAction.settings.outputs.length > 1) {
                 delete clonedAction.onSuccessAction
                 delete clonedAction.onFailureAction
             }
@@ -934,6 +933,15 @@ function isStepLastChildOfParent(child: Step, trigger: Trigger): boolean {
 function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAction {
     return step.type === ActionType.BRANCH || step.type === ActionType.LOOP_ON_ITEMS
 }
+
+function isPieceBranched(step: Step): step is PieceAction {
+    if (step.settings.outputs) {
+        return step.type === ActionType.PIECE && step.settings.outputs.length > 1
+    }
+
+    return false
+}
+
 export const flowHelper = {
     isValid,
     apply(

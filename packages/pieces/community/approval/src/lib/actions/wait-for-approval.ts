@@ -14,7 +14,7 @@ export const waitForApprovalLink = createAction({
       hide: true,
     },
   },
-  isBranchable: true,
+  outputs: ['approved', 'denied'],
   async run(ctx) {
     if (ctx.executionType === ExecutionType.BEGIN) {
       ctx.run.pause({

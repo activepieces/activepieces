@@ -58,7 +58,7 @@ export const PieceActionSettings = Type.Object({
     actionName: Type.Optional(Type.String({})),
     input: Type.Record(Type.String({}), Type.Any()),
     inputUiInfo: SampleDataSettingsObject,
-    isBranchable: Type.Optional(Type.Boolean()),
+    outputs: Type.Optional(Type.Array(Type.String({}))),
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
 

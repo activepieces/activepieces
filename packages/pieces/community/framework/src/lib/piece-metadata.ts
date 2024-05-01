@@ -46,7 +46,7 @@ export const ActionBase = Type.Object({
   props: PiecePropertyMap,
   requireAuth: Type.Boolean(),
   errorHandlingOptions: Type.Optional(ErrorHandlingOptionsParam),
-  isBranchable: Type.Optional(Type.Boolean()),
+  outputs: Type.Optional(Type.Array(Type.String())),
 })
 
 export type ActionBase = {
@@ -56,7 +56,7 @@ export type ActionBase = {
   props: PiecePropertyMap,
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
-  isBranchable?: boolean;
+  outputs?: string[];
 }
 
 export const TriggerBase = Type.Composite([
@@ -119,7 +119,6 @@ const PiecePackageMetadata = Type.Object({
   pieceType: Type.Enum(PieceType),
   packageType: Type.Enum(PackageType),
   archiveId: Type.Optional(Type.String()),
-  isBranchable: Type.Optional(Type.Boolean()),
 })
 type PiecePackageMetadata = Static<typeof PiecePackageMetadata>
 

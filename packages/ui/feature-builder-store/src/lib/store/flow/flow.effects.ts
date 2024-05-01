@@ -109,7 +109,7 @@ export class FlowsEffects {
                   displayName,
                   settings: {
                     ...step.settings,
-                    isBranchable: true, // TODO: get this from piece
+                    outputs: ['approved', 'denied'], // TODO: get this from piece
                     actionName: name,
                     input: initialValues,
                     inputUiInfo: {

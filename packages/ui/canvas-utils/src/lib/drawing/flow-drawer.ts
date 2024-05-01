@@ -211,7 +211,7 @@ export class FlowDrawer {
         break;
       }
       case ActionType.PIECE: {
-        if (step.settings.isBranchable) {
+        if (step.settings.outputs && step.settings.outputs.length > 1) {
           const branchDrawer = BranchDrawer.handleBranchAction(step);
           childHeight = branchDrawer.boundingBox().height;
           flowDrawer = flowDrawer.mergeChild(branchDrawer);
