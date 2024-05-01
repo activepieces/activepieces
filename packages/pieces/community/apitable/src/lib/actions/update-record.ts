@@ -33,7 +33,7 @@ export const updateRecordAction = createAction({
 
     const props = Object.entries(dynamicFields);
     for (const [propertyKey, propertyValue] of props) {
-      if (propertyValue) {
+      if (propertyValue !== undefined && propertyValue !== '') {
         fields[propertyKey] = propertyValue;
       }
     }
