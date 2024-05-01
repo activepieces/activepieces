@@ -11,7 +11,7 @@ export const externalTokenExtractor = {
     async extract(token: string): Promise<ExternalPrincipal> {
         const decoded = jwtUtils.decode<ExternalTokenPayload>({ jwt: token })
 
-        const signingKeyId = decoded.header?.kid
+        const signingKeyId = decoded?.header?.kid
 
         if (isNil(signingKeyId)) {
             throw new ActivepiecesError({

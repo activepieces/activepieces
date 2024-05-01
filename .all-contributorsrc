@@ -992,6 +992,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "MohamedHassan499",
+      "name": "Mohamed Hassan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/50884619?v=4",
+      "profile": "http://farag.tech",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"
