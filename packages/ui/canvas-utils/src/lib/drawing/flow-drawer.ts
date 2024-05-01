@@ -1,6 +1,7 @@
 import {
   Action,
   ActionType,
+  PieceAction,
   StepLocationRelativeToParent,
   flowHelper,
   isNil,
@@ -210,22 +211,20 @@ export class FlowDrawer {
         flowDrawer = flowDrawer.mergeChild(loopDrawer);
         break;
       }
-      case ActionType.PIECE: {
-        if (step.settings.outputs && step.settings.outputs.length > 1) {
-          const branchDrawer = BranchDrawer.handleBranchAction(step);
-          childHeight = branchDrawer.boundingBox().height;
-          flowDrawer = flowDrawer.mergeChild(branchDrawer);
-        }
-        break;
-      }
       case ActionType.BRANCH: {
         const branchDrawer = BranchDrawer.handleBranchAction(step);
         childHeight = branchDrawer.boundingBox().height;
         flowDrawer = flowDrawer.mergeChild(branchDrawer);
         break;
       }
-
       default: {
+        if (step.settings.outputs && step.settings.outputs.length > 1) {
+          const branchDrawer = BranchDrawer.handleBranchAction(step as PieceAction);
+          childHeight = branchDrawer.boundingBox().height;
+          flowDrawer = flowDrawer.mergeChild(branchDrawer);
+          break;
+        }
+
         const { line, button } = drawLineComponentWithButton({
           from: centerBottomOfCurrentStep,
           to: {

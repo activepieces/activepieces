@@ -466,8 +466,8 @@ function addAction(
         }
         else if (
             isPieceBranched(parentStep) || 
-            parentStep.type === ActionType.BRANCH &&
-            request.stepLocationRelativeToParent
+            (parentStep.type === ActionType.BRANCH &&
+            request.stepLocationRelativeToParent)
         ) {
             if (
                 request.stepLocationRelativeToParent ===
@@ -554,8 +554,8 @@ function createAction(
         case ActionType.PIECE:
             action = {
                 ...baseProperties,
-                onFailureAction: isPieceBranched(request) ? onFailureAction : undefined,
-                onSuccessAction: isPieceBranched(request) ? onSuccessAction : undefined,
+                onFailureAction,
+                onSuccessAction,
                 type: ActionType.PIECE,
                 settings: request.settings,
             }
