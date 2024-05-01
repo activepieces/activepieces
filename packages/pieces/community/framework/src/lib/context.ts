@@ -127,6 +127,9 @@ export type BaseActionContext<
   generateResumeUrl: (params: {
     queryParams: Record<string, string>
   }) => string;
+  generateApprovalUrl: (params: {
+    action: 'approved' | 'denied'
+  }) => string;
 };
 
 type BeginExecutionActionContext<
