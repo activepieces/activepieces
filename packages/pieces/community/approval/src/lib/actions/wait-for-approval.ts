@@ -1,3 +1,8 @@
+import {
+  HttpMethod,
+  HttpRequest,
+  httpClient,
+} from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { ExecutionType, PauseType } from '@activepieces/shared';
 
@@ -20,25 +25,31 @@ export const waitForApprovalLink = createAction({
       ctx.run.pause({
         pauseMetadata: {
           type: PauseType.WEBHOOK,
-          response: {}
+          response: {},
         },
       });
 
-      return {}
+      const request: HttpRequest<any> = {
+        method: HttpMethod.GET,
+        url: ctx.generateApprovalUrl({
+          action: 'approved',
+        }),
+      };
+
+      const res = await httpClient.sendRequest<{
+        approved: boolean;
+        denied: boolean;
+      }>(request);
+
+      return {
+        approved: res.body.approved,
+        denied: res.body.denied,
+      };
     } else {
-      const action = ctx.resumePayload.queryParams['action'];
-      
-      if (action === 'approve') {
-        return {
-          approved: true,
-          denied: false,
-        };
-      } else {
-        return {
-          approved: false,
-          denied: true,
-        };
-      }
+      return {
+        approved: ctx.resumePayload.queryParams['action'] === 'approve',
+        denied: ctx.resumePayload.queryParams['action'] !== 'approve',
+      };
     }
   },
 });
