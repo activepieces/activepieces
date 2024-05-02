@@ -1001,6 +1001,15 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "christian-schab",
+      "name": "Christian Schab",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17610709?v=4",
+      "profile": "https://www.coasy.com/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
