@@ -23,9 +23,9 @@
       <span class="description"> {{ (selectedStepResult.duration || 1) | number: '1.0-1'  }} ms </span>
     </div>
     <div class="ap-flex ap-flex-col ap-gap-8 ap-mb-4">
-      <ap-json-viewer class="json-viewer" viewTitle="Input" i18n-viewTitle  [content]="selectedStepResult.input"
+      <ap-json-viewer class="json-viewer" viewTitle="Input" i18n-title  [content]="selectedStepResult.input"
       ></ap-json-viewer>
-     <ap-json-viewer viewTitle="Output" i18n-viewTitle
+     <ap-json-viewer viewTitle="Output" i18n-title
        [content]="selectedStepResult.errorMessage ?? selectedStepResult.output"></ap-json-viewer>
    
     </div>

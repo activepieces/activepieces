@@ -1,1 +1,4 @@
 deploy/
+dist/
+cache/
+dev/
