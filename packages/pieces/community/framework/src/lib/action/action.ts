@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox';
 import { ActionContext } from '../context';
-import { ActionBase } from '../piece-metadata';
+import { ActionBase, ActionOutput } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
 
@@ -31,7 +31,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   run: ActionRunner<PieceAuth, ActionProps>
   test?: ActionRunner<PieceAuth, ActionProps>
   requireAuth?: boolean
-  outputs?: string[]
+  outputs?: ActionOutput[]
   errorHandlingOptions?: ErrorHandlingOptionsParam
 }
 
@@ -44,7 +44,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends In
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
     public readonly test: ActionRunner<PieceAuth, ActionProps>,
     public readonly requireAuth: boolean,
-    public readonly outputs: string[],
+    public readonly outputs: ActionOutput[],
     public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
   ) { }
 }

@@ -39,6 +39,14 @@ export type PieceBase = {
   maximumSupportedRelease?: string;
 }
 
+export const ActionOutput = Type.Object({
+  name: Type.String()
+})
+
+export type ActionOutput = {
+  name: string
+}
+
 export const ActionBase = Type.Object({
   name: Type.String(),
   displayName: Type.String(),
@@ -46,7 +54,7 @@ export const ActionBase = Type.Object({
   props: PiecePropertyMap,
   requireAuth: Type.Boolean(),
   errorHandlingOptions: Type.Optional(ErrorHandlingOptionsParam),
-  outputs: Type.Optional(Type.Array(Type.String())),
+  outputs: Type.Optional(Type.Array(ActionOutput)),
 })
 
 export type ActionBase = {
@@ -56,7 +64,7 @@ export type ActionBase = {
   props: PiecePropertyMap,
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
-  outputs?: string[];
+  outputs?: ActionOutput[];
 }
 
 export const TriggerBase = Type.Composite([

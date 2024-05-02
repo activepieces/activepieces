@@ -1,5 +1,5 @@
 import { URL } from 'url'
-import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { Action, ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { ActionType, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, StepOutputStatus } from '@activepieces/shared'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { pieceLoader } from '../helper/piece-loader'
@@ -9,6 +9,7 @@ import { createContextStore } from '../services/storage.service'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { flowExecutor } from './flow-executor'
 
 type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
 
@@ -107,11 +108,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 const url = new URL(`${constants.serverUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}`)
                 url.search = new URLSearchParams(params.queryParams).toString()
                 return url.toString()
-            },
-            generateApprovalUrl: (params) => {
-                const url = new URL(`${constants.serverUrl}v1/approval/${constants.flowRunId}/${params.action}`)
-                return url.toString()
-            },
+            }
         }
         const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)
@@ -132,6 +129,23 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                     pauseMetadata: hookResponse.pauseResponse.pauseMetadata,
                 })
         }
+        if (hasBranches(pieceAction)) {
+            // TODO ROUTING LOGIC
+            let newExecutionContext = executionState;
+            const branchPaylods = output as unknown[];
+            for (let i = 0; i < branchPaylods.length; ++i) {
+                if (isNil(branchPaylods[i])) {
+                    return;
+                }
+                const childToRun = action.children[0];
+                newExecutionContext = await flowExecutor.execute({
+                    action: childToRun,
+                    executionState: newExecutionContext,
+                    constants,
+                })
+            }
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
+        }
 
         return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
     }
@@ -146,6 +160,10 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             .upsertStep(action.name, failedStepOutput)
             .setVerdict(ExecutionVerdict.FAILED, handledError.verdictResponse)
     }
+}
+
+function hasBranches(pieceAction: Action) {
+    return !isNil(pieceAction.outputs) && pieceAction.outputs.length > 1;
 }
 
 const createTagsManager = (hookResponse: HookResponse): TagsManager => {

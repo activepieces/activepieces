@@ -19,7 +19,7 @@ export const waitForApprovalLink = createAction({
       hide: true,
     },
   },
-  outputs: ['approved', 'denied'],
+  outputs: [{ name: 'approved' }, { name: 'denied' }],
   async run(ctx) {
     if (ctx.executionType === ExecutionType.BEGIN) {
       ctx.run.pause({
@@ -28,28 +28,9 @@ export const waitForApprovalLink = createAction({
           response: {},
         },
       });
-
-      const request: HttpRequest<any> = {
-        method: HttpMethod.GET,
-        url: ctx.generateApprovalUrl({
-          action: 'approved',
-        }),
-      };
-
-      const res = await httpClient.sendRequest<{
-        approved: boolean;
-        denied: boolean;
-      }>(request);
-
-      return {
-        approved: res.body.approved,
-        denied: res.body.denied,
-      };
+      return [undefined, undefined]
     } else {
-      return {
-        approved: ctx.resumePayload.queryParams['action'] === 'approve',
-        denied: ctx.resumePayload.queryParams['action'] !== 'approve',
-      };
+      return [{}, undefined]
     }
   },
 });

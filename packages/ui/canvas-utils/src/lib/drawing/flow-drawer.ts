@@ -219,7 +219,7 @@ export class FlowDrawer {
       }
       default: {
         if (step.settings.outputs && step.settings.outputs.length > 1) {
-          const branchDrawer = BranchDrawer.handleBranchAction(step as PieceAction);
+          const branchDrawer = BranchDrawer.handleBranchAction(step);
           childHeight = branchDrawer.boundingBox().height;
           flowDrawer = flowDrawer.mergeChild(branchDrawer);
           break;

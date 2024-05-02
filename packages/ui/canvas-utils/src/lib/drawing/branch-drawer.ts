@@ -27,7 +27,7 @@ export class BranchDrawer {
   private constructor() {
     throw new Error('BranchDrawer is not meant to be instantiated');
   }
-  static handleBranchAction(branchStep: BranchAction | PieceAction): FlowDrawer {
+  static handleBranchAction(branchStep: BranchAction): FlowDrawer {
     let resultDrawer = FlowDrawer.construct(undefined);
     const actions = [branchStep.onSuccessAction, branchStep.onFailureAction]
     const branchesDrawers: FlowDrawer[] = actions.map(action => FlowDrawer.construct(action))
