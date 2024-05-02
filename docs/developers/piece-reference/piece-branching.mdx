@@ -1,0 +1,58 @@
+---
+title: 'Piece Branching'
+icon: 'hammer'
+description: 'Make a piece branchable'
+---
+Activepieces allows pieces to be directly branched from depending on the action by adding the expected outputs in the `outputs` array of objects when creating an action.
+
+### Waiting for approval action
+
+We will see the branching feature within the context of the approval process, using the waiting for approval action as an example.
+
+**Example:**
+
+```typescript
+import { createAction } from '@activepieces/pieces-framework';
+import { ExecutionType, PauseType, branchedPieceResponse } from '@activepieces/shared';
+
+export const waitForApprovalLink = createAction({
+  name: 'wait_for_approval',
+  displayName: 'Wait for Approval',
+  description: 'Pauses the flow and wait for the approval from the user',
+  props: {},
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
+  // Here we define the names of the outputs expected to be branched from the piece
+  outputs: [
+    { name: 'approved' }, 
+    { name: 'denied' }
+  ],
+  async run(ctx) {
+    if (ctx.executionType === ExecutionType.BEGIN) {
+      ctx.run.pause({
+        pauseMetadata: {
+          type: PauseType.WEBHOOK,
+          response: {},
+        },
+      });
+
+      // Return an empty Map while execution is paused
+      return branchedPieceResponse()
+    } else {
+      const op = {
+        approved: ctx.resumePayload.queryParams['action'] === 'approve',
+        denied: ctx.resumePayload.queryParams['action'] !== 'approve',
+      }
+
+      // Return a Map populated with the expected returned data
+      return branchedPieceResponse(op)
+    }
+  },
+});
+```
