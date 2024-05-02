@@ -2,7 +2,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { sendEmail } from './lib/actions/send-email';
 
-const mailjetAuth = PieceAuth.BasicAuth({
+export const mailjetAuth = PieceAuth.BasicAuth({
   description: 'Enter your api credentials',
   required: true,
   username: {

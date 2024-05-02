@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { mailjetAuth } from '../../';
 
 export const sendEmail = createAction({
+  auth: mailjetAuth,
   name: 'send_email',
   displayName: 'Send Email',
   description: 'Send a text, HTML or template email through Mailjet',
@@ -46,9 +48,7 @@ export const sendEmail = createAction({
     })
   },
   async run(configValue) {
-    const auth = configValue.auth as { username: string; password: string; };
-    const { propsValue } = configValue;
-    if (!auth) throw new Error(`Credentials not found!`);
+    const { propsValue, auth } = configValue;
 
     const message = {
       From: {
