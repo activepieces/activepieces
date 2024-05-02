@@ -30,7 +30,8 @@ export const matchPerson = createAction({
         email: propsValue.email,
       }
     });
-    await store.put(`_apollo_person_${propsValue.email}`, result.body.person);
-    return result.body.person;
+    const personResult = result.body.person || {};
+    await store.put(`_apollo_person_${propsValue.email}`, personResult);
+    return personResult;
   },
 });
