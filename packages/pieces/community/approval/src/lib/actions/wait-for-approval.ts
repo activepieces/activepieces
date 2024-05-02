@@ -29,11 +29,10 @@ export const waitForApprovalLink = createAction({
 
       return branchedPieceResponse()
     } else {
-      const op = {
+      return branchedPieceResponse({
         approved: ctx.resumePayload.queryParams['action'] === 'approve',
         denied: ctx.resumePayload.queryParams['action'] !== 'approve',
-      }
-      return branchedPieceResponse(op)
+      })
     }
   },
 });

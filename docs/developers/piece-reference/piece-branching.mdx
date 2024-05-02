@@ -45,13 +45,11 @@ export const waitForApprovalLink = createAction({
       // Return an empty Map while execution is paused
       return branchedPieceResponse()
     } else {
-      const op = {
+      // Return a Map populated with the expected returned data
+      return branchedPieceResponse({
         approved: ctx.resumePayload.queryParams['action'] === 'approve',
         denied: ctx.resumePayload.queryParams['action'] !== 'approve',
-      }
-
-      // Return a Map populated with the expected returned data
-      return branchedPieceResponse(op)
+      })
     }
   },
 });
