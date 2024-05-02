@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { ExecutionType, PauseType } from '@activepieces/shared';
+import { ExecutionType, PauseType, branchedPieceResponse } from '@activepieces/shared';
 
 export const waitForApprovalLink = createAction({
   name: 'wait_for_approval',
@@ -27,13 +27,13 @@ export const waitForApprovalLink = createAction({
         },
       });
 
-      return new Map()
+      return branchedPieceResponse()
     } else {
       const op = {
         approved: ctx.resumePayload.queryParams['action'] === 'approve',
         denied: ctx.resumePayload.queryParams['action'] !== 'approve',
       }
-      return new Map(Object.entries(op))
+      return branchedPieceResponse(op)
     }
   },
 });

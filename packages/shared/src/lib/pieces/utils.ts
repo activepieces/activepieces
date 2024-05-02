@@ -1,8 +1,17 @@
 import semverMajor from 'semver/functions/major'
 import semverMinor from 'semver/functions/minor'
 import semverMinVersion from 'semver/ranges/min-version'
+import { isNil } from '../common'
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
 import { PackageType, PiecePackage } from './piece'
+
+export const branchedPieceResponse = (params?: BranchedPieceRequestType): Map<string, boolean | undefined | null> => {
+    if (isNil(params)) {
+        return new Map()
+    } 
+
+    return new Map(Object.entries(params))
+}
 
 export const getPackageAliasForPiece = (params: GetPackageAliasForPieceParams): string => {
     const { pieceName, pieceVersion } = params
@@ -74,4 +83,8 @@ type ExtractPieceFromModuleParams = {
     module: Record<string, unknown>
     pieceName: string
     pieceVersion: string
+}
+
+type BranchedPieceRequestType = {
+    [key: string]: boolean | undefined | null
 }
