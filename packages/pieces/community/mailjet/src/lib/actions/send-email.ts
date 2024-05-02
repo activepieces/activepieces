@@ -46,8 +46,6 @@ export const sendEmail = createAction({
     })
   },
   async run(configValue) {
-    // Action logic here
-    console.log(`ConfigValue: `, configValue);
     const auth = configValue.auth as { username: string; password: string; };
     const { propsValue } = configValue;
     if (!auth) throw new Error(`Credentials not found!`);
