@@ -36,8 +36,13 @@ export type GitRepo = Static<typeof GitRepo>
 export const GitRepoWithoutSensitiveData = Type.Omit(GitRepo, ['sshPrivateKey'])
 export type GitRepoWithoutSensitiveData = Static<typeof GitRepoWithoutSensitiveData>
 
+export enum GitPushOperationType {
+    PUSH_FLOW = 'PUSH_FLOW',
+    DELETE_FLOW = 'DELETE_FLOW',
+}
 
 export const PushGitRepoRequest = Type.Object({
+    type: Type.Enum(GitPushOperationType),
     commitMessage: Type.String(),
     flowId: Type.String()
 })

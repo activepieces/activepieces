@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import {
   map,
   Observable,
+  of,
   shareReplay,
   startWith,
   Subject,
@@ -18,6 +19,7 @@ import {
   FlowOperationType,
   TelemetryEventName,
   ApFlagId,
+  isNil,
 } from '@activepieces/shared';
 import {
   ApPaginatorComponent,
@@ -29,6 +31,8 @@ import {
   TelemetryService,
   downloadFlow,
   flowActionsUiInfo,
+  flowDeleteNote,
+  flowDeleteNoteWithGit,
 } from '@activepieces/ui/common';
 import { FlowService } from '@activepieces/ui/common';
 import { ARE_THERE_FLOWS_FLAG } from '../../resolvers/are-there-flows.resolver';
@@ -49,6 +53,8 @@ import {
   RenameFlowDialogData,
 } from '../../components/dialogs/rename-flow-dialog/rename-flow-dialog.component';
 import { RewardsDialogComponent } from '../../components/dialogs/rewards-dialog/rewards-dialog.component';
+import { SyncProjectService } from '@activepieces/ui-feature-git-sync';
+import { GitBranchType, GitPushOperationType } from '@activepieces/ee-shared';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -79,6 +85,7 @@ export class FlowsTableComponent implements OnInit {
   renameFlow$?: Observable<boolean>;
   hideFolders$ = this.embeddingService.getHideFolders$();
   showRewards$: Observable<boolean>;
+  deleteFlowFromGit$?: Observable<void>;
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -90,6 +97,7 @@ export class FlowsTableComponent implements OnInit {
     private embeddingService: EmbeddingService,
     private telemetryService: TelemetryService,
     private flagService: FlagService,
+    private syncProjectService: SyncProjectService,
     @Inject(LOCALE_ID) public locale: string
   ) {
     this.showAllFlows$ = this.listenToShowAllFolders();
@@ -155,7 +163,12 @@ export class FlowsTableComponent implements OnInit {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
       entityName: flow.version.displayName,
-      note: flowActionsUiInfo.delete.note,
+      note: '',
+      note$: this.syncProjectService.isDevelopment().pipe(
+        map((isDevelopment) => {
+          return isDevelopment ? flowDeleteNoteWithGit : flowDeleteNote;
+        })
+      ),
     };
     const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
       data: dialogData,
@@ -163,6 +176,23 @@ export class FlowsTableComponent implements OnInit {
     this.deleteFlowDialogClosed$ = dialogRef.beforeClosed().pipe(
       tap((res) => {
         if (res) {
+          this.deleteFlowFromGit$ = this.syncProjectService.get().pipe(
+            switchMap((repo) => {
+              if (
+                isNil(repo) ||
+                repo.branchType !== GitBranchType.DEVELOPMENT
+              ) {
+                return of(undefined);
+              }
+              return this.syncProjectService.push(repo.id, {
+                type: GitPushOperationType.DELETE_FLOW,
+                flowId: flow.id,
+                commitMessage: `chore: deleted flow ${flow.version.displayName}`,
+              });
+            }),
+            map(() => void 0)
+          );
+
           this.refreshTableAtCurrentCursor$.next(true);
           this.store.dispatch(
             FolderActions.deleteFlow({
