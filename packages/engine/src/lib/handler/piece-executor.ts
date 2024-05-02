@@ -131,20 +131,15 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         }
         if (action.children && hasBranches(pieceAction)) {
             const pieceOutput = output as RunFunctionReturnType
-            let newExecutionContext = executionState
 
-            for (const [k, v] of pieceOutput.entries()) {
-                if (v === false || v === undefined || isNil(v)) {
-                    continue
-                }
-
-                newExecutionContext = await flowExecutor.execute({
-                    action: action.children.filter(child => child.name === k)[0].action,
-                    executionState: newExecutionContext,
-                    constants,
-                })
-                return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(v)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
-            }
+            return await runBranchablePieceWithVersion({
+                executionState,
+                pieceOutput,
+                action,
+                constants,
+                stepOutput,
+                version: pieceOutput.version,
+            })
         }
 
         return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
@@ -164,6 +159,48 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
 function hasBranches(pieceAction: Action): boolean {
     return !isNil(pieceAction.outputs) && pieceAction.outputs.length > 1
+}
+
+async function runBranchablePieceWithVersion({ 
+    pieceOutput,
+    executionState, 
+    action, 
+    constants,
+    stepOutput, 
+    version = 'v1', 
+}: {
+    version: 'v1'
+    pieceOutput: RunFunctionReturnType
+    executionState: FlowExecutorContext
+    action: PieceAction
+    constants: EngineConstants
+    stepOutput: GenericStepOutput<ActionType.PIECE, unknown>
+}): Promise<FlowExecutorContext> {
+    const versions = {
+        v1: async (): Promise<FlowExecutorContext> => {
+            let newExecutionContext = executionState
+            let outputValue = undefined
+            for (const [k, v] of pieceOutput.output.entries()) {
+                if (v === false || v === undefined || isNil(v)) {
+                    continue
+                }
+    
+                if (isNil(action.children)) {
+                    continue
+                }
+
+                newExecutionContext = await flowExecutor.execute({
+                    action: action.children.filter(child => child.name === k)[0].action,
+                    executionState: newExecutionContext,
+                    constants,
+                })
+                outputValue = v
+            }
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(outputValue)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
+        },
+    }
+
+    return versions[version]()
 }
 
 const createTagsManager = (hookResponse: HookResponse): TagsManager => {

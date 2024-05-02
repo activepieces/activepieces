@@ -5,12 +5,26 @@ import { isNil } from '../common'
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
 import { PackageType, PiecePackage } from './piece'
 
-export const branchedPieceResponse = (params?: BranchedPieceRequestType): Map<string, boolean | undefined | null> => {
-    if (isNil(params)) {
-        return new Map()
-    } 
+export const branchedPieceResponse = (params?: BranchedPieceRequestType): BranchedResponseType => {
+    const versions = {
+        v1: (): BranchedResponseTypeV1 => {
+            const currentVersion = 'v1'
+            if (isNil(params)) {
+                return {
+                    version: currentVersion,
+                    output: new Map(),
+                }
+            } 
 
-    return new Map(Object.entries(params))
+            const { version: _, ...paramsWithoutVersion } = params 
+            return {
+                version: currentVersion,
+                output: new Map(Object.entries(paramsWithoutVersion)),
+            }
+        },
+    }
+    
+    return params?.version ? versions[params?.version]() : versions['v1']()
 }
 
 export const getPackageAliasForPiece = (params: GetPackageAliasForPieceParams): string => {
@@ -85,6 +99,17 @@ type ExtractPieceFromModuleParams = {
     pieceVersion: string
 }
 
-type BranchedPieceRequestType = {
+type BranchedPieceRequestTypeV1 = {
+    version?: 'v1'
+} & {
     [key: string]: boolean | undefined | null
 }
+
+type BranchedResponseTypeV1 =  {
+    version: 'v1'
+    output: Map<string, boolean | undefined | null> 
+}
+
+type BranchedPieceRequestType = BranchedPieceRequestTypeV1
+
+type BranchedResponseType = BranchedResponseTypeV1
