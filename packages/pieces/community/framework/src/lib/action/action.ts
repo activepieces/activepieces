@@ -7,7 +7,7 @@ import { PieceAuthProperty } from '../property/authentication';
 export type RunFunctionReturnType = Map<string, boolean | undefined | null>
 
 export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> =
-  (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<RunFunctionReturnType | void>
+  (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<RunFunctionReturnType | unknown | void>
 
 export const ErrorHandlingOptionsParam = Type.Object({
   retryOnFailure: Type.Object({
