@@ -13,6 +13,15 @@ import { flowExecutor } from './flow-executor'
 
 type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
 
+type RunBranchablePieceWithVersion = {
+    version: 'v1'
+    pieceOutput: RunFunctionReturnType
+    executionState: FlowExecutorContext
+    action: PieceAction
+    constants: EngineConstants
+    stepOutput: GenericStepOutput<ActionType.PIECE, unknown>
+}
+
 export const pieceExecutor: BaseExecutor<PieceAction> = {
     async handle({
         action,
@@ -168,14 +177,7 @@ async function runBranchablePieceWithVersion({
     constants,
     stepOutput, 
     version = 'v1', 
-}: {
-    version: 'v1'
-    pieceOutput: RunFunctionReturnType
-    executionState: FlowExecutorContext
-    action: PieceAction
-    constants: EngineConstants
-    stepOutput: GenericStepOutput<ActionType.PIECE, unknown>
-}): Promise<FlowExecutorContext> {
+}: RunBranchablePieceWithVersion): Promise<FlowExecutorContext> {
     const versions = {
         v1: async (): Promise<FlowExecutorContext> => {
             let newExecutionContext = executionState
