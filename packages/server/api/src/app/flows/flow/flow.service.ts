@@ -6,7 +6,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
-import { flowServiceHooks as hooks } from './flow-service-hooks'
+import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
 import { logger } from '@activepieces/server-shared'
@@ -285,7 +285,7 @@ export const flowService = {
         })
 
         if (flowToUpdate.status !== newStatus) {
-            const { scheduleOptions } = await hooks.preUpdateStatus({
+            const { scheduleOptions } = await flowSideEffects.preUpdateStatus({
                 flowToUpdate,
                 newStatus,
                 entityManager,
@@ -318,7 +318,7 @@ export const flowService = {
             },
         )
 
-        const { scheduleOptions } = await hooks.preUpdatePublishedVersionId({
+        const { scheduleOptions } = await flowSideEffects.preUpdatePublishedVersionId({
             flowToUpdate,
             flowVersionToPublish,
         })
@@ -355,8 +355,8 @@ export const flowService = {
                 id,
                 projectId,
             })
-
-            await hooks.preDelete({
+            
+            await flowSideEffects.preDelete({
                 flowToDelete,
             })
 

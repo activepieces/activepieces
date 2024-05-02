@@ -109,10 +109,11 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
+        const userId = await extractUserIdFromPrincipal(request.principal)
         eventsHooks.get().send(request, {
             action: ApplicationEventName.DELETED_FLOW,
             flow,
-            userId: request.principal.id,
+            userId,
         })
         await flowService.delete({
             id: request.params.id,

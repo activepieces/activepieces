@@ -50,8 +50,8 @@ const buildResponse = ({
         }
     }
 
-    const { id, name, defaultLocale, projectRolesEnabled } = platform
-    return { id, name, defaultLocale, projectRolesEnabled }
+    const { id, name, defaultLocale, projectRolesEnabled, gitSyncEnabled } = platform
+    return { id, name, defaultLocale, projectRolesEnabled, gitSyncEnabled }
 }
 
 type BuildResponseParams = {
@@ -59,7 +59,7 @@ type BuildResponseParams = {
     principal: Principal
 }
 
-type PlatformBasics = Pick<Platform, 'id' | 'name' | 'defaultLocale' | 'projectRolesEnabled'>
+type PlatformBasics = Pick<Platform, 'id' | 'name' | 'defaultLocale' | 'projectRolesEnabled' | 'gitSyncEnabled'>
 
 const UpdatePlatformRequest = {
     schema: {
