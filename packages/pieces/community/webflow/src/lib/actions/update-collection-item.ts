@@ -1,62 +1,74 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+
 import { webflowAuth } from '../..';
-import { webflowCommon } from '../common/common';
+import { webflowProps } from '../common/props';
+import { WebflowApiClient } from '../common/client';
 
 export const webflowUpdateCollectionItem = createAction({
-  auth: webflowAuth,
-  name: 'update_collection_item',
-  description: 'Update collection item',
-  displayName: 'Update an item in a collection',
-  props: {
-    site_id: webflowCommon.sitesDropdown,
-    collection_id: webflowCommon.collectionsDropdown,
-    collection_item_id: Property.ShortText({
-      displayName: 'Collection Item ID',
-      description: 'The ID of the collection item',
-      required: true,
-    }),
-    values: webflowCommon.collectionFieldProperties,
-    is_archived: Property.Checkbox({
-      displayName: 'Is Archived',
-      description: 'Whether the item is archived or not',
-      required: false,
-    }),
-    is_draft: Property.Checkbox({
-      displayName: 'Is Draft',
-      description: 'Whether the item is a draft or not',
-      required: false,
-    }),
-  },
+	auth: webflowAuth,
+	name: 'update_collection_item',
+	description: 'Update collection item',
+	displayName: 'Update an item in a collection',
+	props: {
+		site_id: webflowProps.site_id,
+		collection_id: webflowProps.collection_id,
+		collection_item_id: webflowProps.collection_item_id,
+		collection_fields: webflowProps.collection_fields,
+		is_archived: Property.Checkbox({
+			displayName: 'Is Archived',
+			description: 'Whether the item is archived or not',
+			required: false,
+		}),
+		is_draft: Property.Checkbox({
+			displayName: 'Is Draft',
+			description: 'Whether the item is a draft or not',
+			required: false,
+		}),
+	},
 
-  async run(configValue) {
-    const accessToken = configValue.auth['access_token'];
-    const collectionId = configValue.propsValue['collection_id'];
-    const collectionItemId = configValue.propsValue['collection_item_id'];
-    const isArchived = configValue.propsValue['is_archived'];
-    const isDraft = configValue.propsValue['is_draft'];
+	async run(context) {
+		const collectionId = context.propsValue.collection_id;
+		const collectionItemId = context.propsValue.collection_item_id;
+		const isArchived = context.propsValue.is_archived;
+		const isDraft = context.propsValue.is_draft;
+		const collectionInputFields = context.propsValue.collection_fields;
 
-    const request: HttpRequest = {
-      method: HttpMethod.PUT,
-      url: `https://api.webflow.com/collections/${collectionId}/items/${collectionItemId}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: accessToken,
-      },
-      body: {
-        fields: configValue.propsValue['values'],
-        isArchived,
-        isDraft,
-      },
-    };
+		const client = new WebflowApiClient(context.auth.access_token);
+		const { fields: CollectionFields } = await client.getCollection(collectionId);
 
-    const res = await httpClient.sendRequest<never>(request);
+		const formattedCollectionFields: DynamicPropsValue = {};
+		for (const field of CollectionFields) {
+			const fieldValue = collectionInputFields[field.slug];
 
-    return res.body;
-  },
+			if (fieldValue !== undefined && fieldValue !== '') {
+				switch (field.type) {
+					case 'ImageRef':
+					case 'FileRef':
+						formattedCollectionFields[field.slug] = { url: fieldValue };
+						break;
+					case 'Set':
+						if (fieldValue.length > 0) {
+							formattedCollectionFields[field.slug] = fieldValue.map((url: string) => ({
+								url: url,
+							}));
+						}
+						break;
+					case 'ItemRefSet':
+						if (fieldValue.length > 0) {
+							formattedCollectionFields[field.slug] = fieldValue;
+						}
+						break;
+					case 'Number':
+						formattedCollectionFields[field.slug] = Number(fieldValue);
+						break;
+					default:
+						formattedCollectionFields[field.slug] = fieldValue;
+				}
+			}
+		}
+
+		return await client.updateCollectionItem(collectionId, collectionItemId, {
+			fields: { ...formattedCollectionFields, _archived: isArchived, _draft: isDraft },
+		});
+	},
 });
