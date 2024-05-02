@@ -29,7 +29,8 @@ export const enrichCompany = createAction({
         'Content-Type': 'application/json',
       },
     });
-    await store.put(`_apollo_org_${propsValue.domain}`, result.body.organization);
-    return result.body.organization;
+    const resultOrg = result.body.organization || {};
+    await store.put(`_apollo_org_${propsValue.domain}`, resultOrg);
+    return resultOrg;
   },
 });
