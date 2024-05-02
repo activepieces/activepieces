@@ -56,6 +56,12 @@ export const telegramSendMessageAction = createAction({
     instructions_format: Property.MarkDown({
       value: format,
     }),
+    web_page_preview: Property.Checkbox({
+      displayName: 'Disable Web Page Preview',
+      description: 'Disable link previews for links in this message',
+      required: false,
+      defaultValue: false,
+    }),
     message: Property.LongText({
       displayName: 'Message',
       description: 'The message to be sent',
@@ -78,6 +84,7 @@ export const telegramSendMessageAction = createAction({
         message_thread_id: ctx.propsValue['message_thread_id'] ?? undefined,
         parse_mode: ctx.propsValue['format'] ?? 'MarkdownV2',
         reply_markup: ctx.propsValue['reply_markup'] ?? undefined,
+        disable_web_page_preview: ctx.propsValue['web_page_preview'] ?? false,
       },
     });
   },
