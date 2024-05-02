@@ -47,6 +47,7 @@ export const waitForApprovalLink = createAction({
     } else {
       // Return a Map populated with the expected returned data
       return branchedPieceResponse({
+        version: 'v1', // Optional: adding a version for the expected response. Defaults to 'v1'.
         approved: ctx.resumePayload.queryParams['action'] === 'approve',
         denied: ctx.resumePayload.queryParams['action'] !== 'approve',
       })
