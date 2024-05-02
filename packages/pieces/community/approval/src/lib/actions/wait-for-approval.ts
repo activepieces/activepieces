@@ -1,8 +1,3 @@
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { ExecutionType, PauseType } from '@activepieces/shared';
 
@@ -19,7 +14,10 @@ export const waitForApprovalLink = createAction({
       hide: true,
     },
   },
-  outputs: ['approved', 'denied'],
+  outputs: [
+    { name: 'approved' }, 
+    { name: 'denied' }
+  ],
   async run(ctx) {
     if (ctx.executionType === ExecutionType.BEGIN) {
       ctx.run.pause({
@@ -29,27 +27,13 @@ export const waitForApprovalLink = createAction({
         },
       });
 
-      const request: HttpRequest<any> = {
-        method: HttpMethod.GET,
-        url: ctx.generateApprovalUrl({
-          action: 'approved',
-        }),
-      };
-
-      const res = await httpClient.sendRequest<{
-        approved: boolean;
-        denied: boolean;
-      }>(request);
-
-      return {
-        approved: res.body.approved,
-        denied: res.body.denied,
-      };
+      return new Map()
     } else {
-      return {
+      const op = {
         approved: ctx.resumePayload.queryParams['action'] === 'approve',
         denied: ctx.resumePayload.queryParams['action'] !== 'approve',
-      };
+      }
+      return new Map(Object.entries(op))
     }
   },
 });

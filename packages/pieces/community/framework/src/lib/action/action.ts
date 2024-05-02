@@ -1,11 +1,13 @@
 import { Static, Type } from '@sinclair/typebox';
 import { ActionContext } from '../context';
-import { ActionBase } from '../piece-metadata';
+import { ActionBase, ActionOutput } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
 
+export type RunFunctionReturnType = Map<string, boolean | undefined | null>
+
 export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> =
-  (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
+  (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<RunFunctionReturnType | void>
 
 export const ErrorHandlingOptionsParam = Type.Object({
   retryOnFailure: Type.Object({
@@ -31,7 +33,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   run: ActionRunner<PieceAuth, ActionProps>
   test?: ActionRunner<PieceAuth, ActionProps>
   requireAuth?: boolean
-  outputs?: string[]
+  outputs?: ActionOutput[]
   errorHandlingOptions?: ErrorHandlingOptionsParam
 }
 
@@ -44,7 +46,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends In
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
     public readonly test: ActionRunner<PieceAuth, ActionProps>,
     public readonly requireAuth: boolean,
-    public readonly outputs: string[],
+    public readonly outputs: ActionOutput[],
     public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
   ) { }
 }
@@ -68,7 +70,7 @@ export const createAction = <
     params.run,
     params.test ?? params.run,
     params.requireAuth ?? true,
-    params.outputs ?? ['main'],
+    params.outputs ?? [{ name: 'main' }],
     params.errorHandlingOptions ?? {
       continueOnFailure: {
         defaultValue: false,
