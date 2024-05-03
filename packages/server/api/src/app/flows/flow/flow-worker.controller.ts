@@ -1,9 +1,9 @@
-import { PopulatedFlow, PrincipalType } from "@activepieces/shared"
-import { FastifyPluginAsyncTypebox, Type } from "@fastify/type-provider-typebox"
-import { flowService } from "./flow.service"
-import { flowVersionService } from "../flow-version/flow-version.service"
-import { entitiesMustBeOwnedByCurrentProject } from "../../authentication/authorization"
-import { StatusCodes } from "http-status-codes"
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { flowVersionService } from '../flow-version/flow-version.service'
+import { flowService } from './flow.service'
+import { PopulatedFlow, PrincipalType } from '@activepieces/shared'
 
 export const flowWorkerController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
@@ -16,7 +16,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (fastify) =
             projectId: request.principal.projectId,
         })
         const lockedVersion = await flowVersionService.lockPieceVersions({
-            flowVersion: flowVersion,
+            flowVersion,
             projectId: request.principal.projectId,
         })
         return {
@@ -29,14 +29,14 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (fastify) =
 
 const GetLockedVersionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.WORKER]
+        allowedPrincipals: [PrincipalType.WORKER],
     },
     schema: {
         querystring: Type.Object({
             versionId: Type.String(),
         }),
         response: {
-            [StatusCodes.OK]: PopulatedFlow
-        }
+            [StatusCodes.OK]: PopulatedFlow,
+        },
     },
 }
