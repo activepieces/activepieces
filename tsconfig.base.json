@@ -402,6 +402,9 @@
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
       ],
+      "@activepieces/piece-queue": [
+        "packages/pieces/community/queue/src/index.ts"
+      ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
       ],
