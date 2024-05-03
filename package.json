@@ -201,7 +201,7 @@
     "zone.js": "0.14.4"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "17.1.4",
+    "@angular-devkit/build-angular": "17.3.6",
     "@angular-devkit/core": "17.1.4",
     "@angular-devkit/schematics": "17.1.4",
     "@angular-eslint/builder": "15.2.1",
