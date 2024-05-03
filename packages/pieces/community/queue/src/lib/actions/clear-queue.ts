@@ -13,7 +13,8 @@ export const clearQueue = createAction({
         info: Property.MarkDown({
             value: `
             **Note:**
-            This deletes all items inside the queue permanently.
+            - This deletes all items inside the queue permanently.
+            - The testing step work in isolation and doesn't affect the actual queue after publishing.
             `,
         }),
         queueName: Property.ShortText({
