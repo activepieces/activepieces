@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/shared';
 import { googleSheetsAuth } from '../../';
 import {
   columnToLabel,
@@ -28,6 +29,8 @@ import {
 
 import crypto from 'crypto';
 
+const ALL_COLUMNS = 'all_columns';
+
 export const newOrUpdatedRowTrigger = createTrigger({
   auth: googleSheetsAuth,
   name: 'google-sheets-new-or-updated-row',
@@ -44,14 +47,14 @@ export const newOrUpdatedRowTrigger = createTrigger({
     trigger_column: Property.Dropdown({
       displayName: 'Trigger Column',
       description: `Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.`,
-      required: true,
+      required: false,
       refreshers: ['spreadsheet_id', 'sheet_id'],
       options: async ({ auth, spreadsheet_id, sheet_id }) => {
-        if (!auth || !spreadsheet_id || !sheet_id) {
+        if (!auth || !spreadsheet_id || isNil(sheet_id)) {
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please select sheet first.',
+            placeholder: `Please select sheet first`,
           };
         }
 
@@ -73,7 +76,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
         const labeledRowValues = transformWorkSheetValues(firstRowValues, 0);
 
         const options: DropdownOption<string>[] = [
-          { label: 'All Columns', value: 'all_columns' },
+          { label: 'All Columns', value: ALL_COLUMNS },
         ];
 
         Object.entries(labeledRowValues[0].values).forEach(([key, value]) => {
@@ -98,7 +101,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
   async onEnable(context) {
     const spreadSheetId = context.propsValue.spreadsheet_id;
     const sheetId = context.propsValue.sheet_id;
-    const triggerColumn = context.propsValue.trigger_column;
+    const triggerColumn = context.propsValue.trigger_column ;
 
     const sheetName = await getWorkSheetName(
       context.auth,
@@ -107,7 +110,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
     );
 
     const range =
-      triggerColumn === 'all_columns'
+      triggerColumn === ALL_COLUMNS
         ? sheetName
         : `${sheetName}!${triggerColumn}:${triggerColumn}`; // only fetch trigger column values
 
@@ -169,7 +172,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
     const spreadSheetId = context.propsValue.spreadsheet_id;
     const sheetId = context.propsValue.sheet_id;
-    const triggerColumn = context.propsValue.trigger_column;
+    const triggerColumn = context.propsValue.trigger_column ?? ALL_COLUMNS;
 
     const sheetName = await getWorkSheetName(
       context.auth,
@@ -200,7 +203,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
        * If trigger column is all_columns then store entrie row as target value, else store only column value.
        */
       let targetValue;
-      if (triggerColumn === 'all_columns') {
+      if (triggerColumn === ALL_COLUMNS) {
         targetValue = currentRowValue;
       } else {
         const currentTriggerColumnValue =
