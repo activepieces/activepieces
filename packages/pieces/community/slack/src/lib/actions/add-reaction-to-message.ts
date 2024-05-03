@@ -1,18 +1,15 @@
 import { slackAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackChannel, slackInfo } from '../common/props';
-import {
-	AuthenticationType,
-	httpClient,
-	HttpMethod,
-	HttpRequest,
-} from '@activepieces/pieces-common';
+
+import { WebClient } from '@slack/web-api';
 
 export const addRectionToMessageAction = createAction({
 	auth: slackAuth,
 	name: 'slack-add-reaction-to-message',
 	displayName: 'Add Reaction to Message',
 	description: 'Add an emoji reaction to a message.',
+
 	props: {
 		info: slackInfo,
 		channel: slackChannel,
@@ -28,25 +25,18 @@ export const addRectionToMessageAction = createAction({
 			description: 'e.g.`thumbsup`',
 		}),
 	},
+
 	async run(context) {
 		const { channel, ts, reaction } = context.propsValue;
 
-		const request: HttpRequest = {
-			method: HttpMethod.POST,
-			url: 'https://slack.com/api/reactions.add',
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.access_token,
-			},
-			body: {
-				channel,
-				timestamp: ts,
-				name: reaction,
-			},
-		};
+		const slack = new WebClient(context.auth.access_token);
 
-		const response = await httpClient.sendRequest(request);
+		const response = await slack.reactions.add({
+			channel,
+			timestamp: ts,
+			name: reaction,
+		});
 
-		return response.body;
+		return response;
 	},
 });

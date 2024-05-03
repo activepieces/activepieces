@@ -68,6 +68,7 @@
     "@sendgrid/mail": "8.0.0",
     "@sentry/node": "7.64.0",
     "@sinclair/typebox": "0.26.8",
+    "@slack/web-api": "7.0.4",
     "@supabase/supabase-js": "2.33.1",
     "@types/imapflow": "1.0.18",
     "@types/showdown": "2.0.6",
