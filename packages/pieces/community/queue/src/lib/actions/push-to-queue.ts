@@ -28,16 +28,16 @@ export const pushToQueue = createAction({
     }),
   },
   async run(context) {
-    await push({ store: context.store, queueName: context.propsValue.queueName, items: context.propsValue.items, testing: false })
+    return push({ store: context.store, queueName: context.propsValue.queueName, items: context.propsValue.items, testing: false })
   },
   async test(context) {
-    await push({ store: context.store, queueName: context.propsValue.queueName, items: context.propsValue.items, testing: true })
+    return push({ store: context.store, queueName: context.propsValue.queueName, items: context.propsValue.items, testing: true })
   }
 });
 
 async function push({ store, queueName, items, testing }: { store: Store, queueName: string, items: unknown[], testing: boolean }) {
   const key = constructQueueName(queueName, testing)
-  const existingQueueItems = await store.get(queueName, StoreScope.PROJECT) || []
-  const updatedQueueItems = [...existingQueueItems as unknown[], ...items]
+  const existingQueueItems = await store.get<unknown[]>(key, StoreScope.PROJECT) || []
+  const updatedQueueItems = [...existingQueueItems, ...items]
   await store.put(key, updatedQueueItems, StoreScope.PROJECT)
 }
