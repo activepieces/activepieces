@@ -1,55 +1,46 @@
 import {
     Property,
+    Store,
     StoreScope,
     createAction,
 } from '@activepieces/pieces-framework';
+import { constructQueueName } from '../common';
 
-export const pullToQueue = createAction({
-    name: 'pull-to-queue',
+export const pullFromQueue = createAction({
+    name: 'pull-from-queue',
     description: 'Pull items from queue',
     displayName: 'Pull items from queue',
     props: {
+        info: Property.MarkDown({
+            value: `
+            **Note:**
+            - You can pull items from other flows. The queue name should be unique across all flows.
+            - The testing step work in isolation and doesn't affect the actual queue after publishing.
+            `,
+        }),
         queueName: Property.ShortText({
             displayName: 'Queue Name',
-            description: 'Name of the queue to pull from',
             required: true,
         }),
         numOfItems: Property.Number({
             displayName: 'Number of items',
-            description: 'Number of items to pull',
             required: true,
-        }),
-        testPull: Property.MarkDown({
-            value: `
-            When you test this action, it will not pull the items out of the queue.
-            `,
-        }),
+        })
     },
     async run(context) {
-        const neededItems = pullFromQueue(context)
-        const allItems: any[] = await context.store.get(context.propsValue.queueName, StoreScope.PROJECT) || []
-
-        for (let i = 0; i < Math.min(context.propsValue.numOfItems, allItems.length); i++) {
-            allItems.shift()
-        }
-
-        await context.store.put(context.propsValue.queueName, allItems, StoreScope.PROJECT)
-
-        return neededItems
+        const items = await poll({ store: context.store, queueName: context.propsValue.queueName, numOfItems: context.propsValue.numOfItems, testing: false })
+        return items
     },
     async test(context) {
-        return await pullFromQueue(context)
+        const items = await poll({ store: context.store, queueName: context.propsValue.queueName, numOfItems: context.propsValue.numOfItems, testing: true })
+        return items
     }
 });
 
-const pullFromQueue = async (context: any) => {
-    const items = await context.store.get(context.propsValue.queueName, StoreScope.PROJECT) || []
-    const numOfItems = context.propsValue.numOfItems
-    const neededItems = []
-
-    for (let i = 0 ; i < Math.min(numOfItems, items.length); i++){
-        neededItems.push(items[i])
-    }
-
+async function poll({ store, queueName, numOfItems, testing }: { store: Store, queueName: string, numOfItems: number, testing: boolean }) {
+    const key = constructQueueName(queueName, testing)
+    const allItems = await store.get<unknown[]>(key, StoreScope.PROJECT) || []
+    const neededItems = allItems.splice(0, numOfItems)
+    await store.put(key, allItems, StoreScope.PROJECT)
     return neededItems
 }

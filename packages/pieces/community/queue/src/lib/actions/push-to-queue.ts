@@ -1,28 +1,43 @@
 import {
   Property,
+  Store,
   StoreScope,
   createAction,
 } from '@activepieces/pieces-framework';
+import { constructQueueName } from '../common';
 
 export const pushToQueue = createAction({
   name: 'push-to-queue',
   description: 'Push item to queue',
   displayName: 'Push to Queue',
   props: {
+    info: Property.MarkDown({
+      value: `
+      **Note:**
+      - You can push items from other flows. The queue name should be unique across all flows.
+      - The testing step work in isolation and doesn't affect the actual queue after publishing.
+      `,
+    }),
     queueName: Property.ShortText({
       displayName: 'Queue Name',
-      description: 'Name of the queue to push item to',
       required: true,
     }),
     items: Property.Array({
       displayName: 'Items',
-      description: 'Items to push to queue',
       required: true,
     }),
   },
   async run(context) {
-    const existingQueueItems = await context.store.get(context.propsValue.queueName, StoreScope.PROJECT) || []
-    const updatedQueueItems = [...existingQueueItems as unknown[], ...context.propsValue.items]
-    await context.store.put(context.propsValue.queueName, updatedQueueItems, StoreScope.PROJECT)
+    await push({ store: context.store, queueName: context.propsValue.queueName, items: context.propsValue.items, testing: false })
   },
+  async test(context) {
+    await push({ store: context.store, queueName: context.propsValue.queueName, items: context.propsValue.items, testing: true })
+  }
 });
+
+async function push({ store, queueName, items, testing }: { store: Store, queueName: string, items: unknown[], testing: boolean }) {
+  const key = constructQueueName(queueName, testing)
+  const existingQueueItems = await store.get(queueName, StoreScope.PROJECT) || []
+  const updatedQueueItems = [...existingQueueItems as unknown[], ...items]
+  await store.put(key, updatedQueueItems, StoreScope.PROJECT)
+}
