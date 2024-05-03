@@ -6,6 +6,13 @@ import {
 	HttpRequest,
 } from '@activepieces/pieces-common';
 
+export const slackInfo = Property.MarkDown({
+	value: `
+	Please make sure add the bot to the channel by following these steps:
+	  1. Type /invite in the channel's chat.
+	  2. Click on Add apps to this channel.
+	  3. Search for and add the bot.`,
+})
 export const slackChannel = Property.Dropdown({
 	displayName: 'Channel',
 	description: 'Channel, private group, or IM channel to send message to.',

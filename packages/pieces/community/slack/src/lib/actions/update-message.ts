@@ -6,7 +6,7 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { slackAuth } from '../..';
-import { blocks, slackChannel } from '../common/props';
+import { blocks, slackChannel, slackInfo } from '../common/props';
 
 export const updateMessage = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -15,6 +15,7 @@ export const updateMessage = createAction({
   description: 'Update an existing message',
   auth: slackAuth,
   props: {
+    info: slackInfo,
     channel: slackChannel,
     ts: Property.ShortText({
       displayName: 'Message ts',

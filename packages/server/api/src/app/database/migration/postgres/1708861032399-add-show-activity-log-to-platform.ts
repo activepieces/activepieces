@@ -1,10 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
+import { ApEdition } from '@activepieces/shared'
 
 export class AddShowActivityLogToPlatform1708861032399 implements MigrationInterface {
     name = 'AddShowActivityLogToPlatform1708861032399'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform"
             ADD "showActivityLog" boolean
@@ -24,6 +29,9 @@ export class AddShowActivityLogToPlatform1708861032399 implements MigrationInter
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform" DROP COLUMN "showActivityLog"
         `)

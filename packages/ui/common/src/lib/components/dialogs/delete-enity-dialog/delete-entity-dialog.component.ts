@@ -14,6 +14,7 @@ import { matchesString } from '../../../validators';
 export interface DeleteEntityDialogData {
   entityName: string;
   note: string;
+  note$?: Observable<string>;
   deleteEntity$: Observable<unknown>;
   errorMessageBuilder?: (e: unknown) => string | undefined;
 }

@@ -1,10 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
+import { ApEdition } from '@activepieces/shared'
 
 export class AddSmtpAndPrivacyUrlToPlatform1699491705906
 implements MigrationInterface {
     name = 'AddSmtpAndPrivacyUrlToPlatform1699491705906'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform"
             ADD "smtpHost" character varying
@@ -59,6 +64,9 @@ implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
         ALTER TABLE "platform" DROP COLUMN "cloudAuthEnabled"
     `)

@@ -7,14 +7,12 @@ import { CustomDomain } from '@activepieces/ee-shared';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import {
   CustomDomainService,
   HostnameDetailsResponse,
 } from '../../service/custom-domain.service';
 import { CreateCustomDomainDialogComponent } from '../dialogs/create-custom-domain-dialog/create-custom-domain-dialog.component';
-import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 import { DomainTxtValidationDialogComponent } from '../dialogs/domain-txt-validation-dialog/domain-txt-validation-dialog.component';
 
 @Component({
@@ -22,29 +20,22 @@ import { DomainTxtValidationDialogComponent } from '../dialogs/domain-txt-valida
   templateUrl: './custom-domain-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CustomDomainTableComponent
-  extends PlatformSettingsBaseComponent
-  implements OnInit
-{
+export class CustomDomainTableComponent implements OnInit {
   displayedColumns = ['domain', 'status', 'created', 'action'];
   dataSource!: CustomDomainDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
   validationData$?: Observable<HostnameDetailsResponse>;
-  featureDisabledTooltip = featureDisabledTooltip;
   upgradeNoteTitle = $localize`Unlock Custom Domain`;
   upgradeNote = $localize`Customize your domain to match your brand and provide a seamless experience for your users.`;
   constructor(
     private matDialog: MatDialog,
     private customDomainService: CustomDomainService
-  ) {
-    super();
-  }
+  ) {}
   ngOnInit(): void {
     this.dataSource = new CustomDomainDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
-      this.customDomainService,
-      this.isDemo
+      this.customDomainService
     );
   }
   createKey() {

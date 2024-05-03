@@ -1,7 +1,12 @@
 import { NgModule } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { DashboardContainerComponent } from './dashboard-container.component';
-import { ApDatePipe, DropdownSearchControlComponent, SelectAllDirective, UiCommonModule } from '@activepieces/ui/common';
+import {
+  ApDatePipe,
+  DropdownSearchControlComponent,
+  SelectAllDirective,
+  UiCommonModule,
+} from '@activepieces/ui/common';
 import { SidenavRoutesListComponent } from './components/sidenav-routes-list/sidenav-routes-list.component';
 import { RunsTableComponent } from './pages/runs-table/runs-table.component';
 import { FlowsTableComponent } from './pages/flows-table/flows-table.component';

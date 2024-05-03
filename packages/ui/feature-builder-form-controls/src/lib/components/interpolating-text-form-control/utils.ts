@@ -145,9 +145,7 @@ export function fromTextToOps(
               apMention: {
                 value: prefix + mentionText,
                 serverValue: item,
-                data: {
-                  logoUrl: stepMetaData?.logoUrl,
-                },
+                logoUrl: stepMetaData?.logoUrl,
               },
             },
           };

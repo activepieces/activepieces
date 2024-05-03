@@ -67,7 +67,8 @@ export class FlowExecutorContext {
             return undefined
         }
         assertEqual(stepOutput.type, ActionType.LOOP_ON_ITEMS, 'stepOutput.type', 'LOOP_ON_ITEMS')
-        return stepOutput as LoopStepOutput
+        // The new LoopStepOutput is needed as casting to LoopStepOutput will just cast the data but the class methods will not be available
+        return new LoopStepOutput(stepOutput as LoopStepOutput)
     }
 
     public isCompleted({ stepName }: { stepName: string }): boolean {

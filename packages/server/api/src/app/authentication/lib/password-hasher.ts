@@ -44,7 +44,7 @@ async function compareScrypt(
 }
 
 function isBcryptHash(hash: string): boolean {
-    return hash.startsWith('$2b$')
+    return hash.startsWith('$2')
 }
 
 function isScrypt(hash: string): boolean {

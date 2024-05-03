@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   BehaviorSubject,
-  delay,
   forkJoin,
   interval,
   map,
@@ -282,7 +281,6 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
                       return this.testStepService
                         .savePieceWebhookTriggerMockdata(flow.id, mockdata)
                         .pipe(
-                          delay(1500),
                           map((serverSavedMockdata) => [serverSavedMockdata]),
                           tap((resultsList) => {
                             this.currentResults$.next(resultsList);

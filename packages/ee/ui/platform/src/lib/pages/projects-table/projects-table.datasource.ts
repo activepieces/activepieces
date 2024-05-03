@@ -23,7 +23,7 @@ export class ProjectsDataSource extends DataSource<Project> {
     private projectService: ProjectService,
     private refresh$: Observable<boolean>,
     private queryParams$: Observable<Params>,
-    private isDemo: boolean
+    private isLocked: boolean
   ) {
     super();
   }
@@ -35,19 +35,24 @@ export class ProjectsDataSource extends DataSource<Project> {
    */
 
   connect(): Observable<ProjectWithLimits[]> {
-    if (this.isDemo) {
-      return of([]);
-    }
     return combineLatest([this.refresh$, this.queryParams$]).pipe(
       tap(() => {
         this.isLoading$.next(true);
       }),
-      switchMap(([_refresh, queryParams]) =>
-        this.projectService.list({
-          cursor: queryParams[CURSOR_QUERY_PARAM] ?? null,
-          limit: queryParams[LIMIT_QUERY_PARAM] ?? 10,
-        })
-      ),
+      switchMap(([_refresh, queryParams]) => {
+        if (this.isLocked) {
+          return of({
+            data: [],
+            next: null,
+            previous: null,
+          });
+        } else {
+          return this.projectService.list({
+            cursor: queryParams[CURSOR_QUERY_PARAM] ?? null,
+            limit: queryParams[LIMIT_QUERY_PARAM] ?? 10,
+          });
+        }
+      }),
       tap((page) => {
         this.data = page.data;
         this.paginator!.setNextAndPrevious(page.next, page.previous);

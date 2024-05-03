@@ -56,7 +56,8 @@
           "packages/ui/core/src/assets/scss/prism-theme.scss",
           "node_modules/prismjs/plugins/command-line/prism-command-line.css",
           "node_modules/prismjs/plugins/line-highlight/prism-line-highlight.css",
-          "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css"
+          "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css",
+          "node_modules/jsoneditor/dist/jsoneditor.min.css"
         ],
         "scripts": [
           "node_modules/marked/marked.min.js",
@@ -76,7 +77,7 @@
             {
               "type": "initial",
               "maximumWarning": "5mb",
-              "maximumError": "10mb"
+              "maximumError": "11mb"
             },
             {
               "type": "anyComponentStyle",

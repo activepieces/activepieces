@@ -4,6 +4,7 @@ import {
   slackChannel,
   username,
   blocks,
+  slackInfo,
 } from '../common/props';
 import { slackSendMessage } from '../common/utils';
 import { slackAuth } from '../../';
@@ -14,10 +15,12 @@ export const slackSendMessageAction = createAction({
   displayName: 'Send Message To A Channel',
   description: 'Send message to a channel',
   props: {
+    info: slackInfo,
     channel: slackChannel,
     threadTs: Property.ShortText({
       displayName: 'Thread ts',
-      description: 'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.',
+      description:
+        'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.',
       required: false,
     }),
     text: Property.LongText({

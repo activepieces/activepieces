@@ -5,31 +5,28 @@ description: "Learn how to publish your piece to the community."
 
 You can publish your pieces to npm registry and share them with the community, users can install your piece from Settings -> My Pieces -> Install Piece -> type in the name of your piece package.
 
-**1. Login to npm**
-
-Make sure you are logged in to npm. If not, please run:
-```bash
-npm login
-```
-
-**2. Rename Piece**
-
-Rename the piece name in `package.json` to something unique or related to your organization's scope (Ex: `@my-org/piece-PIECE_NAME`). You can find it at `packages/pieces/PIECE_NAME/package.json`.
-
-<Tip>
-Don't forget to increase the version number in `package.json` for each new release.
-</Tip>
-
-
-**3. Publish**
-
-<Tip>
-Replace `PIECE_NAME` with the actual name of your piece.
-</Tip>
-
-Run the following command:
-```bash
-npm run publish-piece PIECE_NAME
-```
+<Steps>
+  <Step title="Login to npm">
+    Make sure you are logged in to npm. If not, please run:
+    ```bash
+    npm login
+    ```
+  </Step>
+  <Step title="Rename Piece">
+    Rename the piece name in `package.json` to something unique or related to your organization's scope (Ex: `@my-org/piece-PIECE_NAME`). You can find it at `packages/pieces/PIECE_NAME/package.json`.
+    <Tip>
+    Don't forget to increase the version number in `package.json` for each new release.
+    </Tip>
+  </Step>
+  <Step title="Publish">
+    <Tip>
+    Replace `PIECE_NAME` with the actual name of your piece.
+    </Tip>
+    Run the following command:
+    ```bash
+    npm run publish-piece PIECE_NAME
+    ```
+  </Step>
+</Steps>
 
 **Congratulations! You can now import the piece from the settings page.**

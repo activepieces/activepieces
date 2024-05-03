@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  BehaviorSubject,
-  switchMap,
-  take,
-} from 'rxjs';
+import { BehaviorSubject, switchMap, take } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { FlagService } from './flag.service';
 import { TelemetryService } from './telemetry.service';
@@ -24,25 +20,25 @@ export interface Feature {
   key: FeatureKey;
 }
 
-
-export const FEATURES: Feature[] = [{
-  label: 'Create Multiple Projects',
-  key: 'PROJECTS',
-},
-{ label: 'Brand Activepieces', key: 'BRANDING' },
-{ label: 'Control Pieces', key: 'PIECES' },
-{
-  label: 'Create Custom Templates',
-  key: 'TEMPLATES',
-},
-{ label: 'Access Full API', key: 'API' },
-{ label: 'Single Sign On', key: 'SSO' },
-{ label: 'Audit Logs', key: 'AUDIT_LOGS' },
-{
-  label: 'Team Collaboration via Git',
-  key: 'GIT_SYNC',
-}]
-
+export const FEATURES: Feature[] = [
+  {
+    label: 'Create Multiple Projects',
+    key: 'PROJECTS',
+  },
+  { label: 'Brand Activepieces', key: 'BRANDING' },
+  { label: 'Control Pieces', key: 'PIECES' },
+  {
+    label: 'Create Custom Templates',
+    key: 'TEMPLATES',
+  },
+  { label: 'Access Full API', key: 'API' },
+  { label: 'Single Sign On', key: 'SSO' },
+  { label: 'Audit Logs', key: 'AUDIT_LOGS' },
+  {
+    label: 'Team Collaboration via Git',
+    key: 'GIT_SYNC',
+  },
+];
 
 @Injectable({
   providedIn: 'root',
@@ -55,7 +51,8 @@ export class ContactSalesService {
   constructor(
     private http: HttpClient,
     private telemetryService: TelemetryService,
-    private flagService: FlagService) { }
+    private flagService: FlagService
+  ) {}
 
   public open(features: FeatureKey[]): void {
     this.telemetryService.capture({
@@ -72,12 +69,18 @@ export class ContactSalesService {
     this.contactSalesState.next(false);
   }
 
-  sendRequest({ name, email, domain, message, features }: {
+  sendRequest({
+    name,
+    email,
+    domain,
+    message,
+    features,
+  }: {
     name: string;
     email: string;
     domain: string;
     message: string;
-    features: FeatureKey[],
+    features: FeatureKey[];
   }) {
     this.telemetryService.capture({
       name: TelemetryEventName.REQUEST_TRIAL_SUBMITTED,
@@ -106,8 +109,4 @@ export class ContactSalesService {
       })
     );
   }
-
-
-
-
 }

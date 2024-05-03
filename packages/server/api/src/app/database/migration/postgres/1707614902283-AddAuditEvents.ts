@@ -1,9 +1,14 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
+import { ApEdition } from '@activepieces/shared'
 
 export class AddAuditEvents1707614902283 implements MigrationInterface {
     name = 'AddAuditEvents1707614902283'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             CREATE TABLE "audit_event" (
                 "id" character varying(21) NOT NULL,
@@ -45,6 +50,9 @@ export class AddAuditEvents1707614902283 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform" DROP COLUMN "auditLogEnabled"
         `)

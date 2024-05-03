@@ -1,11 +1,16 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
+import { ApEdition } from '@activepieces/shared'
 
 export class AddAuthOptionsToPlatform1704667304953
 implements MigrationInterface {
     name = 'AddAuthOptionsToPlatform1704667304953'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-    // allowedAuthDomains
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
+        // allowedAuthDomains
         await queryRunner.query(`
             ALTER TABLE "platform"
             ADD COLUMN "allowedAuthDomains" character varying[]
@@ -60,6 +65,9 @@ implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform" DROP COLUMN "federatedAuthProviders"
         `)

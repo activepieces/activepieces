@@ -108,7 +108,7 @@ describe('Platform API', () => {
         })
 
         it('fails if user is not owner', async () => {
-            // arrange
+        // arrange
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
 
@@ -242,10 +242,11 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(3)
+            expect(Object.keys(responseBody)).toHaveLength(4)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.name).toBe(mockPlatform.name)
             expect(responseBody.defaultLocale).toBe(mockPlatform.defaultLocale)
+            expect(responseBody.projectRolesEnabled).toBe(mockPlatform.projectRolesEnabled)
         })
 
         it('Fails if user is not a platform member', async () => {

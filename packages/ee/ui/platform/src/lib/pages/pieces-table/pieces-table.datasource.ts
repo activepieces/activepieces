@@ -30,7 +30,7 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
     private searchControlValueChanged$: Observable<string>,
     private oAuth2AppsService: OAuth2AppsService,
     private refresh$: Observable<true>,
-    private withoutOAuth2Cred: boolean
+    private isLocked: boolean
   ) {
     super();
     this.pieces$ = this.piecesService
@@ -57,6 +57,9 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
         this.isLoading$.next(true);
       }),
       switchMap(({ search }) => {
+        if (this.isLocked) {
+          return of([]);
+        }
         return this.pieces$.pipe(
           map((ps) => {
             if (search) {
@@ -69,9 +72,6 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
         );
       }),
       switchMap((pieces) => {
-        if (this.withoutOAuth2Cred) {
-          return of(pieces);
-        }
         return this.oAuth2AppsService.listOAuth2AppsCredentials().pipe(
           map((apps) => {
             return pieces.map((p) => {

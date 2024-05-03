@@ -2,7 +2,7 @@ import { DataSource } from '@angular/cdk/collections';
 import { Observable, BehaviorSubject, tap, switchMap, map } from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { UserResponse } from '@activepieces/shared';
-import { PlatformService } from '@activepieces/ui/common';
+import { PlatformUserService } from '../../service/platform-user.service';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -14,7 +14,7 @@ export class UsersDataSource extends DataSource<UserResponse> {
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
     private refresh$: Observable<boolean>,
-    private platformService: PlatformService
+    private platformUserService: PlatformUserService
   ) {
     super();
   }
@@ -31,7 +31,9 @@ export class UsersDataSource extends DataSource<UserResponse> {
         this.isLoading$.next(true);
       }),
       switchMap(() => {
-        return this.platformService.listUsers().pipe(map((res) => res.data));
+        return this.platformUserService
+          .listUsers()
+          .pipe(map((res) => res.data));
       }),
       tap((res) => {
         this.data = res;

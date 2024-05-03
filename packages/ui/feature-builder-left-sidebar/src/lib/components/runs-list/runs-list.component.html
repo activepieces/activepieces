@@ -7,32 +7,35 @@
         <cdk-virtual-scroll-viewport class="ap-h-[calc(100vh-165px)]  ap-overflow-scroll thin-scrollbars" itemSize="48"
             (scrolledIndexChange)="nextBatch()">
 
-            <div *cdkVirtualFor="let run of runs" class=" ap-px-5 ap-my-5 ap-flex ap-gap-2 ap-items-center">
+            <div *cdkVirtualFor="let run of runs" class="ap-min-h-[52px] hover:ap-bg-hover ap-cursor-pointer ap-p-5 ap-flex ap-gap-2 ap-items-center"  (click)="runItemClicked(run)"
+                [matTooltip]="(currentRun$ | async)?.id !== run.id ? viewRunTooltip: exitRunTooltip"
+            >
                 <ap-state-icon [size]="19" [status]="run.status" [showStatusText]="false"></ap-state-icon>
                 <div class="ap-flex ap-flex-col ap-gap-1 ">
-                    <div class=" ap-text-body  ">
+                    <div class=" ap-text-body  " [class.!ap-font-semibold]="(currentRun$ | async)?.id === run.id ">
                         {{run.created
-                        |date:'mediumDate'
-                        }}, {{run.created |date:'h:mm:ss a' }}
+                        | insideBuilderDate}}
                     </div>
 
                 </div>
                 <div class="ap-flex-grow"></div>
-
-                <ap-icon-button *ngIf="(currentRun$ | async)?.id !== run.id || (isInDebugMode$ | async)"
-                    iconFilename="enter-run.svg" (buttonClicked)="ShowRun(run)" tooltipText="View run" i18n-tooltipText
-                    [width]="20" [height]="20"></ap-icon-button>
-                <ng-container
-                    *ngIf="(currentRun$ | async)?.id === run.id && ((isInDebugMode$ | async) === false || (isInDebugMode$ | async) === undefined)">
-                    <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]">
-                        <svg-icon src="assets/img/custom/eye.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
-                            i18n-matTooltip matTooltip="Viewing" [applyClass]="true"></svg-icon>
-                    </div>
-                </ng-container>
-                <ap-icon-button
-                    *ngIf="(currentRun$ | async)?.id === run.id && ((isInDebugMode$ | async) === false || (isInDebugMode$ | async) === undefined)"
-                    iconFilename="exit-run.svg" (buttonClicked)="exitRun()" tooltipText="Exit run" i18n-tooltipText
-                    [width]="20" [height]="20"></ap-icon-button>
+                <div class="ap-flex ap-items-center ap-justify-center ap-min-w-[48px]">
+                    @if((currentRun$ | async)?.id !== run.id)
+                    {
+                        <svg-icon class="ap-h-[20px] ap-w-[20px]" src="/assets/img/custom/arrow-right.svg" 
+                        [applyClass]="true" ></svg-icon>
+                    }
+                    @else(){
+                        <div class="ap-rotate-180">
+                            <svg-icon class="ap-h-[20px] ap-w-[20px]" src="/assets/img/custom/arrow-right.svg"
+                            [applyClass]="true" ></svg-icon>
+                        </div>
+                    }
+                    
+                </div>
+               
+              
+             
             </div>
         </cdk-virtual-scroll-viewport>
     </div>
@@ -53,4 +56,4 @@
     </div>
 </ng-template>
 
-<ng-container *ngIf="showRun$ | async"></ng-container>
+<ng-container *ngIf="runClicked$ | async"></ng-container>

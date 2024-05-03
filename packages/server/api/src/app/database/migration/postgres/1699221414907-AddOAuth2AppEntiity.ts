@@ -1,9 +1,14 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
+import { ApEdition } from '@activepieces/shared'
 
 export class AddOAuth2AppEntiity1699221414907 implements MigrationInterface {
     name = 'AddOAuth2AppEntiity1699221414907'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             CREATE TABLE "oauth_app" (
                 "id" character varying(21) NOT NULL,
@@ -26,6 +31,9 @@ export class AddOAuth2AppEntiity1699221414907 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "oauth_app" DROP CONSTRAINT "fk_oauth_app_platform_id"
         `)

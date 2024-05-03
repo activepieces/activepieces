@@ -22,7 +22,7 @@ import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 @Component({
   selector: 'app-edit-step-sidebar',
   templateUrl: './edit-step-sidebar.component.html',
-  styleUrls: ['./edit-step-sidebar.component.css'],
+  styleUrls: [],
 })
 export class EditStepSidebarComponent implements OnInit {
   constructor(

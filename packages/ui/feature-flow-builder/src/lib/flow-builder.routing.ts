@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { FlowBuilderComponent } from './page/flow-builder/flow-builder.component';
 import { GetInstanceRunResolver } from './resolvers/instance-run.resolver';
 import { GetFlowResolver } from './resolvers/flow.resolver';
-import { UserLoggedIn } from '@activepieces/ui/common';
+import { UserLoggedInGuard } from '@activepieces/ui/common';
 import { BuilderSavingGuard } from './guards/builder-saving.guard';
 import { FoldersResolver } from '@activepieces/ui/feature-folders-store';
 import { flowDisplayNameInRouteData } from './resolvers/builder-route-data';
@@ -15,7 +15,7 @@ export const FlowLayoutRouting: Routes = [
       [flowDisplayNameInRouteData]: GetFlowResolver,
       folders: FoldersResolver,
     },
-    canActivate: [UserLoggedIn],
+    canActivate: [UserLoggedInGuard],
     canDeactivate: [BuilderSavingGuard],
     runGuardsAndResolvers: 'always',
   },
@@ -25,6 +25,6 @@ export const FlowLayoutRouting: Routes = [
     resolve: {
       [flowDisplayNameInRouteData]: GetInstanceRunResolver, 
     },
-    canActivate: [UserLoggedIn],
+    canActivate: [UserLoggedInGuard],
   },
 ];

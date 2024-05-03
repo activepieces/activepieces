@@ -46,7 +46,4 @@ export const moxieCRMRegisterTrigger = ({
     async run(context) {
       return [context.payload.body];
     },
-    async test(context) {
-      return [context.payload.body];
-    },
   });

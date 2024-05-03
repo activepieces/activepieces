@@ -1,5 +1,8 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { slackChannel } from '../common/props';
+import {
+  TriggerStrategy,
+  createTrigger,
+} from '@activepieces/pieces-framework';
+import { slackChannel, slackInfo } from '../common/props';
 import { slackAuth } from '../../';
 import {
   AuthenticationType,
@@ -43,6 +46,7 @@ export const newMessage = createTrigger({
   displayName: 'New Message',
   description: 'Triggers when a new message is received',
   props: {
+    info: slackInfo,
     channel: slackChannel,
   },
   type: TriggerStrategy.APP_WEBHOOK,

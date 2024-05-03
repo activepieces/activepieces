@@ -42,7 +42,6 @@ import {
   keysWithinPath,
   QuillEditorOperationsObject,
   QuillMaterialBase,
-  TextInsertOperation,
 } from './utils';
 import 'quill-mention';
 
@@ -52,6 +51,7 @@ import {
   EnrichedStepMetaDataForMentions,
 } from '@activepieces/ui/feature-builder-store';
 import {
+  BLOT_NAME,
   InsertMentionOperation,
   UiCommonModule,
 } from '@activepieces/ui/common';
@@ -87,6 +87,7 @@ export class InterpolatingTextFormControlComponent
 {
   static nextId = 0;
   @Input() insideMatField = true;
+  formats = ['span', BLOT_NAME];
   @Input() onlyAllowOneMentionToBeAdded = false;
   @Output() editorFocused: EventEmitter<boolean> = new EventEmitter();
   @Input({ required: true })
@@ -232,34 +233,13 @@ export class InterpolatingTextFormControlComponent
 
   editorCreated(): void {
     this.removeDefaultTabKeyBinding();
-    this.removeConvertingSpaceAndMinusToList();
-
-    this.editor.quillEditor.clipboard.addMatcher(
-      Node.ELEMENT_NODE,
-      (_node: Element, delta: any) => {
-        const cleanedOps: (InsertMentionOperation | TextInsertOperation)[] = [];
-        delta.ops.forEach((op: any) => {
-          if (
-            (op.insert && typeof op.insert === 'string') ||
-            (typeof op.insert === 'object' && op.insert.mention)
-          ) {
-            // remove styling in case the user is pasting HTML
-            delete op['attributes'];
-            cleanedOps.push(op);
-          }
-        });
-        delta.ops = cleanedOps;
-        return delta;
-      }
-    );
   }
 
   private removeDefaultTabKeyBinding() {
-    delete this.editor.quillEditor.getModule('keyboard').bindings['9'];
+    const module = this.editor.quillEditor.getModule('keyboard');
+    delete module.bindings['9'];
   }
-  private removeConvertingSpaceAndMinusToList() {
-    delete this.editor.quillEditor.getModule('keyboard').bindings['32'][0];
-  }
+
   get placeholder() {
     return this._placeholder;
   }
@@ -398,9 +378,7 @@ export class InterpolatingTextFormControlComponent
       if (indexInDfsTraversal > 0) {
         mentionOp.insert.apMention.value = `${indexInDfsTraversal}. ${mentionOp.insert.apMention.value}`;
       }
-      mentionOp.insert.apMention.data = {
-        logoUrl: stepMetaData?.logoUrl,
-      };
+      mentionOp.insert.apMention.logoUrl = stepMetaData?.logoUrl;
       if (this.onlyAllowOneMentionToBeAdded) {
         this.editorFormControl.setValue({ ops: [mentionOp] });
       } else {

@@ -81,6 +81,34 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             nullable: false,
             default: true,
         },
+        customDomainsEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
+        customAppearanceEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
+        manageProjectsEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
+        managePiecesEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
+        manageTemplatesEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
+        apiKeysEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
+        projectRolesEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
         embeddingEnabled: {
             type: Boolean,
             nullable: false,

@@ -138,6 +138,12 @@ export const userService = {
         })
     },
 
+    async getUsersByEmail({ email }: { email: string }): Promise<User[]> {
+        return repo()
+            .createQueryBuilder()
+            .andWhere('LOWER(email) = LOWER(:email)', { email })
+            .getMany()
+    },
     async getByPlatformAndEmail({
         platformId,
         email,

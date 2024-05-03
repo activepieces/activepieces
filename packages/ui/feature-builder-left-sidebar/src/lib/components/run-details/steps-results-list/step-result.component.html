@@ -121,13 +121,16 @@
 <ng-container *ngIf="hideIterationInput$ | async"></ng-container>
 
 <ng-template #statusIconTemplate>
-  <svg-icon
+  <div class="ap-w-[43px] ap-flex ap-items-center ap-justify-center">
+    <svg-icon
     *ngIf="StepOutputStatus.SUCCEEDED === stepResult.output?.status || StepOutputStatus.STOPPED === stepResult.output?.status"
     matTooltip="Step succeeded" src="assets/img/custom/success-step-result.svg"
-    [svgStyle]="{ width: '21px', height: '20px' }" class="icon-padding"></svg-icon>
+    [svgStyle]="{ width: '21px', height: '20px' }" ></svg-icon>
   <svg-icon *ngIf="StepOutputStatus.FAILED === stepResult.output?.status"
     src="assets/img/custom/failure-step-result.svg" [svgStyle]="{ width: '21px', height: '20px' }" class="icon-padding"
     matTooltip="Step failed"></svg-icon>
   <svg-icon *ngIf="StepOutputStatus.PAUSED === stepResult.output?.status" src="assets/img/custom/status/paused.svg"
     class="icon-padding" [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step paused"></svg-icon>
-</ng-template>
+
+  </div>
+  </ng-template>

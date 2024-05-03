@@ -9,7 +9,10 @@ import {
     ApId,
     assertEqual,
     Platform,
-    PlatformWithoutSensitiveData, Principal, UpdatePlatformRequestBody } from '@activepieces/shared'
+    PlatformWithoutSensitiveData,
+    Principal,
+    UpdatePlatformRequestBody,
+} from '@activepieces/shared'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {
@@ -47,8 +50,8 @@ const buildResponse = ({
         }
     }
 
-    const { id, name, defaultLocale } = platform
-    return { id, name, defaultLocale }
+    const { id, name, defaultLocale, projectRolesEnabled, gitSyncEnabled } = platform
+    return { id, name, defaultLocale, projectRolesEnabled, gitSyncEnabled }
 }
 
 type BuildResponseParams = {
@@ -56,7 +59,7 @@ type BuildResponseParams = {
     principal: Principal
 }
 
-type PlatformBasics = Pick<Platform, 'id' | 'name' | 'defaultLocale'>
+type PlatformBasics = Pick<Platform, 'id' | 'name' | 'defaultLocale' | 'projectRolesEnabled' | 'gitSyncEnabled'>
 
 const UpdatePlatformRequest = {
     schema: {

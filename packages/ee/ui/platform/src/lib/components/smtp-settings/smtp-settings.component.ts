@@ -1,17 +1,19 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnInit,
+} from '@angular/core';
 import {
   FormBuilder,
   FormControl,
   FormGroup,
   Validators,
 } from '@angular/forms';
-import {
-  PlatformService,
-  featureDisabledTooltip,
-} from '@activepieces/ui/common';
+import { PlatformService } from '@activepieces/ui/common';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
+import { Platform } from '@activepieces/shared';
 
 interface SmtpForm {
   smtpHost: FormControl<string>;
@@ -26,14 +28,12 @@ interface SmtpForm {
   templateUrl: './smtp-settings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SmtpSettingsComponent
-  extends PlatformSettingsBaseComponent
-  implements OnInit
-{
+export class SmtpSettingsComponent implements OnInit {
+  @Input({ required: true }) platform?: Platform;
+
   smtpSettingsForm: FormGroup<SmtpForm>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$?: Observable<void>;
-  featureDisabledTooltip = featureDisabledTooltip;
   upgradeNoteTitle = $localize`Unlock Email Settings`;
   upgradeNote = $localize`Configure your email provider settings for when you send users authentication emails or failed runs notifications.`;
   constructor(
@@ -41,7 +41,6 @@ export class SmtpSettingsComponent
     private platformService: PlatformService,
     private matSnackbar: MatSnackBar
   ) {
-    super();
     this.smtpSettingsForm = this.fb.group({
       smtpHost: this.fb.control('', {
         nonNullable: true,
@@ -72,10 +71,6 @@ export class SmtpSettingsComponent
   ngOnInit(): void {
     if (this.platform) {
       this.smtpSettingsForm.patchValue(this.platform);
-    }
-
-    if (this.isDemo) {
-      this.smtpSettingsForm.disable();
     }
   }
   save(): void {

@@ -1,15 +1,13 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { platformService } from '../../platform/platform.service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { auditLogService } from './audit-event-service'
 import { ListAuditEventsRequest } from '@activepieces/ee-shared'
 import {
-    ActivepiecesError,
     assertNotNullOrUndefined,
-    ErrorCode,
 } from '@activepieces/shared'
 
 export const auditEventModule: FastifyPluginAsyncTypebox = async (app) => {
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.auditLogEnabled))
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(auditEventController, { prefix: '/v1/audit-events' })
 }
@@ -25,7 +23,6 @@ const auditEventController: FastifyPluginAsyncTypebox = async (app) => {
         async (request) => {
             const platformId = request.principal.platform.id
             assertNotNullOrUndefined(platformId, 'platformId')
-            await assertAuditLogEnabled(platformId)
             return auditLogService.list({
                 platformId,
                 cursorRequest: request.query.cursor ?? null,
@@ -33,17 +30,4 @@ const auditEventController: FastifyPluginAsyncTypebox = async (app) => {
             })
         },
     )
-}
-
-async function assertAuditLogEnabled(platformId: string): Promise<void> {
-    const platform = await platformService.getOneOrThrow(platformId)
-
-    if (!platform.auditLogEnabled) {
-        throw new ActivepiecesError({
-            code: ErrorCode.FEATURE_DISABLED,
-            params: {
-                message: 'Audit log addon feature is disabled',
-            },
-        })
-    }
 }

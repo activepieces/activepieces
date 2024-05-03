@@ -9,7 +9,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { Platform } from '@activepieces/shared';
 import { FlagService, PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
-import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
+import {
+  APPEARANCE_DISABLED_RESOLVER_KEY,
+  AUDIT_LOG_DISABLED_RESOLVER_KEY,
+  CUSTOM_DOMAINS_DISABLED_RESOLVER_KEY,
+  SIGNING_KEY_DISABLED_RESOLVER_KEY,
+} from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-platform-settings',
@@ -28,15 +33,18 @@ export class PlatformSettingsComponent implements AfterViewInit {
   readonly newUpdateMessage = $localize`New update available`;
 
   readonly tabIndexFragmentMap = [
-    { fragmentName: 'Updates', removeOnDemo: false },
-    { fragmentName: 'SigningKeys', removeOnDemo: true },
-    { fragmentName: 'MailServer', removeOnDemo: true },
-    { fragmentName: 'CustomDomains', removeOnDemo: true },
-    { fragmentName: 'ApiKeys', removeOnDemo: false },
-    { fragmentName: 'SSO', removeOnDemo: false },
-    { fragmentName: 'AuditLog', removeOnDemo: false },
+    { fragmentName: 'Updates' },
+    { fragmentName: 'SigningKeys' },
+    { fragmentName: 'MailServer' },
+    { fragmentName: 'CustomDomains' },
+    { fragmentName: 'ApiKeys' },
+    { fragmentName: 'SSO' },
+    { fragmentName: 'AuditLog' },
   ];
-  isDemo = false;
+  removeSigningKey = false;
+  removeMailServer = false;
+  removeCustomDomain = false;
+  auditLogFeatureLocked = false;
   platform?: Platform;
   isVersionMatch$: Observable<boolean>;
 
@@ -45,10 +53,27 @@ export class PlatformSettingsComponent implements AfterViewInit {
     private route: ActivatedRoute,
     private flagService: FlagService
   ) {
-    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
-    if (this.isDemo) {
+    this.auditLogFeatureLocked =
+      this.route.snapshot.data[AUDIT_LOG_DISABLED_RESOLVER_KEY];
+    this.removeSigningKey =
+      this.route.snapshot.data[SIGNING_KEY_DISABLED_RESOLVER_KEY];
+    if (this.removeSigningKey) {
       this.tabIndexFragmentMap = this.tabIndexFragmentMap.filter(
-        (i) => !i.removeOnDemo
+        (i) => i.fragmentName !== 'SigningKeys'
+      );
+    }
+    this.removeMailServer =
+      this.route.snapshot.data[APPEARANCE_DISABLED_RESOLVER_KEY];
+    if (this.removeMailServer) {
+      this.tabIndexFragmentMap = this.tabIndexFragmentMap.filter(
+        (i) => i.fragmentName !== 'MailServer'
+      );
+    }
+    this.removeCustomDomain =
+      this.route.snapshot.data[CUSTOM_DOMAINS_DISABLED_RESOLVER_KEY];
+    if (this.removeCustomDomain) {
+      this.tabIndexFragmentMap = this.tabIndexFragmentMap.filter(
+        (i) => i.fragmentName !== 'CustomDomains'
       );
     }
     this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];

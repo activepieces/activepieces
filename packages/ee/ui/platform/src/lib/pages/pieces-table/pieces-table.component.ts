@@ -15,9 +15,9 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   FlagService,
+  MANAGE_PIECES_DISABLED_RESOLVER_KEY,
   OAuth2AppsService,
   PlatformService,
-  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { ApFlagId, PieceSyncMode, Platform } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
@@ -39,7 +39,6 @@ import {
   PieceMetadataService,
 } from '@activepieces/ui/feature-pieces';
 import { PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
-import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 import { PieceScope } from '@activepieces/shared';
 import { TagsService } from 'ui-feature-tags';
 
@@ -82,8 +81,7 @@ export class PiecesTableComponent implements OnInit {
   addPackageDialogClosed$!: Observable<Record<string, string> | null>;
   cloudAuthToggleFormControl = new FormControl(false, { nonNullable: true });
   toggleCloudOAuth2$?: Observable<void>;
-  featDisabledTooltipText = featureDisabledTooltip;
-  isDemo = false;
+  isLocked!: boolean;
   pieceSelection = new SelectionModel<string>(true, []);
   isAnyPieceSelected$ = this.pieceSelection.changed.pipe(
     map(() => this.pieceSelection.selected.length > 0)
@@ -100,13 +98,16 @@ export class PiecesTableComponent implements OnInit {
     private matSnackbar: MatSnackBar,
     private matDialog: MatDialog,
     private tagService: TagsService,
+    private router: ActivatedRoute,
     private flagService: FlagService,
     private oauth2AppsService: OAuth2AppsService
   ) {}
   ngOnInit(): void {
+    this.isLocked = this.router.snapshot.data[
+      MANAGE_PIECES_DISABLED_RESOLVER_KEY
+    ] as boolean;
     const platform: Platform | undefined =
       this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
-    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     if (platform) {
       this.platform$ = new BehaviorSubject(platform);
     }
@@ -123,11 +124,9 @@ export class PiecesTableComponent implements OnInit {
       this.searchFormControl.valueChanges.pipe(startWith('')),
       this.oauth2AppsService,
       this.refresh$.asObservable().pipe(startWith(true as const)),
-      this.isDemo
+      this.isLocked
     );
-    if (this.isDemo) {
-      this.cloudAuthToggleFormControl.disable();
-    } else if (this.platform$) {
+    if (this.platform$) {
       this.cloudAuthToggleFormControl.setValue(
         this.platform$.value.cloudAuthEnabled
       );

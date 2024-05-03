@@ -10,11 +10,12 @@ import { FoldersResolver } from '@activepieces/ui/feature-folders-store';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import {
   PLATFORM_RESOLVER_KEY,
-  isFeatureFlagEnabledResolver,
   PlatformResolver,
   showBasedOnFlagGuard,
   showBasedOnRoles,
   showPlatformSettingsGuard,
+  PROJECT_ROLE_DISABLED_RESOLVER_KEY,
+  projectRoleDisabledResolver,
 } from '@activepieces/ui/common';
 import { PlansPageComponent } from 'ee-billing-ui';
 import { ProjectMembersTableComponent } from 'ee-project-members';
@@ -67,9 +68,7 @@ export const DashboardLayoutRouting: Routes = [
         path: 'team',
         component: ProjectMembersTableComponent,
         resolve: {
-          [ApFlagId.PROJECT_MEMBERS_ENABLED]: isFeatureFlagEnabledResolver(
-            ApFlagId.PROJECT_MEMBERS_ENABLED
-          ),
+          [PROJECT_ROLE_DISABLED_RESOLVER_KEY]: projectRoleDisabledResolver,
         },
         canActivate: [
           showBasedOnRoles([

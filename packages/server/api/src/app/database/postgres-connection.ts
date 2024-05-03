@@ -128,6 +128,8 @@ import { PiecesProjectLimits1712279318440 } from './migration/postgres/171227931
 import { RemoveUniqueEmailOnUser1713221809186 } from './migration/postgres/1713221809186-RemoveUniqueEmailOnUser'
 import { AddPlatformRoleToUser1713302610746 } from './migration/postgres/1713302610746-AddPlatformRoleToUser'
 import { AddUniqueNameToFolder1713643694049 } from './migration/postgres/1713643694049-AddUniqueNameToFolder'
+import { AddFeaturesToPlatform1714145914415 } from './migration/postgres/1714145914415-AddFeaturesToPlatform'
+import { UnifyEnterpriseWithCloud1714249840058 } from './migration/postgres/1714249840058-UnifyEnterpriseWithCloud'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 
@@ -212,70 +214,12 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveUniqueEmailOnUser1713221809186,
         AddPlatformRoleToUser1713302610746,
         AddUniqueNameToFolder1713643694049,
+        AddFeaturesToPlatform1714145914415,
     ]
 
     const edition = getEdition()
     switch (edition) {
         case ApEdition.CLOUD:
-            commonMigration.push(
-                MakeStripeSubscriptionNullable1685053959806,
-                AddTemplates1685538145476,
-                ChangeToJsonToKeepKeysOrder1685991260335,
-                AddPinnedAndBlogUrlToTemplates1686133672743,
-                AddPinnedOrder1686154285890,
-                AddProjectIdToTemplate1688083336934,
-                AddBillingParameters1688739844617,
-                AddAppSumo1688943462327,
-                AddProjectMembers1689177797092,
-                AddTasksPerDays1689336533370,
-                RemoveCalculatedMetrics1689806173642,
-                AddReferral1690459469381,
-                ProjectMemberRelations1694381968985,
-                FlowTemplateAddUserIdAndImageUrl1694379223109,
-                AddFeaturedDescriptionAndFlagToTemplates1694604120205,
-                ModifyBilling1694902537045,
-                AddDatasourcesLimit1695916063833,
-                AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
-                AddPlatform1697717995884,
-                AddCustomDomain1698077078271,
-                AddSigningKey1698602417745,
-                AddDisplayNameToSigningKey1698698190965,
-                AddOAuth2AppEntiity1699221414907,
-                AddFilteredPiecesToPlatform1699281870038,
-                AddSmtpAndPrivacyUrlToPlatform1699491705906,
-                RemoveUnusedFieldsinBilling1700132368636,
-                AddOtpEntity1700396157624,
-                AddPlatformDefaultLanguage1700406308445,
-                MakeStripeCustomerIdNullable1700751925992,
-                AddStateToOtp1701084418793,
-                ModifyProjectMembersAndRemoveUserId1701647565290,
-                AddApiKeys1701716639135,
-                AddEmbeddingFeatureToPlatform1701794452891,
-                AddPlatformIdToFlowTemplates1703411318826,
-                AddAuthOptionsToPlatform1704667304953,
-                AddEnableEmailAuthToPlatform1704797979825,
-                AddGitRepoMigrationPostgres1704503804056,
-                AddGitSyncEnabledToPlatform1704636362533,
-                RemoveUniqueonAppNameAppCredentials1705586178452,
-                AddAuditEvents1707614902283,
-                CreateActivityTable1708515756040,
-                AddLengthLimitsToActivity1708529586342,
-                AddProjectBilling1708811745694,
-                AddShowActivityLogToPlatform1708861032399,
-                MakePlatformNotNullable1705969874745,
-                AddSlugToGitRepo1709151540095,
-                DropUnusedPlatformIndex1709500873378,
-                MigrateWebhookTemplate1709581196564,
-                AddPlatformForeignKeyToProjectPostgres1709566642531,
-                AddUserEmailToReferral1709500213947,
-                MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258,
-                AddMappingStateToGit1709753080714,
-                CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669,
-                CascadeProjectDeleteToActivity1710720610670,
-                AddBranchTypeToGit1711073772867,
-                PiecesProjectLimits1712279318440,
-            )
-            break
         case ApEdition.ENTERPRISE:
             commonMigration.push(
                 AddTemplates1685538145476,
@@ -304,7 +248,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddDatasourcesLimit1695916063833,
                 MakeStripeCustomerIdNullable1700751925992,
                 AddStateToOtp1701084418793,
-                MigrateEeUsersToOldestPlatform1701261357197,
                 ModifyProjectMembersAndRemoveUserId1701647565290,
                 AddApiKeys1701716639135,
                 AddEmbeddingFeatureToPlatform1701794452891,
@@ -327,6 +270,22 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 CascadeProjectDeleteToActivity1710720610670,
                 AddBranchTypeToGit1711073772867,
                 PiecesProjectLimits1712279318440,
+                // Cloud Only Migrations, before unifing the migrations.
+                ChangeToJsonToKeepKeysOrder1685991260335,
+                AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
+                RemoveUniqueonAppNameAppCredentials1705586178452,
+                CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669,
+
+                // Enterprise Only Migrations, before unifing the migrations.
+                MigrateEeUsersToOldestPlatform1701261357197,
+                UnifyEnterpriseWithCloud1714249840058,
+
+                // Cloud Only Entities, But we need to run them for Enterprise as well.
+                AddAppSumo1688943462327,
+                AddReferral1690459469381,
+                AddUserEmailToReferral1709500213947,
+                AddProjectBilling1708811745694,
+
             )
             break
         case ApEdition.COMMUNITY:

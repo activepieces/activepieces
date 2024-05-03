@@ -1,9 +1,8 @@
-@if(isDemo){
+@if(isLocked){
 <ap-upgrade-note
   [featureNoteTitle]="upgradeNoteTitle"
   [featureNote]="upgradeNote"
   videoUrl="https://cdn.activepieces.com/videos/showcase/pieces.mp4"
-  *ngIf="isDemo"
   featureKey="PIECES"
 ></ap-upgrade-note>
 

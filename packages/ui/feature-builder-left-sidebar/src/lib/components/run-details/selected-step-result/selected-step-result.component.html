@@ -1,5 +1,5 @@
 <div class="ap-px-5">
-  <div class="ap-text-title ap-typography ap-py-3">
+  <div class="ap-text-viewTitle ap-typography ap-py-3">
     <div class="ap-min-h-[48px] ap-gap-2 ap-flex ap-items-center">
       <ng-container *ngIf="ActionStatusEnum.SUCCEEDED === selectedStepResult.status">
         <svg-icon src="assets/img/custom/success-step-result.svg" [svgStyle]="{ width: '21px', height: '20px' }"
@@ -22,9 +22,12 @@
       <span i18n>Duration:</span>
       <span class="description"> {{ (selectedStepResult.duration || 1) | number: '1.0-1'  }} ms </span>
     </div>
-    <ap-json-viewer class="json-viewer" title="Input" i18n-title  [content]="selectedStepResult.input"
-     ></ap-json-viewer>
-    <ap-json-viewer title="Output" i18n-title
-      [content]="selectedStepResult.errorMessage ?? selectedStepResult.output"></ap-json-viewer>
+    <div class="ap-flex ap-flex-col ap-gap-8 ap-mb-4">
+      <ap-json-viewer class="json-viewer" viewTitle="Input" i18n-title  [content]="selectedStepResult.input"
+      ></ap-json-viewer>
+     <ap-json-viewer viewTitle="Output" i18n-title
+       [content]="selectedStepResult.errorMessage ?? selectedStepResult.output"></ap-json-viewer>
+   
+    </div>
   </div>
 </div>

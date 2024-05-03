@@ -96,7 +96,7 @@ describe('Audit Event API', () => {
             const mockUser1 = createMockUser({ platformRole: PlatformRole.ADMIN })
             await databaseConnection.getRepository('user').save(mockUser1)
 
-            const mockPlatform1 = createMockPlatform({ ownerId: mockUser1.id })
+            const mockPlatform1 = createMockPlatform({ ownerId: mockUser1.id, auditLogEnabled: true })
             await databaseConnection.getRepository('platform').save(mockPlatform1)
 
             const mockProject1 = createMockProject({

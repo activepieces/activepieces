@@ -8,6 +8,7 @@ export enum GoogleCalendarKind {
   CALENDAR_EVENT = 'calendar#event',
   CALENDAR_EVENT_LIST = 'calendar#events',
   EVENT_WATCH = 'api#channel',
+  CALENDAR_COLORS = 'calendar#colors',
 }
 
 export interface CalendarList {
@@ -226,4 +227,20 @@ export interface GoogleCalendarEventList {
   nextPageToken: string;
   nextSyncToken: string;
   items: GoogleCalendarEvent[];
+}
+
+export interface GetColorsResponse {
+  kind: GoogleCalendarKind.CALENDAR_COLORS;
+  calendar: {
+    [s: string]: {
+      background: string;
+      foreground: string;
+    };
+  };
+  event: {
+    [s: string]: {
+      background: string;
+      foreground: string;
+    };
+  };
 }
