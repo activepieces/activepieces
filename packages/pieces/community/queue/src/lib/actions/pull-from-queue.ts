@@ -21,7 +21,7 @@ export const pullToQueue = createAction({
         }),
         testPull: Property.MarkDown({
             value: `
-            When you test this action, it will will not pull the items out of the queue.
+            When you test this action, it will not pull the items out of the queue.
             `,
         }),
     },
