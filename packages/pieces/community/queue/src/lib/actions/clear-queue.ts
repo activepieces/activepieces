@@ -25,9 +25,15 @@ export const clearQueue = createAction({
     async run(context) {
         const queueName = constructQueueName(context.propsValue.queueName, false)
         await context.store.delete(queueName, StoreScope.PROJECT)
+        return {
+            success: true
+        }
     },
     async test(context) {
         const queueName = constructQueueName(context.propsValue.queueName, true)
         await context.store.delete(queueName, StoreScope.PROJECT)
+        return {
+            success: true
+        }
     }
 });
