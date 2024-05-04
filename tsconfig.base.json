@@ -572,6 +572,9 @@
       "@activepieces/piece-zendesk": [
         "packages/pieces/community/zendesk/src/index.ts"
       ],
+      "@activepieces/piece-zerobounce": [
+        "packages/pieces/community/zerobounce/src/index.ts"
+      ],
       "@activepieces/piece-zoho-crm": [
         "packages/pieces/community/zoho-crm/src/index.ts"
       ],
