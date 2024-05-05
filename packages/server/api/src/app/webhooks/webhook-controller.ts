@@ -65,7 +65,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             .send(response.body)
     })
 
-    app.all('/:flowId/simulate', WEBHOOK_PARAMS, async (request, reply) => {
+    app.all('/:flowId/test', WEBHOOK_PARAMS, async (request, reply) => {
         const response = await handleWebhook({
             request,
             flowId: request.params.flowId,
