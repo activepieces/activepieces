@@ -3,7 +3,8 @@
     <div class="ap-select-none">
       {{ property.displayName }}
     </div>
-    <ng-container *ngTemplateOutlet="dynamicInputTemplate"></ng-container>
+    <ng-content></ng-content>
+    
   </div>
 
   @if(!!property.properties)
