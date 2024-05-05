@@ -9,10 +9,12 @@ import { IssuesService } from '../../services/issues.service';
 import {
   ApPaginatorComponent,
   AuthenticationService,
+  FLOW_QUERY_PARAM,
   NavigationService,
+  STATUS_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
-import { IssueStatus, PopulatedIssue } from '@activepieces/ee-shared';
+import { PopulatedIssue } from '@activepieces/ee-shared';
 import { FlowRunStatus } from '@activepieces/shared';
 
 @Component({
@@ -24,13 +26,7 @@ export class IssuesTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator: ApPaginatorComponent;
   dataSource: IssuesDataSource;
-  displayedColumns: string[] = [
-    'status',
-    'name',
-    'count',
-    'lastOccurrence',
-    'action',
-  ];
+  displayedColumns: string[] = ['name', 'count', 'lastOccurrence', 'action'];
   constructor(
     private issuesService: IssuesService,
     private authService: AuthenticationService,
@@ -46,15 +42,6 @@ export class IssuesTableComponent implements OnInit {
     );
   }
 
-  statusText(issue: IssueStatus) {
-    switch (issue) {
-      case IssueStatus.ONGOING:
-        return 'Ongoing';
-      case IssueStatus.RESOLEVED:
-        return 'Resolved';
-    }
-  }
-
   openRuns(issue: PopulatedIssue, event: MouseEvent) {
     const openInNewWindow =
       event.ctrlKey || event.which == 2 || event.button == 4;
@@ -62,8 +49,8 @@ export class IssuesTableComponent implements OnInit {
       route: ['/runs'],
       extras: {
         queryParams: {
-          flowId: issue.flowId,
-          status: FlowRunStatus.FAILED,
+          [FLOW_QUERY_PARAM]: issue.flowId,
+          [STATUS_QUERY_PARAM]: FlowRunStatus.FAILED,
         },
       },
       openInNewWindow,

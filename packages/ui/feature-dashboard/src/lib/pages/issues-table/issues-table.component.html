@@ -5,12 +5,7 @@
   </div>
   <div class="ap-min-h-[70%]">
     <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="issues">
-      <ng-container matColumnDef="status">
-        <th mat-header-cell *matHeaderCellDef i18n>Status</th>
-        <td mat-cell *matCellDef="let issues"><span
-            class="ap-bg-red-100 ap-text-red-800 ap-text-xs ap-font-medium ap-me-2 ap-px-2.5 ap-py-0.5 ap-rounded-full">{{
-            statusText(issues.status) }}</span></td>
-      </ng-container>
+     
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef i18n>Flow Name</th>
         <td mat-cell *matCellDef="let issues">{{ issues.flowDisplayName }}</td>
@@ -18,8 +13,8 @@
 
 
       <ng-container matColumnDef="count">
-        <th mat-header-cell *matHeaderCellDef i18n>Count</th>
-        <td mat-cell *matCellDef="let issues">{{ issues.count }}</td>
+        <th mat-header-cell *matHeaderCellDef i18n>Description </th>
+        <td mat-cell *matCellDef="let issues" i18n>This flow has failed {{ issues.count }} times</td>
       </ng-container>
 
 
@@ -33,9 +28,7 @@
         <td mat-cell *matCellDef="let issues">
 
           <div class="ap-flex ap-items-center">
-            <ap-button btnStyle="flat" btnColor="primary" btnSize="small" (click)="$event.stopPropagation()">
-              <div i18n>Mark Resolved</div>
-            </ap-button>
+            <ap-icon-button extraClasses="ap-fill-success" (click)="$event.stopPropagation()" i18n-tooltipText tooltipText="Resolve" iconFilename="check.svg" [width]="18" [height]="18"></ap-icon-button>
           </div>
         </td>
       </ng-container>
@@ -60,6 +53,6 @@
   </div>
 
   <div class="ap-flex ap-justify-end ap-py-2">
-    <ap-paginator> </ap-paginator>
+    <ap-paginator> </ap-paginator> 
   </div>
 </div>
