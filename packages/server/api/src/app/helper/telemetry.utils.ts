@@ -20,6 +20,7 @@ export const telemetry = {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 projectId,
+                firstSeenAt: user.created,
                 ...(await getMetadata()),
             },
         }
