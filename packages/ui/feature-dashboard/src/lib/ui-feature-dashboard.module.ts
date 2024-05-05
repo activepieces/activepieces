@@ -8,7 +8,6 @@ import {
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { SidenavRoutesListComponent } from './components/sidenav-routes-list/sidenav-routes-list.component';
-import { RunsTableComponent } from './pages/runs-table/runs-table.component';
 import { FlowsTableComponent } from './pages/flows-table/flows-table.component';
 import { EmptyFlowsTableComponent } from './pages/flows-table/empty-flows-table/empty-flows-table.component';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
@@ -33,7 +32,6 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { NewConnectionDialogComponent } from './components/dialogs/new-connection-dialog/new-connection-dialog.component';
 import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections';
 import { ActivityTableComponent } from './pages/activity-table/activity-table.component';
-import { IssuesTableComponent } from './pages/issues-table/issues-table.component';
 import { ContactSalesComponent } from './components/contact-sales/contact-sales.component';
 import { FormsModule } from '@angular/forms';
 import {
@@ -71,7 +69,6 @@ import { RewardsNoteComponent } from './components/rewards-note/rewards-note.com
   ],
   declarations: [
     DashboardContainerComponent,
-    RunsTableComponent,
     FlowsTableComponent,
     EmptyFlowsTableComponent,
     ConnectionsTableComponent,
@@ -83,7 +80,6 @@ import { RewardsNoteComponent } from './components/rewards-note/rewards-note.com
     RenameFlowDialogComponent,
     NewConnectionDialogComponent,
     ActivityTableComponent,
-    IssuesTableComponent,
     ContactSalesComponent,
   ],
   providers: [DatePipe],

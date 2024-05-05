@@ -7,24 +7,31 @@ import {
 import { IssuesDataSource } from './issues-table.datasource';
 import { IssuesService } from '../../services/issues.service';
 import {
+  ApDatePipe,
   ApPaginatorComponent,
   AuthenticationService,
+  CURSOR_QUERY_PARAM,
   ConfirmActionDialogComponent,
   ConfirmActionDialogData,
   FLOW_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
   NavigationService,
   STATUS_QUERY_PARAM,
+  UiCommonModule,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { PopulatedIssue } from '@activepieces/ee-shared';
-import { FlowRunStatus } from '@activepieces/shared';
+import { FlowRunStatus, spreadIfDefined } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-issues-table',
   templateUrl: './issues-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [CommonModule, UiCommonModule, ApDatePipe],
 })
 export class IssuesTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
@@ -84,5 +91,12 @@ export class IssuesTableComponent implements OnInit {
           }
         })
       );
+  }
+
+  getCurrentQueryParams() {
+    return {
+      [LIMIT_QUERY_PARAM]: this.paginator.pageSizeControl.value,
+      ...spreadIfDefined(CURSOR_QUERY_PARAM, this.paginator.cursor),
+    };
   }
 }

@@ -13,6 +13,7 @@ import {
   NotificationStatus,
   ProjectId,
   SeekPage,
+  spreadIfDefined,
 } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -40,14 +41,30 @@ import {
   DATE_RANGE_END_QUERY_PARAM,
   DATE_RANGE_START_QUERY_PARAM,
   ProjectService,
+  UiCommonModule,
+  ApDatePipe,
+  LIMIT_QUERY_PARAM,
+  CURSOR_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { FormControl, FormGroup } from '@angular/forms';
 import { RunsService } from '../../services/runs.service';
 import { DropdownOption } from '@activepieces/pieces-framework';
+import { CommonModule } from '@angular/common';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 const allOptionValue = 'all';
 @Component({
   templateUrl: './runs-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [
+    CommonModule,
+    UiCommonModule,
+    ApDatePipe,
+    MatDatepickerModule,
+    MatNativeDateModule,
+  ],
+  selector: 'app-runs-table',
 })
 export class RunsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
@@ -161,22 +178,23 @@ export class RunsTableComponent implements OnInit {
         const createdBefore = new Date(result.date.end);
         createdBefore.setHours(23, 59, 59, 999);
         this.navigationService.navigate({
-          route: ['runs'],
+          route: ['executions'],
           openInNewWindow: false,
           extras: {
+            fragment: 'Runs',
             queryParams: {
-              flowId:
+              [FLOW_QUERY_PARAM]:
                 result.flowId === this.allOptionValue
                   ? undefined
                   : result.flowId,
-              status:
+              [STATUS_QUERY_PARAM]:
                 result.status === this.allOptionValue
                   ? undefined
                   : result.status,
-              createdAfter: result.date.start
+              [DATE_RANGE_START_QUERY_PARAM]: result.date.start
                 ? createdAfter.toISOString()
                 : undefined,
-              createdBefore: result.date.end
+              [DATE_RANGE_END_QUERY_PARAM]: result.date.end
                 ? createdBefore.toISOString()
                 : undefined,
             },
@@ -236,5 +254,26 @@ export class RunsTableComponent implements OnInit {
         this.refreshTableForReruns$.next(true);
       })
     );
+  }
+
+  getCurrentQueryParams() {
+    return {
+      [FLOW_QUERY_PARAM]:
+        this.flowFilterControl.value === this.allOptionValue
+          ? undefined
+          : this.flowFilterControl.value,
+      [STATUS_QUERY_PARAM]:
+        this.statusFilterControl.value === this.allOptionValue
+          ? undefined
+          : this.statusFilterControl.value,
+      [DATE_RANGE_START_QUERY_PARAM]: this.dateFormGroup.value.start
+        ? this.dateFormGroup.value.start.toISOString()
+        : undefined,
+      [DATE_RANGE_END_QUERY_PARAM]: this.dateFormGroup.value.end
+        ? this.dateFormGroup.value.end.toISOString()
+        : undefined,
+      [LIMIT_QUERY_PARAM]: this.paginator.pageSizeControl.value,
+      ...spreadIfDefined(CURSOR_QUERY_PARAM, this.paginator.cursor),
+    };
   }
 }

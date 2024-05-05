@@ -137,18 +137,12 @@ export class SidenavRoutesListComponent implements OnInit {
       },
       {
         icon: 'assets/img/custom/dashboard/runs.svg',
-        caption: $localize`Runs`,
-        route: 'runs',
+        caption: $localize`Executions`,
+        route: 'executions',
         showInSideNav$: of(true),
         showLock$: of(false),
       },
-      {
-        icon: 'assets/img/custom/dashboard/issues.svg',
-        caption: $localize`Issues`,
-        route: 'issues',
-        showInSideNav$: of(true),
-        showLock$: of(false),
-      },
+
       {
         icon: 'assets/img/custom/dashboard/activity.svg',
         caption: $localize`Activity`,
