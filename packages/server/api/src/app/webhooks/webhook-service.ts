@@ -65,9 +65,9 @@ export const webhookService = {
 
         const { projectId } = flow
 
-        if (isNil(flow.publishedVersionId)) {
+        if (flow.status !== FlowStatus.ENABLED || isNil(flow.publishedVersionId)) {
             logger.info(
-                `[WebhookService#callback] flowInstance not found, flowId=${flow.id}`,
+                `[WebhookService#callback] flowInstance not found or not enabled ignoring the webhook, flowId=${flow.id}`,
             )
 
             throw new ActivepiecesError({
@@ -76,12 +76,6 @@ export const webhookService = {
                     id: flow.id,
                 },
             })
-        }
-        if (flow.status !== FlowStatus.ENABLED) {
-            logger.info(
-                `[WebhookService#callback] flowInstance not found or not enabled ignoring the webhook, flowId=${flow.id}`,
-            )
-            return []
         }
 
         const flowVersion = await flowVersionService.getOneOrThrow(
