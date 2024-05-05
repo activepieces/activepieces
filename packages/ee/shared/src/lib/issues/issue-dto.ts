@@ -12,7 +12,7 @@ export const Issue = Type.Object({
     flowId: ApId,
     status: Type.Enum(IssueStatus),
     count: Type.Number(),
-    lastSeen: Type.String(),
+    lastOccurrence: Type.String(),
 })
 
 export type Issue = Static<typeof Issue>

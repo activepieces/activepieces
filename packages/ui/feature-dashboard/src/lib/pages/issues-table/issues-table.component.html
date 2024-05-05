@@ -23,9 +23,9 @@
       </ng-container>
 
 
-      <ng-container matColumnDef="lastSeen">
-        <th mat-header-cell *matHeaderCellDef i18n>Last Seen</th>
-        <td mat-cell *matCellDef="let issues">{{ issues.lastSeen | apDate:'mdhms' }}</td>
+      <ng-container matColumnDef="lastOccurrence">
+        <th mat-header-cell *matHeaderCellDef i18n>Last Occurrence</th>
+        <td mat-cell *matCellDef="let issues">{{ issues.lastOccurrence | apDate:'mdhms' }}</td>
       </ng-container>
 
       <ng-container matColumnDef="action">

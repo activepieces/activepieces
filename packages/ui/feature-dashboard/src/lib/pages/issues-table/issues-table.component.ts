@@ -28,7 +28,7 @@ export class IssuesTableComponent implements OnInit {
     'status',
     'name',
     'count',
-    'lastSeen',
+    'lastOccurrence',
     'action',
   ];
   constructor(

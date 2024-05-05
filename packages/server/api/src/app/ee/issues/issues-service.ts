@@ -1,12 +1,11 @@
+import dayjs from 'dayjs'
 import { databaseConnection } from '../../database/database-connection'
+import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { Issue, ListIssuesParams, UpdateIssueRequest, IssueStatus, PopulatedIssue } from '@activepieces/ee-shared'
-import { apId, SeekPage, isNil, ActivepiecesError, ErrorCode, spreadIfDefined } from '@activepieces/shared'
 import { IssueEntity } from './issues-entity'
-import dayjs from 'dayjs'
-import { flowService } from '../../flows/flow/flow.service'
-import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { Issue, IssueStatus, ListIssuesParams, PopulatedIssue, UpdateIssueRequest } from '@activepieces/ee-shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/shared'
 const repo = databaseConnection.getRepository(IssueEntity)
 
 export const issuesService = {
@@ -18,38 +17,38 @@ export const issuesService = {
                 projectId,
                 flowId,
                 id: apId(),
-                lastSeen: dayjs().toISOString(),
+                lastOccurrence: dayjs().toISOString(),
                 count: 0,
                 status: IssueStatus.ONGOING,
                 created: dayjs().toISOString(),
                 updated: dayjs().toISOString(),
             })
             .orIgnore()
-            .execute();
+            .execute()
 
         await this.update({
-            projectId: projectId,
-            flowId: flowId,
+            projectId,
+            flowId,
             status: IssueStatus.ONGOING,
         })
     },
     async get(projectId: string, flowId: string): Promise<Issue | null> {
         return repo.findOneBy({
-            projectId: projectId,
-            flowId: flowId,
+            projectId,
+            flowId,
         })
     },
 
     async getOrThrow(projectId: string, flowId: string): Promise<Issue> {
         const issue = await repo.findOneBy({
-            projectId: projectId,
-            flowId: flowId,
+            projectId,
+            flowId,
         })
         if (isNil(issue)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    message: `issue not found`,
+                    message: 'issue not found',
                 },
             })
         }
@@ -74,7 +73,7 @@ export const issuesService = {
         const { data, cursor: newCursor } = await paginator.paginate(query)
 
         const populatedIssues = await Promise.all(data.map(async issue => {
-            const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(issue.flowId);
+            const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(issue.flowId)
             return {
                 ...issue,
                 flowDisplayName: flowVersion.displayName,
@@ -83,16 +82,16 @@ export const issuesService = {
         return paginationHelper.createPage<PopulatedIssue>(populatedIssues, newCursor)
     },
 
-    // Updates the status of the issue and updates the coloumns `count` and `lastSeen` accordingly.
+    // Updates the status of the issue and updates the coloumns `count` and `lastOccurrence` accordingly.
     async update({ projectId, flowId, status }: UpdateIssueRequest): Promise<void> {
         if (status != IssueStatus.RESOLEVED) {
-            await repo.increment({ projectId, flowId }, 'count', 1);
+            await repo.increment({ projectId, flowId }, 'count', 1)
         }
         await repo.update({
             projectId,
             flowId,
         }, {
-            ...spreadIfDefined('lastSeen', status !== IssueStatus.RESOLEVED ? dayjs().toISOString() : undefined),
+            ...spreadIfDefined('lastOccurrence', status !== IssueStatus.RESOLEVED ? dayjs().toISOString() : undefined),
             ...spreadIfDefined('count', status === IssueStatus.RESOLEVED ? 0 : undefined),
             status,
             updated: new Date().toISOString(),

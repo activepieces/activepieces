@@ -130,6 +130,7 @@ import { AddPlatformRoleToUser1713302610746 } from './migration/postgres/1713302
 import { AddUniqueNameToFolder1713643694049 } from './migration/postgres/1713643694049-AddUniqueNameToFolder'
 import { AddFeaturesToPlatform1714145914415 } from './migration/postgres/1714145914415-AddFeaturesToPlatform'
 import { UnifyEnterpriseWithCloud1714249840058 } from './migration/postgres/1714249840058-UnifyEnterpriseWithCloud'
+import { AddIssueEntityPostgres1714904516114 } from './migration/postgres/1714904516114-AddIssueEntityPostgres'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 
@@ -215,6 +216,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPlatformRoleToUser1713302610746,
         AddUniqueNameToFolder1713643694049,
         AddFeaturesToPlatform1714145914415,
+        AddIssueEntityPostgres1714904516114,
     ]
 
     const edition = getEdition()

@@ -33,9 +33,9 @@ export const IssueEntity = new EntitySchema<IssueSchema>({
         count: {
             type: Number,
         },
-        lastSeen: {
+        lastOccurrence: {
             type: TIMESTAMP_COLUMN_TYPE,
-        }
+        },
     },
     indices: [
         {
