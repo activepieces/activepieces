@@ -5,8 +5,8 @@ import {
     TIMESTAMP_COLUMN_TYPE,
 } from '../../database/database-common'
 import {
-    IssueStatus,
     Issue,
+    IssueStatus,
 } from '@activepieces/ee-shared'
 import { Flow, Project } from '@activepieces/shared'
 

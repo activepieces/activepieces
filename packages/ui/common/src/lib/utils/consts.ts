@@ -115,3 +115,4 @@ export const showPlatformDashboard$ = (
 };
 /**Three colors that fits with our design system to use as backgrounds */
 export const experimentalColors = ['#f5dc83', '#ed9090', '#90edb5'];
+export const TEN_SECONDS = 10000;

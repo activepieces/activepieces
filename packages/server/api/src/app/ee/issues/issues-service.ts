@@ -4,8 +4,8 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { IssueEntity } from './issues-entity'
-import { Issue, IssueStatus, ListIssuesParams, PopulatedIssue, UpdateIssueRequest } from '@activepieces/ee-shared'
-import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { Issue, IssueStatus, ListIssuesParams, PopulatedIssue } from '@activepieces/ee-shared'
+import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/shared'
 const repo = databaseConnection.getRepository(IssueEntity)
 
 export const issuesService = {
@@ -67,7 +67,8 @@ export const issuesService = {
         })
 
         const query = repo.createQueryBuilder(IssueEntity.options.name).where({
-            projectId,
+            projectId, 
+            status: IssueStatus.ONGOING,
         })
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
@@ -82,8 +83,22 @@ export const issuesService = {
         return paginationHelper.createPage<PopulatedIssue>(populatedIssues, newCursor)
     },
 
-    // Updates the status of the issue and updates the coloumns `count` and `lastOccurrence` accordingly.
-    async update({ projectId, flowId, status }: UpdateIssueRequest): Promise<void> {
+    async updateById(id: string, status: IssueStatus): Promise<void> {
+        await repo.update({
+            id,
+        }, {
+            status,
+            updated: new Date().toISOString(),
+            count: 0,
+        })
+    },
+
+    /**Updates the status of the issue and updates the columns `count` and `lastOccurrence` accordingly. */ 
+    async update({ projectId, flowId, status }: {
+        projectId: ApId
+        flowId: ApId
+        status: IssueStatus
+    }): Promise<void> {
         if (status != IssueStatus.RESOLEVED) {
             await repo.increment({ projectId, flowId }, 'count', 1)
         }
@@ -97,4 +112,5 @@ export const issuesService = {
             updated: new Date().toISOString(),
         })
     },
+
 }

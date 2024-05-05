@@ -1,10 +1,14 @@
-import { Issue, ListIssuesParams } from '@activepieces/ee-shared';
+import {
+  Issue,
+  IssueStatus,
+  ListIssuesParams,
+  UpdateIssueRequestBody,
+} from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
 import { environment } from '@activepieces/ui/common';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Params } from '@angular/router';
-import { of } from 'rxjs';
 @Injectable({
   providedIn: 'root',
 })
@@ -21,7 +25,13 @@ export class IssuesService {
       params,
     });
   }
-  resolve(issue: Issue) {
-    return of(issue);
+  resolve(issueId: string) {
+    const body: UpdateIssueRequestBody = {
+      status: IssueStatus.RESOLEVED,
+    };
+    return this.http.post<void>(
+      environment.apiUrl + `/issues/${issueId}`,
+      body
+    );
   }
 }

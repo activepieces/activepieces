@@ -14,7 +14,16 @@
 
       <ng-container matColumnDef="count">
         <th mat-header-cell *matHeaderCellDef i18n>Description </th>
-        <td mat-cell *matCellDef="let issue" i18n>This flow has failed {{ issue.count }} times</td>
+        <td mat-cell *matCellDef="let issue" i18n>
+        @if(issue.count > 1)
+        {
+          This flow has failed {{ issue.count }} times
+        }
+        @else {
+          This flow has failed once
+        }
+        
+        </td>
       </ng-container>
 
 
@@ -30,7 +39,7 @@
         <td mat-cell *matCellDef="let issue">
 
           <div class="ap-flex ap-items-center">
-            <ap-icon-button extraClasses="ap-fill-success" (click)="$event.stopPropagation(); resolve(issue)" i18n-tooltipText tooltipText="Resolve" iconFilename="check.svg" [width]="18" [height]="18"></ap-icon-button>
+            <ap-button btnSize="small" btnStyle="flat" (click)="$event.stopPropagation(); resolve(issue)" i18n>Mark as Resolved</ap-button>
           </div>
         </td>
       </ng-container>

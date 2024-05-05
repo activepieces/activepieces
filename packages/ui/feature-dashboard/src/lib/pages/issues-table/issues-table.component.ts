@@ -16,7 +16,7 @@ import {
   STATUS_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
-import { Issue, PopulatedIssue } from '@activepieces/ee-shared';
+import { PopulatedIssue } from '@activepieces/ee-shared';
 import { FlowRunStatus } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
@@ -65,12 +65,12 @@ export class IssuesTableComponent implements OnInit {
     });
   }
 
-  resolve(issue: Issue) {
+  resolve(issue: PopulatedIssue) {
     const data: ConfirmActionDialogData = {
-      action$: this.issuesService.resolve(issue),
-      note: $localize`Are you sure you want to resolve this issue?`,
-      successMessage: $localize`Issue resolved successfully`,
-      title: $localize`Resolve Issue`,
+      action$: this.issuesService.resolve(issue.id),
+      note: $localize`Are you sure you resolved all of <b>${issue.flowDisplayName}</b>'s issues?`,
+      successMessage: $localize`Resolved successfully`,
+      title: $localize`Resolve`,
     };
     this.resolve$ = this.matDialog
       .open(ConfirmActionDialogComponent, {

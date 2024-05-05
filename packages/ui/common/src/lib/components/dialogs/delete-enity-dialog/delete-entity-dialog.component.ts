@@ -10,6 +10,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { GenericSnackbarTemplateComponent } from '../../generic-snackbar-template/generic-snackbar-template.component';
 import { matchesString } from '../../../validators';
+import { TEN_SECONDS } from '../../../utils/consts';
 
 export interface DeleteEntityDialogData {
   entityName: string;
@@ -24,7 +25,6 @@ export interface DeleteEntityDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeleteEntityDialogComponent {
-  private TEN_SECONDS = 10000;
   private DEFAULT_ERROR_MESSAGE = `<b>${this.data.entityName}</b> deletion failed, please check the console`;
 
   confirmationForm: FormGroup<{ confirmation: FormControl<string> }>;
@@ -71,7 +71,7 @@ export class DeleteEntityDialogComponent {
     this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
       data: errorMessage,
       panelClass: 'error',
-      duration: this.TEN_SECONDS,
+      duration: TEN_SECONDS,
     });
     console.error(e);
     return of(e);

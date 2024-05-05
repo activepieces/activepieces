@@ -4,6 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { GenericSnackbarTemplateComponent } from '../../generic-snackbar-template/generic-snackbar-template.component';
+import { TEN_SECONDS } from '../../../utils/consts';
 export interface ConfirmActionDialogData {
   title: string;
   note: string;
@@ -16,7 +17,6 @@ export interface ConfirmActionDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfirmActionDialogComponent {
-  readonly TEN_SECONDS = 10000;
   confirmationForm: FormGroup<{ confirmation: FormControl<string> }>;
   action$: Observable<void>;
 
@@ -50,7 +50,7 @@ export class ConfirmActionDialogComponent {
     this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
       data: $localize`Action failed`,
       panelClass: 'error',
-      duration: this.TEN_SECONDS,
+      duration: TEN_SECONDS,
     });
     console.error(e);
     return of(e);

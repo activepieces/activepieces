@@ -10,10 +10,8 @@ export const ListIssuesParams = Type.Object({
 })
 export type ListIssuesParams = Static<typeof ListIssuesParams>
 
-export const UpdateIssueRequest = Type.Object({
-    projectId: ApId,
-    flowId: ApId,
+export const UpdateIssueRequestBody = Type.Object({
     status: Type.Enum(IssueStatus),
 })
 
-export type UpdateIssueRequest = Static<typeof UpdateIssueRequest>
+export type UpdateIssueRequestBody = Static<typeof UpdateIssueRequestBody>

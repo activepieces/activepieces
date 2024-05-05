@@ -1,7 +1,7 @@
-import { FastifyPluginAsyncTypebox  } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncTypebox, Type  } from '@fastify/type-provider-typebox'
 import { issuesService } from './issues-service'
-import { ListIssuesParams } from '@activepieces/ee-shared'
-import { Permission, PrincipalType } from '@activepieces/shared'
+import { ListIssuesParams, UpdateIssueRequestBody } from '@activepieces/ee-shared'
+import { ApId, PrincipalType } from '@activepieces/shared'
 
 export const issuesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListIssuesRequest, async (req) => {
@@ -12,6 +12,9 @@ export const issuesController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
     
+    app.post('/:id', UpdateIssueRequest, async (req) => {
+        return issuesService.updateById(req.params.id, req.body.status)
+    })
 }
 
 const ListIssuesRequest = {
@@ -19,9 +22,23 @@ const ListIssuesRequest = {
         allowedPrincipals: [
             PrincipalType.USER,
         ],
-        permission: Permission.READ_ACTIVITY,
     },
     schema: {
         querystring: ListIssuesParams,
+    },
+}
+
+const UpdateIssueRequest = {
+    config: {
+        allowedPrincipals: [
+            PrincipalType.USER,
+        ],
+    },
+    
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+        body: UpdateIssueRequestBody,
     },
 }
