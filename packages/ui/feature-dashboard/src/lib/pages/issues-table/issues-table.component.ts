@@ -9,13 +9,17 @@ import { IssuesService } from '../../services/issues.service';
 import {
   ApPaginatorComponent,
   AuthenticationService,
+  ConfirmActionDialogComponent,
+  ConfirmActionDialogData,
   FLOW_QUERY_PARAM,
   NavigationService,
   STATUS_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
-import { PopulatedIssue } from '@activepieces/ee-shared';
+import { Issue, PopulatedIssue } from '@activepieces/ee-shared';
 import { FlowRunStatus } from '@activepieces/shared';
+import { MatDialog } from '@angular/material/dialog';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 @Component({
   selector: 'app-issues-table',
@@ -27,18 +31,22 @@ export class IssuesTableComponent implements OnInit {
   paginator: ApPaginatorComponent;
   dataSource: IssuesDataSource;
   displayedColumns: string[] = ['name', 'count', 'lastOccurrence', 'action'];
+  resolve$: Observable<unknown>;
+  refresh$ = new BehaviorSubject<boolean>(true);
   constructor(
     private issuesService: IssuesService,
     private authService: AuthenticationService,
     private route: ActivatedRoute,
-    private navigationService: NavigationService
+    private navigationService: NavigationService,
+    private matDialog: MatDialog
   ) {}
   ngOnInit(): void {
     this.dataSource = new IssuesDataSource(
       this.route.queryParams,
       this.paginator,
       this.issuesService,
-      this.authService.getProjectId()
+      this.authService.getProjectId(),
+      this.refresh$.asObservable()
     );
   }
 
@@ -55,5 +63,26 @@ export class IssuesTableComponent implements OnInit {
       },
       openInNewWindow,
     });
+  }
+
+  resolve(issue: Issue) {
+    const data: ConfirmActionDialogData = {
+      action$: this.issuesService.resolve(issue),
+      note: $localize`Are you sure you want to resolve this issue?`,
+      successMessage: $localize`Issue resolved successfully`,
+      title: $localize`Resolve Issue`,
+    };
+    this.resolve$ = this.matDialog
+      .open(ConfirmActionDialogComponent, {
+        data,
+      })
+      .afterClosed()
+      .pipe(
+        tap((resolved) => {
+          if (resolved) {
+            this.refresh$.next(true);
+          }
+        })
+      );
   }
 }

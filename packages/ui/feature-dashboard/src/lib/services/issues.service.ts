@@ -4,6 +4,7 @@ import { environment } from '@activepieces/ui/common';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Params } from '@angular/router';
+import { of } from 'rxjs';
 @Injectable({
   providedIn: 'root',
 })
@@ -19,5 +20,8 @@ export class IssuesService {
     return this.http.get<SeekPage<Issue>>(environment.apiUrl + `/issues`, {
       params,
     });
+  }
+  resolve(issue: Issue) {
+    return of(issue);
   }
 }

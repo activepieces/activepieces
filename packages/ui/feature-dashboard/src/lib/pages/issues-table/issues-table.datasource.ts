@@ -16,7 +16,7 @@ import {
   CURSOR_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { Params } from '@angular/router';
-import { Issue } from '@activepieces/ee-shared';
+import { Issue, IssueStatus } from '@activepieces/ee-shared';
 import { IssuesService } from '../../services/issues.service';
 
 /**
@@ -31,7 +31,8 @@ export class IssuesDataSource extends DataSource<Issue> {
     private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
     private issueService: IssuesService,
-    private projectId: string
+    private projectId: string,
+    private refresh$: Observable<boolean>
   ) {
     super();
   }
@@ -44,6 +45,7 @@ export class IssuesDataSource extends DataSource<Issue> {
   connect(): Observable<Issue[]> {
     return combineLatest({
       queryParams: this.queryParams$,
+      refresh: this.refresh$,
     }).pipe(
       tap(() => {
         this.isLoading$.next(true);
@@ -68,9 +70,20 @@ export class IssuesDataSource extends DataSource<Issue> {
       tap((res) => {
         this.isLoading$.next(false);
         this.paginator.setNextAndPrevious(res.next, res.previous);
-        this.data = res.data;
+        this.data = [
+          {
+            count: 12,
+            created: new Date().toISOString(),
+            flowId: '1234',
+            id: '1234',
+            lastSeen: new Date().toISOString(),
+            projectId: '1234',
+            status: IssueStatus.ONGOING,
+            updated: new Date().toISOString(),
+          },
+        ];
       }),
-      map((res) => res.data)
+      map(() => this.data)
     );
   }
 

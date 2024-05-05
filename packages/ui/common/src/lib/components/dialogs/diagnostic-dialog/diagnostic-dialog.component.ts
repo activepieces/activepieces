@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { UiCommonModule } from '../../ui-common.module';
-import { jsonEditorOptionsMonaco } from '../../utils/consts';
 import { Observable, catchError, forkJoin, map } from 'rxjs';
-import { FlagService } from '../../service';
 import { ApFlagId } from '@activepieces/shared';
+import { UiCommonModule } from '../../../ui-common.module';
+import { jsonEditorOptionsMonaco } from '../../../utils/consts';
+import { FlagService } from '../../../service';
 
 export type DialogData = {
   information: unknown;

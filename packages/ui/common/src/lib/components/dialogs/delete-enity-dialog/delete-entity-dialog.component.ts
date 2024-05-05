@@ -59,7 +59,7 @@ export class DeleteEntityDialogComponent {
   }
 
   success() {
-    const successMessage = `Success! <b>${this.data.entityName}</b> has been deleted`;
+    const successMessage = `<b>${this.data.entityName}</b> has been deleted successfully`;
     this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
       data: successMessage,
     });

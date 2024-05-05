@@ -8,27 +8,29 @@
      
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef i18n>Flow Name</th>
-        <td mat-cell *matCellDef="let issues">{{ issues.flowDisplayName }}</td>
+        <td mat-cell *matCellDef="let issue">{{ issue.flowDisplayName }}</td>
       </ng-container>
 
 
       <ng-container matColumnDef="count">
         <th mat-header-cell *matHeaderCellDef i18n>Description </th>
-        <td mat-cell *matCellDef="let issues" i18n>This flow has failed {{ issues.count }} times</td>
+        <td mat-cell *matCellDef="let issue" i18n>This flow has failed {{ issue.count }} times</td>
       </ng-container>
+
 
 
       <ng-container matColumnDef="lastOccurrence">
         <th mat-header-cell *matHeaderCellDef i18n>Last Occurrence</th>
         <td mat-cell *matCellDef="let issues">{{ issues.lastOccurrence | apDate:'mdhms' }}</td>
+
       </ng-container>
 
       <ng-container matColumnDef="action">
         <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let issues">
+        <td mat-cell *matCellDef="let issue">
 
           <div class="ap-flex ap-items-center">
-            <ap-icon-button extraClasses="ap-fill-success" (click)="$event.stopPropagation()" i18n-tooltipText tooltipText="Resolve" iconFilename="check.svg" [width]="18" [height]="18"></ap-icon-button>
+            <ap-icon-button extraClasses="ap-fill-success" (click)="$event.stopPropagation(); resolve(issue)" i18n-tooltipText tooltipText="Resolve" iconFilename="check.svg" [width]="18" [height]="18"></ap-icon-button>
           </div>
         </td>
       </ng-container>
@@ -56,3 +58,5 @@
     <ap-paginator> </ap-paginator> 
   </div>
 </div>
+
+@if(resolve$ | async) {}
