@@ -39,7 +39,11 @@
         <td mat-cell *matCellDef="let issue">
 
           <div class="ap-flex ap-items-center">
-            <ap-button btnSize="small" btnStyle="flat" (click)="$event.stopPropagation(); resolve(issue)" i18n>Mark as Resolved</ap-button>
+            <ap-button btnSize="small" btnStyle="flat" (click)="$event.stopPropagation(); resolve(issue)" >
+            <div class="ap-flex ap-gap-1 ap-items-center ap-justify-center" i18n>
+             <svg-icon src="assets/img/custom/check.svg" [applyClass]="true" class="ap-fill-white ap-w-[15px] ap-h-[15px]"></svg-icon>  Mark as Resolved
+            </div>
+            </ap-button>
           </div>
         </td>
       </ng-container>

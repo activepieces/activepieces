@@ -69,7 +69,7 @@ export class IssuesTableComponent implements OnInit {
     const data: ConfirmActionDialogData = {
       action$: this.issuesService.resolve(issue.id),
       note: $localize`Are you sure you resolved all of <b>${issue.flowDisplayName}</b>'s issues?`,
-      successMessage: $localize`Resolved successfully`,
+      successMessage: $localize`Marked <b>${issue.flowDisplayName}</b> issues as resolved successfully`,
       title: $localize`Resolve`,
     };
     this.resolve$ = this.matDialog
