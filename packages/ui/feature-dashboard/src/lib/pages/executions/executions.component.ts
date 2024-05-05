@@ -11,6 +11,8 @@ import { IssuesTableComponent } from '../../components/issues-table/issues-table
 import { TabsPageCoreComponent } from '../../components/tabs-page-core/tabs-page-core.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
+import { PopulatedIssue } from '@activepieces/ee-shared';
+import { FlowRunStatus } from '@activepieces/shared';
 
 @Component({
   selector: 'app-executions',
@@ -42,7 +44,10 @@ import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 
         <mat-tab i18n-label label="Issues">
           <div class="ap-mt-1">
-            <app-issues-table #IssuesTable></app-issues-table>
+            <app-issues-table
+              (issueClicked)="issueClicked($event.issue)"
+              #IssuesTable
+            ></app-issues-table>
           </div>
         </mat-tab>
       </mat-tab-group>
@@ -80,13 +85,29 @@ export class ExecutionsComponent
       console.warn('tab index out of bounds');
       return;
     }
-    const queryParams =
-      event.index === 0
-        ? this.runsTable?.getCurrentQueryParams()
-        : this.IssuesTable?.getCurrentQueryParams();
-    this.updateFragment(
-      this.tabIndexFragmentMap[event.index].fragmentName,
-      queryParams ?? {}
+
+    if (
+      this.route.snapshot.fragment !==
+      this.tabIndexFragmentMap[event.index].fragmentName
+    ) {
+      const queryParams =
+        event.index === 0
+          ? this.runsTable?.getCurrentQueryParams()
+          : this.IssuesTable?.getCurrentQueryParams();
+      this.updateFragment(
+        this.tabIndexFragmentMap[event.index].fragmentName,
+        queryParams ?? {}
+      );
+    }
+  }
+
+  issueClicked(issue: PopulatedIssue) {
+    const runsTabIndex = this.tabIndexFragmentMap.findIndex(
+      (i) => i.fragmentName === 'Runs'
     );
+    if (this.tabGroup) {
+      this.tabGroup.selectedIndex = runsTabIndex;
+    }
+    this.runsTable?.setParams(FlowRunStatus.FAILED, issue.flowId);
   }
 }

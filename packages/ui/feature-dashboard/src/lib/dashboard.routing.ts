@@ -24,6 +24,8 @@ import { IssuesTableComponent } from './components/issues-table/issues-table.com
 import { SettingsPageComponent } from './pages/settings-page/settings-page.component';
 import { FLAGS_RESOLVE_DATA, FlagsResolver } from './resolvers/flags.resolver';
 import { ExecutionsComponent } from './pages/executions/executions.component';
+import { redirectToNewRouteGuard } from './guards/redirect-to-new-route.guard';
+import { RunsTableComponent } from './components/runs-table/runs-table.component';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -46,6 +48,12 @@ export const DashboardLayoutRouting: Routes = [
             ProjectMemberRole.VIEWER,
           ]),
         ],
+      },
+      {
+        path: 'runs',
+        pathMatch: 'full',
+        canActivate: [redirectToNewRouteGuard('/executions')],
+        component: RunsTableComponent,
       },
       {
         data: {

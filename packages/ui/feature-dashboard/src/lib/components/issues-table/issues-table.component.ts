@@ -1,7 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  EventEmitter,
   OnInit,
+  Output,
   ViewChild,
 } from '@angular/core';
 import { IssuesDataSource } from './issues-table.datasource';
@@ -13,6 +15,7 @@ import {
   CURSOR_QUERY_PARAM,
   ConfirmActionDialogComponent,
   ConfirmActionDialogData,
+  EmbeddingService,
   FLOW_QUERY_PARAM,
   LIMIT_QUERY_PARAM,
   NavigationService,
@@ -40,12 +43,15 @@ export class IssuesTableComponent implements OnInit {
   displayedColumns: string[] = ['name', 'count', 'lastOccurrence', 'action'];
   resolve$: Observable<unknown>;
   refresh$ = new BehaviorSubject<boolean>(true);
+  @Output()
+  issueClicked = new EventEmitter<{ issue: PopulatedIssue }>();
   constructor(
     private issuesService: IssuesService,
     private authService: AuthenticationService,
     private route: ActivatedRoute,
     private navigationService: NavigationService,
-    private matDialog: MatDialog
+    private matDialog: MatDialog,
+    private embeddingService: EmbeddingService
   ) {}
   ngOnInit(): void {
     this.dataSource = new IssuesDataSource(
@@ -60,16 +66,21 @@ export class IssuesTableComponent implements OnInit {
   openRuns(issue: PopulatedIssue, event: MouseEvent) {
     const openInNewWindow =
       event.ctrlKey || event.which == 2 || event.button == 4;
-    this.navigationService.navigate({
-      route: ['/runs'],
-      extras: {
-        queryParams: {
-          [FLOW_QUERY_PARAM]: issue.flowId,
-          [STATUS_QUERY_PARAM]: FlowRunStatus.FAILED,
+    if (openInNewWindow && !this.embeddingService.getState().isEmbedded) {
+      this.navigationService.navigate({
+        route: ['/executions'],
+        extras: {
+          fragment: 'Runs',
+          queryParams: {
+            [FLOW_QUERY_PARAM]: issue.flowId,
+            [STATUS_QUERY_PARAM]: FlowRunStatus.FAILED,
+          },
         },
-      },
-      openInNewWindow,
-    });
+        openInNewWindow,
+      });
+    } else {
+      this.issueClicked.emit({ issue });
+    }
   }
 
   resolve(issue: PopulatedIssue) {

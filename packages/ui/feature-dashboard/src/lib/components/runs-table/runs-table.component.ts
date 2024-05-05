@@ -97,6 +97,7 @@ export class RunsTableComponent implements OnInit {
   FlowRetryStrategy: typeof FlowRetryStrategy = FlowRetryStrategy;
   retryFlow$?: Observable<void>;
   setInitialFilters$?: Observable<void>;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private flagsService: FlagService,
@@ -275,5 +276,9 @@ export class RunsTableComponent implements OnInit {
       [LIMIT_QUERY_PARAM]: this.paginator.pageSizeControl.value,
       ...spreadIfDefined(CURSOR_QUERY_PARAM, this.paginator.cursor),
     };
+  }
+  setParams(status: FlowRunStatus, flowId: string) {
+    this.statusFilterControl.setValue(status);
+    this.flowFilterControl.setValue(flowId);
   }
 }

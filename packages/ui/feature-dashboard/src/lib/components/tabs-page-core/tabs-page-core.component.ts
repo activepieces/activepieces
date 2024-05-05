@@ -3,13 +3,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 
 export class TabsPageCoreComponent {
-  fragmentChanged$: Observable<string | null>;
+  fragmentChanged$?: Observable<string | null>;
   tabGroup?: MatTabGroup;
   constructor(
     protected tabIndexFragmentMap: { fragmentName: string }[],
     protected router: Router,
     protected route: ActivatedRoute
-  ) {
+  ) {}
+  afterViewInit(): void {
     this.fragmentChanged$ = this.route.fragment.pipe(
       tap((fragment) => {
         if (fragment === null) {
@@ -19,14 +20,6 @@ export class TabsPageCoreComponent {
         }
       })
     );
-  }
-  afterViewInit(): void {
-    const fragment = this.route.snapshot.fragment;
-    if (fragment === null) {
-      this.updateFragment(this.tabIndexFragmentMap[0].fragmentName);
-    } else {
-      this.fragmentCheck(fragment);
-    }
   }
 
   private fragmentCheck(fragment: string) {
