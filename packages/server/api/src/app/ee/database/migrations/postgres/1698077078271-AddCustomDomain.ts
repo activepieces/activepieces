@@ -1,9 +1,14 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../../../database/database-common'
+import { ApEdition } from '@activepieces/shared'
 
 export class AddCustomDomain1698077078271 implements MigrationInterface {
     name = 'AddCustomDomain1698077078271'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             CREATE TABLE "custom_domain" (
                 "id" character varying(21) NOT NULL,
@@ -25,6 +30,9 @@ export class AddCustomDomain1698077078271 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "custom_domain" DROP CONSTRAINT "fk_custom_domain_platform_id"
         `)

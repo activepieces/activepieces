@@ -1,10 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
+import { ApEdition } from '@activepieces/shared'
 
 export class AddOtpEntity1700396157624 implements MigrationInterface {
     name = 'AddOtpEntity1700396157624'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             CREATE TABLE "otp" (
                 "id" character varying(21) NOT NULL,
@@ -28,6 +33,9 @@ export class AddOtpEntity1700396157624 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "otp" DROP CONSTRAINT "fk_otp_user_id"
         `)

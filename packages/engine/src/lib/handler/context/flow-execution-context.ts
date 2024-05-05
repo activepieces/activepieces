@@ -1,4 +1,4 @@
-import { ActionType, assertEqual, FlowError, FlowRunResponse, FlowRunStatus, isNil, LoopStepOutput, PauseMetadata, spreadIfDefined, StepOutput, StepOutputStatus, StopResponse } from '@activepieces/shared'
+import { ActionType, assertEqual, FlowError, FlowRunResponse, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, spreadIfDefined, StepOutput, StepOutputStatus, StopResponse } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
@@ -67,7 +67,8 @@ export class FlowExecutorContext {
             return undefined
         }
         assertEqual(stepOutput.type, ActionType.LOOP_ON_ITEMS, 'stepOutput.type', 'LOOP_ON_ITEMS')
-        return stepOutput as LoopStepOutput
+        // The new LoopStepOutput is needed as casting directly to LoopClassOutput will just cast the data but the class methods will not be available
+        return new LoopStepOutput(stepOutput as GenericStepOutput<ActionType.LOOP_ON_ITEMS, LoopStepResult>)
     }
 
     public isCompleted({ stepName }: { stepName: string }): boolean {

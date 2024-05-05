@@ -1,10 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
+import { ApEdition } from '@activepieces/shared'
 
 export class AddGitRepoMigrationPostgres1704503804056
 implements MigrationInterface {
     name = 'AddGitRepoMigrationPostgres1704503804056'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             CREATE TABLE "git_repo" (
                 "id" character varying(21) NOT NULL,
@@ -28,6 +33,9 @@ implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "git_repo" DROP CONSTRAINT "fk_git_repo_project_id"
         `)

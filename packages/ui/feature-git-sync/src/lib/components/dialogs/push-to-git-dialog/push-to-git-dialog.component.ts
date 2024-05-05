@@ -9,6 +9,7 @@ import { AsyncPipe } from '@angular/common';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
 import { UiCommonModule } from '@activepieces/ui/common';
+import { GitPushOperationType } from '@activepieces/ee-shared';
 
 export type PushToGitDialogData = {
   projectName: string;
@@ -55,12 +56,12 @@ export class PushToGitDialogComponent {
     this.commitMsgFormControl.markAllAsTouched();
     if (this.commitMsgFormControl.valid && !this.loading$.value) {
       this.loading$.next(true);
-      const request = {
+
+      this.push$ = this.syncProjectService.push(this.data.repoId,  {
+        type: GitPushOperationType.PUSH_FLOW,
         flowId: this.data.flow?.id,
         commitMessage: this.commitMsgFormControl.getRawValue(),
-      };
-
-      this.push$ = this.syncProjectService.push(this.data.repoId, request).pipe(
+      }).pipe(
         tap(() => {
           this.snackbar.open($localize`Pushed successfully`);
           this.matDialogRef.close();

@@ -1,11 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
-import { apId } from '@activepieces/shared'
+import { ApEdition, apId } from '@activepieces/shared'
 
 export class MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258 implements MigrationInterface {
     name = 'MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         const ids = await getAllSigningKeyIds(queryRunner)
 
         for (const id of ids) {
@@ -24,6 +28,9 @@ export class MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258 impl
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "signing_key"
             ADD "generatedBy" character varying(21)

@@ -1,9 +1,14 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../../../database/database-common'
+import { ApEdition } from '@activepieces/shared'
 
 export class AddTasksPerDays1689336533370 implements MigrationInterface {
     name = 'AddTasksPerDays1689336533370'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
+            return
+        }
         await queryRunner.query(
             'ALTER TABLE "project_plan" ADD "tasksPerDay" integer',
         )
@@ -31,6 +36,9 @@ export class AddTasksPerDays1689336533370 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
+            return
+        }
         await queryRunner.query(
             'ALTER TABLE "project_usage" ALTER COLUMN "teamMembers" SET DEFAULT \'0\'',
         )

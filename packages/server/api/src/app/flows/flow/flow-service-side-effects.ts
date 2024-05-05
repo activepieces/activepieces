@@ -12,7 +12,7 @@ import {
     ScheduleType,
 } from '@activepieces/shared'
 
-export const flowServiceHooks = {
+export const flowSideEffects = {
     async preUpdateStatus({
         flowToUpdate,
         newStatus,

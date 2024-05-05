@@ -1,4 +1,4 @@
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
 import cronParser from 'cron-parser'
 import dayjs from 'dayjs'
 
@@ -33,9 +33,9 @@ export class ApMemoryQueue<T> {
     }
 
     start(processJob: (job: ApJob<T>) => Promise<void>): void {
-        setInterval(async () => {
+        setInterval(() => {
             const jobsToRun = this.queue.filter((job) => {
-                if (job.cronExpression && job.nextFireAtEpochSeconds) {
+                if (job.nextFireAtEpochSeconds) {
                     return dayjs().unix() >= Number(job.nextFireAtEpochSeconds)
                 }
                 return true
@@ -43,9 +43,7 @@ export class ApMemoryQueue<T> {
             this.queue = this.queue.filter((job) => !jobsToRun.includes(job))
 
             for (const job of jobsToRun) {
-                processJob(job).catch((e) => {
-                    logger.error({ error: e, job }, 'Error processing job')
-                })
+                rejectedPromiseHandler(processJob(job))
                 const nextJob = calculateNextJob(job)
                 if (nextJob) {
                     this.queue.push(nextJob)

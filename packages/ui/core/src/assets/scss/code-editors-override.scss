@@ -1,3 +1,4 @@
+@import url('./json-editor-override.scss');
 .code .editor-container {
   height: 300px;
 }
@@ -111,3 +112,5 @@ ngx-monaco-editor {
 .white-nums-column .monaco-editor .margin {
   background-color: var(--white);
 }
+
+

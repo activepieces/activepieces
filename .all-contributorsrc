@@ -983,6 +983,33 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "javix64",
+      "name": "Javier HM",
+      "avatar_url": "https://avatars.githubusercontent.com/u/58471170?v=4",
+      "profile": "http://javix64.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "MohamedHassan499",
+      "name": "Mohamed Hassan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/50884619?v=4",
+      "profile": "http://farag.tech",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "christian-schab",
+      "name": "Christian Schab",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17610709?v=4",
+      "profile": "https://www.coasy.com/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

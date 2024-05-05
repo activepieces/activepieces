@@ -52,11 +52,11 @@ async function requireUpdate(): Promise<boolean> {
     return dayjs(newestState.recentUpdate).unix() !== newestInCache || Number(newestState.count) !== cache.length
 }
 
-const executeWithLock = async <T>(methodToExecute: () => T): Promise<T> => {
+const executeWithLock = async <T>(methodToExecute: () => Promise<T>): Promise<T> => {
     const releaseLock = await lock.acquire()
 
     try {
-        return methodToExecute()
+        return await methodToExecute()
     }
     finally {
         releaseLock()

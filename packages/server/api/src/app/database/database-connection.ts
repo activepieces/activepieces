@@ -74,25 +74,6 @@ function getEntities(): EntitySchema<unknown>[] {
 
     switch (edition) {
         case ApEdition.CLOUD:
-            entities.push(
-                ProjectMemberEntity,
-                AppSumoEntity,
-                ReferralEntity,
-                ProjectPlanEntity,
-                FlowTemplateEntity,
-                ConnectionKeyEntity,
-                AppCredentialEntity,
-                CustomDomainEntity,
-                SigningKeyEntity,
-                OAuthAppEntity,
-                OtpEntity,
-                ApiKeyEntity,
-                GitRepoEntity,
-                AuditEventEntity,
-                ActivityEntity,
-                ProjectBillingEntity,
-            )
-            break
         case ApEdition.ENTERPRISE:
             entities.push(
                 ProjectMemberEntity,
@@ -106,6 +87,13 @@ function getEntities(): EntitySchema<unknown>[] {
                 GitRepoEntity,
                 AuditEventEntity,
                 ActivityEntity,
+
+                // CLOUD
+                AppSumoEntity,
+                ReferralEntity,
+                ConnectionKeyEntity,
+                AppCredentialEntity,
+                ProjectBillingEntity,
             )
             break
         case ApEdition.COMMUNITY:

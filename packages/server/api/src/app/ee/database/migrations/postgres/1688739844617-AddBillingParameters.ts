@@ -1,9 +1,14 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../../../database/database-common'
+import { ApEdition } from '@activepieces/shared'
 
 export class AddBillingParameters1688739844617 implements MigrationInterface {
     name = 'AddBillingParameters1688739844617'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
+            return
+        }
         await queryRunner.query(
             'ALTER TABLE "project_plan" ADD "minimumPollingInterval" integer NOT NULL DEFAULT 5',
         )
@@ -28,6 +33,9 @@ export class AddBillingParameters1688739844617 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
+            return
+        }
         await queryRunner.query(
             'ALTER TABLE "project_usage" DROP COLUMN "teamMembers"',
         )

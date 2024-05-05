@@ -14,12 +14,11 @@ Store the last timestamp or most recent item id using the context store property
 This method runs every **5 minutes**, fetches the endpoint between a certain timestamp or traverses until it finds the last item id, and returns the new items as an array.
 
 **Testing:**
-You cannot test it with Test Flow, as it uses static sample data provided in the piece. 
-To test the trigger, publish the flow, perform the event, and wait for the run to be invoked (every 5 minutes) on the third party. Then check the flow runs from the main dashboard.
+You can implement a test function which should return some of the most recent items. It's recommended to limit this to five.
 
 **Examples:**
-- [New Record Airtable](https://github.com/activepieces/activepieces/blob/main/packages/pieces/airtable/src/lib/trigger/new-record.trigger.ts)
-- [New Updated Item Salesforce](https://github.com/activepieces/activepieces/blob/main/packages/pieces/salesforce/src/lib/trigger/new-updated-record.ts)
+- [New Record Airtable](https://github.com/activepieces/activepieces/blob/main/packages/pieces/community/airtable/src/lib/trigger/new-record.trigger.ts)
+- [New Updated Item Salesforce](https://github.com/activepieces/activepieces/blob/main/packages/pieces/community/salesforce/src/lib/trigger/new-updated-record.ts)
 
 # Polling library
 

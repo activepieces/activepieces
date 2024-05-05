@@ -1,9 +1,14 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
+import { ApEdition } from '@activepieces/shared'
 
 export class AddProjectBilling1708811745694 implements MigrationInterface {
     name = 'AddProjectBilling1708811745694'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             CREATE TABLE "project_billing" (
                 "id" character varying(21) NOT NULL,
@@ -29,6 +34,9 @@ export class AddProjectBilling1708811745694 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "project_billing" DROP CONSTRAINT "fk_project_stripe_project_id"
         `)

@@ -1,40 +1,26 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { createAction } from '@activepieces/pieces-framework';
+
 import { webflowAuth } from '../..';
-import { webflowCommon } from '../common/common';
+import { webflowProps } from '../common/props';
+import { WebflowApiClient } from '../common/client';
 
 export const webflowDeleteCollectionItem = createAction({
-  auth: webflowAuth,
-  name: 'delete_collection_item',
-  description: 'Delete collection item',
-  displayName: 'Delete an item in a collection',
-  props: {
-    site_id: webflowCommon.sitesDropdown,
-    collection_id: webflowCommon.collectionsDropdown,
-    collection_item_id: webflowCommon.collectionItemsDropdown,
-  },
+	auth: webflowAuth,
+	name: 'delete_collection_item',
+	description: 'Delete collection item',
+	displayName: 'Delete an item in a collection',
+	props: {
+		site_id: webflowProps.site_id,
+		collection_id: webflowProps.collection_id,
+		collection_item_id: webflowProps.collection_item_id,
+	},
 
-  async run(configValue) {
-    const accessToken = configValue.auth['access_token'];
-    const collectionId = configValue.propsValue['collection_id'];
-    const collectionItemId = configValue.propsValue['collection_item_id'];
+	async run(context) {
+		const collectionId = context.propsValue.collection_id;
+		const collectionItemId = context.propsValue.collection_item_id;
 
-    const request: HttpRequest = {
-      method: HttpMethod.DELETE,
-      url: `https://api.webflow.com/collections/${collectionId}/items/${collectionItemId}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: accessToken,
-      },
-    };
+		const client = new WebflowApiClient(context.auth.access_token);
 
-    const res = await httpClient.sendRequest<never>(request);
-
-    return res.body;
-  },
+		return await client.deleteCollectionItem(collectionId, collectionItemId);
+	},
 });

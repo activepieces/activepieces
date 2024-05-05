@@ -33,7 +33,7 @@ export const updateRecordAction = createAction({
 
     const props = Object.entries(dynamicFields);
     for (const [propertyKey, propertyValue] of props) {
-      if (propertyValue) {
+      if (propertyValue !== undefined && propertyValue !== '') {
         fields[propertyKey] = propertyValue;
       }
     }
@@ -48,7 +48,7 @@ export const updateRecordAction = createAction({
       context.auth as PiecePropValueSchema<typeof APITableAuth>
     );
 
-    return await client.updateRecord(datasheetId as string, {
+    const response: any = await client.updateRecord(datasheetId as string, {
       records: [
         {
           recordId: recordId,
@@ -58,5 +58,10 @@ export const updateRecordAction = createAction({
         },
       ],
     });
+
+    if (!response.success) {
+      throw new Error(JSON.stringify(response, undefined, 2));
+    }
+    return response;
   },
 });

@@ -1,8 +1,13 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
+import { ApEdition } from '@activepieces/shared'
 export class AddPieceTypeAndPackageTypeToFlowTemplate1696245170062
 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD])) {
+            return
+        }
         const connection = queryRunner.connection
         const templates = await connection.query('SELECT * FROM flow_template')
         for (const template of templates) {
@@ -21,6 +26,9 @@ implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD])) {
+            return
+        }
         const connection = queryRunner.connection
         const templates = await connection.query('SELECT * FROM flow_template')
         for (const template of templates) {
