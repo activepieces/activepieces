@@ -14,7 +14,7 @@ import { transcribeAction } from './lib/actions/transcriptions';
 import { translateAction } from './lib/actions/translation';
 import { visionPrompt } from './lib/actions/vision-prompt';
 import { baseUrl } from './lib/common/common';
-import { extractStructureDataAction } from './lib/actions/extract-structure-data.action';
+import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
 
 const markdownDescription = `
 Follow these instructions to get your OpenAI API Key:
@@ -68,7 +68,7 @@ export const openai = createPiece({
 		textToSpeech,
 		transcribeAction,
 		translateAction,
-		extractStructureDataAction,
+		extractStructuredDataAction,
 		createCustomApiCallAction({
 			auth: openaiAuth,
 			baseUrl: () => baseUrl,

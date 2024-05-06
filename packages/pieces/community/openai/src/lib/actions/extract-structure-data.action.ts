@@ -3,10 +3,10 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { notLLMs } from '../common/common';
 
-export const extractStructureDataAction = createAction({
+export const extractStructuredDataAction = createAction({
 	auth: openaiAuth,
-	name: 'openai-extract-structure-data',
-	displayName: 'Transform Text to Structure Data',
+	name: 'openai-extract-structured-data',
+	displayName: 'Transform Text to Structured Data',
 	description: 'Returns structured data from provided unstructured text.',
 	props: {
 		model: Property.Dropdown({
@@ -96,52 +96,48 @@ export const extractStructureDataAction = createAction({
 		}),
 	},
 	async run(context) {
-		try {
-			const { model, text, prompt } = context.propsValue;
+		const { model, text, prompt } = context.propsValue;
 
-			const paramInputArray = context.propsValue.params as ParamInput[];
+		const paramInputArray = context.propsValue.params as ParamInput[];
 
-			const functionParams: Record<string, any> = {};
-			const requiredFunctionParams = [];
-			for (const param of paramInputArray) {
-				functionParams[param.propName] = {
-					type: param.propDataType,
-					description: param.propDescription,
-				};
-				if (param.propIsRequired) requiredFunctionParams.push(param.propName);
-			}
+		const functionParams: Record<string, any> = {};
+		const requiredFunctionParams = [];
+		for (const param of paramInputArray) {
+			functionParams[param.propName] = {
+				type: param.propDataType,
+				description: param.propDescription,
+			};
+			if (param.propIsRequired) requiredFunctionParams.push(param.propName);
+		}
 
-			const openai = new OpenAI({
-				apiKey: context.auth,
-			});
+		const openai = new OpenAI({
+			apiKey: context.auth,
+		});
 
-			const response = await openai.chat.completions.create({
-				model: model,
-				messages: [{ role: 'user', content: text }],
-				tools: [
-					{
-						type: 'function',
-						function: {
-							name: 'extract_structured_data',
-							description: prompt,
-							parameters: {
-								type: 'object',
-								properties: functionParams,
-								required: requiredFunctionParams,
-							},
+		const response = await openai.chat.completions.create({
+			model: model,
+			messages: [{ role: 'user', content: text }],
+			tools: [
+				{
+					type: 'function',
+					function: {
+						name: 'extract_structured_data',
+						description: prompt,
+						parameters: {
+							type: 'object',
+							properties: functionParams,
+							required: requiredFunctionParams,
 						},
 					},
-				],
-			});
+				},
+			],
+		});
 
-			const toolCallsResponse = response.choices[0].message.tool_calls;
-			if (toolCallsResponse) {
-				return JSON.parse(toolCallsResponse[0].function.arguments);
-			} else {
-				return response.choices[0].message;
-			}
-		} catch (error) {
-			throw Error(JSON.stringify(error, null, 2));
+		const toolCallsResponse = response.choices[0].message.tool_calls;
+		if (toolCallsResponse) {
+			return JSON.parse(toolCallsResponse[0].function.arguments);
+		} else {
+			throw Error('Unable to extract data. Please provide valid params and text.');
 		}
 	},
 });
