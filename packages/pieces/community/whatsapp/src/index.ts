@@ -13,7 +13,7 @@ To Obtain a Client ID and Client Secret:
 5. Add new Product -> WhatsApp.
 6. Navigate to WhatsApp Settings > API Setup.
 7. Select a phone number and copy its Phone number ID.
-8. Login to your (Meta Business Manager)[https://business.facebook.com/].
+8. Login to your [Meta Business Manager](https://business.facebook.com/).
 9. Click on Settings.
 10. Create a new System User with access over the app and copy the access token.
 `;
