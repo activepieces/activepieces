@@ -1,9 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import {
-  ContactSalesService,
-  FeatureKey,
-} from '../../service/contact-sales.service';
+import { ContactSalesService } from '../../service/contact-sales.service';
 import { fadeIn400ms } from '../../animation/fade-in.animations';
+import { FeatureKey } from '../../utils/consts';
 
 @Component({
   selector: 'ap-upgrade-note',
@@ -16,7 +14,7 @@ export class UpgradeNoteComponent {
   @Input({ required: true }) featureNoteTitle = '';
   @Input({ required: true }) featureNote = '';
   @Input() videoUrl = '';
-  @Input() featureKey: FeatureKey;
+  @Input({ required: true }) featureKey: FeatureKey;
 
   constructor(private contactSalesService: ContactSalesService) {}
 
