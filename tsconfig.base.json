@@ -553,6 +553,9 @@
       "@activepieces/piece-whatsable": [
         "packages/pieces/community/whatsable/src/index.ts"
       ],
+      "@activepieces/piece-whatsapp": [
+        "packages/pieces/community/whatsapp/src/index.ts"
+      ],
       "@activepieces/piece-woocommerce": [
         "packages/pieces/community/woocommerce/src/index.ts"
       ],
