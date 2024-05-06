@@ -39,6 +39,12 @@ export const createWordPressPost = createAction({
     }),
     featured_media_file: wordpressCommon.featured_media_file,
     tags: wordpressCommon.tags,
+    acfFields: Property.Object({
+      displayName: 'Custom ACF fields',
+      description:
+        'Provide field name with value.You can find out field name from ACF plugin menu.',
+      required: false,
+    }),
     categories: wordpressCommon.categories,
     featured_media: wordpressCommon.featured_media,
     status: wordpressCommon.status,
@@ -57,6 +63,7 @@ export const createWordPressPost = createAction({
     }),
   },
   async run(context) {
+    console.log(JSON.stringify(context.propsValue));
     if (!(await wordpressCommon.urlExists(context.auth.website_url.trim()))) {
       throw new Error('Website url is invalid: ' + context.auth.website_url);
     }
@@ -91,6 +98,13 @@ export const createWordPressPost = createAction({
     }
     if (context.propsValue.featured_media) {
       requestBody['featured_media'] = context.propsValue.featured_media;
+    }
+
+    if (
+      context.propsValue.acfFields &&
+      Object.keys(context.propsValue.acfFields).length > 0
+    ) {
+      requestBody['acf'] = context.propsValue.acfFields;
     }
 
     if (context.propsValue.featured_media_file) {
