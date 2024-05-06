@@ -111,9 +111,9 @@ const getGitHubUserInfo = async (
             params: null,
         })
     }
-
+    const { name, login } = await response.json()
     return {
-        firstName: (await response.json()).name,
+        firstName: name ?? login,
         lastName: '',
         email: await getGitHubUserEmail(gitHubAccessToken),
     }

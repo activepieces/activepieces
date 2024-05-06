@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { telegramCommons } from '../common';
 import { telegramBotAuth } from '../..';
+import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 
 export const telegramNewMessage = createTrigger({
   auth: telegramBotAuth,
@@ -45,5 +46,18 @@ export const telegramNewMessage = createTrigger({
   },
   async run(context) {
     return [context.payload.body];
-  }
+  },
+  async test(context) {
+    const messages = await getLastFiveMessages(context.auth)
+    return messages.result
+  },
 });
+
+const getLastFiveMessages = async (botToken: string) => {
+  const request: HttpRequest = {
+    method: HttpMethod.GET,
+    url: `https://api.telegram.org/bot${botToken}/getUpdates?offset=-5`,
+  };
+  const response = await httpClient.sendRequest(request);
+  return response.body;
+}

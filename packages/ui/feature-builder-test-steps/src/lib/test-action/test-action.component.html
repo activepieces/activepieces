@@ -75,8 +75,9 @@
         <div *ngIf="res.date" class="ap-typography-body-2 ap-text-body ap--mt-2 ap-mb-4 ap-pl-0.5">
             {{ res.date | timeago:true}}
         </div>
-    
-            <ap-json-viewer title="Output" [content]="res.output"></ap-json-viewer>
+            <div class="ap-mb-8">
+                <ap-json-viewer viewTitle="Output" i18n-title [content]="res.output"></ap-json-viewer>
+            </div>
       
     </div>
    

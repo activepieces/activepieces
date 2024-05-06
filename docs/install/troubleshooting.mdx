@@ -63,7 +63,7 @@ If you forgot your password on self hosted instance, you can reset it using the 
 1. **Open the SQLite3 Shell**:
    - Access the SQLite3 database by opening the SQLite3 shell. Replace "database.db" with the actual name of your SQLite3 database file if it's different.
    ```bash
-   sqlite3 ~/.activepieces/database.sqlite3
+   sqlite3 ~/.activepieces/database.sqlite
    ```
 
 2. **Create a Secure Password**:
@@ -73,7 +73,7 @@ If you forgot your password on self hosted instance, you can reset it using the 
 3. **Reset Your Password**:
    - Once inside the SQLite3 shell, you can update your password with an SQL query. Replace `HASH_PASSWORD` with your new password and `YOUR_USERNAME` with your username or email.
    ```sql
-   UPDATE users SET password = 'HASH_PASSWORD' WHERE email = 'YOUR_EMAIL_ADDRESS';
+   UPDATE user SET password = 'HASH_PASSWORD' WHERE email = 'YOUR_EMAIL_ADDRESS';
    ```
 
 4. **Exit the SQLite3 Shell**:

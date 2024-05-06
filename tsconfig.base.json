@@ -45,6 +45,9 @@
       "@activepieces/piece-apitable": [
         "packages/pieces/community/apitable/src/index.ts"
       ],
+      "@activepieces/piece-apollo": [
+        "packages/pieces/community/apollo/src/index.ts"
+      ],
       "@activepieces/piece-approval": [
         "packages/pieces/community/approval/src/index.ts"
       ],
@@ -399,6 +402,9 @@
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
       ],
+      "@activepieces/piece-queue": [
+        "packages/pieces/community/queue/src/index.ts"
+      ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
       ],
@@ -426,6 +432,9 @@
       ],
       "@activepieces/piece-schedule": [
         "packages/pieces/community/schedule/src/index.ts"
+      ],
+      "@activepieces/piece-segment": [
+        "packages/pieces/community/segment/src/index.ts"
       ],
       "@activepieces/piece-sendfox": [
         "packages/pieces/community/sendfox/src/index.ts"
@@ -562,6 +571,9 @@
       ],
       "@activepieces/piece-zendesk": [
         "packages/pieces/community/zendesk/src/index.ts"
+      ],
+      "@activepieces/piece-zerobounce": [
+        "packages/pieces/community/zerobounce/src/index.ts"
       ],
       "@activepieces/piece-zoho-crm": [
         "packages/pieces/community/zoho-crm/src/index.ts"

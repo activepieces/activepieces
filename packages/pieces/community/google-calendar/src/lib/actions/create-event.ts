@@ -39,6 +39,7 @@ export const createEvent = createAction({
       description: 'Description of the event. You can use HTML tags here.',
       required: false,
     }),
+    colorId: googleCalendarCommon.colorId,
     attendees: Property.Array({
       displayName: 'Attendees',
       description: 'Emails of the attendees (guests)',
@@ -65,7 +66,10 @@ export const createEvent = createAction({
       options: {
         options: [
           { label: 'Yes, to everyone', value: 'all' },
-          { label: 'To non-Google Calendar guests only', value: 'externalOnly' },
+          {
+            label: 'To non-Google Calendar guests only',
+            value: 'externalOnly',
+          },
           { label: 'To no one', value: 'none' },
         ],
       },
@@ -81,11 +85,11 @@ export const createEvent = createAction({
       end_date_time,
       location,
       description,
+      colorId,
       guests_can_modify: guestsCanModify,
       guests_can_invite_others: guestsCanInviteOthers,
       guests_can_see_other_guests: guestsCanSeeOtherGuests,
     } = configValue.propsValue;
-
 
     const start = {
       dateTime: dayjs(start_date_time).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
@@ -100,7 +104,7 @@ export const createEvent = createAction({
     /*const attachment = {
       fileUrl: configValue.propsValue.attachment,
     };*/
-    
+
     const attendeesArray = configValue.propsValue.attendees as string[];
 
     const sendNotifications = configValue.propsValue.send_notifications;
@@ -108,16 +112,15 @@ export const createEvent = createAction({
     const attendeesObject = [];
     if (attendeesArray) {
       for (const attendee of attendeesArray) {
-        attendeesObject.push({ email: attendee});
+        attendeesObject.push({ email: attendee });
       }
     }
-   
-    console.log
+
     const authClient = new OAuth2Client();
     authClient.setCredentials(configValue.auth);
 
     const calendar = google.calendar({ version: 'v3', auth: authClient });
-    
+
     const response = await calendar.events.insert({
       calendarId,
       sendUpdates: sendNotifications,
@@ -125,9 +128,10 @@ export const createEvent = createAction({
         summary,
         start,
         end,
+        colorId,
         //attachments: configValue.propsValue.attachment ? [attachment] : [],
-        location: location ?? "",
-        description: description ?? "",
+        location: location ?? '',
+        description: description ?? '',
         attendees: attendeesObject,
         guestsCanInviteOthers,
         guestsCanModify,
