@@ -63,7 +63,6 @@ export const createWordPressPost = createAction({
     }),
   },
   async run(context) {
-    console.log(JSON.stringify(context.propsValue));
     if (!(await wordpressCommon.urlExists(context.auth.website_url.trim()))) {
       throw new Error('Website url is invalid: ' + context.auth.website_url);
     }
