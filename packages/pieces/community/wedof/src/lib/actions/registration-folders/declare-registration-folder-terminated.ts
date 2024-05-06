@@ -1,13 +1,15 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../..';
+import { wedofAuth } from '../../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { wedofCommon } from '../common/wedof';
+import { wedofCommon } from '../../common/wedof';
+import dayjs from 'dayjs';
 
-export const cancelRegistrationFolder = createAction({
+export const declareRegistrationFolderTerminated = createAction({
   auth: wedofAuth,
-  name: 'cancelRegistrationFolder',
-  displayName: 'Annuler le dossier de formation',
-  description: 'Annuler le dossier de formation',
+  name: 'declareRegistrationFolderTerminated',
+  displayName: "Passer un dossier de formation à l'état : sortie de formation",
+  description:
+    "Change l'état d'un dossier de formation vers : sortie de formation",
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',
@@ -15,9 +17,14 @@ export const cancelRegistrationFolder = createAction({
         'Sélectionner la propriété {externalId} du dossier de formation',
       required: true,
     }),
+    date: Property.DateTime({
+      displayName: 'Sortie de formation le',
+      description: 'Date au format YYYY-MM-DD.',
+      required: false,
+    }),
     code: Property.Dropdown({
-      displayName: "Raison de l'annulation du dossier de formation",
-      description: "Sélectionner la raison de l'annulation",
+      displayName: 'Raison de la sortie de formation',
+      description: 'Sélectionner la raison de sortie de formation',
       required: true,
       refreshers: ['auth'],
       refreshOnSearch: false,
@@ -32,7 +39,8 @@ export const cancelRegistrationFolder = createAction({
           await httpClient.sendRequest({
             method: HttpMethod.GET,
             url:
-              wedofCommon.baseUrl + '/registrationFoldersReasons?type=canceled',
+              wedofCommon.baseUrl +
+              '/registrationFoldersReasons?type=terminated',
             headers: {
               'Content-Type': 'application/json',
               'X-Api-Key': auth as string,
@@ -50,16 +58,20 @@ export const cancelRegistrationFolder = createAction({
         };
       },
     }),
-    description: Property.LongText({
-      displayName: 'Description',
-      description: " Texte expliquant les raisons de l'annulation",
+    absenceDuration: Property.Number({
+      displayName: "durée d'absence",
+      description:
+        "La durée d'une éventuelle absence en heures. 0 si aucune absence.",
       required: false,
     }),
   },
   async run(context) {
     const message = {
+      date: context.propsValue.date
+        ? dayjs(context.propsValue.date).format('YYYY-MM-DD')
+        : null,
       code: context.propsValue.code,
-      description: context.propsValue.description,
+      absenceDuration: context.propsValue.absenceDuration,
     };
 
     return (
@@ -69,7 +81,7 @@ export const cancelRegistrationFolder = createAction({
           wedofCommon.baseUrl +
           '/registrationFolders/' +
           context.propsValue.externalId +
-          '/cancel',
+          '/terminate',
         body: message,
         headers: {
           'Content-Type': 'application/json',

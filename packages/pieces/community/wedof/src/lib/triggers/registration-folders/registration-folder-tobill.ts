@@ -1,7 +1,7 @@
-import { wedofAuth } from '../..';
+import { wedofAuth } from '../../..';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { wedofCommon } from '../common/wedof';
+import { wedofCommon } from '../../common/wedof';
 
 export const registrationFolderTobill = createTrigger({
   auth: wedofAuth,

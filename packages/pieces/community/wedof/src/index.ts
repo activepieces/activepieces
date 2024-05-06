@@ -2,25 +2,27 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { wedofCommon } from './lib/common/wedof';
-import { newRegistrationFolderNotProcessed } from './lib/triggers/new-registration-folder-created';
-import { registrationFolderUpdated } from './lib/triggers/registration-folder-updated';
-import { registrationFolderAccepted } from './lib/triggers/registration-folder-accepted';
-import { registrationFolderPaid } from './lib/triggers/registration-folder-paid';
-import { registrationFolderSelected } from './lib/triggers/registration-folder-selected';
-import { registrationFolderTobill } from './lib/triggers/registration-folder-tobill';
-import { validateRegistrationFolder } from './lib/actions/validate-registration-folder';
-import { updateRegistrationFolder } from './lib/actions/update-registration-folder';
-import { searchRegistrationFolder } from './lib/actions/search-registration-folder';
-import { declareRegistrationFolderTerminated } from './lib/actions/declare-registration-folder-terminated';
-import { declareRegistrationFolderServicedone } from './lib/actions/declare-registration-folder-servicedone';
-import { declareRegistrationFolderIntraining } from './lib/actions/declare-registration-folder-intraining';
-import { billRegistrationFolder } from './lib/actions/bill-registration-folder';
-import { registrationFolderInTraining } from './lib/triggers/registration-folder-inTraining';
-import { registrationFolderTerminated } from './lib/triggers/registration-folder-terminated';
-import { getRegistrationFolder } from './lib/actions/get-registration-folder';
-import { cancelRegistrationFolder } from './lib/actions/cancel-registration-folder';
-import { refuseRegistrationFolder } from './lib/actions/refuse-registration-folder';
-import { getMinimalSessionDates } from './lib/actions/get-minimal-session-dates';
+import { newRegistrationFolderNotProcessed } from './lib/triggers/registration-folders/new-registration-folder-created';
+import { registrationFolderUpdated } from './lib/triggers/registration-folders/registration-folder-updated';
+import { registrationFolderAccepted } from './lib/triggers/registration-folders/registration-folder-accepted';
+import { registrationFolderPaid } from './lib/triggers/registration-folders/registration-folder-paid';
+import { registrationFolderSelected } from './lib/triggers/registration-folders/registration-folder-selected';
+import { registrationFolderTobill } from './lib/triggers/registration-folders/registration-folder-tobill';
+import { validateRegistrationFolder } from './lib/actions/registration-folders/validate-registration-folder';
+import { updateRegistrationFolder } from './lib/actions/registration-folders/update-registration-folder';
+import { searchRegistrationFolder } from './lib/actions/registration-folders/search-registration-folder';
+import { declareRegistrationFolderTerminated } from './lib/actions/registration-folders/declare-registration-folder-terminated';
+import { declareRegistrationFolderServicedone } from './lib/actions/registration-folders/declare-registration-folder-servicedone';
+import { declareRegistrationFolderIntraining } from './lib/actions/registration-folders/declare-registration-folder-intraining';
+import { billRegistrationFolder } from './lib/actions/registration-folders/bill-registration-folder';
+import { registrationFolderInTraining } from './lib/triggers/registration-folders/registration-folder-inTraining';
+import { registrationFolderTerminated } from './lib/triggers/registration-folders/registration-folder-terminated';
+import { getRegistrationFolder } from './lib/actions/registration-folders/get-registration-folder';
+import { cancelRegistrationFolder } from './lib/actions/registration-folders/cancel-registration-folder';
+import { refuseRegistrationFolder } from './lib/actions/registration-folders/refuse-registration-folder';
+import { getMinimalSessionDates } from './lib/actions/registration-folders/get-minimal-session-dates';
+import { certificationFolderUpdated } from './lib/triggers/certification-folders/certification-folder-updated';
+import { certificationFolderSuccess } from './lib/triggers/certification-folders/certification-folder-success';
 
 export const wedofAuth = PieceAuth.SecretText({
   displayName: 'Clé API',
@@ -81,5 +83,7 @@ export const wedof = createPiece({
     registrationFolderPaid,
     registrationFolderSelected,
     registrationFolderTobill,
+    certificationFolderUpdated,
+    certificationFolderSuccess,
   ],
 });
