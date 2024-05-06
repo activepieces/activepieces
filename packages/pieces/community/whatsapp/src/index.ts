@@ -4,7 +4,7 @@ import { sendMessage } from "./lib/actions/send-message";
 import { sendMedia } from "./lib/actions/send-media";
 
 const markdown = `
-To Obtain a Client ID and Client Secret:
+To Obtain a Phone Number ID and a Permanent System User Access Token, follow these steps:
 
 1. Go to https://developers.facebook.com/
 2. Make a new app, Select Other for usecase.
