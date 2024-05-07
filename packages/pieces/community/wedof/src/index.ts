@@ -23,6 +23,11 @@ import { refuseRegistrationFolder } from './lib/actions/registration-folders/ref
 import { getMinimalSessionDates } from './lib/actions/registration-folders/get-minimal-session-dates';
 import { certificationFolderUpdated } from './lib/triggers/certification-folders/certification-folder-updated';
 import { certificationFolderSuccess } from './lib/triggers/certification-folders/certification-folder-success';
+import { newCertificationFolderCreated } from './lib/triggers/certification-folders/new-certification-folder-created';
+import { certificationFolderTotake } from './lib/triggers/certification-folders/certification-folder-totake';
+import { certificationFolderToretake } from './lib/triggers/certification-folders/certification-folder-toretake';
+import { certificationFolderRegistred } from './lib/triggers/certification-folders/certification-folder-registred';
+import { certificationFolderToControl } from './lib/triggers/certification-folders/certification-folder-tocontrol';
 
 export const wedofAuth = PieceAuth.SecretText({
   displayName: 'Clé API',
@@ -85,5 +90,10 @@ export const wedof = createPiece({
     registrationFolderTobill,
     certificationFolderUpdated,
     certificationFolderSuccess,
+    newCertificationFolderCreated,
+    certificationFolderTotake,
+    certificationFolderToretake,
+    certificationFolderRegistred,
+    certificationFolderToControl
   ],
 });
