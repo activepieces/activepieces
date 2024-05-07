@@ -14,7 +14,8 @@ import { Processors } from "../../processors/processors";
 import { Validators } from "../../validators/validators";
 import { DynamicProperties } from "./dynamic-prop";
 import { DropdownProperty, MultiSelectDropdownProperty } from "./dropdown/dropdown-prop";
-
+import { GoogleFilePickerProperty } from "./google-file-picker-property";
+export {GoogleFilePickerViewId} from './google-file-picker-property';
 export const InputProperty = Type.Union([
   ShortTextProperty,
   LongTextProperty,
@@ -31,6 +32,7 @@ export const InputProperty = Type.Union([
   JsonProperty,
   DateTimeProperty,
   FileProperty,
+  GoogleFilePickerProperty
 ])
 
 export type InputProperty =
@@ -48,7 +50,8 @@ export type InputProperty =
   | StaticMultiSelectDropdownProperty<unknown, boolean>
   | DynamicProperties<boolean>
   | DateTimeProperty<boolean>
-  | FileProperty<boolean>;
+  | FileProperty<boolean>
+  | GoogleFilePickerProperty<boolean>;
 
 type Properties<T> = Omit<
   T,
@@ -230,4 +233,11 @@ export const Property = {
       type: PropertyType.FILE,
     } as unknown as R extends true ? FileProperty<true> : FileProperty<false>;
   },
+  GoogleFilePicker<R extends boolean>( request: Properties<GoogleFilePickerProperty<R>>): R extends true ? GoogleFilePickerProperty<true> : GoogleFilePickerProperty<false> {
+    return {
+      ...request,
+      valueSchema: undefined,
+      type: PropertyType.GOOGLE_FILE_PICKER,
+    } as unknown as R extends true ? GoogleFilePickerProperty<true> : GoogleFilePickerProperty<false>;
+  }
 };
