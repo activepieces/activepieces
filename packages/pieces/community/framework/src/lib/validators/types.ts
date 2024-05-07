@@ -20,6 +20,7 @@ export enum ValidationInputType {
   OBJECT = 'OBJECT',
   ARRAY = 'ARRAY',
   JSON = 'JSON',
+  GOOGLE_FILE_PICKER= "GOOGLE_FILE_PICKER"
 }
 
 export type TypedValidatorFn<T extends ValidationInputType> = {

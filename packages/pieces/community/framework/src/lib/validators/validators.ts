@@ -276,6 +276,21 @@ class Validators {
     },
   };
 
+  
+  static googleFilePicker: TypedValidatorFn<ValidationInputType.GOOGLE_FILE_PICKER> = {
+    type: ValidationInputType.GOOGLE_FILE_PICKER,
+    fn: (property, processedValue, userInput) => {
+      if(!processedValue && !property.required)
+        {
+          return null;
+        }
+      if(processedValue && typeof processedValue === 'object' && processedValue.fileId && processedValue.fileDisplayName){
+        return null;
+      }
+      return formatErrorMessage(ErrorMessages.GOOGLE_FILE_PICKER, { property,userInput });
+    },
+  };
+
   static email: TypedValidatorFn<ValidationInputType.STRING> = {
     type: ValidationInputType.STRING,
     fn: (property, processedValue, userInput) => {

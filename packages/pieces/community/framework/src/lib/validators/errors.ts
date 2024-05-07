@@ -23,4 +23,5 @@ export enum ErrorMessages {
   SIZE = 'The {property} size must be less than 0:{size}KB',
   NON_ZERO = 'The value: {userInput} must be a non-zero value',
   PHONE_NUMBER = 'The phone number entered is not a valid phone number',
+  GOOGLE_FILE_PICKER = 'The value: {userInput} for property {property} must be a valid object that includes fileId and fileDisplayName properties',
 }
