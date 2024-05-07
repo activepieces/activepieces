@@ -14,13 +14,14 @@ export const googleDriveCreateNewFolder = createAction({
   description: 'Create a new empty folder in your Google Drive',
   displayName: 'Create new folder',
   props: {
+    driveId: common.properties.driveId,
     folderName: Property.ShortText({
       displayName: 'Folder name',
       description: 'The name of the new folder',
       required: true,
     }),
     parentFolder: common.properties.parentFolder,
-    include_team_drives: common.properties.include_team_drives,
+    // include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
     const body: Record<string, string | string[] | undefined> = {
