@@ -23,6 +23,7 @@ import {
   AppConnectionWithoutSensitiveData,
   ValidateConnectionNameRequestBody,
   ValidateConnectionNameResponse,
+  AppConnection,
 } from '@activepieces/shared';
 import { CURSOR_QUERY_PARAM, LIMIT_QUERY_PARAM } from '../utils/tables.utils';
 import { environment } from '../environments/environment';
@@ -140,5 +141,11 @@ export class AppConnectionsService {
           throw err;
         })
       );
+  }
+
+  getDecryptedConnection(connectionName: string) {
+    return this.http.get<AppConnection>(
+      environment.apiUrl + '/app-connections/' + connectionName
+    );
   }
 }

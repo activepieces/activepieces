@@ -115,3 +115,7 @@ export const ValidateConnectionNameRequestBody = Type.Object({
     description: 'Request for validating connection name',
 })
 export type ValidateConnectionNameRequestBody = Static<typeof ValidateConnectionNameRequestBody>
+
+export const GetAppConnectionRequestParams =  Type.Object({
+    connectionName: Type.String(),
+})

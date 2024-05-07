@@ -7,9 +7,13 @@ import { eventsHooks } from '../helper/application-events'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
+    ActivepiecesError,
     ApId,
     AppConnection,
     AppConnectionWithoutSensitiveData,
+    ErrorCode,
+    GetAppConnectionRequestParams,
+    isNil,
     ListAppConnectionsRequestQuery,
     Permission,
     PrincipalType,
@@ -95,6 +99,33 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
                 projectId: request.principal.projectId,
             })
             await reply.status(StatusCodes.NO_CONTENT).send()
+        },
+    )
+
+    app.get(
+        '/:connectionName',
+        {
+            schema: {
+                params: GetAppConnectionRequestParams,
+            },
+        },
+        async (request): Promise<AppConnection> => {
+            const appConnection = await appConnectionService.getOne({
+                projectId: request.principal.projectId,
+                name: request.params.connectionName,
+            })
+
+            if (isNil(appConnection)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        entityId: `connectionName=${request.params.connectionName}`,
+                        entityType: 'AppConnection',
+                    },
+                })
+            }
+
+            return appConnection
         },
     )
 

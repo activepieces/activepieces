@@ -1,6 +1,5 @@
 import {
     FastifyPluginCallbackTypebox,
-    Type,
 } from '@fastify/type-provider-typebox'
 import { allowWorkersOnly } from '../authentication/authorization'
 import { appConnectionService } from './app-connection-service/app-connection-service'
@@ -8,6 +7,7 @@ import {
     ActivepiecesError,
     AppConnection,
     ErrorCode,
+    GetAppConnectionRequestParams,
     isNil,
 } from '@activepieces/shared'
 
@@ -20,7 +20,11 @@ export const appConnectionWorkerController: FastifyPluginCallbackTypebox = (
 
     app.get(
         '/:connectionName',
-        GetAppConnectionRequest,
+        {
+            schema: {
+                params: GetAppConnectionRequestParams,
+            },
+        },
         async (request): Promise<AppConnection> => {
             const appConnection = await appConnectionService.getOne({
                 projectId: request.principal.projectId,
@@ -44,10 +48,4 @@ export const appConnectionWorkerController: FastifyPluginCallbackTypebox = (
     done()
 }
 
-const GetAppConnectionRequest = {
-    schema: {
-        params: Type.Object({
-            connectionName: Type.String(),
-        }),
-    },
-}
+
