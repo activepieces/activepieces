@@ -26,7 +26,7 @@ export const todoistFindTaskAction = createAction({
 		assertNotNullOrUndefined(token, 'token');
 		const tasks = await todoistRestClient.tasks.list({ token, project_id });
 
-		let matchedTask = tasks.find((task) => task.content == name);
+		const matchedTask = tasks.find((task) => task.content == name);
 		if (!matchedTask) {
 			throw new Error('Task not found');
 		} else {
