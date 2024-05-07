@@ -34,7 +34,7 @@ export { FileProperty } from './input/file-property';
 export { BasicAuthProperty } from './authentication/basic-auth-prop';
 export { SecretTextProperty } from './authentication/secret-text-property'
 export { CustomAuthProperty } from './authentication/custom-auth-prop';
-export {GoogleFilePickerViewId, GoogleFilePickerProperty } from './input/google-file-picker-property'
+export { GoogleFilePickerViewId, GoogleFilePickerProperty, GoogleFilePickerPropertyValueSchema } from './input/google-file-picker-property'
 export { JsonProperty } from './input/json-property'
 export const PieceProperty = Type.Union([InputProperty, PieceAuthProperty])
 export type PieceProperty = InputProperty | PieceAuthProperty;

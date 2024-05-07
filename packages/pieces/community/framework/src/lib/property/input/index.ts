@@ -15,7 +15,6 @@ import { Validators } from "../../validators/validators";
 import { DynamicProperties } from "./dynamic-prop";
 import { DropdownProperty, MultiSelectDropdownProperty } from "./dropdown/dropdown-prop";
 import { GoogleFilePickerProperty } from "./google-file-picker-property";
-export {GoogleFilePickerViewId} from './google-file-picker-property';
 export const InputProperty = Type.Union([
   ShortTextProperty,
   LongTextProperty,

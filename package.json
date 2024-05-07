@@ -70,6 +70,8 @@
     "@sinclair/typebox": "0.26.8",
     "@slack/web-api": "7.0.4",
     "@supabase/supabase-js": "2.33.1",
+    "@types/gapi": "0.0.47",
+    "@types/google.picker": "0.0.42",
     "@types/imapflow": "1.0.18",
     "@types/showdown": "2.0.6",
     "airtable": "0.11.6",
