@@ -94,6 +94,8 @@ const parseControlValue = (property: PieceProperty, value: unknown) => {
         : typeof value === 'string'
         ? value
         : JSON.stringify(value, null, 2);
+    case PropertyType.GOOGLE_FILE_PICKER:
+      return isNil(value) ? undefined : value;
   }
 };
 

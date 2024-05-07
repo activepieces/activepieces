@@ -242,8 +242,18 @@
             </ng-container>
           </app-dictionary-form-control>
         }
+        @case(PropertyType.GOOGLE_FILE_PICKER){
+          <app-google-file-picker-control
+            [control]="form.controls[property.key] | abstractFormControlCaster"
+            [property]="property.value"
+            [connectionName]="form.controls[AUTHENTICATION_PROPERTY_NAME].value"
+          >
+          </app-google-file-picker-control>
+        }
       }
+      
     }
+
 
     @if (
       property.value.type !== PropertyType.MARKDOWN &&

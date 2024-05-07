@@ -5,7 +5,7 @@
     "declaration": false,
     "declarationMap": false,
     "inlineSources": true,
-    "types": ["@types/google.picker","@types/gapi"]
+
   },
   "exclude": ["src/**/*.spec.ts", "jest.config.ts", "src/**/*.test.ts"],
   "include": ["src/**/*.ts"]

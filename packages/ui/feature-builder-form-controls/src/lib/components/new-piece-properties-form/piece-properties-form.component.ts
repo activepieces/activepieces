@@ -22,7 +22,10 @@ import {
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { BehaviorSubject, Observable, distinctUntilChanged, tap } from 'rxjs';
 import deepEqual from 'deep-equal';
-import { PopulatedFlow } from '@activepieces/shared';
+import {
+  AUTHENTICATION_PROPERTY_NAME,
+  PopulatedFlow,
+} from '@activepieces/shared';
 import { createFormControlsWithTheirValidators } from './properties-controls-helper';
 import { ControlThatUsesMentionsCoreComponent } from '../control-that-uses-mentions-core/control-that-uses-mentions-core.component';
 
@@ -35,6 +38,7 @@ export class PiecePropertiesFormComponent
   extends ControlThatUsesMentionsCoreComponent
   implements OnInit, OnChanges
 {
+  readonly AUTHENTICATION_PROPERTY_NAME = AUTHENTICATION_PROPERTY_NAME;
   @Input({ required: true }) pieceMetaData: PieceMetadataModel;
   @Input({ required: true }) actionOrTriggerName: string;
   @Input({ required: true }) stepName: string;

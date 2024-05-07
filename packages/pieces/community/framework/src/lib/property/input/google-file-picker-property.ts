@@ -36,10 +36,7 @@ export const GoogleFilePickerProperty = Type.Composite([
 
 export type GoogleFilePickerProperty<R extends boolean> = BasePropertySchema & {
   viewId: GoogleFilePickerViewId
-} & TPropertyValue<{
-  filedId: string;
-  fileDisplayName:string
-}, PropertyType.GOOGLE_FILE_PICKER, ValidationInputType.ANY, R>;
+} & TPropertyValue<GoogleFilePickerPropertyValueSchema, PropertyType.GOOGLE_FILE_PICKER, ValidationInputType.ANY, R>;
 
 export type GoogleFilePickerPropertyValueSchema = {
   fileId: string;

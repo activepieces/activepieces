@@ -42,6 +42,7 @@ import {
   WebSocketService,
   FlowRendererService,
   PlatformService,
+  GoogleFilePickerService,
 } from '@activepieces/ui/common';
 import {
   flowDisplayNameInRouteData,
@@ -100,8 +101,10 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     private platformService: PlatformService,
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
     private websocketService: WebSocketService,
-    private zoomingService: ZoomingService
+    private zoomingService: ZoomingService,
+    private googleFilePickerService: GoogleFilePickerService
   ) {
+    this.googleFilePickerService.loadGapiScript();
     this.viewedVersion$ = this.store.select(BuilderSelectors.selectViewedVersion);
     this.showPoweredByAp$ = this.platformService.showPoweredByAp();
     this.dataInsertionPopupHidden$ =

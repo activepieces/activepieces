@@ -47,6 +47,7 @@ import { ShouldShowDynamicInputToggleAboveInputPipe } from './pipes/should-show-
 import { DynamicPropertyControlComponent } from './components/dynamic-property-control/dynamic-property-control.component';
 import { FormGroupCasterPipe } from './pipes/form-group-caster.pipe';
 import { IsAuthPropertyPipe } from './pipes/is-auth-property.pipe';
+import { GoogleFilePicerkControlComponent } from './components/google-file-picker-control/google-file-picker-control.component';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -84,6 +85,7 @@ const exportedDeclarations = [
     ShouldShowDynamicInputToggleAboveInputPipe,
     FormGroupCasterPipe,
     IsAuthPropertyPipe,
+    GoogleFilePicerkControlComponent,
   ],
   declarations: [
     ...exportedDeclarations,
