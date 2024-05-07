@@ -12,19 +12,14 @@ import { fadeIn400ms } from '../../animation/fade-in.animations';
   animations: [fadeIn400ms],
 })
 export class UpgradeNoteComponent {
-  @Input() docsLink = '';
   @Input({ required: true }) featureNoteTitle = '';
   @Input({ required: true }) featureNote = '';
   @Input() videoUrl = '';
-  @Input() featureKey: FeatureKey;
+  @Input({ required: true }) featureKey: FeatureKey;
 
   constructor(private contactSalesService: ContactSalesService) {}
 
   @Input() insideTab = false;
-
-  openDocs() {
-    window.open(this.docsLink, '_blank', 'noopener noreferrer');
-  }
 
   openContactSales(): void {
     this.contactSalesService.open([this.featureKey]);
