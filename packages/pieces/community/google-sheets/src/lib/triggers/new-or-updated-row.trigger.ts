@@ -1,5 +1,10 @@
+import { isNil } from '@activepieces/shared';
 import { googleSheetsAuth } from '../../';
-import { columnToLabel, googleSheetsCommon } from '../common/common';
+import {
+  columnToLabel,
+  googleSheetsCommon,
+  labelToColumn,
+} from '../common/common';
 import {
   createFileNotification,
   deleteFileNotification,
@@ -17,9 +22,14 @@ import {
   TriggerStrategy,
   DEDUPE_KEY_PROPERTY,
   WebhookRenewStrategy,
+  Property,
+  PiecePropValueSchema,
+  DropdownOption,
 } from '@activepieces/pieces-framework';
 
 import crypto from 'crypto';
+
+const ALL_COLUMNS = 'all_columns';
 
 export const newOrUpdatedRowTrigger = createTrigger({
   auth: googleSheetsAuth,
@@ -27,9 +37,58 @@ export const newOrUpdatedRowTrigger = createTrigger({
   displayName: 'New or Updated Row',
   description: 'Triggers when a new row is added or modified in a spreadsheet.',
   props: {
+    info: Property.MarkDown({
+      value:
+        'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.',
+    }),
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     sheet_id: googleSheetsCommon.sheet_id,
     include_team_drives: googleSheetsCommon.include_team_drives,
+    trigger_column: Property.Dropdown({
+      displayName: 'Trigger Column',
+      description: `Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.`,
+      required: false,
+      refreshers: ['spreadsheet_id', 'sheet_id'],
+      options: async ({ auth, spreadsheet_id, sheet_id }) => {
+        if (!auth || !spreadsheet_id || isNil(sheet_id)) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: `Please select sheet first`,
+          };
+        }
+
+        const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
+        const spreadSheetId = spreadsheet_id as string;
+        const sheetId = sheet_id as number;
+
+        const sheetName = await getWorkSheetName(
+          authValue,
+          spreadSheetId,
+          sheetId
+        );
+
+        const firstRowValues = await getWorkSheetValues(
+          authValue,
+          spreadSheetId,
+          `${sheetName}!1:1`
+        );
+        const labeledRowValues = transformWorkSheetValues(firstRowValues, 0);
+
+        const options: DropdownOption<string>[] = [
+          { label: 'All Columns', value: ALL_COLUMNS },
+        ];
+
+        Object.entries(labeledRowValues[0].values).forEach(([key, value]) => {
+          options.push({ label: value as string, value: key });
+        });
+
+        return {
+          disabled: false,
+          options,
+        };
+      },
+    }),
   },
 
   renewConfiguration: {
@@ -42,6 +101,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
   async onEnable(context) {
     const spreadSheetId = context.propsValue.spreadsheet_id;
     const sheetId = context.propsValue.sheet_id;
+    const triggerColumn = context.propsValue.trigger_column ;
 
     const sheetName = await getWorkSheetName(
       context.auth,
@@ -49,10 +109,15 @@ export const newOrUpdatedRowTrigger = createTrigger({
       sheetId
     );
 
+    const range =
+      triggerColumn === ALL_COLUMNS
+        ? sheetName
+        : `${sheetName}!${triggerColumn}:${triggerColumn}`; // only fetch trigger column values
+
     const sheetValues = await getWorkSheetValues(
       context.auth,
       spreadSheetId,
-      sheetName
+      range
     );
 
     const rowHashes = [];
@@ -107,6 +172,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
     const spreadSheetId = context.propsValue.spreadsheet_id;
     const sheetId = context.propsValue.sheet_id;
+    const triggerColumn = context.propsValue.trigger_column ?? ALL_COLUMNS;
 
     const sheetName = await getWorkSheetName(
       context.auth,
@@ -116,7 +182,8 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
     const oldValuesHashes = (await context.store.get(`${sheetId}`)) as any[];
 
-    // fetch new sheet row values
+    /* Fetch rows values with all columns as this will be used on returning updated/new row data
+     */
     const currentValues = await getWorkSheetValues(
       context.auth,
       spreadSheetId,
@@ -128,13 +195,30 @@ export const newOrUpdatedRowTrigger = createTrigger({
     const changedValues = [];
     const newRowHashes = [];
 
-    for (let i = 0; i < currentValues.length; i++) {
-      const currentRowValue = currentValues[i];
+    for (let row = 0; row < currentValues.length; row++) {
+      const currentRowValue = currentValues[row];
+
+      /**
+       * This variable store value based on trigger column.
+       * If trigger column is all_columns then store entrie row as target value, else store only column value.
+       */
+      let targetValue;
+      if (triggerColumn === ALL_COLUMNS) {
+        targetValue = currentRowValue;
+      } else {
+        const currentTriggerColumnValue =
+          currentRowValue[labelToColumn(triggerColumn)];
+
+        targetValue =
+          currentTriggerColumnValue !== undefined
+            ? [currentTriggerColumnValue]
+            : [];
+      }
 
       // create hash for new row values
       const currentRowHash = crypto
         .createHash('md5')
-        .update(JSON.stringify(currentRowValue))
+        .update(JSON.stringify(targetValue))
         .digest('hex');
       newRowHashes.push(currentRowHash);
 
@@ -143,16 +227,17 @@ export const newOrUpdatedRowTrigger = createTrigger({
         continue;
       }
 
-      const oldRowHash = oldValuesHashes[i];
+      const oldRowHash = oldValuesHashes[row];
+
       if (oldRowHash === undefined || oldRowHash != currentRowHash) {
         const formattedValues: any = {};
 
-        for (let j = 0; j < currentRowValue.length; j++) {
-          formattedValues[columnToLabel(j)] = currentRowValue[j];
+        for (let column = 0; column < currentValues[row].length; column++) {
+          formattedValues[columnToLabel(column)] = currentValues[row][column];
         }
 
         changedValues.push({
-          row: i + 1,
+          row: row + 1,
           values: formattedValues,
         });
       }

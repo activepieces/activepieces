@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.25.1",
-  "rcVersion": "0.26.0-rc.2",
+  "rcVersion": "0.26.0-rc.3",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -68,6 +68,7 @@
     "@sendgrid/mail": "8.0.0",
     "@sentry/node": "7.64.0",
     "@sinclair/typebox": "0.26.8",
+    "@slack/web-api": "7.0.4",
     "@supabase/supabase-js": "2.33.1",
     "@types/imapflow": "1.0.18",
     "@types/showdown": "2.0.6",

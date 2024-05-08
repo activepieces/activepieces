@@ -15,7 +15,7 @@ import {
     PullGitRepoRequest,
     PushGitRepoRequest,
 } from '@activepieces/ee-shared'
-import { PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.gitSyncEnabled))
@@ -82,6 +82,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
 const PullRepoFromProjectRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.SERVICE],
+        permission: Permission.WRITE_GIT_REPO,
     },
     schema: {
         description:
@@ -98,6 +99,7 @@ const PullRepoFromProjectRequestSchema = {
 const DeleteRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
+        permission: Permission.WRITE_GIT_REPO,
     },
     schema: {
         description: 'Delete a git repository information for a project.',
@@ -113,6 +115,7 @@ const DeleteRepoRequestSchema = {
 const PullRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
+        permission: Permission.WRITE_GIT_REPO,
     },
     schema: {
         description:
@@ -131,6 +134,7 @@ const PullRepoRequestSchema = {
 const PushRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
+        permission: Permission.WRITE_GIT_REPO,
     },
     schema: {
         description:
@@ -148,6 +152,7 @@ const PushRepoRequestSchema = {
 const ConfigureRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
+        permission: Permission.WRITE_GIT_REPO,
     },
     schema: {
         description: 'Upsert a git repository information for a project.',
@@ -161,6 +166,7 @@ const ConfigureRepoRequestSchema = {
 const ListRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_GIT_REPO,
     },
     schema: {
         querystring: Type.Object({

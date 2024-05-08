@@ -390,6 +390,9 @@
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
+      "@activepieces/piece-poper": [
+        "packages/pieces/community/poper/src/index.ts"
+      ],
       "@activepieces/piece-postgres": [
         "packages/pieces/community/postgres/src/index.ts"
       ],
@@ -401,6 +404,9 @@
       ],
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
+      ],
+      "@activepieces/piece-queue": [
+        "packages/pieces/community/queue/src/index.ts"
       ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
@@ -568,6 +574,9 @@
       ],
       "@activepieces/piece-zendesk": [
         "packages/pieces/community/zendesk/src/index.ts"
+      ],
+      "@activepieces/piece-zerobounce": [
+        "packages/pieces/community/zerobounce/src/index.ts"
       ],
       "@activepieces/piece-zoho-crm": [
         "packages/pieces/community/zoho-crm/src/index.ts"

@@ -1,25 +1,28 @@
-<div class="ap-h-[calc(100% - 6.5625rem)] ap-px-7.5 ap-relative ap-overflow-hidden" [class.ap-hidden]="(areThereFlows$|async)===false">
+<div class="ap-h-[calc(100% - 6.5625rem)] ap-px-7.5 ap-relative ap-overflow-hidden"
+  [class.ap-hidden]="(areThereFlows$|async)===false">
   <div class="ap-flex ap-h-full ">
-    <div class=" ap-min-w-[274px] ap-max-w-[274px]" *ngIf="(hideFolders$ | async) === undefined ||(hideFolders$ | async) === false " #foldersSection>
+    <div class=" ap-min-w-[274px] ap-max-w-[274px]"
+      *ngIf="(hideFolders$ | async) === undefined ||(hideFolders$ | async) === false " #foldersSection>
       <div class="ap-typography-headline-5 !ap-font-semibold ap-mb-7.5 ap-mt-20" i18n>My Flows</div>
       <app-folders-list></app-folders-list>
     </div>
-    <div class="ap-h-full ap-w-[calc(100%-274px)] ap-pl-[30px] ap-pt-[80px]" [class.ap-w-full]="(hideFolders$ | async)" [class.!ap-pl-0]="(hideFolders$ | async)">
+    <div class="ap-h-full ap-w-[calc(100%-274px)] ap-pl-[30px] ap-pt-[80px]" [class.ap-w-full]="(hideFolders$ | async)"
+      [class.!ap-pl-0]="(hideFolders$ | async)">
       <div class="ap-h-full ap-mb-[40px]">
         <div
           class=" ap-rounded ap-border ap-border-solid ap-border-dividers ap-p-[30px] ap-pb-[80px] ap-flex ap-flex-col">
           <app-flows-table-title></app-flows-table-title>
           @if(showRewards$ | async)
           {
-            <div class="ap-my-2">
-              <app-rewards-note-component></app-rewards-note-component>
-            </div>
+          <div class="ap-my-2">
+            <app-rewards-note-component></app-rewards-note-component>
+          </div>
           }
           <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Flows" i18n-aria-label>
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef i18n>Name</th>
               <td mat-cell *matCellDef="let flow"><a class="!ap-typography-body-2 !ap-no-underline !ap-text-body"
-                  (auxclick)="$event.stopPropagation()" >
+                  (auxclick)="$event.stopPropagation()">
                   {{ flow.version.displayName }}
                 </a></td>
             </ng-container>
@@ -31,7 +34,8 @@
             </ng-container>
             <ng-container matColumnDef="created">
               <th mat-header-cell *matHeaderCellDef i18n>Created</th>
-              <td mat-cell *matCellDef="let flow" [matTooltip]="flow.created | apDate: 'ymdhm'">{{ flow.created | apDate: 'mdhm' }}</td>
+              <td mat-cell *matCellDef="let flow" [matTooltip]="flow.created | apDate: 'ymdhm'">{{ flow.created |
+                apDate: 'mdhm' }}</td>
             </ng-container>
 
             <ng-container matColumnDef="status">
@@ -141,7 +145,7 @@
       </div>
     </div>
   </div>
- <ng-container *ngTemplateOutlet="rewards"></ng-container>
+  <ng-container *ngTemplateOutlet="rewards"></ng-container>
 </div>
 
 <ng-container *ngIf="(areThereFlows$|async)===false">
@@ -163,16 +167,20 @@
 <ng-container *ngIf="renameFlow$ | async"></ng-container>
 
 <ng-template #rewards>
-@if(showRewards$ | async)
+  @if(showRewards$ | async)
   {
-    <div (click)="openRewardsDialog()"   class="ap-border ap-border-solid ap-border-dividers ap-top-[180px] ap-drop-shadow -ap-right-[85px] ap-transition-all ap-cursor-pointer hover:-ap-right-[14px] ap-py-2 ap-absolute ap-rounded-full ap-overflow-hidden ap-bg-white ap-px-4 ap-text-primary ap-flex ap-items-center ap-gap-2"> 
-      <div class="ap-relative">
-          <div class="ap-p-0.5 ap-bg-[red] ap-rounded-full -ap-right-[2.5px] ap-top-0 ap-absolute">
-          </div>
-          <svg-icon class="ap-fill-primary" [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/rewards/rewards.svg"></svg-icon>
-
+  <div (click)="openRewardsDialog()"
+    class="ap-border ap-border-solid ap-border-dividers ap-top-[180px] ap-drop-shadow -ap-right-[85px] ap-transition-all ap-cursor-pointer hover:-ap-right-[14px] ap-py-2 ap-absolute ap-rounded-full ap-overflow-hidden ap-bg-white ap-px-4 ap-text-primary ap-flex ap-items-center ap-gap-2">
+    <div class="ap-relative">
+      <div class="ap-p-0.5 ap-bg-[red] ap-rounded-full -ap-right-[2.5px] ap-top-0 ap-absolute">
       </div>
-      <div class="ap-typography-body-1">Rewards</div>
+      <svg-icon class="ap-fill-primary" [svgStyle]="{ width: '20px', height: '20px' }"
+        src="assets/img/custom/rewards/rewards.svg"></svg-icon>
+
+    </div>
+    <div class="ap-typography-body-1">Rewards</div>
   </div>
   }
 </ng-template>
+
+@if (deleteFlowFromGit$ |async) {}
