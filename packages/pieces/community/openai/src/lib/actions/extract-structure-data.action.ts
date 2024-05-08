@@ -5,8 +5,8 @@ import { notLLMs } from '../common/common';
 
 export const extractStructuredDataAction = createAction({
 	auth: openaiAuth,
-	name: 'openai-extract-structured-data',
-	displayName: 'Transform Text to Structured Data',
+	name: 'extract-structured-data',
+	displayName: 'Extract Structured Data from Text',
 	description: 'Returns structured data from provided unstructured text.',
 	props: {
 		model: Property.Dropdown({
@@ -71,7 +71,7 @@ export const extractStructuredDataAction = createAction({
 					displayName: 'Description',
 					description:
 						'Brief description of the parameter, defining what data will be extracted to this parameter.',
-					required: true,
+					required: false,
 				}),
 				propDataType: Property.StaticDropdown({
 					displayName: 'Data Type',
@@ -81,14 +81,15 @@ export const extractStructuredDataAction = createAction({
 					options: {
 						disabled: false,
 						options: [
-							{ label: 'string', value: 'string' },
-							{ label: 'number', value: 'number' },
-							{ label: 'boolean', value: 'boolean' },
+							{ label: 'Text', value: 'string' },
+							{ label: 'Number', value: 'number' },
+							{ label: 'Boolean', value: 'boolean' },
 						],
 					},
 				}),
 				propIsRequired: Property.Checkbox({
-					displayName: 'Is Parameter Required?',
+					displayName: 'Is Property Required?',
+					description: 'If the property must be present, the action will fail if it is not found.',
 					required: true,
 					defaultValue: true,
 				}),
@@ -97,17 +98,17 @@ export const extractStructuredDataAction = createAction({
 	},
 	async run(context) {
 		const { model, text, prompt } = context.propsValue;
-
 		const paramInputArray = context.propsValue.params as ParamInput[];
-
-		const functionParams: Record<string, any> = {};
-		const requiredFunctionParams = [];
+		const functionParams: Record<string, unknown> = {};
+		const requiredFunctionParams: string[] = [];
 		for (const param of paramInputArray) {
 			functionParams[param.propName] = {
 				type: param.propDataType,
 				description: param.propDescription,
 			};
-			if (param.propIsRequired) requiredFunctionParams.push(param.propName);
+			if (param.propIsRequired) {
+				requiredFunctionParams.push(param.propName);
+			}
 		}
 
 		const openai = new OpenAI({
@@ -137,7 +138,9 @@ export const extractStructuredDataAction = createAction({
 		if (toolCallsResponse) {
 			return JSON.parse(toolCallsResponse[0].function.arguments);
 		} else {
-			throw Error('Unable to extract data. Please provide valid params and text.');
+			throw Error(JSON.stringify({
+				message: 'Unable to extract data. Please provide valid params and text.'
+			}));
 		}
 	},
 });
