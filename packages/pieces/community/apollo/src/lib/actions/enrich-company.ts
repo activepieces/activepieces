@@ -1,5 +1,5 @@
 import { apolloAuth } from '../../';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, StoreScope, createAction } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
   httpClient,
@@ -15,12 +15,20 @@ export const enrichCompany = createAction({
       description: '',
       required: true,
     }),
+    cacheResponse: Property.Checkbox({
+      displayName: 'Cache Response',
+      description: 'Store the response in the project store for future use.',
+      required: false,
+      defaultValue: true,
+    }),
   },
   auth: apolloAuth,
   async run({ propsValue, auth, store }) {
-    const cachedResult = await store.get(`_apollo_org_${propsValue.domain}`)
-    if (cachedResult) {
-      return cachedResult;
+    if (propsValue.cacheResponse) {
+      const cachedResult = await store.get(`_apollo_org_${propsValue.domain}`, StoreScope.PROJECT);
+      if (cachedResult) {
+        return cachedResult;
+      }
     }
     const result = await httpClient.sendRequest<{ organization: Record<string, unknown> }>({
       method: HttpMethod.GET,
@@ -30,7 +38,10 @@ export const enrichCompany = createAction({
       },
     });
     const resultOrg = result.body.organization || {};
-    await store.put(`_apollo_org_${propsValue.domain}`, resultOrg);
+    if (propsValue.cacheResponse) {
+      await store.put(`_apollo_org_${propsValue.domain}`, resultOrg, StoreScope.PROJECT);
+
+    }
     return resultOrg;
   },
 });
