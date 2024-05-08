@@ -16,6 +16,7 @@ export class ShouldShowDynamicInputToggleAboveInputPipe
       PropertyType.STATIC_MULTI_SELECT_DROPDOWN,
       PropertyType.MULTI_SELECT_DROPDOWN,
       PropertyType.JSON,
+      PropertyType.GOOGLE_FILE_PICKER,
     ];
     if (allowedTypes.includes(property.type)) {
       return true;
