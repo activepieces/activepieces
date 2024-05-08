@@ -56,7 +56,11 @@
 
 
     }
+    @empty {
+      <ng-container *ngTemplateOutlet="emptyListPlaceholder">
 
+      </ng-container>
+      } 
   }
   @else {
     <div cdkDropList [cdkDropListData]="formArray.controls" (cdkDropListDropped)="drop($event)" class="drag-list" > 
@@ -69,9 +73,9 @@
           (removeValue)="remove($event)"></app-array-form-control-text-item>
       </div>
       } @empty {
-      <div class="ap-border-dashed ap-border-2 ap-border-gray-500 ap-rounded ap-p-3 ap-text-center">
-        The list is empty
-      </div>
+        <ng-container *ngTemplateOutlet="emptyListPlaceholder">
+
+        </ng-container>
       } 
     </div>
   }
@@ -83,4 +87,10 @@
     }
   <div class="ap-flex-grow" #spacer></div>
 </div>
+
+<ng-template #emptyListPlaceholder>
+  <div class="ap-border-dashed ap-border-2 ap-border-gray-500 ap-rounded ap-p-3 ap-text-center ap-mb-2">
+    The list is empty
+  </div>
+</ng-template>
 @if (updateValueOnChange$ | async) {}
