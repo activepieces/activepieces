@@ -1010,6 +1010,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "thirstycode",
+      "name": "Pratik Kinage",
+      "avatar_url": "https://avatars.githubusercontent.com/u/37847256?v=4",
+      "profile": "https://www.gamespecifications.com/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
