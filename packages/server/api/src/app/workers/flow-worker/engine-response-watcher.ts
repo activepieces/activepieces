@@ -24,6 +24,9 @@ export const engineResponseWatcher = {
     getHandlerId(): string {
         return HANDLER_ID
     },
+    removeListener(requestId: string): void {
+        listeners.delete(requestId)
+    },
     async init(): Promise<void> {
         logger.info('[engineWatcher#init] Initializing engine run watcher')
 

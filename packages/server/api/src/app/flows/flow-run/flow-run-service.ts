@@ -78,6 +78,20 @@ async function updateFlowRunToLatestFlowVersionId(
     })
 }
 
+function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): string {
+    const handlerId = engineResponseWatcher.getHandlerId()
+    if (isNil(pauseMetadata)) {
+        return handlerId
+    }
+
+    if (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId && pauseMetadata.handlerId) {
+        return pauseMetadata.handlerId
+    }
+    else {
+        return handlerId
+    }
+}
+
 export const flowRunService = {
     async list({
         projectId,
@@ -173,6 +187,8 @@ export const flowRunService = {
                 flowRunId: flowRunToResume.id,
                 projectId: flowRunToResume.projectId,
                 flowVersionId: flowRunToResume.flowVersionId,
+                synchronousHandlerId: returnHandlerId(pauseMetadata, requestId),
+                hookType: HookType.BEFORE_LOG,
                 executionType,
                 environment: RunEnvironment.PRODUCTION,
             })
@@ -288,11 +304,14 @@ export const flowRunService = {
 
         const { flowRunId, logFileId, pauseMetadata } = params
 
+        const updatedPauseMetadata = params.pauseMetadata.type === PauseType.WEBHOOK ? { ...pauseMetadata, 
+            id: engineResponseWatcher.getHandlerId() } : pauseMetadata
+
         await flowRunRepo.update(flowRunId, {
             status: FlowRunStatus.PAUSED,
             logsFileId: logFileId,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            pauseMetadata: pauseMetadata as any,
+            pauseMetadata: updatedPauseMetadata as any,
         })
 
         const flowRun = await flowRunRepo.findOneByOrFail({ id: flowRunId })
