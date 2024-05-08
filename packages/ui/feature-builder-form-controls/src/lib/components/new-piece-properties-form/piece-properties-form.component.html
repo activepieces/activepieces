@@ -178,7 +178,8 @@
         }
         @case (PropertyType.MARKDOWN) {
           @if (property.value.description) {
-            <ap-markdown
+            <div [style.marginBottom]="BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM">
+              <ap-markdown
               [data]="
                 property.value.description
                   | replaceMarkdownConsts
@@ -188,6 +189,8 @@
               "
             >
             </ap-markdown>
+            </div>
+           
           }
         }
         @case (PropertyType.DYNAMIC) {

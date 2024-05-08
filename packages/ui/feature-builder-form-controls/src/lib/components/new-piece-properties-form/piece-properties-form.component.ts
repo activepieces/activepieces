@@ -16,6 +16,7 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
+  BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM,
   getPropertyInitialValue,
   jsonValidator,
 } from '@activepieces/ui/common';
@@ -62,6 +63,8 @@ export class PiecePropertiesFormComponent
     customizedInputs: Record<string, boolean | Record<string, boolean>>;
     valid: boolean;
   }>();
+  readonly BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM =
+    BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM;
   readonly PropertyType = PropertyType;
   sortedPropertiesByRequired: PiecePropertyMap;
   emitNewChanges$?: Observable<unknown>;
