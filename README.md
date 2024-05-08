@@ -274,6 +274,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="http://javix64.com"><img src="https://avatars.githubusercontent.com/u/58471170?v=4?s=100" width="100px;" alt="Javier HM"/><br /><sub><b>Javier HM</b></sub></a><br /><a href="#plugin-javix64" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://farag.tech"><img src="https://avatars.githubusercontent.com/u/50884619?v=4?s=100" width="100px;" alt="Mohamed Hassan"/><br /><sub><b>Mohamed Hassan</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3AMohamedHassan499" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.coasy.com/"><img src="https://avatars.githubusercontent.com/u/17610709?v=4?s=100" width="100px;" alt="Christian Schab"/><br /><sub><b>Christian Schab</b></sub></a><br /><a href="#plugin-christian-schab" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.gamespecifications.com/"><img src="https://avatars.githubusercontent.com/u/37847256?v=4?s=100" width="100px;" alt="Pratik Kinage"/><br /><sub><b>Pratik Kinage</b></sub></a><br /><a href="#plugin-thirstycode" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
