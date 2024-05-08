@@ -7,7 +7,14 @@ import {
   Renderer2,
   ViewChild,
 } from '@angular/core';
-import { distinctUntilChanged, map, Observable, switchMap, take } from 'rxjs';
+import {
+  distinctUntilChanged,
+  map,
+  Observable,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import { UUID } from 'angular2-uuid';
 import { Store } from '@ngrx/store';
 import { RunDetailsService } from './iteration-details.service';
@@ -67,9 +74,13 @@ export class RunDetailsComponent implements OnInit {
     this.selectedStepName$ = this.store.select(
       BuilderSelectors.selectCurrentStepName
     );
-    this.selectedRun$ = this.store.select(
-      BuilderSelectors.selectCurrentFlowRun
-    );
+    this.selectedRun$ = this.store
+      .select(BuilderSelectors.selectCurrentFlowRun)
+      .pipe(
+        tap((run) => {
+          console.log(run);
+        })
+      );
     this.logs$ = this.selectedRun$.pipe(
       distinctUntilChanged((prev, curr) => {
         return JSON.stringify(prev) === JSON.stringify(curr);

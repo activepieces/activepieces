@@ -260,17 +260,18 @@ const selectStepDisplayNameAndDfsIndexForIterationOutput = (
   });
 };
 const selectStepResultsAccordion = createSelector(
-  selectCurrentFlow,
+  selectViewedVersion,
   selectCurrentFlowRun,
-  (flow, run) => {
+  (version, run) => {
     if (!run || run.status === FlowRunStatus.RUNNING) {
       return [];
     }
-    const steps = flowHelper.getAllSteps(flow.version.trigger);
+    const steps = flowHelper.getAllSteps(version.trigger);
     const results: StepRunResult[] = [];
+
     steps.forEach((s) => {
       const stepIndex = FlowStructureUtil.findStepIndex(
-        flow.version.trigger,
+        version.trigger,
         s.name
       );
       if (run.steps[s.name]) {

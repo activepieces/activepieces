@@ -32,13 +32,10 @@ export class StepResultComponent implements OnInit {
   @Input({ required: true }) set selectedStepName(stepName: string | null) {
     this._selectedStepName = stepName;
     this.stepLogoUrl$ = this.store
-      .select(BuilderSelectors.selectCurrentFlow)
+      .select(BuilderSelectors.selectViewedVersion)
       .pipe(
-        switchMap((flow) => {
-          const step = flowHelper.getStep(
-            flow.version,
-            this.stepResult.stepName
-          );
+        switchMap((version) => {
+          const step = flowHelper.getStep(version, this.stepResult.stepName);
           assertNotNullOrUndefined(step, 'step');
           return this.pieceMetadataService.getStepDetails(step).pipe(
             map((stepDetails) => {
