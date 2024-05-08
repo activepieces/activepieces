@@ -49,7 +49,7 @@ export const poper = createPiece({
 	categories: [PieceCategory.MARKETING],
 	description:
 		'AI Driven Pop-up Builder that can convert visitors into customers,increase subscriber count, and skyrocket sales.',
-	logoUrl: 'https://cdn.activepieces.com/pieces/poper.png',
+	logoUrl: 'https://cdn.poper.ai/poper-logo.png',
 	authors: ['thirstycode'],
 	actions: [],
 	triggers: [newLead],
