@@ -8,9 +8,9 @@ export const clearSheetAction = createAction({
   description: 'Clears all rows on an existing sheet',
   displayName: 'Clear Sheet',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+    spreadsheet_id: googleSheetsCommon.spreadsheet_id_googledrive,
     include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id,
+    sheet_id: googleSheetsCommon.sheet_id_after_google_drive,
     is_first_row_headers: Property.Checkbox({
       displayName: 'Is First row Headers?',
       description: 'If the first row is headers',
@@ -21,13 +21,13 @@ export const clearSheetAction = createAction({
   async run({ propsValue, auth }) {
     await googleSheetsCommon.findSheetName(
       auth['access_token'],
-      propsValue['spreadsheet_id'],
+      propsValue['spreadsheet_id'].fileId,
       propsValue['sheet_id']
     );
 
     const rowsToDelete: number[] = [];
     const values = await googleSheetsCommon.getValues(
-      propsValue.spreadsheet_id,
+      propsValue.spreadsheet_id.fileId,
       auth['access_token'],
       propsValue.sheet_id
     );
@@ -40,7 +40,7 @@ export const clearSheetAction = createAction({
 
     for (let i = 0; i < rowsToDelete.length; i++) {
       await googleSheetsCommon.clearSheet(
-        propsValue.spreadsheet_id,
+        propsValue.spreadsheet_id.fileId,
         propsValue.sheet_id,
         auth['access_token'],
         propsValue.is_first_row_headers ? 1 : 0,
