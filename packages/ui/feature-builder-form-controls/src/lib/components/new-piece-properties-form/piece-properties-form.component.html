@@ -246,7 +246,7 @@
           <app-google-file-picker-control
             [control]="form.controls[property.key] | abstractFormControlCaster"
             [property]="property.value"
-            [connectionName]="form.controls[AUTHENTICATION_PROPERTY_NAME].value"
+            [connectionControl]="form.controls[AUTHENTICATION_PROPERTY_NAME] | abstractFormControlCaster"
           >
           </app-google-file-picker-control>
         }

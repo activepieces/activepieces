@@ -771,3 +771,7 @@ app-templates-dialog
 .drag-list:active{
   cursor: grabbing !important;
 }
+
+.picker-dialog-bg{
+  background-color: rgba(0, 0, 0, 0.32) !important;
+}

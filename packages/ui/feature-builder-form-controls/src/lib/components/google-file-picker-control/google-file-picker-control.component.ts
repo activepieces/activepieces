@@ -18,42 +18,67 @@ import { Observable, map, tap } from 'rxjs';
   imports: [CommonModule, UiCommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="ap-flex ap-gap-2 ap-items-center ap-justify-between ap-mb-2">
-      <div>
-        {{ property.displayName }}
+    <mat-form-field class="ap-w-full" subscriptSizing="dynamic">
+      <mat-label i18n>{{ property.displayName }}</mat-label>
+      <input
+        class="!ap-hidden"
+        matInput
+        [formControl]="control"
+        [readonly]="true"
+        (click)="openPicker()"
+      />
+      <input
+        class="ap-cursor-pointer"
+        matInput
+        [value]="control.value?.fileDisplayName"
+        [readonly]="true"
+        (click)="openPicker()"
+      />
+      <div matSuffix class="ap-flex ap-gap-2">
+        @if(property.required || control.value === undefined) {
+        <ap-icon-button
+          [height]="25"
+          [width]="25"
+          iconFilename="google-drive.svg"
+          (buttonClicked)="openPicker()"
+        ></ap-icon-button>
+        } @if( !property.required && control.value !== undefined) {
+        <ap-icon-button
+          [height]="15"
+          [width]="15"
+          iconFilename="close.svg"
+          (buttonClicked)="unset()"
+        ></ap-icon-button>
+        }
       </div>
-      <ng-content></ng-content>
-    </div>
-    <div class="ap-flex ap-gap-2 ap-items-center">
-      <ap-button
-        btnSize="small"
-        (buttonClicked)="openPicker()"
-        [loading]="isLoadingPickerApi$ | async | defaultTrue"
-      >
-        {{ control.value ? changeFileText : selectFileText }}
-      </ap-button>
-      {{ control.value ? control.value.fileDisplayName : noFileSelectedText }}
-    </div>
-    @if(pickerOpened$ | async) {}
+    </mat-form-field>
+
+    @if(pickerOpened$ | async) {} @if(connectionNameChanged$ | async){}
   `,
 })
 export class GoogleFilePicerkControlComponent {
   readonly selectFileText = $localize`Select File`;
   readonly changeFileText = $localize`Change File`;
   readonly noFileSelectedText = $localize`No file selected`;
+  connectionNameChanged$: Observable<
+    PieceConnectionDropdownItem['value'] | undefined
+  >;
   firstTimeSetting = true;
   @Input({ required: true })
   control: FormControl<GoogleFilePickerPropertyValueSchema | undefined>;
   @Input({ required: true }) property: GoogleFilePickerProperty<boolean>;
-  @Input({ required: true }) set connectionName(
-    val: PieceConnectionDropdownItem['value']
+  @Input({ required: true }) set connectionControl(
+    ctrl: FormControl<PieceConnectionDropdownItem['value'] | undefined>
   ) {
-    const newConnectionName = this.extractConnectionName(val);
-    if (!this.firstTimeSetting && newConnectionName !== this._connectionName) {
-      this.control.setValue(undefined);
-    }
-    this.firstTimeSetting = false;
-    this._connectionName = newConnectionName;
+    this.connectionNameChanged$ = ctrl.valueChanges.pipe(
+      tap((val) => {
+        this._connectionName = val ? this.extractConnectionName(val) : '';
+        this.control.setValue(undefined);
+      })
+    );
+    this._connectionName = ctrl.value
+      ? this.extractConnectionName(ctrl.value)
+      : '';
   }
   _connectionName = '';
   pickerOpened$: Observable<GoogleFilePickerPropertyValueSchema | null>;
@@ -72,7 +97,6 @@ export class GoogleFilePicerkControlComponent {
         .showPicker(this._connectionName, this.property.viewId as any)
         .pipe(
           tap((value) => {
-            debugger;
             if (value) {
               this.control.setValue(value);
             }
@@ -90,5 +114,9 @@ export class GoogleFilePicerkControlComponent {
     }
     console.error('Activepieces: Could not extract connection name');
     return '';
+  }
+
+  unset() {
+    this.control.setValue(undefined);
   }
 }
