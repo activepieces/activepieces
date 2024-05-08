@@ -17,7 +17,7 @@ const message = `
 \`\`\`text
 {{webhookUrl}}/test
 \`\`\`
-***This URL can be used to test the webhook without triggering the flow.***
+***Use this URL for testing the webhook and saving sample data. It won't start the flow***.
 
 **Notes:**
 - If you are expecting a reply from this webhook, append **/sync** to the URL in that case, you will also have to add an HTTP step with **return response** at the end of your flow.
