@@ -73,7 +73,7 @@ export const createAction = <
     params.run,
     params.test ?? params.run,
     params.requireAuth ?? true,
-    params.outputs ?? [{ name: 'main' }],
+    params.outputs ?? [],
     params.errorHandlingOptions ?? {
       continueOnFailure: {
         defaultValue: false,
