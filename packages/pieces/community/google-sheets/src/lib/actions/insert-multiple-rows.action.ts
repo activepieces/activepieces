@@ -2,6 +2,7 @@ import { googleSheetsAuth } from '../../';
 import {
 	createAction,
 	DynamicPropsValue,
+	GoogleFilePickerPropertyValueSchema,
 	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
@@ -17,9 +18,9 @@ export const insertMultipleRowsAction = createAction({
 	displayName: 'Insert Multiple Rows',
 	description: 'Add one or more new rows in a specific spreadsheet.',
 	props: {
-		spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+		spreadsheet_id: googleSheetsCommon.spreadsheet_id_googledrive,
 		include_team_drives: googleSheetsCommon.include_team_drives,
-		sheet_id: googleSheetsCommon.sheet_id,
+		sheet_id: googleSheetsCommon.sheet_id_after_google_drive,
 		as_string: Property.Checkbox({
 			displayName: 'As String',
 			description:
@@ -32,9 +33,10 @@ export const insertMultipleRowsAction = createAction({
 			required: true,
 			refreshers: ['sheet_id', 'spreadsheet_id'],
 			props: async ({ auth, sheet_id, spreadsheet_id }) => {
+				const spreadsheet_id_property = spreadsheet_id as GoogleFilePickerPropertyValueSchema | undefined;
 				if (
 					!auth ||
-					(spreadsheet_id ?? '').toString().length === 0 ||
+					!spreadsheet_id_property ||
 					(sheet_id ?? '').toString().length === 0
 				) {
 					return {};
@@ -44,7 +46,7 @@ export const insertMultipleRowsAction = createAction({
 
 				const authentication = auth as OAuth2PropertyValue;
 				const values = await googleSheetsCommon.getValues(
-					spreadsheet_id as unknown as string,
+					spreadsheet_id_property.fileId,
 					getAccessTokenOrThrow(authentication),
 					sheet_id as unknown as number,
 				);
@@ -77,8 +79,7 @@ export const insertMultipleRowsAction = createAction({
 		const spreadSheetId = context.propsValue.spreadsheet_id;
 		const sheetId = context.propsValue.sheet_id;
 		const rowValuesInput = context.propsValue.values['values'] as any[];
-
-		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
+		const sheetName = await getWorkSheetName(context.auth, spreadSheetId.fileId, sheetId);
 
 		const formattedValues = [];
 
@@ -93,7 +94,7 @@ export const insertMultipleRowsAction = createAction({
 
 		const response = await sheets.spreadsheets.values.append({
 			range: sheetName + '!A:A',
-			spreadsheetId: spreadSheetId,
+			spreadsheetId: spreadSheetId.fileId,
 			valueInputOption: context.propsValue.as_string
 				? ValueInputOption.RAW
 				: ValueInputOption.USER_ENTERED,
