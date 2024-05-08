@@ -308,6 +308,95 @@ export const googleSheetsCommon = {
       };
     },
   }),
+  columnName_after_google_drive: Property.Dropdown<string>({
+    description: 'Column Name',
+    displayName: 'The name of the column to search in',
+    required: true,
+    refreshers: ['sheet_id', 'spreadsheet_id'],
+    options: async (context) => {
+      const authentication = context.auth as OAuth2PropertyValue;
+      const spreadsheet_id = context.spreadsheet_id as GoogleFilePickerPropertyValueSchema;
+      const sheet_id = context.sheet_id as number;
+      const accessToken = authentication['access_token'] ?? '';
+
+      if (
+        !context.auth ||
+        !spreadsheet_id ||
+        (sheet_id ?? '').toString().length === 0
+      ) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a sheet first',
+        };
+      }
+
+      const sheetName = await googleSheetsCommon.findSheetName(
+        accessToken,
+        spreadsheet_id.fileId,
+        sheet_id
+      );
+
+      if (!sheetName) {
+        throw Error('Sheet not found in spreadsheet');
+      }
+
+      const values: {
+        row: number;
+        values: {
+          [x: string]: string[];
+        }[];
+      }[] = await googleSheetsCommon.getValues(
+        spreadsheet_id.fileId,
+        accessToken,
+        sheet_id
+      );
+
+      const ret = [];
+
+      const firstRow = values[0].values;
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+      if (firstRow.length === 0) {
+        let columnSize = 1;
+
+        for (const row of values) {
+          columnSize = Math.max(columnSize, row.values.length);
+        }
+
+        for (let i = 0; i < columnSize; i++) {
+          ret.push({
+            label: alphabet[i].toUpperCase(),
+            value: alphabet[i],
+          });
+        }
+      } else {
+        let index = 0;
+        for (const key in firstRow) {
+          let value = 'A';
+          if (index >= alphabet.length) {
+            // if the index is greater than the length of the alphabet, we need to add another letter
+            const firstLetter =
+              alphabet[Math.floor(index / alphabet.length) - 1];
+            const secondLetter = alphabet[index % alphabet.length];
+            value = firstLetter + secondLetter;
+          } else {
+            value = alphabet[index];
+          }
+
+          ret.push({
+            label: firstRow[key].toString(),
+            value: value,
+          });
+          index++;
+        }
+      }
+      return {
+        options: ret,
+        disabled: false,
+      };
+    },
+  }),
   getValues: getValues,
   appendGoogleSheetValues: appendGoogleSheetValues,
   updateGoogleSheetRow: updateGoogleSheetRow,

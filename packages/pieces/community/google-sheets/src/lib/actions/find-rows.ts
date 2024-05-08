@@ -17,10 +17,10 @@ export const findRowsAction = createAction({
     'Find or get rows in a Google Sheet by column name and search value',
   displayName: 'Find Rows',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+    spreadsheet_id: googleSheetsCommon.spreadsheet_id_googledrive,
     include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id,
-    columnName: googleSheetsCommon.columnName,
+    sheet_id: googleSheetsCommon.sheet_id_after_google_drive,
+    columnName: googleSheetsCommon.columnName_after_google_drive,
     searchValue: Property.ShortText({
       displayName: 'Search Value',
       description:
@@ -57,14 +57,14 @@ export const findRowsAction = createAction({
 
     const sheetName = await googleSheetsCommon.findSheetName(
       auth.access_token,
-      spreadSheetId,
+      spreadSheetId.fileId,
       sheetId
     );
 
     let rows = await getAllGoogleSheetRows({
       accessToken: auth.access_token,
       sheetName: `${sheetName}!A${startingRow}:ZZZ`,
-      spreadSheetId: spreadSheetId,
+      spreadSheetId: spreadSheetId.fileId,
     });
 
     // modify row number based on starting row number
