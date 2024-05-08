@@ -13,9 +13,9 @@ export const updateRowAction = createAction({
   description: 'Overwrite values in an existing row',
   displayName: 'Update Row',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+    spreadsheet_id: googleSheetsCommon.spreadsheet_id_googledrive,
     include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id,
+    sheet_id: googleSheetsCommon.sheet_id_after_google_drive,
     row_id: Property.Number({
       displayName: 'Row Number',
       description: 'The row number to update',
@@ -27,14 +27,14 @@ export const updateRowAction = createAction({
       required: true,
       defaultValue: false,
     }),
-    values: googleSheetsCommon.values,
+    values: googleSheetsCommon.values_after_google_drive,
   },
   async run({ propsValue, auth }) {
     const { spreadsheet_id, sheet_id, values, row_id, first_row_headers } =
       propsValue;
     const sheetName = await googleSheetsCommon.findSheetName(
       auth['access_token'],
-      spreadsheet_id,
+      spreadsheet_id.fileId,
       sheet_id
     );
 
@@ -49,7 +49,7 @@ export const updateRowAction = createAction({
         accessToken: auth['access_token'],
         rowIndex: Number(row_id),
         sheetName: sheetName,
-        spreadSheetId: spreadsheet_id,
+        spreadSheetId: spreadsheet_id.fileId,
         valueInputOption: ValueInputOption.USER_ENTERED,
         values: stringifyArray(formattedValues),
       });
