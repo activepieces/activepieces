@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
@@ -9,10 +10,9 @@ import {
     createMockProject,
 } from '../../../helpers/mocks'
 import {
-    PrincipalType,
     apId,
+    PrincipalType,
 } from '@activepieces/shared'
-import { StatusCodes } from 'http-status-codes'
 
 let app: FastifyInstance | null = null
 
@@ -30,22 +30,24 @@ describe('Flow API for Worker', () => {
     describe('Get Flow form Worker', () => {
         it('List other flow for another project', async () => {
             // arrange
-            const { mockPlatform } = await createMockPlatformWithOwner()
-            const mockProject = await createMockProject({
+            const { mockPlatform, mockOwner } = createMockPlatformWithOwner()
+            const mockProject = createMockProject({
                 platformId: mockPlatform.id,
+                ownerId: mockOwner.id,
             })
-            const mockProject2 = await createMockProject({
+            const mockProject2 = createMockProject({
                 platformId: mockPlatform.id,
+                ownerId: mockOwner.id,
             })
 
             await databaseConnection.getRepository('project').save([mockProject, mockProject2])
 
-            const mockFlow = await createMockFlow({
+            const mockFlow = createMockFlow({
                 projectId: mockProject.id,
             })
             await databaseConnection.getRepository('flow').save([mockFlow])
 
-            const mockFlowVersion = await createMockFlowVersion({
+            const mockFlowVersion = createMockFlowVersion({
                 flowId: mockProject.id,
             })
             await databaseConnection.getRepository('flow_version').save([mockFlowVersion])
@@ -61,7 +63,7 @@ describe('Flow API for Worker', () => {
                 url: `/v1/worker/flows/${mockFlowVersion.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
-                }
+                },
             })
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
