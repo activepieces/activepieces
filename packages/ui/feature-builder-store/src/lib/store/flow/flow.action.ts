@@ -14,7 +14,7 @@ import {
   FlowStatus,
   ApId,
 } from '@activepieces/shared';
-import { PiecePropertyMap } from '@activepieces/pieces-framework';
+import { ActionOutput, PiecePropertyMap } from '@activepieces/pieces-framework';
 
 export enum FlowsActionType {
   // Flow Version Modifying Action
@@ -48,7 +48,12 @@ const updateTrigger = createAction(
 );
 const newTriggerOrActionSelected = createAction(
   FlowsActionType.NEW_TRIGGER_OR_ACTION_SELECTED,
-  props<{ displayName: string; name: string; properties: PiecePropertyMap }>()
+  props<{
+    displayName: string;
+    name: string;
+    properties: PiecePropertyMap;
+    outputs?: ActionOutput[];
+  }>()
 );
 const moveAction = createAction(
   FlowsActionType.MOVE_ACTION,
