@@ -415,6 +415,7 @@ export class PieceInputFormComponent extends InputFormCore {
                 ...selectedTriggerOrAction.props,
                 ...spreadIfDefined(AUTHENTICATION_PROPERTY_NAME, authProperty),
               },
+              outputs: selectedTriggerOrAction.outputs,
             })
           );
         }
