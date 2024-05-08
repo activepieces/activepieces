@@ -52,7 +52,7 @@ import {
       displayName: "Poper",
       auth: poperAuth,
       minimumSupportedRelease: '0.20.0',
-      logoUrl: "https://cdn.activepieces.com/pieces/poper.png",
+      logoUrl: "https://cdn.poper.ai/poper-logo.png",
       authors: [],
       actions: [],
       triggers: [newLead],
