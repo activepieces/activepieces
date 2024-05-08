@@ -1,4 +1,4 @@
-import { Property, OAuth2PropertyValue, NumberProperty, Processors, Validators } from '@activepieces/pieces-framework';
+import { Property, OAuth2PropertyValue, GoogleFilePickerViewId, GoogleFilePickerPropertyValueSchema } from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpMethod,
@@ -9,6 +9,12 @@ import {
 import { isString } from '@activepieces/shared';
 
 export const googleSheetsCommon = {
+  spreadsheet_id_googledrive: Property.GoogleFilePicker({
+    displayName:"Spreadsheet",
+    required:true,
+    viewId: GoogleFilePickerViewId.SPREADSHEETS,
+    description: "Select the Google Sheet file from Google Drive",
+  }),
   baseUrl: 'https://sheets.googleapis.com/v4/spreadsheets',
   include_team_drives: Property.Checkbox({
     displayName: 'Include Team Drive Sheets',
@@ -91,6 +97,83 @@ export const googleSheetsCommon = {
           }
         ),
       };
+    },
+  }),
+
+  sheet_id_after_google_drive: Property.Dropdown({
+    displayName: 'Sheet',
+    required: true,
+    refreshers: ['spreadsheet_id'],
+    options: async ({ auth, spreadsheet_id }) => {
+      const spreadsheetProperty = spreadsheet_id as GoogleFilePickerPropertyValueSchema | undefined;
+  
+      if (!auth || !spreadsheetProperty) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a spreadsheet first',
+        };
+      }
+      const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+      const sheets = await listSheetsName(
+        authProp['access_token'],
+        spreadsheetProperty.fileId
+      );
+      return {
+        disabled: false,
+        options: sheets.map(
+          (sheet: { properties: { title: string; sheetId: number } }) => {
+            return {
+              label: sheet.properties.title,
+              value: sheet.properties.sheetId,
+            };
+          }
+        ),
+      };
+    },
+  }),
+  values_after_google_drive: Property.DynamicProperties({
+    displayName: 'Values',
+    description: 'The values to insert',
+    required: true,
+    refreshers: ['sheet_id', 'spreadsheet_id', 'first_row_headers'],
+    props: async ({ auth, spreadsheet_id, sheet_id, first_row_headers }) => {
+      const spreadsheetProperty = spreadsheet_id as GoogleFilePickerPropertyValueSchema | undefined;
+      if (
+        !auth ||
+        !spreadsheetProperty ||
+        (sheet_id ?? '').toString().length === 0
+      ) {
+        return {};
+      }
+      const authentication = auth as OAuth2PropertyValue;
+      const values = await googleSheetsCommon.getValues(
+        spreadsheetProperty.fileId,
+        getAccessTokenOrThrow(authentication),
+        sheet_id as unknown as number
+      );
+
+      if (!first_row_headers) {
+        return {
+          values: Property.Array({
+            displayName: 'Values',
+            required: true,
+          }),
+        };
+      }
+      const firstRow = values?.[0]?.values ?? [];
+      const properties: {
+        [key: string]: any;
+      } = {};
+      for (const key in firstRow) {
+        properties[key] = Property.ShortText({
+          displayName: firstRow[key].toString(),
+          description: firstRow[key].toString(),
+          required: false,
+          defaultValue: '',
+        });
+      }
+      return properties;
     },
   }),
   values: Property.DynamicProperties({
@@ -544,3 +627,4 @@ export enum Dimension {
   ROWS = 'ROWS',
   COLUMNS = 'COLUMNS',
 }
+

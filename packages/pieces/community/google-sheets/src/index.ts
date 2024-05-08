@@ -21,7 +21,7 @@ export const googleSheetsAuth = PieceAuth.OAuth2({
 	required: true,
 	scope: [
 		'https://www.googleapis.com/auth/spreadsheets',
-		'https://www.googleapis.com/auth/drive.readonly',
+		'https://www.googleapis.com/auth/drive.file',
 	],
 });
 
