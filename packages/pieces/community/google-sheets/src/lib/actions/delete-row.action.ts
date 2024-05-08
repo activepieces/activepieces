@@ -8,9 +8,8 @@ export const deleteRowAction = createAction({
   description: 'Delete a row on an existing sheet you have access to',
   displayName: 'Delete Row',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id_googledrive,
-    include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id_after_google_drive,
+    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+    sheet_id: googleSheetsCommon.sheet_id,
     row_id: Property.Number({
       displayName: 'Row Number',
       description: 'The row number to remove',

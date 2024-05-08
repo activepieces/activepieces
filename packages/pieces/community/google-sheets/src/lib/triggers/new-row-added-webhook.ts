@@ -32,9 +32,8 @@ export const newRowAddedTrigger = createTrigger({
 			value:
 				'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.',
 		}),
-		spreadsheet_id: googleSheetsCommon.spreadsheet_id_googledrive,
-		sheet_id: googleSheetsCommon.sheet_id_after_google_drive,
-		include_team_drives: googleSheetsCommon.include_team_drives,
+		spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+		sheet_id: googleSheetsCommon.sheet_id,
 	},
 	renewConfiguration: {
 		strategy: WebhookRenewStrategy.CRON,

@@ -8,8 +8,7 @@ export const findRowByNumAction = createAction({
   description: 'Get a row in a Google Sheet by row number',
   displayName: 'Get Row',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id_googledrive,
-    include_team_drives: googleSheetsCommon.include_team_drives,
+    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     sheet_id: googleSheetsCommon.sheet_id,
     rowNumber: Property.Number({
       displayName: 'Row Number',

@@ -15,9 +15,8 @@ export const insertRowAction = createAction({
   description: 'Append a row of values to an existing sheet',
   displayName: 'Insert Row',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id_googledrive,
-    include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id_after_google_drive,
+    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+    sheet_id: googleSheetsCommon.sheet_id,
     as_string: Property.Checkbox({
       displayName: 'As String',
       description:
@@ -30,7 +29,7 @@ export const insertRowAction = createAction({
       required: true,
       defaultValue: false,
     }),
-    values: googleSheetsCommon.values_after_google_drive,
+    values: googleSheetsCommon.values,
   },
   async run({ propsValue, auth }) {
     const values = propsValue['values'];

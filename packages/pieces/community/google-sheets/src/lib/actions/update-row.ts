@@ -13,9 +13,8 @@ export const updateRowAction = createAction({
   description: 'Overwrite values in an existing row',
   displayName: 'Update Row',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id_googledrive,
-    include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id_after_google_drive,
+    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+    sheet_id: googleSheetsCommon.sheet_id,
     row_id: Property.Number({
       displayName: 'Row Number',
       description: 'The row number to update',
@@ -27,7 +26,7 @@ export const updateRowAction = createAction({
       required: true,
       defaultValue: false,
     }),
-    values: googleSheetsCommon.values_after_google_drive,
+    values: googleSheetsCommon.values,
   },
   async run({ propsValue, auth }) {
     const { spreadsheet_id, sheet_id, values, row_id, first_row_headers } =

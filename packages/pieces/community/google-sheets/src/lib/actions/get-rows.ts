@@ -78,9 +78,8 @@ export const getRowsAction = createAction({
   description: 'Get next group of rows from a Google Sheet',
   displayName: 'Get next row(s)',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id_googledrive,
-    include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id_after_google_drive,
+    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+    sheet_id: googleSheetsCommon.sheet_id,
     memKey: Property.ShortText({
       displayName: 'Memory Key',
       description: 'The key used to store the current row number in memory',
