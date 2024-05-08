@@ -78,9 +78,9 @@ export const getRowsAction = createAction({
   description: 'Get next group of rows from a Google Sheet',
   displayName: 'Get next row(s)',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+    spreadsheet_id: googleSheetsCommon.spreadsheet_id_googledrive,
     include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id,
+    sheet_id: googleSheetsCommon.sheet_id_after_google_drive,
     memKey: Property.ShortText({
       displayName: 'Memory Key',
       description: 'The key used to store the current row number in memory',
@@ -100,7 +100,7 @@ export const getRowsAction = createAction({
       return await getRows(
         store,
         auth['access_token'],
-        propsValue['spreadsheet_id'],
+        propsValue['spreadsheet_id'].fileId,
         propsValue['sheet_id'],
         propsValue['memKey'],
         propsValue['groupSize'],
@@ -119,7 +119,7 @@ export const getRowsAction = createAction({
       return await getRows(
         store,
         auth['access_token'],
-        propsValue['spreadsheet_id'],
+        propsValue['spreadsheet_id'].fileId,
         propsValue['sheet_id'],
         propsValue['memKey'],
         propsValue['groupSize'],
