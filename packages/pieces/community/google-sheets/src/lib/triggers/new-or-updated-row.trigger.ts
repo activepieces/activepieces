@@ -25,6 +25,7 @@ import {
   Property,
   PiecePropValueSchema,
   DropdownOption,
+  GoogleFilePickerPropertyValueSchema,
 } from '@activepieces/pieces-framework';
 
 import crypto from 'crypto';
@@ -41,8 +42,8 @@ export const newOrUpdatedRowTrigger = createTrigger({
       value:
         'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.',
     }),
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-    sheet_id: googleSheetsCommon.sheet_id,
+    spreadsheet_id: googleSheetsCommon.spreadsheet_id_googledrive,
+    sheet_id: googleSheetsCommon.sheet_id_after_google_drive,
     include_team_drives: googleSheetsCommon.include_team_drives,
     trigger_column: Property.Dropdown({
       displayName: 'Trigger Column',
@@ -59,18 +60,18 @@ export const newOrUpdatedRowTrigger = createTrigger({
         }
 
         const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
-        const spreadSheetId = spreadsheet_id as string;
+        const spreadSheetId = spreadsheet_id  as GoogleFilePickerPropertyValueSchema;
         const sheetId = sheet_id as number;
 
         const sheetName = await getWorkSheetName(
           authValue,
-          spreadSheetId,
+          spreadSheetId.fileId,
           sheetId
         );
 
         const firstRowValues = await getWorkSheetValues(
           authValue,
-          spreadSheetId,
+          spreadSheetId.fileId,
           `${sheetName}!1:1`
         );
         const labeledRowValues = transformWorkSheetValues(firstRowValues, 0);
@@ -105,7 +106,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
     const sheetName = await getWorkSheetName(
       context.auth,
-      spreadSheetId,
+      spreadSheetId.fileId,
       sheetId
     );
 
@@ -116,7 +117,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
     const sheetValues = await getWorkSheetValues(
       context.auth,
-      spreadSheetId,
+      spreadSheetId.fileId,
       range
     );
 
@@ -137,7 +138,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
     // create file watch notification
     const fileNotificationRes = await createFileNotification(
       context.auth,
-      spreadSheetId,
+      spreadSheetId.fileId,
       context.webhookUrl
     );
 
@@ -176,7 +177,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
     const sheetName = await getWorkSheetName(
       context.auth,
-      spreadSheetId,
+      spreadSheetId.fileId,
       sheetId
     );
 
@@ -186,7 +187,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
      */
     const currentValues = await getWorkSheetValues(
       context.auth,
-      spreadSheetId,
+      spreadSheetId.fileId,
       sheetName
     );
 
@@ -260,12 +261,12 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
     const sheetName = await getWorkSheetName(
       context.auth,
-      spreadSheetId,
+      spreadSheetId.fileId,
       sheetId
     );
     const currentSheetValues = await getWorkSheetValues(
       context.auth,
-      spreadSheetId,
+      spreadSheetId.fileId,
       sheetName
     );
 
@@ -291,7 +292,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
       );
       const fileNotificationRes = await createFileNotification(
         context.auth,
-        context.propsValue.spreadsheet_id,
+        context.propsValue.spreadsheet_id.fileId,
         context.webhookUrl
       );
       // store channel response
