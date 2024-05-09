@@ -160,7 +160,7 @@
     "openai": "4.17.5",
     "papaparse": "5.4.1",
     "pdf-parse": "1.1.1",
-    "pdf-text-reader": "5.0.0",
+    "pdf-text-reader": "4.1.0",
     "pg": "8.11.3",
     "pickleparser": "0.1.0",
     "pino-loki": "2.1.3",
