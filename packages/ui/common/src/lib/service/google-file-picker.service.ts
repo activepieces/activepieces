@@ -59,21 +59,25 @@ export class GoogleFilePickerService {
                 .setCallback((data: Record<string, any>) => {
                   if (
                     data[google.picker.Response.ACTION] ==
-                    google.picker.Action.PICKED
+                      google.picker.Action.PICKED ||
+                    data[google.picker.Response.ACTION] ==
+                      google.picker.Action.CANCEL
                   ) {
-                    const formattedData = this.pickerCallback(data);
+                    const formattedData =
+                      data[google.picker.Response.ACTION] ==
+                      google.picker.Action.CANCEL
+                        ? null
+                        : this.pickerCallback(data);
                     observer.next(formattedData);
                     observer.complete();
-                  } else if (
-                    data[google.picker.Response.ACTION] ==
-                    google.picker.Action.CANCEL
-                  ) {
-                    observer.next(null);
-                    observer.complete();
+                    picker.dispose();
                   }
                 })
                 .build();
               picker.setVisible(true);
+              setTimeout(() => {
+                this.backdropListener(picker);
+              }, 100);
             }
           );
         })
@@ -92,5 +96,17 @@ export class GoogleFilePickerService {
       };
     }
     return null;
+  }
+
+  backdropListener(picker: google.picker.Picker) {
+    const backdrop = document.querySelector('div.picker-dialog-bg');
+    if (backdrop) {
+      const callback = () => {
+        backdrop.removeEventListener('click', callback);
+        picker.setVisible(false);
+        picker.dispose();
+      };
+      backdrop.addEventListener('click', callback);
+    }
   }
 }
