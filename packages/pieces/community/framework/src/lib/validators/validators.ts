@@ -284,7 +284,7 @@ class Validators {
         {
           return null;
         }
-      if(processedValue && typeof processedValue === 'object' && processedValue.fileId && processedValue.fileDisplayName){
+      if(processedValue && typeof processedValue === 'object' && processedValue.fileId){
         return null;
       }
       return formatErrorMessage(ErrorMessages.GOOGLE_FILE_PICKER, { property,userInput });
