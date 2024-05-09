@@ -1,3 +1,4 @@
+import EventEmitter from 'events'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { websocketService } from '../websockets/websockets.service'
@@ -9,7 +10,7 @@ import { folderController } from './folder/folder.controller'
 import { stepRunService } from './step-run/step-run-service'
 import { testTriggerController } from './test-trigger/test-trigger-controller'
 import { logger } from '@activepieces/server-shared'
-import { CreateStepRunRequestBody, FlowRunStatus, StepRunResponse, TestFlowRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { CreateStepRunRequestBody, FlowRun, FlowRunStatus, StepRunResponse, TestFlowRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 
 export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowVersionController, { prefix: '/v1/flows' })
@@ -18,23 +19,23 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(testTriggerController, { prefix: '/v1/test-trigger' })
     websocketService.addListener(WebsocketServerEvent.TEST_FLOW_RUN, (socket) => {
         return async (data: TestFlowRunRequestBody) => {
+            const eventEmitter = new EventEmitter() 
             const principal = await accessTokenManager.extractPrincipal(socket.handshake.auth.token)
             const flowRun = await flowRunService.test({
                 projectId: principal.projectId,
                 flowVersionId: data.flowVersionId,
             })
-            socket.emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, flowRun)
 
-            let finalFlowRun = flowRun
-            while (finalFlowRun.status === FlowRunStatus.PAUSED) {
-                await engineResponseWatcher.listen(finalFlowRun.id, false)
-                finalFlowRun = await flowRunService.getOneOrThrow({ id: finalFlowRun.id, projectId: principal.projectId })
-                socket.emit(WebsocketClientEvent.TEST_FLOW_RUN_FINISHED, finalFlowRun)
-            }
-                
-            if (finalFlowRun.status === FlowRunStatus.SUCCEEDED) {
-                engineResponseWatcher.removeListener(flowRun.id)
-            }
+            socket.emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, flowRun)
+            
+            eventEmitter.on('FlowStatus', (flowRunResponse: FlowRun) => {
+                if (flowRunResponse.status === FlowRunStatus.SUCCEEDED) {
+                    eventEmitter.removeAllListeners()
+                }
+                socket.emit(WebsocketClientEvent.TEST_FLOW_RUN_FINISHED, flowRunResponse)
+            })
+            
+            await engineResponseWatcher.listenAndEmit(flowRun.id, eventEmitter, flowRunService.getOneOrThrow({ id: flowRun.id, projectId: principal.projectId }))
         }
     })
     websocketService.addListener(WebsocketServerEvent.TEST_STEP_RUN, (socket) => {
