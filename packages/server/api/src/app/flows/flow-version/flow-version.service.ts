@@ -9,7 +9,7 @@ import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { stepFileService } from '../step-file/step-file.service'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
+import {  PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { logger } from '@activepieces/server-shared'
 import {
     ActionType,
@@ -619,6 +619,11 @@ function buildSchema(props: PiecePropertyMap): TSchema {
             case PropertyType.DYNAMIC:
                 propsSchema[name] = Type.Record(Type.String(), Type.Any())
                 break
+            case PropertyType.GOOGLE_FILE_PICKER:
+                propsSchema[name] = Type.Union([Type.String(), Type.Object({
+                    fileId: Type.String(),
+                    fileDisplayName: Type.String(),
+                }) ])
         }
 
         if (!property.required) {
