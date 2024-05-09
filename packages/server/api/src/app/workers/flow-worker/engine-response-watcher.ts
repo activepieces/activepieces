@@ -46,9 +46,7 @@ export const engineResponseWatcher = {
     },
     listen(requestId: string): TypedEventEmitter<EngineResponseWithId> {
         const eventEmitter = new TypedEventEmitter<EngineResponseWithId>()
-        logger.error('FUCK')
         listeners.set(requestId, (data) => {
-            logger.error('ASH ' + data.requestId)
             eventEmitter.emit(data)
         })
         return eventEmitter
