@@ -6,8 +6,8 @@ import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockFlow,
     createMockFlowVersion,
-    createMockPlatformWithOwner,
     createMockProject,
+    mockBasicSetup,
 } from '../../../helpers/mocks'
 import {
     apId,
@@ -27,10 +27,11 @@ afterAll(async () => {
 })
 
 describe('Flow API for Worker', () => {
-    describe('Get Flow form Worker', () => {
+    describe('Get Flow from Worker', () => {
         it('List other flow for another project', async () => {
             // arrange
-            const { mockPlatform, mockOwner } = createMockPlatformWithOwner()
+            const { mockPlatform, mockOwner } = await mockBasicSetup()
+
             const mockProject = createMockProject({
                 platformId: mockPlatform.id,
                 ownerId: mockOwner.id,
