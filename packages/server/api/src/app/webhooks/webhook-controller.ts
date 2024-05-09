@@ -104,7 +104,7 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
             headers: {},
         }
     }
-    return engineResponseWatcher.listen(requestId, true)
+    return engineResponseWatcher.oneTimeListener(requestId, true)
 }
 
 async function convertRequest(request: FastifyRequest): Promise<EventPayload> {

@@ -69,7 +69,6 @@ export const webhookService = {
             logger.info(
                 `[WebhookService#callback] flowInstance not found or not enabled ignoring the webhook, flowId=${flow.id}`,
             )
-
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_NOT_FOUND,
                 params: {
