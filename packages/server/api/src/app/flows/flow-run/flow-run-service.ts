@@ -92,6 +92,17 @@ function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: st
     }
 }
 
+function modifyPauseMetadata(pauseMetadata: PauseMetadata): PauseMetadata {
+    if (pauseMetadata.type === PauseType.WEBHOOK) {
+        return { 
+            ...pauseMetadata, 
+            handlerId: engineResponseWatcher.getHandlerId(), 
+        }
+    }
+
+    return pauseMetadata
+}
+
 export const flowRunService = {
     async list({
         projectId,
@@ -304,14 +315,11 @@ export const flowRunService = {
 
         const { flowRunId, logFileId, pauseMetadata } = params
 
-        const updatedPauseMetadata = params.pauseMetadata.type === PauseType.WEBHOOK ? { ...pauseMetadata, 
-            id: engineResponseWatcher.getHandlerId() } : pauseMetadata
-
         await flowRunRepo.update(flowRunId, {
             status: FlowRunStatus.PAUSED,
             logsFileId: logFileId,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            pauseMetadata: updatedPauseMetadata as any,
+            pauseMetadata: modifyPauseMetadata(pauseMetadata) as any,
         })
 
         const flowRun = await flowRunRepo.findOneByOrFail({ id: flowRunId })
