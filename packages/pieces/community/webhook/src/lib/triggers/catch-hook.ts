@@ -7,17 +7,21 @@ import {
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 const message = `
-URL:
 
+**Production URL:**
 \`\`\`text
 {{webhookUrl}}
 \`\`\`
 
-If you are expecting a reply from this webhook, append **/sync** to the URL.
+**Testing URL:**
+\`\`\`text
+{{webhookUrl}}/test
+\`\`\`
+***Use this URL for testing the webhook and saving sample data. It won't start the flow***.
 
-In that case, you will also have to add an HTTP step with **return response** at the end of your flow.
-
-If the flow takes more than **30 seconds**, it will give a **408 Request Timeout** response.
+**Notes:**
+- If you are expecting a reply from this webhook, append **/sync** to the URL in that case, you will also have to add an HTTP step with **return response** at the end of your flow.
+- If the flow takes more than **30 seconds**, it will give a **408 Request Timeout** response.
 `;
 
 enum AuthType {
