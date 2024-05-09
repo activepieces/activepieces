@@ -10,7 +10,7 @@ import { folderController } from './folder/folder.controller'
 import { stepRunService } from './step-run/step-run-service'
 import { testTriggerController } from './test-trigger/test-trigger-controller'
 import { logger } from '@activepieces/server-shared'
-import { CreateStepRunRequestBody, FlowRun, FlowRunStatus, StepRunResponse, TestFlowRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { CreateStepRunRequestBody, FlowRun, getFlowState, StepRunResponse, TestFlowRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 
 export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowVersionController, { prefix: '/v1/flows' })
@@ -28,12 +28,12 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
 
             socket.emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, flowRun)
             
-            eventEmitter.on('FlowStatus', (flowRunResponse: FlowRun) => {
-                if (flowRunResponse.status === FlowRunStatus.SUCCEEDED || flowRunResponse.status === FlowRunStatus.FAILED) {
+            eventEmitter.on(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, (flowRunResponse: FlowRun) => {
+                if (getFlowState(flowRunResponse.status)) {
                     eventEmitter.removeAllListeners()
                     engineResponseWatcher.removeListener(flowRun.id)
                 }
-                socket.emit(WebsocketClientEvent.TEST_FLOW_RUN_FINISHED, flowRunResponse)
+                socket.emit(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, flowRunResponse)
             })
             
             await engineResponseWatcher.listenAndEmit(flowRun.id, eventEmitter, flowRunService.getOneOrThrow({ id: flowRun.id, projectId: principal.projectId }))

@@ -3,7 +3,7 @@ import { logger } from '@sentry/utils'
 import { StatusCodes } from 'http-status-codes'
 import { pubSub } from '../../helper/pubsub'
 import { system, SystemProp } from '@activepieces/server-shared'
-import { apId, FlowRunStatus } from '@activepieces/shared'
+import { apId, FlowRunStatus, WebsocketClientEvent } from '@activepieces/shared'
 
 const listeners = new Map<string, (flowResponse: EngineHttpResponse) => void>()
 
@@ -51,7 +51,7 @@ export const engineResponseWatcher = {
 
         const listenStatus = async () => {
             const finalFlowRun = await driver
-            event.emit('FlowStatus', finalFlowRun)
+            event.emit(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, finalFlowRun)
             if (finalFlowRun.status !== FlowRunStatus.SUCCEEDED) {
                 await listenStatus()
             }
