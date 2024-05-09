@@ -1,14 +1,15 @@
 import { GoogleFilePickerPropertyValueSchema } from '@activepieces/pieces-framework';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Observable, switchMap } from 'rxjs';
+import { Observable, switchMap, map } from 'rxjs';
 import { AppConnectionsService } from './app-connections.service';
 import { AppConnectionType } from '@activepieces/shared';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({ providedIn: 'root' })
 export class GoogleFilePickerService {
   private isPickerApiLoaded$ = new BehaviorSubject<boolean>(false);
-  constructor(private appConnectionsService: AppConnectionsService) {}
+  constructor(private appConnectionsService: AppConnectionsService, private httpClient: HttpClient) { }
   loadGapiScript() {
     if (!this.isPickerApiLoaded$.value) {
       const script = document.createElement('script');
@@ -52,20 +53,22 @@ export class GoogleFilePickerService {
               userDriveView.setIncludeFolders(true);
               const sharedDriveView = new google.picker.DocsView(viewId);
               sharedDriveView.setEnableDrives(true).setIncludeFolders(true);
+              const appId = connection.value.client_id.split("-")[0]
               const picker = new google.picker.PickerBuilder()
                 .addView(userDriveView)
                 .addView(sharedDriveView)
+                .setAppId(appId)
                 .setOAuthToken(connection.value.access_token)
                 .setCallback((data: Record<string, any>) => {
                   if (
                     data[google.picker.Response.ACTION] ==
-                      google.picker.Action.PICKED ||
+                    google.picker.Action.PICKED ||
                     data[google.picker.Response.ACTION] ==
-                      google.picker.Action.CANCEL
+                    google.picker.Action.CANCEL
                   ) {
                     const formattedData =
                       data[google.picker.Response.ACTION] ==
-                      google.picker.Action.CANCEL
+                        google.picker.Action.CANCEL
                         ? null
                         : this.pickerCallback(data);
                     observer.next(formattedData);
@@ -108,5 +111,13 @@ export class GoogleFilePickerService {
       };
       backdrop.addEventListener('click', callback);
     }
+  }
+
+  getFileName({ fileId, accessToken }: { fileId: string, accessToken: string }) {
+    return this.httpClient.get<{ name: string }>(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    }).pipe(map(f => f.name))
   }
 }
