@@ -1,8 +1,9 @@
+import { EventEmitter } from 'events'
 import { logger } from '@sentry/utils'
 import { StatusCodes } from 'http-status-codes'
 import { pubSub } from '../../helper/pubsub'
 import { system, SystemProp } from '@activepieces/server-shared'
-import { apId } from '@activepieces/shared'
+import { apId, FlowRunStatus, WebsocketClientEvent } from '@activepieces/shared'
 
 const listeners = new Map<string, (flowResponse: EngineHttpResponse) => void>()
 
@@ -24,6 +25,9 @@ export const engineResponseWatcher = {
     getHandlerId(): string {
         return HANDLER_ID
     },
+    removeListener(requestId: string): void {
+        listeners.delete(requestId)
+    },
     async init(): Promise<void> {
         logger.info('[engineWatcher#init] Initializing engine run watcher')
 
@@ -41,6 +45,19 @@ export const engineResponseWatcher = {
                 )
             },
         )
+    },
+    async listenAndEmit(requestId: string, event: EventEmitter, driver: Promise<any>): Promise<void> {
+        logger.info(`[engineWatcher#listenAndEmit] requestId=${requestId}`)
+
+        const listenStatus = async () => {
+            const finalFlowRun = await driver
+            event.emit(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, finalFlowRun)
+            if (finalFlowRun.status !== FlowRunStatus.SUCCEEDED) {
+                await listenStatus()
+            }
+        }
+    
+        await listenStatus()
     },
     async listen(requestId: string, timeoutRequest: boolean): Promise<EngineHttpResponse> {
         logger.info(`[engineWatcher#listen] requestId=${requestId}`)
