@@ -30,7 +30,7 @@ import { Observable, map, tap } from 'rxjs';
       <input
         class="ap-cursor-pointer"
         matInput
-        [value]=" control.value?.fileDisplayName || ''"
+        [value]="control.value?.fileDisplayName || ''"
         [readonly]="true"
         (click)="openPicker()"
       />
