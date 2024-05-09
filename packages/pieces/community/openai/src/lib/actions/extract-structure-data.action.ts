@@ -51,26 +51,20 @@ export const extractStructuredDataAction = createAction({
 			displayName: 'Unstructured Text',
 			required: true,
 		}),
-		prompt: Property.LongText({
-			displayName: 'Prompt',
-			description:
-				'Provide a brief description of what sort of data you want extracted from the unstructured text.',
-			required: true,
-		}),
 		params: Property.Array({
-			displayName: 'Structured Data Definition',
+			displayName: 'Data Definition',
 			required: true,
 			properties: {
 				propName: Property.ShortText({
 					displayName: 'Name',
 					description:
-						'Provide the name of the values you want to extract from the unstructured text. Name should be unique and short. ',
+						'Provide the name of the value you want to extract from the unstructured text. The name should be unique and short. ',
 					required: true,
 				}),
 				propDescription: Property.LongText({
 					displayName: 'Description',
 					description:
-						'Brief description of the parameter, defining what data will be extracted to this parameter.',
+						'Brief description of the data, this hints for the AI on what to look for',
 					required: false,
 				}),
 				propDataType: Property.StaticDropdown({
@@ -88,29 +82,28 @@ export const extractStructuredDataAction = createAction({
 					},
 				}),
 				propIsRequired: Property.Checkbox({
-					displayName: 'Is Property Required?',
-					description: 'If the property must be present, the action will fail if it is not found.',
+					displayName: 'Fail if Not present?',
 					required: true,
-					defaultValue: true,
+					defaultValue: false,
 				}),
 			},
 		}),
 	},
 	async run(context) {
-		const { model, text, prompt } = context.propsValue;
+		const { model, text } = context.propsValue;
 		const paramInputArray = context.propsValue.params as ParamInput[];
 		const functionParams: Record<string, unknown> = {};
 		const requiredFunctionParams: string[] = [];
 		for (const param of paramInputArray) {
 			functionParams[param.propName] = {
 				type: param.propDataType,
-				description: param.propDescription,
+				description: param.propDescription ?? param.propName,
 			};
 			if (param.propIsRequired) {
 				requiredFunctionParams.push(param.propName);
 			}
 		}
-
+		const prompt = 'Extract the following data from the provided text'
 		const openai = new OpenAI({
 			apiKey: context.auth,
 		});
@@ -138,8 +131,8 @@ export const extractStructuredDataAction = createAction({
 		if (toolCallsResponse) {
 			return JSON.parse(toolCallsResponse[0].function.arguments);
 		} else {
-			throw Error(JSON.stringify({
-				message: 'Unable to extract data. Please provide valid params and text.'
+			throw new Error(JSON.stringify({
+				message: "OpenAI couldn't extract the fields from the above text."
 			}));
 		}
 	},
