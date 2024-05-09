@@ -36,7 +36,7 @@ export const whatsappAuth = PieceAuth.CustomAuth({
 
 
 export const whatsapp = createPiece({
-  displayName: "WhatsApp",
+  displayName: "WhatsApp Business",
   description: 'Manage your WhatsApp business account',
   auth: whatsappAuth,
   minimumSupportedRelease: '0.20.0',
