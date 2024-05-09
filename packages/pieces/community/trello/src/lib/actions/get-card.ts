@@ -34,8 +34,6 @@ export const getCard = createAction({
       headers: {
         Accept: 'application/json',
       },
-      body: {},
-      queryParams: {},
     };
     return (await httpClient.sendRequest<TrelloCard>(request)).body;
   },

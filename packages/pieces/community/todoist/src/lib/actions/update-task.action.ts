@@ -1,23 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import { todoistRestClient } from '../common/client/rest-client';
-import { todoistProjectIdDropdown, todoistSectionIdDropdown } from '../common/props';
-import { TodoistCreateTaskRequest } from '../common/models';
 import { todoistAuth } from '../..';
 
-export const todoistCreateTaskAction = createAction({
+export const todoistUpdateTaskAction = createAction({
 	auth: todoistAuth,
-	name: 'create_task',
-	displayName: 'Create Task',
-	description: 'Create task',
+	name: 'update_task',
+	displayName: 'Update Task',
+	description: 'Updates an existing task.',
 	props: {
-		project_id: todoistProjectIdDropdown(
-			"Task project ID. If not set, task is put to user's Inbox.",
-		),
+		task_id: Property.ShortText({
+			displayName: 'Task ID',
+			required: true,
+		}),
 		content: Property.LongText({
 			displayName: 'content',
 			description: "The task's content. It may contain some markdown-formatted text and hyperlinks",
-			required: true,
+			required: false,
 		}),
 		description: Property.LongText({
 			displayName: 'Description',
@@ -41,25 +40,22 @@ export const todoistCreateTaskAction = createAction({
 			description: "Specific date in YYYY-MM-DD format relative to user's timezone",
 			required: false,
 		}),
-		section_id: todoistSectionIdDropdown,
 	},
 
 	async run({ auth, propsValue }) {
 		const token = auth.access_token;
-		const { project_id, content, description, labels, priority, due_date, section_id } =
-			propsValue as TodoistCreateTaskRequest;
+		const { task_id, content, description, priority, due_date } = propsValue;
+		const labels = propsValue.labels as string[];
 
 		assertNotNullOrUndefined(token, 'token');
-		assertNotNullOrUndefined(content, 'content');
-		return await todoistRestClient.tasks.create({
+		return await todoistRestClient.tasks.update({
 			token,
-			project_id,
+			task_id,
 			content,
 			description,
 			labels,
 			priority,
 			due_date,
-			section_id,
 		});
 	},
 });
