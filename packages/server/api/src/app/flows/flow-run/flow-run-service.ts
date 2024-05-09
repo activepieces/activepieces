@@ -199,7 +199,7 @@ export const flowRunService = {
                 projectId: flowRunToResume.projectId,
                 flowVersionId: flowRunToResume.flowVersionId,
                 synchronousHandlerId: returnHandlerId(pauseMetadata, requestId),
-                hookType: HookType.BEFORE_LOG,
+                hookType: HookType.AFTER_LOG,
                 executionType,
                 environment: RunEnvironment.PRODUCTION,
             })
