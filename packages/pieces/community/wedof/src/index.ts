@@ -37,6 +37,10 @@ import { declareCertificationFolderToRetake } from './lib/actions/certification-
 import { declareCertificationFolderFailed } from './lib/actions/certification-folders/declare-certification-folder-failed';
 import { refuseCertificationFolder } from './lib/actions/certification-folders/refuse-certification-folder';
 import { abortCertificationFolder } from './lib/actions/certification-folders/abort-certification-folder';
+import { getCertificationFolder } from './lib/actions/certification-folders/get-certification-folder';
+import { listCertificationFolders } from './lib/actions/certification-folders/list-certification-folders';
+import { listRegistrationFolders } from './lib/actions/registration-folders/list-registration-folders';
+import { searchCertificationFolder } from './lib/actions/certification-folders/search-certification-folder';
 
 export const wedofAuth = PieceAuth.SecretText({
   displayName: 'Clé API',
@@ -78,6 +82,7 @@ export const wedof = createPiece({
   actions: [
     ////////////// registrationFolders ////////////
     getRegistrationFolder,
+    listRegistrationFolders,
     searchRegistrationFolder,
     updateRegistrationFolder,
     validateRegistrationFolder,
@@ -89,6 +94,9 @@ export const wedof = createPiece({
     refuseRegistrationFolder,
     getMinimalSessionDates,
     ////////////// certificationFolders ////////////
+    getCertificationFolder,
+    listCertificationFolders,
+    searchCertificationFolder,
     declareCertificationFolderRegistred,
     declareCertificationFolderToTake,
     declareCertificationFolderToControl,
