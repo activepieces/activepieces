@@ -11,7 +11,7 @@ export const declareRegistrationFolderIntraining = createAction({
   description: "Change l'état d'un dossier de formation vers : En formation",
 
   props: {
-    externalId: Property.DateTime({
+    externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',
       description:
         'Sélectionner la propriété {externalId} du dossier de formation',

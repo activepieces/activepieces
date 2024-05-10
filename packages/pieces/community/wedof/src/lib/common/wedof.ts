@@ -216,6 +216,64 @@ export const wedofCommon = {
     },
   }),
 
+  certificationEvents: Property.StaticMultiSelectDropdown({
+    displayName: 'Événement sur le dossier de certification',
+    required: true,
+    options: {
+      options: [
+        {
+          value: 'certificationFolder.created',
+          label: 'Créé',
+        },
+        {
+          value: 'certificationFolder.updated',
+          label: 'Mis à jour',
+        },
+        {
+          value: 'certificationFolder.accrochageOk',
+          label: 'Accrochage réussi',
+        },
+        {
+          value: 'certificationFolder.accrochageKo',
+          label: 'Accrochage en erreur',
+        },
+        {
+          value: 'certificationFolder.toRegister',
+          label: 'À enregistrer',
+        },
+        {
+          value: 'certificationFolder.registered',
+          label: "Enregistré",
+        },
+        {
+          value: 'certificationFolder.toTake',
+          label: 'Prêt à passer',
+        },
+        {
+          value: 'certificationFolder.toControl',
+          label: 'À contrôler',
+        },
+        {
+          value: 'certificationFolder.success',
+          label: 'Réussi',
+        },
+        {
+          value: 'certificationFolder.refused',
+          label: 'Refusé',
+        },
+        {
+          value: 'certificationFolder.failed',
+          label: 'Échoué',
+        },
+        {
+          value: 'certificationFolder.aborted',
+          label: 'Abandonné',
+        },
+      ],
+      disabled: false,
+    },
+  }),
+
   forceMajeurAbsence: Property.StaticDropdown({
     displayName: 'absence pour raison de force majeure',
     description: "si absence pour raison de force majeure, 'Oui', sinon 'Non'",
@@ -230,6 +288,63 @@ export const wedofCommon = {
         {
           value: false,
           label: 'Non',
+        },
+      ],
+      disabled: false,
+    },
+  }),
+
+  europeanLanguageLevel: Property.StaticDropdown({
+    displayName: 'Nomenclature européeenne pour les certifications de langues',
+    required: false,
+    defaultValue: false,
+    options: {
+      options: [
+        {label: "C2", value: "C2"},
+			  {label: "C1", value: "C1"},
+			  {label: "B2", value: "B2"},
+			  {label: "B1", value: "B1"},
+			  {label: "A2", value: "A2"},
+			  {label: "A1", value: "A1"},
+			  {label: "INSUFFISANT", value: "INSUFFISANT"}
+      ],
+      disabled: false,
+    },
+  }),
+
+  gradePass: Property.StaticDropdown({
+    displayName: 'Ajoute une mention au dossier de certification',
+    required: false,
+    defaultValue: false,
+    options: {
+      options: [
+        {label: "SANS MENTION", value: "SANS_MENTION"},
+			  {label: "MENTION ASSEZ BIEN", value: "MENTION_ASSEZ_BIEN"},
+			  {label: "MENTION BIEN", value: "MENTION_BIEN"},
+			  {label: "MENTION TRES BIEN", value: "MENTION_TRES_BIEN"},
+			  {label: "MENTION TRES BIEN AVEC FELICITATIONS", value: "MENTION_TRES_BIEN_AVEC_FELICITATIONS_DU_JURY"},
+      ],
+      disabled: false,
+    },
+  }),
+
+  examinationType: Property.StaticDropdown({
+    displayName: "Type de passage de l'examen",
+    required: false,
+    defaultValue: false,
+    options: {
+      options: [
+        {
+          value: "A_DISTANCE",
+          label: 'À distance',
+        },
+        {
+          value: "EN_PRESENTIEL",
+          label: 'En présentiel',
+        },
+        {
+          value: "MIXTE",
+          label: 'Mixte',
         },
       ],
       disabled: false,

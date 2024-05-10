@@ -28,6 +28,15 @@ import { certificationFolderTotake } from './lib/triggers/certification-folders/
 import { certificationFolderToretake } from './lib/triggers/certification-folders/certification-folder-toretake';
 import { certificationFolderRegistred } from './lib/triggers/certification-folders/certification-folder-registred';
 import { certificationFolderToControl } from './lib/triggers/certification-folders/certification-folder-tocontrol';
+import { certificationFolderSelected } from './lib/triggers/certification-folders/certification-folder-selected';
+import { declareCertificationFolderRegistred } from './lib/actions/certification-folders/declare-certification-folder-registred';
+import { declareCertificationFolderToTake } from './lib/actions/certification-folders/declare-certification-folder-totake';
+import { declareCertificationFolderToControl } from './lib/actions/certification-folders/declare-certification-folder-tocontrol';
+import { declareCertificationFolderSuccess } from './lib/actions/certification-folders/declare-certification-folder-success';
+import { declareCertificationFolderToRetake } from './lib/actions/certification-folders/declare-certification-folder-toretake';
+import { declareCertificationFolderFailed } from './lib/actions/certification-folders/declare-certification-folder-failed';
+import { refuseCertificationFolder } from './lib/actions/certification-folders/refuse-certification-folder';
+import { abortCertificationFolder } from './lib/actions/certification-folders/abort-certification-folder';
 
 export const wedofAuth = PieceAuth.SecretText({
   displayName: 'Clé API',
@@ -67,6 +76,7 @@ export const wedof = createPiece({
   ],
   authors: ['vbarrier', 'obenazouz'],
   actions: [
+    ////////////// registrationFolders ////////////
     getRegistrationFolder,
     searchRegistrationFolder,
     updateRegistrationFolder,
@@ -78,8 +88,18 @@ export const wedof = createPiece({
     cancelRegistrationFolder,
     refuseRegistrationFolder,
     getMinimalSessionDates,
+    ////////////// certificationFolders ////////////
+    declareCertificationFolderRegistred,
+    declareCertificationFolderToTake,
+    declareCertificationFolderToControl,
+    declareCertificationFolderSuccess,
+    declareCertificationFolderToRetake,
+    declareCertificationFolderFailed,
+    refuseCertificationFolder,
+    abortCertificationFolder
   ],
   triggers: [
+    ////////////// registrationFolders ////////////
     newRegistrationFolderNotProcessed,
     registrationFolderUpdated,
     registrationFolderAccepted,
@@ -88,12 +108,14 @@ export const wedof = createPiece({
     registrationFolderPaid,
     registrationFolderSelected,
     registrationFolderTobill,
-    certificationFolderUpdated,
-    certificationFolderSuccess,
+    ////////////// certificationFolders ////////////
     newCertificationFolderCreated,
-    certificationFolderTotake,
-    certificationFolderToretake,
+    certificationFolderUpdated,
     certificationFolderRegistred,
-    certificationFolderToControl
+    certificationFolderTotake,
+    certificationFolderToControl,
+    certificationFolderSuccess,
+    certificationFolderToretake,
+    certificationFolderSelected
   ],
 });
