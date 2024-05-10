@@ -1,6 +1,6 @@
 import { apolloAuth } from '../../';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, StoreScope, createAction } from '@activepieces/pieces-framework';
 
 export const matchPerson = createAction({
   name: 'matchPerson',
@@ -11,13 +11,21 @@ export const matchPerson = createAction({
       displayName: 'Email',
       description: '',
       required: true,
-    })
+    }),
+    cacheResponse: Property.Checkbox({
+      displayName: 'Cache Response',
+      description: 'Store the response in the project store for future use.',
+      required: false,
+      defaultValue: true,
+    }),
   },
   auth: apolloAuth,
   async run({ propsValue, auth, store }) {
-    const cachedResult = await store.get(`_apollo_person_${propsValue.email}`)
-    if (cachedResult) {
-      return cachedResult;
+    if (propsValue.cacheResponse) {
+      const cachedResult = await store.get(`_apollo_person_${propsValue.email}`, StoreScope.PROJECT);
+      if (cachedResult) {
+        return cachedResult;
+      }
     }
     const result = await httpClient.sendRequest<{ person: Record<string, unknown> }>({
       method: HttpMethod.POST,
@@ -31,7 +39,9 @@ export const matchPerson = createAction({
       }
     });
     const personResult = result.body.person || {};
-    await store.put(`_apollo_person_${propsValue.email}`, personResult);
+    if (propsValue.cacheResponse) {
+      await store.put(`_apollo_person_${propsValue.email}`, personResult, StoreScope.PROJECT);
+    }
     return personResult;
   },
 });

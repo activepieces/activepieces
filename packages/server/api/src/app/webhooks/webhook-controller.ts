@@ -65,7 +65,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             .send(response.body)
     })
 
-    app.all('/:flowId/simulate', WEBHOOK_PARAMS, async (request, reply) => {
+    app.all('/:flowId/test', WEBHOOK_PARAMS, async (request, reply) => {
         const response = await handleWebhook({
             request,
             flowId: request.params.flowId,
@@ -104,7 +104,7 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
             headers: {},
         }
     }
-    return engineResponseWatcher.listen(requestId, true)
+    return engineResponseWatcher.oneTimeListener(requestId, true)
 }
 
 async function convertRequest(request: FastifyRequest): Promise<EventPayload> {

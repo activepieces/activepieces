@@ -1,7 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
 import {
+  Action,
+  ActionType,
   FlowVersion,
   FlowVersionTemplate,
+  Trigger,
+  TriggerType,
   flowHelper,
 } from '@activepieces/shared';
 import { Observable, forkJoin, map } from 'rxjs';
@@ -34,7 +38,7 @@ export class PiecesIconsFromFlowComponent implements OnInit {
 
   constructor(private pieceService: PieceMetadataService) { }
   ngOnInit(): void {
-    const steps = flowHelper.getAllSteps(this.flowVersion.trigger);
+    const steps = this.filterOutDuplicates(flowHelper.getAllSteps(this.flowVersion.trigger));
     const stepMetadata$: Observable<FlowItemDetails>[] = steps.map((step) => this.pieceService.getStepDetails(step));
     this.urlsToLoad$ = forkJoin(stepMetadata$).pipe(
       map((items) => items.map((item) => item.logoUrl!).slice(0, this.maxNumberOfIconsToLoad)));
@@ -46,11 +50,29 @@ export class PiecesIconsFromFlowComponent implements OnInit {
     const stepsAppsNames = items.map((item) => item.name);
     if (stepsAppsNames.length === 1) {
       return stepsAppsNames[0]!;
-    } else if (stepsAppsNames.length < 7) {
+    } else if (stepsAppsNames.length <= 7) {
       return stepsAppsNames.slice(0, stepsAppsNames.length - 1).join(', ') +
         ` and ${stepsAppsNames[stepsAppsNames.length - 1]}`;
     } else {
       return stepsAppsNames.join(', ') + ' and others';
     }
+  }
+
+  private filterOutDuplicates(steps: (Action | Trigger)[])
+  {
+    const seen = new Set<string>();
+    return steps.filter((step) => {
+      let isDuplicate = false;
+     if(step.type === ActionType.PIECE || step.type === TriggerType.PIECE) 
+      {
+        isDuplicate = seen.has(step.settings.pieceName);
+        seen.add(step.settings.pieceName);
+      }
+      else{
+        isDuplicate = seen.has(step.type);
+        seen.add(step.type);
+      }
+      return !isDuplicate;
+    });
   }
 }

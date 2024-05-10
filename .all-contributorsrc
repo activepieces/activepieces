@@ -1010,6 +1010,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "thirstycode",
+      "name": "Pratik Kinage",
+      "avatar_url": "https://avatars.githubusercontent.com/u/37847256?v=4",
+      "profile": "https://www.gamespecifications.com/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "LevwTech",
+      "name": "Abdelrahman Mostafa ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/69399787?v=4",
+      "profile": "https://github.com/LevwTech",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

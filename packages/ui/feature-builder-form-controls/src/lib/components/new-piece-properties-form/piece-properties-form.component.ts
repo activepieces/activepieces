@@ -15,7 +15,10 @@ import {
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { jsonValidator } from '@activepieces/ui/common';
+import {
+  getPropertyInitialValue,
+  jsonValidator,
+} from '@activepieces/ui/common';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { BehaviorSubject, Observable, distinctUntilChanged, tap } from 'rxjs';
 import deepEqual from 'deep-equal';
@@ -129,8 +132,12 @@ export class PiecePropertiesFormComponent
         this.form.controls[propertyName].addValidators(jsonValidator);
       }
     }
+
     this.customizedInputsChanged.emit({ propertyName, value });
-    this.form.controls[propertyName].setValue('', { emitEvent: false });
+    this.form.controls[propertyName].setValue(
+      getPropertyInitialValue(property, undefined),
+      { emitEvent: false }
+    );
     this.form.controls[propertyName].updateValueAndValidity({
       emitEvent: false,
     });

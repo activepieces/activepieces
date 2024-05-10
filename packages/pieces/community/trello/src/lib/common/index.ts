@@ -184,8 +184,6 @@ async function getAuthorisedUser(apikey: string, token: string) {
     headers: {
       Accept: 'application/json',
     },
-    body: {},
-    queryParams: {},
   };
   const response = await httpClient.sendRequest(request);
 
@@ -211,8 +209,6 @@ async function listBoards(apikey: string, token: string, user_id: string) {
     headers: {
       Accept: 'application/json',
     },
-    body: {},
-    queryParams: {},
   };
   const response = await httpClient.sendRequest<{ id: string; name: string }[]>(
     request
@@ -240,8 +236,6 @@ async function listBoardLists(apikey: string, token: string, board_id: string) {
     headers: {
       Accept: 'application/json',
     },
-    body: {},
-    queryParams: {},
   };
   const response = await httpClient.sendRequest<{ id: string; name: string }[]>(
     request
