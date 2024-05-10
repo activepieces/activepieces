@@ -18,19 +18,24 @@ export const createClickupTaskComment = createAction({
       displayName: 'Comment',
       required: true,
     }),
+    assignee_id: clickupCommon.assignee_id(),
   },
   async run(configValue) {
-    const { task_id, comment } = configValue.propsValue;
+    const { task_id, comment, assignee_id } = configValue.propsValue;
 
-    const user_request = await callClickUpApi(
-      HttpMethod.GET,
-      `/user`,
-      getAccessTokenOrThrow(configValue.auth),
-      {}
-    );
+    if (!assignee_id) {
+      const user_request = await callClickUpApi(
+        HttpMethod.GET,
+        `/user`,
+        getAccessTokenOrThrow(configValue.auth),
+        {}
+      );
+  
+      if (user_request.body['user'] === undefined) {
+        throw 'Please connect to your ClickUp account';
+      }
 
-    if (user_request.body['user'] === undefined) {
-      throw 'Please connect to your ClickUp account';
+      assignee_id = user_request.body['user']['id'];
     }
 
     const response = await callClickUpApi(
@@ -39,7 +44,7 @@ export const createClickupTaskComment = createAction({
       getAccessTokenOrThrow(configValue.auth),
       {
         comment_text: comment,
-        assignee: user_request.body['user']['id'],
+        assignee: assignee_id,
         notify_all: true,
       }
     );
