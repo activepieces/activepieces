@@ -107,10 +107,11 @@ export const taskadeProps = {
 			const options: DropdownOption<string>[] = [];
 
 			let after;
-			while (true) {
+			let moreTasks = true;
+			while (moreTasks) {
 				const response = await client.listTasks(project_id as string, { limit: 100, after });
 				if (response.items.length === 0) {
-					break;
+					moreTasks = false;
 				} else {
 					after = response.items[response.items.length - 1].id;
 					for (const task of response.items) {
@@ -118,7 +119,6 @@ export const taskadeProps = {
 					}
 				}
 			}
-
 			return {
 				disabled: false,
 				options,
