@@ -98,4 +98,8 @@ export class TaskadeAPIClient {
 			{},
 		);
 	}
+
+	async deleteTask(projectId: string, taskId: string) {
+		return await this.makeRequest(HttpMethod.DELETE, `/projects/${projectId}/tasks/${taskId}`);
+	}
 }
