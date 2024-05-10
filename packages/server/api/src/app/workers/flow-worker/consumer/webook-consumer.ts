@@ -17,7 +17,7 @@ export const webhookConsumer = {
             })
             return
         }
-        const isPublishedAndEnabled = (flow.status !== FlowStatus.ENABLED || isNil(flow.publishedVersionId))&& !simulate 
+        const isPublishedAndEnabled = (flow.status !== FlowStatus.ENABLED || isNil(flow.publishedVersionId)) && !simulate 
         if (isPublishedAndEnabled) {
             await stopAndReply(data, {
                 status: StatusCodes.NOT_FOUND,
