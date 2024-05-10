@@ -20,9 +20,14 @@ export interface CreateTaskParams {
 
 export interface TaskResponse {
 	id: string;
-	text: string;
 	parentId: string;
+	text: string;
 	completed: boolean;
+}
+
+export interface CreateTaskResponse {
+	ok: boolean;
+	item: TaskResponse[];
 }
 
 export interface CreateTaskDateParams {

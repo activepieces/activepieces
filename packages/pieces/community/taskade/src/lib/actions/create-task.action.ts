@@ -1,9 +1,7 @@
 import { taskadeAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { taskadeProps } from '../common/props';
-import dayjs from 'dayjs';
 import { TaskadeAPIClient } from '../common/client';
-import { CreateTaskDateParams } from '../common/types';
 
 export const createTaskAction = createAction({
 	auth: taskadeAuth,
@@ -38,6 +36,7 @@ export const createTaskAction = createAction({
 		}),
 		placement: Property.StaticDropdown({
 			displayName: 'Placement',
+			description: 'Placement of task in block',
 			required: true,
 			defaultValue: 'afterbegin',
 			options: {
@@ -54,40 +53,16 @@ export const createTaskAction = createAction({
 				],
 			},
 		}),
-		start_date: Property.DateTime({
-			displayName: 'Start Date',
-			required: true,
-		}),
-		end_date: Property.DateTime({
-			displayName: 'End Date',
-			required: false,
-		}),
 	},
 	async run(context) {
 		const { project_id, content_type, content, placement } = context.propsValue;
 
 		const client = new TaskadeAPIClient(context.auth);
 
-		const task = await client.createTask(project_id, {
+		return await client.createTask(project_id, {
 			content,
 			contentType: content_type,
 			placement,
 		});
-
-		const createDateBody: CreateTaskDateParams = {
-			start: {
-				date: dayjs(context.propsValue.start_date).format('YYYY-MM-DD'),
-				time: dayjs(context.propsValue.start_date).format('HH:mm:ss'),
-			},
-		};
-
-		if (context.propsValue.end_date) {
-			createDateBody.end = {
-				date: dayjs(context.propsValue.end_date).format('YYYY-MM-DD'),
-				time: dayjs(context.propsValue.end_date).format('HH:mm:ss'),
-			};
-		}
-
-		return await client.createTaskDate(project_id, task.items[0].id, createDateBody);
 	},
 });

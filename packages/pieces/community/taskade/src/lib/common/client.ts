@@ -11,10 +11,13 @@ import {
 	CreateTaskParams,
 	ListAPIResponse,
 	ProjectResponse,
-	TaskResponse,
+	CreateTaskResponse,
 	WorkspaceFolderResponse,
 	WorkspaceResponse,
+	TaskResponse,
 } from './types';
+
+type RequestParams = Record<string, string | number | string[] | undefined>;
 
 export class TaskadeAPIClient {
 	constructor(private personalToken: string) {}
@@ -22,7 +25,7 @@ export class TaskadeAPIClient {
 	async makeRequest<T extends HttpMessageBody>(
 		method: HttpMethod,
 		resourceUri: string,
-		query?: Record<string, string | number | string[] | undefined>,
+		query?: RequestParams,
 		body: any | undefined = undefined,
 	): Promise<T> {
 		const baseUrl = 'https://www.taskade.com/api/v1';
@@ -65,16 +68,10 @@ export class TaskadeAPIClient {
 		return await this.makeRequest(HttpMethod.GET, `/folders/${folder_id}/projects`);
 	}
 
-	async createTask(
-		projectId: string,
-		params: CreateTaskParams,
-	): Promise<ListAPIResponse<TaskResponse>> {
-		return await this.makeRequest(
-			HttpMethod.POST,
-			`/projects/${projectId}/tasks`,
-			undefined,
-			params,
-		);
+	async createTask(projectId: string, params: CreateTaskParams): Promise<CreateTaskResponse> {
+		return await this.makeRequest(HttpMethod.POST, `/projects/${projectId}/tasks`, undefined, {
+			tasks: [params],
+		});
 	}
 
 	async createTaskDate(projectId: string, taskId: string, params: CreateTaskDateParams) {
@@ -83,6 +80,22 @@ export class TaskadeAPIClient {
 			`/projects/${projectId}/tasks/${taskId}/date`,
 			undefined,
 			params,
+		);
+	}
+
+	async listTasks(
+		projectId: string,
+		params: RequestParams,
+	): Promise<ListAPIResponse<TaskResponse>> {
+		return await this.makeRequest(HttpMethod.GET, `/projects/${projectId}/tasks`, params);
+	}
+
+	async completeTask(projectId: string, taskId: string) {
+		return await this.makeRequest(
+			HttpMethod.POST,
+			`/projects/${projectId}/tasks/${taskId}/complete`,
+			undefined,
+			{},
 		);
 	}
 }

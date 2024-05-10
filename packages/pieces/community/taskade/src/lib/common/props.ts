@@ -91,4 +91,38 @@ export const taskadeProps = {
 			};
 		},
 	}),
+	task_id: Property.Dropdown({
+		displayName: 'Task',
+		refreshers: ['project_id'],
+		required: true,
+		options: async ({ auth, project_id }) => {
+			if (!auth) {
+				return createEmptyOptions('Please connect account first.');
+			}
+			if (!project_id) {
+				return createEmptyOptions('Please select project.');
+			}
+
+			const client = new TaskadeAPIClient(auth as string);
+			const options: DropdownOption<string>[] = [];
+
+			let after;
+			while (true) {
+				const response = await client.listTasks(project_id as string, { limit: 100, after });
+				if (response.items.length === 0) {
+					break;
+				} else {
+					after = response.items[response.items.length - 1].id;
+					for (const task of response.items) {
+						options.push({ label: task.text, value: task.id });
+					}
+				}
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	}),
 };
