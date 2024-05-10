@@ -9,7 +9,8 @@ import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
 import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ALL_PRINCIPAL_TYPES,
+import {
+    ActivepiecesError, ALL_PRINCIPAL_TYPES,
     ErrorCode,
     EventPayload,
     isNil,

@@ -13,7 +13,7 @@ export class ReplaceMarkdownConstsPipe implements PipeTransform {
     formPieceTriggerPrefix: string
   ): string {
     return value
-      .replace('{{webhookUrl}}', `${webhookPrefix}/${flowId}`)
-      .replace('{{formUrl}}', `${formPieceTriggerPrefix}/${flowId}`);
+      .replaceAll('{{webhookUrl}}', `${webhookPrefix}/${flowId}`)
+      .replaceAll('{{formUrl}}', `${formPieceTriggerPrefix}/${flowId}`);
   }
 }

@@ -1,4 +1,3 @@
-import { flowService } from '../flows/flow/flow.service'
 import { flowRunService, HookType } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { triggerHooks } from '../flows/trigger'
@@ -66,32 +65,16 @@ export const webhookService = {
 
         const { projectId } = flow
 
-        if (isNil(flow.publishedVersionId)) {
-            logger.info(
-                `[WebhookService#callback] flowInstance not found, flowId=${flow.id}`,
-            )
-            const flowVersion = (
-                await flowService.getOnePopulatedOrThrow({
-                    projectId,
-                    id: flow.id,
-                })
-            ).version
-            const payloads: unknown[] = await triggerHooks.executeTrigger({
-                projectId,
-                flowVersion,
-                payload,
-                simulate: false,
-            })
-            payloads.forEach((resultPayload) => {
-                saveSampleDataForWebhookTesting(flow, resultPayload)
-            })
-            return []
-        }
-        if (flow.status !== FlowStatus.ENABLED) {
+        if (flow.status !== FlowStatus.ENABLED || isNil(flow.publishedVersionId)) {
             logger.info(
                 `[WebhookService#callback] flowInstance not found or not enabled ignoring the webhook, flowId=${flow.id}`,
             )
-            return []
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_NOT_FOUND,
+                params: {
+                    id: flow.id,
+                },
+            })
         }
 
         const flowVersion = await flowVersionService.getOneOrThrow(
@@ -104,20 +87,20 @@ export const webhookService = {
             simulate: false,
         })
 
-        payloads.forEach((payload) => {
-            triggerEventService
-                .saveEvent({
-                    flowId: flow.id,
-                    payload,
-                    projectId,
-                })
-                .catch((e) =>
-                    logger.error(
-                        e,
-                        '[WebhookService#callback] triggerEventService.saveEvent',
-                    ),
-                )
-        })
+        const savePayloads = payloads.map((payload) => 
+            triggerEventService.saveEvent({
+                flowId: flow.id,
+                payload,
+                projectId,
+            }).catch((e) =>
+                logger.error(
+                    e,
+                    '[WebhookService#callback] triggerEventService.saveEvent',
+                ),
+            ),
+        )
+
+        await Promise.all(savePayloads)
 
         const filterPayloads = await dedupeService.filterUniquePayloads(
             flowVersion.id,
@@ -180,7 +163,7 @@ export const webhookService = {
         flowId,
         simulate,
     }: GetWebhookUrlParams): Promise<string> {
-        const suffix: WebhookUrlSuffix = simulate ? '/simulate' : ''
+        const suffix: WebhookUrlSuffix = simulate ? '/test' : ''
         const webhookPrefix = await this.getWebhookPrefix()
         return `${webhookPrefix}/${flowId}${suffix}`
     },
@@ -211,22 +194,7 @@ const getLatestFlowVersionOrThrow = async (
     return flowVersion
 }
 
-function saveSampleDataForWebhookTesting(flow: Flow, payload: unknown): void {
-    triggerEventService
-        .saveEvent({
-            flowId: flow.id,
-            payload,
-            projectId: flow.projectId,
-        })
-        .catch((e) =>
-            logger.error(
-                e,
-                '[WebhookService#saveSampleDataForWebhookTesting] triggerEventService.saveEvent',
-            ),
-        )
-}
-
-type WebhookUrlSuffix = '' | '/simulate'
+type WebhookUrlSuffix = '' | '/test'
 
 type GetWebhookUrlParams = {
     flowId: FlowId
