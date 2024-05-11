@@ -6,11 +6,18 @@ import {
 } from '@activepieces/pieces-common';
 
 export const googleFormsCommon = {
+  include_team_drives: Property.Checkbox({
+    displayName: 'Include Team Drive Forms',
+    description:
+      'Determines if forms from Team Drives should be included in the results.',
+    defaultValue: false,
+    required: false,
+  }),
   form_id: Property.Dropdown({
     displayName: 'Form',
     required: true,
-    refreshers: [],
-    options: async ({ auth }) => {
+    refreshers: ['include_team_drives'],
+    options: async ({ auth, include_team_drives }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -26,6 +33,8 @@ export const googleFormsCommon = {
             url: `https://www.googleapis.com/drive/v3/files`,
             queryParams: {
               q: "mimeType='application/vnd.google-apps.form'",
+              includeItemsFromAllDrives: include_team_drives,
+              supportsAllDrives: 'true',
             },
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
