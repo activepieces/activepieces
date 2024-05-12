@@ -1,4 +1,5 @@
 import {
+  ActionType,
   BranchAction,
   PieceAction,
   StepLocationRelativeToParent,
@@ -27,10 +28,14 @@ export class BranchDrawer {
   private constructor() {
     throw new Error('BranchDrawer is not meant to be instantiated');
   }
-  static handleBranchAction(branchStep: BranchAction | PieceAction): FlowDrawer {
+  static handleBranchAction(
+    branchStep: BranchAction | PieceAction
+  ): FlowDrawer {
     let resultDrawer = FlowDrawer.construct(undefined);
-    const actions = [branchStep.onSuccessAction, branchStep.onFailureAction]
-    const branchesDrawers: FlowDrawer[] = actions.map(action => FlowDrawer.construct(action))
+    const actions = [branchStep.onSuccessAction, branchStep.onFailureAction];
+    const branchesDrawers: FlowDrawer[] = actions.map((action) =>
+      FlowDrawer.construct(action)
+    );
 
     const { maximumHeight, xOfFartherestLeftChild } =
       BranchDrawer.calculateDimensionsForBranch(branchesDrawers);
@@ -67,7 +72,15 @@ export class BranchDrawer {
           branchStep,
           maximumHeight,
         });
-      const label = index === 0 ? $localize`True` : $localize`False`;
+      let label = '';
+      if (branchStep.type === ActionType.BRANCH) {
+        label = index === 0 ? $localize`True` : $localize`False`;
+      } else {
+        label =
+          index === 0
+            ? $localize`${branchStep.settings.outputs![0].name}`
+            : $localize`${branchStep.settings.outputs![1].name}`;
+      }
       resultDrawer = resultDrawer
         .mergeChild(drawerMovedToFirstChildStep)
         .appendLabel({

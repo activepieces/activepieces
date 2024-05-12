@@ -138,7 +138,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                     pauseMetadata: hookResponse.pauseResponse.pauseMetadata,
                 })
         }
-        if (action.children && hasBranches(pieceAction)) {
+        if (hasBranches(pieceAction)) {
             const pieceOutput = output as RunFunctionReturnType
 
             return await runBranchablePieceWithVersion({
@@ -183,19 +183,26 @@ async function runBranchablePieceWithVersion({
             let newExecutionContext = executionState
             let outputValue = undefined
             for (const [k, v] of pieceOutput.output.entries()) {
-                if (v === false || v === undefined || isNil(v)) {
-                    continue
-                }
-    
-                if (isNil(action.children)) {
+                if (isNil(v)) {
                     continue
                 }
 
-                newExecutionContext = await flowExecutor.execute({
-                    action: action.children.filter(child => child.name === k)[0].action,
-                    executionState: newExecutionContext,
-                    constants,
-                })
+                if (k === 'approved' && v === true && action.onSuccessAction) {
+                    newExecutionContext = await flowExecutor.execute({
+                        action: action.onSuccessAction,
+                        executionState: newExecutionContext,
+                        constants,
+                    })    
+                }
+
+                if (k === 'denied' && v === true && action.onFailureAction) {
+                    newExecutionContext = await flowExecutor.execute({
+                        action: action.onFailureAction,
+                        executionState: newExecutionContext,
+                        constants,
+                    })    
+                }
+
                 outputValue = v
             }
             return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(outputValue)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
