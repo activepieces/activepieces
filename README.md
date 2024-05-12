@@ -277,6 +277,9 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://www.gamespecifications.com/"><img src="https://avatars.githubusercontent.com/u/37847256?v=4?s=100" width="100px;" alt="Pratik Kinage"/><br /><sub><b>Pratik Kinage</b></sub></a><br /><a href="#plugin-thirstycode" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/LevwTech"><img src="https://avatars.githubusercontent.com/u/69399787?v=4?s=100" width="100px;" alt="Abdelrahman Mostafa "/><br /><sub><b>Abdelrahman Mostafa </b></sub></a><br /><a href="#plugin-LevwTech" title="Plugin/utility libraries">🔌</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/HamzaZagha"><img src="https://avatars.githubusercontent.com/u/45468866?v=4?s=100" width="100px;" alt="Hamza Zagha"/><br /><sub><b>Hamza Zagha</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3AHamzaZagha" title="Bug reports">🐛</a></td>
+    </tr>
   </tbody>
 </table>
 
