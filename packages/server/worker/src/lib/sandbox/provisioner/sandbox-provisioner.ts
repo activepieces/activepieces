@@ -19,7 +19,7 @@ export const sandboxProvisioner = {
                 codeSteps,
             })
 
-            const sandbox = await sandboxManager.allocate()
+            const sandbox = await sandboxManager.allocate(cachedSandbox.key)
 
             await sandbox.assignCache({
                 cacheKey: cachedSandbox.key,

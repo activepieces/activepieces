@@ -5,8 +5,8 @@ import { PiecePackage, SourceCode } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import { codeBuilder } from '../../code-worker/code-builder'
-import { engineInstaller } from '../../engine/engine-installer'
 import { pieceManager } from '../../piece-manager'
+import { engineInstaller } from '../../utils/engine-installer'
 import { CachedSandboxState } from './cached-sandbox-state'
 
 export class CachedSandbox {

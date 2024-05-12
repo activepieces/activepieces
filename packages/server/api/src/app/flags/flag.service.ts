@@ -1,3 +1,4 @@
+import fs from 'fs/promises'
 import axios from 'axios'
 import { databaseConnection } from '../database/database-connection'
 import { getEdition, getSupportedAppWebhooks } from '../helper/secret-helper'
@@ -237,7 +238,7 @@ export const flagService = {
         return `${trimmedFrontendUrl}/redirect`
     },
     async getCurrentRelease(): Promise<string> {
-        const packageJson = await import('package.json')
+        const packageJson = JSON.parse(await fs.readFile('package.json', 'utf8'))
         return packageJson.version
     },
 

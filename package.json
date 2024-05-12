@@ -158,6 +158,7 @@
     "nodemailer": "6.9.9",
     "object-sizeof": "2.6.3",
     "openai": "4.17.5",
+    "p-cancelable": "4.0.1",
     "papaparse": "5.4.1",
     "pdf-parse": "1.1.1",
     "pdf-text-reader": "4.1.0",
