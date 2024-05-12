@@ -1028,6 +1028,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "HamzaZagha",
+      "name": "Hamza Zagha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45468866?v=4",
+      "profile": "https://github.com/HamzaZagha",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"
