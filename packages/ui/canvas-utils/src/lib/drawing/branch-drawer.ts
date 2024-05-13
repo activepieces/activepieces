@@ -4,6 +4,7 @@ import {
   PieceAction,
   StepLocationRelativeToParent,
   flowHelper,
+  capitalizeFirstLetter,
 } from '@activepieces/shared';
 import { FlowDrawer } from './flow-drawer';
 import {
@@ -72,15 +73,6 @@ export class BranchDrawer {
           branchStep,
           maximumHeight,
         });
-      let label = '';
-      if (branchStep.type === ActionType.BRANCH) {
-        label = index === 0 ? $localize`True` : $localize`False`;
-      } else {
-        label =
-          index === 0
-            ? $localize`${branchStep.settings.outputs![0].name}`
-            : $localize`${branchStep.settings.outputs![1].name}`;
-      }
       resultDrawer = resultDrawer
         .mergeChild(drawerMovedToFirstChildStep)
         .appendLabel({
@@ -88,7 +80,7 @@ export class BranchDrawer {
           y:
             drawerMovedToFirstChildStep.steps[0].y -
             VERTICAL_SPACE_BETWEEN_LABEL_AND_FLOW_ITEM,
-          label,
+          label: BranchDrawer.setLabel(index, branchStep),
         })
         .appendSvg(lineComponentAtStartOfBranch.line)
         .appendButton(lineComponentAtStartOfBranch.button)
@@ -209,5 +201,18 @@ export class BranchDrawer {
         VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS / 2 -
         BUTTON_SIZE / 2.0,
     };
+  }
+
+  private static setLabel(
+    index: number,
+    step: BranchAction | PieceAction
+  ): string {
+    if (step.type === ActionType.BRANCH) {
+      return index === 0 ? $localize`True` : $localize`False`;
+    } else {
+      return index === 0
+        ? $localize`${capitalizeFirstLetter(step.settings.outputs![0].name)}`
+        : $localize`${capitalizeFirstLetter(step.settings.outputs![1].name)}`;
+    }
   }
 }
