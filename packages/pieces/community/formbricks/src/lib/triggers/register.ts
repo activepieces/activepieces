@@ -8,7 +8,7 @@ import {
   HttpRequest,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { formBricksAuth } from '../..';
+import { FormBricksAuthType, formBricksAuth } from '../..';
 
 export const formBricksRegisterTrigger = ({
   name,
@@ -46,7 +46,7 @@ export const formBricksRegisterTrigger = ({
 
           const response = await httpClient.sendRequest<{ data: Survey[] }>({
             method: HttpMethod.GET,
-            url: `https://app.formbricks.com/api/v1/management/surveys`,
+            url: `${(auth as FormBricksAuthType).appUrl}/api/v1/management/surveys`,
             headers: {
               'x-Api-Key': auth as unknown as string,
             },
@@ -77,7 +77,7 @@ export const formBricksRegisterTrigger = ({
     async onEnable(context) {
       const response = await httpClient.sendRequest<WebhookInformation>({
         method: HttpMethod.POST,
-        url: `https://app.formbricks.com/api/v1/webhooks`,
+        url: `${context.auth.appUrl}/api/v1/webhooks`,
         body: {
           url: context.webhookUrl,
           triggers: [eventType],
@@ -99,7 +99,7 @@ export const formBricksRegisterTrigger = ({
       if (webhook != null) {
         const request: HttpRequest = {
           method: HttpMethod.DELETE,
-          url: `https://app.formbricks.com/api/v1/webhooks/${webhook.webhookId}`,
+          url: `${context.auth.appUrl}/api/v1/webhooks/${webhook.webhookId}`,
           headers: {
             'x-Api-Key': context.auth as unknown as string,
           },
