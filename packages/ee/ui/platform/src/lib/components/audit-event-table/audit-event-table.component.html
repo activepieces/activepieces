@@ -1,7 +1,8 @@
 <div class="ap-w-full ap-pt-2">
   @if(featureLocked) {
   <ap-upgrade-note [insideTab]="true" class="ap-mb-2" [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote"
-    docsLink="https://www.activepieces.com/docs/operations/audit-logs"></ap-upgrade-note>
+    featureKey="AUDIT_LOGS"
+  ></ap-upgrade-note>
   } @else {
 
   <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="Audit Events">
