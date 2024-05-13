@@ -247,7 +247,7 @@ function getAllStepsAtFirstLevel(step: Trigger): (Action | Trigger)[] {
     }
     return steps
 }
-function getAllChildSteps(action: LoopOnItemsAction | BranchAction): Action[] {
+function getAllChildSteps(action: LoopOnItemsAction | BranchAction | PieceAction): Action[] {
     switch (action.type) {
         case ActionType.LOOP_ON_ITEMS:
             return traverseInternal(action.firstLoopAction) as Action[]
@@ -271,7 +271,7 @@ function getAllDirectChildStepsForLoop(action: LoopOnItemsAction): Action[] {
     return actions
 }
 
-function getAllDirectChildStepsForBranch(action: BranchAction, branch: 'success' | 'failure'): Action[] {
+function getAllDirectChildStepsForBranch(action: BranchAction | PieceAction, branch: 'success' | 'failure'): Action[] {
     const actions: Action[] = []
     if (branch === 'success') {
         let child = action.onSuccessAction
@@ -574,7 +574,7 @@ function createAction(
     }
 }
 
-function isChildOf(parent: LoopOnItemsAction | BranchAction, childStepName: string): boolean {
+function isChildOf(parent: LoopOnItemsAction | BranchAction | PieceAction, childStepName: string): boolean {
     switch (parent.type) {
         case ActionType.LOOP_ON_ITEMS: {
             const children = getAllChildSteps(parent)
@@ -878,7 +878,7 @@ function getDirectParentStep(child: Step, parent: Trigger | Step | undefined): S
         }
     }
 
-    if (parent.type === ActionType.BRANCH) {
+    if (parent.type === ActionType.BRANCH || isPieceBranched(parent)) {
 
         const isChildOfBranch = isChildOf(parent, child.name)
         if (isChildOfBranch) {
@@ -930,8 +930,8 @@ function isStepLastChildOfParent(child: Step, trigger: Trigger): boolean {
     return false
 }
 
-function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAction {
-    return step.type === ActionType.BRANCH || step.type === ActionType.LOOP_ON_ITEMS
+function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAction | PieceAction {
+    return step.type === ActionType.BRANCH || step.type === ActionType.LOOP_ON_ITEMS || isPieceBranched(step)
 }
 
 function isPieceBranched(step: Step): step is PieceAction {
