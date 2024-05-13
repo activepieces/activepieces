@@ -26,7 +26,7 @@ export const googleSheetsAuth = PieceAuth.OAuth2({
 });
 
 export const googleSheets = createPiece({
-	minimumSupportedRelease: '0.5.0',
+	minimumSupportedRelease: '0.26.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/google-sheets.png',
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: [
