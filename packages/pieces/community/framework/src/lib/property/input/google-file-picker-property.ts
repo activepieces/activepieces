@@ -28,7 +28,7 @@ export enum GoogleFilePickerViewId {
 
 export const GoogleFilePickerProperty = Type.Composite([
   BasePropertySchema,
-  TPropertyValue(Type.Unknown(), PropertyType.DROPDOWN),
+  TPropertyValue(Type.Unknown(), PropertyType.GOOGLE_FILE_PICKER),
   Type.Object({
     viewId: Type.Enum(GoogleFilePickerViewId),
   }),

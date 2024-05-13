@@ -214,7 +214,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
       /**
        * This variable store value based on trigger column.
-       * If trigger column is all_columns then store entrie row as target value, else store only column value.
+       * If trigger column is all_columns then store entry row as target value, else store only column value.
        */
       let targetValue;
       if (triggerColumn === ALL_COLUMNS) {
