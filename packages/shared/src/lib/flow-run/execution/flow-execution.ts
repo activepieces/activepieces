@@ -29,6 +29,7 @@ export const WebhookPauseMetadata = Type.Object({
     type: Type.Literal(PauseType.WEBHOOK),
     requestId: Type.String(),
     response: Type.Unknown(),
+    handlerId: Type.Optional(Type.String({})),
 })
 export type WebhookPauseMetadata = Static<typeof WebhookPauseMetadata>
 
