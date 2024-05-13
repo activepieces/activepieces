@@ -43,6 +43,10 @@ import { listRegistrationFolders } from './lib/actions/registration-folders/list
 import { searchCertificationFolder } from './lib/actions/certification-folders/search-certification-folder';
 import { getCertificationFolderDocuments } from './lib/actions/certification-folders/list-certification-folder-documents';
 import { listActivitiesAndTasks } from './lib/actions/list-activities-and-tasks';
+import { createTask } from './lib/actions/create-task';
+import { createActivitie } from './lib/actions/create-activitie';
+import { sendFile } from './lib/actions/send-file';
+
 export const wedofAuth = PieceAuth.SecretText({
   displayName: 'Clé API',
   required: true,
@@ -81,7 +85,6 @@ export const wedof = createPiece({
   ],
   authors: ['vbarrier', 'obenazouz'],
   actions: [
-    listActivitiesAndTasks,
     ////////////// registrationFolders ////////////
     getRegistrationFolder,
     listRegistrationFolders,
@@ -108,6 +111,10 @@ export const wedof = createPiece({
     refuseCertificationFolder,
     abortCertificationFolder,
     getCertificationFolderDocuments,
+    listActivitiesAndTasks,
+    createTask,
+    createActivitie,
+    sendFile
   ],
   triggers: [
     ////////////// registrationFolders ////////////

@@ -732,6 +732,186 @@ export const wedofCommon = {
     },
   }),
 
+  tasks: Property.StaticDropdown({
+    displayName: 'Type de tâche',
+    required: true,
+    options: {
+      disabled: false,
+      options: [
+        {
+          label: "Téléphone",
+          value: 'phone',
+        },
+        {
+          label: 'Email',
+          value: 'email',
+        },
+        {
+          label: 'Meeting',
+          value: 'meeting',
+        },
+        {
+          label: 'Chat',
+          value: 'chat',
+        },
+        {
+          label: 'SMS',
+          value: 'sms',
+        },
+        {
+          label: "Formation", 
+          value: "training"
+        },
+			  {
+          label: "Remarque", 
+          value: "remark"
+        },
+			  {
+          label: "Document", 
+          value: "file"
+        },
+      ],
+    },
+  }),
+
+  qualiopiIndicators: Property.StaticDropdown({
+    displayName: 'Associée à Qualiop',
+    required: false,
+    options: {
+      disabled: false,
+      options: [
+        {
+          label: "Ind. 1 : Informations du public",
+          value: 1
+      },
+      {
+          label: "Ind. 2 : Indicateurs de résultats",
+          value: 2
+      },
+      {
+          label: "Ind. 3 : Obtentions des certifications",
+          value: 3
+      },
+      {
+          label: "Ind. 4 : Analyse du besoin",
+          value: 4
+      },
+      {
+          label: "Ind. 5 : Objectifs de la prestation",
+          value: 5
+      },
+      {
+          label: "Ind. 6 : Mise en oeuvre de la prestation",
+          value: 6
+      },
+      {
+          label: "Ind. 7 : Adéquation contenus / exigences",
+          value: 7
+      },
+      {
+          label: "Ind. 8 : Positionnement à l'entrée",
+          value: 8
+      },
+      {
+          label: "Ind. 9 : Condition de déroulement",
+          value: 9
+      },
+      {
+          label: "Ind. 10 : Adaptation de la prestation",
+          value: 10
+      },
+      {
+          label: "Ind. 11 : Atteinte des objectifs",
+          value: 11
+      },
+      {
+          label: "Ind. 12 : Engagement des bénéficiaires",
+          value: 12
+      },
+      {
+          label: "Ind. 13 : Coordination des apprentis",
+          value: 13
+      },
+      {
+          label: "Ind. 14 : Exercice de la citoyenneté",
+          value: 14
+      },
+      {
+          label: "Ind. 15 : Droits à devoirs de l'apprenti",
+          value: 15
+      },
+      {
+          label: "Ind. 16 : Présentation à la certification",
+          value: 16
+      },
+      {
+          label: "Ind. 17 : Moyens humains et techniques",
+          value: 17
+      },
+      {
+          label: "Ind. 18 : Coordination des acteurs",
+          value: 18
+      },
+      {
+          label: "Ind. 19 : Ressources pédagogiques",
+          value: 19
+      },
+      {
+          label: "Ind. 20 : Personnels dédiés",
+          value: 20
+      },
+      {
+          label: "Ind. 21 : Compétences des acteurs",
+          value: 21
+      },
+      {
+          label: "Ind. 22 : Gestion des compétences",
+          value: 22
+      },
+      {
+          label: "Ind. 23 : Veille légale et réglementaire",
+          value: 23
+      },
+      {
+          label: "Ind. 24 : Veille emplois et métiers",
+          value: 24
+      },
+      {
+          label: "Ind. 25 : Veille technologique",
+          value: 25
+      },
+      {
+          label: "Ind. 26 : Public en situation de handicap",
+          value: 26
+      },
+      {
+          label: "Ind. 27 : Sous-traitance et portage salarial",
+          value: 27
+      },
+      {
+          label: "Ind. 28 : Formation Situation de travail",
+          value: 28
+      },
+      {
+          label: "Ind. 29 : Insertion professionnelle",
+          value: 29
+      },
+      {
+          label: "Ind. 30 : Recueil des appréciations",
+          value: 30
+      },
+      {
+          label: "Ind. 31 : Traitement des réclamations",
+          value: 31
+      },
+      {
+          label: "Ind. 32 : Mesures d'amélioration continue",
+          value: 32
+      }
+      ],
+    },
+  }),
+
   cdcState: Property.StaticDropdown({
     displayName: "État de l'accrochage",
     description:"Permet d'indiquer où en est le dossier de certification dans le processus d'accrochage auprès de la CDC",
