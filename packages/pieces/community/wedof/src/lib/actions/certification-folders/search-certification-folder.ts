@@ -52,15 +52,64 @@ import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common
           return props;
         },
       }),
-      type: wedofCommon.type,
       state: wedofCommon.state,
-      billingState: wedofCommon.billingState,
-      controlState: wedofCommon.controlState,
       certificationFolderState: wedofCommon.certificationFolderState,
-      proposalCode: Property.ShortText({
-        displayName: 'Code de proposition commercial',
-        description: 'Code de la proposition commercial Wedof associé',
+      sort:wedofCommon.sort,
+      order:wedofCommon.order,
+      cdcState:wedofCommon.cdcState,
+      cdcExcluded: Property.StaticDropdown({
+        displayName: "Exclus de l'accrochage",
+        description: "Permet de filtrer les dossiers de certification qui sont exclus de l'accrochage",
         required: false,
+        options: {
+          options: [
+            {
+              value: true,
+              label: 'Oui',
+            },
+            {
+              value: false,
+              label: 'Non',
+            },
+          ],
+          disabled: false,
+        },
+      }),
+      cdcCompliant: Property.StaticDropdown({
+        displayName: "Donnés apprenant complètes",
+        description: "Permet de filtrer les dossiers de certification selon le fait qu'ils contiennent les données de l'apprenant obligatoires pour l'accrochage en cas d'obtention de la certification",
+        required: false,
+        options: {
+          options: [
+            {
+              value: true,
+              label: 'Oui',
+            },
+            {
+              value: false,
+              label: 'Non',
+            },
+          ],
+          disabled: false,
+        },
+      }),
+      cdcToExport: Property.StaticDropdown({
+        displayName: "Inclus dans les prochains accrochages",
+        description: "Permet de filtrer les dossiers de certification qui devront être inclus dans les prochains exports pour l'accrochage (par défaut oui, sauf si déjà accroché avec succès)",
+        required: false,
+        options: {
+          options: [
+            {
+              value: true,
+              label: 'Oui',
+            },
+            {
+              value: false,
+              label: 'Non',
+            },
+          ],
+          disabled: false,
+        },
       }),
       limit: Property.Number({
         displayName: 'Nombre de dossiers de formation',
@@ -82,12 +131,15 @@ import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common
         query: context.propsValue.query ?? null,
         limit: context.propsValue.limit ?? null,
         page: context.propsValue.page ?? null,
-        controlState: context.propsValue.controlState ?? null,
         state: context.propsValue.state ?? null,
+        sort:context.propsValue.state ?? null,
+        order:context.propsValue.order ?? null,
+        cdcExcluded:context.propsValue.cdcExcluded ?? null,
+        cdcCompliant:context.propsValue.cdcCompliant ?? null,
+        cdcToExport:context.propsValue.cdcToExport ?? null,
         certificationFolderState:
           context.propsValue.certificationFolderState ?? null,
-        billingState: context.propsValue.billingState ?? null,
-        type: context.propsValue.type ?? null,
+        cdcState:context.propsValue.cdcState ?? null,
         period: context.propsValue.period ?? null,
         since: context.propsValue.periodForm['since']
           ? dayjs(context.propsValue.periodForm['since'])
@@ -101,7 +153,6 @@ import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common
           : null,
         filterOnStateDate:
           context.propsValue.periodForm['filterOnStateDate'] ?? null,
-        proposalCode: context.propsValue.proposalCode ?? null,
       };
       const queryParams: QueryParams = {};
       Object.keys(params).forEach((value) => {

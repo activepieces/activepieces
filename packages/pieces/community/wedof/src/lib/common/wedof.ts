@@ -73,10 +73,6 @@ export const wedofCommon = {
           value: 'refusedByFinancer',
           label: 'Refusé (par le financeur)',
         },
-        {
-          value: 'refusedByFinancer',
-          label: 'Refusé (par le financeur)',
-        },
       ],
       disabled: false,
     },
@@ -375,6 +371,8 @@ export const wedofCommon = {
     },
   }),
 
+
+
   certificationFolderState: Property.StaticMultiSelectDropdown({
     displayName: 'Etat du dossier de certification',
     required: false,
@@ -587,6 +585,10 @@ export const wedofCommon = {
           label: 'Année courante',
           value: 'currentYear',
         },
+        {
+          label: 'Période de facturation Wedof en cours',
+          value: 'wedofInvoice',
+        },
       ],
       disabled: false,
     },
@@ -688,6 +690,74 @@ export const wedofCommon = {
         {
           label: 'Date de fin de session',
           value: 'sessionEndDate',
+        },
+      ],
+    },
+  }),
+
+  sort: Property.StaticDropdown({
+    displayName: 'Tri sur critère',
+    required: true,
+    options: {
+      disabled: false,
+      options: [
+        {
+          label: "Date du dernier changement d'état",
+          value: 'stateLastUpdate',
+        },
+        {
+          label: 'Date du dernier dossier mis à réussi',
+          value: 'successDate',
+        },
+      ],
+    },
+  }),
+
+  order: Property.StaticDropdown({
+    displayName: 'Ordre',
+    description:'Tri les résultats par ordre ascendant ou descendant - par défaut descendant',
+    required: false,
+    options: {
+      disabled: false,
+      options: [
+        {
+          label: "Descendant",
+          value: 'desc',
+        },
+        {
+          label: 'Ascendant',
+          value: 'asc',
+        },
+      ],
+    },
+  }),
+
+  cdcState: Property.StaticDropdown({
+    displayName: "État de l'accrochage",
+    description:"Permet d'indiquer où en est le dossier de certification dans le processus d'accrochage auprès de la CDC",
+    required: false,
+    options: {
+      disabled: false,
+      options: [
+        {
+          label: "Tous",
+          value: 'all',
+        },
+        {
+          label: 'Jamais accroché',
+          value: 'notExported',
+        },
+        {
+          label: "Envoyé et en attente de l'accusé",
+          value: 'exported',
+        },
+        {
+          label: "Accrochage réussi",
+          value: 'processedOk',
+        },
+        {
+          label: "Accrochage en erreur",
+          value: 'processedKo',
         },
       ],
     },
