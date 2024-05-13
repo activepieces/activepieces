@@ -279,6 +279,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/HamzaZagha"><img src="https://avatars.githubusercontent.com/u/45468866?v=4?s=100" width="100px;" alt="Hamza Zagha"/><br /><sub><b>Hamza Zagha</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3AHamzaZagha" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://founderblocks.io/"><img src="https://avatars.githubusercontent.com/u/88160672?v=4?s=100" width="100px;" alt="Lasse Schuirmann"/><br /><sub><b>Lasse Schuirmann</b></sub></a><br /><a href="#plugin-founderblocks-sils" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
