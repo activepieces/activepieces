@@ -1,10 +1,10 @@
 import { logger } from '@sentry/utils'
 import { StatusCodes } from 'http-status-codes'
 import { pubSub } from '../../helper/pubsub'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { system, SystemProp, TypedEventEmitter } from '@activepieces/server-shared'
 import { apId } from '@activepieces/shared'
 
-const listeners = new Map<string, (flowResponse: EngineHttpResponse) => void>()
+const listeners = new Map<string, (flowResponse: EngineResponseWithId) => void>()
 
 export type EngineHttpResponse = {
     status: number
@@ -12,7 +12,7 @@ export type EngineHttpResponse = {
     headers: Record<string, string>
 }
 
-type EngineResponseWithId = {
+export type EngineResponseWithId = {
     requestId: string
     httpResponse: EngineHttpResponse
 }
@@ -24,6 +24,9 @@ export const engineResponseWatcher = {
     getHandlerId(): string {
         return HANDLER_ID
     },
+    removeListener(requestId: string): void {
+        listeners.delete(requestId)
+    },
     async init(): Promise<void> {
         logger.info('[engineWatcher#init] Initializing engine run watcher')
 
@@ -33,8 +36,7 @@ export const engineResponseWatcher = {
                 const parsedMessasge: EngineResponseWithId = JSON.parse(message)
                 const listener = listeners.get(parsedMessasge.requestId)
                 if (listener) {
-                    listener(parsedMessasge.httpResponse)
-                    listeners.delete(parsedMessasge.requestId)
+                    listener(parsedMessasge)
                 }
                 logger.info(
                     `[engineWatcher#init] message=${parsedMessasge.requestId}`,
@@ -42,28 +44,37 @@ export const engineResponseWatcher = {
             },
         )
     },
-    async listen(requestId: string, timeoutRequest: boolean): Promise<EngineHttpResponse> {
+    listen(requestId: string): TypedEventEmitter<EngineResponseWithId> {
+        const eventEmitter = new TypedEventEmitter<EngineResponseWithId>()
+        listeners.set(requestId, (data) => {
+            eventEmitter.emit(data)
+        })
+        return eventEmitter
+    },
+    async oneTimeListener(requestId: string, timeoutRequest: boolean): Promise<EngineHttpResponse> {
         logger.info(`[engineWatcher#listen] requestId=${requestId}`)
         return new Promise((resolve) => {
-            const defaultResponse: EngineHttpResponse = {
-                status: StatusCodes.NO_CONTENT,
-                body: {},
-                headers: {},
-            }
-            const responseHandler = (flowResponse: EngineHttpResponse) => {
-                clearTimeout(timeout)
-                resolve(flowResponse)
-            }
             let timeout: NodeJS.Timeout
-            if (!timeoutRequest) {
-                listeners.set(requestId, resolve)
-            }
-            else {
+            if (timeoutRequest) {
+                const defaultResponse: EngineHttpResponse = {
+                    status: StatusCodes.NO_CONTENT,
+                    body: {},
+                    headers: {},
+                }
                 timeout = setTimeout(() => {
+                    this.removeListener(requestId)
                     resolve(defaultResponse)
                 }, WEBHOOK_TIMEOUT_MS)
-                listeners.set(requestId, responseHandler)
+
             }
+            const responseHandler = (flowResponse: EngineResponseWithId) => {
+                if (timeout) {
+                    clearTimeout(timeout)
+                }
+                this.removeListener(requestId)
+                resolve(flowResponse.httpResponse)
+            }
+            listeners.set(requestId, responseHandler)
         })
     },
     async publish(
