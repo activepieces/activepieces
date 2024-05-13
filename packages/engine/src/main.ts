@@ -35,6 +35,7 @@ else {
     if (workerData) {
         const originalLog = console.log
         console.log = function (...args) {
+            assertNotNullOrUndefined(parentPort, 'parentPort')
             parentPort.postMessage({ type: 'stdout', message: args.join(' ') })
             originalLog.apply(console, args)
         }
@@ -42,6 +43,7 @@ else {
 
         const originalError = console.error
         console.error = function (...args) {
+            assertNotNullOrUndefined(parentPort, 'parentPort')
             parentPort.postMessage({ type: 'stderr', message: args.join(' ') })
             originalError.apply(console, args)
         }
