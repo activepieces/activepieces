@@ -187,17 +187,17 @@ async function runBranchablePieceWithVersion({
                     continue
                 }
 
-                if (k === 'approved' && v === true && action.onSuccessAction) {
+                if (k === 'approved' && v === true && action.children.onSuccessAction) {
                     newExecutionContext = await flowExecutor.execute({
-                        action: action.onSuccessAction,
+                        action: action.children.onSuccessAction,
                         executionState: newExecutionContext,
                         constants,
                     })    
                 }
 
-                if (k === 'denied' && v === true && action.onFailureAction) {
+                if (k === 'denied' && v === true && action.children.onFailureAction) {
                     newExecutionContext = await flowExecutor.execute({
-                        action: action.onFailureAction,
+                        action: action.children.onFailureAction,
                         executionState: newExecutionContext,
                         constants,
                     })    

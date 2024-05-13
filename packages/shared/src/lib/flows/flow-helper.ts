@@ -66,7 +66,23 @@ function deleteAction(
             parentStep.nextAction = stepToUpdate.nextAction
         }
         switch (parentStep.type) {
-            case ActionType.PIECE: 
+            case ActionType.PIECE: {
+                if (
+                    parentStep.children['onFailureAction'] &&
+                    parentStep.children['onFailureAction'].name === request.name
+                ) {
+                    const stepToUpdate: Action = parentStep.children['onFailureAction']
+                    parentStep.children['onFailureAction'] = stepToUpdate.nextAction
+                }
+                if (
+                    parentStep.children['onSuccessAction'] &&
+                    parentStep.children['onSuccessAction'].name === request.name
+                ) {
+                    const stepToUpdate: Action = parentStep.children['onSuccessAction']
+                    parentStep.children['onSuccessAction'] = stepToUpdate.nextAction
+                }
+                break
+            }
             case ActionType.BRANCH: {
                 if (
                     parentStep.onFailureAction &&
@@ -117,9 +133,16 @@ function traverseInternal(
     const steps: (Action | Trigger)[] = []
     while (step !== undefined && step !== null) {
         steps.push(step)
-        if (step.type === ActionType.BRANCH || isPieceBranched(step)) {
+        if (step.type === ActionType.BRANCH) {
             steps.push(...traverseInternal(step.onSuccessAction))
             steps.push(...traverseInternal(step.onFailureAction))
+        }
+        if (step.type === ActionType.PIECE && isPieceBranched(step)) {
+            const children = step.children
+            for (const key in children) {
+                const action = children[key]
+                steps.push(...traverseInternal(action))
+            }
         }
         if (step.type === ActionType.LOOP_ON_ITEMS) {
             steps.push(...traverseInternal(step.firstLoopAction))
@@ -135,7 +158,7 @@ async function transferStepAsync<T extends Step>(
 ): Promise<Step> {
     const updatedStep = await transferFunction(step as T)
 
-    if (updatedStep.type === ActionType.BRANCH || isPieceBranched(updatedStep)) {
+    if (updatedStep.type === ActionType.BRANCH) {
         const { onSuccessAction, onFailureAction } = updatedStep
         if (onSuccessAction) {
             updatedStep.onSuccessAction = (await transferStepAsync(
@@ -159,6 +182,18 @@ async function transferStepAsync<T extends Step>(
             )) as Action
         }
     }
+    else if (isPieceBranched(updatedStep)) {
+        const { children } = updatedStep
+        for (const key in children) {
+            const action = children[key]
+            if (action) {
+                updatedStep.children[key] = (await transferStepAsync(
+                    action,
+                    transferFunction,
+                )) as Action
+            }
+        }
+    }
 
     if (updatedStep.nextAction) {
         updatedStep.nextAction = (await transferStepAsync(
@@ -175,7 +210,7 @@ function transferStep<T extends Step>(
     transferFunction: (step: T) => T,
 ): Step {
     const updatedStep = transferFunction(step as T)
-    if (updatedStep.type === ActionType.BRANCH || isPieceBranched(updatedStep)) {
+    if (updatedStep.type === ActionType.BRANCH) {
         const { onSuccessAction, onFailureAction } = updatedStep
         if (onSuccessAction) {
             updatedStep.onSuccessAction = transferStep(
@@ -197,6 +232,18 @@ function transferStep<T extends Step>(
                 firstLoopAction,
                 transferFunction,
             ) as Action
+        }
+    }
+    else if (isPieceBranched(updatedStep)) {
+        const { children } = updatedStep
+        for (const key in children) {
+            const action = children[key]
+            if (action) {
+                updatedStep.children[key] = transferStep(
+                    action,
+                    transferFunction,
+                ) as Action
+            }
         }
     }
 
@@ -251,6 +298,11 @@ function getAllChildSteps(action: LoopOnItemsAction | BranchAction | PieceAction
     switch (action.type) {
         case ActionType.LOOP_ON_ITEMS:
             return traverseInternal(action.firstLoopAction) as Action[]
+        case ActionType.PIECE: 
+            return [
+                ...traverseInternal(action.children['onSuccessAction']),
+                ...traverseInternal(action.children['onFailureAction']),
+            ] as Action[]
         default:
             return [
                 ...traverseInternal(action.onSuccessAction),
@@ -273,22 +325,22 @@ function getAllDirectChildStepsForLoop(action: LoopOnItemsAction): Action[] {
 
 function getAllDirectChildStepsForBranch(action: BranchAction | PieceAction, branch: 'success' | 'failure'): Action[] {
     const actions: Action[] = []
+    const actionForType = action.type === ActionType.BRANCH ? action : action.children
     if (branch === 'success') {
-        let child = action.onSuccessAction
+        let child = actionForType.onSuccessAction
         while (child) {
             actions.push(child)
             child = child.nextAction
         }
     }
     else {
-        let child = action.onFailureAction
+        let child = actionForType.onFailureAction
         while (child) {
             actions.push(child)
             child = child.nextAction
         }
     }
     return actions
-
 }
 
 function getStep(
@@ -326,7 +378,7 @@ function updateAction(
             const actions = extractActions(parentStep.nextAction)
             parentStep.nextAction = createAction(request, actions)
         }
-        if (parentStep.type === ActionType.BRANCH || isPieceBranched(parentStep)) {
+        if (parentStep.type === ActionType.BRANCH) {
             if (
                 parentStep.onFailureAction &&
                 parentStep.onFailureAction.name === request.name
@@ -349,6 +401,22 @@ function updateAction(
             ) {
                 const actions = extractActions(parentStep.firstLoopAction)
                 parentStep.firstLoopAction = createAction(request, actions)
+            }
+        }
+        if (isPieceBranched(parentStep)) {
+            if (
+                parentStep.children['onFailureAction'] &&
+                parentStep.children['onFailureAction'].name === request.name
+            ) {
+                const actions = extractActions(parentStep.children['onFailureAction'])
+                parentStep.children['onFailureAction'] = createAction(request, actions)
+            }
+            if (
+                parentStep.children['onSuccessAction'] &&
+                parentStep.children['onSuccessAction'].name === request.name
+            ) {
+                const actions = extractActions(parentStep.children['onSuccessAction'])
+                parentStep.children['onSuccessAction'] = createAction(request, actions)
             }
         }
         return parentStep
@@ -465,7 +533,6 @@ function addAction(
             }
         }
         else if (
-            isPieceBranched(parentStep) || 
             (parentStep.type === ActionType.BRANCH &&
             request.stepLocationRelativeToParent)
         ) {
@@ -503,6 +570,35 @@ function addAction(
                 )
             }
         }
+        else if (isPieceBranched(parentStep)) {
+            if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_TRUE_BRANCH) {
+                parentStep.children['onSuccessAction'] = createAction(request.action, {
+                    nextAction: parentStep.children['onSuccessAction'],
+                })
+            }
+            else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_FALSE_BRANCH) {
+                parentStep.children['onFailureAction'] = createAction(request.action, {
+                    nextAction: parentStep.children['onFailureAction'],
+                })
+            } 
+            else if (
+                request.stepLocationRelativeToParent ===
+                StepLocationRelativeToParent.AFTER
+            ) {
+                parentStep.nextAction = createAction(request.action, {
+                    nextAction: parentStep.nextAction,
+                })
+            }
+            else {
+                throw new ActivepiecesError(
+                    {
+                        code: ErrorCode.FLOW_OPERATION_INVALID,
+                        params: {},
+                    },
+                    `Branched piece step parernt ${request.stepLocationRelativeToParent} not found`,
+                )
+            }
+        }
         else {
             parentStep.nextAction = createAction(request.action, {
                 nextAction: parentStep.nextAction,
@@ -519,11 +615,13 @@ function createAction(
         onFailureAction,
         onSuccessAction,
         firstLoopAction,
+        children,
     }: {
         nextAction?: Action
         firstLoopAction?: Action
         onSuccessAction?: Action
         onFailureAction?: Action
+        children?: Record<string, Action>
     },
 ): Action {
     const baseProperties = {
@@ -554,8 +652,7 @@ function createAction(
         case ActionType.PIECE:
             action = {
                 ...baseProperties,
-                onFailureAction,
-                onSuccessAction,
+                children: children ?? {},
                 type: ActionType.PIECE,
                 settings: request.settings,
             }
@@ -635,7 +732,24 @@ export function getImportOperations(
             })
         }
         switch (step.type) {
-            case ActionType.PIECE:
+            case ActionType.PIECE: {
+                for (const key in step.children) {
+                    const action = step.children[key]
+                    if (action) {
+                        steps.push({
+                            type: FlowOperationType.ADD_ACTION,
+                            request: {
+                                parentStep: step.name,
+                                stepLocationRelativeToParent:
+                                    StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
+                                action: removeAnySubsequentAction(action),
+                            },
+                        })
+                        steps.push(...getImportOperations(action))
+                    }
+                }
+                break
+            }
             case ActionType.BRANCH: {
                 if (step.onFailureAction) {
                     steps.push({
@@ -707,10 +821,7 @@ function removeAnySubsequentAction(action: Action): Action {
             break
         }
         case ActionType.PIECE: {
-            if (clonedAction.settings.outputs && clonedAction.settings.outputs.length > 1) {
-                delete clonedAction.onSuccessAction
-                delete clonedAction.onFailureAction
-            }
+            clonedAction.children = {}
             break
         }
         case ActionType.CODE:
@@ -878,8 +989,7 @@ function getDirectParentStep(child: Step, parent: Trigger | Step | undefined): S
         }
     }
 
-    if (parent.type === ActionType.BRANCH || isPieceBranched(parent)) {
-
+    if (parent.type === ActionType.BRANCH) {
         const isChildOfBranch = isChildOf(parent, child.name)
         if (isChildOfBranch) {
             const directTrueBranchChildren = getAllDirectChildStepsForBranch(parent, 'success')
@@ -889,9 +999,22 @@ function getDirectParentStep(child: Step, parent: Trigger | Step | undefined): S
             }
 
             return getDirectParentStep(child, parent.onSuccessAction) ?? getDirectParentStep(child, parent.onFailureAction)
-
         }
     }
+
+    if (isPieceBranched(parent)) {
+        const isChildOfBranch = isChildOf(parent, child.name)
+        if (isChildOfBranch) {
+            const directTrueBranchChildren = getAllDirectChildStepsForBranch(parent, 'success')
+            const directFalseBranchChildren = getAllDirectChildStepsForBranch(parent, 'failure')
+            if (directTrueBranchChildren.at(-1)?.name === child.name || directFalseBranchChildren.at(-1)?.name === child.name) {
+                return parent
+            }
+
+            return getDirectParentStep(child, parent.children['onSuccessAction']) ?? getDirectParentStep(child, parent.children['onFailureAction'])
+        }
+    }
+
     if (parent.type === ActionType.LOOP_ON_ITEMS) {
         const isChildOfLoop = isChildOf(parent, child.name)
         if (isChildOfLoop) {

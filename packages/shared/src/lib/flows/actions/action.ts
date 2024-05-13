@@ -193,8 +193,10 @@ export const Action = Type.Recursive(action => Type.Union([
     })]),
     Type.Intersect([PieceActionSchema, Type.Object({
         nextAction: Type.Optional(action),
-        onSuccessAction: Type.Optional(action),
-        onFailureAction: Type.Optional(action),
+        children: Type.Record(
+            Type.String({}),
+            Type.Union([action, Type.Undefined()]),
+        ),
     })]),
     Type.Intersect([LoopOnItemsActionSchema, Type.Object({
         nextAction: Type.Optional(action),
@@ -221,7 +223,7 @@ export type BranchAction = Static<typeof BranchActionSchema> & { nextAction?: Ac
 export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema> & { nextAction?: Action, firstLoopAction?: Action }
 
 
-export type PieceAction = Static<typeof PieceActionSchema> & { nextAction?: Action, onFailureAction?: Action, onSuccessAction?: Action }
+export type PieceAction = Static<typeof PieceActionSchema> & { nextAction?: Action, children: Record<string, Action | undefined> }
 
 export type CodeAction = Static<typeof CodeActionSchema> & { nextAction?: Action }
 

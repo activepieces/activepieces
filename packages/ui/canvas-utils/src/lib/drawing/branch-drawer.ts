@@ -33,7 +33,13 @@ export class BranchDrawer {
     branchStep: BranchAction | PieceAction
   ): FlowDrawer {
     let resultDrawer = FlowDrawer.construct(undefined);
-    const actions = [branchStep.onSuccessAction, branchStep.onFailureAction];
+    const actions =
+      branchStep.type === ActionType.BRANCH
+        ? [branchStep.onSuccessAction, branchStep.onFailureAction]
+        : [
+            branchStep.children['onSuccessAction'],
+            branchStep.children['onFailureAction'],
+          ];
     const branchesDrawers: FlowDrawer[] = actions.map((action) =>
       FlowDrawer.construct(action)
     );
@@ -121,6 +127,25 @@ export class BranchDrawer {
     };
   }
 
+  private static doesBranchHaveChildren(
+    branchStep: BranchAction | PieceAction,
+    stepLocationRelativeToParent: StepLocationRelativeToParent
+  ) {
+    return branchStep.type === ActionType.BRANCH
+      ? (stepLocationRelativeToParent ===
+          StepLocationRelativeToParent.INSIDE_TRUE_BRANCH &&
+          !!branchStep.onSuccessAction) ||
+          (stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_FALSE_BRANCH &&
+            !!branchStep.onFailureAction)
+      : (stepLocationRelativeToParent ===
+          StepLocationRelativeToParent.INSIDE_TRUE_BRANCH &&
+          !!branchStep.children['onSuccessAction']) ||
+          (stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_FALSE_BRANCH &&
+            !!branchStep.children['onFailureAction']);
+  }
+
   private static drawLineComponentAtStartOfBranch({
     firstChildStepPosition,
     branchStep,
@@ -130,13 +155,10 @@ export class BranchDrawer {
     branchStep: BranchAction | PieceAction;
     stepLocationRelativeToParent: StepLocationRelativeToParent;
   }) {
-    const doesBranchHaveChildren =
-      (stepLocationRelativeToParent ===
-        StepLocationRelativeToParent.INSIDE_TRUE_BRANCH &&
-        !!branchStep.onSuccessAction) ||
-      (stepLocationRelativeToParent ===
-        StepLocationRelativeToParent.INSIDE_FALSE_BRANCH &&
-        !!branchStep.onFailureAction);
+    const doesBranchHaveChildren = BranchDrawer.doesBranchHaveChildren(
+      branchStep,
+      stepLocationRelativeToParent
+    );
     return drawLineComponentWithButton({
       from: {
         x: FlowDrawer.centerBottomOfFlowItemUi.x,
