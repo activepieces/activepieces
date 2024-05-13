@@ -22,7 +22,15 @@ export const oauth2Util = {
 
 function removeClientSecret(connection: AppConnection): AppConnection {
     if (connection.value.type === AppConnectionType.OAUTH2 && connection.value.grant_type === OAuth2GrantType.CLIENT_CREDENTIALS) {
-        connection.value.client_secret = ''
+        connection.value.client_secret = '(REDACTED)'
+    }
+    if (connection.value.type === AppConnectionType.OAUTH2
+        || connection.value.type === AppConnectionType.CLOUD_OAUTH2
+        || connection.value.type === AppConnectionType.PLATFORM_OAUTH2) {
+        connection.value = {
+            ...connection.value,
+            refresh_token: '(REDACTED)',
+        }
     }
     return connection
 }
