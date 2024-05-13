@@ -20,7 +20,7 @@
     <div class="detail-item ap-flex ap-items-center">
       <svg-icon src="assets/img/custom/duration.svg" [svgStyle]="{ width: '12px', height: '20px' }"></svg-icon>
       <span i18n>Duration:</span>
-      <span class="description"> {{ (selectedStepResult.duration || 1) | number: '1.0-1'  }} ms </span>
+      <span class="description"> {{ ((selectedStepResult.duration || 1) / 1000) | number: '1.1-3' }} s </span>
     </div>
     <div class="ap-flex ap-flex-col ap-gap-8 ap-mb-4">
       <ap-json-viewer class="json-viewer" viewTitle="Input" i18n-title  [content]="selectedStepResult.input"

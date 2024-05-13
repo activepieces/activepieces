@@ -49,7 +49,7 @@ export const webhookSimulationService = {
         })
 
         try {
-            const webhookSimulationExists = await webhookSimulationRepo.exist({
+            const webhookSimulationExists = await webhookSimulationRepo.exists({
                 where: { flowId },
             })
 
