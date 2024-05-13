@@ -59,7 +59,6 @@ export class PiecePropertiesFormComponent
     valid: boolean;
   }>();
   readonly PropertyType = PropertyType;
-  sortedPropertiesByRequired: PiecePropertyMap;
   emitNewChanges$?: Observable<unknown>;
   stepChanged$ = new BehaviorSubject('');
   constructor(private fb: UntypedFormBuilder) {
@@ -85,24 +84,7 @@ export class PiecePropertiesFormComponent
   }
 
   private initializeForm() {
-    this.sortPropertiesByRequired();
     this.buildForm();
-  }
-
-  private sortPropertiesByRequired() {
-    const requiredProperties: PiecePropertyMap = {};
-    const optionalProperties: PiecePropertyMap = {};
-    Object.entries(this.propertiesMap).forEach(([key, value]) => {
-      if (value.required || value.type === PropertyType.MARKDOWN) {
-        requiredProperties[key] = value;
-      } else {
-        optionalProperties[key] = value;
-      }
-    });
-    this.sortedPropertiesByRequired = {
-      ...requiredProperties,
-      ...optionalProperties,
-    };
   }
 
   private buildForm() {

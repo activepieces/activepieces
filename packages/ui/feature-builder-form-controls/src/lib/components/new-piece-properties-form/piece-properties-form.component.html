@@ -1,6 +1,6 @@
 <form [formGroup]="form" class="ap-flex ap-flex-col">
   @for (
-    property of sortedPropertiesByRequired | objectToArray;
+    property of propertiesMap | objectToArray;
     track property.key
   ) {
     @if (
