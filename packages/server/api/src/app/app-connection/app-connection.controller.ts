@@ -101,7 +101,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
             },
         )
 
-    app.get('/:connectionName', GetAppConnectionParms, async (request): Promise<AppConnection> => {
+    app.get('/:connectionName', GetAppConnectionParams, async (request): Promise<AppConnection> => {
         return appConnectionService.getOneOrThrowByName({
             projectId: request.principal.projectId,
             name: request.params.connectionName,
@@ -120,7 +120,7 @@ const removeConnectionValue = (
     return appConnectionWithoutSensitiveData as AppConnectionWithoutSensitiveData
 }
 
-const GetAppConnectionParms = {
+const GetAppConnectionParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
         permission: Permission.READ_APP_CONNECTION,
