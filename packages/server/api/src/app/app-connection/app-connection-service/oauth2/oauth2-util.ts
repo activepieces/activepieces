@@ -3,6 +3,8 @@ import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { PropertyType } from '@activepieces/pieces-framework'
 import {
     ActivepiecesError,
+    AppConnection,
+    AppConnectionType,
     assertNotNullOrUndefined,
     BaseOAuth2ConnectionValue,
     deleteProps,
@@ -15,6 +17,14 @@ export const oauth2Util = {
     isExpired,
     isUserError,
     getOAuth2TokenUrl,
+    removeClientSecret,
+}
+
+function removeClientSecret(connection: AppConnection): AppConnection {
+    if (connection.value.type === AppConnectionType.OAUTH2 && connection.value.grant_type === OAuth2GrantType.CLIENT_CREDENTIALS) {
+        connection.value.client_secret = ''
+    }
+    return connection
 }
 
 function isExpired(connection: BaseOAuth2ConnectionValue): boolean {

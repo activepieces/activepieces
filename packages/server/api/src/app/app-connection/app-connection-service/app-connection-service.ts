@@ -43,7 +43,6 @@ const repo = databaseConnection.getRepository(AppConnectionEntity)
 
 export const appConnectionService = {
     async validateConnectionName({ connectionName, projectId }: ValidateConnectionNameRequestBody & { projectId: ProjectId }): Promise<ValidateConnectionNameResponse> {
-        //test regex on connection name
         const regex = new RegExp(`^${connectionNameRegex}$`)
         if (!regex.test(connectionName)) {
             return {
@@ -112,12 +111,28 @@ export const appConnectionService = {
 
         const appConnection = decryptConnection(encryptedAppConnection)
         if (!needRefresh(appConnection)) {
-            return appConnection
+            return oauth2Util.removeClientSecret(appConnection)
         }
 
-        return lockAndRefreshConnection({ projectId, name })
+        const refreshedConnection = await lockAndRefreshConnection({ projectId, name })
+        if (isNil(refreshedConnection)) {
+            return null
+        }
+        return oauth2Util.removeClientSecret(refreshedConnection)
     },
-
+    async getOneOrThrowByName(params: GetOneByName): Promise<AppConnection> {
+        const connection = await this.getOne(params)
+        if (isNil(connection)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'AppConnection',
+                    entityId: params.name,
+                },
+            })
+        }
+        return connection
+    },
     async getOneOrThrow(params: GetOneParams): Promise<AppConnection> {
         const connectionById = await repo.findOneBy({
             id: params.id,
@@ -141,7 +156,6 @@ export const appConnectionService = {
     async delete(params: DeleteParams): Promise<void> {
         await repo.delete(params)
     },
-
     async list({
         projectId,
         pieceName,

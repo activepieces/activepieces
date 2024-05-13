@@ -41,7 +41,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
         })
         await reply
             .status(StatusCodes.CREATED)
-            .send(removeSensitiveData(appConnection))
+            .send(removeConnectionValue(appConnection))
     })
 
     app.get(
@@ -58,11 +58,10 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
                 limit: limit ?? DEFAULT_PAGE_SIZE,
             })
 
-            const appConnectionsWithoutSensitiveData: SeekPage<AppConnectionWithoutSensitiveData> =
-      {
-          ...appConnections,
-          data: appConnections.data.map(removeSensitiveData),
-      }
+            const appConnectionsWithoutSensitiveData: SeekPage<AppConnectionWithoutSensitiveData> = {
+                ...appConnections,
+                data: appConnections.data.map(removeConnectionValue),
+            }
 
             return appConnectionsWithoutSensitiveData
         },
@@ -81,64 +80,54 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
             return result
         },
     ),
-    app.delete(
-        '/:id',
-        DeleteAppConnectionRequest,
-        async (request, reply): Promise<void> => {
-            const connection = await appConnectionService.getOneOrThrow({
-                id: request.params.id,
-                projectId: request.principal.projectId,
-            })
-            eventsHooks.get().send(request, {
-                action: ApplicationEventName.DELETED_CONNECTION,
-                connection,
-                userId: request.principal.id,
-            })
-            await appConnectionService.delete({
-                id: request.params.id,
-                projectId: request.principal.projectId,
-            })
-            await reply.status(StatusCodes.NO_CONTENT).send()
-        },
-    )
-
-    app.get(
-        '/:connectionName',
-        {
-            schema: {
-                params: GetAppConnectionRequestParams,
-            },
-        },
-        async (request): Promise<AppConnection> => {
-            const appConnection = await appConnectionService.getOne({
-                projectId: request.principal.projectId,
-                name: request.params.connectionName,
-            })
-
-            if (isNil(appConnection)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        entityId: `connectionName=${request.params.connectionName}`,
-                        entityType: 'AppConnection',
-                    },
+        app.delete(
+            '/:id',
+            DeleteAppConnectionRequest,
+            async (request, reply): Promise<void> => {
+                const connection = await appConnectionService.getOneOrThrow({
+                    id: request.params.id,
+                    projectId: request.principal.projectId,
                 })
-            }
+                eventsHooks.get().send(request, {
+                    action: ApplicationEventName.DELETED_CONNECTION,
+                    connection,
+                    userId: request.principal.id,
+                })
+                await appConnectionService.delete({
+                    id: request.params.id,
+                    projectId: request.principal.projectId,
+                })
+                await reply.status(StatusCodes.NO_CONTENT).send()
+            },
+        )
 
-            return appConnection
-        },
-    )
+    app.get('/:connectionName', GetAppConnectionParms, async (request): Promise<AppConnection> => {
+        return appConnectionService.getOneOrThrowByName({
+            projectId: request.principal.projectId,
+            name: request.params.connectionName,
+        })
+    })
 
     done()
 }
 
 const DEFAULT_PAGE_SIZE = 10
 
-const removeSensitiveData = (
+const removeConnectionValue = (
     appConnection: AppConnection,
 ): AppConnectionWithoutSensitiveData => {
     const { value: _, ...appConnectionWithoutSensitiveData } = appConnection
     return appConnectionWithoutSensitiveData as AppConnectionWithoutSensitiveData
+}
+
+const GetAppConnectionParms = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+        permission: Permission.READ_APP_CONNECTION,
+    },
+    schema: {
+        params: GetAppConnectionRequestParams,
+    },
 }
 
 const UpsertAppConnectionRequest = {

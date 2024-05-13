@@ -4,11 +4,9 @@ import {
 import { allowWorkersOnly } from '../authentication/authorization'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 import {
-    ActivepiecesError,
     AppConnection,
-    ErrorCode,
     GetAppConnectionRequestParams,
-    isNil,
+    PrincipalType,
 } from '@activepieces/shared'
 
 export const appConnectionWorkerController: FastifyPluginCallbackTypebox = (
@@ -18,34 +16,23 @@ export const appConnectionWorkerController: FastifyPluginCallbackTypebox = (
 ) => {
     app.addHook('preHandler', allowWorkersOnly)
 
-    app.get(
-        '/:connectionName',
-        {
-            schema: {
-                params: GetAppConnectionRequestParams,
-            },
-        },
-        async (request): Promise<AppConnection> => {
-            const appConnection = await appConnectionService.getOne({
-                projectId: request.principal.projectId,
-                name: request.params.connectionName,
-            })
-
-            if (isNil(appConnection)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        entityId: `connectionName=${request.params.connectionName}`,
-                        entityType: 'AppConnection',
-                    },
-                })
-            }
-
-            return appConnection
-        },
-    )
+    app.get('/:connectionName', GetConnectionParams, async (request): Promise<AppConnection> => {
+        return appConnectionService.getOneOrThrowByName({
+            projectId: request.principal.projectId,
+            name: request.params.connectionName,
+        })
+    })
 
     done()
+}
+
+const GetConnectionParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.WORKER],
+    },
+    schema: {
+        params: GetAppConnectionRequestParams,
+    },
 }
 
 
