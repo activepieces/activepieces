@@ -33,7 +33,7 @@ export const updateRowAction = createAction({
       propsValue;
     const sheetName = await googleSheetsCommon.findSheetName(
       auth['access_token'],
-      spreadsheet_id.fileId,
+      spreadsheet_id,
       sheet_id
     );
 
@@ -48,7 +48,7 @@ export const updateRowAction = createAction({
         accessToken: auth['access_token'],
         rowIndex: Number(row_id),
         sheetName: sheetName,
-        spreadSheetId: spreadsheet_id.fileId,
+        spreadSheetId: spreadsheet_id,
         valueInputOption: ValueInputOption.USER_ENTERED,
         values: stringifyArray(formattedValues),
       });

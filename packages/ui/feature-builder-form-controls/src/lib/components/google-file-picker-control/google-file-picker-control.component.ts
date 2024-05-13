@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   GoogleFilePickerService,
@@ -7,11 +12,8 @@ import {
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import {
-  GoogleFilePickerProperty,
-  GoogleFilePickerPropertyValueSchema,
-} from '@activepieces/pieces-framework';
-import { Observable, map, tap } from 'rxjs';
+import { GoogleFilePickerProperty } from '@activepieces/pieces-framework';
+import { Observable, map, of, startWith, switchMap, tap } from 'rxjs';
 @Component({
   selector: 'app-google-file-picker-control',
   standalone: true,
@@ -27,13 +29,15 @@ import { Observable, map, tap } from 'rxjs';
         [readonly]="true"
         (click)="openPicker()"
       />
+
       <input
         class="ap-cursor-pointer"
         matInput
-        [value]="control.value?.fileDisplayName || ''"
+        [value]="(fileDisplayName$ | async | defaultText : loadingText) || ''"
         [readonly]="true"
         (click)="openPicker()"
       />
+
       <div matSuffix class="ap-flex ap-gap-2">
         @if(property.required || control.value === undefined) {
         <ap-icon-button
@@ -56,16 +60,22 @@ import { Observable, map, tap } from 'rxjs';
     @if(pickerOpened$ | async) {} @if(connectionNameChanged$ | async){}
   `,
 })
-export class GoogleFilePicerkControlComponent {
+export class GoogleFilePicerkControlComponent implements OnInit {
   readonly selectFileText = $localize`Select File`;
   readonly changeFileText = $localize`Change File`;
   readonly noFileSelectedText = $localize`No file selected`;
+  readonly loadingText = $localize`Loading...`;
+  fileDisplayName$?: Observable<string>;
   connectionNameChanged$: Observable<
     PieceConnectionDropdownItem['value'] | undefined
   >;
   firstTimeSetting = true;
+  control: FormControl<string | undefined>;
   @Input({ required: true })
-  control: FormControl<GoogleFilePickerPropertyValueSchema | undefined>;
+  set passedFormControl(val: FormControl<string | undefined>) {
+    this.control = val;
+    this.setFileIdListener();
+  }
   @Input({ required: true }) property: GoogleFilePickerProperty<boolean>;
   @Input({ required: true }) set connectionControl(
     ctrl: FormControl<PieceConnectionDropdownItem['value'] | undefined>
@@ -81,7 +91,10 @@ export class GoogleFilePicerkControlComponent {
       : '';
   }
   _connectionName = '';
-  pickerOpened$: Observable<GoogleFilePickerPropertyValueSchema | null>;
+  pickerOpened$: Observable<{
+    fileId: string;
+    fileDisplayName: string;
+  } | null>;
   isLoadingPickerApi$: Observable<boolean>;
   constructor(
     private googleFilePickerService: GoogleFilePickerService,
@@ -91,6 +104,24 @@ export class GoogleFilePicerkControlComponent {
       .getIsPickerLoaded$()
       .pipe(map((res) => !res));
   }
+  ngOnInit(): void {
+    this.setFileIdListener();
+  }
+  private setFileIdListener() {
+    this.fileDisplayName$ = this.control.valueChanges.pipe(
+      startWith(this.control.value),
+      switchMap((val) => {
+        if (val && this._connectionName) {
+          return this.googleFilePickerService.getFileName({
+            connectionName: this._connectionName,
+            fileId: val,
+          });
+        }
+        return of('');
+      })
+    );
+  }
+
   openPicker() {
     if (this._connectionName) {
       this.pickerOpened$ = this.googleFilePickerService
@@ -98,7 +129,7 @@ export class GoogleFilePicerkControlComponent {
         .pipe(
           tap((value) => {
             if (value) {
-              this.control.setValue(value);
+              this.control.setValue(value.fileId);
             }
           })
         );

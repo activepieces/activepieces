@@ -19,14 +19,14 @@ export const findRowByNumAction = createAction({
   async run({ propsValue, auth }) {
     const sheetName = await googleSheetsCommon.findSheetName(
       auth['access_token'],
-      propsValue['spreadsheet_id'].fileId,
+      propsValue['spreadsheet_id'],
       propsValue['sheet_id']
     );
 
     const row = await getGoogleSheetRows({
       accessToken: auth['access_token'],
       sheetName: sheetName,
-      spreadSheetId: propsValue['spreadsheet_id'].fileId,
+      spreadSheetId: propsValue['spreadsheet_id'],
       rowIndex_s: propsValue['rowNumber'],
       rowIndex_e: propsValue['rowNumber'],
     });

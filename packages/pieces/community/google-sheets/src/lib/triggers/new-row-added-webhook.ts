@@ -44,15 +44,15 @@ export const newRowAddedTrigger = createTrigger({
 		const { spreadsheet_id, sheet_id } = context.propsValue;
 
 		// fetch current sheet values
-		const sheetName = await getWorkSheetName(context.auth, spreadsheet_id.fileId, sheet_id);
-		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheet_id.fileId, sheetName);
+		const sheetName = await getWorkSheetName(context.auth, spreadsheet_id, sheet_id);
+		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheet_id, sheetName);
 
 		// store current sheet row count
 		await context.store.put(`${sheet_id}`, currentSheetValues.length);
 
 		const fileNotificationRes = await createFileNotification(
 			context.auth,
-			spreadsheet_id.fileId,
+			spreadsheet_id,
 			context.webhookUrl,
 		);
 
@@ -82,8 +82,8 @@ export const newRowAddedTrigger = createTrigger({
 		const oldRowCount = (await context.store.get(`${sheet_id}`)) as number;
 
 		// fetch current row count for worksheet
-		const sheetName = await getWorkSheetName(context.auth, spreadsheet_id.fileId, sheet_id);
-		const currentRowValues = await getWorkSheetValues(context.auth, spreadsheet_id.fileId, sheetName);
+		const sheetName = await getWorkSheetName(context.auth, spreadsheet_id, sheet_id);
+		const currentRowValues = await getWorkSheetValues(context.auth, spreadsheet_id, sheetName);
 		const currentRowCount = currentRowValues.length;
 
 		// if no new rows return
@@ -100,7 +100,7 @@ export const newRowAddedTrigger = createTrigger({
 
 		const newRowValues = await getWorkSheetValues(
 			context.auth as PiecePropValueSchema<typeof googleSheetsAuth>,
-			spreadsheet_id.fileId,
+			spreadsheet_id,
 			range,
 		);
 
@@ -124,7 +124,7 @@ export const newRowAddedTrigger = createTrigger({
 			await deleteFileNotification(context.auth, webhook.id, webhook.resourceId);
 			const fileNotificationRes = await createFileNotification(
 				context.auth,
-				context.propsValue.spreadsheet_id.fileId,
+				context.propsValue.spreadsheet_id,
 				context.webhookUrl,
 			);
 			// store channel response
@@ -136,8 +136,8 @@ export const newRowAddedTrigger = createTrigger({
 	},
 	async test(context) {
 		const { spreadsheet_id, sheet_id } = context.propsValue;
-		const sheetName = await getWorkSheetName(context.auth, spreadsheet_id.fileId, sheet_id);
-		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheet_id.fileId, sheetName);
+		const sheetName = await getWorkSheetName(context.auth, spreadsheet_id, sheet_id);
+		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheet_id, sheetName);
 
 		// transform row values
 		const transformedRowValues = transformWorkSheetValues(currentSheetValues, 0)

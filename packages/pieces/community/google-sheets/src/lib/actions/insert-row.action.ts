@@ -35,7 +35,7 @@ export const insertRowAction = createAction({
     const values = propsValue['values'];
     const sheetName = await googleSheetsCommon.findSheetName(
       auth['access_token'],
-      propsValue['spreadsheet_id'].fileId,
+      propsValue['spreadsheet_id'],
       propsValue['sheet_id']
     );
     let formattedValues;
@@ -51,7 +51,7 @@ export const insertRowAction = createAction({
       accessToken: auth['access_token'],
       majorDimension: Dimension.COLUMNS,
       range: sheetName,
-      spreadSheetId: propsValue['spreadsheet_id'].fileId,
+      spreadSheetId: propsValue['spreadsheet_id'],
       valueInputOption: propsValue['as_string']
         ? ValueInputOption.RAW
         : ValueInputOption.USER_ENTERED,

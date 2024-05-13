@@ -20,13 +20,13 @@ export const clearSheetAction = createAction({
   async run({ propsValue, auth }) {
     await googleSheetsCommon.findSheetName(
       auth['access_token'],
-      propsValue['spreadsheet_id'].fileId,
+      propsValue['spreadsheet_id'],
       propsValue['sheet_id']
     );
 
     const rowsToDelete: number[] = [];
     const values = await googleSheetsCommon.getValues(
-      propsValue.spreadsheet_id.fileId,
+      propsValue.spreadsheet_id,
       auth['access_token'],
       propsValue.sheet_id
     );
@@ -39,7 +39,7 @@ export const clearSheetAction = createAction({
 
     for (let i = 0; i < rowsToDelete.length; i++) {
       await googleSheetsCommon.clearSheet(
-        propsValue.spreadsheet_id.fileId,
+        propsValue.spreadsheet_id,
         propsValue.sheet_id,
         auth['access_token'],
         propsValue.is_first_row_headers ? 1 : 0,

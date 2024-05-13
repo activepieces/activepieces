@@ -56,14 +56,14 @@ export const findRowsAction = createAction({
 
     const sheetName = await googleSheetsCommon.findSheetName(
       auth.access_token,
-      spreadSheetId.fileId,
+      spreadSheetId,
       sheetId
     );
 
     let rows = await getAllGoogleSheetRows({
       accessToken: auth.access_token,
       sheetName: `${sheetName}!A${startingRow}:ZZZ`,
-      spreadSheetId: spreadSheetId.fileId,
+      spreadSheetId: spreadSheetId,
     });
 
     // modify row number based on starting row number

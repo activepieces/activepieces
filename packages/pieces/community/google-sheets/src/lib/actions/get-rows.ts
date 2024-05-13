@@ -99,7 +99,7 @@ export const getRowsAction = createAction({
       return await getRows(
         store,
         auth['access_token'],
-        propsValue['spreadsheet_id'].fileId,
+        propsValue['spreadsheet_id'],
         propsValue['sheet_id'],
         propsValue['memKey'],
         propsValue['groupSize'],
@@ -118,7 +118,7 @@ export const getRowsAction = createAction({
       return await getRows(
         store,
         auth['access_token'],
-        propsValue['spreadsheet_id'].fileId,
+        propsValue['spreadsheet_id'],
         propsValue['sheet_id'],
         propsValue['memKey'],
         propsValue['groupSize'],

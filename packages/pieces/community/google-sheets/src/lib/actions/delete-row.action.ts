@@ -19,14 +19,14 @@ export const deleteRowAction = createAction({
   async run({ propsValue, auth }) {
     await googleSheetsCommon.findSheetName(
       auth.access_token,
-      propsValue['spreadsheet_id'].fileId,
+      propsValue['spreadsheet_id'],
       propsValue['sheet_id']
     );
 
     // Subtract 1 from the row_id to convert it to 0-indexed
     const adjustedRowIndex = propsValue.row_id - 1;
     const response = await googleSheetsCommon.deleteRow(
-      propsValue.spreadsheet_id.fileId,
+      propsValue.spreadsheet_id,
       propsValue.sheet_id,
       adjustedRowIndex,
       auth['access_token']

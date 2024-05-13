@@ -46,9 +46,11 @@ export const createFormControlsWithTheirValidators = (
 };
 
 const removeAllFormControls = (form: UntypedFormGroup) => {
-  Object.keys(form.controls).forEach((ctrlName) => {
-    form.removeControl(ctrlName, { emitEvent: false });
-  });
+  if (form.controls) {
+    Object.keys(form.controls).forEach((ctrlName) => {
+      form.removeControl(ctrlName, { emitEvent: false });
+    });
+  }
 };
 
 function createControl(

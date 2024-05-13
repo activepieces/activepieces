@@ -1,4 +1,4 @@
-import { Property, OAuth2PropertyValue, GoogleFilePickerViewId, GoogleFilePickerPropertyValueSchema } from '@activepieces/pieces-framework';
+import { Property, OAuth2PropertyValue, GoogleFilePickerViewId } from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpMethod,
@@ -21,9 +21,8 @@ export const googleSheetsCommon = {
     required: true,
     refreshers: ['spreadsheet_id'],
     options: async ({ auth, spreadsheet_id }) => {
-      const spreadsheetProperty = spreadsheet_id as GoogleFilePickerPropertyValueSchema | undefined;
   
-      if (!auth || !spreadsheetProperty) {
+      if (!auth  || (spreadsheet_id ?? '').toString().length === 0) {
         return {
           disabled: true,
           options: [],
@@ -33,7 +32,7 @@ export const googleSheetsCommon = {
       const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
       const sheets = await listSheetsName(
         authProp['access_token'],
-        spreadsheetProperty.fileId
+        spreadsheet_id as unknown as string
       );
       return {
         disabled: false,
@@ -54,17 +53,17 @@ export const googleSheetsCommon = {
     required: true,
     refreshers: ['sheet_id', 'spreadsheet_id', 'first_row_headers'],
     props: async ({ auth, spreadsheet_id, sheet_id, first_row_headers }) => {
-      const spreadsheetProperty = spreadsheet_id as GoogleFilePickerPropertyValueSchema | undefined;
+
       if (
         !auth ||
-        !spreadsheetProperty ||
+        (spreadsheet_id ?? '').toString().length === 0 ||
         (sheet_id ?? '').toString().length === 0
       ) {
         return {};
       }
       const authentication = auth as OAuth2PropertyValue;
       const values = await googleSheetsCommon.getValues(
-        spreadsheetProperty.fileId,
+        spreadsheet_id as unknown as string,
         getAccessTokenOrThrow(authentication),
         sheet_id as unknown as number
       );
@@ -99,13 +98,13 @@ export const googleSheetsCommon = {
     refreshers: ['sheet_id', 'spreadsheet_id'],
     options: async (context) => {
       const authentication = context.auth as OAuth2PropertyValue;
-      const spreadsheet_id = context.spreadsheet_id as GoogleFilePickerPropertyValueSchema;
+      const spreadsheet_id = context.spreadsheet_id as string;
       const sheet_id = context.sheet_id as number;
       const accessToken = authentication['access_token'] ?? '';
 
       if (
         !context.auth ||
-        !spreadsheet_id ||
+        (spreadsheet_id ?? '').toString().length === 0 ||
         (sheet_id ?? '').toString().length === 0
       ) {
         return {
@@ -117,7 +116,7 @@ export const googleSheetsCommon = {
 
       const sheetName = await googleSheetsCommon.findSheetName(
         accessToken,
-        spreadsheet_id.fileId,
+        spreadsheet_id,
         sheet_id
       );
 
@@ -131,7 +130,7 @@ export const googleSheetsCommon = {
           [x: string]: string[];
         }[];
       }[] = await googleSheetsCommon.getValues(
-        spreadsheet_id.fileId,
+        spreadsheet_id,
         accessToken,
         sheet_id
       );

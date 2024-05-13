@@ -1,4 +1,3 @@
-import { isNil } from '@activepieces/shared';
 import { googleSheetsAuth } from '../../';
 import {
   columnToLabel,
@@ -25,7 +24,6 @@ import {
   Property,
   PiecePropValueSchema,
   DropdownOption,
-  GoogleFilePickerPropertyValueSchema,
 } from '@activepieces/pieces-framework';
 
 import crypto from 'crypto';
@@ -50,27 +48,43 @@ export const newOrUpdatedRowTrigger = createTrigger({
       required: false,
       refreshers: ['spreadsheet_id', 'sheet_id'],
       options: async ({ auth, spreadsheet_id, sheet_id }) => {
-        if (!auth || !spreadsheet_id || isNil(sheet_id)) {
+        if (!auth) {
           return {
             disabled: true,
             options: [],
-            placeholder: `Please select sheet first`,
+            placeholder: `Please connect your account first`,
           };
         }
 
         const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
-        const spreadSheetId = spreadsheet_id  as GoogleFilePickerPropertyValueSchema;
+        const spreadSheetId = spreadsheet_id as string ;
         const sheetId = sheet_id as number;
+
+        if((spreadSheetId ?? '').toString().length === 0) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: `Please select a spreadsheet first`,
+          };
+        }
+        if((sheetId ?? '').toString().length === 0) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: `Please select a sheet first`,
+          };
+        }
+
 
         const sheetName = await getWorkSheetName(
           authValue,
-          spreadSheetId.fileId,
+          spreadSheetId,
           sheetId
         );
 
         const firstRowValues = await getWorkSheetValues(
           authValue,
-          spreadSheetId.fileId,
+          spreadSheetId,
           `${sheetName}!1:1`
         );
         const labeledRowValues = transformWorkSheetValues(firstRowValues, 0);
@@ -105,7 +119,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
     const sheetName = await getWorkSheetName(
       context.auth,
-      spreadSheetId.fileId,
+      spreadSheetId,
       sheetId
     );
 
@@ -116,7 +130,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
     const sheetValues = await getWorkSheetValues(
       context.auth,
-      spreadSheetId.fileId,
+      spreadSheetId,
       range
     );
 
@@ -137,7 +151,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
     // create file watch notification
     const fileNotificationRes = await createFileNotification(
       context.auth,
-      spreadSheetId.fileId,
+      spreadSheetId,
       context.webhookUrl
     );
 
@@ -176,7 +190,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
     const sheetName = await getWorkSheetName(
       context.auth,
-      spreadSheetId.fileId,
+      spreadSheetId,
       sheetId
     );
 
@@ -186,7 +200,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
      */
     const currentValues = await getWorkSheetValues(
       context.auth,
-      spreadSheetId.fileId,
+      spreadSheetId,
       sheetName
     );
 
@@ -260,12 +274,12 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
     const sheetName = await getWorkSheetName(
       context.auth,
-      spreadSheetId.fileId,
+      spreadSheetId,
       sheetId
     );
     const currentSheetValues = await getWorkSheetValues(
       context.auth,
-      spreadSheetId.fileId,
+      spreadSheetId,
       sheetName
     );
 
@@ -291,7 +305,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
       );
       const fileNotificationRes = await createFileNotification(
         context.auth,
-        context.propsValue.spreadsheet_id.fileId,
+        context.propsValue.spreadsheet_id,
         context.webhookUrl
       );
       // store channel response

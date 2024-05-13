@@ -12,7 +12,7 @@ import { CheckOverflowDirective } from '../../directives';
   standalone: true,
   imports: [CommonModule, MarkdownModule, CheckOverflowDirective],
   template: `
-    @if( !(description || (passedFormControl.touched &&
+    @if(passedFormControl) { @if( !(description || (passedFormControl.touched &&
     passedFormControl.invalid))) {
     <div [style.height]="MIN_SPACING_BETWEEN_INPUTS"></div>
     } @else() {
@@ -59,7 +59,7 @@ import { CheckOverflowDirective } from '../../directives';
         </button>
       </div>
     </div>
-    }
+    } }
   `,
 })
 export class ControlDescriptionComponent {

@@ -1,6 +1,5 @@
-import { GoogleFilePickerPropertyValueSchema } from '@activepieces/pieces-framework';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { Observable, switchMap, map } from 'rxjs';
 import { AppConnectionsService } from './app-connections.service';
 import { AppConnectionType } from '@activepieces/shared';
@@ -9,7 +8,10 @@ import { HttpClient } from '@angular/common/http';
 @Injectable({ providedIn: 'root' })
 export class GoogleFilePickerService {
   private isPickerApiLoaded$ = new BehaviorSubject<boolean>(false);
-  constructor(private appConnectionsService: AppConnectionsService, private httpClient: HttpClient) { }
+  constructor(
+    private appConnectionsService: AppConnectionsService,
+    private http: HttpClient
+  ) {}
   loadGapiScript() {
     if (!this.isPickerApiLoaded$.value) {
       const script = document.createElement('script');
@@ -36,53 +38,54 @@ export class GoogleFilePickerService {
       .getDecryptedConnection(connectionName)
       .pipe(
         switchMap((connection) => {
-          return new Observable<GoogleFilePickerPropertyValueSchema | null>(
-            (observer) => {
-              if (
-                connection.value.type !== AppConnectionType.CLOUD_OAUTH2 &&
-                connection.value.type !== AppConnectionType.OAUTH2
-              ) {
-                console.error(
-                  `Activepieces: Connection ${connection.name} is not an OAuth2 connection`
-                );
-                observer.next(null);
-                observer.complete();
-                return;
-              }
-              const userDriveView = new google.picker.DocsView(viewId);
-              userDriveView.setIncludeFolders(true);
-              const sharedDriveView = new google.picker.DocsView(viewId);
-              sharedDriveView.setEnableDrives(true).setIncludeFolders(true);
-              const appId = connection.value.client_id.split("-")[0]
-              const picker = new google.picker.PickerBuilder()
-                .addView(userDriveView)
-                .addView(sharedDriveView)
-                .setAppId(appId)
-                .setOAuthToken(connection.value.access_token)
-                .setCallback((data: Record<string, any>) => {
-                  if (
-                    data[google.picker.Response.ACTION] ==
+          return new Observable<{
+            fileId: string;
+            fileDisplayName: string;
+          } | null>((observer) => {
+            if (
+              connection.value.type !== AppConnectionType.CLOUD_OAUTH2 &&
+              connection.value.type !== AppConnectionType.OAUTH2
+            ) {
+              console.error(
+                `Activepieces: Connection ${connection.name} is not an OAuth2 connection`
+              );
+              observer.next(null);
+              observer.complete();
+              return;
+            }
+            const userDriveView = new google.picker.DocsView(viewId);
+            userDriveView.setIncludeFolders(true);
+            const sharedDriveView = new google.picker.DocsView(viewId);
+            sharedDriveView.setEnableDrives(true).setIncludeFolders(true);
+            const appId = connection.value.client_id.split('-')[0];
+            const picker = new google.picker.PickerBuilder()
+              .addView(userDriveView)
+              .addView(sharedDriveView)
+              .setAppId(appId)
+              .setOAuthToken(connection.value.access_token)
+              .setCallback((data: Record<string, any>) => {
+                if (
+                  data[google.picker.Response.ACTION] ==
                     google.picker.Action.PICKED ||
+                  data[google.picker.Response.ACTION] ==
+                    google.picker.Action.CANCEL
+                ) {
+                  const formattedData =
                     data[google.picker.Response.ACTION] ==
                     google.picker.Action.CANCEL
-                  ) {
-                    const formattedData =
-                      data[google.picker.Response.ACTION] ==
-                        google.picker.Action.CANCEL
-                        ? null
-                        : this.pickerCallback(data);
-                    observer.next(formattedData);
-                    observer.complete();
-                    picker.dispose();
-                  }
-                })
-                .build();
-              picker.setVisible(true);
-              setTimeout(() => {
-                this.backdropListener(picker);
-              }, 100);
-            }
-          );
+                      ? null
+                      : this.pickerCallback(data);
+                  observer.next(formattedData);
+                  observer.complete();
+                  picker.dispose();
+                }
+              })
+              .build();
+            picker.setVisible(true);
+            setTimeout(() => {
+              this.backdropListener(picker);
+            }, 100);
+          });
         })
       );
   }
@@ -113,11 +116,37 @@ export class GoogleFilePickerService {
     }
   }
 
-  getFileName({ fileId, accessToken }: { fileId: string, accessToken: string }) {
-    return this.httpClient.get<{ name: string }>(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
-    }).pipe(map(f => f.name))
+  getFileName({
+    fileId,
+    connectionName,
+  }: {
+    fileId: string;
+    connectionName: string;
+  }) {
+    return this.appConnectionsService
+      .getDecryptedConnection(connectionName)
+      .pipe(
+        switchMap((res) => {
+          if (
+            res.value.type !== AppConnectionType.CLOUD_OAUTH2 &&
+            res.value.type !== AppConnectionType.OAUTH2
+          ) {
+            console.error(
+              `Activepieces: Connection ${res.name} is not an OAuth2 connection`
+            );
+            return of('');
+          }
+          return this.http
+            .get<{ name: string }>(
+              `https://www.googleapis.com/drive/v3/files/${fileId}?fields=name`,
+              {
+                headers: {
+                  Authorization: `Bearer ${res.value.access_token}`,
+                },
+              }
+            )
+            .pipe(map((res) => res.name));
+        })
+      );
   }
 }

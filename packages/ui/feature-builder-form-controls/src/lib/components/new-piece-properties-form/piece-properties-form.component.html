@@ -247,7 +247,7 @@
         }
         @case(PropertyType.GOOGLE_FILE_PICKER){
           <app-google-file-picker-control
-            [control]="form.controls[property.key] | abstractFormControlCaster"
+            [passedFormControl]="form.controls[property.key] | abstractFormControlCaster"
             [property]="property.value"
             [connectionControl]="form.controls[AUTHENTICATION_PROPERTY_NAME] | abstractFormControlCaster"
           >
