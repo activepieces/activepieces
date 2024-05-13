@@ -1046,6 +1046,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Startouf",
+      "name": "Cyril Duchon-Doris",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7388889?v=4",
+      "profile": "https://about.me/cyril_duchon_doris",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
