@@ -30,18 +30,14 @@ describe('Flow API for Worker', () => {
     describe('Get Flow from Worker', () => {
         it('List other flow for another project', async () => {
             // arrange
-            const { mockPlatform, mockOwner } = await mockBasicSetup()
+            const { mockPlatform, mockOwner, mockProject } = await mockBasicSetup()
 
-            const mockProject = createMockProject({
-                platformId: mockPlatform.id,
-                ownerId: mockOwner.id,
-            })
             const mockProject2 = createMockProject({
                 platformId: mockPlatform.id,
                 ownerId: mockOwner.id,
             })
 
-            await databaseConnection.getRepository('project').save([mockProject, mockProject2])
+            await databaseConnection.getRepository('project').save([mockProject2])
 
             const mockFlow = createMockFlow({
                 projectId: mockProject.id,
@@ -49,7 +45,7 @@ describe('Flow API for Worker', () => {
             await databaseConnection.getRepository('flow').save([mockFlow])
 
             const mockFlowVersion = createMockFlowVersion({
-                flowId: mockProject.id,
+                flowId: mockFlow.id,
             })
             await databaseConnection.getRepository('flow_version').save([mockFlowVersion])
 
