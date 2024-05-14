@@ -85,7 +85,7 @@ export type EngineHelperResponse<Result extends EngineHelperResult> = {
     standardOutput: string
 }
 
-const generateWorkerToken = ({
+export const generateWorkerToken = ({
     projectId,
 }: GenerateWorkerTokenParams): Promise<string> => {
     return accessTokenManager.generateToken({
