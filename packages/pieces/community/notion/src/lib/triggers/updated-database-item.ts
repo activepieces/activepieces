@@ -7,11 +7,13 @@ import {
   createTrigger,
   TriggerStrategy,
   OAuth2PropertyValue,
+  DEDUPE_KEY_PROPERTY,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../..';
+import crypto from 'crypto';
 
 export const updatedDatabaseItem = createTrigger({
   auth: notionAuth,
@@ -127,11 +129,12 @@ const polling: Polling<
       propsValue.database_id!,
       lastFetchEpochMS === 0 ? null : dayjs(lastFetchEpochMS).toISOString()
     );
-    return items.results.map((item) => {
+    return items.map((item: any) => {
       const object = item as { last_edited_time: string };
       return {
         epochMilliSeconds: dayjs(object.last_edited_time).valueOf(),
         data: item,
+        [DEDUPE_KEY_PROPERTY]: hashObject(item),
       };
     });
   },
@@ -146,22 +149,63 @@ const getResponse = async (
     auth: authentication.access_token,
     notionVersion: '2022-02-22',
   });
-  return notion.databases.query({
-    database_id,
-    filter:
-      startDate == null
-        ? undefined
-        : {
-            timestamp: 'last_edited_time',
-            last_edited_time: {
-              after: startDate,
+
+  let cursor;
+  let hasMore = true;
+  const results = [];
+  do {
+    const response = await notion.databases.query({
+      start_cursor: cursor,
+      database_id,
+      filter:
+        startDate == null
+          ? undefined
+          : {
+              timestamp: 'last_edited_time',
+              last_edited_time: {
+                on_or_after: startDate,
+              },
             },
-          },
-    sorts: [
-      {
-        timestamp: 'last_edited_time',
-        direction: startDate == null ? 'descending' : 'ascending',
-      },
-    ],
-  });
+      sorts: [
+        {
+          timestamp: 'last_edited_time',
+          direction: startDate == null ? 'descending' : 'ascending',
+        },
+      ],
+    });
+
+    hasMore = response.has_more;
+    cursor = response.next_cursor ?? undefined;
+
+    results.push(...response.results);
+  } while (hasMore);
+
+  console.log(JSON.stringify(results));
+
+  return results;
+  // return notion.databases.query({
+  //   start_cursor:
+  //   database_id,
+  //   filter:
+  //     startDate == null
+  //       ? undefined
+  //       : {
+  //           timestamp: 'last_edited_time',
+  //           last_edited_time: {
+  //             after: startDate,
+  //           },
+  //         },
+  //   sorts: [
+  //     {
+  //       timestamp: 'last_edited_time',
+  //       direction: startDate == null ? 'descending' : 'ascending',
+  //     },
+  //   ],
+  // });
 };
+
+export function hashObject(obj: Record<string, unknown>): string {
+  const hash = crypto.createHash('sha256');
+  hash.update(JSON.stringify(obj));
+  return hash.digest('hex');
+}
