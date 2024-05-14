@@ -4,14 +4,14 @@ import {
     flowRunService,
     HookType,
 } from '../../flows/flow-run/flow-run-service'
-import { flowVersionService } from '../../flows/flow-version/flow-version.service'
-import { engineHelper } from '../../helper/engine-helper'
+import { engineHelper, generateWorkerToken } from '../../helper/engine-helper'
 import { getPiecePackage } from '../../pieces/piece-metadata-service'
 import { EngineHttpResponse, engineResponseWatcher } from './engine-response-watcher'
 import { flowWorkerHooks } from './flow-worker-hooks'
 import { OneTimeJobData } from './job-data'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
-import { Action, ActionType,
+import {
+    Action, ActionType,
     ActivepiecesError,
     assertNotNullOrUndefined,
     BeginExecuteFlowOperation,
@@ -40,7 +40,7 @@ import { Action, ActionType,
     Trigger,
     TriggerType,
 } from '@activepieces/shared'
-import { logSerializer, Sandbox, SandBoxCacheType, sandboxProvisioner } from 'server-worker'
+import { logSerializer, Sandbox, SandBoxCacheType, sandboxProvisioner, serverApiService } from 'server-worker'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId
@@ -183,36 +183,31 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     )
 
     const startTime = Date.now()
-
-    const flowVersionWithLockedPieces = await flowVersionService.getOne(
-        jobData.flowVersionId,
-    )
-
-    if (isNil(flowVersionWithLockedPieces)) {
+    const workerToken = await generateWorkerToken({
+        projectId: jobData.projectId,
+    })
+    const serverApi = serverApiService(workerToken)
+    const flow = await serverApi.getFlowWithExactPieces(jobData.flowVersionId)
+    if (isNil(flow)) {
         logger.info({
             message: 'Flow version not found, skipping execution',
             flowVersionId: jobData.flowVersionId,
         })
         return
     }
-    const flowVersion = await flowVersionService.lockPieceVersions({
-        projectId: jobData.projectId,
-        flowVersion: flowVersionWithLockedPieces,
-    })
-
     await flowWorkerHooks
         .getHooks()
         .preExecute({ projectId: jobData.projectId, runId: jobData.runId })
 
     try {
         const { input, logFileId } = await loadInputAndLogFileId({
-            flowVersion,
+            flowVersion: flow.version,
             jobData,
         })
 
         const sandbox = await getSandbox({
             projectId: jobData.projectId,
-            flowVersion,
+            flowVersion: flow.version,
             runEnvironment: jobData.environment,
         })
 
