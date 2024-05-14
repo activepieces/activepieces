@@ -112,7 +112,7 @@ export class TestFlowWidgetComponent implements OnInit {
       );
 
     this.testResult$ = this.websockService.socket
-      .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_FINISHED)
+      .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS)
       .pipe(
         switchMap((flowRun) => {
           return this.instanceRunService.get(flowRun.id);

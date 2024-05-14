@@ -39,5 +39,5 @@ async function push({ store, queueName, items, testing }: { store: Store, queueN
   const key = constructQueueName(queueName, testing)
   const existingQueueItems = await store.get<unknown[]>(key, StoreScope.PROJECT) || []
   const updatedQueueItems = [...existingQueueItems, ...items]
-  await store.put(key, updatedQueueItems, StoreScope.PROJECT)
+  return await store.put(key, updatedQueueItems, StoreScope.PROJECT)
 }
