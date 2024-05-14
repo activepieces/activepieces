@@ -30,7 +30,7 @@ export const notion = createPiece({
 	description: 'The all-in-one workspace',
 	logoUrl: 'https://cdn.activepieces.com/pieces/notion.png',
 	categories: [PieceCategory.PRODUCTIVITY],
-	minimumSupportedRelease: '0.5.0',
+	minimumSupportedRelease: '0.26.2',
 	authors: ['ShayPunter', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
 	auth: notionAuth,
 	actions: [

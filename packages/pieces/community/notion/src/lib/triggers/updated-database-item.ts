@@ -180,28 +180,7 @@ const getResponse = async (
     results.push(...response.results);
   } while (hasMore);
 
-  console.log(JSON.stringify(results));
-
   return results;
-  // return notion.databases.query({
-  //   start_cursor:
-  //   database_id,
-  //   filter:
-  //     startDate == null
-  //       ? undefined
-  //       : {
-  //           timestamp: 'last_edited_time',
-  //           last_edited_time: {
-  //             after: startDate,
-  //           },
-  //         },
-  //   sorts: [
-  //     {
-  //       timestamp: 'last_edited_time',
-  //       direction: startDate == null ? 'descending' : 'ascending',
-  //     },
-  //   ],
-  // });
 };
 
 export function hashObject(obj: Record<string, unknown>): string {
