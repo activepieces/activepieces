@@ -44,6 +44,7 @@ export class IssuesTableComponent implements OnInit {
   displayedColumns: string[] = ['name', 'count', 'lastOccurrence', 'action'];
   resolve$: Observable<unknown>;
   refresh$ = new BehaviorSubject<boolean>(true);
+  readonly betaNote = $localize`<b> Note: </b> This feature is in <b>BETA</b>, and it will only be free during the <b>BETA</b> period.`;
   @Output()
   issueClicked = new EventEmitter<{ issue: PopulatedIssue }>();
   constructor(
@@ -100,6 +101,7 @@ export class IssuesTableComponent implements OnInit {
         tap((resolved) => {
           if (resolved) {
             this.refresh$.next(true);
+            this.issuesService.refreshIssuesCount();
           }
         })
       );

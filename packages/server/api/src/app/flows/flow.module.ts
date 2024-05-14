@@ -23,7 +23,6 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
                 projectId: principal.projectId,
                 flowVersionId: data.flowVersionId,
             })
-
             socket.emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, flowRun)
             const eventEmitter = engineResponseWatcher.listen(flowRun.id)
             eventEmitter.on(async (data) => {

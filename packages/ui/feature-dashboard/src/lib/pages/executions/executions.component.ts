@@ -16,6 +16,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 import { PopulatedIssue } from '@activepieces/ee-shared';
 import { FlowRunStatus } from '@activepieces/shared';
+import { IssuesService } from '../../services/issues.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-executions',
@@ -46,6 +48,21 @@ import { FlowRunStatus } from '@activepieces/shared';
         </mat-tab>
 
         <mat-tab i18n-label label="Issues">
+          <ng-template matTabLabel class="ap-flex ap-items-center">
+            <div class="ap-flex ap-gap-1 ap-items-center">
+              <div class="category-label" i18n>Issues</div>
+              @if(isThereAnIssue$ | async){
+              <svg-icon
+                [applyClass]="true"
+                class="ap-fill-danger"
+                [svgStyle]="{ width: '14px', height: '14px' }"
+                src="assets/img/custom/notification_important.svg"
+              >
+              </svg-icon>
+              }
+            </div>
+          </ng-template>
+
           <div class="ap-mt-1">
             <app-issues-table
               (issueClicked)="issueClicked($event.issue)"
@@ -65,7 +82,12 @@ export class ExecutionsComponent
   @ViewChild('tabs') tabGroupView?: MatTabGroup;
   @ViewChild('runsTable') runsTable?: RunsTableComponent;
   @ViewChild('IssuesTable') IssuesTable?: IssuesTableComponent;
-  constructor(router: Router, route: ActivatedRoute) {
+  isThereAnIssue$: Observable<boolean>;
+  constructor(
+    router: Router,
+    route: ActivatedRoute,
+    private issuesService: IssuesService
+  ) {
     super(
       [
         {
@@ -78,6 +100,8 @@ export class ExecutionsComponent
       router,
       route
     );
+    this.isThereAnIssue$ =
+      this.issuesService.shouldShowIssuesNotificationIconInSidebarObs$;
   }
   ngAfterViewInit(): void {
     this.tabGroup = this.tabGroupView;
