@@ -6,7 +6,11 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
+import {
+  DropdownOption,
+  DropdownState,
+  PropertyType,
+} from '@activepieces/pieces-framework';
 import {
   DropdownSearchControlComponent,
   UiCommonModule,
@@ -14,7 +18,7 @@ import {
 import { DynamicInputToggleComponent } from '../dynamic-input-toggle/dynamic-input-toggle.component';
 import deepEqual from 'deep-equal';
 import { DropdownSelectedValuesPipe } from '../../pipes/dropdown-selected-values.pipe';
-import { Observable, startWith } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { DropdownLabelsJoinerPipe } from '../../pipes/dropdown-labels-joiner.pipe';
 import { FormControl, UntypedFormControl } from '@angular/forms';
@@ -40,14 +44,23 @@ export class RefreshableDropdownControlComponent
   @Input({ required: true }) passedFormControl: UntypedFormControl;
   searchControl: FormControl<string>;
   options$?: Observable<DropdownState<unknown>>;
+  /**Because options are dynamic and they might not be there when the user searches, this helps us show a value */
+  selectedItemsCache$ = new BehaviorSubject<DropdownOption<unknown>[]>([]);
+  invalidateCache$?: Observable<void>;
   readonly PropertyType = PropertyType;
+  readonly loadingText = $localize`Loading...`;
   constructor(piecetaDataService: PieceMetadataService) {
     const searchControl = new FormControl('', { nonNullable: true });
-    super(piecetaDataService, searchControl.valueChanges.pipe(startWith('')));
+    super(piecetaDataService, searchControl.valueChanges);
     this.searchControl = searchControl;
   }
   ngOnInit() {
     this.options$ = this.createRefreshers();
+    this.invalidateCache$ = this.passedFormControl.valueChanges.pipe(
+      tap(() => {
+        this.selectedItemsCache$.next([]);
+      })
+    );
   }
   dropdownCompareWithFunction(opt: unknown, formControlValue: string) {
     return (
