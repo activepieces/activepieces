@@ -11,6 +11,7 @@
     #matSelect
     [matTooltip]="property.description || ''"
     [formControl]="passedFormControl"
+    (opened)="dropdownSearch.focus()"
     [compareWith]="dropdownCompareWithFunction"
     [multiple]="property.type === PropertyType.MULTI_SELECT_DROPDOWN"
   >
