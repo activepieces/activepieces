@@ -5,7 +5,10 @@ import {
   ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UiCommonModule } from '@activepieces/ui/common';
+import {
+  UiCommonModule,
+  executionsPageFragments,
+} from '@activepieces/ui/common';
 import { RunsTableComponent } from '../../components/runs-table/runs-table.component';
 import { IssuesTableComponent } from '../../components/issues-table/issues-table.component';
 import { TabsPageCoreComponent } from '../../components/tabs-page-core/tabs-page-core.component';
@@ -66,10 +69,10 @@ export class ExecutionsComponent
     super(
       [
         {
-          fragmentName: 'Runs',
+          fragmentName: executionsPageFragments.Runs,
         },
         {
-          fragmentName: 'Issues',
+          fragmentName: executionsPageFragments.Issues,
         },
       ],
       router,
@@ -85,7 +88,6 @@ export class ExecutionsComponent
       console.warn('tab index out of bounds');
       return;
     }
-
     if (
       this.route.snapshot.fragment !==
       this.tabIndexFragmentMap[event.index].fragmentName
@@ -103,7 +105,7 @@ export class ExecutionsComponent
 
   issueClicked(issue: PopulatedIssue) {
     const runsTabIndex = this.tabIndexFragmentMap.findIndex(
-      (i) => i.fragmentName === 'Runs'
+      (i) => i.fragmentName === executionsPageFragments.Runs
     );
     if (this.tabGroup) {
       this.tabGroup.selectedIndex = runsTabIndex;

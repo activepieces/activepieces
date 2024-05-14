@@ -45,6 +45,7 @@ import {
   ApDatePipe,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
+  executionsPageFragments,
 } from '@activepieces/ui/common';
 import { FormControl, FormGroup } from '@angular/forms';
 import { RunsService } from '../../services/runs.service';
@@ -178,30 +179,36 @@ export class RunsTableComponent implements OnInit {
         const createdAfter = new Date(result.date.start);
         const createdBefore = new Date(result.date.end);
         createdBefore.setHours(23, 59, 59, 999);
-        this.navigationService.navigate({
-          route: ['executions'],
-          openInNewWindow: false,
-          extras: {
-            fragment: 'Runs',
-            queryParams: {
-              [FLOW_QUERY_PARAM]:
-                result.flowId === this.allOptionValue
-                  ? undefined
-                  : result.flowId,
-              [STATUS_QUERY_PARAM]:
-                result.status === this.allOptionValue
-                  ? undefined
-                  : result.status,
-              [DATE_RANGE_START_QUERY_PARAM]: result.date.start
-                ? createdAfter.toISOString()
-                : undefined,
-              [DATE_RANGE_END_QUERY_PARAM]: result.date.end
-                ? createdBefore.toISOString()
-                : undefined,
+        if (
+          this.activatedRoute.snapshot.fragment ===
+            executionsPageFragments.Runs ||
+          this.activatedRoute.snapshot.fragment === null
+        ) {
+          this.navigationService.navigate({
+            route: ['executions'],
+            openInNewWindow: false,
+            extras: {
+              fragment: executionsPageFragments.Runs,
+              queryParams: {
+                [FLOW_QUERY_PARAM]:
+                  result.flowId === this.allOptionValue
+                    ? undefined
+                    : result.flowId,
+                [STATUS_QUERY_PARAM]:
+                  result.status === this.allOptionValue
+                    ? undefined
+                    : result.status,
+                [DATE_RANGE_START_QUERY_PARAM]: result.date.start
+                  ? createdAfter.toISOString()
+                  : undefined,
+                [DATE_RANGE_END_QUERY_PARAM]: result.date.end
+                  ? createdBefore.toISOString()
+                  : undefined,
+              },
+              queryParamsHandling: 'merge',
             },
-            queryParamsHandling: 'merge',
-          },
-        });
+          });
+        }
       }),
       map(() => undefined)
     );

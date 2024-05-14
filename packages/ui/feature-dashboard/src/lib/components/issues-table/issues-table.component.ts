@@ -21,6 +21,7 @@ import {
   NavigationService,
   STATUS_QUERY_PARAM,
   UiCommonModule,
+  executionsPageFragments,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { PopulatedIssue } from '@activepieces/ee-shared';
@@ -70,7 +71,7 @@ export class IssuesTableComponent implements OnInit {
       this.navigationService.navigate({
         route: ['/executions'],
         extras: {
-          fragment: 'Runs',
+          fragment: executionsPageFragments.Runs,
           queryParams: {
             [FLOW_QUERY_PARAM]: issue.flowId,
             [STATUS_QUERY_PARAM]: FlowRunStatus.FAILED,
