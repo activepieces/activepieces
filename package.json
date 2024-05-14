@@ -82,7 +82,7 @@
     "axios": "1.6.7",
     "bcrypt": "5.1.1",
     "buffer": "6.0.3",
-    "bullmq": "5.3.3",
+    "bullmq": "5.4.2",
     "cheerio": "1.0.0-rc.12",
     "clarifai-nodejs-grpc": "9.7.0",
     "cli-table3": "0.6.3",
