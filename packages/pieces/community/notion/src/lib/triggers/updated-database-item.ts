@@ -7,13 +7,11 @@ import {
   createTrigger,
   TriggerStrategy,
   OAuth2PropertyValue,
-  DEDUPE_KEY_PROPERTY,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../..';
-import crypto from 'crypto';
 
 export const updatedDatabaseItem = createTrigger({
   auth: notionAuth,
@@ -122,19 +120,29 @@ const polling: Polling<
   OAuth2PropertyValue,
   { database_id: string | undefined }
 > = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+  strategy: DedupeStrategy.LAST_ITEM,
+  items: async ({ auth, propsValue, lastItemId }) => {
+    const lastItem = lastItemId as string;
+    let lastUpdatedDate: string | null;
+
+    if (lastItem) {
+      const lastUpdatedEpochMS = Number(lastItem.split('|')[1]);
+      lastUpdatedDate = dayjs(lastUpdatedEpochMS).toISOString();
+    } else {
+      lastUpdatedDate = lastItem;
+    }
+
     const items = await getResponse(
       auth,
       propsValue.database_id!,
-      lastFetchEpochMS === 0 ? null : dayjs(lastFetchEpochMS).toISOString()
+      lastUpdatedDate
     );
+
     return items.map((item: any) => {
-      const object = item as { last_edited_time: string };
+      const object = item as { last_edited_time: string; id: string };
       return {
-        epochMilliSeconds: dayjs(object.last_edited_time).valueOf(),
+        id: object.id + '|' + dayjs(object.last_edited_time).valueOf(),
         data: item,
-        [DEDUPE_KEY_PROPERTY]: hashObject(item),
       };
     });
   },
@@ -163,13 +171,13 @@ const getResponse = async (
           : {
               timestamp: 'last_edited_time',
               last_edited_time: {
-                on_or_after: startDate,
+                after: startDate,
               },
             },
       sorts: [
         {
           timestamp: 'last_edited_time',
-          direction: startDate == null ? 'descending' : 'ascending',
+          direction: 'descending',
         },
       ],
     });
@@ -182,9 +190,3 @@ const getResponse = async (
 
   return results;
 };
-
-export function hashObject(obj: Record<string, unknown>): string {
-  const hash = crypto.createHash('sha256');
-  hash.update(JSON.stringify(obj));
-  return hash.digest('hex');
-}
