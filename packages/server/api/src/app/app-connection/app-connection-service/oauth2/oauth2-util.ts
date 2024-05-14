@@ -17,7 +17,7 @@ export const oauth2Util = {
     isExpired,
     isUserError,
     getOAuth2TokenUrl,
-    removeRefreshTokenAndClientSecret
+    removeRefreshTokenAndClientSecret,
 }
 
 function removeRefreshTokenAndClientSecret(connection: AppConnection): AppConnection {
