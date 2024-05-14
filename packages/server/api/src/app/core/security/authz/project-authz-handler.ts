@@ -11,7 +11,7 @@ export class ProjectAuthzHandler extends BaseSecurityHandler {
         '/v1/users/projects/:projectId/token',
         '/v1/webhooks',
         '/v1/webhooks/:flowId',
-        '/v1/webhooks/:flowId/simulate',
+        '/v1/webhooks/:flowId/test',
         '/v1/webhooks/:flowId/sync',
     ]
 

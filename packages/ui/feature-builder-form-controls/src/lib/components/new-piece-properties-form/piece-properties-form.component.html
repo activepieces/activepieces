@@ -1,6 +1,6 @@
 <form [formGroup]="form" class="ap-flex ap-flex-col">
   @for (
-    property of sortedPropertiesByRequired | objectToArray;
+    property of propertiesMap | objectToArray;
     track property.key
   ) {
     @if (
@@ -179,6 +179,7 @@
         @case (PropertyType.MARKDOWN) {
           @if (property.value.description) {
             <ap-markdown
+            [fullWidth]="true"
               [data]="
                 property.value.description
                   | replaceMarkdownConsts

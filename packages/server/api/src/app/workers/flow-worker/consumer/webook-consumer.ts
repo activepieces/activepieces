@@ -3,7 +3,7 @@ import { flowService } from '../../../flows/flow/flow.service'
 import { webhookService } from '../../../webhooks/webhook-service'
 import { EngineHttpResponse, engineResponseWatcher } from '../engine-response-watcher'
 import { WebhookJobData } from '../job-data'
-import { isNil } from '@activepieces/shared'
+import { FlowStatus, isNil } from '@activepieces/shared'
 
 export const webhookConsumer = {
     async consumeWebhook(data: WebhookJobData): Promise<void> {
@@ -12,6 +12,14 @@ export const webhookConsumer = {
         if (isNil(flow)) {
             await stopAndReply(data, {
                 status: StatusCodes.GONE,
+                body: {},
+                headers: {},
+            })
+            return
+        }
+        if (flow.status !== FlowStatus.ENABLED && !simulate) {
+            await stopAndReply(data, {
+                status: StatusCodes.NOT_FOUND,
                 body: {},
                 headers: {},
             })
@@ -51,7 +59,7 @@ export const webhookConsumer = {
             return
         }
         const firstRun = runs[0]
-        const response = await engineResponseWatcher.listen(firstRun.id, true)
+        const response = await engineResponseWatcher.oneTimeListener(firstRun.id, true)
         await stopAndReply(data, response)
     },
 

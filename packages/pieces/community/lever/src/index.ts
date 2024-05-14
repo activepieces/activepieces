@@ -3,6 +3,8 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { getOpportunity } from './lib/actions/get-opportunity';
 import { updateOpportunityStage } from './lib/actions/update-opportunity-stage';
 import { listOpportunityForms } from './lib/actions/list-opportunity-forms';
+import { listOpportunityFeedback } from './lib/actions/list-opportunity-feedback';
+import { addFeedbackToOpportunity } from './lib/actions/add-feedback-to-opportunity';
 
 export const LEVER_BASE_URL = 'https://api.lever.co/v1';
 
@@ -29,6 +31,8 @@ export const lever = createPiece({
     getOpportunity,
     updateOpportunityStage,
     listOpportunityForms,
+    listOpportunityFeedback,
+    addFeedbackToOpportunity,
     createCustomApiCallAction({
       baseUrl: () => {
         return LEVER_BASE_URL;
