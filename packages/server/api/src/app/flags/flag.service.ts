@@ -1,4 +1,3 @@
-import fs from 'fs/promises'
 import axios from 'axios'
 import { databaseConnection } from '../database/database-connection'
 import { getEdition, getSupportedAppWebhooks } from '../helper/secret-helper'

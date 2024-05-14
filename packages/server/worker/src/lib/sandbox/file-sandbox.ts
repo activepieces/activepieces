@@ -126,6 +126,11 @@ function createWorker(enginePath: string,
                 operationType,
                 operation,
             },
+            env: {
+                NODE_OPTIONS: '--enable-source-maps',
+                AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
+                AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
+            },
             resourceLimits: {
                 maxOldGenerationSizeMb: memoryLimit,
                 maxYoungGenerationSizeMb: memoryLimit,
