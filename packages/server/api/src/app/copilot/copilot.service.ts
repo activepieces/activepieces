@@ -4,10 +4,15 @@ import {
     ChatCompletionTool,
 } from 'openai/resources'
 import { CopilotInstanceTypes, logger, system, SystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { assertNotNullOrUndefined, GenerateHttpRequestDetailsOpenAIResponse, OpenAIRole } from '@activepieces/shared'
 
 type GenerateCodeParams = {
     prompt: string
+}
+
+type generateHttpRequestDetailsParams = {
+    prompt: string
+    docsText?: string
 }
 
 
@@ -46,7 +51,7 @@ export const copilotService = {
             messages: [
                 ...this.createCodeMessageContext(),
                 {
-                    role: 'user',
+                    role: OpenAIRole.USER,
                     content: prompt,
                 },
             ],
@@ -123,7 +128,7 @@ export const copilotService = {
     createCodeMessageContext(): ChatCompletionMessageParam[] {
         return [
             {
-                role: 'user',
+                role: OpenAIRole.USER,
                 content: `
 # INTRODUCTION
 You are a TypeScript coding bot that helps users turn natural language into useable code, for an open-source automation platform called Activepieces.
@@ -137,12 +142,12 @@ You will use import to import any libraries you need. You will be penalized for 
                 `,
             },
             {
-                role: 'user',
+                role: OpenAIRole.USER,
                 content:
                     'I want code that will combine 2 arrays and only return the unique elements',
             },
             {
-                role: 'assistant',
+                role: OpenAIRole.ASSISTANT,
                 content: null,
                 function_call: {
                     name: 'generate_code',
@@ -151,12 +156,12 @@ You will use import to import any libraries you need. You will be penalized for 
                 },
             },
             {
-                role: 'user',
+                role: OpenAIRole.USER,
                 content:
                     'Write me a piece of code that splits the user\'s first name from his last name in a full name string received in inputs.',
             },
             {
-                role: 'assistant',
+                role: OpenAIRole.ASSISTANT,
                 content: null,
                 function_call: {
                     name: 'generate_code',
@@ -165,12 +170,12 @@ You will use import to import any libraries you need. You will be penalized for 
                 },
             },
             {
-                role: 'user',
+                role: OpenAIRole.USER,
                 content:
                     'from an array of objects, take the created_at property for each object and print it as an ISO string',
             },
             {
-                role: 'assistant',
+                role: OpenAIRole.ASSISTANT,
                 content: null,
                 function_call: {
                     name: 'generate_code',
@@ -179,11 +184,11 @@ You will use import to import any libraries you need. You will be penalized for 
                 },
             },
             {
-                role: 'user',
+                role: OpenAIRole.USER,
                 content: 'Hi',
             },
             {
-                role: 'assistant',
+                role: OpenAIRole.ASSISTANT,
                 content: null,
                 function_call: {
                     name: 'generate_code',
@@ -192,11 +197,11 @@ You will use import to import any libraries you need. You will be penalized for 
                 },
             },
             {
-                role: 'user',
+                role: OpenAIRole.USER,
                 content: 'How are you?',
             },
             {
-                role: 'assistant',
+                role: OpenAIRole.ASSISTANT,
                 content: null,
                 function_call: {
                     name: 'generate_code',
@@ -205,18 +210,98 @@ You will use import to import any libraries you need. You will be penalized for 
                 },
             },
             {
-                role: 'user',
+                role: OpenAIRole.USER,
                 content:
                     'Using axios, send a GET request to https://cloud.activepieces.com/api/v1/pieces',
             },
             {
-                role: 'assistant',
+                role: OpenAIRole.ASSISTANT,
                 content: null,
                 function_call: {
                     name: 'generate_code',
                     arguments:
                         '{ "code": "import axios from \'axios\'***NEW_LINE***export const code = async (inputs) => {***NEW_LINE***  const response = await axios.get(\'https://cloud.activepieces.com/api/v1/pieces\');***NEW_LINE***  return response.data;***NEW_LINE***};", "inputs": [], "packages": ["axios"] }',
                 },
+            },
+        ]
+    },
+
+    async generateHttpRequestDetails({ prompt, docsText }: generateHttpRequestDetailsParams ): Promise<GenerateHttpRequestDetailsOpenAIResponse> {
+        logger.debug({ prompt }, '[CopilotService#generateHttpRequestDetails] Prompting...')
+        const content = docsText ? `${prompt} Use the following docs: ${docsText}` : prompt
+        const result = await getOpenAI().chat.completions.create({
+            model: 'gpt-3.5-turbo',
+            response_format: {
+                type: 'json_object',
+            },
+            messages: [
+                ...this.createHttpRequestDetailsMessageContext(),
+                {
+                    role: OpenAIRole.USER,
+                    content,
+                },
+            ],
+        })
+        const requestDetails = result.choices[0].message.content
+        assertNotNullOrUndefined(
+            requestDetails,
+            'OpenAIHttpRequestDetailsResponse',
+        )
+        logger.debug(
+            { response: requestDetails },
+            '[CopilotService#generateHttpRequestDetails] Response received...',
+        )
+        return JSON.parse(requestDetails)
+    },
+      
+    createHttpRequestDetailsMessageContext(): ChatCompletionMessageParam[] {
+        return [
+            {
+                role: OpenAIRole.SYSTEM,
+                content: 
+            `# INTRODUCTION
+            You are a bot that helps users turn prompts which can include curl requests into details of http API requests.
+      
+            # RESPONSE FORMAT
+            You will not respond to any messages that require a conversational answer.
+            You will not elaborate.
+            You MUST respond ONLY with a json object containing the url of type string, a method which is a string that can only be one of the following: GET, POST, PUT, PATCH, DELETE. and headers object containing key-value pairs of strings, queryParams object containing key-value pairs of strings, and a body object containing key-value pairs of strings, and a body_type string which can only be one of the following: json, form_data raw. You will follow this format with the same names and types.
+            The url and method are required and must always be included in the response, the body, queryParams, and body_type are optional and should be included only if they are required for the request to work.
+            body_type is required if the body is included in the response.
+            headers should be included only when needed, such as when an Authorization header is required.
+            
+            # EXAMPLES OF RESPONSES
+            {
+              "url": "https://api.spotify.com/v1/artists/0TnOYISbd1XYRBk9myaseg",
+              "method": "GET",
+              "headers": {
+                "Authorization": "Bearer your_token"
+              }
+            }
+      
+            {
+              "url": "https://api.openweathermap.org/data/3.0/onecall",
+              "method": "GET",
+              queryParams: {
+                "lat": "33.44",
+                "lon": "-94.04",
+                "exclude": "hourly,daily",
+                "appid": "your_api_key"
+              }
+            }
+      
+            {
+              "url": "https://api.example.com/create-book",
+              "method": "POST",
+              "body": {
+                "name": "The Dark Forest",
+                "author": "Liu Cixin"
+              },
+              "body_type": "json"
+              "headers": {
+                "Authorization": "Bearer your_token"
+              }
+            }`,
             },
         ]
     },
