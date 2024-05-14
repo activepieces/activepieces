@@ -17,12 +17,6 @@ export const slackSendMessageAction = createAction({
   props: {
     info: slackInfo,
     channel: slackChannel,
-    threadTs: Property.ShortText({
-      displayName: 'Thread ts',
-      description:
-        'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.',
-      required: false,
-    }),
     text: Property.LongText({
       displayName: 'Message',
       description: 'The text of your message',
@@ -32,6 +26,12 @@ export const slackSendMessageAction = createAction({
     profilePicture,
     file: Property.File({
       displayName: 'Attachment',
+      required: false,
+    }),
+    threadTs: Property.ShortText({
+      displayName: 'Thread ts',
+      description:
+        'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.',
       required: false,
     }),
     blocks,

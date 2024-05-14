@@ -112,10 +112,14 @@ export const appConnectionService = {
 
         const appConnection = decryptConnection(encryptedAppConnection)
         if (!needRefresh(appConnection)) {
-            return appConnection
+            return oauth2Util.removeRefreshTokenAndClientSecret(appConnection)
         }
 
-        return lockAndRefreshConnection({ projectId, name })
+        const refreshedConnection = await lockAndRefreshConnection({ projectId, name })
+        if (isNil(refreshedConnection)) {
+            return null
+        }
+        return oauth2Util.removeRefreshTokenAndClientSecret(refreshedConnection)
     },
 
     async getOneOrThrow(params: GetOneParams): Promise<AppConnection> {

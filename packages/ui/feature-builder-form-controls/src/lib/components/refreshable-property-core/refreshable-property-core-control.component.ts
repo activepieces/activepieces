@@ -78,7 +78,7 @@ export class RefreshablePropertyCoreControlComponent {
     const singleTimeRefresher$ = of('singleTimeRefresher');
     return combineLatest({
       refreshers: refreshers$,
-      search: search$.pipe(startWith('')),
+      search: search$,
       singleTimeRefresher: singleTimeRefresher$,
     }).pipe(
       switchMap((res) => {
@@ -111,7 +111,13 @@ export class RefreshablePropertyCoreControlComponent {
     return this.property.type === PropertyType.DROPDOWN &&
       this.property.refreshOnSearch &&
       this.searchRefresher$
-      ? this.searchRefresher$
+      ? this.searchRefresher$.pipe(
+          startWith(''),
+          debounceTime(200),
+          tap(() => {
+            this.loading$.next(true);
+          })
+        )
       : of('');
   }
 
