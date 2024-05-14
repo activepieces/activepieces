@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
+  PlatformService,
   UiCommonModule,
   executionsPageFragments,
 } from '@activepieces/ui/common';
@@ -51,7 +52,8 @@ import { Observable } from 'rxjs';
           <ng-template matTabLabel class="ap-flex ap-items-center">
             <div class="ap-flex ap-gap-1 ap-items-center">
               <div class="category-label" i18n>Issues</div>
-              @if(isThereAnIssue$ | async){
+              @if((isIssuesDisabled$ | async) ===false) { @if(isThereAnIssue$ |
+              async){
               <svg-icon
                 [applyClass]="true"
                 class="ap-fill-danger"
@@ -59,13 +61,14 @@ import { Observable } from 'rxjs';
                 src="assets/img/custom/notification_important.svg"
               >
               </svg-icon>
-              }
+              } }
             </div>
           </ng-template>
 
           <div class="ap-mt-1">
             <app-issues-table
               (issueClicked)="issueClicked($event.issue)"
+              [isFeatureDisabled]="isIssuesDisabled$ | async | defaultTrue"
               #IssuesTable
             ></app-issues-table>
           </div>
@@ -83,10 +86,13 @@ export class ExecutionsComponent
   @ViewChild('runsTable') runsTable?: RunsTableComponent;
   @ViewChild('IssuesTable') IssuesTable?: IssuesTableComponent;
   isThereAnIssue$: Observable<boolean>;
+  isIssuesDisabled$: Observable<boolean>;
+
   constructor(
     router: Router,
     route: ActivatedRoute,
-    private issuesService: IssuesService
+    private issuesService: IssuesService,
+    private platformService: PlatformService
   ) {
     super(
       [
@@ -102,6 +108,7 @@ export class ExecutionsComponent
     );
     this.isThereAnIssue$ =
       this.issuesService.shouldShowIssuesNotificationIconInSidebarObs$;
+    this.isIssuesDisabled$ = this.platformService.issuesDisabled();
   }
   ngAfterViewInit(): void {
     this.tabGroup = this.tabGroupView;

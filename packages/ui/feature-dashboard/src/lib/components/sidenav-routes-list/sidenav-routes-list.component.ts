@@ -35,7 +35,6 @@ export class SidenavRoutesListComponent implements OnInit {
     this.embeddingService.getSkipLocationChange$();
 
   isVersionMatch$?: Observable<boolean>;
-
   readonly supportRoute: SideNavRoute = {
     caption: 'Support',
     icon: 'assets/img/custom/support.svg',

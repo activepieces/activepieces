@@ -11,7 +11,7 @@ import {
   FlagService,
   environment,
 } from '@activepieces/ui/common';
-import { Observable, combineLatest, map, switchMap, tap } from 'rxjs';
+import { Observable, combineLatest, map, of, switchMap, tap } from 'rxjs';
 import { Project } from '@activepieces/shared';
 import { Router } from '@angular/router';
 import { MatSidenav } from '@angular/material/sidenav';
@@ -59,12 +59,21 @@ export class DashboardContainerComponent {
         return !res.isInPlatformRoute && res.showPoweredByAp;
       })
     );
-    this.issuesCountCheck$ = this.issuesService.shouldRefreshIssuesCount$.pipe(
-      switchMap(() => {
-        return this.issuesService.getIssuesCount();
-      }),
-      tap((res) => {
-        this.issuesService.toggleShowIssuesNotificationIconInSidebar(res > 0);
+    this.issuesCountCheck$ = this.platformService.issuesDisabled().pipe(
+      switchMap((res) => {
+        if (!res) {
+          return this.issuesService.shouldRefreshIssuesCount$.pipe(
+            switchMap(() => {
+              return this.issuesService.getIssuesCount();
+            }),
+            tap((res) => {
+              this.issuesService.toggleShowIssuesNotificationIconInSidebar(
+                res > 0
+              );
+            })
+          );
+        }
+        return of(0);
       })
     );
     this.isEmbedded$ = this.embeddedService.getIsInEmbedding$();

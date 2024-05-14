@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
+  Input,
   OnInit,
   Output,
   ViewChild,
@@ -38,13 +39,16 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, UiCommonModule, ApDatePipe],
 })
 export class IssuesTableComponent implements OnInit {
+  @Input({ required: true })
+  isFeatureDisabled = true;
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator: ApPaginatorComponent;
   dataSource: IssuesDataSource;
   displayedColumns: string[] = ['name', 'count', 'lastOccurrence', 'action'];
   resolve$: Observable<unknown>;
   refresh$ = new BehaviorSubject<boolean>(true);
-  readonly betaNote = $localize`<b> Note: </b> This feature is in <b>BETA</b>, and it will only be free during the <b>BETA</b> period.`;
+  readonly upgradeNoteTitle = $localize`Unlock Issues`;
+  readonly upgradeNote = $localize`Track consecutive failed runs effortlessly`;
   @Output()
   issueClicked = new EventEmitter<{ issue: PopulatedIssue }>();
   constructor(

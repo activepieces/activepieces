@@ -13,7 +13,8 @@ export type FeatureKey =
   | 'API'
   | 'SSO'
   | 'AUDIT_LOGS'
-  | 'GIT_SYNC';
+  | 'GIT_SYNC'
+  | 'ISSUES';
 
 export interface Feature {
   label: string;
@@ -37,6 +38,10 @@ export const FEATURES: Feature[] = [
   {
     label: 'Team Collaboration via Git',
     key: 'GIT_SYNC',
+  },
+  {
+    label: 'Track Consecutive Failed Runs',
+    key: 'ISSUES',
   },
 ];
 
