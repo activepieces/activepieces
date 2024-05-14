@@ -4,18 +4,13 @@
   appearance="outline"
 >
   <mat-label>
-    @if (loading$ | async) {
-      Loading...
-    } @else {
-      {{ property.displayName }}
-    }
+    {{ property.displayName }}
   </mat-label>
 
   <mat-select
     #matSelect
     [matTooltip]="property.description || ''"
     [formControl]="passedFormControl"
-    (closed)="searchControl.setValue('')"
     [compareWith]="dropdownCompareWithFunction"
     [multiple]="property.type === PropertyType.MULTI_SELECT_DROPDOWN"
   >
@@ -23,16 +18,34 @@
       @if ((loading$ | async) === false) {
         @if (options$ | async; as state) {
           @if (
-            state.options | dropdownSelectedValues: passedFormControl | async;
+            state.options | dropdownSelectedValues: passedFormControl : selectedItemsCache$ | async;
             as selectedOptions
           ) {
             {{ selectedOptions | dropdownLabelsJoiner }}
           }
         }
       }
+      @else(){
+        @if(selectedItemsCache$ | async; as cache)
+        {
+          @if(cache.length > 0)
+          {
+            @if (
+              cache | dropdownSelectedValues: passedFormControl | async;
+              as selectedOptions
+            ) {
+              {{ selectedOptions | dropdownLabelsJoiner }}
+            }
+          }
+          @else() {
+            {{loadingText}}
+          }
+        }
+      }
     </mat-select-trigger>
 
     <ap-dropdown-search-control
+      #dropdownSearch
       [searchControl]="searchControl"
     ></ap-dropdown-search-control>
     @if (loading$ | async) {
@@ -41,6 +54,10 @@
           <ap-loading-icon> </ap-loading-icon>
         </div>
       </mat-option>
+     
+        <mat-option class="!ap-hidden" [value]="passedFormControl.value"> 
+          Loading...
+        </mat-option>
     } @else {
       @if (options$ | async; as state) {
         @if (
@@ -94,7 +111,7 @@
         <!-- Needed to make dropdown openable -->
         @for (
           item of state.options
-            | dropdownSelectedValues: passedFormControl
+            | dropdownSelectedValues: passedFormControl: selectedItemsCache$
             | async;
           track item
         ) {
@@ -102,12 +119,23 @@
             {{ item.label }}
           </mat-option>
         }
+       
       }
     }
 
     @if (options$ | async) {}
     @if (resetValueOnRefresherChange$ | async) {}
+    @if(invalidateCache$ | async) {}
     <!-- need at least 1 pre-existing option to open the select -->
     <mat-option class="!ap-hidden"></mat-option>
+
+    @if(selectedItemsCache$ | async; as cache)
+    { 
+      @for( c of cache; track c)
+      {
+        <mat-option [value]="c.value" class="!ap-hidden"> {{c.label}} </mat-option>
+      }
+
+    }
   </mat-select>
 </mat-form-field>
