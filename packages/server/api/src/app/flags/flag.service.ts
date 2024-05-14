@@ -238,10 +238,9 @@ export const flagService = {
         return `${trimmedFrontendUrl}/redirect`
     },
     async getCurrentRelease(): Promise<string> {
-        const packageJson = JSON.parse(await fs.readFile('package.json', 'utf8'))
+        const packageJson = await import('package.json')
         return packageJson.version
     },
-
     async getLatestRelease(): Promise<string> {
         try {
             const response = await axios.get<PackageJson>(
