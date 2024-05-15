@@ -1,11 +1,19 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { ExecutionType, PauseType, branchedPieceResponse } from '@activepieces/shared';
+
+const message = `
+For testing: try either of the links in the 'Create Approval Links' step.
+`;
 
 export const waitForApprovalLink = createAction({
   name: 'wait_for_approval',
   displayName: 'Wait for Approval',
   description: 'Pauses the flow and wait for the approval from the user',
-  props: {},
+  props: {
+    markdown: Property.MarkDown({
+      value: message
+    })
+  },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,
