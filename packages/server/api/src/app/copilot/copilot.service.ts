@@ -4,7 +4,7 @@ import {
     ChatCompletionTool,
 } from 'openai/resources'
 import { CopilotInstanceTypes, logger, system, SystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, GenerateHttpRequestDetailsOpenAIResponse, OpenAIRole } from '@activepieces/shared'
+import { assertNotNullOrUndefined, OpenAIRole } from '@activepieces/shared'
 
 type GenerateCodeParams = {
     prompt: string
@@ -226,14 +226,11 @@ You will use import to import any libraries you need. You will be penalized for 
         ]
     },
 
-    async generateHttpRequestDetails({ prompt, docsText }: generateHttpRequestDetailsParams ): Promise<GenerateHttpRequestDetailsOpenAIResponse> {
+    async generateHttpRequestDetails({ prompt, docsText }: generateHttpRequestDetailsParams ): Promise<string> {
         logger.debug({ prompt }, '[CopilotService#generateHttpRequestDetails] Prompting...')
         const content = docsText ? `${prompt} Use the following docs: ${docsText}` : prompt
         const result = await getOpenAI().chat.completions.create({
             model: 'gpt-3.5-turbo',
-            response_format: {
-                type: 'json_object',
-            },
             messages: [
                 ...this.createHttpRequestDetailsMessageContext(),
                 {
@@ -241,68 +238,127 @@ You will use import to import any libraries you need. You will be penalized for 
                     content,
                 },
             ],
+            tools: this.generateHttpRequestDetailsTools(),
+            tool_choice: {
+                type: 'function',
+                function: {
+                    name: 'generate_http_request_details',
+                },
+            },
+            temperature: 1,
         })
-        const requestDetails = result.choices[0].message.content
         assertNotNullOrUndefined(
-            requestDetails,
-            'OpenAIHttpRequestDetailsResponse',
+            result.choices[0].message.tool_calls,
+            'generateHttpRequestDetails',
         )
         logger.debug(
-            { response: requestDetails },
+            { response: result.choices[0].message.tool_calls[0] },
             '[CopilotService#generateHttpRequestDetails] Response received...',
         )
-        return JSON.parse(requestDetails)
+        return result.choices[0].message.tool_calls[0].function.arguments
     },
-      
+
     createHttpRequestDetailsMessageContext(): ChatCompletionMessageParam[] {
         return [
             {
-                role: OpenAIRole.SYSTEM,
+                role: OpenAIRole.USER,
                 content: 
-            `# INTRODUCTION
-            You are a bot that helps users turn prompts which can include curl requests into details of http API requests.
-      
-            # RESPONSE FORMAT
-            You will not respond to any messages that require a conversational answer.
-            You will not elaborate.
-            You MUST respond ONLY with a json object containing the url of type string, a method which is a string that can only be one of the following: GET, POST, PUT, PATCH, DELETE. and headers object containing key-value pairs of strings, queryParams object containing key-value pairs of strings, and a body object containing key-value pairs of strings, and a body_type string which can only be one of the following: json, form_data raw. You will follow this format with the same names and types.
-            The url and method are required and must always be included in the response, the body, queryParams, and body_type are optional and should be included only if they are required for the request to work.
-            body_type is required if the body is included in the response.
-            headers should be included only when needed, such as when an Authorization header is required.
-            
-            # EXAMPLES OF RESPONSES
+                `# INTRODUCTION
+                You are a bot that helps users turn prompts which can include curl requests into details of http API requests.
+        
+                # RESPONSE FORMAT
+                You will not respond to any messages that require a conversational answer.
+                You will not elaborate.
+                You MUST respond ONLY with a json object containing the url of type string, a method which is a string that can only be one of the following: GET, POST, PUT, PATCH, DELETE. and headers object containing key-value pairs of strings, queryParams object containing key-value pairs of strings, and a body object containing key-value pairs of strings, and a body_type string which can only be one of the following: json, form_data raw. You will follow this format with the same names and types.
+                The url and method are required and must always be included in the response, the body, queryParams, and body_type are optional and should be included only if they are required for the request to work.
+                body_type is required if the body is included in the response.
+                headers should be included only when needed, such as when an Authorization header is required.`,
+            },
             {
-              "url": "https://api.spotify.com/v1/artists/0TnOYISbd1XYRBk9myaseg",
-              "method": "GET",
-              "headers": {
-                "Authorization": "Bearer your_token"
-              }
-            }
-      
+                role: OpenAIRole.USER,
+                content:
+                    'I want to make a request to the Spotify API to get information about an artist. The artist ID is 0TnOYISbd1XYRBk9myaseg.',
+            },
             {
-              "url": "https://api.openweathermap.org/data/3.0/onecall",
-              "method": "GET",
-              queryParams: {
-                "lat": "33.44",
-                "lon": "-94.04",
-                "exclude": "hourly,daily",
-                "appid": "your_api_key"
-              }
-            }
-      
+                role: OpenAIRole.ASSISTANT,
+                content: null,
+                function_call: {
+                    name: 'generate_http_request_details',
+                    arguments:
+                        '{"url":"https://api.spotify.com/v1/artists/0TnOYISbd1XYRBk9myaseg","method":"GET","headers":{"Authorization":"Bearer your_token"}}',
+                },
+            },
             {
-              "url": "https://api.example.com/create-book",
-              "method": "POST",
-              "body": {
-                "name": "The Dark Forest",
-                "author": "Liu Cixin"
-              },
-              "body_type": "json"
-              "headers": {
-                "Authorization": "Bearer your_token"
-              }
-            }`,
+                role: OpenAIRole.USER,
+                content:
+                    'I want to make a request to the OpenWeatherMap API to get the current weather for a location with latitude 33.44 and longitude -94.04. I do not want the hourly and daily forecasts.',
+            },
+            {
+                role: OpenAIRole.ASSISTANT,
+                content: null,
+                function_call: {
+                    name: 'generate_http_request_details',
+                    arguments:
+                        '{"url":"https://api.openweathermap.org/data/3.0/onecall","method":"GET","queryParams":{"lat":"33.44","lon":"-94.04","exclude":"hourly,daily","appid":"your_api_key"}}',
+                },
+            },
+            {
+                role: OpenAIRole.USER,
+                content:
+                    'I want to create a tweet using the Twitter API. The content of the tweet should be: "Just discovered a great new coffee shop in town ☕️ #coffee"',
+            },
+            {
+                role: OpenAIRole.ASSISTANT,
+                content: null,
+                function_call: {
+                    name: 'generate_http_request_details',
+                    arguments:
+                    '{"url":"https://api.twitter.com/2/tweets","method":"POST","headers":{"Authorization":"Bearer your_bearer_token"},"body":{"text":"Just discovered a great new coffee shop in town ☕️ #coffee"}}',
+                },
             },
         ]
+    },
+
+    generateHttpRequestDetailsTools(): ChatCompletionTool[] {
+        const tools = [
+            {
+                type: 'function',
+                function: {
+                    name: 'generate_http_request_details',
+                    description: 'Write http API request details based on user prompt.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            url: {
+                                type: 'string',
+                                description: 'The url of the API endpoint to make the request to.',
+                            },
+                            method: {
+                                type: 'string',
+                                description: 'The HTTP method to use for the request. Can be one of GET, POST, PUT, PATCH, DELETE.',
+                            },
+                            headers: {
+                                type: 'object',
+                                description: 'The headers to include in the request. Key-value pairs of strings.',
+                            },
+                            queryParams: {
+                                type: 'object',
+                                description: 'The query parameters to include in the request. Key-value pairs of strings.',
+                            },
+                            body: {
+                                type: 'object',
+                                description: 'The body to include in the request. Key-value pairs of strings.',
+                            },
+                            body_type: {
+                                type: 'string',
+                                description: 'The type of the body. Can be one of json, form_data, raw.',
+                            },
+                        },
+                        required: ['url', 'method'],
+                    },
+                },
+            },
+        ]
+        return tools as ChatCompletionTool[]
     },
 }
