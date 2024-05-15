@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
+  EmbeddingService,
   PlatformService,
   UiCommonModule,
   executionsPageFragments,
@@ -18,7 +19,7 @@ import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 import { PopulatedIssue } from '@activepieces/ee-shared';
 import { FlowRunStatus } from '@activepieces/shared';
 import { IssuesService } from '../../services/issues.service';
-import { Observable } from 'rxjs';
+import { Observable, take } from 'rxjs';
 
 @Component({
   selector: 'app-executions',
@@ -32,6 +33,10 @@ import { Observable } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class=" ap-px-[30px] ap-pt-[50px]">
+      @if(isInEmbedding$ | async) {
+      <ap-page-title title="Runs" i18n-title></ap-page-title>
+      <app-runs-table #runsTable></app-runs-table>
+      } @else() {
       <ap-page-title title="Executions" i18n-title></ap-page-title>
       <mat-tab-group
         #tabs
@@ -74,6 +79,7 @@ import { Observable } from 'rxjs';
           </div>
         </mat-tab>
       </mat-tab-group>
+      }
     </div>
     @if(fragmentChanged$ | async){}
   `,
@@ -87,12 +93,14 @@ export class ExecutionsComponent
   @ViewChild('IssuesTable') IssuesTable?: IssuesTableComponent;
   isThereAnIssue$: Observable<boolean>;
   isIssuesDisabled$: Observable<boolean>;
+  isInEmbedding$: Observable<boolean>;
 
   constructor(
     router: Router,
     route: ActivatedRoute,
     private issuesService: IssuesService,
-    private platformService: PlatformService
+    private platformService: PlatformService,
+    private embeddingService: EmbeddingService
   ) {
     super(
       [
@@ -109,10 +117,15 @@ export class ExecutionsComponent
     this.isThereAnIssue$ =
       this.issuesService.shouldShowIssuesNotificationIconInSidebarObs$;
     this.isIssuesDisabled$ = this.platformService.issuesDisabled();
+    this.isInEmbedding$ = this.embeddingService
+      .getIsInEmbedding$()
+      .pipe(take(1));
   }
   ngAfterViewInit(): void {
-    this.tabGroup = this.tabGroupView;
-    this.afterViewInit();
+    if (!this.embeddingService.getIsInEmbedding()) {
+      this.tabGroup = this.tabGroupView;
+      this.afterViewInit();
+    }
   }
   override tabChanged(event: MatTabChangeEvent) {
     if (event.index < 0 || event.index >= this.tabIndexFragmentMap.length) {

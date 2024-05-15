@@ -46,6 +46,7 @@ import {
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
   executionsPageFragments,
+  EmbeddingService,
 } from '@activepieces/ui/common';
 import { FormControl, FormGroup } from '@angular/forms';
 import { RunsService } from '../../services/runs.service';
@@ -107,7 +108,8 @@ export class RunsTableComponent implements OnInit {
     private navigationService: NavigationService,
     private runsService: RunsService,
     private flowsService: FlowService,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private embeddingService: EmbeddingService
   ) {
     this.flowFilterControl.setValue(
       this.activatedRoute.snapshot.queryParamMap.get(FLOW_QUERY_PARAM) ||
@@ -188,7 +190,9 @@ export class RunsTableComponent implements OnInit {
             route: ['executions'],
             openInNewWindow: false,
             extras: {
-              fragment: executionsPageFragments.Runs,
+              fragment: this.embeddingService.getIsInEmbedding()
+                ? undefined
+                : executionsPageFragments.Runs,
               queryParams: {
                 [FLOW_QUERY_PARAM]:
                   result.flowId === this.allOptionValue
