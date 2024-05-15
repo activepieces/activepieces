@@ -14,8 +14,9 @@ import {
     PrincipalType,
     RetryFlowRequestBody,
     SeekPage,
-
-    SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+    SERVICE_KEY_SECURITY_OPENAPI,
+    stepRunEventEmitter, 
+} from '@activepieces/shared'
 
 const DEFAULT_PAGING_LIMIT = 10
 
@@ -65,6 +66,12 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
             },
             executionType: ExecutionType.RESUME,
         })
+    })
+
+    app.all('/test-run/requests/:requestId', TestRunRequest, async (req) => {
+        const queryParams = req.query as Record<string, string>
+        
+        stepRunEventEmitter.emit({ action: queryParams.action })
     })
 
     app.post('/:id/retry', RetryFlowRequest, async (req) => {
@@ -118,6 +125,17 @@ const ResumeFlowRunRequest = {
     schema: {
         params: Type.Object({
             id: ApId,
+            requestId: Type.String(),
+        }),
+    },
+}
+
+const TestRunRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        params: Type.Object({
             requestId: Type.String(),
         }),
     },
