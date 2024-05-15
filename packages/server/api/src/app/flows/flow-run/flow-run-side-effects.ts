@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { issuesService } from '../../ee/issues/issues-service'
 import { notifications } from '../../helper/notifications'
 import { flowQueue } from '../../workers/flow-worker/flow-queue'
 import {
@@ -17,9 +18,8 @@ import {
     FlowRunStatus,
     isNil,
     PauseType,
-    RunEnvironment
+    RunEnvironment,
 } from '@activepieces/shared'
-import { issuesService } from '../../ee/issues/issues-service'
 
 type StartParams = {
     flowRun: FlowRun

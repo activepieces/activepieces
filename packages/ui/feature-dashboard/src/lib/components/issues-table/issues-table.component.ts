@@ -21,12 +21,17 @@ import {
   LIMIT_QUERY_PARAM,
   NavigationService,
   STATUS_QUERY_PARAM,
+  TelemetryService,
   UiCommonModule,
   executionsPageFragments,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { PopulatedIssue } from '@activepieces/ee-shared';
-import { FlowRunStatus, spreadIfDefined } from '@activepieces/shared';
+import {
+  FlowRunStatus,
+  TelemetryEventName,
+  spreadIfDefined,
+} from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -39,6 +44,8 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, UiCommonModule, ApDatePipe],
 })
 export class IssuesTableComponent implements OnInit {
+
+  readonly betaNote = 'Note: This feature is in <strong>BETA</strong> and will only be <strong>Free</strong> during the <strong>BETA</strong> period.'
   @Input({ required: true })
   isFeatureDisabled = true;
   @ViewChild(ApPaginatorComponent, { static: true })
@@ -57,6 +64,7 @@ export class IssuesTableComponent implements OnInit {
     private route: ActivatedRoute,
     private navigationService: NavigationService,
     private matDialog: MatDialog,
+    private telemetryService: TelemetryService,
     private embeddingService: EmbeddingService
   ) {}
   ngOnInit(): void {
@@ -70,6 +78,12 @@ export class IssuesTableComponent implements OnInit {
   }
 
   openRuns(issue: PopulatedIssue, event: MouseEvent) {
+    this.telemetryService.capture({
+      name: TelemetryEventName.FLOW_ISSUE_CLICKED,
+      payload: {
+        flowId: issue.flowId,
+      },
+    });
     const openInNewWindow =
       event.ctrlKey || event.which == 2 || event.button == 4;
     if (openInNewWindow && !this.embeddingService.getState().isEmbedded) {

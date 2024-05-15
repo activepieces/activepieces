@@ -5,6 +5,7 @@
     featureKey="ISSUES"></ap-upgrade-note>
   }
   @else {
+    <ap-markdown [data]="betaNote"> </ap-markdown>
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="issues">
        

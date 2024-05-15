@@ -3,9 +3,11 @@ import { databaseConnection } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { telemetry } from '../../helper/telemetry.utils'
 import { IssueEntity } from './issues-entity'
 import { Issue, IssueStatus, ListIssuesParams, PopulatedIssue } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 const repo = databaseConnection.getRepository(IssueEntity)
 
 export const issuesService = {
@@ -32,27 +34,11 @@ export const issuesService = {
             status: IssueStatus.ONGOING,
         })
     },
-    async get(projectId: string, flowId: string): Promise<Issue | null> {
+    async get({ projectId, flowId }: { projectId: string, flowId: string }): Promise<Issue | null> {
         return repo.findOneBy({
             projectId,
             flowId,
         })
-    },
-
-    async getOrThrow(projectId: string, flowId: string): Promise<Issue> {
-        const issue = await repo.findOneBy({
-            projectId,
-            flowId,
-        })
-        if (isNil(issue)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    message: 'issue not found',
-                },
-            })
-        }
-        return issue
     },
     async list({ projectId, cursor, limit }: ListIssuesParams): Promise<SeekPage<PopulatedIssue>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
@@ -67,7 +53,7 @@ export const issuesService = {
         })
 
         const query = repo.createQueryBuilder(IssueEntity.options.name).where({
-            projectId, 
+            projectId,
             status: IssueStatus.ONGOING,
         })
 
@@ -83,7 +69,25 @@ export const issuesService = {
         return paginationHelper.createPage<PopulatedIssue>(populatedIssues, newCursor)
     },
 
-    async updateById(id: string, status: IssueStatus): Promise<void> {
+    async updateById({ projectId, id, status }: UpdateParams): Promise<void> {
+        const flowIssue = await repo.findOneBy({
+            id,
+            projectId,
+        })
+        if (isNil(flowIssue)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: 'issue not found',
+                },
+            })
+        }
+        rejectedPromiseHandler(telemetry.trackProject(flowIssue.projectId, {
+            name: TelemetryEventName.FLOW_ISSUE_RESOLVED,
+            payload: {
+                flowId: flowIssue.flowId,
+            },
+        }))
         await repo.update({
             id,
         }, {
@@ -92,8 +96,6 @@ export const issuesService = {
             count: 0,
         })
     },
-
-    /**Updates the status of the issue and updates the columns `count` and `lastOccurrence` accordingly. */ 
     async update({ projectId, flowId, status }: {
         projectId: ApId
         flowId: ApId
@@ -120,4 +122,10 @@ export const issuesService = {
             },
         })
     },
+}
+
+type UpdateParams = {
+    projectId: string
+    id: string
+    status: IssueStatus
 }
