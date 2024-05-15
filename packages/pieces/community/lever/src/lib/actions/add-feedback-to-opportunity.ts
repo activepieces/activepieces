@@ -12,7 +12,6 @@ import {
 import { LeverFieldMapping } from '../common';
 
 export const addFeedbackToOpportunity = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'addFeedbackToOpportunity',
   displayName: 'Add feedback to opportunity',
   description: 'Provide feedback to a candidate after an interview',
@@ -74,6 +73,7 @@ export const addFeedbackToOpportunity = createAction({
     }),
     panelId: Property.Dropdown({
       displayName: 'Interview panel',
+      description: 'If you select one, you must select an interview too',
       required: false,
       refreshers: ['auth', 'opportunityId'],
       options: async ({ auth, opportunityId }) => {
@@ -117,6 +117,7 @@ export const addFeedbackToOpportunity = createAction({
     }),
     interviewId: Property.Dropdown({
       displayName: 'Interview',
+      description: 'Mandatory is you select an interview panel',
       required: false,
       refreshers: ['auth', 'opportunityId', 'panelId'],
       options: async ({ auth, opportunityId, panelId }) => {
@@ -159,37 +160,85 @@ export const addFeedbackToOpportunity = createAction({
         };
       },
     }),
+    feedbackTemplateId: Property.Dropdown({
+      displayName: 'Feedback template',
+      description: 'Ignored if you select an interview panel and an interview',
+      required: false,
+      refreshers: ['auth'],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please connect first.',
+            options: [],
+          };
+        }
+
+        const response = await httpClient.sendRequest({
+          method: HttpMethod.GET,
+          url: `${LEVER_BASE_URL}/feedback_templates`,
+          authentication: {
+            type: AuthenticationType.BASIC,
+            username: (auth as LeverAuth).apiKey,
+            password: '',
+          },
+        });
+        return {
+          options: response.body.data.map(
+            (template: { id: string; text: string }) => {
+              return {
+                label: template.text,
+                value: template.id,
+              };
+            }
+          ),
+        };
+      },
+    }),
     feedbackFields: Property.DynamicProperties({
       displayName: 'Fields',
       required: true,
-      refreshers: ['auth', 'opportunityId', 'panelId', 'interviewId'],
-      props: async ({ auth, opportunityId, panelId, interviewId }) => {
-        if (!auth || !opportunityId || !panelId || !interviewId) {
+      refreshers: [
+        'auth',
+        'opportunityId',
+        'panelId',
+        'interviewId',
+        'feedbackTemplateId',
+      ],
+      props: async ({
+        auth,
+        opportunityId,
+        panelId,
+        interviewId,
+        feedbackTemplateId,
+      }) => {
+        if (
+          !auth ||
+          !opportunityId ||
+          !(feedbackTemplateId || (panelId && interviewId))
+        ) {
           return {
             disabled: true,
             placeholder:
-              'Please connect your Lever account first and select an interview',
+              'Please connect your Lever account first and select an interview or a feedback template',
             options: [],
           };
         }
         const fields: DynamicPropsValue = {};
+        const templateId =
+          panelId && interviewId
+            ? await getFeedbackTemplateForInterview(
+                opportunityId,
+                panelId,
+                interviewId,
+                auth as LeverAuth
+              )
+            : feedbackTemplateId;
+
         try {
-          const interviewResponse = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `${LEVER_BASE_URL}/opportunities/${opportunityId}/panels/${panelId}?include=interviews`,
-            authentication: {
-              type: AuthenticationType.BASIC,
-              username: (auth as LeverAuth).apiKey,
-              password: '',
-            },
-          });
-          const interview = interviewResponse.body.data.interviews.find(
-            (interview: { id: string }) =>
-              interview.id === (interviewId as unknown as string)
-          );
           const feedbackTemplateResponse = await httpClient.sendRequest({
             method: HttpMethod.GET,
-            url: `${LEVER_BASE_URL}/feedback_templates/${interview.feedbackTemplate}`,
+            url: `${LEVER_BASE_URL}/feedback_templates/${templateId}`,
             authentication: {
               type: AuthenticationType.BASIC,
               username: (auth as LeverAuth).apiKey,
@@ -222,23 +271,19 @@ export const addFeedbackToOpportunity = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const interviewResponse = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${LEVER_BASE_URL}/opportunities/${propsValue.opportunityId}/panels/${propsValue.panelId}?include=interviews`,
-      authentication: {
-        type: AuthenticationType.BASIC,
-        username: (auth as LeverAuth).apiKey,
-        password: '',
-      },
-    });
-    const interview = interviewResponse.body.data.interviews.find(
-      (interview: { id: string }) =>
-        interview.id === (propsValue.interviewId as unknown as string)
-    );
+    const templateId =
+      propsValue.panelId && propsValue.interviewId
+        ? await getFeedbackTemplateForInterview(
+            propsValue.opportunityId,
+            propsValue.panelId,
+            propsValue.interviewId,
+            auth as LeverAuth
+          )
+        : propsValue.feedbackTemplateId;
 
     const feedbackTemplateResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${LEVER_BASE_URL}/feedback_templates/${interview.feedbackTemplate}`,
+      url: `${LEVER_BASE_URL}/feedback_templates/${templateId}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: (auth as LeverAuth).apiKey,
@@ -257,7 +302,7 @@ export const addFeedbackToOpportunity = createAction({
     }, {});
 
     const payload = {
-      baseTemplateId: interview.feedbackTemplate,
+      baseTemplateId: templateId,
       panel: propsValue.panelId,
       interview: propsValue.interviewId,
       fieldValues: Object.entries(groupedValues).map(([fieldId, values]) => {
@@ -286,3 +331,25 @@ export const addFeedbackToOpportunity = createAction({
     return response.body.data;
   },
 });
+
+async function getFeedbackTemplateForInterview(
+  opportunityId: string | DynamicPropsValue,
+  panelId: string | DynamicPropsValue,
+  interviewId: string | DynamicPropsValue,
+  auth: LeverAuth
+) {
+  const interviewResponse = await httpClient.sendRequest({
+    method: HttpMethod.GET,
+    url: `${LEVER_BASE_URL}/opportunities/${opportunityId}/panels/${panelId}?include=interviews`,
+    authentication: {
+      type: AuthenticationType.BASIC,
+      username: auth.apiKey,
+      password: '',
+    },
+  });
+  const interview = interviewResponse.body.data.interviews.find(
+    (interview: { id: string }) =>
+      interview.id === (interviewId as unknown as string)
+  );
+  return interview.feedbackTemplate;
+}
