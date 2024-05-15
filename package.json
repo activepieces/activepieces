@@ -157,7 +157,7 @@
     "node-cron": "3.0.3",
     "nodemailer": "6.9.9",
     "object-sizeof": "2.6.3",
-    "openai": "4.17.5",
+    "openai": "4.47.1",
     "papaparse": "5.4.1",
     "pdf-parse": "1.1.1",
     "pdf-text-reader": "4.1.0",
