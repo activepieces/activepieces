@@ -1,7 +1,12 @@
 <div class="ap-w-full">
-  @if(isFeatureDisabled)
+  @if(!isFeatureDisabled)
   {
-    <ap-upgrade-note [insideTab]="true" [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote"
+    <ap-upgrade-note 
+    [insideTab]="true" 
+    [videoUrl]="'https://cdn.activepieces.com/videos/showcase/flow-issues.mp4'"
+    [featureNoteTitle]="upgradeNoteTitle" 
+    [featureNote]="upgradeNote"
+
     featureKey="ISSUES"></ap-upgrade-note>
   }
   @else {

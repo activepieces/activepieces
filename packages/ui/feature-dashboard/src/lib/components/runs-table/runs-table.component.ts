@@ -185,7 +185,7 @@ export class RunsTableComponent implements OnInit {
           this.activatedRoute.snapshot.fragment === null
         ) {
           this.navigationService.navigate({
-            route: ['executions'],
+            route: ['runs'],
             openInNewWindow: false,
             extras: {
               fragment: executionsPageFragments.Runs,

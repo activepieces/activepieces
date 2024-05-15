@@ -55,7 +55,7 @@ export class IssuesTableComponent implements OnInit {
   resolve$: Observable<unknown>;
   refresh$ = new BehaviorSubject<boolean>(true);
   readonly upgradeNoteTitle = $localize`Unlock Issues`;
-  readonly upgradeNote = $localize`Track consecutive failed runs effortlessly`;
+  readonly upgradeNote = $localize`Centralized issue tracking without digging through pages of flow runs.`;
   @Output()
   issueClicked = new EventEmitter<{ issue: PopulatedIssue }>();
   constructor(
@@ -66,7 +66,7 @@ export class IssuesTableComponent implements OnInit {
     private matDialog: MatDialog,
     private telemetryService: TelemetryService,
     private embeddingService: EmbeddingService
-  ) {}
+  ) { }
   ngOnInit(): void {
     this.dataSource = new IssuesDataSource(
       this.route.queryParams,

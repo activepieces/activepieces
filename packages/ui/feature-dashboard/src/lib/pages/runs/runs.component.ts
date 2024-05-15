@@ -32,7 +32,7 @@ import { Observable } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class=" ap-px-[30px] ap-pt-[50px]">
-      <ap-page-title title="Executions" i18n-title></ap-page-title>
+      <ap-page-title title="Runs" i18n-title></ap-page-title>
       <mat-tab-group
         #tabs
         (selectedTabChange)="tabChanged($event)"
@@ -42,7 +42,7 @@ import { Observable } from 'rxjs';
         mat-align-tabs="start"
         animationDuration="0"
       >
-        <mat-tab i18n-label label="Runs">
+        <mat-tab i18n-label label="All runs">
           <div class="ap-mt-1">
             <app-runs-table #runsTable></app-runs-table>
           </div>
@@ -78,7 +78,7 @@ import { Observable } from 'rxjs';
     @if(fragmentChanged$ | async){}
   `,
 })
-export class ExecutionsComponent
+export class RunsComponent
   extends TabsPageCoreComponent
   implements AfterViewInit
 {
