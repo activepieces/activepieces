@@ -23,7 +23,7 @@ export class WebSocketService {
     return {
       url: resolveSocketUrl(environment.apiUrl),
       options: {
-        transports: ['websocket', 'polling'],
+        transports: ['websocket'],
         auth: {
           token: this.authenticationService.getToken(),
         },
