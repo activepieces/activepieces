@@ -8,7 +8,7 @@
     #matSelect
     [matTooltip]="property.description || ''"
     [formControl]="passedFormControl"
-    (closed)="searchControl.setValue('')"
+    (opened)="search.focus()"
     [compareWith]="dropdownCompareWithFunction"
     [multiple]="property.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN"
   >
@@ -24,6 +24,7 @@
     </mat-select-trigger>
 
     <ap-dropdown-search-control
+      #search
       [searchControl]="searchControl"
     ></ap-dropdown-search-control>
 

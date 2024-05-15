@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  Input,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UiCommonModule } from '../../ui-common.module';
 import { FormControl } from '@angular/forms';
@@ -28,5 +34,10 @@ import { FormControl } from '@angular/forms';
   `,
 })
 export class DropdownSearchControlComponent {
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
   @Input({ required: true }) searchControl: FormControl<string>;
+
+  focus() {
+    this.searchInput?.nativeElement.focus();
+  }
 }
