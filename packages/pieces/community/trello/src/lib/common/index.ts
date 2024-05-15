@@ -62,7 +62,7 @@ export const trelloCommon = {
       if (!auth || !board_id) {
         return {
           disabled: true,
-          placeholder: 'connect your account first and select board',
+          placeholder: 'connect your account first and select a board',
           options: [],
         };
       }
@@ -73,8 +73,6 @@ export const trelloCommon = {
         basicAuthProperty.password,
         board_id as string
       );
-
-      console.log(lists);
 
       return {
         options: lists.map((list: { id: string; name: string }) => ({
@@ -93,7 +91,7 @@ export const trelloCommon = {
       if (!auth || !board_id) {
         return {
           disabled: true,
-          placeholder: 'connect your account first and select board',
+          placeholder: 'connect your account first and select a board',
           options: [],
         };
       }
@@ -104,12 +102,39 @@ export const trelloCommon = {
         board_id as string
       );
 
-      console.log(lists);
-
       return {
         options: lists.map((list: { id: string; name: string }) => ({
           value: list.id,
           label: list.name,
+        })),
+      };
+    },
+  }),
+  board_labels: Property.MultiSelectDropdown({
+    displayName: 'Labels',
+    description: 'Assign labels to the card',
+    required: false,
+    refreshers: ['board_id'],
+    options: async ({ auth, board_id }) => {
+      if (!auth || !board_id) {
+        return {
+          disabled: true,
+          placeholder: 'connect your account first and select a board',
+          options: [],
+        };
+      }
+
+      const basicAuthProperty = auth as BasicAuthPropertyValue;
+      const labels = await listBoardLabels( 
+        basicAuthProperty.username,
+        basicAuthProperty.password,
+        board_id as string
+      );
+
+      return {
+        options: labels.map((label: { id: string; name: string }) => ({
+          value: label.id,
+          label: label.name,
         })),
       };
     },
@@ -229,6 +254,33 @@ async function listBoardLists(apikey: string, token: string, board_id: string) {
     method: HttpMethod.GET,
     url:
       `${trelloCommon.baseUrl}boards/${board_id}/lists` +
+      `?key=` +
+      apikey +
+      `&token=` +
+      token,
+    headers: {
+      Accept: 'application/json',
+    },
+  };
+  const response = await httpClient.sendRequest<{ id: string; name: string }[]>(
+    request
+  );
+
+  return response.body;
+}
+
+/**
+ * Gets all the labels of a board
+ * @param apikey API Key
+ * @param token  API Token
+ * @param board_id Board to fetch labels from
+ * @returns JSON Array of labels
+ */
+async function listBoardLabels(apikey: string, token: string, board_id: string) {
+  const request: HttpRequest = {
+    method: HttpMethod.GET,
+    url:
+      `${trelloCommon.baseUrl}boards/${board_id}/labels` +
       `?key=` +
       apikey +
       `&token=` +
