@@ -120,17 +120,27 @@ const polling: Polling<
   OAuth2PropertyValue,
   { database_id: string | undefined }
 > = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+  strategy: DedupeStrategy.LAST_ITEM,
+  items: async ({ auth, propsValue, lastItemId }) => {
+    const lastItem = lastItemId as string;
+    let lastCreateddDate: string | null;
+
+    if (lastItem) {
+      const lastUpdatedEpochMS = Number(lastItem.split('|')[1]);
+      lastCreateddDate = dayjs(lastUpdatedEpochMS).toISOString();
+    } else {
+      lastCreateddDate = lastItem;
+    }
+
     const items = await getResponse(
       auth,
       propsValue.database_id!,
-      lastFetchEpochMS === 0 ? null : dayjs(lastFetchEpochMS).toISOString()
+      lastCreateddDate
     );
-    return items.results.map((item) => {
-      const object = item as { created_time: string };
+    return items.map((item: any) => {
+      const object = item as { created_time: string; id: string };
       return {
-        epochMilliSeconds: dayjs(object.created_time).valueOf(),
+        id: object.id + '|' + dayjs(object.created_time).valueOf(),
         data: item,
       };
     });
@@ -146,22 +156,36 @@ const getResponse = async (
     auth: authentication.access_token,
     notionVersion: '2022-02-22',
   });
-  return notion.databases.query({
-    database_id,
-    filter:
-      startDate == null
-        ? undefined
-        : {
-            timestamp: 'created_time',
-            created_time: {
-              after: startDate,
+  let cursor;
+  let hasMore = true;
+  const results = [];
+
+  do {
+    const response = await notion.databases.query({
+      start_cursor: cursor,
+      database_id,
+      filter:
+        startDate == null
+          ? undefined
+          : {
+              timestamp: 'created_time',
+              created_time: {
+                after: startDate,
+              },
             },
-          },
-    sorts: [
-      {
-        timestamp: 'created_time',
-        direction: startDate == null ? 'descending' : 'ascending',
-      },
-    ],
-  });
+      sorts: [
+        {
+          timestamp: 'created_time',
+          direction: startDate == null ? 'descending' : 'ascending',
+        },
+      ],
+    });
+
+    hasMore = response.has_more;
+    cursor = response.next_cursor ?? undefined;
+
+    results.push(...response.results);
+  } while (hasMore);
+
+  return results;
 };
