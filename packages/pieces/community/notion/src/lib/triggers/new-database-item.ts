@@ -170,13 +170,13 @@ const getResponse = async (
           : {
               timestamp: 'created_time',
               created_time: {
-                after: startDate,
+                on_or_after: startDate,
               },
             },
       sorts: [
         {
           timestamp: 'created_time',
-          direction: startDate == null ? 'descending' : 'ascending',
+          direction: 'descending',
         },
       ],
     });

@@ -171,7 +171,7 @@ const getResponse = async (
           : {
               timestamp: 'last_edited_time',
               last_edited_time: {
-                after: startDate,
+                on_or_after: startDate,
               },
             },
       sorts: [
