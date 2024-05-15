@@ -71,4 +71,10 @@ export class RefreshableDropdownControlComponent
   override refreshersChanged() {
     this.passedFormControl.setValue(undefined);
   }
+  refreshOptions() {
+    this.options$ = this.createRefreshers();
+    setTimeout(() => {
+      this.searchControl.setValue('');
+    }, 10);
+  }
 }
