@@ -1,67 +1,76 @@
 <div class="ap-w-full">
-  <div class="ap-min-h-[70%]">
-    <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="issues">
-     
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef i18n>Flow Name</th>
-        <td mat-cell *matCellDef="let issue">{{ issue.flowDisplayName }}</td>
-      </ng-container>
-
-
-      <ng-container matColumnDef="count">
-        <th mat-header-cell *matHeaderCellDef i18n>Description </th>
-        <td mat-cell *matCellDef="let issue" i18n>
-        @if(issue.count > 1)
-        {
-          This flow has failed {{ issue.count }} times
-        }
-        @else {
-          This flow has failed once
-        }
-        
-        </td>
-      </ng-container>
-
-
-
-      <ng-container matColumnDef="lastOccurrence">
-        <th mat-header-cell *matHeaderCellDef i18n>Last Occurrence</th>
-        <td mat-cell *matCellDef="let issues">{{ issues.lastOccurrence | apDate:'mdhms' }}</td>
-
-      </ng-container>
-
-      <ng-container matColumnDef="action">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let issue">
-
-          <div class="ap-flex ap-items-center">
-            <ap-button btnSize="small" btnStyle="flat" (click)="$event.stopPropagation(); resolve(issue)" >
-            <div class="ap-flex ap-gap-1 ap-items-center ap-justify-center" i18n>
-             <svg-icon src="assets/img/custom/check.svg" [applyClass]="true" class="ap-fill-white ap-w-[15px] ap-h-[15px]"></svg-icon>  Mark as Resolved
+  @if(isFeatureDisabled)
+  {
+    <ap-upgrade-note [insideTab]="true" [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote"
+    featureKey="ISSUES"></ap-upgrade-note>
+  }
+  @else {
+    <div class="ap-min-h-[70%]">
+      <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="issues">
+       
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef i18n>Flow Name</th>
+          <td mat-cell *matCellDef="let issue">{{ issue.flowDisplayName }}</td>
+        </ng-container>
+  
+  
+        <ng-container matColumnDef="count">
+          <th mat-header-cell *matHeaderCellDef i18n>Description </th>
+          <td mat-cell *matCellDef="let issue" i18n>
+          @if(issue.count > 1)
+          {
+            This flow has failed {{ issue.count }} times
+          }
+          @else {
+            This flow has failed once
+          }
+          
+          </td>
+        </ng-container>
+  
+  
+  
+        <ng-container matColumnDef="lastOccurrence">
+          <th mat-header-cell *matHeaderCellDef i18n>Last Occurrence</th>
+          <td mat-cell *matCellDef="let issues">{{ issues.lastOccurrence | apDate:'mdhms' }}</td>
+  
+        </ng-container>
+  
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let issue">
+  
+            <div class="ap-flex ap-items-center">
+              <ap-button btnSize="small" btnStyle="flat" (click)="$event.stopPropagation(); resolve(issue)" >
+              <div class="ap-flex ap-gap-1 ap-items-center ap-justify-center" i18n>
+               <svg-icon src="assets/img/custom/check.svg" [applyClass]="true" class="ap-fill-white ap-w-[15px] ap-h-[15px]"></svg-icon>  Mark as Resolved
+              </div>
+              </ap-button>
             </div>
-            </ap-button>
-          </div>
-        </td>
+          </td>
+        </ng-container>
+  
+  
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row [class.ap-hidden]="dataSource.isLoading$ | async" class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openRuns(row, $event)"
+        (auxclick)="openRuns(row, $event)" *matRowDef="let row; columns: displayedColumns">
+        </tr>
+      </table>
+      <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
+        <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
+          <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
+          </ap-loading-icon>
+        </div>
       </ng-container>
+      <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
+        <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-py-8" i18n>
+          No issues present
+        </div>
+      </ng-container>
+    </div>
+  }
 
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row [class.ap-hidden]="dataSource.isLoading$ | async" class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openRuns(row, $event)"
-      (auxclick)="openRuns(row, $event)" *matRowDef="let row; columns: displayedColumns">
-      </tr>
-    </table>
-    <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
-      <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
-        <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
-        </ap-loading-icon>
-      </div>
-    </ng-container>
-    <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
-      <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-py-8" i18n>
-        No issues present
-      </div>
-    </ng-container>
-  </div>
 
   <div class="ap-flex ap-justify-end ap-py-2">
     <ap-paginator> </ap-paginator> 

@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
+  Input,
   OnInit,
   Output,
   ViewChild,
@@ -21,6 +22,7 @@ import {
   NavigationService,
   STATUS_QUERY_PARAM,
   UiCommonModule,
+  executionsPageFragments,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { PopulatedIssue } from '@activepieces/ee-shared';
@@ -37,12 +39,16 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, UiCommonModule, ApDatePipe],
 })
 export class IssuesTableComponent implements OnInit {
+  @Input({ required: true })
+  isFeatureDisabled = true;
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator: ApPaginatorComponent;
   dataSource: IssuesDataSource;
   displayedColumns: string[] = ['name', 'count', 'lastOccurrence', 'action'];
   resolve$: Observable<unknown>;
   refresh$ = new BehaviorSubject<boolean>(true);
+  readonly upgradeNoteTitle = $localize`Unlock Issues`;
+  readonly upgradeNote = $localize`Track consecutive failed runs effortlessly`;
   @Output()
   issueClicked = new EventEmitter<{ issue: PopulatedIssue }>();
   constructor(
@@ -70,7 +76,7 @@ export class IssuesTableComponent implements OnInit {
       this.navigationService.navigate({
         route: ['/executions'],
         extras: {
-          fragment: 'Runs',
+          fragment: executionsPageFragments.Runs,
           queryParams: {
             [FLOW_QUERY_PARAM]: issue.flowId,
             [STATUS_QUERY_PARAM]: FlowRunStatus.FAILED,
@@ -99,6 +105,7 @@ export class IssuesTableComponent implements OnInit {
         tap((resolved) => {
           if (resolved) {
             this.refresh$.next(true);
+            this.issuesService.refreshIssuesCount();
           }
         })
       );

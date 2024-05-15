@@ -29,6 +29,10 @@ export const FEATURES: Feature[] = [
     label: 'Team Collaboration via Git',
     key: 'GIT_SYNC',
   },
+  {
+    label: 'Track Consecutive Failed Runs',
+    key: 'ISSUES',
+  },
 ];
 
 @Injectable({

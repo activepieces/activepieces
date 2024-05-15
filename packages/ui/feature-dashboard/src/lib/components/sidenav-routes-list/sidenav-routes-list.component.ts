@@ -12,18 +12,12 @@ import {
 import { Observable, forkJoin, map, of, take } from 'rxjs';
 import { ApFlagId, ProjectMemberRole, supportUrl } from '@activepieces/shared';
 import { DashboardService, FlagService } from '@activepieces/ui/common';
-import { SidenavRouteItemComponent } from '../sidenav-route-item/sidenav-route-item.component';
+import {
+  SideNavRoute,
+  SidenavRouteItemComponent,
+} from '../sidenav-route-item/sidenav-route-item.component';
 import { CommonModule } from '@angular/common';
-
-type SideNavRoute = {
-  icon: string;
-  caption: string;
-  route: string | undefined;
-  effect?: () => void;
-  showInSideNav$: Observable<boolean>;
-  showLock$?: Observable<boolean>;
-  showNotification$?: Observable<boolean>;
-};
+import { IssuesService } from '../../services/issues.service';
 
 @Component({
   selector: 'app-sidenav-routes-list',
@@ -41,7 +35,6 @@ export class SidenavRoutesListComponent implements OnInit {
     this.embeddingService.getSkipLocationChange$();
 
   isVersionMatch$?: Observable<boolean>;
-
   readonly supportRoute: SideNavRoute = {
     caption: 'Support',
     icon: 'assets/img/custom/support.svg',
@@ -72,7 +65,8 @@ export class SidenavRoutesListComponent implements OnInit {
     private embeddingService: EmbeddingService,
     private platformService: PlatformService,
     private authenticationService: AuthenticationService,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private issuesService: IssuesService
   ) {
     this.logoUrl$ = this.flagServices
       .getLogos()
@@ -141,6 +135,8 @@ export class SidenavRoutesListComponent implements OnInit {
         route: 'executions',
         showInSideNav$: of(true),
         showLock$: of(false),
+        showNotification$:
+          this.issuesService.shouldShowIssuesNotificationIconInSidebarObs$,
       },
 
       {

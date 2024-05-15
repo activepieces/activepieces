@@ -3,7 +3,6 @@ import {
   ChangeDetectorRef,
   Component,
   Input,
-  TemplateRef,
   ViewChild,
 } from '@angular/core';
 import {
@@ -50,7 +49,6 @@ export class ArrayFormControlComponent
 {
   formArray: FormArray<FormControl<string> | UntypedFormGroup>;
   @Input({ required: true }) property: ArrayProperty<boolean>;
-  @Input() dynamicInputTemplate: TemplateRef<unknown>;
   @ViewChild('textControl') firstInput: InterpolatingTextFormControlComponent;
   @Input({ required: true }) pieceMetaData: PieceMetadataModel;
   @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;

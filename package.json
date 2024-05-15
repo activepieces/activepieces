@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.25.1",
-  "rcVersion": "0.26.0-rc.3",
+  "version": "0.26.1",
+  "rcVersion": "0.27.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -82,7 +82,7 @@
     "axios": "1.6.7",
     "bcrypt": "5.1.1",
     "buffer": "6.0.3",
-    "bullmq": "5.3.3",
+    "bullmq": "5.4.2",
     "cheerio": "1.0.0-rc.12",
     "clarifai-nodejs-grpc": "9.7.0",
     "cli-table3": "0.6.3",
@@ -160,7 +160,7 @@
     "openai": "4.17.5",
     "papaparse": "5.4.1",
     "pdf-parse": "1.1.1",
-    "pdf-text-reader": "4.0.1",
+    "pdf-text-reader": "4.1.0",
     "pg": "8.11.3",
     "pickleparser": "0.1.0",
     "pino-loki": "2.1.3",

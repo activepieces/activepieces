@@ -42,7 +42,7 @@ export class SelectAllDirective implements AfterViewInit, OnDestroy {
     );
 
     setTimeout(() => {
-      if (parentFormControl?.value.length === this.allValues.length) {
+      if (parentFormControl?.value?.length === this.allValues.length) {
         this._matOption.select(false);
       }
     });

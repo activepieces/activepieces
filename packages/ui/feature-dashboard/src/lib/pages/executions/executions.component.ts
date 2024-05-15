@@ -5,7 +5,11 @@ import {
   ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UiCommonModule } from '@activepieces/ui/common';
+import {
+  PlatformService,
+  UiCommonModule,
+  executionsPageFragments,
+} from '@activepieces/ui/common';
 import { RunsTableComponent } from '../../components/runs-table/runs-table.component';
 import { IssuesTableComponent } from '../../components/issues-table/issues-table.component';
 import { TabsPageCoreComponent } from '../../components/tabs-page-core/tabs-page-core.component';
@@ -13,6 +17,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 import { PopulatedIssue } from '@activepieces/ee-shared';
 import { FlowRunStatus } from '@activepieces/shared';
+import { IssuesService } from '../../services/issues.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-executions',
@@ -43,9 +49,26 @@ import { FlowRunStatus } from '@activepieces/shared';
         </mat-tab>
 
         <mat-tab i18n-label label="Issues">
+          <ng-template matTabLabel class="ap-flex ap-items-center">
+            <div class="ap-flex ap-gap-1 ap-items-center">
+              <div class="category-label" i18n>Issues</div>
+              @if((isIssuesDisabled$ | async) ===false) { @if(isThereAnIssue$ |
+              async){
+              <svg-icon
+                [applyClass]="true"
+                class="ap-fill-danger"
+                [svgStyle]="{ width: '14px', height: '14px' }"
+                src="assets/img/custom/notification_important.svg"
+              >
+              </svg-icon>
+              } }
+            </div>
+          </ng-template>
+
           <div class="ap-mt-1">
             <app-issues-table
               (issueClicked)="issueClicked($event.issue)"
+              [isFeatureDisabled]="isIssuesDisabled$ | async | defaultTrue"
               #IssuesTable
             ></app-issues-table>
           </div>
@@ -62,19 +85,30 @@ export class ExecutionsComponent
   @ViewChild('tabs') tabGroupView?: MatTabGroup;
   @ViewChild('runsTable') runsTable?: RunsTableComponent;
   @ViewChild('IssuesTable') IssuesTable?: IssuesTableComponent;
-  constructor(router: Router, route: ActivatedRoute) {
+  isThereAnIssue$: Observable<boolean>;
+  isIssuesDisabled$: Observable<boolean>;
+
+  constructor(
+    router: Router,
+    route: ActivatedRoute,
+    private issuesService: IssuesService,
+    private platformService: PlatformService
+  ) {
     super(
       [
         {
-          fragmentName: 'Runs',
+          fragmentName: executionsPageFragments.Runs,
         },
         {
-          fragmentName: 'Issues',
+          fragmentName: executionsPageFragments.Issues,
         },
       ],
       router,
       route
     );
+    this.isThereAnIssue$ =
+      this.issuesService.shouldShowIssuesNotificationIconInSidebarObs$;
+    this.isIssuesDisabled$ = this.platformService.issuesDisabled();
   }
   ngAfterViewInit(): void {
     this.tabGroup = this.tabGroupView;
@@ -85,7 +119,6 @@ export class ExecutionsComponent
       console.warn('tab index out of bounds');
       return;
     }
-
     if (
       this.route.snapshot.fragment !==
       this.tabIndexFragmentMap[event.index].fragmentName
@@ -103,7 +136,7 @@ export class ExecutionsComponent
 
   issueClicked(issue: PopulatedIssue) {
     const runsTabIndex = this.tabIndexFragmentMap.findIndex(
-      (i) => i.fragmentName === 'Runs'
+      (i) => i.fragmentName === executionsPageFragments.Runs
     );
     if (this.tabGroup) {
       this.tabGroup.selectedIndex = runsTabIndex;

@@ -112,5 +112,12 @@ export const issuesService = {
             updated: new Date().toISOString(),
         })
     },
-
+    async count({ projectId }: { projectId: ApId }): Promise<number> {
+        return repo.count({
+            where: {
+                projectId,
+                status: IssueStatus.ONGOING,
+            },
+        })
+    },
 }

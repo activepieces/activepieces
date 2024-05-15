@@ -12,6 +12,13 @@ export const issuesController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
     
+    app.get('/count', CountIssuesRequest, async (req) => {
+        return issuesService.count({
+            projectId: req.principal.projectId,
+           
+        })
+    })
+
     app.post('/:id', UpdateIssueRequest, async (req) => {
         return issuesService.updateById(req.params.id, req.body.status)
     })
@@ -25,6 +32,15 @@ const ListIssuesRequest = {
     },
     schema: {
         querystring: ListIssuesParams,
+    },
+}
+
+
+const CountIssuesRequest = {
+    config: {
+        allowedPrincipals: [
+            PrincipalType.USER,
+        ],
     },
 }
 

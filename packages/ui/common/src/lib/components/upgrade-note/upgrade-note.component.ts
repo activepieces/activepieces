@@ -10,7 +10,6 @@ import { FeatureKey } from '../../utils/consts';
   animations: [fadeIn400ms],
 })
 export class UpgradeNoteComponent {
-  @Input() docsLink = '';
   @Input({ required: true }) featureNoteTitle = '';
   @Input({ required: true }) featureNote = '';
   @Input() videoUrl = '';
@@ -19,10 +18,6 @@ export class UpgradeNoteComponent {
   constructor(private contactSalesService: ContactSalesService) {}
 
   @Input() insideTab = false;
-
-  openDocs() {
-    window.open(this.docsLink, '_blank', 'noopener noreferrer');
-  }
 
   openContactSales(): void {
     this.contactSalesService.open([this.featureKey]);

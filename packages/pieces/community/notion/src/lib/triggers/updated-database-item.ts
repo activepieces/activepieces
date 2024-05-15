@@ -128,9 +128,9 @@ const polling: Polling<
       lastFetchEpochMS === 0 ? null : dayjs(lastFetchEpochMS).toISOString()
     );
     return items.results.map((item) => {
-      const object = item as { created_time: string };
+      const object = item as { last_edited_time: string };
       return {
-        epochMilliSeconds: dayjs(object.created_time).valueOf(),
+        epochMilliSeconds: dayjs(object.last_edited_time).valueOf(),
         data: item,
       };
     });
