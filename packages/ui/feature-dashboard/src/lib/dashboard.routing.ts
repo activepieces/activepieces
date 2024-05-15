@@ -23,9 +23,7 @@ import { ActivityTableComponent } from './pages/activity-table/activity-table.co
 import { IssuesTableComponent } from './components/issues-table/issues-table.component';
 import { SettingsPageComponent } from './pages/settings-page/settings-page.component';
 import { FLAGS_RESOLVE_DATA, FlagsResolver } from './resolvers/flags.resolver';
-import { ExecutionsComponent } from './pages/executions/executions.component';
-import { redirectToNewRouteGuard } from './guards/redirect-to-new-route.guard';
-import { RunsTableComponent } from './components/runs-table/runs-table.component';
+import { RunsComponent } from './pages/runs/runs.component';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -36,11 +34,11 @@ export const DashboardLayoutRouting: Routes = [
       { path: '', pathMatch: 'full', redirectTo: '/flows' },
       {
         data: {
-          title: $localize`Executions`,
+          title: $localize`Runs`,
         },
-        path: 'executions',
+        path: 'runs',
         pathMatch: 'full',
-        component: ExecutionsComponent,
+        component: RunsComponent,
         canActivate: [
           showBasedOnRoles([
             ProjectMemberRole.ADMIN,
@@ -48,12 +46,6 @@ export const DashboardLayoutRouting: Routes = [
             ProjectMemberRole.VIEWER,
           ]),
         ],
-      },
-      {
-        path: 'runs',
-        pathMatch: 'full',
-        canActivate: [redirectToNewRouteGuard('/executions')],
-        component: RunsTableComponent,
       },
       {
         data: {

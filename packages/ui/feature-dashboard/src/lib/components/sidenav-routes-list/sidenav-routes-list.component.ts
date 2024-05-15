@@ -131,24 +131,14 @@ export class SidenavRoutesListComponent implements OnInit {
       },
       {
         icon: 'assets/img/custom/dashboard/runs.svg',
-        caption: $localize`Executions`,
-        route: 'executions',
-        showInSideNav$: this.embeddingService.getIsInEmbedding$().pipe(
-          take(1),
-          map((isInEmbedding) => !isInEmbedding)
-        ),
+        caption: $localize`Runs`,
+        route: 'runs',
+        showInSideNav$: of(true),
         showLock$: of(false),
         showNotification$:
           this.issuesService.shouldShowIssuesNotificationIconInSidebarObs$,
       },
-      {
-        icon: 'assets/img/custom/dashboard/runs.svg',
-        caption: $localize`Runs`,
-        route: 'executions',
-        showInSideNav$: this.embeddingService.getIsInEmbedding$().pipe(take(1)),
-        showLock$: of(false),
-        showNotification$: of(false),
-      },
+
       {
         icon: 'assets/img/custom/dashboard/activity.svg',
         caption: $localize`Activity`,
