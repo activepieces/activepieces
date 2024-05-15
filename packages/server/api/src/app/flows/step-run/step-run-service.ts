@@ -8,9 +8,31 @@ import {
     FlowVersionId,
     isNil,
     ProjectId,
-    StepRunResponse } from '@activepieces/shared'
+    stepRunEventEmitter,
+    StepRunResponse,
+} from '@activepieces/shared'
 
 export const stepRunService = {
+    async stepOutput(stepName: string, stepOutput: unknown): Promise<unknown> {
+        // testing for approval step
+        // handle the event after hitting the webhook -> { action: string }
+        const outputPromise = new Promise(resolve => {
+            // TODO: need to generalize it
+            if (stepName === 'wait_for_approval') {
+                stepRunEventEmitter.once((data: any) => {
+                    resolve({
+                        approved: data.action === 'approve',
+                        denied: data.action !== 'approve',
+                    })
+                })
+            }
+            else {
+                resolve(stepOutput)
+            }
+        })
+
+        return outputPromise
+    },
     async create({
         projectId,
         flowVersionId,
@@ -20,8 +42,7 @@ export const stepRunService = {
         const step = flowHelper.getStep(flowVersion, stepName)
 
         if (
-            isNil(step) ||
-      !Object.values(ActionType).includes(step.type as ActionType)
+            isNil(step) || !Object.values(ActionType).includes(step.type as ActionType)
         ) {
             throw new ActivepiecesError({
                 code: ErrorCode.STEP_NOT_FOUND,
@@ -30,15 +51,18 @@ export const stepRunService = {
                 },
             })
         }
-        const { result, standardError, standardOutput } =
-      await engineHelper.executeAction({
-          stepName,
-          flowVersion,
-          projectId,
-      })
+
+        const { result, standardError, standardOutput } = await engineHelper.executeAction({
+            stepName,
+            flowVersion,
+            projectId,
+        })
+
+        const output = await this.stepOutput(step.name, result.output)
+        
         return {
             success: result.success,
-            output: result.output,
+            output,
             standardError,
             standardOutput,
         }
