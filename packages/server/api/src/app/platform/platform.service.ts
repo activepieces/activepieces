@@ -113,6 +113,7 @@ export const platformService = {
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,
             ),
+            ...spreadIfDefined('flowIssuesEnabled', params.flowIssuesEnabled),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('manageProjectsEnabled', params.manageProjectsEnabled),
             ...spreadIfDefined('managePiecesEnabled', params.managePiecesEnabled),
@@ -178,6 +179,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
     customDomainsEnabled?: boolean
     customAppearanceEnabled?: boolean
     manageProjectsEnabled?: boolean
+    flowIssuesEnabled?: boolean
     managePiecesEnabled?: boolean
     manageTemplatesEnabled?: boolean
     apiKeysEnabled?: boolean
