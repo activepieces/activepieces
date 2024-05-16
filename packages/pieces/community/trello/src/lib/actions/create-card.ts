@@ -32,10 +32,10 @@ export const createCard = createAction({
       required: false,
       options: {
         options: [
-            {label: "Top", value: "top"},
-            {label: "Bottom", value: "bottom"}
-        ]
-      }
+          { label: 'Top', value: 'top' },
+          { label: 'Bottom', value: 'bottom' },
+        ],
+      },
     }),
     labels: trelloCommon.board_labels,
   },
@@ -58,7 +58,7 @@ export const createCard = createAction({
         name: context.propsValue['name'],
         desc: context.propsValue['description'],
         pos: context.propsValue['position'],
-        idLabels: context.propsValue['labels']?.join()
+        idLabels: context.propsValue['labels'],
       },
       queryParams: {},
     };

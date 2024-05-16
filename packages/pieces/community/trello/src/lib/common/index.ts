@@ -125,17 +125,19 @@ export const trelloCommon = {
       }
 
       const basicAuthProperty = auth as BasicAuthPropertyValue;
-      const labels = await listBoardLabels( 
+      const labels = await listBoardLabels(
         basicAuthProperty.username,
         basicAuthProperty.password,
         board_id as string
       );
 
       return {
-        options: labels.map((label: { id: string; name: string }) => ({
-          value: label.id,
-          label: label.name,
-        })),
+        options: labels.map(
+          (label: { id: string; name: string; color: string }) => ({
+            label: label.name || label.color,
+            value: label.id,
+          })
+        ),
       };
     },
   }),
@@ -276,7 +278,11 @@ async function listBoardLists(apikey: string, token: string, board_id: string) {
  * @param board_id Board to fetch labels from
  * @returns JSON Array of labels
  */
-async function listBoardLabels(apikey: string, token: string, board_id: string) {
+async function listBoardLabels(
+  apikey: string,
+  token: string,
+  board_id: string
+) {
   const request: HttpRequest = {
     method: HttpMethod.GET,
     url:
@@ -289,9 +295,9 @@ async function listBoardLabels(apikey: string, token: string, board_id: string) 
       Accept: 'application/json',
     },
   };
-  const response = await httpClient.sendRequest<{ id: string; name: string }[]>(
-    request
-  );
+  const response = await httpClient.sendRequest<
+    { id: string; name: string; color: string }[]
+  >(request);
 
   return response.body;
 }
