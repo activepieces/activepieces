@@ -275,13 +275,16 @@ export class FlowsEffects {
       concatLatestFrom(() => [
         this.store.select(BuilderSelectors.selectCurrentFlow),
         this.store.select(BuilderSelectors.selectReadOnly),
+        this.store.select(BuilderSelectors.selectViewedVersion),
       ]),
-      concatMap(([action, flow, isReadonly]) => {
-        if (isReadonly) {
-          console.error(
-            'Activepieces: Trying to modify a readonly flow',
-            action
-          );
+      concatMap(([action, flow, isReadonly, viewedVersion]) => {
+        //TODO: prevent these cases from occuring here
+        if (isReadonly || viewedVersion.id !== flow.version.id) {
+          console.warn('Activepieces: Trying to modify a readonly flow', {
+            action,
+            viewedVersion,
+            draft: flow.version,
+          });
           return EMPTY;
         }
         const genSavedId = UUID.UUID();
