@@ -7,9 +7,8 @@ import {
   FlowVersionState,
   TriggerType,
 } from '@activepieces/shared';
-import { BuilderSavingStatusEnum, ViewModeEnum } from '../../model';
+import { BuilderSavingStatusEnum } from '../../model';
 import { FlowState } from '../../model/flow-state';
-import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 
 const initialState: FlowState = {
   flow: {
@@ -130,13 +129,7 @@ const _flowsReducer = createReducer(
     clonedState.savingStatus &= ~BuilderSavingStatusEnum.WAITING_TO_SAVE;
     return clonedState;
   }),
-  on(ViewModeActions.setViewMode, (flowState, action) => {
-    const clonedState: FlowState = JSON.parse(JSON.stringify(flowState));
-    if (action.viewMode === ViewModeEnum.BUILDING) {
-      clonedState.flow.version.state = FlowVersionState.DRAFT;
-    }
-    return clonedState;
-  }),
+
   on(FlowsActions.savedSuccess, (state, action) => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
     clonedState.flow.version.state = FlowVersionState.DRAFT;

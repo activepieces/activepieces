@@ -29,7 +29,6 @@ import {
   FlowOperationType,
   TriggerType,
   flowHelper,
-  FlowVersionState,
   FlowStatus,
 } from '@activepieces/shared';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
@@ -589,15 +588,12 @@ export class FlowsEffects {
               );
             }
           case ViewModeEnum.BUILDING:
-            if (currentFlow.version.state === FlowVersionState.LOCKED) {
-              throw Error('Trying to view draft version when there is none');
-            } else {
-              return of(
-                canvasActions.viewVersion({
-                  viewedFlowVersion: currentFlow.version,
-                })
-              );
-            }
+            return of(
+              canvasActions.viewVersion({
+                viewedFlowVersion: currentFlow.version,
+              })
+            );
+
           case ViewModeEnum.SHOW_OLD_VERSION: {
             return of(
               canvasActions.viewVersion({
