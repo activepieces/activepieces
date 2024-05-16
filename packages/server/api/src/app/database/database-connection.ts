@@ -16,6 +16,7 @@ import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { GitRepoEntity } from '../ee/git-repos/git-repo.entity'
+import { IssueEntity } from '../ee/issues/issues-entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { OtpEntity } from '../ee/otp/otp-entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
@@ -68,6 +69,7 @@ function getEntities(): EntitySchema<unknown>[] {
         PlatformEntity,
         TagEntity,
         PieceTagEntity,
+        IssueEntity,
     ]
 
     switch (edition) {
@@ -120,9 +122,9 @@ export const commonProperties = {
 }
 
 export const databaseConnection =
-  databaseType === DatabaseType.SQLITE3
-      ? createSqlLiteDataSource()
-      : createPostgresDataSource()
+    databaseType === DatabaseType.SQLITE3
+        ? createSqlLiteDataSource()
+        : createPostgresDataSource()
 
 export function APArrayContains<T extends ObjectLiteral>(
     columnName: string,

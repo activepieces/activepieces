@@ -42,6 +42,7 @@ import { RemoveUniqueEmailOnUser1713222892743 } from './migration/sqlite/1713222
 import { AddPlatformRole1713271221154 } from './migration/sqlite/1713271221154-AddPlatformRole'
 import { AddUniqueNameToFolderSqlite1713645171373 } from './migration/sqlite/1713645171373-AddUniqueNameToFolderSqlite'
 import { AddFeatureFlagsToPlatform1714137103728 } from './migration/sqlite/1714137103728-AddFeatureFlagsToPlatform'
+import { AddIssueEntitySqlite1714900626443 } from './migration/sqlite/1714900626443-AddIssueEntitySqlite'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 
@@ -106,6 +107,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPlatformRole1713271221154,
         AddUniqueNameToFolderSqlite1713645171373,
         AddFeatureFlagsToPlatform1714137103728,
+        AddIssueEntitySqlite1714900626443,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

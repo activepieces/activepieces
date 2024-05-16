@@ -108,6 +108,9 @@ export class PlatformService {
   customDomainDisabled() {
     return this.isFeatureDisabled('customDomainsEnabled');
   }
+  issuesDisabled() {
+    return this.isFeatureDisabled('flowIssuesEnabled');
+  }
 
   manageProjectsDisabled() {
     return this.isFeatureDisabled('manageProjectsEnabled');

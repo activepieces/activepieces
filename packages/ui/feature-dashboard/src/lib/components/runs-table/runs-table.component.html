@@ -1,6 +1,5 @@
-<div class="ap-w-full  ap-px-[30px] ap-pt-[50px]">
+<div class="ap-w-full ">
   <div class="ap-h-full">
-    <ap-page-title title="Runs" i18n-title></ap-page-title>
     <div class="ap-flex ap-gap-2">
       <mat-form-field class="!ap-min-w-[15.625rem]">
         <mat-label i18n>Filter by status</mat-label>
@@ -13,11 +12,11 @@
         </mat-select>
       </mat-form-field>
       <mat-form-field class="!ap-min-w-[15.625rem]">
-        <mat-label i18n> Filter by flow</mat-label>
+        <mat-label i18n>Filter by flow</mat-label>
         <mat-select [formControl]="flowFilterControl" (closed)="searchControl.setValue('')">
           <mat-select-trigger>
             <div class="ap-mx-3">
-              <ng-container *ngIf="selectedFlowName$ | async as flowName; else allLabel ">
+              <ng-container *ngIf="selectedFlowName$ | async as flowName; else allLabel">
                 {{flowName}}
               </ng-container>
               <ng-template #allLabel>

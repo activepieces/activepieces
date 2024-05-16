@@ -104,7 +104,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   redirectHome(openInNewWindow: boolean) {
     if (this.router.url.includes('/runs')) {
       this.navigationService.navigate({
-        route: ['/runs'],
+        route: ['/executions'],
         openInNewWindow,
       });
     } else {

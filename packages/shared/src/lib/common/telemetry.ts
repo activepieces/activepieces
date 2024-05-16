@@ -51,6 +51,14 @@ type FlowImportedUsingFile = {
 
 }
 
+type FlowIssueClicked = {
+    flowId: string
+}
+
+type FlowIssueResolved = {
+    flowId: string
+}
+
 type RequestTrialClicked = {
     feature: string | null
 }
@@ -106,6 +114,8 @@ export enum TelemetryEventName {
     QUOTA_ALERT = 'quota.alert',
     REQUEST_TRIAL_CLICKED = 'request.trial.clicked',
     REQUEST_TRIAL_SUBMITTED = 'request.trial.submitted',
+    FLOW_ISSUE_CLICKED = 'flow.issue.clicked',
+    FLOW_ISSUE_RESOLVED = 'flow.issue.resolved',
     UPGRADE_CLICKED = 'upgrade.clicked',
     OPENED_PRICING_FROM_DASHBOARD = 'pricing.viewed',
     UPGRADE_POPUP = 'upgrade.popup',
@@ -139,6 +149,8 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.REFERRAL, Referral>
     | BaseTelemetryEvent<TelemetryEventName.REQUEST_TRIAL_CLICKED, RequestTrialClicked>
     | BaseTelemetryEvent<TelemetryEventName.REQUEST_TRIAL_SUBMITTED, Record<string, never>>
+    | BaseTelemetryEvent<TelemetryEventName.FLOW_ISSUE_CLICKED, FlowIssueClicked>
+    | BaseTelemetryEvent<TelemetryEventName.FLOW_ISSUE_RESOLVED, FlowIssueResolved>
     | BaseTelemetryEvent<TelemetryEventName.UPGRADE_CLICKED, UpgradeClicked>
     | BaseTelemetryEvent<TelemetryEventName.UPGRADE_POPUP, UpgradePopup>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_RUN_CREATED, RunCreated>

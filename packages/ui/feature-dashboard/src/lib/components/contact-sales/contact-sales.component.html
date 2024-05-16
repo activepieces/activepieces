@@ -36,7 +36,7 @@
                 <div class="ap-text-sm ap-mt-2 ap-text-gray-500">{{ featureData.featureCount }} selected / 3 max</div>
 
                 <div class="ap-flex ap-flex-col ap-mt-2">
-                    <ng-container *ngFor="let feature of this.FEATURES; let i = index">
+                    <ng-container *ngFor="let feature of FEATURES; let i = index">
                         <mat-checkbox color="primary" (change)="toggle(feature)"
                             [disabled]="featureData.featureCount >= 3 && !hasFeature(feature)"
                             [checked]="hasFeature(feature)"

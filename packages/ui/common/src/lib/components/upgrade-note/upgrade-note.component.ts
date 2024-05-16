@@ -1,9 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import {
-  ContactSalesService,
-  FeatureKey,
-} from '../../service/contact-sales.service';
+import { ContactSalesService } from '../../service/contact-sales.service';
 import { fadeIn400ms } from '../../animation/fade-in.animations';
+import { FeatureKey } from '../../utils/consts';
 
 @Component({
   selector: 'ap-upgrade-note',
