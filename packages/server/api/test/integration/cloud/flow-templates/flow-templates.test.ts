@@ -145,6 +145,7 @@ async function createMockPlatformTemplate({ platformId }: { platformId: string }
     const { mockOwner, mockPlatform, mockProject } = await mockBasicSetup({
         platform: {
             id: platformId,
+            manageTemplatesEnabled: true
         },
     })
 
