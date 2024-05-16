@@ -46,8 +46,7 @@ import { CommonModule } from '@angular/common';
 export class IssuesTableComponent implements OnInit {
   readonly betaNote =
     'Note: This feature is in <strong>BETA</strong> and will only be <strong>Free</strong> during the <strong>BETA</strong> period.';
-  @Input({ required: true })
-  isFeatureDisabled = true;
+  @Input({ required: true }) isFeatureDisabled = true;
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator: ApPaginatorComponent;
   dataSource: IssuesDataSource;
