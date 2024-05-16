@@ -490,7 +490,7 @@ type CountParams = {
 
 type UpdateParams = {
     id: FlowId
-    userId: UserId
+    userId: UserId | null
     projectId: ProjectId
     operation: FlowOperationRequest
     lock?: boolean
@@ -505,7 +505,7 @@ type UpdateStatusParams = {
 
 type UpdatePublishedVersionIdParams = {
     id: FlowId
-    userId: UserId
+    userId: UserId | null
     projectId: ProjectId
 }
 
@@ -518,7 +518,7 @@ type NewFlow = Omit<Flow, 'created' | 'updated'>
 
 type LockFlowVersionIfNotLockedParams = {
     flowVersion: FlowVersion
-    userId: UserId
+    userId: UserId | null
     projectId: ProjectId
     entityManager: EntityManager
 }
