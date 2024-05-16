@@ -1055,6 +1055,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Javiink",
+      "name": "Javiink",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43996484?v=4",
+      "profile": "https://github.com/Javiink",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
