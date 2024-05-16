@@ -165,7 +165,6 @@ export class SidenavRoutesListComponent implements OnInit {
         ),
         showLock$: this.platformService.projectRolesDisabled(),
       },
-
       {
         icon: 'assets/img/custom/dashboard/settings.svg',
         caption: $localize`Settings`,
