@@ -44,8 +44,8 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, UiCommonModule, ApDatePipe],
 })
 export class IssuesTableComponent implements OnInit {
-
-  readonly betaNote = 'Note: This feature is in <strong>BETA</strong> and will only be <strong>Free</strong> during the <strong>BETA</strong> period.'
+  readonly betaNote =
+    'Note: This feature is in <strong>BETA</strong> and will only be <strong>Free</strong> during the <strong>BETA</strong> period.';
   @Input({ required: true })
   isFeatureDisabled = true;
   @ViewChild(ApPaginatorComponent, { static: true })
@@ -66,7 +66,7 @@ export class IssuesTableComponent implements OnInit {
     private matDialog: MatDialog,
     private telemetryService: TelemetryService,
     private embeddingService: EmbeddingService
-  ) { }
+  ) {}
   ngOnInit(): void {
     this.dataSource = new IssuesDataSource(
       this.route.queryParams,
