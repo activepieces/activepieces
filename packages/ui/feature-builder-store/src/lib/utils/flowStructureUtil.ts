@@ -95,7 +95,7 @@ export class FlowStructureUtil {
   }
 
   public static removeAnySubequentStepsFromAction(
-    req: Omit<Action, 'children'>
+    req: Action
   ): UpdateActionRequest {
     const clone: Action = JSON.parse(JSON.stringify(req));
     if (clone.nextAction) clone.nextAction = undefined;

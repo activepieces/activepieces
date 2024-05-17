@@ -73,7 +73,7 @@ export class FlowsEffects {
       concatLatestFrom(() =>
         this.store.select(BuilderSelectors.selectCurrentStep)
       ),
-      switchMap(([{ displayName, name, properties, outputs }, step]) => {
+      switchMap(([{ displayName, name, properties }, step]) => {
         if (step) {
           const { initialValues, valid } =
             extractInitialPieceStepValuesAndValidity(properties);
@@ -109,7 +109,6 @@ export class FlowsEffects {
                   displayName,
                   settings: {
                     ...step.settings,
-                    outputs,
                     actionName: name,
                     input: initialValues,
                     inputUiInfo: {

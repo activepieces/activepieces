@@ -418,7 +418,7 @@ async function getSandboxForAction(
 ): Promise<Sandbox> {
     switch (action.type) {
         case ActionType.PIECE: {
-            const { packageType, pieceType, pieceName, pieceVersion, outputs } =
+            const { packageType, pieceType, pieceName, pieceVersion } =
                 action.settings
             const piece = {
                 packageType,
@@ -426,7 +426,6 @@ async function getSandboxForAction(
                 pieceName,
                 pieceVersion,
                 projectId,
-                outputs,
             }
 
             return sandboxProvisioner.provision({
