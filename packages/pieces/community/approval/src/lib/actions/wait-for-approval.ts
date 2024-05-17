@@ -14,10 +14,10 @@ export const waitForApprovalLink = createAction({
       hide: true,
     },
   },
-  outputs: [
-    { name: 'approved' }, 
-    { name: 'denied' }
-  ],
+  outputs: {
+    approved: {}, 
+    denied: {}
+  },
   async run(ctx) {
     if (ctx.executionType === ExecutionType.BEGIN) {
       ctx.run.pause({
@@ -29,10 +29,21 @@ export const waitForApprovalLink = createAction({
 
       return branchedPieceResponse()
     } else {
-      return branchedPieceResponse({
-        approved: ctx.resumePayload.queryParams['action'] === 'approve',
-        denied: ctx.resumePayload.queryParams['action'] !== 'approve',
-      })
+      const action = ctx.resumePayload.queryParams['action']
+      switch(action) {
+        case 'approve':
+          return branchedPieceResponse({
+            approved: true
+          })
+        case 'deny':
+          return branchedPieceResponse({
+            denied: true
+          })
+        default:
+          throw new Error(JSON.stringify({
+            message: `The url were called with invalid action ${action}.`
+          }))
+      }
     }
   },
 });

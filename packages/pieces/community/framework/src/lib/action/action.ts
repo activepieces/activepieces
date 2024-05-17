@@ -36,7 +36,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   run: ActionRunner<PieceAuth, ActionProps>
   test?: ActionRunner<PieceAuth, ActionProps>
   requireAuth?: boolean
-  outputs?: ActionOutput[]
+  outputs?: ActionOutput
   errorHandlingOptions?: ErrorHandlingOptionsParam
 }
 
@@ -49,7 +49,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends In
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
     public readonly test: ActionRunner<PieceAuth, ActionProps>,
     public readonly requireAuth: boolean,
-    public readonly outputs: ActionOutput[],
+    public readonly outputs: ActionOutput,
     public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
   ) { }
 }
@@ -73,7 +73,7 @@ export const createAction = <
     params.run,
     params.test ?? params.run,
     params.requireAuth ?? true,
-    params.outputs ?? [],
+    params.outputs ?? {},
     params.errorHandlingOptions ?? {
       continueOnFailure: {
         defaultValue: false,

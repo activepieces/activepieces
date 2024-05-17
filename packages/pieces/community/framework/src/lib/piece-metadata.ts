@@ -39,12 +39,13 @@ export type PieceBase = {
   maximumSupportedRelease?: string;
 }
 
-export const ActionOutput = Type.Object({
-  name: Type.String()
-})
+export const ActionOutput = Type.Record(
+  Type.String({}),
+  Type.Object({})
+)
 
 export type ActionOutput = {
-  name: string
+  [key: string]: unknown
 }
 
 export const ActionBase = Type.Object({
@@ -64,7 +65,7 @@ export type ActionBase = {
   props: PiecePropertyMap,
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
-  outputs?: ActionOutput[];
+  outputs?: ActionOutput;
 }
 
 export const TriggerBase = Type.Composite([
