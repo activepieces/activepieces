@@ -167,7 +167,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 }
 
 function hasBranches(pieceAction: Action): boolean {
-    return !isNil(pieceAction.outputs) && pieceAction.outputs.length > 1
+    return !isNil(pieceAction.outputs) && Object.keys(pieceAction.outputs).length > 1
 }
 
 async function runBranchablePieceWithVersion({ 
@@ -181,31 +181,23 @@ async function runBranchablePieceWithVersion({
     const versions = {
         v1: async (): Promise<FlowExecutorContext> => {
             let newExecutionContext = executionState
-            let outputValue = undefined
-            for (const [k, v] of pieceOutput.output.entries()) {
-                if (isNil(v)) {
+            for (const [branchKey, _branchValue] of pieceOutput.output.entries()) {
+                const childAction = action.children?.[branchKey]
+                if (isNil(childAction)) {
                     continue
                 }
 
-                if (k === 'approved' && v === true && action.children.onSuccessAction) {
-                    newExecutionContext = await flowExecutor.execute({
-                        action: action.children.onSuccessAction,
-                        executionState: newExecutionContext,
-                        constants,
-                    })    
-                }
-
-                if (k === 'denied' && v === true && action.children.onFailureAction) {
-                    newExecutionContext = await flowExecutor.execute({
-                        action: action.children.onFailureAction,
-                        executionState: newExecutionContext,
-                        constants,
-                    })    
-                }
-
-                outputValue = v
+                newExecutionContext = await flowExecutor.execute({
+                    action: childAction,
+                    executionState: newExecutionContext,
+                    constants,
+                })
+                break
             }
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(outputValue)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
+            return newExecutionContext
+                .upsertStep(action.name, stepOutput.setOutput(pieceOutput.output))
+                .increaseTask()
+                .setVerdict(ExecutionVerdict.RUNNING, undefined)
         },
     }
 

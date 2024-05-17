@@ -3,8 +3,8 @@ import {
   BranchAction,
   PieceAction,
   StepLocationRelativeToParent,
-  flowHelper,
   capitalizeFirstLetter,
+  flowHelper,
 } from '@activepieces/shared';
 import { FlowDrawer } from './flow-drawer';
 import {
@@ -24,22 +24,24 @@ import {
   VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
 } from './draw-common';
 import { Position } from './step-card';
+import { ActionOutput } from '@activepieces/pieces-framework';
 
 export class BranchDrawer {
   private constructor() {
     throw new Error('BranchDrawer is not meant to be instantiated');
   }
+
   static handleBranchAction(
-    branchStep: BranchAction | PieceAction
+    branchStep: BranchAction | PieceAction,
+    outputs?: ActionOutput
   ): FlowDrawer {
     let resultDrawer = FlowDrawer.construct(undefined);
     const actions =
       branchStep.type === ActionType.BRANCH
         ? [branchStep.onSuccessAction, branchStep.onFailureAction]
-        : [
-            branchStep.children['onSuccessAction'],
-            branchStep.children['onFailureAction'],
-          ];
+        : Object.keys(outputs ?? {}).map(
+            (output) => branchStep.children?.[output]
+          );
     const branchesDrawers: FlowDrawer[] = actions.map((action) =>
       FlowDrawer.construct(action)
     );
@@ -131,19 +133,20 @@ export class BranchDrawer {
     branchStep: BranchAction | PieceAction,
     stepLocationRelativeToParent: StepLocationRelativeToParent
   ) {
-    return branchStep.type === ActionType.BRANCH
-      ? (stepLocationRelativeToParent ===
+    if (branchStep.type === ActionType.BRANCH) {
+      return (
+        (stepLocationRelativeToParent ===
           StepLocationRelativeToParent.INSIDE_TRUE_BRANCH &&
           !!branchStep.onSuccessAction) ||
-          (stepLocationRelativeToParent ===
-            StepLocationRelativeToParent.INSIDE_FALSE_BRANCH &&
-            !!branchStep.onFailureAction)
-      : (stepLocationRelativeToParent ===
-          StepLocationRelativeToParent.INSIDE_TRUE_BRANCH &&
-          !!branchStep.children['onSuccessAction']) ||
-          (stepLocationRelativeToParent ===
-            StepLocationRelativeToParent.INSIDE_FALSE_BRANCH &&
-            !!branchStep.children['onFailureAction']);
+        (stepLocationRelativeToParent ===
+          StepLocationRelativeToParent.INSIDE_FALSE_BRANCH &&
+          !!branchStep.onFailureAction)
+      );
+    }
+
+    // TODO: need to test
+    const allChildSteps = flowHelper.getAllChildSteps(branchStep);
+    return allChildSteps.length > 1 ? true : false;
   }
 
   private static drawLineComponentAtStartOfBranch({
@@ -225,16 +228,10 @@ export class BranchDrawer {
     };
   }
 
-  private static setLabel(
-    index: number,
-    step: BranchAction | PieceAction
-  ): string {
-    if (step.type === ActionType.BRANCH) {
-      return index === 0 ? $localize`True` : $localize`False`;
-    } else {
-      return index === 0
-        ? $localize`${capitalizeFirstLetter(step.settings.outputs![0].name)}`
-        : $localize`${capitalizeFirstLetter(step.settings.outputs![1].name)}`;
+  private static setLabel(index: number, outputs?: ActionOutput): string {
+    if (outputs) {
+      return $localize`${capitalizeFirstLetter(Object.keys(outputs)[index])}`;
     }
+    return index === 0 ? $localize`True` : $localize`False`;
   }
 }

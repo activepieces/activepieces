@@ -67,20 +67,15 @@ function deleteAction(
         }
         switch (parentStep.type) {
             case ActionType.PIECE: {
-                if (
-                    parentStep.children['onFailureAction'] &&
-                    parentStep.children['onFailureAction'].name === request.name
-                ) {
-                    const stepToUpdate: Action = parentStep.children['onFailureAction']
-                    parentStep.children['onFailureAction'] = stepToUpdate.nextAction
+                if (isPieceBranched(parentStep)) {
+                    Object.keys(parentStep.children).forEach(key => {
+                        const action = parentStep.children[key]
+                        if (action && action.name === request.name) {
+                            parentStep.children[key] = action.nextAction
+                        }
+                    })
                 }
-                if (
-                    parentStep.children['onSuccessAction'] &&
-                    parentStep.children['onSuccessAction'].name === request.name
-                ) {
-                    const stepToUpdate: Action = parentStep.children['onSuccessAction']
-                    parentStep.children['onSuccessAction'] = stepToUpdate.nextAction
-                }
+
                 break
             }
             case ActionType.BRANCH: {
@@ -187,7 +182,7 @@ async function transferStepAsync<T extends Step>(
         for (const key in children) {
             const action = children[key]
             if (action) {
-                updatedStep.children[key] = (await transferStepAsync(
+                children[key] = (await transferStepAsync(
                     action,
                     transferFunction,
                 )) as Action
@@ -239,7 +234,7 @@ function transferStep<T extends Step>(
         for (const key in children) {
             const action = children[key]
             if (action) {
-                updatedStep.children[key] = transferStep(
+                children[key] = transferStep(
                     action,
                     transferFunction,
                 ) as Action
@@ -298,11 +293,16 @@ function getAllChildSteps(action: LoopOnItemsAction | BranchAction | PieceAction
     switch (action.type) {
         case ActionType.LOOP_ON_ITEMS:
             return traverseInternal(action.firstLoopAction) as Action[]
-        case ActionType.PIECE: 
-            return [
-                ...traverseInternal(action.children['onSuccessAction']),
-                ...traverseInternal(action.children['onFailureAction']),
-            ] as Action[]
+        case ActionType.PIECE: {
+            const children: Action[] = []
+            if (isPieceBranched(action)) {
+                Object.values(action.children).forEach((child) => {
+                    const childSteps: Action[] = traverseInternal(child) as Action[]
+                    children.push(...childSteps)
+                })
+            }
+            return children
+        }
         default:
             return [
                 ...traverseInternal(action.onSuccessAction),
@@ -323,18 +323,30 @@ function getAllDirectChildStepsForLoop(action: LoopOnItemsAction): Action[] {
     return actions
 }
 
-function getAllDirectChildStepsForBranch(action: BranchAction | PieceAction, branch: 'success' | 'failure'): Action[] {
+function getAllDirectChildStepsForPiece(action: PieceAction, childName: string): Action[] {
     const actions: Action[] = []
-    const actionForType = action.type === ActionType.BRANCH ? action : action.children
+    const children = action.children
+    if (children) {
+        let child = children[childName]
+        while (child) {
+            actions.push(child)
+            child = child.nextAction
+        }
+    }
+    return actions
+}
+
+function getAllDirectChildStepsForBranch(action: BranchAction, branch: 'success' | 'failure'): Action[] {
+    const actions: Action[] = []
     if (branch === 'success') {
-        let child = actionForType.onSuccessAction
+        let child = action.onSuccessAction
         while (child) {
             actions.push(child)
             child = child.nextAction
         }
     }
     else {
-        let child = actionForType.onFailureAction
+        let child = action.onFailureAction
         while (child) {
             actions.push(child)
             child = child.nextAction
@@ -404,20 +416,13 @@ function updateAction(
             }
         }
         if (isPieceBranched(parentStep)) {
-            if (
-                parentStep.children['onFailureAction'] &&
-                parentStep.children['onFailureAction'].name === request.name
-            ) {
-                const actions = extractActions(parentStep.children['onFailureAction'])
-                parentStep.children['onFailureAction'] = createAction(request, actions)
-            }
-            if (
-                parentStep.children['onSuccessAction'] &&
-                parentStep.children['onSuccessAction'].name === request.name
-            ) {
-                const actions = extractActions(parentStep.children['onSuccessAction'])
-                parentStep.children['onSuccessAction'] = createAction(request, actions)
-            }
+            Object.keys(parentStep.children).forEach(key => {
+                const action = parentStep.children[key]
+                if (action) {
+                    const actions = extractActions(action)
+                    parentStep.children[key] = createAction(request, actions)
+                }
+            })
         }
         return parentStep
     })
@@ -571,16 +576,21 @@ function addAction(
             }
         }
         else if (isPieceBranched(parentStep)) {
-            if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_TRUE_BRANCH) {
-                parentStep.children['onSuccessAction'] = createAction(request.action, {
-                    nextAction: parentStep.children['onSuccessAction'],
+            const outputs = { approved: {}, denied: {} } // !!!TESTING ONLY!!! need to get from piece definition
+            if (
+                request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+            ) {
+                const firstOutput = Object.keys(outputs)[0]
+                parentStep.children[firstOutput] = createAction(request.action, {
+                    nextAction: parentStep.children[firstOutput],
                 })
             }
             else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_FALSE_BRANCH) {
-                parentStep.children['onFailureAction'] = createAction(request.action, {
-                    nextAction: parentStep.children['onFailureAction'],
+                const secondOutput = Object.keys(outputs)[1]
+                parentStep.children[secondOutput] = createAction(request.action, {
+                    nextAction: parentStep.children[secondOutput],
                 })
-            } 
+            }
             else if (
                 request.stepLocationRelativeToParent ===
                 StepLocationRelativeToParent.AFTER
@@ -652,7 +662,7 @@ function createAction(
         case ActionType.PIECE:
             action = {
                 ...baseProperties,
-                children: children ?? {},
+                children,
                 type: ActionType.PIECE,
                 settings: request.settings,
             }
@@ -1005,13 +1015,12 @@ function getDirectParentStep(child: Step, parent: Trigger | Step | undefined): S
     if (isPieceBranched(parent)) {
         const isChildOfBranch = isChildOf(parent, child.name)
         if (isChildOfBranch) {
-            const directTrueBranchChildren = getAllDirectChildStepsForBranch(parent, 'success')
-            const directFalseBranchChildren = getAllDirectChildStepsForBranch(parent, 'failure')
-            if (directTrueBranchChildren.at(-1)?.name === child.name || directFalseBranchChildren.at(-1)?.name === child.name) {
+            const branchChildren = getAllDirectChildStepsForPiece(parent, child.name)
+            if (branchChildren.at(-1)?.name) {
                 return parent
             }
 
-            return getDirectParentStep(child, parent.children['onSuccessAction']) ?? getDirectParentStep(child, parent.children['onFailureAction'])
+            return getDirectParentStep(child, parent.children[child.name])
         }
     }
 
@@ -1037,6 +1046,10 @@ function isStepLastChildOfParent(child: Step, trigger: Trigger): boolean {
                 const children = getAllDirectChildStepsForLoop(parent)
                 return children[children.length - 1]?.name === child.name
             }
+            if (isPieceBranched(parent)) {
+                const pieceChildren = getAllDirectChildStepsForPiece(parent, child.name)
+                return pieceChildren[pieceChildren.length - 1]?.name === child.name
+            } 
             const trueBranchChildren = getAllDirectChildStepsForBranch(parent, 'success')
             const falseBranchChildren = getAllDirectChildStepsForBranch(parent, 'failure')
             return trueBranchChildren[trueBranchChildren.length - 1]?.name === child.name || falseBranchChildren[falseBranchChildren.length - 1]?.name === child.name
@@ -1053,16 +1066,12 @@ function isStepLastChildOfParent(child: Step, trigger: Trigger): boolean {
     return false
 }
 
-function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAction | PieceAction {
-    return step.type === ActionType.BRANCH || step.type === ActionType.LOOP_ON_ITEMS || isPieceBranched(step)
+function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAction  {
+    return step.type === ActionType.BRANCH || step.type === ActionType.LOOP_ON_ITEMS
 }
 
-function isPieceBranched(step: Step): step is PieceAction {
-    if (step.settings.outputs) {
-        return step.type === ActionType.PIECE && step.settings.outputs.length > 1
-    }
-
-    return false
+function isPieceBranched(step: Step): step is PieceAction & { children: Record<string, Action | undefined> } {
+    return step.type === ActionType.PIECE && !isNil(step.children)
 }
 
 export const flowHelper = {

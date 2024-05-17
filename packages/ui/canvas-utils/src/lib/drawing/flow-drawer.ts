@@ -17,6 +17,27 @@ import { SvgDrawer, drawLineComponentWithButton } from './svg-drawer';
 import { PositionedStep } from './step-card';
 import { BranchDrawer } from './branch-drawer';
 import { LoopDrawer } from './loop-drawer';
+import { environment } from '@activepieces/ui/common';
+
+// !!!TESTING ONLY!!! Testing purpose to fetch piece metadata
+const getPieceMetadata = async (
+  name: string,
+  actionName?: string,
+  version?: string
+) => {
+  console.log('name ' + name);
+  const response = await fetch(`${environment.apiUrl}/pieces/${name}`);
+  const data = await response.json();
+
+  if (actionName && data.actions && data.actions[actionName]) {
+    console.log(
+      'actionName' + JSON.stringify(data.actions[actionName].outputs)
+    );
+    return data.actions[actionName].outputs;
+  } else {
+    return data;
+  }
+};
 
 export class FlowDrawer {
   readonly steps: readonly PositionedStep[];
@@ -217,14 +238,18 @@ export class FlowDrawer {
         break;
       }
       default: {
-        if (
-          step.type === ActionType.PIECE &&
-          step.settings.outputs &&
-          step.settings.outputs.length > 1
-        ) {
-          const branchDrawer = BranchDrawer.handleBranchAction(step);
-          childHeight = branchDrawer.boundingBox().height;
-          flowDrawer = flowDrawer.mergeChild(branchDrawer);
+        if (step.type === ActionType.PIECE) {
+          getPieceMetadata(
+            step.settings.pieceName,
+            step.settings.actionName,
+            step.settings.pieceVersion
+          ).then((data) => {
+            if (Object.keys(data).length > 1) {
+              const branchDrawer = BranchDrawer.handleBranchAction(step, data);
+              childHeight = branchDrawer.boundingBox().height;
+              flowDrawer = flowDrawer.mergeChild(branchDrawer);
+            }
+          });
           break;
         }
 
