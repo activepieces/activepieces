@@ -5,7 +5,16 @@ import {
 } from '@activepieces/shared';
 import { AuthenticationService, FlagService } from '../service';
 import { forkJoin, map, take } from 'rxjs';
-
+export type FeatureKey =
+  | 'PROJECTS'
+  | 'BRANDING'
+  | 'PIECES'
+  | 'TEMPLATES'
+  | 'API'
+  | 'SSO'
+  | 'AUDIT_LOGS'
+  | 'GIT_SYNC'
+  | 'ISSUES';
 export const unexpectedErrorMessage = $localize`An unexpected error occurred, please contact support`;
 export const codeGeneratorTooltip = $localize`Write code with assistance from AI`;
 export const disabledCodeGeneratorTooltip = $localize`Configure api key in the environment variables to generate code using AI`;
@@ -115,3 +124,8 @@ export const showPlatformDashboard$ = (
 };
 /**Three colors that fits with our design system to use as backgrounds */
 export const experimentalColors = ['#f5dc83', '#ed9090', '#90edb5'];
+export const executionsPageFragments = {
+  Runs: 'Runs',
+  Issues: 'Issues',
+};
+export const TEN_SECONDS = 10000;

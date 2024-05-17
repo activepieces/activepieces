@@ -11,11 +11,11 @@ import {
   FlagService,
   environment,
 } from '@activepieces/ui/common';
-import { Observable, combineLatest, map } from 'rxjs';
+import { Observable, combineLatest, map, of, switchMap, tap } from 'rxjs';
 import { Project } from '@activepieces/shared';
-
 import { Router } from '@angular/router';
 import { MatSidenav } from '@angular/material/sidenav';
+import { IssuesService } from './services/issues.service';
 
 @Component({
   templateUrl: './dashboard-container.component.html',
@@ -34,7 +34,7 @@ export class DashboardContainerComponent {
   contactSalesState$: Observable<boolean>;
   isVersionMatch$?: Observable<boolean>;
   newUpdateMessage = $localize`New update available`;
-
+  issuesCountCheck$: Observable<number>;
   constructor(
     private flagService: FlagService,
     private embeddedService: EmbeddingService,
@@ -42,7 +42,8 @@ export class DashboardContainerComponent {
     private authenticationService: AuthenticationService,
     private platformService: PlatformService,
     public router: Router,
-    private contactSalesService: ContactSalesService
+    private contactSalesService: ContactSalesService,
+    private issuesService: IssuesService
   ) {
     this.contactSalesState$ =
       this.contactSalesService.contactSalesState.asObservable();
@@ -58,13 +59,28 @@ export class DashboardContainerComponent {
         return !res.isInPlatformRoute && res.showPoweredByAp;
       })
     );
-
+    this.issuesCountCheck$ = this.platformService.issuesDisabled().pipe(
+      switchMap((res) => {
+        if (!res) {
+          return this.issuesService.shouldRefreshIssuesCount$.pipe(
+            switchMap(() => {
+              return this.issuesService.getIssuesCount();
+            }),
+            tap((res) => {
+              this.issuesService.toggleShowIssuesNotificationIconInSidebar(
+                res > 0
+              );
+            })
+          );
+        }
+        return of(0);
+      })
+    );
     this.isEmbedded$ = this.embeddedService.getIsInEmbedding$();
     this.showSidnav$ = this.embeddedService
       .getState$()
       .pipe(map((state) => !state.hideSideNav));
     this.isInPlatformRoute$ = this.dashboardService.getIsInPlatformRoute();
-
     this.isVersionMatch$ = this.flagService.isVersionMatch();
   }
 

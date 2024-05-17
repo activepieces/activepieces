@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { RunsTableComponent } from './pages/runs-table/runs-table.component';
 import { FlowsTableComponent } from './pages/flows-table/flows-table.component';
 import {
   ARE_THERE_FLOWS_FLAG,
@@ -21,8 +20,10 @@ import { PlansPageComponent } from 'ee-billing-ui';
 import { ProjectMembersTableComponent } from 'ee-project-members';
 import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
 import { ActivityTableComponent } from './pages/activity-table/activity-table.component';
+import { IssuesTableComponent } from './components/issues-table/issues-table.component';
 import { SettingsPageComponent } from './pages/settings-page/settings-page.component';
 import { FLAGS_RESOLVE_DATA, FlagsResolver } from './resolvers/flags.resolver';
+import { RunsComponent } from './pages/runs/runs.component';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -37,7 +38,22 @@ export const DashboardLayoutRouting: Routes = [
         },
         path: 'runs',
         pathMatch: 'full',
-        component: RunsTableComponent,
+        component: RunsComponent,
+        canActivate: [
+          showBasedOnRoles([
+            ProjectMemberRole.ADMIN,
+            ProjectMemberRole.EDITOR,
+            ProjectMemberRole.VIEWER,
+          ]),
+        ],
+      },
+      {
+        data: {
+          title: $localize`Issues`,
+        },
+        path: 'issues',
+        pathMatch: 'full',
+        component: IssuesTableComponent,
         canActivate: [
           showBasedOnRoles([
             ProjectMemberRole.ADMIN,

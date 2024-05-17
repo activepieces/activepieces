@@ -41,6 +41,7 @@ import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-tem
 import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
+import { issuesModule } from './ee/issues/issues-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { otpModule } from './ee/otp/otp-module'
@@ -252,6 +253,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await pieceSyncService.setup()
     await app.register(flowWorkerModule)
     await app.register(platformUserModule)
+    await app.register(issuesModule)
+
     await setupBullMQBoard(app)
 
     app.get(

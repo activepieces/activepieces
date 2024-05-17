@@ -18,7 +18,7 @@ import {
 import { DynamicInputToggleComponent } from '../dynamic-input-toggle/dynamic-input-toggle.component';
 import deepEqual from 'deep-equal';
 import { DropdownSelectedValuesPipe } from '../../pipes/dropdown-selected-values.pipe';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, startWith, tap } from 'rxjs';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { DropdownLabelsJoinerPipe } from '../../pipes/dropdown-labels-joiner.pipe';
 import { FormControl, UntypedFormControl } from '@angular/forms';
@@ -47,6 +47,7 @@ export class RefreshableDropdownControlComponent
   /**Because options are dynamic and they might not be there when the user searches, this helps us show a value */
   selectedItemsCache$ = new BehaviorSubject<DropdownOption<unknown>[]>([]);
   invalidateCache$?: Observable<void>;
+  refresh$ = new BehaviorSubject<void>(undefined);
   readonly PropertyType = PropertyType;
   readonly loadingText = $localize`Loading...`;
   constructor(piecetaDataService: PieceMetadataService) {
@@ -55,7 +56,9 @@ export class RefreshableDropdownControlComponent
     this.searchControl = searchControl;
   }
   ngOnInit() {
-    this.options$ = this.createRefreshers();
+    this.options$ = this.createRefreshers(
+      this.refresh$.pipe(startWith(undefined))
+    );
     this.invalidateCache$ = this.passedFormControl.valueChanges.pipe(
       tap(() => {
         this.selectedItemsCache$.next([]);
@@ -70,5 +73,9 @@ export class RefreshableDropdownControlComponent
   }
   override refreshersChanged() {
     this.passedFormControl.setValue(undefined);
+  }
+  refreshOptions() {
+    this.refresh$.next(undefined);
+    this.searchControl.setValue('');
   }
 }

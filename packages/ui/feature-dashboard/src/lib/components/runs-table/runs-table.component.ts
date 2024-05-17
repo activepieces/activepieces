@@ -13,6 +13,7 @@ import {
   NotificationStatus,
   ProjectId,
   SeekPage,
+  spreadIfDefined,
 } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -40,14 +41,32 @@ import {
   DATE_RANGE_END_QUERY_PARAM,
   DATE_RANGE_START_QUERY_PARAM,
   ProjectService,
+  UiCommonModule,
+  ApDatePipe,
+  LIMIT_QUERY_PARAM,
+  CURSOR_QUERY_PARAM,
+  executionsPageFragments,
+  EmbeddingService,
 } from '@activepieces/ui/common';
 import { FormControl, FormGroup } from '@angular/forms';
 import { RunsService } from '../../services/runs.service';
 import { DropdownOption } from '@activepieces/pieces-framework';
+import { CommonModule } from '@angular/common';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 const allOptionValue = 'all';
 @Component({
   templateUrl: './runs-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [
+    CommonModule,
+    UiCommonModule,
+    ApDatePipe,
+    MatDatepickerModule,
+    MatNativeDateModule,
+  ],
+  selector: 'app-runs-table',
 })
 export class RunsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
@@ -80,6 +99,7 @@ export class RunsTableComponent implements OnInit {
   FlowRetryStrategy: typeof FlowRetryStrategy = FlowRetryStrategy;
   retryFlow$?: Observable<void>;
   setInitialFilters$?: Observable<void>;
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private flagsService: FlagService,
@@ -88,7 +108,8 @@ export class RunsTableComponent implements OnInit {
     private navigationService: NavigationService,
     private runsService: RunsService,
     private flowsService: FlowService,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private embeddingService: EmbeddingService
   ) {
     this.flowFilterControl.setValue(
       this.activatedRoute.snapshot.queryParamMap.get(FLOW_QUERY_PARAM) ||
@@ -160,29 +181,38 @@ export class RunsTableComponent implements OnInit {
         const createdAfter = new Date(result.date.start);
         const createdBefore = new Date(result.date.end);
         createdBefore.setHours(23, 59, 59, 999);
-        this.navigationService.navigate({
-          route: ['runs'],
-          openInNewWindow: false,
-          extras: {
-            queryParams: {
-              flowId:
-                result.flowId === this.allOptionValue
-                  ? undefined
-                  : result.flowId,
-              status:
-                result.status === this.allOptionValue
-                  ? undefined
-                  : result.status,
-              createdAfter: result.date.start
-                ? createdAfter.toISOString()
-                : undefined,
-              createdBefore: result.date.end
-                ? createdBefore.toISOString()
-                : undefined,
+        if (
+          this.activatedRoute.snapshot.fragment ===
+            executionsPageFragments.Runs ||
+          this.activatedRoute.snapshot.fragment === null
+        ) {
+          this.navigationService.navigate({
+            route: ['runs'],
+            openInNewWindow: false,
+            extras: {
+              fragment: this.embeddingService.getIsInEmbedding()
+                ? undefined
+                : executionsPageFragments.Runs,
+              queryParams: {
+                [FLOW_QUERY_PARAM]:
+                  result.flowId === this.allOptionValue
+                    ? undefined
+                    : result.flowId,
+                [STATUS_QUERY_PARAM]:
+                  result.status === this.allOptionValue
+                    ? undefined
+                    : result.status,
+                [DATE_RANGE_START_QUERY_PARAM]: result.date.start
+                  ? createdAfter.toISOString()
+                  : undefined,
+                [DATE_RANGE_END_QUERY_PARAM]: result.date.end
+                  ? createdBefore.toISOString()
+                  : undefined,
+              },
+              queryParamsHandling: 'merge',
             },
-            queryParamsHandling: 'merge',
-          },
-        });
+          });
+        }
       }),
       map(() => undefined)
     );
@@ -236,5 +266,30 @@ export class RunsTableComponent implements OnInit {
         this.refreshTableForReruns$.next(true);
       })
     );
+  }
+
+  getCurrentQueryParams() {
+    return {
+      [FLOW_QUERY_PARAM]:
+        this.flowFilterControl.value === this.allOptionValue
+          ? undefined
+          : this.flowFilterControl.value,
+      [STATUS_QUERY_PARAM]:
+        this.statusFilterControl.value === this.allOptionValue
+          ? undefined
+          : this.statusFilterControl.value,
+      [DATE_RANGE_START_QUERY_PARAM]: this.dateFormGroup.value.start
+        ? this.dateFormGroup.value.start.toISOString()
+        : undefined,
+      [DATE_RANGE_END_QUERY_PARAM]: this.dateFormGroup.value.end
+        ? this.dateFormGroup.value.end.toISOString()
+        : undefined,
+      [LIMIT_QUERY_PARAM]: this.paginator.pageSizeControl.value,
+      ...spreadIfDefined(CURSOR_QUERY_PARAM, this.paginator.cursor),
+    };
+  }
+  setParams(status: FlowRunStatus, flowId: string) {
+    this.statusFilterControl.setValue(status);
+    this.flowFilterControl.setValue(flowId);
   }
 }

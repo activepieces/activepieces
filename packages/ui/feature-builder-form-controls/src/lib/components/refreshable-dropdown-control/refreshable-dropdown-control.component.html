@@ -1,4 +1,16 @@
-<mat-form-field
+<div class="ap-relative">
+  @if(
+    !passedFormControl.disabled
+  ){
+    <div class="ap-right-[30px] ap-absolute ap-z-50 ap-top-[2px] ap-bg-white ap-h-[40px]">
+      <ap-icon-button (click)="refreshOptions(); matSelect.open();" i18n-tooltipText tooltipText="Refresh Options"
+      iconFilename="refresh.svg" [width]="20" [height]="20" [height]="16"></ap-icon-button>
+    </div>
+  }
+
+
+
+  <mat-form-field
   subscriptSizing="dynamic"
   class="ap-w-full"
   appearance="outline"
@@ -140,3 +152,5 @@
     }
   </mat-select>
 </mat-form-field>
+
+</div>

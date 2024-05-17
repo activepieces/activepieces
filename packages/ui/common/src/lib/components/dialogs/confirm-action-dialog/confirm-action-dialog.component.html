@@ -1,0 +1,28 @@
+<div class="md:ap-max-w-[600px]">
+  <ap-dialog-title-template i18n>{{ data.title }}
+  </ap-dialog-title-template>
+</div>
+
+<mat-dialog-content>
+  <div class="md:ap-max-w-[600px]">
+   
+    <div class="ap-typography-body-1 ap-text-body ap-mb-4" [innerHTML]="data.note">
+    </div>
+   
+  </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="!!action$"  [tabIndex]="1"
+      i18n>
+      Cancel
+    </ap-button>
+    <ap-button btnSize="default" type="submit" [tabIndex]="0" (click)="submit();" [loading]="!!action$" btnColor="primary" i18n>
+      Confirm
+    </ap-button>
+  </div>
+</mat-dialog-actions>
+
+<ng-container *ngIf="action$ | async"></ng-container>

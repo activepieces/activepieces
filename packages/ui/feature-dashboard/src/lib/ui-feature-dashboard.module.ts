@@ -8,7 +8,6 @@ import {
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { SidenavRoutesListComponent } from './components/sidenav-routes-list/sidenav-routes-list.component';
-import { RunsTableComponent } from './pages/runs-table/runs-table.component';
 import { FlowsTableComponent } from './pages/flows-table/flows-table.component';
 import { EmptyFlowsTableComponent } from './pages/flows-table/empty-flows-table/empty-flows-table.component';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
@@ -70,7 +69,6 @@ import { RewardsNoteComponent } from './components/rewards-note/rewards-note.com
   ],
   declarations: [
     DashboardContainerComponent,
-    RunsTableComponent,
     FlowsTableComponent,
     EmptyFlowsTableComponent,
     ConnectionsTableComponent,

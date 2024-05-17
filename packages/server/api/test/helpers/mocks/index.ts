@@ -70,7 +70,7 @@ export const createMockUser = (user?: Partial<User>): User => {
         password: user?.password
             ? bcrypt.hashSync(user.password, 10)
             : faker.internet.password(),
-        status: user?.status ?? faker.helpers.enumValue(UserStatus), 
+        status: user?.status ?? faker.helpers.enumValue(UserStatus),
         platformRole: user?.platformRole ?? faker.helpers.enumValue(PlatformRole),
         verified: user?.verified ?? faker.datatype.boolean(),
         externalId: user?.externalId,
@@ -181,6 +181,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         smtpPort: platform?.smtpPort ?? faker.internet.port(),
         smtpUser: platform?.smtpUser ?? faker.internet.userName(),
         smtpPassword: platform?.smtpPassword ?? faker.internet.password(),
+        flowIssuesEnabled: platform?.flowIssuesEnabled ?? faker.datatype.boolean(),
         smtpUseSSL: platform?.smtpUseSSL ?? faker.datatype.boolean(),
         smtpSenderEmail: platform?.smtpSenderEmail ?? faker.internet.email(),
         privacyPolicyUrl: platform?.privacyPolicyUrl ?? faker.internet.url(),

@@ -20,6 +20,7 @@ export class ApPaginatorComponent implements OnInit {
   @Input() pageSizes: number[] = PAGE_SIZES;
   @Output() pageChanged: EventEmitter<string> = new EventEmitter();
   @Output() pageSizeChanged: EventEmitter<number> = new EventEmitter();
+  cursor?: string;
   pageSizeChanged$!: Observable<number>;
   pageSizeControl!: FormControl<number>;
   constructor(
@@ -58,7 +59,7 @@ export class ApPaginatorComponent implements OnInit {
       [LIMIT_QUERY_PARAM]: this.pageSizeControl.value,
       [CURSOR_QUERY_PARAM]: cursor,
     };
-
+    this.cursor = cursor;
     this.navigationService.navigate({
       route: ['.'],
       extras: {
