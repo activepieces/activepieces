@@ -1064,6 +1064,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "hharchani",
+      "name": "Harshit Harchani",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6430611?v=4",
+      "profile": "https://github.com/hharchani",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
