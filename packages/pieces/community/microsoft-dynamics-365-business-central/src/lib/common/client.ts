@@ -20,13 +20,15 @@ interface CompanyResponse {
 	name: string;
 }
 
+export type filterParams = Record<string, string | number | string[] | undefined>;
+
 export class BusinessCentralAPIClient {
 	constructor(private environment: string, private accessToken: string) {}
 
 	async makeRequest<T extends HttpMessageBody>(
 		method: HttpMethod,
 		resourceUri: string,
-		query?: Record<string, string | number | string[] | undefined>,
+		query?: filterParams,
 		body: any | undefined = undefined,
 	): Promise<T> {
 		const baseUrl = `https://api.businesscentral.dynamics.com/v2.0/${this.environment}/api/v2.0`;
@@ -100,6 +102,14 @@ export class BusinessCentralAPIClient {
 			HttpMethod.DELETE,
 			`/companies(${companyId})/${recordType}(${recordId})`,
 		);
+	}
+
+	async filterRecords(
+		companyId: string,
+		recordType: string,
+		params: filterParams,
+	): Promise<ListAPIResponse<Record<string, unknown>>> {
+		return await this.makeRequest(HttpMethod.GET, `/companies(${companyId})/${recordType}`, params);
 	}
 }
 

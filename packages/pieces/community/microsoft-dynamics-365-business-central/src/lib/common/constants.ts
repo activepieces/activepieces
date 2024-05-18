@@ -15,4 +15,8 @@ export const ENTITY_DROPDOWN_OPTIONS = [
 		label: 'Customers',
 		value: 'customers',
 	},
+	{
+		label: 'Vendors',
+		value: 'vendors',
+	},
 ];
