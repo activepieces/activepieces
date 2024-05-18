@@ -514,8 +514,8 @@ export const commonProps = {
 				case 'bankAccounts':
 					fields = entityProps.bankAccounts;
 					break;
-				case 'customers':
-					fields = entityProps.customers;
+				case 'contacts':
+					fields = entityProps.contacts;
 					break;
 				case 'currencies':
 					fields = entityProps.currencies;
