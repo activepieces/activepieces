@@ -16,6 +16,14 @@ export const ENTITY_DROPDOWN_OPTIONS = [
 		value: 'customers',
 	},
 	{
+		label: 'Dispute Status',
+		value: 'disputeStatus',
+	},
+	{
+		label: 'Employees',
+		value: 'employees',
+	},
+	{
 		label: 'Vendors',
 		value: 'vendors',
 	},
