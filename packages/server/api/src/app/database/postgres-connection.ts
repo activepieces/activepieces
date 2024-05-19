@@ -133,6 +133,7 @@ import { UnifyEnterpriseWithCloud1714249840058 } from './migration/postgres/1714
 import { AddIssueEntityPostgres1714904516114 } from './migration/postgres/1714904516114-AddIssueEntityPostgres'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
+import { RemoveShowActivityLog1716105958530 } from './migration/common/1716105958530-RemoveShowActivityLog'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -217,6 +218,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddUniqueNameToFolder1713643694049,
         AddFeaturesToPlatform1714145914415,
         AddIssueEntityPostgres1714904516114,
+        RemoveShowActivityLog1716105958530,
     ]
 
     const edition = getEdition()

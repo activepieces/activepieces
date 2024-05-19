@@ -87,7 +87,7 @@ export class IssuesTableComponent implements OnInit {
       event.ctrlKey || event.which == 2 || event.button == 4;
     if (openInNewWindow && !this.embeddingService.getState().isEmbedded) {
       this.navigationService.navigate({
-        route: ['/executions'],
+        route: ['/runs'],
         extras: {
           fragment: executionsPageFragments.Runs,
           queryParams: {
