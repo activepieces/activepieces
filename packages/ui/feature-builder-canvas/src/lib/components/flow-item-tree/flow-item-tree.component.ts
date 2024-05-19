@@ -1,5 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable, combineLatest, map } from 'rxjs';
+import {
+  Observable,
+  combineLatest,
+  filter,
+  from,
+  map,
+  mergeMap,
+  switchMap,
+  toArray,
+} from 'rxjs';
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import {
@@ -12,6 +21,9 @@ import {
   PositionedStep,
   DEFAULT_TOP_MARGIN,
 } from '@activepieces/ui-canvas-utils';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import { ActionType, flowHelper } from '@activepieces/shared';
+import { PieceMetadataModel } from '@activepieces/pieces-framework';
 
 type UiFlowDrawer = {
   centeringGraphTransform: string;
@@ -32,7 +44,8 @@ export class FlowItemTreeComponent implements OnInit {
   constructor(
     private store: Store,
     private pannerService: PannerService,
-    private zoomingService: ZoomingService
+    private zoomingService: ZoomingService,
+    private piecesMetadataService: PieceMetadataService
   ) {
     this.transform$ = this.getTransform$();
     this.isPanning$ = this.pannerService.isPanning$;
@@ -43,26 +56,39 @@ export class FlowItemTreeComponent implements OnInit {
     const flowVersion$ = this.store.select(
       BuilderSelectors.selectViewedVersion
     );
+
     this.flowDrawer$ = flowVersion$.pipe(
-      map((version) => {
-        FlowDrawer.trigger = version.trigger;
-        return FlowDrawer.construct(version.trigger).offset(
-          0,
-          DEFAULT_TOP_MARGIN
-        );
-      }),
-      map((drawer) => {
-        return {
-          svg: drawer.svg.toSvg().content,
-          boundingBox: drawer.boundingBox(),
-          buttons: drawer.buttons,
-          steps: drawer.steps,
-          labels: drawer.labels,
-          centeringGraphTransform: `translate(${
-            drawer.boundingBox().width / 2 - FLOW_ITEM_WIDTH / 2
-          }px,-${FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING - DEFAULT_TOP_MARGIN}px)`,
-        };
-      })
+      switchMap((version) =>
+        from(flowHelper.getAllSteps(version.trigger)).pipe(
+          filter((s) => s.type === ActionType.PIECE),
+          mergeMap((s) =>
+            this.piecesMetadataService.getPieceMetadata(
+              s.settings.pieceName,
+              s.settings.pieceVersion
+            )
+          ),
+          toArray(),
+          map((allPieces: PieceMetadataModel[]) => {
+            FlowDrawer.trigger = version.trigger;
+            const drawer = FlowDrawer.construct(
+              version.trigger,
+              allPieces
+            ).offset(0, DEFAULT_TOP_MARGIN);
+            return {
+              svg: drawer.svg.toSvg().content,
+              boundingBox: drawer.boundingBox(),
+              buttons: drawer.buttons,
+              steps: drawer.steps,
+              labels: drawer.labels,
+              centeringGraphTransform: `translate(${
+                drawer.boundingBox().width / 2 - FLOW_ITEM_WIDTH / 2
+              }px,-${
+                FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING - DEFAULT_TOP_MARGIN
+              }px)`,
+            };
+          })
+        )
+      )
     );
   }
 

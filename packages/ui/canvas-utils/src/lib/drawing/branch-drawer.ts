@@ -39,9 +39,7 @@ export class BranchDrawer {
     const actions =
       branchStep.type === ActionType.BRANCH
         ? [branchStep.onSuccessAction, branchStep.onFailureAction]
-        : Object.keys(outputs ?? {}).map(
-            (output) => branchStep.children?.[output]
-          );
+        : Object.keys(outputs!).map((output) => branchStep.children?.[output]);
     const branchesDrawers: FlowDrawer[] = actions.map((action) =>
       FlowDrawer.construct(action)
     );
@@ -88,7 +86,7 @@ export class BranchDrawer {
           y:
             drawerMovedToFirstChildStep.steps[0].y -
             VERTICAL_SPACE_BETWEEN_LABEL_AND_FLOW_ITEM,
-          label: BranchDrawer.setLabel(index, branchStep),
+          label: BranchDrawer.setLabel(index, outputs),
         })
         .appendSvg(lineComponentAtStartOfBranch.line)
         .appendButton(lineComponentAtStartOfBranch.button)

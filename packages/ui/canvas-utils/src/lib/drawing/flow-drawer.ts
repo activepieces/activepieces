@@ -17,26 +17,30 @@ import { SvgDrawer, drawLineComponentWithButton } from './svg-drawer';
 import { PositionedStep } from './step-card';
 import { BranchDrawer } from './branch-drawer';
 import { LoopDrawer } from './loop-drawer';
-import { environment } from '@activepieces/ui/common';
+import { PieceMetadataModel } from '@activepieces/pieces-framework';
 
-// !!!TESTING ONLY!!! Testing purpose to fetch piece metadata
-const getPieceMetadata = async (
-  name: string,
-  actionName?: string,
-  version?: string
+const filterActionFunction = (
+  pieceMetadata: PieceMetadataModel[] | undefined,
+  pieceName?: string,
+  actionName?: string | undefined
 ) => {
-  console.log('name ' + name);
-  const response = await fetch(`${environment.apiUrl}/pieces/${name}`);
-  const data = await response.json();
-
-  if (actionName && data.actions && data.actions[actionName]) {
-    console.log(
-      'actionName' + JSON.stringify(data.actions[actionName].outputs)
-    );
-    return data.actions[actionName].outputs;
-  } else {
-    return data;
+  if (isNil(pieceMetadata) || isNil(pieceName) || isNil(actionName)) {
+    return undefined;
   }
+  const piece = pieceMetadata.filter((piece) => {
+    return piece.name === pieceName;
+  })[0];
+
+  if (isNil(piece)) {
+    return undefined;
+  }
+
+  const action = piece.actions[actionName].outputs;
+  if (isNil(action) || Object.keys(action).length === 0) {
+    return undefined;
+  }
+
+  return action;
 };
 
 export class FlowDrawer {
@@ -50,6 +54,7 @@ export class FlowDrawer {
     y: 0,
     content: null,
   }).center('bottom');
+  static pieces: PieceMetadataModel[] | undefined = [];
   private constructor({
     svg = SvgDrawer.empty(),
     steps = [],
@@ -194,7 +199,11 @@ export class FlowDrawer {
     });
   }
 
-  static construct(step: Action | Trigger | undefined): FlowDrawer {
+  static construct(
+    step: Action | Trigger | undefined,
+    allPieces?: PieceMetadataModel[]
+  ): FlowDrawer {
+    this.pieces = allPieces ?? this.pieces;
     if (isNil(step)) {
       return new FlowDrawer({
         buttons: [],
@@ -238,18 +247,15 @@ export class FlowDrawer {
         break;
       }
       default: {
-        if (step.type === ActionType.PIECE) {
-          getPieceMetadata(
-            step.settings.pieceName,
-            step.settings.actionName,
-            step.settings.pieceVersion
-          ).then((data) => {
-            if (Object.keys(data).length > 1) {
-              const branchDrawer = BranchDrawer.handleBranchAction(step, data);
-              childHeight = branchDrawer.boundingBox().height;
-              flowDrawer = flowDrawer.mergeChild(branchDrawer);
-            }
-          });
+        const outputs = filterActionFunction(
+          this.pieces,
+          step.settings.pieceName,
+          step.settings.actionName
+        );
+        if (step.type === ActionType.PIECE && !isNil(outputs)) {
+          const branchDrawer = BranchDrawer.handleBranchAction(step, outputs);
+          childHeight = branchDrawer.boundingBox().height;
+          flowDrawer = flowDrawer.mergeChild(branchDrawer);
           break;
         }
 
