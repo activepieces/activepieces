@@ -132,7 +132,7 @@ function traverseInternal(
             steps.push(...traverseInternal(step.onSuccessAction))
             steps.push(...traverseInternal(step.onFailureAction))
         }
-        if (step.type === ActionType.PIECE && isPieceBranched(step)) {
+        if (isPieceBranched(step)) {
             const children = step.children
             for (const key in children) {
                 const action = children[key]
@@ -433,6 +433,7 @@ function extractActions(step: Trigger | Action): {
     onSuccessAction?: Action
     onFailureAction?: Action
     firstLoopAction?: Action
+    childrenActions?: Record<string, Action | undefined>
 } {
     const nextAction = step.nextAction
     const onSuccessAction =
@@ -441,7 +442,8 @@ function extractActions(step: Trigger | Action): {
         step.type === ActionType.BRANCH ? step.onFailureAction : undefined
     const firstLoopAction =
         step.type === ActionType.LOOP_ON_ITEMS ? step.firstLoopAction : undefined
-    return { nextAction, onSuccessAction, onFailureAction, firstLoopAction }
+    const childrenActions = isPieceBranched(step) ? step.children : undefined
+    return { nextAction, onSuccessAction, onFailureAction, firstLoopAction, childrenActions }
 }
 
 function moveAction(
@@ -576,7 +578,7 @@ function addAction(
             }
         }
         else if (isPieceBranched(parentStep)) {
-            const outputs = { approved: {}, denied: {} } // !!!TESTING ONLY!!! need to get from piece definition
+            const outputs = extractOutputs(parentStep)
             if (
                 request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
             ) {
@@ -1071,7 +1073,15 @@ function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAct
 }
 
 function isPieceBranched(step: Step): step is PieceAction & { children: Record<string, Action | undefined> } {
-    return step.type === ActionType.PIECE && !isNil(step.children)
+    if (step.type === ActionType.PIECE) {
+        return extractOutputs(step) ? true : false
+    }
+    return false
+}
+
+function extractOutputs(step: Step): { [key: string]: unknown } {
+    const customUiInputs = step.settings.inputUiInfo.customizedInputs 
+    return customUiInputs && customUiInputs['outputs']
 }
 
 export const flowHelper = {

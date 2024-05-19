@@ -385,7 +385,9 @@ export class StepTypeSidebarComponent implements AfterViewInit {
               actionName: suggestion?.name,
               input: initialValues,
               inputUiInfo: {
-                customizedInputs: {},
+                customizedInputs: {
+                  outputs: suggestion?.outputs,
+                },
               },
               errorHandlingOptions: {
                 continueOnFailure: {
