@@ -2,9 +2,14 @@ name: Release RC
 
 on:
   workflow_dispatch:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
 
 jobs:
   Release:
+    if: contains(github.event.pull_request.labels.*.name, 'pre-release')
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
