@@ -32,6 +32,18 @@ export const ENTITY_DROPDOWN_OPTIONS = [
 		value: 'locations',
 	},
 	{
+		label: 'Payment Methods',
+		value: 'paymentMethods',
+	},
+	{
+		label: 'Payment Terms',
+		value: 'paymentTerms',
+	},
+	{
+		label: 'Projects',
+		value: 'projects',
+	},
+	{
 		label: 'Vendors',
 		value: 'vendors',
 	},
