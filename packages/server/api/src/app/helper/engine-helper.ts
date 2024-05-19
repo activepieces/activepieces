@@ -109,20 +109,20 @@ function tryParseJson(value: unknown): unknown {
 }
 
 const execute = async <Result extends EngineHelperResult>(
-    operation: EngineOperationType,
+    operationType: EngineOperationType,
     sandbox: Sandbox,
     input: EngineOperation,
 ): Promise<EngineHelperResponse<Result>> => {
     try {
         logger.debug(
-            { operation, sandboxId: sandbox.boxId },
+            { operationType, sandboxId: sandbox.boxId },
             '[EngineHelper#execute]',
         )
 
         const sandboxPath = sandbox.getSandboxFolderPath()
 
         await fs.writeFile(`${sandboxPath}/input.json`, JSON.stringify(input))
-        const sandboxResponse = await sandbox.runOperation(operation)
+        const sandboxResponse = await sandbox.runOperation(operationType, input)
 
         sandboxResponse.standardOutput.split('\n').forEach((f) => {
             if (f.trim().length > 0) logger.debug({}, chalk.yellow(f))

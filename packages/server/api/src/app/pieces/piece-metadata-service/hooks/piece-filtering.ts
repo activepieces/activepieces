@@ -1,5 +1,4 @@
 import Fuse from 'fuse.js'
-import { platformService } from '../../../platform/platform.service'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
 import { isNil, PieceCategory, PlatformId, SuggestionType } from '@activepieces/shared'
@@ -41,7 +40,6 @@ async function filterPiecesBasedOnFeatures(
     if (isNil(platformId)) {
         return pieces
     }
-    const platform = await platformService.getOneOrThrow(platformId)
     return pieces
 }
 

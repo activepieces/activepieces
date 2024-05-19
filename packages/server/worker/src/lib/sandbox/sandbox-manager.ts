@@ -12,11 +12,11 @@ const sandboxes: Sandbox[] = new Array(SANDBOX_LIMIT)
 const lock: Mutex = new Mutex()
 
 export const sandboxManager = {
-    async allocate(): Promise<Sandbox> {
-        logger.debug('[SandboxManager#allocate]')
+    async allocate(cacheKey: string): Promise<Sandbox> {
+        logger.debug({ cacheKey }, '[SandboxManager#allocate]')
 
         const sandbox = await executeWithLock((): Sandbox => {
-            const sandbox = sandboxes.find(byNotInUse)
+            const sandbox = findSandbox(cacheKey)
 
             if (isNil(sandbox)) {
                 throw new Error('[SandboxManager#allocate] all sandboxes are in-use')
@@ -27,7 +27,7 @@ export const sandboxManager = {
         })
 
         try {
-            await sandbox.recreate()
+            await sandbox.cleanUp()
             return sandbox
         }
         catch (e) {
@@ -65,4 +65,16 @@ const executeWithLock = async <T>(methodToExecute: () => T): Promise<T> => {
     }
 }
 
-const byNotInUse = (s: Sandbox): boolean => !s.inUse
+
+function findSandbox(cacheKey: string): Sandbox | undefined {
+    const sandboxByKey = sandboxes.find(f => f.cacheKey === cacheKey && !f.inUse)
+    if (!isNil(sandboxByKey)) {
+        return sandboxByKey
+    }
+    const uncachedSandbox = sandboxes.find(f => !f.inUse && isNil(f.cacheKey))
+    if (!isNil(uncachedSandbox)) {
+        return uncachedSandbox
+    }
+    return sandboxes.find(f => !f.inUse)
+}
+

@@ -49,7 +49,7 @@ export class ApMemoryQueue<T> {
                     this.queue.push(nextJob)
                 }
             }
-        }, 1000)
+        }, 50)
     }
 }
 

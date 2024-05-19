@@ -240,7 +240,6 @@ export const flagService = {
         const packageJson = await import('package.json')
         return packageJson.version
     },
-
     async getLatestRelease(): Promise<string> {
         try {
             const response = await axios.get<PackageJson>(
