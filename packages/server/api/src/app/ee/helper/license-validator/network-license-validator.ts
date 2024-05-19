@@ -28,6 +28,7 @@ export const networkLicenseValidator: LicenseValidator = {
                 customDomainsEnabled: res.data.customDomainsEnabled,
                 manageProjectsEnabled: res.data.manageProjectsEnabled,
                 managePiecesEnabled: res.data.managePiecesEnabled,
+                flowIssuesEnabled: res.data.flowIssuesEnabled,
                 manageTemplatesEnabled: res.data.manageTemplatesEnabled,
                 apiKeysEnabled: res.data.apiKeysEnabled,
                 projectRolesEnabled: res.data.projectRolesEnabled,

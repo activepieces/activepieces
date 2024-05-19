@@ -18,7 +18,6 @@ import { accessTokenManager } from './authentication/lib/access-token-manager'
 import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
-import { activityModule } from './ee/activity/activity-module'
 import { analyticsModule } from './ee/analytics/analytics-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
@@ -41,6 +40,7 @@ import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-tem
 import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
+import { issuesModule } from './ee/issues/issues-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { otpModule } from './ee/otp/otp-module'
@@ -252,6 +252,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await pieceSyncService.setup()
     await app.register(flowWorkerModule)
     await app.register(platformUserModule)
+    await app.register(issuesModule)
+
     await setupBullMQBoard(app)
 
     app.get(
@@ -309,7 +311,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(activityModule)
             await app.register(usageTrackerModule)
             await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
@@ -343,7 +344,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(activityModule)
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
             setPlatformOAuthService({

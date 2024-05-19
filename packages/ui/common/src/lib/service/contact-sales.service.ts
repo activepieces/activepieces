@@ -4,16 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { FlagService } from './flag.service';
 import { TelemetryService } from './telemetry.service';
 import { TelemetryEventName } from '@activepieces/shared';
-
-export type FeatureKey =
-  | 'PROJECTS'
-  | 'BRANDING'
-  | 'PIECES'
-  | 'TEMPLATES'
-  | 'API'
-  | 'SSO'
-  | 'AUDIT_LOGS'
-  | 'GIT_SYNC';
+import { FeatureKey } from '../utils/consts';
 
 export interface Feature {
   label: string;
@@ -37,6 +28,10 @@ export const FEATURES: Feature[] = [
   {
     label: 'Team Collaboration via Git',
     key: 'GIT_SYNC',
+  },
+  {
+    label: 'Track Consecutive Failed Runs',
+    key: 'ISSUES',
   },
 ];
 

@@ -47,7 +47,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         flagService.getThirdPartyRedirectUrl(platform.id, hostname)
             modifiedFlags[ApFlagId.PRIVACY_POLICY_URL] = platform.privacyPolicyUrl
             modifiedFlags[ApFlagId.OWN_AUTH2_ENABLED] = false
-            modifiedFlags[ApFlagId.SHOW_ACTIVITY_LOG] = platform.showActivityLog
         }
         return modifiedFlags
     },

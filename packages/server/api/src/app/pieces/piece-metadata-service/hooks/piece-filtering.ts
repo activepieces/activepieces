@@ -42,12 +42,7 @@ async function filterPiecesBasedOnFeatures(
         return pieces
     }
     const platform = await platformService.getOneOrThrow(platformId)
-    return pieces.filter((piece) => {
-        if (piece.name === '@activepieces/piece-activity' && !platform.showActivityLog) {
-            return false
-        }
-        return true
-    })
+    return pieces
 }
 
 const filterBasedOnSearchQuery = ({

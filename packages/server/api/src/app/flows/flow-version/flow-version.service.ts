@@ -31,7 +31,8 @@ import {
     LoopOnItemsActionSettingsWithValidation,
     PieceActionSettings,
     PieceTriggerSettings,
-    ProjectId, SeekPage, TriggerType, UserId } from '@activepieces/shared'
+    ProjectId, SeekPage, TriggerType, UserId,
+} from '@activepieces/shared'
 
 const branchSettingsValidator = TypeCompiler.Compile(
     BranchActionSettingsWithValidation,
@@ -138,8 +139,9 @@ export const flowVersionService = {
         }
 
         mutatedFlowVersion.updated = dayjs().toISOString()
-        mutatedFlowVersion.updatedBy = userId
-
+        if (userId) {
+            mutatedFlowVersion.updatedBy = userId
+        }
         return flowVersionRepo(entityManager).save(mutatedFlowVersion)
     },
 
@@ -641,7 +643,7 @@ type GetFlowVersionOrThrowParams = {
 type NewFlowVersion = Omit<FlowVersion, 'created' | 'updated'>
 
 type ApplyOperationParams = {
-    userId: UserId
+    userId: UserId | null
     projectId: ProjectId
     flowVersion: FlowVersion
     userOperation: FlowOperationRequest
