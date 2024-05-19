@@ -159,11 +159,7 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
         auditLogEnabled: {
             type: Boolean,
             nullable: false,
-        },
-        showActivityLog: {
-            type: Boolean,
-            nullable: false,
-        },
+        }
     },
     indices: [],
     relations: {

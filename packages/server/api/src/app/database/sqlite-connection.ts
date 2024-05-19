@@ -45,6 +45,7 @@ import { AddFeatureFlagsToPlatform1714137103728 } from './migration/sqlite/17141
 import { AddIssueEntitySqlite1714900626443 } from './migration/sqlite/1714900626443-AddIssueEntitySqlite'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
+import { RemoveShowActivityLog1716105958530 } from './migration/common/1716105958530-RemoveShowActivityLog'
 
 
 const getSqliteDatabaseFilePath = (): string => {
@@ -108,6 +109,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddUniqueNameToFolderSqlite1713645171373,
         AddFeatureFlagsToPlatform1714137103728,
         AddIssueEntitySqlite1714900626443,
+        RemoveShowActivityLog1716105958530,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

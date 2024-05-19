@@ -10,8 +10,8 @@ import { catchError, map, Observable, of, tap } from 'rxjs';
 import { ProjectMemberService } from '../../service/project-members.service';
 import { DialogRef } from '@angular/cdk/dialog';
 import { HttpStatusCode } from '@angular/common/http';
-import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
-import { AuthenticationService, FlagService } from '@activepieces/ui/common';
+import { ProjectMemberRole } from '@activepieces/shared';
+import { AuthenticationService } from '@activepieces/ui/common';
 import { RolesDisplayNames } from '../../utils';
 
 @Component({
@@ -30,10 +30,7 @@ export class InviteProjectMemberDialogComponent {
   ProjectMemberRole = Object.values(ProjectMemberRole).map((role) => {
     return {
       role,
-      condition$:
-        role === ProjectMemberRole.EXTERNAL_CUSTOMER
-          ? this.flagService.isFlagEnabled(ApFlagId.SHOW_ACTIVITY_LOG)
-          : of(true),
+      condition$: of(true),
     };
   });
   constructor(
@@ -42,7 +39,6 @@ export class InviteProjectMemberDialogComponent {
     private projectMemberService: ProjectMemberService,
     private authenticationService: AuthenticationService,
     private dialogRef: DialogRef,
-    private flagService: FlagService
   ) {
     this.invitationForm = this.formBuilder.group({
       email: new FormControl('', {
