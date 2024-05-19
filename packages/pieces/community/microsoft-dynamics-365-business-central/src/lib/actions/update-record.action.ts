@@ -22,6 +22,8 @@ export const updateRecordAction = createAction({
 
 		const client = makeClient(context.auth);
 
-		return await client.updateRecord(companyId, recordType, recordId, recordFields);
+		const endpoint = `/companies(${companyId})/${recordType}(${recordId})`;
+
+		return await client.updateRecord(endpoint, recordFields);
 	},
 });

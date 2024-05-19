@@ -19,7 +19,8 @@ export const deleteRecordAction = createAction({
 		const recordId = context.propsValue.record_id;
 
 		const client = makeClient(context.auth);
+		const endpoint = `/companies(${companyId})/${recordType}(${recordId})`;
 
-		return await client.deleteRecord(companyId, recordType, recordId);
+		return await client.deleteRecord(endpoint);
 	},
 });

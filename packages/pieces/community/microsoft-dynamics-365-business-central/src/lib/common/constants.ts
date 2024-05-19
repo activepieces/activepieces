@@ -24,6 +24,18 @@ export const ENTITY_DROPDOWN_OPTIONS = [
 		value: 'employees',
 	},
 	{
+		label: 'Items',
+		value: 'items',
+	},
+	{
+		label: 'Item Categories',
+		value: 'itemCategories',
+	},
+	{
+		label: 'Item Variants',
+		value: 'itemVariants',
+	},
+	{
 		label: 'Journals',
 		value: 'journals',
 	},

@@ -19,6 +19,9 @@ import { locationsEntityProps } from './props/locations.entity';
 import { paymentMethodsEntityProps } from './props/paymentMethods.entity';
 import { paymentTermsEntityProps } from './props/paymentTerms.entity';
 import { projectsEntityProps } from './props/projects.entity';
+import { itemCategoriesEntityProps } from './props/itemCategories.entity';
+import { itemsEntityProps } from './props/items.entity';
+import { itemVariantsEntityProps } from './props/itemVariants.entity';
 
 export const commonProps = {
 	company_id: Property.Dropdown({
@@ -91,6 +94,15 @@ export const commonProps = {
 					break;
 				case 'employees':
 					fields = employeesEntityProps;
+					break;
+				case 'items':
+					fields = itemsEntityProps;
+					break;
+				case 'itemCategories':
+					fields = itemCategoriesEntityProps;
+					break;
+				case 'itemVariants':
+					fields = itemVariantsEntityProps;
 					break;
 				case 'journals':
 					fields = journalsEntityProps;

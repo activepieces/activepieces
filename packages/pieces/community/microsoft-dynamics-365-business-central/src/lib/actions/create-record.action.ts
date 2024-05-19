@@ -20,6 +20,8 @@ export const createRecordAction = createAction({
 
 		const client = makeClient(context.auth);
 
-		return await client.createRecord(companyId, recordType, recordFields);
+		const endpoint = `/companies(${companyId})/${recordType}`;
+
+		return await client.createRecord(endpoint, recordFields);
 	},
 });

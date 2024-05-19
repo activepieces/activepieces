@@ -67,41 +67,20 @@ export class BusinessCentralAPIClient {
 		return await this.makeRequest(HttpMethod.GET, '/companies');
 	}
 
-	async createRecord(companyId: string, recordType: string, request: Record<string, any>) {
-		return await this.makeRequest(
-			HttpMethod.POST,
-			`/companies(${companyId})/${recordType}`,
-			undefined,
-			request,
-		);
+	async createRecord(endpoint: string, request: Record<string, any>) {
+		return await this.makeRequest(HttpMethod.POST, endpoint, undefined, request);
 	}
 
-	async updateRecord(
-		companyId: string,
-		recordType: string,
-		recordId: string,
-		request: Record<string, any>,
-	) {
-		return await this.makeRequest(
-			HttpMethod.PATCH,
-			`/companies(${companyId})/${recordType}(${recordId})`,
-			undefined,
-			request,
-		);
+	async updateRecord(endpoint: string, request: Record<string, any>) {
+		return await this.makeRequest(HttpMethod.PATCH, endpoint, undefined, request);
 	}
 
-	async getRecord(companyId: string, recordType: string, recordId: string) {
-		return await this.makeRequest(
-			HttpMethod.GET,
-			`/companies(${companyId})/${recordType}(${recordId})`,
-		);
+	async getRecord(endpoint: string) {
+		return await this.makeRequest(HttpMethod.GET, endpoint);
 	}
 
-	async deleteRecord(companyId: string, recordType: string, recordId: string) {
-		return await this.makeRequest(
-			HttpMethod.DELETE,
-			`/companies(${companyId})/${recordType}(${recordId})`,
-		);
+	async deleteRecord(endpoint: string) {
+		return await this.makeRequest(HttpMethod.DELETE, endpoint);
 	}
 
 	async filterRecords(
