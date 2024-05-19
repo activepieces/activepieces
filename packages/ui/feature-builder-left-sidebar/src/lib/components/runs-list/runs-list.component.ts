@@ -22,6 +22,8 @@ import {
 import {
   BuilderSelectors,
   LeftSideBarType,
+  NO_PROPS,
+  RightSideBarType,
   TestRunBarComponent,
   ViewModeActions,
   ViewModeEnum,
@@ -139,7 +141,16 @@ export class RunsListComponent implements OnInit {
   }
   exitRun() {
     this.store.dispatch(
-      ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING })
+      canvasActions.setRightSidebar({
+        sidebarType: RightSideBarType.NONE,
+        props: NO_PROPS,
+        deselectCurrentStep: true,
+      })
     );
+    setTimeout(() => {
+      this.store.dispatch(
+        ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING })
+      );
+    });
   }
 }

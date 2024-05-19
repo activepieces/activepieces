@@ -1,5 +1,6 @@
 import {
   FlowOperationType,
+  FlowVersion,
   FlowVersionMetadata,
   SeekPage,
 } from '@activepieces/shared';
@@ -8,6 +9,8 @@ import {
   BuilderSelectors,
   FlowsActions,
   LeftSideBarType,
+  NO_PROPS,
+  RightSideBarType,
   ViewModeActions,
   ViewModeEnum,
   canvasActions,
@@ -79,7 +82,7 @@ export class VersionHistoryComponent {
           this.rewritingDraft = false;
           this.store.dispatch(FlowsActions.importFlow({ flow }));
           this.viewDraftVersion();
-          this.closeSidebar();
+          this.closeLeftSidebar();
         }),
         catchError(() => {
           this.rewritingDraft = false;
@@ -106,7 +109,7 @@ export class VersionHistoryComponent {
         })
       );
   }
-  closeSidebar() {
+  closeLeftSidebar() {
     this.store.dispatch(
       canvasActions.setLeftSidebar({
         sidebarType: LeftSideBarType.NONE,
@@ -115,31 +118,38 @@ export class VersionHistoryComponent {
   }
 
   displayVersion(flowVersion: FlowVersionMetadata) {
-    this.displayVersion$ = forkJoin({
-      flow: this.flowService.get(flowVersion.flowId, flowVersion.id),
-      published: this.store
-        .select(BuilderSelectors.selectPublishedFlowVersion)
-        .pipe(take(1)),
-      draftId: this.store
-        .select(BuilderSelectors.selectDraftVersionId)
-        .pipe(take(1)),
-    }).pipe(
-      tap(({ flow, published, draftId }) => {
-        if (flow.version.id === published?.id) {
-          this.viewPublishedVersion();
-        } else if (flow.version.id === draftId) {
-          this.viewDraftVersion();
-        } else {
-          this.store.dispatch(
-            ViewModeActions.setViewMode({
-              viewMode: ViewModeEnum.SHOW_OLD_VERSION,
-              version: flow.version,
-            })
-          );
-        }
+    this.closeRightSidebar();
+    setTimeout(() => {
+      this.displayVersion$ = forkJoin({
+        flow: this.flowService.get(flowVersion.flowId, flowVersion.id),
+        published: this.store
+          .select(BuilderSelectors.selectPublishedFlowVersion)
+          .pipe(take(1)),
+        draftId: this.store
+          .select(BuilderSelectors.selectDraftVersionId)
+          .pipe(take(1)),
+      }).pipe(
+        tap(({ flow, published, draftId }) => {
+          if (flow.version.id === published?.id) {
+            this.viewPublishedVersion();
+          } else if (flow.version.id === draftId) {
+            this.viewDraftVersion();
+          } else {
+            this.viewOldVersion(flow.version);
+          }
+        })
+      );
+    });
+  }
+  private viewOldVersion(version: FlowVersion) {
+    this.store.dispatch(
+      ViewModeActions.setViewMode({
+        viewMode: ViewModeEnum.SHOW_OLD_VERSION,
+        version: version,
       })
     );
   }
+
   viewDraftVersion() {
     this.store.dispatch(
       ViewModeActions.setViewMode({
@@ -151,6 +161,15 @@ export class VersionHistoryComponent {
     this.store.dispatch(
       ViewModeActions.setViewMode({
         viewMode: ViewModeEnum.SHOW_PUBLISHED,
+      })
+    );
+  }
+  closeRightSidebar() {
+    this.store.dispatch(
+      canvasActions.setRightSidebar({
+        sidebarType: RightSideBarType.NONE,
+        props: NO_PROPS,
+        deselectCurrentStep: true,
       })
     );
   }
