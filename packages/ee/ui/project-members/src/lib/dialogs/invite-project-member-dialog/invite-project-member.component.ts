@@ -38,7 +38,7 @@ export class InviteProjectMemberDialogComponent {
     private snackbar: MatSnackBar,
     private projectMemberService: ProjectMemberService,
     private authenticationService: AuthenticationService,
-    private dialogRef: DialogRef,
+    private dialogRef: DialogRef
   ) {
     this.invitationForm = this.formBuilder.group({
       email: new FormControl('', {

@@ -111,7 +111,7 @@ export const showPlatformDashboard$ = (
       ({ platformAdmin, showPlatformDemo }) =>
         (showPlatformDemo || platformAdmin) &&
         authenticationService.currentUser.projectRole !==
-        ProjectMemberRole.EXTERNAL_CUSTOMER
+          ProjectMemberRole.EXTERNAL_CUSTOMER
     )
   );
 };
