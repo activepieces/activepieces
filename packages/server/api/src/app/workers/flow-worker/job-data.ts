@@ -1,4 +1,3 @@
-import { HookType } from '../../flows/flow-run/flow-run-service'
 import {
     EventPayload,
     ExecutionType,
@@ -6,6 +5,7 @@ import {
     FlowRetryPayload,
     FlowRunId,
     FlowVersionId,
+    ProgressUpdateType,
     ProjectId,
     RunEnvironment,
     TriggerType,
@@ -58,17 +58,17 @@ export type ScheduledJobData =
 export type OneTimeJobData = BaseJobData & {
     flowVersionId: FlowVersionId
     runId: FlowRunId
-    synchronousHandlerId?: string
+    synchronousHandlerId: string | null
     payload: unknown
     executionType: ExecutionType
     retryPayload?: FlowRetryPayload
-    hookType?: HookType
+    progressUpdateType: ProgressUpdateType
 }
 
 export type WebhookJobData = {
     schemaVersion: number
     requestId: string
-    synchronousHandlerId?: string
+    synchronousHandlerId: string | null
     payload: EventPayload
     flowId: string
     simulate: boolean

@@ -1,6 +1,5 @@
 
 import { Static, Type } from '@sinclair/typebox'
-import { ExecutionState } from './execution-output'
 
 export enum FlowRunStatus {
     FAILED = 'FAILED',
@@ -52,7 +51,7 @@ export const FlowError = Type.Object({
 export type FlowError = Static<typeof FlowError>
 
 const BaseExecutionResponse = {
-    ...ExecutionState,
+    steps: Type.Record(Type.String(), Type.Unknown()),
     duration: Type.Number(),
     tasks: Type.Number(),
     tags: Type.Optional(Type.Array(Type.String())),
@@ -78,4 +77,9 @@ export const FlowRunResponse = Type.Union([
         ]),
     }),
 ])
-export type FlowRunResponse = Static<typeof FlowRunResponse> & ExecutionState
+export type FlowRunResponse = Static<typeof FlowRunResponse>
+
+
+export const isFlowStateTerminal = (status: FlowRunStatus): boolean => {
+    return status === FlowRunStatus.SUCCEEDED || status === FlowRunStatus.FAILED || status === FlowRunStatus.INTERNAL_ERROR || status === FlowRunStatus.QUOTA_EXCEEDED
+}

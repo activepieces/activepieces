@@ -1,5 +1,6 @@
 import { performance } from 'node:perf_hooks'
-import { Action, ActionType, isNil } from '@activepieces/shared'
+import { Action, ActionType, isNil, ProgressUpdateType } from '@activepieces/shared'
+import { progressService } from '../services/progress.service'
 import { BaseExecutor } from './base-executor'
 import { branchExecutor } from './branch-executor'
 import { codeExecutor } from './code-executor'
@@ -50,6 +51,14 @@ export const flowExecutor = {
 
             if (flowExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
                 break
+            }
+
+            const sendContinuousProgress = constants.progressUpdateType === ProgressUpdateType.TEST_FLOW
+            if (sendContinuousProgress) {
+                await progressService.sendUpdate({
+                    engineConstants: constants,
+                    flowExecutorContext: flowExecutionContext,
+                })
             }
 
             currentAction = currentAction.nextAction

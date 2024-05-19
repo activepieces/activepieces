@@ -30,11 +30,12 @@ export const platformWorkerHooks: FlowWorkerHooks = {
                     e instanceof ActivepiecesError &&
                     (e as ActivepiecesError).error.code === ErrorCode.QUOTA_EXCEEDED
                 ) {
-                    await flowRunService.finish({
+                    await flowRunService.updateStatus({
                         flowRunId: runId,
                         status: FlowRunStatus.QUOTA_EXCEEDED,
+                        executionState: null,
+                        projectId,
                         tasks: 0,
-                        logsFileId: null,
                         tags: [],
                     })
                     return

@@ -52,7 +52,7 @@ type GenerateWorkerTokenParams = {
     projectId: ProjectId
 }
 
-export type EngineHelperFlowResult = FlowRunResponse
+export type EngineHelperFlowResult = Pick<FlowRunResponse, 'status' | 'error'>
 
 export type EngineHelperTriggerResult<
     T extends TriggerHookType = TriggerHookType,

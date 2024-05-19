@@ -23,6 +23,7 @@ import { ActivepiecesError,
     ExecutionType,
     FlowStatus,
     isNil,
+    ProgressUpdateType,
     RunEnvironment,
     TriggerPayload,
     TriggerType,
@@ -123,6 +124,7 @@ const consumeDelayedJob = async (data: DelayedJobData): Promise<void> => {
         flowVersionId: data.flowVersionId,
         executionType: ExecutionType.RESUME,
         environment: RunEnvironment.PRODUCTION,
+        progressUpdateType: ProgressUpdateType.NONE,
     })
 }
 
@@ -215,6 +217,7 @@ const consumePieceTrigger = async (data: RepeatingJobData): Promise<void> => {
             payload,
             projectId: data.projectId,
             executionType: ExecutionType.BEGIN,
+            progressUpdateType: ProgressUpdateType.NONE,
         }),
     )
 
