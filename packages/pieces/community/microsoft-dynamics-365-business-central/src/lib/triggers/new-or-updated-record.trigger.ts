@@ -5,7 +5,7 @@ import {
 	PiecePropValueSchema,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { commonProps } from '../common/props';
+import { commonProps } from '../common';
 import { filterParams, makeClient } from '../common/client';
 import dayjs from 'dayjs';
 
