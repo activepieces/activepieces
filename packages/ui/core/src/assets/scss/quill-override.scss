@@ -64,5 +64,12 @@
   .ql-disabled{
     color: $body ;
   }
+  .ql-editor > *{
+    cursor:pointer !important;
+  }
 
+}
+
+.ql-disabled .ql-editor > *{
+ cursor: default !important
 }
