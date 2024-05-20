@@ -115,6 +115,14 @@ export class RunsListComponent implements OnInit {
   runItemClicked(run: FlowRun) {
     const run$ = this.instanceRunService.get(run.id);
     const flow$ = this.flowService.get(this.flowId, run.flowVersionId);
+    this.store.dispatch(
+      canvasActions.setRightSidebar({
+        sidebarType: RightSideBarType.NONE,
+        props: NO_PROPS,
+        deselectCurrentStep: true,
+      })
+    );
+
     this.runClicked$ = forkJoin({
       run: run$,
       currentRun: this.currentRun$.pipe(take(1)),
@@ -122,19 +130,21 @@ export class RunsListComponent implements OnInit {
     })
       .pipe(
         tap((res) => {
-          if (res.currentRun?.id !== res.run.id) {
-            this.store.dispatch(
-              canvasActions.viewRun({
-                run: res.run,
-                version: res.flow.version,
-              })
-            );
-            this.snackbar.openFromComponent(TestRunBarComponent, {
-              duration: undefined,
-            });
-          } else {
-            this.exitRun();
-          }
+          setTimeout(() => {
+            if (res.currentRun?.id !== res.run.id) {
+              this.store.dispatch(
+                canvasActions.viewRun({
+                  run: res.run,
+                  version: res.flow.version,
+                })
+              );
+              this.snackbar.openFromComponent(TestRunBarComponent, {
+                duration: undefined,
+              });
+            } else {
+              this.exitRun();
+            }
+          });
         })
       )
       .pipe(map(() => void 0));

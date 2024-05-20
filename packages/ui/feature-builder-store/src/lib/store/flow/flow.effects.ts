@@ -278,7 +278,6 @@ export class FlowsEffects {
         this.store.select(BuilderSelectors.selectReadOnly),
       ]),
       concatMap(([action, flow, isReadonly]) => {
-        debugger;
         if (isReadonly) {
           console.error(
             'Activepieces: Trying to modify a readonly flow',
