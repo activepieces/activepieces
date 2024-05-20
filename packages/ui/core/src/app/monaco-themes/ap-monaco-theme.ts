@@ -13,10 +13,6 @@ export const apMonacoTheme = {
   inherit: true,
   rules: [
     {
-      background: '#FFFFFF',
-      token: '',
-    },
-    {
       foreground: getVariableValue('code-editor-blue'),
       token: 'string',
     },
@@ -75,7 +71,7 @@ export const apMonacoTheme = {
       token: 'meta.tag',
     },
     {
-      foreground: '770088',
+      foreground: '#770088',
       token: 'declaration.tag',
     },
     {
@@ -110,7 +106,7 @@ export const apMonacoTheme = {
       token: 'entity.name.tag',
     },
     {
-      foreground: '881280',
+      foreground: '#881280',
       token: 'entity.name.tag',
     },
     { token: 'string.key.json', foreground: '#000000' },
