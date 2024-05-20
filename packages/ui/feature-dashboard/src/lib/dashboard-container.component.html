@@ -22,9 +22,9 @@
                         <b>Admin Console</b>
                         @if(isVersionMatch$ | async) {
                         <svg-icon [applyClass]="true" class="ap-fill-disable"
-                            [svgStyle]="{ width: '18px', height: '18px' }"
-                            [matTooltip]="newUpdateMessage"
-                            src="assets/img/custom/notification_important.svg">
+                            [svgStyle]="{ width: '6px', height: '6px' }"
+                            class="ap-fill-danger ap-top-[0px] ap-right-[-4px] ap-mr-[2px] ap-absolute"
+                            [matTooltip]="newUpdateMessage" src="assets/img/custom/notification_important.svg">
                         </svg-icon>
                         }
                     </div>

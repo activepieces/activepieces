@@ -51,8 +51,8 @@ export type SideNavRoute = {
         } @if(sideNavRoute.showNotification$ | async) {
         <svg-icon
           [applyClass]="true"
-          class="ap-fill-danger ap-top-[1.5px] ap-right-[1.5px] ap-absolute"
-          [svgStyle]="{ width: '14px', height: '14px' }"
+          class="ap-fill-danger ap-top-[4px] ap-right-[2px] ap-absolute"
+          [svgStyle]="{ width: '6px', height: '6px' }"
           src="assets/img/custom/notification_important.svg"
         >
         </svg-icon>
