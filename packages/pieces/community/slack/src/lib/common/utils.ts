@@ -67,11 +67,13 @@ export const slackSendMessage = async ({
   if (!response.body.ok) {
     switch (response.body.error) {
       case 'not_in_channel':
-        throw new Error(JSON.stringify({
-          message: 'The bot is not in the channel',
-          code: 'not_in_channel',
-          action: 'Invite the bot from the channel settings'
-        }));
+        throw new Error(
+          JSON.stringify({
+            message: 'The bot is not in the channel',
+            code: 'not_in_channel',
+            action: 'Invite the bot from the channel settings',
+          })
+        );
       default: {
         throw new Error(response.body.error);
       }
@@ -95,3 +97,23 @@ type SlackSendMessageParams = {
   file?: ApFile;
   threadTs?: string;
 };
+
+export function processMessageTimestamp(input: string) {
+  // Regular expression to match a URL containing the timestamp
+  const urlRegex = /\/p(\d+)(\d{6})$/;
+  // Check if the input is a URL
+  const urlMatch = input.match(urlRegex);
+  if (urlMatch) {
+    const timestamp = `${urlMatch[1]}.${urlMatch[2]}`;
+    return timestamp;
+  }
+
+  // Check if the input is already in the desired format
+  const timestampRegex = /^(\d+)\.(\d{6})$/;
+  const timestampMatch = input.match(timestampRegex);
+  if (timestampMatch) {
+    return input;
+  }
+
+  return null;
+}
