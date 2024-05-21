@@ -23,6 +23,7 @@ import { itemCategoriesEntityProps } from './props/itemCategories.entity';
 import { itemsEntityProps } from './props/items.entity';
 import { itemVariantsEntityProps } from './props/itemVariants.entity';
 import { salesOrdersEntityProps } from './props/salesOrders.entity';
+import { salesOrderLinesEntityProps } from './props/salesOrderLines.entity';
 
 export const commonProps = {
 	company_id: Property.Dropdown({
@@ -122,6 +123,9 @@ export const commonProps = {
 					break;
 				case 'salesOrders':
 					fields = salesOrdersEntityProps;
+					break;
+				case 'salesOrderLines':
+					fields = salesOrderLinesEntityProps;
 					break;
 				case 'vendors':
 					fields = vendorsEntityProps;
