@@ -114,11 +114,12 @@ export class TestFlowWidgetComponent implements OnInit {
     this.testResult$ = this.websockService.socket
       .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS)
       .pipe(
-        switchMap((flowRun) => {
-          return this.instanceRunService.get(flowRun.id);
+        switchMap((run) => {
+          //because server emitter doesn't send steps
+          return this.instanceRunService.get(run.id);
         }),
-        tap((instanceRun) => {
-          this.store.dispatch(canvasActions.setRun({ run: instanceRun }));
+        tap((run) => {
+          this.store.dispatch(canvasActions.setRun({ run }));
         })
       );
   }

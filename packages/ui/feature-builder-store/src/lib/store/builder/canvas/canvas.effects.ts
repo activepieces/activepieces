@@ -110,8 +110,11 @@ export class CanvasEffects {
   selectTriggerOnTestRunEnd$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(canvasActions.setRun),
-      switchMap(({ run }) => {
-        if (run.status !== FlowRunStatus.RUNNING) {
+      concatLatestFrom(() => [
+        this.store.select(BuilderSelectors.selectCurrentStep),
+      ]),
+      switchMap(([{ run }, step]) => {
+        if (run.status !== FlowRunStatus.RUNNING && !step) {
           return of(canvasActions.selectStepByName({ stepName: 'trigger' }));
         }
         return EMPTY;
