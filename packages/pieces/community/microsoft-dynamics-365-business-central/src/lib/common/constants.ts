@@ -55,6 +55,11 @@ export const ENTITY_DROPDOWN_OPTIONS = [
 		label: 'Projects',
 		value: 'projects',
 	},
+
+	{
+		label: 'Sales Orders',
+		value: 'salesOrders',
+	},
 	{
 		label: 'Vendors',
 		value: 'vendors',
