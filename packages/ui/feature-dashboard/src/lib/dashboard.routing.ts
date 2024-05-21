@@ -19,7 +19,6 @@ import {
 import { PlansPageComponent } from 'ee-billing-ui';
 import { ProjectMembersTableComponent } from 'ee-project-members';
 import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
-import { ActivityTableComponent } from './pages/activity-table/activity-table.component';
 import { IssuesTableComponent } from './components/issues-table/issues-table.component';
 import { SettingsPageComponent } from './pages/settings-page/settings-page.component';
 import { FLAGS_RESOLVE_DATA, FlagsResolver } from './resolvers/flags.resolver';
@@ -93,15 +92,6 @@ export const DashboardLayoutRouting: Routes = [
             ProjectMemberRole.VIEWER,
           ]),
         ],
-      },
-      {
-        data: {
-          title: $localize`Activity`,
-        },
-        path: 'activity',
-        pathMatch: 'full',
-        component: ActivityTableComponent,
-        canActivate: [showBasedOnFlagGuard(ApFlagId.SHOW_ACTIVITY_LOG)],
       },
       {
         data: {

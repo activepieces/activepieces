@@ -9,7 +9,6 @@ import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-enti
 import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/tags/tag-entity'
 import {
-    Activity,
     ApiKey,
     ApplicationEvent,
     ApplicationEventName,
@@ -190,7 +189,6 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         embeddingEnabled: platform?.embeddingEnabled ?? faker.datatype.boolean(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         showPoweredBy: platform?.showPoweredBy ?? faker.datatype.boolean(),
-        showActivityLog: platform?.showActivityLog ?? faker.datatype.boolean(),
         managePiecesEnabled: platform?.managePiecesEnabled ?? faker.datatype.boolean(),
         manageProjectsEnabled: platform?.manageProjectsEnabled ?? faker.datatype.boolean(),
         manageTemplatesEnabled: platform?.manageTemplatesEnabled ?? faker.datatype.boolean(),
@@ -476,18 +474,6 @@ export const createMockFlowVersion = (
         state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
         updatedBy: flowVersion?.updatedBy,
         valid: flowVersion?.valid ?? faker.datatype.boolean(),
-    }
-}
-
-export const createMockActivity = (activity?: Partial<Activity>): Activity => {
-    return {
-        id: activity?.id ?? apId(),
-        created: activity?.created ?? faker.date.recent().toISOString(),
-        updated: activity?.updated ?? faker.date.recent().toISOString(),
-        projectId: activity?.projectId ?? apId(),
-        event: activity?.status ?? faker.lorem.words(),
-        message: activity?.message ?? faker.lorem.paragraph(),
-        status: activity?.status ?? faker.lorem.word(),
     }
 }
 

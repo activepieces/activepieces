@@ -24,7 +24,7 @@ const TS_CONFIG_CONTENT = `
 `
 
 const INVALID_ARTIFACT_TEMPLATE_PATH =
-  './packages/server/api/src/assets/invalid-code.js'
+    './packages/server/api/src/assets/invalid-code.js'
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
@@ -122,14 +122,11 @@ const handleCompilationError = async ({
         'utf8',
     )
 
-    const errorMessage = `Compilation Error:\n${
-        error['stdout'] ?? error['message'] ?? 'error building code'
-    }`
-    const escapedErrorMessage = errorMessage.replace(/"/g, '\\"')
+    const errorMessage = `Compilation Error:\n${JSON.stringify(error) ?? 'error building code'}`
 
     const invalidArtifactContent = invalidArtifactTemplate.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
-        escapedErrorMessage,
+        JSON.stringify(errorMessage),
     )
 
     await fs.writeFile(`${codePath}/index.js`, invalidArtifactContent, 'utf8')

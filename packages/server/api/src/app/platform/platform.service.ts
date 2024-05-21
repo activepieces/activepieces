@@ -55,7 +55,6 @@ export const platformService = {
             manageTemplatesEnabled: false,
             manageProjectsEnabled: false,
             projectRolesEnabled: false,
-            showActivityLog: false,
             customDomainsEnabled: false,
             apiKeysEnabled: false,
             customAppearanceEnabled: false,

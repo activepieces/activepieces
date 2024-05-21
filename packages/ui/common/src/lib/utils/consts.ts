@@ -92,14 +92,7 @@ export const EMPTY_SPACE_BETWEEN_INPUTS_IN_PIECE_PROPERTIES_FORM = 24 + 'px';
 export const BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM = 18 + 'px';
 
 export const findHomePageRouteForRole = (role: ProjectMemberRole) => {
-  switch (role) {
-    case ProjectMemberRole.ADMIN:
-    case ProjectMemberRole.EDITOR:
-    case ProjectMemberRole.VIEWER:
-      return '/flows';
-    case ProjectMemberRole.EXTERNAL_CUSTOMER:
-      return '/activity';
-  }
+  return '/flows';
 };
 
 export const showPlatformDashboard$ = (

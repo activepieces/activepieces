@@ -6,7 +6,8 @@ export const fileExists = async (path: string): Promise<boolean> => {
         return true
     }
     catch (e) {
-        if (e instanceof Error && 'code' in e && e.code === 'ENOENT') {
+        const castedError = e as Error
+        if ('code' in castedError && castedError.code === 'ENOENT') {
             return false
         }
 

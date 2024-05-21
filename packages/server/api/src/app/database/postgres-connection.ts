@@ -28,6 +28,7 @@ import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/
 import { AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 } from './migration/common/1701096458822-add-partial-unique-index-for-email-and-platform-id-is-null'
 import { AddTriggerTestStrategy1707087022764 } from './migration/common/1707087022764-add-trigger-test-strategy'
 import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-migrate-webhook'
+import { RemoveShowActivityLog1716105958530 } from './migration/common/1716105958530-RemoveShowActivityLog'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -217,6 +218,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddUniqueNameToFolder1713643694049,
         AddFeaturesToPlatform1714145914415,
         AddIssueEntityPostgres1714904516114,
+        RemoveShowActivityLog1716105958530,
     ]
 
     const edition = getEdition()
