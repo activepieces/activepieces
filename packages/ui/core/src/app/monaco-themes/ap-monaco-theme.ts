@@ -1,10 +1,10 @@
 const getVariableValue = (variableName: string) => {
   //in case the browser hasn't rendered the css variables in embedding
   const defaults = {
-    '--code-editor-purple': "#770088",
-    '--code-editor-green': "#0f9b68",
-    '--code-editor-blue': "#0d57a8"
-  }
+    '--code-editor-purple': '#770088',
+    '--code-editor-green': '#0f9b68',
+    '--code-editor-blue': '#0d57a8',
+  };
   const monacoRoot = document.querySelector('body');
   if (monacoRoot) {
     const varnameValue = getComputedStyle(monacoRoot).getPropertyValue(
@@ -12,10 +12,9 @@ const getVariableValue = (variableName: string) => {
     );
     return varnameValue;
   }
-  if(defaults[`--${variableName}`])
-    {
-      return defaults[`--${variableName}`]
-    }
+  if (defaults[`--${variableName}`]) {
+    return defaults[`--${variableName}`];
+  }
   return null;
 };
 export const apMonacoTheme = {
