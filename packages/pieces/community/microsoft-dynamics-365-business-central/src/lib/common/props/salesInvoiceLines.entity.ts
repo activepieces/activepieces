@@ -1,19 +1,19 @@
 import { Property } from '@activepieces/pieces-framework';
 
-// https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/resources/dynamics_salesorderline
-export const salesOrderLinesEntityProps = {
+//https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/resources/dynamics_salesinvoiceline
+export const salesInvoiceLinesEntityProps = {
 	sequence: Property.Number({
 		displayName: 'Sequence Number',
 		required: false,
 	}),
 	itemId: Property.ShortText({
 		displayName: 'Item ID',
-		description: 'The ID of the item in the sales order line.',
+		description: 'The ID of the item in the sales invoice line.',
 		required: false,
 	}),
 	accountId: Property.ShortText({
 		displayName: 'Account ID',
-		description: 'The id of the account that the sales order line is related to.',
+		description: 'The id of the account that the sales invoice line is related to.',
 		required: false,
 	}),
 	lineType: Property.StaticDropdown({
@@ -55,7 +55,7 @@ export const salesOrderLinesEntityProps = {
 	}),
 	lineObjectNumber: Property.ShortText({
 		displayName: 'Line Object Number',
-		description: 'The number of the object (account or item) of the sales order line.',
+		description: 'The number of the object (account or item) of the sales invoice line.',
 		required: false,
 	}),
 	description: Property.ShortText({
@@ -96,26 +96,6 @@ export const salesOrderLinesEntityProps = {
 	}),
 	shipmentDate: Property.ShortText({
 		displayName: 'Shipment Date',
-		required: false,
-	}),
-	shippedQuantity: Property.Number({
-		displayName: 'Shipped Quantity',
-		required: false,
-		description: 'The quantity of items from the order already shipped.',
-	}),
-	invoicedQuantity: Property.Number({
-		displayName: 'Invoiced Quantity',
-		description: 'The quantity of items from the sales order line that was invoiced.',
-		required: false,
-	}),
-	invoiceQuantity: Property.Number({
-		displayName: 'Invoice Quantity',
-		description: 'The quantity of items from the sales order line to be invoiced.',
-		required: false,
-	}),
-	shipQuantity: Property.Number({
-		displayName: 'Ship Quantity',
-		description: 'The quantity of items from the order to be shipped.',
 		required: false,
 	}),
 	itemVariantId: Property.ShortText({

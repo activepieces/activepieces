@@ -24,6 +24,11 @@ import { itemsEntityProps } from './props/items.entity';
 import { itemVariantsEntityProps } from './props/itemVariants.entity';
 import { salesOrdersEntityProps } from './props/salesOrders.entity';
 import { salesOrderLinesEntityProps } from './props/salesOrderLines.entity';
+import { salesInvoiceLinesEntityProps } from './props/salesInvoiceLines.entity';
+import { salesInvoicesEntityProps } from './props/salesInvoices.entity';
+import { salesQuoteLinesEntityProps } from './props/salesQuoteLines.entity';
+import { salesQuotesEntityProps } from './props/salesQuotes.entity';
+import { shipmentMethodsEntityProps } from './props/shipmentMethods.entity';
 
 export const commonProps = {
 	company_id: Property.Dropdown({
@@ -121,11 +126,26 @@ export const commonProps = {
 				case 'projects':
 					fields = projectsEntityProps;
 					break;
+				case 'salesInvoices':
+					fields = salesInvoicesEntityProps;
+					break;
+				case 'salesInvoiceLines':
+					fields = salesInvoiceLinesEntityProps;
+					break;
 				case 'salesOrders':
 					fields = salesOrdersEntityProps;
 					break;
 				case 'salesOrderLines':
 					fields = salesOrderLinesEntityProps;
+					break;
+				case 'salesQuotes':
+					fields = salesQuotesEntityProps;
+					break;
+				case 'salesQuoteLines':
+					fields = salesQuoteLinesEntityProps;
+					break;
+				case 'shipmentMethods':
+					fields = shipmentMethodsEntityProps;
 					break;
 				case 'vendors':
 					fields = vendorsEntityProps;

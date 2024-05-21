@@ -55,7 +55,14 @@ export const ENTITY_DROPDOWN_OPTIONS = [
 		label: 'Projects',
 		value: 'projects',
 	},
-
+	{
+		label: 'Sales Invoices',
+		value: 'salesInvoices',
+	},
+	{
+		label: 'Sales Invoice Lines',
+		value: 'salesInvoiceLines',
+	},
 	{
 		label: 'Sales Orders',
 		value: 'salesOrders',
@@ -63,6 +70,10 @@ export const ENTITY_DROPDOWN_OPTIONS = [
 	{
 		label: 'Sales Order Lines',
 		value: 'salesOrderLines',
+	},
+	{
+		label: 'Shipment Methods',
+		value: 'shipmentMethods',
 	},
 	{
 		label: 'Vendors',
