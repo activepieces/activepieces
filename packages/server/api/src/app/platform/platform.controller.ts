@@ -11,6 +11,7 @@ import {
     Platform,
     PlatformWithoutSensitiveData,
     Principal,
+    PrincipalType,
     UpdatePlatformRequestBody,
 } from '@activepieces/shared'
 
@@ -50,8 +51,22 @@ const buildResponse = ({
         }
     }
 
-    const { id, name, defaultLocale, projectRolesEnabled, gitSyncEnabled, flowIssuesEnabled } = platform
-    return { id, name, defaultLocale, projectRolesEnabled, gitSyncEnabled, flowIssuesEnabled }
+    const {
+        id,
+        name,
+        defaultLocale,
+        projectRolesEnabled,
+        gitSyncEnabled,
+        flowIssuesEnabled,
+    } = platform
+    return {
+        id,
+        name,
+        defaultLocale,
+        projectRolesEnabled,
+        gitSyncEnabled,
+        flowIssuesEnabled,
+    }
 }
 
 type BuildResponseParams = {
@@ -59,7 +74,15 @@ type BuildResponseParams = {
     principal: Principal
 }
 
-type PlatformBasics = Pick<Platform, 'id' | 'name' | 'defaultLocale' | 'projectRolesEnabled' | 'gitSyncEnabled' | 'flowIssuesEnabled'>
+type PlatformBasics = Pick<
+Platform,
+| 'id'
+| 'name'
+| 'defaultLocale'
+| 'projectRolesEnabled'
+| 'gitSyncEnabled'
+| 'flowIssuesEnabled'
+>
 
 const UpdatePlatformRequest = {
     schema: {
@@ -74,6 +97,9 @@ const UpdatePlatformRequest = {
 }
 
 const GetPlatformRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
     schema: {
         params: Type.Object({
             id: ApId,
