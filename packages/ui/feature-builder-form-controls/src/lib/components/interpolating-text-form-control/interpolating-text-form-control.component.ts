@@ -92,7 +92,7 @@ export class InterpolatingTextFormControlComponent
   @Output() editorFocused: EventEmitter<boolean> = new EventEmitter();
   @Input({ required: true })
   stepMetaDataForMentions: EnrichedStepMetaDataForMentions[] = [];
-  private _readOnly = false;
+  _readOnly = false;
   private _placeholder = '';
   focused = false;
   hasMention = false;
@@ -273,7 +273,6 @@ export class InterpolatingTextFormControlComponent
 
   async writeValue(value: string) {
     this._value = value;
-
     if (!isNil(value) && typeof value === 'string' && value.length > 0) {
       const parsedTextToOps = fromTextToOps(
         value,
