@@ -6,7 +6,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FlowService, InstanceRunService } from '@activepieces/ui/common';
-import { FlowRun, Cursor } from '@activepieces/shared';
+import { FlowRun, Cursor, FlowRunStatus } from '@activepieces/shared';
 import {
   BehaviorSubject,
   Observable,
@@ -55,6 +55,7 @@ export class RunsListComponent implements OnInit {
   runClicked$?: Observable<void>;
   currentRun$: Observable<FlowRun | undefined>;
   isInDebugMode$: Observable<boolean>;
+  readonly FlowRunStatus = FlowRunStatus;
   constructor(
     private instanceRunService: InstanceRunService,
     private store: Store,

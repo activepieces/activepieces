@@ -81,8 +81,10 @@ import { AbstractFormControlCasterPipe } from './pipe/abstract-form-control-cast
 import { VersionHistoryIndicatorComponent } from './components/ap-version-status-indicator/ap-version-history-indicator.component';
 import { InsideBuilderDatePipe } from './pipe/inside-builder-date.pipe';
 import { ConfirmActionDialogComponent } from './components/dialogs/confirm-action-dialog/confirm-action-dialog.component';
+import { DurationPipe } from './pipe/duration.pipe';
 
 const exportedImports = [
+  DurationPipe,
   CommonModule,
   MatTooltipModule,
   AngularSvgIconModule,
