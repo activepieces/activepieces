@@ -27,7 +27,8 @@ export const resolvePlatformIdForAuthnRequest = async (
     userEmail: string,
     request: FastifyRequest,
 ): Promise<string | null> => {
-    return resolvePlatformIdFromEmail(userEmail) ?? resolvePlatformIdForRequest(request)
+    const platformId = await resolvePlatformIdFromEmail(userEmail)
+    return platformId ?? resolvePlatformIdForRequest(request)
 }
 
 export const resolvePlatformIdForRequest = async (
