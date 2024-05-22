@@ -2,43 +2,41 @@
 
   @if(selectedRun$ | async; as selectedRun)
   {
-    @if(selectedRun.status !== instanceRunStatus.PAUSED)
+    @if(selectedRun.status !== FlowRunStatus.PAUSED)
     {
-    <ap-state-icon  [status]="selectedRun.status"
-    [showStatusText]="false"></ap-state-icon>
+        <ap-state-icon  [status]="selectedRun.status"
+        [showStatusText]="false"></ap-state-icon>
+
    }
     @switch(selectedRun.status)
     {
-      @case (instanceRunStatus.SUCCEEDED) {
+      @case (FlowRunStatus.SUCCEEDED) {
         <div class="ap-flex ap-flex-col ap-gap-2">
           <span i18n>Run succeeded ({{ selectedRun.id }})</span>
-          <div>Took {{selectedRun.startTime | duration : selectedRun.finishTime}} </div>
         </div>
        
       }
-      @case (instanceRunStatus.STOPPED) {
+      @case (FlowRunStatus.STOPPED) {
         <div class="ap-flex ap-flex-col ap-gap-2">
           <span i18n>Run succeeded ({{ selectedRun.id }})</span>
-          <div>Took {{selectedRun.startTime | duration : selectedRun.finishTime}} </div>
         </div>
       }
-      @case (instanceRunStatus.FAILED) {
+      @case (FlowRunStatus.FAILED) {
         <div class="ap-flex ap-flex-col ap-gap-2">
           <span i18n>Run failed ({{ selectedRun.id }})</span>
-          <div>Took {{selectedRun.startTime | duration : selectedRun.finishTime}} </div>
         </div>
       }
-      @case (instanceRunStatus.RUNNING) {
+      @case (FlowRunStatus.RUNNING) {
         <span  i18n>Flow is running</span>
       }
-      @case (instanceRunStatus.PAUSED) {
+      @case (FlowRunStatus.PAUSED) {
         <span  i18n>Flow is paused ...</span>
       }
-      @case (instanceRunStatus.TIMEOUT) {
+      @case (FlowRunStatus.TIMEOUT) {
         <span  i18n>Run exceeded {{sandboxTimeoutSeconds$ | async}} seconds, try to optimize your
           steps.</span>
       }
-      @case (instanceRunStatus.INTERNAL_ERROR) {
+      @case (FlowRunStatus.INTERNAL_ERROR) {
         <span  i18n>Run failed for an unknown reason, contact support.</span>
       }
     }
@@ -48,8 +46,11 @@
   {
    Initialising run...
   }
-  <ap-button [hidden]="hideExit$ | async" btnColor="basic" btnStyle="basic" btnSize="medium"
-     (buttonClicked)="exitButtonClicked.next()" i18n> Exit Run </ap-button>
+  <div class="ap-ml-3">
+
+    <ap-button [hidden]="hideExit$ | async" btnColor="basic" btnStyle="basic" btnSize="medium"
+    (buttonClicked)="exitButtonClicked.next()" i18n> Exit Run </ap-button>
+  </div>
 
 </div>
 
