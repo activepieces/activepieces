@@ -87,11 +87,12 @@ export const routes: Routes = [
     component: FormsComponent,
   },
   {
-    path: '**',
+    path: 'not-found',
     component: NotFoundComponent,
-    data: {
-      title: '404',
-    },
+  },
+  {
+    path: '**',
+    redirectTo: '/not-found',
   },
 ];
 
