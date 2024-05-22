@@ -117,6 +117,8 @@ export const flowRunSideEffects = {
                     data: {
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         runId: flowRun.id,
+                        synchronousHandlerId: flowRun.pauseMetadata?.handlerId ?? null,
+                        progressUpdateType: flowRun.pauseMetadata?.progressUpdateType ?? ProgressUpdateType.NONE,
                         projectId: flowRun.projectId,
                         environment: flowRun.environment,
                         jobType: RepeatableJobType.DELAYED_FLOW,

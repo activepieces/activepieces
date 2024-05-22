@@ -53,7 +53,9 @@ export const flowExecutor = {
                 break
             }
 
-            const sendContinuousProgress = constants.progressUpdateType === ProgressUpdateType.TEST_FLOW
+            const isNotNested = flowExecutionContext.currentPath.path.length === 0
+            const sendContinuousProgress = isNotNested
+                && constants.progressUpdateType === ProgressUpdateType.TEST_FLOW
             if (sendContinuousProgress) {
                 await progressService.sendUpdate({
                     engineConstants: constants,

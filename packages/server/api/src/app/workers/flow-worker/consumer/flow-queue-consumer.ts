@@ -120,11 +120,12 @@ const consumeDelayedJob = async (data: DelayedJobData): Promise<void> => {
     await flowRunService.start({
         payload: null,
         flowRunId: data.runId,
+        synchronousHandlerId: data.synchronousHandlerId ?? undefined,
         projectId: data.projectId,
         flowVersionId: data.flowVersionId,
         executionType: ExecutionType.RESUME,
         environment: RunEnvironment.PRODUCTION,
-        progressUpdateType: ProgressUpdateType.NONE,
+        progressUpdateType: data.progressUpdateType,
     })
 }
 

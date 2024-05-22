@@ -26,6 +26,7 @@ import {
     Flow,
     FlowRunStatus,
     PauseType,
+    ProgressUpdateType,
     RunEnvironment,
     TriggerType,
 } from '@activepieces/shared'
@@ -158,6 +159,8 @@ export const memoryQueueManager: MemoryQueueManager = {
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         flowVersionId: flowRun.flowVersionId,
                         jobType: RepeatableJobType.DELAYED_FLOW,
+                        synchronousHandlerId: delayPauseMetadata.handlerId ?? null,
+                        progressUpdateType: delayPauseMetadata.progressUpdateType ?? ProgressUpdateType.NONE,
                     },
                     delay,
                 }).catch((e) => logger.error(e, '[MemoryQueue#init] add'))

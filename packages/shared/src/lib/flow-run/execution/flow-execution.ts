@@ -1,5 +1,6 @@
 
 import { Static, Type } from '@sinclair/typebox'
+import { ProgressUpdateType } from '../../engine'
 
 export enum FlowRunStatus {
     FAILED = 'FAILED',
@@ -20,6 +21,8 @@ export enum PauseType {
 export const DelayPauseMetadata = Type.Object({
     type: Type.Literal(PauseType.DELAY),
     resumeDateTime: Type.String(),
+    handlerId: Type.Optional(Type.String({})),
+    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
 })
 
 export type DelayPauseMetadata = Static<typeof DelayPauseMetadata>
@@ -29,11 +32,12 @@ export const WebhookPauseMetadata = Type.Object({
     requestId: Type.String(),
     response: Type.Unknown(),
     handlerId: Type.Optional(Type.String({})),
+    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
 })
 export type WebhookPauseMetadata = Static<typeof WebhookPauseMetadata>
 
 export const PauseMetadata = Type.Union([DelayPauseMetadata, WebhookPauseMetadata])
-export type PauseMetadata = DelayPauseMetadata | WebhookPauseMetadata
+export type PauseMetadata = Static<typeof PauseMetadata>
 
 export const StopResponse = Type.Object({
     status: Type.Optional(Type.Number()),

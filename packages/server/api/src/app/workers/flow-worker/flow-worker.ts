@@ -76,6 +76,7 @@ const loadInputAndLogFileId = async ({
         flowVersion,
         flowRunId: jobData.runId,
         projectId: jobData.projectId,
+        serverHandlerId: jobData.synchronousHandlerId,
     }
 
     const flowRun = await flowRunService.getOnePopulatedOrThrow({
@@ -102,7 +103,6 @@ const loadInputAndLogFileId = async ({
                     steps: flowRun.steps,
                     runEnvironment: jobData.environment,
                     resumePayload: jobData.payload as ResumePayload,
-                    serverHandlerId: jobData.synchronousHandlerId,
                     progressUpdateType: jobData.progressUpdateType,
                 },
             }
@@ -123,7 +123,6 @@ const loadInputAndLogFileId = async ({
                     triggerPayload: jobData.payload,
                     executionType: ExecutionType.BEGIN,
                     runEnvironment: jobData.environment,
-                    serverHandlerId: jobData.synchronousHandlerId,
                     progressUpdateType: jobData.progressUpdateType,
                     ...baseInput,
                 },

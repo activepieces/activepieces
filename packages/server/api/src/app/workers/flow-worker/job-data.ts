@@ -47,6 +47,8 @@ export type DelayedJobData = BaseJobData & {
     schemaVersion: number
     flowVersionId: FlowVersionId
     runId: FlowRunId
+    synchronousHandlerId: string | null
+    progressUpdateType: ProgressUpdateType
     jobType: RepeatableJobType.DELAYED_FLOW
 }
 

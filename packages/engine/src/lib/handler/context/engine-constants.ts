@@ -1,4 +1,4 @@
-import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, ProgressUpdateType, Project, ProjectId, ResumePayload, TriggerHookType, UpdateRunProgressRequest } from '@activepieces/shared'
+import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, ProgressUpdateType, Project, ProjectId, ResumePayload, TriggerHookType } from '@activepieces/shared'
 import { VariableService } from '../../services/variable-service'
 
 type RetryConstants = {

@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { combineLatest, map, Observable, of, tap } from 'rxjs';
 import {
-  InstanceRunService,
   WebSocketService,
   fadeIn400msWithoutOut,
   initializedRun,
@@ -20,7 +19,7 @@ import {
   BuilderSelectors,
   TestRunBarComponent,
 } from '@activepieces/ui/feature-builder-store';
-import { switchMap, take } from 'rxjs/operators';
+import { filter, take, withLatestFrom } from 'rxjs/operators';
 import { canvasActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
@@ -38,7 +37,7 @@ export class TestFlowWidgetComponent implements OnInit {
   selectedFlow$: Observable<PopulatedFlow | undefined>;
   instanceRunStatusChecker$: Observable<FlowRun>;
   executeTest$: Observable<FlowRun | null>;
-  testResult$: Observable<FlowRun>;
+  testResult$: Observable<unknown>;
   shouldHideTestWidget$: Observable<boolean>;
   testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
   isTriggerTested$: Observable<boolean>;
@@ -46,7 +45,6 @@ export class TestFlowWidgetComponent implements OnInit {
   readonly savingText = $localize`Saving...`;
   constructor(
     private store: Store,
-    private instanceRunService: InstanceRunService,
     private snackbar: MatSnackBar,
     private websockService: WebSocketService
   ) {}
@@ -110,23 +108,14 @@ export class TestFlowWidgetComponent implements OnInit {
           );
         })
       );
-
     this.testResult$ = this.websockService.socket
       .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS)
       .pipe(
-        switchMap((run) => {
-          return this.store.select(BuilderSelectors.selectCurrentFlowRun).pipe(
-            take(1),
-            switchMap((currentInStore) => {
-              if (!currentInStore || currentInStore.id === run.id) {
-                //because server emitter doesn't send steps
-                return this.instanceRunService.get(run.id);
-              }
-              return of(currentInStore);
-            })
-          );
-        }),
-        tap((run) => {
+        withLatestFrom(
+          this.store.select(BuilderSelectors.selectCurrentFlowRun).pipe(take(1))
+        ),
+        filter(([run, runInStore]) => !runInStore || runInStore.id === run.id),
+        tap(([run]) => {
           this.store.dispatch(canvasActions.setRun({ run }));
         })
       );

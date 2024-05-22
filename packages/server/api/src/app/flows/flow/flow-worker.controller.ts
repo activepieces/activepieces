@@ -49,7 +49,11 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (fastify) =
         if (runDetails.status === FlowRunStatus.PAUSED) {
             await flowRunService.pause({
                 flowRunId: runId,
-                pauseMetadata: runDetails.pauseMetadata!,
+                pauseMetadata: {
+                    progressUpdateType,
+                    handlerId: workerHandlerId ?? undefined,
+                    ...(runDetails.pauseMetadata!),
+                },
             })
         }
         if (progressUpdateType === ProgressUpdateType.TEST_FLOW && workerHandlerId) {
