@@ -1,4 +1,10 @@
 const getVariableValue = (variableName: string) => {
+  //in case the browser hasn't rendered the css variables in embedding
+  const defaults = {
+    '--code-editor-purple': '#770088',
+    '--code-editor-green': '#0f9b68',
+    '--code-editor-blue': '#0d57a8',
+  };
   const monacoRoot = document.querySelector('body');
   if (monacoRoot) {
     const varnameValue = getComputedStyle(monacoRoot).getPropertyValue(
@@ -6,16 +12,15 @@ const getVariableValue = (variableName: string) => {
     );
     return varnameValue;
   }
-  return '';
+  if (defaults[`--${variableName}`]) {
+    return defaults[`--${variableName}`];
+  }
+  return null;
 };
 export const apMonacoTheme = {
   base: 'vs',
   inherit: true,
   rules: [
-    {
-      background: '#FFFFFF',
-      token: '',
-    },
     {
       foreground: getVariableValue('code-editor-blue'),
       token: 'string',
@@ -24,6 +29,7 @@ export const apMonacoTheme = {
       foreground: '#1c00cf',
       token: 'constant.numeric',
     },
+
     {
       foreground: getVariableValue('code-editor-purple'),
       token: 'keyword',
@@ -75,7 +81,7 @@ export const apMonacoTheme = {
       token: 'meta.tag',
     },
     {
-      foreground: '770088',
+      foreground: '#770088',
       token: 'declaration.tag',
     },
     {
@@ -110,7 +116,7 @@ export const apMonacoTheme = {
       token: 'entity.name.tag',
     },
     {
-      foreground: '881280',
+      foreground: '#881280',
       token: 'entity.name.tag',
     },
     { token: 'string.key.json', foreground: '#000000' },

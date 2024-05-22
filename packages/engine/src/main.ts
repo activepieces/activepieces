@@ -20,10 +20,8 @@ async function executeFromWorkerData(): Promise<void> {
     const { operation, operationType } = workerData
     const result = await execute(operationType, operation)
     assertNotNullOrUndefined(parentPort, 'parentPort')
-    parentPort.postMessage({
-        type: 'result',
-        message: result,
-    })
+    const resultParsed = JSON.parse(JSON.stringify(result))
+    parentPort.postMessage({ type: 'result', message: resultParsed })
 }
 
 const operationType = argv[2]

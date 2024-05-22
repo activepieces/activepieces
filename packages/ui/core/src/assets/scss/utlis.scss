@@ -1,24 +1,4 @@
-/* width */
-::-webkit-scrollbar {
-  width: 10px;
-}
 
-/* Track */
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background: $border;
-  border-radius: 40px;
-  scrollbar-width: thin;
-}
-
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(179, 179, 179, 0.7);
-}
 
 .form-control {
   display: block;
@@ -115,49 +95,10 @@ ap-markdown {
   }
 }
 
-.thin-scrollbars {
-  *{
-    &::-webkit-scrollbar {
-      width: 16px;
-    }
-  
-    &::-webkit-scrollbar-thumb {
-      background: $border;
-      background-clip: content-box;
-      border: 5px solid transparent;
-      border-radius: 40px;
-      scrollbar-width: thin;
-    }
-  
-    &::-webkit-scrollbar-thumb:hover {
-      background: rgba(179, 179, 179, 0.7);
-      background-clip: content-box;
-      border: 5px solid transparent;
-      border-radius: 40px;
-      scrollbar-width: thin;
-    }
-  }
-  &::-webkit-scrollbar {
-    width: 16px;
-  }
 
-  &::-webkit-scrollbar-thumb {
-    background: $border;
-    background-clip: content-box;
-    border: 5px solid transparent;
-    border-radius: 40px;
-    scrollbar-width: thin;
-  }
 
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(179, 179, 179, 0.7);
-    background-clip: content-box;
-    border: 5px solid transparent;
-    border-radius: 40px;
-    scrollbar-width: thin;
-  }
- 
-}
+
+
 
 .ap-clamp-4 {
   display: -webkit-box;
@@ -173,46 +114,6 @@ ap-markdown {
 }
 
 
-.thin-scrollbars.black-scrollbars {
-  &::-webkit-scrollbar {
-    width: 16px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: $body;
-    background-clip: content-box;
-    border: 5px solid transparent;
-    border-radius: 40px;
-    scrollbar-width: thin;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: $body;
-    background-clip: content-box;
-    border: 5px solid transparent;
-    border-radius: 40px;
-    scrollbar-width: thin;
-  }
-
-  mat-tab-header {
-    border-bottom-color: $outline;
-    border-style: solid;
-    border-bottom-width: 1px;
-
-    .mat-mdc-tab-labels {
-      padding-left: .75rem;
-    }
-
-    .mdc-tab {
-      fill: var(--mat-tab-header-inactive-label-text-color)
-    }
-
-    .mdc-tab--active {
-      fill: var(--mat-tab-header-active-label-text-color);
-    }
-  }
-
-}
 
 @keyframes loading-spin {
   from {
