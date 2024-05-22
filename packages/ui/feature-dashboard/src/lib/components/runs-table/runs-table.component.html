@@ -2,7 +2,7 @@
   <div class="ap-h-full">
     <div class="ap-flex ap-gap-2">
       <mat-form-field class="!ap-min-w-[15.625rem]">
-        <mat-label i18n>Filter by status</mat-label>
+        <mat-label i18n>Filter by Status</mat-label>
         <mat-select [formControl]="statusFilterControl">
           <mat-option [value]="allOptionValue" i18n>All</mat-option>
           <mat-option [value]="ExecutionOutputStatus.RUNNING" i18n>Running</mat-option>
@@ -12,7 +12,7 @@
         </mat-select>
       </mat-form-field>
       <mat-form-field class="!ap-min-w-[15.625rem]">
-        <mat-label i18n>Filter by flow</mat-label>
+        <mat-label i18n>Filter by Flow</mat-label>
         <mat-select [formControl]="flowFilterControl" (closed)="searchControl.setValue('')">
           <mat-select-trigger>
             <div class="ap-mx-3">
@@ -47,7 +47,7 @@
         </mat-select>
       </mat-form-field>
       <mat-form-field>
-        <mat-label i18n>Filter by start date</mat-label>
+        <mat-label i18n>Filter by Start Date</mat-label>
         <mat-date-range-input #picker (openedStream)="picker._updateFocus('mouse')" [formGroup]="dateFormGroup" [rangePicker]="runsPicker" [comparisonStart]="dateFormGroup.controls.start.value" 
           [comparisonEnd]="dateFormGroup.controls.end.value">
           <input matStartDate placeholder="From" [formControl]="dateFormGroup.controls.start" i18n-placeholder>
