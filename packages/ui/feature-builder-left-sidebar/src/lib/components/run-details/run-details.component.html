@@ -1,5 +1,5 @@
 <div class="p-3">
-  <ap-sidebar-header (closeClicked)="closeLeftSideBar()" title="Run Details" i18n-title></ap-sidebar-header>
+  <ap-sidebar-header (closeClicked)="closeLeftSideBar()" headerTitle="Run Details" i18n-headerTitle></ap-sidebar-header>
 </div>
 <ng-container *ngIf="(selectedRun$ | async) as flowRun">
   <ng-container *ngIf="logs$ | async as logs; else loading">

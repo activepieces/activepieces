@@ -1,5 +1,5 @@
 <div class="p-3">
-    <ap-sidebar-header (closeClicked)="closeLeftSideBar()" title="Runs" i18n-title></ap-sidebar-header>
+    <ap-sidebar-header (closeClicked)="closeLeftSideBar()" headerTitle="Runs" i18n-headerTitle></ap-sidebar-header>
 </div>
 <ng-container *ngIf="(runs$ | async) as runs;else loading">
 
@@ -8,7 +8,6 @@
             (scrolledIndexChange)="nextBatch()">
 
             <div *cdkVirtualFor="let run of runs" class="ap-min-h-[52px] hover:ap-bg-hover ap-cursor-pointer ap-p-5 ap-flex ap-gap-2 ap-items-center"  (click)="runItemClicked(run)"
-                [matTooltip]="(currentRun$ | async)?.id !== run.id ? viewRunTooltip: exitRunTooltip"
             >
                 <ap-state-icon [size]="19" [status]="run.status" [showStatusText]="false"></ap-state-icon>
                 <div class="ap-flex ap-flex-col ap-gap-1 ap-justify-center ap-min-h-[44px] ">
@@ -18,8 +17,8 @@
                     </div>
                     @if(run.status !== FlowRunStatus.RUNNING)
                     {
-                        <div class="ap-typography-caption ap-text-description">
-                            {{ run.startTime | duration: run.finishTime}}
+                        <div class="ap-typography-caption ap-text-description" i18n>
+                         Took   {{ run.startTime | duration: run.finishTime}}
                          </div>
                     }
                    
@@ -29,12 +28,16 @@
                 <div class="ap-flex ap-items-center ap-justify-center ap-min-w-[48px]">
                     @if((currentRun$ | async)?.id !== run.id)
                     {
-                        <svg-icon class="ap-h-[20px] ap-w-[20px]" src="/assets/img/custom/arrow-right.svg" 
+                        <svg-icon class="ap-h-[20px] ap-w-[20px]" 
+                       [matTooltip]=" viewRunTooltip"       
+                        src="/assets/img/custom/arrow-right.svg" 
                         [applyClass]="true" ></svg-icon>
                     }
                     @else(){
                         <div class="ap-rotate-180">
-                            <svg-icon class="ap-h-[20px] ap-w-[20px]" src="/assets/img/custom/arrow-right.svg"
+                            <svg-icon class="ap-h-[20px] ap-w-[20px]" 
+                            [matTooltip]=" exitRunTooltip" 
+                            src="/assets/img/custom/arrow-right.svg"
                             [applyClass]="true" ></svg-icon>
                         </div>
                     }
