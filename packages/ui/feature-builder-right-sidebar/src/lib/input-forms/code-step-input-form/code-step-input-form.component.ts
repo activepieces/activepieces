@@ -1,19 +1,19 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import {
-  ControlValueAccessor,
-  NG_VALUE_ACCESSOR,
   FormGroup,
   FormBuilder,
   FormControl,
+  UntypedFormGroup,
 } from '@angular/forms';
-import { Observable, tap } from 'rxjs';
+import { Observable, Subject, of, takeUntil, tap } from 'rxjs';
 import {
   ActionErrorHandlingOptions,
   ActionType,
   ApFlagId,
+  CodeAction,
   SourceCode,
+  UpdateActionRequest,
 } from '@activepieces/shared';
-import { CodeStepInputFormSchema } from '../input-forms-schema';
 import { MatDialog } from '@angular/material/dialog';
 import { CodeWriterDialogComponent } from './code-writer-dialog/code-writer-dialog.component';
 import {
@@ -24,23 +24,23 @@ import {
 import { InputFormCore } from '../input-form-core';
 import { Store } from '@ngrx/store';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import {
+  BuilderSelectors,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-code-step-input-form',
   templateUrl: './code-step-input-form.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      multi: true,
-      useExisting: CodeStepInputFormComponent,
-    },
-  ],
 })
-export class CodeStepInputFormComponent
-  extends InputFormCore
-  implements ControlValueAccessor
-{
-  codeStepForm: FormGroup<{
+export class CodeStepInputFormComponent extends InputFormCore {
+  _step!: CodeAction;
+  @Input({ required: true }) set step(value: CodeAction) {
+    this._step = value;
+    this.writeValue(value);
+  }
+  readOnly$: Observable<boolean> = of(true);
+  form: FormGroup<{
     input: FormControl<Record<string, unknown>>;
     sourceCode: FormControl<SourceCode>;
     errorHandlingOptions: FormControl<ActionErrorHandlingOptions>;
@@ -60,16 +60,8 @@ export class CodeStepInputFormComponent
   <br>
   **Warning: "const code" is the entry to the code, if it is removed or renamed, your step will fail.**
   `;
-
-  onChange: (val: CodeStepInputFormSchema) => void = (
-    value: CodeStepInputFormSchema
-  ) => {
-    value;
-  };
-  onTouch: () => void = () => {
-    //ignore
-  };
-
+  /**This is used because Monaco emits changes even if they are silent, like when you are setting the value because a new code step has been selected */
+  stepChanged$ = new Subject<true>();
   constructor(
     store: Store,
     pieceService: PieceMetadataService,
@@ -84,8 +76,14 @@ export class CodeStepInputFormComponent
     this.showGenerateCode$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COPILOT
     );
-
-    this.codeStepForm = this.formBuilder.group({
+    this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(
+      tap((val) => {
+        val
+          ? this.form.disable({ emitEvent: false })
+          : this.form.enable({ emitEvent: false });
+      })
+    );
+    this.form = this.formBuilder.group({
       input: new FormControl({}, { nonNullable: true }),
       sourceCode: new FormControl(
         { code: '', packageJson: '' },
@@ -103,62 +101,75 @@ export class CodeStepInputFormComponent
         { nonNullable: true }
       ),
     });
-    this.formValueChanged$ = this.codeStepForm.valueChanges.pipe(
+    this.formValueChanged$ = this.createListener$();
+  }
+
+  private createListener$() {
+    return this.form.valueChanges.pipe(
+      takeUntil(this.stepChanged$),
       tap((formValue) => {
-        this.onChange({
-          input: this.codeStepForm.value.input || {},
-          sourceCode: formValue.sourceCode!,
-          type: ActionType.CODE,
-          errorHandlingOptions: formValue.errorHandlingOptions ?? {
-            continueOnFailure: {
-              value: false,
+        const codeActionSettings: UpdateActionRequest = {
+          settings: {
+            input: this.form.value.input || {},
+            sourceCode: formValue.sourceCode!,
+            errorHandlingOptions: formValue.errorHandlingOptions ?? {
+              continueOnFailure: {
+                value: false,
+              },
+              retryOnFailure: {
+                value: false,
+              },
             },
-            retryOnFailure: {
-              value: false,
-            },
+            inputUiInfo: this._step.settings.inputUiInfo,
           },
-        });
+          type: ActionType.CODE,
+          displayName: this._step.displayName,
+          name: this._step.name,
+          valid: true,
+        };
+        this.store.dispatch(
+          FlowsActions.updateAction({ operation: codeActionSettings })
+        );
       })
     );
   }
+  private writeValue(value: CodeAction) {
+    this.stepChanged$.next(true);
 
-  writeValue(obj: CodeStepInputFormSchema): void {
-    if (obj.type === ActionType.CODE) {
-      this.codeStepForm.controls.sourceCode.setValue(obj.sourceCode, {
-        emitEvent: false,
-      });
-      this.codeStepForm.controls.input.setValue(obj.input, {
-        emitEvent: false,
-      });
-      this.codeStepForm.controls.errorHandlingOptions.setValue(
-        obj.errorHandlingOptions,
+    (this.form as UntypedFormGroup).removeControl('sourceCode', {
+      emitEvent: false,
+    });
+    this.form.addControl(
+      'sourceCode',
+      new FormControl(
+        {
+          code: value.settings.sourceCode.code,
+          packageJson: value.settings.sourceCode.packageJson,
+        },
+        { nonNullable: true }
+      ),
+      { emitEvent: false }
+    );
+    this.form.controls.input.setValue(value.settings.input, {
+      emitEvent: false,
+    });
+    if (value.settings.errorHandlingOptions) {
+      this.form.controls.errorHandlingOptions.setValue(
+        value.settings.errorHandlingOptions,
         {
           emitEvent: false,
         }
       );
-      if (this.codeStepForm.disabled) {
-        this.codeStepForm.disable();
-      }
     }
-  }
-  registerOnChange(fn: any): void {
-    this.onChange = fn;
-  }
-  registerOnTouched(fn: any): void {
-    this.onTouch = fn;
-  }
-  setDisabledState?(isDisabled: boolean): void {
-    if (isDisabled) {
-      this.codeStepForm.disable();
-    } else if (this.codeStepForm.disabled) {
-      this.codeStepForm.enable();
-    }
+    setTimeout(() => {
+      this.formValueChanged$ = this.createListener$();
+    });
   }
 
   openCodeWriterDialog() {
     const dialogRef = this.dialogService.open(CodeWriterDialogComponent, {
       data: {
-        existingCode: this.codeStepForm.controls.sourceCode.value.code,
+        existingCode: this.form.controls.sourceCode.value.code,
       },
     });
 
@@ -170,7 +181,7 @@ export class CodeStepInputFormComponent
           packages: { [key: string]: string }[];
         }) => {
           if (result) {
-            let packageJson = this.codeStepForm.value.sourceCode!.packageJson;
+            let packageJson = this.form.value.sourceCode!.packageJson;
             if (result.packages.length > 0) {
               try {
                 const packageJsonObj = JSON.parse(packageJson);
@@ -188,17 +199,16 @@ export class CodeStepInputFormComponent
                 console.error('Invalid package.json');
               }
             }
-            this.codeStepForm.controls.sourceCode.setValue({
+            this.form.controls.sourceCode.setValue({
               code: result.code as string,
               packageJson,
             });
             const inputs: Record<string, unknown> = {};
             result.inputs.forEach((input) => {
               inputs[input.key] =
-                this.codeStepForm.controls.input.value[input.key] ??
-                input.value;
+                this.form.controls.input.value[input.key] ?? input.value;
             });
-            this.codeStepForm.controls.input.setValue(inputs);
+            this.form.controls.input.setValue(inputs);
           }
         }
       )
