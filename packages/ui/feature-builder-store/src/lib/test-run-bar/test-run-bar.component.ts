@@ -13,7 +13,6 @@ import { canvasActions } from '../store/builder/canvas/canvas.action';
 @Component({
   selector: 'app-test-run-bar',
   templateUrl: './test-run-bar.component.html',
-  styleUrls: ['./test-run-bar.component.scss'],
 })
 export class TestRunBarComponent implements OnInit {
   constructor(
