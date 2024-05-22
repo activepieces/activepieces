@@ -5,3 +5,4 @@ export * from './dropdown-search.pipe';
 export * from './abstract-form-control-caster.pipe';
 export * from './inside-builder-date.pipe';
 export * from './duration.pipe';
+export * from './duration-formatter.pipe';
