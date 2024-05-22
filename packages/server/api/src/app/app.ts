@@ -30,6 +30,7 @@ import { enterpriseAuthenticationServiceHooks } from './ee/authentication/authen
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import { rbacMiddleware } from './ee/authentication/rbac/rbac-middleware'
+import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
 import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
@@ -253,6 +254,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(flowWorkerModule)
     await app.register(platformUserModule)
     await app.register(issuesModule)
+    await app.register(authnSsoSamlModule)
 
     await setupBullMQBoard(app)
 

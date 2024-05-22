@@ -28,10 +28,16 @@ export const GithubAuthnProviderConfig = Type.Object({
 })
 export type GithubAuthnProviderConfig = Static<typeof GithubAuthnProviderConfig>
 
+export const SAMLAuthnProviderConfig = Type.Object({
+    idpMetadata: Type.String(),
+    idpCertificate: Type.String(),
+})
+export type SAMLAuthnProviderConfig = Static<typeof SAMLAuthnProviderConfig>
 
 export const FederatedAuthnProviderConfig = Type.Object({
     google: Type.Optional(GoogleAuthnProviderConfig),
     github: Type.Optional(GithubAuthnProviderConfig),
+    saml: Type.Optional(SAMLAuthnProviderConfig),
 })
 export type FederatedAuthnProviderConfig = Static<typeof FederatedAuthnProviderConfig>
 

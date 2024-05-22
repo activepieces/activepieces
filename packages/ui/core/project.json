@@ -119,6 +119,7 @@
           "buildTarget": "ui-core:build:production"
         },
         "development": {
+          "proxyConfig": "packages/ui/core/proxy.conf.json",
           "buildTarget": "ui-core:build:development"
         },
         "fr": {

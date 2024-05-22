@@ -20,6 +20,7 @@ export class ThirdPartyAuthComponent {
   readonly ThirdPartyAuthnProvider = ThirdPartyAuthnProviderEnum;
   readonly signUpText = $localize`Sign up with`;
   readonly signInText = $localize`Sign in with`;
+
   @Input()
   isForSignup = false;
   thirdPartyProvidersToShow$: Observable<ThirdPartyAuthnProvidersToShowMap>;
@@ -33,6 +34,11 @@ export class ThirdPartyAuthComponent {
     this.thirdPartyProvidersToShow$ =
       this.flagService.getThirdPartyProvidersMap();
   }
+
+  signInWithSaml() {
+    window.location.href = '/api/v1/authn/saml/login';
+  }
+
   signInWithThirdPartyProvider(provider: ThirdPartyAuthnProviderEnum) {
     this.signInWithThirdPartyProvider$ = this.flagService.getRedirectUrl().pipe(
       switchMap((redirectUrl) => {
