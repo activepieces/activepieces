@@ -43,11 +43,17 @@ type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
     setupLink: string
 }>
 
+type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
+    issueId: string
+    createdAt: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
   | QuotaEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
+  | IssueCreatedTemplateData
 
 type SendArgs = {
     email: string

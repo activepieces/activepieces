@@ -4,6 +4,9 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
+import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
+import { emailService } from '../helper/email/email-service'
 import { IssueEntity } from './issues-entity'
 import { Issue, IssueStatus, ListIssuesParams, PopulatedIssue } from '@activepieces/ee-shared'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
@@ -12,18 +15,25 @@ const repo = databaseConnection.getRepository(IssueEntity)
 
 export const issuesService = {
     async add({ projectId, flowId }: { flowId: string, projectId: string }): Promise<void> {
+        const issueId = apId()
+        const date = dayjs().toISOString()
+        const project = await projectService.getOneOrThrow(projectId)
+        const user = await userService.getMetaInfo({
+            id: project.ownerId,
+        })
+        
         await repo.createQueryBuilder()
             .insert()
             .into(IssueEntity)
             .values({
                 projectId,
                 flowId,
-                id: apId(),
-                lastOccurrence: dayjs().toISOString(),
+                id: issueId,
+                lastOccurrence: date,
                 count: 0,
                 status: IssueStatus.ONGOING,
-                created: dayjs().toISOString(),
-                updated: dayjs().toISOString(),
+                created: date,
+                updated: date,
             })
             .orIgnore()
             .execute()
@@ -33,6 +43,15 @@ export const issuesService = {
             flowId,
             status: IssueStatus.ONGOING,
         })
+
+        if (!isNil(user)) {
+            await emailService.sendIssueCreatedNotification({
+                projectId,
+                issueId,
+                email: user.email,
+                createdAt: date,
+            })
+        }
     },
     async get({ projectId, flowId }: { projectId: string, flowId: string }): Promise<Issue | null> {
         return repo.findOneBy({

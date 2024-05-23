@@ -73,6 +73,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name']): string => {
         'quota-100': '[URGENT] 100% of your Activepieces tasks are consumed',
         'verify-email': 'Verify your email address',
         'reset-password': 'Reset your password',
+        'issue-created': 'A new issue created',
     }
 
     return templateToSubject[templateName]

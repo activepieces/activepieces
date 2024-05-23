@@ -46,6 +46,24 @@ export const emailService = {
         })
     },
 
+    async sendIssueCreatedNotification({
+        projectId, email, issueId, createdAt,
+    }: IssueCreatedArgs): Promise<void> {
+        const project = await projectService.getOneOrThrow(projectId)
+
+        await emailSender.send({
+            email,
+            platformId: project.platformId,
+            templateData: {
+                name: 'issue-created',
+                vars: {
+                    issueId,
+                    createdAt,
+                },
+            },
+        })
+    },
+
     async sendQuotaAlert({ email, projectId, resetDate, firstName, templateName }: SendQuotaAlertArgs): Promise<void> {
         if (EDITION_IS_NOT_CLOUD) {
             return
@@ -142,4 +160,11 @@ type SendOtpArgs = {
     platformId: string | null
     otp: string
     user: User
+}
+
+type IssueCreatedArgs = {
+    projectId: string
+    issueId: string
+    email: string
+    createdAt: string    
 }
