@@ -10,7 +10,7 @@ import { emailService } from '../helper/email/email-service'
 import { IssueEntity } from './issues-entity'
 import { Issue, IssueStatus, ListIssuesParams, PopulatedIssue } from '@activepieces/ee-shared'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, spreadIfDefined, TelemetryEventName, User } from '@activepieces/shared'
 const repo = databaseConnection.getRepository(IssueEntity)
 
 export const issuesService = {
@@ -18,10 +18,10 @@ export const issuesService = {
         const issueId = apId()
         const date = dayjs().toISOString()
         const project = await projectService.getOneOrThrow(projectId)
-        const user = await userService.getMetaInfo({
-            id: project.ownerId,
+        const users = await userService.list({
+            platformId: project.platformId,
         })
-        
+
         await repo.createQueryBuilder()
             .insert()
             .into(IssueEntity)
@@ -44,13 +44,15 @@ export const issuesService = {
             status: IssueStatus.ONGOING,
         })
 
-        if (!isNil(user)) {
-            await emailService.sendIssueCreatedNotification({
-                projectId,
-                issueId,
-                email: user.email,
-                createdAt: date,
-            })
+        if (!isNil(users)) {
+            await Promise.all((users.data as User[]).map((user: User): void => {
+                emailService.sendIssueCreatedNotification({
+                    projectId,
+                    issueId,
+                    email: user.email,
+                    createdAt: date,
+                })
+            }))
         }
     },
     async get({ projectId, flowId }: { projectId: string, flowId: string }): Promise<Issue | null> {
