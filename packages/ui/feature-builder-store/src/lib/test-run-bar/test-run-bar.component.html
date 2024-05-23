@@ -46,11 +46,16 @@
   {
    Initialising run...
   }
-  <div class="ap-ml-3">
 
-    <ap-button [hidden]="hideExit$ | async" btnColor="basic" btnStyle="basic" btnSize="medium"
-    (buttonClicked)="exitButtonClicked.next()" i18n> Exit Run </ap-button>
-  </div>
+  @if((hideExit$ | async | defaultFalse) === false)
+  {
+    <div class="ap-ml-3">
+
+      <ap-button  btnColor="basic" btnStyle="basic" btnSize="medium"
+      (buttonClicked)="exitButtonClicked.next()" i18n> Exit Run </ap-button>
+    </div>
+  }
+ 
 
 </div>
 
