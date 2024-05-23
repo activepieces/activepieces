@@ -18,10 +18,11 @@
   >
     <div
       class="ap-flex"
-      *ngIf="!(isLast && disabled && idx > 0)"
       [formGroup]="getPair(idx)"
     >
-      <div class="delete-btn-container" >
+     @if(pairs.controls.length > 1 && form.enabled)
+     {
+      <div class="delete-btn-container"   >
         <div
           class="ap-flex ap-items-center ap-justify-center ap-h-[30px] ap-w-[30px] ap-cursor-pointer delete-btn ap-z-40 ap-transition "
           apTrackHover
@@ -50,6 +51,8 @@
 
    
       </div>
+     }
+    
 
       <input
         #key
@@ -82,7 +85,7 @@
           formControlName="value"
           placeholder="Value"
           (click)="pairs.enabled ? showMenu($event, handler) : null"
-          (editorFocused)="showMenu($event, handler)"
+          (editorFocused)="pairs.enabled ? showMenu($event, handler): null"
           [stepMetaDataForMentions]="stepMetaDataForMentions"
         ></app-interpolating-text-form-control>
 

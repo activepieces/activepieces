@@ -32,7 +32,9 @@ import { EnrichedStepMetaDataForMentions } from '@activepieces/ui/feature-builde
         class="ap-w-full"
         appearance="outline"
         #textInput
-        (click)="handler.showMentionsDropdown()"
+        (click)="
+          passedFormControl.enabled ? handler.showMentionsDropdown() : null
+        "
       >
         @if(property.type === PropertyType.FILE) {
         <div matTooltip="File Input" matSuffix class="material-suffix-icon">
@@ -64,7 +66,9 @@ import { EnrichedStepMetaDataForMentions } from '@activepieces/ui/feature-builde
           #textControl
           [formControl]="passedFormControl"
           [attr.name]="property.displayName"
-          (editorFocused)="handler.showMentionsDropdown()"
+          (editorFocused)="
+            passedFormControl.enabled ? handler.showMentionsDropdown() : null
+          "
           [stepMetaDataForMentions]="stepMetaDataForMentions"
         ></app-interpolating-text-form-control>
       </mat-form-field>
