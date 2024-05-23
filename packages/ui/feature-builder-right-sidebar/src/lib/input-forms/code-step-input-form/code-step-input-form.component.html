@@ -1,4 +1,4 @@
-<form [formGroup]="codeStepForm" class="ng-submitted">
+<form [formGroup]="form" class="ng-submitted">
   <div class="ap-flex ap-flex-col ap-gap-2">
     <div>
       <div class="ap-mb-2 ap-pointer-events-none" i18n>Inputs</div>
@@ -6,7 +6,7 @@
         <ap-markdown [data]="markdown" [smallText]="true">
         </ap-markdown>
       </div>
-      <app-dictionary-form-control [formControl]="codeStepForm.controls.input" [stepMetaDataForMentions]="(stepMetaDataForMentions$ | async )|| []"></app-dictionary-form-control>
+      <app-dictionary-form-control [formControl]="form.controls.input" [stepMetaDataForMentions]="(stepMetaDataForMentions$ | async )|| []"></app-dictionary-form-control>
     </div>
     <div>
       <div class="ap-mb-2 ap-flex ap-justify-between ap-items-center">
@@ -26,17 +26,20 @@
 
       </div>
       <app-code-artifact-form-control (openCodeWriterDialog)="openCodeWriterDialog()"
-        [formControl]="codeStepForm.controls.sourceCode"></app-code-artifact-form-control>
+        [formControl]="form.controls.sourceCode"></app-code-artifact-form-control>
       <app-action-error-handling-form-control
-        [formControl]="codeStepForm.controls.errorHandlingOptions"></app-action-error-handling-form-control>
+        [formControl]="form.controls.errorHandlingOptions"></app-action-error-handling-form-control>
     </div>
   </div>
 </form>
 
-<ng-container *ngIf="formValueChanged$ | async"></ng-container>
-<ng-container *ngIf="dialogClosed$ | async"></ng-container>
+
 <ng-template #loading>
   <div class="ap-flex ap-items-center ap-justify-center ap-h-[337px] ap-bg-[#193549]">
     <ap-loading-icon [whiteLoader]="true" [outlineLoader]="false"></ap-loading-icon>
   </div>
 </ng-template>
+
+@if(formValueChanged$ | async) {}
+@if(dialogClosed$ | async) {}
+@if(readOnly$ | async) {}
