@@ -1,23 +1,34 @@
 import { Pipe, PipeTransform } from '@angular/core';
-
+const fractionDigits = 2;
 @Pipe({
   name: 'durationFormatter',
   pure: true,
   standalone: true,
 })
 export class DurationFormatterPipe implements PipeTransform {
-  transform(duration: number): string {
+  transform(
+    duration: number,
+    short?: boolean,
+    allowFractions?: boolean
+  ): string {
     try {
-      const durationInSeconds = Math.ceil(duration / 1000);
+      console.log(duration);
+      const durationInSeconds = allowFractions
+        ? Math.max(0.01, parseFloat((duration / 1000).toFixed(fractionDigits)))
+        : Math.ceil(duration / 1000);
       if (durationInSeconds < 60) {
-        return $localize`${durationInSeconds} seconds`;
+        return $localize`${durationInSeconds}${short ? 's' : ' seconds'}`;
       }
-      const durationInMinutes = Math.ceil(durationInSeconds / 60);
+      const durationInMinutes = allowFractions
+        ? parseFloat((durationInSeconds / 60).toFixed(fractionDigits))
+        : Math.ceil(durationInSeconds / 60);
       if (durationInMinutes < 60) {
-        return $localize`${durationInMinutes} minutes`;
+        return $localize`${durationInMinutes}${short ? 'm' : ' minutes'}`;
       }
-      const durationInHours = Math.ceil(durationInMinutes / 60);
-      return $localize`${durationInHours} hours`;
+      const durationInHours = allowFractions
+        ? parseFloat((durationInMinutes / 60).toFixed(fractionDigits))
+        : Math.ceil(durationInMinutes / 60);
+      return $localize`${durationInHours}${short ? 'h' : ' hours'}`;
     } catch (ex) {
       console.error(ex);
       return '';
