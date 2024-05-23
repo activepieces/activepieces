@@ -1,27 +1,25 @@
-import { wedofAuth } from '../..';
+import { wedofAuth } from '../../..';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { wedofCommon } from '../common/wedof';
+import { wedofCommon } from '../../common/wedof';
 
-export const registrationFolderSelected = createTrigger({
+export const registrationFolderInTraining = createTrigger({
   auth: wedofAuth,
-  name: 'registrationFolderSelected',
-  displayName: 'Événement sur le dossier de formation',
+  name: 'registrationFolderInTraining',
+  displayName: 'Dossier de formation entre en formation',
   description:
-    "Se déclenche Lorsque l'événement choisi se produit sur un dossier de formation",
-  props: {
-    scope: wedofCommon.events,
-  },
+    "Se déclenche Lorsqu'un dossier de formation passe à l'état en formation",
+  props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const name =
-      'Activepieces - EventSelectedRegistrationFolder - ' +
+      'Activepieces - RegistrationFolderInTraining - ' +
       context.webhookUrl.substring(context.webhookUrl.lastIndexOf('/') + 1);
 
     const message = {
       url: context.webhookUrl,
-      events: context.propsValue.scope,
+      events: ['registrationFolder.inTraining'],
       name: name,
       secret: null,
       enabled: true,
