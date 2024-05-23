@@ -7,28 +7,36 @@ const fractionDigits = 2;
 })
 export class DurationFormatterPipe implements PipeTransform {
   transform(
-    duration: number,
+    durationInMs: number,
     short?: boolean,
     allowFractions?: boolean
   ): string {
     try {
-      console.log(duration);
+      if (durationInMs < 1000) {
+        return $localize`${(durationInMs || 1).toFixed()} ${
+          short ? 'ms' : 'milliseconds'
+        }`;
+      }
       const durationInSeconds = allowFractions
-        ? Math.max(0.01, parseFloat((duration / 1000).toFixed(fractionDigits)))
-        : Math.ceil(duration / 1000);
+        ? Math.max(
+            0.01,
+            parseFloat((durationInMs / 1000).toFixed(fractionDigits))
+          )
+        : Math.ceil(durationInMs / 1000);
+
       if (durationInSeconds < 60) {
-        return $localize`${durationInSeconds}${short ? 's' : ' seconds'}`;
+        return $localize`${durationInSeconds} ${short ? 's' : 'seconds'}`;
       }
       const durationInMinutes = allowFractions
         ? parseFloat((durationInSeconds / 60).toFixed(fractionDigits))
         : Math.ceil(durationInSeconds / 60);
       if (durationInMinutes < 60) {
-        return $localize`${durationInMinutes}${short ? 'm' : ' minutes'}`;
+        return $localize` ${durationInMinutes}${short ? 'm' : 'minutes'}`;
       }
       const durationInHours = allowFractions
         ? parseFloat((durationInMinutes / 60).toFixed(fractionDigits))
         : Math.ceil(durationInMinutes / 60);
-      return $localize`${durationInHours}${short ? 'h' : ' hours'}`;
+      return $localize`${durationInHours} ${short ? 'h' : 'hours'}`;
     } catch (ex) {
       console.error(ex);
       return '';
