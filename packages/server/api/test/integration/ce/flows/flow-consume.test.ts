@@ -19,6 +19,7 @@ import {
     FlowVersionState,
     PackageType,
     PieceType,
+    ProgressUpdateType,
     RunEnvironment,
     TriggerType,
 } from '@activepieces/shared'
@@ -135,6 +136,8 @@ describe('flow execution', () => {
             environment: RunEnvironment.PRODUCTION,
             runId: mockFlowRun.id,
             payload: {},
+            synchronousHandlerId: 'test',
+            progressUpdateType: ProgressUpdateType.NONE,
             executionType: ExecutionType.BEGIN,
         })
 
