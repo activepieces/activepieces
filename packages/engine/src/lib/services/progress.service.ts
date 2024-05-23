@@ -22,7 +22,7 @@ export const progressService = {
             progressUpdateType: engineConstants.progressUpdateType,
         }
 
-        fetch(url.toString(), {
+        const sendUpdatePromise = fetch(url.toString(), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -30,16 +30,22 @@ export const progressService = {
             },
             body: JSON.stringify(request),
             signal: currentAbortController.signal,
-        }).catch((error) => {
-            if (error.name !== 'AbortError') {
-                console.error(`Failed to send step progress: ${error}`)
-            }
         })
+        if (params.sync) {
+            await sendUpdatePromise
+        }
+        else {
+            sendUpdatePromise.catch((e) => {
+                console.error('Failed to send progress update', e)
+            })
+        
+        }
     },
 }
 
 type UpdateStepProgressParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
+    sync: boolean
 }
 

@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { engineResponseWatcher } from '../../../../src/app/workers/flow-worker/engine-response-watcher'
 import { flowWorker } from '../../../../src/app/workers/flow-worker/flow-worker'
 import {
     createMockFlow,
@@ -136,7 +137,7 @@ describe('flow execution', () => {
             environment: RunEnvironment.PRODUCTION,
             runId: mockFlowRun.id,
             payload: {},
-            synchronousHandlerId: 'test',
+            synchronousHandlerId: engineResponseWatcher.getHandlerId(),
             progressUpdateType: ProgressUpdateType.NONE,
             executionType: ExecutionType.BEGIN,
         })

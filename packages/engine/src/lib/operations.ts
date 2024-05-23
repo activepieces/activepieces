@@ -41,6 +41,7 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
     await progressService.sendUpdate({
         engineConstants: constants,
         flowExecutorContext: newContext,
+        sync: true,
     })
     const response = await newContext.toResponse()
     return {

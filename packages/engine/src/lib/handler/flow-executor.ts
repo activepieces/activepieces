@@ -60,6 +60,7 @@ export const flowExecutor = {
                 await progressService.sendUpdate({
                     engineConstants: constants,
                     flowExecutorContext: flowExecutionContext,
+                    sync: false,
                 })
             }
 
