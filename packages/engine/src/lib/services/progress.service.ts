@@ -6,7 +6,7 @@ import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 const lock = new Mutex()
 
 export const progressService = {
-    sendUpdate: async (params: UpdateStepProgressParams): Promise<unknown> => {
+    sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
         return lock.runExclusive(async () => {        
             const { flowExecutorContext, engineConstants } = params
             const url = new URL(`${EngineConstants.API_URL}v1/worker/flows/update-run`)
@@ -17,7 +17,7 @@ export const progressService = {
                 progressUpdateType: engineConstants.progressUpdateType,
             }
 
-            return fetch(url.toString(), {
+            await fetch(url.toString(), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -14,12 +14,13 @@ import {
   TriggerType,
   WebsocketClientEvent,
   WebsocketServerEvent,
+  isFlowStateTerminal,
 } from '@activepieces/shared';
 import {
   BuilderSelectors,
   TestRunBarComponent,
 } from '@activepieces/ui/feature-builder-store';
-import { filter, take, withLatestFrom } from 'rxjs/operators';
+import { filter, switchMap, take, takeWhile } from 'rxjs/operators';
 import { canvasActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
@@ -37,7 +38,6 @@ export class TestFlowWidgetComponent implements OnInit {
   selectedFlow$: Observable<PopulatedFlow | undefined>;
   instanceRunStatusChecker$: Observable<FlowRun>;
   executeTest$: Observable<FlowRun | null>;
-  testResult$: Observable<unknown>;
   shouldHideTestWidget$: Observable<boolean>;
   testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
   isTriggerTested$: Observable<boolean>;
@@ -91,7 +91,7 @@ export class TestFlowWidgetComponent implements OnInit {
       .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_STARTED)
       .pipe(
         take(1),
-        tap((flowRun) => {
+        switchMap((flowRun) => {
           this.store.dispatch(
             canvasActions.setRun({
               run: flowRun ?? initializedRun,
@@ -106,17 +106,19 @@ export class TestFlowWidgetComponent implements OnInit {
               },
             }
           );
-        })
-      );
-    this.testResult$ = this.websockService.socket
-      .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS)
-      .pipe(
-        withLatestFrom(
-          this.store.select(BuilderSelectors.selectCurrentFlowRun).pipe(take(1))
-        ),
-        filter(([run, runInStore]) => !runInStore || runInStore.id === run.id),
-        tap(([run]) => {
-          this.store.dispatch(canvasActions.setRun({ run }));
+          return this.websockService.socket
+            .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS)
+            .pipe(
+              filter((run) => run.id === flowRun.id),
+              tap((run) => {
+                this.store.dispatch(
+                  canvasActions.setRun({
+                    run,
+                  })
+                );
+              }),
+              takeWhile((run) => !isFlowStateTerminal(run.status))
+            );
         })
       );
   }
