@@ -57,10 +57,11 @@ export const flowExecutor = {
             const sendContinuousProgress = isNotNested
                 && constants.progressUpdateType === ProgressUpdateType.TEST_FLOW
             if (sendContinuousProgress) {
-                await progressService.sendUpdate({
+                progressService.sendUpdate({
                     engineConstants: constants,
                     flowExecutorContext: flowExecutionContext,
-                    sync: false,
+                }).catch((error) => {
+                    console.error('Error sending progress update', error)
                 })
             }
 

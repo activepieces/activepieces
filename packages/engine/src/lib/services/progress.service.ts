@@ -1,51 +1,35 @@
 import { UpdateRunProgressRequest } from '@activepieces/shared'
+import { Mutex } from 'async-mutex'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 
-
-
-let currentAbortController: AbortController | null = null
+const lock = new Mutex()
 
 export const progressService = {
-    sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
-        if (currentAbortController) {
-            currentAbortController.abort()
-        }
-        currentAbortController = new AbortController()
+    sendUpdate: async (params: UpdateStepProgressParams): Promise<unknown> => {
+        return lock.runExclusive(async () => {        
+            const { flowExecutorContext, engineConstants } = params
+            const url = new URL(`${EngineConstants.API_URL}v1/worker/flows/update-run`)
+            const request: UpdateRunProgressRequest = {
+                runId: engineConstants.flowRunId,
+                workerHandlerId: engineConstants.serverHandlerId ?? null,
+                runDetails: await flowExecutorContext.toResponse(),
+                progressUpdateType: engineConstants.progressUpdateType,
+            }
 
-        const { flowExecutorContext, engineConstants } = params
-        const url = new URL(`${EngineConstants.API_URL}v1/worker/flows/update-run`)
-        const request: UpdateRunProgressRequest = {
-            runId: engineConstants.flowRunId,
-            workerHandlerId: engineConstants.serverHandlerId ?? null,
-            runDetails: await flowExecutorContext.toResponse(),
-            progressUpdateType: engineConstants.progressUpdateType,
-        }
-
-        const sendUpdatePromise = fetch(url.toString(), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${engineConstants.workerToken}`,
-            },
-            body: JSON.stringify(request),
-            signal: currentAbortController.signal,
-        })
-        if (params.sync) {
-            await sendUpdatePromise
-        }
-        else {
-            sendUpdatePromise.catch((e) => {
-                console.error('Failed to send progress update', e)
+            return fetch(url.toString(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${engineConstants.workerToken}`,
+                },
+                body: JSON.stringify(request),
             })
-        
-        }
+        })
     },
 }
 
 type UpdateStepProgressParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
-    sync: boolean
 }
-
