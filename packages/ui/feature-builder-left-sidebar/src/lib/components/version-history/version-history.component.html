@@ -1,4 +1,4 @@
-<ap-sidebar-header (closeClicked)="closeLeftSidebar()" [title]="sideBarDisplayName"></ap-sidebar-header>
+<ap-sidebar-header (closeClicked)="closeLeftSidebar()" [headerTitle]="sideBarDisplayName"></ap-sidebar-header>
 <ng-container *ngIf="flowVersions$ | async as flowVersions; else loading">
     <ng-container *ngIf="!rewritingDraft; else loading">
         <div class="ap-flex ap-flex-col ap-gap-4 ap-p-5">

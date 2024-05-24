@@ -13,7 +13,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarHeaderComponent implements OnChanges {
-  @Input() title: string;
+  @Input() headerTitle: string;
   @Output() closeClicked: EventEmitter<void> = new EventEmitter<void>();
 
   constructor(private cd: ChangeDetectorRef) {}
