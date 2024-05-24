@@ -235,31 +235,33 @@ export const commonProps = {
 						break;
 					case 'dynamic_multi_select':
 					case 'dynamic_select':
-						const propType =
-							prop.type === 'dynamic_select'
-								? Property.StaticDropdown
-								: Property.StaticMultiSelectDropdown;
+						{
+							const propType =
+								prop.type === 'dynamic_select'
+									? Property.StaticDropdown
+									: Property.StaticMultiSelectDropdown;
 
-						const response = await client.filterRecords(companyId, prop.options.sourceFieldSlug, {
-							$select: `${prop.options.labelField},id`,
-						});
-						const options: DropdownOption<string>[] = [];
+							const response = await client.filterRecords(companyId, prop.options.sourceFieldSlug, {
+								$select: `${prop.options.labelField},id`,
+							});
+							const options: DropdownOption<string>[] = [];
 
-						for (const option of response.value) {
-							options.push({
-								label: option[prop.options.labelField] as string,
-								value: option['id'] as string,
+							for (const option of response.value) {
+								options.push({
+									label: option[prop.options.labelField] as string,
+									value: option['id'] as string,
+								});
+							}
+							fields[prop.name] = propType({
+								displayName: prop.displayName,
+								description: prop.description,
+								required: prop.isRequired,
+								options: {
+									disabled: false,
+									options,
+								},
 							});
 						}
-						fields[prop.name] = propType({
-							displayName: prop.displayName,
-							description: prop.description,
-							required: prop.isRequired,
-							options: {
-								disabled: false,
-								options,
-							},
-						});
 						break;
 					default:
 						break;
