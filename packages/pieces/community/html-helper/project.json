@@ -1,0 +1,38 @@
+{
+  "name": "pieces-html-helper",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/html-helper/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/html-helper",
+        "tsConfig": "packages/pieces/community/html-helper/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/html-helper/package.json",
+        "main": "packages/pieces/community/html-helper/src/index.ts",
+        "assets": [
+          "packages/pieces/community/html-helper/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-html-helper {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  },
+  "tags": []
+}

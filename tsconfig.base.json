@@ -245,6 +245,9 @@
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
+      "@activepieces/piece-html-helper": [
+        "packages/pieces/community/html-helper/src/index.ts"
+      ],
       "@activepieces/piece-http": [
         "packages/pieces/community/http/src/index.ts"
       ],

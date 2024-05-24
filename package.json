@@ -155,6 +155,7 @@
     "ngx-socket-io": "4.6.1",
     "ngx-timeago": "3.0.0",
     "node-cron": "3.0.3",
+    "node-html-parser": "6.1.13",
     "nodemailer": "6.9.9",
     "object-sizeof": "2.6.3",
     "openai": "4.47.1",
