@@ -37,7 +37,6 @@ import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
-import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
@@ -84,7 +83,6 @@ import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
 import { flowQueueConsumer } from './workers/flow-worker/consumer/flow-queue-consumer'
 import { engineResponseWatcher } from './workers/flow-worker/engine-response-watcher'
-import { flowWorkerHooks } from './workers/flow-worker/flow-worker-hooks'
 import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
 import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-bullboard'
 import {
@@ -321,7 +319,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             })
             eventsHooks.set(auditLogService)
             appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
-            flowWorkerHooks.setHooks(platformWorkerHooks)
             flowRunHooks.setHooks(platformRunHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -351,7 +348,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             })
             eventsHooks.set(auditLogService)
             flowRunHooks.setHooks(platformRunHooks)
-            flowWorkerHooks.setHooks(platformWorkerHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
