@@ -2,10 +2,6 @@ import dayjs from 'dayjs'
 import { issuesService } from '../../ee/issues/issues-service'
 import { notifications } from '../../helper/notifications'
 import { flowQueue } from '../../workers/flow-worker/flow-queue'
-import {
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    RepeatableJobType,
-} from '../../workers/flow-worker/job-data'
 import { JobType } from '../../workers/flow-worker/queues/queue'
 import { flowRunHooks } from './flow-run-hooks'
 import { logger } from '@activepieces/server-shared'
@@ -20,6 +16,10 @@ import {
     ProgressUpdateType,
     RunEnvironment,
 } from '@activepieces/shared'
+import {
+    LATEST_JOB_DATA_SCHEMA_VERSION,
+    RepeatableJobType,
+} from 'server-worker'
 
 type StartParams = {
     flowRun: FlowRun

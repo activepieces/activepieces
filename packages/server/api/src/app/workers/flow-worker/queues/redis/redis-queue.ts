@@ -3,19 +3,19 @@ import { DefaultJobOptions, Job, Queue } from 'bullmq'
 import { createRedisClient } from '../../../../database/redis-connection'
 import { flowRepo } from '../../../../flows/flow/flow.repo'
 import { acquireLock } from '../../../../helper/lock'
-import {
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    OneTimeJobData,
-    RepeatableJobType,
-    ScheduledJobData,
-    WebhookJobData,
-} from '../../job-data'
 import { AddParams, JobType, QueueManager, RemoveParams } from '../queue'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId, ErrorCode, ExecutionType, isNil, RunEnvironment, ScheduleType,
 } from '@activepieces/shared'
+import {
+    LATEST_JOB_DATA_SCHEMA_VERSION,
+    OneTimeJobData,
+    RepeatableJobType,
+    ScheduledJobData,
+    WebhookJobData,
+} from 'server-worker'
 
 export const WEBHOOK_JOB_QUEUE = 'webhookJobs'
 export const ONE_TIME_JOB_QUEUE = 'oneTimeJobs'
