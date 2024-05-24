@@ -73,13 +73,11 @@ Review the [configurations guide]((/install/configurations/environment-variables
 To upgrade to new versions, which are installed using docker compose, perform the following steps. First, open a terminal in the activepieces repository directory and run the following commands.
 
 **1. Run the update script**
+Automatically pull:
 ```bash
 sh tools/update.sh
 ```
-
-
-To upgrade to new versions manually, which are installed using docker compose, perform the following steps. First, open a terminal in the activepieces repository directory and run the following commands.
-
+Manually pull the new docker compose file:
 **1. Pull the new docker compose file**
 ```bash
 git pull
@@ -90,13 +88,13 @@ git pull
 docker compose pull
 ```
 
-3. Review changelog for breaking changes
+**3. Review changelog for breaking changes**
 
 <Warning>
 Please review the [Breaking changes](https://activepieces.com/docs/install/breaking-changes) document.
 </Warning>
 
-4. Run the updated docker images
+**4. Run the updated docker images**
 ```
 docker compose up -d --remove-orphans
 ```
