@@ -6,7 +6,7 @@ import {
 	Property,
 } from '@activepieces/pieces-framework';
 import { makeClient } from './client';
-import { ENTITY_DROPDOWN_OPTIONS } from './constants';
+import { ACTION_ENTITY_DROPDOWN_OPTIONS } from './constants';
 import { customersEntityProps } from './props/customers.entity';
 import { bankAccountsEntityProps } from './props/bankAccounts.entity';
 import { contactsEntityProps } from './props/contacts.entity';
@@ -82,7 +82,7 @@ export const commonProps = {
 		required: true,
 		options: {
 			disabled: false,
-			options: ENTITY_DROPDOWN_OPTIONS,
+			options: ACTION_ENTITY_DROPDOWN_OPTIONS,
 		},
 	}),
 	record_fields: Property.DynamicProperties({

@@ -1,4 +1,4 @@
-export const ENTITY_DROPDOWN_OPTIONS = [
+export const ACTION_ENTITY_DROPDOWN_OPTIONS = [
 	{
 		label: 'Bank Accounts',
 		value: 'bankAccounts',
@@ -88,3 +88,7 @@ export const ENTITY_DROPDOWN_OPTIONS = [
 		value: 'vendors',
 	},
 ];
+
+export const TRIGGER_ENTITY_DROPDOWN_OPTIONS = ACTION_ENTITY_DROPDOWN_OPTIONS.filter(
+	(option) => !['salesQuoteLines', 'salesOrderLines', 'salesInvoiceLines'].includes(option.value),
+);

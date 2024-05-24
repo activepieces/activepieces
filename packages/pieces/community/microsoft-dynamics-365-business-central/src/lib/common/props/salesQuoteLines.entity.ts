@@ -5,7 +5,7 @@ import { EntityProp } from '../types';
 export const salesQuoteLinesEntityProps: EntityProp[] = [
 	{
 		name: 'salesQuoteId',
-		displayName: 'Sales Qoute ID',
+		displayName: 'Sales Quote ID',
 		type: 'dynamic_select',
 		isRequired: false,
 		options: {

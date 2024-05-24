@@ -3,11 +3,13 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import {
 	createTrigger,
 	PiecePropValueSchema,
+	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { commonProps } from '../common';
 import { filterParams, makeClient } from '../common/client';
 import dayjs from 'dayjs';
+import { TRIGGER_ENTITY_DROPDOWN_OPTIONS } from '../common/constants';
 
 const polling: Polling<
 	PiecePropValueSchema<typeof businessCentralAuth>,
@@ -48,7 +50,14 @@ export const newOrUpdatedRecordTrigger = createTrigger({
 	sampleData: {},
 	props: {
 		company_id: commonProps.company_id,
-		record_type: commonProps.record_type,
+		record_type: Property.StaticDropdown({
+			displayName: 'Record Type',
+			required: true,
+			options: {
+				disabled: false,
+				options: TRIGGER_ENTITY_DROPDOWN_OPTIONS,
+			},
+		}),
 	},
 	async test(ctx) {
 		return await pollingHelper.test(polling, {
