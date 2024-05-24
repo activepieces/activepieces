@@ -23,7 +23,6 @@ import {
   VerifyEmailRequestBody,
 } from '@activepieces/ee-shared';
 import { FlagService } from './flag.service';
-import { TelemetryService } from './telemetry.service';
 
 type UserWithoutPassword = Omit<User, 'password'>;
 
@@ -40,7 +39,6 @@ export class AuthenticationService {
 
   constructor(
     private router: Router,
-    private telemetryService: TelemetryService,
     private http: HttpClient,
     private flagsService: FlagService
   ) {}
@@ -120,7 +118,6 @@ export class AuthenticationService {
   }
 
   logout(): void {
-    this.telemetryService.reset();
     localStorage.removeItem(environment.jwtTokenName);
     localStorage.removeItem(environment.userPropertyNameInLocalStorage);
     this.currentUserSubject.next(undefined);

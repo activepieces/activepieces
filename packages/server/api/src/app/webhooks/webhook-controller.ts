@@ -90,7 +90,7 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
         data: {
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             requestId,
-            synchronousHandlerId: async ? undefined : engineResponseWatcher.getHandlerId(),
+            synchronousHandlerId: async ? null : engineResponseWatcher.getHandlerId(),
             payload,
             flowId: flow.id,
             simulate,

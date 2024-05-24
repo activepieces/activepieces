@@ -58,9 +58,11 @@ export const webhookConsumer = {
             })
             return
         }
-        const firstRun = runs[0]
-        const response = await engineResponseWatcher.oneTimeListener(firstRun.id, true)
-        await stopAndReply(data, response)
+        if (!isNil(data.synchronousHandlerId)) {
+            const firstRun = runs[0]
+            const response = await engineResponseWatcher.oneTimeListener(firstRun.id, true)
+            await stopAndReply(data, response)
+        }
     },
 
 }

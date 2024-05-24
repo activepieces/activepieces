@@ -12,6 +12,7 @@ import {
     FlowRun,
     ListFlowRunsRequestQuery,
     PrincipalType,
+    ProgressUpdateType,
     RetryFlowRequestBody,
     SeekPage,
 
@@ -63,6 +64,7 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
                 headers,
                 queryParams,
             },
+            progressUpdateType: ProgressUpdateType.TEST_FLOW,
             executionType: ExecutionType.RESUME,
         })
     })

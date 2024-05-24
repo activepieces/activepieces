@@ -115,7 +115,7 @@ export const redisQueueManager: RedisQueueManager = {
             const { id, data } = params
             await webhookJobQueue.add(id, data, {
                 jobId: id,
-                priority: params.priority === 'high' ? 1 : 2,
+                priority: params.priority === 'high' ? 1 : undefined,
             })
         }
         else {
@@ -123,7 +123,7 @@ export const redisQueueManager: RedisQueueManager = {
 
             await oneTimeJobQueue.add(id, data, {
                 jobId: id,
-                priority: params.priority === 'high' ? 1 : 2,
+                priority: params.priority === 'high' ? 1 : undefined,
             })
         }
     },

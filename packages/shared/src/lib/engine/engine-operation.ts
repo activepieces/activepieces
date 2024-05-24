@@ -1,6 +1,6 @@
 import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
-import { FlowRunId } from '../flow-run/flow-run'
+import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '../pieces'
 import { ProjectId } from '../project/project'
@@ -63,6 +63,15 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowVersion: FlowVersion
     flowRunId: FlowRunId
     executionType: T
+    runEnvironment: RunEnvironment
+    serverHandlerId: string | null
+    progressUpdateType: ProgressUpdateType
+}
+
+export enum ProgressUpdateType {
+    WEBHOOK_RESPONSE = 'WEBHOOK_RESPONSE',
+    TEST_FLOW = 'TEST_FLOW',
+    NONE = 'NONE',
 }
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {

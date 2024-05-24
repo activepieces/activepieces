@@ -28,7 +28,7 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
             socket.emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, flowRun)
             const eventEmitter = engineResponseWatcher.listen(flowRun.id)
             eventEmitter.on(async (data) => {
-                const flowRun = await flowRunService.getOneOrThrow({
+                const flowRun = await flowRunService.getOnePopulatedOrThrow({
                     id: data.requestId,
                     projectId: principal.projectId,
                 })

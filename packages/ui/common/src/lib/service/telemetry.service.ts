@@ -73,14 +73,9 @@ export class TelemetryService {
   }
 
   reset() {
-    this.flagService
-      .getAllFlags()
-      .pipe(take(1))
-      .subscribe((flags) => {
-        if (this.analytics) {
-          this.analytics.reset();
-        }
-      });
+    if (this.analytics) {
+      this.analytics.reset();
+    }
   }
 
   capture(event: TelemetryEvent) {
