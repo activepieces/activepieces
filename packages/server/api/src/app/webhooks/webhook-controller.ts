@@ -7,7 +7,6 @@ import { flowService } from '../flows/flow/flow.service'
 import { getEdition } from '../helper/secret-helper'
 import { EngineHttpResponse, engineResponseWatcher } from '../workers/flow-worker/engine-response-watcher'
 import { flowQueue } from '../workers/flow-worker/flow-queue'
-import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../workers/flow-worker/job-data'
 import { JobType } from '../workers/flow-worker/queues/queue'
 import { logger } from '@activepieces/server-shared'
 import {
@@ -23,6 +22,7 @@ import {
     isNil,
     WebhookUrlParams,
 } from '@activepieces/shared'
+import { LATEST_JOB_DATA_SCHEMA_VERSION } from 'server-worker'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 

@@ -8,10 +8,6 @@ import {
 import { getEdition } from '../../../helper/secret-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
 import { flowQueue } from '../../../workers/flow-worker/flow-queue'
-import {
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    RepeatableJobType,
-} from '../../../workers/flow-worker/job-data'
 import { JobType } from '../../../workers/flow-worker/queues/queue'
 import { getPieceTrigger } from './trigger-utils'
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
@@ -31,6 +27,10 @@ import {
     TriggerHookType,
     TriggerType,
 } from '@activepieces/shared'
+import {
+    LATEST_JOB_DATA_SCHEMA_VERSION,
+    RepeatableJobType,
+} from 'server-worker'
 
 const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
     system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5,

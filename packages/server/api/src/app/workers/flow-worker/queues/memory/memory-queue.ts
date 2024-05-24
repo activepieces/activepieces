@@ -5,10 +5,6 @@ import { flowRunRepo } from '../../../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../../../flows/flow-version/flow-version.service'
 import { getPieceTrigger } from '../../../../flows/trigger/hooks/trigger-utils'
 import {
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    RepeatableJobType,
-} from '../../job-data'
-import {
     AddParams,
     DelayedJobAddParams,
     JobType,
@@ -30,7 +26,10 @@ import {
     RunEnvironment,
     TriggerType,
 } from '@activepieces/shared'
-import { ApMemoryQueue } from 'server-worker'
+import {
+    ApMemoryQueue,
+    LATEST_JOB_DATA_SCHEMA_VERSION,
+    RepeatableJobType } from 'server-worker'
 
 type FlowWithRenewWebhook = {
     flow: Flow
