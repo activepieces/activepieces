@@ -7,7 +7,6 @@ import {
 import { engineHelper, generateWorkerToken } from '../../helper/engine-helper'
 import { getPiecePackage } from '../../pieces/piece-metadata-service'
 import { EngineHttpResponse, engineResponseWatcher } from './engine-response-watcher'
-import { flowWorkerHooks } from './flow-worker-hooks'
 import { OneTimeJobData } from './job-data'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
@@ -41,6 +40,7 @@ import {
     TriggerType,
 } from '@activepieces/shared'
 import { logSerializer, Sandbox, SandBoxCacheType, sandboxProvisioner, serverApiService } from 'server-worker'
+import { tasksLimit } from '../../ee/project-plan/tasks-limit'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId
@@ -195,11 +195,11 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         })
         return
     }
-    await flowWorkerHooks
-        .getHooks()
-        .preExecute({ projectId: jobData.projectId, runId: jobData.runId })
     
     try {
+        await tasksLimit.limit({
+            projectId: jobData.projectId,
+        })
         const { input, logFileId } = await loadInputAndLogFileId({
             flowVersion: flow.version,
             jobData,
