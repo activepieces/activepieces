@@ -1,14 +1,18 @@
-import { Property } from '@activepieces/pieces-framework';
+import { EntityProp } from '../types';
 
-export const disputeStatusEntityProps = {
-	code: Property.ShortText({
+export const disputeStatusEntityProps: EntityProp[] = [
+	{
+		name: 'code',
 		displayName: 'Code',
 		description: 'The code of the dispute status.',
-		required: false,
-	}),
-	displayName: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'displayName',
 		displayName: 'Display Name',
 		description: `Specifies the dispute status's name. This name will appear on all sales documents for the dispute status.`,
-		required: false,
-	}),
-};
+		type: 'text',
+		isRequired: false,
+	},
+];

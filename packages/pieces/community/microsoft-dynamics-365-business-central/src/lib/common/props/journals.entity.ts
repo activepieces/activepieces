@@ -1,19 +1,25 @@
-import { Property } from '@activepieces/pieces-framework';
+import { EntityProp } from '../types';
 
-export const journalsEntityProps = {
-	code: Property.ShortText({
+export const journalsEntityProps: EntityProp[] = [
+	{
+		name: 'code',
 		displayName: 'Code',
 		description: 'The code of the journal.',
-		required: false,
-	}),
-	displayName: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'displayName',
 		displayName: 'Display Name',
 		description:
 			"Specifies the journal's name. This name will appear on all sales documents for the journal.",
-		required: false,
-	}),
-	balancingAccountNumber: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'balancingAccountNumber',
 		displayName: 'Balancing Account Number',
-		required: false,
-	}),
-};
+		type: 'text',
+		isRequired: false,
+	},
+];

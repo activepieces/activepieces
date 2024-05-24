@@ -24,12 +24,12 @@ export const ENTITY_DROPDOWN_OPTIONS = [
 		value: 'employees',
 	},
 	{
-		label: 'Items',
-		value: 'items',
-	},
-	{
 		label: 'Item Categories',
 		value: 'itemCategories',
+	},
+	{
+		label: 'Items',
+		value: 'items',
 	},
 	{
 		label: 'Item Variants',
@@ -56,20 +56,28 @@ export const ENTITY_DROPDOWN_OPTIONS = [
 		value: 'projects',
 	},
 	{
+		label: 'Sales Invoice Lines',
+		value: 'salesInvoiceLines',
+	},
+	{
 		label: 'Sales Invoices',
 		value: 'salesInvoices',
 	},
 	{
-		label: 'Sales Invoice Lines',
-		value: 'salesInvoiceLines',
+		label: 'Sales Order Lines',
+		value: 'salesOrderLines',
 	},
 	{
 		label: 'Sales Orders',
 		value: 'salesOrders',
 	},
 	{
-		label: 'Sales Order Lines',
-		value: 'salesOrderLines',
+		label: 'Sales Quote Lines',
+		value: 'salesQuoteLines',
+	},
+	{
+		label: 'Sales Quotes',
+		value: 'salesQuotes',
 	},
 	{
 		label: 'Shipment Methods',

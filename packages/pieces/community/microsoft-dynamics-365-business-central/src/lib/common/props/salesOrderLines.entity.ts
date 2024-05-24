@@ -1,125 +1,156 @@
-import { Property } from '@activepieces/pieces-framework';
+import { EntityProp } from '../types';
 
 // https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/resources/dynamics_salesorderline
-export const salesOrderLinesEntityProps = {
-	sequence: Property.Number({
-		displayName: 'Sequence Number',
-		required: false,
-	}),
-	itemId: Property.ShortText({
-		displayName: 'Item ID',
-		description: 'The ID of the item in the sales order line.',
-		required: false,
-	}),
-	accountId: Property.ShortText({
-		displayName: 'Account ID',
-		description: 'The id of the account that the sales order line is related to.',
-		required: false,
-	}),
-	lineType: Property.StaticDropdown({
-		displayName: 'Line Type',
-		required: false,
+
+export const salesOrdersLinesEntityProps: EntityProp[] = [
+	{
+		name: 'salesOrderId',
+		displayName: 'Sales Order ID',
+		type: 'dynamic_select',
+		isRequired: false,
 		options: {
-			disabled: false,
-			options: [
-				{
-					label: 'Comment',
-					value: 'Comment',
-				},
-				{
-					label: 'Account',
-					value: 'Account',
-				},
-				{
-					label: 'Item',
-					value: 'Item',
-				},
-				{
-					label: 'Resource',
-					value: 'Resource',
-				},
-				{
-					label: 'Value',
-					value: 'Value',
-				},
-				{
-					label: 'Charge',
-					value: 'Charge',
-				},
-				{
-					label: 'Fixed Asset',
-					value: 'Fixed Asset',
-				},
-			],
+			sourceFieldSlug: 'salesOrders',
+			labelField: 'number',
 		},
-	}),
-	lineObjectNumber: Property.ShortText({
+	},
+	{
+		name: 'lineType',
+		displayName: 'Type',
+		type: 'static_select',
+		isRequired: false,
+		options: [
+			// {
+			// 	label: 'Comment',
+			// 	value: 'Comment',
+			// },
+			// {
+			// 	label: 'Account',
+			// 	value: 'Account',
+			// },
+			{
+				label: 'Item',
+				value: 'Item',
+			},
+			// {
+			// 	label: 'Resource',
+			// 	value: 'Resource',
+			// },
+			// {
+			// 	label: 'Value',
+			// 	value: 'Value',
+			// },
+			// {
+			// 	label: 'Charge',
+			// 	value: 'Charge',
+			// },
+			// {
+			// 	label: 'Fixed Asset',
+			// 	value: 'Fixed Asset',
+			// },
+		],
+	},
+	{
+		name: 'itemId',
+		displayName: 'Item ID',
+		isRequired: false,
+		type: 'dynamic_select',
+		options: {
+			sourceFieldSlug: 'items',
+			labelField: 'number',
+		},
+	},
+	{
+		name: 'sequence',
+		displayName: 'Sequence Number',
+		isRequired: false,
+		type: 'text',
+	},
+	{
+		name: 'lineObjectNumber',
 		displayName: 'Line Object Number',
 		description: 'The number of the object (account or item) of the sales order line.',
-		required: false,
-	}),
-	description: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'description',
 		displayName: 'Description',
-		required: false,
-	}),
-	unitOfMeasureId: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'unitOfMeasureId',
 		displayName: 'Unit of Measure ID',
-		required: false,
-	}),
-	unitOfMeasureCode: Property.ShortText({
+		isRequired: false,
+		type: 'dynamic_select',
+		options: {
+			sourceFieldSlug: 'unitsOfMeasure',
+			labelField: 'code',
+		},
+	},
+	{
+		name: 'unitOfMeasureCode',
 		displayName: 'Unit of Measure Code',
-		required: false,
-	}),
-	quantity: Property.Number({
+		isRequired: false,
+		type: 'text',
+	},
+	{
+		name: 'quantity',
 		displayName: 'Quantity',
-		required: false,
-	}),
-	unitPrice: Property.Number({
+		isRequired: false,
+		type: 'number',
+	},
+	{
+		name: 'unitPrice',
 		displayName: 'Unit Price',
-		required: false,
-	}),
-	discountAmount: Property.Number({
-		displayName: 'Discount Number',
-		required: false,
-	}),
-	discountPercent: Property.Number({
+		isRequired: false,
+		type: 'number',
+	},
+	{
+		name: 'discountAmount',
+		displayName: 'Discount Amount',
+		type: 'number',
+		isRequired: false,
+	},
+	{
+		name: 'discountPercent',
 		displayName: 'Discount Percent',
-		required: false,
-	}),
-	discountAppliedBeforeTax: Property.Checkbox({
-		displayName: 'Discount Applied Befor Tax?',
-		required: false,
-	}),
-	taxCode: Property.ShortText({
+		type: 'number',
+		isRequired: false,
+	},
+	{
+		name: 'taxCode',
 		displayName: 'Tax Code',
-		required: false,
-	}),
-	shipmentDate: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'shipmentDate',
 		displayName: 'Shipment Date',
-		required: false,
-	}),
-	shippedQuantity: Property.Number({
-		displayName: 'Shipped Quantity',
-		required: false,
-		description: 'The quantity of items from the order already shipped.',
-	}),
-	invoicedQuantity: Property.Number({
-		displayName: 'Invoiced Quantity',
-		description: 'The quantity of items from the sales order line that was invoiced.',
-		required: false,
-	}),
-	invoiceQuantity: Property.Number({
+		isRequired: false,
+		type: 'date',
+	},
+	{
+		name: 'invoiceQuantity',
 		displayName: 'Invoice Quantity',
+		type: 'number',
+		isRequired: false,
 		description: 'The quantity of items from the sales order line to be invoiced.',
-		required: false,
-	}),
-	shipQuantity: Property.Number({
+	},
+	{
+		name: 'shipQuantity',
 		displayName: 'Ship Quantity',
+		type: 'number',
+		isRequired: false,
 		description: 'The quantity of items from the order to be shipped.',
-		required: false,
-	}),
-	itemVariantId: Property.ShortText({
-		displayName: 'Item Variant ID',
-		required: false,
-	}),
-};
+	},
+];
+
+export const salesOrderLinesEntityNumberProps = [
+	'quantity',
+	'unitPrice',
+	'discountPercent',
+	'discountAmount',
+	'invoicedQuantity',
+	'shipQuantity',
+];

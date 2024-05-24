@@ -1,55 +1,72 @@
-import { Property } from '@activepieces/pieces-framework';
+import { EntityProp } from '../types';
 
-export const locationsEntityProps = {
-	code: Property.ShortText({
+export const locationsEntityProps: EntityProp[] = [
+	{
+		name: 'code',
 		displayName: 'Code',
-		description: 'The code of the location.',
-		required: false,
-	}),
-	displayName: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'displayName',
 		displayName: 'Display Name',
 		description:
 			"Specifies the location's name. This name will appear on all sales documents for the location.",
-		required: false,
-	}),
-	addressLine1: Property.LongText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'addressLine1',
 		displayName: 'Address Line 1',
-		required: false,
-	}),
-	addressLine2: Property.LongText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'addressLine2',
 		displayName: 'Address Line 2',
-		required: false,
-	}),
-	city: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'city',
 		displayName: 'City',
-		required: false,
-	}),
-	state: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'state',
 		displayName: 'State',
-		required: false,
-	}),
-	country: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'country',
 		displayName: 'Country',
-		required: false,
-	}),
-	postalCode: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'postalCode',
 		displayName: 'Postal Code',
-		required: false,
-	}),
-	phoneNumber: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'phoneNumber',
 		displayName: 'Phone Number',
-		required: false,
-	}),
-	email: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'email',
 		displayName: 'Email',
-		required: false,
-	}),
-	website: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'website',
 		displayName: 'Website',
-		required: false,
-	}),
-	contact: Property.ShortText({
-		displayName: 'Contact',
-		required: false,
-	}),
-};
+		type: 'text',
+		isRequired: false,
+	},
+];

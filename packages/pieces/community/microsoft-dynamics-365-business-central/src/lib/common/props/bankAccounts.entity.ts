@@ -1,35 +1,34 @@
-import { Property } from '@activepieces/pieces-framework';
+import { EntityProp } from '../types';
 
-export const bankAccountsEntityProps = {
-	number: Property.ShortText({
+export const bankAccountsEntityProps: EntityProp[] = [
+	{
+		name: 'number',
 		displayName: 'Number',
-		required: false,
-	}),
-	displayName: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'displayName',
 		displayName: 'Display Name',
-		required: false,
-	}),
-	bankAccountNumber: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'bankAccountNumber',
 		displayName: 'Bank Account Number',
-		required: false,
-	}),
-	blocked: Property.Checkbox({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'blocked',
 		displayName: 'Blocked ?',
-		description:
-			'Specifies that entries cannot be posted to the bank account. True indicates account is blocked and posting is not allowed.',
-		required: false,
-	}),
-	currencyCode: Property.ShortText({
-		displayName: 'Currency Code',
-		required: false,
-		description: 'The default currency code for the bank account.',
-	}),
-	currencyId: Property.ShortText({
-		displayName: 'Currency ID',
-		required: false,
-	}),
-	iban: Property.ShortText({
+		type: 'boolean',
+		isRequired: false,
+	},
+	{
+		name: 'iban',
 		displayName: 'IBAN',
-		required: false,
-	}),
-};
+		type: 'text',
+		isRequired: false,
+	},
+];

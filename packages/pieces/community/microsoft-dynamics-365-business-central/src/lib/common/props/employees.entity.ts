@@ -1,98 +1,127 @@
-import { Property } from '@activepieces/pieces-framework';
+import { EntityProp } from '../types';
 
-export const employeesEntityProps = {
-	number: Property.ShortText({
+export const employeesEntityProps: EntityProp[] = [
+	{
+		name: 'number',
 		displayName: 'Number',
-		required: false,
-	}),
-	displayName: Property.ShortText({
-		displayName: 'Display Name',
-		required: false,
-	}),
-	givenName: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'givenName',
 		displayName: 'First Name',
-		required: false,
-	}),
-	middleName: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'middleName',
 		displayName: 'Middle Name',
-		required: false,
-	}),
-	surname: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'surname',
 		displayName: 'Last Name',
-		required: false,
-	}),
-	jobTitle: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'jobTitle',
 		displayName: 'Job Title',
-		required: false,
-	}),
-	addressLine1: Property.LongText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'addressLine1',
 		displayName: 'Address Line 1',
-		required: false,
-	}),
-	addressLine2: Property.LongText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'addressLine2',
 		displayName: 'Address Line 2',
-		required: false,
-	}),
-	city: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'city',
 		displayName: 'City',
-		required: false,
-	}),
-	state: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'state',
 		displayName: 'State',
-		required: false,
-	}),
-	country: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'country',
 		displayName: 'Country',
-		required: false,
-	}),
-	postalCode: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'postalCode',
 		displayName: 'Postal Code',
-		required: false,
-	}),
-	phoneNumber: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'phoneNumber',
 		displayName: 'Phone Number',
-		required: false,
-	}),
-	mobilePhone: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'mobilePhone',
 		displayName: 'Mobile Number',
-		required: false,
-	}),
-	email: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'email',
 		displayName: 'Email',
-		required: false,
-	}),
-	personalEmail: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'personalEmail',
 		displayName: 'Personal Email',
-		required: false,
-	}),
-	status: Property.StaticDropdown({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'status',
 		displayName: 'Status',
+		type: 'static_select',
 		description: 'Specifies the status of the employee.',
-		required: false,
-		options: {
-			disabled: false,
-			options: [
-				{
-					label: 'Active',
-					value: 'Active',
-				},
-				{
-					label: 'Inactive',
-					value: 'Inactive',
-				},
-				{
-					label: 'Terminated',
-					value: 'Terminated',
-				},
-			],
-		},
-	}),
-	birthDate: Property.DateTime({
+		isRequired: false,
+		options: [
+			{
+				label: 'Active',
+				value: 'Active',
+			},
+			{
+				label: 'Inactive',
+				value: 'Inactive',
+			},
+			{
+				label: 'Terminated',
+				value: 'Terminated',
+			},
+		],
+	},
+	{
+		name: 'birthDate',
 		displayName: 'Birth Date',
-		required: false,
-	}),
-	employmentDate: Property.DateTime({
+		type: 'date',
+		isRequired: false,
+	},
+	{
+		name: 'employmentDate',
 		displayName: 'Employment Date',
-		required: false,
-	}),
-};
+		type: 'date',
+		isRequired: false,
+	},
+];

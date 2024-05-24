@@ -1,70 +1,109 @@
-import { Property } from '@activepieces/pieces-framework';
+import { EntityProp } from '../types';
 
-export const itemsEntityProps = {
-	number: Property.ShortText({
+export const itemsEntityProps: EntityProp[] = [
+	{
+		name: 'number',
 		displayName: 'Number',
-		required: false,
-	}),
-	displayName: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'displayName',
 		displayName: 'Display Name',
-		required: false,
-	}),
-	type: Property.StaticDropdown({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'type',
 		displayName: 'Type',
-		required: false,
-		options: {
-			disabled: false,
-			options: [
-				{ label: 'Inventory', value: 'Inventory' },
-				{ label: 'Service', value: 'Service' },
-				{ label: 'Non-Inventory', value: 'Non-Inventory' },
-			],
-		},
-	}),
-	blocked: Property.Checkbox({
+		type: 'static_select',
+		isRequired: false,
+		options: [
+			{ label: 'Inventory', value: 'Inventory' },
+			{ label: 'Service', value: 'Service' },
+			{ label: 'Non-Inventory', value: 'Non-Inventory' },
+		],
+	},
+	{
+		name: 'blocked',
 		displayName: 'Blocked?',
-		required: false,
-	}),
-	itemCategoryId: Property.ShortText({
+		type: 'boolean',
+		isRequired: false,
+	},
+	{
+		name: 'itemCategoryId',
 		displayName: 'Item Category ID',
-		required: false,
-	}),
-	itemCategoryCode: Property.ShortText({
+		type: 'dynamic_select',
+		isRequired: false,
+		options: {
+			sourceFieldSlug: 'itemCategories',
+			labelField: 'code',
+		},
+	},
+	{
+		name: 'itemCategoryCode',
 		displayName: 'Item Category Code',
-		required: false,
-	}),
-	gtin: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'gtin',
 		displayName: 'GTIN',
-		required: false,
-	}),
-	unitPrice: Property.Number({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'unitPrice',
 		displayName: 'Unit Price',
-		required: false,
-	}),
-	priceIncludesTax: Property.Checkbox({
+		type: 'number',
+		isRequired: false,
+	},
+	{
+		name: 'priceIncludesTax',
 		displayName: 'Price Includes Tax?',
 		description:
 			'Specifies that the unitPrice includes tax. Set to true, if unitPrice includes tax.',
-		required: false,
-	}),
-	unitCost: Property.Number({
+		type: 'boolean',
+		isRequired: false,
+	},
+	{
+		name: 'unitCost',
 		displayName: 'Unit Cost',
-		required: false,
-	}),
-	taxGroupId: Property.ShortText({
-		displayName: 'Tax Group ID',
-		required: false,
-	}),
-	taxGroupCode: Property.ShortText({
-		displayName: 'Tax Group Code',
-		required: false,
-	}),
-	baseUnitOfMeasureId: Property.ShortText({
+		type: 'number',
+		isRequired: false,
+	},
+	{
+		name: 'baseUnitOfMeasureId',
 		displayName: 'Basic Unit of Measure ID',
-		required: false,
-	}),
-	baseUnitOfMeasureCode: Property.ShortText({
+		isRequired: false,
+		type: 'dynamic_select',
+		options: {
+			sourceFieldSlug: 'unitsOfMeasure',
+			labelField: 'code',
+		},
+	},
+	{
+		name: 'baseUnitOfMeasureCode',
 		displayName: 'Basic Unit of Measure Code',
-		required: false,
-	}),
-};
+		isRequired: false,
+		type: 'text',
+	},
+	{
+		name: 'taxGroupId',
+		displayName: 'Tax Group ID',
+		isRequired: false,
+		type: 'dynamic_select',
+		options: {
+			sourceFieldSlug: 'taxGroups',
+			labelField: 'code',
+		},
+	},
+	{
+		name: 'taxGroupCode',
+		displayName: 'Tax Group Code',
+		isRequired: false,
+		type: 'text',
+	},
+];
+
+export const itemsEntityNumberProps = ['unitPrice', 'unitCost'];

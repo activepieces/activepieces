@@ -1,23 +1,32 @@
-import { Property } from '@activepieces/pieces-framework';
+import { EntityProp } from '../types';
 
-export const currenciesEntityProps = {
-	displayName: Property.ShortText({
+export const currenciesEntityProps: EntityProp[] = [
+	{
+		name: 'displayName',
 		displayName: 'Display Name',
-		required: false,
-	}),
-	code: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'code',
 		displayName: 'Code',
-		description: 'The code of the currency.',
-		required: false,
-	}),
-	amountDecimalPlaces: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'amountDecimalPlaces',
 		displayName: 'Amount Decimal Places',
 		description:
-			'	Specifies the number of decimal places the system will display on amounts for this currency.',
-		required: false,
-	}),
-	amountRoundingPrecision: Property.Number({
+			'Specifies the number of decimal places the system will display on amounts for this currency.',
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'amountRoundingPrecision',
 		displayName: 'Amount Rounding Precision',
-		required: false,
-	}),
-};
+		type: 'number',
+		isRequired: false,
+	},
+];
+
+export const currenciesEntityNumberProps = ['amountRoundingPrecision'];

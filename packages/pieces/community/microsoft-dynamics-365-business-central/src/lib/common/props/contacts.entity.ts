@@ -1,87 +1,110 @@
-import { Property } from '@activepieces/pieces-framework';
+import { EntityProp } from '../types';
 
-export const contactsEntityProps = {
-	number: Property.ShortText({
+export const contactsEntityProps: EntityProp[] = [
+	{
+		name: 'number',
 		displayName: 'Number',
-		required: false,
-	}),
-	displayName: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'displayName',
 		displayName: 'Display Name',
-		required: false,
-	}),
-	type: Property.StaticDropdown({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'type',
 		displayName: 'Type',
-		required: false,
-		options: {
-			disabled: false,
-			options: [
-				{
-					label: 'Person',
-					value: 'Person',
-				},
-				{ label: 'Company', value: 'Company' },
-			],
-		},
-	}),
-	jobTitle: Property.ShortText({
+		type: 'static_select',
+		isRequired: false,
+		options: [
+			{
+				label: 'Person',
+				value: 'Person',
+			},
+			{
+				label: 'Company',
+				value: 'Company',
+			},
+		],
+	},
+	{
+		name: 'jobTitle',
 		displayName: 'Job Title',
-		required: false,
-	}),
-	companyNumber: Property.ShortText({
-		displayName: 'Company Number',
-		required: false,
-	}),
-	companyName: Property.ShortText({
-		displayName: 'Company Name',
-		required: false,
-	}),
-	addressLine1: Property.LongText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'addressLine1',
 		displayName: 'Address Line 1',
-		required: false,
-	}),
-	addressLine2: Property.LongText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'addressLine2',
 		displayName: 'Address Line 2',
-		required: false,
-	}),
-	city: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'city',
 		displayName: 'City',
-		required: false,
-	}),
-	state: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'state',
 		displayName: 'State',
-		required: false,
-	}),
-	country: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'country',
 		displayName: 'Country',
-		required: false,
-	}),
-	postalCode: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'postalCode',
 		displayName: 'Postal Code',
-		required: false,
-	}),
-	phoneNumber: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'phoneNumber',
 		displayName: 'Phone Number',
-		required: false,
-	}),
-	mobilePhoneNumber: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'mobilePhoneNumber',
 		displayName: 'Mobile Number',
-		required: false,
-	}),
-	email: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'email',
 		displayName: 'Email',
-		required: false,
-	}),
-	website: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'website',
 		displayName: 'Website',
-		required: false,
-	}),
-	privacyBlocked: Property.Checkbox({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'privacyBlocked',
 		displayName: 'Privacy Blocked?',
-		description: 'Specifies whether the privacy of the contact is blocked.',
-		required: false,
-	}),
-	taxRegistrationNumber: Property.ShortText({
+		type: 'boolean',
+		isRequired: false,
+	},
+	{
+		name: 'taxRegistrationNumber',
 		displayName: 'Tax Registration Number',
-		required: false,
-	}),
-};
+		type: 'text',
+		isRequired: false,
+	},
+];

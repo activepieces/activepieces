@@ -1,6 +1,6 @@
 import { businessCentralAuth } from '../../';
 import { createAction } from '@activepieces/pieces-framework';
-import { commonProps } from '../common';
+import { commonProps, formatRecodFields } from '../common';
 import { makeClient } from '../common/client';
 
 export const createRecordAction = createAction({
@@ -18,10 +18,34 @@ export const createRecordAction = createAction({
 		const recordType = context.propsValue.record_type;
 		const recordFields = context.propsValue.record_fields;
 
+		const formattedRecordFields = formatRecodFields(recordFields, recordType);
+
 		const client = makeClient(context.auth);
 
-		const endpoint = `/companies(${companyId})/${recordType}`;
+		let endpoint;
 
-		return await client.createRecord(endpoint, recordFields);
+		switch (recordType) {
+			case 'itemVariants':
+				endpoint = `/companies(${companyId})/items(${recordFields['itemId']})/${recordType}`;
+				delete formattedRecordFields['itemId'];
+				break;
+			case 'salesInvoiceLines':
+				endpoint = `/companies(${companyId})/salesInvoices(${recordFields['salesInvoiceId']})/${recordType}`;
+				delete formattedRecordFields['salesInvoiceId'];
+				break;
+			case 'salesOrderLines':
+				endpoint = `/companies(${companyId})/salesOrders(${recordFields['salesOrderId']})/${recordType}`;
+				delete formattedRecordFields['salesOrderId'];
+				break;
+			case 'salesQuoteLines':
+				endpoint = `/companies(${companyId})/salesQuotes(${recordFields['salesQuoteId']})/${recordType}`;
+				delete formattedRecordFields['salesQuoteId'];
+				break;
+			default:
+				endpoint = `/companies(${companyId})/${recordType}`;
+				break;
+		}
+
+		return await client.createRecord(endpoint, formattedRecordFields);
 	},
 });

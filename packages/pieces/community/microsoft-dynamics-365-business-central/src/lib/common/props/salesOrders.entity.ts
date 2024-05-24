@@ -1,199 +1,216 @@
-import { Property } from '@activepieces/pieces-framework';
+import { EntityProp } from '../types';
 
-export const salesOrdersEntityProps = {
-	number: Property.ShortText({
-		displayName: 'Number',
-		required: false,
-	}),
-	orderDate: Property.DateTime({
+export const salesOrdersEntityProps: EntityProp[] = [
+	{
+		name: 'orderDate',
 		displayName: 'Order Date',
-		required: false,
-	}),
-	postingDate: Property.DateTime({
+		type: 'date',
+		isRequired: false,
+	},
+	{
+		name: 'postingDate',
 		displayName: 'Posting Date',
-		required: false,
-	}),
-	customerId: Property.ShortText({
+		type: 'date',
+		isRequired: false,
+	},
+	{
+		name: 'customerId',
 		displayName: 'Customer ID',
-		required: false,
-	}),
-	customerNumber: Property.ShortText({
+		type: 'dynamic_select',
+		isRequired: false,
+		options: {
+			sourceFieldSlug: 'customers',
+			labelField: 'displayName',
+		},
+	},
+	{
+		name: 'customerNumber',
 		displayName: 'Customer Number',
-		required: false,
-	}),
-	customerName: Property.ShortText({
-		displayName: 'Customer Name',
-		required: false,
-	}),
-	billToName: Property.ShortText({
-		displayName: 'Bill to Name',
-		required: false,
-	}),
-	billToCustomerId: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'billToCustomerId',
 		displayName: 'Bill to Customer ID',
-		required: false,
-	}),
-	billToCustomerNumber: Property.ShortText({
+		type: 'dynamic_select',
+		isRequired: false,
+		options: {
+			sourceFieldSlug: 'customers',
+			labelField: 'displayName',
+		},
+	},
+	{
+		name: 'billToCustomerNumber',
 		displayName: 'Bill to Customer Number',
-		required: false,
-	}),
-	shipToName: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'shipToName',
 		displayName: 'Ship to Name',
-		required: false,
-	}),
-	shipToContact: Property.ShortText({
-		displayName: 'SHip to Contact',
-		required: false,
-	}),
-	sellToAddressLine1: Property.ShortText({
-		displayName: 'Sell to Address Line 1',
-		required: false,
-	}),
-	sellToAddressLine2: Property.ShortText({
-		displayName: 'Sell to Address Line 2',
-		required: false,
-	}),
-	sellToCity: Property.ShortText({
-		displayName: 'Sell to City',
-		required: false,
-	}),
-	sellToCountry: Property.ShortText({
-		displayName: 'Sell to Country',
-		required: false,
-	}),
-	sellToState: Property.ShortText({
-		displayName: 'Sell to State',
-		required: false,
-	}),
-	sellToPostCode: Property.ShortText({
-		displayName: 'Sell to Postalcode',
-		required: false,
-	}),
-	billToAddressLine1: Property.ShortText({
-		displayName: 'Bill to Address Line 1',
-		required: false,
-	}),
-	billToAddressLine2: Property.ShortText({
-		displayName: 'Bill to Address Line 2',
-		required: false,
-	}),
-	billToCity: Property.ShortText({
-		displayName: 'Bill to City',
-		required: false,
-	}),
-	billToCountry: Property.ShortText({
-		displayName: 'Bill to Country',
-		required: false,
-	}),
-	billToState: Property.ShortText({
-		displayName: 'Bill to State',
-		required: false,
-	}),
-	billToPostCode: Property.ShortText({
-		displayName: 'Bill to Postalcode',
-		required: false,
-	}),
-	shipToAddressLine1: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'shipToContact',
+		displayName: 'Ship to Contact',
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'shipToAddressLine1',
 		displayName: 'Ship to Address Line 1',
-		required: false,
-	}),
-	shipToAddressLine2: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'shipToAddressLine2',
 		displayName: 'Ship to Address Line 2',
-		required: false,
-	}),
-	shipToCity: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'shipToCity',
 		displayName: 'Ship to City',
-		required: false,
-	}),
-	shipToCountry: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'shipToCountry',
 		displayName: 'Ship to Country',
-		required: false,
-	}),
-	shipToState: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'shipToState',
 		displayName: 'Ship to State',
-		required: false,
-	}),
-	shipToPostCode: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'shipToPostCode',
 		displayName: 'Ship to Postalcode',
-		required: false,
-	}),
-	currencyId: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'sellToAddressLine1',
+		displayName: 'Sell to Address Line 1',
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'sellToAddressLine2',
+		displayName: 'Sell to Address Line 2',
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'sellToCity',
+		displayName: 'Sell to City',
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'sellToCountry',
+		displayName: 'Sell to Country',
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'sellToState',
+		displayName: 'Sell to State',
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'sellToPostCode',
+		displayName: 'Sell to Postalcode',
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'currencyId',
 		displayName: 'Currency ID',
-		required: false,
-	}),
-	currencyCode: Property.ShortText({
+		type: 'dynamic_select',
+		isRequired: false,
+		options: {
+			labelField: 'code',
+			sourceFieldSlug: 'currencies',
+		},
+	},
+	{
+		name: 'currencyCode',
 		displayName: 'Currency Code',
-		required: false,
-	}),
-	pricesIncludeTax: Property.Checkbox({
-		displayName: 'Prices Include Tax?',
-		required: false,
-	}),
-	paymentTermsId: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'pricesIncludeTax',
+		displayName: 'Prices include Tax?',
+		isRequired: false,
+		type: 'boolean',
+	},
+	{
+		name: 'paymentTermsId',
 		displayName: 'Payment Terms ID',
-		required: false,
-	}),
-	shipmentMethodId: Property.ShortText({
+		type: 'dynamic_select',
+		isRequired: false,
+		options: {
+			sourceFieldSlug: 'paymentTerms',
+			labelField: 'code',
+		},
+	},
+	{
+		name: 'shipmentMethodId',
 		displayName: 'Shipment Method ID',
-		required: false,
-	}),
-	salesperson: Property.ShortText({
-		displayName: 'Sales Person',
+		type: 'dynamic_select',
+		isRequired: false,
+		options: {
+			sourceFieldSlug: 'shipmentMethods',
+			labelField: 'code',
+		},
+	},
+	{
+		name: 'salesperson',
+		displayName: 'Sales Person Code',
 		description: 'The salesperson code for the sales order.',
-		required: false,
-	}),
-	partialShipping: Property.Checkbox({
+		isRequired: false,
+		type: 'text',
+	},
+	{
+		name: 'partialShipping',
 		displayName: 'Specifies whether partial shipping of items is preferred or not.',
-		required: false,
-	}),
-	requestedDeliveryDate: Property.ShortText({
+		type: 'boolean',
+		isRequired: false,
+	},
+	{
+		name: 'requestedDeliveryDate',
 		displayName: 'Requested Delivery Date',
-		required: false,
-	}),
-	discountAmount: Property.Number({
-		displayName: 'Discount Amount',
-		description: 'The sales order discount amount.',
-		required: false,
-	}),
-	discountAppliedBeforeTax: Property.Checkbox({
-		displayName: 'Discount is applied before tax?',
-		required: false,
-	}),
-	phoneNumber: Property.ShortText({
+		type: 'date',
+		isRequired: false,
+	},
+	{
+		name: 'phoneNumber',
 		displayName: 'Phone Number',
 		description: "Specifies the sales order's telephone number.",
-		required: false,
-	}),
-	email: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'email',
 		displayName: 'Email',
 		description: "Specifies the sales order's email address.",
-		required: false,
-	}),
-	status: Property.StaticDropdown({
-		displayName: 'Status',
-		description: 'Specifies the status of the sales order. ',
-		required: false,
-		options: {
-			disabled: false,
-			options: [
-				{
-					label: 'Draft',
-					value: 'Draft',
-				},
-				{
-					label: 'Open',
-					value: 'Open',
-				},
-				{
-					label: 'Review',
-					value: 'Review',
-				},
-			],
-		},
-	}),
-	fullyShipped: Property.Checkbox({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'fullyShipped',
 		displayName: 'Fully Shipped?',
 		description: 'Specifies whether the items of the sales order were fully shipped or not.',
-		required: false,
-	}),
-};
+		type: 'boolean',
+		isRequired: false,
+	},
+];
+
+export const salesOrderLinesEntityNumberProps = ['discountAmount'];

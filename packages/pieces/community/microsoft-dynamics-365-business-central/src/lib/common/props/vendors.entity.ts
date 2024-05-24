@@ -1,91 +1,112 @@
-import { Property } from '@activepieces/pieces-framework';
+import { EntityProp } from '../types';
 
-export const vendorsEntityProps = {
-	number: Property.ShortText({
+export const vendorsEntityProps: EntityProp[] = [
+	{
+		name: 'number',
 		displayName: 'Number',
-		required: false,
-	}),
-	displayName: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'displayName',
 		displayName: 'Display Name',
-		required: false,
-	}),
-	addressLine1: Property.LongText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'addressLine1',
 		displayName: 'Address Line 1',
-		required: false,
-	}),
-	addressLine2: Property.LongText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'addressLine2',
 		displayName: 'Address Line 2',
-		required: false,
-	}),
-	city: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'city',
 		displayName: 'City',
-		required: false,
-	}),
-	state: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'state',
 		displayName: 'State',
-		required: false,
-	}),
-	country: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'country',
 		displayName: 'Country',
-		required: false,
-	}),
-	postalCode: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'postalCode',
 		displayName: 'Postal Code',
-		required: false,
-	}),
-	email: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'email',
 		displayName: 'Email',
-		required: false,
-	}),
-	website: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'website',
 		displayName: 'Website',
-		required: false,
-	}),
-	taxLiable: Property.Checkbox({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'taxLiable',
 		displayName: 'Tax Liable?',
-		required: false,
-	}),
-	taxRegistrationNumber: Property.ShortText({
+		type: 'boolean',
+		isRequired: false,
+	},
+	{
+		name: 'taxRegistrationNumber',
 		displayName: 'Tax Registration Number',
-		required: false,
-	}),
-	currencyId: Property.ShortText({
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'currencyId',
 		displayName: 'Currency ID',
-		required: false,
-	}),
-	currencyCode: Property.ShortText({
-		displayName: 'Currency Code',
-		required: false,
-	}),
-	paymentTermsId: Property.ShortText({
-		displayName: 'Payment Terms ID',
-		required: false,
-	}),
-	paymentMethodId: Property.ShortText({
-		displayName: 'Payment Method ID',
-		required: false,
-	}),
-	blocked: Property.StaticDropdown({
-		displayName: 'Blocked',
-		description: 'Specifies which transactions with the customer cannot be posted',
-		required: false,
-		defaultValue: '',
+		type: 'dynamic_select',
+		isRequired: false,
 		options: {
-			disabled: false,
-			options: [
-				{
-					label: 'Ship',
-					value: 'Ship',
-				},
-				{
-					label: 'Invoice',
-					value: 'Invoice',
-				},
-				{
-					label: 'All',
-					value: 'All',
-				},
-			],
+			labelField: 'code',
+			sourceFieldSlug: 'currencies',
 		},
-	}),
-};
+	},
+	{
+		name: 'currencyCode',
+		displayName: 'Currency Code',
+		type: 'text',
+		isRequired: false,
+	},
+	{
+		name: 'paymentTermsId',
+		displayName: 'Payment Terms ID',
+		type: 'dynamic_select',
+		isRequired: false,
+		options: {
+			sourceFieldSlug: 'paymentTerms',
+			labelField: 'code',
+		},
+	},
+	{
+		name: 'paymentMethodId',
+		displayName: 'Payment Method ID',
+		type: 'dynamic_select',
+		isRequired: false,
+		options: {
+			sourceFieldSlug: 'paymentMethods',
+			labelField: 'code',
+		},
+	},
+];
