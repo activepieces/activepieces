@@ -13,7 +13,6 @@ import { canvasActions } from '../store/builder/canvas/canvas.action';
 @Component({
   selector: 'app-test-run-bar',
   templateUrl: './test-run-bar.component.html',
-  styleUrls: ['./test-run-bar.component.scss'],
 })
 export class TestRunBarComponent implements OnInit {
   constructor(
@@ -28,7 +27,7 @@ export class TestRunBarComponent implements OnInit {
   exitRun$: Observable<void> = new Observable<void>();
   @Output()
   exitButtonClicked: EventEmitter<void> = new EventEmitter();
-
+  readonly FlowRunStatus = FlowRunStatus;
   ngOnInit(): void {
     this.hideExit$ = this.store.select(BuilderSelectors.selectIsInDebugMode);
     this.selectedRun$ = this.store
@@ -56,9 +55,5 @@ export class TestRunBarComponent implements OnInit {
       }),
       map(() => void 0)
     );
-  }
-
-  get instanceRunStatus() {
-    return FlowRunStatus;
   }
 }

@@ -79,7 +79,7 @@ export class RunsTableComponent implements OnInit {
   nonCommunityEdition$: Observable<boolean>;
   toggleNotificationFormControl: FormControl<boolean> = new FormControl();
   dataSource!: RunsTableDataSource;
-  displayedColumns = ['flowName', 'status', 'started', 'finished', 'action'];
+  displayedColumns = ['flowName', 'status', 'started', 'duration', 'action'];
   updateNotificationsValue$: Observable<unknown>;
   refreshTableForReruns$: Subject<boolean> = new Subject();
   statusFilterControl: FormControl<FlowRunStatus | typeof allOptionValue> =
