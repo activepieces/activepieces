@@ -27,17 +27,28 @@ import { testExecutionContext } from './handler/context/test-execution-context'
 import { flowExecutor } from './handler/flow-executor'
 import { pieceHelper } from './helper/piece-helper'
 import { triggerHelper } from './helper/trigger-helper'
+import { progressService } from './services/progress.service'
 import { utils } from './utils'
 
-const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<EngineResponse<FlowRunResponse>> => {
+const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<EngineResponse<Pick<FlowRunResponse, 'status' | 'error'>>> => {
+    const constants = EngineConstants.fromExecuteFlowInput(input)
     const output = await flowExecutor.execute({
         action: input.flowVersion.trigger.nextAction,
         executionState: context,
-        constants: EngineConstants.fromExecuteFlowInput(input),
+        constants,
     })
+    const newContext = output.verdict === ExecutionVerdict.RUNNING ? output.setVerdict(ExecutionVerdict.SUCCEEDED, output.verdictResponse) : output
+    await progressService.sendUpdate({
+        engineConstants: constants,
+        flowExecutorContext: newContext,
+    })
+    const response = await newContext.toResponse()
     return {
         status: EngineResponseStatus.OK,
-        response: await output.toResponse(),
+        response: {
+            status: response.status,
+            error: response.error,
+        },
     }
 }
 

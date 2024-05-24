@@ -36,7 +36,7 @@ export const FlowRun = Type.Object({
     finishTime: Type.String(),
     environment: Type.Enum(RunEnvironment),
     pauseMetadata: Type.Optional(PauseMetadata),
-    ...ExecutionState,
+    steps: Type.Record(Type.String(), Type.Unknown()),
 })
 
 export type FlowRun = Static<typeof FlowRun> & ExecutionState
