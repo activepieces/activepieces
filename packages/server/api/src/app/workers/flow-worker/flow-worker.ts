@@ -1,9 +1,9 @@
+import { tasksLimit } from '../../ee/project-plan/tasks-limit'
 import {
     flowRunService,
 } from '../../flows/flow-run/flow-run-service'
 import { engineHelper, generateWorkerToken } from '../../helper/engine-helper'
 import { getPiecePackage } from '../../pieces/piece-metadata-service'
-import { flowWorkerHooks } from './flow-worker-hooks'
 import { OneTimeJobData } from './job-data'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
@@ -149,11 +149,11 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         })
         return
     }
-    await flowWorkerHooks
-        .getHooks()
-        .preExecute({ projectId: jobData.projectId, runId: jobData.runId })
     
     try {
+        await tasksLimit.limit({
+            projectId: jobData.projectId,
+        })
         const { input } = await loadInputAndLogFileId({
             flowVersion: flow.version,
             jobData,

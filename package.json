@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.26.1",
-  "rcVersion": "0.27.0-rc.0",
+  "rcVersion": "0.27.0-rc.1",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -141,7 +141,7 @@
     "marked": "4.3.0",
     "mime": "4.0.1",
     "mime-types": "2.1.35",
-    "monaco-editor": "0.34.1",
+    "monaco-editor": "0.44.0",
     "monday-sdk-js": "0.5.2",
     "mustache": "4.2.0",
     "nanoid": "3.3.6",
@@ -149,7 +149,7 @@
     "ngx-colors": "3.5.2",
     "ngx-lottie": "10.0.0",
     "ngx-markdown": "17.0.0",
-    "ngx-monaco-editor-v2": "16.0.1",
+    "ngx-monaco-editor-v2": "17.0.1",
     "ngx-quill": "20.0.1",
     "ngx-skeleton-loader": "6.0.0",
     "ngx-socket-io": "4.6.1",

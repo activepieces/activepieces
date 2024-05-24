@@ -401,7 +401,7 @@ export const createMockCustomDomain = (
 
 export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
     const now = dayjs()
-    const twentyMinutesAgo = now.subtract(20, 'minutes')
+    const twentyMinutesAgo = now.subtract(5, 'minutes')
 
     return {
         id: otp?.id ?? apId(),
