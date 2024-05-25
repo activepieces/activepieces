@@ -5,14 +5,6 @@ import { triggerHooks } from '../../../flows/trigger'
 import { dedupeService } from '../../../flows/trigger/dedupe'
 import { flowQueue } from '../flow-queue'
 import { flowWorker } from '../flow-worker'
-import {
-    DelayedJobData,
-    OneTimeJobData,
-    RenewWebhookJobData,
-    RepeatableJobType,
-    RepeatingJobData,
-    ScheduledJobData,
-} from '../job-data'
 import { consumeJobsInMemory } from '../queues/memory/memory-consumer'
 import { memoryQueueManager } from '../queues/memory/memory-queue'
 import { redisConsumer } from '../queues/redis/redis-consumer'
@@ -28,6 +20,14 @@ import { ActivepiecesError,
     TriggerPayload,
     TriggerType,
 } from '@activepieces/shared'
+import {
+    DelayedJobData,
+    OneTimeJobData,
+    RenewWebhookJobData,
+    RepeatableJobType,
+    RepeatingJobData,
+    ScheduledJobData,
+} from 'server-worker'
 
 const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
 

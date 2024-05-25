@@ -4,7 +4,6 @@ import {
 } from '../../flows/flow-run/flow-run-service'
 import { engineHelper, generateWorkerToken } from '../../helper/engine-helper'
 import { getPiecePackage } from '../../pieces/piece-metadata-service'
-import { OneTimeJobData } from './job-data'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
     Action, ActionType,
@@ -28,7 +27,7 @@ import {
     Trigger,
     TriggerType,
 } from '@activepieces/shared'
-import { Sandbox, SandBoxCacheType, sandboxProvisioner, serverApiService } from 'server-worker'
+import { OneTimeJobData, Sandbox, SandBoxCacheType, sandboxProvisioner, serverApiService } from 'server-worker'
 
 type LoadInputAndLogFileIdParams = {
     flowVersion: FlowVersion

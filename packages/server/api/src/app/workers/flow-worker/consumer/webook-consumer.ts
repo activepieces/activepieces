@@ -2,8 +2,8 @@ import { StatusCodes } from 'http-status-codes'
 import { flowService } from '../../../flows/flow/flow.service'
 import { webhookService } from '../../../webhooks/webhook-service'
 import { EngineHttpResponse, engineResponseWatcher } from '../engine-response-watcher'
-import { WebhookJobData } from '../job-data'
 import { FlowStatus, isNil } from '@activepieces/shared'
+import { WebhookJobData } from 'server-worker'
 
 export const webhookConsumer = {
     async consumeWebhook(data: WebhookJobData): Promise<void> {
