@@ -10,6 +10,7 @@ import { updateRecordAction } from './lib/actions/update-record.action';
 import { deleteRecordAction } from './lib/actions/delete-record.action';
 import { newOrUpdatedRecordTrigger } from './lib/triggers/new-or-updated-record.trigger';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { searchRecordsAction } from './lib/actions/search-records.action';
 
 export const businessCentralAuth = PieceAuth.OAuth2({
 	props: {
@@ -40,6 +41,7 @@ export const microsoftDynamics365BusinessCentral = createPiece({
 		deleteRecordAction,
 		getRecordAction,
 		updateRecordAction,
+		searchRecordsAction,
 		createCustomApiCallAction({
 			auth: businessCentralAuth,
 			baseUrl: (auth) => {

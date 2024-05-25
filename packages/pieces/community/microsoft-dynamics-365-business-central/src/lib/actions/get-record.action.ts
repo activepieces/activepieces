@@ -1,7 +1,8 @@
 import { businessCentralAuth } from '../../';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { commonProps } from '../common';
 import { makeClient } from '../common/client';
+import { ACTION_ENTITY_DROPDOWN_OPTIONS } from '../common/constants';
 
 export const getRecordAction = createAction({
 	auth: businessCentralAuth,
@@ -10,7 +11,14 @@ export const getRecordAction = createAction({
 	description: `Retrives the details of a record by it's ID.`,
 	props: {
 		company_id: commonProps.company_id,
-		record_type: commonProps.record_type,
+		record_type: Property.StaticDropdown({
+			displayName: 'Record Type',
+			required: true,
+			options: {
+				disabled: false,
+				options: ACTION_ENTITY_DROPDOWN_OPTIONS,
+			},
+		}),
 		record_id: commonProps.record_id,
 	},
 	async run(context) {

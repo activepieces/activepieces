@@ -100,79 +100,9 @@ export const commonProps = {
 			const client = makeClient(authValue);
 
 			const fields: DynamicPropsValue = {};
-			let entitySchema: EntityProp[] = [];
 
 			// fetch entity prop schema
-			switch (recordType) {
-				case 'bankAccounts':
-					entitySchema = bankAccountsEntityProps;
-					break;
-				case 'contacts':
-					entitySchema = contactsEntityProps;
-					break;
-				case 'currencies':
-					entitySchema = currenciesEntityProps;
-					break;
-				case 'customers':
-					entitySchema = customersEntityProps;
-					break;
-				case 'disputeStatus':
-					entitySchema = disputeStatusEntityProps;
-					break;
-				case 'employees':
-					entitySchema = employeesEntityProps;
-					break;
-				case 'itemCategories':
-					entitySchema = itemCategoriesEntityProps;
-					break;
-				case 'items':
-					entitySchema = itemsEntityProps;
-					break;
-				case 'itemVariants':
-					entitySchema = itemVariantsEntityProps;
-					break;
-				case 'journals':
-					entitySchema = journalsEntityProps;
-					break;
-				case 'locations':
-					entitySchema = locationsEntityProps;
-					break;
-				case 'paymentTerms':
-					entitySchema = paymentTermsEntityProps;
-					break;
-				case 'paymentMethods':
-					entitySchema = paymentMethodsEntityProps;
-					break;
-				case 'projects':
-					entitySchema = projectsEntityProps;
-					break;
-				case 'salesInvoiceLines':
-					entitySchema = salesInvoiceLinesEntityProps;
-					break;
-				case 'salesInvoices':
-					entitySchema = salesInvoicesEntityProps;
-					break;
-				case 'salesOrderLines':
-					entitySchema = salesOrdersLinesEntityProps;
-					break;
-				case 'salesOrders':
-					entitySchema = salesOrdersEntityProps;
-					break;
-				case 'salesQuoteLines':
-					entitySchema = salesQuoteLinesEntityProps;
-					break;
-				case 'salesQuotes':
-					entitySchema = salesQuotesEntityProps;
-					break;
-				case 'shipmentMethods':
-					entitySchema = shipmentMethodsEntityProps;
-					break;
-				case 'vendors':
-					entitySchema = vendorsEntityProps;
-					break;
-				default:
-					break;
-			}
+			const entitySchema = getEntityPropSchema(recordType);
 
 			for (const prop of entitySchema) {
 				switch (prop.type) {
@@ -270,9 +200,49 @@ export const commonProps = {
 			return fields;
 		},
 	}),
+	record_filter_fields: Property.DynamicProperties({
+		displayName: 'Filter Fields',
+		refreshers: ['company_id', 'record_type'],
+		required: true,
+		props: async ({ auth, company_id, record_type }) => {
+			if (!auth) return {};
+			if (!company_id) return {};
+			if (!record_type) return {};
+
+			const recordType = record_type as unknown as string;
+
+			const fields: DynamicPropsValue = {};
+
+			// fetch entity prop schema
+			const entitySchema = getEntityPropSchema(recordType);
+
+			// currently only support text fields
+			for (const prop of entitySchema) {
+				switch (prop.type) {
+					case 'text':
+						fields[prop.name] = Property.ShortText({
+							displayName: prop.displayName,
+							description: prop.description,
+							required: prop.isRequired,
+						});
+						break;
+					case 'multi_text':
+						fields[prop.name] = Property.LongText({
+							displayName: prop.displayName,
+							description: prop.description,
+							required: prop.isRequired,
+						});
+						break;
+					default:
+						break;
+				}
+			}
+			return fields;
+		},
+	}),
 };
 
-export function formatRecodFields(recordFields: DynamicPropsValue, recordType: string) {
+export function formatRecordFields(recordFields: DynamicPropsValue, recordType: string) {
 	const numberFields = [];
 	switch (recordType) {
 		case 'currencies':
@@ -313,4 +283,81 @@ export function formatRecodFields(recordFields: DynamicPropsValue, recordType: s
 	}
 
 	return formattedRecordFields;
+}
+
+export function getEntityPropSchema(recordType: string): EntityProp[] {
+	let entitySchema: EntityProp[] = [];
+
+	// fetch entity prop schema
+	switch (recordType) {
+		case 'bankAccounts':
+			entitySchema = bankAccountsEntityProps;
+			break;
+		case 'contacts':
+			entitySchema = contactsEntityProps;
+			break;
+		case 'currencies':
+			entitySchema = currenciesEntityProps;
+			break;
+		case 'customers':
+			entitySchema = customersEntityProps;
+			break;
+		case 'disputeStatus':
+			entitySchema = disputeStatusEntityProps;
+			break;
+		case 'employees':
+			entitySchema = employeesEntityProps;
+			break;
+		case 'itemCategories':
+			entitySchema = itemCategoriesEntityProps;
+			break;
+		case 'items':
+			entitySchema = itemsEntityProps;
+			break;
+		case 'itemVariants':
+			entitySchema = itemVariantsEntityProps;
+			break;
+		case 'journals':
+			entitySchema = journalsEntityProps;
+			break;
+		case 'locations':
+			entitySchema = locationsEntityProps;
+			break;
+		case 'paymentTerms':
+			entitySchema = paymentTermsEntityProps;
+			break;
+		case 'paymentMethods':
+			entitySchema = paymentMethodsEntityProps;
+			break;
+		case 'projects':
+			entitySchema = projectsEntityProps;
+			break;
+		case 'salesInvoiceLines':
+			entitySchema = salesInvoiceLinesEntityProps;
+			break;
+		case 'salesInvoices':
+			entitySchema = salesInvoicesEntityProps;
+			break;
+		case 'salesOrderLines':
+			entitySchema = salesOrdersLinesEntityProps;
+			break;
+		case 'salesOrders':
+			entitySchema = salesOrdersEntityProps;
+			break;
+		case 'salesQuoteLines':
+			entitySchema = salesQuoteLinesEntityProps;
+			break;
+		case 'salesQuotes':
+			entitySchema = salesQuotesEntityProps;
+			break;
+		case 'shipmentMethods':
+			entitySchema = shipmentMethodsEntityProps;
+			break;
+		case 'vendors':
+			entitySchema = vendorsEntityProps;
+			break;
+		default:
+			break;
+	}
+	return entitySchema;
 }

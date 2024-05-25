@@ -1,7 +1,8 @@
 import { businessCentralAuth } from '../../';
-import { createAction } from '@activepieces/pieces-framework';
-import { commonProps, formatRecodFields } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { commonProps, formatRecordFields } from '../common';
 import { makeClient } from '../common/client';
+import { ACTION_ENTITY_DROPDOWN_OPTIONS } from '../common/constants';
 
 export const createRecordAction = createAction({
 	auth: businessCentralAuth,
@@ -10,7 +11,14 @@ export const createRecordAction = createAction({
 	description: 'Creates a new record.',
 	props: {
 		company_id: commonProps.company_id,
-		record_type: commonProps.record_type,
+		record_type: Property.StaticDropdown({
+			displayName: 'Record Type',
+			required: true,
+			options: {
+				disabled: false,
+				options: ACTION_ENTITY_DROPDOWN_OPTIONS,
+			},
+		}),
 		record_fields: commonProps.record_fields,
 	},
 	async run(context) {
@@ -18,7 +26,7 @@ export const createRecordAction = createAction({
 		const recordType = context.propsValue.record_type;
 		const recordFields = context.propsValue.record_fields;
 
-		const formattedRecordFields = formatRecodFields(recordFields, recordType);
+		const formattedRecordFields = formatRecordFields(recordFields, recordType);
 
 		const client = makeClient(context.auth);
 
