@@ -221,7 +221,7 @@ export const flowRunService = {
         await flowRunRepo.update(flowRunId, {
             status,
             tasks,
-            ...spreadIfDefined('duration', duration),
+            ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
             ...spreadIfDefined('logsFileId', logFileId),
             terminationReason: undefined,
             tags,
