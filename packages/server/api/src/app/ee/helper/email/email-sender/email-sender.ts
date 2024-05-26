@@ -44,7 +44,10 @@ type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
 }>
 
 type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
-    issueId: string
+    flowId: string
+    firstName: string
+    flowName: string
+    count: string
     createdAt: string
 }>
 

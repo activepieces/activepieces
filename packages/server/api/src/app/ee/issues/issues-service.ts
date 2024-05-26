@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import { databaseConnection } from '../../database/database-connection'
+import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -18,6 +19,16 @@ export const issuesService = {
         const issueId = apId()
         const date = dayjs().toISOString()
         const project = await projectService.getOneOrThrow(projectId)
+        const flow = await flowService.getOneOrThrow({ projectId, id: flowId })
+        if (isNil(flow.publishedVersionId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: 'Flow version not found',
+                },
+            })
+        }
+        const flowVersion = await flowVersionService.getFlowVersionOrThrow({ flowId, versionId: flow.publishedVersionId })
         const users = await userService.list({
             platformId: project.platformId,
         })
@@ -38,7 +49,7 @@ export const issuesService = {
             .orIgnore()
             .execute()
 
-        await this.update({
+        const updatedIssueCount = await this.update({
             projectId,
             flowId,
             status: IssueStatus.ONGOING,
@@ -48,7 +59,10 @@ export const issuesService = {
             await Promise.all((users.data as User[]).map(async (user: User) => {
                 return emailService.sendIssueCreatedNotification({
                     projectId,
-                    issueId,
+                    flowId,
+                    flowName: flowVersion.displayName,
+                    count: updatedIssueCount,
+                    firstName: user.firstName,
                     email: user.email,
                     createdAt: date,
                 })
@@ -121,9 +135,10 @@ export const issuesService = {
         projectId: ApId
         flowId: ApId
         status: IssueStatus
-    }): Promise<void> {
+    }): Promise<number> {
         if (status != IssueStatus.RESOLEVED) {
-            await repo.increment({ projectId, flowId }, 'count', 1)
+            const incrementedIssue = await repo.increment({ projectId, flowId }, 'count', 1)
+            return incrementedIssue.generatedMaps[0].count
         }
         await repo.update({
             projectId,
@@ -134,6 +149,7 @@ export const issuesService = {
             status,
             updated: new Date().toISOString(),
         })
+        return 0
     },
     async count({ projectId }: { projectId: ApId }): Promise<number> {
         return repo.count({

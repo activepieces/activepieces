@@ -47,7 +47,13 @@ export const emailService = {
     },
 
     async sendIssueCreatedNotification({
-        projectId, email, issueId, createdAt,
+        projectId,
+        firstName,
+        flowId,
+        flowName,
+        count,
+        email,
+        createdAt,
     }: IssueCreatedArgs): Promise<void> {
         const project = await projectService.getOneOrThrow(projectId)
 
@@ -57,8 +63,11 @@ export const emailService = {
             templateData: {
                 name: 'issue-created',
                 vars: {
-                    issueId,
+                    flowId,
+                    flowName,
+                    firstName,
                     createdAt,
+                    count: count.toString(),
                 },
             },
         })
@@ -164,7 +173,10 @@ type SendOtpArgs = {
 
 type IssueCreatedArgs = {
     projectId: string
-    issueId: string
+    firstName: string
+    flowId: string
+    flowName: string
+    count: number
     email: string
     createdAt: string    
 }
