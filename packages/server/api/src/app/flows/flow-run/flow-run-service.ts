@@ -225,7 +225,7 @@ export const flowRunService = {
             tags,
             finishTime: new Date().toISOString(),
         })
-        const flowRun = await this.getOneOrThrow({
+        const flowRun = await this.getOnePopulatedOrThrow({
             id: flowRunId,
             projectId: undefined,
         })
