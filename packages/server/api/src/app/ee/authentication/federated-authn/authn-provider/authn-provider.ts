@@ -11,9 +11,19 @@ export type AuthnProvider = {
     ) => Promise<FebderatedAuthnIdToken>
 }
 
+const emptyProvider: AuthnProvider = {
+    getLoginUrl: async () => {
+        throw new Error('No provider configured')
+    },
+    authenticate: async () => {
+        throw new Error('No provider configured')
+    },
+}
+
 export const providers: Record<ThirdPartyAuthnProviderEnum, AuthnProvider> = {
     [ThirdPartyAuthnProviderEnum.GOOGLE]: googleAuthnProvider,
     [ThirdPartyAuthnProviderEnum.GITHUB]: gitHubAuthnProvider,
+    [ThirdPartyAuthnProviderEnum.SAML]: emptyProvider,
 }
 
 

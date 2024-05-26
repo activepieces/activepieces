@@ -1,0 +1,68 @@
+<ap-dialog-title-template>
+  {{ title }}
+</ap-dialog-title-template>
+
+<mat-dialog-content>
+  <div class="ap-min-w-[470px] ap-max-w-[470px]">
+    <ap-markdown [data]="(redirectUrl$ | async) || ''"> </ap-markdown>
+    <form
+      autocomplete="off"
+      class="ap-flex ap-flex-col ap-gap-2"
+      [formGroup]="formGroup"
+      (keyup.enter)="submit()"
+    >
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label>Idp Metadata </mat-label>
+        <textarea
+          name="idpMetadata"
+          autocomplete="nope"
+          cdkFocusInitial
+          [formControl]="formGroup.controls.idpMetadata"
+          matInput
+        ></textarea>
+        <mat-error *ngIf="formGroup.controls.idpMetadata" i18n>
+          Idp Metadata is required
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label>Idp Certificate</mat-label>
+        <textarea
+          name="idpCertificate"
+          autocomplete="nope"
+          cdkFocusInitial
+          [formControl]="formGroup.controls.idpCertificate"
+          matInput
+        ></textarea>
+        <mat-error *ngIf="formGroup.controls.idpCertificate" i18n>
+          Idp Certificate is required
+        </mat-error>
+      </mat-form-field>
+    </form>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button
+      btnColor="basic"
+      mat-dialog-close
+      btnSize="default"
+      btnColor="basic"
+      [disabled]="(loading$ | async) || false"
+      i18n
+    >
+      Cancel
+    </ap-button>
+    <ap-button
+      btnSize="default"
+      type="submit"
+      (click)="submit()"
+      [loading]="(loading$ | async) || false"
+      btnColor="primary"
+      i18n
+    >
+      Confirm
+    </ap-button>
+  </div>
+</mat-dialog-actions>
+<ng-container *ngIf="enableProvider$ | async"></ng-container>

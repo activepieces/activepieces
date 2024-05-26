@@ -7,82 +7,86 @@ import {
 } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
-import { Platform, ThirdPartyAuthnProviderEnum } from '@activepieces/shared';
+import { Platform } from '@activepieces/shared';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { FlagService, PlatformService } from '@activepieces/ui/common';
 export type EnableFederatedAuthnProviderDialogData = {
   platform: Platform;
-  provider: ThirdPartyAuthnProviderEnum;
 };
 
 @Component({
-  selector: 'app-enable-federated-authn-provider-dialog',
-  templateUrl: './enable-federated-authn-provider-dialog.component.html',
+  selector: 'app-enable-saml-authn-provider-dialog',
+  templateUrl: './enable-saml-authn-provider-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EnableFederatedAuthnProviderDialogComponent {
+export class EnableSAMLAuthnProviderDialogComponent {
   readonly ApEdition = ApEdition;
   readonly title: string = '';
   loading$ = new BehaviorSubject(false);
   enableProvider$?: Observable<void>;
   formGroup: FormGroup<{
-    clientId: FormControl<string>;
-    clientSecret: FormControl<string>;
+    idpMetadata: FormControl<string>;
+    idpCertificate: FormControl<string>;
   }>;
   redirectUrl$: Observable<string>;
   constructor(
     private fb: FormBuilder,
-    private dialogRef: MatDialogRef<EnableFederatedAuthnProviderDialogComponent>,
+    private dialogRef: MatDialogRef<EnableSAMLAuthnProviderDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
     private data: EnableFederatedAuthnProviderDialogData,
     private platformService: PlatformService,
     private flagService: FlagService
   ) {
     this.redirectUrl$ = this.flagService
-      .getStringFlag(ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL)
+      .getStringFlag(ApFlagId.SAML_AUTH_ACS_URL)
       .pipe(
-        map((redirectUrl) => {
+        map((samlAcs) => {
           return $localize`
           **Setup Instructions**:\n
           Please check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)\
           
-          **Redirect URL**:
+          **Single sign-on URL**:
           \`\`\`text
-          ${redirectUrl}
+          ${samlAcs}
+          \`\`\`
+          **Audience URI (SP Entity ID)**:
+          \`\`\`text
+          Activepieces
           \`\`\`
           `;
         })
       );
-
     this.formGroup = this.fb.group({
-      clientId: this.fb.control<string>('', {
+      idpMetadata: this.fb.control<string>('', {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      clientSecret: this.fb.control<string>('', {
+      idpCertificate: this.fb.control<string>('', {
         nonNullable: true,
         validators: [Validators.required],
       }),
     });
-    this.title = $localize`${this.data.provider} SSO`;
+    this.title = $localize`SAML SSO`;
   }
 
   submit() {
     this.formGroup.markAllAsTouched();
     if (!this.loading$.value && this.formGroup.valid) {
       this.loading$.next(true);
-      const platform: Platform = JSON.parse(JSON.stringify(this.data.platform));
       const formData = this.formGroup.getRawValue();
-      if (this.data.provider === ThirdPartyAuthnProviderEnum.GITHUB) {
-        platform.federatedAuthProviders.github = formData;
-      }
-      if (this.data.provider === ThirdPartyAuthnProviderEnum.GOOGLE) {
-        platform.federatedAuthProviders.google = formData;
-      }
+      const platform: Platform = {
+        ...this.data.platform,
+        federatedAuthProviders: {
+          ...this.data.platform.federatedAuthProviders,
+          saml: formData,
+        },
+      };
       this.enableProvider$ = this.platformService
         .updatePlatform(
-          { federatedAuthProviders: platform.federatedAuthProviders },
-          platform.id
+          {
+            federatedAuthProviders: platform.federatedAuthProviders,
+          },
+          this.data.platform.id
         )
         .pipe(
           tap(() => {

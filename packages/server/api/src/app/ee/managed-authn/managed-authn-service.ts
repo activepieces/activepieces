@@ -107,7 +107,7 @@ const getOrCreateUser = async (
         firstName: externalFirstName,
         lastName: externalLastName,
         trackEvents: true,
-        newsLetter: true,
+        newsLetter: false,
         platformRole: PlatformRole.MEMBER,
         verified: true,
         externalId: externalUserId,

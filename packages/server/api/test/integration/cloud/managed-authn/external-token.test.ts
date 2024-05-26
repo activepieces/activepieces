@@ -75,7 +75,7 @@ describe('Managed Authentication API', () => {
             expect(responseBody?.firstName).toBe(mockExternalTokenPayload.firstName)
             expect(responseBody?.lastName).toBe(mockExternalTokenPayload.lastName)
             expect(responseBody?.trackEvents).toBe(true)
-            expect(responseBody?.newsLetter).toBe(true)
+            expect(responseBody?.newsLetter).toBe(false)
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe('ACTIVE')
             expect(responseBody?.verified).toBe(true)
