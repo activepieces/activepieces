@@ -41,6 +41,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (fastify) =
             flowRunId: runId,
             status: getTerminalStatus(runDetails.status),
             tasks: runDetails.tasks,
+            duration: runDetails.duration,
             executionState: getExecutionState(runDetails),
             projectId: request.principal.projectId,
             tags: runDetails.tags ?? [],

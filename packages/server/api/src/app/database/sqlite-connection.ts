@@ -10,6 +10,7 @@ import { AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 } from '.
 import { AddTriggerTestStrategy1707087022764 } from './migration/common/1707087022764-add-trigger-test-strategy'
 import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-migrate-webhook'
 import { RemoveShowActivityLog1716105958530 } from './migration/common/1716105958530-RemoveShowActivityLog'
+import { AddDurationForRuns1716725027424 } from './migration/common/1716725027424-AddDurationForRuns'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -110,6 +111,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFeatureFlagsToPlatform1714137103728,
         AddIssueEntitySqlite1714900626443,
         RemoveShowActivityLog1716105958530,
+        AddDurationForRuns1716725027424,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

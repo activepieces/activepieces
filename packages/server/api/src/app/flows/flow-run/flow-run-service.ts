@@ -210,6 +210,7 @@ export const flowRunService = {
         executionState,
         projectId,
         tags,
+        duration,
     }: FinishParams): Promise<FlowRun> {
         const logFileId = await updateLogs({
             flowRunId,
@@ -220,6 +221,7 @@ export const flowRunService = {
         await flowRunRepo.update(flowRunId, {
             status,
             tasks,
+            ...spreadIfDefined('duration', duration),
             ...spreadIfDefined('logsFileId', logFileId),
             terminationReason: undefined,
             tags,
@@ -402,6 +404,7 @@ type FinishParams =  {
     projectId: string
     status: FlowRunStatus
     tasks: number
+    duration: number | undefined
     executionState: ExecutionState | null
     tags: string[]
 }

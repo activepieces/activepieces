@@ -4,15 +4,12 @@
     <div i18n>
       Run Details
     </div>
-    @if((selectedRun$ | async); as flowRun)
-    {
-     @if(flowRun.status !== FlowRunStatus.PAUSED  &&flowRun.status !== FlowRunStatus.RUNNING)
-     {
+    @if((selectedRun$ | async); as flowRun) {
+      @if(flowRun.status !== FlowRunStatus.PAUSED &&flowRun.status !== FlowRunStatus.RUNNING && flowRun.duration ) {
       <div class="ap-text-description ap-typography-caption">
-        {{flowRun.startTime | duration: flowRun.finishTime: true}}
+        {{ flowRun.duration | durationFormatter: false: true }}
       </div>
-     }
-    
+      }
     }
    
   </div>
