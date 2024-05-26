@@ -15,10 +15,10 @@
                         {{run.created
                         | insideBuilderDate}}
                     </div>
-                    @if(run.status !== FlowRunStatus.RUNNING)
+                    @if(run.status !== FlowRunStatus.RUNNING && run.duration)
                     {
                         <div class="ap-typography-caption ap-text-description" i18n>
-                         Took   {{ run.startTime | duration: run.finishTime}}
+                         Took {{ run.duration | durationFormatter: false: true}}
                          </div>
                     }
                    

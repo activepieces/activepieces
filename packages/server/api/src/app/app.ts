@@ -84,9 +84,9 @@ import { userModule } from './user/user.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
 import { flowQueueConsumer } from './workers/flow-worker/consumer/flow-queue-consumer'
-import { webhookResponseWatcher } from './workers/flow-worker/webhook-response-watcher'
 import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
 import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-bullboard'
+import { webhookResponseWatcher } from './workers/flow-worker/webhook-response-watcher'
 import {
     GitRepoWithoutSensitiveData,
     ProjectMember,
