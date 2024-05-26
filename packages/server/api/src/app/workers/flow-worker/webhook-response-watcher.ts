@@ -20,7 +20,7 @@ export type EngineResponseWithId = {
 const WEBHOOK_TIMEOUT_MS =
     (system.getNumber(SystemProp.WEBHOOK_TIMEOUT_SECONDS) ?? 30) * 1000
 const HANDLER_ID = apId()
-export const engineResponseWatcher = {
+export const webhookResponseWatcher = {
     getHandlerId(): string {
         return HANDLER_ID
     },
