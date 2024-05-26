@@ -17,8 +17,17 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.WRITE_APP_CONNECTION,
         Permission.READ_FLOW,
         Permission.WRITE_FLOW,
+        Permission.UPDATE_FLOW_STATUS,
         Permission.READ_PROJECT_MEMBER,
         Permission.WRITE_GIT_REPO,
+        Permission.READ_GIT_REPO,
+    ],
+    [ProjectMemberRole.OPERATOR]: [
+        Permission.READ_APP_CONNECTION,
+        Permission.WRITE_APP_CONNECTION,
+        Permission.READ_FLOW,
+        Permission.UPDATE_FLOW_STATUS,
+        Permission.READ_PROJECT_MEMBER,
         Permission.READ_GIT_REPO,
     ],
     [ProjectMemberRole.VIEWER]: [

@@ -19,16 +19,17 @@ export const rbacMiddleware = async (req: FastifyRequest): Promise<void> => {
     if (ignoreRequest(req)) {
         return
     }
+    await assertRoleHasPermission(req.principal, req.routeConfig.permission)
+}
 
-    const principalRole = await getPrincipalRoleOrThrow(req.principal)
-
+export const assertRoleHasPermission = async (principal: Principal, permission: Permission | undefined): Promise<void> => {
+    const principalRole = await getPrincipalRoleOrThrow(principal)
     const access = grantAccess({
         principalRole,
-        routePermission: req.routeConfig.permission,
+        routePermission: permission,
     })
-
     if (!access) {
-        throwPermissionDenied(req.principal)
+        throwPermissionDenied(principal)
     }
 }
 

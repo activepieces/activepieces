@@ -207,7 +207,7 @@ export class SidenavRoutesListComponent implements OnInit {
       return {
         ...route,
         showInSideNav$: forkJoin({
-          roleCondition: this.isRouteAllowedForRole(role, route.route),
+          roleCondition: of(true),
           flagCondition: route.showInSideNav$,
         }).pipe(
           map(
@@ -218,21 +218,4 @@ export class SidenavRoutesListComponent implements OnInit {
     });
   }
 
-  private isRouteAllowedForRole(
-    role: ProjectMemberRole | null | undefined,
-    route?: string
-  ) {
-    if (role === undefined || role === null || route === undefined) {
-      return of(true);
-    }
-
-    switch (role) {
-      case ProjectMemberRole.ADMIN:
-      case ProjectMemberRole.EDITOR:
-      case ProjectMemberRole.VIEWER:
-        return of(true);
-      case ProjectMemberRole.EXTERNAL_CUSTOMER:
-        return of(route === 'connections');
-    }
-  }
 }
