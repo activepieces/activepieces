@@ -5,9 +5,9 @@ import { tasksLimit } from '../ee/project-plan/tasks-limit'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
 import { getEdition } from '../helper/secret-helper'
-import { EngineHttpResponse, engineResponseWatcher } from '../workers/flow-worker/engine-response-watcher'
 import { flowQueue } from '../workers/flow-worker/flow-queue'
 import { JobType } from '../workers/flow-worker/queues/queue'
+import { EngineHttpResponse, webhookResponseWatcher } from '../workers/flow-worker/webhook-response-watcher'
 import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -90,7 +90,7 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
         data: {
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             requestId,
-            synchronousHandlerId: async ? null : engineResponseWatcher.getHandlerId(),
+            synchronousHandlerId: async ? null : webhookResponseWatcher.getHandlerId(),
             payload,
             flowId: flow.id,
             simulate,
@@ -104,7 +104,7 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
             headers: {},
         }
     }
-    return engineResponseWatcher.oneTimeListener(requestId, true)
+    return webhookResponseWatcher.oneTimeListener(requestId, true)
 }
 
 async function convertRequest(request: FastifyRequest): Promise<EventPayload> {
