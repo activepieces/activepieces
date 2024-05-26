@@ -45,8 +45,8 @@ export const issuesService = {
         })
 
         if (!isNil(users)) {
-            await Promise.all((users.data as User[]).map((user: User): void => {
-                emailService.sendIssueCreatedNotification({
+            await Promise.all((users.data as User[]).map(async (user: User) => {
+                return emailService.sendIssueCreatedNotification({
                     projectId,
                     issueId,
                     email: user.email,
