@@ -42,6 +42,9 @@ export const FederatedAuthnProviderConfig = Type.Object({
 export type FederatedAuthnProviderConfig = Static<typeof FederatedAuthnProviderConfig>
 
 export const FederatedAuthnProviderConfigWithoutSensitiveData = Type.Object({
-    google: Type.Optional(Type.Omit(GoogleAuthnProviderConfig, ['clientSecret'])),
-    github: Type.Optional(Type.Omit(GithubAuthnProviderConfig, ['clientSecret'])),
+    google: Type.Optional(Type.Pick(GoogleAuthnProviderConfig, ['clientId'])),
+    github: Type.Optional(Type.Pick(GithubAuthnProviderConfig, ['clientId'])),
+    saml: Type.Optional(Type.Object({})),
 })
+
+export type FederatedAuthnProviderConfigWithoutSensitiveData = Static<typeof FederatedAuthnProviderConfigWithoutSensitiveData>
