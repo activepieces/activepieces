@@ -38,7 +38,6 @@ import {
   SyncProjectComponent,
 } from '@activepieces/ui-feature-git-sync';
 import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewards-dialog.component';
-import { RewardsNoteComponent } from './components/rewards-note/rewards-note.component';
 
 @NgModule({
   imports: [
@@ -61,7 +60,6 @@ import { RewardsNoteComponent } from './components/rewards-note/rewards-note.com
     FormsModule,
     SyncProjectComponent,
     RewardsDialogComponent,
-    RewardsNoteComponent,
     DropdownSearchControlComponent,
     SelectAllDirective,
     ApDatePipe,
