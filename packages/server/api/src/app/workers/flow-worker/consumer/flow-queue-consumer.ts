@@ -10,7 +10,8 @@ import { memoryQueueManager } from '../queues/memory/memory-queue'
 import { redisConsumer } from '../queues/redis/redis-consumer'
 import { redisQueueManager } from '../queues/redis/redis-queue'
 import { enrichErrorContext, exceptionHandler, logger, QueueMode, system, SystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError,
+import {
+    ActivepiecesError,
     ErrorCode,
     ExecutionType,
     FlowStatus,
@@ -30,36 +31,6 @@ import {
 } from 'server-worker'
 
 const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
-
-const initFlowQueueConsumer = async (): Promise<void> => {
-    switch (queueMode) {
-        case QueueMode.MEMORY: {
-            await memoryQueueManager.init()
-            consumeJobsInMemory().catch((e) =>
-                logger.error(e, '[FlowQueueConsumer#init] consumeJobsInMemory'),
-            )
-            break
-        }
-        case QueueMode.REDIS: {
-            await redisQueueManager.init()
-            await redisConsumer.init()
-            break
-        }
-    }
-}
-
-const close = async (): Promise<void> => {
-    logger.info('[FlowQueueConsumer#close] closing all consumers')
-    switch (queueMode) {
-        case QueueMode.MEMORY: {
-            break
-        }
-        case QueueMode.REDIS: {
-            await redisConsumer.close()
-            break
-        }
-    }
-}
 
 async function consumeOnetimeJob(data: OneTimeJobData): Promise<void> {
     try {
@@ -225,9 +196,45 @@ const consumePieceTrigger = async (data: RepeatingJobData): Promise<void> => {
     await Promise.all(createFlowRuns)
 }
 
-export const flowQueueConsumer = {
+const workerIds: string[] = [];
+
+export const flowWorkerManager = {
     consumeOnetimeJob,
     consumeScheduledJobs,
-    init: initFlowQueueConsumer,
-    close,
+    onAdd: async (workerId: string): Promise<void> => {
+        workerIds.push(workerId)
+        switch (queueMode) {
+            case QueueMode.MEMORY: {
+                await memoryQueueManager.init()
+                consumeJobsInMemory().catch((e) =>
+                    logger.error(e, '[FlowQueueConsumer#init] consumeJobsInMemory'),
+                )
+                break
+            }
+            case QueueMode.REDIS: {
+                await redisQueueManager.init()
+                await redisConsumer.init(workerId)
+                break
+            }
+        }
+    },
+    onRemove: async (workerId: string): Promise<void> => {
+        logger.info('[FlowQueueConsumer#close] closing all consumers')
+        workerIds.splice(workerIds.indexOf(workerId), 1)
+        switch (queueMode) {
+            case QueueMode.MEMORY: {
+                break
+            }
+            case QueueMode.REDIS: {
+                await redisConsumer.close(workerId)
+                break
+            }
+        }
+    },
+    shutdown: async (): Promise<void> => {
+        for (const workerId in workerIds) {
+            await flowWorkerManager.onRemove(workerId)
+        }
+    }
+
 }

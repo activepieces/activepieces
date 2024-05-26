@@ -1,4 +1,4 @@
-import { flowQueueConsumer } from '../../consumer/flow-queue-consumer'
+import { flowWorkerManager } from '../../consumer/flow-queue-consumer'
 import { webhookConsumer } from '../../consumer/webook-consumer'
 import { memoryQueueManager } from './memory-queue'
 import { ApSemaphore, system, SystemProp } from '@activepieces/server-shared'
@@ -20,13 +20,13 @@ async function processJob<T>(data: T, consumeFunction: (data: T) => Promise<void
 
 export async function consumeJobsInMemory(): Promise<void> {
     memoryQueueManager.getOneTimeQueue().start(async (job) => {
-        await processJob(job.data.data, flowQueueConsumer.consumeOnetimeJob)
+        await processJob(job.data.data, flowWorkerManager.consumeOnetimeJob)
     })
     memoryQueueManager.getRepeatingQueue().start(async (job) => {
-        await processJob(job.data.data, flowQueueConsumer.consumeScheduledJobs)
+        await processJob(job.data.data, flowWorkerManager.consumeScheduledJobs)
     })
     memoryQueueManager.getDelayedQueue().start(async (job) => {
-        await processJob(job.data.data, flowQueueConsumer.consumeScheduledJobs)
+        await processJob(job.data.data, flowWorkerManager.consumeScheduledJobs)
     })
     memoryQueueManager.getWebhookQueue().start(async (job) => {
         await processJob(job.data.data, webhookConsumer.consumeWebhook)

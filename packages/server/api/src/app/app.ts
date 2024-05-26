@@ -84,8 +84,7 @@ import { platformUserModule } from './user/platform/platform-user-module'
 import { userModule } from './user/user.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
-import { flowQueueConsumer } from './workers/flow-worker/consumer/flow-queue-consumer'
-import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
+import { flowWorkerManager } from './workers/flow-worker/consumer/flow-queue-consumer'
 import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-bullboard'
 import { webhookResponseWatcher } from './workers/flow-worker/webhook-response-watcher'
 import {
@@ -104,6 +103,7 @@ import {
     ErrorCode,
     Flow,
     FlowRun,
+    PrincipalType,
     ProjectWithLimits,
     spreadIfDefined,
 } from '@activepieces/shared'
@@ -212,8 +212,23 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             })
     })
 
-    app.io.on('connection', (socket: Socket) => {
-        rejectedPromiseHandler(websocketService.init(socket))
+    app.io.on('connection', async (socket: Socket) => {
+        const principal = await accessTokenManager.extractPrincipal(
+            socket.handshake.auth.token,
+        )
+        switch(principal.type){
+            case PrincipalType.WORKER_SERVER:
+                return flowWorkerManager.onAdd(principal.id)
+            case PrincipalType.USER:
+                return rejectedPromiseHandler(websocketService.init(socket))
+            default:
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: {
+                        type: principal.type,
+                    },
+                })
+        }
     })
 
     app.addHook('onRequest', async (request, reply) => {
@@ -253,7 +268,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(formModule)
     await app.register(tagsModule)
     await pieceSyncService.setup()
-    await app.register(flowWorkerModule)
     await app.register(platformUserModule)
     await app.register(issuesModule)
     await app.register(authnSsoSamlModule)
@@ -367,7 +381,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     }
 
     app.addHook('onClose', async () => {
-        await flowQueueConsumer.close()
+        await flowWorkerManager.shutdown()
         await systemJobsSchedule.close()
         await webhookResponseWatcher.shutdown()
     })
