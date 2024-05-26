@@ -38,7 +38,6 @@ import {
     FlowTemplate,
     FlowVersion,
     FlowVersionState,
-    LocalesEnum,
     NotificationStatus,
     PackageType,
     PiecesFilterType,
