@@ -10,16 +10,19 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import {
   BuilderSelectors,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import {
   delay,
+  filter,
   firstValueFrom,
   map,
   Observable,
   of,
   switchMap,
   take,
+  takeWhile,
   tap,
 } from 'rxjs';
 import { MatDrawerContainer } from '@angular/material/sidenav';
@@ -27,9 +30,12 @@ import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import {
+  FlowRun,
   FlowRunStatus,
   FlowVersion,
   TriggerType,
+  WebsocketClientEvent,
+  isFlowStateTerminal,
 } from '@activepieces/shared';
 import {
   LeftSideBarType,
@@ -83,9 +89,10 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     readOnly: false,
     automaticLayout: true,
   };
+  updateRun$: Observable<unknown>;
   setTitle$?: Observable<void>;
   showPoweredByAp$: Observable<boolean>;
-  viewedVersion$:Observable<FlowVersion>;
+  viewedVersion$: Observable<FlowVersion>;
   constructor(
     private store: Store,
     private actRoute: ActivatedRoute,
@@ -120,7 +127,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     this.isDragging$ = this.flowRendererService.isDragginStep$;
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
-          this.setTitle$ = this.appearanceService.setTitle(value[flowDisplayNameInRouteData])
+        this.setTitle$ = this.appearanceService.setTitle(value[flowDisplayNameInRouteData])
       }),
       map(() => void 0)
     );
@@ -171,6 +178,21 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.websocketService.connect()
+    const runId = this.actRoute.snapshot.paramMap.get('runId') as string;
+    if (runId) {
+      this.updateRun$ = this.websocketService.socket.fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS)
+        .pipe(
+          filter((run) => run.id === runId),
+          tap((run) => {
+            this.store.dispatch(
+              canvasActions.setRun({
+                run,
+              })
+            );
+          }),
+          takeWhile((run) => !isFlowStateTerminal(run.status))
+        );
+    }
   }
 
   public get rightSideBarType() {

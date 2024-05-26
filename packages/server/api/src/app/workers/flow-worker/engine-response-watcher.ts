@@ -1,7 +1,7 @@
 import { logger } from '@sentry/utils'
 import { StatusCodes } from 'http-status-codes'
 import { pubSub } from '../../helper/pubsub'
-import { system, SystemProp, TypedEventEmitter } from '@activepieces/server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 import { apId } from '@activepieces/shared'
 
 const listeners = new Map<string, (flowResponse: EngineResponseWithId) => void>()
@@ -43,13 +43,6 @@ export const engineResponseWatcher = {
                 )
             },
         )
-    },
-    listen(requestId: string): TypedEventEmitter<EngineResponseWithId> {
-        const eventEmitter = new TypedEventEmitter<EngineResponseWithId>()
-        listeners.set(requestId, (data) => {
-            eventEmitter.emit(data)
-        })
-        return eventEmitter
     },
     async oneTimeListener(requestId: string, timeoutRequest: boolean): Promise<EngineHttpResponse> {
         logger.info(`[engineWatcher#listen] requestId=${requestId}`)

@@ -1,5 +1,4 @@
 export * from './lib/exception-handler'
-export * from './lib/typed-event-emitter'
 export * from './lib/semaphore'
 export * from './lib/file-compressor'
 export * from './lib/file-system'
