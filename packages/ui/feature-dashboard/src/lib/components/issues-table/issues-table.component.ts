@@ -18,8 +18,10 @@ import {
   ConfirmActionDialogData,
   EmbeddingService,
   FLOW_QUERY_PARAM,
+  FlagService,
   LIMIT_QUERY_PARAM,
   NavigationService,
+  ProjectService,
   STATUS_QUERY_PARAM,
   TelemetryService,
   UiCommonModule,
@@ -28,13 +30,25 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { PopulatedIssue } from '@activepieces/ee-shared';
 import {
+  ApEdition,
   FlowRunStatus,
+  NotificationStatus,
+  ProjectId,
   TelemetryEventName,
   spreadIfDefined,
 } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  distinctUntilChanged,
+  map,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { FormControl } from '@angular/forms';
 
 @Component({
   selector: 'app-issues-table',
@@ -52,6 +66,10 @@ export class IssuesTableComponent implements OnInit {
   dataSource: IssuesDataSource;
   displayedColumns: string[] = ['name', 'count', 'lastOccurrence', 'action'];
   resolve$: Observable<unknown>;
+  currentProject: ProjectId;
+  updateNotificationsValue$: Observable<unknown>;
+  nonCommunityEdition$: Observable<boolean>;
+  toggleNotificationFormControl: FormControl<boolean> = new FormControl();
   refresh$ = new BehaviorSubject<boolean>(true);
   readonly upgradeNoteTitle = $localize`Unlock Issues`;
   readonly upgradeNote = $localize`Centralized issue tracking without digging through pages of flow runs.`;
@@ -64,15 +82,42 @@ export class IssuesTableComponent implements OnInit {
     private navigationService: NavigationService,
     private matDialog: MatDialog,
     private telemetryService: TelemetryService,
-    private embeddingService: EmbeddingService
+    private embeddingService: EmbeddingService,
+    private flagsService: FlagService,
+    private projectService: ProjectService,
+    private authenticationService: AuthenticationService
   ) {}
   ngOnInit(): void {
+    this.currentProject = this.authenticationService.getProjectId();
     this.dataSource = new IssuesDataSource(
       this.route.queryParams,
       this.paginator,
       this.issuesService,
       this.authService.getProjectId(),
       this.refresh$.asObservable()
+    );
+    this.nonCommunityEdition$ = this.flagsService
+      .getEdition()
+      .pipe(map((res) => res !== ApEdition.COMMUNITY));
+    this.updateNotificationsValue$ = this.projectService.currentProject$.pipe(
+      take(1),
+      tap((project) => {
+        this.toggleNotificationFormControl.setValue(
+          project?.notifyStatus === NotificationStatus.ALWAYS
+        );
+      }),
+      switchMap(() => {
+        return this.toggleNotificationFormControl.valueChanges.pipe(
+          distinctUntilChanged(),
+          switchMap((value) => {
+            return this.projectService.update(this.currentProject, {
+              notifyStatus: value
+                ? NotificationStatus.ALWAYS
+                : NotificationStatus.NEVER,
+            });
+          })
+        );
+      })
     );
   }
 
