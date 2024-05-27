@@ -33,7 +33,7 @@ export const googleFormsCommon = {
             url: `https://www.googleapis.com/drive/v3/files`,
             queryParams: {
               q: "mimeType='application/vnd.google-apps.form'",
-              includeItemsFromAllDrives: include_team_drives,
+              includeItemsFromAllDrives: include_team_drives ? 'true' : 'false',
               supportsAllDrives: 'true',
             },
             authentication: {
