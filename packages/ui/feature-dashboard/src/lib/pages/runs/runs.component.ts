@@ -57,23 +57,22 @@ import { Observable, take } from 'rxjs';
           <ng-template matTabLabel class="ap-flex ap-items-center">
             <div class="ap-flex ap-gap-1 ap-items-center">
               <div class="category-label" i18n>Issues</div>
-              @if((isIssuesDisabled$ | async) ===false) { @if(isThereAnIssue$ |
-              async){
+              @if((isIssuesDisabled$ | async) ===false) {
               <svg-icon
                 [applyClass]="true"
-                class="ap-fill-danger ap-top-[6px] ap-right-[-4px] ap-absolute"
-                [svgStyle]="{ width: '6px', height: '6px' }"
+                class="ap-fill-danger ap-top-[6px] ap-right-[-6px] ap-absolute"
+                [svgStyle]="{ width: '8px', height: '8px' }"
                 src="assets/img/custom/notification_important.svg"
               >
               </svg-icon>
-              } }
+              }
             </div>
           </ng-template>
 
           <div class="ap-mt-1">
             <app-issues-table
               (issueClicked)="issueClicked($event.issue)"
-              [isFeatureDisabled]="isIssuesDisabled$ | async | defaultTrue"
+              [isFeatureDisabled]="isIssuesDisabled$ | async | defaultFalse"
               #IssuesTable
             ></app-issues-table>
           </div>
