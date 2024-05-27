@@ -7,7 +7,7 @@ import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 import { OtpType } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, isNil, User } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, isNil, NotificationStatus, User } from '@activepieces/shared'
 
 const EDITION = getEdition()
 
@@ -62,6 +62,9 @@ export const emailService = {
             createdAt,
         })
         const project = await projectService.getOneOrThrow(projectId)
+        if (project.notifyStatus === NotificationStatus.NEVER) {
+            return
+        }
         // TODO remove the hardcoded limit
         const users = await projectMemberService.list(projectId, null, 50)
         const sendEmails = users.data.map(async (projectMember) => {
