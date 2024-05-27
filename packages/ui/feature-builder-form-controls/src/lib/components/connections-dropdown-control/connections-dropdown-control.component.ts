@@ -65,9 +65,9 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
             >
               <div class="ap-w-full ap-truncate">
                 @if ( options | dropdownSelectedValues: passedFormControl |
-                async; as selectedValues ) {
+                async; as selectedValues ) { @if(selectedValues[0]) {
                 {{ selectedValues[0].label }}
-                }
+                } }
               </div>
               <div>
                 @if (passedFormControl.value && passedFormControl.enabled) {

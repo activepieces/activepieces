@@ -12,18 +12,12 @@ import {
 import { Observable, forkJoin, map, of, take } from 'rxjs';
 import { ApFlagId, ProjectMemberRole, supportUrl } from '@activepieces/shared';
 import { DashboardService, FlagService } from '@activepieces/ui/common';
-import { SidenavRouteItemComponent } from '../sidenav-route-item/sidenav-route-item.component';
+import {
+  SideNavRoute,
+  SidenavRouteItemComponent,
+} from '../sidenav-route-item/sidenav-route-item.component';
 import { CommonModule } from '@angular/common';
-
-type SideNavRoute = {
-  icon: string;
-  caption: string;
-  route: string | undefined;
-  effect?: () => void;
-  showInSideNav$: Observable<boolean>;
-  showLock$?: Observable<boolean>;
-  showNotification$?: Observable<boolean>;
-};
+import { IssuesService } from '../../services/issues.service';
 
 @Component({
   selector: 'app-sidenav-routes-list',
@@ -41,7 +35,6 @@ export class SidenavRoutesListComponent implements OnInit {
     this.embeddingService.getSkipLocationChange$();
 
   isVersionMatch$?: Observable<boolean>;
-
   readonly supportRoute: SideNavRoute = {
     caption: 'Support',
     icon: 'assets/img/custom/support.svg',
@@ -72,7 +65,8 @@ export class SidenavRoutesListComponent implements OnInit {
     private embeddingService: EmbeddingService,
     private platformService: PlatformService,
     private authenticationService: AuthenticationService,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private issuesService: IssuesService
   ) {
     this.logoUrl$ = this.flagServices
       .getLogos()
@@ -141,15 +135,8 @@ export class SidenavRoutesListComponent implements OnInit {
         route: 'runs',
         showInSideNav$: of(true),
         showLock$: of(false),
-      },
-      {
-        icon: 'assets/img/custom/dashboard/activity.svg',
-        caption: $localize`Activity`,
-        route: 'activity',
-        showInSideNav$: this.flagServices.isFlagEnabled(
-          ApFlagId.SHOW_ACTIVITY_LOG
-        ),
-        showLock$: of(false),
+        showNotification$:
+          this.issuesService.shouldShowIssuesNotificationIconInSidebarObs$,
       },
       {
         icon: 'assets/img/custom/dashboard/connections.svg',
@@ -168,7 +155,6 @@ export class SidenavRoutesListComponent implements OnInit {
         ),
         showLock$: this.platformService.projectRolesDisabled(),
       },
-
       {
         icon: 'assets/img/custom/dashboard/settings.svg',
         caption: $localize`Settings`,
@@ -246,7 +232,7 @@ export class SidenavRoutesListComponent implements OnInit {
       case ProjectMemberRole.VIEWER:
         return of(true);
       case ProjectMemberRole.EXTERNAL_CUSTOMER:
-        return of(route === 'connections' || route === 'activity');
+        return of(route === 'connections');
     }
   }
 }

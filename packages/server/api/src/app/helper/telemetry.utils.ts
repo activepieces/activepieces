@@ -1,4 +1,5 @@
 import { Analytics } from '@segment/analytics-node'
+import { flagService } from '../flags/flag.service'
 import { projectService } from '../project/project-service'
 import { getEdition } from './secret-helper'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
@@ -56,7 +57,7 @@ export const telemetry = {
 }
 
 async function getMetadata() {
-    const currentVersion = (await import('package.json')).version
+    const currentVersion = await flagService.getCurrentRelease()
     const edition = getEdition()
     return {
         activepiecesVersion: currentVersion,

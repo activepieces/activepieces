@@ -1,28 +1,32 @@
 import dayjs from 'dayjs'
+import { issuesService } from '../../ee/issues/issues-service'
 import { notifications } from '../../helper/notifications'
 import { flowQueue } from '../../workers/flow-worker/flow-queue'
-import {
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    RepeatableJobType,
-} from '../../workers/flow-worker/job-data'
 import { JobType } from '../../workers/flow-worker/queues/queue'
 import { flowRunHooks } from './flow-run-hooks'
-import { HookType } from './flow-run-service'
 import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
     ExecutionType,
     FlowRun,
+    FlowRunStatus,
     isNil,
-    PauseType } from '@activepieces/shared'
+    PauseType,
+    ProgressUpdateType,
+    RunEnvironment,
+} from '@activepieces/shared'
+import {
+    LATEST_JOB_DATA_SCHEMA_VERSION,
+    RepeatableJobType,
+} from 'server-worker'
 
 type StartParams = {
     flowRun: FlowRun
     executionType: ExecutionType
     payload: unknown
     synchronousHandlerId?: string
-    hookType?: HookType
+    progressUpdateType: ProgressUpdateType
 }
 
 type PauseParams = {
@@ -49,7 +53,14 @@ export const flowRunSideEffects = {
         await flowRunHooks
             .getHooks()
             .onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks! })
-
+        if (flowRun.environment === RunEnvironment.PRODUCTION) {
+            if (flowRun.status == FlowRunStatus.FAILED || flowRun.status == FlowRunStatus.INTERNAL_ERROR || flowRun.status == FlowRunStatus.QUOTA_EXCEEDED || flowRun.status == FlowRunStatus.TIMEOUT) {
+                await issuesService.add({
+                    flowId: flowRun.flowId,
+                    projectId: flowRun.projectId,
+                })
+            }
+        }
         await notifications.notifyRun({
             flowRun,
         })
@@ -59,7 +70,7 @@ export const flowRunSideEffects = {
         executionType,
         payload,
         synchronousHandlerId,
-        hookType,
+        progressUpdateType,
     }: StartParams): Promise<void> {
         logger.info(
             `[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`,
@@ -70,14 +81,14 @@ export const flowRunSideEffects = {
             type: JobType.ONE_TIME,
             priority: isNil(synchronousHandlerId) ? 'medium' : 'high',
             data: {
-                synchronousHandlerId,
+                synchronousHandlerId: synchronousHandlerId ?? null,
                 projectId: flowRun.projectId,
                 environment: flowRun.environment,
                 runId: flowRun.id,
                 flowVersionId: flowRun.flowVersionId,
                 payload,
                 executionType,
-                hookType,
+                progressUpdateType,
             },
         })
     },
@@ -106,6 +117,8 @@ export const flowRunSideEffects = {
                     data: {
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         runId: flowRun.id,
+                        synchronousHandlerId: flowRun.pauseMetadata?.handlerId ?? null,
+                        progressUpdateType: flowRun.pauseMetadata?.progressUpdateType ?? ProgressUpdateType.NONE,
                         projectId: flowRun.projectId,
                         environment: flowRun.environment,
                         jobType: RepeatableJobType.DELAYED_FLOW,

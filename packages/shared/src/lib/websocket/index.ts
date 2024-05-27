@@ -10,5 +10,5 @@ export enum WebsocketClientEvent {
 export enum WebsocketServerEvent {
     TEST_STEP_RUN = 'TEST_STEP_RUN',
     GENERATE_CODE = 'GENERATE_CODE',
-    TEST_FLOW_RUN = 'TEST_FLOW_RUN',
+    TEST_FLOW_RUN = 'TEST_FLOW_RUN', 
 }

@@ -1028,6 +1028,60 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "HamzaZagha",
+      "name": "Hamza Zagha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45468866?v=4",
+      "profile": "https://github.com/HamzaZagha",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "founderblocks-sils",
+      "name": "Lasse Schuirmann",
+      "avatar_url": "https://avatars.githubusercontent.com/u/88160672?v=4",
+      "profile": "https://founderblocks.io/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Startouf",
+      "name": "Cyril Duchon-Doris",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7388889?v=4",
+      "profile": "https://about.me/cyril_duchon_doris",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Javiink",
+      "name": "Javiink",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43996484?v=4",
+      "profile": "https://github.com/Javiink",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "hharchani",
+      "name": "Harshit Harchani",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6430611?v=4",
+      "profile": "https://github.com/hharchani",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "MrAkber",
+      "name": "MrAkber",
+      "avatar_url": "https://avatars.githubusercontent.com/u/170118042?v=4",
+      "profile": "https://github.com/MrAkber",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"

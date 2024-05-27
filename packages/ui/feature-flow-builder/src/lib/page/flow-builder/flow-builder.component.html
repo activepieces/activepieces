@@ -70,3 +70,4 @@
 <div class="ap-hidden">
   <ngx-monaco-editor [options]="codeEditorOptions"></ngx-monaco-editor>
 </div>
+<ng-container *ngIf="updateRun$ | async"></ng-container>

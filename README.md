@@ -277,6 +277,14 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://www.gamespecifications.com/"><img src="https://avatars.githubusercontent.com/u/37847256?v=4?s=100" width="100px;" alt="Pratik Kinage"/><br /><sub><b>Pratik Kinage</b></sub></a><br /><a href="#plugin-thirstycode" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/LevwTech"><img src="https://avatars.githubusercontent.com/u/69399787?v=4?s=100" width="100px;" alt="Abdelrahman Mostafa "/><br /><sub><b>Abdelrahman Mostafa </b></sub></a><br /><a href="#plugin-LevwTech" title="Plugin/utility libraries">🔌</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/HamzaZagha"><img src="https://avatars.githubusercontent.com/u/45468866?v=4?s=100" width="100px;" alt="Hamza Zagha"/><br /><sub><b>Hamza Zagha</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3AHamzaZagha" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://founderblocks.io/"><img src="https://avatars.githubusercontent.com/u/88160672?v=4?s=100" width="100px;" alt="Lasse Schuirmann"/><br /><sub><b>Lasse Schuirmann</b></sub></a><br /><a href="#plugin-founderblocks-sils" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://about.me/cyril_duchon_doris"><img src="https://avatars.githubusercontent.com/u/7388889?v=4?s=100" width="100px;" alt="Cyril Duchon-Doris"/><br /><sub><b>Cyril Duchon-Doris</b></sub></a><br /><a href="#plugin-Startouf" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Javiink"><img src="https://avatars.githubusercontent.com/u/43996484?v=4?s=100" width="100px;" alt="Javiink"/><br /><sub><b>Javiink</b></sub></a><br /><a href="#plugin-Javiink" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/hharchani"><img src="https://avatars.githubusercontent.com/u/6430611?v=4?s=100" width="100px;" alt="Harshit Harchani"/><br /><sub><b>Harshit Harchani</b></sub></a><br /><a href="#plugin-hharchani" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MrAkber"><img src="https://avatars.githubusercontent.com/u/170118042?v=4?s=100" width="100px;" alt="MrAkber"/><br /><sub><b>MrAkber</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=MrAkber" title="Documentation">📖</a></td>
+    </tr>
   </tbody>
 </table>
 

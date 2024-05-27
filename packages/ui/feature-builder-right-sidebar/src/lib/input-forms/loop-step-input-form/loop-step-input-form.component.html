@@ -1,13 +1,17 @@
-<form [formGroup]="loopStepForm" class="ap-flex ap-flex-col ap-gap-2" (click)="$event.stopImmediatePropagation()">
+<form [formGroup]="form" class="ap-flex ap-flex-col ap-gap-2" (click)="$event.stopImmediatePropagation()">
   <div #inputContainer tabIndex="0">
-    <mat-form-field class="ap-w-full" appearance="outline" (click)="handler.showMentionsDropdown()" #inputContainer>
+    <mat-form-field class="ap-w-full" appearance="outline" (click)="form.enabled? handler.showMentionsDropdown() : null" #inputContainer>
       <mat-label i18n>Items</mat-label>
-      <app-interpolating-text-form-control #ItemsTextControl formControlName="items"
+      <app-interpolating-text-form-control #ItemsTextControl [formControl]="form.controls.items"
         [stepMetaDataForMentions]="(stepMetaDataForMentions$ | async) ||  []"
         [onlyAllowOneMentionToBeAdded]="true"></app-interpolating-text-form-control>
-      <mat-error *ngIf="loopStepForm.controls.items.invalid" i18n>
-        Items are required.
-      </mat-error>
+        @if(form.controls.items.invalid)
+        {
+          <mat-error  i18n>
+            Items are required.
+          </mat-error>
+        }
+  
     </mat-form-field>
 
     <app-builder-autocomplete-dropdown-handler #handler [container]="inputContainer"
@@ -15,5 +19,5 @@
     </app-builder-autocomplete-dropdown-handler>
   </div>
 </form>
-
-<ng-container *ngIf="updateComponentValue$ | async"></ng-container>
+@if(updateComponentValue$ | async){}
+@if(isReadOnly$ | async){}

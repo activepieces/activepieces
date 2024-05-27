@@ -1,13 +1,17 @@
 <div class="ap-flex ap-items-center ap-px-5 ap-pt-3">
-  <div *ngIf="title; else passedContent" class="ap-typography-subtitle-1 ap-text-title !ap-font-semibold ap-flex-grow"
-    #drawerTitle [matTooltip]="drawerTitle.clientWidth < drawerTitle.scrollWidth? title:''">
-    {{ title }}
+  @if(headerTitle)
+  {
+    <div  class="ap-typography-subtitle-1 ap-text-title !ap-font-semibold ap-flex-grow"
+    #drawerTitle [matTooltip]="drawerTitle.clientWidth < drawerTitle.scrollWidth? headerTitle:''">
+    {{ headerTitle }}
   </div>
-  <ng-template #passedContent>
-    <div class="ap-flex-grow">
-      <ng-content>
-      </ng-content>
-    </div>
-  </ng-template>
+  }
+ @else {
+  <div class="ap-flex-grow">
+    <ng-content>
+    </ng-content>
+  </div>
+ }
+
   <ap-icon-button [iconFilename]="'close.svg'" (click)="closeClicked.emit()"></ap-icon-button>
 </div>

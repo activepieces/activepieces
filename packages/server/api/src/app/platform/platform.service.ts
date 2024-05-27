@@ -49,12 +49,12 @@ export const platformService = {
             ssoEnabled: false,
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
+            flowIssuesEnabled: false,
             gitSyncEnabled: false,
             managePiecesEnabled: false,
             manageTemplatesEnabled: false,
             manageProjectsEnabled: false,
             projectRolesEnabled: false,
-            showActivityLog: false,
             customDomainsEnabled: false,
             apiKeysEnabled: false,
             customAppearanceEnabled: false,
@@ -112,6 +112,7 @@ export const platformService = {
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,
             ),
+            ...spreadIfDefined('flowIssuesEnabled', params.flowIssuesEnabled),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('manageProjectsEnabled', params.manageProjectsEnabled),
             ...spreadIfDefined('managePiecesEnabled', params.managePiecesEnabled),
@@ -177,6 +178,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
     customDomainsEnabled?: boolean
     customAppearanceEnabled?: boolean
     manageProjectsEnabled?: boolean
+    flowIssuesEnabled?: boolean
     managePiecesEnabled?: boolean
     manageTemplatesEnabled?: boolean
     apiKeysEnabled?: boolean

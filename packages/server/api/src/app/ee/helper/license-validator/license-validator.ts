@@ -8,6 +8,7 @@ export type SuccessLicenseResponse = {
     status: LiceneseStatus.VALID
     showPoweredBy?: boolean
     ssoEnabled?: boolean
+    flowIssuesEnabled?: boolean
     embeddingEnabled?: boolean
     gitSyncEnabled?: boolean
     auditLogEnabled?: boolean

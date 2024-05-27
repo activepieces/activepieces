@@ -27,9 +27,6 @@
       "@activepieces/piece-activepieces": [
         "packages/pieces/community/activepieces/src/index.ts"
       ],
-      "@activepieces/piece-activity": [
-        "packages/pieces/community/activity/src/index.ts"
-      ],
       "@activepieces/piece-acumbamail": [
         "packages/pieces/community/acumbamail/src/index.ts"
       ],
@@ -507,6 +504,9 @@
       ],
       "@activepieces/piece-tally": [
         "packages/pieces/community/tally/src/index.ts"
+      ],
+      "@activepieces/piece-taskade": [
+        "packages/pieces/community/taskade/src/index.ts"
       ],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/community/telegram-bot/src/index.ts"

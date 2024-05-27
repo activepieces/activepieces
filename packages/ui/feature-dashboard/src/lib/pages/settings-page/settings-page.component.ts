@@ -28,7 +28,7 @@ import { GeneralSettingsComponent } from '../../components/general-settings/gene
 export class SettingsPageComponent implements AfterViewInit {
   @ViewChild('tabs') tabGroup?: MatTabGroup;
   title = $localize`Settings`;
-  fragmentChanged$: Observable<string | null>;
+  fragmentChanged$?: Observable<string | null>;
   readonly gitSyncTableTitle = $localize`Git Sync`;
   readonly piecesTable = $localize`Pieces`;
   readonly generalSettingsTable = $localize`General`;

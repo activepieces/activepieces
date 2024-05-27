@@ -5,14 +5,6 @@ import { triggerHooks } from '../../../flows/trigger'
 import { dedupeService } from '../../../flows/trigger/dedupe'
 import { flowQueue } from '../flow-queue'
 import { flowWorker } from '../flow-worker'
-import {
-    DelayedJobData,
-    OneTimeJobData,
-    RenewWebhookJobData,
-    RepeatableJobType,
-    RepeatingJobData,
-    ScheduledJobData,
-} from '../job-data'
 import { consumeJobsInMemory } from '../queues/memory/memory-consumer'
 import { memoryQueueManager } from '../queues/memory/memory-queue'
 import { redisConsumer } from '../queues/redis/redis-consumer'
@@ -23,10 +15,19 @@ import { ActivepiecesError,
     ExecutionType,
     FlowStatus,
     isNil,
+    ProgressUpdateType,
     RunEnvironment,
     TriggerPayload,
     TriggerType,
 } from '@activepieces/shared'
+import {
+    DelayedJobData,
+    OneTimeJobData,
+    RenewWebhookJobData,
+    RepeatableJobType,
+    RepeatingJobData,
+    ScheduledJobData,
+} from 'server-worker'
 
 const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
 
@@ -119,10 +120,12 @@ const consumeDelayedJob = async (data: DelayedJobData): Promise<void> => {
     await flowRunService.start({
         payload: null,
         flowRunId: data.runId,
+        synchronousHandlerId: data.synchronousHandlerId ?? undefined,
         projectId: data.projectId,
         flowVersionId: data.flowVersionId,
         executionType: ExecutionType.RESUME,
         environment: RunEnvironment.PRODUCTION,
+        progressUpdateType: data.progressUpdateType,
     })
 }
 
@@ -215,6 +218,7 @@ const consumePieceTrigger = async (data: RepeatingJobData): Promise<void> => {
             payload,
             projectId: data.projectId,
             executionType: ExecutionType.BEGIN,
+            progressUpdateType: ProgressUpdateType.NONE,
         }),
     )
 

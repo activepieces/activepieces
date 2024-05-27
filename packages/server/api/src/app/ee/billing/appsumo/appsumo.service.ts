@@ -54,6 +54,13 @@ const appSumoPlans: Record<string, FlowPlanLimits> = {
         connections: 100,
         teamMembers: 5,
     },
+    activepieces_tier6: {
+        nickname: 'appsumo_activepieces_tier6',
+        tasks: 10000000,
+        minimumPollingInterval: 1,
+        connections: 100,
+        teamMembers: 5,
+    },
 }
 
 export const appsumoService = {

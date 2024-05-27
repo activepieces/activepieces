@@ -147,16 +147,20 @@ export class FlowItemContentComponent implements OnInit {
       distinctUntilChanged(),
       map((selectedRun) => {
         if (selectedRun) {
-          if (selectedRun.status !== FlowRunStatus.RUNNING) {
-            const stepName = this._flowItem.name;
-            const result = selectedRun.steps[stepName.toString()];
-            if (result) {
-              this.stepOutput = result;
-            }
-            return result === undefined ? undefined : result.status;
-          } else {
+          this.stepOutput = undefined;
+          if (!selectedRun.steps) {
             return StepOutputStatus.RUNNING;
           }
+          const stepName = this._flowItem.name;
+          const result = selectedRun.steps[stepName.toString()];
+          if (result) {
+            this.stepOutput = result;
+          }
+          return result
+            ? result.status
+            : selectedRun?.status === FlowRunStatus.RUNNING
+            ? StepOutputStatus.RUNNING
+            : undefined;
         }
         return undefined;
       }),
