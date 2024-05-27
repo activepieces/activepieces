@@ -73,7 +73,7 @@ import { Observable, take } from 'rxjs';
           <div class="ap-mt-1">
             <app-issues-table
               (issueClicked)="issueClicked($event.issue)"
-              [isFeatureDisabled]="isIssuesDisabled$ | async | defaultFalse"
+              [isFeatureDisabled]="isIssuesDisabled$ | async | defaultTrue"
               #IssuesTable
             ></app-issues-table>
           </div>

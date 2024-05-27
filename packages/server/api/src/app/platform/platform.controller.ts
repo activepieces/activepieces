@@ -8,9 +8,10 @@ import { platformService } from './platform.service'
 import {
     ApId,
     assertEqual,
-    Platform,
+    EndpointScope,
     PlatformWithoutSensitiveData,
-    Principal,
+    PrincipalType,
+    SERVICE_KEY_SECURITY_OPENAPI,
     UpdatePlatformRequestBody,
 } from '@activepieces/shared'
 
@@ -31,35 +32,9 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
             'paramId',
         )
         const platform = await platformService.getOneOrThrow(req.params.id)
-
-        return buildResponse({
-            platform,
-            principal: req.principal,
-        })
+        return platform
     })
 }
-
-const buildResponse = ({
-    platform,
-    principal,
-}: BuildResponseParams): Platform | PlatformBasics => {
-    if (platform.ownerId === principal.id) {
-        return {
-            ...platform,
-            smtpPassword: undefined,
-        }
-    }
-
-    const { id, name, defaultLocale, projectRolesEnabled, gitSyncEnabled, flowIssuesEnabled } = platform
-    return { id, name, defaultLocale, projectRolesEnabled, gitSyncEnabled, flowIssuesEnabled }
-}
-
-type BuildResponseParams = {
-    platform: Platform
-    principal: Principal
-}
-
-type PlatformBasics = Pick<Platform, 'id' | 'name' | 'defaultLocale' | 'projectRolesEnabled' | 'gitSyncEnabled' | 'flowIssuesEnabled'>
 
 const UpdatePlatformRequest = {
     schema: {
@@ -74,9 +49,19 @@ const UpdatePlatformRequest = {
 }
 
 const GetPlatformRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        EndpointScope: EndpointScope.PLATFORM,
+    },
     schema: {
+        tags: ['platforms'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Get a platform by id',
         params: Type.Object({
             id: ApId,
         }),
+        response: {
+            [StatusCodes.OK]: PlatformWithoutSensitiveData,
+        },
     },
 }

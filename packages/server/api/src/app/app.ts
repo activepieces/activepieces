@@ -2,6 +2,7 @@ import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart from '@fastify/multipart'
 import swagger from '@fastify/swagger'
+import { createAdapter } from '@socket.io/redis-adapter'
 import fastify, { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
@@ -18,6 +19,7 @@ import { accessTokenManager } from './authentication/lib/access-token-manager'
 import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
+import { getRedisConnection } from './database/redis-connection'
 import { analyticsModule } from './ee/analytics/analytics-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
@@ -30,6 +32,7 @@ import { enterpriseAuthenticationServiceHooks } from './ee/authentication/authen
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import { rbacMiddleware } from './ee/authentication/rbac/rbac-middleware'
+import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
 import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
@@ -37,7 +40,6 @@ import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
-import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
@@ -83,16 +85,15 @@ import { userModule } from './user/user.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
 import { flowQueueConsumer } from './workers/flow-worker/consumer/flow-queue-consumer'
-import { engineResponseWatcher } from './workers/flow-worker/engine-response-watcher'
-import { flowWorkerHooks } from './workers/flow-worker/flow-worker-hooks'
 import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
 import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-bullboard'
+import { webhookResponseWatcher } from './workers/flow-worker/webhook-response-watcher'
 import {
     GitRepoWithoutSensitiveData,
     ProjectMember,
 } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ExecutionMode, initializeSentry, logger, QueueMode, system, SystemProp } from '@activepieces/server-shared'
+import { ExecutionMode, initializeSentry, logger, QueueMode, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -104,6 +105,7 @@ import {
     Flow,
     FlowRun,
     ProjectWithLimits,
+    spreadIfDefined,
 } from '@activepieces/shared'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
@@ -195,6 +197,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         cors: {
             origin: '*',
         },
+        ...spreadIfDefined('adapter', await getAdapter()),
         transports: ['websocket'],
     })
 
@@ -210,7 +213,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     })
 
     app.io.on('connection', (socket: Socket) => {
-        websocketService.init(socket)
+        rejectedPromiseHandler(websocketService.init(socket))
     })
 
     app.addHook('onRequest', async (request, reply) => {
@@ -253,6 +256,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(flowWorkerModule)
     await app.register(platformUserModule)
     await app.register(issuesModule)
+    await app.register(authnSsoSamlModule)
 
     await setupBullMQBoard(app)
 
@@ -321,7 +325,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             })
             eventsHooks.set(auditLogService)
             appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
-            flowWorkerHooks.setHooks(platformWorkerHooks)
             flowRunHooks.setHooks(platformRunHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -351,7 +354,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             })
             eventsHooks.set(auditLogService)
             flowRunHooks.setHooks(platformRunHooks)
-            flowWorkerHooks.setHooks(platformWorkerHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -367,7 +369,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     app.addHook('onClose', async () => {
         await flowQueueConsumer.close()
         await systemJobsSchedule.close()
-        await engineResponseWatcher.shutdown()
+        await webhookResponseWatcher.shutdown()
     })
 
     return app
@@ -400,5 +402,19 @@ const validateEnvPropsOnStartup = async (): Promise<void> => {
             },
             'Allowing users to sign up is not allowed in unsandboxed mode, please check the configuration section in the documentation',
         )
+    }
+}
+
+async function getAdapter() {
+    const queue = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
+    switch (queue) {
+        case QueueMode.MEMORY: {
+            return undefined
+        }
+        case QueueMode.REDIS: {
+            const sub = getRedisConnection().duplicate()
+            const pub = getRedisConnection().duplicate()
+            return createAdapter(pub, sub)
+        }
     }
 }

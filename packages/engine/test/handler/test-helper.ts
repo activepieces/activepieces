@@ -1,4 +1,4 @@
-import { Action, ActionErrorHandlingOptions, ActionType, BranchAction, BranchCondition, CodeAction, LoopOnItemsAction, PackageType, PieceAction, PieceType } from '@activepieces/shared'
+import { Action, ActionErrorHandlingOptions, ActionType, BranchAction, BranchCondition, CodeAction, LoopOnItemsAction, PackageType, PieceAction, PieceType, ProgressUpdateType } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 import { VariableService } from '../../src/lib/services/variable-service'
 
@@ -20,6 +20,8 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
         }),
         params?.testSingleStepMode ?? false,
         params?.filesServiceType ?? 'local',
+        params?.progressUpdateType ?? ProgressUpdateType.NONE,
+        params?.serverHandlerId ?? null,
         params?.resumePayload,
     )
 }

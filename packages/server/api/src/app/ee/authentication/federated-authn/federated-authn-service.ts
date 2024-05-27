@@ -31,7 +31,7 @@ export const federatedAuthnService = {
         const provider = providers[providerName]
         const platform = await platformService.getOneOrThrow(platformId)
         const idToken = await provider.authenticate(hostname, platform, code)
-        const platformIdFromEmail = await resolvePlatformIdFromEmail(platformId, idToken.email)
+        const platformIdFromEmail = (await resolvePlatformIdFromEmail(idToken.email)) ?? platformId
         return authenticationService.federatedAuthn({
             email: idToken.email,
             verified: true,

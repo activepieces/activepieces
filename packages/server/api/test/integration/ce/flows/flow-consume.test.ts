@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { flowWorker } from '../../../../src/app/workers/flow-worker/flow-worker'
+import { webhookResponseWatcher } from '../../../../src/app/workers/flow-worker/webhook-response-watcher'
 import {
     createMockFlow,
     createMockFlowRun,
@@ -19,6 +20,7 @@ import {
     FlowVersionState,
     PackageType,
     PieceType,
+    ProgressUpdateType,
     RunEnvironment,
     TriggerType,
 } from '@activepieces/shared'
@@ -135,6 +137,8 @@ describe('flow execution', () => {
             environment: RunEnvironment.PRODUCTION,
             runId: mockFlowRun.id,
             payload: {},
+            synchronousHandlerId: webhookResponseWatcher.getHandlerId(),
+            progressUpdateType: ProgressUpdateType.NONE,
             executionType: ExecutionType.BEGIN,
         })
 

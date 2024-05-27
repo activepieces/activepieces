@@ -29,6 +29,7 @@ import { AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 } from '.
 import { AddTriggerTestStrategy1707087022764 } from './migration/common/1707087022764-add-trigger-test-strategy'
 import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-migrate-webhook'
 import { RemoveShowActivityLog1716105958530 } from './migration/common/1716105958530-RemoveShowActivityLog'
+import { AddDurationForRuns1716725027424 } from './migration/common/1716725027424-AddDurationForRuns'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -219,6 +220,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFeaturesToPlatform1714145914415,
         AddIssueEntityPostgres1714904516114,
         RemoveShowActivityLog1716105958530,
+        AddDurationForRuns1716725027424,
     ]
 
     const edition = getEdition()

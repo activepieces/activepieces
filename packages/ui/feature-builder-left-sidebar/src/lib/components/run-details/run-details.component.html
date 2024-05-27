@@ -1,5 +1,20 @@
 <div class="p-3">
-  <ap-sidebar-header (closeClicked)="closeLeftSideBar()" title="Run Details" i18n-title></ap-sidebar-header>
+  <ap-sidebar-header (closeClicked)="closeLeftSideBar()" headerTitle="" i18n-headerTitle>
+  <div class="ap-typography-subtitle-1 ap-text-title !ap-font-semibold ap-flex-grow ap-flex ap-items-center ap-justify-between" >
+    <div i18n>
+      Run Details
+    </div>
+    @if((selectedRun$ | async); as flowRun) {
+      @if(flowRun.status !== FlowRunStatus.PAUSED &&flowRun.status !== FlowRunStatus.RUNNING && flowRun.duration ) {
+      <div class="ap-text-description ap-typography-caption">
+        {{ flowRun.duration | durationFormatter: false: true }}
+      </div>
+      }
+    }
+   
+  </div>
+  
+  </ap-sidebar-header>
 </div>
 <ng-container *ngIf="(selectedRun$ | async) as flowRun">
   <ng-container *ngIf="logs$ | async as logs; else loading">

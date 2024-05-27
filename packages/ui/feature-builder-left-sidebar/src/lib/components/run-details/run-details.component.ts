@@ -12,12 +12,7 @@ import { UUID } from 'angular2-uuid';
 import { Store } from '@ngrx/store';
 import { RunDetailsService } from './iteration-details.service';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
-import {
-  FlowRunStatus,
-  FlowRun,
-  StepOutput,
-  StepOutputStatus,
-} from '@activepieces/shared';
+import { FlowRunStatus, FlowRun, StepOutput } from '@activepieces/shared';
 import {
   BuilderSelectors,
   LeftSideBarType,
@@ -31,9 +26,21 @@ import {
   styleUrls: ['./run-details.component.scss'],
 })
 export class RunDetailsComponent implements OnInit {
+  readonly FlowRunStatus = FlowRunStatus;
   runResults: StepRunResult[] = [];
   selectedRun$: Observable<FlowRun | undefined>;
-  accordionRect: DOMRect;
+  private accordionRect: DOMRect = {
+    bottom: 0,
+    height: 0,
+    left: 0,
+    right: 0,
+    top: 0,
+    width: 0,
+    x: 0,
+    y: 0,
+    toJSON: () => '',
+  };
+
   resizerKnobIsBeingDragged = false;
   flowId: UUID;
   logs$: Observable<
@@ -108,14 +115,6 @@ export class RunDetailsComponent implements OnInit {
         sidebarType: LeftSideBarType.NONE,
       })
     );
-  }
-
-  public get actionStatusEnum() {
-    return StepOutputStatus;
-  }
-
-  public get InstanceRunStatus() {
-    return FlowRunStatus;
   }
 
   resizerDragStarted(stepsResultsAccordion: HTMLElement) {

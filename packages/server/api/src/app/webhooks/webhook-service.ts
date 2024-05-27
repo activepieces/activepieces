@@ -1,4 +1,4 @@
-import { flowRunService, HookType } from '../flows/flow-run/flow-run-service'
+import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { triggerHooks } from '../flows/trigger'
 import { dedupeService } from '../flows/trigger/dedupe'
@@ -15,6 +15,7 @@ import { ActivepiecesError, ErrorCode, EventPayload,
     FlowStatus,
     FlowVersion,
     isNil,
+    ProgressUpdateType,
     ProjectId,
     RunEnvironment,
 } from '@activepieces/shared'
@@ -113,7 +114,7 @@ export const webhookService = {
                 flowVersionId: flowVersion.id,
                 payload,
                 synchronousHandlerId,
-                hookType: HookType.BEFORE_LOG,
+                progressUpdateType: ProgressUpdateType.WEBHOOK_RESPONSE,
                 projectId,
                 executionType: ExecutionType.BEGIN,
             }),
