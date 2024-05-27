@@ -44,11 +44,11 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.MANAGE_PROJECT_PIECES_ENABLED] = true
             modifiedFlags[ApFlagId.SHOW_SIGN_UP_LINK] = false
             modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
-            modifiedFlags[ApFlagId.FRONTEND_URL] = `${hostname}`
+            modifiedFlags[ApFlagId.FRONTEND_URL] = `${hostUrl}`
             modifiedFlags[ApFlagId.SAML_AUTH_ACS_URL] = `${hostUrl}/api/authn/saml/acs`
             modifiedFlags[
                 ApFlagId.WEBHOOK_URL_PREFIX
-            ] = `${hostname}/api/v1/webhooks`
+            ] = `${hostUrl}/api/v1/webhooks`
             modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] =
         flagService.getThirdPartyRedirectUrl(platform.id, hostname)
             modifiedFlags[ApFlagId.PRIVACY_POLICY_URL] = platform.privacyPolicyUrl
