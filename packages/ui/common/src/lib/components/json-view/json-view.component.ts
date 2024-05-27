@@ -15,21 +15,32 @@ import { JsonEditorOptions } from 'ang-jsoneditor';
 export class JsonViewComponent {
   jsonFormController = new FormControl({});
   _content = '';
-  showText = false;
+  contentIsAnObject = false;
+  contentType:
+    | 'object'
+    | 'string'
+    | 'number'
+    | 'boolean'
+    | 'bigint'
+    | 'symbol'
+    | 'function'
+    | 'undefined' = 'string';
   containerHeight = 0;
   @Input() hideTitle = false;
   @Input() hideMaximize = false;
   @Input() viewTitle: string;
   jsonEditorOptions: JsonEditorOptions = new JsonEditorOptions();
   @Input() set content(value: unknown) {
-    if (typeof value === 'string') {
-      this._content = value;
-    } else {
+    this.contentType = typeof value;
+    if (this.contentType === 'object') {
       this._content = JSON.stringify(value, null, 2);
-    }
-    this.showText = !this.isContentAnObject(this._content);
-    if (!this.showText) {
       this.jsonFormController.setValue(JSON.parse(this._content));
+    } else {
+      if (typeof value === 'string' && this.isStringValidJson(value)) {
+        this._content = JSON.stringify(JSON.parse(value), null, 2);
+      } else {
+        this._content = JSON.stringify(value);
+      }
     }
     this.setExpandAllNodesInEditor();
   }
@@ -54,15 +65,18 @@ export class JsonViewComponent {
   }
 
   downloadContent() {
-    downloadFile(this._content, this.viewTitle, this.showText ? 'txt' : 'json');
+    downloadFile(
+      this._content,
+      this.viewTitle,
+      this.contentIsAnObject ? 'txt' : 'json'
+    );
   }
-
-  private isContentAnObject(content: string) {
+  private isStringValidJson(str: string) {
     try {
-      const value = JSON.parse(content);
-      return typeof value === 'object' && value !== null;
+      JSON.parse(str);
     } catch (e) {
       return false;
     }
+    return true;
   }
 }
