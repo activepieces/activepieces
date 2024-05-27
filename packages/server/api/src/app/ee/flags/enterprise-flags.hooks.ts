@@ -9,8 +9,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags = { ...flags }
         const hostname = request.hostname
-        const protocol = request.protocol
-        const hostUrl = `${protocol}://${hostname}`
+        const hostUrl = `https://${hostname}`
         const platformId = await resolvePlatformIdForRequest(request)
         if (isNil(platformId)) {
             return modifiedFlags
