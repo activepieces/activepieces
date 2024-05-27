@@ -9,6 +9,7 @@ import {
     ExecuteSandboxResult,
     SandboxCtorParams,
 } from './abstract-sandbox'
+import ivm from 'isolated-vm'
 
 const memoryLimit = Math.floor((Number(system.getOrThrow(SystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
 export class FileSandbox extends AbstractSandbox {
@@ -16,6 +17,9 @@ export class FileSandbox extends AbstractSandbox {
 
     public constructor(params: SandboxCtorParams) {
         super(params)
+        // This a workound to make isolated-vm work in the worker thread check https://github.com/laverdet/isolated-vm/pull/402
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const _strongReference = ivm.Isolate
     }
 
     public override async cleanUp(): Promise<void> {
