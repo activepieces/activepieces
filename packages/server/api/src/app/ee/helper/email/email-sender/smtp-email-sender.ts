@@ -13,7 +13,7 @@ import { Platform } from '@activepieces/shared'
 export const smtpEmailSender: EmailSender = {
     async send({ email, platformId, templateData }) {
         const platform = await getPlatform(platformId)
-        const emailSubject = getEmailSubject(templateData.name)
+        const emailSubject = getEmailSubject(templateData.name, templateData.vars)
         const senderName = platform?.name ?? system.get(SystemProp.SMTP_SENDER_NAME)
         const senderEmail = platform?.smtpSenderEmail ?? system.get(SystemProp.SMTP_SENDER_EMAIL)
 
@@ -65,7 +65,7 @@ const initSmtpClient = (platform: Platform | null): Transporter => {
     })
 }
 
-const getEmailSubject = (templateName: EmailTemplateData['name']): string => {
+const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<string, string>): string => {
     const templateToSubject: Record<EmailTemplateData['name'], string> = {
         'invitation-email': 'You have been invited to a team',
         'quota-50': '[ACTION REQUIRED] 50% of your Activepieces tasks are consumed',
@@ -73,7 +73,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name']): string => {
         'quota-100': '[URGENT] 100% of your Activepieces tasks are consumed',
         'verify-email': 'Verify your email address',
         'reset-password': 'Reset your password',
-        'issue-created': 'A new issue created',
+        'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
     }
 
     return templateToSubject[templateName]
