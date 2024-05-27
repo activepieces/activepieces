@@ -84,9 +84,11 @@ export class IssuesTableComponent implements OnInit {
     private telemetryService: TelemetryService,
     private embeddingService: EmbeddingService,
     private flagsService: FlagService,
-    private projectService: ProjectService
+    private projectService: ProjectService,
+    private authenticationService: AuthenticationService
   ) {}
   ngOnInit(): void {
+    this.currentProject = this.authenticationService.getProjectId();
     this.dataSource = new IssuesDataSource(
       this.route.queryParams,
       this.paginator,
