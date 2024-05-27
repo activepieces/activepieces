@@ -428,7 +428,7 @@
                                                   min-width: auto !important;
                                                 "
                                               >
-                                                Flow encountered an issue!
+                                                {{flowName}} encountered an issue!
                                               </td>
                                             </tr>
                                             <tr>
@@ -452,11 +452,10 @@
                                               >
                                                 Hi {{firstName}},<br /><br />
 
-                                                Your flow {{flowName}} has encountered an issue <br />
-                                                Count: {{count}}<br />
-                                                Date: {{createdAt}}<br /><br />
+                                                Your flow {{flowName}} has encountered {{count}} issues. <br />
+                                                First seen at: {{createdAt}}<br /><br />
 
-                                                Kindly attend to fixing the issue and restart your flow.
+                                                
                                               </td>
                                             </tr>
                                             <tr>
@@ -497,7 +496,7 @@
                                                           "
                                                         >
                                                           <a
-                                                            href="https://cloud.activepieces.com/flows/{{flowId}}"
+                                                            href="{{issueUrl}}"
                                                             target="_blank"
                                                             class="link-button button-inner"
                                                             style="
@@ -509,7 +508,7 @@
                                                             ><span
                                                               class="link-button"
                                                               style="color: #ffffff"
-                                                              >Go to flow</span
+                                                              >View Issues</span
                                                             ></a
                                                           >
                                                         </td>

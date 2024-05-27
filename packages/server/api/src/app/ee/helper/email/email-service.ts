@@ -1,6 +1,8 @@
 import { jwtUtils } from '../../../helper/jwt-utils'
 import { getEdition } from '../../../helper/secret-helper'
 import { projectService } from '../../../project/project-service'
+import { userService } from '../../../user/user-service'
+import { projectMemberService } from '../../project-members/project-member.service'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 import { OtpType } from '@activepieces/ee-shared'
@@ -48,29 +50,49 @@ export const emailService = {
 
     async sendIssueCreatedNotification({
         projectId,
-        firstName,
-        flowId,
         flowName,
         count,
-        email,
         createdAt,
     }: IssueCreatedArgs): Promise<void> {
-        const project = await projectService.getOneOrThrow(projectId)
-
-        await emailSender.send({
-            email,
-            platformId: project.platformId,
-            templateData: {
-                name: 'issue-created',
-                vars: {
-                    flowId,
-                    flowName,
-                    firstName,
-                    createdAt,
-                    count: count.toString(),
-                },
-            },
+        logger.info({
+            name: '[emailService#sendIssueCreatedNotification]',
+            projectId,
+            flowName,
+            count,
+            createdAt,
         })
+        const project = await projectService.getOneOrThrow(projectId)
+        // TODO remove the hardcoded limit
+        const users = await projectMemberService.list(projectId, null, 50)
+        const sendEmails = users.data.map(async (projectMember) => {
+            const userData = await userService.getByPlatformAndEmail({
+                platformId: project.platformId,
+                email: projectMember.email,
+            })
+            if (isNil(userData)) {
+                return
+            }
+            const issueUrl = await platformDomainHelper.constructUrlFrom({
+                platformId: project.platformId,
+                path: 'runs?limit=10#Issues',
+            })
+    
+            return emailSender.send({
+                email: userData.email,
+                platformId: project.platformId,
+                templateData: {
+                    name: 'issue-created',
+                    vars: {
+                        issueUrl,
+                        flowName,
+                        firstName: userData.firstName,
+                        createdAt,
+                        count: count.toString(),
+                    },
+                },
+            })
+        })
+        await Promise.all(sendEmails)
     },
 
     async sendQuotaAlert({ email, projectId, resetDate, firstName, templateName }: SendQuotaAlertArgs): Promise<void> {
@@ -173,10 +195,7 @@ type SendOtpArgs = {
 
 type IssueCreatedArgs = {
     projectId: string
-    firstName: string
-    flowId: string
     flowName: string
     count: number
-    email: string
-    createdAt: string    
+    createdAt: string
 }
