@@ -12,12 +12,6 @@
         <div
           class=" ap-rounded ap-border ap-border-solid ap-border-dividers ap-p-[30px] ap-pb-[80px] ap-flex ap-flex-col">
           <app-flows-table-title></app-flows-table-title>
-          @if(showRewards$ | async)
-          {
-          <div class="ap-my-2">
-            <app-rewards-note-component></app-rewards-note-component>
-          </div>
-          }
           <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Flows" i18n-aria-label>
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef i18n>Name</th>

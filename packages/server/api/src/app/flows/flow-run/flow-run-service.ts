@@ -8,7 +8,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { telemetry } from '../../helper/telemetry.utils'
-import { engineResponseWatcher } from '../../workers/flow-worker/engine-response-watcher'
+import { webhookResponseWatcher } from '../../workers/flow-worker/webhook-response-watcher'
 import { flowService } from '../flow/flow.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunHooks } from './flow-run-hooks'
@@ -84,7 +84,7 @@ async function updateFlowRunToLatestFlowVersionId(
 }
 
 function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): string {
-    const handlerId = engineResponseWatcher.getHandlerId()
+    const handlerId = webhookResponseWatcher.getHandlerId()
     if (isNil(pauseMetadata)) {
         return handlerId
     }
@@ -210,6 +210,7 @@ export const flowRunService = {
         executionState,
         projectId,
         tags,
+        duration,
     }: FinishParams): Promise<FlowRun> {
         const logFileId = await updateLogs({
             flowRunId,
@@ -220,12 +221,13 @@ export const flowRunService = {
         await flowRunRepo.update(flowRunId, {
             status,
             tasks,
+            ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
             ...spreadIfDefined('logsFileId', logFileId),
             terminationReason: undefined,
             tags,
             finishTime: new Date().toISOString(),
         })
-        const flowRun = await this.getOneOrThrow({
+        const flowRun = await this.getOnePopulatedOrThrow({
             id: flowRunId,
             projectId: undefined,
         })
@@ -302,7 +304,7 @@ export const flowRunService = {
             payload,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: engineResponseWatcher.getHandlerId(),
+            synchronousHandlerId: webhookResponseWatcher.getHandlerId(),
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
         })
     },
@@ -402,6 +404,7 @@ type FinishParams =  {
     projectId: string
     status: FlowRunStatus
     tasks: number
+    duration: number | undefined
     executionState: ExecutionState | null
     tags: string[]
 }

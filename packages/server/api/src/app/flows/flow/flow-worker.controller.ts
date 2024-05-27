@@ -1,11 +1,11 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { EngineHttpResponse, engineResponseWatcher } from '../../workers/flow-worker/engine-response-watcher'
+import { EngineHttpResponse, webhookResponseWatcher } from '../../workers/flow-worker/webhook-response-watcher'
 import { flowRunService } from '../flow-run/flow-run-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowService } from './flow.service'
-import { ExecutionState, FlowRunResponse, FlowRunStatus, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, StepOutput, UpdateRunProgressRequest } from '@activepieces/shared'
+import { ExecutionState, FlowRunResponse, FlowRunStatus, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 
 export const flowWorkerController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
@@ -30,22 +30,23 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (fastify) =
     fastify.post('/update-run', UpdateStepProgress, async (request) => {
         const { runId, workerHandlerId, runDetails, progressUpdateType } = request.body
         if (progressUpdateType === ProgressUpdateType.WEBHOOK_RESPONSE && workerHandlerId) {
-            await engineResponseWatcher.publish(
+            await webhookResponseWatcher.publish(
                 runId,
                 workerHandlerId,
                 await getFlowResponse(runDetails),
             )
         }
 
-        await flowRunService.updateStatus({
+        const populatedRun = await flowRunService.updateStatus({
             flowRunId: runId,
             status: getTerminalStatus(runDetails.status),
             tasks: runDetails.tasks,
+            duration: runDetails.duration,
             executionState: getExecutionState(runDetails),
             projectId: request.principal.projectId,
             tags: runDetails.tags ?? [],
         })
-    
+
         if (runDetails.status === FlowRunStatus.PAUSED) {
             await flowRunService.pause({
                 flowRunId: runId,
@@ -56,13 +57,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (fastify) =
                 },
             })
         }
-        if (progressUpdateType === ProgressUpdateType.TEST_FLOW && workerHandlerId) {
-            await engineResponseWatcher.publish(
-                runId,
-                workerHandlerId,
-                await getFlowResponse(runDetails),
-            )
-        }
+        fastify.io.to(populatedRun.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, populatedRun)
         return {}
     })
 

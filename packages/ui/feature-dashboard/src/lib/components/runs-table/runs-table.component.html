@@ -41,14 +41,15 @@
             <mat-option *ngFor="let opt of flows" class="!ap-hidden" [value]="opt.value">
               {{opt.label}}
             </mat-option></ng-container>
-            <ng-template #loading>
-              <mat-option [disabled]="true">Loading...</mat-option>
-            </ng-template>
+          <ng-template #loading>
+            <mat-option [disabled]="true">Loading...</mat-option>
+          </ng-template>
         </mat-select>
       </mat-form-field>
       <mat-form-field>
         <mat-label i18n>Filter by Start Date</mat-label>
-        <mat-date-range-input #picker (openedStream)="picker._updateFocus('mouse')" [formGroup]="dateFormGroup" [rangePicker]="runsPicker" [comparisonStart]="dateFormGroup.controls.start.value" 
+        <mat-date-range-input #picker (openedStream)="picker._updateFocus('mouse')" [formGroup]="dateFormGroup"
+          [rangePicker]="runsPicker" [comparisonStart]="dateFormGroup.controls.start.value"
           [comparisonEnd]="dateFormGroup.controls.end.value">
           <input matStartDate placeholder="From" [formControl]="dateFormGroup.controls.start" i18n-placeholder>
           <input matEndDate placeholder="To" [formControl]="dateFormGroup.controls.end" i18n-placeholder>
@@ -76,7 +77,8 @@
 
         <ng-container matColumnDef="duration">
           <th mat-header-cell *matHeaderCellDef i18n>Duration</th>
-          <td mat-cell *matCellDef="let run">{{ run.startTime | duration: run.finishTime }}</td>
+          <td mat-cell *matCellDef="let run">{{ run.duration ? (run.duration | durationFormatter: false: true) : '-' }}
+          </td>
         </ng-container>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef i18n>Status</th>
