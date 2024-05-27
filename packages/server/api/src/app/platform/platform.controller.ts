@@ -51,7 +51,7 @@ const UpdatePlatformRequest = {
 const GetPlatformRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        EndpointScope: EndpointScope.PLATFORM,
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         tags: ['platforms'],

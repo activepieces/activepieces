@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
 import { isNil } from 'lodash'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { assertUserHasPermissionToFlow } from '../../ee/authentication/rbac/rbac-middleware'
 import { eventsHooks } from '../../helper/application-events'
 import { projectService } from '../../project/project-service'
 import { flowService } from './flow.service'
@@ -17,7 +18,6 @@ import {
     CreateFlowRequest,
     ErrorCode,
     FlowOperationRequest,
-    FlowOperationType,
     FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
     ListFlowsRequest,
@@ -28,8 +28,6 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
-import { projectMemberService } from '../../ee/project-members/project-member.service'
-import { assertRoleHasPermission } from '../../ee/authentication/rbac/rbac-middleware'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -53,7 +51,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
         const userId = await extractUserIdFromPrincipal(request.principal)
-        await assertUserHasPermissionToFlow(request.principal, userId, request.body.type)
+        await assertUserHasPermissionToFlow(request.principal, request.body.type)
 
         const flow = await flowService.getOnePopulatedOrThrow({
             id: request.params.id,
@@ -128,38 +126,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
-async function assertUserHasPermissionToFlow(
-    principal: Principal,
-    userId: string,
-    operationType: FlowOperationType,
-): Promise<void> {
-    const role = await projectMemberService.getRole({
-        projectId: principal.projectId,
-        userId,
-    })
-    switch (operationType) {
-        case FlowOperationType.LOCK_AND_PUBLISH:
-        case FlowOperationType.CHANGE_STATUS: {
-            await assertRoleHasPermission(principal, Permission.UPDATE_FLOW_STATUS)
-            break;
-        }
-        case FlowOperationType.ADD_ACTION:
-        case FlowOperationType.UPDATE_ACTION:
-        case FlowOperationType.DELETE_ACTION:
-        case FlowOperationType.LOCK_FLOW:
-        case FlowOperationType.CHANGE_FOLDER:
-        case FlowOperationType.CHANGE_NAME:
-        case FlowOperationType.MOVE_ACTION:
-        case FlowOperationType.IMPORT_FLOW:
-        case FlowOperationType.UPDATE_TRIGGER:
-        case FlowOperationType.DUPLICATE_ACTION:
-        case FlowOperationType.USE_AS_DRAFT: {
-            await assertRoleHasPermission(principal, Permission.WRITE_FLOW)
-            break;
-        }
-    }
-}
-
 async function assertThatFlowIsNotBeingUsed(
     flow: PopulatedFlow,
     userId: string,
@@ -209,7 +175,7 @@ const CreateFlowRequestOptions = {
 
 const UpdateFlowRequestOptions = {
     config: {
-        permission: Permission.WRITE_FLOW,
+        permission: Permission.UPDATE_FLOW_STATUS,
     },
     schema: {
         tags: ['flows'],

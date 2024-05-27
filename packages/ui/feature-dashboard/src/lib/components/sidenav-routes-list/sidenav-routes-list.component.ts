@@ -217,5 +217,4 @@ export class SidenavRoutesListComponent implements OnInit {
       };
     });
   }
-
 }
