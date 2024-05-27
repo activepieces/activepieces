@@ -137,10 +137,9 @@ export const issuesService = {
         status: IssueStatus
     }): Promise<number> {
         if (status != IssueStatus.RESOLEVED) {
-            const incrementedIssue = await repo.increment({ projectId, flowId }, 'count', 1)
-            return incrementedIssue.generatedMaps[0].count
+            await repo.increment({ projectId, flowId }, 'count', 1)
         }
-        await repo.update({
+        const updatedIssue = await repo.update({
             projectId,
             flowId,
         }, {
@@ -149,7 +148,7 @@ export const issuesService = {
             status,
             updated: new Date().toISOString(),
         })
-        return 0
+        return updatedIssue.generatedMaps[0].count
     },
     async count({ projectId }: { projectId: ApId }): Promise<number> {
         return repo.count({
