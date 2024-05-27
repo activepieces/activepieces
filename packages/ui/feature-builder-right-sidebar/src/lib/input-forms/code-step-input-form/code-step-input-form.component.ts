@@ -11,6 +11,7 @@ import {
   ActionType,
   ApFlagId,
   CodeAction,
+  CodeActionSettings,
   SourceCode,
   UpdateActionRequest,
 } from '@activepieces/shared';
@@ -39,6 +40,7 @@ export class CodeStepInputFormComponent extends InputFormCore {
     this._step = value;
     this.writeValue(value);
   }
+  @Input({ required: true }) stepSettings: CodeActionSettings;
   readOnly$: Observable<boolean> = of(true);
   form: FormGroup<{
     input: FormControl<Record<string, unknown>>;
@@ -110,6 +112,7 @@ export class CodeStepInputFormComponent extends InputFormCore {
       tap((formValue) => {
         const codeActionSettings: UpdateActionRequest = {
           settings: {
+            ...this.stepSettings,
             input: this.form.value.input || {},
             sourceCode: formValue.sourceCode!,
             errorHandlingOptions: formValue.errorHandlingOptions ?? {
@@ -120,7 +123,6 @@ export class CodeStepInputFormComponent extends InputFormCore {
                 value: false,
               },
             },
-            inputUiInfo: this._step.settings.inputUiInfo,
           },
           type: ActionType.CODE,
           displayName: this._step.displayName,

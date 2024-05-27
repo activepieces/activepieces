@@ -143,7 +143,39 @@ const selectCurrentStepSettings = createSelector(
   selectCurrentStep,
   (selectedStep) => {
     if (selectedStep && selectedStep) {
-      return selectedStep.settings;
+      switch (selectedStep.type) {
+        case ActionType.PIECE:
+        case TriggerType.PIECE: {
+          return {
+            type: selectedStep.type,
+            settings: selectedStep.settings,
+          };
+        }
+        case ActionType.CODE: {
+          return {
+            type: selectedStep.type,
+            settings: selectedStep.settings,
+          };
+        }
+        case ActionType.BRANCH: {
+          return {
+            type: selectedStep.type,
+            settings: selectedStep.settings,
+          };
+        }
+        case ActionType.LOOP_ON_ITEMS: {
+          return {
+            type: selectedStep.type,
+            settings: selectedStep.settings,
+          };
+        }
+        case TriggerType.EMPTY: {
+          return {
+            type: selectedStep.type,
+            settings: selectedStep.settings,
+          };
+        }
+      }
     }
     return undefined;
   }
