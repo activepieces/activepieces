@@ -8,21 +8,21 @@ export const ListAuditEventsRequest = Type.Object({
 export type ListAuditEventsRequest = Static<typeof ListAuditEventsRequest>;
 
 export enum ApplicationEventName {
-    CREATED_FLOW = 'CREATED_FLOW',
-    DELETED_FLOW = 'DELETED_FLOW',
-    CREATED_FOLDER = 'CREATED_FOLDER',
-    UPDATED_FOLDER = 'UPDATED_FOLDER',
-    DELETED_FOLDER = 'DELETED_FOLDER',
-    UPDATED_FLOW = 'UPDATED_FLOW',
-    UPSERTED_CONNECTION = 'UPSERTED_CONNECTION',
-    DELETED_CONNECTION = 'DELETED_CONNECTION',
-    SIGNED_UP_USING_EMAIL = 'SIGNED_UP_USING_EMAIL',
-    SIGNED_UP_USING_SSO = 'SIGNED_UP_USING_SSO',
-    SIGNED_UP_USING_MANAGED_AUTH = 'SIGNED_UP_USING_MANAGED_AUTH',
-    SIGNED_IN = 'SIGNED_IN',
-    RESET_PASSWORD = 'RESET_PASSWORD',
-    VERIFIED_EMAIL = 'VERIFIED_EMAIL',
-    CREATED_SIGNING_KEY = 'CREATED_SIGNING_KEY',
+    FLOW_CREATED = 'flow.created',
+    FLOW_DELETED = 'flow.deleted',
+    FLOW_UPDATED = 'flow.updated',
+    FOLDER_CREATED = 'folder.created',
+    FOLDER_UPDATED = 'folder.updated',
+    FOLDER_DELETED = 'folder.deleted',
+    CONNECTION_UPSERTED = 'connection.upserted',
+    CONNECTION_DELETED = 'connection.deleted',
+    USER_SIGNED_UP_USING_EMAIL = 'user.signed.up.email',
+    USER_SIGNED_UP_USING_SSO = 'user.signed.up.sso',
+    USER_SIGNED_UP_USING_MANAGED_AUTH = 'user.signed.up.managed.auth',
+    USER_SIGNED_IN = 'user.signed.in',
+    USER_PASSWORD_RESET = 'user.password.reset',
+    USER_EMAIL_VERIFIED = 'user.email.verified',
+    SIGNING_KEY_CREATED = 'signing.key.created',
 }
 
 const BaseAuditEventProps = {
@@ -37,7 +37,7 @@ const BaseAuditEventProps = {
 
 export const ConnectionEvent = Type.Object({
     ...BaseAuditEventProps,
-    action: Type.Union([Type.Literal(ApplicationEventName.DELETED_CONNECTION), Type.Literal(ApplicationEventName.UPSERTED_CONNECTION)]),
+    action: Type.Union([Type.Literal(ApplicationEventName.CONNECTION_DELETED), Type.Literal(ApplicationEventName.CONNECTION_UPSERTED)]),
     data: Type.Object({
         connectionId: Type.String(),
         connectionName: Type.String(),
@@ -49,7 +49,7 @@ export type ConnectionEvent = Static<typeof ConnectionEvent>
 
 export const FolderEvent = Type.Object({
     ...BaseAuditEventProps,
-    action: Type.Union([Type.Literal(ApplicationEventName.UPDATED_FOLDER), Type.Literal(ApplicationEventName.CREATED_FOLDER), Type.Literal(ApplicationEventName.DELETED_FOLDER)]),
+    action: Type.Union([Type.Literal(ApplicationEventName.FOLDER_UPDATED), Type.Literal(ApplicationEventName.FOLDER_CREATED), Type.Literal(ApplicationEventName.FOLDER_DELETED)]),
     data: Type.Object({
         folderId: Type.String(),
         folderName: Type.String(),
@@ -59,11 +59,20 @@ export const FolderEvent = Type.Object({
 export type FolderEvent = Static<typeof FolderEvent>
 
 
+export const FlowCreatedEvent = Type.Object({
+    ...BaseAuditEventProps,
+    action: Type.Literal(ApplicationEventName.FLOW_CREATED),
+    data: Type.Object({
+        flowId: Type.String(),
+        flowName: Type.String(),
+    }),
+})
+
 export const FlowEvent = Type.Object({
     ...BaseAuditEventProps,
     action: Type.Union([
-        Type.Literal(ApplicationEventName.CREATED_FLOW),
-        Type.Literal(ApplicationEventName.DELETED_FLOW),
+        Type.Literal(ApplicationEventName.FLOW_CREATED),
+        Type.Literal(ApplicationEventName.FLOW_DELETED),
     ]),
     data: Type.Object({
         flowId: Type.String(),
@@ -75,7 +84,7 @@ export type FlowEvent = Static<typeof FlowEvent>
 
 export const UpdatedFlowEvent = Type.Object({
     ...BaseAuditEventProps,
-    action: Type.Literal(ApplicationEventName.UPDATED_FLOW),
+    action: Type.Literal(ApplicationEventName.FLOW_UPDATED),
     data: Type.Object({
         flowId: Type.String(),
         flowName: Type.String(),
@@ -87,7 +96,7 @@ export type UpdatedFlowEvent = Static<typeof UpdatedFlowEvent>
 
 export const AuthenticationEvent = Type.Object({
     ...BaseAuditEventProps,
-    action: Type.Union([Type.Literal(ApplicationEventName.SIGNED_IN), Type.Literal(ApplicationEventName.RESET_PASSWORD), Type.Literal(ApplicationEventName.VERIFIED_EMAIL)]),
+    action: Type.Union([Type.Literal(ApplicationEventName.USER_SIGNED_IN), Type.Literal(ApplicationEventName.USER_PASSWORD_RESET), Type.Literal(ApplicationEventName.USER_EMAIL_VERIFIED)]),
     data: Type.Object({}),
 })
 
@@ -96,9 +105,9 @@ export type AuthenticationEvent = Static<typeof AuthenticationEvent>
 export const SignUpEvent = Type.Object({
     ...BaseAuditEventProps,
     action: Type.Union([
-        Type.Literal(ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH),
-        Type.Literal(ApplicationEventName.SIGNED_UP_USING_EMAIL),
-        Type.Literal(ApplicationEventName.SIGNED_UP_USING_SSO)]),
+        Type.Literal(ApplicationEventName.USER_SIGNED_UP_USING_MANAGED_AUTH),
+        Type.Literal(ApplicationEventName.USER_SIGNED_UP_USING_EMAIL),
+        Type.Literal(ApplicationEventName.USER_SIGNED_UP_USING_SSO)]),
     data: Type.Object({
         createdUser: Type.Object({
             id: Type.String(),
@@ -111,7 +120,7 @@ export type SignUpEvent = Static<typeof SignUpEvent>
 export const SigningKeyEvent = Type.Object({
     ...BaseAuditEventProps,
     action: Type.Union([
-        Type.Literal(ApplicationEventName.CREATED_SIGNING_KEY),
+        Type.Literal(ApplicationEventName.SIGNING_KEY_CREATED),
     ]),
     data: Type.Object({
         signingKeyId: Type.String(),
@@ -136,36 +145,36 @@ export type ApplicationEvent = Static<typeof ApplicationEvent>
 
 export function summarizeApplicationEvent(event: ApplicationEvent) {
     switch (event.action) {
-        case ApplicationEventName.UPDATED_FLOW: {
+        case ApplicationEventName.FLOW_UPDATED: {
             return convertUpdateActionToDetails(event);
         }
-        case ApplicationEventName.CREATED_FLOW:
+        case ApplicationEventName.FLOW_CREATED:
             return `${event.data.flowName} is created`;
-        case ApplicationEventName.DELETED_FLOW:
+        case ApplicationEventName.FLOW_DELETED:
             return `${event.data.flowName} is deleted`;
-        case ApplicationEventName.CREATED_FOLDER:
+        case ApplicationEventName.FOLDER_CREATED:
             return `${event.data.folderName} is created`;
-        case ApplicationEventName.UPDATED_FOLDER:
+        case ApplicationEventName.FOLDER_UPDATED:
             return `${event.data.folderName} is updated`;
-        case ApplicationEventName.DELETED_FOLDER:
+        case ApplicationEventName.FOLDER_DELETED:
             return `${event.data.folderName} is deleted`;
-        case ApplicationEventName.UPSERTED_CONNECTION:
+        case ApplicationEventName.CONNECTION_UPSERTED:
             return `${event.data.connectionName} is updated`;
-        case ApplicationEventName.DELETED_CONNECTION:
+        case ApplicationEventName.CONNECTION_DELETED:
             return `${event.data.connectionName} is deleted`;
-        case ApplicationEventName.SIGNED_IN:
+        case ApplicationEventName.USER_SIGNED_IN:
             return `User ${event.userEmail} signed in`;
-        case ApplicationEventName.RESET_PASSWORD:
+        case ApplicationEventName.USER_PASSWORD_RESET:
             return `User ${event.userEmail} reset password`;
-        case ApplicationEventName.VERIFIED_EMAIL:
+        case ApplicationEventName.USER_EMAIL_VERIFIED:
             return `User ${event.userEmail} verified email`;
-        case ApplicationEventName.SIGNED_UP_USING_EMAIL:
+        case ApplicationEventName.USER_SIGNED_UP_USING_EMAIL:
             return `User ${event.data.createdUser.email} signed up using email`;
-        case ApplicationEventName.SIGNED_UP_USING_SSO:
+        case ApplicationEventName.USER_SIGNED_UP_USING_SSO:
             return `User ${event.data.createdUser.email} signed up using SSO`;
-        case ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH:
+        case ApplicationEventName.USER_SIGNED_UP_USING_MANAGED_AUTH:
             return `User ${event.data.createdUser.email} signed up using managed auth`;
-        case ApplicationEventName.CREATED_SIGNING_KEY:
+        case ApplicationEventName.SIGNING_KEY_CREATED:
             return `${event.data.signingKeyName} is created`;
     }
 }

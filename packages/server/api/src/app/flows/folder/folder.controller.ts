@@ -35,7 +35,7 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 request: request.body,
             })
             eventsHooks.get().send(request, {
-                action: ApplicationEventName.CREATED_FOLDER,
+                action: ApplicationEventName.FOLDER_CREATED,
                 folder: createdFolder,
                 userId: request.principal.id,
             })
@@ -59,7 +59,7 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
             })
 
             eventsHooks.get().send(request, {
-                action: ApplicationEventName.UPDATED_FOLDER,
+                action: ApplicationEventName.FOLDER_UPDATED,
                 folder: updatedFlow,
                 userId: request.principal.id,
             })
@@ -115,7 +115,7 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 folderId: request.params.folderId,
             })
             eventsHooks.get().send(request, {
-                action: ApplicationEventName.DELETED_FOLDER,
+                action: ApplicationEventName.FOLDER_DELETED,
                 folder,
                 userId: request.principal.id,
             })

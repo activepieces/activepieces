@@ -5,38 +5,38 @@ import { AppConnection, FlowOperationRequest, Folder, PopulatedFlow } from '@act
 export type CreateAuditEventParam =
   | {
       action:
-      | ApplicationEventName.UPDATED_FOLDER
-      | ApplicationEventName.DELETED_FOLDER
-      | ApplicationEventName.CREATED_FOLDER
+      | ApplicationEventName.FOLDER_UPDATED
+      | ApplicationEventName.FOLDER_DELETED
+      | ApplicationEventName.FOLDER_CREATED
       folder: Folder
       userId: string
   }
   | {
       action:
-      | ApplicationEventName.UPSERTED_CONNECTION
-      | ApplicationEventName.DELETED_CONNECTION
+      | ApplicationEventName.CONNECTION_UPSERTED
+      | ApplicationEventName.CONNECTION_DELETED
       connection: AppConnection
       userId: string
   }
   | {
       action:
-      | ApplicationEventName.CREATED_FLOW
-      | ApplicationEventName.DELETED_FLOW
+      | ApplicationEventName.FLOW_CREATED
+      | ApplicationEventName.FLOW_DELETED
       flow: PopulatedFlow
       userId: string
   }
   | {
       action:
-      | ApplicationEventName.SIGNED_IN
-      | ApplicationEventName.RESET_PASSWORD
-      | ApplicationEventName.VERIFIED_EMAIL
+      | ApplicationEventName.USER_SIGNED_IN
+      | ApplicationEventName.USER_PASSWORD_RESET
+      | ApplicationEventName.USER_EMAIL_VERIFIED
       userId: string
   }
   | {
       action:
-      | ApplicationEventName.SIGNED_UP_USING_EMAIL
-      | ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH
-      | ApplicationEventName.SIGNED_UP_USING_SSO
+      | ApplicationEventName.USER_SIGNED_UP_USING_EMAIL
+      | ApplicationEventName.USER_SIGNED_UP_USING_MANAGED_AUTH
+      | ApplicationEventName.USER_SIGNED_UP_USING_SSO
       userId: string
       createdUser: {
           id: string
@@ -44,12 +44,12 @@ export type CreateAuditEventParam =
       }
   }
   | {
-      action: ApplicationEventName.UPDATED_FLOW
+      action: ApplicationEventName.FLOW_UPDATED
       flow: PopulatedFlow
       request: FlowOperationRequest
       userId: string
   } | {
-      action: ApplicationEventName.CREATED_SIGNING_KEY
+      action: ApplicationEventName.SIGNING_KEY_CREATED
       userId: string
       signingKey: SigningKey
   }

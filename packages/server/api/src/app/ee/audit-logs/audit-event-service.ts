@@ -105,9 +105,9 @@ const saveEvent = async (
     }
     let eventToSave: ApplicationEvent | undefined
     switch (rawEvent.action) {
-        case ApplicationEventName.SIGNED_UP_USING_EMAIL:
-        case ApplicationEventName.SIGNED_UP_USING_SSO:
-        case ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH: {
+        case ApplicationEventName.USER_SIGNED_UP_USING_EMAIL:
+        case ApplicationEventName.USER_SIGNED_UP_USING_SSO:
+        case ApplicationEventName.USER_SIGNED_UP_USING_MANAGED_AUTH: {
             eventToSave = {
                 ...baseProps,
                 action: rawEvent.action,
@@ -120,9 +120,9 @@ const saveEvent = async (
             }
             break
         }
-        case ApplicationEventName.SIGNED_IN:
-        case ApplicationEventName.RESET_PASSWORD:
-        case ApplicationEventName.VERIFIED_EMAIL: {
+        case ApplicationEventName.USER_SIGNED_IN:
+        case ApplicationEventName.USER_PASSWORD_RESET:
+        case ApplicationEventName.USER_EMAIL_VERIFIED: {
             eventToSave = {
                 ...baseProps,
                 action: rawEvent.action,
@@ -130,7 +130,7 @@ const saveEvent = async (
             }
             break
         }
-        case ApplicationEventName.UPDATED_FLOW: {
+        case ApplicationEventName.FLOW_UPDATED: {
             eventToSave = {
                 ...baseProps,
                 action: rawEvent.action,
@@ -142,8 +142,8 @@ const saveEvent = async (
             }
             break
         }
-        case ApplicationEventName.CREATED_FLOW:
-        case ApplicationEventName.DELETED_FLOW: {
+        case ApplicationEventName.FLOW_CREATED:
+        case ApplicationEventName.FLOW_DELETED: {
             eventToSave = {
                 ...baseProps,
                 action: rawEvent.action,
@@ -154,8 +154,8 @@ const saveEvent = async (
             }
             break
         }
-        case ApplicationEventName.UPSERTED_CONNECTION:
-        case ApplicationEventName.DELETED_CONNECTION: {
+        case ApplicationEventName.CONNECTION_UPSERTED:
+        case ApplicationEventName.CONNECTION_DELETED: {
             eventToSave = {
                 ...baseProps,
                 action: rawEvent.action,
@@ -166,9 +166,9 @@ const saveEvent = async (
             }
             break
         }
-        case ApplicationEventName.CREATED_FOLDER:
-        case ApplicationEventName.UPDATED_FOLDER:
-        case ApplicationEventName.DELETED_FOLDER: {
+        case ApplicationEventName.FOLDER_CREATED:
+        case ApplicationEventName.FOLDER_UPDATED:
+        case ApplicationEventName.FOLDER_DELETED: {
             eventToSave = {
                 ...baseProps,
                 action: rawEvent.action,
@@ -179,7 +179,7 @@ const saveEvent = async (
             }
             break
         }
-        case ApplicationEventName.CREATED_SIGNING_KEY: {
+        case ApplicationEventName.SIGNING_KEY_CREATED: {
             eventToSave = {
                 ...baseProps,
                 action: rawEvent.action,
