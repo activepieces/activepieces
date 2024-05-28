@@ -8,6 +8,11 @@ import {
   FlowVersionState,
   PopulatedFlow,
   flowHelper,
+  BranchActionSettings,
+  CodeActionSettings,
+  LoopOnItemsActionSettings,
+  PieceActionSettings,
+  PieceTriggerSettings,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 import { ActionType, TriggerType } from '@activepieces/shared';
@@ -139,43 +144,76 @@ const selectCurrentPieceStepTriggerOrActionName = createSelector(
     };
   }
 );
+/**Declared this function so compiler size limit doesn't get exceeded */
+const extractStepSettings: (step: Step) =>
+  | {
+      type: ActionType.BRANCH;
+      settings: BranchActionSettings;
+    }
+  | {
+      type: ActionType.CODE;
+      settings: CodeActionSettings;
+    }
+  | {
+      type: ActionType.LOOP_ON_ITEMS;
+      settings: LoopOnItemsActionSettings;
+    }
+  | {
+      type: ActionType.PIECE;
+      settings: PieceActionSettings;
+    }
+  | {
+      type: TriggerType.PIECE;
+      settings: PieceTriggerSettings;
+    }
+  | {
+      type: TriggerType.EMPTY;
+      settings: Record<string, unknown>;
+    } = (step: Step) => {
+  switch (step.type) {
+    case ActionType.PIECE: {
+      return {
+        type: step.type,
+        settings: step.settings,
+      };
+    }
+    case TriggerType.PIECE: {
+      return {
+        type: step.type,
+        settings: step.settings,
+      };
+    }
+    case ActionType.CODE: {
+      return {
+        type: step.type,
+        settings: step.settings,
+      };
+    }
+    case ActionType.BRANCH: {
+      return {
+        type: step.type,
+        settings: step.settings,
+      };
+    }
+    case ActionType.LOOP_ON_ITEMS: {
+      return {
+        type: step.type,
+        settings: step.settings,
+      };
+    }
+    case TriggerType.EMPTY: {
+      return {
+        type: step.type,
+        settings: step.settings,
+      };
+    }
+  }
+};
 const selectCurrentStepSettings = createSelector(
   selectCurrentStep,
   (selectedStep) => {
-    if (selectedStep && selectedStep) {
-      switch (selectedStep.type) {
-        case ActionType.PIECE:
-        case TriggerType.PIECE: {
-          return {
-            type: selectedStep.type,
-            settings: selectedStep.settings,
-          };
-        }
-        case ActionType.CODE: {
-          return {
-            type: selectedStep.type,
-            settings: selectedStep.settings,
-          };
-        }
-        case ActionType.BRANCH: {
-          return {
-            type: selectedStep.type,
-            settings: selectedStep.settings,
-          };
-        }
-        case ActionType.LOOP_ON_ITEMS: {
-          return {
-            type: selectedStep.type,
-            settings: selectedStep.settings,
-          };
-        }
-        case TriggerType.EMPTY: {
-          return {
-            type: selectedStep.type,
-            settings: selectedStep.settings,
-          };
-        }
-      }
+    if (selectedStep) {
+      return extractStepSettings(selectedStep);
     }
     return undefined;
   }
