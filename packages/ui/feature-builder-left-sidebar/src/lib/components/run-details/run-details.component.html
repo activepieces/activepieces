@@ -1,68 +1,67 @@
+@if((selectedRun$ | async); as flowRun) {
+
 <div class="p-3">
   <ap-sidebar-header (closeClicked)="closeLeftSideBar()" headerTitle="" i18n-headerTitle>
-  <div class="ap-typography-subtitle-1 ap-text-title !ap-font-semibold ap-flex-grow ap-flex ap-items-center ap-justify-between" >
-    <div i18n>
-      Run Details
-    </div>
-    @if((selectedRun$ | async); as flowRun) {
-      @if(flowRun.status !== FlowRunStatus.PAUSED &&flowRun.status !== FlowRunStatus.RUNNING && flowRun.duration ) {
+    <div
+      class="ap-typography-subtitle-1 ap-text-title !ap-font-semibold ap-flex-grow ap-flex ap-items-center ap-justify-between">
+      <div i18n>
+        Run Details
+      </div>
+      @if(flowRun.duration ) {
       <div class="ap-text-description ap-typography-caption">
         {{ flowRun.duration | durationFormatter: false: true }}
       </div>
       }
-    }
-   
-  </div>
-  
+
+    </div>
+
   </ap-sidebar-header>
 </div>
-<ng-container *ngIf="(selectedRun$ | async) as flowRun">
-  <ng-container *ngIf="logs$ | async as logs; else loading">
-    <ng-container *ngIf="logs.runResults.length> 0; else loading">
-      <div class="run-details-body">
-        <div class="resizer-area" #resizerArea>
-          <ap-horizontal-sidebar-separator 
-          [elevateResizerOnTestingStep]="false"
-          topStyle="calc(50% + 48px)"
+@if(flowRun.status === FlowRunStatus.QUOTA_EXCEEDED || flowRun.status === FlowRunStatus.INTERNAL_ERROR){
+<div class="no-details-message">
+  <p i18n>No details available for this run.</p>
+</div>
+}@else{
+<ng-container *ngIf="logs$ | async as logs; else loading">
+  <ng-container *ngIf="logs.runResults.length> 0; else loading">
+    <div class="run-details-body">
+      <div class="resizer-area" #resizerArea>
+        <ap-horizontal-sidebar-separator [elevateResizerOnTestingStep]="false" topStyle="calc(50% + 48px)"
           [resizerArea]="resizerArea" (resizerDragged)="
-                resizerDragged(
-                  $event
-                )
-              " (resizerDragStopped)="resizerDragStopped()"
-            (resizerDragStarted)="resizerDragStarted(stepsResultsAccordion)">
-          </ap-horizontal-sidebar-separator>
-        </div>
-        <div class="top-resizer-section thin-scrollbars ap-overflow-y-auto" #stepsResultsAccordion>
-          <ng-container *ngFor="let stepResult of logs.runResults; let stepIndex = index">
-            <app-step-result [isTrigger]="stepIndex === 0" [stepResult]="stepResult"
-              [selectedStepName]="selectedStepName$ | async">
-            </app-step-result>
-          </ng-container>
-        </div>
-        <div class="bottom-resizer-section ap-overflow-y-auto thin-scrollbars" #selectedStepResultContainer>
-          <ng-container *ngIf="
-                currentStepResult$ | async as currentStepResult
-              ">
-            <div class="px-3">
-              <app-selected-step-result *ngIf="currentStepResult.output" [selectedStepResult]="currentStepResult.output"
-                [selectedStepName]="currentStepResult.stepName"></app-selected-step-result>
-            </div>
-          </ng-container>
-        </div>
+                  resizerDragged(
+                    $event
+                  )
+                " (resizerDragStopped)="resizerDragStopped()"
+          (resizerDragStarted)="resizerDragStarted(stepsResultsAccordion)">
+        </ap-horizontal-sidebar-separator>
       </div>
-    </ng-container>
+      <div class="top-resizer-section thin-scrollbars ap-overflow-y-auto" #stepsResultsAccordion>
+        <ng-container *ngFor="let stepResult of logs.runResults; let stepIndex = index">
+          <app-step-result [isTrigger]="stepIndex === 0" [stepResult]="stepResult"
+            [selectedStepName]="selectedStepName$ | async">
+          </app-step-result>
+        </ng-container>
+      </div>
+      <div class="bottom-resizer-section ap-overflow-y-auto thin-scrollbars" #selectedStepResultContainer>
+        <ng-container *ngIf="
+                  currentStepResult$ | async as currentStepResult
+                ">
+          <div class="px-3">
+            <app-selected-step-result *ngIf="currentStepResult.output" [selectedStepResult]="currentStepResult.output"
+              [selectedStepName]="currentStepResult.stepName"></app-selected-step-result>
+          </div>
+        </ng-container>
+      </div>
+    </div>
   </ng-container>
-
-
-  <ng-template #loading>
-    <div class="loading-icon">
-      <ap-loading-icon></ap-loading-icon>
-    </div>
-  </ng-template>
-
-  <ng-template #noDetails>
-    <div class="no-details-message">
-      <p i18n>No details available for this run.</p>
-    </div>
-  </ng-template>
 </ng-container>
+
+
+<ng-template #loading>
+  <div class="loading-icon">
+    <ap-loading-icon></ap-loading-icon>
+  </div>
+</ng-template>
+}
+
+}
