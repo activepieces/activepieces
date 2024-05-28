@@ -23,6 +23,16 @@
   --code-editor-green: #0f9b68;
   --code-editor-blue: #0d57a8;
 }
+.view-boolean {
+  color: var(--code-editor-purple) !important;
+}
+.view-string {
+  color: var(--code-editor-blue) !important;
+}
+.view-number {
+  color: var(--code-editor-green) !important;
+}
+
 .jsoneditor-url {
     color: var(--code-editor-blue) !important;
   }

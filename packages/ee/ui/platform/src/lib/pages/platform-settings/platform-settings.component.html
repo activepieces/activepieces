@@ -7,8 +7,8 @@
         Updates
       </div>
       @if(isVersionMatch$ | async){
-      <svg-icon [applyClass]="true" class="ap-fill-disable ap-ml-1" [svgStyle]="{ width: '18px', height: '18px' }"
-        [matTooltip]="newUpdateMessage"
+      <svg-icon [applyClass]="true" class="ap-fill-disable ap-ml-1 ap-top-[6px] ap-right-[-6px] ap-absolute"
+        [svgStyle]="{ width: '8px', height: '8px' }" [matTooltip]="newUpdateMessage"
         src="assets/img/custom/notification_important.svg">
       </svg-icon>
       }
@@ -18,7 +18,7 @@
     </ng-template>
   </mat-tab>
   <mat-tab [label]="signingKeysTabTitle" *ngIf="!removeSigningKey">
-    <app-signing-keys-table ></app-signing-keys-table>
+    <app-signing-keys-table></app-signing-keys-table>
   </mat-tab>
   <mat-tab [label]="accountManagementEmailTabTitle" *ngIf="!removeMailServer">
     <app-smtp-settings [platform]="platform"></app-smtp-settings></mat-tab>
@@ -32,7 +32,7 @@
     <app-sso-settings></app-sso-settings>
   </mat-tab>
   <mat-tab label="Audit Logs" bodyClass="!ap-overflow-visible">
-    <app-audit-event-table [featureLocked]="auditLogFeatureLocked" ></app-audit-event-table>
+    <app-audit-event-table [featureLocked]="auditLogFeatureLocked"></app-audit-event-table>
   </mat-tab>
 </mat-tab-group>
 <ng-container *ngIf="fragmentChanged$ | async"></ng-container>

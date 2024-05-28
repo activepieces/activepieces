@@ -115,5 +115,5 @@ export function processMessageTimestamp(input: string) {
     return input;
   }
 
-  return null;
+  return undefined;
 }

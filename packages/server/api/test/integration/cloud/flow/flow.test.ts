@@ -92,6 +92,7 @@ describe('Flow API', () => {
 
         it.each([
             ProjectMemberRole.VIEWER,
+            ProjectMemberRole.OPERATOR,
             ProjectMemberRole.EXTERNAL_CUSTOMER,
         ])('Fails if user role is %s', async (testRole) => {
             // arrange
@@ -153,9 +154,34 @@ describe('Flow API', () => {
 
     describe('Update flow endpoint', () => {
         it.each([
-            ProjectMemberRole.ADMIN,
-            ProjectMemberRole.EDITOR,
-        ])('Succeeds if user role is %s', async (testRole) => {
+            {
+                role: ProjectMemberRole.ADMIN,
+                request: {
+                    type: FlowOperationType.CHANGE_STATUS,
+                    request: {
+                        status: 'ENABLED',
+                    },
+                },
+            },
+            {
+                role: ProjectMemberRole.EDITOR,
+                request: {
+                    type: FlowOperationType.CHANGE_STATUS,
+                    request: {
+                        status: 'ENABLED',
+                    },
+                },
+            },
+            {
+                role: ProjectMemberRole.OPERATOR,
+                request: {
+                    type: FlowOperationType.CHANGE_STATUS,
+                    request: {
+                        status: 'ENABLED',
+                    },
+                },
+            },
+        ])('Succeeds if user role is %s', async ({ role, request }) => {
             // arrange
             const mockPlatformId = apId()
             const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
@@ -175,7 +201,7 @@ describe('Flow API', () => {
                 email: mockUser.email,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                role: testRole,
+                role,
             })
             await databaseConnection.getRepository('project_member').save([mockProjectMember])
 
@@ -206,12 +232,7 @@ describe('Flow API', () => {
                 },
             })
 
-            const mockUpdateFlowStatusRequest = {
-                type: FlowOperationType.CHANGE_STATUS,
-                request: {
-                    status: 'ENABLED',
-                },
-            }
+
 
             // act
             const response = await app?.inject({
@@ -220,7 +241,7 @@ describe('Flow API', () => {
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
-                body: mockUpdateFlowStatusRequest,
+                body: request,
             })
 
             // assert
@@ -228,9 +249,34 @@ describe('Flow API', () => {
         })
 
         it.each([
-            ProjectMemberRole.VIEWER,
-            ProjectMemberRole.EXTERNAL_CUSTOMER,
-        ])('Fails if user role is %s', async (testRole) => {
+            {
+                role: ProjectMemberRole.VIEWER,
+                request: {
+                    type: FlowOperationType.CHANGE_STATUS,
+                    request: {
+                        status: 'ENABLED',
+                    },
+                },
+            },
+            {
+                role: ProjectMemberRole.EXTERNAL_CUSTOMER,
+                request: {
+                    type: FlowOperationType.CHANGE_STATUS,
+                    request: {
+                        status: 'ENABLED',
+                    },
+                },
+            },
+            {
+                role: ProjectMemberRole.OPERATOR,
+                request: {
+                    type: FlowOperationType.CHANGE_NAME,
+                    request: {
+                        displayName: 'hello',
+                    },
+                },
+            },
+        ])('Fails if user role is %s', async ({ role, request }) => {
             // arrange
             const mockPlatformId = apId()
             const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
@@ -250,7 +296,7 @@ describe('Flow API', () => {
                 email: mockUser.email,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                role: testRole,
+                role,
             })
             await databaseConnection.getRepository('project_member').save([mockProjectMember])
 
@@ -281,12 +327,6 @@ describe('Flow API', () => {
                 },
             })
 
-            const mockUpdateFlowStatusRequest = {
-                type: FlowOperationType.CHANGE_STATUS,
-                request: {
-                    status: 'ENABLED',
-                },
-            }
 
             // act
             const response = await app?.inject({
@@ -295,7 +335,7 @@ describe('Flow API', () => {
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
-                body: mockUpdateFlowStatusRequest,
+                body: request,
             })
 
             // assert
@@ -312,6 +352,7 @@ describe('Flow API', () => {
         it.each([
             ProjectMemberRole.ADMIN,
             ProjectMemberRole.EDITOR,
+            ProjectMemberRole.OPERATOR,
             ProjectMemberRole.VIEWER,
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
