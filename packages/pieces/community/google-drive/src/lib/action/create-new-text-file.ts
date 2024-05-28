@@ -74,6 +74,9 @@ export const googleDriveCreateNewTextFile = createAction({
       headers: {
         ...form.getHeaders(),
       },
+      queryParams: {
+        supportsAllDrives: String(context.propsValue.include_team_drives || false),
+      },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
