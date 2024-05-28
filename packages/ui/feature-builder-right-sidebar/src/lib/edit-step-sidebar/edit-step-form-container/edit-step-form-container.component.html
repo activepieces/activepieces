@@ -2,29 +2,37 @@
   <form class="ap-w-full" >
     <div class="ap-px-4 ap-py-2 expansion-panel-body">
       <div >
-        @if(selectedStep.type === ActionType.LOOP_ON_ITEMS)
+        @if(selectedSettings$ | async; as settings)
         {
-          <app-loop-step-input-form
-          [step]="selectedStep"
-        >
-        </app-loop-step-input-form>
-        }
-    
-        @if(selectedStep.type === ActionType.BRANCH)
-        {
-          <app-branch-step-input-form
-          [step]="selectedStep"
+          @if(selectedStep.type === ActionType.LOOP_ON_ITEMS && settings.type === ActionType.LOOP_ON_ITEMS)
+          {
+           
+            <app-loop-step-input-form
+            [step]="selectedStep"
+            [stepSettings]="settings.settings"
           >
-        </app-branch-step-input-form>
+          </app-loop-step-input-form>
+          }
+      
+          @if(selectedStep.type === ActionType.BRANCH && settings.type === ActionType.BRANCH)
+          {
+            <app-branch-step-input-form
+            [step]="selectedStep"
+            [stepSettings]="settings.settings"
+            >
+          </app-branch-step-input-form>
+          }
+         
+          @if(selectedStep.type === ActionType.CODE && settings.type === ActionType.CODE)
+          {
+            <app-code-step-input-form
+            [step]="selectedStep"
+            [stepSettings]="settings.settings"
+            >
+            </app-code-step-input-form>
+          }
         }
-       
-        @if(selectedStep.type === ActionType.CODE)
-        {
-          <app-code-step-input-form
-          [step]="selectedStep"
-          >
-          </app-code-step-input-form>
-        }
+     
     
         @if(selectedStep.type === ActionType.PIECE || selectedStep.type === TriggerType.PIECE)
         {
