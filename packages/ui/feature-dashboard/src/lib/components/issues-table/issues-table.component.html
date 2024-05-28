@@ -7,7 +7,6 @@
   @else {
   <ap-markdown [data]="betaNote"> </ap-markdown>
   <div class="ap-min-h-[70%]">
-
     <mat-slide-toggle *ngIf="nonCommunityEdition$ | async" [formControl]="toggleNotificationFormControl"
       class="ap-mt-[-62px] ap-mb-2 ap-float-right" color="primary" [labelPosition]="'before'" i18n>
       Send email notifications about flow issues
@@ -17,34 +16,23 @@
         <th mat-header-cell *matHeaderCellDef i18n>Flow Name</th>
         <td mat-cell *matCellDef="let issue">{{ issue.flowDisplayName }}</td>
       </ng-container>
-
-
       <ng-container matColumnDef="count">
-        <th mat-header-cell *matHeaderCellDef i18n>Description </th>
+        <th mat-header-cell *matHeaderCellDef i18n>Count</th>
         <td mat-cell *matCellDef="let issue" i18n>
-          @if(issue.count > 1)
-          {
-          This flow has failed {{ issue.count }} times
-          }
-          @else {
-          This flow has failed once
-          }
-
+          {{ issue.count }}
         </td>
       </ng-container>
-
-
-
-      <ng-container matColumnDef="lastOccurrence">
-        <th mat-header-cell *matHeaderCellDef i18n>Last Occurrence</th>
-        <td mat-cell *matCellDef="let issues">{{ issues.lastOccurrence | apDate:'mdhms' }}</td>
-
+      <ng-container matColumnDef="firstSeen">
+        <th mat-header-cell *matHeaderCellDef i18n>First Seen</th>
+        <td mat-cell *matCellDef="let issues">{{ issues.created | apDate:'mdhms' }}</td>
       </ng-container>
-
+      <ng-container matColumnDef="lastSeen">
+        <th mat-header-cell *matHeaderCellDef i18n>Last Seen</th>
+        <td mat-cell *matCellDef="let issues">{{ issues.lastOccurrence | apDate:'mdhms' }}</td>
+      </ng-container>
       <ng-container matColumnDef="action">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let issue">
-
           <div class="ap-flex ap-items-center">
             <ap-button btnSize="small" btnStyle="flat" (click)="$event.stopPropagation(); resolve(issue)">
               <div class="ap-flex ap-gap-1 ap-items-center ap-justify-center" i18n>
@@ -55,8 +43,6 @@
           </div>
         </td>
       </ng-container>
-
-
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row [class.ap-hidden]="dataSource.isLoading$ | async" class="ap-cursor-pointer hover:!ap-bg-hover"
         (click)="openRuns(row, $event)" (auxclick)="openRuns(row, $event)"
@@ -76,9 +62,6 @@
     </ng-container>
   </div>
   }
-
-
-
   <div class="ap-flex ap-justify-end ap-py-2">
     <ap-paginator> </ap-paginator>
   </div>
