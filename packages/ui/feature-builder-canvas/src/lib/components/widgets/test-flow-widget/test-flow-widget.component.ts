@@ -111,6 +111,7 @@ export class TestFlowWidgetComponent implements OnInit {
             .pipe(
               filter((run) => run.id === flowRun.id),
               tap((run) => {
+                console.log('FUCK ' + JSON.stringify(run));
                 this.store.dispatch(
                   canvasActions.setRun({
                     run,
