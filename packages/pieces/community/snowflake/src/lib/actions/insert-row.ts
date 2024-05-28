@@ -1,89 +1,34 @@
-import {
-  createAction,
-  PiecePropValueSchema,
-  Property,
-} from '@activepieces/pieces-framework';
-import snowflake from 'snowflake-sdk';
-import { snowflakeAuth } from '../../index';
-import { reject } from 'lodash';
-import { configureConnection, connect, getConnection } from '../common';
-
-const DEFAULT_APPLICATION_NAME = 'ActivePieces';
-const DEFAULT_QUERY_TIMEOUT = 30000;
+import { createAction } from '@activepieces/pieces-framework';
+import { snowflakeAuth } from '../../';
+import { configureConnection, connect, destroy, execute, snowflakeCommonProps } from '../common';
 
 export const insertRowAction = createAction({
-  name: 'insert-row',
-  displayName: 'Insert Row',
-  description: 'Insert a row into a table.',
-  auth: snowflakeAuth,
-  props: {
-    database: Property.Dropdown({
-      displayName: 'Database',
-      refreshers: [],
-      required: true,
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please connect your account first',
-          };
-        }
+	name: 'insert-row',
+	displayName: 'Insert Row',
+	description: 'Insert a row into a table.',
+	auth: snowflakeAuth,
+	props: {
+		database: snowflakeCommonProps.database,
+		schema: snowflakeCommonProps.schema,
+		table: snowflakeCommonProps.table,
+		table_column_values: snowflakeCommonProps.table_column_values,
+	},
+	async run(context) {
+		const tableName = context.propsValue.table;
+		const tableColumnValues = context.propsValue.table_column_values;
 
-        const authValue = auth as PiecePropValueSchema<typeof snowflakeAuth>;
-        const { username, password, role, database, warehouse, account } =
-          authValue;
+		const columns = Object.keys(tableColumnValues).join(',');
+		const valuePlaceholders = Object.keys(tableColumnValues)
+			.map(() => '?')
+			.join(', ');
+		const statement = `INSERT INTO ${tableName}(${columns}) VALUES(${valuePlaceholders})`;
 
-        const connection = configureConnection(authValue);
+		const connection = configureConnection(context.auth);
+		await connect(connection);
 
-        await connect(connection);
+		const response = await execute(connection, statement, Object.values(tableColumnValues));
+		await destroy(connection);
 
-        return {
-          disabled: false,
-          options: [],
-        };
-      },
-    }),
-  },
-  async run(context) {
-    const { username, password, role, database, warehouse, account } =
-      context.auth;
-
-    const connection = snowflake.createConnection({
-      application: context.propsValue.application,
-      timeout: context.propsValue.timeout,
-      username,
-      password,
-      role,
-      database,
-      warehouse,
-      account,
-    });
-
-    return new Promise((resolve, reject) => {
-      connection.connect(function (err, conn) {
-        if (err) {
-          reject(err);
-        }
-      });
-
-      const { sqlText, binds } = context.propsValue;
-
-      connection.execute({
-        sqlText,
-        binds: binds as snowflake.Binds,
-        complete: (err, stmt, rows) => {
-          if (err) {
-            reject(err);
-          }
-          connection.destroy((err, conn) => {
-            if (err) {
-              reject(err);
-            }
-          });
-          resolve(rows);
-        },
-      });
-    });
-  },
+		return response;
+	},
 });
