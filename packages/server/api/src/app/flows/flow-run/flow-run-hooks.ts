@@ -1,5 +1,4 @@
 export type FlowRunHooks = {
-    onPreStart({ projectId }: { projectId: string }): Promise<void>
     onFinish({
         projectId,
         tasks,
@@ -10,9 +9,6 @@ export type FlowRunHooks = {
 }
 
 const emptyHooks: FlowRunHooks = {
-    async onPreStart() {
-    // DO NOTHING
-    },
     async onFinish() {
         // DO NOTHING
     },
