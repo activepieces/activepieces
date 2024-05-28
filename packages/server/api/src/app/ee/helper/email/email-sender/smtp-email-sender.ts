@@ -5,7 +5,7 @@ import { defaultTheme } from '../../../../flags/theme'
 import { platformService } from '../../../../platform/platform.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
 import { system, SystemProp } from '@activepieces/server-shared'
-import { Platform } from '@activepieces/shared'
+import { isNil, Platform } from '@activepieces/shared'
 
 /**
  * Sends emails using SMTP
@@ -13,9 +13,13 @@ import { Platform } from '@activepieces/shared'
 export const smtpEmailSender: EmailSender = {
     async send({ email, platformId, templateData }) {
         const platform = await getPlatform(platformId)
-        const emailSubject = getEmailSubject(templateData.name)
+        const emailSubject = getEmailSubject(templateData.name, templateData.vars)
         const senderName = platform?.name ?? system.get(SystemProp.SMTP_SENDER_NAME)
         const senderEmail = platform?.smtpSenderEmail ?? system.get(SystemProp.SMTP_SENDER_EMAIL)
+
+        if (!isSmtpConfigured(platform)) {
+            return
+        }
 
         const emailBody = await renderEmailBody({
             platform,
@@ -31,6 +35,18 @@ export const smtpEmailSender: EmailSender = {
             html: emailBody,
         })
     },
+}
+
+
+const isSmtpConfigured = (platform: Platform | null): boolean => {
+    const isConfigured = (host: string | undefined, port: string | undefined, user: string | undefined, password: string | undefined): boolean => {
+        return !isNil(host) && !isNil(port) && !isNil(user) && !isNil(password)
+    }
+
+    const isPlatformSmtpConfigured = platform && isConfigured(platform.smtpHost, platform.smtpPort?.toString(), platform.smtpUser, platform.smtpPassword)
+    const isSmtpSystemConfigured = isConfigured(system.get(SystemProp.SMTP_HOST), system.get(SystemProp.SMTP_PORT), system.get(SystemProp.SMTP_USERNAME), system.get(SystemProp.SMTP_PASSWORD))
+
+    return isPlatformSmtpConfigured || isSmtpSystemConfigured
 }
 
 const getPlatform = async (platformId: string | undefined): Promise<Platform | null> => {
@@ -65,7 +81,7 @@ const initSmtpClient = (platform: Platform | null): Transporter => {
     })
 }
 
-const getEmailSubject = (templateName: EmailTemplateData['name']): string => {
+const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<string, string>): string => {
     const templateToSubject: Record<EmailTemplateData['name'], string> = {
         'invitation-email': 'You have been invited to a team',
         'quota-50': '[ACTION REQUIRED] 50% of your Activepieces tasks are consumed',
@@ -73,6 +89,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name']): string => {
         'quota-100': '[URGENT] 100% of your Activepieces tasks are consumed',
         'verify-email': 'Verify your email address',
         'reset-password': 'Reset your password',
+        'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
     }
 
     return templateToSubject[templateName]

@@ -92,3 +92,10 @@ export const isFlowStateTerminal = (status: FlowRunStatus): boolean => {
         || status === FlowRunStatus.INTERNAL_ERROR 
         || status === FlowRunStatus.QUOTA_EXCEEDED
 }
+
+export const isFailedState = (status: FlowRunStatus): boolean => {
+    return status === FlowRunStatus.FAILED
+        || status === FlowRunStatus.INTERNAL_ERROR
+        || status === FlowRunStatus.QUOTA_EXCEEDED
+        || status === FlowRunStatus.TIMEOUT
+}

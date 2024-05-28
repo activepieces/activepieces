@@ -6,7 +6,7 @@ import {
   blocks,
   slackInfo,
 } from '../common/props';
-import { slackSendMessage } from '../common/utils';
+import { processMessageTimestamp, slackSendMessage } from '../common/utils';
 import { slackAuth } from '../../';
 
 export const slackSendMessageAction = createAction({
@@ -31,14 +31,14 @@ export const slackSendMessageAction = createAction({
     threadTs: Property.ShortText({
       displayName: 'Thread ts',
       description:
-        'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.',
+        'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.Alternatively, you can easily obtain the message link by clicking on the three dots next to the parent message and selecting the `Copy link` option.',
       required: false,
     }),
     blocks,
   },
   async run(context) {
     const token = context.auth.access_token;
-    const { text, channel, username, profilePicture, file, threadTs, blocks } =
+    const { text, channel, username, profilePicture, threadTs, file, blocks } =
       context.propsValue;
 
     return slackSendMessage({
@@ -47,7 +47,7 @@ export const slackSendMessageAction = createAction({
       username,
       profilePicture,
       conversationId: channel,
-      threadTs,
+      threadTs: threadTs ? processMessageTimestamp(threadTs) : undefined,
       file,
       blocks,
     });

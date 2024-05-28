@@ -2,13 +2,23 @@ import { cp, mkdir, rmdir } from 'node:fs/promises'
 import path from 'node:path'
 import { Worker } from 'worker_threads'
 import { fileExists, logger, system, SystemProp } from '@activepieces/server-shared'
-import { EngineOperation, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
+import { CodeSandboxType, EngineOperation, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 import fs from 'fs-extra'
 import {
     AbstractSandbox,
     ExecuteSandboxResult,
     SandboxCtorParams,
 } from './abstract-sandbox'
+
+// This a workound to make isolated-vm work in the worker thread check https://github.com/laverdet/isolated-vm/pull/402
+/* eslint-disable */
+const codeSandboxType = system.getOrThrow(SystemProp.CODE_SANDBOX_TYPE);
+let ivm: any;
+if (codeSandboxType === CodeSandboxType.V8_ISOLATE) {
+    ivm = import('isolated-vm');
+    const _strongReference = ivm.Isolate
+}
+/* eslint-enable */
 
 const memoryLimit = Math.floor((Number(system.getOrThrow(SystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
 export class FileSandbox extends AbstractSandbox {

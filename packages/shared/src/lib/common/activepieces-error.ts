@@ -2,9 +2,10 @@ import { FileId } from '../file/file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { FlowVersionId } from '../flows/flow-version'
-import { ProjectId } from '../project'
+import { ProjectId, ProjectMemberRole } from '../project'
 import { UserId } from '../user'
 import { ApId } from './id-generator'
+import { Permission } from './security'
 
 export class ActivepiecesError extends Error {
     constructor(public error: ErrorParams, message?: string) {
@@ -93,6 +94,8 @@ ErrorCode.PERMISSION_DENIED,
 {
     userId: UserId
     projectId: ProjectId
+    role: ProjectMemberRole
+    permission: Permission | undefined
 }
 >
 

@@ -33,6 +33,7 @@ export async function enforceLimits(): Promise<void> {
                 embeddingEnabled: license.embeddingEnabled,
                 ssoEnabled: license.ssoEnabled,
                 auditLogEnabled: license.auditLogEnabled,
+                flowIssuesEnabled: license.flowIssuesEnabled,
                 gitSyncEnabled: license.gitSyncEnabled,
                 customDomainsEnabled: license.customDomainsEnabled,
                 customAppearanceEnabled: license.customAppearanceEnabled,

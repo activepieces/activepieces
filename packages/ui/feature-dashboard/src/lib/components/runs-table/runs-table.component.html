@@ -59,10 +59,6 @@
       </mat-form-field>
     </div>
 
-    <mat-slide-toggle *ngIf="nonCommunityEdition$ | async" [formControl]="toggleNotificationFormControl"
-      class="ap-mt-[-62px] ap-mb-2 ap-float-right" color="primary" [labelPosition]="'before'" i18n>
-      Send email notifications about failed runs
-    </mat-slide-toggle>
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="Runs">
         <ng-container matColumnDef="flowName">
@@ -138,6 +134,5 @@
     </div>
   </div>
 </div>
-<ng-container *ngIf="updateNotificationsValue$ | async"></ng-container>
 <ng-container *ngIf="filtersChanged$ | async"></ng-container>
 <ng-container *ngIf="retryFlow$ | async"> </ng-container>
