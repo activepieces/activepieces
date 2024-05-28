@@ -1,6 +1,5 @@
 import dayjs from 'dayjs'
 import { issuesService } from '../../ee/issues/issues-service'
-import { notifications } from '../../helper/notifications'
 import { flowQueue } from '../../workers/flow-worker/flow-queue'
 import { JobType } from '../../workers/flow-worker/queues/queue'
 import { flowRunHooks } from './flow-run-hooks'
@@ -10,7 +9,7 @@ import {
     ErrorCode,
     ExecutionType,
     FlowRun,
-    FlowRunStatus,
+    isFailedState,
     isNil,
     PauseType,
     ProgressUpdateType,
@@ -54,16 +53,13 @@ export const flowRunSideEffects = {
             .getHooks()
             .onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks! })
         if (flowRun.environment === RunEnvironment.PRODUCTION) {
-            if (flowRun.status == FlowRunStatus.FAILED || flowRun.status == FlowRunStatus.INTERNAL_ERROR || flowRun.status == FlowRunStatus.QUOTA_EXCEEDED || flowRun.status == FlowRunStatus.TIMEOUT) {
+            if (isFailedState(flowRun.status)) {
                 await issuesService.add({
                     flowId: flowRun.flowId,
                     projectId: flowRun.projectId,
                 })
             }
         }
-        await notifications.notifyRun({
-            flowRun,
-        })
     },
     async start({
         flowRun,
