@@ -5,12 +5,10 @@ import {
   ViewChild,
 } from '@angular/core';
 import {
-  ApEdition,
   FlowRunStatus,
   FlowId,
   FlowRetryStrategy,
   FlowRun,
-  NotificationStatus,
   ProjectId,
   SeekPage,
   spreadIfDefined,
@@ -25,14 +23,12 @@ import {
   startWith,
   Subject,
   switchMap,
-  take,
   tap,
 } from 'rxjs';
 import { RunsTableDataSource } from './runs-table.datasource';
 import {
   InstanceRunService,
   ApPaginatorComponent,
-  FlagService,
   NavigationService,
   AuthenticationService,
   FlowService,
@@ -76,11 +72,8 @@ export class RunsTableComponent implements OnInit {
   searchControl: FormControl<string> = new FormControl('', {
     nonNullable: true,
   });
-  nonCommunityEdition$: Observable<boolean>;
-  toggleNotificationFormControl: FormControl<boolean> = new FormControl();
   dataSource!: RunsTableDataSource;
-  displayedColumns = ['flowName', 'status', 'started', 'finished', 'action'];
-  updateNotificationsValue$: Observable<unknown>;
+  displayedColumns = ['flowName', 'status', 'started', 'duration', 'action'];
   refreshTableForReruns$: Subject<boolean> = new Subject();
   statusFilterControl: FormControl<FlowRunStatus | typeof allOptionValue> =
     new FormControl(allOptionValue, { nonNullable: true });
@@ -102,7 +95,6 @@ export class RunsTableComponent implements OnInit {
 
   constructor(
     private activatedRoute: ActivatedRoute,
-    private flagsService: FlagService,
     private projectService: ProjectService,
     private instanceRunService: InstanceRunService,
     private navigationService: NavigationService,
@@ -215,30 +207,6 @@ export class RunsTableComponent implements OnInit {
         }
       }),
       map(() => undefined)
-    );
-
-    this.nonCommunityEdition$ = this.flagsService
-      .getEdition()
-      .pipe(map((res) => res !== ApEdition.COMMUNITY));
-    this.updateNotificationsValue$ = this.projectService.currentProject$.pipe(
-      take(1),
-      tap((project) => {
-        this.toggleNotificationFormControl.setValue(
-          project?.notifyStatus === NotificationStatus.ALWAYS
-        );
-      }),
-      switchMap(() => {
-        return this.toggleNotificationFormControl.valueChanges.pipe(
-          distinctUntilChanged(),
-          switchMap((value) => {
-            return this.projectService.update(this.currentProject, {
-              notifyStatus: value
-                ? NotificationStatus.ALWAYS
-                : NotificationStatus.NEVER,
-            });
-          })
-        );
-      })
     );
 
     this.dataSource = new RunsTableDataSource(

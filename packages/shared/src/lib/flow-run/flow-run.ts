@@ -32,11 +32,12 @@ export const FlowRun = Type.Object({
     logsFileId: Nullable(Type.String()),
     tasks: Type.Optional(Type.Number()),
     status: Type.Enum(FlowRunStatus),
+    duration: Type.Optional(Type.Number()),
     startTime: Type.String(),
     finishTime: Type.String(),
     environment: Type.Enum(RunEnvironment),
     pauseMetadata: Type.Optional(PauseMetadata),
-    ...ExecutionState,
+    steps: Type.Record(Type.String(), Type.Unknown()),
 })
 
 export type FlowRun = Static<typeof FlowRun> & ExecutionState

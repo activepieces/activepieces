@@ -2,7 +2,6 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../../model/global-builder-state.model';
 
 import {
-  FlowRunStatus,
   FlowRun,
   FlowVersion,
   FlowVersionState,
@@ -333,7 +332,7 @@ const selectStepResultsAccordion = createSelector(
   selectCurrentFlow,
   selectCurrentFlowRun,
   (flow, run) => {
-    if (!run || run.status === FlowRunStatus.RUNNING) {
+    if (!run || !run.steps) {
       return [];
     }
     const steps = flowHelper.getAllSteps(flow.version.trigger);

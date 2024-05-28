@@ -1,6 +1,6 @@
 
 import { Static, Type } from '@sinclair/typebox'
-import { ExecutionState } from './execution-output'
+import { ProgressUpdateType } from '../../engine'
 
 export enum FlowRunStatus {
     FAILED = 'FAILED',
@@ -21,6 +21,8 @@ export enum PauseType {
 export const DelayPauseMetadata = Type.Object({
     type: Type.Literal(PauseType.DELAY),
     resumeDateTime: Type.String(),
+    handlerId: Type.Optional(Type.String({})),
+    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
 })
 
 export type DelayPauseMetadata = Static<typeof DelayPauseMetadata>
@@ -30,11 +32,12 @@ export const WebhookPauseMetadata = Type.Object({
     requestId: Type.String(),
     response: Type.Unknown(),
     handlerId: Type.Optional(Type.String({})),
+    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
 })
 export type WebhookPauseMetadata = Static<typeof WebhookPauseMetadata>
 
 export const PauseMetadata = Type.Union([DelayPauseMetadata, WebhookPauseMetadata])
-export type PauseMetadata = DelayPauseMetadata | WebhookPauseMetadata
+export type PauseMetadata = Static<typeof PauseMetadata>
 
 export const StopResponse = Type.Object({
     status: Type.Optional(Type.Number()),
@@ -52,7 +55,7 @@ export const FlowError = Type.Object({
 export type FlowError = Static<typeof FlowError>
 
 const BaseExecutionResponse = {
-    ...ExecutionState,
+    steps: Type.Record(Type.String(), Type.Unknown()),
     duration: Type.Number(),
     tasks: Type.Number(),
     tags: Type.Optional(Type.Array(Type.String())),
@@ -78,4 +81,21 @@ export const FlowRunResponse = Type.Union([
         ]),
     }),
 ])
-export type FlowRunResponse = Static<typeof FlowRunResponse> & ExecutionState
+export type FlowRunResponse = Static<typeof FlowRunResponse>
+
+
+export const isFlowStateTerminal = (status: FlowRunStatus): boolean => {
+    return status === FlowRunStatus.SUCCEEDED
+        || status == FlowRunStatus.STOPPED
+        || status === FlowRunStatus.TIMEOUT
+        || status === FlowRunStatus.FAILED 
+        || status === FlowRunStatus.INTERNAL_ERROR 
+        || status === FlowRunStatus.QUOTA_EXCEEDED
+}
+
+export const isFailedState = (status: FlowRunStatus): boolean => {
+    return status === FlowRunStatus.FAILED
+        || status === FlowRunStatus.INTERNAL_ERROR
+        || status === FlowRunStatus.QUOTA_EXCEEDED
+        || status === FlowRunStatus.TIMEOUT
+}

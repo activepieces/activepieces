@@ -1,14 +1,9 @@
-import { StatusCodes } from 'http-status-codes'
-import { fileService } from '../../file/file.service'
+import { tasksLimit } from '../../ee/project-plan/tasks-limit'
 import {
     flowRunService,
-    HookType,
 } from '../../flows/flow-run/flow-run-service'
 import { engineHelper, generateWorkerToken } from '../../helper/engine-helper'
 import { getPiecePackage } from '../../pieces/piece-metadata-service'
-import { EngineHttpResponse, engineResponseWatcher } from './engine-response-watcher'
-import { flowWorkerHooks } from './flow-worker-hooks'
-import { OneTimeJobData } from './job-data'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
     Action, ActionType,
@@ -18,19 +13,11 @@ import {
     CodeAction,
     ErrorCode,
     ExecutionType,
-    ExecutioOutputFile,
-    File,
-    FileCompression,
     FileId,
-    FileType,
     flowHelper,
-    FlowRunId,
-    FlowRunResponse,
     FlowRunStatus,
     FlowVersion,
     isNil,
-    MAX_LOG_SIZE,
-    PauseType,
     PiecePackage,
     ProjectId,
     ResumeExecuteFlowOperation,
@@ -40,13 +27,7 @@ import {
     Trigger,
     TriggerType,
 } from '@activepieces/shared'
-import { logSerializer, Sandbox, SandBoxCacheType, sandboxProvisioner, serverApiService } from 'server-worker'
-
-type FinishExecutionParams = {
-    flowRunId: FlowRunId
-    logFileId: FileId
-    result: FlowRunResponse
-}
+import { OneTimeJobData, Sandbox, SandBoxCacheType, sandboxProvisioner, serverApiService } from 'server-worker'
 
 type LoadInputAndLogFileIdParams = {
     flowVersion: FlowVersion
@@ -84,38 +65,6 @@ const extractFlowPieces = async ({
     return pieces
 }
 
-const finishExecution = async (
-    params: FinishExecutionParams,
-): Promise<void> => {
-    logger.trace(params, '[FlowWorker#finishExecution] params')
-
-    const { flowRunId, logFileId, result } = params
-
-    if (result.status === FlowRunStatus.PAUSED) {
-        await flowRunService.pause({
-            flowRunId,
-            logFileId,
-            pauseMetadata: result.pauseMetadata!,
-        })
-    }
-    else {
-        await flowRunService.finish({
-            flowRunId,
-            status: getTerminalStatus(result.status),
-            tasks: result.tasks,
-            logsFileId: logFileId,
-            tags: result.tags ?? [],
-        })
-    }
-}
-
-const getTerminalStatus = (
-    status: FlowRunStatus,
-): FlowRunStatus => {
-    return status == FlowRunStatus.STOPPED
-        ? FlowRunStatus.SUCCEEDED
-        : status
-}
 
 
 const loadInputAndLogFileId = async ({
@@ -126,6 +75,7 @@ const loadInputAndLogFileId = async ({
         flowVersion,
         flowRunId: jobData.runId,
         projectId: jobData.projectId,
+        serverHandlerId: jobData.synchronousHandlerId,
     }
 
     const flowRun = await flowRunService.getOnePopulatedOrThrow({
@@ -150,9 +100,10 @@ const loadInputAndLogFileId = async ({
                     tasks: flowRun.tasks ?? 0,
                     executionType: ExecutionType.RESUME,
                     steps: flowRun.steps,
+                    runEnvironment: jobData.environment,
                     resumePayload: jobData.payload as ResumePayload,
+                    progressUpdateType: jobData.progressUpdateType,
                 },
-                logFileId: flowRun.logsFileId,
             }
         }
         case ExecutionType.BEGIN:
@@ -170,6 +121,8 @@ const loadInputAndLogFileId = async ({
                 input: {
                     triggerPayload: jobData.payload,
                     executionType: ExecutionType.BEGIN,
+                    runEnvironment: jobData.environment,
+                    progressUpdateType: jobData.progressUpdateType,
                     ...baseInput,
                 },
             }
@@ -195,12 +148,12 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         })
         return
     }
-    await flowWorkerHooks
-        .getHooks()
-        .preExecute({ projectId: jobData.projectId, runId: jobData.runId })
     
     try {
-        const { input, logFileId } = await loadInputAndLogFileId({
+        await tasksLimit.limit({
+            projectId: jobData.projectId,
+        })
+        const { input } = await loadInputAndLogFileId({
             flowVersion: flow.version,
             jobData,
         })
@@ -232,46 +185,6 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             throwErrorToRetry(retryError, jobData.runId)
         }
 
-        if (
-            jobData.synchronousHandlerId &&
-            jobData.hookType === HookType.BEFORE_LOG
-        ) {
-            const resultHttpResponse = await getFlowResponse(result)
-            await engineResponseWatcher.publish(
-                jobData.runId,
-                jobData.synchronousHandlerId,
-                resultHttpResponse,
-            )
-        }
-
-        const logsFile = await saveToLogFile({
-            fileId: logFileId,
-            projectId: jobData.projectId,
-            executionOutput: {
-                executionState: {
-                    steps: result.steps,
-                },
-            },
-        })
-
-        await finishExecution({
-            flowRunId: jobData.runId,
-            logFileId: logsFile.id,
-            result,
-        })
-
-        if (
-            jobData.synchronousHandlerId &&
-            jobData.hookType === HookType.AFTER_LOG
-        ) {
-            const resultHttpResponse = await getFlowResponse(result)
-            await engineResponseWatcher.publish(
-                jobData.runId,
-                jobData.synchronousHandlerId,
-                resultHttpResponse,
-            )
-        }
-
         logger.info(
             `[FlowWorker#executeFlow] flowRunId=${jobData.runId
             } executionOutputStatus=${result.status} sandboxId=${sandbox.boxId
@@ -283,34 +196,51 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             e instanceof ActivepiecesError &&
             (e as ActivepiecesError).error.code === ErrorCode.QUOTA_EXCEEDED
         ) {
-            await flowRunService.finish({
-                flowRunId: jobData.runId,
-                status: FlowRunStatus.QUOTA_EXCEEDED,
-                tasks: 0,
-                logsFileId: null,
-                tags: [],
+            await serverApiService(workerToken).updateRunStatus({
+                runDetails: {
+                    steps: {},
+                    duration: 0,
+                    status: FlowRunStatus.QUOTA_EXCEEDED,
+                    tasks: 0,
+                    tags: [],
+                },
+                progressUpdateType: jobData.progressUpdateType,
+                workerHandlerId: jobData.synchronousHandlerId,
+                runId: jobData.runId,
             })
+
         }
         else if (
             e instanceof ActivepiecesError &&
             e.error.code === ErrorCode.EXECUTION_TIMEOUT
         ) {
-            await flowRunService.finish({
-                flowRunId: jobData.runId,
-                status: FlowRunStatus.TIMEOUT,
-                // TODO REVISIT THIS
-                tasks: 10,
-                logsFileId: null,
-                tags: [],
+            await serverApiService(workerToken).updateRunStatus({
+                runDetails: {
+                    steps: {},
+                    duration: 0,
+                    status: FlowRunStatus.TIMEOUT,
+                    // TODO REVISIT THIS
+                    tasks: 10,
+                    tags: [],
+                },
+                progressUpdateType: jobData.progressUpdateType,
+                workerHandlerId: jobData.synchronousHandlerId,
+                runId: jobData.runId,
             })
+
         }
         else {
-            await flowRunService.finish({
-                flowRunId: jobData.runId,
-                status: FlowRunStatus.INTERNAL_ERROR,
-                tasks: 0,
-                logsFileId: null,
-                tags: [],
+            await serverApiService(workerToken).updateRunStatus({
+                runDetails: {
+                    steps: {},
+                    duration: 0,
+                    status: FlowRunStatus.INTERNAL_ERROR,
+                    tasks: 0,
+                    tags: [],
+                },
+                progressUpdateType: jobData.progressUpdateType,
+                workerHandlerId: jobData.synchronousHandlerId,
+                runId: jobData.runId,
             })
             throwErrorToRetry(e as Error, jobData.runId)
         }
@@ -324,36 +254,6 @@ function throwErrorToRetry(error: Error, runId: string): void {
         '[FlowWorker#executeFlow] Error executing flow run id' + runId,
     )
     throw error
-}
-
-async function saveToLogFile({
-    fileId,
-    projectId,
-    executionOutput,
-}: {
-    fileId: FileId | undefined
-    projectId: ProjectId
-    executionOutput: ExecutioOutputFile
-}): Promise<File> {
-    const serializedLogs = await logSerializer.serialize(executionOutput)
-
-    if (serializedLogs.byteLength > MAX_LOG_SIZE) {
-        const errors = new Error(
-            'Execution Output is too large, maximum size is ' + MAX_LOG_SIZE,
-        )
-        exceptionHandler.handle(errors)
-        throw errors
-    }
-
-    const logsFile = await fileService.save({
-        fileId,
-        projectId,
-        data: serializedLogs,
-        type: FileType.FLOW_RUN_LOG,
-        compression: FileCompression.GZIP,
-    })
-
-    return logsFile
 }
 
 function getCodeSteps(
@@ -414,61 +314,3 @@ export const flowWorker = {
     executeFlow,
 }
 
-
-async function getFlowResponse(
-    result: FlowRunResponse,
-): Promise<EngineHttpResponse> {
-    switch (result.status) {
-        case FlowRunStatus.PAUSED:
-            if (result.pauseMetadata && result.pauseMetadata.type === PauseType.WEBHOOK) {
-                return {
-                    status: StatusCodes.OK,
-                    body: result.pauseMetadata.response,
-                    headers: {},
-                }
-            }
-            return {
-                status: StatusCodes.NO_CONTENT,
-                body: {},
-                headers: {},
-            }
-        case FlowRunStatus.STOPPED:
-            return {
-                status: result.stopResponse?.status ?? StatusCodes.OK,
-                body: result.stopResponse?.body,
-                headers: result.stopResponse?.headers ?? {},
-            }
-        case FlowRunStatus.INTERNAL_ERROR:
-            return {
-                status: StatusCodes.INTERNAL_SERVER_ERROR,
-                body: {
-                    message: 'An internal error has occurred',
-                },
-                headers: {},
-            }
-        case FlowRunStatus.FAILED:
-            return {
-                status: StatusCodes.INTERNAL_SERVER_ERROR,
-                body: {
-                    message: 'The flow has failed and there is no response returned',
-                },
-                headers: {},
-            }
-        case FlowRunStatus.TIMEOUT:
-        case FlowRunStatus.RUNNING:
-            return {
-                status: StatusCodes.GATEWAY_TIMEOUT,
-                body: {
-                    message: 'The request took too long to reply',
-                },
-                headers: {},
-            }
-        case FlowRunStatus.SUCCEEDED:
-        case FlowRunStatus.QUOTA_EXCEEDED:
-            return {
-                status: StatusCodes.NO_CONTENT,
-                body: {},
-                headers: {},
-            }
-    }
-}

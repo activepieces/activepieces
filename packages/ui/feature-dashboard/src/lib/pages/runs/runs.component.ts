@@ -61,8 +61,8 @@ import { Observable, take } from 'rxjs';
               async){
               <svg-icon
                 [applyClass]="true"
-                class="ap-fill-danger"
-                [svgStyle]="{ width: '14px', height: '14px' }"
+                class="ap-fill-danger ap-top-[6px] ap-right-[-6px] ap-absolute"
+                [svgStyle]="{ width: '8px', height: '8px' }"
                 src="assets/img/custom/notification_important.svg"
               >
               </svg-icon>

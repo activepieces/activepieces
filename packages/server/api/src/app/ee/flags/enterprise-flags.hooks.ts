@@ -9,6 +9,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags = { ...flags }
         const hostname = request.hostname
+        const hostUrl = `https://${hostname}`
         const platformId = await resolvePlatformIdForRequest(request)
         if (isNil(platformId)) {
             return modifiedFlags
@@ -20,6 +21,9 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             ),
             [ThirdPartyAuthnProviderEnum.GITHUB]: !isNil(
                 platform.federatedAuthProviders.github,
+            ),
+            [ThirdPartyAuthnProviderEnum.SAML]: !isNil(
+                platform.federatedAuthProviders.saml,
             ),
         }
         modifiedFlags[ApFlagId.EMAIL_AUTH_ENABLED] = platform.emailAuthEnabled
@@ -39,10 +43,11 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.MANAGE_PROJECT_PIECES_ENABLED] = true
             modifiedFlags[ApFlagId.SHOW_SIGN_UP_LINK] = false
             modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
-            modifiedFlags[ApFlagId.FRONTEND_URL] = `https://${hostname}`
+            modifiedFlags[ApFlagId.FRONTEND_URL] = `${hostUrl}`
+            modifiedFlags[ApFlagId.SAML_AUTH_ACS_URL] = `${hostUrl}/api/authn/saml/acs`
             modifiedFlags[
                 ApFlagId.WEBHOOK_URL_PREFIX
-            ] = `https://${hostname}/api/v1/webhooks`
+            ] = `${hostUrl}/api/v1/webhooks`
             modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] =
         flagService.getThirdPartyRedirectUrl(platform.id, hostname)
             modifiedFlags[ApFlagId.PRIVACY_POLICY_URL] = platform.privacyPolicyUrl

@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { combineLatest, map, Observable, of, tap } from 'rxjs';
 import {
-  InstanceRunService,
   WebSocketService,
   fadeIn400msWithoutOut,
   initializedRun,
@@ -15,12 +14,13 @@ import {
   TriggerType,
   WebsocketClientEvent,
   WebsocketServerEvent,
+  isFlowStateTerminal,
 } from '@activepieces/shared';
 import {
   BuilderSelectors,
   TestRunBarComponent,
 } from '@activepieces/ui/feature-builder-store';
-import { switchMap, take } from 'rxjs/operators';
+import { filter, switchMap, take, takeWhile } from 'rxjs/operators';
 import { canvasActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
@@ -38,7 +38,6 @@ export class TestFlowWidgetComponent implements OnInit {
   selectedFlow$: Observable<PopulatedFlow | undefined>;
   instanceRunStatusChecker$: Observable<FlowRun>;
   executeTest$: Observable<FlowRun | null>;
-  testResult$: Observable<FlowRun>;
   shouldHideTestWidget$: Observable<boolean>;
   testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
   isTriggerTested$: Observable<boolean>;
@@ -46,7 +45,6 @@ export class TestFlowWidgetComponent implements OnInit {
   readonly savingText = $localize`Saving...`;
   constructor(
     private store: Store,
-    private instanceRunService: InstanceRunService,
     private snackbar: MatSnackBar,
     private websockService: WebSocketService
   ) {}
@@ -93,7 +91,7 @@ export class TestFlowWidgetComponent implements OnInit {
       .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_STARTED)
       .pipe(
         take(1),
-        tap((flowRun) => {
+        switchMap((flowRun) => {
           this.store.dispatch(
             canvasActions.setRun({
               run: flowRun ?? initializedRun,
@@ -108,17 +106,19 @@ export class TestFlowWidgetComponent implements OnInit {
               },
             }
           );
-        })
-      );
-
-    this.testResult$ = this.websockService.socket
-      .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS)
-      .pipe(
-        switchMap((flowRun) => {
-          return this.instanceRunService.get(flowRun.id);
-        }),
-        tap((instanceRun) => {
-          this.store.dispatch(canvasActions.setRun({ run: instanceRun }));
+          return this.websockService.socket
+            .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS)
+            .pipe(
+              filter((run) => run.id === flowRun.id),
+              tap((run) => {
+                this.store.dispatch(
+                  canvasActions.setRun({
+                    run,
+                  })
+                );
+              }),
+              takeWhile((run) => !isFlowStateTerminal(run.status))
+            );
         })
       );
   }

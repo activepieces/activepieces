@@ -72,6 +72,12 @@ export class TelemetryService {
     });
   }
 
+  reset() {
+    if (this.analytics) {
+      this.analytics.reset();
+    }
+  }
+
   capture(event: TelemetryEvent) {
     this.flagService
       .getAllFlags()
