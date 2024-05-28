@@ -22,6 +22,7 @@
   "private": true,
   "dependencies": {
     "@angular/animations": "16.2.6",
+    "newrelic": "latest",
     "@angular/cdk": "16.2.6",
     "@angular/common": "16.2.6",
     "@angular/compiler": "16.2.6",

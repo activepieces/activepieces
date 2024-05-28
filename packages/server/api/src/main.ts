@@ -5,6 +5,7 @@ import { setupApp } from './app/app'
 import { FastifyInstance } from 'fastify'
 import { enforceLimits } from './app/ee/helper/license-validator'
 import { SystemProp, logger, system } from 'server-shared'
+import 'newrelic'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {

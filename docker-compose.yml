@@ -5,6 +5,9 @@ services:
     restart: unless-stopped
     image: ${AP_DOCKER_IMAGE}
     platform: linux/arm64
+    environment:
+      - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
+      - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME}
     ports:
       - ${AP_DOCKER_IMAGE_PORT}
     depends_on:
