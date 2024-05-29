@@ -43,6 +43,7 @@ import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
 import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
+import { AlertEntity } from '../ee/alerts/alerts-entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -69,6 +70,7 @@ function getEntities(): EntitySchema<unknown>[] {
         TagEntity,
         PieceTagEntity,
         IssueEntity,
+        AlertEntity
     ]
 
     switch (edition) {

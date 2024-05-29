@@ -2,12 +2,12 @@ import { jwtUtils } from '../../../helper/jwt-utils'
 import { getEdition } from '../../../helper/secret-helper'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
-import { projectMemberService } from '../../project-members/project-member.service'
+import { alertsService } from '../../alerts/alerts-service'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
-import { OtpType } from '@activepieces/ee-shared'
+import { AlertChannel, OtpType } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, isNil, NotificationStatus, User } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, isNil, User } from '@activepieces/shared'
 
 const EDITION = getEdition()
 
@@ -62,15 +62,15 @@ export const emailService = {
             createdAt,
         })
         const project = await projectService.getOneOrThrow(projectId)
-        if (project.notifyStatus === NotificationStatus.NEVER) {
-            return
-        }
         // TODO remove the hardcoded limit
-        const users = await projectMemberService.list(projectId, null, 50)
-        const sendEmails = users.data.map(async (projectMember) => {
+        const alerts = (await alertsService.list({ projectId, cursor: undefined, limit: 50 }))
+        const sendEmails = alerts.data.map(async (alert) => {
+            if (alert.channel !== AlertChannel.EMAIL) {
+                return
+            }
             const userData = await userService.getByPlatformAndEmail({
                 platformId: project.platformId,
-                email: projectMember.email,
+                email: alert.details,
             })
             if (isNil(userData)) {
                 return

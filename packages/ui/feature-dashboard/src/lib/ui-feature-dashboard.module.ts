@@ -38,6 +38,7 @@ import {
   SyncProjectComponent,
 } from '@activepieces/ui-feature-git-sync';
 import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewards-dialog.component';
+import { NewAlertDialogComponent } from './components/dialogs/new-alert-dialog/new-alert-dialog.component';
 
 @NgModule({
   imports: [
@@ -77,6 +78,7 @@ import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewa
     RenameFlowDialogComponent,
     NewConnectionDialogComponent,
     ContactSalesComponent,
+    NewAlertDialogComponent,
   ],
   providers: [DatePipe],
 })

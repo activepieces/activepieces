@@ -12,18 +12,20 @@ import { UiCommonModule } from '@activepieces/ui/common';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { SyncProjectComponent } from '@activepieces/ui-feature-git-sync';
 import { GeneralSettingsComponent } from '../../components/general-settings/general-settings.component';
+import { AlertsTableComponent } from "../../components/alerts-table/alerts-table.component";
 
 @Component({
-  standalone: true,
-  imports: [
-    CommonModule,
-    UiCommonModule,
-    SyncProjectComponent,
-    UiFeaturePiecesModule,
-    GeneralSettingsComponent,
-  ],
-  templateUrl: './settings-page.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    templateUrl: './settings-page.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        CommonModule,
+        UiCommonModule,
+        SyncProjectComponent,
+        UiFeaturePiecesModule,
+        GeneralSettingsComponent,
+        AlertsTableComponent
+    ]
 })
 export class SettingsPageComponent implements AfterViewInit {
   @ViewChild('tabs') tabGroup?: MatTabGroup;
@@ -32,10 +34,12 @@ export class SettingsPageComponent implements AfterViewInit {
   readonly gitSyncTableTitle = $localize`Git Sync`;
   readonly piecesTable = $localize`Pieces`;
   readonly generalSettingsTable = $localize`General`;
+  readonly alertsTable = $localize`Alerts`;
   readonly tabIndexFragmentMap = [
     { fragmentName: 'General' },
     { fragmentName: 'Pieces' },
     { fragmentName: 'GitSync' },
+    { fragmentName: 'Alerts' },
   ];
 
   constructor(private router: Router, private route: ActivatedRoute) {

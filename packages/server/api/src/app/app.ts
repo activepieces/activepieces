@@ -20,6 +20,7 @@ import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { getRedisConnection } from './database/redis-connection'
+import { alertsModule } from './ee/alerts/alerts-module'
 import { analyticsModule } from './ee/analytics/analytics-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
@@ -257,6 +258,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(platformUserModule)
     await app.register(issuesModule)
     await app.register(authnSsoSamlModule)
+    await app.register(alertsModule)
 
     await setupBullMQBoard(app)
 

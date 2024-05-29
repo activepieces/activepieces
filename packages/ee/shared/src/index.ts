@@ -19,3 +19,4 @@ export * from './lib/otp'
 export * from './lib/authn'
 
 export * from './lib/issues'
+export * from './lib/alerts'

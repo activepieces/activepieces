@@ -7,10 +7,6 @@
   @else {
   <ap-markdown [data]="betaNote"> </ap-markdown>
   <div class="ap-min-h-[70%]">
-    <mat-slide-toggle *ngIf="nonCommunityEdition$ | async" [formControl]="toggleNotificationFormControl"
-      class="ap-mt-[-62px] ap-mb-2 ap-float-right" color="primary" [labelPosition]="'before'" i18n>
-      Send email notifications about flow issues
-    </mat-slide-toggle>
     <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="issues">
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef i18n>Flow Name</th>
