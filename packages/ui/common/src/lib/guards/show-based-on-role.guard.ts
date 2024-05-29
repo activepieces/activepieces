@@ -21,7 +21,7 @@ export const showBasedOnRoles: (roles: ProjectMemberRole[]) => CanActivateFn = (
       ) > -1;
 
     if (!result) {
-      router.navigate(['/404']);
+      router.navigate(['/not-found']);
     }
     return result;
   };
