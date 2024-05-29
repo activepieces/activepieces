@@ -42,6 +42,7 @@ export class AlertsTableComponent implements OnInit {
   refresh$ = new BehaviorSubject<boolean>(true);
   addAlertDialogClosed$: Observable<void>;
   isAdmin$: Observable<boolean>
+  deleteAlert$: Observable<void> | undefined
   constructor(
     private dialogService: MatDialog,
     private alertsService: AlertsService,
@@ -53,6 +54,10 @@ export class AlertsTableComponent implements OnInit {
     this.showUpgrade = !(
       this.route.snapshot.data[PLATFORM_RESOLVER_KEY] as Platform
     ).alertsEnabled;
+  }
+
+  capitalizeChannel(channel: string) {
+    return channel.charAt(0).toUpperCase() + channel.slice(1).toLowerCase();
   }
 
   ngOnInit(): void {
@@ -74,16 +79,13 @@ export class AlertsTableComponent implements OnInit {
     .afterClosed()
     .pipe(
       tap(() => {
-        this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
-          data: 'New alert has been added',
-        });
         this.refresh$.next(true);
       })
     );
   }
 
   deleteAlert(alert: Alert): void {
-    this.alertsService.remove({ id: alert.id }).pipe(
+    this.deleteAlert$ = this.alertsService.remove(alert.id).pipe(
       tap(() => {
         this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
           data: `Alert ${alert.details} deleted`,

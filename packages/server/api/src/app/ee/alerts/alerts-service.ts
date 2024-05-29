@@ -4,13 +4,27 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { AlertEntity } from './alerts-entity'
 import { Alert, AlertChannel, ListAlertsParams } from '@activepieces/ee-shared'
-import { ApId, apId, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, ErrorCode, SeekPage } from '@activepieces/shared'
 
 const repo = databaseConnection.getRepository(AlertEntity)
 
 export const alertsService = {
     async add({ projectId, channel, details }: AddPrams): Promise<void> {
         const alertId = apId()
+        const existingAlert = await repo.findOneBy({
+            details
+        })
+
+        if (existingAlert) {
+            throw new ActivepiecesError({
+                code: ErrorCode.EXISTING_USER,
+                params: {
+                    email: details,
+                    platformId: null,
+                },
+            })
+        }
+
         await repo.createQueryBuilder()
             .insert()
             .into(AlertEntity)

@@ -1,10 +1,12 @@
 import { AlertChannel } from '@activepieces/ee-shared';
 import { Component } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
-import { Observable, tap } from 'rxjs';
+import { Observable, catchError, of, tap } from 'rxjs';
 import { AlertsService } from '../../../services/alerts.service';
 import { MatDialogRef } from '@angular/material/dialog';
-import { AuthenticationService } from '@activepieces/ui/common';
+import { AuthenticationService, GenericSnackbarTemplateComponent } from '@activepieces/ui/common';
+import { HttpStatusCode } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-new-alert-dialog',
@@ -20,6 +22,7 @@ export class NewAlertDialogComponent {
     private fb: FormBuilder,
     private alertsService: AlertsService,
     private authService: AuthenticationService,
+    private snackBar: MatSnackBar,
     public dialogRef: MatDialogRef<NewAlertDialogComponent>
   ) {
     this.newAlertForm = this.fb.group({
@@ -30,15 +33,32 @@ export class NewAlertDialogComponent {
 
   addAlert() {
     if (this.newAlertForm.valid) {
+      let invalidEmail = false
       this.creatingAlert$ = this.alertsService
         .add({
           projectId: this.authService.getProjectId(),
           channel: AlertChannel.EMAIL,
-          details: this.newAlertForm.getRawValue().details.trim(),
+          details: this.newAlertForm.getRawValue().details.trim().toLowerCase(),
         })
         .pipe(
+          catchError((err) => {
+            console.log(err)
+            invalidEmail = true
+            if (err.status === HttpStatusCode.Conflict) {
+              this.newAlertForm.controls.details.setErrors({
+                exists: true,
+              });
+            } else {
+              this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
+                data: 'New alert has been added',
+              });
+            }
+            return of(err);
+          }),
           tap(() => {
-            this.dialogRef.close();
+            if (!invalidEmail) {
+              this.dialogRef.close();
+            }
           })
         );
     }

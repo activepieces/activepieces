@@ -3,7 +3,7 @@ import {
   CreateAlertParams,
   ListAlertsParams,
 } from '@activepieces/ee-shared';
-import { ApId, SeekPage } from '@activepieces/shared';
+import { SeekPage } from '@activepieces/shared';
 import { environment } from '@activepieces/ui/common';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
@@ -32,7 +32,7 @@ export class AlertsService {
     };
     return this.http.post<void>(environment.apiUrl + '/alerts', body);
   }
-  remove(req: { id: ApId }) {
-    return this.http.delete<void>(environment.apiUrl + `/alerts/${req.id}`);
+  remove(id: string ) {
+    return this.http.delete<void>(environment.apiUrl + `/alerts/${id}`);
   }
 }

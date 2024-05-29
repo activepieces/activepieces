@@ -10,7 +10,18 @@
         </mat-form-field>
         <mat-form-field class="ap-w-full" appearance="outline">
             <mat-label i18n>Details</mat-label>
-            <input formControlName="details" matInput type="text" />
+            <input formControlName="details" matInput type="email" placeholder="john.doe@activepieces.com" />
+            <mat-error *ngIf="newAlertForm.controls.details.invalid">
+                <ng-container *ngIf="
+                    newAlertForm.controls.details.getError('exists');
+                    else emailRequired
+                  ">
+                    <span i18n>This email already exists in the alerts list.</span>
+                </ng-container>
+                <ng-template #emailRequired>
+                    <span i18n>Email is Required</span>
+                </ng-template>
+            </mat-error>
         </mat-form-field>
     </form>
 </mat-dialog-content>

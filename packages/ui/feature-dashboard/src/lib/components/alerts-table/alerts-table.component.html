@@ -15,7 +15,7 @@
             <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Alerts" i18n-aria-label>
                 <ng-container matColumnDef="channel">
                     <th mat-header-cell *matHeaderCellDef i18n>Channel</th>
-                    <td mat-cell *matCellDef="let alert">{{ alert.channel }}</td>
+                    <td mat-cell *matCellDef="let alert">{{ capitalizeChannel(alert.channel) }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="details">
@@ -55,4 +55,5 @@
         </div>
     </div>
 </div>
+<ng-container *ngIf="deleteAlert$ | async"></ng-container>
 @if(addAlertDialogClosed$ | async) {}
