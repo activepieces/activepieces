@@ -55,13 +55,13 @@ class SamlClient {
 
 let instance: SamlClient | null = null
 
-export const createSamlClient = async (samlProvider: SAMLAuthnProviderConfig): Promise<SamlClient> => {
+export const createSamlClient = async (hostName: string, samlProvider: SAMLAuthnProviderConfig): Promise<SamlClient> => {
     if (instance) {
         return instance
     }
     saml.setSchemaValidator(validator)
     const idp = createIdp(samlProvider.idpMetadata)
-    const sp = createSp(samlProvider.idpCertificate)
+    const sp = createSp(hostName, samlProvider.idpCertificate)
     return instance = new SamlClient(idp, sp)
 }
 
@@ -74,7 +74,7 @@ const createIdp = (metadata: string): saml.IdentityProviderInstance => {
     })
 }
 
-const createSp = (privateKey: string): saml.ServiceProviderInstance => {
+const createSp = (hostname: string, privateKey: string): saml.ServiceProviderInstance => {
     return saml.ServiceProvider({
         entityID: 'Activepieces',
         authnRequestsSigned: false,
@@ -85,7 +85,7 @@ const createSp = (privateKey: string): saml.ServiceProviderInstance => {
         isAssertionEncrypted: true,
         assertionConsumerService: [{
             Binding: saml.Constants.namespace.binding.post,
-            Location: 'http://localhost:3000/v1/authn/saml/acs',
+            Location: `https://${hostname}/api/v1/authn/saml/acs`,
         }],
         signatureConfig: {},
     })
