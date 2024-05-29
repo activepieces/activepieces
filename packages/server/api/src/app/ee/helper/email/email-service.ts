@@ -63,7 +63,7 @@ export const emailService = {
         })
         const project = await projectService.getOneOrThrow(projectId)
         // TODO remove the hardcoded limit
-        const alerts = (await alertsService.list({ projectId, cursor: undefined, limit: 50 }))
+        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
         const sendEmails = alerts.data.map(async (alert) => {
             if (alert.channel !== AlertChannel.EMAIL) {
                 return
