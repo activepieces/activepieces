@@ -9,25 +9,20 @@ import {
 } from '@angular/core';
 import {
   BehaviorSubject,
-  distinctUntilChanged,
-  filter,
   forkJoin,
   map,
   Observable,
   of,
-  shareReplay,
   Subject,
   switchMap,
   tap,
 } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import {
   Action,
   ActionType,
   FlowRunStatus,
   FlowRun,
-  StepOutput,
   StepOutputStatus,
   Trigger,
   TriggerType,
@@ -66,8 +61,7 @@ export class FlowItemContentComponent implements OnInit {
   readonly MAX_FLOW_ITEM_NAME_WIDTH = MAX_FLOW_ITEM_NAME_WIDTH;
   //in case it is not reached, we return undefined
   @ViewChild('stepDragTemplate') stepDragTemplate: TemplateRef<any>;
-  stepStatus$: Observable<StepOutputStatus | undefined>;
-  stepInsideLoopStatus$: Observable<StepOutputStatus | undefined>;
+  stepStatus$?: Observable<StepOutputStatus | undefined>;
   hover = false;
   flowItemChanged$: Subject<boolean> = new BehaviorSubject(true);
   stepIconUrl: string;
@@ -81,18 +75,15 @@ export class FlowItemContentComponent implements OnInit {
   TriggerType = TriggerType;
   ActionType = ActionType;
   stepIndex$: Observable<number>;
-  _selected = false;
-  @Input() set selected(val: boolean) {
-    if (val) {
-      this.broadcastStepOutput();
-    }
-    this._selected = val;
-  }
+  @Input() selected = false;
   @Input() set flowItem(newFlowItem: Step) {
     this._flowItem = newFlowItem;
     this.stepAppName$ = this.pieceService
       .getStepDetails(this._flowItem)
       .pipe(map((details) => details.name));
+    this.stepStatus$ = this.store.select(
+      BuilderSelectors.selectStepOutputStatus(this._flowItem.name)
+    );
     this.flowItemChanged$.next(true);
     this.childStepsIconsUrls$ = this.childrenLogoUrls();
     this.stepIndex$ = this.store.select(
@@ -100,12 +91,10 @@ export class FlowItemContentComponent implements OnInit {
     );
   }
   isDragging$: Observable<boolean>;
-  stepOutput: StepOutput | undefined;
   flowItemDetails$: Observable<FlowItemDetails | null | undefined>;
   constructor(
     private store: Store,
     private cd: ChangeDetectorRef,
-    private runDetailsService: RunDetailsService,
     private flowRendererService: FlowRendererService,
     private pieceService: PieceMetadataService
   ) {}
@@ -115,17 +104,7 @@ export class FlowItemContentComponent implements OnInit {
     this.selectedRun$ = this.store.select(
       BuilderSelectors.selectCurrentFlowRun
     );
-    this.stepStatus$ = this.getStepStatusIfItsNotInsideLoop();
-    this.stepInsideLoopStatus$ =
-      this.runDetailsService.iterationStepResultState$.pipe(
-        filter((stepNameAndStatus) => {
-          return stepNameAndStatus.stepName === this._flowItem.name;
-        }),
-        map((stepNameAndStatus) => {
-          this.stepOutput = stepNameAndStatus.output;
-          return stepNameAndStatus.output?.status;
-        })
-      );
+
     this.flowItemDetails$ = this.flowItemChanged$.pipe(
       switchMap(() =>
         this.pieceService.getStepDetails(this._flowItem).pipe(
@@ -139,32 +118,6 @@ export class FlowItemContentComponent implements OnInit {
           })
         )
       )
-    );
-  }
-
-  getStepStatusIfItsNotInsideLoop(): Observable<StepOutputStatus | undefined> {
-    return this.selectedRun$.pipe(
-      distinctUntilChanged(),
-      map((selectedRun) => {
-        if (selectedRun) {
-          this.stepOutput = undefined;
-          if (!selectedRun.steps) {
-            return StepOutputStatus.RUNNING;
-          }
-          const stepName = this._flowItem.name;
-          const result = selectedRun.steps[stepName.toString()];
-          if (result) {
-            this.stepOutput = result;
-          }
-          return result
-            ? result.status
-            : selectedRun?.status === FlowRunStatus.RUNNING
-            ? StepOutputStatus.RUNNING
-            : undefined;
-        }
-        return undefined;
-      }),
-      shareReplay(1)
     );
   }
 
@@ -190,11 +143,5 @@ export class FlowItemContentComponent implements OnInit {
       ).pipe(map((urls) => Array.from(new Set(urls))));
     }
     return of([]);
-  }
-  private broadcastStepOutput() {
-    this.runDetailsService.currentStepResult$.next({
-      stepName: this._flowItem.name,
-      output: this.stepOutput,
-    });
   }
 }
