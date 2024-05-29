@@ -4,7 +4,7 @@ import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
 import { platformService } from '../../../platform/platform.service'
 import { authenticationHelper } from '../authentication-service/hooks/authentication-helper'
 import { authnSsoSamlService } from './authn-sso-saml-service'
-import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
+import { ActivepiecesError, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
 
 export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/login', LoginRequest, async (req, res) => {
@@ -29,6 +29,14 @@ async function getSamlConfigOrThrow(request: FastifyRequest): Promise<{ saml: SA
     const platformId = await resolvePlatformIdForRequest(request)
     assertNotNullOrUndefined(platformId, 'Platform ID is required for SAML authentication')
     const platform = await platformService.getOneOrThrow(platformId)
+    if (!platform.ssoEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: {
+                message: 'Feature is disabled',
+            },
+        })
+    }
     const saml = platform.federatedAuthProviders.saml
     assertNotNullOrUndefined(saml, 'SAML IDP metadata is not configured for this platform')
     return {
