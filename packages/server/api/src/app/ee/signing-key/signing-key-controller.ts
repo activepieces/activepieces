@@ -24,10 +24,11 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
             displayName: req.body.displayName,
         })
 
-        eventsHooks.get().send(req, {
+        eventsHooks.get().sendUserEvent(req, {
             action: ApplicationEventName.SIGNING_KEY_CREATED,
-            userId: req.principal.id,
-            signingKey: newSigningKey,
+            data: {
+                signingKey: newSigningKey,
+            },
         })
 
         return res.status(StatusCodes.CREATED).send(newSigningKey)

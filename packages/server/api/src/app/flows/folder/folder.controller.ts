@@ -34,10 +34,11 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 projectId: request.principal.projectId,
                 request: request.body,
             })
-            eventsHooks.get().send(request, {
+            eventsHooks.get().sendUserEvent(request, {
                 action: ApplicationEventName.FOLDER_CREATED,
-                folder: createdFolder,
-                userId: request.principal.id,
+                data: {
+                    folder: createdFolder,
+                },
             })
             return createdFolder
         },
@@ -58,10 +59,11 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 request: request.body,
             })
 
-            eventsHooks.get().send(request, {
+            eventsHooks.get().sendUserEvent(request, {
                 action: ApplicationEventName.FOLDER_UPDATED,
-                folder: updatedFlow,
-                userId: request.principal.id,
+                data: {
+                    folder: updatedFlow,
+                },
             })
 
             return updatedFlow
@@ -114,10 +116,11 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 projectId: request.principal.projectId,
                 folderId: request.params.folderId,
             })
-            eventsHooks.get().send(request, {
+            eventsHooks.get().sendUserEvent(request, {
                 action: ApplicationEventName.FOLDER_DELETED,
-                folder,
-                userId: request.principal.id,
+                data: {
+                    folder,
+                },
             })
             await folderService.delete({
                 projectId: request.principal.projectId,

@@ -37,12 +37,10 @@ export const federatedAuthnController: FastifyPluginAsyncTypebox = async (
             providerName: req.body.providerName,
             code: req.body.code,
         })
-        eventsHooks.get().send(req, {
-            action: ApplicationEventName.USER_SIGNED_UP_USING_SSO,
-            userId: req.principal.id,
-            createdUser: {
-                id: response.id,
-                email: response.email,
+        eventsHooks.get().sendUserEvent(req, {
+            action: ApplicationEventName.USER_SIGNED_UP,
+            data: {
+                source: 'sso',
             },
         })
         return response

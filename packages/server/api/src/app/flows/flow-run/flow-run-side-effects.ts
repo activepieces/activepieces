@@ -1,8 +1,10 @@
 import dayjs from 'dayjs'
 import { issuesService } from '../../ee/issues/issues-service'
+import { eventsHooks } from '../../helper/application-events'
 import { flowQueue } from '../../workers/flow-worker/flow-queue'
 import { JobType } from '../../workers/flow-worker/queues/queue'
 import { flowRunHooks } from './flow-run-hooks'
+import { ApplicationEventName } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -60,6 +62,12 @@ export const flowRunSideEffects = {
                 })
             }
         }
+        eventsHooks.get().sendWorkerEvent(flowRun.projectId, {
+            action: ApplicationEventName.FLOW_RUN_FINISHED,
+            data: {
+                flowRun,
+            },
+        })
     },
     async start({
         flowRun,
@@ -85,6 +93,12 @@ export const flowRunSideEffects = {
                 payload,
                 executionType,
                 progressUpdateType,
+            },
+        })
+        eventsHooks.get().sendWorkerEvent(flowRun.projectId, {
+            action: ApplicationEventName.FLOW_RUN_STARTED,
+            data: {
+                flowRun,
             },
         })
     },

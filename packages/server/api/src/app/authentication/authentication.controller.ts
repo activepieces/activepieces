@@ -29,12 +29,10 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
             provider: Provider.EMAIL,
         })
 
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.USER_SIGNED_UP_USING_EMAIL,
-            userId: request.principal.id,
-            createdUser: {
-                id: signUpResponse.id,
-                email: signUpResponse.email,
+        eventsHooks.get().sendUserEvent(request, {
+            action: ApplicationEventName.USER_SIGNED_UP,
+            data: {
+                source: 'credentials',
             },
         })
 
@@ -43,9 +41,9 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
 
     app.post('/sign-in', SignInRequestOptions, async (request) => {
         const platformId = await resolvePlatformIdForAuthnRequest(request.body.email, request)
-        eventsHooks.get().send(request, {
+        eventsHooks.get().sendUserEvent(request, {
             action: ApplicationEventName.USER_SIGNED_IN,
-            userId: request.principal.id,
+            data: {},
         })
         return authenticationService.signIn({
             email: request.body.email,

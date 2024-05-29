@@ -89,7 +89,6 @@ import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
 import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-bullboard'
 import { webhookResponseWatcher } from './workers/flow-worker/webhook-response-watcher'
 import {
-    ApplicationEvent,
     ApplicationEventName,
     FlowCreatedEvent,
     GitRepoWithoutSensitiveData,
