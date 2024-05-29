@@ -5,5 +5,4 @@ export const RolesDisplayNames: { [k: string]: string } = {
   [ProjectMemberRole.EDITOR]: $localize`Editor`,
   [ProjectMemberRole.OPERATOR]: $localize`Operator`,
   [ProjectMemberRole.VIEWER]: $localize`Viewer`,
-  [ProjectMemberRole.EXTERNAL_CUSTOMER]: $localize`External Customer`,
 };

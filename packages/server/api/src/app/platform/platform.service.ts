@@ -132,7 +132,17 @@ export const platformService = {
             id,
         })
 
-        assertPlatformExists(platform)
+        if (isNil(platform)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: id,
+                    entityType: 'Platform',
+                    message: 'Platform not found',
+                },
+            })
+        }
+        
         return platform
     },
 
@@ -142,20 +152,6 @@ export const platformService = {
         })
     },
 }
-
-const assertPlatformExists: (
-    platform: Platform | null
-) => asserts platform is Platform = (platform) => {
-    if (isNil(platform)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                message: 'platform not found',
-            },
-        })
-    }
-}
-
 
 type AddParams = {
     ownerId: UserId
