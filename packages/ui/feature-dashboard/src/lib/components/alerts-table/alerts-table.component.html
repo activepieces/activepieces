@@ -8,8 +8,7 @@
         <div class="ap-flex ap-my-4 ap-gap-4 ap-justify-between ap-items-center">
             <span className="ap-typography-headline-6">Project Alerts</span>
             <ap-button actionButton [disabled]="(isAdmin$ | async) === false" (buttonClicked)="addAlert()"
-                btnSize="medium" btnColor="primary" i18n>+ Add New
-                Alert</ap-button>
+                btnSize="medium" btnColor="primary" i18n>+ Add New Channel</ap-button>
         </div>
         <div class="ap-min-h-[70%]">
             <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Alerts" i18n-aria-label>
