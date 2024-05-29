@@ -75,7 +75,7 @@ export class FormsComponent implements OnInit {
       }),
       catchError((err) => {
         console.error(err);
-        this.router.navigate(['/404']);
+        this.router.navigate(['/not-found']);
         throw err;
       })
     );
