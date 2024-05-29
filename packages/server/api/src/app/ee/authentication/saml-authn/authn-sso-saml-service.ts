@@ -6,16 +6,16 @@ import { createSamlClient, IdpLoginResponse, SamlAttributes } from './saml-clien
 import { PlatformRole, SAMLAuthnProviderConfig, User } from '@activepieces/shared'
 
 export const authnSsoSamlService = {
-    async login(samlProvider: SAMLAuthnProviderConfig): Promise<LoginResponse> {
-        const client = await createSamlClient(samlProvider)
+    async login(hostname: string, samlProvider: SAMLAuthnProviderConfig): Promise<LoginResponse> {
+        const client = await createSamlClient(hostname, samlProvider)
         const redirectUrl = client.getLoginUrl()
         return {
             redirectUrl,
         }
     },
 
-    async acs(platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<User> {
-        const client = await createSamlClient(samlProvider)
+    async acs(hostname: string, platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<User> {
+        const client = await createSamlClient(hostname, samlProvider)
         const attributes = await client.parseAndValidateLoginResponse(idpLoginResponse)
         return getOrCreateUser(platformId, attributes)
     },
