@@ -35,7 +35,7 @@ export class AlertsTableComponent implements OnInit {
   paginator: ApPaginatorComponent;
   upgradeNoteTitle = $localize`Unlock Alerts`;
   upgradeNote = $localize`Stay up to date with your flows, quota limits and updates with Alerts`;
-  displayedColumns: string[] = ['channel', 'details', 'action'];
+  displayedColumns: string[] = ['details', 'action'];
   showUpgrade = true;
   dataSource: AlertsDataSource;
   currentProject$: ProjectId;

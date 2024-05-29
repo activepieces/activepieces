@@ -14,7 +14,6 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class NewAlertDialogComponent {
   newAlertForm: FormGroup<{
-    channel: FormControl<string>;
     details: FormControl<string>;
   }>;
   creatingAlert$: Observable<void>;
@@ -26,7 +25,6 @@ export class NewAlertDialogComponent {
     public dialogRef: MatDialogRef<NewAlertDialogComponent>
   ) {
     this.newAlertForm = this.fb.group({
-      channel: new FormControl('', { nonNullable: true }),
       details: new FormControl('', { nonNullable: true }),
     });
   }

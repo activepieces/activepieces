@@ -5,20 +5,31 @@
         featureKey="ALERTS"></ap-upgrade-note>
     } @else {
     <div class="ap-h-full">
-        <div class="ap-flex ap-my-4 ap-gap-4 ap-justify-between ap-items-center">
-            <span className="ap-typography-headline-6">Project Alerts</span>
+        <div class="ap-flex ap-my-4 ap-justify-between ap-items-center">
+            <span class="ap-typography-subtitle-1">Manage and monitor alerts via email to stay updated on your
+                project's
+                status. Add or delete email alerts with ease to ensure you're promptly informed about critical updates
+                and
+                issues.</span>
             <ap-button actionButton [disabled]="(isAdmin$ | async) === false" (buttonClicked)="addAlert()"
-                btnSize="medium" btnColor="primary" i18n>+ Add New Channel</ap-button>
+                btnSize="medium" btnColor="primary" i18n>+ Add Email</ap-button>
         </div>
-        <div class="ap-min-h-[70%]">
+        <div>
+            <span class="ap-typography-subtitle-1">Email addresses listed here will receive notifications for the
+                following:</span>
+            <ul class="ap-list-[circle] ap-px-6 ap-py-2">
+                <li>
+                    Issues encountered during flow executions
+                </li>
+                <li>
+                    Quota limit warnings
+                </li>
+            </ul>
+        </div>
+        <div class=" ap-min-h-[70%]">
             <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Alerts" i18n-aria-label>
-                <ng-container matColumnDef="channel">
-                    <th mat-header-cell *matHeaderCellDef i18n>Channel</th>
-                    <td mat-cell *matCellDef="let alert">{{ capitalizeChannel(alert.channel) }}</td>
-                </ng-container>
-
                 <ng-container matColumnDef="details">
-                    <th mat-header-cell *matHeaderCellDef i18n>Details</th>
+                    <th mat-header-cell *matHeaderCellDef i18n>Email</th>
                     <td mat-cell *matCellDef="let alert">{{ alert.details }}</td>
                 </ng-container>
 
