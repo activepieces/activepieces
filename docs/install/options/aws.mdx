@@ -1,7 +1,17 @@
 ---
 title: "AWS"
-description: "Get Activepieces up & running on AWS with Pulumi for IaC"
+description: "Get Activepieces up & running on AWS with Stacksnap and Pulumi for IaC"
 ---
+You have 2 ways to deploy Activepieces to AWS: Using either a 1-click stacksnap installer or an infrastructure-as-code template with Pulumi.
+
+## 1-click install
+
+The 1-click installer automatically sets up a load-balanced ECS cluster with the latest Activepieces image, along with CloudFront, RDS (PostgreSQL), and ElastiCache (Redis) for a production-ready environment.
+
+[Deploy with Stacksnap](https://klo.dev/stacksnap/apps/activepieces) 
+
+# Infrastructure-as-Code (IaC) with Pulumi
+
 Pulumi is an IaC solution akin to Terraform or CloudFormation that lets you deploy & manage your infrastructure using popular programming languages e.g. Typescipt (which we'll use), C#, Go etc.
 
 ## Deploy from Pulumi Cloud
