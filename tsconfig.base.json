@@ -323,6 +323,9 @@
       "@activepieces/piece-mautic": [
         "packages/pieces/community/mautic/src/index.ts"
       ],
+      "@activepieces/piece-messagebird": [
+        "packages/pieces/community/messagebird/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-dynamics-crm": [
         "packages/ee/pieces/microsoft-dynamics-crm/src/index.ts"
       ],
