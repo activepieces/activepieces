@@ -11,8 +11,6 @@
                 status. Add or delete email alerts with ease to ensure you're promptly informed about critical updates
                 and
                 issues.</span>
-            <ap-button actionButton [disabled]="(isAdmin$ | async) === false" (buttonClicked)="addAlert()"
-                btnSize="medium" btnColor="primary" i18n>+ Add Email</ap-button>
         </div>
         <div>
             <span class="ap-typography-subtitle-1">Email addresses listed here will receive notifications for the
@@ -34,11 +32,19 @@
                 </ng-container>
 
                 <ng-container matColumnDef="action">
-                    <th mat-header-cell *matHeaderCellDef></th>
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="ap-flex ap-items-center ap-justify-end">
+                            <ap-button actionButton [disabled]="(isAdmin$ | async) === false"
+                                (buttonClicked)="addAlert()" btnSize="medium" btnColor="primary" i18n>+ Add
+                                Email</ap-button>
+                        </div>
+                    </th>
                     <td mat-cell *matCellDef="let alert">
-                        <ap-icon-button tooltipText="Delete Alert" [buttonDisabled]="(isAdmin$ | async) === false"
-                            i18n-tooltipText iconFilename="trash.svg" color="warn" [width]="20" [height]="20"
-                            (buttonClicked)="deleteAlert(alert)" [height]="16"></ap-icon-button>
+                        <div class="ap-float-right ap-text-center ap-w-[4.4375rem]">
+                            <ap-icon-button tooltipText="Delete Alert" [buttonDisabled]="(isAdmin$ | async) === false"
+                                i18n-tooltipText iconFilename="trash.svg" color="warn" [width]="20" [height]="20"
+                                (buttonClicked)="deleteAlert(alert)" [height]="16"></ap-icon-button>
+                        </div>
                     </td>
                 </ng-container>
                 <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
