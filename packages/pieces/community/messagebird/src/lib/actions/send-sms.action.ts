@@ -1,4 +1,4 @@
-import { messageBirdAuth } from '@activepieces/piece-messagebird';
+import { messageBirdAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   httpClient,
