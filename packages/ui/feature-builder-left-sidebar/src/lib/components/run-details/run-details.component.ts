@@ -143,16 +143,20 @@ export class RunDetailsComponent implements OnInit {
   onResize() {
     //resets to initial state
     this.ngZone.runOutsideAngular(() => {
-      this.renderer2.setStyle(
-        this.stepsResultsAccordion.nativeElement,
-        'height',
-        `calc(50% - 1.8125rem)`
-      );
-      this.renderer2.setStyle(
-        this.selectedStepResultContainer.nativeElement,
-        'max-height',
-        `calc(50% - 1.8125rem)`
-      );
+      if (this.stepsResultsAccordion) {
+        this.renderer2.setStyle(
+          this.stepsResultsAccordion?.nativeElement,
+          'height',
+          `calc(50% - 1.8125rem)`
+        );
+      }
+      if (this.selectedStepResultContainer) {
+        this.renderer2.setStyle(
+          this.selectedStepResultContainer?.nativeElement,
+          'max-height',
+          `calc(50% - 1.8125rem)`
+        );
+      }
     });
   }
 }

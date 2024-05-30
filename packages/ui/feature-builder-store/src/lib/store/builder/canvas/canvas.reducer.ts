@@ -55,12 +55,15 @@ const __CanvasReducer = createReducer(
     const displayedFlowVersion: FlowVersion = JSON.parse(
       JSON.stringify(action.displayedFlowVersion)
     );
+    const loopIndexes = action.run
+      ? FlowStructureUtil.getInitialLoopIndexes(displayedFlowVersion.trigger)
+      : {};
     return {
       ...initialState,
       viewedVersion: displayedFlowVersion,
       runInfo: {
-        selectedRun: undefined,
-        loopIndexes: {},
+        selectedRun: action.run,
+        loopIndexes,
       },
     };
   }),
