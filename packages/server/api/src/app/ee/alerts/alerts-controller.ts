@@ -16,7 +16,7 @@ export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
         return alertsService.add({
             projectId: req.body.projectId,
             channel: req.body.channel,
-            details: req.body.details,
+            receiver: req.body.receiver,
         })
     })
 

@@ -9,7 +9,7 @@ export const Alert = Type.Object({
     ...BaseModelSchema,
     projectId: ApId,
     channel: Type.Enum(AlertChannel),
-    details: Type.String({})
+    receiver: Type.String({})
 })
 
 export type Alert = Static<typeof Alert>

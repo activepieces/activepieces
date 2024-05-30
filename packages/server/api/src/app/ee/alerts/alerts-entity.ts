@@ -18,7 +18,7 @@ export const AlertEntity = new EntitySchema<AlertSchema>({
             type: String,
             enum: AlertChannel,
         },
-        details: {
+        receiver: {
             type: String,
             nullable: false,
         },

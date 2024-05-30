@@ -4,7 +4,10 @@ import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { Observable, catchError, of, tap } from 'rxjs';
 import { AlertsService } from '../../../services/alerts.service';
 import { MatDialogRef } from '@angular/material/dialog';
-import { AuthenticationService, GenericSnackbarTemplateComponent } from '@activepieces/ui/common';
+import {
+  AuthenticationService,
+  GenericSnackbarTemplateComponent,
+} from '@activepieces/ui/common';
 import { HttpStatusCode } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -14,7 +17,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class NewAlertDialogComponent {
   newAlertForm: FormGroup<{
-    details: FormControl<string>;
+    receiver: FormControl<string>;
   }>;
   creatingAlert$: Observable<void>;
   constructor(
@@ -25,31 +28,37 @@ export class NewAlertDialogComponent {
     public dialogRef: MatDialogRef<NewAlertDialogComponent>
   ) {
     this.newAlertForm = this.fb.group({
-      details: new FormControl('', { nonNullable: true }),
+      receiver: new FormControl('', { nonNullable: true }),
     });
   }
 
   addAlert() {
     if (this.newAlertForm.valid) {
-      let invalidEmail = false
+      let invalidEmail = false;
       this.creatingAlert$ = this.alertsService
         .add({
           projectId: this.authService.getProjectId(),
           channel: AlertChannel.EMAIL,
-          details: this.newAlertForm.getRawValue().details.trim().toLowerCase(),
+          receiver: this.newAlertForm
+            .getRawValue()
+            .receiver.trim()
+            .toLowerCase(),
         })
         .pipe(
           catchError((err) => {
-            console.log(err)
-            invalidEmail = true
+            console.log(err);
+            invalidEmail = true;
             if (err.status === HttpStatusCode.Conflict) {
-              this.newAlertForm.controls.details.setErrors({
+              this.newAlertForm.controls.receiver.setErrors({
                 exists: true,
               });
             } else {
-              this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
-                data: 'New alert has been added',
-              });
+              this.snackBar.openFromComponent(
+                GenericSnackbarTemplateComponent,
+                {
+                  data: 'New email added',
+                }
+              );
             }
             return of(err);
           }),

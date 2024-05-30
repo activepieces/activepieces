@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddAlertsEntitySqlite1717000733019 implements MigrationInterface {
     name = 'AddAlertsEntitySqlite1717000733019'
@@ -11,9 +11,9 @@ export class AddAlertsEntitySqlite1717000733019 implements MigrationInterface {
                 "updated" datetime NOT NULL DEFAULT (datetime('now')),
                 "projectId" varchar(21) NOT NULL,
                 "channel" varchar NOT NULL,
-                "details" varchar NOT NULL
+                "receiver" varchar NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform"
             ADD "alertsEnabled" boolean NOT NULL

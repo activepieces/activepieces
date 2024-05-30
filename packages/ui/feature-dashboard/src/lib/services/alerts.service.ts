@@ -28,11 +28,11 @@ export class AlertsService {
     const body: CreateAlertParams = {
       projectId: req.projectId,
       channel: req.channel,
-      details: req.details,
+      receiver: req.receiver,
     };
     return this.http.post<void>(environment.apiUrl + '/alerts', body);
   }
-  remove(id: string ) {
+  remove(id: string) {
     return this.http.delete<void>(environment.apiUrl + `/alerts/${id}`);
   }
 }

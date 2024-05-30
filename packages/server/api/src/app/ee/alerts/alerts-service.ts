@@ -9,17 +9,17 @@ import { ActivepiecesError, ApId, apId, ErrorCode, SeekPage } from '@activepiece
 const repo = databaseConnection.getRepository(AlertEntity)
 
 export const alertsService = {
-    async add({ projectId, channel, details }: AddPrams): Promise<void> {
+    async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
         const alertId = apId()
         const existingAlert = await repo.findOneBy({
-            details
+            receiver,
         })
 
         if (existingAlert) {
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_USER,
                 params: {
-                    email: details,
+                    email: receiver,
                     platformId: null,
                 },
             })
@@ -32,7 +32,7 @@ export const alertsService = {
                 id: alertId,
                 channel,
                 projectId,
-                details,
+                receiver,
                 created: dayjs().toISOString(),
             })
             .execute()
@@ -67,5 +67,5 @@ export const alertsService = {
 type AddPrams = { 
     projectId: string
     channel: AlertChannel
-    details: string 
+    receiver: string 
 }

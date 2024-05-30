@@ -11,7 +11,7 @@ export class AddAlertsEntityPostgres1716989780835 implements MigrationInterface 
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "projectId" character varying(21) NOT NULL,
                 "channel" character varying NOT NULL,
-                "details" character varying NOT NULL
+                "receiver" character varying NOT NULL
             )
         `)
         await queryRunner.query(`

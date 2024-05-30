@@ -70,7 +70,7 @@ export const emailService = {
             }
             const userData = await userService.getByPlatformAndEmail({
                 platformId: project.platformId,
-                email: alert.details,
+                email: alert.receiver,
             })
             if (isNil(userData)) {
                 return

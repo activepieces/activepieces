@@ -12,7 +12,7 @@ export type ListAlertsParams = Static<typeof ListAlertsParams>
 export const CreateAlertParams = Type.Object({
     projectId: ApId,
     channel: Type.Enum(AlertChannel),
-    details: Type.String({})
+    receiver: Type.String({})
 })
 
 export type CreateAlertParams = Static<typeof CreateAlertParams>

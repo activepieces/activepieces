@@ -35,14 +35,14 @@ export class AlertsTableComponent implements OnInit {
   paginator: ApPaginatorComponent;
   upgradeNoteTitle = $localize`Unlock Alerts`;
   upgradeNote = $localize`Stay up to date with your flows, quota limits and updates with Alerts`;
-  displayedColumns: string[] = ['details', 'action'];
+  displayedColumns: string[] = ['receiver', 'action'];
   showUpgrade = true;
   dataSource: AlertsDataSource;
   currentProject$: ProjectId;
   refresh$ = new BehaviorSubject<boolean>(true);
   addAlertDialogClosed$: Observable<void>;
-  isAdmin$: Observable<boolean>
-  deleteAlert$: Observable<void> | undefined
+  isAdmin$: Observable<boolean>;
+  deleteAlert$: Observable<void> | undefined;
   constructor(
     private dialogService: MatDialog,
     private alertsService: AlertsService,
@@ -73,22 +73,23 @@ export class AlertsTableComponent implements OnInit {
   }
 
   addAlert(): void {
-    this.addAlertDialogClosed$ = this.dialogService.open(NewAlertDialogComponent, {
-      restoreFocus: false,
-    })
-    .afterClosed()
-    .pipe(
-      tap(() => {
-        this.refresh$.next(true);
+    this.addAlertDialogClosed$ = this.dialogService
+      .open(NewAlertDialogComponent, {
+        restoreFocus: false,
       })
-    );
+      .afterClosed()
+      .pipe(
+        tap(() => {
+          this.refresh$.next(true);
+        })
+      );
   }
 
   deleteAlert(alert: Alert): void {
     this.deleteAlert$ = this.alertsService.remove(alert.id).pipe(
       tap(() => {
         this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
-          data: `Alert ${alert.details} deleted`,
+          data: `Email ${alert.receiver} deleted`,
         });
         this.refresh$.next(true);
       })
