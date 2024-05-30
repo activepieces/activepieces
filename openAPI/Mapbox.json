@@ -1,0 +1,912 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Mapbox",
+    "description": "Mapbox allows you to access its navigation, location search and static map generation services to create interative/static maps in your application.",
+    "version": "1.0",
+    "contact": {
+      "name": "Simone Lin",
+      "email": "simonelinrj@outlook.com"
+    }
+  },
+  "host": "api.mapbox.com",
+  "basePath": "/",
+  "schemes": ["https"],
+  "consumes": [],
+  "produces": [],
+  "paths": {
+    "/geocoding/v5/mapbox.places/{search_text}.json": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "type",
+                  "title": "properties_type",
+                  "x-ms-visibility": "internal"
+                },
+                "query": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "search text query words",
+                    "title": "search text word"
+                  },
+                  "description": "An array of space and punctuation separated strings from the original query"
+                },
+                "features": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "feature ID in the format type.id",
+                        "title": "feature_id",
+                        "x-ms-visibility": "internal"
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "a GeoJSON type",
+                        "title": "feature_type",
+                        "x-ms-visibility": "internal"
+                      },
+                      "place_type": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "x-ms-visibility": "internal"
+                        },
+                        "description": "An array of feature types describing the feature",
+                        "x-ms-visibility": "internal"
+                      },
+                      "relevance": {
+                        "type": "number",
+                        "format": "float",
+                        "description": "Indicates how well the returned feature matches to user's query on a scale of 0 to 1",
+                        "title": "feature_relevance",
+                        "x-ms-visibility": "important"
+                      },
+                      "properties": {
+                        "type": "object",
+                        "properties": {},
+                        "description": "An object describing the feature",
+                        "x-ms-visibility": "internal"
+                      },
+                      "text": {
+                        "type": "string",
+                        "description": "A string representing the feature in the requested language if specified",
+                        "title": "feature_text",
+                        "x-ms-visibility": "internal"
+                      },
+                      "place_name": {
+                        "type": "string",
+                        "description": "A string representing the feature in the requested language if specified and its full result hierarchy",
+                        "title": "feature_placename",
+                        "x-ms-visibility": "advanced"
+                      },
+                      "matching_text": {
+                        "type": "string",
+                        "description": "Optional. A string analogous to the text field that more closely matches the query than results in the specified language",
+                        "title": "feature_matchingtext",
+                        "x-ms-visibility": "internal"
+                      },
+                      "matching_place_name": {
+                        "type": "string",
+                        "description": "Optional. A string analogous to the place_name field that more closely matches the query than results in the specified language",
+                        "title": "feature_matchingplacename",
+                        "x-ms-visibility": "internal"
+                      },
+                      "bbox": {
+                        "type": "array",
+                        "items": {
+                          "type": "number",
+                          "format": "float",
+                          "description": "minX, minY, maxX, maxY of the bounding box"
+                        },
+                        "description": "A bounding box array",
+                        "x-ms-visibility": "advanced"
+                      },
+                      "center": {
+                        "type": "array",
+                        "items": {
+                          "type": "number",
+                          "format": "float",
+                          "description": "longitude and latitude of the center"
+                        },
+                        "description": "The coordinates of the feature's center in the form of [longitude, latitude], may be the literal center or the center of human activities",
+                        "x-ms-visibility": "important"
+                      },
+                      "geometry": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "description": "type",
+                            "x-ms-visibility": "internal"
+                          },
+                          "coordinates": {
+                            "type": "array",
+                            "items": {
+                              "type": "number",
+                              "format": "float"
+                            },
+                            "description": "an array in the format [longitude, latitude] at the center of the specified bounding box"
+                          },
+                          "interpolated": {
+                            "type": "boolean",
+                            "description": "interpolated",
+                            "x-ms-visibility": "internal",
+                            "enum": [true, false]
+                          },
+                          "omitted": {
+                            "type": "boolean",
+                            "description": "omitted",
+                            "x-ms-visibility": "internal",
+                            "enum": [true, false]
+                          }
+                        },
+                        "description": "an object describing the spatial geometry of the returned feature",
+                        "x-ms-visibility": "internal"
+                      },
+                      "address": {
+                        "type": "string",
+                        "description": "The house number of the returned address feature",
+                        "x-ms-visibility": "internal"
+                      },
+                      "context": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "id"
+                            },
+                            "text": {
+                              "type": "string",
+                              "description": "text"
+                            },
+                            "wikidata": {
+                              "type": "string",
+                              "description": "wikidata"
+                            },
+                            "short_code": {
+                              "type": "string",
+                              "description": "short_code"
+                            }
+                          }
+                        },
+                        "description": "An array representing the hierarchy of encompassing parent features",
+                        "x-ms-visibility": "internal"
+                      }
+                    }
+                  },
+                  "description": "An array of feature objects ordered by relevance"
+                },
+                "attribution": {
+                  "type": "string",
+                  "description": "attributes the result to Mapbox",
+                  "x-ms-visibility": "internal"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Forward Geocoding",
+        "description": "This action allows you to look up a single location by name and will return you the geographic coordinates (latitude and longitude) of the location",
+        "operationId": "FwGeocoding",
+        "parameters": [
+          {
+            "name": "search_text",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "x-ms-visibility": "important",
+            "x-ms-summary": "Address or post code of the location.",
+            "description": "An address or a post code of the location that the user wants to retrieve geocoordinates from."
+          },
+          {
+            "name": "proximity",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "default": "ip",
+            "description": "Bias the response to favor results that are closer to this location. Default is ip, or can be longitude,latitude coordinates",
+            "x-ms-summary": "Favor results taht are closer to the specified location",
+            "x-ms-visibility": "advanced"
+          },
+          {
+            "name": "types",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "default": "place,postcode,address",
+            "description": "Filter results to include only a subset (one or more) of the available feature types. Options are country, region, postcode, district, place, locality, neighborhood, address, and poi",
+            "x-ms-summary": "Feature types included in the search",
+            "x-ms-visibility": "advanced"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "default": 2,
+            "description": "Specify the maximum number of results to return, default is 2 and maximum is 10",
+            "x-ms-summary": "Maximum number of results to return",
+            "x-ms-visibility": "advanced"
+          },
+          {
+            "name": "autocomplete",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "default": false,
+            "description": "Specify whether to return autocomplete results, default is false.",
+            "x-ms-summary": "Set autocomplete results",
+            "x-ms-visibility": "advanced"
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "default": "en",
+            "description": "Specify the user's language. This parameter controls the language of the text supplied in responses.",
+            "x-ms-summary": "Specify the user's language",
+            "x-ms-visibility": "advanced"
+          }
+        ],
+        "x-ms-visibility": "important"
+      }
+    },
+    "/styles/v1/mapbox/streets-v11/static/pin-s+ff2211({pinlon},{pinlat})/{lon},{lat},{zoom},{bearing},{pitch}/{width}x{height}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "default",
+            "schema": {
+              "type": "string",
+              "format": "binary",
+              "x-ms-media-kind": "image"
+            }
+          }
+        },
+        "summary": "Get Static Map Image",
+        "description": "This action outputs a static map image of a location in base64, the location is specified by its longitude and latitude. The static map image does not have interactivity or controls.",
+        "operationId": "GetStaticMap",
+        "x-ms-visibility": "important",
+        "parameters": [
+          {
+            "name": "pinlon",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "longitude value which should be the same as the center longitude specified in variable lon, in order to pin the desired location",
+            "x-ms-summary": "Pin longitude",
+            "x-ms-visibility": "important"
+          },
+          {
+            "name": "pinlat",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "latitude value which should be the same as the center latitude specified in variable lon, in order to pin the desired location",
+            "x-ms-summary": "Pin latitude",
+            "x-ms-visibility": "important"
+          },
+          {
+            "name": "lon",
+            "in": "path",
+            "required": true,
+            "type": "number",
+            "description": "Longitude for the center point of the static map; a number between -180 and 180.",
+            "x-ms-summary": "Longitude",
+            "x-ms-visibility": "important",
+            "format": "float"
+          },
+          {
+            "name": "lat",
+            "in": "path",
+            "required": true,
+            "type": "number",
+            "description": "Latitude for the center point of the static map; a number between -85.0511 and 85.0511.",
+            "x-ms-summary": "Latitude",
+            "x-ms-visibility": "important",
+            "format": "float"
+          },
+          {
+            "name": "zoom",
+            "in": "path",
+            "required": true,
+            "type": "number",
+            "default": 13.31,
+            "description": "Zoom level; a number between 0 and 22. Fractional zoom levels will be rounded to two decimal places",
+            "x-ms-summary": "Image Zoom",
+            "format": "float",
+            "x-ms-visibility": "important"
+          },
+          {
+            "name": "bearing",
+            "in": "path",
+            "required": true,
+            "type": "number",
+            "default": 0,
+            "description": "Bearing rotates the map around its center. A number between 0 and 360, interpreted as decimal degrees.",
+            "x-ms-summary": "Image Rotation",
+            "x-ms-visibility": "advanced",
+            "format": "float"
+          },
+          {
+            "name": "pitch",
+            "in": "path",
+            "required": true,
+            "type": "number",
+            "default": 0,
+            "description": "Pitch tilts the map, producing a perspective effect. A number between 0 and 60, measured in degrees.",
+            "x-ms-summary": "Image Tilt",
+            "x-ms-visibility": "advanced",
+            "format": "float"
+          },
+          {
+            "name": "width",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "default": 300,
+            "description": "Width of the image; a number between 1 and 1280 pixels.",
+            "x-ms-summary": "Image Width",
+            "x-ms-visibility": "important",
+            "format": "int32"
+          },
+          {
+            "name": "height",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "default": 200,
+            "description": "Height of the image; a number between 1 and 1280 pixels.",
+            "x-ms-summary": "Image Height",
+            "x-ms-visibility": "important",
+            "format": "int32"
+          }
+        ]
+      }
+    },
+    "/directions/v5/mapbox/{routing}/{coordinates}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "routes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "geometry": {
+                        "type": "string",
+                        "description": "Depending on the geometries query parameter it can be either GeoJSON LineString or Polyline string, depending on the overview it can either be full or simplified",
+                        "x-ms-visibility": "internal"
+                      },
+                      "legs": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "summary": {
+                              "type": "string",
+                              "description": "A summary of the route",
+                              "title": "Route summary",
+                              "x-ms-visibility": "important"
+                            },
+                            "weight": {
+                              "type": "number",
+                              "format": "float",
+                              "description": "The weight in units",
+                              "x-ms-visibility": "internal"
+                            },
+                            "duration": {
+                              "type": "number",
+                              "format": "float",
+                              "description": "The estimated travel time beteen route legs waypoints in seconds",
+                              "title": "Route leg duration",
+                              "x-ms-visibility": "important"
+                            },
+                            "steps": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "intersections": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "out": {
+                                          "type": "integer",
+                                          "format": "int32",
+                                          "description": "The index in the bearings and entry arrays. Used to extract the bearing after the turn",
+                                          "x-ms-visibility": "internal"
+                                        },
+                                        "entry": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "boolean",
+                                            "title": "Entry item",
+                                            "x-ms-visibility": "internal"
+                                          },
+                                          "description": "A list of entry flags, corresponding with the entries in bearings. If the flag is true, indicates that the respective road could be entered on a valid route. If false, the turn onto the respective road would violate a restriction.",
+                                          "x-ms-visibility": "internal"
+                                        },
+                                        "bearings": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "integer",
+                                            "format": "int32",
+                                            "title": "Bearing item",
+                                            "x-ms-visibility": "internal"
+                                          },
+                                          "description": "A list of bearing values that are available at the intersection. The bearings describe all available roads at the intersection.",
+                                          "x-ms-visibility": "internal"
+                                        },
+                                        "location": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "title": "Intersection location item",
+                                            "x-ms-visibility": "internal"
+                                          },
+                                          "description": "A [longitude, latitude] pair describing the location of the turn.",
+                                          "x-ms-visibility": "internal"
+                                        },
+                                        "in": {
+                                          "type": "integer",
+                                          "format": "int32",
+                                          "description": "The index in the bearings and entry arrays. Used to calculate the bearing before the turn",
+                                          "x-ms-visibility": "internal"
+                                        }
+                                      },
+                                      "description": "Single intersection in the step",
+                                      "title": "Single intersection item",
+                                      "x-ms-visibility": "internal"
+                                    },
+                                    "description": "An array of objects representing all the intersections along the step",
+                                    "x-ms-visibility": "internal"
+                                  },
+                                  "driving_side": {
+                                    "type": "string",
+                                    "description": "The legal driving side at the location for this step. Either left or right.",
+                                    "x-ms-visibility": "advanced"
+                                  },
+                                  "geometry": {
+                                    "type": "string",
+                                    "description": "Depending on the geometries parameter, this is a GeoJSON LineString or a Polyline string representing the full route geometry from this route step to the next route step",
+                                    "x-ms-visibility": "internal"
+                                  },
+                                  "mode": {
+                                    "type": "string",
+                                    "description": "The mode of transportation",
+                                    "x-ms-visibility": "advanced"
+                                  },
+                                  "maneuver": {
+                                    "type": "object",
+                                    "properties": {
+                                      "bearing_after": {
+                                        "type": "integer",
+                                        "format": "int32",
+                                        "description": "A number between 0 and 360 indicating the clockwise angle from true north to the direction of travel immediately after the maneuve"
+                                      },
+                                      "bearing_before": {
+                                        "type": "integer",
+                                        "format": "int32",
+                                        "description": "A number between 0 and 360 indicating the clockwise angle from true north to the direction of travel immediately before the maneuve",
+                                        "x-ms-visibility": "internal"
+                                      },
+                                      "location": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "number",
+                                          "format": "float",
+                                          "description": "a coordinate of the maneuver",
+                                          "x-ms-visibility": "internal"
+                                        },
+                                        "description": "The coordinates of the maneuver as [longitude, latitude]",
+                                        "title": "maneuver_location",
+                                        "x-ms-visibility": "internal"
+                                      },
+                                      "modifier": {
+                                        "type": "string",
+                                        "description": "The direction change of the maneuver",
+                                        "title": "maneuver_modifier",
+                                        "x-ms-visibility": "internal"
+                                      },
+                                      "type": {
+                                        "type": "string",
+                                        "description": "Indicates the type of the maneuver, if no modifier is provided then type is limeted to depart and arrive",
+                                        "title": "maneuver_type",
+                                        "x-ms-visibility": "internal"
+                                      },
+                                      "instruction": {
+                                        "type": "string",
+                                        "description": "A human readable instruction of how to execute the returned maneuver",
+                                        "title": "maneuver_instruction",
+                                        "x-ms-visibility": "advanced"
+                                      }
+                                    },
+                                    "description": "A step maneuver",
+                                    "x-ms-visibility": "advanced"
+                                  },
+                                  "ref": {
+                                    "type": "string",
+                                    "description": "Any road designations associated with the road or path leading from this step’s maneuver to the next step’s maneuver",
+                                    "x-ms-visibility": "internal"
+                                  },
+                                  "weight": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "The weight in units",
+                                    "title": "Single step weight",
+                                    "x-ms-visibility": "internal"
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "  The estimated time traveled, in seconds, from the maneuver to the next route step.",
+                                    "title": " Single maneuver duration",
+                                    "x-ms-visibility": "important"
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "description": "  The name of the road or path that forms part of the route step.",
+                                    "title": "Single maneuver road name",
+                                    "x-ms-visibility": "important"
+                                  },
+                                  "distance": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "description": "The distance traveled, in meters, from the maneuver to the next route step.",
+                                    "title": "Single maneuver distance",
+                                    "x-ms-visibility": "important"
+                                  },
+                                  "voiceInstructions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "distanceAlongGeometry": {
+                                          "type": "number",
+                                          "format": "float",
+                                          "description": "distanceAlongGeometry",
+                                          "x-ms-visibility": "internal"
+                                        },
+                                        "announcement": {
+                                          "type": "string",
+                                          "description": "announcement",
+                                          "x-ms-visibility": "internal"
+                                        },
+                                        "ssmlAnnouncement": {
+                                          "type": "string",
+                                          "description": "ssmlAnnouncement",
+                                          "x-ms-visibility": "internal"
+                                        }
+                                      },
+                                      "x-ms-visibility": "internal",
+                                      "title": "voiceInstruction_ite"
+                                    },
+                                    "description": "voiceInstructions",
+                                    "x-ms-visibility": "internal"
+                                  },
+                                  "bannerInstructions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "distanceAlongGeometry": {
+                                          "type": "integer",
+                                          "format": "int32",
+                                          "description": "A float indicating how far from the upcoming maneuver the banner instruction should begin being displayed, in meters",
+                                          "x-ms-visibility": "internal"
+                                        },
+                                        "primary": {
+                                          "type": "object",
+                                          "properties": {
+                                            "text": {
+                                              "type": "string",
+                                              "description": "All text that should be displayed",
+                                              "x-ms-visibility": "internal"
+                                            },
+                                            "components": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "text": {
+                                                    "type": "string",
+                                                    "description": "The sub-string of the text of the parent objects that may have additional context associated with it",
+                                                    "x-ms-visibility": "internal"
+                                                  }
+                                                },
+                                                "title": "components array item",
+                                                "x-ms-visibility": "internal"
+                                              },
+                                              "description": "An array of objects that, together, make up what should be displayed in the banner. Includes additional information intended to be used to aid in visual layout. A component can contain the following properties:",
+                                              "x-ms-visibility": "internal"
+                                            },
+                                            "type": {
+                                              "type": "string",
+                                              "description": "The type of maneuver. May be used in combination with the modifier (and, if it is a roundabout, the degrees) for an icon to display",
+                                              "x-ms-visibility": "internal"
+                                            },
+                                            "modifier": {
+                                              "type": "string",
+                                              "description": "The modifier for the maneuver. Can be used in combination with the type (and, if it is a roundabout, the degrees) for an icon to display.",
+                                              "x-ms-visibility": "internal"
+                                            }
+                                          },
+                                          "description": "The most important content to display to the user. This text is larger and at the top.",
+                                          "x-ms-visibility": "internal"
+                                        },
+                                        "secondary": {
+                                          "type": "object",
+                                          "properties": {
+                                            "text": {
+                                              "type": "string",
+                                              "description": "text",
+                                              "x-ms-visibility": "internal"
+                                            },
+                                            "components": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "text": {
+                                                    "type": "string",
+                                                    "description": "text",
+                                                    "x-ms-visibility": "internal"
+                                                  }
+                                                },
+                                                "title": "secondary components array item",
+                                                "x-ms-visibility": "internal"
+                                              },
+                                              "description": "secondary components",
+                                              "x-ms-visibility": "internal"
+                                            },
+                                            "type": {
+                                              "type": "string",
+                                              "description": "type",
+                                              "x-ms-visibility": "internal"
+                                            },
+                                            "modifier": {
+                                              "type": "string",
+                                              "description": "modifier",
+                                              "x-ms-visibility": "internal"
+                                            }
+                                          },
+                                          "description": "Additional content useful for visual guidance. This text is slightly smaller and below primary. Can be null.",
+                                          "x-ms-visibility": "internal"
+                                        },
+                                        "sub": {
+                                          "type": "string",
+                                          "description": "Additional information that is included if the driver needs to be notified about something.",
+                                          "x-ms-visibility": "internal"
+                                        }
+                                      },
+                                      "description": "bannerInstructions array item",
+                                      "x-ms-visibility": "internal"
+                                    },
+                                    "description": "bannerInstructions",
+                                    "x-ms-visibility": "internal"
+                                  }
+                                },
+                                "description": "a nested route step object includes one step maneuver object as well as information about travel to the following route step",
+                                "title": "Single step item",
+                                "x-ms-visibility": "advanced"
+                              },
+                              "description": "Depending on the steps parameter this can be either an array of steps or empty array.",
+                              "x-ms-visibility": "advanced"
+                            },
+                            "distance": {
+                              "type": "number",
+                              "format": "float",
+                              "description": "The distance travelled between route leg waypoints in meter",
+                              "title": "Route leg distance",
+                              "x-ms-visibility": "important"
+                            }
+                          },
+                          "description": "A route leg item which is the journey from an origin point to a destination point, can be thought as a segment of the rout",
+                          "title": "Route leg item",
+                          "x-ms-visibility": "important"
+                        },
+                        "description": "An array of rout legs",
+                        "x-ms-visibility": "important"
+                      },
+                      "weight_name": {
+                        "type": "string",
+                        "description": "The weight used, default is routability",
+                        "x-ms-visibility": "internal"
+                      },
+                      "weight": {
+                        "type": "number",
+                        "format": "float",
+                        "description": "The weight in unit described in weight_name",
+                        "x-ms-visibility": "internal"
+                      },
+                      "duration": {
+                        "type": "number",
+                        "format": "float",
+                        "description": "The estimated travel time through the waypoints in seconds",
+                        "x-ms-visibility": "important"
+                      },
+                      "distance": {
+                        "type": "number",
+                        "format": "float",
+                        "description": "The distance travelled through the waypoints in meter",
+                        "x-ms-visibility": "important"
+                      }
+                    },
+                    "description": "a single route item",
+                    "title": "Route item"
+                  },
+                  "description": "describes a route through multiple waypoints"
+                },
+                "waypoints": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "the name of the road or path to which the input coordinates have beend snapped",
+                        "x-ms-visibility": "important"
+                      },
+                      "location": {
+                        "type": "array",
+                        "items": {
+                          "type": "number",
+                          "format": "float",
+                          "title": "waypoint location item",
+                          "description": "snapped longitude and latitude coordinates",
+                          "x-ms-visibility": "important"
+                        },
+                        "description": "array of the snapped coordinate in the format [lon, lat]",
+                        "x-ms-visibility": "important"
+                      }
+                    },
+                    "description": "waypoint object which is the input coordinate snapped to the roads network",
+                    "title": "waypoint item",
+                    "x-ms-visibility": "important"
+                  },
+                  "description": "array of waypoint object",
+                  "x-ms-visibility": "important"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "code representing the state of the response, on normal valid response it should be OK",
+                  "x-ms-visibility": "internal"
+                },
+                "uuid": {
+                  "type": "string",
+                  "description": "uuid",
+                  "x-ms-visibility": "internal"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Route To Location",
+        "description": "This action calculates and returns optimal route to reach a specified location from a given location.",
+        "operationId": "GetRoute",
+        "x-ms-visibility": "important",
+        "parameters": [
+          {
+            "name": "routing",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "default": "driving",
+            "x-ms-visibility": "important",
+            "description": "Routing profile to use possible values are driving-traffic, driving, walking, cycling",
+            "x-ms-summary": "Routing profile"
+          },
+          {
+            "name": "coordinates",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "semicolon-separated list of coordinates. e.g. startlon,startlat;endlon,endlat",
+            "x-ms-summary": "Start end coordinate",
+            "x-ms-visibility": "important"
+          },
+          {
+            "name": "alternatives",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "default": false,
+            "x-ms-visibility": "advanced",
+            "x-ms-summary": "Alternative route boolean",
+            "description": "If set to true it will return up to two alternative route than the fastest one"
+          },
+          {
+            "name": "geometries",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "default": "polyline",
+            "x-ms-summary": "Returned geometry format",
+            "description": "the format of the returned geometry, allowed values are geojson, polyline and polyline6",
+            "x-ms-visibility": "advanced"
+          },
+          {
+            "name": "overview",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "default": "simplified",
+            "x-ms-summary": "Type of overview geometry",
+            "description": "Displays the requested type of overview geometry, can be full (most detailed) simplified or false",
+            "x-ms-visibility": "advanced"
+          },
+          {
+            "name": "steps",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "default": false,
+            "x-ms-summary": "Set turn by turn instructions",
+            "description": "Whether to return steps and turn-by-turn instructions (true) or not",
+            "x-ms-visibility": "advanced"
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "default": "en",
+            "x-ms-summary": "Language of the instructions",
+            "description": "The language of returned turn-by-turn text instructions",
+            "x-ms-visibility": "advanced"
+          }
+        ]
+      }
+    }
+  },
+  "definitions": {},
+  "parameters": {},
+  "responses": {},
+  "securityDefinitions": {
+    "API Key": {
+      "type": "apiKey",
+      "in": "query",
+      "name": "access_token"
+    }
+  },
+  "security": [
+    {
+      "API Key": []
+    }
+  ],
+  "tags": [],
+  "x-ms-connector-metadata": [
+    {
+      "propertyName": "Website",
+      "propertyValue": "https://www.mapbox.com/"
+    },
+    {
+      "propertyName": "Privacy policy",
+      "propertyValue": "https://www.mapbox.com/legal/privacy"
+    },
+    {
+      "propertyName": "Categories",
+      "propertyValue": "Data"
+    }
+  ]
+}

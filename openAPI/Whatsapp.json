@@ -1,0 +1,166 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "WhatsApp-Test",
+    "description": "This WhatsApp connector will allow you to send some message templates from the test WhatsApp business account to a phone number registered on this Meta Developer App.",
+    "contact": {
+      "name": "Zakariya Fakira",
+      "url": "https://business.facebook.com/",
+      "email": "zakariyafakira08@gmail.com"
+    }
+  },
+  "x-ms-connector-metadata": [
+    {
+      "propertyName": "Website",
+      "propertyValue": "https://www.whatsapp.com/"
+    },
+    {
+      "propertyName": "Privacy policy",
+      "propertyValue": "https://www.whatsapp.com/legal/privacy-policy/?lang=en"
+    },
+    {
+      "propertyName": "Categories",
+      "propertyValue": "Social Media"
+    }
+  ],
+  "host": "graph.facebook.com",
+  "basePath": "/",
+  "schemes": ["https"],
+  "consumes": [],
+  "produces": ["application/json"],
+  "paths": {
+    "/%7B%7BVersion%7D%7D/%7B%7BPhone-Number-ID%7D%7D/messages": {},
+    "/{Version}/{Phone-Number-ID}/messages": {
+      "post": {
+        "summary": "Send a Message",
+        "description": "Send a message of a specific template to a registered user phone number.",
+        "operationId": "SendMessage",
+        "parameters": [
+          {
+            "name": "Version",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "default": "v15.0",
+            "description": "Version of API",
+            "x-ms-summary": "Version of the WhatsApp Business API being used.",
+            "x-ms-url-encoding": "single"
+          },
+          {
+            "name": "Phone-Number-ID",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "default": 104545025835246,
+            "description": "Phone Number ID of Business",
+            "x-ms-summary": "Use your Business Phone Number ID.",
+            "x-ms-url-encoding": "single"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "messaging_product": {
+                  "type": "string",
+                  "description": "messaging_product"
+                },
+                "to": {
+                  "type": "string",
+                  "description": "to"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "type"
+                },
+                "template": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "name"
+                    },
+                    "language": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "code"
+                        }
+                      },
+                      "description": "language"
+                    },
+                    "components": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "description": "type"
+                          },
+                          "parameters": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "description": "type"
+                                },
+                                "image": {
+                                  "type": "object",
+                                  "properties": {
+                                    "link": {
+                                      "type": "string",
+                                      "description": "link"
+                                    }
+                                  },
+                                  "description": "image"
+                                },
+                                "text": {
+                                  "type": "string",
+                                  "description": "text"
+                                }
+                              }
+                            },
+                            "description": "parameters"
+                          }
+                        }
+                      },
+                      "description": "components"
+                    }
+                  },
+                  "description": "template"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad request"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {},
+  "parameters": {},
+  "responses": {},
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "Authorization"
+    }
+  },
+  "security": [],
+  "tags": []
+}
