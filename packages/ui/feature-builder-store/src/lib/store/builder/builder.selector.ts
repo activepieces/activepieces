@@ -451,12 +451,21 @@ const selectStepOutputStatus = (stepName: string) => {
       if (stepStatus) {
         return stepStatus;
       }
+
+      const parents = FlowStructureUtil.findStepParents(
+        stepName,
+        viewedVersion.trigger
+      );
       if (
-        run.status === FlowRunStatus.PAUSED ||
-        run.status === FlowRunStatus.RUNNING
+        parents === undefined ||
+        ((parents.length === 0 ||
+          run.steps[parents[0].name]?.status !== StepOutputStatus.SUCCEEDED) &&
+          (run.status === FlowRunStatus.PAUSED ||
+            run.status === FlowRunStatus.RUNNING))
       ) {
         return StepOutputStatus.RUNNING;
       }
+
       return undefined;
     }
   );
