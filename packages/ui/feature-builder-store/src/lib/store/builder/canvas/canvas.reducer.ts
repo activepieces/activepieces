@@ -55,23 +55,18 @@ const __CanvasReducer = createReducer(
     const displayedFlowVersion: FlowVersion = JSON.parse(
       JSON.stringify(action.displayedFlowVersion)
     );
-    const loopIndexes = FlowStructureUtil.getInitialLoopIndexes(
-      displayedFlowVersion.trigger
-    );
     return {
       ...initialState,
       viewedVersion: displayedFlowVersion,
       runInfo: {
         selectedRun: undefined,
-        loopIndexes,
+        loopIndexes: {},
       },
     };
   }),
   on(canvasActions.viewVersion, (state, action): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    const loopIndexes = FlowStructureUtil.getInitialLoopIndexes(
-      state.viewedVersion.trigger
-    );
+
     return {
       ...clonedState,
       viewedVersion: action.viewedFlowVersion,
@@ -79,7 +74,7 @@ const __CanvasReducer = createReducer(
       clickedAddBtnId: undefined,
       runInfo: {
         selectedRun: undefined,
-        loopIndexes,
+        loopIndexes: {},
       },
       rightSidebar: {
         props: NO_PROPS,
@@ -135,9 +130,16 @@ const __CanvasReducer = createReducer(
   on(canvasActions.setRun, (state, { run }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     clonedState.runInfo.selectedRun = run;
-    clonedState.runInfo.loopIndexes = FlowStructureUtil.getInitialLoopIndexes(
+    const initialLoopIndexes = FlowStructureUtil.getInitialLoopIndexes(
       clonedState.viewedVersion.trigger
     );
+
+    Object.keys(initialLoopIndexes).forEach((stepName) => {
+      //indexes can be zero so don't check for !loopIndexes[stepName]
+      if (clonedState.runInfo.loopIndexes[stepName] === undefined) {
+        clonedState.runInfo.loopIndexes[stepName] = 0;
+      }
+    });
     return clonedState;
   }),
   on(canvasActions.exitRun, (state, { flowVersion }): CanvasState => {

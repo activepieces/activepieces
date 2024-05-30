@@ -7,7 +7,7 @@ import {
   StepRunResult,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
-import { map, Observable, startWith, switchMap, tap } from 'rxjs';
+import { map, Observable, startWith, switchMap, take, tap } from 'rxjs';
 import { RunDetailsService } from '../iteration-details.service';
 import {
   ActionType,
@@ -83,7 +83,6 @@ export class StepResultComponent implements OnInit {
 
   ngOnInit(): void {
     this.nestingLevelPadding = `${this.nestingLevel * 25}px`;
-
     this.isLoopStep = this.stepResult.output?.type === ActionType.LOOP_ON_ITEMS;
     if (this.stepResult.output?.type === ActionType.LOOP_ON_ITEMS) {
       this.isLoopStep = true;
@@ -93,34 +92,7 @@ export class StepResultComponent implements OnInit {
           this.createStepResultsForDetailsAccordion(iteration)
         );
       });
-      const startingIndex = this.hasAnIterationFailed()
-        ? this.stepResult.output.output?.iterations.length
-        : 1;
-      this.iteration$ = this.iterationIndexControl.valueChanges.pipe(
-        startWith(startingIndex),
-        tap((newIndex: number | null) => {
-          this.setInputMinWidth(newIndex);
-        }),
-        map((newIndex: number | null) => {
-          return this.minMaxIterationIndex(newIndex);
-        }),
-        tap((newIndex) => {
-          this.iterationIndexControl.setValue(newIndex, { emitEvent: false });
-          this.store.dispatch(
-            canvasActions.setLoopIndexForRun({
-              loopIndex: newIndex - 1,
-              stepName: this.stepResult.stepName,
-            })
-          );
-        }),
-        map((newIndex: number) => {
-          if (!newIndex) {
-            return this.iterationsAccordionList[0] || [];
-          }
-          const iteration = this.iterationsAccordionList[newIndex - 1];
-          return iteration || [];
-        })
-      );
+      this.iteration$ = this.createIterationControlListener();
     }
 
     if (this._selectedStepName === this.stepResult.stepName) {
@@ -128,6 +100,54 @@ export class StepResultComponent implements OnInit {
     }
   }
 
+  private createIterationControlListener() {
+    return this.store
+      .select(BuilderSelectors.selectLoopIndex(this.stepResult.stepName))
+      .pipe(
+        take(1),
+        switchMap((loopIndex) => {
+          const startingIndex =
+            this.stepResult.output?.type === ActionType.LOOP_ON_ITEMS &&
+            this.hasAnIterationFailed()
+              ? this.stepResult.output.output?.iterations.length
+              : loopIndex === undefined
+              ? 1
+              : loopIndex + 1;
+          if (loopIndex !== undefined) {
+            this.iterationIndexControl.setValue(startingIndex, {
+              emitEvent: false,
+            });
+          }
+          return this.iterationIndexControl.valueChanges.pipe(
+            startWith(startingIndex),
+            tap((newIndex: number | null) => {
+              this.setInputMinWidth(newIndex);
+            }),
+            map((newIndex: number | null) => {
+              return this.minMaxIterationIndex(newIndex);
+            }),
+            tap((newIndex) => {
+              this.iterationIndexControl.setValue(newIndex, {
+                emitEvent: false,
+              });
+              this.store.dispatch(
+                canvasActions.setLoopIndexForRun({
+                  loopIndex: newIndex - 1,
+                  stepName: this.stepResult.stepName,
+                })
+              );
+            }),
+            map((newIndex: number) => {
+              if (!newIndex) {
+                return this.iterationsAccordionList[0] || [];
+              }
+              const iteration = this.iterationsAccordionList[newIndex - 1];
+              return iteration || [];
+            })
+          );
+        })
+      );
+  }
   private minMaxIterationIndex(newIndex: number | null) {
     if (
       this.stepResult.output?.type !== ActionType.LOOP_ON_ITEMS ||

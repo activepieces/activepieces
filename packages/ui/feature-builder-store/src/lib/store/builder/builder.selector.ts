@@ -471,7 +471,6 @@ const selectCurrentStepOutput = createSelector(
     if (!run || !run.steps) {
       return undefined;
     }
-
     return FlowStructureUtil.extractStepOutput(
       stepName,
       loopIndexes,
@@ -480,6 +479,12 @@ const selectCurrentStepOutput = createSelector(
     );
   }
 );
+
+const selectLoopIndex = (stepName: string) => {
+  return createSelector(selectCurrentLoopIndexes, (loopIndexes) => {
+    return loopIndexes[stepName];
+  });
+};
 
 const selectCurrentStepPieceVersionAndName = createSelector(
   selectCurrentStep,
@@ -566,4 +571,5 @@ export const BuilderSelectors = {
   selectCurrentStepOutput,
   selectStepOutput,
   selectStepOutputStatus,
+  selectLoopIndex,
 };
