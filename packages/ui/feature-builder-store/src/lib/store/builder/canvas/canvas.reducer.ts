@@ -135,6 +135,9 @@ const __CanvasReducer = createReducer(
   on(canvasActions.setRun, (state, { run }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     clonedState.runInfo.selectedRun = run;
+    clonedState.runInfo.loopIndexes = FlowStructureUtil.getInitialLoopIndexes(
+      clonedState.viewedVersion.trigger
+    );
     return clonedState;
   }),
   on(canvasActions.exitRun, (state, { flowVersion }): CanvasState => {
@@ -266,6 +269,17 @@ const __CanvasReducer = createReducer(
     clonedState.rightSidebar = {
       props: NO_PROPS,
       type: RightSideBarType.NONE,
+    };
+    return clonedState;
+  }),
+  on(canvasActions.setLoopIndexForRun, (state, { loopIndex, stepName }) => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.runInfo = {
+      ...clonedState.runInfo,
+      loopIndexes: {
+        ...clonedState.runInfo.loopIndexes,
+        [stepName]: loopIndex,
+      },
     };
     return clonedState;
   })

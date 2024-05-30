@@ -78,7 +78,10 @@ const setRun = createAction(
   CanvasActionType.SET_RUN,
   props<{ run: FlowRun }>()
 );
-const setLoopIndexForRun = createAction( CanvasActionType.SET_LOOP_INDEX_FOR_RUN, props<{ loopIndex:number, stepName:string }>);
+const setLoopIndexForRun = createAction(
+  CanvasActionType.SET_LOOP_INDEX_FOR_RUN,
+  props<{ loopIndex: number; stepName: string }>()
+);
 export const canvasActions = {
   setInitial,
   setLeftSidebar,
@@ -93,5 +96,5 @@ export const canvasActions = {
   /**Used for when you edit a published flow and a draft is created */
   updateViewedVersionId,
   viewRun,
-  setLoopIndexForRun
+  setLoopIndexForRun,
 };

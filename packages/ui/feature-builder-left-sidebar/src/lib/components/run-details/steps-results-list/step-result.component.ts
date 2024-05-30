@@ -84,6 +84,7 @@ export class StepResultComponent implements OnInit {
   ngOnInit(): void {
     this.nestingLevelPadding = `${this.nestingLevel * 25}px`;
 
+    this.isLoopStep = this.stepResult.output?.type === ActionType.LOOP_ON_ITEMS;
     if (this.stepResult.output?.type === ActionType.LOOP_ON_ITEMS) {
       this.isLoopStep = true;
       const loopOutput = this.stepResult.output;
@@ -105,6 +106,12 @@ export class StepResultComponent implements OnInit {
         }),
         tap((newIndex) => {
           this.iterationIndexControl.setValue(newIndex, { emitEvent: false });
+          this.store.dispatch(
+            canvasActions.setLoopIndexForRun({
+              loopIndex: newIndex - 1,
+              stepName: this.stepResult.stepName,
+            })
+          );
         }),
         map((newIndex: number) => {
           if (!newIndex) {
@@ -112,42 +119,15 @@ export class StepResultComponent implements OnInit {
           }
           const iteration = this.iterationsAccordionList[newIndex - 1];
           return iteration || [];
-        }),
-        tap((iteration) => {
-          const previousIteration =
-            this.iterationsAccordionList[this.previousIterationIndex];
-          previousIteration?.forEach((st) => {
-            this.clearStepsThatWereNotReached(st);
-          });
-          this.findCurrentStepResultInCurrentIteration(iteration);
-          this.previousIterationIndex = this.iterationIndexControl.value - 1;
         })
       );
     }
 
     if (this._selectedStepName === this.stepResult.stepName) {
       this.childStepSelected.emit();
-      this.runDetailsService.currentStepResult$.next(this.stepResult);
     }
   }
 
-  private findCurrentStepResultInCurrentIteration(
-    iteration: Pick<StepRunResult, 'stepName' | 'output'>[]
-  ) {
-    iteration.forEach((st) => {
-      const stepNameAndResult = {
-        stepName: st.stepName,
-        output: st.output,
-      };
-      this.runDetailsService.iterationStepResultState$.next(stepNameAndResult);
-      if (
-        st.stepName ===
-        this.runDetailsService.currentStepResult$.value?.stepName
-      ) {
-        this.runDetailsService.currentStepResult$.next(stepNameAndResult);
-      }
-    });
-  }
   private minMaxIterationIndex(newIndex: number | null) {
     if (
       this.stepResult.output?.type !== ActionType.LOOP_ON_ITEMS ||
@@ -223,7 +203,6 @@ export class StepResultComponent implements OnInit {
       );
       this.runDetailsService.hideAllIterationsInput$.next(true);
       this.childStepSelected.emit();
-      this.runDetailsService.currentStepResult$.next(this.stepResult);
     } else if (expansionPanel) {
       expansionPanel.toggle();
     }
@@ -247,35 +226,6 @@ export class StepResultComponent implements OnInit {
     $event.stopPropagation();
   }
 
-  clearStepsThatWereNotReached(
-    stepWithinLoop: Pick<StepRunResult, 'stepName' | 'output'>
-  ) {
-    this.runDetailsService.iterationStepResultState$.next({
-      stepName: stepWithinLoop.stepName,
-      output: undefined,
-    });
-
-    if (
-      stepWithinLoop.stepName ===
-      this.runDetailsService.currentStepResult$.value?.stepName
-    ) {
-      this.runDetailsService.currentStepResult$.next(undefined);
-    }
-
-    if (
-      stepWithinLoop.output?.type === ActionType.LOOP_ON_ITEMS &&
-      stepWithinLoop.output?.output
-    ) {
-      if (stepWithinLoop.output.output.iterations[0]) {
-        const firstIterationResult = this.createStepResultsForDetailsAccordion(
-          stepWithinLoop.output.output.iterations[0]
-        );
-        firstIterationResult.forEach((st) => {
-          this.clearStepsThatWereNotReached(st);
-        });
-      }
-    }
-  }
   childStepSelectedHandler() {
     this.showIterationInput = true;
     this.childStepSelected.emit();
