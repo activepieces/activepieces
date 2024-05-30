@@ -8,13 +8,13 @@ import { ActivepiecesError, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, Error
 
 export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/login', LoginRequest, async (req, res) => {
-        const { saml } = await getSamlConfigOrThrow(req)
-        const loginResponse = await authnSsoSamlService.login(req.hostname, saml)
+        const { saml, platformId } = await getSamlConfigOrThrow(req)
+        const loginResponse = await authnSsoSamlService.login(platformId, saml)
         return res.redirect(loginResponse.redirectUrl)
     })
     app.post('/acs', AcsRequest, async (req, res) => {
         const { saml, platformId } = await getSamlConfigOrThrow(req)
-        const user = await authnSsoSamlService.acs(req.hostname, platformId, saml, {
+        const user = await authnSsoSamlService.acs( platformId, saml, {
             body: req.body,
             query: req.query,
         })
