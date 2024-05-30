@@ -22,7 +22,7 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
 
   const pieceDir = path.join('packages', 'pieces', pieceType, pieceName, 'src');
   const actionsDir = path.join(pieceDir, 'lib', 'action');
-  await createPiece(pieceName, packageName, pieceType); // Use the original createPiece();
+  await createPiece(pieceName, packageName, pieceType);
   console.log(chalk.green(`Creating ${pieceName}... 🫸`));
 
   const authCode = await generateAuth(openAPISpec);
@@ -64,8 +64,6 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
   `;
 
   writeFileSync(path.join(pieceDir, 'index.ts'), pieceDefinition);
-  console.log(pieceDefinition);
-  console.log(actions);
 
   console.log(
     `🚨 Piece definition, auth, actions generated successfully in ${pieceDir}`
