@@ -193,6 +193,7 @@ export class FlowStructureUtil {
             parentStepsThatAreLoops[parentStepsThatAreLoops.length - 1].name
           ]
         ];
+      //Could be accessing out of bounds iteration
       if (directParentOutput) {
         return directParentOutput[childName];
       }
