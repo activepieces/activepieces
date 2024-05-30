@@ -1,0 +1,246 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Slack Test",
+    "version": "1.0",
+    "description": "OpenAPI specification generated from the Slack piece."
+  },
+  "servers": [
+    {
+      "url": "https://slack.com/api"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://slack.com/oauth/v2/authorize",
+            "tokenUrl": "https://slack.com/api/oauth.v2.access",
+            "scopes": {
+              "channels:read": "Read channels",
+              "channels:manage": "Manage channels",
+              "channels:history": "View channel history",
+              "chat:write": "Write messages",
+              "groups:read": "Read groups",
+              "groups:write": "Write to groups",
+              "reactions:read": "Read reactions",
+              "mpim:read": "Read multi-party IMs",
+              "mpim:write": "Write to multi-party IMs",
+              "im:write": "Write to IMs",
+              "users:read": "Read user information",
+              "files:write": "Write files",
+              "files:read": "Read files",
+              "users:read.email": "Read user email",
+              "reactions:write": "Write reactions"
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "OAuth2": [
+        "channels:read",
+        "channels:manage",
+        "channels:history",
+        "chat:write",
+        "groups:read",
+        "groups:write",
+        "reactions:read",
+        "mpim:read",
+        "mpim:write",
+        "im:write",
+        "users:read",
+        "files:write",
+        "files:read",
+        "users:read.email",
+        "reactions:write"
+      ]
+    }
+  ],
+  "paths": {
+    "/chat.postMessage": {
+      "post": {
+        "summary": "Send Message to a Channel",
+        "operationId": "send_channel_message",
+        "description": "Send a message to a specified channel",
+        "parameters": [
+          {
+            "name": "channel",
+            "in": "query",
+            "description": "Channel ID to send the message to",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "description": "Text of the message",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "thread_ts",
+            "in": "query",
+            "description": "Thread timestamp for reply",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "channel": {
+                    "type": "string",
+                    "description": "Channel ID to send the message to"
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "Text of the message"
+                  },
+                  "thread_ts": {
+                    "type": "string",
+                    "description": "Thread timestamp for reply"
+                  }
+                },
+                "required": ["channel", "text"]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Message sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "ts": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response"
+          }
+        }
+      }
+    },
+    "/chat.update": {
+      "post": {
+        "summary": "Update Message",
+        "operationId": "update_message",
+        "description": "Update an existing message",
+        "parameters": [
+          {
+            "name": "channel",
+            "in": "query",
+            "description": "Channel ID of the message to update",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ts",
+            "in": "query",
+            "description": "Timestamp of the message to update",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "description": "Updated text of the message",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "channel": {
+                    "type": "string",
+                    "description": "Channel ID of the message to update"
+                  },
+                  "ts": {
+                    "type": "string",
+                    "description": "Timestamp of the message to update"
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "Updated text of the message"
+                  }
+                },
+                "required": ["channel", "ts", "text"]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Message updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "channel": {
+                      "type": "string"
+                    },
+                    "ts": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response"
+          }
+        }
+      }
+    }
+  }
+}

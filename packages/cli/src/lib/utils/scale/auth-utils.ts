@@ -12,7 +12,7 @@ const generateAuthTemplate = (authType: string, authDetails: AuthDetails): strin
         scope: ${JSON.stringify(authDetails.scope)},
       });
     `;
-  } else if (authType === 'apiKey') {
+  } else if (authType === 'apikey') {
     return `
       export const ${authDetails.displayName} = PieceAuth.SecretText({
         displayName: ${JSON.stringify(authDetails.displayName)},

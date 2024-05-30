@@ -76,7 +76,6 @@ const handleAPIConversion = async (pathOrUrl) => {
   if (isUrl(pathOrUrl)) {
     try {
       openAPISpec = await getJsonFromUrl(pathOrUrl);
-
       console.log('API spec downloaded successfully.');
     } catch (error) {
       console.error('Failed to download API spec:', error.message);
