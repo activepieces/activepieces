@@ -4,7 +4,6 @@ import {
   BranchAction,
   LoopOnItemsAction,
   LoopStepOutput,
-  LoopStepResult,
   StepOutput,
   Trigger,
   UpdateActionRequest,
@@ -172,27 +171,31 @@ export class FlowStructureUtil {
     loopIndexes: Record<string, number>,
     childName: string,
     output: Record<string, StepOutput>
-  ) {
+  ): StepOutput | undefined {
     const parentStepsThatAreLoops = parents.filter(
       (p) => p.type === ActionType.LOOP_ON_ITEMS
     );
     if (parentStepsThatAreLoops.length === 0) return undefined;
-    let iterator: LoopStepOutput | LoopStepResult | undefined = output[
+    let iterator: LoopStepOutput | undefined = output[
       parentStepsThatAreLoops[0].name
     ] as LoopStepOutput;
     let index = 0;
     while (index < parentStepsThatAreLoops.length - 1) {
       iterator = iterator?.output?.iterations[
         loopIndexes[parentStepsThatAreLoops[index].name]
-      ] as LoopStepOutput | undefined;
+      ][parentStepsThatAreLoops[index + 1].name] as LoopStepOutput | undefined;
       index++;
     }
     if (iterator) {
-      return iterator.output?.iterations[
-        loopIndexes[
-          parentStepsThatAreLoops[parentStepsThatAreLoops.length - 1].name
-        ]
-      ][childName];
+      const directParentOutput =
+        iterator.output?.iterations[
+          loopIndexes[
+            parentStepsThatAreLoops[parentStepsThatAreLoops.length - 1].name
+          ]
+        ];
+      if (directParentOutput) {
+        return directParentOutput[childName];
+      }
     }
     return undefined;
   }
