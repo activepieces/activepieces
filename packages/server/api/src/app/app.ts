@@ -67,7 +67,7 @@ import { stepFileModule } from './flows/step-file/step-file.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
-import { loadEncryptionKey } from './helper/encryption'
+import { encryptUtils } from './helper/encryption'
 import { errorHandler } from './helper/error-handler'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { getEdition } from './helper/secret-helper'
@@ -385,7 +385,7 @@ const validateEnvPropsOnStartup = async (): Promise<void> => {
         system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
     const environment = system.get(SystemProp.ENVIRONMENT)
-    await loadEncryptionKey(queueMode)
+    await encryptUtils.loadEncryptionKey(queueMode)
 
     if (
         executionMode === ExecutionMode.UNSANDBOXED &&
