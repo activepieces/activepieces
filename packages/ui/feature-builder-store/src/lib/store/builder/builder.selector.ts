@@ -12,6 +12,8 @@ import {
   LoopOnItemsActionSettings,
   PieceActionSettings,
   PieceTriggerSettings,
+  StepOutputStatus,
+  FlowRunStatus,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 import { ActionType, TriggerType } from '@activepieces/shared';
@@ -289,12 +291,14 @@ export const selectNumberOfInvalidSteps = createSelector(
 export const selectCurrentFlowRun = createSelector(
   selectCanvasState,
   (state) => {
-    return state.selectedRun;
+    return state.runInfo.selectedRun;
   }
 );
+
 const selectPublishedFlowVersion = createSelector(selectCurrentFlow, (flow) => {
   return flow.publishedFlowVersion;
 });
+
 export const selectCurrentFlowRunStatus = createSelector(
   selectCurrentFlowRun,
   (run: FlowRun | undefined) => {
@@ -404,6 +408,92 @@ const selectStepIndex = (stepName: string) => {
 const selectStepValidity = createSelector(selectCurrentStep, (step) => {
   return step?.valid || false;
 });
+const selectCurrentLoopIndexes = createSelector(selectCanvasState, (state) => {
+  return state.runInfo.loopIndexes;
+});
+
+const selectStepOutput = (stepName: string) => {
+  return createSelector(
+    selectCurrentFlowRun,
+    selectCurrentLoopIndexes,
+    selectViewedVersion,
+    (run, loopIndexes, viewedVersion) => {
+      if (!run || !run.steps) {
+        return undefined;
+      }
+      return FlowStructureUtil.extractStepOutput(
+        stepName,
+        loopIndexes,
+        run.steps,
+        viewedVersion.trigger
+      );
+    }
+  );
+};
+const selectStepOutputStatus = (stepName: string) => {
+  return createSelector(
+    selectCurrentFlowRun,
+    selectCurrentLoopIndexes,
+    selectViewedVersion,
+    (run, loopIndexes, viewedVersion) => {
+      if (!run) {
+        return undefined;
+      }
+      if (run && run.status === FlowRunStatus.RUNNING && !run.steps) {
+        return StepOutputStatus.RUNNING;
+      }
+      const stepStatus = FlowStructureUtil.extractStepOutput(
+        stepName,
+        loopIndexes,
+        run.steps,
+        viewedVersion.trigger
+      )?.status;
+      if (stepStatus) {
+        return stepStatus;
+      }
+
+      const parents = FlowStructureUtil.findStepParents(
+        stepName,
+        viewedVersion.trigger
+      );
+      if (
+        parents === undefined ||
+        ((parents.length === 0 ||
+          run.steps[parents[0].name]?.status !== StepOutputStatus.SUCCEEDED) &&
+          (run.status === FlowRunStatus.PAUSED ||
+            run.status === FlowRunStatus.RUNNING))
+      ) {
+        return StepOutputStatus.RUNNING;
+      }
+
+      return undefined;
+    }
+  );
+};
+
+const selectCurrentStepOutput = createSelector(
+  selectCurrentStepName,
+  selectCurrentFlowRun,
+  selectCurrentLoopIndexes,
+  selectViewedVersion,
+  (stepName, run, loopIndexes, viewedVersion) => {
+    if (!run || !run.steps) {
+      return undefined;
+    }
+    return FlowStructureUtil.extractStepOutput(
+      stepName,
+      loopIndexes,
+      run.steps,
+      viewedVersion.trigger
+    );
+  }
+);
+
+const selectLoopIndex = (stepName: string) => {
+  return createSelector(selectCurrentLoopIndexes, (loopIndexes) => {
+    return loopIndexes[stepName];
+  });
+};
 
 const selectCurrentStepPieceVersionAndName = createSelector(
   selectCurrentStep,
@@ -487,4 +577,8 @@ export const BuilderSelectors = {
   selectDraftVersion,
   selectShowIncompleteStepsWidget,
   selectCurrentPieceStepTriggerOrActionName,
+  selectCurrentStepOutput,
+  selectStepOutput,
+  selectStepOutputStatus,
+  selectLoopIndex,
 };
