@@ -7,7 +7,7 @@ import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, isNil, User } from '@activepieces/shared'
+import { ApEdition, assertEqual, assertNotNullOrUndefined, isNil, User } from '@activepieces/shared'
 
 const EDITION = getEdition()
 
@@ -65,9 +65,7 @@ export const emailService = {
         // TODO remove the hardcoded limit
         const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
         const sendEmails = alerts.data.map(async (alert) => {
-            if (alert.channel !== AlertChannel.EMAIL) {
-                return
-            }
+            assertEqual(alert.channel, AlertChannel.EMAIL, 'alertChannel', 'EMAIL')
             const userData = await userService.getByPlatformAndEmail({
                 platformId: project.platformId,
                 email: alert.receiver,
