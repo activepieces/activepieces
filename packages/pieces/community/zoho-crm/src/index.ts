@@ -17,20 +17,28 @@ export const zohoCrmAuth = PieceAuth.OAuth2({
       options: {
         options: [
           {
-            label: 'zoho.eu',
+            label: 'zoho.eu (Europe)',
             value: 'zoho.eu',
           },
           {
-            label: 'zoho.com',
+            label: 'zoho.com (United States)',
             value: 'zoho.com',
           },
           {
-            label: 'zoho.com.au',
+            label: 'zoho.com.au (Australia)',
             value: 'zoho.com.au',
           },
           {
-            label: 'zoho.jp',
+            label: 'zoho.jp (Japan)',
             value: 'zoho.jp',
+          },
+          {
+            label: 'zoho.in (India)',
+            value: 'zoho.in',
+          },
+          {
+            label: 'zohocloud.ca (Canada)',
+            value: 'zohocloud.ca',
           },
         ],
       },
