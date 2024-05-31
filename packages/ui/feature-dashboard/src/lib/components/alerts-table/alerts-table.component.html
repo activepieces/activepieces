@@ -6,9 +6,9 @@
     } @else {
     <div class="ap-h-full">
         <div class="ap-p-[0.875rem]">
-            <span class="ap-typography-subtitle-1">Receive email alerts and manage the recipient emails
-                for when new flow issues are created.</span>
+            <span class="ap-typography-subtitle-1">Receive email alerts and manage the recipient emails.</span>
         </div>
+        <ap-markdown [data]="betaNote"> </ap-markdown>
         <div class=" ap-min-h-[70%]">
             <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Alerts" i18n-aria-label>
                 <ng-container matColumnDef="receiver">
