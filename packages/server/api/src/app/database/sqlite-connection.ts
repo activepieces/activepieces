@@ -111,9 +111,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddUniqueNameToFolderSqlite1713645171373,
         AddFeatureFlagsToPlatform1714137103728,
         AddIssueEntitySqlite1714900626443,
-        AddAlertsEntitySqlite1717000733019,
         RemoveShowActivityLog1716105958530,
         AddDurationForRuns1716725027424,
+        AddAlertsEntitySqlite1717000733019,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

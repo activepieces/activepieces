@@ -220,9 +220,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddUniqueNameToFolder1713643694049,
         AddFeaturesToPlatform1714145914415,
         AddIssueEntityPostgres1714904516114,
-        AddAlertsEntityPostgres1716989780835,
         RemoveShowActivityLog1716105958530,
         AddDurationForRuns1716725027424,
+        AddAlertsEntityPostgres1716989780835,
     ]
 
     const edition = getEdition()
