@@ -17,10 +17,9 @@ export const alertsService = {
 
         if (existingAlert) {
             throw new ActivepiecesError({
-                code: ErrorCode.EXISTING_USER,
+                code: ErrorCode.EXISTING_ALERT_CHANNEL,
                 params: {
                     email: receiver,
-                    platformId: null,
                 },
             })
         }
