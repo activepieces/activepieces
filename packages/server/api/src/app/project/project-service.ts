@@ -11,6 +11,9 @@ import { ActivepiecesError, apId,
     spreadIfDefined,
     UserId,
 } from '@activepieces/shared'
+import { alertsService } from '../ee/alerts/alerts-service'
+import { AlertChannel } from '@activepieces/ee-shared'
+import { projectMemberService } from '../ee/project-members/project-member.service'
 
 const repo = repoFactory(ProjectEntity)
 
@@ -21,6 +24,14 @@ export const projectService = {
             ...params,
             notifyStatus: NotificationStatus.ALWAYS,
         }
+
+        const users = await projectMemberService.list(newProject.id, null, 1)
+        const owner = users.data[0]
+        await alertsService.add({
+            channel: AlertChannel.EMAIL,
+            projectId: newProject.id,
+            receiver: owner.email
+        })
 
         return repo().save(newProject)
     },
