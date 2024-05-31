@@ -37,7 +37,7 @@ export const zohoCrmAuth = PieceAuth.OAuth2({
     }),
   },
   description: 'Authentication for Zoho CRM',
-  scope: ['ZohoCRM.modules.READ'],
+  scope: ['ZohoCRM.users.ALL','ZohoCRM.org.ALL', 'ZohoCRM.settings.ALL', 'ZohoCRM.modules.ALL', 'ZohoCRM.bulk.ALL'],
   authUrl: 'https://accounts.{location}/oauth/v2/auth',
   tokenUrl: 'https://accounts.{location}/oauth/v2/token',
   required: true,
@@ -50,7 +50,7 @@ export const zohoCrm = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-crm.png',
   minimumSupportedRelease: '0.5.0',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud","ikus060"],
   auth: zohoCrmAuth,
   actions: [
     createCustomApiCallAction({
