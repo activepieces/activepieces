@@ -12,20 +12,20 @@ import { UiCommonModule } from '@activepieces/ui/common';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { SyncProjectComponent } from '@activepieces/ui-feature-git-sync';
 import { GeneralSettingsComponent } from '../../components/general-settings/general-settings.component';
-import { AlertsTableComponent } from "../../components/alerts-table/alerts-table.component";
+import { AlertsTableComponent } from '../../components/alerts-table/alerts-table.component';
 
 @Component({
-    standalone: true,
-    templateUrl: './settings-page.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        CommonModule,
-        UiCommonModule,
-        SyncProjectComponent,
-        UiFeaturePiecesModule,
-        GeneralSettingsComponent,
-        AlertsTableComponent
-    ]
+  standalone: true,
+  templateUrl: './settings-page.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    UiCommonModule,
+    SyncProjectComponent,
+    UiFeaturePiecesModule,
+    GeneralSettingsComponent,
+    AlertsTableComponent,
+  ],
 })
 export class SettingsPageComponent implements AfterViewInit {
   @ViewChild('tabs') tabGroup?: MatTabGroup;
