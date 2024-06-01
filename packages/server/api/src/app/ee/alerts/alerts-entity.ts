@@ -3,7 +3,7 @@ import {
     ApIdSchema,
     BaseColumnSchemaPart,
 } from '../../database/database-common'
-import { Alert, AlertChannel } from '@activepieces/ee-shared'
+import { Alert } from '@activepieces/ee-shared'
 
 type AlertSchema = Alert
 
@@ -16,7 +16,6 @@ export const AlertEntity = new EntitySchema<AlertSchema>({
         },
         channel: {
             type: String,
-            enum: AlertChannel,
         },
         receiver: {
             type: String,

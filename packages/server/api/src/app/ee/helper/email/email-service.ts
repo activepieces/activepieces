@@ -54,6 +54,9 @@ export const emailService = {
         count,
         createdAt,
     }: IssueCreatedArgs): Promise<void> {
+        if (EDITION_IS_NOT_PAID) {
+            return
+        }
         logger.info({
             name: '[emailService#sendIssueCreatedNotification]',
             projectId,

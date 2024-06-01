@@ -1,6 +1,6 @@
+import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
 import { apId } from '@activepieces/shared'
-import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddAlertsEntityPostgres1716989780835 implements MigrationInterface {
     name = 'AddAlertsEntityPostgres1716989780835'
@@ -34,17 +34,17 @@ export class AddAlertsEntityPostgres1716989780835 implements MigrationInterface 
             INNER JOIN "user" u ON u."id" = p."ownerId"
         `)
 
-        let countAlerts = 0;
+        let countAlerts = 0
         for (const project of projects) {
-            const alertId = apId();
+            const alertId = apId()
             await queryRunner.query(
                 'INSERT INTO alert (id, created, updated, projectId, channel, receiver) VALUES ($1, NOW(), NOW(), $2, "EMAIL", $3)',
                 [alertId, project.projectId, project.receiver],
-            );
-            countAlerts++;
+            )
+            countAlerts++
         }
 
-        logger.info(`CreateAlerts1680986182074 Migrated ${countAlerts} alerts`);
+        logger.info(`CreateAlerts1680986182074 Migrated ${countAlerts} alerts`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

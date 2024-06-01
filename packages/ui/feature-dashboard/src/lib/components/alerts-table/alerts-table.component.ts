@@ -21,7 +21,7 @@ import { AlertsService } from '../../services/alerts.service';
 import { MatDialog } from '@angular/material/dialog';
 import { NewAlertDialogComponent } from '../dialogs/new-alert-dialog/new-alert-dialog.component';
 import { Alert } from '@activepieces/ee-shared';
-import { ProjectMemberService } from '@ee/ui/project-members/src';
+import { ProjectMemberService } from 'ee-project-members';
 
 @Component({
   selector: 'app-alerts-table',
@@ -33,7 +33,8 @@ import { ProjectMemberService } from '@ee/ui/project-members/src';
 export class AlertsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator: ApPaginatorComponent;
-  readonly betaNote = 'Note: This feature is in <strong>BETA</strong> and will only be <strong>Free</strong> during the <strong>BETA</strong> period.';
+  readonly betaNote =
+    'Note: This feature is in <strong>BETA</strong> and will only be <strong>Free</strong> during the <strong>BETA</strong> period.';
   upgradeNoteTitle = $localize`Unlock Alerts`;
   upgradeNote = $localize`Stay up to date with your flows, quota limits and updates with Alerts`;
   displayedColumns: string[] = ['receiver', 'action'];
