@@ -286,6 +286,9 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MrAkber"><img src="https://avatars.githubusercontent.com/u/170118042?v=4?s=100" width="100px;" alt="MrAkber"/><br /><sub><b>MrAkber</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=MrAkber" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/marek-slavicek"><img src="https://avatars.githubusercontent.com/u/136325104?v=4?s=100" width="100px;" alt="marek-slavicek"/><br /><sub><b>marek-slavicek</b></sub></a><br /><a href="#plugin-marek-slavicek" title="Plugin/utility libraries">🔌</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/hugh-codes"><img src="https://avatars.githubusercontent.com/u/166336705?v=4?s=100" width="100px;" alt="hugh-codes"/><br /><sub><b>hugh-codes</b></sub></a><br /><a href="#plugin-hugh-codes" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
   </tbody>
 </table>
 
