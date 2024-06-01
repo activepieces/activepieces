@@ -32,7 +32,7 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
           return {
             url: Property.ShortText({
               displayName: 'URL',
-              description: 'Add the endpoint to use. For example: https://www.zohoapis.com/crm/v6/Leads?fields=Last_Name,Email,Converted',
+              description: 'The full URL to use, including the base URL',
               required: true,
               defaultValue: baseUrl(auth)
             })
