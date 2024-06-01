@@ -2,13 +2,12 @@ import { jwtUtils } from '../../../helper/jwt-utils'
 import { getEdition } from '../../../helper/secret-helper'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
-import { userService } from '../../../user/user-service'
 import { alertsService } from '../../alerts/alerts-service'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ApEdition, assertEqual, assertNotNullOrUndefined, isNil, User } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, User } from '@activepieces/shared'
 
 const EDITION = getEdition()
 
@@ -37,7 +36,7 @@ export const emailService = {
         })
 
         await emailSender.send({
-            email,
+            emails: [email],
             platformId: project.platformId,
             templateData: {
                 name: 'invitation-email',
@@ -73,36 +72,24 @@ export const emailService = {
         }
         // TODO remove the hardcoded limit
         const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
-        const sendEmails = alerts.data.map(async (alert) => {
-            assertEqual(alert.channel, AlertChannel.EMAIL, 'alertChannel', 'EMAIL')
-            const userData = await userService.getByPlatformAndEmail({
-                platformId: project.platformId,
-                email: alert.receiver,
-            })
-            if (isNil(userData)) {
-                return
-            }
-            const issueUrl = await platformDomainHelper.constructUrlFrom({
-                platformId: project.platformId,
-                path: 'runs?limit=10#Issues',
-            })
-
-            return emailSender.send({
-                email: userData.email,
-                platformId: project.platformId,
-                templateData: {
-                    name: 'issue-created',
-                    vars: {
-                        issueUrl,
-                        flowName,
-                        firstName: userData.firstName,
-                        createdAt,
-                        count: count.toString(),
-                    },
-                },
-            })
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const issueUrl = await platformDomainHelper.constructUrlFrom({
+            platformId: project.platformId,
+            path: 'runs?limit=10#Issues',
         })
-        await Promise.all(sendEmails)
+        await emailSender.send({
+            emails,
+            platformId: project.platformId,
+            templateData: {
+                name: 'issue-created',
+                vars: {
+                    issueUrl,
+                    flowName,
+                    createdAt,
+                    count: count.toString(),
+                },
+            },
+        })
     },
 
     async sendQuotaAlert({ email, projectId, resetDate, firstName, templateName }: SendQuotaAlertArgs): Promise<void> {
@@ -119,7 +106,7 @@ export const emailService = {
         }
 
         await emailSender.send({
-            email,
+            emails: [email],
             platformId: project.platformId,
             templateData: {
                 name: templateName,
@@ -175,7 +162,7 @@ export const emailService = {
         }
 
         await emailSender.send({
-            email: user.email,
+            emails: [user.email],
             platformId: platformId ?? undefined,
             templateData: otpToTemplate[type],
         })
@@ -206,6 +193,7 @@ type SendOtpArgs = {
 type IssueCreatedArgs = {
     projectId: string
     flowName: string
+    lastSeenAt: string
     count: number
     createdAt: string
 }
