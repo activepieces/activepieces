@@ -45,9 +45,9 @@ import { AddPlatformRole1713271221154 } from './migration/sqlite/1713271221154-A
 import { AddUniqueNameToFolderSqlite1713645171373 } from './migration/sqlite/1713645171373-AddUniqueNameToFolderSqlite'
 import { AddFeatureFlagsToPlatform1714137103728 } from './migration/sqlite/1714137103728-AddFeatureFlagsToPlatform'
 import { AddIssueEntitySqlite1714900626443 } from './migration/sqlite/1714900626443-AddIssueEntitySqlite'
+import { AddAlertsEntitySqlite1717239613259 } from './migration/sqlite/1717239613259-AddAlertsEntitySqlite'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
-import { AddAlertsEntitySqlite1717000733019 } from './migration/sqlite/1717000733019-AddAlertsEntitySqlite'
 
 
 const getSqliteDatabaseFilePath = (): string => {
@@ -113,7 +113,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIssueEntitySqlite1714900626443,
         RemoveShowActivityLog1716105958530,
         AddDurationForRuns1716725027424,
-        AddAlertsEntitySqlite1717000733019,
+        AddAlertsEntitySqlite1717239613259,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

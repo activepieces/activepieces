@@ -52,6 +52,7 @@ import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterpr
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { projectMemberModule } from './ee/project-members/project-member.module'
+import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { referralModule } from './ee/referrals/referral.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
@@ -78,6 +79,7 @@ import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { platformModule } from './platform/platform.module'
+import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tagsModule } from './tags/tags-module'
@@ -325,6 +327,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
+            projectHooks.setHooks(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
             appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
             flowRunHooks.setHooks(platformRunHooks)
@@ -354,6 +357,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
+            projectHooks.setHooks(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
             flowRunHooks.setHooks(platformRunHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)

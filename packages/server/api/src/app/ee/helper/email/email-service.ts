@@ -1,5 +1,6 @@
 import { jwtUtils } from '../../../helper/jwt-utils'
 import { getEdition } from '../../../helper/secret-helper'
+import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { alertsService } from '../../alerts/alerts-service'
@@ -65,6 +66,11 @@ export const emailService = {
             createdAt,
         })
         const project = await projectService.getOneOrThrow(projectId)
+
+        const platform = await platformService.getOneOrThrow(project.platformId)
+        if (platform.embeddingEnabled) {
+            return
+        }
         // TODO remove the hardcoded limit
         const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
         const sendEmails = alerts.data.map(async (alert) => {
@@ -80,7 +86,7 @@ export const emailService = {
                 platformId: project.platformId,
                 path: 'runs?limit=10#Issues',
             })
-    
+
             return emailSender.send({
                 email: userData.email,
                 platformId: project.platformId,
@@ -107,8 +113,8 @@ export const emailService = {
         const project = await projectService.getOne(projectId)
         assertNotNullOrUndefined(project, 'project')
 
-        if (!isNil(project.platformId)) {
-            // Don't Inform the project users, as there should be a feature to manage billing by platform owners, If we send an emails to the project users It will confuse them since the email is not white labeled.
+        const platform = await platformService.getOneOrThrow(project.platformId)
+        if (platform.embeddingEnabled) {
             return
         }
 

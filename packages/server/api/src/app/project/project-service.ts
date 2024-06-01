@@ -1,6 +1,8 @@
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { ProjectEntity } from './project-entity'
+import { projectHooks } from './project-hooks'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, apId,
     ApId,
     ErrorCode,
@@ -11,9 +13,6 @@ import { ActivepiecesError, apId,
     spreadIfDefined,
     UserId,
 } from '@activepieces/shared'
-import { alertsService } from '../ee/alerts/alerts-service'
-import { AlertChannel } from '@activepieces/ee-shared'
-import { projectMemberService } from '../ee/project-members/project-member.service'
 
 const repo = repoFactory(ProjectEntity)
 
@@ -24,16 +23,9 @@ export const projectService = {
             ...params,
             notifyStatus: NotificationStatus.ALWAYS,
         }
-
-        const users = await projectMemberService.list(newProject.id, null, 1)
-        const owner = users.data[0]
-        await alertsService.add({
-            channel: AlertChannel.EMAIL,
-            projectId: newProject.id,
-            receiver: owner.email
-        })
-
-        return repo().save(newProject)
+        const savedProject = await repo().save(newProject)
+        rejectedPromiseHandler(projectHooks.getHooks().postCreate(savedProject))
+        return savedProject
     },
 
     async getOne(projectId: ProjectId | undefined): Promise<Project | null> {
