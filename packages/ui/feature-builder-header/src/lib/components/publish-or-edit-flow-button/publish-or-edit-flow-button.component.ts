@@ -115,10 +115,10 @@ export class PublishButtonComponent implements OnInit {
     this.store.dispatch(FlowsActions.publish());
   }
   editFlowButtonClicked(flowId: string) {
+    this.closeRightSidebar();
     if (this.router.url.includes('/runs')) {
       this.router.navigate([`/flows/${flowId}`]);
     } else {
-      this.closeRightSidebar();
       setTimeout(() => {
         this.store.dispatch(
           ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING })

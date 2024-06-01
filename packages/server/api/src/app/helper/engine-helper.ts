@@ -7,7 +7,7 @@ import {
     getPiecePackage,
     pieceMetadataService,
 } from '../pieces/piece-metadata-service'
-import { hashObject } from './encryption'
+import { encryptUtils } from './encryption'
 import { getServerUrl } from './network-utils'
 import { getEdition, getWebhookSecret } from './secret-helper'
 import {
@@ -440,7 +440,7 @@ async function getSandboxForAction(
                 type: SandBoxCacheType.CODE,
                 flowId,
                 name: action.name,
-                sourceCodeHash: hashObject(action.settings.sourceCode),
+                sourceCodeHash: encryptUtils.hashObject(action.settings.sourceCode),
                 codeSteps: [
                     {
                         name: action.name,

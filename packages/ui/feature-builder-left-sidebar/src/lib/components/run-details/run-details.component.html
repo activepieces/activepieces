@@ -43,14 +43,13 @@
         </ng-container>
       </div>
       <div class="bottom-resizer-section ap-overflow-y-auto thin-scrollbars" #selectedStepResultContainer>
-        <ng-container *ngIf="
-                  currentStepResult$ | async as currentStepResult
-                ">
-          <div class="px-3">
-            <app-selected-step-result *ngIf="currentStepResult.output" [selectedStepResult]="currentStepResult.output"
-              [selectedStepName]="currentStepResult.stepName"></app-selected-step-result>
-          </div>
-        </ng-container>
+        @if(currentStepResult$ | async; as currentStepResult) {     
+        <div class="px-3">
+          <app-selected-step-result  [selectedStepResult]="currentStepResult"
+          [selectedStepName]="(selectedStepDisplayName$ | async) || ''"></app-selected-step-result>
+        </div>
+        }
+      
       </div>
     </div>
   </ng-container>

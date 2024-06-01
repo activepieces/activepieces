@@ -3,25 +3,31 @@
   [class.empty-step]="false">
   <div
     class="flow-item ap-rounded-lg ap-bg-white ap-relative ap ap-p-3 ap-gap-3 ap-flex ap-items-center ap-border-solid ap-border-border ap-border-[1px]"
-    [style.height]="FLOW_ITEM_HEIGHT+'px'" [style.width]="FLOW_ITEM_WIDTH+'px'" [class.selected-non-empty]="_selected"
+    [style.height]="FLOW_ITEM_HEIGHT+'px'" [style.width]="FLOW_ITEM_WIDTH+'px'" [class.selected-non-empty]="selected"
    [class.empty-trigger]="_flowItem.type === TriggerType.EMPTY" (click)="selectStep()">
     <div [style.minHeight]="FLOW_ITEM_ICON_SIZE" [style.minWidth]="FLOW_ITEM_ICON_SIZE"
       [style.maxHeight]="FLOW_ITEM_ICON_SIZE" [style.maxWidth]="FLOW_ITEM_ICON_SIZE"
       class="ap-relative ap-flex ap-justify-center ap-items-center"
       [matTooltip]="((stepAppName$ | async ) || '')| titlecase">
-      <ng-container *ngIf=" (flowItemDetails$ | async)">
-        <img #logo id="logo" *ngIf="stepIconUrl" class="logo-icon ap-pointer-events-none ap-select-none" @fadeIn
-          [src]="stepIconUrl" />
-      </ng-container>
-
-      <div *ngIf="!stepIconUrl" [style.minHeight]="FLOW_ITEM_ICON_SIZE" [style.minWidth]="FLOW_ITEM_ICON_SIZE"
-        [style.maxHeight]="FLOW_ITEM_ICON_SIZE" [style.maxWidth]="FLOW_ITEM_ICON_SIZE"
-        class="step-icon-loading-spinner-container ap-flex ap-items-center ap-left-0 ap-top-0 ap-justify-center">
-        <div class="spinner-grow ap-text-primary ap-pointer-events-none ap-select-none">
-          <span class="sr-only">...</span>
-        </div>
-      </div>
+        @if(flowItemDetails$ | async)
+        {
+          @if(stepIconUrl)
+          {
+            <img #logo id="logo"  class="logo-icon ap-pointer-events-none ap-select-none" @fadeIn
+            [src]="stepIconUrl" />
+          }
+          @else   {
+            <div [style.minHeight]="FLOW_ITEM_ICON_SIZE" [style.minWidth]="FLOW_ITEM_ICON_SIZE"
+            [style.maxHeight]="FLOW_ITEM_ICON_SIZE" [style.maxWidth]="FLOW_ITEM_ICON_SIZE"
+            class="step-icon-loading-spinner-container ap-flex ap-items-center ap-left-0 ap-top-0 ap-justify-center">
+            <div class="spinner-grow ap-text-primary ap-pointer-events-none ap-select-none">
+              <span class="sr-only">...</span>
+            </div>
+          </div>
+          }
+        }
     </div>
+
     <div class="flow-content ap-flex ap-flex-col ap-justify-center  ap-self-stretch">
       <div class="ap-flex ap-items-center ap-gap-2 ">
         <div class="ap-flex ap-flex-grow ap-flex-col ap-gap-1">
@@ -34,31 +40,35 @@
           <div class="ap-select-none ap-typography-caption ap-flex ap-text-description ap-items-center">
             <div>{{ stepAppName$ | async}}</div>
             <div #spacer class="ap-flex-grow"></div>
-            <div class="ap-justify-self-end" @fadeIn *ngIf="!_flowItem.valid || (selectedRun$ | async)">
-              <ng-container *ngIf="!_flowItem.valid">
-                <svg-icon src="assets/img/custom/incomplete-settings.svg" class="ap-w-[16px] ap-h-[16px]"
+            @if(!_flowItem.valid || (selectedRun$ | async))
+            {
+              <div class="ap-justify-self-end" @fadeIn>
+                @if(!_flowItem.valid)
+                {
+                  <svg-icon src="assets/img/custom/incomplete-settings.svg" class="ap-w-[16px] ap-h-[16px]"
                   matTooltip="Incomplete settings" i18n-matTooltip [applyClass]="true"></svg-icon>
-              </ng-container>
-              <ng-container *ngIf="(selectedRun$ | async) as selectedRun; else noSelectedRun">
-
-                <div class="ap-flex-grow" *ngIf="selectedRun && _flowItem.valid"></div>
-                <ng-container
-                  *ngIf="selectedRun.status !== ExecutionOutputStatus.INTERNAL_ERROR && selectedRun.status !== ExecutionOutputStatus.TIMEOUT">
-                  <div>
-                    <ng-container *ngIf="stepStatus$|async as stepStatus; else stepInsideLoopStatusTemplate">
-                      <ap-state-icon [showStatusText]="false" [status]="stepStatus"></ap-state-icon>
-                    </ng-container>
-                    <ng-template #stepInsideLoopStatusTemplate>
-                      <ap-state-icon *ngIf="stepInsideLoopStatus$ | async as stepInsideLoopStatus"
-                        [showStatusText]="false" [status]="stepInsideLoopStatus"></ap-state-icon>
-                    </ng-template>
-                  </div>
-                </ng-container>
-              </ng-container>
-              <ng-template #noSelectedRun>
-
-              </ng-template>
-            </div>
+                }
+              
+                  @if((selectedRun$ | async); as selectedRun)
+                  {
+                    @if(selectedRun && _flowItem.valid)
+                    {
+                      <div class="ap-flex-grow" ></div>
+                    }
+                   @if(selectedRun.status !== ExecutionOutputStatus.INTERNAL_ERROR && selectedRun.status !== ExecutionOutputStatus.TIMEOUT)
+                   {
+                    @if(stepStatus$ | async; as stepStatus)
+                    {
+                    <div>
+                        <ap-state-icon [showStatusText]="false" [status]="stepStatus"></ap-state-icon>
+                    </div>
+                   }
+    
+                   }
+                  }
+              </div>
+            }
+           
           </div>
         </div>
       </div>
@@ -93,4 +103,3 @@
     </div>
   </div>
 </ng-template>
-<ng-container *ngIf="stepInsideLoopStatus$ | async"></ng-container>

@@ -7,7 +7,7 @@ import {
   StepRunResult,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
-import { map, Observable, startWith, switchMap, tap } from 'rxjs';
+import { map, Observable, startWith, switchMap, take, tap } from 'rxjs';
 import { RunDetailsService } from '../iteration-details.service';
 import {
   ActionType,
@@ -83,7 +83,7 @@ export class StepResultComponent implements OnInit {
 
   ngOnInit(): void {
     this.nestingLevelPadding = `${this.nestingLevel * 25}px`;
-
+    this.isLoopStep = this.stepResult.output?.type === ActionType.LOOP_ON_ITEMS;
     if (this.stepResult.output?.type === ActionType.LOOP_ON_ITEMS) {
       this.isLoopStep = true;
       const loopOutput = this.stepResult.output;
@@ -92,61 +92,61 @@ export class StepResultComponent implements OnInit {
           this.createStepResultsForDetailsAccordion(iteration)
         );
       });
-      const startingIndex = this.hasAnIterationFailed()
-        ? this.stepResult.output.output?.iterations.length
-        : 1;
-      this.iteration$ = this.iterationIndexControl.valueChanges.pipe(
-        startWith(startingIndex),
-        tap((newIndex: number | null) => {
-          this.setInputMinWidth(newIndex);
-        }),
-        map((newIndex: number | null) => {
-          return this.minMaxIterationIndex(newIndex);
-        }),
-        tap((newIndex) => {
-          this.iterationIndexControl.setValue(newIndex, { emitEvent: false });
-        }),
-        map((newIndex: number) => {
-          if (!newIndex) {
-            return this.iterationsAccordionList[0] || [];
-          }
-          const iteration = this.iterationsAccordionList[newIndex - 1];
-          return iteration || [];
-        }),
-        tap((iteration) => {
-          const previousIteration =
-            this.iterationsAccordionList[this.previousIterationIndex];
-          previousIteration?.forEach((st) => {
-            this.clearStepsThatWereNotReached(st);
-          });
-          this.findCurrentStepResultInCurrentIteration(iteration);
-          this.previousIterationIndex = this.iterationIndexControl.value - 1;
-        })
-      );
+      this.iteration$ = this.createIterationControlListener();
     }
 
     if (this._selectedStepName === this.stepResult.stepName) {
       this.childStepSelected.emit();
-      this.runDetailsService.currentStepResult$.next(this.stepResult);
     }
   }
 
-  private findCurrentStepResultInCurrentIteration(
-    iteration: Pick<StepRunResult, 'stepName' | 'output'>[]
-  ) {
-    iteration.forEach((st) => {
-      const stepNameAndResult = {
-        stepName: st.stepName,
-        output: st.output,
-      };
-      this.runDetailsService.iterationStepResultState$.next(stepNameAndResult);
-      if (
-        st.stepName ===
-        this.runDetailsService.currentStepResult$.value?.stepName
-      ) {
-        this.runDetailsService.currentStepResult$.next(stepNameAndResult);
-      }
-    });
+  private createIterationControlListener() {
+    return this.store
+      .select(BuilderSelectors.selectLoopIndex(this.stepResult.stepName))
+      .pipe(
+        take(1),
+        switchMap((loopIndex) => {
+          const startingIndex =
+            this.stepResult.output?.type === ActionType.LOOP_ON_ITEMS &&
+            this.hasAnIterationFailed()
+              ? this.stepResult.output.output?.iterations.length
+              : loopIndex === undefined
+              ? 1
+              : loopIndex + 1;
+          if (loopIndex !== undefined) {
+            this.iterationIndexControl.setValue(startingIndex, {
+              emitEvent: false,
+            });
+          }
+          return this.iterationIndexControl.valueChanges.pipe(
+            startWith(startingIndex),
+            tap((newIndex: number | null) => {
+              this.setInputMinWidth(newIndex);
+            }),
+            map((newIndex: number | null) => {
+              return this.minMaxIterationIndex(newIndex);
+            }),
+            tap((newIndex) => {
+              this.iterationIndexControl.setValue(newIndex, {
+                emitEvent: false,
+              });
+              this.store.dispatch(
+                canvasActions.setLoopIndexForRun({
+                  loopIndex: newIndex - 1,
+                  stepName: this.stepResult.stepName,
+                })
+              );
+            }),
+            map((newIndex: number) => {
+              if (!newIndex) {
+                return this.iterationsAccordionList[0] || [];
+              }
+              const iteration = this.iterationsAccordionList[newIndex - 1];
+              return iteration || [];
+            })
+          );
+        })
+      );
   }
   private minMaxIterationIndex(newIndex: number | null) {
     if (
@@ -223,7 +223,6 @@ export class StepResultComponent implements OnInit {
       );
       this.runDetailsService.hideAllIterationsInput$.next(true);
       this.childStepSelected.emit();
-      this.runDetailsService.currentStepResult$.next(this.stepResult);
     } else if (expansionPanel) {
       expansionPanel.toggle();
     }
@@ -247,35 +246,6 @@ export class StepResultComponent implements OnInit {
     $event.stopPropagation();
   }
 
-  clearStepsThatWereNotReached(
-    stepWithinLoop: Pick<StepRunResult, 'stepName' | 'output'>
-  ) {
-    this.runDetailsService.iterationStepResultState$.next({
-      stepName: stepWithinLoop.stepName,
-      output: undefined,
-    });
-
-    if (
-      stepWithinLoop.stepName ===
-      this.runDetailsService.currentStepResult$.value?.stepName
-    ) {
-      this.runDetailsService.currentStepResult$.next(undefined);
-    }
-
-    if (
-      stepWithinLoop.output?.type === ActionType.LOOP_ON_ITEMS &&
-      stepWithinLoop.output?.output
-    ) {
-      if (stepWithinLoop.output.output.iterations[0]) {
-        const firstIterationResult = this.createStepResultsForDetailsAccordion(
-          stepWithinLoop.output.output.iterations[0]
-        );
-        firstIterationResult.forEach((st) => {
-          this.clearStepsThatWereNotReached(st);
-        });
-      }
-    }
-  }
   childStepSelectedHandler() {
     this.showIterationInput = true;
     this.childStepSelected.emit();
