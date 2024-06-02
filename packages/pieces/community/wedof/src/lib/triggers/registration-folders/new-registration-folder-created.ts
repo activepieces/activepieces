@@ -1,24 +1,27 @@
-import { wedofAuth } from '../..';
+import { wedofAuth } from '../../..';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { wedofCommon } from '../common/wedof';
+import { wedofCommon } from '../../common/wedof';
 
-export const registrationFolderUpdated = createTrigger({
+export const newRegistrationFolderNotProcessed = createTrigger({
   auth: wedofAuth,
-  name: 'registrationFolderUpdated',
-  displayName: 'Dossier de formation mis à jour',
-  description: "Se déclenche Lorsqu'un dossier de formation est mis à jour",
+  name: 'newRegistrationFolderNotProcessed',
+  displayName: 'Nouveau dossier de formation',
+  description:
+    "Se déclenche Lorsqu'un nouveau dossier de formation est créé (non traité)",
+  type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {},
-  type: TriggerStrategy.WEBHOOK,
+
   async onEnable(context) {
+    const url = context.webhookUrl as string;
     const name =
-      'Activepieces - RegistrationFolderUpdated - ' +
-      context.webhookUrl.substring(context.webhookUrl.lastIndexOf('/') + 1);
+      'Activepieces - newRegistrationFolderNotProcessed - ' +
+      url.substring(url.lastIndexOf('/') + 1);
 
     const message = {
       url: context.webhookUrl,
-      events: ['registrationFolder.updated'],
+      events: ['registrationFolder.notProcessed'],
       name: name,
       secret: null,
       enabled: true,

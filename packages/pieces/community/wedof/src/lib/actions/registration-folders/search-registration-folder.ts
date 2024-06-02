@@ -3,13 +3,13 @@ import {
   HttpMethod,
   QueryParams,
 } from '@activepieces/pieces-common';
-import { wedofAuth } from '../..';
+import { wedofAuth } from '../../..';
 import {
   createAction,
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { wedofCommon } from '../common/wedof';
+import { wedofCommon } from '../../common/wedof';
 import dayjs from 'dayjs';
 
 export const searchRegistrationFolder = createAction({

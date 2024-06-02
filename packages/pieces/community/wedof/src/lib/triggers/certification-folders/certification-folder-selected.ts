@@ -1,25 +1,27 @@
-import { wedofAuth } from '../..';
+import { wedofAuth } from '../../..';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { wedofCommon } from '../common/wedof';
+import { wedofCommon } from '../../common/wedof';
 
-export const registrationFolderTobill = createTrigger({
+export const certificationFolderSelected = createTrigger({
   auth: wedofAuth,
-  name: 'registrationFolderTobill',
-  displayName: 'Dossier de formation à facturer',
+  name: 'certificationFolderSelected',
+  displayName: 'Événement sur le dossier de certification',
   description:
-    "Se déclenche Lorsqu'un dossier de formation est prêt à être facturé (service fait validé)",
-  props: {},
+    "Se déclenche Lorsque l'événement choisi se produit sur un dossier de certification",
+  props: {
+    scope: wedofCommon.certificationEvents,
+  },
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const name =
-      'Activepieces - RegistrationFolderToBill - ' +
+      'Activepieces - EventSelectedCertificationFolder - ' +
       context.webhookUrl.substring(context.webhookUrl.lastIndexOf('/') + 1);
 
     const message = {
       url: context.webhookUrl,
-      events: ['registrationFolderBilling.toBill'],
+      events: context.propsValue.scope,
       name: name,
       secret: null,
       enabled: true,
