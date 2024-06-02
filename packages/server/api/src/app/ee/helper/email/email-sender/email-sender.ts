@@ -45,7 +45,6 @@ type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
 
 type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     issueUrl: string
-    firstName: string
     flowName: string
     count: string
     createdAt: string
@@ -59,7 +58,7 @@ export type EmailTemplateData =
   | IssueCreatedTemplateData
 
 type SendArgs = {
-    email: string
+    emails: string[]
     platformId: string | undefined
     templateData: EmailTemplateData
 }
