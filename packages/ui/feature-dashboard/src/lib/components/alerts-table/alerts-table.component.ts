@@ -38,7 +38,7 @@ export class AlertsTableComponent implements OnInit {
   upgradeNoteTitle = $localize`Unlock Alerts`;
   upgradeNote = $localize`Stay up to date with your flows, quota limits and updates with Alerts`;
   displayedColumns: string[] = ['receiver', 'action'];
-  showUpgrade = true;
+  showUpgrade = false; // TODO: Update after BETA
   dataSource: AlertsDataSource;
   currentProject$: ProjectId;
   refresh$ = new BehaviorSubject<boolean>(true);
@@ -52,11 +52,7 @@ export class AlertsTableComponent implements OnInit {
     private authService: AuthenticationService,
     private snackBar: MatSnackBar,
     private projectMemberService: ProjectMemberService
-  ) {
-    this.showUpgrade = !(
-      this.route.snapshot.data[PLATFORM_RESOLVER_KEY] as Platform
-    ).alertsEnabled;
-  }
+  ) {}
 
   capitalizeChannel(channel: string) {
     return channel.charAt(0).toUpperCase() + channel.slice(1).toLowerCase();
