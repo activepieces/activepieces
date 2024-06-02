@@ -16,6 +16,8 @@ import { Project } from '@activepieces/shared';
 import { Router } from '@angular/router';
 import { MatSidenav } from '@angular/material/sidenav';
 import { IssuesService } from './services/issues.service';
+import { MatDialog } from '@angular/material/dialog';
+import { RequestTrialComponent } from './components/request-trial/request-trial.component';
 
 @Component({
   templateUrl: './dashboard-container.component.html',
@@ -43,7 +45,8 @@ export class DashboardContainerComponent {
     private platformService: PlatformService,
     public router: Router,
     private contactSalesService: ContactSalesService,
-    private issuesService: IssuesService
+    private issuesService: IssuesService,
+    private matDialog: MatDialog
   ) {
     this.contactSalesState$ =
       this.contactSalesService.contactSalesState.asObservable();
@@ -94,5 +97,11 @@ export class DashboardContainerComponent {
 
   closeContactSalesSlideout() {
     this.contactSalesService.close();
+  }
+
+  openRequestTrialDialog() {
+    this.matDialog.open(RequestTrialComponent, {
+      panelClass: 'fullscreen-dialog',
+    });
   }
 }

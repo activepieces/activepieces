@@ -5,7 +5,7 @@
     <mat-sidenav-content class="thin-scrollbars ">
         <div *ngIf="(isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false"
             class="ap-absolute ap-z-50  ap-w-full ap-border-b ">
-            <div class="ap-flex ap-items-center  ap-my-5 ap-mx-[1.875rem]">
+            <div class="ap-flex ap-items-center ap-gap-2  ap-my-5 ap-mx-[1.875rem]">
                 <app-project-switcher
                     *ngIf="(isInPlatformRoute$ | async) === undefined || (isInPlatformRoute$ | async) === false "></app-project-switcher>
 
@@ -14,6 +14,14 @@
 
                 <div class="ap-flex-grow"></div>
 
+
+                <ap-button btnColor="white" btnStyle="stroked"
+                btnSize="medium" (buttonClicked)="openRequestTrialDialog()" i18n>
+                <div class="ap-flex ap-gap-2 ap-items-center">
+                    🚀 <b>Free Trial</b> 
+                </div>
+
+            </ap-button>
 
                 <ap-button *ngIf="!router.url.startsWith('/platform') && (showPlatform$ | async) === true"
                     btnColor="white" btnStyle="stroked" btnSize="medium" (buttonClicked)="navigateToAdminConsole()"
@@ -36,6 +44,7 @@
                     </div>
 
                 </ap-button>
+                
                 <div class="ap-flex ap-mx-3 ">
                     <app-tasks-progress></app-tasks-progress>
                 </div>
