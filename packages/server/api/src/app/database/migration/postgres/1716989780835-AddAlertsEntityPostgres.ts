@@ -35,17 +35,10 @@ export class AddAlertsEntityPostgres1716989780835 implements MigrationInterface 
             INNER JOIN "user" u ON u."id" = p."ownerId"
         `)
 
-        let countAlerts = 0
-        for (const project of projects) {
-            const alertId = apId()
-            await queryRunner.query(
-                'INSERT INTO "alert" ("id", "created", "updated", "projectId", "channel", "receiver") VALUES ($1, NOW(), NOW(), $2, \'EMAIL\', $3)',
-                [alertId, project.projectId, project.receiver],
-            )
-            countAlerts++
-        }
-
+        await queryRunner.startTransaction()
+        const countAlerts = await insertAlertsInBatches(projects, queryRunner)
         logger.info(`CreateAlerts1680986182074 Migrated ${countAlerts} alerts`)
+        await queryRunner.commitTransaction()
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -57,4 +50,35 @@ export class AddAlertsEntityPostgres1716989780835 implements MigrationInterface 
         `)
     }
 
+}
+
+async function insertAlertsInBatches(projects: { projectId: string, receiver: string }[], queryRunner: QueryRunner, batchSize = 500): Promise<number> {
+    if (projects.length === 0) return 0
+
+    let totalInserted = 0
+
+    for (let i = 0; i < projects.length; i += batchSize) {
+        const batch = projects.slice(i, i + batchSize)
+        const result = await insertBatch(batch, queryRunner)
+        totalInserted += result
+    }
+
+    return totalInserted
+}
+
+async function insertBatch(batch: { projectId: string, receiver: string }[], queryRunner: QueryRunner): Promise<number> {
+    let query = 'INSERT INTO "alert" ("id", "created", "updated", "projectId", "channel", "receiver") VALUES '
+    const values = []
+    const placeholders = []
+
+    for (const project of batch) {
+        const alertId = apId()
+        placeholders.push(`($${values.length + 1}, NOW(), NOW(), $${values.length + 2}, 'EMAIL', $${values.length + 3})`)
+        values.push(alertId, project.projectId, project.receiver)
+    }
+
+    query += placeholders.join(', ')
+
+    await queryRunner.query(query, values)
+    return batch.length 
 }
