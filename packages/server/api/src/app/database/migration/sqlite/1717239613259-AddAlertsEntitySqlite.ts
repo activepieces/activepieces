@@ -14,7 +14,7 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
                 "updated" datetime NOT NULL DEFAULT (datetime('now')),
                 "projectId" varchar(21) NOT NULL,
                 "channel" varchar NOT NULL,
-                "receiver" varchar NOT NULL
+                "receiver" varchar NOT NULL,
             )
         `)
         await queryRunner.query(`
@@ -182,7 +182,7 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
         for (const project of projects) {
             const alertId = apId()
             await queryRunner.query(
-                'INSERT INTO alert (id, created, updated, projectId, channel, receiver) VALUES (?, datetime(\'now\'), datetime(\'now\'), ?, "EMAIL", ?)',
+                'INSERT INTO "alert" ("id", "created", "updated", "projectId", "channel", "receiver") VALUES (?, datetime(\'now\'), datetime(\'now\'), ?, "EMAIL", ?)',
                 [alertId, project.projectId, project.receiver],
             )
             countAlerts++

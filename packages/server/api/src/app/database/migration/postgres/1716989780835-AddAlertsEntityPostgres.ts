@@ -13,7 +13,8 @@ export class AddAlertsEntityPostgres1716989780835 implements MigrationInterface 
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "projectId" character varying(21) NOT NULL,
                 "channel" character varying NOT NULL,
-                "receiver" character varying NOT NULL
+                "receiver" character varying NOT NULL,
+                PRIMARY KEY ("id")
             )
         `)
         await queryRunner.query(`
@@ -38,7 +39,7 @@ export class AddAlertsEntityPostgres1716989780835 implements MigrationInterface 
         for (const project of projects) {
             const alertId = apId()
             await queryRunner.query(
-                'INSERT INTO alert (id, created, updated, projectId, channel, receiver) VALUES ($1, NOW(), NOW(), $2, "EMAIL", $3)',
+                'INSERT INTO "alert" ("id", "created", "updated", "projectId", "channel", "receiver") VALUES ($1, NOW(), NOW(), $2, "EMAIL", $3)',
                 [alertId, project.projectId, project.receiver],
             )
             countAlerts++
