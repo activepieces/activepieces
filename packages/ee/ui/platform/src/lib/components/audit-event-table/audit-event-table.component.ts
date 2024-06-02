@@ -61,6 +61,12 @@ export class AuditEventTableComponent implements OnInit {
 
   convertToIcon(event: ApplicationEvent) {
     switch (event.action) {
+      case ApplicationEventName.FLOW_RUN_FINISHED:
+      case ApplicationEventName.FLOW_RUN_STARTED:
+        return {
+          icon: 'assets/img/custom/dashboard/runs.svg',
+          tooltip: 'Flow Run',
+        };
       case ApplicationEventName.FLOW_CREATED:
       case ApplicationEventName.FLOW_DELETED:
       case ApplicationEventName.FLOW_UPDATED:
@@ -81,9 +87,7 @@ export class AuditEventTableComponent implements OnInit {
           icon: 'assets/img/custom/dashboard/connections.svg',
           tooltip: 'Connection',
         };
-      case ApplicationEventName.USER_SIGNED_UP_USING_EMAIL:
-      case ApplicationEventName.USER_SIGNED_UP_USING_MANAGED_AUTH:
-      case ApplicationEventName.USER_SIGNED_UP_USING_SSO:
+      case ApplicationEventName.USER_SIGNED_UP:
       case ApplicationEventName.USER_SIGNED_IN:
       case ApplicationEventName.USER_PASSWORD_RESET:
       case ApplicationEventName.USER_EMAIL_VERIFIED:

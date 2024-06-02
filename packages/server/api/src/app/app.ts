@@ -296,7 +296,9 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await validateEnvPropsOnStartup()
 
     const edition = getEdition()
-    logger.info(`Activepieces ${edition} Edition`)
+    logger.info({
+        edition,
+    }, 'Activepieces Edition')
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(appCredentialModule)

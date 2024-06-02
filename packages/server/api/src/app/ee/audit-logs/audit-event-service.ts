@@ -12,7 +12,7 @@ import { AuditEventEntity } from './audit-event-entity'
 import {
     ApplicationEvent,
 } from '@activepieces/ee-shared'
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     apId,
     assertEqual,
@@ -70,8 +70,7 @@ export const auditLogService = {
     },
 }
 
-async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam ) {
-
+async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam): Promise<void> {
     const platformId = info.platformId
     const platform = await platformService.getOneOrThrow(platformId)
     if (!platform.auditLogEnabled) {
@@ -98,7 +97,8 @@ async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam ) {
     }
     const valid = eventSchema(eventToSave)
     assertEqual(valid, true, 'Event validation', 'true')
-    await auditLogRepo.save(eventToSave as ApplicationEvent)
+    const appEvent = await auditLogRepo.save(eventToSave as ApplicationEvent)
+    logger.info(appEvent, '[AuditEventService#saveEvent] Audit event saved')
 }
 
 type MetaInformation = {
