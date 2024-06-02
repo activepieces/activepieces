@@ -35,10 +35,8 @@ export class AddAlertsEntityPostgres1716989780835 implements MigrationInterface 
             INNER JOIN "user" u ON u."id" = p."ownerId"
         `)
 
-        await queryRunner.startTransaction()
         const countAlerts = await insertAlertsInBatches(projects, queryRunner)
-        logger.info(`CreateAlerts1680986182074 Migrated ${countAlerts} alerts`)
-        await queryRunner.commitTransaction()
+        logger.info(`CreateAlerts1716989780835 Migrated ${countAlerts} alerts`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

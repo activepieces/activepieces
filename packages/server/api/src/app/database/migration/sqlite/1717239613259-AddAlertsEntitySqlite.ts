@@ -179,7 +179,6 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
     `)
 
         let countAlerts = 0
-        await queryRunner.startTransaction()
         const alertsToInsert = projects.map((project: { projectId: string, receiver: string }) => {
             const alertId = apId()
             countAlerts++
@@ -189,9 +188,8 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
             )
         })
         await Promise.all(alertsToInsert)
-        await queryRunner.commitTransaction()
 
-        logger.info(`CreateAlerts1680986182074 Migrated ${countAlerts} alerts`)
+        logger.info(`CreateAlerts1717239613259 Migrated ${countAlerts} alerts`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
