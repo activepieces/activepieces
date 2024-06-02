@@ -6,7 +6,7 @@ import {
 import { AuthDetails, OpenAPISpec } from './types';
 
 export const openai = new OpenAI({
-  apiKey: '',
+  apiKey: "",
 });
 
 export const extractAuthType = async (
