@@ -39,7 +39,7 @@ export class AddAlertsEntityPostgres1716989780835 implements MigrationInterface 
         for (const project of projects) {
             const alertId = apId()
             await queryRunner.query(
-                'INSERT INTO "alert" ("id", "created", "updated", "projectId", "channel", "receiver") VALUES ($1, NOW(), NOW(), $2, "EMAIL", $3)',
+                'INSERT INTO "alert" ("id", "created", "updated", "projectId", "channel", "receiver") VALUES ($1, NOW(), NOW(), $2, \'EMAIL\', $3)',
                 [alertId, project.projectId, project.receiver],
             )
             countAlerts++
