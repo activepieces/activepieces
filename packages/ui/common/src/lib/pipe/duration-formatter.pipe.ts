@@ -31,7 +31,7 @@ export class DurationFormatterPipe implements PipeTransform {
         ? parseFloat((durationInSeconds / 60).toFixed(fractionDigits))
         : Math.ceil(durationInSeconds / 60);
       if (durationInMinutes < 60) {
-        return $localize` ${durationInMinutes}${short ? 'm' : 'minutes'}`;
+        return $localize` ${durationInMinutes} ${short ? 'm' : 'minutes'}`;
       }
       const durationInHours = allowFractions
         ? parseFloat((durationInMinutes / 60).toFixed(fractionDigits))

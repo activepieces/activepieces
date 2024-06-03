@@ -7,10 +7,7 @@ import { StepOutput, StepOutputStatus } from '@activepieces/shared';
   styleUrls: ['./selected-step-result.component.scss'],
 })
 export class SelectedStepResultComponent {
+  readonly StepOutputStatus = StepOutputStatus;
   @Input() selectedStepResult: StepOutput;
   @Input() selectedStepName: string;
-
-  get ActionStatusEnum() {
-    return StepOutputStatus;
-  }
 }

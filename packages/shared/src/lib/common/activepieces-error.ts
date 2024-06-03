@@ -59,6 +59,7 @@ type ErrorParams =
     | UserIsInActiveErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
+    | ExistingAlertChannelErrorParams
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -347,6 +348,12 @@ ErrorCode.INVALID_SAML_RESPONSE,
 }
 >
 
+export type ExistingAlertChannelErrorParams = BaseErrorParams<
+ErrorCode.EXISTING_ALERT_CHANNEL,
+{
+    email: string
+}
+>
 
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
@@ -361,6 +368,7 @@ export enum ErrorCode {
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
+    EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
     FLOW_FORM_NOT_FOUND = 'FLOW_FORM_NOT_FOUND',
     FILE_NOT_FOUND = 'FILE_NOT_FOUND',
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',

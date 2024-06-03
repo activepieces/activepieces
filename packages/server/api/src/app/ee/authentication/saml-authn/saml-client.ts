@@ -3,7 +3,8 @@ import * as validator from '@authenio/samlify-node-xmllint'
 import { Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import * as saml from 'samlify'
-import { ActivepiecesError, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
+import { customDomainService } from '../../custom-domains/custom-domain.service'
+import { ActivepiecesError, ErrorCode, isNil, SAMLAuthnProviderConfig } from '@activepieces/shared'
 
 
 const samlResponseValidator = TypeCompiler.Compile(
@@ -55,13 +56,27 @@ class SamlClient {
 
 let instance: SamlClient | null = null
 
-export const createSamlClient = async (hostName: string, samlProvider: SAMLAuthnProviderConfig): Promise<SamlClient> => {
+export const createSamlClient = async (platformId: string, samlProvider: SAMLAuthnProviderConfig): Promise<SamlClient> => {
     if (instance) {
         return instance
     }
+    const customDomain = await customDomainService.getOneByPlatform({
+        platformId,
+    })
+    if (isNil(customDomain)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityId: platformId,
+                entityType: 'CustomDomain',
+                message: 'Please configure a custom domain for this platform.',
+            },
+        })
+    }
+
     saml.setSchemaValidator(validator)
     const idp = createIdp(samlProvider.idpMetadata)
-    const sp = createSp(hostName, samlProvider.idpCertificate)
+    const sp = createSp(customDomain.domain, samlProvider.idpCertificate)
     return instance = new SamlClient(idp, sp)
 }
 
@@ -74,7 +89,7 @@ const createIdp = (metadata: string): saml.IdentityProviderInstance => {
     })
 }
 
-const createSp = (hostname: string, privateKey: string): saml.ServiceProviderInstance => {
+const createSp = (domain: string, privateKey: string): saml.ServiceProviderInstance => {
     return saml.ServiceProvider({
         entityID: 'Activepieces',
         authnRequestsSigned: false,
@@ -85,7 +100,7 @@ const createSp = (hostname: string, privateKey: string): saml.ServiceProviderIns
         isAssertionEncrypted: true,
         assertionConsumerService: [{
             Binding: saml.Constants.namespace.binding.post,
-            Location: `https://${hostname}/api/v1/authn/saml/acs`,
+            Location: `https://${domain}/api/v1/authn/saml/acs`,
         }],
         signatureConfig: {},
     })
