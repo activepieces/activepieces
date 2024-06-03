@@ -22,7 +22,7 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
 
   const pieceDir = path.join('packages', 'pieces', pieceType, pieceName, 'src');
   const actionsDir = path.join(pieceDir, 'lib', 'action');
-  // await createPiece(pieceName, packageName, pieceType);
+  await createPiece(pieceName, packageName, pieceType);
   console.log(chalk.green(`Creating ${pieceName}... 🫸`));
 
   const authCode = await generateAuth(openAPISpec);
@@ -31,11 +31,11 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
   const actions = await generateActions(openAPISpec, authDisplayName);
 
   if (actions.length > 0 && !existsSync(actionsDir)) {
-    // mkdirSync(actionsDir, { recursive: true });
+    mkdirSync(actionsDir, { recursive: true });
   }
 
   actions.forEach((action) => {
-    // writeFileSync(path.join(actionsDir, `${action.name}.ts`), action.code);
+    writeFileSync(path.join(actionsDir, `${action.name}.ts`), action.code);
   });
 
   const actionImports = actions
@@ -63,7 +63,7 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
     });
   `;
 
-  // writeFileSync(path.join(pieceDir, 'index.ts'), pieceDefinition);
+  writeFileSync(path.join(pieceDir, 'index.ts'), pieceDefinition);
 
   console.log(authCode + "\n" + actions + "\n" + pieceDefinition);
   

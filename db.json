@@ -1701,7 +1701,7 @@
   "SendSMS": {
     "swagger": "2.0",
     "info": {
-      "title": "SendSMS",
+      "title": "SendSMSTest",
       "description": "sendSMS is a leading European Communications Platform as a Service (CPaaS) known for its reliability. Established in 2008, the platform has expanded its services globally. Specializing in seamless no-code and low-code integrations, sendSMS has effectively integrated with over 30 eCommerce platforms, CRMs, ERPs, and various integrators, streamlining communications and operational efficiency.",
       "version": "1.0",
       "contact": {
