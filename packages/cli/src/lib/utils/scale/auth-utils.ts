@@ -27,5 +27,6 @@ const generateAuthTemplate = (authType: string, authDetails: AuthDetails): strin
 export const generateAuth = async (openAPISpec: OpenAPISpec): Promise<string> => {
   const authType = await extractAuthType(openAPISpec);
   const authDetails = await extractAuthDetails(openAPISpec);
+  
   return generateAuthTemplate(authType, authDetails);
 };

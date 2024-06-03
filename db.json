@@ -1697,5 +1697,351 @@
     },
     "security": [],
     "tags": []
+  },
+  "SendSMS": {
+    "swagger": "2.0",
+    "info": {
+      "title": "SendSMS",
+      "description": "sendSMS is a leading European Communications Platform as a Service (CPaaS) known for its reliability. Established in 2008, the platform has expanded its services globally. Specializing in seamless no-code and low-code integrations, sendSMS has effectively integrated with over 30 eCommerce platforms, CRMs, ERPs, and various integrators, streamlining communications and operational efficiency.",
+      "version": "1.0",
+      "contact": {
+        "name": "sendSms",
+        "url": "https://www.sendsms.ro",
+        "email": "support@sendsms.ro"
+      }
+    },
+    "host": "api.sendsms.ro",
+    "basePath": "/integration/powerautomate/",
+    "schemes": ["https"],
+    "consumes": ["application/json"],
+    "produces": ["application/json"],
+    "paths": {
+      "/message_send": {
+        "post": {
+          "responses": {
+            "200": {
+              "description": "Message sent successfully",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Status code"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Status message"
+                  },
+                  "message_id": {
+                    "type": "string",
+                    "description": "Unique identifier for the message"
+                  },
+                  "details": {
+                    "type": "string",
+                    "description": "Additional details"
+                  },
+                  "mcc": {
+                    "type": "string",
+                    "description": "Mobile country code"
+                  },
+                  "mnc": {
+                    "type": "string",
+                    "description": "Mobile network code"
+                  },
+                  "parts": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Parts"
+                  },
+                  "length": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Length of the OTP; max length is 10"
+                  },
+                  "shortlink": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "shortlink"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request - Required parameter missing or invalid",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "errors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "description": "Error message"
+                        },
+                        "details": {
+                          "type": "string",
+                          "description": "Detailed error message"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized - Authentication failed",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "errors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "description": "Error message indicating authentication failure"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "parameters": [
+            {
+              "name": "body",
+              "in": "body",
+              "required": true,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "description": "Recipient phone number",
+                    "title": "To",
+                    "x-ms-visibility": "important"
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "Text of the message",
+                    "title": "Text",
+                    "x-ms-visibility": "important"
+                  },
+                  "from": {
+                    "type": "string",
+                    "description": "Sender",
+                    "title": "Sender (From)",
+                    "x-ms-visibility": "important"
+                  },
+                  "short": {
+                    "type": "string",
+                    "description": "Shortened URL"
+                  }
+                },
+                "x-ms-visibility": "important"
+              },
+              "x-ms-visibility": "important"
+            }
+          ],
+          "operationId": "message_send",
+          "summary": "Message Send",
+          "x-ms-visibility": "important",
+          "description": "This method is designed to activate the process of sending a Short Message Service (SMS) message to a pre-determined phone number upon receiving a specific request. It seamlessly facilitates the communication by ensuring that the SMS is transmitted efficiently to the designated recipient.",
+          "x-ms-openai-data": {
+            "openai-enabled": true,
+            "operations": [
+              {
+                "operationId": "message_send",
+                "x-ms-require-user-confirmation": true
+              }
+            ]
+          }
+        }
+      },
+      "/message_status": {
+        "post": {
+          "responses": {
+            "200": {
+              "description": "Message status retrieved successfully",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Status code of the message"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Status message"
+                  },
+                  "details": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Status of the message"
+                      },
+                      "message": {
+                        "type": "string",
+                        "description": "Message"
+                      },
+                      "cost": {
+                        "type": "number",
+                        "format": "float",
+                        "description": "Cost"
+                      },
+                      "parts": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Parts"
+                      },
+                      "timestamp_created": {
+                        "type": "string",
+                        "description": "Timestamp when the message was created"
+                      },
+                      "timestamp_delivered": {
+                        "type": "string",
+                        "description": "Timestamp when the message was delivered"
+                      },
+                      "timestamp_failed": {
+                        "type": "string",
+                        "description": "Timestamp when the message failed"
+                      },
+                      "failover_id": {
+                        "type": "string",
+                        "description": "Failover Id"
+                      },
+                      "ctype": {
+                        "type": "string",
+                        "description": "1 = SMS (Default), 2 = RCS - (not active yet), 3 = Viber (failover to SMS if undelivered)"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request - Required parameter missing",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "errors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "description": "Error message for missing parameter"
+                        },
+                        "details": {
+                          "type": "string",
+                          "description": "Details of the missing parameter"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found - Message does not exist",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "errors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "description": "Error message indicating the message does not exist"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "summary": "Message Status",
+          "description": "The Message Status method is designed to retrieve the current status of a message that has been sent through a communication platform. This method plays a critical role in message delivery systems, offering developers and users insights into the message lifecycle, including whether a message has been sent, delivered or encountered any errors during the process.",
+          "x-ms-visibility": "important",
+          "operationId": "message_status",
+          "parameters": [
+            {
+              "name": "body",
+              "in": "body",
+              "required": true,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message_id": {
+                    "type": "string",
+                    "description": "Unique identifier for the message to retrieve status",
+                    "title": "Message ID",
+                    "x-ms-visibility": "important"
+                  }
+                },
+                "x-ms-visibility": "important"
+              },
+              "x-ms-visibility": "important"
+            }
+          ],
+          "x-ms-openai-data": {
+            "openai-enabled": true,
+            "operations": [
+              {
+                "operationId": "message_status",
+                "x-ms-require-user-confirmation": true
+              }
+            ]
+          }
+        }
+      }
+    },
+    "definitions": {},
+    "parameters": {},
+    "responses": {},
+    "securityDefinitions": {
+      "oauth2-auth": {
+        "type": "oauth2",
+        "flow": "accessCode",
+        "authorizationUrl": "https://api.sendsms.ro/oauth2/authorize",
+        "tokenUrl": "https://api.sendsms.ro/oauth2/token",
+        "scopes": {
+          "PowerAutomate": "PowerAutomate"
+        }
+      }
+    },
+    "security": [
+      {
+        "oauth2-auth": ["PowerAutomate"]
+      }
+    ],
+    "x-ms-connector-metadata": [
+      {
+        "propertyName": "Website",
+        "propertyValue": "https://www.sendsms.ro/"
+      },
+      {
+        "propertyName": "Privacy policy",
+        "propertyValue": "https://www.sendsms.ro/en/gdpr/"
+      },
+      {
+        "propertyName": "Categories",
+        "propertyValue": "Communication;Marketing"
+      }
+    ]
   }
 }

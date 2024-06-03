@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import {
   openapiAuthFunctions,
+  openapiBaseURLFunction,
   openapiExtractAuthTypeFunctions,
 } from './openai-config';
 import { AuthDetails, OpenAPISpec } from './types';
@@ -34,4 +35,18 @@ export const extractAuthDetails = async (
     response_format: { type: 'json_object' },
   });
   return JSON.parse(response.choices[0].message.function_call.arguments);
+};
+
+export const extractBaseURL = async (
+  openAPISpec: OpenAPISpec
+): Promise<string> => {
+  const response = await openai.chat.completions.create({
+    messages: [{ role: 'user', content: JSON.stringify(openAPISpec) }],
+    model: 'gpt-4-turbo',
+    functions: openapiBaseURLFunction,
+    function_call: 'auto',
+    response_format: { type: 'json_object' },
+  });
+  return JSON.parse(response.choices[0].message.function_call.arguments)
+    .baseURL;
 };

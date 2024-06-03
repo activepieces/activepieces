@@ -1,5 +1,5 @@
 import { openapiCustomFunctions } from './openai-config';
-import { openai } from './openai-utils';
+import { extractBaseURL, openai } from './openai-utils';
 import { Action, OpenAPISpec } from './types';
 
 const generateActions = async (
@@ -31,9 +31,10 @@ const generateActions = async (
       return JSON.parse(actionExtractedData);
     })
   );
+  const baseURL = await extractBaseURL(openAPISpec);
 
   return completions.map((action) =>
-    createActionTemplate(action, openAPISpec.servers[0].url, authDisplayName)
+    createActionTemplate(action, baseURL, authDisplayName)
   );
 };
 
@@ -52,7 +53,7 @@ const createActionTemplate = (
     requestBody,
   } = action;
 
-  let props = parameters
+  const props = parameters
     .map(
       (param) => `
     ${param.name}: Property.ShortText({
@@ -62,18 +63,18 @@ const createActionTemplate = (
     )
     .join('');
 
-  if (requestBody && requestBody.properties) {
-    props += Object.keys(requestBody.properties)
-      .map((key) => {
-        const prop = requestBody.properties[key];
-        return `
-      ${key}: Property.${determinePropertyType(prop.type)}({
-        displayName: '${prop.description}',
-        required: ${requestBody.required.includes(key)},
-      }),`;
-      })
-      .join('');
-  }
+  // if (requestBody && requestBody.properties) {
+  //   props += Object.keys(requestBody.properties)
+  //     .map((key) => {
+  //       const prop = requestBody.properties[key];
+  //       return `
+  //     ${key}: Property.${determinePropertyType(prop.type)}({
+  //       displayName: '${prop.description}',
+  //       required: ${requestBody.required.includes(key)},
+  //     }),`;
+  //     })
+  //     .join('');
+  // }
 
   return {
     name: operationId,
