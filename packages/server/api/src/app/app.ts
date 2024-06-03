@@ -20,6 +20,7 @@ import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { getRedisConnection } from './database/redis-connection'
+import { activationKeysModule } from './ee/activation-keys/activation-keys-module'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { analyticsModule } from './ee/analytics/analytics-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
@@ -261,7 +262,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(issuesModule)
     await app.register(authnSsoSamlModule)
     await app.register(alertsModule)
-
     await setupBullMQBoard(app)
 
     app.get(
@@ -336,6 +336,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
             initializeSentry()
+            await app.register(activationKeysModule)
             break
         case ApEdition.ENTERPRISE:
             await app.register(customDomainModule)
