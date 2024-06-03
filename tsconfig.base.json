@@ -581,6 +581,9 @@
       "@activepieces/piece-zerobounce": [
         "packages/pieces/community/zerobounce/src/index.ts"
       ],
+      "@activepieces/piece-zoho-books": [
+        "packages/pieces/community/zoho-books/src/index.ts"
+      ],
       "@activepieces/piece-zoho-crm": [
         "packages/pieces/community/zoho-crm/src/index.ts"
       ],
