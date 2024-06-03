@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import semVer from 'semver'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import {
@@ -21,7 +22,8 @@ const repo = repoFactory(PieceMetadataEntity)
 export const FastDbPieceMetadataService = (): PieceMetadataService => {
     return {
         async list(params): Promise<PieceMetadataModelSummary[]> {
-            const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc(params)
+            const platform = params.platformId && params.premiumPieces === 'include' ? await platformService.getOneOrThrow(params.platformId) : undefined
+            const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({ ...params, platformPremiumPieces: platform?.premiumPieces })
             const uniquePieces = new Set<string>(originalPieces.map((piece) => piece.name))
             const latestVersionOfEachPiece = Array.from(uniquePieces).map((name) => {
                 const result = originalPieces.find((piece) => piece.name === name)
@@ -239,9 +241,9 @@ const increaseMajorVersion = (version: string): string => {
     return incrementedVersion
 }
 
-async function findAllPiecesVersionsSortedByNameAscVersionDesc({ projectId, platformId, release }: { projectId?: string, platformId?: string, release: string | undefined }): Promise<PieceMetadataSchema[]> {
-    const piece = (await localPieceCache.getSortedbyNameAscThenVersionDesc()).filter((piece) => {
-        return isOfficialPiece(piece) || isProjectPiece(projectId, piece) || isPlatformPiece(platformId, piece)
+async function findAllPiecesVersionsSortedByNameAscVersionDesc({ projectId, platformId, release, platformPremiumPieces }: { projectId?: string, platformId?: string, release: string | undefined, platformPremiumPieces?: string[] }): Promise<PieceMetadataSchema[]> {
+    const piece = (await localPieceCache.getSortedbyNameAscThenVersionDesc()).filter(async (piece) => {
+        return isOfficialPiece(piece) || isProjectPiece(projectId, piece) || isPlatformPiece(platformId, piece) || isPremiumPiece(platformPremiumPieces, piece)
     }).filter((piece) => isSupportedRelease(release, piece))
     return piece
 }
@@ -275,4 +277,11 @@ function isPlatformPiece(platformId: string | undefined, piece: PieceMetadataSch
         return false
     }
     return piece.platformId === platformId && isNil(piece.projectId) && piece.pieceType === PieceType.CUSTOM
+}
+
+function isPremiumPiece(premiumPieces: string[] | undefined, piece: PieceMetadataSchema): boolean {
+    if (isNil(premiumPieces)) {
+        return false
+    }
+    return premiumPieces.includes(piece.name)
 }

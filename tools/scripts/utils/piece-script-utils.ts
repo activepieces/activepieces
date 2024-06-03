@@ -5,7 +5,8 @@ import { cwd } from 'node:process'
 import { PieceMetadata } from '../../../packages/pieces/community/framework/src'
 import { extractPieceFromModule } from '../../../packages/shared/src'
 import * as semver from 'semver'
-import { readPackageJson } from './files'
+import { readPackageJson, readProjectJson } from './files'
+import { exec } from './exec'
 type Piece = {
     name: string;
     displayName: string;
@@ -61,8 +62,15 @@ export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     const paths = await traverseFolder(piecesPath)
     return paths
 }
+
+export async function findAllPremiumPiecesDirectory(): Promise<string[]> {
+    const piecesPath = resolve(cwd(), 'packages', 'ee', 'pieces')
+    const paths = await traverseFolder(piecesPath)
+    return paths
+}
+
 export async function findPieceDirectoryInSource(pieceName: string): Promise<string | null> {
-    const piecesPath =  await findAllPiecesDirectoryInSource()
+    const piecesPath = [...await findAllPiecesDirectoryInSource(), ...await findAllPremiumPiecesDirectory()]
     const piecePath = piecesPath.find((p) => p.includes(pieceName))
     return piecePath ?? null
 }
@@ -70,8 +78,24 @@ export async function findPieceDirectoryInSource(pieceName: string): Promise<str
 export async function findAllPieces(): Promise<PieceMetadata[]> {
     const piecesPath = resolve(cwd(), 'dist', 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
-    const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
+    const enterprisePiecesPaths = await buildAndFindAllPremiumPieces()
+    const pieces = await Promise.all([...paths ,...enterprisePiecesPaths].map((p) => loadPieceFromFolder(p)))
     return pieces.filter((p): p is PieceMetadata => p !== null).sort(byDisplayNameIgnoreCase)
+}
+
+async function buildAndFindAllPremiumPieces(): Promise<string[]> {
+    const piecesFolder = await findAllPremiumPiecesDirectory()
+    if (piecesFolder.length === 0) {
+        return []
+    }
+    for (const pieceFolder of piecesFolder) {
+        const projectJson = await readProjectJson(pieceFolder);
+        await exec('npx nx build ' + projectJson.name);
+    }
+
+    const enterprisePiecesPath = resolve(cwd(), 'dist', 'packages', 'ee', 'pieces')
+    const enterprisePiecesPaths = await traverseFolder(enterprisePiecesPath)    
+    return enterprisePiecesPaths
 }
 
 async function traverseFolder(folderPath: string): Promise<string[]> {

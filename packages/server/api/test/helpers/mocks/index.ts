@@ -198,6 +198,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         customDomainsEnabled: platform?.customDomainsEnabled ?? faker.datatype.boolean(),
         projectRolesEnabled: platform?.projectRolesEnabled ?? faker.datatype.boolean(),
         alertsEnabled: platform?.alertsEnabled ?? faker.datatype.boolean(),
+        premiumPieces: platform?.premiumPieces ?? [],
     }
 }
 

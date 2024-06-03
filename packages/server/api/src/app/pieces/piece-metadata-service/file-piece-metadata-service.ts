@@ -1,3 +1,4 @@
+import { exec } from 'node:child_process'
 import { readdir, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
@@ -37,8 +38,33 @@ async function findAllPieces(): Promise<PieceMetadata[]> {
     return [...pieces, ...enterprisePieces]
 }
 
+async function buildAllPremiumPiecesFromFolder(): Promise<PromiseSettledResult<unknown>[]> {
+    const piecesPath = resolve(cwd(), 'packages', 'ee', 'pieces')
+    const paths = await traverseFolder(piecesPath)
+    const promises = []
+    for (const path of paths) {
+        const projectJson = importFresh<Record<string, string>>(
+            join(path, 'project.json'),
+        )
+        promises.push(new Promise((resolve, reject) => {
+            exec('npx nx build ' + projectJson.name, (error, stdout: string | PromiseLike<string>, stderr) => {
+                if (error) {
+                    reject(error)
+                    return
+                }
+                if (stderr) {
+                    return
+                }
+                resolve(stdout)
+            })
+        }))
+    }
+    return Promise.allSettled(promises)
+}
+
 async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
     try {
+        await buildAllPremiumPiecesFromFolder()
         const paths = await traverseFolder(folderPath)
         const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
         return pieces.filter((p): p is PieceMetadata => p !== null)

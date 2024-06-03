@@ -9,7 +9,7 @@ import { PieceMetadataEntity } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
-import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
+import { ApEdition, ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const piecesRepo = repoFactory(PieceMetadataEntity)
@@ -108,8 +108,11 @@ async function getOrThrow({ name, version }: { name: string, version: string }):
 
 async function listPieces(): Promise<PieceMetadataModelSummary[]> {
     const queryParams = new URLSearchParams()
-    queryParams.append('edition', getEdition())
+    const edition = getEdition()
+    const isEnterptise = edition === ApEdition.ENTERPRISE
+    queryParams.append('edition', edition)
     queryParams.append('release', await flagService.getCurrentRelease())
+    isEnterptise && queryParams.append('premiumPieces', 'include')
     const url = `${CLOUD_API_URL}?${queryParams.toString()}`
     const response = await fetch(url)
     if (response.status === StatusCodes.GONE.valueOf()) {
