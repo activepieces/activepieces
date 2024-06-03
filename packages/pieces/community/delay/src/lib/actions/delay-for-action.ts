@@ -68,7 +68,7 @@ export const delayForAction = createAction({
         delayForInMs: delayInMs,
         success: true,
       };
-    } else if (delayInMs > 1 * 60 * 1000) {
+    } else if (delayInMs > 1 * 10 * 1000) {
       // use flow pause
       const currentTime = new Date();
       const futureTime = new Date(currentTime.getTime() + delayInMs);

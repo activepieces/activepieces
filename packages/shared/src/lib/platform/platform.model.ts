@@ -48,6 +48,7 @@ export const Platform = Type.Object({
     customDomainsEnabled: Type.Boolean(),
     apiKeysEnabled: Type.Boolean(),
     flowIssuesEnabled: Type.Boolean(),
+    alertsEnabled: Type.Boolean(),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum)),
     ssoEnabled: Type.Boolean(),
     enforceAllowedAuthDomains: Type.Boolean(),

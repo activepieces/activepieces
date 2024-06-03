@@ -44,7 +44,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.SHOW_SIGN_UP_LINK] = false
             modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
             modifiedFlags[ApFlagId.FRONTEND_URL] = `${hostUrl}`
-            modifiedFlags[ApFlagId.SAML_AUTH_ACS_URL] = `${hostUrl}/api/authn/saml/acs`
+            modifiedFlags[ApFlagId.SAML_AUTH_ACS_URL] = `${hostUrl}/api/v1/authn/saml/acs`
             modifiedFlags[
                 ApFlagId.WEBHOOK_URL_PREFIX
             ] = `${hostUrl}/api/v1/webhooks`

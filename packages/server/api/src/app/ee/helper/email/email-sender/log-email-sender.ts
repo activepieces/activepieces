@@ -5,10 +5,10 @@ import { logger } from '@activepieces/server-shared'
  * Logs sent emails to the console
  */
 export const logEmailSender: EmailSender = {
-    async send({ email, platformId, templateData }) {
+    async send({ emails, platformId, templateData }) {
         logger.debug({
             name: 'LogEmailSender#send',
-            email,
+            emails,
             platformId,
             templateData,
         })

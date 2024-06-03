@@ -15,9 +15,13 @@ import {
 } from '@activepieces/shared';
 import { canvasActions } from './canvas.action';
 import { FlowsActions } from '../../flow/flow.action';
+import { FlowStructureUtil } from '../../../utils/flowStructureUtil';
 
 const initialState: CanvasState = {
-  selectedRun: undefined,
+  runInfo: {
+    selectedRun: undefined,
+    loopIndexes: {},
+  },
   leftSidebar: {
     type: LeftSideBarType.NONE,
   },
@@ -48,24 +52,33 @@ const initialState: CanvasState = {
 const __CanvasReducer = createReducer(
   initialState,
   on(canvasActions.setInitial, (state, action): CanvasState => {
-    const displayedFlowVersion = JSON.parse(
+    const displayedFlowVersion: FlowVersion = JSON.parse(
       JSON.stringify(action.displayedFlowVersion)
     );
-
+    const loopIndexes = action.run
+      ? FlowStructureUtil.getInitialLoopIndexes(displayedFlowVersion.trigger)
+      : {};
     return {
       ...initialState,
       viewedVersion: displayedFlowVersion,
-      selectedRun: action.run,
+      runInfo: {
+        selectedRun: action.run,
+        loopIndexes,
+      },
     };
   }),
   on(canvasActions.viewVersion, (state, action): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+
     return {
       ...clonedState,
       viewedVersion: action.viewedFlowVersion,
       selectedStepName: '',
       clickedAddBtnId: undefined,
-      selectedRun: undefined,
+      runInfo: {
+        selectedRun: undefined,
+        loopIndexes: {},
+      },
       rightSidebar: {
         props: NO_PROPS,
         type: RightSideBarType.NONE,
@@ -119,14 +132,27 @@ const __CanvasReducer = createReducer(
   }),
   on(canvasActions.setRun, (state, { run }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.selectedRun = run;
+    clonedState.runInfo.selectedRun = run;
+    const initialLoopIndexes = FlowStructureUtil.getInitialLoopIndexes(
+      clonedState.viewedVersion.trigger
+    );
+
+    Object.keys(initialLoopIndexes).forEach((stepName) => {
+      //indexes can be zero so don't check for !loopIndexes[stepName]
+      if (clonedState.runInfo.loopIndexes[stepName] === undefined) {
+        clonedState.runInfo.loopIndexes[stepName] = 0;
+      }
+    });
     return clonedState;
   }),
   on(canvasActions.exitRun, (state, { flowVersion }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     return {
       ...clonedState,
-      selectedRun: undefined,
+      runInfo: {
+        selectedRun: undefined,
+        loopIndexes: {},
+      },
       leftSidebar: {
         type: LeftSideBarType.NONE,
       },
@@ -222,7 +248,10 @@ const __CanvasReducer = createReducer(
     };
     clonedState.selectedStepName = '';
     clonedState.clickedAddBtnId = undefined;
-    clonedState.selectedRun = undefined;
+    clonedState.runInfo = {
+      selectedRun: undefined,
+      loopIndexes: {},
+    };
     return clonedState;
   }),
   on(canvasActions.setAddButtonId, (state, { id }) => {
@@ -232,7 +261,10 @@ const __CanvasReducer = createReducer(
   }),
   on(canvasActions.viewRun, (state, { run, version }) => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.selectedRun = run;
+    clonedState.runInfo = {
+      selectedRun: run,
+      loopIndexes: {},
+    };
     clonedState.viewedVersion = version;
     clonedState.leftSidebar = {
       type: LeftSideBarType.SHOW_RUN,
@@ -242,6 +274,17 @@ const __CanvasReducer = createReducer(
     clonedState.rightSidebar = {
       props: NO_PROPS,
       type: RightSideBarType.NONE,
+    };
+    return clonedState;
+  }),
+  on(canvasActions.setLoopIndexForRun, (state, { loopIndex, stepName }) => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.runInfo = {
+      ...clonedState.runInfo,
+      loopIndexes: {
+        ...clonedState.runInfo.loopIndexes,
+        [stepName]: loopIndex,
+      },
     };
     return clonedState;
   })
