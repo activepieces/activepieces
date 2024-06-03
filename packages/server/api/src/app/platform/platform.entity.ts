@@ -164,6 +164,11 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
         },
+        premiumPieces: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+            nullable: false,
+        },
     },
     indices: [],
     relations: {

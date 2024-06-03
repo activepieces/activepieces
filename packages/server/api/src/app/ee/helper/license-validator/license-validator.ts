@@ -20,6 +20,7 @@ export type SuccessLicenseResponse = {
     customDomainsEnabled?: boolean
     projectRolesEnabled?: boolean
     alertsEnabled?: boolean
+    premiumPieces?: string[]
 }
 export type LicenseResponse =
   | SuccessLicenseResponse
