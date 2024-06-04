@@ -22,7 +22,7 @@ const repo = repoFactory(PieceMetadataEntity)
 export const FastDbPieceMetadataService = (): PieceMetadataService => {
     return {
         async list(params): Promise<PieceMetadataModelSummary[]> {
-            const platform = params.platformId && params.premiumPieces === 'include' ? await platformService.getOneOrThrow(params.platformId) : undefined
+            const platform = params.platformId && params.includePremiumPieces === true ? await platformService.getOneOrThrow(params.platformId) : undefined
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({ ...params, platformPremiumPieces: platform?.premiumPieces })
             const uniquePieces = new Set<string>(originalPieces.map((piece) => piece.name))
             const latestVersionOfEachPiece = Array.from(uniquePieces).map((name) => {

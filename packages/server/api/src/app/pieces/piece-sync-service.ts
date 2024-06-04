@@ -109,10 +109,10 @@ async function getOrThrow({ name, version }: { name: string, version: string }):
 async function listPieces(): Promise<PieceMetadataModelSummary[]> {
     const queryParams = new URLSearchParams()
     const edition = getEdition()
-    const isEnterptise = edition === ApEdition.ENTERPRISE
+    const isEnterprise = edition === ApEdition.ENTERPRISE
     queryParams.append('edition', edition)
     queryParams.append('release', await flagService.getCurrentRelease())
-    isEnterptise && queryParams.append('premiumPieces', 'include')
+    queryParams.append('includePremiumPieces', isEnterprise.toString())
     const url = `${CLOUD_API_URL}?${queryParams.toString()}`
     const response = await fetch(url)
     if (response.status === StatusCodes.GONE.valueOf()) {

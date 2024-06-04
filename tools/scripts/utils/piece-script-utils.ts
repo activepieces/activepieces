@@ -3,7 +3,7 @@ import { readdir, stat } from 'node:fs/promises'
 import { resolve, join, normalize } from 'node:path'
 import { cwd } from 'node:process'
 import { PieceMetadata } from '../../../packages/pieces/community/framework/src'
-import { extractPieceFromModule } from '../../../packages/shared/src'
+import { extractPieceFromModule, ApEdition } from '../../../packages/shared/src'
 import * as semver from 'semver'
 import { readPackageJson, readProjectJson } from './files'
 import { exec } from './exec'
@@ -18,7 +18,7 @@ type Piece = {
 
 export const PIECES_FOLDER = 'packages/pieces'
 export const COMMUNITY_PIECE_FOLDER = 'packages/pieces/community'
-
+const { AP_EDITION } = process.env
 
 const validateSupportedRelease = (minRelease: string | undefined, maxRelease: string | undefined) => {
     if (minRelease !== undefined && !semver.valid(minRelease)) {
@@ -78,7 +78,7 @@ export async function findPieceDirectoryInSource(pieceName: string): Promise<str
 export async function findAllPieces(): Promise<PieceMetadata[]> {
     const piecesPath = resolve(cwd(), 'dist', 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
-    const enterprisePiecesPaths = await buildAndFindAllPremiumPieces()
+    const enterprisePiecesPaths = AP_EDITION && AP_EDITION === ApEdition.ENTERPRISE ? await buildAndFindAllPremiumPieces() : []
     const pieces = await Promise.all([...paths ,...enterprisePiecesPaths].map((p) => loadPieceFromFolder(p)))
     return pieces.filter((p): p is PieceMetadata => p !== null).sort(byDisplayNameIgnoreCase)
 }
