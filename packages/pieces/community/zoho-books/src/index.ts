@@ -60,7 +60,8 @@ export const zohoBooks = createPiece({
   auth: zohoBooksAuth,
   actions: [
     createCustomApiCallAction({
-      baseUrl: (auth) => `https://www.zohoapis.com/books/v3/contacts`,
+      baseUrl: (auth) =>
+        `https://${(auth as OAuth2PropertyValue).data['location']}/books/v3`,
       auth: zohoBooksAuth,
       authMapping: (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
