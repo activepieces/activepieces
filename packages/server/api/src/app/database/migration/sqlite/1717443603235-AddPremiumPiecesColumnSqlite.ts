@@ -5,18 +5,6 @@ export class AddPremiumPiecesColumnSqlite1717443603235 implements MigrationInter
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "premiumPieces" character varying array
-        `)
-        await queryRunner.query(`
-            UPDATE "platform"
-            SET "premiumPieces" = '{}'
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ALTER COLUMN "premiumPieces" SET NOT NULL
-        `)
-        await queryRunner.query(`
             CREATE TABLE "temporary_platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -121,7 +109,8 @@ export class AddPremiumPiecesColumnSqlite1717443603235 implements MigrationInter
                     "projectRolesEnabled",
                     "customDomainsEnabled",
                     "flowIssuesEnabled",
-                    "alertsEnabled"
+                    "alertsEnabled",
+                    "premiumPieces"
                 )
             SELECT "id",
                 "created",
@@ -161,7 +150,8 @@ export class AddPremiumPiecesColumnSqlite1717443603235 implements MigrationInter
                 "projectRolesEnabled",
                 "customDomainsEnabled",
                 "flowIssuesEnabled",
-                "alertsEnabled"
+                "alertsEnabled",
+                '{}'
             FROM "platform"
         `)
         await queryRunner.query(`
@@ -327,9 +317,6 @@ export class AddPremiumPiecesColumnSqlite1717443603235 implements MigrationInter
         `)
         await queryRunner.query(`
             DROP TABLE "temporary_platform"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "premiumPieces"
         `)
     }
 
