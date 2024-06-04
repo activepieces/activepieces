@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
-import { ALL_PRINCIPAL_TYPES, PrincipalType } from '../authentication/model/principal-type'
-import { spreadIfDefined } from '../common'
+import {  PrincipalType } from '../authentication/model/principal-type'
+
 
 export const ActivateKeyRequestBody = Type.Object({
     key: Type.String(),
@@ -28,41 +28,29 @@ const GetKeyRequestParams =  Type.Object({
 })
 
 export type GetKeyRequestParams = Static<typeof GetKeyRequestParams>
-export const GetKeyRequest = ({ withCredentials }: { withCredentials: boolean }) => {
-    const request = {
-        ...spreadIfDefined('config', configCreator(withCredentials)),
-        schema: {
-            params: GetKeyRequestParams,
-        },
-    }
-    return request
-}
-
-
-
-export const CreateKeyRequest = ({ withCredentials }: { withCredentials: boolean }) => {
-  
-    const request =  {
-        ...spreadIfDefined('config', configCreator(withCredentials)),
-        schema: {
-            body: CreateKeyRequestBody,
-        },
-    }
-    return request
-}
-export const ActivateKeyRequest = ({ withCredentials }: { withCredentials: boolean }) => {
-    const request =  {
-        ...spreadIfDefined('config', configCreator(withCredentials)),
-        schema: {
-            body: ActivateKeyRequestBody,
-        },
-    }
-    return request
-}
-
-
-const configCreator = ( withCredentials: boolean) => {
-    return withCredentials ? { allowedPrincipals: [
+export const GetKeyRequest = {
+    config: { allowedPrincipals: [
         PrincipalType.USER,
-    ] } : { allowedPrincipals: ALL_PRINCIPAL_TYPES }
+    ] },
+    schema: {
+        params: GetKeyRequestParams,
+    },
+}
+
+
+export const CreateKeyRequest =  {
+    config: { allowedPrincipals: [
+        PrincipalType.USER,
+    ] },
+    schema: {
+        body: CreateKeyRequestBody,
+    },
+}
+export const ActivateKeyRequest = {
+    config: { allowedPrincipals: [
+        PrincipalType.USER,
+    ] },
+    schema: {
+        body: ActivateKeyRequestBody,
+    },
 }

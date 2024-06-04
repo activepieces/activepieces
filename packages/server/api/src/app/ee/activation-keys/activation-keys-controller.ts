@@ -4,18 +4,18 @@ import { ActivateKeyRequest, CreateKeyRequest, GetKeyRequest } from '@activepiec
 
 
 export const activationKeysController: FastifyPluginAsyncTypebox = async (app) => {
-    app.get('/:key', GetKeyRequest({ withCredentials: false }), async (req) => {
-        const key = await activationKeysService.getKeyRow(req.params.key)
+    app.get('/:key', GetKeyRequest, async (req) => {
+        const key = await activationKeysService.getKeyRow(req.params)
         return key
     })
 
-    app.post('/activate', ActivateKeyRequest({ withCredentials: false }), async (req) => {
-        const res =  await activationKeysService.activateKey(req.body.key)
+    app.post('/activate', ActivateKeyRequest, async (req) => {
+        const res =  await activationKeysService.activateKey(req.body)
         return res
 
     })
-    app.post('/', CreateKeyRequest({ withCredentials: false }), async (req) => {
-        const res = await activationKeysService.createKey(req.body.email)
+    app.post('/', CreateKeyRequest, async (req) => {
+        const res = await activationKeysService.createKey(req.body)
         return res
     })
 }
