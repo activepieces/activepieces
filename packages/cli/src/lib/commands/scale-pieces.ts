@@ -9,6 +9,7 @@ import {
   getJsonFromUrl,
   isUrl,
 } from '../utils/scale';
+import { extractBaseURL } from '../utils/scale/openai-utils';
 import { createPiece } from './create-piece';
 
 const convertOpenAPIToPiece = async (openAPISpec) => {
@@ -23,12 +24,17 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
   const pieceDir = path.join('packages', 'pieces', pieceType, pieceName, 'src');
   const actionsDir = path.join(pieceDir, 'lib', 'action');
   await createPiece(pieceName, packageName, pieceType);
-  console.log(chalk.green(`Creating ${pieceName}... 🫸`));
 
+  console.log(chalk.green(`Generating authentication for ${pieceName}...`));
   const authCode = await generateAuth(openAPISpec);
   const authDisplayName = authCode.split('\n')[1].trim().split(' ')[2];
+  console.log(chalk.green(`Getting server url for ${pieceName}...`));
+  const baseURL = await extractBaseURL(openAPISpec);
 
-  const actions = await generateActions(openAPISpec, authDisplayName);
+  console.log(
+    chalk.green(`Generating ${pieceName} actions, please be patient...`)
+  );
+  const actions = await generateActions(openAPISpec, authDisplayName, baseURL);
 
   if (actions.length > 0 && !existsSync(actionsDir)) {
     mkdirSync(actionsDir, { recursive: true });
@@ -47,7 +53,9 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
   const actionExports = actions.map((action) => `${action.name}`).join(', ');
 
   const pieceDefinition = `
-    import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+    import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
+    import { createCustomApiCallAction } from '@activepieces/pieces-common';
+    
     ${actionImports}
 
     ${authCode}
@@ -58,18 +66,30 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
       minimumSupportedRelease: '0.20.0',
       logoUrl: 'https://cdn.activepieces.com/pieces/${pieceName}.png',
       authors: [],
-      actions: [${actionExports}],
+      actions: [
+        ${actionExports},
+        createCustomApiCallAction({
+          baseUrl: () => {
+            return '${baseURL}';
+          },
+          auth: ${authDisplayName},
+          authMapping: (auth) => {
+            return {
+              Authorization: \`Bearer \${(auth as OAuth2PropertyValue).access_token}\`,
+            };
+          },
+        }),
+      ],
       triggers: [],
     });
   `;
 
   writeFileSync(path.join(pieceDir, 'index.ts'), pieceDefinition);
+  console.log(chalk.green(`Enjoy ${pieceName} at ${pieceDir}. ❤️`));
 
-  console.log(authCode + "\n" + actions + "\n" + pieceDefinition);
-  
-  console.log(
-    `🚨 Piece definition, auth, actions generated successfully in ${pieceDir}`
-  );
+  // console.log(
+  //   `🚨 Piece definition, auth, actions generated successfully in ${pieceDir}`
+  // );
 };
 
 const handleAPIConversion = async (pathOrUrl) => {

@@ -463,6 +463,9 @@
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
       ],
+      "@activepieces/piece-slacktest": [
+        "packages/pieces/community/slacktest/src/index.ts"
+      ],
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
       ],

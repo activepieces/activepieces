@@ -2,7 +2,7 @@
   "Slack": {
     "openapi": "3.0.0",
     "info": {
-      "title": "Slack Test",
+      "title": "SlackTest",
       "version": "1.0",
       "description": "OpenAPI specification generated from the Slack piece."
     },

@@ -26,7 +26,8 @@ export const openapiBaseURLFunction = [
       properties: {
         baseURL: {
           type: 'string',
-          description: 'The base url or host for the service server eg: api.sendsms.ro, https://slack.com/api, ...etc',
+          description:
+            'The base url or host for the service server eg: api.sendsms.ro, https://slack.com/api, ...etc',
         },
       },
     },
@@ -49,7 +50,7 @@ export const openapiAuthFunctions = [
         description: {
           type: 'string',
           description:
-            'Description of markdown type, for guiding user through auth process from the service documentation. Like how to setup the OAuth2 for discord, asana, slack, meta apis, In steps',
+            'Description of markdown type, for guiding user through auth process from the service documentation. Like how to setup the OAuth2 for discord, asana, slack, meta apis, In steps. Also REMOVE the back ticks inside the generated description string',
         },
         authUrl: {
           type: 'string',

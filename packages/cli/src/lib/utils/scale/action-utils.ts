@@ -1,10 +1,11 @@
 import { openapiCustomFunctions } from './openai-config';
-import { extractBaseURL, openai } from './openai-utils';
+import { openai } from './openai-utils';
 import { Action, OpenAPISpec } from './types';
 
 const generateActions = async (
   openAPISpec: OpenAPISpec,
-  authDisplayName: string
+  authDisplayName: string,
+  baseURL: string
 ): Promise<{ name: string; code: string }[]> => {
   const requests = [];
 
@@ -31,7 +32,6 @@ const generateActions = async (
       return JSON.parse(actionExtractedData);
     })
   );
-  const baseURL = await extractBaseURL(openAPISpec);
 
   return completions.map((action) =>
     createActionTemplate(action, baseURL, authDisplayName)
