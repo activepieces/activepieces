@@ -71,7 +71,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 sortBy: req.query.sortBy,
                 orderBy: req.query.orderBy,
                 suggestionType: req.query.suggestionType,
-                includePremiumPieces: req.query.includePremiumPieces,
+                premiumPieces: req.query.premiumPieces,
             })
             return pieceMetadataSummary
         },
@@ -115,8 +115,9 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     app.post(
         '/sync',
         SyncPiecesRequest,
-        async (): Promise<void> => {
-            await pieceSyncService.sync()
+        async (req): Promise<void> => {
+            const platformId = req.principal.platform.id
+            await pieceSyncService.sync(platformId)
         },
     )
 

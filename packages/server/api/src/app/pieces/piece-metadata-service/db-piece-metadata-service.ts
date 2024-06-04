@@ -3,7 +3,6 @@ import dayjs from 'dayjs'
 import semVer from 'semver'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import {
@@ -22,8 +21,8 @@ const repo = repoFactory(PieceMetadataEntity)
 export const FastDbPieceMetadataService = (): PieceMetadataService => {
     return {
         async list(params): Promise<PieceMetadataModelSummary[]> {
-            const platform = params.platformId && params.includePremiumPieces === true ? await platformService.getOneOrThrow(params.platformId) : undefined
-            const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({ ...params, platformPremiumPieces: platform?.premiumPieces })
+            const platformPremiumPieces = params.premiumPieces ? params.premiumPieces.split(',') : undefined 
+            const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({ ...params, platformPremiumPieces })
             const uniquePieces = new Set<string>(originalPieces.map((piece) => piece.name))
             const latestVersionOfEachPiece = Array.from(uniquePieces).map((name) => {
                 const result = originalPieces.find((piece) => piece.name === name)
@@ -242,7 +241,7 @@ const increaseMajorVersion = (version: string): string => {
 }
 
 async function findAllPiecesVersionsSortedByNameAscVersionDesc({ projectId, platformId, release, platformPremiumPieces }: { projectId?: string, platformId?: string, release: string | undefined, platformPremiumPieces?: string[] }): Promise<PieceMetadataSchema[]> {
-    const piece = (await localPieceCache.getSortedbyNameAscThenVersionDesc()).filter(async (piece) => {
+    const piece = (await localPieceCache.getSortedbyNameAscThenVersionDesc()).filter((piece) => {
         return isOfficialPiece(piece) || isProjectPiece(projectId, piece) || isPlatformPiece(platformId, piece) || isPremiumPiece(platformPremiumPieces, piece)
     }).filter((piece) => isSupportedRelease(release, piece))
     return piece

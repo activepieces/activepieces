@@ -49,7 +49,7 @@ export const ListPiecesRequestQuery = Type.Object({
     orderBy: Type.Optional(Type.Enum(PieceOrderBy)),
     categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
     suggestionType: Type.Optional(Type.Enum(SuggestionType)),
-    includePremiumPieces: Type.Optional(Type.Boolean()),
+    premiumPieces: Type.Optional(Type.String()),
 })
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>

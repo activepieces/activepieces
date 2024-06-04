@@ -5,11 +5,12 @@ import { flagService } from '../flags/flag.service'
 import { parseAndVerify } from '../helper/json-validator'
 import { getEdition } from '../helper/secret-helper'
 import { systemJobsSchedule } from '../helper/system-jobs'
+import { platformService } from '../platform/platform.service'
 import { PieceMetadataEntity } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
+import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const piecesRepo = repoFactory(PieceMetadataEntity)
@@ -35,14 +36,14 @@ export const pieceSyncService = {
             },
         })
     },
-    async sync(): Promise<void> {
+    async sync(platformId?: string): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
             logger.info('Piece sync service is disabled')
             return
         }
         try {
             logger.info({ time: dayjs().toISOString() }, 'Syncing pieces')
-            const pieces = await listPieces()
+            const pieces = await listPieces(platformId)
             const promises: Promise<void>[] = []
 
             for (const summary of pieces) {
@@ -106,13 +107,17 @@ async function getOrThrow({ name, version }: { name: string, version: string }):
     return response.json()
 }
 
-async function listPieces(): Promise<PieceMetadataModelSummary[]> {
+async function listPieces(platformId?: string): Promise<PieceMetadataModelSummary[]> {
+    let premiumPieces: string[] | undefined
+    if (platformId) {
+        const platform = await platformService.getOne(platformId)
+        premiumPieces = platform?.premiumPieces
+    }
+
     const queryParams = new URLSearchParams()
-    const edition = getEdition()
-    const isEnterprise = edition === ApEdition.ENTERPRISE
-    queryParams.append('edition', edition)
+    queryParams.append('edition', getEdition())
     queryParams.append('release', await flagService.getCurrentRelease())
-    queryParams.append('includePremiumPieces', isEnterprise.toString())
+    premiumPieces && queryParams.append('premiumPieces', premiumPieces.join(','))
     const url = `${CLOUD_API_URL}?${queryParams.toString()}`
     const response = await fetch(url)
     if (response.status === StatusCodes.GONE.valueOf()) {

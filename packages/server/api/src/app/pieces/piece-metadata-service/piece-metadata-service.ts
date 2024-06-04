@@ -27,7 +27,7 @@ type ListParams = {
     orderBy?: PieceOrderBy
     searchQuery?: string
     suggestionType?: SuggestionType
-    includePremiumPieces?: boolean
+    premiumPieces?: string
 }
 
 type GetOrThrowParams = {
