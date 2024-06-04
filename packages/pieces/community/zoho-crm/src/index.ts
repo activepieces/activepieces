@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { newContact } from './lib/triggers/new-contact';
+import { readFile } from './lib/actions/read-file';
 
 export const zohoCrmAuth = PieceAuth.OAuth2({
   props: {
@@ -61,6 +62,7 @@ export const zohoCrm = createPiece({
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud","ikus060"],
   auth: zohoCrmAuth,
   actions: [
+    readFile,
     createCustomApiCallAction({
       baseUrl: (auth) =>
         `https://${(auth as OAuth2PropertyValue).data.location}/crm/v4`,
