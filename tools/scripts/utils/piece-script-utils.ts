@@ -18,7 +18,6 @@ type Piece = {
 
 export const PIECES_FOLDER = 'packages/pieces'
 export const COMMUNITY_PIECE_FOLDER = 'packages/pieces/community'
-const { AP_EDITION } = process.env
 
 const validateSupportedRelease = (minRelease: string | undefined, maxRelease: string | undefined) => {
     if (minRelease !== undefined && !semver.valid(minRelease)) {
@@ -60,17 +59,14 @@ export async function findPiece(pieceName: string): Promise<PieceMetadata | null
 export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     const piecesPath = resolve(cwd(), 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
-    return paths
+    const enterprisePiecesPath = resolve(cwd(), 'packages', 'ee', 'pieces')
+    const enterprisePiecesPaths = await traverseFolder(enterprisePiecesPath)
+    return [...paths, ...enterprisePiecesPaths]
 }
 
-export async function findAllPremiumPiecesDirectory(): Promise<string[]> {
-    const piecesPath = resolve(cwd(), 'packages', 'ee', 'pieces')
-    const paths = await traverseFolder(piecesPath)
-    return paths
-}
 
 export async function findPieceDirectoryInSource(pieceName: string): Promise<string | null> {
-    const piecesPath = [...await findAllPiecesDirectoryInSource(), ...await findAllPremiumPiecesDirectory()]
+    const piecesPath =await findAllPiecesDirectoryInSource();
     const piecePath = piecesPath.find((p) => p.includes(pieceName))
     return piecePath ?? null
 }
@@ -78,24 +74,8 @@ export async function findPieceDirectoryInSource(pieceName: string): Promise<str
 export async function findAllPieces(): Promise<PieceMetadata[]> {
     const piecesPath = resolve(cwd(), 'dist', 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
-    const enterprisePiecesPaths = AP_EDITION && AP_EDITION === ApEdition.ENTERPRISE ? await buildAndFindAllPremiumPieces() : []
-    const pieces = await Promise.all([...paths ,...enterprisePiecesPaths].map((p) => loadPieceFromFolder(p)))
+    const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
     return pieces.filter((p): p is PieceMetadata => p !== null).sort(byDisplayNameIgnoreCase)
-}
-
-async function buildAndFindAllPremiumPieces(): Promise<string[]> {
-    const piecesFolder = await findAllPremiumPiecesDirectory()
-    if (piecesFolder.length === 0) {
-        return []
-    }
-    for (const pieceFolder of piecesFolder) {
-        const projectJson = await readProjectJson(pieceFolder);
-        await exec('npx nx build ' + projectJson.name);
-    }
-
-    const enterprisePiecesPath = resolve(cwd(), 'dist', 'packages', 'ee', 'pieces')
-    const enterprisePiecesPaths = await traverseFolder(enterprisePiecesPath)    
-    return enterprisePiecesPaths
 }
 
 async function traverseFolder(folderPath: string): Promise<string[]> {
