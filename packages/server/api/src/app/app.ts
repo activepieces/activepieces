@@ -16,6 +16,7 @@ import { appEventRoutingModule } from './app-event-routing/app-event-routing.mod
 import { authenticationServiceHooks } from './authentication/authentication-service/hooks'
 import { authenticationModule } from './authentication/authentication.module'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
+import { clientActivationKeysModule } from './client-activation-keys/client-activation-keys-module'
 import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
@@ -323,7 +324,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
             await app.register(projectBillingModule)
-
+            await app.register(activationKeysModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -336,7 +337,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
             initializeSentry()
-            await app.register(activationKeysModule)
             break
         case ApEdition.ENTERPRISE:
             await app.register(customDomainModule)
@@ -355,6 +355,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(auditEventModule)
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
+            await app.register(clientActivationKeysModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -370,6 +371,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             await app.register(communityFlowTemplateModule)
+            await app.register(clientActivationKeysModule)
             break
     }
 
