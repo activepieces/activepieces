@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto'
 import { PostgrestSingleResponse } from '@supabase/supabase-js'
 import { emailSender } from '../helper/email/email-sender/email-sender'
 import { getSupabaseClient, initialiseSupabaseClient } from './supabase-client'
@@ -52,8 +53,8 @@ export const activationKeysService = {
     },
 
     async createKey(email: string): Promise<ActivationKeyEntity> {
-        const key = await getKeyByEmail(email)
-        if (key) {
+        const emailPreviousKey = await getKeyByEmail(email)
+        if (emailPreviousKey) {
             throw new ActivepiecesError({
                 code: ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY,
                 params: {
@@ -61,10 +62,11 @@ export const activationKeysService = {
                 },
             })
         }
+        const key =  randomUUID().toString()
         const { data, error } = await getSupabaseClient()
             .from('keys')
             .insert([
-                { email },
+                { email, key },
             ])
             .select()
         if (error) {
