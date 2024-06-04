@@ -33,7 +33,8 @@ import { ProjectMemberService } from 'ee-project-members';
 export class AlertsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator: ApPaginatorComponent;
-  readonly permissionMessage = $localize` 'You don\'t have permissions to add email'`;
+  readonly permissionToAddMessage = $localize`You don\'t have permissions to add email`;
+  readonly permissionToDeleteMessage = $localize`You don\'t have permissions to delete email`;
   readonly betaNote =
     'Note: This feature is in <strong>BETA</strong> and will only be <strong>Free</strong> during the <strong>BETA</strong> period.';
   upgradeNoteTitle = $localize`Unlock Alerts`;
