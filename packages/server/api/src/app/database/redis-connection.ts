@@ -5,7 +5,7 @@ import { isNil } from '@activepieces/shared'
 const url = system.get(SystemProp.REDIS_URL)
 const username = system.get(SystemProp.REDIS_USER)
 const password = system.get(SystemProp.REDIS_PASSWORD)
-const useSsl = system.get(SystemProp.REDIS_USE_SSL) ?? false
+const useSsl = system.getBoolean(SystemProp.REDIS_USE_SSL) ?? false
 const db = system.getNumber(SystemProp.REDIS_DB) ?? 0
 
 export const createRedisClient = (params?: CreateRedisClientParams): Redis => {
