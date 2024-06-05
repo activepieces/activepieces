@@ -469,6 +469,9 @@
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
       ],
+      "@activepieces/piece-snowflake": [
+        "packages/ee/pieces/snowflake/src/index.ts"
+      ],
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
       ],

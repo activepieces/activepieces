@@ -3,7 +3,7 @@ import { readdir, stat } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
 import { PieceMetadata } from '../../../packages/pieces/community/framework/src'
-import { extractPieceFromModule } from '../../../packages/shared/src'
+import { PieceCategory, extractPieceFromModule } from '../../../packages/shared/src'
 import * as semver from 'semver'
 import { readPackageJson } from './files'
 type Piece = {
@@ -38,6 +38,14 @@ const validateMetadata = (pieceMetadata: PieceMetadata): void => {
         pieceMetadata.minimumSupportedRelease,
         pieceMetadata.maximumSupportedRelease,
     )
+    validatePremiumPiece(pieceMetadata)
+}
+
+const validatePremiumPiece = (piece: PieceMetadata): void => {
+    const categories = piece.categories ?? []
+    if (categories.includes(PieceCategory.PREMIUM) && (!piece.minimumSupportedRelease || semver.lt(piece.minimumSupportedRelease, '0.28.0'))) {
+        throw Error(`[validatePremiumPiece] Premium pieces must have a minimum supported release of 0.28.0 or higher`)
+    }
 }
 
 const byDisplayNameIgnoreCase = (a: PieceMetadata, b: PieceMetadata) => {
@@ -74,7 +82,7 @@ export async function findAllPieces(): Promise<PieceMetadata[]> {
     const standardPiecesPath = resolve(baseDir, 'pieces')
     const enterprisePiecesPath = resolve(baseDir, 'ee', 'pieces')
     const paths = [
-        ...await traverseFolder(standardPiecesPath), 
+        ...await traverseFolder(standardPiecesPath),
         ...await traverseFolder(enterprisePiecesPath)
     ]
     const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
