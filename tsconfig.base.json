@@ -324,7 +324,7 @@
         "packages/pieces/community/mautic/src/index.ts"
       ],
       "@activepieces/piece-microsoft-dynamics-365-business-central": [
-        "packages/pieces/community/microsoft-dynamics-365-business-central/src/index.ts"
+        "packages/ee/pieces/microsoft-dynamics-365-business-central/src/index.ts"
       ],
       "@activepieces/piece-microsoft-dynamics-crm": [
         "packages/ee/pieces/microsoft-dynamics-crm/src/index.ts"
