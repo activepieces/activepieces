@@ -56,6 +56,9 @@ export async function assertUserHasPermissionToFlow(
 }
 
 const assertRoleHasPermission = async (principal: Principal, permission: Permission | undefined): Promise<void> => {
+    if (principal.type === PrincipalType.SERVICE) { 
+        return
+    }
     const principalRole = await getPrincipalRoleOrThrow(principal)
     const access = grantAccess({
         principalRole,

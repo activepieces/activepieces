@@ -32,6 +32,9 @@
       @case (FlowRunStatus.PAUSED) {
         <span  i18n>Flow is paused ...</span>
       }
+      @case (FlowRunStatus.QUOTA_EXCEEDED) {
+        <span  i18n>Run failed due to quota exceeded</span>
+      }
       @case (FlowRunStatus.TIMEOUT) {
         <span  i18n>Run exceeded {{sandboxTimeoutSeconds$ | async}} seconds, try to optimize your
           steps.</span>

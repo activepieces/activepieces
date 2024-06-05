@@ -33,7 +33,19 @@ import { Observable, take } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class=" ap-px-[30px] ap-pt-[50px]">
-      <ap-page-title title="Runs" i18n-title></ap-page-title>
+      <ap-page-title title="Runs" i18n-title>
+        @if((isInEmbedding$ | async) === false) {
+        <ap-button
+          actionButton
+          i18n-tooltipText
+          (buttonClicked)="goToAlerts()"
+          btnSize="medium"
+          btnColor="primary"
+          i18n
+          >Set Alerts</ap-button
+        >
+        }
+      </ap-page-title>
       @if(isInEmbedding$ | async) {
       <app-runs-table #runsTable></app-runs-table>
       } @else() {
@@ -155,5 +167,9 @@ export class RunsComponent
       this.tabGroup.selectedIndex = runsTabIndex;
     }
     this.runsTable?.setParams(FlowRunStatus.FAILED, issue.flowId);
+  }
+
+  goToAlerts() {
+    this.router.navigate(['/settings'], { fragment: 'Alerts' });
   }
 }

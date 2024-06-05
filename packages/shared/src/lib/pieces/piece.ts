@@ -49,4 +49,5 @@ export enum PieceCategory {
     PAYMENT_PROCESSING = 'PAYMENT_PROCESSING',
     MARKETING = 'MARKETING',
     SALES_AND_CRM = 'SALES_AND_CRM',
+    PREMIUM = 'PREMIUM', 
 }

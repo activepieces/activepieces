@@ -11,7 +11,6 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { webhookResponseWatcher } from '../../workers/flow-worker/webhook-response-watcher'
 import { flowService } from '../flow/flow.service'
 import { FlowRunEntity } from './flow-run-entity'
-import { flowRunHooks } from './flow-run-hooks'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
@@ -252,8 +251,6 @@ export const flowRunService = {
             id: flowVersion.flowId,
             projectId,
         })
-
-        await flowRunHooks.getHooks().onPreStart({ projectId })
 
         const flowRun = await getFlowRunOrCreate({
             id: flowRunId,

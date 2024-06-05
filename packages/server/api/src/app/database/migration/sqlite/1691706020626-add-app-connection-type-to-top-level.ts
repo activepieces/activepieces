@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { decryptObject } from '../../../helper/encryption'
+import { encryptUtils } from '../../../helper/encryption'
 import { logger } from '@activepieces/server-shared'
 
 type AppConnectionValue = {
@@ -31,7 +31,7 @@ implements MigrationInterface {
 
         for (const currentConnection of connections) {
             try {
-                const connectionValue = decryptObject<AppConnectionValue>(
+                const connectionValue = encryptUtils.decryptObject<AppConnectionValue>(
                     JSON.parse(currentConnection.value),
                 )
                 await queryRunner.query(

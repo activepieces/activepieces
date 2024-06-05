@@ -1,15 +1,15 @@
 <div class="ap-px-5">
   <div class="ap-text-viewTitle ap-typography ap-py-3">
     <div class="ap-min-h-[48px] ap-gap-2 ap-flex ap-items-center">
-      <ng-container *ngIf="ActionStatusEnum.SUCCEEDED === selectedStepResult.status">
+      <ng-container *ngIf="StepOutputStatus.SUCCEEDED === selectedStepResult.status">
         <svg-icon src="assets/img/custom/success-step-result.svg" [svgStyle]="{ width: '21px', height: '20px' }"
           matTooltip="Step succeeded" i18n-matTooltip></svg-icon>
       </ng-container>
-      <ng-container *ngIf="ActionStatusEnum.FAILED === selectedStepResult.status">
+      <ng-container *ngIf="StepOutputStatus.FAILED === selectedStepResult.status">
         <svg-icon src="assets/img/custom/failure-step-result.svg" [svgStyle]="{ width: '21px', height: '20px' }"
           matTooltip="Step succeeded" i18n-matTooltip></svg-icon>
       </ng-container>
-      <ng-container *ngIf="ActionStatusEnum.PAUSED === selectedStepResult.status">
+      <ng-container *ngIf="StepOutputStatus.PAUSED === selectedStepResult.status">
         <svg-icon src="assets/img/custom/status/paused.svg" [svgStyle]="{ width: '21px', height: '20px' }"
           matTooltip="Step paused" i18n-matTooltip></svg-icon>
       </ng-container>

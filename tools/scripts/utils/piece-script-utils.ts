@@ -1,6 +1,6 @@
 
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, join, normalize } from 'node:path'
+import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
 import { PieceMetadata } from '../../../packages/pieces/community/framework/src'
 import { extractPieceFromModule } from '../../../packages/shared/src'
@@ -17,7 +17,6 @@ type Piece = {
 
 export const PIECES_FOLDER = 'packages/pieces'
 export const COMMUNITY_PIECE_FOLDER = 'packages/pieces/community'
-
 
 const validateSupportedRelease = (minRelease: string | undefined, maxRelease: string | undefined) => {
     if (minRelease !== undefined && !semver.valid(minRelease)) {
@@ -59,17 +58,25 @@ export async function findPiece(pieceName: string): Promise<PieceMetadata | null
 export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     const piecesPath = resolve(cwd(), 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
-    return paths
+    const enterprisePiecesPath = resolve(cwd(), 'packages', 'ee', 'pieces')
+    const enterprisePiecesPaths = await traverseFolder(enterprisePiecesPath)
+    return [...paths, ...enterprisePiecesPaths]
 }
+
 export async function findPieceDirectoryInSource(pieceName: string): Promise<string | null> {
-    const piecesPath =  await findAllPiecesDirectoryInSource()
+    const piecesPath = await findAllPiecesDirectoryInSource();
     const piecePath = piecesPath.find((p) => p.includes(pieceName))
     return piecePath ?? null
 }
 
 export async function findAllPieces(): Promise<PieceMetadata[]> {
-    const piecesPath = resolve(cwd(), 'dist', 'packages', 'pieces')
-    const paths = await traverseFolder(piecesPath)
+    const baseDir = resolve(cwd(), 'dist', 'packages')
+    const standardPiecesPath = resolve(baseDir, 'pieces')
+    const enterprisePiecesPath = resolve(baseDir, 'ee', 'pieces')
+    const paths = [
+        ...await traverseFolder(standardPiecesPath), 
+        ...await traverseFolder(enterprisePiecesPath)
+    ]
     const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
     return pieces.filter((p): p is PieceMetadata => p !== null).sort(byDisplayNameIgnoreCase)
 }

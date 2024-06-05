@@ -43,6 +43,7 @@ export const issuesService = {
                 projectId,
                 flowName: flowVersion.displayName,
                 count: updatedIssue.count,
+                lastSeenAt: dayjs(updatedIssue.lastOccurrence).format('DD MMM YYYY, HH:mm'),
                 createdAt: dayjs(date).format('DD MMM YYYY, HH:mm'),
             })
         }

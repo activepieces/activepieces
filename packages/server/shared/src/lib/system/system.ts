@@ -57,7 +57,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.PACKAGE_ARCHIVE_PATH]: 'dist/archives',
     [SystemProp.PIECES_SOURCE]: PiecesSource.CLOUD_AND_DB,
     [SystemProp.QUEUE_MODE]: QueueMode.REDIS,
-    [SystemProp.SANDBOX_MEMORY_LIMIT]: '131072',
+    [SystemProp.SANDBOX_MEMORY_LIMIT]: '524288',
     [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
     [SystemProp.SIGN_UP_ENABLED]: 'false',
     [SystemProp.TELEMETRY_ENABLED]: 'true',

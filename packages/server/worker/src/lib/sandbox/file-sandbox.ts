@@ -149,14 +149,15 @@ function createWorker(enginePath: string,
         })
 
         const timeoutWorker = setTimeout(async () => {
-            await worker.terminate()
             resolve({
                 engine: {
-                    status: EngineResponseStatus.TIMEOUT, response: {},
+                    status: EngineResponseStatus.TIMEOUT,
+                    response: {},
                 },
                 stdError: '',
                 stdOut: '',
             })
+            await worker.terminate()
         }, AbstractSandbox.sandboxRunTimeSeconds * 1000)
 
         let stdError = ''

@@ -221,4 +221,36 @@ export const props = {
         };
       },
     }),
+  template_id: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Template',
+      required,
+      description: 'ID of Template',
+      refreshers: ['auth', 'team_id'],
+      options: async ({ auth, team_id }) => {
+        if (!auth || !team_id) {
+          return {
+            disabled: true,
+            placeholder: 'connect your account first and select team',
+            options: [],
+          };
+        }
+        const client = makeClient(auth as string);
+        const filter: Omit<LinearDocument.Team_TemplatesQueryVariables, "id"> = {
+          first: 50,
+          orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+        };
+        const templatesConnection = await client.listTeamsTemplates(team_id as string, filter);
+        const templates = await templatesConnection.nodes;
+        return {
+          disabled: false,
+          options: templates.map((template) => {
+            return {
+              label: template.name,
+              value: template.id,
+            };
+          }),
+        };
+      },
+    }),
 };

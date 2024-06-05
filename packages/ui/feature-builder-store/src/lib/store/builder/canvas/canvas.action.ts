@@ -20,6 +20,7 @@ export enum CanvasActionType {
   VIEW_VERSION = '[CANVAS] VIEW_VERSION',
   UPDATE_VIEWED_VERSION_ID = `[CANVAS] UPDATE_VIEWED_VERSION_ID`,
   VIEW_RUN = '[CANVAS] VIEW_RUN',
+  SET_LOOP_INDEX_FOR_RUN = '[CANVAS] SET_LOOP_INDEX_FOR_RUN',
 }
 
 const setInitial = createAction(
@@ -77,7 +78,10 @@ const setRun = createAction(
   CanvasActionType.SET_RUN,
   props<{ run: FlowRun }>()
 );
-
+const setLoopIndexForRun = createAction(
+  CanvasActionType.SET_LOOP_INDEX_FOR_RUN,
+  props<{ loopIndex: number; stepName: string }>()
+);
 export const canvasActions = {
   setInitial,
   setLeftSidebar,
@@ -92,4 +96,5 @@ export const canvasActions = {
   /**Used for when you edit a published flow and a draft is created */
   updateViewedVersionId,
   viewRun,
+  setLoopIndexForRun,
 };

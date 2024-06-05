@@ -58,6 +58,8 @@ export const platformService = {
             customDomainsEnabled: false,
             apiKeysEnabled: false,
             customAppearanceEnabled: false,
+            alertsEnabled: false,
+            premiumPieces: [],
         }
 
         const savedPlatform = await repo.save(newPlatform)
@@ -121,6 +123,8 @@ export const platformService = {
             ...spreadIfDefined('projectRolesEnabled', params.projectRolesEnabled),
             ...spreadIfDefined('customDomainsEnabled', params.customDomainsEnabled),
             ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
+            ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
+            ...spreadIfDefined('premiumPieces', params.premiumPieces),
             
         }
 
@@ -132,7 +136,17 @@ export const platformService = {
             id,
         })
 
-        assertPlatformExists(platform)
+        if (isNil(platform)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: id,
+                    entityType: 'Platform',
+                    message: 'Platform not found',
+                },
+            })
+        }
+        
         return platform
     },
 
@@ -142,20 +156,6 @@ export const platformService = {
         })
     },
 }
-
-const assertPlatformExists: (
-    platform: Platform | null
-) => asserts platform is Platform = (platform) => {
-    if (isNil(platform)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                message: 'platform not found',
-            },
-        })
-    }
-}
-
 
 type AddParams = {
     ownerId: UserId
@@ -183,5 +183,6 @@ type UpdateParams = UpdatePlatformRequestBody & {
     manageTemplatesEnabled?: boolean
     apiKeysEnabled?: boolean
     projectRolesEnabled?: boolean
-    
+    alertsEnabled?: boolean   
+    premiumPieces?: string[]
 }

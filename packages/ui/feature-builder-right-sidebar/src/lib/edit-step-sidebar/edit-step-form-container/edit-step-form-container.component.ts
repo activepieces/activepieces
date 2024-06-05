@@ -18,7 +18,10 @@ export class EditStepFormContainerComponent {
   ApEdition = ApEdition;
   edition$: Observable<ApEdition>;
   @Input({ required: true }) selectedStep: Step;
-
+  /**The selected step input param doesn't change if the settings or something within change*/
+  selectedSettings$ = this.store.select(
+    BuilderSelectors.selectCurrentStepSettings
+  );
   constructor(
     private store: Store,
     private snackbar: MatSnackBar,

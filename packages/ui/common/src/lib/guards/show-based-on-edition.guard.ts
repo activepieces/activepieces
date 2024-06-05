@@ -15,7 +15,7 @@ export const showBasedOnEditionGuard: (
         return !!allowedEditions.find((ed) => ed === res);
       }),
       tap((res) => {
-        if (!res) router.navigate(['/404']);
+        if (!res) router.navigate(['/not-found']);
       })
     );
   };

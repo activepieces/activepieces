@@ -4,7 +4,7 @@ import { getEdition } from '../helper/secret-helper'
 import { userService } from '../user/user-service'
 import { platformService } from './platform.service'
 import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, Principal, PrincipalType } from '@activepieces/shared'
+import { ApEdition, isNil, Principal, PrincipalType } from '@activepieces/shared'
 
 const edition = getEdition()
 
@@ -34,11 +34,13 @@ export const resolvePlatformIdForAuthnRequest = async (
 export const resolvePlatformIdForRequest = async (
     request: FastifyRequest,
 ): Promise<string | null> => {
-    return (
-        (await extractPlatformIdFromAuthenticatedPrincipal(request.principal)) ??
-        (await getPlatformIdForHostname(request.hostname))
-    )
+    const platformId = await extractPlatformIdFromAuthenticatedPrincipal(request.principal)
+    if (!isNil(platformId)) {
+        return platformId
+    }
+    return getPlatformIdForHostname(request.hostname)
 }
+
 const extractPlatformIdFromAuthenticatedPrincipal = async (
     principal: Principal,
 ): Promise<string | null> => {
