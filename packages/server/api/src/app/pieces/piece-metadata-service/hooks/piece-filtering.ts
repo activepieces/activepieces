@@ -41,15 +41,15 @@ export const filterPiecesBasedOnPremiumPlatform = async ({
     platformId?: string
     pieces: PieceMetadataSchema[]
 }): Promise<PieceMetadataSchema[]> => {
-    const standardPieces = pieces.filter(piece => !piece.categories?.includes(PieceCategory.PREMIUM))
     if (isNil(platformId)) {
-        return standardPieces
+        return pieces
     }
     const platform = await platformService.getOne(platformId)
     if (isNil(platform)) {
-        return standardPieces
+        return pieces
     }
     const platformPremiumPieces = platform.premiumPieces
+    const standardPieces = pieces.filter(piece => !piece.categories?.includes(PieceCategory.PREMIUM))
     const premiumPieces = pieces.filter(piece => platformPremiumPieces.includes(piece.name))
     return [...standardPieces, ...premiumPieces]
 }
