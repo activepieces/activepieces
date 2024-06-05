@@ -1,5 +1,5 @@
 import { publishNxProject } from '../utils/publish-nx-project'
-import { findAllPieces, findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
+import { findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
 
 const publishPiece = async (nxProjectPath: string): Promise<void> => {
   console.info(`[publishPiece] nxProjectPath=${nxProjectPath}`)
@@ -11,3 +11,5 @@ const main = async () => {
   const publishResults = piecesSource.map(p => publishPiece(p))
   await Promise.all(publishResults)
 }
+
+main()
