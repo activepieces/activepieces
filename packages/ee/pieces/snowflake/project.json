@@ -1,18 +1,18 @@
 {
   "name": "pieces-snowflake",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/snowflake/src",
+  "sourceRoot": "packages/ee/pieces/snowflake/src",
   "projectType": "library",
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/pieces/community/snowflake",
-        "tsConfig": "packages/pieces/community/snowflake/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/snowflake/package.json",
-        "main": "packages/pieces/community/snowflake/src/index.ts",
-        "assets": ["packages/pieces/community/snowflake/*.md"],
+        "outputPath": "dist/packages/ee/pieces/snowflake",
+        "tsConfig": "packages/ee/pieces/snowflake/tsconfig.lib.json",
+        "packageJson": "packages/ee/pieces/snowflake/package.json",
+        "main": "packages/ee/pieces/snowflake/src/index.ts",
+        "assets": ["packages/ee/pieces/snowflake/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
