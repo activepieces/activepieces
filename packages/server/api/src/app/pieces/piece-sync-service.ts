@@ -5,7 +5,6 @@ import { flagService } from '../flags/flag.service'
 import { parseAndVerify } from '../helper/json-validator'
 import { getEdition } from '../helper/secret-helper'
 import { systemJobsSchedule } from '../helper/system-jobs'
-import { platformService } from '../platform/platform.service'
 import { PieceMetadataEntity } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
@@ -36,14 +35,14 @@ export const pieceSyncService = {
             },
         })
     },
-    async sync(platformId?: string): Promise<void> {
+    async sync(): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
             logger.info('Piece sync service is disabled')
             return
         }
         try {
             logger.info({ time: dayjs().toISOString() }, 'Syncing pieces')
-            const pieces = await listPieces(platformId)
+            const pieces = await listPieces()
             const promises: Promise<void>[] = []
 
             for (const summary of pieces) {
@@ -107,17 +106,10 @@ async function getOrThrow({ name, version }: { name: string, version: string }):
     return response.json()
 }
 
-async function listPieces(platformId?: string): Promise<PieceMetadataModelSummary[]> {
-    let premiumPieces: string[] | undefined
-    if (platformId) {
-        const platform = await platformService.getOne(platformId)
-        premiumPieces = platform?.premiumPieces
-    }
-
+async function listPieces(): Promise<PieceMetadataModelSummary[]> {
     const queryParams = new URLSearchParams()
     queryParams.append('edition', getEdition())
     queryParams.append('release', await flagService.getCurrentRelease())
-    premiumPieces && queryParams.append('premiumPieces', premiumPieces.join(','))
     const url = `${CLOUD_API_URL}?${queryParams.toString()}`
     const response = await fetch(url)
     if (response.status === StatusCodes.GONE.valueOf()) {
