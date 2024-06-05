@@ -371,6 +371,7 @@ export const createMockPieceMetadata = (
         packageType:
             pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
         archiveId: pieceMetadata?.archiveId,
+        categories: pieceMetadata?.categories ?? [],
     }
 }
 

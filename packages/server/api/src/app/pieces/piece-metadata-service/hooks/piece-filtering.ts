@@ -1,4 +1,5 @@
 import Fuse from 'fuse.js'
+import { platformService } from '../../../platform/platform.service'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
 import { isNil, PieceCategory, PlatformId, SuggestionType } from '@activepieces/shared'
@@ -31,6 +32,23 @@ export const filterPiecesBasedUser = async ({
         categories,
         pieces: filterBasedOnSearchQuery({ searchQuery, pieces, suggestionType }),
     }))
+}
+
+export const filterPiecesBasedOnPremiumPlatform = async ({
+    platformId,
+    pieces,
+}: {
+    platformId?: string
+    pieces: PieceMetadataSchema[]
+}): Promise<PieceMetadataSchema[]> => {
+    const standardPieces = pieces.filter(piece => !piece.categories?.includes(PieceCategory.PREMIUM))
+    if (isNil(platformId)) {
+        return standardPieces
+    }
+    const platform = await platformService.getOne(platformId)
+    const platformPremiumPieces = platform!.premiumPieces
+    const premiumPieces = pieces.filter(piece => platformPremiumPieces.includes(piece.name))
+    return [...standardPieces, ...premiumPieces]
 }
 
 async function filterPiecesBasedOnFeatures(
