@@ -1100,6 +1100,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "alewis001",
+      "name": "Alex Lewis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3482446?v=4",
+      "profile": "https://github.com/alewis001",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"
