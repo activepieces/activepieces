@@ -63,19 +63,6 @@ const createActionTemplate = (
     )
     .join('');
 
-  // if (requestBody && requestBody.properties) {
-  //   props += Object.keys(requestBody.properties)
-  //     .map((key) => {
-  //       const prop = requestBody.properties[key];
-  //       return `
-  //     ${key}: Property.${determinePropertyType(prop.type)}({
-  //       displayName: '${prop.description}',
-  //       required: ${requestBody.required.includes(key)},
-  //     }),`;
-  //     })
-  //     .join('');
-  // }
-
   return {
     name: operationId,
     code: `

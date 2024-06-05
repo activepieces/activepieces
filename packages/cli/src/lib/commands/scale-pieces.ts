@@ -86,10 +86,6 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
 
   writeFileSync(path.join(pieceDir, 'index.ts'), pieceDefinition);
   console.log(chalk.green(`Enjoy ${pieceName} at ${pieceDir}. ❤️`));
-
-  // console.log(
-  //   `🚨 Piece definition, auth, actions generated successfully in ${pieceDir}`
-  // );
 };
 
 const handleAPIConversion = async (pathOrUrl) => {
