@@ -46,7 +46,10 @@ export const filterPiecesBasedOnPremiumPlatform = async ({
         return standardPieces
     }
     const platform = await platformService.getOne(platformId)
-    const platformPremiumPieces = platform!.premiumPieces
+    if (isNil(platform)) {
+        return standardPieces
+    }
+    const platformPremiumPieces = platform.premiumPieces
     const premiumPieces = pieces.filter(piece => platformPremiumPieces.includes(piece.name))
     return [...standardPieces, ...premiumPieces]
 }
