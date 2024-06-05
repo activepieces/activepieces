@@ -1,12 +1,11 @@
 
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, join, normalize } from 'node:path'
+import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
 import { PieceMetadata } from '../../../packages/pieces/community/framework/src'
-import { extractPieceFromModule, ApEdition } from '../../../packages/shared/src'
+import { extractPieceFromModule } from '../../../packages/shared/src'
 import * as semver from 'semver'
-import { readPackageJson, readProjectJson } from './files'
-import { exec } from './exec'
+import { readPackageJson } from './files'
 type Piece = {
     name: string;
     displayName: string;
@@ -64,16 +63,20 @@ export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     return [...paths, ...enterprisePiecesPaths]
 }
 
-
 export async function findPieceDirectoryInSource(pieceName: string): Promise<string | null> {
-    const piecesPath =await findAllPiecesDirectoryInSource();
+    const piecesPath = await findAllPiecesDirectoryInSource();
     const piecePath = piecesPath.find((p) => p.includes(pieceName))
     return piecePath ?? null
 }
 
 export async function findAllPieces(): Promise<PieceMetadata[]> {
-    const piecesPath = resolve(cwd(), 'dist', 'packages', 'pieces')
-    const paths = await traverseFolder(piecesPath)
+    const baseDir = resolve(cwd(), 'dist', 'packages')
+    const standardPiecesPath = resolve(baseDir, 'pieces')
+    const enterprisePiecesPath = resolve(baseDir, 'ee', 'pieces')
+    const paths = [
+        ...await traverseFolder(standardPiecesPath), 
+        ...await traverseFolder(enterprisePiecesPath)
+    ]
     const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
     return pieces.filter((p): p is PieceMetadata => p !== null).sort(byDisplayNameIgnoreCase)
 }
