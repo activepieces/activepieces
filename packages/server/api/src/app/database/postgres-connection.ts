@@ -134,6 +134,7 @@ import { AddFeaturesToPlatform1714145914415 } from './migration/postgres/1714145
 import { UnifyEnterpriseWithCloud1714249840058 } from './migration/postgres/1714249840058-UnifyEnterpriseWithCloud'
 import { AddIssueEntityPostgres1714904516114 } from './migration/postgres/1714904516114-AddIssueEntityPostgres'
 import { AddAlertsEntityPostgres1716989780835 } from './migration/postgres/1716989780835-AddAlertsEntityPostgres'
+import { AddPremiumPiecesColumnPostgres1717370717678 } from './migration/postgres/1717370717678-AddPremiumPiecesColumnPostgres'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 
@@ -223,6 +224,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveShowActivityLog1716105958530,
         AddDurationForRuns1716725027424,
         AddAlertsEntityPostgres1716989780835,
+        AddPremiumPiecesColumnPostgres1717370717678,
     ]
 
     const edition = getEdition()

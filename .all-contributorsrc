@@ -1109,6 +1109,24 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "yuaanlin",
+      "name": "Yuanlin Lin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21105863?v=4",
+      "profile": "https://yual.in",
+      "contributions": [
+        "doc"
+      ]
+    }
+    {
+      "login": "AlaShibanAtKlo",
+      "name": "Ala Shiban",
+      "avatar_url": "https://avatars.githubusercontent.com/u/96867907?v=4",
+      "profile": "https://klo.dev",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"

@@ -59,6 +59,7 @@ export const platformService = {
             apiKeysEnabled: false,
             customAppearanceEnabled: false,
             alertsEnabled: false,
+            premiumPieces: [],
         }
 
         const savedPlatform = await repo.save(newPlatform)
@@ -123,6 +124,7 @@ export const platformService = {
             ...spreadIfDefined('customDomainsEnabled', params.customDomainsEnabled),
             ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
             ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
+            ...spreadIfDefined('premiumPieces', params.premiumPieces),
             
         }
 
@@ -182,4 +184,5 @@ type UpdateParams = UpdatePlatformRequestBody & {
     apiKeysEnabled?: boolean
     projectRolesEnabled?: boolean
     alertsEnabled?: boolean   
+    premiumPieces?: string[]
 }
