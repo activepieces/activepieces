@@ -50,6 +50,12 @@ const activateKey = async (request: ActivateKeyRequestBody ): Promise<Activation
             params: request,
         })
     }
+    if (response.status === StatusCodes.NOT_FOUND) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ACTIVATION_KEY_NOT_FOUND,
+            params: request,
+        })
+    }
     if (!response.ok) {
         const errorMessage = JSON.stringify(await response.json())
         throw new Error(errorMessage)

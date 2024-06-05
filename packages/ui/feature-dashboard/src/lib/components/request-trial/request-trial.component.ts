@@ -124,6 +124,8 @@ import { ErrorCode } from '@activepieces/shared';
                   <ng-container i18n
                     >Key has already been activated </ng-container
                   >}
+                  @if(activateTrialKeyForm.controls.key.getError(ErrorCode.ACTIVATION_KEY_NOT_FOUND)){
+                  <ng-container i18n>Key is invalid</ng-container>}
                 </mat-error>
                 }
               </mat-form-field>
@@ -237,7 +239,8 @@ export class RequestTrialComponent {
     );
     this.keyChanged$ = this.createListenerToRemoveServerErrorOnChange(
       this.activateTrialKeyForm.controls.key,
-      ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED
+      ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED,
+      ErrorCode.ACTIVATION_KEY_NOT_FOUND
     );
   }
   submitEmail() {
@@ -286,6 +289,10 @@ export class RequestTrialComponent {
               this.activateTrialKeyForm.controls.key.setErrors({
                 [ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED]: true,
               });
+            } else if (err.error?.code === ErrorCode.ACTIVATION_KEY_NOT_FOUND) {
+              this.activateTrialKeyForm.controls.key.setErrors({
+                [ErrorCode.ACTIVATION_KEY_NOT_FOUND]: true,
+              });
             } else {
               this.snackBar.open(
                 $localize`Unexpected error please contact support on community.activepieces.com`
@@ -309,23 +316,25 @@ export class RequestTrialComponent {
 
   createListenerToRemoveServerErrorOnChange(
     control: FormControl<unknown>,
-    errorName: string
+    ...errorsNames: string[]
   ) {
     return control.valueChanges.pipe(
       tap(() => {
         const errors = this.sendEmailForm.controls.email.errors;
-        const doErrorsContainServerError =
-          errors && errors[errorName] !== undefined;
-        if (doErrorsContainServerError) {
-          if (Object.keys(errors).length > 1) {
-            errors[errorName] = undefined;
-            control.setErrors({
-              ...errors,
-            });
-          } else {
-            control.setErrors(null);
+        errorsNames.forEach((errorName) => {
+          const doErrorsContainServerError =
+            errors && errors[errorName] !== undefined;
+          if (doErrorsContainServerError) {
+            if (Object.keys(errors).length > 1) {
+              errors[errorName] = undefined;
+              control.setErrors({
+                ...errors,
+              });
+            } else {
+              control.setErrors(null);
+            }
           }
-        }
+        });
       })
     );
   }
