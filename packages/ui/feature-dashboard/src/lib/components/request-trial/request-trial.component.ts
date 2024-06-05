@@ -1,10 +1,13 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UiCommonModule, fadeIn400ms } from '@activepieces/ui/common';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, delay, of, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ActivationKeysService } from '../../services/activation-key.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ErrorCode } from '@activepieces/shared';
 
 @Component({
   selector: 'app-request-trial-component',
@@ -57,17 +60,23 @@ import { MatSnackBar } from '@angular/material/snack-bar';
                 />
                 @if(sendEmailForm.controls.email.invalid) {
                 <mat-error>
-                  @if( sendEmailForm.controls.email.getError('email')) {
-                  <ng-container i18n>Email is invalid </ng-container>
-                  } @else {
-                  <ng-container i18n> Email is required </ng-container> }
+                  @if(sendEmailForm.controls.email.getError('email')) {
+                  <ng-container i18n>Email is invalid </ng-container> }
+                  @if(sendEmailForm.controls.email.getError('required')) {
+                  <ng-container i18n>Email is required </ng-container> }
+                  @if(sendEmailForm.controls.email.getError(ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY))
+                  {
+                  <ng-container i18n
+                    >Email already has a trial key sent to it
+                  </ng-container>
+                  }
                 </mat-error>
                 }
               </mat-form-field>
               <div class="ap-min-w-[162px] ap-w-full lg:ap-w-auto ">
                 <ap-button
                   type="submit"
-                  [loading]="loading"
+                  [loading]="loading$ | async | defaultFalse"
                   (buttonClicked)="submitEmail()"
                   btnColor="primary"
                   btnSize="large"
@@ -107,14 +116,22 @@ import { MatSnackBar } from '@angular/material/snack-bar';
                   matInput
                 />
                 @if(activateTrialKeyForm.controls.key.invalid) {
-                <mat-error>Key is required </mat-error>
+
+                <mat-error>
+                  @if(activateTrialKeyForm.controls.key.getError('required')) {
+                  <ng-container i18n>Key is required</ng-container> }
+                  @if(activateTrialKeyForm.controls.key.getError(ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED)){
+                  <ng-container i18n
+                    >Key has already been activated </ng-container
+                  >}
+                </mat-error>
                 }
               </mat-form-field>
 
               <div class="ap-min-w-[162px] ap-w-full lg:ap-w-auto">
                 <ap-button
                   type="submit"
-                  [loading]="loading"
+                  [loading]="loading$ | async | defaultFalse"
                   (buttonClicked)="submitTrialKey()"
                   btnColor="primary"
                   btnSize="large"
@@ -126,6 +143,13 @@ import { MatSnackBar } from '@angular/material/snack-bar';
                 </ap-button>
               </div>
             </form>
+            } @if(!showCheckYourEmailNote) {
+            <a
+              (click)="showCheckYourEmailNote = true"
+              class="!ap-cursor-pointer"
+            >
+              I already have a code
+            </a>
             }
             <div class="ap-flex ap-gap-2 ap-text-description ap-items-center">
               <svg-icon
@@ -171,13 +195,18 @@ import { MatSnackBar } from '@angular/material/snack-bar';
       </div>
     </div>
     <img class="ap-hidden" src="/assets/img/custom/auth/mail_sent.png" />
-    @if(sendTrialKey$ | async) {} @if(activateTrialKey$ | async){}
+    @if(creatTiralKey$ | async) {} @if(activateTrialKey$ | async){}
+    @if(emailChanged$ | async) {}
   `,
 })
 export class RequestTrialComponent {
+  readonly ErrorCode = ErrorCode;
   showCheckYourEmailNote = false;
-  sendTrialKey$?: Observable<null>;
-  activateTrialKey$?: Observable<null>;
+  emailChanged$: Observable<unknown>;
+  keyChanged$: Observable<unknown>;
+  creatTiralKey$?: Observable<void>;
+  activateTrialKey$?: Observable<void>;
+  loading$ = new BehaviorSubject(false);
   logos = [
     'https://www.activepieces.com/logos/posthog.svg',
     'https://www.activepieces.com/logos/roblox.svg',
@@ -199,39 +228,105 @@ export class RequestTrialComponent {
   constructor(
     private fb: FormBuilder,
     private matDialog: MatDialog,
-    private snackBar: MatSnackBar
-  ) {}
-  loading = false;
+    private snackBar: MatSnackBar,
+    private activationKeysService: ActivationKeysService
+  ) {
+    this.emailChanged$ = this.createListenerToRemoveServerErrorOnChange(
+      this.sendEmailForm.controls.email,
+      ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY
+    );
+    this.keyChanged$ = this.createListenerToRemoveServerErrorOnChange(
+      this.activateTrialKeyForm.controls.key,
+      ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED
+    );
+  }
   submitEmail() {
-    //TODO: Actual implelentation
     if (this.sendEmailForm.valid) {
-      this.loading = true;
-      this.sendTrialKey$ = of(null).pipe(
-        delay(1000),
-        tap(() => {
-          this.loading = false;
-          this.showCheckYourEmailNote = true;
+      this.loading$.next(true);
+      this.creatTiralKey$ = this.activationKeysService
+        .createKey({
+          email: this.sendEmailForm.getRawValue().email,
         })
-      );
+        .pipe(
+          catchError((err: HttpErrorResponse) => {
+            if (
+              err.error?.code === ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY
+            ) {
+              this.sendEmailForm.controls.email.setErrors({
+                [ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY]: true,
+              });
+            } else {
+              this.snackBar.open(
+                $localize`Unexpected error please contact support on community.activepieces.com`
+              );
+            }
+            this.loading$.next(false);
+            throw err;
+          }),
+          tap(() => {
+            this.loading$.next(false);
+            this.showCheckYourEmailNote = true;
+          })
+        );
     }
   }
 
   submitTrialKey() {
-    //TODO: Actual implelentation
     if (this.activateTrialKeyForm.valid) {
-      this.loading = true;
-      this.activateTrialKey$ = of(null).pipe(
-        delay(1000),
-        tap(() => {
-          this.loading = false;
-          this.showCheckYourEmailNote = true;
-          this.close();
-          this.snackBar.open('Trial activated successfully');
+      this.loading$.next(true);
+      this.activateTrialKey$ = this.activationKeysService
+        .activateKey({
+          key: this.activateTrialKeyForm.getRawValue().key,
         })
-      );
+        .pipe(
+          catchError((err: HttpErrorResponse) => {
+            if (
+              err.error?.code === ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED
+            ) {
+              this.activateTrialKeyForm.controls.key.setErrors({
+                [ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED]: true,
+              });
+            } else {
+              this.snackBar.open(
+                $localize`Unexpected error please contact support on community.activepieces.com`
+              );
+            }
+            this.loading$.next(false);
+            throw err;
+          }),
+          tap(() => {
+            this.loading$.next(false);
+            this.showCheckYourEmailNote = true;
+            this.close();
+            this.snackBar.open('Trial activated successfully');
+          })
+        );
     }
   }
   close() {
     this.matDialog.closeAll();
+  }
+
+  createListenerToRemoveServerErrorOnChange(
+    control: FormControl<unknown>,
+    errorName: string
+  ) {
+    return control.valueChanges.pipe(
+      tap(() => {
+        const errors = this.sendEmailForm.controls.email.errors;
+        const doErrorsContainServerError =
+          errors && errors[errorName] !== undefined;
+        if (doErrorsContainServerError) {
+          if (Object.keys(errors).length > 1) {
+            errors[errorName] = undefined;
+            control.setErrors({
+              ...errors,
+            });
+          } else {
+            control.setErrors(null);
+          }
+        }
+      })
+    );
   }
 }
