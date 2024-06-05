@@ -1,7 +1,7 @@
 import { StatusCodes } from 'http-status-codes'
 import { ActivateKeyRequestBody, ActivationKeyEntity, ActivepiecesError, CreateKeyRequestBody, ErrorCode, GetKeyRequestParams } from '@activepieces/shared'
-const secretManagerActivationKeysRoute = 'http://localhost:1234/activation-keys'
-const createKey = async (request: CreateKeyRequestBody): Promise<ActivationKeyEntity> => {
+const secretManagerActivationKeysRoute = 'https://5674-109-237-199-55.ngrok-free.app/activation-keys'
+const createKey = async (request: CreateKeyRequestBody): Promise<void> => {
     const response = await fetch(`${secretManagerActivationKeysRoute}`, {
         method: 'POST',
         headers: {
@@ -15,11 +15,12 @@ const createKey = async (request: CreateKeyRequestBody): Promise<ActivationKeyEn
             params: request,
         })
     }
+
     if (!response.ok) {
         const errorMessage = JSON.stringify(await response.json())
         throw new Error(errorMessage)
     }
-    return response.json()
+    
 }
 const getKeyRow = async (request: GetKeyRequestParams): Promise<ActivationKeyEntity> => {
     const response = await  fetch(`${secretManagerActivationKeysRoute}/${request.key}`)

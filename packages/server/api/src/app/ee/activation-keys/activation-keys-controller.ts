@@ -12,7 +12,6 @@ export const activationKeysController: FastifyPluginAsyncTypebox = async (app) =
     app.post('/activate', ActivateKeyRequest, async (req) => {
         const res =  await activationKeysService.activateKey(req.body)
         return res
-
     })
     app.post('/', CreateKeyRequest, async (req) => {
         const res = await activationKeysService.createKey(req.body)
