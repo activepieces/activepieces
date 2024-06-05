@@ -82,6 +82,7 @@ import { VersionHistoryIndicatorComponent } from './components/ap-version-status
 import { InsideBuilderDatePipe } from './pipe/inside-builder-date.pipe';
 import { ConfirmActionDialogComponent } from './components/dialogs/confirm-action-dialog/confirm-action-dialog.component';
 import { DurationFormatterPipe } from './pipe';
+import { RequestTrialComponent } from './components/request-trial/request-trial.component';
 
 const exportedImports = [
   CommonModule,
@@ -160,6 +161,7 @@ const exportedDeclarations = [
   DropdownPropertySearchPipe,
   LetterIconComponent,
   ConfirmActionDialogComponent,
+  RequestTrialComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

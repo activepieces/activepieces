@@ -1,23 +1,20 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { UiCommonModule, fadeIn400ms } from '@activepieces/ui/common';
+import { fadeIn400ms } from '../../animation/fade-in.animations';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActivationKeysService } from '../../services/activation-key.service';
+import { ActivationKeysService } from '../../service/activation-key.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ErrorCode } from '@activepieces/shared';
 
 @Component({
-  selector: 'app-request-trial-component',
-  standalone: true,
-  imports: [CommonModule, UiCommonModule],
+  selector: 'ap-request-trial-component',
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn400ms],
   template: `
     <div
-      class=" ap-w-full ap-h-full ap-bg-[#F5F3FF] ap-text-black ap-py-5 lg:ap-py-5 ap-overflow-scroll thin-scrollbars ap-relative"
+      class=" ap-w-full ap-h-full ap-bg-[#F5F3FF] ap-text-black ap-py-5 lg:ap-py-5 ap-overflow-y-scroll lg:ap-overflow-hidden thin-scrollbars ap-relative"
     >
       <div class="ap-absolute ap-right-[20px] ap-top-[20px]">
         <ap-icon-button
