@@ -1,4 +1,3 @@
-import { exec } from 'node:child_process'
 import { readdir, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
