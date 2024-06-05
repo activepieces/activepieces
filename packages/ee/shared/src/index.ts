@@ -1,3 +1,4 @@
+export * from './lib/invitations';
 export * from './lib/billing';
 export * from './lib/billing/project-stripe';
 export * from './lib/audit-events';
@@ -17,6 +18,5 @@ export * from './lib/managed-authn'
 export * from './lib/oauth-apps'
 export * from './lib/otp'
 export * from './lib/authn'
-
 export * from './lib/issues'
 export * from './lib/alerts'

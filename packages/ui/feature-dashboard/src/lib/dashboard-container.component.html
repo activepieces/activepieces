@@ -14,21 +14,37 @@
 
                 <div class="ap-flex-grow"></div>
 
+                <div class="ap-flex ap-gap-2">
+                    @if (!router.url.startsWith('/platform') && (showPlatform$ | async) === true) {
 
-                <ap-button *ngIf="!router.url.startsWith('/platform') && (showPlatform$ | async) === true"
-                    btnColor="white" btnStyle="stroked" btnSize="medium" (buttonClicked)="navigateToAdminConsole()"
-                    i18n>
-                    <div class="ap-flex ap-gap-2 ap-items-center">
-                        <b>Admin Console</b>
-                        @if(isVersionMatch$ | async) {
-                        <svg-icon [applyClass]="true" class="ap-fill-disable"
-                            [svgStyle]="{ width: '8px', height: '8px' }"
-                            class="ap-fill-danger ap-top-[-2px] ap-right-[-4px] ap-absolute"
-                            [matTooltip]="newUpdateMessage" src="assets/img/custom/notification_important.svg">
-                        </svg-icon>
-                        }
-                    </div>
-                </ap-button>
+                    <ap-button
+                        btnColor="white" btnStyle="stroked" btnSize="medium" (buttonClicked)="navigateToAdminConsole()"
+                        i18n>
+                        <div class="ap-flex ap-gap-2 ap-items-center">
+                            <svg-icon [applyClass]="true" [svgStyle]="{ width: '18px', height: '18px' }"
+                            src="assets/img/custom/dashboard/projects.svg"></svg-icon>
+                            <b>Admin Console</b>
+                            @if(isVersionMatch$ | async) {
+                            <svg-icon [applyClass]="true" class="ap-fill-disable"
+                                [svgStyle]="{ width: '8px', height: '8px' }"
+                                class="ap-fill-danger ap-top-[-2px] ap-right-[-4px] ap-absolute"
+                                [matTooltip]="newUpdateMessage" src="assets/img/custom/notification_important.svg">
+                            </svg-icon>
+                            }
+                        </div>
+                    </ap-button>
+                    <ap-button btnColor="white" btnStyle="stroked" btnSize="medium"
+                        (buttonClicked)="openInviteAdminDialog()" i18n>
+                        <div class="ap-flex ap-gap-2 ap-items-center">
+                            <svg-icon [applyClass]="true" [svgStyle]="{ width: '18px', height: '18px' }"
+                                src="assets/img/custom/person_add.svg"></svg-icon>
+                            <b>Invite members</b>
+                        </div>
+                    </ap-button>
+                    }
+
+
+                </div>
                 <ap-button *ngIf="router.url.startsWith('/platform')" btnColor="white" btnStyle="stroked"
                     btnSize="medium" (buttonClicked)="navigateToProjectDashboard()" i18n>
                     <div class="ap-flex ap-gap-2 ap-items-center">

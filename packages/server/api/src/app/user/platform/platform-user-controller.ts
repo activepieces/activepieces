@@ -4,17 +4,40 @@ import {
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { userService } from '../user-service'
-import { UpdateUserRequestBody } from '@activepieces/ee-shared'
+import { cryptoUtils } from '@activepieces/server-shared'
 import {
     ApId,
     assertNotNullOrUndefined,
+    CreateUserRequestBody,
     EndpointScope,
     PrincipalType,
     SeekPage,
+    UpdateUserRequestBody,
+    User,
     UserResponse,
 } from '@activepieces/shared'
 
 export const platformUserController: FastifyPluginAsyncTypebox = async (app) => {
+
+    app.post('/', CreateUserRequest, async (req, reply) => {
+        const platformId = req.principal.platform.id
+        const { firstName, lastName, email } = req.body
+        assertNotNullOrUndefined(platformId, 'platformId')
+
+        const user = await userService.create({
+            password: await cryptoUtils.generateRandomPassword(),
+            trackEvents: true,
+            newsLetter: true,
+            platformId,
+            firstName,
+            lastName,
+            verified: true,
+            email,
+            platformRole: req.body.platformRole,
+        })
+        return reply.status(StatusCodes.CREATED).send(user)
+    })
+
     app.get('/', ListUsersRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
@@ -49,6 +72,18 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
     })
 }
 
+const CreateUserRequest = {
+    schema: {
+        body: CreateUserRequestBody,
+        response: {
+            [StatusCodes.CREATED]: User,
+        },
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
+    },
+}
 const ListUsersRequest = {
     schema: {
         response: {

@@ -2,7 +2,7 @@ import { DataSource } from '@angular/cdk/collections';
 import { Observable, BehaviorSubject, tap, switchMap, map } from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { UserResponse } from '@activepieces/shared';
-import { PlatformUserService } from '../../service/platform-user.service';
+import { PlatformUserService } from '@activepieces/ui/common';
 
 /**
  * Data source for the LogsTable view. This class should

@@ -1,5 +1,3 @@
-import { randomBytes as randomBytesCallback } from 'node:crypto'
-import { promisify } from 'node:util'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
@@ -12,6 +10,7 @@ import {
     DEFAULT_PLATFORM_LIMIT,
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
+import { cryptoUtils } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
     PiecesFilterType,
@@ -103,7 +102,7 @@ const getOrCreateUser = async (
 
     const { password: _, ...newUser } = await userService.create({
         email: externalEmail,
-        password: await generateRandomPassword(),
+        password: await cryptoUtils.generateRandomPassword(),
         firstName: externalFirstName,
         lastName: externalLastName,
         trackEvents: true,
@@ -157,13 +156,6 @@ const getPiecesList = async ({
             return []
         }
     }
-}
-
-const randomBytes = promisify(randomBytesCallback)
-
-const generateRandomPassword = async (): Promise<string> => {
-    const passwordBytes = await randomBytes(32)
-    return passwordBytes.toString('hex')
 }
 
 type AuthenticateParams = {

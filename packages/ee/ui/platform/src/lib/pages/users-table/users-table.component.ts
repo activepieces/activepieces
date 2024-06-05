@@ -5,13 +5,13 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   GenericSnackbarTemplateComponent,
+  PlatformUserService,
 } from '@activepieces/ui/common';
 import { Observable, Subject, startWith, tap } from 'rxjs';
 import { UserResponse, UserStatus } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { EditUserDialogComponent } from '../../components/dialogs/edit-user-role-dialog/edit-user-role-dialog.component';
-import { PlatformUserService } from '../../service/platform-user.service';
 
 @Component({
   selector: 'app-users-table',
