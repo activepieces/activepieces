@@ -11,6 +11,7 @@ import { Observable, of, tap } from 'rxjs';
 import {
   ActionType,
   LoopOnItemsAction,
+  LoopOnItemsActionSettings,
   UpdateActionRequest,
 } from '@activepieces/shared';
 import { InsertMentionOperation } from '@activepieces/ui/common';
@@ -29,6 +30,7 @@ import {
 })
 export class LoopStepInputFormComponent extends InputFormCore {
   _step!: LoopOnItemsAction;
+  @Input({ required: true }) stepSettings: LoopOnItemsActionSettings;
   @Input({ required: true }) set step(value: LoopOnItemsAction) {
     this._step = value;
     this.replaceOldControllerWithNewOne(value);
@@ -63,8 +65,8 @@ export class LoopStepInputFormComponent extends InputFormCore {
         const updateStep: UpdateActionRequest = {
           displayName: this._step.displayName,
           settings: {
+            ...this.stepSettings,
             items: val.items || '',
-            inputUiInfo: this._step.settings.inputUiInfo,
           },
           name: this._step.name,
           type: ActionType.LOOP_ON_ITEMS,

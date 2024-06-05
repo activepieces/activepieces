@@ -14,9 +14,12 @@ let secret: string | null
 const algorithm = 'aes-256-cbc'
 const ivLength = 16
 
-export const loadEncryptionKey = async (
-    queueMode: QueueMode,
-): Promise<void> => {
+export type EncryptedObject = {
+    iv: string
+    data: string
+}
+
+const loadEncryptionKey = async (queueMode: QueueMode): Promise<void> => {
     secret = system.get(SystemProp.ENCRYPTION_KEY) ?? null
     if (queueMode === QueueMode.MEMORY) {
         if (isNil(secret)) {
@@ -47,12 +50,8 @@ const generateAndStoreSecret = async (): Promise<string> => {
     return secret
 }
 
-export type EncryptedObject = {
-    iv: string
-    data: string
-}
 
-export function encryptString(inputString: string): EncryptedObject {
+function encryptString(inputString: string): EncryptedObject {
     const iv = crypto.randomBytes(ivLength) // Generate a random initialization vector
     assertNotNullOrUndefined(secret, 'secret')
     const key = Buffer.from(secret, 'binary')
@@ -65,12 +64,12 @@ export function encryptString(inputString: string): EncryptedObject {
     }
 }
 
-export function encryptObject(object: unknown): EncryptedObject {
+function encryptObject(object: unknown): EncryptedObject {
     const objectString = JSON.stringify(object) // Convert the object to a JSON string
     return encryptString(objectString)
 }
 
-export function decryptObject<T>(encryptedObject: EncryptedObject): T {
+function decryptObject<T>(encryptedObject: EncryptedObject): T {
     const iv = Buffer.from(encryptedObject.iv, 'hex')
     const key = Buffer.from(secret!, 'binary')
     const decipher = crypto.createDecipheriv(algorithm, key, iv)
@@ -78,7 +77,7 @@ export function decryptObject<T>(encryptedObject: EncryptedObject): T {
     decrypted += decipher.final('utf8')
     return JSON.parse(decrypted)
 }
-export function decryptString(encryptedObject: EncryptedObject): string {
+function decryptString(encryptedObject: EncryptedObject): string {
     const iv = Buffer.from(encryptedObject.iv, 'hex')
     const key = Buffer.from(secret!, 'binary')
     const decipher = crypto.createDecipheriv(algorithm, key, iv)
@@ -87,9 +86,24 @@ export function decryptString(encryptedObject: EncryptedObject): string {
     return decrypted
 }
 
-export function hashObject(object: Record<string, unknown>) {
+function hashObject(object: Record<string, unknown>) {
     const algorithm = 'sha256'
     const hash = crypto.createHash(algorithm)
     hash.update(JSON.stringify(object))
     return hash.digest('hex')
+}
+
+function get16ByteKey(): string {
+    assertNotNullOrUndefined(secret, 'secret is not defined')
+    return secret
+}
+
+export const encryptUtils = {
+    hashObject,
+    decryptString,
+    decryptObject,
+    encryptObject,
+    encryptString,
+    get16ByteKey,
+    loadEncryptionKey,
 }

@@ -160,6 +160,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
         },
+        alertsEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
     },
     indices: [],
     relations: {

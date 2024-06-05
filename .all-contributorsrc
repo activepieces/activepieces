@@ -1082,6 +1082,33 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "marek-slavicek",
+      "name": "marek-slavicek",
+      "avatar_url": "https://avatars.githubusercontent.com/u/136325104?v=4",
+      "profile": "https://github.com/marek-slavicek",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "hugh-codes",
+      "name": "hugh-codes",
+      "avatar_url": "https://avatars.githubusercontent.com/u/166336705?v=4",
+      "profile": "https://github.com/hugh-codes",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "alewis001",
+      "name": "Alex Lewis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3482446?v=4",
+      "profile": "https://github.com/alewis001",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"

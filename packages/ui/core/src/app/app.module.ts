@@ -83,6 +83,7 @@ export function playerFactory() {
         tokenGetter,
         allowedDomains: [extractHostname(environment.apiUrl)],
         disallowedRoutes: [
+          `${environment.apiUrl}/project-members/accept`,
           `${environment.apiUrl}/flags`,
           `${environment.apiUrl}/managed-authn/external-token`,
         ],

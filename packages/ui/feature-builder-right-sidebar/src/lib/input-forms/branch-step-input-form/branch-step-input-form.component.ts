@@ -4,6 +4,7 @@ import { map, Observable, of, tap } from 'rxjs';
 import {
   ActionType,
   BranchAction,
+  BranchActionSettings,
   BranchCondition,
   UpdateActionRequest,
 } from '@activepieces/shared';
@@ -22,12 +23,7 @@ import {
   styleUrls: ['./branch-step-input-form.component.scss'],
 })
 export class BranchStepInputFormComponent extends InputFormCore {
-  form: FormGroup<{
-    conditionsGroups: FormArray<FormControl<BranchCondition[]>>;
-  }>;
-  valueChanges$: Observable<void>;
-  _step!: BranchAction;
-  isReadOnly$: Observable<boolean> = of(false);
+  @Input({ required: true }) stepSettings: BranchActionSettings;
   @Input({ required: true }) set step(value: BranchAction) {
     this._step = value;
     this.form.controls.conditionsGroups.clear({ emitEvent: false });
@@ -43,6 +39,13 @@ export class BranchStepInputFormComponent extends InputFormCore {
       });
     }
   }
+  form: FormGroup<{
+    conditionsGroups: FormArray<FormControl<BranchCondition[]>>;
+  }>;
+  valueChanges$: Observable<void>;
+  _step!: BranchAction;
+  isReadOnly$: Observable<boolean> = of(false);
+
   constructor(
     store: Store,
     pieceService: PieceMetadataService,
@@ -71,8 +74,8 @@ export class BranchStepInputFormComponent extends InputFormCore {
           type: ActionType.BRANCH,
           valid: this.form.valid,
           settings: {
+            ...this.stepSettings,
             conditions: val.conditionsGroups,
-            inputUiInfo: this._step.settings.inputUiInfo,
           },
         };
         this.store.dispatch(

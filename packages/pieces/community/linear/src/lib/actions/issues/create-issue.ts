@@ -23,6 +23,7 @@ export const linearCreateIssue = createAction({
     labels: props.labels(),
     assignee_id: props.assignee_id(),
     priority_id: props.priority_id(),
+    template_id: props.template_id()
   },
   async run({ auth, propsValue }) {
     const issue: LinearDocument.IssueCreateInput = {
@@ -32,6 +33,7 @@ export const linearCreateIssue = createAction({
       stateId: propsValue.state_id,
       priority: propsValue.priority_id,
       labelIds: propsValue.labels,
+      templateId: propsValue.template_id
     };
     const client = makeClient(auth as string);
     const result = await client.createIssue(issue);

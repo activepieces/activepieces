@@ -19,6 +19,7 @@ export type SuccessLicenseResponse = {
     apiKeysEnabled?: boolean
     customDomainsEnabled?: boolean
     projectRolesEnabled?: boolean
+    alertsEnabled?: boolean
 }
 export type LicenseResponse =
   | SuccessLicenseResponse
