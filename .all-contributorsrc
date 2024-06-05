@@ -1109,6 +1109,15 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "yuaanlin",
+      "name": "Yuanlin Lin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21105863?v=4",
+      "profile": "https://yual.in",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"
