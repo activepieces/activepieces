@@ -34,6 +34,7 @@ import { Observable, take } from 'rxjs';
   template: `
     <div class=" ap-px-[30px] ap-pt-[50px]">
       <ap-page-title title="Runs" i18n-title>
+        @if((isInEmbedding$ | async) === false) {
         <ap-button
           actionButton
           i18n-tooltipText
@@ -41,8 +42,9 @@ import { Observable, take } from 'rxjs';
           btnSize="medium"
           btnColor="primary"
           i18n
-          >Manage Alerts</ap-button
+          >Set Alerts</ap-button
         >
+        }
       </ap-page-title>
       @if(isInEmbedding$ | async) {
       <app-runs-table #runsTable></app-runs-table>
