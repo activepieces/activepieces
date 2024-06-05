@@ -25,7 +25,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
       (buttonClicked)="openRequestTrialDialog()"
       i18n
     >
-      <div class="ap-flex ap-gap-2 ap-items-center">🚀 <b>Free Trial</b></div>
+      <div class="ap-flex ap-gap-7 ap-items-center">
+        <ap-hotspot> </ap-hotspot>
+        <b>Free Trial</b>
+      </div>
     </ap-button>
     } @if(openDialog$ | async) {} `,
 })
