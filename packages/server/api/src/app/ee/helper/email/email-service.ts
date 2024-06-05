@@ -1,13 +1,13 @@
 import { jwtUtils } from '../../../helper/jwt-utils'
 import { getEdition } from '../../../helper/secret-helper'
+import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
-import { userService } from '../../../user/user-service'
-import { projectMemberService } from '../../project-members/project-member.service'
+import { alertsService } from '../../alerts/alerts-service'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
-import { OtpType } from '@activepieces/ee-shared'
+import { AlertChannel, OtpType } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, isNil, NotificationStatus, User } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, User } from '@activepieces/shared'
 
 const EDITION = getEdition()
 
@@ -36,7 +36,7 @@ export const emailService = {
         })
 
         await emailSender.send({
-            email,
+            emails: [email],
             platformId: project.platformId,
             templateData: {
                 name: 'invitation-email',
@@ -54,6 +54,9 @@ export const emailService = {
         count,
         createdAt,
     }: IssueCreatedArgs): Promise<void> {
+        if (EDITION_IS_NOT_PAID) {
+            return
+        }
         logger.info({
             name: '[emailService#sendIssueCreatedNotification]',
             projectId,
@@ -62,40 +65,31 @@ export const emailService = {
             createdAt,
         })
         const project = await projectService.getOneOrThrow(projectId)
-        if (project.notifyStatus === NotificationStatus.NEVER) {
+
+        const platform = await platformService.getOneOrThrow(project.platformId)
+        if (platform.embeddingEnabled) {
             return
         }
         // TODO remove the hardcoded limit
-        const users = await projectMemberService.list(projectId, null, 50)
-        const sendEmails = users.data.map(async (projectMember) => {
-            const userData = await userService.getByPlatformAndEmail({
-                platformId: project.platformId,
-                email: projectMember.email,
-            })
-            if (isNil(userData)) {
-                return
-            }
-            const issueUrl = await platformDomainHelper.constructUrlFrom({
-                platformId: project.platformId,
-                path: 'runs?limit=10#Issues',
-            })
-    
-            return emailSender.send({
-                email: userData.email,
-                platformId: project.platformId,
-                templateData: {
-                    name: 'issue-created',
-                    vars: {
-                        issueUrl,
-                        flowName,
-                        firstName: userData.firstName,
-                        createdAt,
-                        count: count.toString(),
-                    },
-                },
-            })
+        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const issueUrl = await platformDomainHelper.constructUrlFrom({
+            platformId: project.platformId,
+            path: 'runs?limit=10#Issues',
         })
-        await Promise.all(sendEmails)
+        await emailSender.send({
+            emails,
+            platformId: project.platformId,
+            templateData: {
+                name: 'issue-created',
+                vars: {
+                    issueUrl,
+                    flowName,
+                    createdAt,
+                    count: count.toString(),
+                },
+            },
+        })
     },
 
     async sendQuotaAlert({ email, projectId, resetDate, firstName, templateName }: SendQuotaAlertArgs): Promise<void> {
@@ -106,13 +100,13 @@ export const emailService = {
         const project = await projectService.getOne(projectId)
         assertNotNullOrUndefined(project, 'project')
 
-        if (!isNil(project.platformId)) {
-            // Don't Inform the project users, as there should be a feature to manage billing by platform owners, If we send an emails to the project users It will confuse them since the email is not white labeled.
+        const platform = await platformService.getOneOrThrow(project.platformId)
+        if (platform.embeddingEnabled) {
             return
         }
 
         await emailSender.send({
-            email,
+            emails: [email],
             platformId: project.platformId,
             templateData: {
                 name: templateName,
@@ -168,7 +162,7 @@ export const emailService = {
         }
 
         await emailSender.send({
-            email: user.email,
+            emails: [user.email],
             platformId: platformId ?? undefined,
             templateData: otpToTemplate[type],
         })
@@ -199,6 +193,7 @@ type SendOtpArgs = {
 type IssueCreatedArgs = {
     projectId: string
     flowName: string
+    lastSeenAt: string
     count: number
     createdAt: string
 }

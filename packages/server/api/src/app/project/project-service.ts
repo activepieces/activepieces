@@ -1,6 +1,8 @@
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { ProjectEntity } from './project-entity'
+import { projectHooks } from './project-hooks'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, apId,
     ApId,
     ErrorCode,
@@ -21,8 +23,9 @@ export const projectService = {
             ...params,
             notifyStatus: NotificationStatus.ALWAYS,
         }
-
-        return repo().save(newProject)
+        const savedProject = await repo().save(newProject)
+        rejectedPromiseHandler(projectHooks.getHooks().postCreate(savedProject))
+        return savedProject
     },
 
     async getOne(projectId: ProjectId | undefined): Promise<Project | null> {

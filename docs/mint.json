@@ -176,7 +176,6 @@
           "icon": "gear",
           "pages": [
             "install/configurations/environment-variables",
-            "install/configurations/error-notifications",
             "install/configurations/setup-app-webhooks"
           ]
         },

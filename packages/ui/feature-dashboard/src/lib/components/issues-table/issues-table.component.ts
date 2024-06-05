@@ -64,7 +64,13 @@ export class IssuesTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator: ApPaginatorComponent;
   dataSource: IssuesDataSource;
-  displayedColumns: string[] = ['name', 'count', 'lastOccurrence', 'action'];
+  displayedColumns: string[] = [
+    'name',
+    'count',
+    'firstSeen',
+    'lastSeen',
+    'action',
+  ];
   resolve$: Observable<unknown>;
   currentProject: ProjectId;
   updateNotificationsValue$: Observable<unknown>;
@@ -84,11 +90,10 @@ export class IssuesTableComponent implements OnInit {
     private telemetryService: TelemetryService,
     private embeddingService: EmbeddingService,
     private flagsService: FlagService,
-    private projectService: ProjectService,
-    private authenticationService: AuthenticationService
+    private projectService: ProjectService
   ) {}
   ngOnInit(): void {
-    this.currentProject = this.authenticationService.getProjectId();
+    this.currentProject = this.authService.getProjectId();
     this.dataSource = new IssuesDataSource(
       this.route.queryParams,
       this.paginator,

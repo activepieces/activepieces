@@ -10,7 +10,7 @@ import { catchError, map, Observable, of, tap } from 'rxjs';
 import { ProjectMemberService } from '../../service/project-members.service';
 import { DialogRef } from '@angular/cdk/dialog';
 import { HttpStatusCode } from '@angular/common/http';
-import { ProjectMemberRole } from '@activepieces/shared';
+import { ProjectMemberRole, isNil } from '@activepieces/shared';
 import { AuthenticationService } from '@activepieces/ui/common';
 import { RolesDisplayNames } from '../../utils';
 
@@ -27,12 +27,14 @@ export class InviteProjectMemberDialogComponent {
   loading = false;
   invalidEmail = false;
   RolesDisplayNames = RolesDisplayNames;
-  ProjectMemberRole = Object.values(ProjectMemberRole).map((role) => {
-    return {
-      role,
-      condition$: of(true),
-    };
-  });
+  ProjectMemberRole = Object.values(ProjectMemberRole)
+    .filter((f) => !isNil(RolesDisplayNames[f]))
+    .map((role) => {
+      return {
+        role,
+        condition$: of(true),
+      };
+    });
   constructor(
     private formBuilder: FormBuilder,
     private snackbar: MatSnackBar,

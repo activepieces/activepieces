@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import { databaseConnection } from '../../../src/app/database/database-connection'
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
-import { encryptString } from '../../../src/app/helper/encryption'
+import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/tags/tag-entity'
@@ -87,7 +87,7 @@ export const createMockOAuthApp = (
         platformId: oAuthApp?.platformId ?? apId(),
         pieceName: oAuthApp?.pieceName ?? faker.lorem.word(),
         clientId: oAuthApp?.clientId ?? apId(),
-        clientSecret: encryptString(faker.lorem.word()),
+        clientSecret: encryptUtils.encryptString(faker.lorem.word()),
     }
 }
 
@@ -197,6 +197,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         apiKeysEnabled: platform?.apiKeysEnabled ?? faker.datatype.boolean(),
         customDomainsEnabled: platform?.customDomainsEnabled ?? faker.datatype.boolean(),
         projectRolesEnabled: platform?.projectRolesEnabled ?? faker.datatype.boolean(),
+        alertsEnabled: platform?.alertsEnabled ?? faker.datatype.boolean(),
     }
 }
 

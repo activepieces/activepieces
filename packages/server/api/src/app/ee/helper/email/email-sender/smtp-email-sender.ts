@@ -11,7 +11,7 @@ import { isNil, Platform } from '@activepieces/shared'
  * Sends emails using SMTP
  */
 export const smtpEmailSender: EmailSender = {
-    async send({ email, platformId, templateData }) {
+    async send({ emails, platformId, templateData }) {
         const platform = await getPlatform(platformId)
         const emailSubject = getEmailSubject(templateData.name, templateData.vars)
         const senderName = platform?.name ?? system.get(SystemProp.SMTP_SENDER_NAME)
@@ -30,7 +30,7 @@ export const smtpEmailSender: EmailSender = {
 
         await smtpClient.sendMail({
             from: `${senderName} <${senderEmail}>`,
-            to: email,
+            to: emails.join(','),
             subject: emailSubject,
             html: emailBody,
         })

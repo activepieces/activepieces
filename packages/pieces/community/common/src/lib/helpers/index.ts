@@ -32,7 +32,7 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
           return {
             url: Property.ShortText({
               displayName: 'URL',
-              description: 'Add the endpoint to use. For example, /models',
+              description: 'The full URL to use, including the base URL',
               required: true,
               defaultValue: baseUrl(auth)
             })
