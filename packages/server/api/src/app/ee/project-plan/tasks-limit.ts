@@ -1,5 +1,6 @@
 import { getEdition } from '../../helper/secret-helper'
 import { projectUsageService } from '../../project/usage/project-usage-service'
+import { emailService } from '../helper/email/email-service'
 import { projectLimitsService } from './project-plan.service'
 import { exceptionHandler } from '@activepieces/server-shared'
 import {
@@ -18,14 +19,31 @@ async function limitTasksPerMonth({
     projectPlan: ProjectPlan
     consumedTasks: number
 }): Promise<void> {
-    if (consumedTasks > projectPlan.tasks) {
-        throw new ActivepiecesError({
-            code: ErrorCode.QUOTA_EXCEEDED,
-            params: {
-                metric: 'tasks',
-                quota: projectPlan.tasks,
-            },
-        })
+    const resetDate = projectUsageService.getCurrentingEndPeriod(projectPlan.created)
+    const quotaAlerts: { limit: number, templateName: 'quota-50' | 'quota-90' | 'quota-100' }[] = [
+        { limit: 0.5, templateName: 'quota-50' },
+        { limit: 0.9, templateName: 'quota-90' },
+        { limit: 1.0, templateName: 'quota-100' },
+    ]
+    
+    for (const { limit, templateName } of quotaAlerts) {
+        if (consumedTasks > projectPlan.tasks * limit) {
+            await emailService.sendQuotaAlert({
+                resetDate,
+                templateName,
+                projectId: projectPlan.projectId,
+            })
+        }
+        
+        if (limit === 1.0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.QUOTA_EXCEEDED,
+                params: {
+                    metric: 'tasks',
+                    quota: projectPlan.tasks,
+                },
+            })
+        }
     }
 }
 

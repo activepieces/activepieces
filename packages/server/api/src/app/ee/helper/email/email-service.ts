@@ -67,7 +67,7 @@ export const emailService = {
         const project = await projectService.getOneOrThrow(projectId)
 
         const platform = await platformService.getOneOrThrow(project.platformId)
-        if (platform.embeddingEnabled) {
+        if (!platform.alertsEnabled) {
             return
         }
         // TODO remove the hardcoded limit
@@ -92,7 +92,7 @@ export const emailService = {
         })
     },
 
-    async sendQuotaAlert({ email, projectId, resetDate, firstName, templateName }: SendQuotaAlertArgs): Promise<void> {
+    async sendQuotaAlert({ projectId, resetDate, templateName }: SendQuotaAlertArgs): Promise<void> {
         if (EDITION_IS_NOT_CLOUD) {
             return
         }
@@ -101,18 +101,21 @@ export const emailService = {
         assertNotNullOrUndefined(project, 'project')
 
         const platform = await platformService.getOneOrThrow(project.platformId)
-        if (platform.embeddingEnabled) {
+        if (!platform.alertsEnabled) {
             return
         }
 
+        // TODO remove the hardcoded limit
+        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+
         await emailSender.send({
-            emails: [email],
+            emails,
             platformId: project.platformId,
             templateData: {
                 name: templateName,
                 vars: {
                     resetDate,
-                    firstName,
                 },
             },
         })
@@ -176,10 +179,8 @@ type SendInvitationArgs = {
 }
 
 type SendQuotaAlertArgs = {
-    email: string
     projectId: string
     resetDate: string
-    firstName: string
     templateName: 'quota-50' | 'quota-90' | 'quota-100'
 }
 

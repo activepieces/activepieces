@@ -31,7 +31,6 @@ type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
 
 type QuotaEmailTemplateData = BaseEmailTemplateData<'quota-50' | 'quota-90' | 'quota-100', {
     resetDate: string
-    firstName: string
 }>
 
 type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
