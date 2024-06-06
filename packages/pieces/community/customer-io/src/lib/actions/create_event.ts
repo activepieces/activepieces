@@ -73,8 +73,15 @@ export const createEvent = createAction({
       body_type,
     } = context.propsValue;
 
+    const basic_track_api = `${
+      Buffer.from(
+        `${context.auth.track_site_id}:${context.auth.track_api_key}`,
+        'utf8'
+      ).toString('base64')
+    }`
+
     const headers = {
-      Authorization: `Basic ${context.auth.track_basic_token}`,
+      Authorization: `Basic ${basic_track_api}`,
       'Content-Type': 'application/json',
     }
     const encoded_email = encodeURIComponent(context.propsValue.customer_email);
@@ -87,12 +94,8 @@ export const createEvent = createAction({
       body: {
         name: context.propsValue.event_name,
         id: context.propsValue.customer_email,
-        data: {}
+        data: body ? body['data'] : {},
       },
-    }
-
-    if (body) {
-      httprequestdata.body.data = body['data'];
     }
     return await httpClient.sendRequest(httprequestdata);
   },
