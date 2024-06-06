@@ -1,0 +1,47 @@
+---
+title: 'CLI Reference'
+icon: 'bolt'
+---
+
+<Tip>
+  **Tip #1:** If you want to experiment, you can fork or clone the public
+  repository.
+</Tip>
+
+<Tip>
+  **Tip #2:** Setup local json server with the openAPI spec you want to work on
+</Tip>
+
+### Let's scale pieces 🚀
+
+By following these steps, you can use the scale-pieces CLI to generate piece: authentication, actions
+using AI to automate the whole process using just an `openAPI` spec in both fromats **JSON** and **YAML**.
+
+1. **Clone the Repository:**
+
+Begin by creating a clone of the repository.
+
+```bash
+git clone git@github.com:activepieces/activepieces.git
+```
+
+2. **Use the CLI**
+
+You can use either local json-server or a static JSON file stored in the activepieces directory
+
+I. From an endpoint (GET)
+
+If you don't know how to setup local json-server see [here](https://www.npmjs.com/package/json-server)
+
+```bash
+cd activepieces
+npm run cli pieces scale http://localhost:3000/openAPI.json
+```
+
+II. From a static file in your repo
+
+```bash
+npm run cli pieces scale openAPIs/trello.json
+```
+
+> The last command expect that youre storing openAPIs/trello.json in the root directory of activepieces repo.
