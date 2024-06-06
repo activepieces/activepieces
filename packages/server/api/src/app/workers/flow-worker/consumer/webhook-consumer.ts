@@ -32,16 +32,6 @@ export const webhookConsumer = {
             })
             return
         }
-        const flowVersion = simulate ? await flowVersionService.getFlowVersionOrThrow({
-            flowId: flow.id,
-            versionId: undefined,
-        }) : await flowVersionService.getLatestLockedVersionOrThrow(flow.id)
-        
-        const filteredPayloads = await webhookService.extractPayloadAndSave({
-            flowVersion,
-            payload: data.payload,
-            projectId: flow.projectId,
-        })
 
         if (flow.status !== FlowStatus.ENABLED && !simulate) {
             await stopAndReply(data, {
@@ -51,6 +41,17 @@ export const webhookConsumer = {
             })
             return
         }
+        const flowVersion = await flowVersionService.getFlowVersionOrThrow({
+            flowId: flow.id,
+            versionId: simulate ? undefined : flow.publishedVersionId!,
+        })
+
+        const filteredPayloads = await webhookService.extractPayloadAndSave({
+            flowVersion,
+            payload: data.payload,
+            projectId: flow.projectId,
+        })
+
         if (simulate) {
             await webhookSimulationService.delete({ flowId: flow.id, projectId: flow.projectId })
             return

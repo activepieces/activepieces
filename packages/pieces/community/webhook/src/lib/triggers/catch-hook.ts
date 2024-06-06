@@ -10,7 +10,7 @@ const message = `**Live URL:**
 \`\`\`text
 {{webhookUrl}}
 \`\`\`
-Generates sample data and triggers the flow.
+Only triggers the flow.
 <br>
 <br>
 **Test URL:**
