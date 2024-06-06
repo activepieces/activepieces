@@ -25,23 +25,32 @@ export const otpService = {
             platformId,
             email,
         })
-        if (user) {
-            const newOtp: Omit<OtpModel, 'created'> = {
-                id: apId(),
-                updated: dayjs().toISOString(),
-                type,
-                userId: user.id,
-                value: otpGenerator.generate(),
-                state: OtpState.PENDING,
-            }
-            await repo.upsert(newOtp, ['userId', 'type'])
-            await emailService.sendOtp({
-                platformId,
-                user,
-                otp: newOtp.value,
-                type: newOtp.type,
-            })
+        if (!user) {
+            return
         }
+        const existingOtp = await repo.findOneBy({
+            userId: user.id,
+            type,
+        })
+        const otpIsNotExpired = existingOtp && dayjs().diff(existingOtp.updated, 'milliseconds') < TEN_MINUTES
+        if (otpIsNotExpired) {
+            return
+        }
+        const newOtp: Omit<OtpModel, 'created'> = {
+            id: apId(),
+            updated: dayjs().toISOString(),
+            type,
+            userId: user.id,
+            value: otpGenerator.generate(),
+            state: OtpState.PENDING,
+        }
+        await repo.upsert(newOtp, ['userId', 'type'])
+        await emailService.sendOtp({
+            platformId,
+            user,
+            otp: newOtp.value,
+            type: newOtp.type,
+        })
     },
 
     async confirm({ userId, type, value }: ConfirmParams): Promise<boolean> {
@@ -49,10 +58,8 @@ export const otpService = {
             userId,
             type,
         })
-        const now = dayjs()
         const otpIsPending = otp.state === OtpState.PENDING
-        const otpIsNotExpired =
-      now.diff(otp.updated, 'milliseconds') < TEN_MINUTES
+        const otpIsNotExpired = dayjs().diff(otp.updated, 'milliseconds') < TEN_MINUTES
         const otpMatches = otp.value === value
         const verdict = otpIsNotExpired && otpMatches && otpIsPending
         if (verdict) {
@@ -78,7 +85,7 @@ const getUser = async ({
 }
 
 type CreateParams = {
-    platformId: PlatformId 
+    platformId: PlatformId
     email: string
     type: OtpType
 }
