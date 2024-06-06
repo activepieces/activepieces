@@ -97,7 +97,7 @@ export function generateTheme({
         colors: {
             avatar: '#515151',
             'blue-link': '#1890ff',
-            danger: '#dc3545',
+            danger: '#FF0000',
             primary: generateColorVariations(primaryColor),
             warn: {
                 default: '#f78a3b',
