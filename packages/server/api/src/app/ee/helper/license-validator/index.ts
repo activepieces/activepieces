@@ -43,6 +43,7 @@ export async function enforceLimits(): Promise<void> {
                 apiKeysEnabled: license.apiKeysEnabled,
                 projectRolesEnabled: license.projectRolesEnabled,
                 alertsEnabled: license.alertsEnabled,
+                premiumPieces: license.premiumPieces,
             })
             break
         }

@@ -1,4 +1,4 @@
-import {findAllPiecesDirectoryInSource } from './utils/piece-script-utils';
+import { findAllPiecesDirectoryInSource } from './utils/piece-script-utils';
 import { packagePrePublishChecks } from './utils/package-pre-publish-checks';
 
 const main = async () => {

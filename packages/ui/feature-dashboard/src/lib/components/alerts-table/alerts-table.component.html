@@ -20,13 +20,16 @@
                     <th mat-header-cell *matHeaderCellDef>
                         <div class="ap-flex ap-items-center ap-justify-end">
                             <ap-button actionButton [disabled]="(isAdmin$ | async) === false"
-                                (buttonClicked)="addAlert()" btnSize="medium" btnColor="primary" i18n>+ Add
+                                [tooltipText]="(isAdmin$ | async) === false ? permissionToAddMessage : ''"
+                                i18n-tooltipText (buttonClicked)="addAlert()" btnSize="medium" btnColor="primary" i18n>+
+                                Add
                                 Email</ap-button>
                         </div>
                     </th>
                     <td mat-cell *matCellDef="let alert">
                         <div class="ap-float-right ap-text-center ap-w-[4.4375rem]">
                             <ap-icon-button tooltipText="Delete Alert" [buttonDisabled]="(isAdmin$ | async) === false"
+                                [tooltipText]="(isAdmin$ | async) === false ? permissionToDeleteMessage : ''"
                                 i18n-tooltipText iconFilename="trash.svg" color="warn" [width]="20" [height]="20"
                                 (buttonClicked)="deleteAlert(alert)" [height]="16"></ap-icon-button>
                         </div>
