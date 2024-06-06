@@ -599,9 +599,7 @@
       "@activepieces/piece-zoom": [
         "packages/pieces/community/zoom/src/index.ts"
       ],
-      "@activepieces/piece-zuora": [
-        "packages/pieces/community/zuora/src/index.ts"
-      ],
+      "@activepieces/piece-zuora": ["packages/ee/pieces/zuora/src/index.ts"],
       "@activepieces/pieces-common": [
         "packages/pieces/community/common/src/index.ts"
       ],

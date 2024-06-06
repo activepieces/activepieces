@@ -71,9 +71,13 @@ export const zuoraAuth = PieceAuth.CustomAuth({
 export const zuora = createPiece({
   displayName: 'Zuora',
   auth: zuoraAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.28.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zuora.png',
-  categories: [PieceCategory.SALES_AND_CRM, PieceCategory.PAYMENT_PROCESSING],
+  categories: [
+    PieceCategory.SALES_AND_CRM,
+    PieceCategory.PAYMENT_PROCESSING,
+    PieceCategory.PREMIUM,
+  ],
   authors: ['kishanprmr'],
   actions: [
     createInvoiceAction,

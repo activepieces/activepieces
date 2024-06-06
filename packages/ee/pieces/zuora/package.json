@@ -1,6 +1,6 @@
 {
-  "name": "@activepieces/piece-snowflake",
-  "version": "0.0.6",
+  "name": "@activepieces/piece-zuora",
+  "version": "0.0.1",
   "license": {
     "type": "SEE LICENSE IN URL",
     "url": "https://raw.githubusercontent.com/activepieces/activepieces/main/packages/ee/LICENSE"
