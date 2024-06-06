@@ -6,11 +6,21 @@ import { Buffer } from 'buffer';
 
 
 const markdown = `
-#### Obtain your Customer.io token
-##### Track Site ID and API Key
-- https://www.customer.io/docs/api/track/#section/Authentication/Tracking-API-Key
-##### bearer_token
-- https://customer.io/docs/api/app/#section/Authentication
+**Site ID:**\n
+
+Please log in and go to Settings, click [here](https://fly.customer.io/settings/api_credentials).
+
+**Tracking API Key:**\n
+
+Please log in and go to Settings, click [here](https://fly.customer.io/settings/api_credentials).
+
+**APP API Token:**\n
+
+Please log in and find it in Account Settings, click [here](https://fly.customer.io/settings/api_credentials?keyType=app).
+
+
+<br>
+Please note that the Track API Key and App API Key are different. You can read more about it [here](https://customer.io/docs/accounts-and-workspaces/managing-credentials/).
 `;
 export const customerIOAuth = PieceAuth.CustomAuth({
   props: {
@@ -31,37 +41,41 @@ export const customerIOAuth = PieceAuth.CustomAuth({
   required: true,
 });
 
+type CustomerIOAuth = {
+  track_site_id: string;
+  track_api_key: string;
+  api_bearer_token: string;
+}
 export const customerIo: any = createPiece({
-  displayName: 'Customer-io',
+  displayName: 'customer.io',
   auth: customerIOAuth,
   minimumSupportedRelease: '0.20.0',
-  logoUrl: 'cdn.activepieces.com/pieces/customerio.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/customerio.png',
   authors: [],
   actions: [
     createEvent,
     createCustomApiCallAction({
       baseUrl: () => customerIOCommon.trackUrl,
       auth: customerIOAuth,
-      name: 'CIO_Track_API',
+      name: 'custom_track_api_call',
       description: 'CustomerIO Track Custom API Call (track.customer.io)',
       displayName: 'Track Custom API Call',
       authMapping: (auth) => ({
-        Authorization: `Basic ${
-          Buffer.from(
-            `${(auth as { track_site_id: string }).track_site_id}:${(auth as { track_api_key: string }).track_api_key}`,
-            'utf8'
-          ).toString('base64')
-        }`,
+        Authorization: `Basic ${Buffer.from(
+          `${(auth as CustomerIOAuth).track_site_id}:${(auth as CustomerIOAuth).track_api_key}`,
+          'utf8'
+        ).toString('base64')
+          }`,
       }),
     }),
     createCustomApiCallAction({
       baseUrl: () => customerIOCommon.apiUrl,
       auth: customerIOAuth,
-      name: 'CIO_Base_API',
-      description: 'CustomerIO Base Custom API Call (api.customer.io)',
-      displayName: 'Base Custom API Call',
+      name: 'custom_app_api_call',
+      description: 'CustomerIO App Custom API Call (api.customer.io)',
+      displayName: 'App Custom API Call',
       authMapping: (auth) => ({
-        Authorization: `Bearer ${(auth as { api_bearer_token: string }).api_bearer_token}`,
+        Authorization: `Bearer ${(auth as CustomerIOAuth).api_bearer_token}`,
       }),
     })
   ],
