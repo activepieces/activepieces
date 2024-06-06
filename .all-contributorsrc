@@ -1127,6 +1127,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "hamedsh",
+      "name": "hamsh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6043214?v=4",
+      "profile": "http://hamedsh.medium.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
