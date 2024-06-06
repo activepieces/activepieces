@@ -185,4 +185,5 @@ type UpdateParams = UpdatePlatformRequestBody & {
     projectRolesEnabled?: boolean
     alertsEnabled?: boolean   
     premiumPieces?: string[]
+    activationKey?: string
 }

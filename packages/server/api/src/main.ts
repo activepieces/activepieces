@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { setupApp } from './app/app'
 import { databaseConnection } from './app/database/database-connection'
 import { seedDevData } from './app/database/seeds/dev-seeds'
-import { enforceLimits } from './app/ee/helper/license-validator'
+import { checkLicenseInEnv, enforceLimits } from './app/ee/helper/license-validator'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 
@@ -38,6 +38,7 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
                 `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
             )
         }
+        await checkLicenseInEnv()
         await enforceLimits()
     }
     catch (err) {

@@ -21,6 +21,7 @@ export type ActivationKeyEntity = {
     activated_at: string
     created_at: string
     key: string
+    isTrial: boolean
 }
 
 const GetKeyRequestParams =  Type.Object({

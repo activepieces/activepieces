@@ -1,4 +1,5 @@
 import { platformService } from '../../../platform/platform.service'
+import { activationKeysService } from '../../activation-keys/activation-keys-service'
 import { LiceneseStatus, LicenseValidator } from './license-validator'
 import { networkLicenseValidator } from './network-license-validator'
 import { noOpLicenseValidator } from './no-op-license-validator'
@@ -60,4 +61,23 @@ export async function enforceLimits(): Promise<void> {
             break
         }
     }
+}
+
+
+export const checkLicenseInEnv = async () => {
+    const licenseKey = system.get(SystemProp.LICENSE_KEY)
+    const oldestPlatform = await platformService.getOldestPlatform()
+  
+    if (!licenseKey || !oldestPlatform || oldestPlatform.activationKey === licenseKey) {
+        return
+    }
+    //TODO: Need to make key return features as well and validate without throwing an error if key doesn't exist
+    const keyRow = await activationKeysService.getKeyRow({ key: licenseKey })
+    if (keyRow) {
+        await platformService.update({
+            id: oldestPlatform.id,
+            activationKey: licenseKey,
+        })
+    }
+
 }
