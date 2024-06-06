@@ -17,6 +17,8 @@ const generateActions = async (
     }
   }
 
+  console.log(requests.slice(0, 12));
+
   const completions = await Promise.all(
     requests.map(async (obj) => {
       const actionsCompletion = await openai.chat.completions.create({
@@ -32,6 +34,8 @@ const generateActions = async (
       return JSON.parse(actionExtractedData);
     })
   );
+
+  console.log(completions.slice(0, 12));
 
   return completions.map((action) =>
     createActionTemplate(action, baseURL, authDisplayName)
@@ -74,7 +78,7 @@ const createActionTemplate = (
       auth: ${authDisplayName},
       name: '${operationId}',
       displayName: '${summary}',
-      description: '${description.replace(/\n/g, ' ')}',
+      description: '${description?.replace(/\n/g, ' ')}',
       props: {${props}},
       run: async (ctx) => {
         return await httpClient.sendRequest({

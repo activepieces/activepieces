@@ -23,7 +23,7 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
 
   const pieceDir = path.join('packages', 'pieces', pieceType, pieceName, 'src');
   const actionsDir = path.join(pieceDir, 'lib', 'action');
-  await createPiece(pieceName, packageName, pieceType);
+  // await createPiece(pieceName, packageName, pieceType);
 
   console.log(chalk.green(`Generating authentication for ${pieceName}...`));
   const authCode = await generateAuth(openAPISpec);
@@ -34,14 +34,17 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
   console.log(
     chalk.green(`Generating ${pieceName} actions, please be patient...`)
   );
+  
+  console.log(openAPISpec.info);
+  
   const actions = await generateActions(openAPISpec, authDisplayName, baseURL);
 
   if (actions.length > 0 && !existsSync(actionsDir)) {
-    mkdirSync(actionsDir, { recursive: true });
+    // mkdirSync(actionsDir, { recursive: true });
   }
 
   actions.forEach((action) => {
-    writeFileSync(path.join(actionsDir, `${action.name}.ts`), action.code);
+    // writeFileSync(path.join(actionsDir, `${action.name}.ts`), action.code);
   });
 
   const actionImports = actions
@@ -84,7 +87,10 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
     });
   `;
 
-  writeFileSync(path.join(pieceDir, 'index.ts'), pieceDefinition);
+  console.log(actions);
+  console.log(pieceDefinition);
+  
+  // writeFileSync(path.join(pieceDir, 'index.ts'), pieceDefinition);
   console.log(chalk.green(`Enjoy ${pieceName} at ${pieceDir}. ❤️`));
 };
 
