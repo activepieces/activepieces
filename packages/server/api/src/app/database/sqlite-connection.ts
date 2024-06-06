@@ -47,6 +47,7 @@ import { AddFeatureFlagsToPlatform1714137103728 } from './migration/sqlite/17141
 import { AddIssueEntitySqlite1714900626443 } from './migration/sqlite/1714900626443-AddIssueEntitySqlite'
 import { AddAlertsEntitySqlite1717239613259 } from './migration/sqlite/1717239613259-AddAlertsEntitySqlite'
 import { AddPremiumPiecesColumnSqlite1717443603235 } from './migration/sqlite/1717443603235-AddPremiumPiecesColumnSqlite'
+import { AddActivationKeyToPlatform1717674106128 } from './migration/sqlite/1717674106128-AddActivationKeyToPlatform'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 
@@ -116,6 +117,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddDurationForRuns1716725027424,
         AddAlertsEntitySqlite1717239613259,
         AddPremiumPiecesColumnSqlite1717443603235,
+        AddActivationKeyToPlatform1717674106128,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {
