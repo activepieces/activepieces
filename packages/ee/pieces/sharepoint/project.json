@@ -1,18 +1,18 @@
 {
   "name": "pieces-microsoft-sharepoint",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/microsoft-sharepoint/src",
+  "sourceRoot": "packages/ee/pieces/sharepoint/src",
   "projectType": "library",
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/pieces/community/microsoft-sharepoint",
-        "tsConfig": "packages/pieces/community/microsoft-sharepoint/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/microsoft-sharepoint/package.json",
-        "main": "packages/pieces/community/microsoft-sharepoint/src/index.ts",
-        "assets": ["packages/pieces/community/microsoft-sharepoint/*.md"],
+        "outputPath": "dist/packages/ee/pieces/sharepoint",
+        "tsConfig": "packages/ee/pieces/sharepoint/tsconfig.lib.json",
+        "packageJson": "packages/ee/pieces/sharepoint/package.json",
+        "main": "packages/ee/pieces/sharepoint/src/index.ts",
+        "assets": ["packages/ee/pieces/sharepoint/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }

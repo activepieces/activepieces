@@ -1,6 +1,6 @@
 {
-  "name": "@activepieces/piece-snowflake",
-  "version": "0.0.7",
+  "name": "@activepieces/piece-microsoft-sharepoint",
+  "version": "0.0.3",
   "license": {
     "type": "COMMERCIAL",
     "url": "https://raw.githubusercontent.com/activepieces/activepieces/main/packages/ee/LICENSE"
