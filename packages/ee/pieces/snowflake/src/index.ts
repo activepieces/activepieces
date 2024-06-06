@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { runQuery } from './lib/actions/run-query';
 import { PieceCategory } from '@activepieces/shared';
+import { insertRowAction } from './lib/actions/insert-row';
 
 export const snowflakeAuth = PieceAuth.CustomAuth({
   props: {
@@ -51,8 +52,8 @@ export const snowflake = createPiece({
   auth: snowflakeAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/snowflake.png',
-  categories: [PieceCategory.DEVELOPER_TOOLS],
+  categories: [PieceCategory.DEVELOPER_TOOLS, PieceCategory.PREMIUM],
   authors: ['AdamSelene', 'abuaboud'],
-  actions: [runQuery],
+  actions: [runQuery, insertRowAction],
   triggers: [],
 });
