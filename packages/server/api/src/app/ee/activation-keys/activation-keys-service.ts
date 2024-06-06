@@ -63,8 +63,25 @@ const activateKey = async (request: ActivateKeyRequestBody ): Promise<Activation
     return response.json()
 }
 
+
+const verifyKey = async (request: {key: string} ): Promise<{valid:boolean, isTrial:boolean, key:ActivationKeyEntity}> => {
+    const response = await fetch(`${secretManagerActivationKeysRoute}/verify`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+    })
+    if (!response.ok) {
+        const errorMessage = JSON.stringify(await response.json())
+        throw new Error(errorMessage)
+    }
+    return response.json()
+}
+
 export const activationKeysService = {
     getKeyRow,
     activateKey,
     createKey,
+    verifyKey
 }

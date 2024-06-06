@@ -22,6 +22,23 @@ export type ActivationKeyEntity = {
     created_at: string
     key: string
     isTrial: boolean
+    features: { 
+        ssoEnabled: boolean,
+        gitSyncEnabled: boolean,
+        showPoweredBy: boolean,
+        embeddingEnabled: boolean,
+        auditLogEnabled: boolean,
+        customAppearanceEnabled: boolean,
+        manageProjectsEnabled: boolean,
+        managePiecesEnabled: boolean,
+        manageTemplatesEnabled: boolean,
+        apiKeysEnabled: boolean,
+        customDomainsEnabled: boolean,
+        projectRolesEnabled: boolean,
+        flowIssuesEnabled: boolean,
+        alertsEnabled: boolean,
+        premiumPieces: string[]
+    }
 }
 
 const GetKeyRequestParams =  Type.Object({
