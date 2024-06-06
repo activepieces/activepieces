@@ -90,7 +90,6 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'verify-email': 'Verify your email address',
         'reset-password': 'Reset your password',
         'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
-        'activation-key-email': 'Activation key',
     }
 
     return templateToSubject[templateName]

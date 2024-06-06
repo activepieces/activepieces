@@ -199,11 +199,21 @@ export class FlagService {
   > {
     return this.getTheme().pipe(map((theme) => theme['materialWarnPalette']));
   }
+
   getPrimaryPalette(): Observable<
     Record<string, string | Record<string, string>>
   > {
     return this.getTheme().pipe(
       map((theme) => theme['materialPrimaryPalette'])
+    );
+  }
+
+  getDbType() {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        //TODO: move DbType enum to shared and used it here
+        return flags[ApFlagId.DB_TYPE] as 'POSTGRES' | 'SQLITE3';
+      })
     );
   }
 }

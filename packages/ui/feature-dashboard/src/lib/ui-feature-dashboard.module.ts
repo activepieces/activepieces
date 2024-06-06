@@ -39,6 +39,7 @@ import {
 } from '@activepieces/ui-feature-git-sync';
 import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewards-dialog.component';
 import { NewAlertDialogComponent } from './components/dialogs/new-alert-dialog/new-alert-dialog.component';
+import { RequestTrialButtonComponent } from './components/request-trial-button/request-trial-button.component';
 
 @NgModule({
   imports: [
@@ -64,6 +65,7 @@ import { NewAlertDialogComponent } from './components/dialogs/new-alert-dialog/n
     DropdownSearchControlComponent,
     SelectAllDirective,
     ApDatePipe,
+    RequestTrialButtonComponent,
   ],
   declarations: [
     DashboardContainerComponent,

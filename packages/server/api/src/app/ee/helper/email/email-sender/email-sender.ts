@@ -24,9 +24,6 @@ type BaseEmailTemplateData<Name extends string, Vars extends Record<string, stri
     vars: Vars
 }
 
-type ActivationEmailTemplateData = BaseEmailTemplateData<'activation-key-email', {
-    key: string
-}>
 
 
 type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
@@ -61,7 +58,6 @@ export type EmailTemplateData =
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
-  | ActivationEmailTemplateData
 
 type SendArgs = {
     emails: string[]

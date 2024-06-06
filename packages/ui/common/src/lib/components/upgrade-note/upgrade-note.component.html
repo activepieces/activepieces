@@ -8,13 +8,25 @@
     <div class="ap-typography-body-1 ap-mx-auto ap-text-gray-800 ap-max-w-[485px] ap-flex ap-flex-col ap-gap-4">
         {{featureNote}}
         <div class="ap-flex ap-justify-center ap-gap-3 ap-items-center ap-h-[3rem]">
-            <ap-button  (buttonClicked)="openContactSales()" [fullWidthOfContainer]="true" btnColor="primary"
-                btnSize="large">
-                <div
-                    class="ap-text-body-2 !ap-font-semibold ap-items-center ap-justify-center">
-                    Request Trial
-                </div>
-            </ap-button>
+            @if(isCloud$ | async | defaultTrue) {
+                <ng-container *ngTemplateOutlet="contactSales"></ng-container>
+            }
+            @else {
+                    @if(isTrialKeyActivated$ | async)
+                    {
+                        <ng-container *ngTemplateOutlet="contactSales"></ng-container>
+                    }
+                    @else {
+                        <ap-button  (buttonClicked)="openTrialDialog()" [fullWidthOfContainer]="true" btnColor="primary"
+                        btnSize="large">
+                        <div i18n
+                            class="ap-text-body-2 !ap-font-semibold ap-items-center ap-justify-center">
+                             Start Trial
+                        </div>
+                    </ap-button>
+                    }
+            }
+           
         </div>
     </div>
 
@@ -23,3 +35,15 @@
         md:ap-max-w-[900px] md:ap-min-w-[900px]  md:ap-min-h-[513px] md:ap-max-h-[513px] lg:ap-min-2-[1200px] lg:ap-max-w-[1200px] lg:ap-min-h-[650px] lg:ap-max-h-[684px]  ap-overflow-hidden ap-rounded-xl " oncanplay="this.play()" onloadedmetadata="this.muted = true"><source [src]="videoUrl" type="video/mp4"></video>
     </div>
 </div>
+
+<ng-template #contactSales>
+    <ap-button  (buttonClicked)="openContactSales()" [fullWidthOfContainer]="true" btnColor="primary"
+                btnSize="large">
+                <div i18n
+                    class="ap-text-body-2 !ap-font-semibold ap-items-center ap-justify-center">
+                    Contact Sales
+                </div>
+            </ap-button>
+</ng-template>
+
+@if(openTrialDialog$ | async) {}

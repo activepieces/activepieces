@@ -217,6 +217,12 @@ export const flagService = {
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.DB_TYPE,
+                value: system.get(SystemProp.DB_TYPE),
+                created,
+                updated,
+            },
         )
 
         return flags
