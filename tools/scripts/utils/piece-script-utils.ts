@@ -47,8 +47,8 @@ const validatePremiumPiece = (piece: PieceMetadata): void => {
     if (piece.directoryPath?.includes("/ee/") && !categories.includes(PieceCategory.PREMIUM)) {
         throw Error(`[validatePremiumPiece] Premium pieces must be in the 'premium' category`)
     }
-    if (categories.includes(PieceCategory.PREMIUM) && (!piece.minimumSupportedRelease || semver.lt(piece.minimumSupportedRelease, '0.28.0'))) {
-        throw Error(`[validatePremiumPiece] Premium pieces must have a minimum supported release of 0.28.0 or higher`)
+    if (categories.includes(PieceCategory.PREMIUM) && (!piece.minimumSupportedRelease || semver.lt(piece.minimumSupportedRelease, '0.27.1'))) {
+        throw Error(`[validatePremiumPiece] Premium pieces must have a minimum supported release of 0.27.1 or higher`)
     }
 }
 
