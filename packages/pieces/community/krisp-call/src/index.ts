@@ -17,17 +17,15 @@ export const krispcallAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const res = await httpClient.sendRequest<string[]>({
+      await httpClient.sendRequest<string[]>({
         method: HttpMethod.GET,
         url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/me',
         headers: {
           'X-API-KEY': auth.apiKey,
         },
       });
-      // Assuming the response indicates success in some way
       return { valid: true };
     } catch (error: any) {
-      // If an error occurs, return an error object
       return { valid: false, error: error.message };
     }
   },
