@@ -131,7 +131,6 @@ export const emailService = {
             email: user.email,
             otp,
             userId: user.id,
-            firstName: user.email,
             type,
         })
 
@@ -156,7 +155,6 @@ export const emailService = {
                 name: 'reset-password',
                 vars: {
                     setupLink,
-                    firstName: user.firstName,
                 },
             },
         }

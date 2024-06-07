@@ -36,7 +36,6 @@ type QuotaEmailTemplateData = BaseEmailTemplateData<'quota-50' | 'quota-90' | 'q
 
 type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
     setupLink: string
-    firstName: string
 }>
 
 type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {

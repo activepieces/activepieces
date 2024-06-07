@@ -32,7 +32,6 @@ export class DashboardContainerComponent {
   showPlatform$: Observable<boolean>;
   @ViewChild('contactSalesSlideout') contactSalesSlideout: MatSidenav;
   contactSalesState$: Observable<boolean>;
-  isVersionMatch$?: Observable<boolean>;
   newUpdateMessage = $localize`New update available`;
   issuesCountCheck$: Observable<number>;
   constructor(
@@ -81,15 +80,6 @@ export class DashboardContainerComponent {
       .getState$()
       .pipe(map((state) => !state.hideSideNav));
     this.isInPlatformRoute$ = this.dashboardService.getIsInPlatformRoute();
-    this.isVersionMatch$ = this.flagService.isVersionMatch();
-  }
-
-  navigateToAdminConsole() {
-    this.router.navigate(['/platform']);
-  }
-
-  navigateToProjectDashboard() {
-    this.router.navigate(['/']);
   }
 
   closeContactSalesSlideout() {
