@@ -12,6 +12,7 @@ export const alertsService = {
     async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
         const alertId = apId()
         const existingAlert = await repo.findOneBy({
+            projectId,
             receiver,
         })
 
