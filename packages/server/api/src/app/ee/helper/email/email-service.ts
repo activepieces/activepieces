@@ -51,7 +51,6 @@ export const emailService = {
     async sendIssueCreatedNotification({
         projectId,
         flowName,
-        count,
         createdAt,
     }: IssueCreatedArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
@@ -61,7 +60,6 @@ export const emailService = {
             name: '[emailService#sendIssueCreatedNotification]',
             projectId,
             flowName,
-            count,
             createdAt,
         })
         const project = await projectService.getOneOrThrow(projectId)
@@ -86,7 +84,6 @@ export const emailService = {
                     issueUrl,
                     flowName,
                     createdAt,
-                    count: count.toString(),
                 },
             },
         })
@@ -194,7 +191,5 @@ type SendOtpArgs = {
 type IssueCreatedArgs = {
     projectId: string
     flowName: string
-    lastSeenAt: string
-    count: number
     createdAt: string
 }
