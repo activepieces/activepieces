@@ -13,15 +13,12 @@ export class DurationFormatterPipe implements PipeTransform {
   ): string {
     try {
       if (durationInMs < 1000) {
-        return $localize`${(durationInMs || 1).toFixed()} ${
+        return $localize`${durationInMs.toFixed()} ${
           short ? 'ms' : 'milliseconds'
         }`;
       }
       const durationInSeconds = allowFractions
-        ? Math.max(
-            0.01,
-            parseFloat((durationInMs / 1000).toFixed(fractionDigits))
-          )
+        ? Math.max(0, parseFloat((durationInMs / 1000).toFixed(fractionDigits)))
         : Math.ceil(durationInMs / 1000);
 
       if (durationInSeconds < 60) {
