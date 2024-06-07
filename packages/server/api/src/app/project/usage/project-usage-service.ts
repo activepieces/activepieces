@@ -17,7 +17,6 @@ export const projectUsageService = {
     increaseTasks,
     getCurrentingStartPeriod,
     getCurrentingEndPeriod,
-    getTasksUsage,
 }
 
 function getCurrentingStartPeriod(datetime: string): string {
@@ -35,31 +34,28 @@ function getCurrentingEndPeriod(datetime: string): string {
 async function increaseTasks(projectId: string, incrementBy: number): Promise<number> {
     const project = await projectService.getOneOrThrow(projectId)
     const startBillingPeriod = getCurrentingStartPeriod(project.created)
-    const currentTasksUsage = await getTasksUsage(project.id, project.created)
-    return incrementOrCreateRedisRecord(projectId, startBillingPeriod, incrementBy, currentTasksUsage)
+    return incrementOrCreateRedisRecord(projectId, startBillingPeriod, incrementBy)
 }
 
-async function incrementOrCreateRedisRecord(projectId: string, startBillingPeriod: string, incrementBy: number, currentTasksUsage: number): Promise<number> {
+async function incrementOrCreateRedisRecord(projectId: string, startBillingPeriod: string, incrementBy: number): Promise<number> {
     const environment = system.get(SystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return 0
     }
     const key = constructUsageKey(projectId, startBillingPeriod)
-    const keyPrevious = constructUsageKey(projectId, startBillingPeriod, true)
-    await getRedisConnection().set(keyPrevious, currentTasksUsage)
     return getRedisConnection().incrby(key, incrementBy)
 }
 
-async function getTasksUsage(projectId: string, startBillingPeriod: string, previous?: boolean): Promise<number> {
+async function getTasksUsage(projectId: string, startBillingPeriod: string): Promise<number> {
     const environment = system.get(SystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return 0
     }
-    const key = constructUsageKey(projectId, startBillingPeriod, previous)
+    const key = constructUsageKey(projectId, startBillingPeriod)
     const value = await getRedisConnection().get(key)
     return Number(value) || 0
 }
 
-function constructUsageKey(projectId: string, startBillingPeriod: string, previous?: boolean): string {
-    return `project-usage${previous && '-previous'}:${projectId}:${startBillingPeriod}`
+function constructUsageKey(projectId: string, startBillingPeriod: string): string {
+    return `project-usage:${projectId}:${startBillingPeriod}`
 }

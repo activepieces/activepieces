@@ -1,4 +1,3 @@
-import { flowRunHooks } from '../../flows/flow-run/flow-run-hooks'
 import { getEdition } from '../../helper/secret-helper'
 import { projectUsageService } from '../../project/usage/project-usage-service'
 import { projectLimitsService } from './project-plan.service'
@@ -9,6 +8,7 @@ import {
     ErrorCode,
     ProjectId,
 } from '@activepieces/shared'
+
 
 async function limit({ projectId }: { projectId: ProjectId }): Promise<void> {
     const edition = getEdition()
@@ -22,16 +22,16 @@ async function limit({ projectId }: { projectId: ProjectId }): Promise<void> {
         if (!projectPlan) {
             return
         }
-        const startBillingPeriod = projectUsageService.getCurrentingStartPeriod(projectPlan.created)
-        const consumedTasks = await projectUsageService.getTasksUsage(projectPlan.projectId, startBillingPeriod)
-        const previousUsage = await projectUsageService.getTasksUsage(projectPlan.projectId, startBillingPeriod, true)
-        await flowRunHooks.getHooks().limitTasksPerMonth({
-            consumedTasks,
-            previousUsage,
-            projectId: projectPlan.projectId,
-            createdAt: projectPlan.created,
-            tasks: projectPlan.tasks,
-        })
+        const consumedTasks = await projectUsageService.increaseTasks(projectId, 0)
+        if (consumedTasks > projectPlan.tasks) {
+            throw new ActivepiecesError({
+                code: ErrorCode.QUOTA_EXCEEDED,
+                params: {
+                    metric: 'tasks',
+                    quota: projectPlan.tasks,
+                },
+            })
+        }
     }
     catch (e) {
         if (
