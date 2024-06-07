@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
 import { getEdition } from '../../helper/secret-helper'
 import { projectUsageService } from '../../project/usage/project-usage-service'
@@ -38,7 +39,7 @@ export const platformRunHooks: FlowRunHooks = {
             { limit: 0.9, templateName: 'quota-90' },
             { limit: 0.5, templateName: 'quota-50' },
         ]
-        const resetDate = projectUsageService.getCurrentingEndPeriod(createdAt)
+        const resetDate = projectUsageService.getCurrentingEndPeriod(createdAt).replace(' UTC', '')
         const currentUsagePercentage = consumedTasks === 0 ? 0 : (consumedTasks / tasks) * 100
         const previousUsagePercentage = previousUsage === 0 ? 0 : (previousUsage / tasks) * 100
     
@@ -46,9 +47,9 @@ export const platformRunHooks: FlowRunHooks = {
             const projectPlanPercentage = tasks * limit
             if (currentUsagePercentage >= projectPlanPercentage && previousUsagePercentage < projectPlanPercentage) {
                 await emailService.sendQuotaAlert({
-                    resetDate,
                     templateName,
                     projectId,
+                    resetDate: dayjs(resetDate).format('DD MMM YYYY, HH:mm'),
                 })
             }
         }
