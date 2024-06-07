@@ -39,8 +39,8 @@ export const platformRunHooks: FlowRunHooks = {
             { limit: 0.5, templateName: 'quota-50' },
         ]
         const resetDate = projectUsageService.getCurrentingEndPeriod(createdAt)
-        const currentUsagePercentage = (consumedTasks / tasks) * 100
-        const previousUsagePercentage = (previousUsage / tasks) * 100
+        const currentUsagePercentage = consumedTasks === 0 ? 0 : (consumedTasks / tasks) * 100
+        const previousUsagePercentage = previousUsage === 0 ? 0 : (previousUsage / tasks) * 100
     
         for (const { limit, templateName } of quotaAlerts) {
             const projectPlanPercentage = tasks * limit
