@@ -95,12 +95,12 @@ export const memoryQueueManager: MemoryQueueManager = {
             )
         ).filter((flow): flow is FlowWithRenewWebhook => flow !== null)
 
-        logger.info(
-            `Adding ${enabledRepeatingFlows.length} repeated flows to the queue manager.`,
-        )
-        logger.info(
-            `Adding ${enabledRenewWebhookFlows.length} renew flows to the queue manager.`,
-        )
+        logger.info({
+            enabledRepeatingFlowsCount: enabledRepeatingFlows.length,
+        }, 'Adding repeated flows to the queue manager.')
+        logger.info({
+            enabledRenewWebhookFlowsCount: enabledRenewWebhookFlows.length,
+        }, 'Adding renew flows to the queue manager.')
 
         enabledRenewWebhookFlows.forEach(({ flow, scheduleOptions }) => {
             this.add({
@@ -139,7 +139,7 @@ export const memoryQueueManager: MemoryQueueManager = {
         const flowRuns = await flowRunRepo.findBy({
             status: FlowRunStatus.PAUSED,
         })
-        logger.info(`Adding ${flowRuns.length} flow runs to the queue manager.`)
+        logger.info({ flowRunsAdded: flowRuns.length }, 'Ading flow runs to the queue manager.')
         flowRuns.forEach((flowRun) => {
             if (flowRun.pauseMetadata?.type === PauseType.DELAY) {
                 const delayPauseMetadata = flowRun.pauseMetadata as DelayPauseMetadata

@@ -40,10 +40,11 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             request: request.body,
         })
 
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.CREATED_FLOW,
-            flow: newFlow,
-            userId: request.principal.id,
+        eventsHooks.get().sendUserEvent(request, {
+            action: ApplicationEventName.FLOW_CREATED,
+            data: {
+                flow: newFlow,
+            },
         })
 
         return reply.status(StatusCodes.CREATED).send(newFlow)
@@ -58,11 +59,12 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
         })
         await assertThatFlowIsNotBeingUsed(flow, userId)
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.UPDATED_FLOW,
-            request: request.body,
-            flow,
-            userId: request.principal.id,
+        eventsHooks.get().sendUserEvent(request, {
+            action: ApplicationEventName.FLOW_UPDATED,
+            data: {
+                request: request.body,
+                flowVersion: flow.version,
+            },
         })
 
         const updatedFlow = await flowService.update({
@@ -112,11 +114,12 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-        const userId = await extractUserIdFromPrincipal(request.principal)
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.DELETED_FLOW,
-            flow,
-            userId,
+        eventsHooks.get().sendUserEvent(request, {
+            action: ApplicationEventName.FLOW_DELETED,
+            data: {
+                flow,
+                flowVersion: flow.version,
+            },
         })
         await flowService.delete({
             id: request.params.id,

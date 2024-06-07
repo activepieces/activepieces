@@ -92,6 +92,8 @@ import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
 import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-bullboard'
 import { webhookResponseWatcher } from './workers/flow-worker/webhook-response-watcher'
 import {
+    ApplicationEventName,
+    FlowCreatedEvent,
     GitRepoWithoutSensitiveData,
     ProjectMember,
 } from '@activepieces/ee-shared'
@@ -150,6 +152,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     },
                 },
                 schemas: {
+                    [ApplicationEventName.FLOW_CREATED]: FlowCreatedEvent,
                     'project-member': ProjectMember,
                     project: ProjectWithLimits,
                     flow: Flow,
@@ -297,7 +300,9 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await validateEnvPropsOnStartup()
 
     const edition = getEdition()
-    logger.info(`Activepieces ${edition} Edition`)
+    logger.info({
+        edition,
+    }, 'Activepieces Edition')
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(appCredentialModule)

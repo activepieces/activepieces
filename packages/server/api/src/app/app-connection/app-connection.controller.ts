@@ -30,10 +30,11 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
             projectId: request.principal.projectId,
             request: request.body,
         })
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.UPSERTED_CONNECTION,
-            connection: appConnection,
-            userId: request.principal.id,
+        eventsHooks.get().sendUserEvent(request, {
+            action: ApplicationEventName.CONNECTION_UPSERTED,
+            data: {
+                connection: appConnection,
+            },
         })
         await reply
             .status(StatusCodes.CREATED)
@@ -85,10 +86,11 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
                 id: request.params.id,
                 projectId: request.principal.projectId,
             })
-            eventsHooks.get().send(request, {
-                action: ApplicationEventName.DELETED_CONNECTION,
-                connection,
-                userId: request.principal.id,
+            eventsHooks.get().sendUserEvent(request, {
+                action: ApplicationEventName.CONNECTION_DELETED,
+                data: {
+                    connection,
+                },
             })
             await appConnectionService.delete({
                 id: request.params.id,
