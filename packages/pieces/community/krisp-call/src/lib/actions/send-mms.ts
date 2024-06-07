@@ -1,10 +1,7 @@
-import {
-  createAction,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { krispcallAuth } from '../..';
 import { Property, PiecePropValueSchema } from '@activepieces/pieces-framework';
-
 
 interface Item {
   name: string;
@@ -34,7 +31,7 @@ export const sendMms = createAction({
               'X-API-KEY': authVaue.apiKey,
             },
           });
-          const mappedOptions = res?.body?.map(item => {
+          const mappedOptions = res?.body?.map((item) => {
             return {
               label: item.name,
               value: item.number,
@@ -43,25 +40,24 @@ export const sendMms = createAction({
 
           return {
             disabled: false,
-            options: mappedOptions
+            options: mappedOptions,
           };
         } catch (error) {
           // Handle error
           console.error(error);
           return { disabled: true, options: [] }; // Return empty options array or handle error accordingly
         }
-      }
-    })
-    ,
+      },
+    }),
     to_number: Property.Number({
       displayName: 'To Number',
       description: 'Enter the number to which you want to send sms.',
-      required: true
+      required: true,
     }),
     content: Property.ShortText({
       displayName: 'content',
       description: 'Enter your message here.',
-      required: false
+      required: false,
     }),
     medias: Property.Array({
       displayName: 'Medias url',
@@ -70,7 +66,7 @@ export const sendMms = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    console.log(auth.apiKey)
+    console.log(auth.apiKey);
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/send-mms',
@@ -82,25 +78,9 @@ export const sendMms = createAction({
         from_number: propsValue.from_number,
         to_number: propsValue.to_number,
         content: propsValue.content,
-        medias: propsValue.medias
-      }
+        medias: propsValue.medias,
+      },
     });
     return res.body;
   },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

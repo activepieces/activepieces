@@ -21,9 +21,6 @@
       "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
-      "@activepieces/piece-KrispCall": [
-        "packages/pieces/community/KrispCall/src/index.ts"
-      ],
       "@activepieces/piece-activecampaign": [
         "packages/pieces/community/activecampaign/src/index.ts"
       ],
@@ -286,6 +283,9 @@
       ],
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
+      ],
+      "@activepieces/piece-krisp-call": [
+        "packages/pieces/community/krisp-call/src/index.ts"
       ],
       "@activepieces/piece-lead-connector": [
         "packages/pieces/community/lead-connector/src/index.ts"

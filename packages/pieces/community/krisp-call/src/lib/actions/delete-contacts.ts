@@ -23,13 +23,8 @@ export const deleteContacts = createAction({
       },
       body: {
         contacts: propsValue.contacts,
-
-      }
+      },
     });
     return res.body;
   },
 });
-
-
-
-

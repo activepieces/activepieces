@@ -11,29 +11,28 @@ export const addContact = createAction({
     name: Property.ShortText({
       displayName: 'Name',
       description: 'Enter your name',
-      required: false
+      required: false,
     }),
     number: Property.Number({
       displayName: 'Contact number',
       description: 'Enter contact number',
-      required: true
+      required: true,
     }),
     address: Property.ShortText({
       displayName: 'Address',
       description: 'Enter your address',
-      required: false
-
+      required: false,
     }),
     company: Property.ShortText({
       displayName: 'Company',
       description: 'Enter your company',
-      required: false
+      required: false,
     }),
     email: Property.ShortText({
       displayName: 'Email',
       description: 'Enter your email',
-      required: false
-    })
+      required: false,
+    }),
   },
   async run({ auth, propsValue }) {
     const res = await httpClient.sendRequest<string[]>({
@@ -47,12 +46,9 @@ export const addContact = createAction({
         number: propsValue.number,
         company: propsValue.company,
         email: propsValue.email,
-        address: propsValue.address
-      }
+        address: propsValue.address,
+      },
     });
     return res.body;
   },
 });
-
-
-
