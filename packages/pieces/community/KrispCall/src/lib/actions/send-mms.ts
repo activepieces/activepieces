@@ -29,7 +29,7 @@ export const sendMms = createAction({
           const authVaue = auth as PiecePropValueSchema<typeof krispcallAuth>;
           const res = await httpClient.sendRequest<Item[]>({
             method: HttpMethod.GET,
-            url: 'https://71a0-202-166-220-144.ngrok-free.app/api/v1/platform/activepiece/get-numbers',
+            url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/get-numbers',
             headers: {
               'X-API-KEY': authVaue.apiKey,
             },
