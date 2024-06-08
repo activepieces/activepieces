@@ -34,6 +34,7 @@ export const businessCentralAuth = PieceAuth.OAuth2({
 export const microsoftDynamics365BusinessCentral = createPiece({
   displayName: 'Microsoft Dynamics 365 Business Central',
   auth: businessCentralAuth,
+  description: 'All-in-one business management solution by Microsoft.',
   categories: [PieceCategory.PREMIUM, PieceCategory.SALES_AND_CRM],
   minimumSupportedRelease: '0.27.1',
   logoUrl:

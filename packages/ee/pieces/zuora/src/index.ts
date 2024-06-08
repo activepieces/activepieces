@@ -72,6 +72,7 @@ export const zuora = createPiece({
   displayName: 'Zuora',
   auth: zuoraAuth,
   minimumSupportedRelease: '0.27.1',
+  description: 'Zuora is a cloud-based subscription management platform that enables businesses to launch and monetize subscription services.',
   logoUrl: 'https://cdn.activepieces.com/pieces/zuora.png',
   categories: [
     PieceCategory.SALES_AND_CRM,
