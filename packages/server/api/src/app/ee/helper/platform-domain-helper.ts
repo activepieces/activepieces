@@ -50,8 +50,7 @@ async function getFrontendDomainFromHostname(
 
 async function getApiDomainFromHostname(hostname: string): Promise<string> {
     const frontendUrl = await getFrontendDomainFromHostname(hostname)
-    const environment = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
-    return frontendUrl + (environment === ApEnvironment.PRODUCTION ? 'api/' : '')
+    return frontendUrl + 'api/'
 }
 async function getFrontendDomain(
     platformId: string | undefined | null,

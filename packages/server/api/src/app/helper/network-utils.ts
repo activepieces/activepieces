@@ -36,25 +36,14 @@ export const extractClientRealIp = (request: FastifyRequest): string => {
 }
 
 export const getServerUrl = async (): Promise<string> => {
-    const environment = system.get(SystemProp.ENVIRONMENT)
-
-    let url =
-    environment === ApEnvironment.PRODUCTION
-        ? system.get(SystemProp.FRONTEND_URL)!
-        : system.get(SystemProp.WEBHOOK_URL)!
-
+    const environment = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+    let url = system.getOrThrow(SystemProp.FRONTEND_URL)
     // Localhost doesn't work with webhooks, so we need try to use the public ip
-    if (
-        extractHostname(url) == 'localhost' &&
-    environment === ApEnvironment.PRODUCTION
-    ) {
+    if (extractHostname(url) == 'localhost' && environment === ApEnvironment.PRODUCTION) {
         url = `http://${(await getPublicIp()).ip}`
     }
-
     const slash = url.endsWith('/') ? '' : '/'
-    const redirect = environment === ApEnvironment.PRODUCTION ? 'api/' : ''
-
-    return `${url}${slash}${redirect}`
+    return `${url}${slash}api/`
 }
 
 function extractHostname(url: string): string | null {
