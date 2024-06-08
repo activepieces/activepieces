@@ -30,9 +30,9 @@ export const microsoftSharePointAuth = PieceAuth.OAuth2({
 export const microsoftSharePoint = createPiece({
   displayName: 'Microsoft SharePoint',
   auth: microsoftSharePointAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-sharepoint.png',
-  categories: [PieceCategory.CONTENT_AND_FILES],
+  categories: [PieceCategory.CONTENT_AND_FILES, PieceCategory.PREMIUM],
   authors: ['kishanprmr'],
   actions: [
     createFolderAction,

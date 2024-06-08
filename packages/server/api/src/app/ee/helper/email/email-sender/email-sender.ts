@@ -31,7 +31,6 @@ type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
 
 type QuotaEmailTemplateData = BaseEmailTemplateData<'quota-50' | 'quota-90' | 'quota-100', {
     resetDate: string
-    firstName: string
 }>
 
 type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
@@ -45,7 +44,6 @@ type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
 type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     issueUrl: string
     flowName: string
-    count: string
     createdAt: string
 }>
 
