@@ -1,6 +1,5 @@
 import { customDomainService } from '../custom-domains/custom-domain.service'
 import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEnvironment } from '@activepieces/shared'
 
 export const platformDomainHelper = {
     async constructUrlFrom({
