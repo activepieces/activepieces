@@ -34,6 +34,10 @@ export * from './lib/directives/select-all.directive';
 export * from './lib/utils/consts';
 export * from './lib/models/mention-list-item';
 export * from './lib/service/contact-sales.service';
+<<<<<<< HEAD
 export * from './lib/components/control-description/control-description.component';
 export * from './lib/components/dialogs';
 export * from './lib/components/control-description/control-description.component';
+=======
+export * from './lib/components/control-description/control-description.component';
+>>>>>>> e55ed8d468a9620d06ef82724d4274b13e0b439b
