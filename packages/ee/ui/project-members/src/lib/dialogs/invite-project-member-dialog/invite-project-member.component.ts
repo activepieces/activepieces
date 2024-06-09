@@ -10,8 +10,8 @@ import { catchError, map, Observable, of, tap } from 'rxjs';
 import { ProjectMemberService } from '../../service/project-members.service';
 import { DialogRef } from '@angular/cdk/dialog';
 import { HttpStatusCode } from '@angular/common/http';
-import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
-import { AuthenticationService, FlagService } from '@activepieces/ui/common';
+import { ProjectMemberRole, isNil } from '@activepieces/shared';
+import { AuthenticationService } from '@activepieces/ui/common';
 import { RolesDisplayNames } from '../../utils';
 
 @Component({
@@ -27,22 +27,20 @@ export class InviteProjectMemberDialogComponent {
   loading = false;
   invalidEmail = false;
   RolesDisplayNames = RolesDisplayNames;
-  ProjectMemberRole = Object.values(ProjectMemberRole).map((role) => {
-    return {
-      role,
-      condition$:
-        role === ProjectMemberRole.EXTERNAL_CUSTOMER
-          ? this.flagService.isFlagEnabled(ApFlagId.SHOW_ACTIVITY_LOG)
-          : of(true),
-    };
-  });
+  ProjectMemberRole = Object.values(ProjectMemberRole)
+    .filter((f) => !isNil(RolesDisplayNames[f]))
+    .map((role) => {
+      return {
+        role,
+        condition$: of(true),
+      };
+    });
   constructor(
     private formBuilder: FormBuilder,
     private snackbar: MatSnackBar,
     private projectMemberService: ProjectMemberService,
     private authenticationService: AuthenticationService,
-    private dialogRef: DialogRef,
-    private flagService: FlagService
+    private dialogRef: DialogRef
   ) {
     this.invitationForm = this.formBuilder.group({
       email: new FormControl('', {

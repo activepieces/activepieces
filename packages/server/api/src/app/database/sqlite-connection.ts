@@ -9,6 +9,8 @@ import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/
 import { AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 } from './migration/common/1701096458822-add-partial-unique-index-for-email-and-platform-id-is-null'
 import { AddTriggerTestStrategy1707087022764 } from './migration/common/1707087022764-add-trigger-test-strategy'
 import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-migrate-webhook'
+import { RemoveShowActivityLog1716105958530 } from './migration/common/1716105958530-RemoveShowActivityLog'
+import { AddDurationForRuns1716725027424 } from './migration/common/1716725027424-AddDurationForRuns'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -42,6 +44,9 @@ import { RemoveUniqueEmailOnUser1713222892743 } from './migration/sqlite/1713222
 import { AddPlatformRole1713271221154 } from './migration/sqlite/1713271221154-AddPlatformRole'
 import { AddUniqueNameToFolderSqlite1713645171373 } from './migration/sqlite/1713645171373-AddUniqueNameToFolderSqlite'
 import { AddFeatureFlagsToPlatform1714137103728 } from './migration/sqlite/1714137103728-AddFeatureFlagsToPlatform'
+import { AddIssueEntitySqlite1714900626443 } from './migration/sqlite/1714900626443-AddIssueEntitySqlite'
+import { AddAlertsEntitySqlite1717239613259 } from './migration/sqlite/1717239613259-AddAlertsEntitySqlite'
+import { AddPremiumPiecesColumnSqlite1717443603235 } from './migration/sqlite/1717443603235-AddPremiumPiecesColumnSqlite'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 
@@ -106,6 +111,11 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPlatformRole1713271221154,
         AddUniqueNameToFolderSqlite1713645171373,
         AddFeatureFlagsToPlatform1714137103728,
+        AddIssueEntitySqlite1714900626443,
+        RemoveShowActivityLog1716105958530,
+        AddDurationForRuns1716725027424,
+        AddAlertsEntitySqlite1717239613259,
+        AddPremiumPiecesColumnSqlite1717443603235,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

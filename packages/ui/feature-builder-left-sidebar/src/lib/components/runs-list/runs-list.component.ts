@@ -6,7 +6,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FlowService, InstanceRunService } from '@activepieces/ui/common';
-import { FlowRun, Cursor } from '@activepieces/shared';
+import { FlowRun, Cursor, FlowRunStatus } from '@activepieces/shared';
 import {
   BehaviorSubject,
   Observable,
@@ -22,6 +22,8 @@ import {
 import {
   BuilderSelectors,
   LeftSideBarType,
+  NO_PROPS,
+  RightSideBarType,
   TestRunBarComponent,
   ViewModeActions,
   ViewModeEnum,
@@ -55,6 +57,7 @@ export class RunsListComponent implements OnInit {
   runClicked$?: Observable<void>;
   currentRun$: Observable<FlowRun | undefined>;
   isInDebugMode$: Observable<boolean>;
+  readonly FlowRunStatus = FlowRunStatus;
   constructor(
     private instanceRunService: InstanceRunService,
     private store: Store,
@@ -113,6 +116,14 @@ export class RunsListComponent implements OnInit {
   runItemClicked(run: FlowRun) {
     const run$ = this.instanceRunService.get(run.id);
     const flow$ = this.flowService.get(this.flowId, run.flowVersionId);
+    this.store.dispatch(
+      canvasActions.setRightSidebar({
+        sidebarType: RightSideBarType.NONE,
+        props: NO_PROPS,
+        deselectCurrentStep: true,
+      })
+    );
+
     this.runClicked$ = forkJoin({
       run: run$,
       currentRun: this.currentRun$.pipe(take(1)),
@@ -120,26 +131,37 @@ export class RunsListComponent implements OnInit {
     })
       .pipe(
         tap((res) => {
-          if (res.currentRun?.id !== res.run.id) {
-            this.store.dispatch(
-              canvasActions.viewRun({
-                run: res.run,
-                version: res.flow.version,
-              })
-            );
-            this.snackbar.openFromComponent(TestRunBarComponent, {
-              duration: undefined,
-            });
-          } else {
-            this.exitRun();
-          }
+          setTimeout(() => {
+            if (res.currentRun?.id !== res.run.id) {
+              this.store.dispatch(
+                canvasActions.viewRun({
+                  run: res.run,
+                  version: res.flow.version,
+                })
+              );
+              this.snackbar.openFromComponent(TestRunBarComponent, {
+                duration: undefined,
+              });
+            } else {
+              this.exitRun();
+            }
+          });
         })
       )
       .pipe(map(() => void 0));
   }
   exitRun() {
     this.store.dispatch(
-      ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING })
+      canvasActions.setRightSidebar({
+        sidebarType: RightSideBarType.NONE,
+        props: NO_PROPS,
+        deselectCurrentStep: true,
+      })
     );
+    setTimeout(() => {
+      this.store.dispatch(
+        ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING })
+      );
+    });
   }
 }

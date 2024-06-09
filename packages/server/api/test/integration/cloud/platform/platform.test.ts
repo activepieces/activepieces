@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
@@ -108,7 +109,7 @@ describe('Platform API', () => {
         })
 
         it('fails if user is not owner', async () => {
-        // arrange
+            // arrange
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
 
@@ -164,14 +165,29 @@ describe('Platform API', () => {
     })
 
     describe('get platform endpoint', () => {
-        it('Returns full platform response for owner', async () => {
+        it('Always Returns non-sensitive information for platform', async () => {
             // arrange
             const mockPlatformId = apId()
 
             const mockOwnerUser = createMockUser({ platformId: mockPlatformId })
             await databaseConnection.getRepository('user').save(mockOwnerUser)
 
-            const mockPlatform = createMockPlatform({ ownerId: mockOwnerUser.id })
+            const providers = {
+                google: {
+                    clientId: faker.internet.password(),
+                    clientSecret: faker.internet.password(),
+                },
+                github: {
+                    clientId: faker.internet.password(),
+                    clientSecret: faker.internet.password(),
+                },
+                saml: {
+                    idpCertificate: faker.internet.password(),
+                    idpMetadata: faker.internet.password(),
+                },
+
+            }
+            const mockPlatform = createMockPlatform({ ownerId: mockOwnerUser.id, smtpPassword: faker.internet.password(), federatedAuthProviders: providers, flowIssuesEnabled: false, alertsEnabled: false, premiumPieces: [] })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             await databaseConnection.getRepository('user').update(mockOwnerUser.id, {
@@ -200,55 +216,28 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
+
+            expect(Object.keys(responseBody).length).toBe(39)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwnerUser.id)
             expect(responseBody.name).toBe(mockPlatform.name)
+            expect(responseBody.smtpPassword).toBeUndefined()
+            expect(responseBody.federatedAuthProviders.google).toStrictEqual({
+                clientId: providers.google.clientId,
+            })
+            expect(responseBody.federatedAuthProviders.github).toStrictEqual({
+                clientId: providers.github.clientId,
+            })
+            expect(responseBody.federatedAuthProviders.saml).toStrictEqual({})
             expect(responseBody.primaryColor).toBe(mockPlatform.primaryColor)
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
             expect(responseBody.fullLogoUrl).toBe(mockPlatform.fullLogoUrl)
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
+            expect(responseBody.alertsEnabled).toBe(false)
+            expect(responseBody.flowIssuesEnabled).toBe(false)
+            expect(responseBody.premiumPieces).toStrictEqual([])
         })
 
-        it('Returns basic platform response for member', async () => {
-            // arrange
-            const mockMemberUserId = apId()
-            const mockPlatformId = apId()
-
-            const mockOwnerUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection.getRepository('user').save(mockOwnerUser)
-
-            const mockPlatform = createMockPlatform({ ownerId: mockOwnerUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-
-
-            const mockToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockMemberUserId,
-                platform: {
-                    id: mockPlatform.id,
-                },
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'GET',
-                url: `/v1/platforms/${mockPlatform.id}`,
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const responseBody = response?.json()
-
-            expect(Object.keys(responseBody)).toHaveLength(5)
-            expect(responseBody.id).toBe(mockPlatform.id)
-            expect(responseBody.gitSyncEnabled).toBeDefined()
-            expect(responseBody.name).toBe(mockPlatform.name)
-            expect(responseBody.defaultLocale).toBe(mockPlatform.defaultLocale)
-            expect(responseBody.projectRolesEnabled).toBe(mockPlatform.projectRolesEnabled)
-        })
 
         it('Fails if user is not a platform member', async () => {
             // arrange

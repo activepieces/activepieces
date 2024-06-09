@@ -7,13 +7,12 @@ import {
 } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
-import { Platform } from '@activepieces/shared';
+import { Platform, ThirdPartyAuthnProviderEnum } from '@activepieces/shared';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { FlagService, PlatformService } from '@activepieces/ui/common';
-import { FederatedAuthnProviderEnum } from '../../sso-settings/federated-authn-provider.enum';
 export type EnableFederatedAuthnProviderDialogData = {
   platform: Platform;
-  provider: FederatedAuthnProviderEnum;
+  provider: ThirdPartyAuthnProviderEnum;
 };
 
 @Component({
@@ -43,9 +42,18 @@ export class EnableFederatedAuthnProviderDialogComponent {
       .getStringFlag(ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL)
       .pipe(
         map((redirectUrl) => {
-          return $localize`Please make a new OAuth2 app and set ${redirectUrl} as the redirect URL in your OAuth2 app`;
+          return $localize`
+          **Setup Instructions**:\n
+          Please check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)\
+          
+          **Redirect URL**:
+          \`\`\`text
+          ${redirectUrl}
+          \`\`\`
+          `;
         })
       );
+
     this.formGroup = this.fb.group({
       clientId: this.fb.control<string>('', {
         nonNullable: true,
@@ -65,10 +73,10 @@ export class EnableFederatedAuthnProviderDialogComponent {
       this.loading$.next(true);
       const platform: Platform = JSON.parse(JSON.stringify(this.data.platform));
       const formData = this.formGroup.getRawValue();
-      if (this.data.provider === 'GitHub') {
+      if (this.data.provider === ThirdPartyAuthnProviderEnum.GITHUB) {
         platform.federatedAuthProviders.github = formData;
       }
-      if (this.data.provider === 'Google') {
+      if (this.data.provider === ThirdPartyAuthnProviderEnum.GOOGLE) {
         platform.federatedAuthProviders.google = formData;
       }
       this.enableProvider$ = this.platformService

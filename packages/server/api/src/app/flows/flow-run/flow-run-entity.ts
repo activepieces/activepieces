@@ -45,6 +45,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             array: isPostgres(),
             nullable: true,
         },
+        duration: {
+            nullable: true,
+            type: Number,
+        },
         tasks: {
             nullable: true,
             type: Number,

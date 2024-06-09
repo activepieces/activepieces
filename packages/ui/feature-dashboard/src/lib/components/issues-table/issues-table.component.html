@@ -1,0 +1,70 @@
+<div class="ap-w-full">
+  @if(isFeatureDisabled)
+  {
+  <ap-upgrade-note [insideTab]="true" [videoUrl]="'https://cdn.activepieces.com/videos/showcase/flow-issues.mp4'"
+    [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote" featureKey="ISSUES"></ap-upgrade-note>
+  }
+  @else {
+  <div class="ap-mt-2 ap-mb-4">
+    <span class="ap-typography-subtitle-2">Track failed runs grouped by flow name, and mark them as resolved
+      when fixed.</span>
+  </div>
+  <ap-markdown [data]=" betaNote"> </ap-markdown>
+  <div class="ap-min-h-[70%]">
+    <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="issues">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef i18n>Flow Name</th>
+        <td mat-cell *matCellDef="let issue">{{ issue.flowDisplayName }}</td>
+      </ng-container>
+      <ng-container matColumnDef="count">
+        <th mat-header-cell *matHeaderCellDef i18n>Count</th>
+        <td mat-cell *matCellDef="let issue" i18n>
+          {{ issue.count }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="firstSeen">
+        <th mat-header-cell *matHeaderCellDef i18n>First Seen</th>
+        <td mat-cell *matCellDef="let issues">{{ issues.created | apDate:'mdhms' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="lastSeen">
+        <th mat-header-cell *matHeaderCellDef i18n>Last Seen</th>
+        <td mat-cell *matCellDef="let issues">{{ issues.lastOccurrence | apDate:'mdhms' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="action">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let issue">
+          <div class="ap-flex ap-items-center">
+            <ap-button btnSize="small" btnStyle="flat" (click)="$event.stopPropagation(); resolve(issue)">
+              <div class="ap-flex ap-gap-1 ap-items-center ap-justify-center" i18n>
+                <svg-icon src="assets/img/custom/check.svg" [applyClass]="true"
+                  class="ap-fill-white ap-w-[15px] ap-h-[15px]"></svg-icon> Mark as Resolved
+              </div>
+            </ap-button>
+          </div>
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row [class.ap-hidden]="dataSource.isLoading$ | async" class="ap-cursor-pointer hover:!ap-bg-hover"
+        (click)="openRuns(row, $event)" (auxclick)="openRuns(row, $event)"
+        *matRowDef="let row; columns: displayedColumns">
+      </tr>
+    </table>
+    <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
+      <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
+        <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
+        </ap-loading-icon>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
+      <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-py-8" i18n>
+        No issues present
+      </div>
+    </ng-container>
+  </div>
+  }
+  <div class="ap-flex ap-justify-end ap-py-2">
+    <ap-paginator> </ap-paginator>
+  </div>
+</div>
+<ng-container *ngIf="updateNotificationsValue$ | async"></ng-container>
+@if(resolve$ | async) {}

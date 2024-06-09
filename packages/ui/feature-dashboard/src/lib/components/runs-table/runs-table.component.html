@@ -1,0 +1,138 @@
+<div class="ap-w-full ">
+  <div class="ap-h-full">
+    <div class="ap-flex ap-gap-2">
+      <mat-form-field class="!ap-min-w-[15.625rem]">
+        <mat-label i18n>Filter by Status</mat-label>
+        <mat-select [formControl]="statusFilterControl">
+          <mat-option [value]="allOptionValue" i18n>All</mat-option>
+          <mat-option [value]="ExecutionOutputStatus.RUNNING" i18n>Running</mat-option>
+          <mat-option [value]="ExecutionOutputStatus.FAILED" i18n>Failed</mat-option>
+          <mat-option [value]="ExecutionOutputStatus.SUCCEEDED" i18n>Succeeded</mat-option>
+          <mat-option [value]="ExecutionOutputStatus.PAUSED" i18n>Paused</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field class="!ap-min-w-[15.625rem]">
+        <mat-label i18n>Filter by Flow</mat-label>
+        <mat-select [formControl]="flowFilterControl" (closed)="searchControl.setValue('')">
+          <mat-select-trigger>
+            <div class="ap-mx-3">
+              <ng-container *ngIf="selectedFlowName$ | async as flowName; else allLabel">
+                {{flowName}}
+              </ng-container>
+              <ng-template #allLabel>
+                <span i18n>All</span>
+              </ng-template>
+            </div>
+          </mat-select-trigger>
+          <div>
+            <mat-form-field subscriptSizing="dynamic" appearance="fill" (click)="$event.stopPropagation();"
+              class="ap-w-full">
+              <input #searchInput [formControl]="searchControl" matInput placeholder="Search" autocomplete="off"
+                (keydown.Space)="$event.stopPropagation()">
+              <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
+            </mat-form-field>
+          </div>
+
+          <mat-option [value]="allOptionValue" i18n>All</mat-option>
+          <ng-container *ngIf="flows$ | async as flows; else loading">
+            <mat-option *ngFor="let opt of (flows | dropdownSearch:searchControl | async)" [value]="opt.value">
+              {{opt.label}}
+            </mat-option>
+            <mat-option *ngFor="let opt of flows" class="!ap-hidden" [value]="opt.value">
+              {{opt.label}}
+            </mat-option></ng-container>
+          <ng-template #loading>
+            <mat-option [disabled]="true">Loading...</mat-option>
+          </ng-template>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label i18n>Filter by Start Date</mat-label>
+        <mat-date-range-input #picker (openedStream)="picker._updateFocus('mouse')" [formGroup]="dateFormGroup"
+          [rangePicker]="runsPicker" [comparisonStart]="dateFormGroup.controls.start.value"
+          [comparisonEnd]="dateFormGroup.controls.end.value">
+          <input matStartDate placeholder="From" [formControl]="dateFormGroup.controls.start" i18n-placeholder>
+          <input matEndDate placeholder="To" [formControl]="dateFormGroup.controls.end" i18n-placeholder>
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="runsPicker"></mat-datepicker-toggle>
+        <mat-date-range-picker #runsPicker></mat-date-range-picker>
+      </mat-form-field>
+    </div>
+
+    <div class="ap-min-h-[70%]">
+      <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="Runs">
+        <ng-container matColumnDef="flowName">
+          <th mat-header-cell *matHeaderCellDef i18n>Flow</th>
+          <td mat-cell *matCellDef="let run">{{ run.flowDisplayName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="started">
+          <th mat-header-cell *matHeaderCellDef i18n>Started</th>
+          <td mat-cell *matCellDef="let run">{{ run.startTime | apDate: 'mdhms' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="duration">
+          <th mat-header-cell *matHeaderCellDef i18n>Duration</th>
+          <td mat-cell *matCellDef="let run">{{ run.duration ? (run.duration | durationFormatter: false: true) : '-' }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef i18n>Status</th>
+          <td mat-cell *matCellDef="let run">
+            <div class="ap-flex ap-items-center">
+              <ap-state-icon [status]="run.status" [showStatusText]="true" class="ap-mr-4"></ap-state-icon>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="action">
+          <th mat-header-cell class="!ap-text-center" *matHeaderCellDef>
+
+          </th>
+          <td mat-cell *matCellDef="let run" class="!ap-text-center">
+            <button mat-icon-button (click)="$event.stopImmediatePropagation()" [matMenuTriggerFor]="menu"
+              *ngIf="run.status !==  ExecutionOutputStatus.RUNNING">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu" xPosition="before">
+              <button mat-menu-item (click)="retryFlow(run, FlowRetryStrategy.ON_LATEST_VERSION)">
+                <div class="ap-flex ap-items-center">
+                  <mat-icon>loop</mat-icon>
+                  <span i18n>Retry on Latest Version</span>
+                </div>
+              </button>
+              <button *ngIf="run.status !== ExecutionOutputStatus.SUCCEEDED" mat-menu-item
+                (click)="retryFlow(run, FlowRetryStrategy.FROM_FAILED_STEP)">
+                <div class="ap-flex ap-items-center">
+                  <mat-icon>replay</mat-icon>
+                  <span i18n>Retry From Failed Step</span>
+                </div>
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openInstanceRun(row,$event)" mat-row
+          [class.ap-hidden]="dataSource.isLoading$ | async" *matRowDef="let row; columns: displayedColumns">
+        </tr>
+      </table>
+      <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
+        <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
+          <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
+          </ap-loading-icon>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
+        <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-py-8" i18n>
+          No runs instantiated yet
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="ap-flex ap-justify-end ap-py-2">
+      <ap-paginator> </ap-paginator>
+    </div>
+  </div>
+</div>
+<ng-container *ngIf="filtersChanged$ | async"></ng-container>
+<ng-container *ngIf="retryFlow$ | async"> </ng-container>

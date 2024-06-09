@@ -109,6 +109,17 @@ export class PlatformService {
     return this.isFeatureDisabled('customDomainsEnabled');
   }
 
+  issuesDisabled() {
+    return this.currentPlatform().pipe(
+      map((platform) => {
+        if (!platform) {
+          return true;
+        }
+        return !platform.flowIssuesEnabled;
+      })
+    );
+  }
+
   manageProjectsDisabled() {
     return this.isFeatureDisabled('manageProjectsEnabled');
   }

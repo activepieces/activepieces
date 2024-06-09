@@ -55,6 +55,13 @@ export class LinearClientWrapper {
   async deleteWebhook(webhookId: string) {
     return this.client.deleteWebhook(webhookId);
   }
+  async listTeamsTemplates(teamId: string, variables: Omit<LinearDocument.Team_TemplatesQueryVariables, "id">) {
+      const team = await this.client.team(teamId);
+      return team.templates(variables);
+  }
+  async rawRequest(query: string, variables?: Record<string, unknown>) {
+      return this.client.client.rawRequest(query, variables)
+  }
 }
 
 export function makeClient(apiKey: string): LinearClientWrapper {

@@ -4,12 +4,11 @@ import dayjs from 'dayjs'
 import { databaseConnection } from '../../../src/app/database/database-connection'
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
-import { encryptString } from '../../../src/app/helper/encryption'
+import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/tags/tag-entity'
 import {
-    Activity,
     ApiKey,
     ApplicationEvent,
     ApplicationEventName,
@@ -70,7 +69,7 @@ export const createMockUser = (user?: Partial<User>): User => {
         password: user?.password
             ? bcrypt.hashSync(user.password, 10)
             : faker.internet.password(),
-        status: user?.status ?? faker.helpers.enumValue(UserStatus), 
+        status: user?.status ?? faker.helpers.enumValue(UserStatus),
         platformRole: user?.platformRole ?? faker.helpers.enumValue(PlatformRole),
         verified: user?.verified ?? faker.datatype.boolean(),
         externalId: user?.externalId,
@@ -88,7 +87,7 @@ export const createMockOAuthApp = (
         platformId: oAuthApp?.platformId ?? apId(),
         pieceName: oAuthApp?.pieceName ?? faker.lorem.word(),
         clientId: oAuthApp?.clientId ?? apId(),
-        clientSecret: encryptString(faker.lorem.word()),
+        clientSecret: encryptUtils.encryptString(faker.lorem.word()),
     }
 }
 
@@ -171,6 +170,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
         fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
         emailAuthEnabled: platform?.emailAuthEnabled ?? true,
+        defaultLocale: platform?.defaultLocale,
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
         filteredPieceNames: platform?.filteredPieceNames ?? [],
         ssoEnabled: platform?.ssoEnabled ?? faker.datatype.boolean(),
@@ -181,6 +181,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         smtpPort: platform?.smtpPort ?? faker.internet.port(),
         smtpUser: platform?.smtpUser ?? faker.internet.userName(),
         smtpPassword: platform?.smtpPassword ?? faker.internet.password(),
+        flowIssuesEnabled: platform?.flowIssuesEnabled ?? faker.datatype.boolean(),
         smtpUseSSL: platform?.smtpUseSSL ?? faker.datatype.boolean(),
         smtpSenderEmail: platform?.smtpSenderEmail ?? faker.internet.email(),
         privacyPolicyUrl: platform?.privacyPolicyUrl ?? faker.internet.url(),
@@ -189,7 +190,6 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         embeddingEnabled: platform?.embeddingEnabled ?? faker.datatype.boolean(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         showPoweredBy: platform?.showPoweredBy ?? faker.datatype.boolean(),
-        showActivityLog: platform?.showActivityLog ?? faker.datatype.boolean(),
         managePiecesEnabled: platform?.managePiecesEnabled ?? faker.datatype.boolean(),
         manageProjectsEnabled: platform?.manageProjectsEnabled ?? faker.datatype.boolean(),
         manageTemplatesEnabled: platform?.manageTemplatesEnabled ?? faker.datatype.boolean(),
@@ -197,6 +197,8 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         apiKeysEnabled: platform?.apiKeysEnabled ?? faker.datatype.boolean(),
         customDomainsEnabled: platform?.customDomainsEnabled ?? faker.datatype.boolean(),
         projectRolesEnabled: platform?.projectRolesEnabled ?? faker.datatype.boolean(),
+        alertsEnabled: platform?.alertsEnabled ?? faker.datatype.boolean(),
+        premiumPieces: platform?.premiumPieces ?? [],
     }
 }
 
@@ -369,6 +371,7 @@ export const createMockPieceMetadata = (
         packageType:
             pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
         archiveId: pieceMetadata?.archiveId,
+        categories: pieceMetadata?.categories ?? [],
     }
 }
 
@@ -402,7 +405,7 @@ export const createMockCustomDomain = (
 
 export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
     const now = dayjs()
-    const twentyMinutesAgo = now.subtract(20, 'minutes')
+    const twentyMinutesAgo = now.subtract(5, 'minutes')
 
     return {
         id: otp?.id ?? apId(),
@@ -475,18 +478,6 @@ export const createMockFlowVersion = (
         state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
         updatedBy: flowVersion?.updatedBy,
         valid: flowVersion?.valid ?? faker.datatype.boolean(),
-    }
-}
-
-export const createMockActivity = (activity?: Partial<Activity>): Activity => {
-    return {
-        id: activity?.id ?? apId(),
-        created: activity?.created ?? faker.date.recent().toISOString(),
-        updated: activity?.updated ?? faker.date.recent().toISOString(),
-        projectId: activity?.projectId ?? apId(),
-        event: activity?.status ?? faker.lorem.words(),
-        message: activity?.message ?? faker.lorem.paragraph(),
-        status: activity?.status ?? faker.lorem.word(),
     }
 }
 

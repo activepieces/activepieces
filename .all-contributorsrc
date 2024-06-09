@@ -1037,6 +1037,105 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "founderblocks-sils",
+      "name": "Lasse Schuirmann",
+      "avatar_url": "https://avatars.githubusercontent.com/u/88160672?v=4",
+      "profile": "https://founderblocks.io/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Startouf",
+      "name": "Cyril Duchon-Doris",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7388889?v=4",
+      "profile": "https://about.me/cyril_duchon_doris",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Javiink",
+      "name": "Javiink",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43996484?v=4",
+      "profile": "https://github.com/Javiink",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "hharchani",
+      "name": "Harshit Harchani",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6430611?v=4",
+      "profile": "https://github.com/hharchani",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "MrAkber",
+      "name": "MrAkber",
+      "avatar_url": "https://avatars.githubusercontent.com/u/170118042?v=4",
+      "profile": "https://github.com/MrAkber",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "marek-slavicek",
+      "name": "marek-slavicek",
+      "avatar_url": "https://avatars.githubusercontent.com/u/136325104?v=4",
+      "profile": "https://github.com/marek-slavicek",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "hugh-codes",
+      "name": "hugh-codes",
+      "avatar_url": "https://avatars.githubusercontent.com/u/166336705?v=4",
+      "profile": "https://github.com/hugh-codes",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "alewis001",
+      "name": "Alex Lewis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3482446?v=4",
+      "profile": "https://github.com/alewis001",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "yuaanlin",
+      "name": "Yuanlin Lin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21105863?v=4",
+      "profile": "https://yual.in",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "AlaShibanAtKlo",
+      "name": "Ala Shiban",
+      "avatar_url": "https://avatars.githubusercontent.com/u/96867907?v=4",
+      "profile": "https://klo.dev",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "hamedsh",
+      "name": "hamsh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6043214?v=4",
+      "profile": "http://hamedsh.medium.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

@@ -1,20 +1,26 @@
 ---
 title: "Project Permissions"
-description: ""
+description: "Documentation on project permissions in Activepieces"
 icon: 'user'
 ---
 
-Activepieces uses RBAC in its projects. In each project, there can be many flows and users. These users get specific roles that say what they can do in the project.
+Activepieces utilizes Role-Based Access Control (RBAC) for managing permissions within projects. Each project consists of multiple flows and users, with each user assigned specific roles that define their actions within the project.
 
 The supported roles in Activepieces are:
 
 - **Admin:**
-  - View / Edit Flows
-  - View Runs
+  - Read/Edit Flows
+  - Read Runs
   - Manage Users
 
 - **Editor:**
-  - View / Edit Flows
+  - View/Edit Flows
+  - View/Edit Connections
+  - View Runs
+
+- **Operator:**
+  - Publish/Turn On and Off Flows only
+  - Edit Connections
   - View Runs
 
 - **Viewer:**

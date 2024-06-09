@@ -49,15 +49,17 @@ export const platformService = {
             ssoEnabled: false,
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
+            flowIssuesEnabled: false,
             gitSyncEnabled: false,
             managePiecesEnabled: false,
             manageTemplatesEnabled: false,
             manageProjectsEnabled: false,
             projectRolesEnabled: false,
-            showActivityLog: false,
             customDomainsEnabled: false,
             apiKeysEnabled: false,
             customAppearanceEnabled: false,
+            alertsEnabled: false,
+            premiumPieces: [],
         }
 
         const savedPlatform = await repo.save(newPlatform)
@@ -112,6 +114,7 @@ export const platformService = {
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,
             ),
+            ...spreadIfDefined('flowIssuesEnabled', params.flowIssuesEnabled),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('manageProjectsEnabled', params.manageProjectsEnabled),
             ...spreadIfDefined('managePiecesEnabled', params.managePiecesEnabled),
@@ -120,6 +123,8 @@ export const platformService = {
             ...spreadIfDefined('projectRolesEnabled', params.projectRolesEnabled),
             ...spreadIfDefined('customDomainsEnabled', params.customDomainsEnabled),
             ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
+            ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
+            ...spreadIfDefined('premiumPieces', params.premiumPieces),
             
         }
 
@@ -131,7 +136,17 @@ export const platformService = {
             id,
         })
 
-        assertPlatformExists(platform)
+        if (isNil(platform)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: id,
+                    entityType: 'Platform',
+                    message: 'Platform not found',
+                },
+            })
+        }
+        
         return platform
     },
 
@@ -141,20 +156,6 @@ export const platformService = {
         })
     },
 }
-
-const assertPlatformExists: (
-    platform: Platform | null
-) => asserts platform is Platform = (platform) => {
-    if (isNil(platform)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                message: 'platform not found',
-            },
-        })
-    }
-}
-
 
 type AddParams = {
     ownerId: UserId
@@ -177,9 +178,11 @@ type UpdateParams = UpdatePlatformRequestBody & {
     customDomainsEnabled?: boolean
     customAppearanceEnabled?: boolean
     manageProjectsEnabled?: boolean
+    flowIssuesEnabled?: boolean
     managePiecesEnabled?: boolean
     manageTemplatesEnabled?: boolean
     apiKeysEnabled?: boolean
     projectRolesEnabled?: boolean
-    
+    alertsEnabled?: boolean   
+    premiumPieces?: string[]
 }

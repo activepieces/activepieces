@@ -1,11 +1,13 @@
 import { jwtUtils } from '../../../helper/jwt-utils'
 import { getEdition } from '../../../helper/secret-helper'
+import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
+import { alertsService } from '../../alerts/alerts-service'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
-import { OtpType } from '@activepieces/ee-shared'
+import { AlertChannel, OtpType } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, isNil, User } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, User } from '@activepieces/shared'
 
 const EDITION = getEdition()
 
@@ -34,7 +36,7 @@ export const emailService = {
         })
 
         await emailSender.send({
-            email,
+            emails: [email],
             platformId: project.platformId,
             templateData: {
                 name: 'invitation-email',
@@ -46,7 +48,48 @@ export const emailService = {
         })
     },
 
-    async sendQuotaAlert({ email, projectId, resetDate, firstName, templateName }: SendQuotaAlertArgs): Promise<void> {
+    async sendIssueCreatedNotification({
+        projectId,
+        flowName,
+        createdAt,
+    }: IssueCreatedArgs): Promise<void> {
+        if (EDITION_IS_NOT_PAID) {
+            return
+        }
+        logger.info({
+            name: '[emailService#sendIssueCreatedNotification]',
+            projectId,
+            flowName,
+            createdAt,
+        })
+        const project = await projectService.getOneOrThrow(projectId)
+
+        const platform = await platformService.getOneOrThrow(project.platformId)
+        if (!platform.alertsEnabled) {
+            return
+        }
+        // TODO remove the hardcoded limit
+        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const issueUrl = await platformDomainHelper.constructUrlFrom({
+            platformId: project.platformId,
+            path: 'runs?limit=10#Issues',
+        })
+        await emailSender.send({
+            emails,
+            platformId: project.platformId,
+            templateData: {
+                name: 'issue-created',
+                vars: {
+                    issueUrl,
+                    flowName,
+                    createdAt,
+                },
+            },
+        })
+    },
+
+    async sendQuotaAlert({ projectId, resetDate, templateName }: SendQuotaAlertArgs): Promise<void> {
         if (EDITION_IS_NOT_CLOUD) {
             return
         }
@@ -54,19 +97,22 @@ export const emailService = {
         const project = await projectService.getOne(projectId)
         assertNotNullOrUndefined(project, 'project')
 
-        if (!isNil(project.platformId)) {
-            // Don't Inform the project users, as there should be a feature to manage billing by platform owners, If we send an emails to the project users It will confuse them since the email is not white labeled.
+        const platform = await platformService.getOneOrThrow(project.platformId)
+        if (!platform.alertsEnabled) {
             return
         }
 
+        // TODO remove the hardcoded limit
+        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+
         await emailSender.send({
-            email,
+            emails,
             platformId: project.platformId,
             templateData: {
                 name: templateName,
                 vars: {
                     resetDate,
-                    firstName,
                 },
             },
         })
@@ -85,7 +131,6 @@ export const emailService = {
             email: user.email,
             otp,
             userId: user.id,
-            firstName: user.email,
             type,
         })
 
@@ -110,13 +155,12 @@ export const emailService = {
                 name: 'reset-password',
                 vars: {
                     setupLink,
-                    firstName: user.firstName,
                 },
             },
         }
 
         await emailSender.send({
-            email: user.email,
+            emails: [user.email],
             platformId: platformId ?? undefined,
             templateData: otpToTemplate[type],
         })
@@ -130,10 +174,8 @@ type SendInvitationArgs = {
 }
 
 type SendQuotaAlertArgs = {
-    email: string
     projectId: string
     resetDate: string
-    firstName: string
     templateName: 'quota-50' | 'quota-90' | 'quota-100'
 }
 
@@ -142,4 +184,10 @@ type SendOtpArgs = {
     platformId: string | null
     otp: string
     user: User
+}
+
+type IssueCreatedArgs = {
+    projectId: string
+    flowName: string
+    createdAt: string
 }

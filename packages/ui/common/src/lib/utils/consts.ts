@@ -5,7 +5,17 @@ import {
 } from '@activepieces/shared';
 import { AuthenticationService, FlagService } from '../service';
 import { forkJoin, map, take } from 'rxjs';
-
+export type FeatureKey =
+  | 'PROJECTS'
+  | 'BRANDING'
+  | 'PIECES'
+  | 'TEMPLATES'
+  | 'API'
+  | 'SSO'
+  | 'AUDIT_LOGS'
+  | 'GIT_SYNC'
+  | 'ISSUES'
+  | 'ALERTS';
 export const unexpectedErrorMessage = $localize`An unexpected error occurred, please contact support`;
 export const codeGeneratorTooltip = $localize`Write code with assistance from AI`;
 export const disabledCodeGeneratorTooltip = $localize`Configure api key in the environment variables to generate code using AI`;
@@ -83,14 +93,7 @@ export const EMPTY_SPACE_BETWEEN_INPUTS_IN_PIECE_PROPERTIES_FORM = 24 + 'px';
 export const BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM = 18 + 'px';
 
 export const findHomePageRouteForRole = (role: ProjectMemberRole) => {
-  switch (role) {
-    case ProjectMemberRole.ADMIN:
-    case ProjectMemberRole.EDITOR:
-    case ProjectMemberRole.VIEWER:
-      return '/flows';
-    case ProjectMemberRole.EXTERNAL_CUSTOMER:
-      return '/activity';
-  }
+  return '/flows';
 };
 
 export const showPlatformDashboard$ = (
@@ -115,3 +118,8 @@ export const showPlatformDashboard$ = (
 };
 /**Three colors that fits with our design system to use as backgrounds */
 export const experimentalColors = ['#f5dc83', '#ed9090', '#90edb5'];
+export const executionsPageFragments = {
+  Runs: 'Runs',
+  Issues: 'Issues',
+};
+export const TEN_SECONDS = 10000;

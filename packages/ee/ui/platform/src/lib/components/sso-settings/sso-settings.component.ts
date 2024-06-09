@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Platform } from '@activepieces/shared';
+import { Platform, ThirdPartyAuthnProviderEnum } from '@activepieces/shared';
 import { PlatformService, fadeInUp400ms } from '@activepieces/ui/common';
 import { Observable } from 'rxjs';
-import { FederatedAuthnProviderEnum } from './federated-authn-provider.enum';
 
 @Component({
   selector: 'app-sso-settings',
@@ -15,7 +14,7 @@ export class SsoSettingsComponent {
   isLocked$: Observable<boolean>;
   addDomain$?: Observable<string>;
   removeDomain$?: Observable<void>;
-  FederatedAuthnProviderEnum = FederatedAuthnProviderEnum;
+  ThirdPartyAuthnProviderEnum = ThirdPartyAuthnProviderEnum;
   upgradeNoteTitle = $localize`Enable Single Sign On`;
   upgradeNote = $localize`Let your users sign in with your current SSO provider or give them self serve sign up access`;
 

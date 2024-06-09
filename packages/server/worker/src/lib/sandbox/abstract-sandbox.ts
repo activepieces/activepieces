@@ -1,10 +1,9 @@
-import { readFile } from 'node:fs/promises'
 import process from 'node:process'
-import { fileExists, logger, system, SystemProp } from '@activepieces/server-shared'
-import { EngineResponse, EngineResponseStatus } from '@activepieces/shared'
+import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { EngineOperation, EngineResponseStatus } from '@activepieces/shared'
 
 export abstract class AbstractSandbox {
-    protected static readonly sandboxRunTimeSeconds =
+    public static readonly sandboxRunTimeSeconds =
         system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
     protected static readonly nodeExecutablePath = process.execPath
 
@@ -21,12 +20,17 @@ export abstract class AbstractSandbox {
         return this._cacheKey
     }
 
-    public abstract recreate(): Promise<void>
+    public abstract cleanUp(): Promise<void>
     public abstract runOperation(
-        operation: string
+        operationType: string,
+        operation: EngineOperation
     ): Promise<ExecuteSandboxResult>
     public abstract getSandboxFolderPath(): string
-    protected abstract setupCache(): Promise<void>
+
+    protected getSandboxFilePath(subFile: string): string {
+        return `${this.getSandboxFolderPath()}/${subFile}`
+    }
+    protected abstract setupCache(cachedChanged: boolean): Promise<void>
 
     public async assignCache({
         cacheKey,
@@ -36,43 +40,14 @@ export abstract class AbstractSandbox {
             { boxId: this.boxId, cacheKey, cachePath },
             '[AbstractSandbox#assignCache]',
         )
-
+        const cacheChanged = this._cacheKey !== cacheKey
         this._cacheKey = cacheKey
         this._cachePath = cachePath
 
-        await this.setupCache()
+        await this.setupCache(cacheChanged)
     }
 
-    protected async parseMetaFile(): Promise<Record<string, unknown>> {
-        const metaFile = this.getSandboxFilePath('meta.txt')
-        const lines = (await readFile(metaFile, { encoding: 'utf-8' })).split('\n')
-        const result: Record<string, unknown> = {}
 
-        lines.forEach((line: string) => {
-            const parts = line.split(':')
-            result[parts[0]] = parts[1]
-        })
-
-        return result
-    }
-
-    protected async parseFunctionOutput(): Promise<EngineResponse<unknown>> {
-        const outputFile = this.getSandboxFilePath('output.json')
-
-        if (!(await fileExists(outputFile))) {
-            throw new Error(`Output file not found in ${outputFile}`)
-        }
-
-        const output = JSON.parse(
-            await readFile(outputFile, { encoding: 'utf-8' }),
-        )
-        logger.trace(output, '[Sandbox#parseFunctionOutput] output')
-        return output
-    }
-
-    protected getSandboxFilePath(subFile: string): string {
-        return `${this.getSandboxFolderPath()}/${subFile}`
-    }
 }
 
 export type SandboxCtorParams = {

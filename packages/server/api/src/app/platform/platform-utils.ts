@@ -4,42 +4,43 @@ import { getEdition } from '../helper/secret-helper'
 import { userService } from '../user/user-service'
 import { platformService } from './platform.service'
 import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, Principal, PrincipalType } from '@activepieces/shared'
+import { ApEdition, isNil, Principal, PrincipalType } from '@activepieces/shared'
 
 const edition = getEdition()
 
 
 export const resolvePlatformIdFromEmail = async (
-    platformId: string | null,
     userEmail: string,
 ): Promise<string | null> => {
     const shouldResolve = getEdition() === ApEdition.COMMUNITY
     if (!shouldResolve) {
-        return platformId
+        return null
     }
     const users = await userService.getUsersByEmail({ email: userEmail })
     if (users.length === 1) {
         return users[0].platformId
     }
-    return platformId
+    return null
 }
 
 export const resolvePlatformIdForAuthnRequest = async (
     userEmail: string,
     request: FastifyRequest,
 ): Promise<string | null> => {
-    const platformId = await resolvePlatformIdForRequest(request)
-    return resolvePlatformIdFromEmail(platformId, userEmail)
+    const platformId = await resolvePlatformIdFromEmail(userEmail)
+    return platformId ?? resolvePlatformIdForRequest(request)
 }
 
 export const resolvePlatformIdForRequest = async (
     request: FastifyRequest,
 ): Promise<string | null> => {
-    return (
-        (await extractPlatformIdFromAuthenticatedPrincipal(request.principal)) ??
-        (await getPlatformIdForHostname(request.hostname))
-    )
+    const platformId = await extractPlatformIdFromAuthenticatedPrincipal(request.principal)
+    if (!isNil(platformId)) {
+        return platformId
+    }
+    return getPlatformIdForHostname(request.hostname)
 }
+
 const extractPlatformIdFromAuthenticatedPrincipal = async (
     principal: Principal,
 ): Promise<string | null> => {

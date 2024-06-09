@@ -137,6 +137,11 @@ export class FlowExecutorContext {
         })
     }
 
+    public getStepOutput(stepName: string): StepOutput | undefined {
+        const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
+        return stateAtPath[stepName]
+    }
+
     public setStepDuration({ stepName, duration }: SetStepDurationParams): FlowExecutorContext {
         const steps = {
             ...this.steps,
@@ -218,7 +223,12 @@ export class FlowExecutorContext {
                     pauseMetadata: verdictResponse.pauseMetadata,
                 }
             }
-            case ExecutionVerdict.RUNNING:
+            case ExecutionVerdict.RUNNING: {
+                return {
+                    ...baseExecutionOutput,
+                    status: FlowRunStatus.RUNNING,
+                }
+            }
             case ExecutionVerdict.SUCCEEDED: {
                 const verdictResponse = this.verdictResponse
                 if (verdictResponse?.reason === FlowRunStatus.STOPPED) {

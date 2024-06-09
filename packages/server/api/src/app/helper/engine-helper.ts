@@ -7,7 +7,7 @@ import {
     getPiecePackage,
     pieceMetadataService,
 } from '../pieces/piece-metadata-service'
-import { hashObject } from './encryption'
+import { encryptUtils } from './encryption'
 import { getServerUrl } from './network-utils'
 import { getEdition, getWebhookSecret } from './secret-helper'
 import {
@@ -52,7 +52,7 @@ type GenerateWorkerTokenParams = {
     projectId: ProjectId
 }
 
-export type EngineHelperFlowResult = FlowRunResponse
+export type EngineHelperFlowResult = Pick<FlowRunResponse, 'status' | 'error'>
 
 export type EngineHelperTriggerResult<
     T extends TriggerHookType = TriggerHookType,
@@ -85,7 +85,7 @@ export type EngineHelperResponse<Result extends EngineHelperResult> = {
     standardOutput: string
 }
 
-const generateWorkerToken = ({
+export const generateWorkerToken = ({
     projectId,
 }: GenerateWorkerTokenParams): Promise<string> => {
     return accessTokenManager.generateToken({
@@ -109,20 +109,20 @@ function tryParseJson(value: unknown): unknown {
 }
 
 const execute = async <Result extends EngineHelperResult>(
-    operation: EngineOperationType,
+    operationType: EngineOperationType,
     sandbox: Sandbox,
     input: EngineOperation,
 ): Promise<EngineHelperResponse<Result>> => {
     try {
         logger.debug(
-            { operation, sandboxId: sandbox.boxId },
+            { operationType, sandboxId: sandbox.boxId },
             '[EngineHelper#execute]',
         )
 
         const sandboxPath = sandbox.getSandboxFolderPath()
 
         await fs.writeFile(`${sandboxPath}/input.json`, JSON.stringify(input))
-        const sandboxResponse = await sandbox.runOperation(operation)
+        const sandboxResponse = await sandbox.runOperation(operationType, input)
 
         sandboxResponse.standardOutput.split('\n').forEach((f) => {
             if (f.trim().length > 0) logger.debug({}, chalk.yellow(f))
@@ -440,7 +440,7 @@ async function getSandboxForAction(
                 type: SandBoxCacheType.CODE,
                 flowId,
                 name: action.name,
-                sourceCodeHash: hashObject(action.settings.sourceCode),
+                sourceCodeHash: encryptUtils.hashObject(action.settings.sourceCode),
                 codeSteps: [
                     {
                         name: action.name,

@@ -14,14 +14,11 @@
       "dark": "#121212"
     }
   },
-  "openapi": [
-    "/openapi.json"
-  ],
+  "openapi": ["/openapi.json"],
   "metadata": {
     "description": "Open source no-code business automation· Zapier open source alternative"
   },
   "topbarCtaButton": {
-    "type": "link",
     "name": "Get Started",
     "url": "https://www.activepieces.com/plans"
   },
@@ -65,16 +62,11 @@
   "navigation": [
     {
       "group": "Getting Started",
-      "pages": [
-        "getting-started/introduction",
-        "getting-started/principles"
-      ]
+      "pages": ["getting-started/introduction", "getting-started/principles"]
     },
     {
       "group": "Get Started",
-      "pages": [
-        "endpoints/overview"
-      ]
+      "pages": ["endpoints/overview"]
     },
     {
       "group": "Endpoints",
@@ -133,18 +125,12 @@
         {
           "group": "Pieces",
           "icon": "plug",
-          "pages": [
-            "endpoints/pieces/schema",
-            "endpoints/pieces/install"
-          ]
+          "pages": ["endpoints/pieces/schema", "endpoints/pieces/install"]
         },
         {
           "group": "Git Sync",
           "icon": "git",
-          "pages": [
-            "endpoints/git-repos/schema",
-            "endpoints/git-repos/pull"
-          ]
+          "pages": ["endpoints/git-repos/schema", "endpoints/git-repos/pull"]
         }
       ]
     },
@@ -176,7 +162,6 @@
           "icon": "gear",
           "pages": [
             "install/configurations/environment-variables",
-            "install/configurations/error-notifications",
             "install/configurations/setup-app-webhooks"
           ]
         },
@@ -188,9 +173,7 @@
     },
     {
       "group": "Getting Started",
-      "pages": [
-        "developers/overview"
-      ]
+      "pages": ["developers/overview"]
     },
     {
       "group": "Build a Piece",
@@ -250,6 +233,7 @@
     {
       "group": "Misc",
       "pages": [
+        "developers/misc/scale-pieces",
         "developers/misc/repo-structure",
         "developers/misc/private-fork"
       ]
@@ -281,18 +265,11 @@
     },
     {
       "group": "Operations",
-      "pages": [
-        "operations/git-sync",
-        "operations/audit-logs"
-      ]
+      "pages": ["operations/git-sync", "operations/audit-logs"]
     },
     {
       "group": "Security",
-      "pages": [
-        "security/practices",
-        "security/permissions",
-        "security/sso"
-      ]
+      "pages": ["security/practices", "security/permissions", "security/sso"]
     },
     {
       "group": "About",
@@ -337,8 +314,8 @@
       "destination": "/embedding/configuration/generate-jwt"
     },
     {
-      "source":"/embedding/embed-builder/embed-iframe",
-      "destination":"/embedding/configuration/initialize-embed"
+      "source": "/embedding/embed-builder/embed-iframe",
+      "destination": "/embedding/configuration/initialize-embed"
     }
   ]
 }

@@ -8,6 +8,7 @@ import { LocalesService } from '../../service/locales.service';
 import { LocalesEnum } from '@activepieces/shared';
 import { localesMap } from '../../utils/locales';
 import { showPlatformDashboard$ } from '../../utils/consts';
+import { TelemetryService } from '../../service';
 @Component({
   selector: 'ap-user-avatar',
   templateUrl: './user-avatar.component.html',
@@ -31,6 +32,7 @@ export class UserAvatarComponent implements OnInit {
     public authenticationService: AuthenticationService,
     private router: Router,
     private flagService: FlagService,
+    private telemetryService: TelemetryService,
     private localesService: LocalesService
   ) {
     this.showCommunity$ = this.flagService.isFlagEnabled(
@@ -60,6 +62,7 @@ export class UserAvatarComponent implements OnInit {
   }
 
   logout() {
+    this.telemetryService.reset();
     this.authenticationService.logout();
   }
 

@@ -3,14 +3,14 @@ import { CommonModule } from '@angular/common';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { Observable } from 'rxjs';
 import { RouterModule } from '@angular/router';
-type SideNavRoute = {
+export type SideNavRoute = {
   icon: string;
   caption: string;
   route?: string;
   effect?: () => void;
   showInSideNav$: Observable<boolean>;
   showLock$?: Observable<boolean>;
-  showNotification$?: Observable<boolean>;
+  showNotification$?: Observable<boolean | string>;
 };
 @Component({
   selector: 'app-sidenav-route-item',
@@ -51,9 +51,8 @@ type SideNavRoute = {
         } @if(sideNavRoute.showNotification$ | async) {
         <svg-icon
           [applyClass]="true"
-          class="ap-fill-disable ap-top-[1px] ap-right-[1px] ap-absolute"
-          [svgStyle]="{ width: '14px', height: '14px' }"
-          [matTooltip]="newUpdateMessage"
+          class="ap-fill-danger ap-top-[4px] ap-right-[3px] ap-absolute"
+          [svgStyle]="{ width: '8px', height: '8px' }"
           src="assets/img/custom/notification_important.svg"
         >
         </svg-icon>

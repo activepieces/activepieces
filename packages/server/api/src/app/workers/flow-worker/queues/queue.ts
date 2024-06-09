@@ -1,3 +1,5 @@
+import { QueueMode, system, SystemProp } from '@activepieces/server-shared'
+import { ApId, ScheduleOptions } from '@activepieces/shared'
 import {
     DelayedJobData,
     JobData,
@@ -5,9 +7,7 @@ import {
     RenewWebhookJobData,
     RepeatingJobData,
     WebhookJobData,
-} from '../job-data'
-import { QueueMode, system, SystemProp } from '@activepieces/server-shared'
-import { ApId, ScheduleOptions } from '@activepieces/shared'
+} from 'server-worker'
 
 export const queueMode = system.getOrThrow(SystemProp.QUEUE_MODE) as QueueMode
 

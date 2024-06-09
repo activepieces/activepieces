@@ -2,12 +2,12 @@ import { InputProperty } from './input';
 import { PieceAuthProperty } from './authentication';
 import { Type } from '@sinclair/typebox';
 
-// EXPORTED 
+// EXPORTED
 
 export { ApFile } from './input/file-property';
 export { DropdownProperty, MultiSelectDropdownProperty } from './input/dropdown/dropdown-prop';
 export { DropdownState } from './input/dropdown/common';
-export { DynamicProperties } from './input/dynamic-prop';
+export { DynamicProperties, DynamicProp } from './input/dynamic-prop';
 export { PropertyType } from './input/property-type';
 export { Property } from './input';
 export { PieceAuth } from './authentication';

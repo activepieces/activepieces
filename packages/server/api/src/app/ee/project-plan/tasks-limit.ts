@@ -7,27 +7,8 @@ import {
     ApEdition,
     ErrorCode,
     ProjectId,
-    ProjectPlan,
 } from '@activepieces/shared'
 
-
-async function limitTasksPerMonth({
-    projectPlan,
-    consumedTasks,
-}: {
-    projectPlan: ProjectPlan
-    consumedTasks: number
-}): Promise<void> {
-    if (consumedTasks > projectPlan.tasks) {
-        throw new ActivepiecesError({
-            code: ErrorCode.QUOTA_EXCEEDED,
-            params: {
-                metric: 'tasks',
-                quota: projectPlan.tasks,
-            },
-        })
-    }
-}
 
 async function limit({ projectId }: { projectId: ProjectId }): Promise<void> {
     const edition = getEdition()
@@ -42,10 +23,15 @@ async function limit({ projectId }: { projectId: ProjectId }): Promise<void> {
             return
         }
         const consumedTasks = await projectUsageService.increaseTasks(projectId, 0)
-        await limitTasksPerMonth({
-            consumedTasks,
-            projectPlan,
-        })
+        if (consumedTasks > projectPlan.tasks) {
+            throw new ActivepiecesError({
+                code: ErrorCode.QUOTA_EXCEEDED,
+                params: {
+                    metric: 'tasks',
+                    quota: projectPlan.tasks,
+                },
+            })
+        }
     }
     catch (e) {
         if (

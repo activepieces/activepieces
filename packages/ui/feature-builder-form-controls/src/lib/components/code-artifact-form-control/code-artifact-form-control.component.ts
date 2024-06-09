@@ -2,7 +2,6 @@ import {
   AfterViewInit,
   Component,
   EventEmitter,
-  OnInit,
   Output,
   ViewChild,
 } from '@angular/core';
@@ -14,7 +13,7 @@ import {
   FormGroup,
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, tap, map } from 'rxjs';
+import { Observable, tap, map, skip } from 'rxjs';
 import {
   CodeArtifactControlFullscreenComponent,
   CodeArtifactControlFullscreenData,
@@ -39,7 +38,7 @@ export interface CodeArtifactForm {
   ],
 })
 export class CodeArtifactFormControlComponent
-  implements ControlValueAccessor, OnInit, AfterViewInit
+  implements ControlValueAccessor, AfterViewInit
 {
   updateComponentValue$: Observable<Partial<SourceCode>>;
   @ViewChild('tooltip') tooltip: MatTooltip;
@@ -62,10 +61,14 @@ export class CodeArtifactFormControlComponent
       packageJson: new FormControl('', { nonNullable: true }),
       code: new FormControl('', { nonNullable: true }),
     });
+    this.updateComponentValue$ = this.codeArtifactForm.valueChanges.pipe(
+      skip(1),
+      tap((artifact) => {
+        this.onChange(artifact);
+      })
+    );
   }
-  ngOnInit(): void {
-    this.setupValueListener();
-  }
+
   ngAfterViewInit(): void {
     setTimeout(() => {
       this.tooltip.show();
@@ -88,7 +91,7 @@ export class CodeArtifactFormControlComponent
 
   writeValue(artifact: SourceCode): void {
     if (artifact && (artifact.code || artifact.packageJson)) {
-      this.codeArtifactForm.patchValue(artifact, { emitEvent: false });
+      this.codeArtifactForm.setValue(artifact, { emitEvent: false });
     }
   }
 
@@ -120,13 +123,5 @@ export class CodeArtifactFormControlComponent
   /**Check ngx-monaco-editor-v2 code, you will see the editor gets reinitialised once the options are changed, no public api to do that otherwise. */
   private reinitialiseEditor() {
     this.codeEditorOptions = JSON.parse(JSON.stringify(this.codeEditorOptions));
-  }
-
-  setupValueListener() {
-    this.updateComponentValue$ = this.codeArtifactForm.valueChanges.pipe(
-      tap((artifact) => {
-        this.onChange(artifact);
-      })
-    );
   }
 }

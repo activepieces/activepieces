@@ -80,6 +80,8 @@ import { MARKED_OPTIONS, MarkdownModule, MarkedRenderer } from 'ngx-markdown';
 import { AbstractFormControlCasterPipe } from './pipe/abstract-form-control-caster.pipe';
 import { VersionHistoryIndicatorComponent } from './components/ap-version-status-indicator/ap-version-history-indicator.component';
 import { InsideBuilderDatePipe } from './pipe/inside-builder-date.pipe';
+import { ConfirmActionDialogComponent } from './components/dialogs/confirm-action-dialog/confirm-action-dialog.component';
+import { DurationFormatterPipe } from './pipe';
 
 const exportedImports = [
   CommonModule,
@@ -116,6 +118,7 @@ const exportedImports = [
   AbstractFormControlCasterPipe,
   VersionHistoryIndicatorComponent,
   InsideBuilderDatePipe,
+  DurationFormatterPipe,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,
@@ -156,6 +159,7 @@ const exportedDeclarations = [
   ImportFlowDialogComponent,
   DropdownPropertySearchPipe,
   LetterIconComponent,
+  ConfirmActionDialogComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

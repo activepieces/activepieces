@@ -2,9 +2,10 @@ import { FileId } from '../file/file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { FlowVersionId } from '../flows/flow-version'
-import { ProjectId } from '../project'
+import { ProjectId, ProjectMemberRole } from '../project'
 import { UserId } from '../user'
 import { ApId } from './id-generator'
+import { Permission } from './security'
 
 export class ActivepiecesError extends Error {
     constructor(public error: ErrorParams, message?: string) {
@@ -35,6 +36,7 @@ type ErrorParams =
     | InvalidCredentialsErrorParams
     | InvalidJwtTokenErrorParams
     | InvalidOtpParams
+    | InvalidSAMLResponseParams
     | InvitationOnlySignUpParams
     | JobRemovalFailureErrorParams
     | OpenAiFailedErrorParams
@@ -57,6 +59,7 @@ type ErrorParams =
     | UserIsInActiveErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
+    | ExistingAlertChannelErrorParams
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -92,6 +95,8 @@ ErrorCode.PERMISSION_DENIED,
 {
     userId: UserId
     projectId: ProjectId
+    role: ProjectMemberRole
+    permission: Permission | undefined
 }
 >
 
@@ -336,6 +341,20 @@ ErrorCode.AUTHENTICATION,
 }
 >
 
+export type InvalidSAMLResponseParams = BaseErrorParams<
+ErrorCode.INVALID_SAML_RESPONSE,
+{
+    message: string
+}
+>
+
+export type ExistingAlertChannelErrorParams = BaseErrorParams<
+ErrorCode.EXISTING_ALERT_CHANNEL,
+{
+    email: string
+}
+>
+
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
 export enum ErrorCode {
@@ -349,6 +368,7 @@ export enum ErrorCode {
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
+    EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
     FLOW_FORM_NOT_FOUND = 'FLOW_FORM_NOT_FOUND',
     FILE_NOT_FOUND = 'FILE_NOT_FOUND',
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
@@ -364,6 +384,7 @@ export enum ErrorCode {
     INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
     INVALID_OR_EXPIRED_JWT_TOKEN = 'INVALID_OR_EXPIRED_JWT_TOKEN',
     INVALID_OTP = 'INVALID_OTP',
+    INVALID_SAML_RESPONSE = 'INVALID_SAML_RESPONSE',
     INVITATION_ONLY_SIGN_UP = 'INVITATION_ONLY_SIGN_UP',
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',

@@ -1,17 +1,19 @@
 <div class="ap-h-full ap-pt-2">
   @if (platform$ | async; as platform) {
   @if (isLocked$ | async) {
-  <ap-upgrade-note [insideTab]="true" class="ap-mb-2" [featureNoteTitle]="upgradeNoteTitle"
-    [featureNote]="upgradeNote" docsLink="https://www.activepieces.com/docs/security/sso#supported-sso-providers"
+  <ap-upgrade-note [insideTab]="true" class="ap-mb-2" [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote"
+    docsLink="https://www.activepieces.com/docs/security/sso#supported-sso-providers"
     featureKey="SSO"></ap-upgrade-note>
 
   } @else{
   <div class="ap-flex ap-max-w-[56.25rem] ap-flex-col ap-gap-4">
     <app-allowed-email-domains-list [platform]="platform"></app-allowed-email-domains-list>
     <app-configure-confederated-authn-card [platform]="platform"
-      [federatedAuthnProvider]="FederatedAuthnProviderEnum.Google"></app-configure-confederated-authn-card>
+      [federatedAuthnProvider]="ThirdPartyAuthnProviderEnum.GOOGLE"></app-configure-confederated-authn-card>
     <app-configure-confederated-authn-card [platform]="platform"
-      [federatedAuthnProvider]="FederatedAuthnProviderEnum.GitHub"></app-configure-confederated-authn-card>
+      [federatedAuthnProvider]="ThirdPartyAuthnProviderEnum.GITHUB"></app-configure-confederated-authn-card>
+    <app-configure-confederated-authn-card [platform]="platform"
+      [federatedAuthnProvider]="ThirdPartyAuthnProviderEnum.SAML"></app-configure-confederated-authn-card>
     <app-configure-allowing-email-logins-card [platform]="platform"></app-configure-allowing-email-logins-card>
   </div>
   }
