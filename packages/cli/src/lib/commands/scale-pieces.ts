@@ -35,8 +35,6 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
     chalk.green(`Generating ${pieceName} actions, please be patient...`)
   );
 
-  console.log(openAPISpec.info);
-  
   const actions = await generateActions(openAPISpec, authDisplayName, baseURL);
 
   if (actions.length > 0 && !existsSync(actionsDir)) {
@@ -87,9 +85,6 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
     });
   `;
 
-  console.log(actions);
-  console.log(pieceDefinition);
-  
   writeFileSync(path.join(pieceDir, 'index.ts'), pieceDefinition);
   console.log(chalk.green(`Enjoy ${pieceName} at ${pieceDir}. ❤️`));
 };
@@ -117,7 +112,6 @@ const handleAPIConversion = async (pathOrUrl) => {
 
   try {
     await convertOpenAPIToPiece(openAPISpec);
-    console.log('Piece converted successfully.');
   } catch (error) {
     console.error('Failed to convert piece:', error.message);
   }

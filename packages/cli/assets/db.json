@@ -2,7 +2,7 @@
   "Airtable": {
     "swagger": "2.0",
     "info": {
-      "title": "Airtable",
+      "title": "AirtableTest",
       "description": "Connector to read and write data in Airtable. Airtable is a cloud-based spreadsheet-like service that enables users to collaborate and manage different types of data. It is easy-to-use and can act as database or CRM (Customer Relationship Management). It can also be used as project planning, tracking inventory.",
       "version": "1.0",
       "contact": {

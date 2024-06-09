@@ -18,16 +18,10 @@ const generateActions = async (
       }
     }
   }
-  console.log(`Total requests: ${requests.length}`);
 
   const completions = [];
   for (let i = 0; i < requests.length; i += CHUNK_SIZE) {
     const chunk = requests.slice(i, i + CHUNK_SIZE);
-    console.log(
-      `Processing chunk ${i / CHUNK_SIZE + 1} of ${Math.ceil(
-        requests.length / CHUNK_SIZE
-      )}`
-    );
 
     const chunkCompletions = await Promise.all(
       chunk.map(async (obj) => {
@@ -56,8 +50,6 @@ const generateActions = async (
     completions.push(...chunkCompletions.filter(Boolean));
   }
 
-  console.log(completions.length, 'completions');
-  
   return completions?.map((action) =>
     createActionTemplate(action, baseURL, authDisplayName)
   );
