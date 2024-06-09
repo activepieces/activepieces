@@ -34,9 +34,10 @@ export class DashboardContainerComponent {
   showPlatform$: Observable<boolean>;
   @ViewChild('contactSalesSlideout') contactSalesSlideout: MatSidenav;
   contactSalesState$: Observable<boolean>;
-  isVersionMatch$?: Observable<boolean>;
   newUpdateMessage = $localize`New update available`;
   issuesCountCheck$: Observable<number>;
+  isVersionMatch$: Observable<boolean>;
+
   constructor(
     private flagService: FlagService,
     private embeddedService: EmbeddingService,

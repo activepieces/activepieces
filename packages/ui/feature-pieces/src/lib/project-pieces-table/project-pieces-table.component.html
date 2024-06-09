@@ -6,7 +6,7 @@
       @if (installPieceEnabled$| async) {
       <ap-button [disabled]="(isAdmin$ | async) === false"
         [tooltipText]="(isAdmin$ | async) === false ? permissionMessage : ''" btnColor="primary"
-        btnSize='medium' (click)="installPiece()" i18n>
+        btnSize='medium' (buttonClicked)="installPiece()" i18n>
         <mat-icon fontIcon="add"></mat-icon>
         <span>
           Install Piece
@@ -16,7 +16,7 @@
       @if (managePiecesEnabled$| async) {
       <ap-button [disabled]="(isAdmin$ | async) === false"
         [tooltipText]="(isAdmin$ | async) === false ? permissionMessage : ''" btnColor="primary"
-        btnSize='medium' (click)="managePieces()">
+        btnSize='medium' (buttonClicked)="managePieces()">
         <span>
           Manage Pieces
         </span>

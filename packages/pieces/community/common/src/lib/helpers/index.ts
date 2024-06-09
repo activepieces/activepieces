@@ -12,15 +12,19 @@ export const getAccessTokenOrThrow = (auth: OAuth2PropertyValue | undefined): st
   return accessToken;
 };
 
-export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
+export function createCustomApiCallAction({ auth, baseUrl, authMapping, description, displayName, name }: {
   auth?: PieceAuthProperty,
   baseUrl: (auth?: unknown) => string,
-  authMapping?: (auth: unknown) => HttpHeaders
+  authMapping?: (auth: unknown) => HttpHeaders,
+//   add description as a parameter that can be null
+  description?: string | null,
+  displayName?: string | null,
+  name?: string | null
 }) {
   return createAction({
-    name: 'custom_api_call',
-    displayName: 'Custom API Call',
-    description: 'Send a custom API call to a specific endpoint',
+    name: name ? name : 'custom_api_call',
+    displayName: displayName ? displayName : 'Custom API Call',
+    description: description ? description : 'Make a custom API call to a specific endpoint',
     auth: auth ? auth : undefined,
     requireAuth: auth ? true : false,
     props: {

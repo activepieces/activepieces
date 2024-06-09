@@ -6,10 +6,13 @@
         <div *ngIf="(isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false"
             class="ap-absolute ap-z-50  ap-w-full ap-border-b ">
             <div class="ap-flex ap-items-center  ap-my-5 ap-mx-[1.875rem]">
-                <app-project-switcher
-                    *ngIf="(isInPlatformRoute$ | async) === undefined || (isInPlatformRoute$ | async) === false "></app-project-switcher>
-
-                <div class="ap-typography-headline-5 !ap-font-semibold" *ngIf="(isInPlatformRoute$ | async) === true"
+                @if((isInPlatformRoute$ | async) === undefined || (isInPlatformRoute$ | async) === false ) {
+                    <app-project-switcher
+                    ></app-project-switcher>
+                }
+             
+                @if((isInPlatformRoute$ | async) === true) {
+                    <div class="ap-typography-headline-5 !ap-font-semibold" 
                     i18n>Admin Console</div>
 
                 <div class="ap-flex-grow"></div>
@@ -51,6 +54,9 @@
                     </div>
 
                 </ap-button>
+                }
+                <div class="ap-flex-grow"></div>  
+                <app-admin-console-button [isInPlatformRoute]="(isInPlatformRoute$ | async | defaultFalse)" [showPlatform]="showPlatform$ | async | defaultFalse"></app-admin-console-button>            
                 <div class="ap-flex ap-mx-3 ">
                     <app-tasks-progress></app-tasks-progress>
                 </div>
@@ -62,8 +68,12 @@
             [class.ap-pt-7.5]="((isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false)">
 
             <router-outlet></router-outlet>
-            <div *ngIf="showPoweredByAp$ | async" class="ap-h-[70px] ap-w-full" #paddingForStickyNote>
-            </div>
+            @if(showPoweredByAp$ | async)
+            {
+                <div  class="ap-h-[70px] ap-w-full" #paddingForStickyNote>
+                </div>
+            }
+           
         </div>
     </mat-sidenav-content>
 
@@ -73,12 +83,15 @@
     </mat-sidenav>
 
 </mat-sidenav-container>
-
-<div *ngIf="showPoweredByAp$ | async"
+@if(showPoweredByAp$ | async)
+{
+    <div
     class="ap-sticky  ap-bg-transparent  ap-bottom-0 ap-pb-5 ap-z-50 ap-mr-5 ap-ml-28">
     <div class="ap-flex ap-justify-end  ap-bg-transparent">
         <ap-powered-by-activepieces></ap-powered-by-activepieces>
     </div>
 </div>
+}
+
 
 @if(issuesCountCheck$ | async) {}

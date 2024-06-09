@@ -18,7 +18,7 @@ import {
 import { LottieModule } from 'ngx-lottie';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { MatDialogRef } from '@angular/material/dialog';
-import { RolesDisplayNames } from '@ee/ui/project-members/src/lib/utils';
+import { RolesDisplayNames } from 'ee-project-members';
 
 @Component({
   templateUrl: './invite-user-dialog.component.html',

@@ -6,11 +6,7 @@ import {
 } from '@angular/core';
 import { ProjectMembersTableDataSource } from './project-members.datasource';
 import { ProjectMemberService } from '../service/project-members.service';
-import { Observable, Subject, map, startWith, tap, switchMap } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
-import { InviteProjectMemberDialogComponent } from '../dialogs/invite-project-member-dialog/invite-project-member.component';
-import { BillingService, UpgradeDialogData } from 'ee-billing-ui';
-import { UpgradeDialogComponent } from 'ee-billing-ui';
+import { Observable, Subject, map, startWith, tap } from 'rxjs';
 import {
   ApPaginatorComponent,
   AuthenticationService,
@@ -45,8 +41,6 @@ export class ProjectMembersTableComponent implements OnInit {
   upgradeNote = $localize`Invite your teammates with the right roles and permissions to collaborate on building flows and debugging them`;
 
   constructor(
-    private matDialog: MatDialog,
-    private billingService: BillingService,
     private projectService: ProjectService,
     private projectMemberService: ProjectMemberService,
     private authenticationService: AuthenticationService,
@@ -77,32 +71,7 @@ export class ProjectMembersTableComponent implements OnInit {
     if (this.inviteLoading) {
       return;
     }
-    this.inviteLoading = true;
-    this.dialogClosed$ = this.billingService.checkTeamMembers().pipe(
-      switchMap((billing) => {
-        this.inviteLoading = false;
-        if (billing.exceeded) {
-          const data: UpgradeDialogData = {
-            limitType: 'team',
-            limit: billing.limit,
-          };
-          return this.matDialog
-            .open(UpgradeDialogComponent, { data })
-            .afterClosed()
-            .pipe(map(() => void 0));
-        }
-
-        return this.matDialog
-          .open(InviteProjectMemberDialogComponent)
-          .afterClosed()
-          .pipe(
-            tap(() => {
-              this.refreshTableAtCurrentCursor$.next(true);
-            }),
-            map(() => void 0)
-          );
-      })
-    );
+    // TODO URGENT FIX
   }
 
   deleteInvitation(invitationId: string) {

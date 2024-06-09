@@ -216,6 +216,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         customDomainsEnabled: platform?.customDomainsEnabled ?? faker.datatype.boolean(),
         projectRolesEnabled: platform?.projectRolesEnabled ?? faker.datatype.boolean(),
         alertsEnabled: platform?.alertsEnabled ?? faker.datatype.boolean(),
+        premiumPieces: platform?.premiumPieces ?? [],
     }
 }
 
@@ -372,6 +373,7 @@ export const createMockPieceMetadata = (
         packageType:
             pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
         archiveId: pieceMetadata?.archiveId,
+        categories: pieceMetadata?.categories ?? [],
     }
 }
 
