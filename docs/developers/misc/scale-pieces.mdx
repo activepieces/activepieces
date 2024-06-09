@@ -1,0 +1,40 @@
+---
+title: 'AI Piece Generation'  
+icon: 'rocket'  
+---
+
+<Tip>
+Currently, this is in **BETA**. We are actively looking for feedback and contributors. Please reach out to us on Discord or GitHub.
+</Tip>
+
+<Info>  
+To use the CLI, you need to clone the repository and use it with npm.  
+</Info>  
+
+## Generate Pieces Using AI
+
+You can use the CLI to generate the following pieces: authentication and actions. The CLI supports OpenAPI specifications in both JSON and YAML formats.
+
+### From OpenAPI URL
+
+You can obtain an OpenAPI specification from sources like [apis.guru](https://apis.guru/?q=slack) using the following command:
+
+```bash
+AP_OPENAI_KEY=YOUR_OPENAI_KEY npm run cli pieces scale https://api.apis.guru/v2/specs/slack.com/1.7.0/openapi.json
+```
+
+### From a Static File
+
+You can also supply an OpenAPI specification from a file path:
+
+```bash
+npm run cli pieces scale openAPIs/trello.json
+```
+
+<Tip>  
+**Note:** You will find your generated piece under /packages/pieces/community/piece-name  
+</Tip>  
+
+> The last command expects that you are storing openAPIs/trello.json in the root directory of the activepieces repository.
+
+![Scale Pieces](/resources/scale-pieces-cli.gif)
