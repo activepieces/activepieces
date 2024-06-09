@@ -14,6 +14,23 @@ export const CreateKeyRequestBody = Type.Object({
 
 export type CreateKeyRequestBody = Static<typeof CreateKeyRequestBody>
 
+type ActivationKeyFeatures = { 
+    ssoEnabled: boolean
+    gitSyncEnabled: boolean
+    showPoweredBy: boolean
+    embeddingEnabled: boolean
+    auditLogEnabled: boolean
+    customAppearanceEnabled: boolean
+    manageProjectsEnabled: boolean
+    managePiecesEnabled: boolean
+    manageTemplatesEnabled: boolean
+    apiKeysEnabled: boolean
+    customDomainsEnabled: boolean
+    projectRolesEnabled: boolean
+    flowIssuesEnabled: boolean
+    alertsEnabled: boolean
+    premiumPieces: string[]
+}
 export type ActivationKeyEntity = {
     id: string
     expires_at: string
@@ -22,25 +39,26 @@ export type ActivationKeyEntity = {
     created_at: string
     key: string
     isTrial: boolean
-    features: { 
-        ssoEnabled: boolean,
-        gitSyncEnabled: boolean,
-        showPoweredBy: boolean,
-        embeddingEnabled: boolean,
-        auditLogEnabled: boolean,
-        customAppearanceEnabled: boolean,
-        manageProjectsEnabled: boolean,
-        managePiecesEnabled: boolean,
-        manageTemplatesEnabled: boolean,
-        apiKeysEnabled: boolean,
-        customDomainsEnabled: boolean,
-        projectRolesEnabled: boolean,
-        flowIssuesEnabled: boolean,
-        alertsEnabled: boolean,
-        premiumPieces: string[]
-    }
+    features: ActivationKeyFeatures
 }
 
+export const turnedOffFeatures: ActivationKeyFeatures = {
+    ssoEnabled: false,
+    gitSyncEnabled: false,
+    showPoweredBy: false,
+    embeddingEnabled: false,
+    auditLogEnabled: false,
+    customAppearanceEnabled: false,
+    manageProjectsEnabled: false,
+    managePiecesEnabled: false,
+    manageTemplatesEnabled: false,
+    apiKeysEnabled: false,
+    customDomainsEnabled: false,
+    projectRolesEnabled: false,
+    flowIssuesEnabled: false,
+    alertsEnabled: false,
+    premiumPieces: [],
+}
 const GetKeyRequestParams =  Type.Object({
     key: Type.String(),
 })

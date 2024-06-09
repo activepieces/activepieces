@@ -3,7 +3,7 @@ import { flagService } from '../../../../flags/flag.service'
 import { platformService } from '../../../../platform/platform.service'
 import { projectService } from '../../../../project/project-service'
 import { userService } from '../../../../user/user-service'
-import { enforceLimits } from '../../../helper/license-validator'
+import { activationKeysService } from '../../../activation-keys/activation-keys-service'
 import { authenticationHelper } from './authentication-helper'
 import { ApFlagId } from '@activepieces/shared'
 
@@ -51,7 +51,7 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             platformId: platform.id,
         })
 
-        await enforceLimits()
+        await activationKeysService.activationKeyCheck()
 
         await flagService.save({
             id: ApFlagId.PLATFORM_CREATED,

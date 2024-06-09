@@ -1,3 +1,4 @@
+import { activationKeysService } from '../../../ee/activation-keys/activation-keys-service'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
@@ -19,6 +20,8 @@ export const communityAuthenticationServiceHooks: AuthenticationServiceHooks = {
             ownerId: user.id,
             name: DEFAULT_PLATFORM_NAME,
         })
+
+        await activationKeysService.activationKeyCheck()
         
         await projectService.create({
             displayName: `${user.firstName}'s Project`,

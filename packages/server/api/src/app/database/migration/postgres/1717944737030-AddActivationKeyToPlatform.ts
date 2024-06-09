@@ -8,10 +8,7 @@ export class AddActivationKeyToPlatform1717944737030 implements MigrationInterfa
             ALTER TABLE "platform"
             ADD "activationKey" character varying
         `)
-        await queryRunner.query(`
-            ALTER TABLE "project"
-            ADD CONSTRAINT "fk_project_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE RESTRICT ON UPDATE RESTRICT
-        `)
+  
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

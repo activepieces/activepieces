@@ -2,9 +2,9 @@ import { FastifyInstance } from 'fastify'
 import { setupApp } from './app/app'
 import { databaseConnection } from './app/database/database-connection'
 import { seedDevData } from './app/database/seeds/dev-seeds'
-import { checkLicenseInEnv, enforceLimits } from './app/ee/helper/license-validator'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
+import { activationKeysService } from './app/ee/activation-keys/activation-keys-service'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
@@ -38,8 +38,8 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
                 `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
             )
         }
-        await checkLicenseInEnv()
-        await enforceLimits()
+     
+        await activationKeysService.activationKeyCheck()
     }
     catch (err) {
         logger.error(err)
@@ -78,7 +78,6 @@ const main = async (): Promise<void> => {
     await databaseConnection.runMigrations()
     await seedDevData()
     const app = await setupApp()
-
     process.on('SIGINT', () => {
         stop(app).catch((e) => logger.error(e, '[Main#stop]'))
     })
