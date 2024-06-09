@@ -36,7 +36,7 @@ export class AlertsTableComponent implements OnInit {
   readonly permissionToAddMessage = $localize`You don\'t have permissions to add email`;
   readonly permissionToDeleteMessage = $localize`You don\'t have permissions to delete email`;
   readonly betaNote =
-    'Note: This feature is in <strong>BETA</strong> and will only be <strong>Free</strong> during the <strong>BETA</strong> period.';
+    'Note: Basic alerts are always free, and advanced alerts will only be <strong>Free</strong> during the <strong>BETA</strong> period.';
   upgradeNoteTitle = $localize`Unlock Alerts`;
   upgradeNote = $localize`Stay up to date with your flows, quota limits and updates with Alerts`;
   displayedColumns: string[] = ['receiver', 'action'];
