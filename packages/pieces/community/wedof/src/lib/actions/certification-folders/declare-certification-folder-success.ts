@@ -27,7 +27,7 @@ export const declareCertificationFolderSuccess = createAction({
       required: true,
     }),
     digitalProofLink: Property.ShortText({
-        displayName: "Lieu de passage de l'examen",
+        displayName: "Lien vers la preuve numérique de l'obtention de la certification",
         required: false,
       }),
     gradePass: wedofCommon.gradePass,

@@ -37,6 +37,10 @@ export const sendFile = createAction({
         displayName: 'Titre du fichier',
         required: false,
     }),
+    typeId: Property.Number({
+      displayName: "Type de fichier",
+      required: true,
+  }),
     file: Property.File({
         displayName: "Fichier a envoyer",
         required: true,
@@ -46,6 +50,7 @@ export const sendFile = createAction({
   async run(context) {
     const message = {
         title: context.propsValue.title ?? null,
+        typeId: context.propsValue.typeId,
         file: context.propsValue.file,
       };
       return (

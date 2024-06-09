@@ -8,7 +8,7 @@ export const declareCertificationFolderFailed = createAction({
   name: 'declareCertificationFolderFailed',
   displayName: "Passer un dossier de certification à l’état : Échoué",
   description:
-    "Change l'état d'un dossier de crtification vers : Échoué",
+    "Change l'état d'un dossier de certification vers : Échoué",
     props: {
         Id: Property.ShortText({
           displayName: 'N° du dossier de certification',

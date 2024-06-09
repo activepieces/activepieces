@@ -3,16 +3,16 @@ import { wedofAuth } from '../../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
-export const getCertificationFolderDocuments = createAction({
+export const getRegistrationFolderDocuments = createAction({
   auth: wedofAuth,
-  name: 'getCertificationFolderDocuments',
-  displayName: "Liste des documents d'un dossier de certification",
-  description: "Récupérer la list de documents d'un dossier de certification à partir de son n° de dossier",
+  name: 'getRegistrationFolderDocuments',
+  displayName: "Liste des documents d'un dossier de formation",
+  description: "Récupérer la list de documents d'un dossier de formation à partir de son n° de dossier",
   props: {
     Id: Property.ShortText({
-      displayName: 'N° du dossier de certification',
+      displayName: 'N° du dossier de formation',
       description:
-        'Sélectionner la propriété {Id} du dossier de certification',
+        'Sélectionner la propriété {Id} du dossier de formation',
       required: true,
     }),
   },
@@ -23,7 +23,7 @@ export const getCertificationFolderDocuments = createAction({
         method: HttpMethod.GET,
         url:
           wedofCommon.baseUrl +
-          '/certificationFolders/' +
+          '/registrationFolders/' +
           context.propsValue.Id +'/files',
         headers: {
           'Content-Type': 'application/json',
