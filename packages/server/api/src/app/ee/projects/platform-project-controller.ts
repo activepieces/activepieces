@@ -50,7 +50,9 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         assertNotNullOrUndefined(platformId, 'platformId')
         return platformProjectService.getAll({
             externalId: request.query.externalId,
-            principal: request.principal,
+            principalType: request.principal.type,
+            principalId: request.principal.id,
+            platformId: request.principal.platform.id,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
         })
@@ -59,7 +61,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     app.post('/:id', UpdateProjectRequest, async (request) => {
         const project = await projectService.getOneOrThrow(request.params.id)
         const haveTokenForTheProject = request.principal.projectId === project.id
-        const ownThePlatform = isPlatformAdmin(request.principal, project.platformId)
+        const ownThePlatform = await isPlatformAdmin(request.principal, project.platformId)
         if (!haveTokenForTheProject && !ownThePlatform) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,

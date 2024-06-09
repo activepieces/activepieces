@@ -1,18 +1,17 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { CreateUserRequestBody, SeekPage, UpdateUserRequestBody, User, UserResponse } from '@activepieces/shared';
-import { Observable } from 'rxjs';
+import {
+  SeekPage,
+  UpdateUserRequestBody,
+  UserResponse,
+} from '@activepieces/shared';
 import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PlatformUserService {
-  constructor(private http: HttpClient) { }
-
-  createUser(request: CreateUserRequestBody) : Observable<User>{
-    return this.http.post<User>(`${environment.apiUrl}/users`, request);
-  }
+  constructor(private http: HttpClient) {}
 
   listUsers() {
     return this.http.get<SeekPage<UserResponse>>(`${environment.apiUrl}/users`);

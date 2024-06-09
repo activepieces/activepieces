@@ -10,7 +10,7 @@ import {
   catchError,
   of,
 } from 'rxjs';
-import { ProjectMember, ProjectMemberStatus } from '@activepieces/ee-shared';
+import { ProjectMember } from '@activepieces/ee-shared';
 import { ProjectMemberService } from '../service/project-members.service';
 import {
   ApPaginatorComponent,
@@ -75,9 +75,9 @@ export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
         const member: ProjectMember = {
           id: this.authenticationService.currentUser.id,
           created: this.authenticationService.currentUser.created,
-          email: this.authenticationService.currentUser.email,
+          userId: this.authenticationService.currentUser.id,
+          platformId: this.authenticationService.currentUser.platformId!,
           role: ProjectMemberRole.ADMIN,
-          status: ProjectMemberStatus.ACTIVE,
           projectId: this.authenticationService.getProjectId(),
           updated: this.authenticationService.currentUser.updated,
         };

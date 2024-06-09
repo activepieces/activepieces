@@ -55,7 +55,7 @@ export async function assertUserHasPermissionToFlow(
     }
 }
 
-const assertRoleHasPermission = async (principal: Principal, permission: Permission | undefined): Promise<void> => {
+export const assertRoleHasPermission = async (principal: Principal, permission: Permission | undefined): Promise<void> => {
     if (principal.type === PrincipalType.SERVICE) { 
         return
     }
@@ -99,7 +99,7 @@ const getPrincipalRoleOrThrow = async (principal: Principal): Promise<ProjectMem
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {
-                message: 'No role found',
+                message: 'No role found for the user',
                 userId,
                 projectId,
             },

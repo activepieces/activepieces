@@ -15,25 +15,17 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
     name: 'project_member',
     columns: {
         ...BaseColumnSchemaPart,
-        email: {
-            type: String,
-        },
         projectId: ApIdSchema,
-        platformId: {
-            type: String,
-            nullable: true,
-        },
+        platformId: ApIdSchema,
+        userId: ApIdSchema,
         role: {
-            type: String,
-        },
-        status: {
             type: String,
         },
     },
     indices: [
         {
-            name: 'idx_project_member_project_id_email_platform_id',
-            columns: ['projectId', 'email', 'platformId'],
+            name: 'idx_project_member_project_id_user_id_platform_id',
+            columns: ['projectId', 'userId', 'platformId'],
             unique: true,
         },
     ],
@@ -46,6 +38,16 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_project_member_project_id',
+            },
+        },
+        user: {
+            type: 'many-to-one',
+            target: 'user',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'userId',
+                foreignKeyConstraintName: 'fk_project_member_user_id',
             },
         },
     },

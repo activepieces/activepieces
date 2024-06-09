@@ -12,7 +12,7 @@ import {
   AcceptProjectResponse,
   ListProjectMembersRequestQuery,
   ProjectMember,
-  AddProjectMemberRequestBody,
+  UpsertProjectMemberRequestBody,
 } from '@activepieces/ee-shared';
 import { ProjectMemberRole, SeekPage } from '@activepieces/shared';
 
@@ -40,7 +40,7 @@ export class ProjectMemberService {
         }
         return this.list({ projectId: project.id }).pipe(
           map((members) => {
-            const member = members.data.find((m) => m.email === user.email);
+            const member = members.data.find((m) => m.userId === user.id);
             return member?.role ?? null;
           })
         );
@@ -63,7 +63,7 @@ export class ProjectMemberService {
     );
   }
 
-  invite(request: AddProjectMemberRequestBody): Observable<void> {
+  invite(request: UpsertProjectMemberRequestBody): Observable<void> {
     return this.http.post<void>(
       environment.apiUrl + '/project-members',
       request

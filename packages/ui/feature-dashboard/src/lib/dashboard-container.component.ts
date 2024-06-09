@@ -17,7 +17,7 @@ import { Router } from '@angular/router';
 import { MatSidenav } from '@angular/material/sidenav';
 import { IssuesService } from './services/issues.service';
 import { MatDialog } from '@angular/material/dialog';
-import { CreateUserDialogComponent } from './components/dialogs/create-user-dialog/create-user-dialog.component';
+import { InviteUserDialogComponent } from './components/dialogs/invite-user-dialog/invite-user-dialog.component';
 
 @Component({
   templateUrl: './dashboard-container.component.html',
@@ -92,7 +92,7 @@ export class DashboardContainerComponent {
   }
 
   openInviteAdminDialog() {
-    this.matDialog.open(CreateUserDialogComponent);
+    this.matDialog.open(InviteUserDialogComponent);
   }
   navigateToProjectDashboard() {
     this.router.navigate(['/']);

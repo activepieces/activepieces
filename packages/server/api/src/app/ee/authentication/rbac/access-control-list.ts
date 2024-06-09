@@ -36,8 +36,4 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.READ_FLOW,
         Permission.READ_PROJECT_MEMBER,
     ],
-    [ProjectMemberRole.EXTERNAL_CUSTOMER]: [
-        Permission.READ_APP_CONNECTION,
-        Permission.WRITE_APP_CONNECTION,
-    ],
 }

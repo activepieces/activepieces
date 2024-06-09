@@ -1,19 +1,22 @@
 import { EntitySchema } from 'typeorm'
-import {
-    BaseColumnSchemaPart,
-} from '../../database/database-common'
-import { UserInvitation } from '@activepieces/ee-shared'
+import { BaseColumnSchemaPart } from '../database/database-common'
+import { UserInvitation } from '@activepieces/shared'
 
 export const UserInvitationEntity = new EntitySchema<UserInvitation>({
-    name: 'project_member',
+    name: 'user_invitation',
     columns: {
         ...BaseColumnSchemaPart,
         platformId: {
             type: String,
             nullable: false,
         },
+        type: {
+            type: String,
+            nullable: false,
+        },
         platformRole: {
             type: String,
+            nullable: true,
         },
         email: {
             type: String,
@@ -25,6 +28,10 @@ export const UserInvitationEntity = new EntitySchema<UserInvitation>({
         projectRole: {
             type: String,
             nullable: true,
+        },
+        status: {
+            type: String,
+            nullable: false,
         },
     },
     indices: [

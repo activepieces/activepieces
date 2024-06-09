@@ -9,7 +9,6 @@ import { ProjectMemberService } from '../service/project-members.service';
 import { Observable, Subject, map, startWith, tap, switchMap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { InviteProjectMemberDialogComponent } from '../dialogs/invite-project-member-dialog/invite-project-member.component';
-import { ProjectMemberStatus } from '@activepieces/ee-shared';
 import { BillingService, UpgradeDialogData } from 'ee-billing-ui';
 import { UpgradeDialogComponent } from 'ee-billing-ui';
 import {
@@ -44,10 +43,6 @@ export class ProjectMembersTableComponent implements OnInit {
   RolesDisplayNames = RolesDisplayNames;
   upgradeNoteTitle = $localize`Bring Your Team`;
   upgradeNote = $localize`Invite your teammates with the right roles and permissions to collaborate on building flows and debugging them`;
-  StatusDisplayNames: { [k: string]: string } = {
-    [ProjectMemberStatus.ACTIVE]: $localize`Active`,
-    [ProjectMemberStatus.PENDING]: $localize`Pending`,
-  };
 
   constructor(
     private matDialog: MatDialog,
@@ -122,9 +117,5 @@ export class ProjectMembersTableComponent implements OnInit {
 
   get projectMemberRole() {
     return ProjectMemberRole;
-  }
-
-  get projectMemberStatus() {
-    return ProjectMemberStatus;
   }
 }

@@ -8,7 +8,6 @@ import { projectLimitsService } from '../project-plan/project-plan.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
 import {
     DEFAULT_PLATFORM_LIMIT,
-    ProjectMemberStatus,
 } from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import {
@@ -38,9 +37,8 @@ export const managedAuthnService = {
 
         const projectMember = await projectMemberService.upsert({
             projectId: project.id,
-            email: externalPrincipal.externalEmail,
+            userId: user.id,
             role: externalPrincipal.role,
-            status: ProjectMemberStatus.ACTIVE,
         })
 
 

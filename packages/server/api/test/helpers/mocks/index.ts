@@ -22,11 +22,11 @@ import {
     OtpState,
     OtpType,
     ProjectMember,
-    ProjectMemberStatus,
     SigningKey,
 } from '@activepieces/ee-shared'
 import {
     apId,
+    assertNotNullOrUndefined,
     File,
     FileCompression,
     FileType,
@@ -38,6 +38,8 @@ import {
     FlowTemplate,
     FlowVersion,
     FlowVersionState,
+    InvitationStatus,
+    InvitationType,
     NotificationStatus,
     PackageType,
     PiecesFilterType,
@@ -51,6 +53,7 @@ import {
     TemplateType,
     TriggerType,
     User,
+    UserInvitation,
     UserStatus,
 } from '@activepieces/shared'
 
@@ -123,6 +126,21 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
         teamMembers: plan?.teamMembers ?? 0,
         tasks: plan?.tasks ?? 0,
+    }
+}
+
+export const createMockUserInvitation = (userInvitation: Partial<UserInvitation>): UserInvitation => {
+    return {
+        id: userInvitation.id ?? apId(),
+        created: userInvitation.created ?? faker.date.recent().toISOString(),
+        updated: userInvitation.updated ?? faker.date.recent().toISOString(),
+        email: userInvitation.email ?? faker.internet.email(),
+        type: userInvitation.type ?? faker.helpers.enumValue(InvitationType),
+        platformId: userInvitation.platformId ?? apId(),
+        projectId: userInvitation.projectId,
+        projectRole: userInvitation.projectRole,
+        platformRole: userInvitation.platformRole,
+        status: userInvitation.status ?? faker.helpers.enumValue(InvitationStatus),
     }
 }
 
@@ -229,16 +247,15 @@ export const createMockPlatformWithOwner = (
 export const createMockProjectMember = (
     projectMember?: Partial<ProjectMember>,
 ): ProjectMember => {
+    assertNotNullOrUndefined(projectMember?.userId, 'userId')
     return {
         id: projectMember?.id ?? apId(),
         created: projectMember?.created ?? faker.date.recent().toISOString(),
         updated: projectMember?.updated ?? faker.date.recent().toISOString(),
-        platformId: projectMember?.platformId ?? null,
-        email: projectMember?.email ?? faker.internet.email(),
+        platformId: projectMember?.platformId ?? apId(),
+        userId: projectMember?.userId,
         projectId: projectMember?.projectId ?? apId(),
         role: projectMember?.role ?? faker.helpers.enumValue(ProjectMemberRole),
-        status:
-            projectMember?.status ?? faker.helpers.enumValue(ProjectMemberStatus),
     }
 }
 
@@ -306,21 +323,6 @@ export const createMockSigningKey = (
     }
 }
 
-export const createProjectMember = (
-    projectMember: Partial<ProjectMember>,
-): ProjectMember => {
-    return {
-        id: projectMember.id ?? apId(),
-        email: projectMember.email ?? faker.internet.email(),
-        platformId: projectMember.platformId ?? apId(),
-        projectId: projectMember.projectId ?? apId(),
-        role: projectMember.role ?? faker.helpers.enumValue(ProjectMember.Role),
-        status:
-            projectMember.status ?? faker.helpers.enumValue(ProjectMember.Status),
-        created: projectMember.created ?? faker.date.recent().toISOString(),
-        updated: projectMember.updated ?? faker.date.recent().toISOString(),
-    }
-}
 
 export const createMockTag = (tag?: Partial<Omit<TagEntitySchema, 'platform'>>): Omit<TagEntitySchema, 'platform'> => {
     return {
