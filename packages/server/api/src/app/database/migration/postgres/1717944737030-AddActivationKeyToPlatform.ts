@@ -1,13 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddActivationKeyToPlatform1717674020379 implements MigrationInterface {
-    name = 'AddActivationKeyToPlatform1717674020379'
+export class AddActivationKeyToPlatform1717944737030 implements MigrationInterface {
+    name = 'AddActivationKeyToPlatform1717944737030'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "premiumPieces" character varying array NOT NULL
-        `)
         await queryRunner.query(`
             ALTER TABLE "platform"
             ADD "activationKey" character varying
@@ -24,9 +20,6 @@ export class AddActivationKeyToPlatform1717674020379 implements MigrationInterfa
         `)
         await queryRunner.query(`
             ALTER TABLE "platform" DROP COLUMN "activationKey"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "premiumPieces"
         `)
     }
 

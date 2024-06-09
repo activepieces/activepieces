@@ -135,7 +135,7 @@ import { UnifyEnterpriseWithCloud1714249840058 } from './migration/postgres/1714
 import { AddIssueEntityPostgres1714904516114 } from './migration/postgres/1714904516114-AddIssueEntityPostgres'
 import { AddAlertsEntityPostgres1716989780835 } from './migration/postgres/1716989780835-AddAlertsEntityPostgres'
 import { AddPremiumPiecesColumnPostgres1717370717678 } from './migration/postgres/1717370717678-AddPremiumPiecesColumnPostgres'
-import { AddActivationKeyToPlatform1717674020379 } from './migration/postgres/1717674020379-AddActivationKeyToPlatform'
+import { AddActivationKeyToPlatform1717944737030 } from './migration/postgres/1717944737030-AddActivationKeyToPlatform'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 
@@ -226,7 +226,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddDurationForRuns1716725027424,
         AddAlertsEntityPostgres1716989780835,
         AddPremiumPiecesColumnPostgres1717370717678,
-        AddActivationKeyToPlatform1717674020379,
     ]
 
     const edition = getEdition()
@@ -297,7 +296,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddReferral1690459469381,
                 AddUserEmailToReferral1709500213947,
                 AddProjectBilling1708811745694,
-
+                AddActivationKeyToPlatform1717944737030,
             )
             break
         case ApEdition.COMMUNITY:

@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddActivationKeyToPlatform1717674106128 implements MigrationInterface {
-    name = 'AddActivationKeyToPlatform1717674106128'
+export class AddActivationKeyToPlatform1717945020079 implements MigrationInterface {
+    name = 'AddActivationKeyToPlatform1717945020079'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
