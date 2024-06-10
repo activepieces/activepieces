@@ -41,10 +41,11 @@ export const dynamicsCRMAuth = PieceAuth.OAuth2({
 export const microsoftDynamicsCrm = createPiece({
   displayName: 'Microsoft Dynamics CRM',
   auth: dynamicsCRMAuth,
-  minimumSupportedRelease: '0.28.0',
+  description: 'Customer relationship management software package developed by Microsoft.',
+  minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-dynamics-crm.png',
   authors: ['kishanprmr'],
-  categories: [PieceCategory.PREMIUM],
+  categories: [PieceCategory.PREMIUM, PieceCategory.SALES_AND_CRM],
   actions: [
     createRecordAction,
     deleteRecordAction,

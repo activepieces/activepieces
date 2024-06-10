@@ -1,8 +1,8 @@
 {
   "name": "@activepieces/piece-microsoft-dynamics-365-business-central",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "license": {
-    "type": "SEE LICENSE IN URL",
+    "type": "COMMERCIAL",
     "url": "https://raw.githubusercontent.com/activepieces/activepieces/main/packages/ee/LICENSE"
   }
 }

@@ -1,8 +1,8 @@
 {
   "name": "@activepieces/piece-zuora",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "license": {
-    "type": "SEE LICENSE IN URL",
+    "type": "COMMERCIAL",
     "url": "https://raw.githubusercontent.com/activepieces/activepieces/main/packages/ee/LICENSE"
   }
 }

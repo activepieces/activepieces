@@ -50,7 +50,7 @@ export const snowflake = createPiece({
   description: 'Data warehouse built for the cloud',
 
   auth: snowflakeAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/snowflake.png',
   categories: [PieceCategory.DEVELOPER_TOOLS, PieceCategory.PREMIUM],
   authors: ['AdamSelene', 'abuaboud'],
