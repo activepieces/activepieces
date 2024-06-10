@@ -14,7 +14,7 @@ export const CreateKeyRequestBody = Type.Object({
 
 export type CreateKeyRequestBody = Static<typeof CreateKeyRequestBody>
 
-type ActivationKeyFeatures = { 
+export type ActivationKeyFeatures = { 
     ssoEnabled: boolean
     gitSyncEnabled: boolean
     showPoweredBy: boolean

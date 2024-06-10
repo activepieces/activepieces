@@ -1,8 +1,11 @@
 import { StatusCodes } from 'http-status-codes'
+import { flagService } from '../../flags/flag.service'
+import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
-import { SystemProp, logger, system } from '@activepieces/server-shared'
-import { ActivateKeyRequestBody, ActivationKeyEntity, ActivepiecesError, ApEdition, CreateKeyRequestBody, ErrorCode, GetKeyRequestParams, Platform, turnedOffFeatures } from '@activepieces/shared'
-const secretManagerActivationKeysRoute = 'https://542b-2a00-18d0-5-b9e5-b5da-5255-c53-ce69.ngrok-free.app/activation-keys'
+import { userService } from '../../user/user-service'
+import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { ActivateKeyRequestBody, ActivationKeyEntity, ActivationKeyFeatures, ActivepiecesError, ApEdition, CreateKeyRequestBody, ErrorCode, GetKeyRequestParams, PieceType, Platform, PlatformRole, turnedOffFeatures, UserStatus } from '@activepieces/shared'
+const secretManagerActivationKeysRoute = 'https://b1d8-2a00-18d0-5-b9e5-1c7c-fd6b-a1c4-ade2.ngrok-free.app/activation-keys'
 const createKey = async (request: CreateKeyRequestBody): Promise<void> => {
     const response = await fetch(`${secretManagerActivationKeysRoute}`, {
         method: 'POST',
@@ -20,7 +23,7 @@ const createKey = async (request: CreateKeyRequestBody): Promise<void> => {
 
     if (!response.ok) {
         const errorMessage = JSON.stringify(await response.json())
-        throw new Error(errorMessage)
+        handleUnexpectedSecretsManagerError(errorMessage)
     }
     
 }
@@ -34,7 +37,7 @@ const getKeyRowOrThrow = async (request: GetKeyRequestParams): Promise<Activatio
     }
     if (!response.ok) {
         const errorMessage = JSON.stringify(await response.json())
-        throw new Error(errorMessage)
+        handleUnexpectedSecretsManagerError(errorMessage)
     }
     return response.json()
 }
@@ -73,7 +76,7 @@ const activateKey = async (request: ActivateKeyRequestBody ): Promise<Activation
     }
     if (!response.ok) {
         const errorMessage = JSON.stringify(await response.json())
-        throw new Error(errorMessage)
+        handleUnexpectedSecretsManagerError(errorMessage)
     }
 
     const key: ActivationKeyEntity = await response.json()
@@ -88,6 +91,11 @@ const activateKey = async (request: ActivateKeyRequestBody ): Promise<Activation
     }
 }
 
+const handleUnexpectedSecretsManagerError = (message: string)=> {
+    logger.error(`[ERROR]: Unexpected error from secret manager: ${message}`)
+    throw new Error(message)
+
+}
 
 type VerificationResult = {
     valid: true
@@ -117,20 +125,12 @@ const checkActivationKeyAndUpdatePlatform: (key: string, platform: Platform) => 
     const verificationResult = await activationKeysService.verifyKey({ key })
     if (!verificationResult.valid) {
         logger.error(`[ERROR]: License key provided is invalid, turning off enterprise features:${key}`)
-        return platformService.update({
-            id: platform.id,
-            activationKey: key,
-            ...turnedOffFeatures,
-        })
+        return deactivateKey(platform, key)
         
     }
-    const turnedOnFeatures = verificationResult.key.features
     logger.debug('License key provided is valid, turning on enterprise features.')
-    return  platformService.update({
-        id: platform.id,
-        activationKey: key,
-        ...turnedOnFeatures,
-    })
+    return applyKeyToPlatform(platform, verificationResult.key.features, key)
+   
 }
 /**Check license key in env then in platform */
 const activationKeyCheck: () => Promise<Platform | undefined> = async () => {
@@ -163,6 +163,17 @@ const activationKeyCheck: () => Promise<Platform | undefined> = async () => {
     return undefined
 }
 
+const deactivateKey: (platform: Platform, activationKey: string) => Promise<Platform> =  async (platform: Platform, activationKey: string) => {
+
+    await deactivatePlatformUsersOtherThanAdmin(platform.id)
+    await deletePrivatePieces(platform.id)
+    return platformService.update({
+        id: platform.id,
+        ...turnedOffFeatures,
+        activationKey,
+    })
+
+}
 
 export const activationKeysService = {
     getKeyRowOrThrow,
@@ -171,5 +182,58 @@ export const activationKeysService = {
     createKey,
     verifyKey,
     checkActivationKeyAndUpdatePlatform,
-    activationKeyCheck
+    activationKeyCheck,
+    
 }
+
+const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<void> = async (platformId: string)=> {
+    const { data } = await userService.list({
+        platformId,
+    })
+    const users = data.map(u => {
+        if (u.platformRole === PlatformRole.ADMIN) {
+            return new Promise<void>((resolve) => resolve())
+        }
+        logger.debug(`Deactivating user ${u.id} ${u.email}`)
+        return userService.update({
+            id: u.id,
+            status: UserStatus.INACTIVE,
+            platformId,
+            platformRole: u.platformRole,
+        })
+    })
+    await Promise.all(users)
+}
+
+
+const deletePrivatePieces: (platformId: string) => Promise<void> = async (platformId: string) => {
+    const latestRelease = await flagService.getCurrentRelease()
+    const pieces = await pieceMetadataService.list({
+        edition: ApEdition.ENTERPRISE,
+        includeHidden: true,
+        release: latestRelease,
+        platformId,
+    })
+    const deletes = pieces.map((piece) => {
+        if (piece.pieceType === PieceType.CUSTOM && piece.id) {
+            return pieceMetadataService.delete({
+                id: piece.id,
+                projectId: piece.projectId,
+            })
+        }
+        return new Promise<void>((resolve) => resolve())
+    })
+    await Promise.all(deletes)
+}
+
+const applyKeyToPlatform: (platform: Platform, features: ActivationKeyFeatures, key: string) => Promise<Platform> = async (platform: Platform, features: ActivationKeyFeatures, key: string) => {
+    const updatedPlatform = await platformService.update({
+        id: platform.id,
+        ...features,
+        activationKey: key,
+    })
+    logger.debug(`[INFO]: License key applied to platform ${platform.id}, key: ${key}`)
+    logger.debug(platform)
+    return updatedPlatform
+}
+

@@ -125,7 +125,7 @@ export const platformService = {
             ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
             ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
             ...spreadIfDefined('premiumPieces', params.premiumPieces),
-            
+            ...spreadIfDefined('activationKey', params.activationKey),
         }
 
         return repo.save(updatedPlatform)
