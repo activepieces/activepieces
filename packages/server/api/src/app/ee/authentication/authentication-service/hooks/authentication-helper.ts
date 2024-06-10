@@ -19,10 +19,6 @@ import {
 } from '@activepieces/shared'
 
 async function getProjectForUserOrThrow(user: User): Promise<Project> {
-    const ownerProject = await projectService.getUserProject(user.id)
-    if (!isNil(ownerProject)) {
-        return ownerProject
-    }
     const invitedProject = await getProjectMemberOrThrow(user)
     if (!isNil(invitedProject)) {
         return invitedProject

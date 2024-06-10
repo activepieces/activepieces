@@ -5,11 +5,13 @@ import { projectMemberService } from './project-member.service'
 import {
     ListProjectMembersRequestQuery,
     ProjectMember,
+    ProjectMemberWithUser,
     UpsertProjectMemberRequestBody,
 } from '@activepieces/ee-shared'
 import {
     Permission,
     PrincipalType,
+    SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
 
@@ -70,6 +72,9 @@ const ListProjectMembersRequestQueryOptions = {
         tags: ['project-members'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListProjectMembersRequestQuery,
+        responnse: {
+            [StatusCodes.OK]: SeekPage(ProjectMemberWithUser),
+        },
     },
 }
 

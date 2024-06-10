@@ -1,4 +1,3 @@
-import { json } from 'stream/consumers'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -133,7 +132,7 @@ describe('Project Member API', () => {
 
     describe('List project members Endpoint', () => {
         describe('List project members from api', () => {
-            it('Lists project members', async () => {
+            it('should return project members', async () => {
                 const { mockApiKey, mockProject, mockMember } = await createBasicEnvironment()
 
                 const mockProjectMember = createMockProjectMember({
@@ -154,8 +153,8 @@ describe('Project Member API', () => {
                 })
                 expect(response?.statusCode).toBe(StatusCodes.OK)
                 const responseBody = response?.json()
-                expect(responseBody.data).toHaveLength(2)
-                expect(responseBody.data[1].id).toBe(mockProjectMember.id)
+                expect(responseBody.data).toHaveLength(1)
+                expect(responseBody.data[0].id).toBe(mockProjectMember.id)
             })
 
             it('Lists project members for non owner project', async () => {

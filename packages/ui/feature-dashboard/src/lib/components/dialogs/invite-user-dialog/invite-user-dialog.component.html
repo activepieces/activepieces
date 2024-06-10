@@ -1,11 +1,13 @@
+@if (platform$ | async; as platform) {
+@if (currentProjectName$ | async; as projectName) {
 <ap-dialog-title-template>
   {{ dialogTitle }}
 </ap-dialog-title-template>
 
 <mat-dialog-content>
   <div class="ap-min-w-[470px] ap-max-w-[470px]">
-    <div class="ap-typography-body-1 ap-text-body ap-mb-4" i18n>
-      Type the email address of the user you want to invite.
+    <div class="ap-typography-body-2 ap-text-body ap-mb-4" i18n>
+      Type the email address of the user you want to invite, the invitation expires in 24 hours.
     </div>
     <form autocomplete="off" class="ap-flex ap-flex-col ap-gap-2" [formGroup]="formGroup" (submit)="submit()">
 
@@ -22,8 +24,12 @@
         <mat-label>Invitation Type</mat-label>
         <mat-select name="role" [formControl]="formGroup.controls.type"
           (selectionChange)="listenForInvitationTypeChange($event.value)">
-          <mat-option [value]="invitationType.PLATFORM">Organisation</mat-option>
-          <mat-option [value]="invitationType.PROJECT">Current Project</mat-option>
+          @if(isPlatformOwner$ | async){
+          <mat-option [value]="invitationType.PLATFORM">Entire Platform</mat-option>
+          }
+          @if(platform.projectRolesEnabled){
+          <mat-option [value]="invitationType.PROJECT">{{projectName }} (Current)</mat-option>
+          }
         </mat-select>
       </mat-form-field>
 
@@ -44,17 +50,16 @@
       }
       @case (invitationType.PLATFORM) {
       <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label i18n>Organisation Role</mat-label>
+        <mat-label i18n>Platform Role</mat-label>
         <mat-select name="role" [formControl]="formGroup.controls.platformRole">
           <mat-option [value]="platformRole.ADMIN">Admin</mat-option>
         </mat-select>
         <mat-error *ngIf="formGroup.controls.platformRole.invalid" i18n>
-          Organisation Role is required
+          Platform Role is required
         </mat-error>
       </mat-form-field>
       }
       }
-
       }
 
     </form>
@@ -74,3 +79,8 @@
     </ap-button>
   </div>
 </mat-dialog-actions>
+
+}
+
+@if(sendUser$ | async){}
+}

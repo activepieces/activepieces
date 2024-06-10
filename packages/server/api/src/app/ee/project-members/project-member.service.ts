@@ -12,6 +12,7 @@ import {
 import {
     ProjectMember,
     ProjectMemberId,
+    ProjectMemberWithUser,
 } from '@activepieces/ee-shared'
 import {
     apId,
@@ -68,7 +69,7 @@ export const projectMemberService = {
         projectId: ProjectId,
         cursorRequest: Cursor | null,
         limit: number,
-    ): Promise<SeekPage<ProjectMember>> {
+    ): Promise<SeekPage<ProjectMemberWithUser>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: ProjectMemberEntity,
@@ -83,20 +84,10 @@ export const projectMemberService = {
             .createQueryBuilder('project_member')
             .where({ projectId })
         const { data, cursor } = await paginator.paginate(queryBuilder)
-        const projectMembers: ProjectMember[] = []
-        const project = await projectService.getOneOrThrow(projectId)
-        projectMembers.push({
-            id: apId(),
-            userId: project.ownerId,
-            platformId: project.platformId ?? null,
-            projectId,
-            created: project.created,
-            role: ProjectMemberRole.ADMIN,
-            updated: project.updated,
-        })
-
-        projectMembers.push(...data)
-        return paginationHelper.createPage<ProjectMember>(projectMembers, cursor)
+        const enrichedData = await Promise.all(
+            data.map(enrichProjectMemberWithUser),
+        )
+        return paginationHelper.createPage<ProjectMemberWithUser>(enrichedData, cursor)
     },
     async getRole({
         userId,
@@ -140,3 +131,22 @@ type UpsertParams = {
 }
 
 type NewProjectMember = Omit<ProjectMember, 'created'>
+
+async function enrichProjectMemberWithUser(
+    projectMember: ProjectMember,
+): Promise<ProjectMemberWithUser> {
+    const user = await userService.getOneOrFail({
+        id: projectMember.userId,
+    })
+    return {
+        ...projectMember,
+        user: {
+            platformId: user.platformId,
+            platformRole: user.platformRole,
+            email: user.email,
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+        },
+    }
+}

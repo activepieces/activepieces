@@ -22,6 +22,7 @@ export * from './lib/service/project.service';
 export * from './lib/guards/show-based-on-flag.guard';
 export * from './lib/components/upgrade-note/upgrade-note.component';
 import '@angular/localize/init';
+export * from './lib/service/user-invitations.service';
 export * from './lib/resolvers/is-feature-locked.resolver';
 export { PlatformUserService } from './lib/service/platform-user.service';
 export { showPlatformDashboard$ } from './lib/utils/consts';

@@ -4,7 +4,7 @@ import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/rbac/rbac-middleware'
 import { userInvitationsService } from './user-invitation.service'
-import { AcceptUserInvitationRequest, InvitationType, isNil, Permission, PrincipalType, SendUserInvitationRequest } from '@activepieces/shared'
+import { AcceptUserInvitationRequest, ALL_PRINCIPAL_TYPES, InvitationType, ListUserInvitationsRequest, Permission, PrincipalType, SendUserInvitationRequest } from '@activepieces/shared'
 
 
 export const invitationModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -17,21 +17,35 @@ const invitationController: FastifyPluginAsyncTypebox = async (
 
     app.post('/', CreateUserInvitationRequestParams, async (request, reply) => {
         await assertPermission(app, request, reply, request.body.type)
-        const { email, platformId, projectId, platformRole, projectRole, type } = request.body
+        const { email, platformRole, projectRole, type } = request.body
+        const platformId = request.principal.platform.id
+        const projectId = request.principal.projectId
         const invitation = await userInvitationsService.create({
             email,
             type,
             platformId,
-            projectId: isNil(projectId) ? null : projectId,
-            projectRole: isNil(projectRole) ? null : projectRole,
-            platformRole,
+            platformRole: type === InvitationType.PROJECT  ? null : platformRole ?? null,
+            projectId: type === InvitationType.PLATFORM ? null : projectId ?? null,
+            projectRole: type === InvitationType.PLATFORM  ? null : projectRole ?? null,
         })
         await reply.status(StatusCodes.CREATED).send(invitation)
     })
 
+    app.get('/', ListUserInvitationsRequestParams, async (request, reply) => {
+        const invitations = await userInvitationsService.list({
+            platformId: request.principal.platform.id,
+            projectId: request.query.type === InvitationType.PROJECT ? request.principal.projectId : null,
+            type: request.query.type,
+            status: request.query.status,
+            cursor: request.query.cursor ?? null, 
+            limit: request.query.limit ?? 10,
+        })
+        await reply.status(StatusCodes.OK).send(invitations)
+    })
+
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
-        await userInvitationsService.accept(request.body)
-        await reply.status(StatusCodes.NO_CONTENT).send()
+        const result = await userInvitationsService.accept(request.body)
+        await reply.status(StatusCodes.OK).send(result)
     })
 
     app.delete('/:id', DeleteInvitationRequestParams, async (request, reply) => {
@@ -61,9 +75,19 @@ async function assertPermission(fastify: FastifyInstance, request: FastifyReques
 }
 
 
+const ListUserInvitationsRequestParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_INVITATION,
+    },
+    schema: {
+        querystring: ListUserInvitationsRequest,
+    },
+}
+
 const AcceptUserInvitationRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         body: AcceptUserInvitationRequest,
@@ -72,7 +96,7 @@ const AcceptUserInvitationRequestParams = {
 
 const DeleteInvitationRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
     schema: {
         params: Type.Object({
@@ -83,7 +107,7 @@ const DeleteInvitationRequestParams = {
 
 const CreateUserInvitationRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
     schema: {
         body: SendUserInvitationRequest,

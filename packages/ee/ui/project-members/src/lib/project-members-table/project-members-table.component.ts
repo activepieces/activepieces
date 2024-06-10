@@ -1,21 +1,29 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  ViewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ProjectMembersTableDataSource } from './project-members.datasource';
 import { ProjectMemberService } from '../service/project-members.service';
 import { Observable, Subject, map, startWith, tap } from 'rxjs';
 import {
-  ApPaginatorComponent,
   AuthenticationService,
   PROJECT_ROLE_DISABLED_RESOLVER_KEY,
   ProjectService,
+  UserInvitationService,
 } from '@activepieces/ui/common';
 import { RolesDisplayNames } from '../utils';
 import { ActivatedRoute } from '@angular/router';
 import { ProjectMemberRole } from '@activepieces/shared';
+import { MatSnackBar } from '@angular/material/snack-bar';
+
+export enum TeamMemberStatus {
+  PENDING = 'Pending',
+  ACTIVE = 'Active',
+}
+export type UserInvitedOrMember = {
+  email: string;
+  role: ProjectMemberRole;
+  status: TeamMemberStatus;
+  created: string;
+  id: string;
+};
 
 @Component({
   selector: 'app-project-members-table',
@@ -24,8 +32,6 @@ import { ProjectMemberRole } from '@activepieces/shared';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectMembersTableComponent implements OnInit {
-  @ViewChild(ApPaginatorComponent, { static: true })
-  paginator!: ApPaginatorComponent;
   dataSource!: ProjectMembersTableDataSource;
   dialogClosed$: Observable<void> | undefined;
   deleteInvitation$: Observable<void> | undefined;
@@ -43,7 +49,9 @@ export class ProjectMembersTableComponent implements OnInit {
   constructor(
     private projectService: ProjectService,
     private projectMemberService: ProjectMemberService,
+    private userInvitationService: UserInvitationService,
     private authenticationService: AuthenticationService,
+    private matsnackBar: MatSnackBar,
     private activatedRoute: ActivatedRoute
   ) {}
   ngOnInit(): void {
@@ -51,12 +59,10 @@ export class ProjectMembersTableComponent implements OnInit {
       PROJECT_ROLE_DISABLED_RESOLVER_KEY
     ] as boolean;
     this.dataSource = new ProjectMembersTableDataSource(
+      this.userInvitationService,
       this.authenticationService,
       this.projectMemberService,
-      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true)),
-      this.isFeatureLocked,
-      this.paginator,
-      this.activatedRoute.queryParams
+      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true))
     );
 
     this.projectOwnerId$ = this.projectService.currentProject$.pipe(
@@ -67,21 +73,33 @@ export class ProjectMembersTableComponent implements OnInit {
     );
   }
 
-  openInviteMember() {
-    if (this.inviteLoading) {
-      return;
+  deleteInvitation(invitation: UserInvitedOrMember) {
+    switch (invitation.status) {
+      case TeamMemberStatus.ACTIVE:
+        this.deleteInvitation$ = this.projectMemberService
+          .delete(invitation.id)
+          .pipe(
+            tap(() => {
+              this.matsnackBar.open(
+                $localize`${invitation.email} is removed from the project`
+              );
+              this.refreshTableAtCurrentCursor$.next(true);
+            })
+          );
+        break;
+      case TeamMemberStatus.PENDING:
+        this.deleteInvitation$ = this.userInvitationService
+          .delete(invitation.id)
+          .pipe(
+            tap(() => {
+              this.matsnackBar.open(
+                $localize`Invitation to ${invitation.email} is removed`
+              );
+              this.refreshTableAtCurrentCursor$.next(true);
+            })
+          );
+        break;
     }
-    // TODO URGENT FIX
-  }
-
-  deleteInvitation(invitationId: string) {
-    this.deleteInvitation$ = this.projectMemberService
-      .delete(invitationId)
-      .pipe(
-        tap(() => {
-          this.refreshTableAtCurrentCursor$.next(true);
-        })
-      );
   }
 
   get projectMemberRole() {

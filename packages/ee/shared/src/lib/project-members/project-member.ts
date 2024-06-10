@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { ApId, BaseModelSchema, ProjectMemberRole } from "@activepieces/shared";
+import { ApId, BaseModelSchema, ProjectMemberRole, UserMeta } from "@activepieces/shared";
 
 export type ProjectMemberId = string;
 
@@ -14,3 +14,9 @@ export const ProjectMember = Type.Object({
 });
 
 export type ProjectMember = Static<typeof ProjectMember>;
+
+export const ProjectMemberWithUser = Type.Composite([ProjectMember, Type.Object({
+    user: UserMeta
+})])
+
+export type ProjectMemberWithUser = Static<typeof ProjectMemberWithUser>;

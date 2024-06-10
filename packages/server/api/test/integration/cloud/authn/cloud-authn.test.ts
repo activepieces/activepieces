@@ -24,7 +24,6 @@ import {
     OtpType,
 } from '@activepieces/ee-shared'
 import {
-    ApFlagId,
     apId,
     InvitationStatus,
     InvitationType,
@@ -49,6 +48,9 @@ beforeEach(async () => {
         .mockResolvedValue(faker.string.alphanumeric())
 
     await databaseConnection.getRepository('flag').delete({})
+    await databaseConnection.getRepository('project').delete({})
+    await databaseConnection.getRepository('platform').delete({})
+    await databaseConnection.getRepository('user').delete({})
 })
 
 afterAll(async () => {
@@ -325,25 +327,6 @@ describe('Authentication API', () => {
                     projectId: responseBody?.projectId,
                 })
             expect(referredUserPlan?.tasks).toBe(1500)
-        })
-
-        it('Fails if USER_CREATED flag is set, and sign-up is disabled', async () => {
-            // arrange
-            const mockSignUpRequest = createMockSignUpRequest()
-            await databaseConnection.getRepository('flag').save({
-                id: ApFlagId.USER_CREATED,
-                value: true,
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/authentication/sign-up',
-                body: mockSignUpRequest,
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
         it('Creates new project for cloud user', async () => {

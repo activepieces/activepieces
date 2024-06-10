@@ -1,12 +1,10 @@
 import { AuthenticationServiceHooks } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
-import { flagService } from '../../../../flags/flag.service'
 import { platformService } from '../../../../platform/platform.service'
 import { projectService } from '../../../../project/project-service'
 import { userService } from '../../../../user/user-service'
 import { userInvitationsService } from '../../../../user-invitations/user-invitation.service'
 import { enforceLimits } from '../../../helper/license-validator'
 import { authenticationHelper } from './authentication-helper'
-import { ApFlagId } from '@activepieces/shared'
 
 const DEFAULT_PLATFORM_NAME = 'platform'
 
@@ -29,10 +27,8 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
         })
     },
     async postSignUp({ user }) {
-        const platformCreated = await flagService.getOne(
-            ApFlagId.PLATFORM_CREATED,
-        )
-        if (platformCreated && platformCreated.value) {
+        const platformCreated = await platformService.hasAnyPlatforms()
+        if (platformCreated) {
             await authenticationHelper.autoVerifyUserIfEligible(user)
             await userInvitationsService.provisionUserInvitation({
                 email: user.email,
@@ -63,11 +59,6 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
         await userInvitationsService.provisionUserInvitation({
             email: user.email,
             platformId: user.platformId!,
-        })
-
-        await flagService.save({
-            id: ApFlagId.PLATFORM_CREATED,
-            value: true,
         })
 
         await userService.verify({ id: user.id })

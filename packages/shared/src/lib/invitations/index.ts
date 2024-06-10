@@ -29,9 +29,7 @@ export type UserInvitation = Static<typeof UserInvitation>
 export const SendUserInvitationRequest = Type.Object({
     email: Type.String(),
     type: Type.Enum(InvitationType),
-    platformId: Type.String(),
-    platformRole: Type.Enum(PlatformRole),
-    projectId: Type.Optional(Type.String()),
+    platformRole: Type.Optional(Type.Enum(PlatformRole)),
     projectRole: Type.Optional(Type.Enum(ProjectMemberRole)),
 })
 
@@ -42,3 +40,12 @@ export const AcceptUserInvitationRequest = Type.Object({
 })
 
 export type AcceptUserInvitationRequest = Static<typeof AcceptUserInvitationRequest>
+
+export const ListUserInvitationsRequest = Type.Object({
+    limit: Type.Optional(Type.Number()),
+    cursor: Type.Optional(Type.String()),
+    type: Type.Enum(InvitationType),
+    status: Type.Optional(Type.Enum(InvitationStatus)),
+})
+
+export type ListUserInvitationsRequest = Static<typeof ListUserInvitationsRequest>

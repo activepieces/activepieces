@@ -21,11 +21,8 @@ import {
     UserStatus,
 } from '@activepieces/shared'
 
-const SIGN_UP_ENABLED = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
-
 export const authenticationService = {
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
-        await assertSignUpIsEnabled()
         await hooks.get().preSignUp(params)
         const user = await createUser(params)
 
@@ -127,17 +124,6 @@ export const authenticationService = {
             projectRole: authnResponse.projectRole,
         }
     },
-}
-
-const assertSignUpIsEnabled = async (): Promise<void> => {
-    const userCreated = await flagService.getOne(ApFlagId.USER_CREATED)
-
-    if (userCreated && !SIGN_UP_ENABLED) {
-        throw new ActivepiecesError({
-            code: ErrorCode.SIGN_UP_DISABLED,
-            params: {},
-        })
-    }
 }
 
 const createUser = async (params: SignUpParams): Promise<User> => {
