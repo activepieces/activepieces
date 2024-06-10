@@ -8,7 +8,7 @@ import {
   fadeIn400ms,
 } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
-import { Observable, map, of } from 'rxjs';
+import { Observable, map, of, shareReplay, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-request-trial-button-component',
@@ -24,17 +24,20 @@ import { Observable, map, of } from 'rxjs';
       (buttonClicked)="openContactSales()"
     >
       <div class="ap-flex ap-gap-1 ap-items-center">
-        @if( daysUntilTrialEnd$ | async; as daysUntilTrialEnds) {
+        @if( durationUntilTrialEnds$ | async; as durationUntilTrialEnds) {
         <svg-icon
           class="ap-w-[16px] ap-h-[16px] ap-fill-body "
-          [class.ap-rotate-180]="daysUntilTrialEnds > 0"
+          [class.ap-rotate-180]="durationUntilTrialEnds > 0"
           src="assets/img/custom/duration.svg"
           [applyClass]="true"
         >
         </svg-icon>
-        @if(daysUntilTrialEnds > 0) {
-        <div i18n>
-          <b>{{ daysUntilTrialEnds }}</b> Days Left
+        @if(durationUntilTrialEnds > 0) {
+        <div>
+          <b>
+            {{ durationUntilTrialEnds | durationFormatter : false : false }}
+          </b>
+          <ng-container> left </ng-container>
         </div>
         }@else { <b i18n>Trial Ended</b> } }
       </div>
@@ -58,33 +61,47 @@ export class RequestTrialButtonComponent {
   showButton$: Observable<boolean>;
   openDialog$: Observable<boolean>;
   //TODO: Add a check to see if platform has key and the key is trial
-  isTrialKeyActivated$ = of(false);
+  isTrialKeyActivated$: Observable<boolean>;
   //TODO: Add actual calculation
-  daysUntilTrialEnd$ = of(this.calculateDaysUntilTrialEnds());
+  durationUntilTrialEnds$: Observable<number>;
   constructor(
     private flagsService: FlagService,
     private contactSalesService: ContactSalesService,
     private activationKeysService: ActivationKeysService
   ) {
     // TODO: Add another check to see if platform has key and the key isn't trial
+    const platformKeyStatus$ = this.activationKeysService
+      .getPlatformKeyStatus()
+      .pipe(tap(console.log), shareReplay(1));
     this.showButton$ = this.flagsService.getEdition().pipe(
-      map((env) => {
-        return env !== ApEdition.CLOUD;
+      switchMap((ed) => {
+        if (ed === ApEdition.ENTERPRISE) {
+          console.log('Enterprise');
+          return platformKeyStatus$.pipe(
+            map((res) => !res.valid || res.isTrial)
+          );
+        }
+        return of(false);
+      })
+    );
+    this.isTrialKeyActivated$ = platformKeyStatus$.pipe(
+      map((res) => res.isTrial)
+    );
+    this.durationUntilTrialEnds$ = platformKeyStatus$.pipe(
+      map((res) => {
+        if (res.expirayDate) {
+          const now = new Date();
+          const trialEnd = new Date(res.expirayDate);
+          const diffInTime = trialEnd.getTime() - now.getTime();
+          return diffInTime;
+        }
+        return -1;
       })
     );
   }
 
   openRequestTrialDialog() {
     this.openDialog$ = this.activationKeysService.openTrialDialog();
-  }
-
-  calculateDaysUntilTrialEnds() {
-    const now = new Date();
-    const trialEnd = new Date();
-    trialEnd.setDate(now.getDate() + 5);
-    const diffInTime = trialEnd.getTime() - now.getTime();
-    const diffInDays = diffInTime / (1000 * 3600 * 24);
-    return Math.ceil(diffInDays);
   }
 
   openContactSales(): void {

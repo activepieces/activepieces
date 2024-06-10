@@ -1,4 +1,5 @@
 import { StatusCodes } from 'http-status-codes'
+import { keyBy } from 'lodash'
 import { flagService } from '../../flags/flag.service'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
@@ -103,7 +104,7 @@ type VerificationResult = {
 } |
 {
     valid: false
-    key: undefined
+    key: ActivationKeyEntity | undefined
 }
 
 const verifyKey = async (request: { key: string } ): Promise<VerificationResult> => {
@@ -185,19 +186,25 @@ const getPlatformKeyStatus: (platformId: string) => Promise<ActivationKeyStatus>
         }
     }
     const verificationResult = await activationKeysService.verifyKey({ key: platform.activationKey })
-    if (verificationResult.valid) {
+    if (verificationResult.valid ) {
         return {
             valid: true,
             isTrial: verificationResult.key.isTrial,
             expirayDate: verificationResult.key.expires_at,
         }
     }
+    else if (verificationResult.key) {
+        return {
+            valid: false,
+            isTrial: verificationResult.key.isTrial,
+            expirayDate: verificationResult.key.expires_at,
+        } 
+    }
     return {
         valid: false,
         isTrial: false,
         expirayDate: undefined,
     }
-
 }
 
 export const activationKeysService = {
@@ -220,7 +227,7 @@ const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<voi
         if (u.platformRole === PlatformRole.ADMIN) {
             return new Promise<void>((resolve) => resolve())
         }
-        logger.debug(`Deactivating user ${u.id} ${u.email}`)
+        logger.debug(`Deactivating user ${u.email}`)
         return userService.update({
             id: u.id,
             status: UserStatus.INACTIVE,

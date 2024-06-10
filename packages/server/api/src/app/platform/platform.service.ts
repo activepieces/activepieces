@@ -149,7 +149,6 @@ export const platformService = {
         
         return {
             ...platform,
-            activationKey: undefined,
         }
     },
 

@@ -1,6 +1,7 @@
 import {
   ActivateKeyRequestBody,
   ActivationKeyEntity,
+  ActivationKeyStatus,
   CreateKeyRequestBody,
   GetKeyRequestParams,
 } from '@activepieces/shared';
@@ -54,6 +55,11 @@ export class ActivationKeysService {
           );
         }
       })
+    );
+  }
+  getPlatformKeyStatus() {
+    return this.http.get<ActivationKeyStatus>(
+      `${environment.apiUrl}/activation-keys/platform-key-status`
     );
   }
 }
