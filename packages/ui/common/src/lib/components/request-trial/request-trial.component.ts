@@ -302,7 +302,12 @@ export class RequestTrialComponent {
             this.loading$.next(false);
             this.showCheckYourEmailNote = true;
             this.close();
-            this.snackBar.open('Trial activated successfully');
+            this.snackBar.open(
+              $localize`Trial activated successfully, refreshing in a second..`
+            );
+            setTimeout(() => {
+              window.location.reload();
+            }, 3000);
           })
         );
     }

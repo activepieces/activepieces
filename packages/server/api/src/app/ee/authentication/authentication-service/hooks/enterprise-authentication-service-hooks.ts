@@ -51,7 +51,7 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             platformId: platform.id,
         })
 
-        await activationKeysService.activationKeyCheck()
+        await activationKeysService.checkActivationKeyInEnvAndPlatform()
 
         await flagService.save({
             id: ApFlagId.PLATFORM_CREATED,

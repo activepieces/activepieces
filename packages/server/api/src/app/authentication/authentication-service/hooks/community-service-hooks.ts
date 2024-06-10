@@ -21,7 +21,6 @@ export const communityAuthenticationServiceHooks: AuthenticationServiceHooks = {
             name: DEFAULT_PLATFORM_NAME,
         })
 
-        await activationKeysService.activationKeyCheck()
         
         await projectService.create({
             displayName: `${user.firstName}'s Project`,

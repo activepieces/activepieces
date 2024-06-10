@@ -18,7 +18,7 @@ export const trialTrackerModule: FastifyPluginAsyncTypebox = async () => {
             if (!oldestPlatform || !oldestPlatform.activationKey) {
                 return
             }
-            await activationKeysService.checkActivationKeyAndUpdatePlatform(oldestPlatform.activationKey, oldestPlatform)
+            await activationKeysService.verifyActivationKeyAndUpdatePlatform(oldestPlatform.activationKey, oldestPlatform)
         },
     })
 }

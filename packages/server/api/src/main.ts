@@ -39,7 +39,7 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
             )
         }
      
-        await activationKeysService.activationKeyCheck()
+        await activationKeysService.checkActivationKeyInEnvAndPlatform()
     }
     catch (err) {
         logger.error(err)
