@@ -17,7 +17,6 @@ import { TabsPageCoreComponent } from '../../components/tabs-page-core/tabs-page
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 import { PopulatedIssue } from '@activepieces/ee-shared';
-import { FlowRunStatus } from '@activepieces/shared';
 import { IssuesService } from '../../services/issues.service';
 import { Observable, take } from 'rxjs';
 
@@ -166,7 +165,7 @@ export class RunsComponent
     if (this.tabGroup) {
       this.tabGroup.selectedIndex = runsTabIndex;
     }
-    this.runsTable?.setParams(FlowRunStatus.FAILED, issue.flowId);
+    this.runsTable?.setFlowId(issue.flowId);
   }
 
   goToAlerts() {
