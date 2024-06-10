@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import { jwtUtils } from '../../../helper/jwt-utils'
 import { getEdition } from '../../../helper/secret-helper'
 import { platformService } from '../../../platform/platform.service'
@@ -57,12 +56,11 @@ export const emailService = {
         if (EDITION_IS_NOT_PAID) {
             return
         }
-        const createdAtFormatted = dayjs(createdAt.replace(' UTC', '')).tz('PT').format('DD MMM YYYY, HH:mm [PT]')
         logger.info({
             name: '[emailService#sendIssueCreatedNotification]',
             projectId,
             flowName,
-            createdAt: createdAtFormatted,
+            createdAt,
         })
         const project = await projectService.getOneOrThrow(projectId)
 
@@ -85,7 +83,7 @@ export const emailService = {
                 vars: {
                     issueUrl,
                     flowName,
-                    createdAt: createdAtFormatted,
+                    createdAt,
                 },
             },
         })
