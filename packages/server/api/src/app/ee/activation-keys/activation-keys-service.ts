@@ -4,7 +4,7 @@ import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
-import { ActivateKeyRequestBody, ActivationKeyEntity, ActivationKeyFeatures, ActivepiecesError, ApEdition, CreateKeyRequestBody, ErrorCode, GetKeyRequestParams, PieceType, Platform, PlatformRole, turnedOffFeatures, UserStatus } from '@activepieces/shared'
+import { ActivateKeyRequestBody, ActivationKeyEntity, ActivationKeyFeatures, ActivationKeyStatus, ActivepiecesError, ApEdition, CreateKeyRequestBody, ErrorCode, GetKeyRequestParams, PieceType, Platform, PlatformRole, turnedOffFeatures, UserStatus } from '@activepieces/shared'
 const secretManagerActivationKeysRoute = 'https://b1d8-2a00-18d0-5-b9e5-1c7c-fd6b-a1c4-ade2.ngrok-free.app/activation-keys'
 const createKey = async (request: CreateKeyRequestBody): Promise<void> => {
     const response = await fetch(`${secretManagerActivationKeysRoute}`, {
@@ -175,6 +175,31 @@ const deactivateKey: (platform: Platform, activationKey: string) => Promise<Plat
 
 }
 
+const getPlatformKeyStatus: (platformId: string) => Promise<ActivationKeyStatus> = async (platformId: string) =>{
+    const platform = await platformService.getOneOrThrow(platformId)
+    if (!platform.activationKey) {
+        return {
+            valid: false,
+            isTrial: false,
+            expirayDate: undefined,
+        }
+    }
+    const verificationResult = await activationKeysService.verifyKey({ key: platform.activationKey })
+    if (verificationResult.valid) {
+        return {
+            valid: true,
+            isTrial: verificationResult.key.isTrial,
+            expirayDate: verificationResult.key.expires_at,
+        }
+    }
+    return {
+        valid: false,
+        isTrial: false,
+        expirayDate: undefined,
+    }
+
+}
+
 export const activationKeysService = {
     getKeyRowOrThrow,
     getKeyRow,
@@ -183,6 +208,7 @@ export const activationKeysService = {
     verifyKey,
     checkActivationKeyAndUpdatePlatform,
     activationKeyCheck,
+    getPlatformKeyStatus,
     
 }
 
@@ -232,8 +258,6 @@ const applyKeyToPlatform: (platform: Platform, features: ActivationKeyFeatures, 
         ...features,
         activationKey: key,
     })
-    logger.debug(`[INFO]: License key applied to platform ${platform.id}, key: ${key}`)
-    logger.debug(platform)
     return updatedPlatform
 }
 

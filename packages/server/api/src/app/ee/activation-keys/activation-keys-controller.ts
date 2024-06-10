@@ -17,6 +17,10 @@ export const activationKeysController: FastifyPluginAsyncTypebox = async (app) =
         const res = await activationKeysService.createKey(req.body)
         return res
     })
+    app.get('/platform-key-status', async (req) => {
+        const key = await activationKeysService.getPlatformKeyStatus(req.principal.platform.id)
+        return key
+    })
 
 }
 

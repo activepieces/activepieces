@@ -147,7 +147,10 @@ export const platformService = {
             })
         }
         
-        return platform
+        return {
+            ...platform,
+            activationKey: undefined,
+        }
     },
 
     async getOne(id: PlatformId): Promise<Platform | null> {

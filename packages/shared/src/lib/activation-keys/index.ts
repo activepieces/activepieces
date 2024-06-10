@@ -90,3 +90,9 @@ export const ActivateKeyRequest = {
         body: ActivateKeyRequestBody,
     },
 }
+
+export type ActivationKeyStatus = {
+    valid: boolean
+    isTrial: boolean
+    expirayDate: string | undefined
+}
