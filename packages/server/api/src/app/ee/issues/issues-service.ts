@@ -42,9 +42,7 @@ export const issuesService = {
             await emailService.sendIssueCreatedNotification({
                 projectId,
                 flowName: flowVersion.displayName,
-                count: updatedIssue.count,
-                lastSeenAt: dayjs(updatedIssue.lastOccurrence).format('DD MMM YYYY, HH:mm'),
-                createdAt: dayjs(date).format('DD MMM YYYY, HH:mm'),
+                createdAt: dayjs(date).tz('PT').format('DD MMM YYYY, HH:mm [PT]'),
             })
         }
     },
