@@ -73,6 +73,21 @@ import { InputFormCore } from '../input-form-core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (deps$ | async; as deps) {
+    <div class="ap-mb-2 ap-flex ap-justify-between ap-items-center">
+      <div></div>
+      <ng-container>
+        <ap-button btnStyle="stroked" btnSize="medium" i18n-tooltipText>
+          <div class="ap-flex ap-gap-3 ap-items-center" i18n>
+            <svg-icon
+              src="assets/img/custom/AI.svg"
+              class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
+              [applyClass]="true"
+            ></svg-icon>
+            Ask AI
+          </div>
+        </ap-button>
+      </ng-container>
+    </div>
 
     <app-action-or-trigger-dropdown
       [items]="deps.triggersOrActions"
