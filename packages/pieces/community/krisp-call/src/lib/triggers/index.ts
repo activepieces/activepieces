@@ -21,7 +21,13 @@ export const triggers = [
         displayName: 'New MMS',
         description: 'Trigger when a new MMS is received.',
         action: 'new_sms_or_mms',
-        sampleData: {},
+        sampleData: {
+            "id": "YiW2nyxqtJPYqkRKbrcJQ7",
+            "from_number": "+16466813538",
+            "to_number": "+12517327005",
+            "content": "Last testing",
+            "media_link": "https://api.twilio.com/2010-04-01/Accounts/LINK/Media/SOMETHING"
+        },
     },
     {
         name: 'newContact',
