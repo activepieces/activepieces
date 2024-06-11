@@ -31,16 +31,21 @@ import { RolesDisplayNames } from 'ee-project-members';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { StatusCodes } from 'http-status-codes';
 import { UpgradeDialogComponent, UpgradeDialogData } from 'ee-billing-ui';
+import { Clipboard, ClipboardModule } from '@angular/cdk/clipboard';
 
 @Component({
   templateUrl: './invite-user-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, UiCommonModule, LottieModule],
+  imports: [CommonModule, UiCommonModule, LottieModule, ClipboardModule],
 })
 export class InviteUserDialogComponent {
-  readonly dialogTitle = $localize`Invite User`;
+  readonly inviteUserTitle = $localize`Invite User`;
+  readonly invitationLinkTitle = $localize`Invitation Link`;
+
   loading$ = new BehaviorSubject(false);
+  screenstate = new BehaviorSubject<'form' | 'success'>('form');
+  invitationLink$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   readonly platformRole = PlatformRole;
   readonly projectRole = ProjectMemberRole;
   readonly invitationType = InvitationType;
@@ -56,7 +61,7 @@ export class InviteUserDialogComponent {
   invitationTypeSubject: BehaviorSubject<InvitationType> =
     new BehaviorSubject<InvitationType>(InvitationType.PROJECT);
   currentProjectName$: Observable<string | undefined>;
-  sendUser$: Observable<void>;
+  sendUser$: Observable<unknown>;
 
   readonly projectMemberRolesOptions = Object.values(ProjectMemberRole)
     .filter((f) => !isNil(RolesDisplayNames[f]))
@@ -74,6 +79,7 @@ export class InviteUserDialogComponent {
     private authService: AuthenticationService,
     private matsnackBar: MatSnackBar,
     private matDialog: MatDialog,
+    private clipboard: Clipboard,
     private dialogRef: MatDialogRef<InviteUserDialogComponent>,
     private navigationService: NavigationService,
     @Inject(MAT_DIALOG_DATA)
@@ -110,6 +116,12 @@ export class InviteUserDialogComponent {
       this.invitationTypeSubject.next(InvitationType.PLATFORM);
       this.formGroup.controls.type.setValue(InvitationType.PLATFORM);
     }
+    this.screenstate.next('form');
+  }
+
+  copyToClipboard() {
+    this.clipboard.copy(this.invitationLink$.value);
+    this.matsnackBar.open($localize`Invitation link copied successfully`);
   }
 
   listenForInvitationTypeChange(type: InvitationType) {
@@ -130,6 +142,22 @@ export class InviteUserDialogComponent {
             type === InvitationType.PLATFORM ? undefined : projectRole!,
         })
         .pipe(
+          tap((invitation) => {
+            this.loading$.next(false);
+            this.navigationService.navigate({
+              route:
+                this.formGroup.value.type === InvitationType.PLATFORM
+                  ? ['/platform/users']
+                  : ['/team'],
+            });
+            if (invitation.link) {
+              this.screenstate.next('success');
+              this.invitationLink$.next(invitation.link);
+            } else {
+              this.matsnackBar.open($localize`${email} invitation is sent`);
+              this.dialogRef.close();
+            }
+          }),
           catchError((error) => {
             this.loading$.next(false);
             if (error.status === StatusCodes.PAYMENT_REQUIRED) {
@@ -140,17 +168,6 @@ export class InviteUserDialogComponent {
               this.matDialog.open(UpgradeDialogComponent, { data });
             }
             return of(undefined);
-          }),
-          tap(() => {
-            this.loading$.next(false);
-            this.matsnackBar.open($localize`${email} invitation is sent`);
-            this.navigationService.navigate({
-              route:
-                this.formGroup.value.type === InvitationType.PLATFORM
-                  ? ['/platform/users']
-                  : ['/team'],
-            });
-            this.dialogRef.close();
           })
         );
     }

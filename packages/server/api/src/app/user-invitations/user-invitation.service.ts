@@ -3,17 +3,20 @@ import dayjs from 'dayjs'
 import { IsNull, MoreThanOrEqual } from 'typeorm'
 
 import { databaseConnection } from '../database/database-connection'
+import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../ee/helper/email/email-service'
+import { platformDomainHelper } from '../ee/helper/platform-domain-helper'
 import { projectMemberService } from '../ee/project-members/project-member.service'
 import { jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
-import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 
 const repo = databaseConnection.getRepository(UserInvitationEntity)
-export const INVITATION_EXPIREY_DATS = 1
+const INVITATION_EXPIREY_DAYS = 1
 
 export const userInvitationsService = {
     async countByProjectId(projectId: string): Promise<number> {
@@ -29,7 +32,7 @@ export const userInvitationsService = {
         if (isNil(user)) {
             return
         }
-        const ONE_DAY_AGO = dayjs().subtract(INVITATION_EXPIREY_DATS, 'day').toISOString()
+        const ONE_DAY_AGO = dayjs().subtract(INVITATION_EXPIREY_DAYS, 'day').toISOString()
         const invitations = await repo.findBy([
             {
                 email,
@@ -73,7 +76,7 @@ export const userInvitationsService = {
         type,
         projectRole,
         platformRole,
-    }: CreateParams): Promise<UserInvitation> {
+    }: CreateParams): Promise<UserInvitationWithLink> {
         const invitation = await repo.findOneBy({
             email,
             platformId,
@@ -97,11 +100,19 @@ export const userInvitationsService = {
         const userInvitation = await this.getOneOrThrow({
             id,
             platformId,
-
         })
+        const invitationLink = await generateInvitationLink(userInvitation)
         await emailService.sendInvitation({
             userInvitation,
+            invitationLink,
         })
+        const platform = await platformService.getOneOrThrow(platformId)
+        if (!smtpEmailSender.isSmtpConfigured(platform)) {
+            return {
+                ...userInvitation,
+                link: invitationLink,
+            }
+        }
         return userInvitation
     },
     async list(params: ListUserParams): Promise<SeekPage<UserInvitation>> {
@@ -191,6 +202,20 @@ export const userInvitationsService = {
 }
 
 
+async function generateInvitationLink(userInvitation: UserInvitation): Promise<string> {
+    const token = await jwtUtils.sign({
+        payload: {
+            id: userInvitation.id,
+        },
+        expiresInSeconds: INVITATION_EXPIREY_DAYS * 24 * 60 * 60,
+        key: await jwtUtils.getJwtSecret(),
+    })
+
+    return platformDomainHelper.constructUrlFrom({
+        platformId: userInvitation.platformId,
+        path: `invitation?token=${token}&email=${encodeURIComponent(userInvitation.email)}`,
+    })
+}
 type ListUserParams = {
     platformId: string
     type: InvitationType

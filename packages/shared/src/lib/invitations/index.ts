@@ -26,6 +26,12 @@ export const UserInvitation = Type.Object({
 
 export type UserInvitation = Static<typeof UserInvitation>
 
+export const UserInvitationWithLink = Type.Composite([UserInvitation, Type.Object({
+    link: Type.Optional(Type.String()),
+})])
+
+export type UserInvitationWithLink = Static<typeof UserInvitationWithLink>
+
 export const SendUserInvitationRequest = Type.Object({
     email: Type.String(),
     type: Type.Enum(InvitationType),
