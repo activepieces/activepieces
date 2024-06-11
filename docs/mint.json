@@ -243,6 +243,7 @@
     {
       "group": "Misc",
       "pages": [
+        "developers/misc/pieces-ci-cd",
         "developers/misc/scale-pieces",
         "developers/misc/repo-structure",
         "developers/misc/private-fork"
