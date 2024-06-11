@@ -1,5 +1,19 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  ActionBase,
+  PieceMetadataModel,
+  PiecePropertyMap,
+  PropertyType,
+  TriggerBase,
+} from '@activepieces/pieces-framework';
+import {
+  AUTHENTICATION_PROPERTY_NAME,
+  ActionErrorHandlingOptions,
+  ActionType,
+  PopulatedFlow,
+  TriggerType,
+  isNil,
+  spreadIfDefined,
+} from '@activepieces/shared';
 import {
   AppConnectionsService,
   FlagService,
@@ -16,6 +30,11 @@ import {
   Step,
   StepMetaDataForMentions,
 } from '@activepieces/ui/feature-builder-store';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
+import { Store } from '@ngrx/store';
 import {
   Observable,
   combineLatest,
