@@ -326,6 +326,9 @@
       "@activepieces/piece-mautic": [
         "packages/pieces/community/mautic/src/index.ts"
       ],
+      "@activepieces/piece-messagebird": [
+        "packages/pieces/community/messagebird/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-dynamics-365-business-central": [
         "packages/ee/pieces/microsoft-dynamics-365-business-central/src/index.ts"
       ],
