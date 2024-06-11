@@ -1,3 +1,4 @@
+import { In } from 'typeorm'
 import {
     APArrayContains,
     databaseConnection,
@@ -124,7 +125,9 @@ export const flowRunService = {
             environment: RunEnvironment.PRODUCTION,
         })
         if (status) {
-            query.andWhere('flow_run.status IN(:...statuses)', { statuses: status })
+            query = query.andWhere({
+                status: In(status),
+            })
         }
         if (createdAfter) {
             query = query.andWhere('flow_run.created >= :createdAfter', {
