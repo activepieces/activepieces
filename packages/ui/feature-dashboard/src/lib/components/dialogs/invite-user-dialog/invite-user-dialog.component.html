@@ -9,7 +9,6 @@
       Type the email address of the user you want to invite, the invitation expires in 24 hours.
     </div>
     <form autocomplete="off" class="ap-flex ap-flex-col ap-gap-4" [formGroup]="formGroup" (submit)="submit()">
-
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label>Email</mat-label>
         <input name="email" autocomplete="doNotAutoComplete" [formControl]="formGroup.controls.email" matInput
@@ -27,7 +26,7 @@
           <mat-option [value]="invitationType.PLATFORM">Entire Platform</mat-option>
           }
           @if(data.platform.projectRolesEnabled){
-          <mat-option [value]="invitationType.PROJECT">{{projectName }} (Current)</mat-option>
+          <mat-option [value]="invitationType.PROJECT">{{projectName}} (Current)</mat-option>
           }
         </mat-select>
       </mat-form-field>
