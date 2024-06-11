@@ -135,7 +135,6 @@ import { UnifyEnterpriseWithCloud1714249840058 } from './migration/postgres/1714
 import { AddIssueEntityPostgres1714904516114 } from './migration/postgres/1714904516114-AddIssueEntityPostgres'
 import { AddAlertsEntityPostgres1716989780835 } from './migration/postgres/1716989780835-AddAlertsEntityPostgres'
 import { AddPremiumPiecesColumnPostgres1717370717678 } from './migration/postgres/1717370717678-AddPremiumPiecesColumnPostgres'
-import { AddActivationKeyToPlatform1717944737030 } from './migration/postgres/1717944737030-AddActivationKeyToPlatform'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 
@@ -281,7 +280,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 CascadeProjectDeleteToActivity1710720610670,
                 AddBranchTypeToGit1711073772867,
                 PiecesProjectLimits1712279318440,
-                AddActivationKeyToPlatform1717944737030,
 
                 // Cloud Only Migrations, before unifing the migrations.
                 ChangeToJsonToKeepKeysOrder1685991260335,

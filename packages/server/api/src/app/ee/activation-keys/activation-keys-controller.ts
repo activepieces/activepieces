@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { activationKeysService } from './activation-keys-service'
-import { ActivateKeyRequest, CreateKeyRequest, GetKeyRequest } from '@activepieces/shared'
+import { CreateKeyRequest, GetKeyRequest } from '@activepieces/shared'
 
 
 export const activationKeysController: FastifyPluginAsyncTypebox = async (app) => {
@@ -9,16 +9,13 @@ export const activationKeysController: FastifyPluginAsyncTypebox = async (app) =
         return key
     })
 
-    app.post('/activate', ActivateKeyRequest, async (req) => {
-        const res =  await activationKeysService.activateKey(req.body)
-        return res
-    })
     app.post('/', CreateKeyRequest, async (req) => {
         const res = await activationKeysService.createKey(req.body)
         return res
     })
-    app.get('/platform-key-status', async (req) => {
-        const key = await activationKeysService.getPlatformKeyStatus(req.principal.platform.id)
+    
+    app.get('/status', async () => {
+        const key = await activationKeysService.getActivationKeyStatus()
         return key
     })
 

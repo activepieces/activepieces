@@ -97,58 +97,10 @@ import { ErrorCode } from '@activepieces/shared';
               />
             </div>
             <div class="ap-text-center ap-typography-body-1 ap-mb-2" i18n>
-              Please check your email for the trial key, and paste it here to
-              start 🚀
+              Please check your email for the trial key, and the instructions on
+              how to activate it 🚀
             </div>
-            <form
-              [formGroup]="activateTrialKeyForm"
-              (submit)="submitTrialKey()"
-              class="ap-flex ap-gap-4 ap-flex-wrap lg:ap-flex-nowrap"
-            >
-              <mat-form-field class="ap-flex-grow" subscriptSizing="dynamic">
-                <mat-label>Key</mat-label>
-                <input
-                  type="text"
-                  [formControl]="activateTrialKeyForm.controls.key"
-                  matInput
-                />
-                @if(activateTrialKeyForm.controls.key.invalid) {
 
-                <mat-error>
-                  @if(activateTrialKeyForm.controls.key.getError('required')) {
-                  <ng-container i18n>Key is required</ng-container> }
-                  @if(activateTrialKeyForm.controls.key.getError(ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED)){
-                  <ng-container i18n
-                    >Key has already been activated </ng-container
-                  >}
-                  @if(activateTrialKeyForm.controls.key.getError(ErrorCode.ACTIVATION_KEY_NOT_FOUND)){
-                  <ng-container i18n>Key is invalid</ng-container>}
-                </mat-error>
-                }
-              </mat-form-field>
-
-              <div class="ap-min-w-[162px] ap-w-full lg:ap-w-auto">
-                <ap-button
-                  type="submit"
-                  [loading]="loading$ | async | defaultFalse"
-                  (buttonClicked)="submitTrialKey()"
-                  btnColor="primary"
-                  btnSize="large"
-                  class="ap-w-full"
-                  [fullWidthOfContainer]="true"
-                  i18n
-                >
-                  Activate Trial
-                </ap-button>
-              </div>
-            </form>
-            } @if(!showCheckYourEmailNote) {
-            <a
-              (click)="showCheckYourEmailNote = true"
-              class="!ap-cursor-pointer"
-            >
-              I already have a code
-            </a>
             }
             <div class="ap-flex ap-gap-2 ap-text-description ap-items-center">
               <svg-icon
@@ -218,12 +170,7 @@ export class RequestTrialComponent {
       nonNullable: true,
     }),
   });
-  activateTrialKeyForm = this.fb.group({
-    key: this.fb.control('', {
-      validators: [Validators.required],
-      nonNullable: true,
-    }),
-  });
+
   constructor(
     private fb: FormBuilder,
     private matDialog: MatDialog,
@@ -233,11 +180,6 @@ export class RequestTrialComponent {
     this.emailChanged$ = this.createListenerToRemoveServerErrorOnChange(
       this.sendEmailForm.controls.email,
       ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY
-    );
-    this.keyChanged$ = this.createListenerToRemoveServerErrorOnChange(
-      this.activateTrialKeyForm.controls.key,
-      ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED,
-      ErrorCode.ACTIVATION_KEY_NOT_FOUND
     );
   }
   submitEmail() {
@@ -271,47 +213,6 @@ export class RequestTrialComponent {
     }
   }
 
-  submitTrialKey() {
-    if (this.activateTrialKeyForm.valid) {
-      this.loading$.next(true);
-      this.activateTrialKey$ = this.activationKeysService
-        .activateKey({
-          key: this.activateTrialKeyForm.getRawValue().key,
-        })
-        .pipe(
-          catchError((err: HttpErrorResponse) => {
-            if (
-              err.error?.code === ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED
-            ) {
-              this.activateTrialKeyForm.controls.key.setErrors({
-                [ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED]: true,
-              });
-            } else if (err.error?.code === ErrorCode.ACTIVATION_KEY_NOT_FOUND) {
-              this.activateTrialKeyForm.controls.key.setErrors({
-                [ErrorCode.ACTIVATION_KEY_NOT_FOUND]: true,
-              });
-            } else {
-              this.snackBar.open(
-                $localize`Unexpected error please contact support on community.activepieces.com`
-              );
-            }
-            this.loading$.next(false);
-            throw err;
-          }),
-          tap(() => {
-            this.loading$.next(false);
-            this.showCheckYourEmailNote = true;
-            this.close();
-            this.snackBar.open(
-              $localize`Trial activated successfully, refreshing in a second..`
-            );
-            setTimeout(() => {
-              window.location.reload();
-            }, 3000);
-          })
-        );
-    }
-  }
   close() {
     this.matDialog.closeAll();
   }

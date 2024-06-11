@@ -82,8 +82,7 @@ const activateKey = async (request: ActivateKeyRequestBody ): Promise<Activation
     const key: ActivationKeyEntity = await response.json()
     const oldesetPlatform = await platformService.getOldestPlatform()
     if (oldesetPlatform) {
-        await platformService.update({ id: oldesetPlatform.id, activationKey: key.key })
-        await applyKeyToPlatform(oldesetPlatform, key.features, key.key)
+        await applyKeyToPlatform(oldesetPlatform.id, key.features)
         return key
     }
     else {
@@ -103,7 +102,7 @@ type VerificationResult = {
 } |
 {
     valid: false
-    key: ActivationKeyEntity | undefined
+    key?: ActivationKeyEntity
 }
 
 const verifyKey = async (request: { key: string } ): Promise<VerificationResult> => {
@@ -121,11 +120,14 @@ const verifyKey = async (request: { key: string } ): Promise<VerificationResult>
     return response.json()
 }
 
-const verifyActivationKeyAndUpdatePlatform: (key: string, platform: Platform) => Promise<Platform> = async (key: string, platform: Platform) => {
+const verifyActivationKeyAndUpdatePlatform: (req: { key: string, platformId: string, throwErrorOnFailure?: boolean }) => Promise<Platform> = async ({ key, platformId, throwErrorOnFailure }) => {
     const verificationResult = await activationKeysService.verifyKey({ key })
     if (!verificationResult.valid) {
         logger.error(`[ERROR]: License key provided is invalid, turning off enterprise features:${key}`)
-        return deactivateKey(platform, key)
+        if (throwErrorOnFailure) {
+            throw new Error(`[ERROR]: License key provided is invalid, key: ${key}`)
+        }
+        return deactivateKey(platformId)
     }
     logger.debug('License key provided is valid, turning on enterprise features.')
     try {
@@ -136,61 +138,49 @@ const verifyActivationKeyAndUpdatePlatform: (key: string, platform: Platform) =>
             throw err
         }
     }
-    return applyKeyToPlatform(platform, verificationResult.key.features, key)
-   
+    return applyKeyToPlatform(platformId, verificationResult.key.features)
 }
 /**Check license key in env then in platform */
-const checkActivationKeyInEnvAndPlatform: () => Promise<Platform | undefined> = async () => {
+const checkActivationKeyStatus: (throwErrorOnInvalid?: boolean) => Promise<Platform | undefined> = async (throwErrorOnInvalid) => {
     const edition = system.getOrThrow<ApEdition>(SystemProp.EDITION)
     if (edition === ApEdition.CLOUD || edition === ApEdition.COMMUNITY) {
         return undefined
     }
-    const licenseKeyInEnvironment = system.get(SystemProp.LICENSE_KEY)
+    const licenseKeyInEnvironment = system.getOrThrow(SystemProp.LICENSE_KEY)
     const oldestPlatform = await platformService.getOldestPlatform()
     if (licenseKeyInEnvironment && oldestPlatform) {
-        return  verifyActivationKeyAndUpdatePlatform(licenseKeyInEnvironment, oldestPlatform)
-    }
-    else if (oldestPlatform && oldestPlatform.activationKey) {
-        return  verifyActivationKeyAndUpdatePlatform(oldestPlatform.activationKey, oldestPlatform)
-    }
-    else if (oldestPlatform) {
-        logger.warn('No license key found, turning off enterprise features.')
-        return platformService.update({
-            id: oldestPlatform.id,
-            ...turnedOffFeatures,
+        return  verifyActivationKeyAndUpdatePlatform({
+            key: licenseKeyInEnvironment, platformId: oldestPlatform.id, throwErrorOnFailure: throwErrorOnInvalid,
         })
     }
-    if (oldestPlatform) {
-        logger.warn('[WARN]: No license key found while trying to activate liscense key.')
-    }
-    else {
+    if (!oldestPlatform) {
         logger.warn('[WARN]: Dealying key activation until platform is created.')
     }
+   
     return undefined
 }
 
-const deactivateKey: (platform: Platform, activationKey: string) => Promise<Platform> =  async (platform: Platform, activationKey: string) => {
+const deactivateKey: (platformId: string) => Promise<Platform> =  async (platformId: string) => {
 
-    await deactivatePlatformUsersOtherThanAdmin(platform.id)
-    await deletePrivatePieces(platform.id)
+    await deactivatePlatformUsersOtherThanAdmin(platformId)
+    await deletePrivatePieces(platformId)
     return platformService.update({
-        id: platform.id,
+        id: platformId,
         ...turnedOffFeatures,
-        activationKey,
     })
 
 }
 
-const getPlatformKeyStatus: (platformId: string) => Promise<ActivationKeyStatus> = async (platformId: string) =>{
-    const platform = await platformService.getOneOrThrow(platformId)
-    if (!platform.activationKey) {
+const getActivationKeyStatus: () => Promise<ActivationKeyStatus> = async () =>{
+    const licenseKeyInEnvironment = system.get(SystemProp.LICENSE_KEY)
+    if (!licenseKeyInEnvironment) {
         return {
             valid: false,
             isTrial: false,
             expirayDate: undefined,
         }
     }
-    const verificationResult = await activationKeysService.verifyKey({ key: platform.activationKey })
+    const verificationResult = await activationKeysService.verifyKey({ key: licenseKeyInEnvironment })
     if (verificationResult.valid ) {
         return {
             valid: true,
@@ -222,8 +212,8 @@ export const activationKeysService = {
     createKey,
     verifyKey,
     verifyActivationKeyAndUpdatePlatform,
-    checkActivationKeyInEnvAndPlatform,
-    getPlatformKeyStatus,
+    checkActivationKeyStatus,
+    getActivationKeyStatus,
 }
 
 const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<void> = async (platformId: string)=> {
@@ -267,11 +257,10 @@ const deletePrivatePieces: (platformId: string) => Promise<void> = async (platfo
 }
 
 
-const applyKeyToPlatform: (platform: Platform, features: ActivationKeyFeatures, key: string) => Promise<Platform> = async (platform: Platform, features: ActivationKeyFeatures, key: string) => {
+const applyKeyToPlatform: (platformId: string, features: ActivationKeyFeatures) => Promise<Platform> = async (platformId: string, features: ActivationKeyFeatures) => {
     const updatedPlatform = await platformService.update({
-        id: platform.id,
+        id: platformId,
         ...features,
-        activationKey: key,
     })
     return updatedPlatform
 }

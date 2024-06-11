@@ -38,8 +38,7 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
                 `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
             )
         }
-     
-        await activationKeysService.checkActivationKeyInEnvAndPlatform()
+        await activationKeysService.checkActivationKeyStatus(true)
     }
     catch (err) {
         logger.error(err)

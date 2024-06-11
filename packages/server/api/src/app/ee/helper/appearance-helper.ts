@@ -1,7 +1,6 @@
 import { defaultTheme, generateTheme } from '../../flags/theme'
 import { getEdition } from '../../helper/secret-helper'
 import { platformService } from '../../platform/platform.service'
-import { activationKeysService } from '../activation-keys/activation-keys-service'
 import { ApEdition, isNil, Platform } from '@activepieces/shared'
 
 const getPlatformByIdOrFallback = async (platformId: string | null) => {
@@ -21,7 +20,7 @@ export const appearanceHelper = {
 
 const enterpriseThemeChecker = async (platform: Platform) => {
     const edition = getEdition()
-    if (edition === ApEdition.COMMUNITY || !platform.activationKey) {
+    if (edition === ApEdition.COMMUNITY) {
         return defaultTheme
     }
  
@@ -35,8 +34,7 @@ const enterpriseThemeChecker = async (platform: Platform) => {
         })
     }
     else {
-        const verificationResult = await activationKeysService.verifyKey({ key: platform.activationKey })
-        if (verificationResult.valid) {
+        if (platform.customAppearanceEnabled) {
             return generateTheme({
                 websiteName: platform.name,
                 fullLogoUrl: platform.fullLogoUrl,
@@ -44,7 +42,7 @@ const enterpriseThemeChecker = async (platform: Platform) => {
                 logoIconUrl: platform.logoIconUrl,
                 primaryColor: platform.primaryColor,
             })
-        }
+        }  
         return defaultTheme
     }
    

@@ -14,11 +14,7 @@ export const trialTrackerModule: FastifyPluginAsyncTypebox = async () => {
             cron: '*/59 23 * * *',
         },
         async handler() {
-            const oldestPlatform = await platformService.getOldestPlatform()
-            if (!oldestPlatform || !oldestPlatform.activationKey) {
-                return
-            }
-            await activationKeysService.verifyActivationKeyAndUpdatePlatform(oldestPlatform.activationKey, oldestPlatform)
+            await activationKeysService.checkActivationKeyStatus(false)
         },
     })
 }
