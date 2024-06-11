@@ -8,6 +8,7 @@ import {
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import {
   AuthenticationService,
+  NavigationService,
   ProjectService,
   UiCommonModule,
   UserInvitationService,
@@ -48,7 +49,6 @@ export class InviteUserDialogComponent {
   isPlatformOwner$: Observable<boolean>;
   invitationTypeSubject: BehaviorSubject<InvitationType> =
     new BehaviorSubject<InvitationType>(InvitationType.PROJECT);
-
   currentProjectName$: Observable<string | undefined>;
   sendUser$: Observable<void>;
 
@@ -68,6 +68,7 @@ export class InviteUserDialogComponent {
     private authService: AuthenticationService,
     private matsnackBar: MatSnackBar,
     private dialogRef: MatDialogRef<InviteUserDialogComponent>,
+    private navigationService: NavigationService,
     @Inject(MAT_DIALOG_DATA)
     public data: {
       platform: Platform;
@@ -125,6 +126,12 @@ export class InviteUserDialogComponent {
           tap(() => {
             this.loading$.next(false);
             this.matsnackBar.open($localize`${email} invitation is sent`);
+            this.navigationService.navigate({
+              route:
+                this.formGroup.value.type === InvitationType.PLATFORM
+                  ? ['/platform/users']
+                  : ['/team'],
+            });
             this.dialogRef.close();
           })
         );
