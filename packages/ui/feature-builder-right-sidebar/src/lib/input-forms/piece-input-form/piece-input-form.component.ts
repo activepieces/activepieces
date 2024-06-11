@@ -1,19 +1,5 @@
-import {
-  ActionBase,
-  PieceMetadataModel,
-  PiecePropertyMap,
-  PropertyType,
-  TriggerBase,
-} from '@activepieces/pieces-framework';
-import {
-  AUTHENTICATION_PROPERTY_NAME,
-  ActionErrorHandlingOptions,
-  ActionType,
-  PopulatedFlow,
-  TriggerType,
-  isNil,
-  spreadIfDefined,
-} from '@activepieces/shared';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
   AppConnectionsService,
   FlagService,
@@ -30,11 +16,6 @@ import {
   Step,
   StepMetaDataForMentions,
 } from '@activepieces/ui/feature-builder-store';
-import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
-import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
-import { Store } from '@ngrx/store';
 import {
   Observable,
   combineLatest,
@@ -73,21 +54,6 @@ import { InputFormCore } from '../input-form-core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (deps$ | async; as deps) {
-    <div class="ap-mb-2 ap-flex ap-justify-between ap-items-center">
-      <div></div>
-      <ng-container>
-        <ap-button btnStyle="stroked" btnSize="medium" i18n-tooltipText>
-          <div class="ap-flex ap-gap-3 ap-items-center" i18n>
-            <svg-icon
-              src="assets/img/custom/AI.svg"
-              class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
-              [applyClass]="true"
-            ></svg-icon>
-            Ask AI
-          </div>
-        </ap-button>
-      </ng-container>
-    </div>
 
     <app-action-or-trigger-dropdown
       [items]="deps.triggersOrActions"
