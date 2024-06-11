@@ -104,6 +104,7 @@ import {
     AppConnectionWithoutSensitiveData,
     Flow,
     FlowRun,
+    isNil,
     ProjectWithLimits,
     spreadIfDefined,
     UserInvitation,
@@ -385,6 +386,13 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 const validateEnvPropsOnStartup = async (): Promise<void> => {
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
     await encryptUtils.loadEncryptionKey(queueMode)
+
+    const codeIsolation = process.env['AP_CODE_ISOLATION']
+    if (!isNil(codeIsolation)) {
+        throw new Error(JSON.stringify({
+            message: 'AP_CODE_ISOLATION is deprecated, please check the https://www.activepieces.com/docs/about/breaking-changes',
+        }))
+    }
 }
 
 async function getAdapter() {

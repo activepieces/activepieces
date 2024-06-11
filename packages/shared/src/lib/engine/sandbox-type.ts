@@ -1,0 +1,5 @@
+export enum ExecutionMode {
+    SANDBOXED = 'SANDBOXED',
+    CODE_SANDBOXED = 'CODE_SANDBOXED',
+    UNSANDBOXED = 'UNSANDBOXED',
+}

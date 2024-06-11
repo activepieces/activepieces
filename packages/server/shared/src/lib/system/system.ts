@@ -2,7 +2,6 @@ import os from 'os'
 import path from 'path'
 import {
     ActivepiecesError,
-    CodeSandboxType,
     ErrorCode,
     isNil,
     PieceSyncMode,
@@ -40,7 +39,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: '1 minute',
     [SystemProp.CLIENT_REAL_IP_HEADER]: 'x-real-ip',
     [SystemProp.CLOUD_AUTH_ENABLED]: 'true',
-    [SystemProp.CODE_SANDBOX_TYPE]: CodeSandboxType.NO_OP,
     [SystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
     [SystemProp.DB_TYPE]: DatabaseType.POSTGRES,
     [SystemProp.EDITION]: 'ce',
@@ -119,7 +117,3 @@ const getEnvVar = (prop: SystemProp): string | undefined => {
 }
 
 
-export enum ExecutionMode {
-    SANDBOXED = 'SANDBOXED',
-    UNSANDBOXED = 'UNSANDBOXED',
-}

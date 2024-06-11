@@ -53,7 +53,7 @@ export class IsolateSandbox extends AbstractSandbox {
 
         try {
             const pieceSource = system.getOrThrow(SystemProp.PIECES_SOURCE)
-            const codeSandboxType = system.get(SystemProp.CODE_SANDBOX_TYPE)
+            const executionMode = system.getOrThrow(SystemProp.EXECUTION_MODE)
             const dirsToBindArgs = this.getDirsToBindArgs()
 
             const fullCommand = [
@@ -69,7 +69,7 @@ export class IsolateSandbox extends AbstractSandbox {
                 '--env=HOME=/tmp/',
                 '--env=NODE_OPTIONS=\'--enable-source-maps\'',
                 `--env=AP_PIECES_SOURCE=${pieceSource}`,
-                `--env=AP_CODE_SANDBOX_TYPE=${codeSandboxType}`,
+                `--env=AP_EXECUTION_MODE=${executionMode}`,
                 `--env=AP_BASE_CODE_DIRECTORY=${IsolateSandbox.cacheBindPath}/codes`,
                 AbstractSandbox.nodeExecutablePath,
                 `${IsolateSandbox.cacheBindPath}/main.js`,

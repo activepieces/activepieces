@@ -8,6 +8,8 @@ icon: "hammer"
 
 ### What has changed?
 
+- **Execution Mode:**
+    - `AP_CODE_ISOLATION` has been removed and replaced with a new mode in `AP_EXECUTION_MODE`.
 - **Project Members:**
     - The `EXTERNAL_CUSTOMER` role has been deprecated and replaced with the `OPERATOR` role. Please check the permissions page for more details.
     - All pending invitations will be removed.
@@ -17,10 +19,11 @@ icon: "hammer"
 
 ### When is action necessary?
 
-- **Project Members:**
+- **Execution**:
+If you have `AP_CODE_ISOLATION` set, please change `AP_EXECUTION_MODE` to `CODE_SANDBOXED`. Please check the [Execution Mode](../install/security) page for more details.
 
+- **Project Members:**
 If you use the embedding SDK or the create project member API with the `EXTERNAL_CUSTOMER` role, you should start using the `OPERATOR` role instead.
 
 - **Authentication:**
-
 Multiple platforms/projects are no longer supported in the community edition. Technically, everything is still there, but you have to hack using the API as the authentication system has now changed. If you have already created the users/platforms, they should continue to work, and no action is required.

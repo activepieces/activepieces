@@ -178,7 +178,8 @@
         "install/setup-ssl",
         "install/architecture",
         "install/enterprise",
-        "install/troubleshooting"
+        "install/troubleshooting",
+        "install/security"
       ]
     },
     {

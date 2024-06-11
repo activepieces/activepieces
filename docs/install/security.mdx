@@ -1,0 +1,66 @@
+---
+title: "Worker Security & Sandbox Mode"
+description: "You can choose from three different modes depending on your existing infrastructure and company policies."
+icon: "lock"
+---
+
+<Tip>
+Friendly Tip: You should use SANDBOXED mode instead of "CODE_SANDBOXED" if you don't share services with Activepieces in the same K8S cluster or environment and your environment can run `privileged` containers.
+</Tip>
+
+## Code Sandboxed Mode (Multi-Tenant)
+
+This mode runs the flow in a different thread but on the same processor, using the V8 browser compiler to isolate the code pieces. The code must be in JavaScript and not Node.js. Enterprises choose this mode to mitigate the risk of a privileged Docker container escaping in environments where ActivePieces runs alongside other services.
+
+<Tip>
+Set `AP_EXECUTION_MODE` to `CODE_SANDBOXED`.
+</Tip>
+
+**Technology Used:**
+- V8 browser compiler for isolating code pieces.
+
+**Pros:**
+- Lightweight and fast.
+- Does not require Docker to be privileged.
+
+**Cons:**
+- Assumes code pieces are trusted.
+- Code pieces only accept web JavaScript instead of Node.js with NPM packages.
+
+
+## Sandboxed Mode (Multi-Tenant)
+
+In this mode, each flow runs inside its own Linux namespace where memory, CPU, and files are completely isolated. However, Docker needs to be privileged for this mode.
+
+<Tip>
+Set `AP_EXECUTION_MODE` to `SANDBOXED`.
+</Tip>
+
+**Technology Used:**
+- Linux namespaces for isolating the whole flow execution.
+
+**Pros:**
+- Strongest isolation.
+- Allows usage of NPM packages in code pieces.
+
+**Cons:**
+- Docker must be privileged, which means if the sandbox is compromised, the user can escape the Docker container and access the host machine. It is safe to use if Activepieces is the only application running on the machine.
+- CPU intensive, with most CPU consumption coming from the overhead of the Node.js binary, as a new process is spun up for each flow.
+
+
+## Unsandboxed Mode (Personal Use)
+
+In this mode, flows and packages are executed natively on the host machine with full access, meaning that the user has unrestricted access to the machine. Use this mode only in trusted environments.
+
+<Tip>
+Set `AP_EXECUTION_MODE` to `UNSANDBOXED`.
+</Tip>
+
+**Technology Used:**
+- Native execution on the host machine.
+
+**Pros:**
+- Fastest and most lightweight.
+
+**Cons:**
+- No security.

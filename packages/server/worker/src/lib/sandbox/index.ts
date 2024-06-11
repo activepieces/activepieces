@@ -1,4 +1,5 @@
-import { ExecutionMode, system, SystemProp } from '@activepieces/server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
+import { ExecutionMode } from '@activepieces/shared'
 import { FileSandbox } from './file-sandbox'
 import { IsolateSandbox } from './isolate-sandbox'
 
@@ -10,6 +11,7 @@ const getSandbox = () => {
     const sandbox = {
         [ExecutionMode.SANDBOXED]: IsolateSandbox,
         [ExecutionMode.UNSANDBOXED]: FileSandbox,
+        [ExecutionMode.CODE_SANDBOXED]: FileSandbox,
     }
 
     return sandbox[executionMode]
