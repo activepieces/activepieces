@@ -220,14 +220,12 @@ describe('Project API', () => {
             })
 
             const tasks = faker.number.int({ min: 1, max: 100000 })
-            const teamMembers = faker.number.int({ min: 1, max: 100 })
 
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
                 notifyStatus: NotificationStatus.NEVER,
                 plan: {
                     tasks,
-                    teamMembers,
                 },
             }
             const response = await app?.inject({
@@ -252,13 +250,11 @@ describe('Project API', () => {
             const { mockProject, mockApiKey } =
                 await createProjectAndPlatformAndApiKey()
             const tasks = faker.number.int({ min: 1, max: 100000 })
-            const teamMembers = faker.number.int({ min: 1, max: 100 })
             const request = {
                 displayName: faker.animal.bird(),
                 notifyStatus: NotificationStatus.NEVER,
                 plan: {
                     tasks,
-                    teamMembers,
                 },
             }
             const response = await app?.inject({
@@ -291,13 +287,11 @@ describe('Project API', () => {
             })
 
             const tasks = faker.number.int({ min: 1, max: 100000 })
-            const teamMembers = faker.number.int({ min: 1, max: 100 })
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
                 notifyStatus: NotificationStatus.NEVER,
                 plan: {
                     tasks,
-                    teamMembers,
                 },
             }
 
@@ -316,7 +310,6 @@ describe('Project API', () => {
             expect(responseBody.displayName).toBe(request.displayName)
             expect(responseBody.notifyStatus).toBe(request.notifyStatus)
             expect(responseBody.plan.tasks).toEqual(tasks)
-            expect(responseBody.plan.teamMembers).toEqual(teamMembers)
         })
 
         it('Fails if user is not platform owner', async () => {
