@@ -64,13 +64,11 @@ type RequestTrialClicked = {
 }
 
 type UpgradeClicked = {
-    limitType?: 'team' | 'connections'
-    limit: number
+    limitType?: 'team'
 }
 
 type UpgradePopup = {
-    limitType?: 'team' | 'connections'
-    limit: number
+    limitType?: 'team'
 
 }
 

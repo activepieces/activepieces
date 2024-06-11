@@ -12,6 +12,10 @@
       <th mat-header-cell *matHeaderCellDef i18n>Email</th>
       <td mat-cell *matCellDef="let user">{{ user.email }}</td>
     </ng-container>
+    <ng-container matColumnDef="externalId">
+      <th mat-header-cell *matHeaderCellDef i18n>External Id</th>
+      <td mat-cell *matCellDef="let user">{{ user.externalId }}</td>
+    </ng-container>
     <ng-container matColumnDef="platformRole">
       <th mat-header-cell *matHeaderCellDef i18n>Role</th>
       <td mat-cell *matCellDef="let user">

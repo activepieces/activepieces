@@ -50,6 +50,7 @@ export class UsersTableComponent {
   displayedColumns = [
     'email',
     'name',
+    'externalId',
     'platformRole',
     'created',
     'status',

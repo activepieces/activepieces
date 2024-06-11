@@ -5,7 +5,6 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { projectMembersLimit } from '../project-plan/members-limit'
 import {
     ProjectMemberEntity,
 } from './project-member.entity'
@@ -33,10 +32,6 @@ export const projectMemberService = {
         projectId,
         role,
     }: UpsertParams): Promise<ProjectMember> {
-        await projectMembersLimit.limit({
-            projectId,
-        })
-
         const { platformId } = await projectService.getOneOrThrow(projectId)
         const existingProjectMember = await repo().findOneBy({
             projectId,
@@ -118,12 +113,8 @@ export const projectMemberService = {
     ): Promise<void> {
         await repo().delete({ projectId, id: invitationId })
     },
-    async countTeamMembersIncludingOwner(projectId: ProjectId): Promise<number> {
-        return (
-            (await repo().countBy({
-                projectId,
-            })) + 1
-        )
+    async countTeamMembers(projectId: ProjectId): Promise<number> {
+        return repo().countBy({ projectId })
     },
 }
 

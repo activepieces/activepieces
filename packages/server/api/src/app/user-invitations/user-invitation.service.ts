@@ -16,6 +16,11 @@ const repo = databaseConnection.getRepository(UserInvitationEntity)
 export const INVITATION_EXPIREY_DATS = 1
 
 export const userInvitationsService = {
+    async countByProjectId(projectId: string): Promise<number> {
+        return repo.countBy({
+            projectId,
+        })
+    },
     provisionUserInvitation: async ({ email, platformId }: ProvisionUserInvitationParams): Promise<void> => {
         const user = await userService.getByPlatformAndEmail({
             email,
