@@ -84,7 +84,6 @@ export const platformProjectService = {
                 const newTasks = getTasksLimit(isCustomerProject, request.plan.tasks)
                 await projectLimitsService.upsert(
                     {
-                        ...spreadIfDefined('teamMembers', request.plan.teamMembers),
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
                         ...spreadIfDefined('tasks', newTasks),

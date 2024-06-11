@@ -3,6 +3,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/rbac/rbac-middleware'
+import { projectMembersLimit } from '../ee/project-plan/members-limit'
 import { userInvitationsService } from './user-invitation.service'
 import { AcceptUserInvitationRequest, ALL_PRINCIPAL_TYPES, InvitationType, ListUserInvitationsRequest, Permission, PrincipalType, SeekPage, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, UserInvitation } from '@activepieces/shared'
 
@@ -18,6 +19,12 @@ const invitationController: FastifyPluginAsyncTypebox = async (
     app.post('/', CreateUserInvitationRequestParams, async (request, reply) => {
         await assertPermission(app, request, reply, request.body.type)
         const { email, platformRole, projectRole, type } = request.body
+        if (type === InvitationType.PROJECT) {
+            await projectMembersLimit.limit({
+                projectId: request.principal.projectId,
+                platformId: request.principal.platform.id,
+            })
+        }
         const platformId = request.principal.platform.id
         const projectId = request.principal.projectId
         const invitation = await userInvitationsService.create({
