@@ -25,7 +25,7 @@ import {
     UserId,
 } from '@activepieces/shared'
 
-const repo = repoFactory(ProjectMemberEntity)
+export const repo = repoFactory(ProjectMemberEntity)
 
 export const projectMemberService = {
     async upsert({
