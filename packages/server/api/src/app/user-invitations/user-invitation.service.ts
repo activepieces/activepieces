@@ -36,6 +36,7 @@ export const userInvitationsService = {
         for (const invitation of invitations) {
             switch (invitation.type) {
                 case InvitationType.PLATFORM: {
+                    assertNotNullOrUndefined(invitation.platformRole, 'platformRole')
                     await userService.update({
                         id: user.id,
                         platformId: invitation.platformId,

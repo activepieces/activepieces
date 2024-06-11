@@ -106,6 +106,7 @@ import {
     FlowRun,
     ProjectWithLimits,
     spreadIfDefined,
+    UserInvitation,
 } from '@activepieces/shared'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
@@ -147,6 +148,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     },
                 },
                 schemas: {
+                    'user-invitation': UserInvitation,
                     'project-member': ProjectMember,
                     project: ProjectWithLimits,
                     flow: Flow,

@@ -16,7 +16,7 @@ import {
 import {
     ApiKeyResponseWithValue,
 } from '@activepieces/ee-shared'
-import { InvitationType, ListUserInvitationsRequest, Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, SendUserInvitationRequest, User } from '@activepieces/shared'
+import { InvitationType, Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, SendUserInvitationRequest, User } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

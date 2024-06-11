@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class ModifyProjectMembers1717961669938 implements MigrationInterface {
@@ -37,10 +38,14 @@ export class ModifyProjectMembers1717961669938 implements MigrationInterface {
             if (projectMember.role === 'EXTERNAL_CUSTOMER') {
                 projectMember.role = 'OPERATOR'
             }
-            const user = await queryRunner.query(`SELECT * FROM "public.user" WHERE email = '${projectMember.email}' AND "platformId" = '${projectMember.platformId}'`)
+            const user = await queryRunner.query(`SELECT * FROM "public"."user" WHERE email = '${projectMember.email}' AND "platformId" = '${projectMember.platformId}'`)
+            if (user.length === 0) {
+                // Skip if user not found
+                break
+            }
             await queryRunner.query(`
             INSERT INTO "project_member" ("id", "created", "updated", "projectId", "platformId", "userId", "role")
-            VALUES ('${projectMember.id}','${projectMember.created}', '${projectMember.updated}', '${projectMember.projectId}', '${projectMember.platformId}', '${user[0].id}', '${projectMember.role}')
+            VALUES ('${projectMember.id}','${dayjs(projectMember.created).toISOString()}', '${dayjs(projectMember.updated).toISOString()}', '${projectMember.projectId}', '${projectMember.platformId}', '${user[0].id}', '${projectMember.role}')
         `)
         }
     }
@@ -80,7 +85,7 @@ export class ModifyProjectMembers1717961669938 implements MigrationInterface {
             const user = await queryRunner.query(`SELECT * FROM "public.user" WHERE id = '${projectMember.userId}'`)
             await queryRunner.query(`
             INSERT INTO "project_member" ("id", "created", "updated", "projectId", "platformId", "email", "status", "role")
-            VALUES ('${projectMember.id}','${projectMember.created}', '${projectMember.updated}', '${projectMember.projectId}', '${projectMember.platformId}', '${user.email}', '${projectMember.status}', '${projectMember.role}')
+            VALUES ('${projectMember.id}','${dayjs(projectMember.created).toISOString()}', '${dayjs(projectMember.updated).toISOString()}', '${projectMember.projectId}', '${projectMember.platformId}', '${user.email}', '${projectMember.status}', '${projectMember.role}')
         `)
         }
     }

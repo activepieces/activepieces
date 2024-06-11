@@ -4,7 +4,7 @@ import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/rbac/rbac-middleware'
 import { userInvitationsService } from './user-invitation.service'
-import { AcceptUserInvitationRequest, ALL_PRINCIPAL_TYPES, InvitationType, ListUserInvitationsRequest, Permission, PrincipalType, SendUserInvitationRequest } from '@activepieces/shared'
+import { AcceptUserInvitationRequest, ALL_PRINCIPAL_TYPES, InvitationType, ListUserInvitationsRequest, Permission, PrincipalType, SeekPage, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, UserInvitation } from '@activepieces/shared'
 
 
 export const invitationModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -81,7 +81,12 @@ const ListUserInvitationsRequestParams = {
         permission: Permission.READ_INVITATION,
     },
     schema: {
+        tags: ['user-invitations'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListUserInvitationsRequest,
+        responnse: {
+            [StatusCodes.OK]: SeekPage(UserInvitation),
+        },
     },
 }
 
@@ -99,9 +104,14 @@ const DeleteInvitationRequestParams = {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
     schema: {
+        tags: ['user-invitations'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: Type.Object({
             id: Type.String(),
         }),
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+        },
     },
 }
 
@@ -111,5 +121,10 @@ const CreateUserInvitationRequestParams = {
     },
     schema: {
         body: SendUserInvitationRequest,
+        tags: ['user-invitations'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        response: {
+            [StatusCodes.CREATED]: UserInvitation,
+        },
     },
 }
