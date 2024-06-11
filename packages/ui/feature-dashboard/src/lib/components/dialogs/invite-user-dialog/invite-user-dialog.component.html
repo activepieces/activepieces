@@ -1,7 +1,6 @@
 @if (platform$ | async; as platform) {
 @if (currentProjectName$ | async; as projectName) {
-<ap-dialog-title-template>
-  {{ dialogTitle }}
+<ap-dialog-title-template>{{ dialogTitle }}
 </ap-dialog-title-template>
 
 <mat-dialog-content>
@@ -9,7 +8,7 @@
     <div class="ap-typography-body-2 ap-text-body ap-mb-4" i18n>
       Type the email address of the user you want to invite, the invitation expires in 24 hours.
     </div>
-    <form autocomplete="off" class="ap-flex ap-flex-col ap-gap-2" [formGroup]="formGroup" (submit)="submit()">
+    <form autocomplete="off" class="ap-flex ap-flex-col ap-gap-4" [formGroup]="formGroup" (submit)="submit()">
 
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label>Email</mat-label>
