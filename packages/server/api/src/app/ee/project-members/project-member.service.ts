@@ -95,6 +95,9 @@ export const projectMemberService = {
         const user = await userService.getOneOrFail({
             id: userId,
         })
+        if (user.id === project.ownerId) {
+            return ProjectMemberRole.ADMIN
+        }
         if (project.platformId === user.platformId && user.platformRole === PlatformRole.ADMIN) {
             return ProjectMemberRole.ADMIN
         }
