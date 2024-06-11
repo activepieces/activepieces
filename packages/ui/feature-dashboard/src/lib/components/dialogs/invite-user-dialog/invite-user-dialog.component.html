@@ -19,7 +19,7 @@
       </mat-form-field>
 
       <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label>Invitation Type</mat-label>
+        <mat-label>Invite to</mat-label>
         <mat-select name="role" [formControl]="formGroup.controls.type"
           (selectionChange)="listenForInvitationTypeChange($event.value)">
           @if(isPlatformOwner$ | async){

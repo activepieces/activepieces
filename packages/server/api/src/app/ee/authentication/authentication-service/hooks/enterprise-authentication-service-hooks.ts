@@ -6,7 +6,7 @@ import { userInvitationsService } from '../../../../user-invitations/user-invita
 import { enforceLimits } from '../../../helper/license-validator'
 import { authenticationHelper } from './authentication-helper'
 
-const DEFAULT_PLATFORM_NAME = 'platform'
+const DEFAULT_PLATFORM_NAME = 'Activepieces'
 
 export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async preSignIn({ email, platformId, provider }) {
