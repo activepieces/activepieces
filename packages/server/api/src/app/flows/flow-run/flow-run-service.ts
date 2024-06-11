@@ -121,9 +121,15 @@ export const flowRunService = {
         let query = flowRunRepo.createQueryBuilder('flow_run').where({
             projectId,
             ...spreadIfDefined('flowId', flowId),
-            ...spreadIfDefined('status', status),
             environment: RunEnvironment.PRODUCTION,
         })
+        if (status) {
+            status.forEach((s, index) => {
+                const queryName = `query_${index}`
+                const condition = index === 0 ? 'andWhere' : 'orWhere'
+                query[condition](`flow_run.status LIKE :${queryName}`, { [queryName]: `%${s}%` })
+            })
+        }
         if (createdAfter) {
             query = query.andWhere('flow_run.created >= :createdAfter', {
                 createdAfter,
@@ -418,7 +424,7 @@ type GetOrCreateParams = {
 type ListParams = {
     projectId: ProjectId
     flowId: FlowId | undefined
-    status: FlowRunStatus | undefined
+    status: FlowRunStatus[] | undefined
     cursor: Cursor | null
     tags?: string[]
     limit: number
