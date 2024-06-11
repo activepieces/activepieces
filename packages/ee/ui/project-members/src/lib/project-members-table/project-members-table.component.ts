@@ -44,7 +44,7 @@ export class ProjectMembersTableComponent implements OnInit {
   title = $localize`Project Members`;
   RolesDisplayNames = RolesDisplayNames;
   upgradeNoteTitle = $localize`Bring Your Team`;
-  upgradeNote = $localize`Invite your teammates with the right roles and permissions to collaborate on building flows and debugging them`;
+  upgradeNote = $localize`Invite your teammates to a project, assigning the appropriate roles and permissions for building and debugging flows.`;
 
   constructor(
     private projectService: ProjectService,

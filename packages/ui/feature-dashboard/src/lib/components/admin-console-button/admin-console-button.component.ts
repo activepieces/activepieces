@@ -33,6 +33,12 @@ import { Observable, tap } from 'rxjs';
         >
         </svg-icon>
         }
+        <svg-icon
+          [applyClass]="true"
+          class="ap-fill-black"
+          [svgStyle]="{ width: '18px', height: '18px' }"
+          src="assets/img/custom/dashboard/admin-console.svg"
+        ></svg-icon>
         <b>Platform Admin</b>
       </div>
     </ap-button>
