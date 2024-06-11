@@ -50,7 +50,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
 
 const UpsertProjectMemberRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.SERVICE],
         permission: Permission.WRITE_PROJECT_MEMBER,
     },
     schema: {

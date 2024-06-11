@@ -83,7 +83,9 @@ describe('Project Member API', () => {
         it.each([
             ProjectMemberRole.EDITOR,
             ProjectMemberRole.VIEWER,
-        ])('Fails if user role is %s', async (testRole) => {
+            ProjectMemberRole.ADMIN,
+            ProjectMemberRole.OPERATOR,
+        ])('Fails for user with role %s, only api keys allowed', async (testRole) => {
             const { mockPlatform, mockProject } = await createBasicEnvironment()
 
             const mockUser = createMockUser({ platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER })
@@ -124,9 +126,7 @@ describe('Project Member API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
 
             const responseBody = response?.json()
-            expect(responseBody?.code).toBe('PERMISSION_DENIED')
-            expect(responseBody?.params?.userId).toBe(mockUser.id)
-            expect(responseBody?.params?.projectId).toBe(mockProject.id)
+            expect(responseBody?.code).toBe('AUTHORIZATION')
         })
     })
 
@@ -187,6 +187,7 @@ describe('Project Member API', () => {
                 ProjectMemberRole.ADMIN,
                 ProjectMemberRole.EDITOR,
                 ProjectMemberRole.VIEWER,
+                ProjectMemberRole.OPERATOR,
             ])('Succeeds if user role is %s', async (testRole) => {
                 // arrange
                 const { mockPlatform, mockProject, mockMember } = await createBasicEnvironment()
@@ -252,6 +253,7 @@ describe('Project Member API', () => {
         it.each([
             ProjectMemberRole.EDITOR,
             ProjectMemberRole.VIEWER,
+            ProjectMemberRole.OPERATOR,
         ])('Fails if user role is %s', async (testRole) => {
             // arrange
             const { mockPlatform, mockProject, mockMember } = await createBasicEnvironment()
@@ -282,11 +284,11 @@ describe('Project Member API', () => {
                     authorization: `Bearer ${mockToken}`,
                 },
             })
-
             // assert
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
 
             const responseBody = response?.json()
+
             expect(responseBody?.code).toBe('PERMISSION_DENIED')
             expect(responseBody?.params?.userId).toBe(mockMember.id)
             expect(responseBody?.params?.projectId).toBe(mockProject.id)
@@ -340,22 +342,20 @@ describe('Project Member API', () => {
     })
 })
 
-async function createBasicEnvironment(
-    embeddingEnabled = false,
-): Promise<{
-        mockOwner: User
-        mockPlatform: Platform
-        mockProject: Project
-        mockApiKey: ApiKeyResponseWithValue
-        mockOwnerToken: string
-        mockMember: User
-    }> {
+async function createBasicEnvironment(): Promise<{
+    mockOwner: User
+    mockPlatform: Platform
+    mockProject: Project
+    mockApiKey: ApiKeyResponseWithValue
+    mockOwnerToken: string
+    mockMember: User
+}> {
     const mockOwner = createMockUser()
     await databaseConnection.getRepository('user').save(mockOwner)
 
     const mockPlatform = createMockPlatform({
         ownerId: mockOwner.id,
-        embeddingEnabled,
+        projectRolesEnabled: true,
     })
     await databaseConnection.getRepository('platform').save(mockPlatform)
 

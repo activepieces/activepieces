@@ -10,7 +10,6 @@ import {
 import {
   ListProjectMembersRequestQuery,
   ProjectMemberWithUser,
-  UpsertProjectMemberRequestBody,
 } from '@activepieces/ee-shared';
 import { ProjectMemberRole, SeekPage } from '@activepieces/shared';
 
@@ -52,13 +51,6 @@ export class ProjectMemberService {
 
   role(): Observable<ProjectMemberRole | null> {
     return this.role$;
-  }
-
-  invite(request: UpsertProjectMemberRequestBody): Observable<void> {
-    return this.http.post<void>(
-      environment.apiUrl + '/project-members',
-      request
-    );
   }
 
   delete(invitationId: string): Observable<void> {
