@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-  ActivationKeysService,
+  LicenseKeysService,
   ContactSalesService,
   FlagService,
   UiCommonModule,
@@ -52,24 +52,22 @@ import { Observable, map, of, shareReplay, switchMap, tap } from 'rxjs';
     >
       <div class="ap-flex ap-gap-7 ap-items-center">
         <ap-hotspot> </ap-hotspot>
-        <b>Free Trial</b>
+        <b>Try Enterprise</b>
       </div>
     </ap-button>
     } } `,
 })
 export class RequestTrialButtonComponent {
   showButton$: Observable<boolean>;
-  //TODO: Add a check to see if platform has key and the key is trial
   isTrialKeyActivated$: Observable<boolean>;
-  //TODO: Add actual calculation
   durationUntilTrialEnds$: Observable<number>;
   constructor(
     private flagsService: FlagService,
     private contactSalesService: ContactSalesService,
-    private activationKeysService: ActivationKeysService
+    private licenseKeysService: LicenseKeysService
   ) {
     // TODO: Add another check to see if platform has key and the key isn't trial
-    const platformKeyStatus$ = this.activationKeysService
+    const platformKeyStatus$ = this.licenseKeysService
       .getPlatformKeyStatus()
       .pipe(tap(console.log), shareReplay(1));
     this.showButton$ = this.flagsService.getEdition().pipe(
@@ -102,7 +100,7 @@ export class RequestTrialButtonComponent {
   }
 
   openRequestTrialDialog() {
-    this.activationKeysService.openTrialDialog();
+    this.licenseKeysService.openTrialDialog();
   }
 
   openContactSales(): void {

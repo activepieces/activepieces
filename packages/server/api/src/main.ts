@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { setupApp } from './app/app'
 import { databaseConnection } from './app/database/database-connection'
 import { seedDevData } from './app/database/seeds/dev-seeds'
-import { activationKeysService } from './app/ee/activation-keys/activation-keys-service'
+import { licenseKeysService } from './app/ee/license-keys/license-keys-service'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 
@@ -38,7 +38,7 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
                 `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
             )
         }
-        await activationKeysService.checkActivationKeyStatus(true)
+        await licenseKeysService.checkKeyStatus(true)
     }
     catch (err) {
         logger.error(err)

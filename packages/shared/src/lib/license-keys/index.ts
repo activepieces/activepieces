@@ -2,19 +2,15 @@ import { Static, Type } from '@sinclair/typebox'
 import {  PrincipalType } from '../authentication/model/principal-type'
 
 
-export const ActivateKeyRequestBody = Type.Object({
-    key: Type.String(),
-})
 
-export type ActivateKeyRequestBody = Static<typeof ActivateKeyRequestBody>
 
-export const CreateKeyRequestBody = Type.Object({
+export const CreateTrialLicenseKeyRequestBody = Type.Object({
     email: Type.String(),
 })
 
-export type CreateKeyRequestBody = Static<typeof CreateKeyRequestBody>
+export type CreateTrialLicenseKeyRequestBody = Static<typeof CreateTrialLicenseKeyRequestBody>
 
-export type ActivationKeyFeatures = { 
+export type LicenseKeyFeatures = { 
     ssoEnabled: boolean
     gitSyncEnabled: boolean
     showPoweredBy: boolean
@@ -31,7 +27,7 @@ export type ActivationKeyFeatures = {
     alertsEnabled: boolean
     premiumPieces: string[]
 }
-export type ActivationKeyEntity = {
+export type LicenseKeyEntity = {
     id: string
     expires_at: string
     email: string
@@ -39,10 +35,10 @@ export type ActivationKeyEntity = {
     created_at: string
     key: string
     isTrial: boolean
-    features: ActivationKeyFeatures
+    features: LicenseKeyFeatures
 }
 
-export const turnedOffFeatures: ActivationKeyFeatures = {
+export const turnedOffFeatures: LicenseKeyFeatures = {
     ssoEnabled: false,
     gitSyncEnabled: false,
     showPoweredBy: false,
@@ -59,39 +55,18 @@ export const turnedOffFeatures: ActivationKeyFeatures = {
     alertsEnabled: false,
     premiumPieces: [],
 }
-const GetKeyRequestParams =  Type.Object({
-    key: Type.String(),
-})
 
-export type GetKeyRequestParams = Static<typeof GetKeyRequestParams>
-export const GetKeyRequest = {
+export const CreateTrialLicenseKeyRequest =  {
     config: { allowedPrincipals: [
         PrincipalType.USER,
     ] },
     schema: {
-        params: GetKeyRequestParams,
+        body: CreateTrialLicenseKeyRequestBody,
     },
 }
 
 
-export const CreateKeyRequest =  {
-    config: { allowedPrincipals: [
-        PrincipalType.USER,
-    ] },
-    schema: {
-        body: CreateKeyRequestBody,
-    },
-}
-export const ActivateKeyRequest = {
-    config: { allowedPrincipals: [
-        PrincipalType.USER,
-    ] },
-    schema: {
-        body: ActivateKeyRequestBody,
-    },
-}
-
-export type ActivationKeyStatus = {
+export type LicenseKeyStatus = {
     valid: boolean
     isTrial: boolean
     expirayDate: string | undefined

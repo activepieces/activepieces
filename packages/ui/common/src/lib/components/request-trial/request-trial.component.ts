@@ -4,7 +4,7 @@ import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActivationKeysService } from '../../service/activation-key.service';
+import { LicenseKeysService } from '../../service/license-keys.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ErrorCode } from '@activepieces/shared';
 
@@ -175,7 +175,7 @@ export class RequestTrialComponent {
     private fb: FormBuilder,
     private matDialog: MatDialog,
     private snackBar: MatSnackBar,
-    private activationKeysService: ActivationKeysService
+    private licenseKeysService: LicenseKeysService
   ) {
     this.emailChanged$ = this.createListenerToRemoveServerErrorOnChange(
       this.sendEmailForm.controls.email,
@@ -185,7 +185,7 @@ export class RequestTrialComponent {
   submitEmail() {
     if (this.sendEmailForm.valid) {
       this.loading$.next(true);
-      this.creatTiralKey$ = this.activationKeysService
+      this.creatTiralKey$ = this.licenseKeysService
         .createKey({
           email: this.sendEmailForm.getRawValue().email,
         })

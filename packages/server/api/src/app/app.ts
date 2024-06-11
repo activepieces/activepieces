@@ -20,7 +20,6 @@ import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { getRedisConnection } from './database/redis-connection'
-import { activationKeysModule } from './ee/activation-keys/activation-keys-module'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { analyticsModule } from './ee/analytics/analytics-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
@@ -45,6 +44,7 @@ import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-tem
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
+import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { otpModule } from './ee/otp/otp-module'
@@ -57,6 +57,7 @@ import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { referralModule } from './ee/referrals/referral.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
+import { trialTrackerModule } from './ee/trial-tracker/trial-tracker-module'
 import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
@@ -352,8 +353,10 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(usageTrackerModule)
+            await app.register(trialTrackerModule)
             await app.register(analyticsModule)
-            await app.register(activationKeysModule)
+            await app.register(licenseKeysModule)
+            await app.register(trialTrackerModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -369,7 +372,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             await app.register(communityFlowTemplateModule)
-            await app.register(activationKeysModule)
+            await app.register(licenseKeysModule)
             break
     }
 
