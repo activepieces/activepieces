@@ -41,7 +41,7 @@ export class ModifyProjectMembers1717961669938 implements MigrationInterface {
             const user = await queryRunner.query(`SELECT * FROM "public"."user" WHERE email = '${projectMember.email}' AND "platformId" = '${projectMember.platformId}'`)
             if (user.length === 0) {
                 // Skip if user not found
-                break
+                continue
             }
             await queryRunner.query(`
             INSERT INTO "project_member" ("id", "created", "updated", "projectId", "platformId", "userId", "role")
