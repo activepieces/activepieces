@@ -1,5 +1,5 @@
+import OpenAI from 'openai';
 import { openapiCustomFunctions } from './openai-config';
-import { openai } from './openai-utils';
 import { Action, OpenAPISpec } from './types';
 
 const CHUNK_SIZE = 10; // Define a chunk size for splitting requests
@@ -26,6 +26,9 @@ const generateActions = async (
     const chunkCompletions = await Promise.all(
       chunk.map(async (obj) => {
         try {
+          const openai = new OpenAI({
+            apiKey: process.env.AP_OPENAI_KEY,
+          });
           const actionsCompletion = await openai.chat.completions.create({
             messages: [{ role: 'user', content: JSON.stringify(obj) }],
             model: 'gpt-4-turbo',

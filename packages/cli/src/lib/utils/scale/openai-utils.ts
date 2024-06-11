@@ -6,13 +6,13 @@ import {
 } from './openai-config';
 import { AuthDetails, OpenAPISpec } from './types';
 
-export const openai = new OpenAI({
-  apiKey: process.env.AP_OPENAI_KEY,
-});
 
 export const extractAuthType = async (
   openAPISpec: OpenAPISpec
 ): Promise<string> => {
+  const openai = new OpenAI({
+    apiKey: process.env.AP_OPENAI_KEY,
+  });
   const response = await openai.chat.completions.create({
     messages: [{ role: 'user', content: JSON.stringify(openAPISpec) }],
     model: 'gpt-4-turbo',
@@ -27,6 +27,9 @@ export const extractAuthType = async (
 export const extractAuthDetails = async (
   openAPISpec: OpenAPISpec
 ): Promise<AuthDetails> => {
+  const openai = new OpenAI({
+    apiKey: process.env.AP_OPENAI_KEY,
+  });
   const response = await openai.chat.completions.create({
     messages: [{ role: 'user', content: JSON.stringify(openAPISpec) }],
     model: 'gpt-4-turbo',
@@ -40,6 +43,9 @@ export const extractAuthDetails = async (
 export const extractBaseURL = async (
   openAPISpec: OpenAPISpec
 ): Promise<string> => {
+  const openai = new OpenAI({
+    apiKey: process.env.AP_OPENAI_KEY,
+  });
   const response = await openai.chat.completions.create({
     messages: [{ role: 'user', content: JSON.stringify(openAPISpec) }],
     model: 'gpt-4-turbo',
