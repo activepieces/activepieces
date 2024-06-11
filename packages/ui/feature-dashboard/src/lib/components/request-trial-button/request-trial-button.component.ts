@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LicenseKeysService,
-  ContactSalesService,
   FlagService,
   UiCommonModule,
   fadeIn400ms,
+  ContactSalesDialogComponent,
 } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { Observable, map, of, shareReplay, switchMap, tap } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-request-trial-button-component',
@@ -39,7 +40,7 @@ import { Observable, map, of, shareReplay, switchMap, tap } from 'rxjs';
           </b>
           <ng-container> left </ng-container>
         </div>
-        }@else { <b i18n>Trial Ended</b> } }
+        }@else { <b i18n>Contact Sales</b> } }
       </div>
     </ap-button>
     } @else() {
@@ -63,7 +64,7 @@ export class RequestTrialButtonComponent {
   durationUntilTrialEnds$: Observable<number>;
   constructor(
     private flagsService: FlagService,
-    private contactSalesService: ContactSalesService,
+    private matDialog: MatDialog,
     private licenseKeysService: LicenseKeysService
   ) {
     // TODO: Add another check to see if platform has key and the key isn't trial
@@ -104,6 +105,6 @@ export class RequestTrialButtonComponent {
   }
 
   openContactSales(): void {
-    this.contactSalesService.open([]);
+    this.matDialog.open(ContactSalesDialogComponent, {});
   }
 }

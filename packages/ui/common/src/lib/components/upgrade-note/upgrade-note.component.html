@@ -9,12 +9,24 @@
         {{featureNote}}
         <div class="ap-flex ap-justify-center ap-gap-3 ap-items-center ap-h-[3rem]">
             @if(isCloud$ | async | defaultTrue) {
-                <ng-container *ngTemplateOutlet="contactSales"></ng-container>
+                <ap-button  (buttonClicked)="openRequestTrialSlide()" [fullWidthOfContainer]="true" btnColor="primary"
+                btnSize="large">
+                <div i18n
+                    class="ap-text-body-2 !ap-font-semibold ap-items-center ap-justify-center">
+                    Request Trial
+                </div>
+            </ap-button>
             }
             @else {
                     @if(isTrialKeyActivated$ | async)
                     {
-                        <ng-container *ngTemplateOutlet="contactSales"></ng-container>
+                        <ap-button  (buttonClicked)="openTrialDialog()" [fullWidthOfContainer]="true" btnColor="primary"
+                        btnSize="large">
+                        <div i18n
+                            class="ap-text-body-2 !ap-font-semibold ap-items-center ap-justify-center">
+                            Contact Sales
+                        </div>
+                    </ap-button>
                     }
                     @else {
                         <ap-button  (buttonClicked)="openTrialDialog()" [fullWidthOfContainer]="true" btnColor="primary"
@@ -36,12 +48,3 @@
     </div>
 </div>
 
-<ng-template #contactSales>
-    <ap-button  (buttonClicked)="openContactSales()" [fullWidthOfContainer]="true" btnColor="primary"
-                btnSize="large">
-                <div i18n
-                    class="ap-text-body-2 !ap-font-semibold ap-items-center ap-justify-center">
-                    Contact Sales
-                </div>
-            </ap-button>
-</ng-template>

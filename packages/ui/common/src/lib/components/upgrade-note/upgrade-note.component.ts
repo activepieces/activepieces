@@ -5,6 +5,8 @@ import { FeatureKey } from '../../utils/consts';
 import { LicenseKeysService, FlagService } from '../../service';
 import { Observable, map, of, switchMap } from 'rxjs';
 import { ApEdition } from '@activepieces/shared';
+import { ContactSalesDialogComponent } from '../dialogs';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'ap-upgrade-note',
@@ -23,7 +25,8 @@ export class UpgradeNoteComponent {
   constructor(
     private contactSalesService: ContactSalesService,
     private activationKeysService: LicenseKeysService,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private matDialog: MatDialog
   ) {
     this.isCloud$ = this.flagService
       .getEdition()
@@ -40,11 +43,14 @@ export class UpgradeNoteComponent {
     );
   }
 
-  openContactSales(): void {
+  openRequestTrialSlide(): void {
     this.contactSalesService.open([this.featureKey]);
   }
 
   openTrialDialog(): void {
     this.activationKeysService.openTrialDialog();
+  }
+  openContactSalesDialog(): void {
+    this.matDialog.open(ContactSalesDialogComponent, {});
   }
 }

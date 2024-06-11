@@ -83,6 +83,7 @@ import { InsideBuilderDatePipe } from './pipe/inside-builder-date.pipe';
 import { ConfirmActionDialogComponent } from './components/dialogs/confirm-action-dialog/confirm-action-dialog.component';
 import { DurationFormatterPipe } from './pipe';
 import { RequestTrialComponent } from './components/request-trial/request-trial.component';
+import { ContactSalesDialogComponent } from './components/dialogs/contact-sales-dialog/contact-sales-dialog.component';
 
 const exportedImports = [
   CommonModule,
@@ -162,6 +163,7 @@ const exportedDeclarations = [
   LetterIconComponent,
   ConfirmActionDialogComponent,
   RequestTrialComponent,
+  ContactSalesDialogComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
