@@ -5,7 +5,7 @@ import { licenseKeysService } from '../license-keys/license-keys-service'
 export const trialTrackerModule: FastifyPluginAsyncTypebox = async () => {
     await systemJobsSchedule.upsertJob({
         job: {
-            name: 'usage-report',
+            name: 'trial-tracker',
             data: {},
         },
         schedule: {

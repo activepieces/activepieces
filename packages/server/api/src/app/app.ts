@@ -356,7 +356,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(trialTrackerModule)
             await app.register(analyticsModule)
             await app.register(licenseKeysModule)
-            await app.register(trialTrackerModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })

@@ -5,9 +5,9 @@ import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, LicenseKeyEntity, LicenseKeyFeatures, LicenseKeyStatus, PieceType, Platform, PlatformRole, turnedOffFeatures, UserStatus } from '@activepieces/shared'
-const secretManagerActivationKeysRoute = 'https://b1d8-2a00-18d0-5-b9e5-1c7c-fd6b-a1c4-ade2.ngrok-free.app/license-keys'
+const secretManagerLicenseKeysRoute = 'https://1041-109-237-199-55.ngrok-free.app/license-keys'
 const createKey = async (request: CreateTrialLicenseKeyRequestBody): Promise<void> => {
-    const response = await fetch(`${secretManagerActivationKeysRoute}`, {
+    const response = await fetch(`${secretManagerLicenseKeysRoute}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -28,7 +28,7 @@ const createKey = async (request: CreateTrialLicenseKeyRequestBody): Promise<voi
     
 }
 const getKeyRowOrThrow = async (key: string): Promise<LicenseKeyEntity> => {
-    const response = await  fetch(`${secretManagerActivationKeysRoute}/${key}`)
+    const response = await  fetch(`${secretManagerLicenseKeysRoute}/${key}`)
     if (response.status === 404) {
         throw new ActivepiecesError({
             code: ErrorCode.ACTIVATION_KEY_NOT_FOUND,
@@ -55,7 +55,7 @@ const getKeyRow = async (key: string): Promise<LicenseKeyEntity | undefined> => 
     
 }
 const activateKey: (request: { key: string }) => Promise<LicenseKeyEntity>  = async (request ) => {
-    const response = await fetch(`${secretManagerActivationKeysRoute}/activate`, {
+    const response = await fetch(`${secretManagerLicenseKeysRoute}/activate`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ type VerificationResult = {
 }
 
 const verifyKey = async (request: { key: string } ): Promise<VerificationResult> => {
-    const response = await fetch(`${secretManagerActivationKeysRoute}/verify`, {
+    const response = await fetch(`${secretManagerLicenseKeysRoute}/verify`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -121,15 +121,6 @@ const verifyKey = async (request: { key: string } ): Promise<VerificationResult>
 }
 
 const verifyKeyAndUpdatePlatform: (req: { key: string, platformId: string, throwErrorOnFailure?: boolean }) => Promise<Platform> = async ({ key, platformId, throwErrorOnFailure }) => {
-    const verificationResult = await verifyKey({ key })
-    if (!verificationResult.valid) {
-        logger.error(`[ERROR]: License key provided is invalid, turning off enterprise features:${key}`)
-        if (throwErrorOnFailure) {
-            throw new Error(`[ERROR]: License key provided is invalid, key: ${key}`)
-        }
-        return deactivateKey(platformId)
-    }
-    logger.debug('License key provided is valid, turning on enterprise features.')
     try {
         await  activateKey({ key })
     }
@@ -138,6 +129,16 @@ const verifyKeyAndUpdatePlatform: (req: { key: string, platformId: string, throw
             throw err
         }
     }
+    const verificationResult = await verifyKey({ key })
+    if (!verificationResult.valid) {
+        if (throwErrorOnFailure) {
+            throw new Error(`[ERROR]: License key provided is invalid, key: ${key}`)
+        }
+        logger.error(`[ERROR]: License key provided is invalid, turning off enterprise features:${key}`)
+        return deactivateKey(platformId)
+    }
+    logger.debug('License key provided is valid, turning on enterprise features.')
+   
     return applyKeyToPlatform(platformId, verificationResult.key.features)
 }
 /**Check license key in env then in platform */
