@@ -1,7 +1,7 @@
 import { ExecutionMode } from '@activepieces/shared'
 import { CodeSandbox } from '../../core/code/code-sandbox-common'
 
-const EXECUTION_MODE_TYPE = (process.env.AP_EXECUTION_MODE as ExecutionMode) ?? ExecutionMode.CODE_SANDBOXED
+const EXECUTION_MODE_TYPE = (process.env.AP_EXECUTION_MODE as ExecutionMode | undefined) ?? ExecutionMode.UNSANDBOXED
 
 const loadNoOpCodeSandbox = async (): Promise<CodeSandbox> => {
     const noOpCodeSandboxModule = await import('./no-op-code-sandbox')

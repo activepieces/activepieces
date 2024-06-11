@@ -5,12 +5,12 @@ icon: "lock"
 ---
 
 <Tip>
-Friendly Tip: You should use SANDBOXED mode instead of "CODE_SANDBOXED" if you don't share services with Activepieces in the same K8S cluster or environment and your environment can run `privileged` containers.
+Friendly Tip: You should use **SANDBOXED** mode instead of CODE_SANDBOXED** if you don't share services with Activepieces in the same K8S cluster or environment and your environment can run **privileged** containers.
 </Tip>
 
 ## Code Sandboxed Mode (Multi-Tenant)
 
-This mode runs the flow in a different thread but on the same processor, using the V8 browser compiler to isolate the code pieces. The code must be in JavaScript and not Node.js. Enterprises choose this mode to mitigate the risk of a privileged Docker container escaping in environments where ActivePieces runs alongside other services.
+This mode runs the flow in a different thread but on the same processor, using the V8 browser compiler to isolate the code pieces. The code must be in JavaScript and not Node.js. Enterprises choose this mode to mitigate the risk of a privileged Docker container escaping in environments where Activepieces runs alongside other services.
 
 <Tip>
 Set `AP_EXECUTION_MODE` to `CODE_SANDBOXED`.
