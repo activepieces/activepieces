@@ -18,8 +18,8 @@ export const triggers = [
     },
     {
         name: 'newMms',
-        displayName: 'New MMS',
-        description: 'Trigger when a new MMS is received.',
+        displayName: 'New MMS/SMS',
+        description: 'Trigger when a new MMS/SMS is received.',
         action: 'new_sms_or_mms',
         sampleData: {
             "id": "YiW2nyxqtJPYqkRKbrcJQ7",

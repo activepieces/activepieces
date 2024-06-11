@@ -36,6 +36,7 @@ export type krispcallAuth = {
 
 export const KrispCall = createPiece({
   displayName: 'Krispcall',
+  description: 'KrispCall is a cloud telephony system for modern businesses, offering advanced features for high-growth startups and modern enterprises.',
   auth: krispcallAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/krispcall.svg',
