@@ -59,7 +59,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [SystemProp.SANDBOX_MEMORY_LIMIT]: '524288',
     [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
-    [SystemProp.SIGN_UP_ENABLED]: 'false',
     [SystemProp.TELEMETRY_ENABLED]: 'true',
     [SystemProp.TEMPLATES_SOURCE_URL]:
     'https://cloud.activepieces.com/api/v1/flow-templates',

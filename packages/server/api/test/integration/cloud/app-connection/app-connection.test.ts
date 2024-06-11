@@ -38,7 +38,6 @@ describe('AppConnection API', () => {
         it.each([
             ProjectMemberRole.ADMIN,
             ProjectMemberRole.EDITOR,
-            ProjectMemberRole.EXTERNAL_CUSTOMER,
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
             const mockPlatformId = apId()
@@ -56,7 +55,7 @@ describe('AppConnection API', () => {
             await databaseConnection.getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
-                email: mockUser.email,
+                userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
                 role: testRole,
@@ -132,7 +131,7 @@ describe('AppConnection API', () => {
             await databaseConnection.getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
-                email: mockUser.email,
+                userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
                 role: ProjectMemberRole.VIEWER,
@@ -201,7 +200,6 @@ describe('AppConnection API', () => {
             ProjectMemberRole.ADMIN,
             ProjectMemberRole.EDITOR,
             ProjectMemberRole.VIEWER,
-            ProjectMemberRole.EXTERNAL_CUSTOMER,
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
             const mockPlatformId = apId()
@@ -219,7 +217,7 @@ describe('AppConnection API', () => {
             await databaseConnection.getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
-                email: mockUser.email,
+                userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
                 role: testRole,

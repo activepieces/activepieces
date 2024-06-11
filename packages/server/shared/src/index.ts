@@ -1,4 +1,5 @@
 export * from './lib/exception-handler'
+export * from './lib/crypto'
 export * from './lib/semaphore'
 export * from './lib/file-compressor'
 export * from './lib/file-system'

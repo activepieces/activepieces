@@ -47,6 +47,7 @@ import { AddFeatureFlagsToPlatform1714137103728 } from './migration/sqlite/17141
 import { AddIssueEntitySqlite1714900626443 } from './migration/sqlite/1714900626443-AddIssueEntitySqlite'
 import { AddAlertsEntitySqlite1717239613259 } from './migration/sqlite/1717239613259-AddAlertsEntitySqlite'
 import { AddPremiumPiecesColumnSqlite1717443603235 } from './migration/sqlite/1717443603235-AddPremiumPiecesColumnSqlite'
+import { AddUserInvitationSqlite1717943564437 } from './migration/sqlite/1717943564437-AddUserInvitationSqlite'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 
@@ -115,6 +116,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveShowActivityLog1716105958530,
         AddDurationForRuns1716725027424,
         AddAlertsEntitySqlite1717239613259,
+        AddUserInvitationSqlite1717943564437,
         AddPremiumPiecesColumnSqlite1717443603235,
     ]
     const edition = getEdition()

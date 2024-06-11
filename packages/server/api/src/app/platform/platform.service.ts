@@ -19,6 +19,10 @@ import {
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
 
 export const platformService = {
+    async hasAnyPlatforms(): Promise<boolean> {
+        const count = await repo.count()
+        return count > 0
+    },
     async create(params: AddParams): Promise<Platform> {
         const {
             ownerId,

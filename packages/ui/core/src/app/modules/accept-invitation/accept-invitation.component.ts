@@ -1,12 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { UiCommonModule, UserInvitationService } from '@activepieces/ui/common';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ProjectMemberService } from '../service/project-members.service';
 import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-accept-invitation',
   templateUrl: './accept-invitation.component.html',
   styleUrls: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [UiCommonModule],
 })
 export class AcceptInvitationComponent implements OnInit {
   acceptInvitation$: Observable<void> | undefined;
@@ -15,14 +18,14 @@ export class AcceptInvitationComponent implements OnInit {
   constructor(
     private activatedRoute: ActivatedRoute,
     private router: Router,
-    private projectMemberService: ProjectMemberService
+    private userInvitationService: UserInvitationService
   ) {}
 
   ngOnInit(): void {
     this.acceptInvitation$ = this.activatedRoute.queryParams.pipe(
       switchMap((query) => {
-        return this.projectMemberService.accept({
-          token: query['token'],
+        return this.userInvitationService.accept({
+          invitationToken: query['token'],
         });
       }),
       tap((value) => {
