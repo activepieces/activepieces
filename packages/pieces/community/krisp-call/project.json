@@ -1,0 +1,30 @@
+{
+  "name": "pieces-krisp-call",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/krisp-call/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/krisp-call",
+        "tsConfig": "packages/pieces/community/krisp-call/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/krisp-call/package.json",
+        "main": "packages/pieces/community/krisp-call/src/index.ts",
+        "assets": ["packages/pieces/community/krisp-call/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-KrispCall {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  },
+  "tags": []
+}
