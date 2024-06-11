@@ -18,7 +18,6 @@ export class UpgradeNoteComponent {
   @Input() videoUrl = '';
   @Input({ required: true }) featureKey: FeatureKey;
   @Input() insideTab = false;
-  openTrialDialog$: Observable<boolean>;
   isCloud$: Observable<boolean>;
   //TODO: Actual implementation
   isTrialKeyActivated$: Observable<boolean> = of(false);
@@ -37,6 +36,6 @@ export class UpgradeNoteComponent {
   }
 
   openTrialDialog(): void {
-    this.openTrialDialog$ = this.activationKeysService.openTrialDialog();
+    this.activationKeysService.openTrialDialog();
   }
 }

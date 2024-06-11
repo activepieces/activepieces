@@ -55,11 +55,10 @@ import { Observable, map, of, shareReplay, switchMap, tap } from 'rxjs';
         <b>Free Trial</b>
       </div>
     </ap-button>
-    } } @if(openDialog$ | async) {} `,
+    } } `,
 })
 export class RequestTrialButtonComponent {
   showButton$: Observable<boolean>;
-  openDialog$: Observable<boolean>;
   //TODO: Add a check to see if platform has key and the key is trial
   isTrialKeyActivated$: Observable<boolean>;
   //TODO: Add actual calculation
@@ -76,12 +75,14 @@ export class RequestTrialButtonComponent {
     this.showButton$ = this.flagsService.getEdition().pipe(
       switchMap((ed) => {
         if (ed === ApEdition.ENTERPRISE) {
-          console.log('Enterprise');
           return platformKeyStatus$.pipe(
             map((res) => !res.valid || res.isTrial)
           );
+        } else if (ed === ApEdition.COMMUNITY) {
+          return of(true);
+        } else {
+          return of(false);
         }
-        return of(false);
       })
     );
     this.isTrialKeyActivated$ = platformKeyStatus$.pipe(
@@ -101,7 +102,7 @@ export class RequestTrialButtonComponent {
   }
 
   openRequestTrialDialog() {
-    this.openDialog$ = this.activationKeysService.openTrialDialog();
+    this.activationKeysService.openTrialDialog();
   }
 
   openContactSales(): void {

@@ -207,13 +207,4 @@ export class FlagService {
       map((theme) => theme['materialPrimaryPalette'])
     );
   }
-
-  getDbType() {
-    return this.getAllFlags().pipe(
-      map((flags) => {
-        //TODO: move DbType enum to shared and used it here
-        return flags[ApFlagId.DB_TYPE] as 'POSTGRES' | 'SQLITE3';
-      })
-    );
-  }
 }
