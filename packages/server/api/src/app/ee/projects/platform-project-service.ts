@@ -18,7 +18,6 @@ import {
     ApSubscriptionStatus,
     DEFAULT_FREE_PLAN_LIMIT,
     MAXIMUM_ALLOWED_TASKS,
-    ProjectMemberStatus,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
 import {
@@ -31,7 +30,6 @@ import {
     isNil,
     PlatformId,
     PlatformRole,
-    Principal,
     PrincipalType,
     Project,
     ProjectId,
@@ -44,17 +42,8 @@ const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
 export const platformProjectService = {
-    async getAll({
-        principal,
-        externalId,
-        cursorRequest,
-        limit,
-    }: {
-        principal: Principal
-        externalId?: string
-        cursorRequest: Cursor | null
-        limit: number
-    }): Promise<SeekPage<ProjectWithLimits>> {
+    async getAll(params: GetAllParams): Promise<SeekPage<ProjectWithLimits>> {
+        const { cursorRequest, limit } = params
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: ProjectEntity,
@@ -65,7 +54,7 @@ export const platformProjectService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const filters = await createFilters(principal, externalId)
+        const filters = await createFilters(params)
         const queryBuilder = projectRepo()
             .createQueryBuilder('project')
             .leftJoinAndMapOne(
@@ -143,6 +132,15 @@ export const platformProjectService = {
     },
 }
 
+type GetAllParams = {
+    principalType: PrincipalType
+    principalId: string
+    platformId: string
+    externalId?: string
+    cursorRequest: Cursor | null
+    limit: number
+}
+
 function getTasksLimit(isCustomerPlatform: boolean, limit: number | undefined) {
     return isCustomerPlatform ? limit : Math.min(limit ?? MAXIMUM_ALLOWED_TASKS, MAXIMUM_ALLOWED_TASKS)
 }
@@ -161,22 +159,18 @@ function isCustomerPlatform(platformId: string | undefined): boolean {
     }
     return !flagService.isCloudPlatform(platformId)
 }
-async function createFilters(
-    principal: Principal,
-    externalId?: string | undefined,
-) {
-    const platformId = principal.platform.id
+async function createFilters({ platformId, principalType, principalId, externalId }: GetAllParams) {
     const commonFilter = {
         deleted: IsNull(),
         ...spreadIfDefined('platformId', platformId),
         ...spreadIfDefined('externalId', externalId),
     }
-    switch (principal.type) {
+    switch (principalType) {
         case PrincipalType.SERVICE: {
             return commonFilter
         }
         case PrincipalType.USER: {
-            const user = await userService.getMetaInfo({ id: principal.id })
+            const user = await userService.getMetaInfo({ id: principalId })
             assertNotNullOrUndefined(user, 'User not found')
             if (user.platformRole === PlatformRole.ADMIN) {
                 return commonFilter
@@ -184,7 +178,7 @@ async function createFilters(
             else {
                 const ids = await getIdsOfProjects({
                     platformId,
-                    email: user.email,
+                    userId: user.id,
                 })
                 return [
                     {
@@ -209,11 +203,10 @@ async function createFilters(
     }
 }
 
-async function getIdsOfProjects({ platformId, email }: { platformId: string, email: string }): Promise<string[]> {
+async function getIdsOfProjects({ platformId, userId }: { platformId: string, userId: string }): Promise<string[]> {
     const members = await projectMemberRepo().findBy({
-        email,
+        userId,
         platformId: Equal(platformId),
-        status: Equal(ProjectMemberStatus.ACTIVE),
     })
     return members.map((member) => member.projectId)
 }

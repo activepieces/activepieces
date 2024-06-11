@@ -165,7 +165,7 @@ describe('Project API', () => {
         it('it should list owned projects in platform', async () => {
             await mockBasicSetup()
             const { mockOwner: mockUserTwo, mockProject: mockProjectTwo, mockPlatform: mockPlatformTwo } = await mockBasicSetup()
-            
+
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserTwo.id,
@@ -200,6 +200,12 @@ describe('Project API', () => {
                 ownerId: mockUser.id,
             })
             await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            mockUser.platformId = mockPlatform.id
+            mockUser.platformRole = PlatformRole.ADMIN
+
+            await databaseConnection.getRepository('user').save(mockUser)
+
 
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
@@ -403,10 +409,10 @@ describe('Project API', () => {
 
             // assert
             const responseBody = response?.json()
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-            expect(responseBody?.code).toBe('AUTHORIZATION')
-            expect(responseBody?.params?.projectId).toBe(mockProject.id)
-            expect(responseBody?.params?.userId).toBe(mockOwner.id)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
+            expect(responseBody?.params?.entityId).toBe(mockProject.id)
+            expect(responseBody?.params?.entityType).toBe('project')
         })
     })
 
@@ -620,6 +626,10 @@ async function createProjectAndPlatformAndApiKey(): Promise<{
         ownerId: mockUser.id,
     })
     await databaseConnection.getRepository('platform').save(mockPlatform)
+
+    mockUser.platformId = mockPlatform.id
+    mockUser.platformRole = PlatformRole.ADMIN
+    await databaseConnection.getRepository('user').save(mockUser)
 
     const mockProject = createMockProject({
         ownerId: mockUser.id,

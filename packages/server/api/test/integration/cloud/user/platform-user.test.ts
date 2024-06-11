@@ -1,3 +1,4 @@
+
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
@@ -64,6 +65,43 @@ describe('Enterprise User API', () => {
     })
 
     describe('Update user endpoint', () => {
+
+        it('Failed if own other platform', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = setupMockApiKeyServiceAccount()
+            const { mockOwner: mockOwner2, mockPlatform: mockPlatform2 } = setupMockApiKeyServiceAccount()
+            const mockUser = createMockUser({
+                platformId: mockPlatform.id,
+                status: UserStatus.ACTIVE,
+                platformRole: PlatformRole.MEMBER,
+            })
+
+
+            await databaseConnection.getRepository('user').save([mockOwner, mockOwner2, mockUser])
+            await databaseConnection.getRepository('platform').save([mockPlatform, mockPlatform2])
+
+            const mockUserToken = await generateMockToken({
+                id: mockOwner2.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform2.id,
+                },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/users/${mockUser.id}`,
+                headers: {
+                    authorization: `Bearer ${mockUserToken}`,
+                },
+                body: {
+                    status: UserStatus.INACTIVE,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
 
         it('Fail if not admin', async () => {
             // arrange
@@ -184,7 +222,7 @@ describe('Enterprise User API', () => {
             await databaseConnection.getRepository('user').save([mockUser])
 
             const mockProjectMember = createMockProjectMember({
-                email: mockUser.email,
+                userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
             })

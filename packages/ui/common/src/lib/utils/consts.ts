@@ -109,10 +109,7 @@ export const showPlatformDashboard$ = (
     showPlatformDemo,
   }).pipe(
     map(
-      ({ platformAdmin, showPlatformDemo }) =>
-        (showPlatformDemo || platformAdmin) &&
-        authenticationService.currentUser.projectRole !==
-          ProjectMemberRole.EXTERNAL_CUSTOMER
+      ({ platformAdmin, showPlatformDemo }) => showPlatformDemo || platformAdmin
     )
   );
 };

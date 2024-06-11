@@ -1,0 +1,91 @@
+
+@if (currentProjectName$ | async; as projectName) {
+<ap-dialog-title-template>{{ dialogTitle }}
+</ap-dialog-title-template>
+
+<mat-dialog-content>
+  <div class="ap-min-w-[470px] ap-max-w-[470px]">
+    <div class="ap-typography-body-2 ap-text-body ap-mb-4" i18n>
+      Type the email address of the user you want to invite, the invitation expires in 24 hours.
+    </div>
+    <form autocomplete="off" class="ap-flex ap-flex-col ap-gap-4" [formGroup]="formGroup" (submit)="submit()">
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label>Email</mat-label>
+        <input name="email" autocomplete="doNotAutoComplete" [formControl]="formGroup.controls.email" matInput
+          type="email" placeholder="gilfoyle@piedpiper.com" />
+        <mat-error *ngIf="formGroup.controls.email.invalid" i18n>
+          Email is required
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label>Invite to</mat-label>
+        <mat-select name="role" [formControl]="formGroup.controls.type"
+          (selectionChange)="listenForInvitationTypeChange($event.value)">
+          @if(isPlatformOwner$ | async){
+          <mat-option [value]="invitationType.PLATFORM">Entire Platform</mat-option>
+          }
+          @if(data.platform.projectRolesEnabled){
+          <mat-option [value]="invitationType.PROJECT">{{projectName}} (Current)</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if(invitationTypeSubject | async; as selectedType){
+      @switch (selectedType) {
+      @case (invitationType.PROJECT) {
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label>Project Role</mat-label>
+        <mat-select name="role" [formControl]="formGroup.controls.projectRole">
+          @for(projectRole of projectMemberRolesOptions; track projectRole){
+          <mat-option [value]="projectRole.value">{{projectRole.name}}</mat-option>
+          }
+        </mat-select>
+        @if(formGroup.controls.projectRole.invalid)
+        {
+          <mat-error i18n>
+            Project Role is required
+          </mat-error>
+        }
+       
+      </mat-form-field>
+      }
+      @case (invitationType.PLATFORM) {
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label i18n>Platform Role</mat-label>
+        <mat-select name="role" [formControl]="formGroup.controls.platformRole">
+          <mat-option [value]="platformRole.ADMIN">Admin</mat-option>
+        </mat-select>
+        @if(formGroup.controls.platformRole.invalid)
+        {
+          <mat-error  i18n>
+            Platform Role is required
+          </mat-error>
+        }
+     
+      </mat-form-field>
+      }
+      }
+      }
+
+    </form>
+
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic"
+      [disabled]="(loading$ | async) || false" i18n>
+      Cancel
+    </ap-button>
+    <ap-button btnSize="default" type="submit" (click)="submit()" [loading]="(loading$ | async) || false"
+      btnColor="primary" i18n>
+      Invite
+    </ap-button>
+  </div>
+</mat-dialog-actions>
+
+}
+
+@if(sendUser$ | async){}
