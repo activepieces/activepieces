@@ -5,7 +5,7 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { BehaviorSubject, Observable, map, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, map, of, tap } from 'rxjs';
 import {
   AuthenticationService,
   NavigationService,
@@ -22,9 +22,15 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { LottieModule } from 'ngx-lottie';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { RolesDisplayNames } from 'ee-project-members';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { StatusCodes } from 'http-status-codes';
+import { UpgradeDialogComponent, UpgradeDialogData } from 'ee-billing-ui';
 
 @Component({
   templateUrl: './invite-user-dialog.component.html',
@@ -67,6 +73,7 @@ export class InviteUserDialogComponent {
     private projectService: ProjectService,
     private authService: AuthenticationService,
     private matsnackBar: MatSnackBar,
+    private matDialog: MatDialog,
     private dialogRef: MatDialogRef<InviteUserDialogComponent>,
     private navigationService: NavigationService,
     @Inject(MAT_DIALOG_DATA)
@@ -123,6 +130,17 @@ export class InviteUserDialogComponent {
             type === InvitationType.PLATFORM ? undefined : projectRole!,
         })
         .pipe(
+          catchError((error) => {
+            this.loading$.next(false);
+            if (error.status === StatusCodes.PAYMENT_REQUIRED) {
+              const data: UpgradeDialogData = {
+                limitType: 'team',
+              };
+              this.dialogRef.close();
+              this.matDialog.open(UpgradeDialogComponent, { data });
+            }
+            return of(undefined);
+          }),
           tap(() => {
             this.loading$.next(false);
             this.matsnackBar.open($localize`${email} invitation is sent`);

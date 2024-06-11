@@ -16,11 +16,6 @@
                     <mat-hint>The maximum number of tasks that can be run in a month.
                         If you exceed the limit, the runs will fail.</mat-hint>
                 </mat-form-field>
-                <mat-form-field class="ap-w-full">
-                    <mat-label>Users Limit</mat-label>
-                    <input matInput placeholder="5" [formControl]="formGroup.controls.teamMembers!" />
-                    <mat-error *ngIf="formGroup.controls.teamMembers!.invalid">Team Members is required </mat-error>
-                </mat-form-field>
                 }
             </form>
         </div>
