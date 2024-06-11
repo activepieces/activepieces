@@ -1,4 +1,4 @@
-@if (platform$ | async; as platform) {
+
 @if (currentProjectName$ | async; as projectName) {
 <ap-dialog-title-template>{{ dialogTitle }}
 </ap-dialog-title-template>
@@ -26,7 +26,7 @@
           @if(isPlatformOwner$ | async){
           <mat-option [value]="invitationType.PLATFORM">Entire Platform</mat-option>
           }
-          @if(platform.projectRolesEnabled){
+          @if(data.platform.projectRolesEnabled){
           <mat-option [value]="invitationType.PROJECT">{{projectName }} (Current)</mat-option>
           }
         </mat-select>
@@ -42,9 +42,13 @@
           <mat-option [value]="projectRole.value">{{projectRole.name}}</mat-option>
           }
         </mat-select>
-        <mat-error *ngIf="formGroup.controls.projectRole.invalid" i18n>
-          Project Role is required
-        </mat-error>
+        @if(formGroup.controls.projectRole.invalid)
+        {
+          <mat-error i18n>
+            Project Role is required
+          </mat-error>
+        }
+       
       </mat-form-field>
       }
       @case (invitationType.PLATFORM) {
@@ -53,9 +57,13 @@
         <mat-select name="role" [formControl]="formGroup.controls.platformRole">
           <mat-option [value]="platformRole.ADMIN">Admin</mat-option>
         </mat-select>
-        <mat-error *ngIf="formGroup.controls.platformRole.invalid" i18n>
-          Platform Role is required
-        </mat-error>
+        @if(formGroup.controls.platformRole.invalid)
+        {
+          <mat-error  i18n>
+            Platform Role is required
+          </mat-error>
+        }
+     
       </mat-form-field>
       }
       }
@@ -82,4 +90,3 @@
 }
 
 @if(sendUser$ | async){}
-}

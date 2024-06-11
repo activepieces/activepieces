@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -8,7 +8,6 @@ import {
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import {
   AuthenticationService,
-  PlatformService,
   ProjectService,
   UiCommonModule,
   UserInvitationService,
@@ -22,7 +21,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { LottieModule } from 'ngx-lottie';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { RolesDisplayNames } from 'ee-project-members';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -65,27 +64,19 @@ export class InviteUserDialogComponent {
   constructor(
     private fb: FormBuilder,
     private userInvitationService: UserInvitationService,
-    private platformService: PlatformService,
     private projectService: ProjectService,
     private authService: AuthenticationService,
     private matsnackBar: MatSnackBar,
-    private dialogRef: MatDialogRef<InviteUserDialogComponent>
+    private dialogRef: MatDialogRef<InviteUserDialogComponent>,
+    @Inject(MAT_DIALOG_DATA)
+    public data: {
+      platform: Platform;
+    }
   ) {
     this.currentProjectName$ = this.projectService.currentProject$.pipe(
       map((p) => p?.displayName)
     );
     this.isPlatformOwner$ = this.authService.isPlatformOwner$();
-    this.platform$ = this.platformService.currentPlatformNotNull().pipe(
-      tap((platform) => {
-        if (platform.manageProjectsEnabled) {
-          this.invitationTypeSubject.next(InvitationType.PROJECT);
-          this.formGroup.controls.type.setValue(InvitationType.PROJECT);
-        } else {
-          this.invitationTypeSubject.next(InvitationType.PLATFORM);
-          this.formGroup.controls.type.setValue(InvitationType.PLATFORM);
-        }
-      })
-    );
     this.formGroup = this.fb.group({
       email: this.fb.control<string>('', {
         nonNullable: true,
@@ -104,6 +95,13 @@ export class InviteUserDialogComponent {
         validators: [Validators.required],
       }),
     });
+    if (data.platform.manageProjectsEnabled) {
+      this.invitationTypeSubject.next(InvitationType.PROJECT);
+      this.formGroup.controls.type.setValue(InvitationType.PROJECT);
+    } else {
+      this.invitationTypeSubject.next(InvitationType.PLATFORM);
+      this.formGroup.controls.type.setValue(InvitationType.PLATFORM);
+    }
   }
 
   listenForInvitationTypeChange(type: InvitationType) {
