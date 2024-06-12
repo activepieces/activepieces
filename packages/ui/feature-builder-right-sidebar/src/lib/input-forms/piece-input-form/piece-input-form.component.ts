@@ -1,5 +1,19 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  ActionBase,
+  PieceMetadataModel,
+  PiecePropertyMap,
+  PropertyType,
+  TriggerBase,
+} from '@activepieces/pieces-framework';
+import {
+  AUTHENTICATION_PROPERTY_NAME,
+  ActionErrorHandlingOptions,
+  ActionType,
+  PopulatedFlow,
+  TriggerType,
+  isNil,
+  spreadIfDefined,
+} from '@activepieces/shared';
 import {
   AppConnectionsService,
   FlagService,
@@ -8,14 +22,17 @@ import {
   extractAuthenticationProperty,
 } from '@activepieces/ui/common';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
-import { Store } from '@ngrx/store';
-import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import {
   BuilderSelectors,
   FlowsActions,
   Step,
   StepMetaDataForMentions,
 } from '@activepieces/ui/feature-builder-store';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
+import { Store } from '@ngrx/store';
 import {
   Observable,
   combineLatest,
@@ -28,33 +45,22 @@ import {
   take,
   tap,
 } from 'rxjs';
-import {
-  AUTHENTICATION_PROPERTY_NAME,
-  ActionErrorHandlingOptions,
-  ActionType,
-  PopulatedFlow,
-  TriggerType,
-  isNil,
-  spreadIfDefined,
-} from '@activepieces/shared';
-import {
-  ActionBase,
-  PieceMetadataModel,
-  PiecePropertyMap,
-  PropertyType,
-  TriggerBase,
-} from '@activepieces/pieces-framework';
-import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
+import { HttpRequestWriterComponent } from '../../http-request-writer/http-request-writer.component';
 import { InputFormCore } from '../input-form-core';
 
 @Component({
   selector: 'app-piece-input-form',
   standalone: true,
-  imports: [CommonModule, UiCommonModule, UiFeatureBuilderFormControlsModule],
+  imports: [
+    CommonModule,
+    UiCommonModule,
+    UiFeatureBuilderFormControlsModule,
+    HttpRequestWriterComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (deps$ | async; as deps) {
-
+    <app-http-request-writer></app-http-request-writer>
     <app-action-or-trigger-dropdown
       [items]="deps.triggersOrActions"
       [passedFormControl]="triggersOrActionsControl"
