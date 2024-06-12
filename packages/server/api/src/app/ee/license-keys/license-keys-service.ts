@@ -27,33 +27,7 @@ const createKey = async (request: CreateTrialLicenseKeyRequestBody): Promise<voi
     }
     
 }
-const getKeyRowOrThrow = async (key: string): Promise<LicenseKeyEntity> => {
-    const response = await  fetch(`${secretManagerLicenseKeysRoute}/${key}`)
-    if (response.status === 404) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ACTIVATION_KEY_NOT_FOUND,
-            params: { key },
-        })
-    }
-    if (!response.ok) {
-        const errorMessage = JSON.stringify(await response.json())
-        handleUnexpectedSecretsManagerError(errorMessage)
-    }
-    return response.json()
-}
 
-const getKeyRow = async (key: string): Promise<LicenseKeyEntity | undefined> => {
-    try {
-        return await getKeyRowOrThrow(key)
-    }
-    catch (e) {
-        if (e instanceof ActivepiecesError && e.error.code === ErrorCode.ACTIVATION_KEY_NOT_FOUND) {
-            return undefined
-        }
-        throw e
-    }
-    
-}
 const activateKey: (request: { key: string }) => Promise<LicenseKeyEntity>  = async (request ) => {
     const response = await fetch(`${secretManagerLicenseKeysRoute}/activate`, {
         method: 'POST',
@@ -125,21 +99,30 @@ const verifyKeyAndUpdatePlatform: (req: { key: string, platformId: string, throw
         await  activateKey({ key })
     }
     catch (err) {
-        if (!(err instanceof ActivepiecesError) || err.error.code !== ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED) {
+        //  ABDUL TODO: Discuss unknown errors with MO 
+        if ((err instanceof ActivepiecesError) &&  err.error.code !== ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED) {
             throw err
         }
     }
-    const verificationResult = await verifyKey({ key })
-    if (!verificationResult.valid) {
-        if (throwErrorOnFailure) {
-            throw new Error(`[ERROR]: License key provided is invalid, key: ${key}`)
+
+    try {
+        const verificationResult = await verifyKey({ key })
+        if (!verificationResult.valid) {
+            if (throwErrorOnFailure) {
+                throw new Error(`[ERROR]: License key provided is invalid, key: ${key}`)
+            }
+            logger.error(`[ERROR]: License key provided is invalid, turning off enterprise features:${key}`)
+            return await deactivateKey(platformId)
         }
-        logger.error(`[ERROR]: License key provided is invalid, turning off enterprise features:${key}`)
-        return deactivateKey(platformId)
+        logger.debug('License key provided is valid, turning on enterprise features.')
+       
+        return await applyKeyToPlatform(platformId, verificationResult.key.features)
     }
-    logger.debug('License key provided is valid, turning on enterprise features.')
-   
-    return applyKeyToPlatform(platformId, verificationResult.key.features)
+    catch (err) {
+        //  ABDUL TODO: Discuss unknown errors with MO 
+        logger.error(`[ERROR]: Error verifying license key: ${err}`)   
+        return (await platformService.getOldestPlatform())! 
+    }
 }
 /**Check license key in env then in platform */
 const checkKeyStatus: (throwErrorOnInvalid?: boolean) => Promise<Platform | undefined> = async (throwErrorOnInvalid) => {
@@ -147,7 +130,7 @@ const checkKeyStatus: (throwErrorOnInvalid?: boolean) => Promise<Platform | unde
     if (edition === ApEdition.CLOUD || edition === ApEdition.COMMUNITY) {
         return undefined
     }
-    const licenseKeyInEnvironment = system.get(SystemProp.LICENSE_KEY)
+    const licenseKeyInEnvironment = system.getOrThrow(SystemProp.LICENSE_KEY)
     const oldestPlatform = await platformService.getOldestPlatform()
     if (licenseKeyInEnvironment && oldestPlatform) {
         return verifyKeyAndUpdatePlatform({
