@@ -146,7 +146,7 @@
     {
       "group": "Get Started",
       "pages": [
-        "install/options/overview",
+        "install/overview",
         "install/options/docker",
         "install/options/docker-compose",
         "install/options/easypanel",
