@@ -9,6 +9,7 @@ import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { Observable, Subject, tap } from 'rxjs';
 import { FlowItemDetails, fadeIn400ms } from '@activepieces/ui/common';
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
+import { PieceCategory, isNil } from '@activepieces/shared';
 
 @Component({
   selector: 'app-step-type-item',
@@ -50,6 +51,12 @@ export class StepTypeItemComponent {
     itemIcon.onload = () => {
       this.loadingLogo$.next(false);
     };
+  }
+  isPremiumPieceAndCommunityEdition(categories: PieceCategory[] | undefined) {
+    if (isNil(categories)) {
+      return false;
+    }
+    return categories.includes(PieceCategory.PREMIUM);
   }
   openDocs(url: string) {
     window.open(url, '_blank', 'noopener');

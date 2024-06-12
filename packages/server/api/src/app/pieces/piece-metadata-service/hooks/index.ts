@@ -1,5 +1,5 @@
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
-import { filterPiecesBasedOnPremiumPlatform, filterPiecesBasedUser } from './piece-filtering'
+import { filterPiecesBasedOnEmbedding, filterPiecesBasedUser } from './piece-filtering'
 import { sortAndOrderPieces } from './piece-sorting'
 import { PieceCategory, PieceOrderBy, PieceSortBy, PlatformId, SuggestionType } from '@activepieces/shared'
 
@@ -19,12 +19,12 @@ export const defaultPieceHooks: PieceMetadataServiceHooks = {
             suggestionType: params.suggestionType,
         })
 
-        const platformPremiumBasedPieces = filterPiecesBasedOnPremiumPlatform({
+        const platformEmbeddedBasedPieces = filterPiecesBasedOnEmbedding({
             platformId: params.platformId,
             pieces: userBasedPieces,
         })
 
-        return platformPremiumBasedPieces
+        return platformEmbeddedBasedPieces
     },
 }
 

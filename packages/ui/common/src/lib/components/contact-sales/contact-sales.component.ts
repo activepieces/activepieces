@@ -5,12 +5,11 @@ import {
   Output,
 } from '@angular/core';
 import {
-  AuthenticationService,
   ContactSalesService,
   FEATURES,
   Feature,
-  FeatureKey,
-} from '@activepieces/ui/common';
+} from '../../service/contact-sales.service';
+import { FeatureKey } from '../../utils/consts';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { tap, map, catchError, startWith } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -20,9 +19,10 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
+import { AuthenticationService } from '../../service';
 
 @Component({
-  selector: 'app-contact-sales',
+  selector: 'ap-contact-sales',
   templateUrl: './contact-sales.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

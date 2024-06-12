@@ -1,10 +1,12 @@
 import { Store } from '@ngrx/store';
 import {
+  combineLatest,
   debounceTime,
   filter,
   forkJoin,
   map,
   Observable,
+  of,
   startWith,
   Subject,
   switchMap,
@@ -31,6 +33,9 @@ import {
   PieceType,
   PackageType,
   ApFlagId,
+  PieceCategory,
+  isNil,
+  ApEdition,
 } from '@activepieces/shared';
 import { FormControl } from '@angular/forms';
 import {
@@ -44,11 +49,13 @@ import {
   StepTypeSideBarProps,
 } from '@activepieces/ui/feature-builder-store';
 import {
+  ContactSalesService,
   extractInitialPieceStepValuesAndValidity,
   FlagService,
   FlowItemDetails,
   getDefaultDisplayNameForPiece,
   getDisplayNameForTrigger,
+  PlatformService,
   TelemetryService,
 } from '@activepieces/ui/common';
 import { Actions, ofType } from '@ngrx/effects';
@@ -86,13 +93,17 @@ export class StepTypeSidebarComponent implements AfterViewInit {
   }[] = [];
   flowTypeSelected$: Observable<void>;
   triggersDetails$: Observable<FlowItemDetails[]>;
+  isPremium$: Observable<boolean>;
+  premiumPieces$: Observable<string[]>;
   constructor(
     private store: Store,
     private codeService: CodeService,
     private actions: Actions,
     private flagsService: FlagService,
     private telemetryService: TelemetryService,
-    private pieceMetadataService: PieceMetadataService
+    private pieceMetadataService: PieceMetadataService,
+    private contactSalesService: ContactSalesService,
+    private platformService: PlatformService
   ) {
     this.focusSearchInput$ = this.actions.pipe(
       ofType(CanvasActionType.SET_RIGHT_SIDEBAR),
@@ -118,6 +129,10 @@ export class StepTypeSidebarComponent implements AfterViewInit {
       }),
       map(() => void 0)
     );
+    this.isPremium$ = this.flagsService
+      .getEdition()
+      .pipe(map((ed) => ed === ApEdition.ENTERPRISE || ed === ApEdition.CLOUD));
+    this.premiumPieces$ = this.platformService.getPremiumPieces();
   }
 
   ngAfterViewInit(): void {
@@ -154,28 +169,36 @@ export class StepTypeSidebarComponent implements AfterViewInit {
     const appItemsDetails$ = searchQuery$.pipe(
       tap(() => this.loading$.next(true)),
       switchMap((searchQuery) => {
-        return this._showTriggers
+        const appItemsDetails = this._showTriggers
           ? this.pieceMetadataService.listAppFlowItemsDetailsForTrigger(
               searchQuery ?? undefined
             )
           : this.pieceMetadataService.listAppFlowItemsDetailsForAction(
               searchQuery ?? undefined
             );
+        return combineLatest([appItemsDetails, this.premiumPieces$]);
       }),
+      map(([appItemsDetails, premiumPieces]) =>
+        this.filterItemsDetailsByPlatform(appItemsDetails, premiumPieces)
+      ),
       tap(() => this.loading$.next(false))
     );
 
     const allItemDetails$ = searchQuery$.pipe(
       tap(() => this.loading$.next(true)),
       switchMap((searchQuery) => {
-        return this._showTriggers
+        const allItemDetails = this._showTriggers
           ? this.pieceMetadataService.listAllFlowItemsDetailsForTrigger(
               searchQuery ?? undefined
             )
           : this.pieceMetadataService.listAllFlowItemsDetailsForAction(
               searchQuery ?? undefined
             );
+        return combineLatest([allItemDetails, this.premiumPieces$]);
       }),
+      map(([allItemDetails, premiumPieces]) =>
+        this.filterItemsDetailsByPlatform(allItemDetails, premiumPieces)
+      ),
       tap(() => this.loading$.next(false))
     );
 
@@ -215,6 +238,15 @@ export class StepTypeSidebarComponent implements AfterViewInit {
     flowItemDetails: FlowItemDetails;
     suggestion?: ActionBase | TriggerBase;
   }) {
+    this.isPremiumPieceAndCommunityEdition(flowItemDetails).pipe(
+      tap((isPremium) => {
+        if (!isPremium) {
+          this.contactSalesService.open(['PREMIUM_PIECES']);
+          return void 0;
+        }
+      })
+    );
+
     this.flowTypeSelected$ = forkJoin({
       currentFlow: this.store
         .select(BuilderSelectors.selectCurrentFlow)
@@ -434,5 +466,36 @@ export class StepTypeSidebarComponent implements AfterViewInit {
       };
     }
     return extractInitialPieceStepValuesAndValidity(suggestion.props);
+  }
+
+  private isPremiumPieceAndCommunityEdition(flowItemDetails: FlowItemDetails) {
+    return combineLatest([this.isPremium$, of(flowItemDetails)]).pipe(
+      map(([isPremium, flowItemDetails]) => {
+        if (!isPremium) {
+          return false;
+        }
+
+        if (
+          isNil(flowItemDetails.categories) ||
+          !flowItemDetails.categories.includes(PieceCategory.PREMIUM)
+        ) {
+          return false;
+        }
+
+        return flowItemDetails.categories.includes(PieceCategory.PREMIUM);
+      })
+    );
+  }
+
+  private filterItemsDetailsByPlatform(
+    itemDetails: FlowItemDetails[],
+    premiumPieces: string[]
+  ): FlowItemDetails[] {
+    return itemDetails.filter(
+      (piece) =>
+        !piece.categories?.includes(PieceCategory.PREMIUM) ||
+        (piece.categories?.includes(PieceCategory.PREMIUM) &&
+          premiumPieces.includes(piece.extra!.pieceName))
+    );
   }
 }

@@ -98,6 +98,7 @@ export class PieceMetadataService {
             name: piece.displayName,
             description: piece.description,
             logoUrl: piece.logoUrl,
+            categories: piece.categories,
             extra: {
                 packageType: piece.packageType,
                 pieceType: piece.pieceType,
@@ -151,6 +152,12 @@ export class PieceMetadataService {
             searchQuery,
             suggestionType: SuggestionType.TRIGGER
         }).pipe(map(pieces => pieces.filter(this.hasTriggers).map((p) => this.convertToFlowItemDetails(p, TriggerType.PIECE))));
+    }
+
+    isPremiumPiece() {
+        return this.listAllFlowItemsDetailsForAction('').pipe(
+            map((pieces) => pieces.filter((piece) => piece.categories).map((piece) => piece.categories!.includes(PieceCategory.PREMIUM)))
+        )
     }
 
     getPieceMetadata(name: string, version: string | undefined): Observable<PieceMetadataModel> {

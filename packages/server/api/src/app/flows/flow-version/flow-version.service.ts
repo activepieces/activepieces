@@ -5,6 +5,7 @@ import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { getEdition } from '../../helper/secret-helper'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { stepFileService } from '../step-file/step-file.service'
 import { FlowVersionEntity } from './flow-version-entity'
@@ -14,6 +15,7 @@ import { logger } from '@activepieces/server-shared'
 import {
     ActionType,
     ActivepiecesError,
+    ApEdition,
     apId,
     BranchActionSettingsWithValidation,
     Cursor,
@@ -30,6 +32,7 @@ import {
     isNil,
     LoopOnItemsActionSettingsWithValidation,
     PieceActionSettings,
+    PieceCategory,
     PieceTriggerSettings,
     ProjectId, SeekPage, TriggerType, UserId,
 } from '@activepieces/shared'
@@ -489,6 +492,9 @@ async function validateAction({
     })
 
     if (isNil(piece)) {
+        return false
+    }
+    if ((getEdition() !== ApEdition.ENTERPRISE || getEdition() !== ApEdition.CLOUD) && piece.categories?.includes(PieceCategory.PREMIUM)) {
         return false
     }
     const action = piece.actions[settings.actionName]

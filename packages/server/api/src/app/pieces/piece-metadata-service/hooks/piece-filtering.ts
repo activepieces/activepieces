@@ -34,7 +34,7 @@ export const filterPiecesBasedUser = async ({
     }))
 }
 
-export const filterPiecesBasedOnPremiumPlatform = async ({
+export const filterPiecesBasedOnEmbedding = async ({
     platformId,
     pieces,
 }: {
@@ -48,10 +48,10 @@ export const filterPiecesBasedOnPremiumPlatform = async ({
     if (isNil(platform)) {
         return pieces
     }
-    const platformPremiumPieces = platform.premiumPieces
-    const standardPieces = pieces.filter(piece => !piece.categories?.includes(PieceCategory.PREMIUM))
-    const premiumPieces = pieces.filter(piece => platformPremiumPieces.includes(piece.name))
-    return [...standardPieces, ...premiumPieces]
+    if (platform.embeddingEnabled) {
+        return pieces.filter(piece => !piece.categories?.includes(PieceCategory.PREMIUM))
+    }
+    return pieces
 }
 
 async function filterPiecesBasedOnFeatures(
