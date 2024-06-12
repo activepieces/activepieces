@@ -28,6 +28,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         }
         modifiedFlags[ApFlagId.EMAIL_AUTH_ENABLED] = platform.emailAuthEnabled
         const isCustomerPlatform = !flagService.isCloudPlatform(platformId)
+        modifiedFlags[ApFlagId.IS_CLOUD_PLATFORM] = !isCustomerPlatform
         if (isCustomerPlatform) {
             modifiedFlags[ApFlagId.SHOW_PLATFORM_DEMO] = false
             modifiedFlags[ApFlagId.THEME] = await appearanceHelper.getTheme({

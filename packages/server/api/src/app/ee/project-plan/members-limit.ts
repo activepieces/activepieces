@@ -6,28 +6,38 @@ import {
     ActivepiecesError,
     ErrorCode,
     ProjectId,
+    ProjectMemberRole,
 } from '@activepieces/shared'
 
 export const projectMembersLimit = {
-    async limit({ projectId, platformId }: { projectId: ProjectId, platformId: string }): Promise<void> {
-        if (!flagService.isCloudPlatform(platformId)) {
-            return
-        }
-        const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
-        if (!projectPlan) {
-            return
-        }
-        const numberOfMembers = await projectMemberService.countTeamMembers(projectId)
-        const numberOfInvitations = await userInvitationsService.countByProjectId(projectId)
+    async limit({ projectId, platformId, role }: { projectId: ProjectId, platformId: string, role: ProjectMemberRole }): Promise<void> {
+        const shouldLimit = await shouldLimitMembers({ projectId, platformId, role })
 
-        if (numberOfMembers + numberOfInvitations > projectPlan.teamMembers) {
+        if (shouldLimit) {
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,
                 params: {
                     metric: 'team-members',
-                    quota: projectPlan.teamMembers,
                 },
             })
         }
     },
+}
+
+const UNLIMITED_TEAM_MEMBERS = 100
+
+async function shouldLimitMembers({ projectId, platformId, role }: { projectId: ProjectId, platformId: string, role: ProjectMemberRole }): Promise<boolean> {
+    if (!flagService.isCloudPlatform(platformId)) {
+        return false
+    }
+    const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
+    if (!projectPlan) {
+        return false
+    }
+    if (projectPlan.teamMembers === UNLIMITED_TEAM_MEMBERS) {
+        return role !== ProjectMemberRole.ADMIN
+    }
+    const numberOfMembers = await projectMemberService.countTeamMembers(projectId)
+    const numberOfInvitations = await userInvitationsService.countByProjectId(projectId)
+    return numberOfMembers + numberOfInvitations > projectPlan.teamMembers
 }

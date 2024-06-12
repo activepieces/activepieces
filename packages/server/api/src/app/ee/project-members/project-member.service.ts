@@ -1,5 +1,4 @@
 import dayjs from 'dayjs'
-import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -16,7 +15,6 @@ import {
 import {
     apId,
     Cursor,
-    isNil,
     PlatformRole,
     ProjectId,
     ProjectMemberRole,
@@ -36,7 +34,7 @@ export const projectMemberService = {
         const existingProjectMember = await repo().findOneBy({
             projectId,
             userId,
-            platformId: isNil(platformId) ? IsNull() : platformId,
+            platformId,
         })
         const projectMemberId = existingProjectMember?.id ?? apId()
 

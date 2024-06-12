@@ -320,8 +320,8 @@ ErrorCode.INVALID_APP_CONNECTION,
 export type QuotaExceededParams = BaseErrorParams<
 ErrorCode.QUOTA_EXCEEDED,
 {
-    metric: 'connections' | 'tasks' | 'bots' | 'datasource' | 'team-members'
-    quota: number
+    metric: 'tasks' | 'team-members'
+    quota?: number
 }
 >
 

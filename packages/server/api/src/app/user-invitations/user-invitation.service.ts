@@ -13,7 +13,7 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
-import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 
 const repo = databaseConnection.getRepository(UserInvitationEntity)
 const INVITATION_EXPIREY_DAYS = 1
@@ -24,7 +24,7 @@ export const userInvitationsService = {
             projectId,
         })
     },
-    provisionUserInvitation: async ({ email, platformId }: ProvisionUserInvitationParams): Promise<void> => {
+    async provisionUserInvitation({ email, platformId }: ProvisionUserInvitationParams): Promise<void> {
         const user = await userService.getByPlatformAndEmail({
             email,
             platformId,
@@ -32,6 +32,7 @@ export const userInvitationsService = {
         if (isNil(user)) {
             return
         }
+        const platform = await platformService.getOneOrThrow(platformId)
         const ONE_DAY_AGO = dayjs().subtract(INVITATION_EXPIREY_DAYS, 'day').toISOString()
         const invitations = await repo.findBy([
             {
@@ -56,6 +57,7 @@ export const userInvitationsService = {
                     const { projectId, projectRole } = invitation
                     assertNotNullOrUndefined(projectId, 'projectId')
                     assertNotNullOrUndefined(projectRole, 'projectRole')
+                    assertEqual(platform.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
                     await projectMemberService.upsert({
                         projectId,
                         userId: user.id,
