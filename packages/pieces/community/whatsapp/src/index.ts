@@ -2,6 +2,7 @@
 import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
 import { sendMessage } from "./lib/actions/send-message";
 import { sendMedia } from "./lib/actions/send-media";
+import { sendFromTemplate } from "./lib/actions/send-from-template";
 
 const markdown = `
 To Obtain a Phone Number ID and a Permanent System User Access Token, follow these steps:
@@ -31,6 +32,11 @@ export const whatsappAuth = PieceAuth.CustomAuth({
       description: 'The phone number ID of your WhatsApp business account',
       required: true,
     }),
+    businessAccountId: Property.ShortText({
+      displayName: 'Business Account ID',
+      description: 'The business account ID of your WhatsApp business account',
+      required: true,
+    }),
   },
 });
 
@@ -42,6 +48,6 @@ export const whatsapp = createPiece({
   minimumSupportedRelease: '0.20.0',
   logoUrl: "https://cdn.activepieces.com/pieces/whatsapp.png",
   authors: ["LevwTech"],
-  actions: [sendMessage, sendMedia],
+  actions: [sendMessage, sendMedia, sendFromTemplate],
   triggers: [],
 });
