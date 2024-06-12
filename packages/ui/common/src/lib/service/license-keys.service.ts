@@ -3,7 +3,10 @@ import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { environment } from '../environments/environment';
-import { RequestTrialComponent } from '../components/request-trial/request-trial.component';
+import {
+  RequestTrialComponent,
+  RequestTrialDialogData,
+} from '../components/request-trial/request-trial.component';
 import {
   LicenseKeyStatus,
   CreateTrialLicenseKeyRequestBody,
@@ -18,8 +21,10 @@ export class LicenseKeysService {
     return this.http.post<void>(`${environment.apiUrl}/license-keys`, req);
   }
   openTrialDialog() {
+    const data: RequestTrialDialogData = { isDialog: true };
     this.matDialog.open(RequestTrialComponent, {
       panelClass: 'fullscreen-dialog',
+      data,
     });
   }
   getPlatformKeyStatus() {

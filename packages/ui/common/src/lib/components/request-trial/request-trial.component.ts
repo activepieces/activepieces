@@ -1,12 +1,21 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Inject,
+  Optional,
+} from '@angular/core';
 import { fadeIn400ms } from '../../animation/fade-in.animations';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { LicenseKeysService } from '../../service/license-keys.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ErrorCode } from '@activepieces/shared';
+
+export type RequestTrialDialogData = {
+  isDialog: boolean;
+};
 
 @Component({
   selector: 'ap-request-trial-component',
@@ -16,12 +25,15 @@ import { ErrorCode } from '@activepieces/shared';
     <div
       class=" ap-w-full ap-h-full ap-bg-[#F5F3FF] ap-text-black ap-py-5 lg:ap-py-5 ap-overflow-y-scroll lg:ap-overflow-hidden thin-scrollbars ap-relative"
     >
+      @if(data?.isDialog) {
       <div class="ap-absolute ap-right-[20px] ap-top-[20px]">
         <ap-icon-button
           [iconFilename]="'close.svg'"
           (buttonClicked)="close()"
         ></ap-icon-button>
       </div>
+      }
+
       <div
         class="ap-flex ap-flex-grow  ap-items-centeap-max-w-screen-xl ap-mx-auto ap-px-6   ap-flex-col ap-justify-center lg:ap-h-full lg:ap-w-full"
       >
@@ -175,7 +187,10 @@ export class RequestTrialComponent {
     private fb: FormBuilder,
     private matDialog: MatDialog,
     private snackBar: MatSnackBar,
-    private licenseKeysService: LicenseKeysService
+    private licenseKeysService: LicenseKeysService,
+    @Optional()
+    @Inject(MAT_DIALOG_DATA)
+    public data?: RequestTrialDialogData
   ) {
     this.emailChanged$ = this.createListenerToRemoveServerErrorOnChange(
       this.sendEmailForm.controls.email,

@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import {
+  RequestTrialComponent,
   UserLoggedInGuard,
   showBasedOnEditionGuard,
 } from '@activepieces/ui/common';
@@ -89,6 +90,10 @@ export const routes: Routes = [
   {
     path: 'not-found',
     component: NotFoundComponent,
+  },
+  {
+    path: 'enterprise-trial',
+    component: RequestTrialComponent,
   },
   {
     path: '**',
