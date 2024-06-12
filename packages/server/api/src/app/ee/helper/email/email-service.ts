@@ -1,8 +1,6 @@
-import { jwtUtils } from '../../../helper/jwt-utils'
 import { getEdition } from '../../../helper/secret-helper'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
-import { INVITATION_EXPIREY_DATS as INVITATION_EXPIREY_DAYS } from '../../../user-invitations/user-invitation.service'
 import { alertsService } from '../../alerts/alerts-service'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
@@ -16,7 +14,7 @@ const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(ED
 const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
 
 export const emailService = {
-    async sendInvitation({ userInvitation }: SendInvitationArgs): Promise<void> {
+    async sendInvitation({ userInvitation, invitationLink }: SendInvitationArgs): Promise<void> {
         logger.info({
             message: '[emailService#sendInvitation] sending invitation email',
             email: userInvitation.email,
@@ -27,27 +25,15 @@ export const emailService = {
             platformRole: userInvitation.platformRole,
         })
         const { email, platformId } = userInvitation
-        const token = await jwtUtils.sign({
-            payload: {
-                id: userInvitation.id,
-            },
-            expiresInSeconds: INVITATION_EXPIREY_DAYS * 24 * 60 * 60,
-            key: await jwtUtils.getJwtSecret(),
-        })
-
-        const setupLink = await platformDomainHelper.constructUrlFrom({
-            platformId,
-            path: `invitation?token=${token}&email=${encodeURIComponent(email)}`,
-        })
         const { name: projectOrPlatformName, role } = await getEntityNameForInvitation(userInvitation)
-        
+
         await emailSender.send({
             emails: [email],
             platformId,
             templateData: {
                 name: 'invitation-email',
                 vars: {
-                    setupLink,
+                    setupLink: invitationLink,
                     projectOrPlatformName,
                     role,
                 },
@@ -202,6 +188,7 @@ function capitalizeFirstLetter(str: string): string {
 
 type SendInvitationArgs = {
     userInvitation: UserInvitation
+    invitationLink: string
 }
 
 type SendQuotaAlertArgs = {

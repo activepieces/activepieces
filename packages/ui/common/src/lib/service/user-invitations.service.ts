@@ -5,6 +5,7 @@ import {
   SeekPage,
   SendUserInvitationRequest,
   UserInvitation,
+  UserInvitationWithLink,
 } from '@activepieces/shared';
 import { environment } from '../environments/environment';
 
@@ -15,7 +16,7 @@ export class UserInvitationService {
   constructor(private http: HttpClient) {}
 
   inviteUser(request: SendUserInvitationRequest) {
-    return this.http.post<void>(
+    return this.http.post<UserInvitationWithLink>(
       `${environment.apiUrl}/user-invitations`,
       request
     );

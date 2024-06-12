@@ -5,7 +5,7 @@ import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from
 import { assertRoleHasPermission } from '../ee/authentication/rbac/rbac-middleware'
 import { projectMembersLimit } from '../ee/project-plan/members-limit'
 import { userInvitationsService } from './user-invitation.service'
-import { AcceptUserInvitationRequest, ALL_PRINCIPAL_TYPES, InvitationType, ListUserInvitationsRequest, Permission, PrincipalType, SeekPage, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, UserInvitation } from '@activepieces/shared'
+import { AcceptUserInvitationRequest, ALL_PRINCIPAL_TYPES, InvitationType, ListUserInvitationsRequest, Permission, PrincipalType, SeekPage, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 
 
 export const invitationModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -131,7 +131,7 @@ const CreateUserInvitationRequestParams = {
         tags: ['user-invitations'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
-            [StatusCodes.CREATED]: UserInvitation,
+            [StatusCodes.CREATED]: UserInvitationWithLink,
         },
     },
 }
