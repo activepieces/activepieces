@@ -11,7 +11,12 @@ const markdown = `
 - Now, locate the form where you want the trigger to occur.
 - Add a webhook to that form.
 - In the webhook settings, paste this URL: 
-  \`{{webhookUrl}}\`
+  **Generate Sample Data URL**:
+  \`{{{webhookUrl}}/test\`
+
+  **Trigger Flow URL**:
+  \`{{{webhookUrl}}\`
+
 - Keep the other settings unchanged (default).
 `;
 

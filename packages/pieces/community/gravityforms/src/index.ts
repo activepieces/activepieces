@@ -7,7 +7,7 @@ export const gravityforms = createPiece({
   description: 'Build and publish your WordPress forms',
 
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.6.1',
+  minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/gravityforms.svg',
   authors: ["Abdallah-Alwarawreh","kishanprmr","MoShizzle","abuaboud"],
   categories: [PieceCategory.FORMS_AND_SURVEYS],
