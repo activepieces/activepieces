@@ -4,6 +4,7 @@ import {
   RequestTrialComponent,
   UserLoggedInGuard,
   showBasedOnEditionGuard,
+  enterpriseTrialGuard,
 } from '@activepieces/ui/common';
 import { ImportFlowUriEncodedResolver } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.resolver';
 import { ImportFlowUriEncodedComponent } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.component';
@@ -94,6 +95,7 @@ export const routes: Routes = [
   {
     path: 'enterprise-trial',
     component: RequestTrialComponent,
+    canActivate: [enterpriseTrialGuard()],
   },
   {
     path: '**',
