@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
+import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 
 export const gmailAuth = PieceAuth.OAuth2({
   description: '',
@@ -14,7 +15,11 @@ export const gmailAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://oauth2.googleapis.com/token',
   required: true,
   // TODO add https://www.googleapis.com/auth/gmail.readonly when we have the permission
-  scope: ['https://www.googleapis.com/auth/gmail.send', 'email'],
+  scope: [
+    'https://www.googleapis.com/auth/gmail.send',
+    'email',
+    'https://www.googleapis.com/auth/gmail.readonly',
+  ],
 });
 
 export const gmail = createPiece({
@@ -37,7 +42,17 @@ export const gmail = createPiece({
   displayName: 'Gmail',
   description: 'Email service by Google',
 
-  authors: ["kanarelo","abdullahranginwala","BastienMe","Salem-Alaa","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
-  triggers: [],
+  authors: [
+    'kanarelo',
+    'abdullahranginwala',
+    'BastienMe',
+    'Salem-Alaa',
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+  ],
+  triggers: [gmailNewEmailTrigger],
   auth: gmailAuth,
 });
