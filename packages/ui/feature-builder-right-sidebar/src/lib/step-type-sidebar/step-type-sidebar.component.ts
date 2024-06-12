@@ -95,6 +95,7 @@ export class StepTypeSidebarComponent implements AfterViewInit {
   triggersDetails$: Observable<FlowItemDetails[]>;
   isPremium$: Observable<boolean>;
   premiumPieces$: Observable<string[]>;
+  showTrial$: Observable<boolean>;
   constructor(
     private store: Store,
     private codeService: CodeService,
@@ -238,14 +239,11 @@ export class StepTypeSidebarComponent implements AfterViewInit {
     flowItemDetails: FlowItemDetails;
     suggestion?: ActionBase | TriggerBase;
   }) {
-    this.isPremiumPieceAndCommunityEdition(flowItemDetails).pipe(
-      tap((isPremium) => {
-        if (!isPremium) {
-          this.contactSalesService.open(['PREMIUM_PIECES']);
-          return void 0;
-        }
-      })
-    );
+    this.showTrial$ = this.isPremiumPieceAndCommunityEdition(flowItemDetails);
+    if (!this.showTrial$) {
+      this.contactSalesService.open(['PREMIUM_PIECES']);
+      return void 0;
+    }
 
     this.flowTypeSelected$ = forkJoin({
       currentFlow: this.store
