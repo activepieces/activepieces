@@ -32,6 +32,8 @@ export const networkLicenseValidator: LicenseValidator = {
                 manageTemplatesEnabled: res.data.manageTemplatesEnabled,
                 apiKeysEnabled: res.data.apiKeysEnabled,
                 projectRolesEnabled: res.data.projectRolesEnabled,
+                alertsEnabled: res.data.alertsEnabled,
+                premiumPieces: res.data.premiumPieces,
             }
         }
         catch (err) {

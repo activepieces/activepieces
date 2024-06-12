@@ -1,12 +1,11 @@
 import { QueryFailedError } from 'typeorm'
 import { flagService } from '../../flags/flag.service'
-import { generateRandomPassword } from '../../helper/crypto'
 import { telemetry } from '../../helper/telemetry.utils'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
 import { Provider } from './hooks/authentication-service-hooks'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { cryptoUtils, logger, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -22,11 +21,8 @@ import {
     UserStatus,
 } from '@activepieces/shared'
 
-const SIGN_UP_ENABLED = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
-
 export const authenticationService = {
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
-        await assertSignUpIsEnabled()
         await hooks.get().preSignUp(params)
         const user = await createUser(params)
 
@@ -76,7 +72,7 @@ export const authenticationService = {
             lastName: params.lastName,
             trackEvents: true,
             newsLetter: true,
-            password: await generateRandomPassword(),
+            password: await cryptoUtils.generateRandomPassword(),
             platformId: params.platformId,
         }
 
@@ -128,17 +124,6 @@ export const authenticationService = {
             projectRole: authnResponse.projectRole,
         }
     },
-}
-
-const assertSignUpIsEnabled = async (): Promise<void> => {
-    const userCreated = await flagService.getOne(ApFlagId.USER_CREATED)
-
-    if (userCreated && !SIGN_UP_ENABLED) {
-        throw new ActivepiecesError({
-            code: ErrorCode.SIGN_UP_DISABLED,
-            params: {},
-        })
-    }
 }
 
 const createUser = async (params: SignUpParams): Promise<User> => {

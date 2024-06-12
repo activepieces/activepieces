@@ -1,0 +1,30 @@
+{
+  "name": "pieces-microsoft-sharepoint",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ee/pieces/sharepoint/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/ee/pieces/sharepoint",
+        "tsConfig": "packages/ee/pieces/sharepoint/tsconfig.lib.json",
+        "packageJson": "packages/ee/pieces/sharepoint/package.json",
+        "main": "packages/ee/pieces/sharepoint/src/index.ts",
+        "assets": ["packages/ee/pieces/sharepoint/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-microsoft-sharepoint {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  },
+  "tags": []
+}

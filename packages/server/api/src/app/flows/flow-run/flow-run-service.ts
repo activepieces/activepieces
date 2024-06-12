@@ -1,3 +1,4 @@
+import { In } from 'typeorm'
 import {
     APArrayContains,
     databaseConnection,
@@ -121,9 +122,13 @@ export const flowRunService = {
         let query = flowRunRepo.createQueryBuilder('flow_run').where({
             projectId,
             ...spreadIfDefined('flowId', flowId),
-            ...spreadIfDefined('status', status),
             environment: RunEnvironment.PRODUCTION,
         })
+        if (status) {
+            query = query.andWhere({
+                status: In(status),
+            })
+        }
         if (createdAfter) {
             query = query.andWhere('flow_run.created >= :createdAfter', {
                 createdAfter,
@@ -418,7 +423,7 @@ type GetOrCreateParams = {
 type ListParams = {
     projectId: ProjectId
     flowId: FlowId | undefined
-    status: FlowRunStatus | undefined
+    status: FlowRunStatus[] | undefined
     cursor: Cursor | null
     tags?: string[]
     limit: number

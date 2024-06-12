@@ -1,11 +1,10 @@
 import {
   ApFile,
-  Property,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
 import { TwitterApi } from 'twitter-api-v2';
 import { twitterAuth } from '../..';
+import { twitterCommon } from '../common';
 
 export const createTweet = createAction({
   auth: twitterAuth,
@@ -14,30 +13,10 @@ export const createTweet = createAction({
   displayName: 'Create Tweet',
   description: 'Create a tweet',
   props: {
-    text: Property.LongText({
-      displayName: 'Text',
-      description: 'The text of the tweet',
-      required: true,
-      validators: [Validators.minLength(1)],
-    }),
-    image_1: Property.File({
-      displayName: 'Media (1)',
-      description:
-        'An image, video or GIF url or base64 to attach to the tweet',
-      required: false,
-    }),
-    image_2: Property.File({
-      displayName: 'Media (2)',
-      description:
-        'An image, video or GIF url or base64 to attach to the tweet',
-      required: false,
-    }),
-    image_3: Property.File({
-      displayName: 'Media (3)',
-      description:
-        'An image, video or GIF url or base64 to attach to the tweet',
-      required: false,
-    }),
+    text: twitterCommon.text,
+    image_1: twitterCommon.image_1,
+    image_2: twitterCommon.image_2,
+    image_3: twitterCommon.image_3,
   },
   async run(context) {
     const { consumerKey, consumerSecret, accessToken, accessTokenSecret } =

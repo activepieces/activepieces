@@ -22,7 +22,6 @@ import {
   LIMIT_QUERY_PARAM,
   NavigationService,
   ProjectService,
-  STATUS_QUERY_PARAM,
   TelemetryService,
   UiCommonModule,
   executionsPageFragments,
@@ -31,7 +30,6 @@ import { ActivatedRoute } from '@angular/router';
 import { PopulatedIssue } from '@activepieces/ee-shared';
 import {
   ApEdition,
-  FlowRunStatus,
   NotificationStatus,
   ProjectId,
   TelemetryEventName,
@@ -142,7 +140,6 @@ export class IssuesTableComponent implements OnInit {
           fragment: executionsPageFragments.Runs,
           queryParams: {
             [FLOW_QUERY_PARAM]: issue.flowId,
-            [STATUS_QUERY_PARAM]: FlowRunStatus.FAILED,
           },
         },
         openInNewWindow,

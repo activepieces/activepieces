@@ -258,7 +258,7 @@ class Validators {
   static integer: TypedValidatorFn<ValidationInputType.NUMBER> = {
     type: ValidationInputType.NUMBER,
     fn: (property, processedValue, userInput) => {
-      if (isInteger(processedValue)) {
+      if (!isInteger(processedValue)) {
         return formatErrorMessage(ErrorMessages.WHOLE_NUMBER, { userInput });
       }
       return null;

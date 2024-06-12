@@ -6,6 +6,7 @@ import {
 } from 'typeorm'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
+import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
@@ -38,6 +39,7 @@ import { StoreEntryEntity } from '../store-entry/store-entry-entity'
 import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
 import { UserEntity } from '../user/user-entity'
+import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
@@ -69,6 +71,8 @@ function getEntities(): EntitySchema<unknown>[] {
         TagEntity,
         PieceTagEntity,
         IssueEntity,
+        AlertEntity,
+        UserInvitationEntity,
     ]
 
     switch (edition) {

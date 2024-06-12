@@ -59,6 +59,7 @@ type ErrorParams =
     | UserIsInActiveErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
+    | ExistingAlertChannelErrorParams
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -67,7 +68,9 @@ export type BaseErrorParams<T, V> = {
 
 export type InvitationOnlySignUpParams = BaseErrorParams<
 ErrorCode.INVITATION_ONLY_SIGN_UP,
-Record<string, never>
+{
+    message?: string
+}
 >
 
 export type InvalidClaimParams = BaseErrorParams<ErrorCode.INVALID_CLAIM, { redirectUrl: string, tokenUrl: string, clientId: string }>
@@ -317,8 +320,8 @@ ErrorCode.INVALID_APP_CONNECTION,
 export type QuotaExceededParams = BaseErrorParams<
 ErrorCode.QUOTA_EXCEEDED,
 {
-    metric: 'connections' | 'tasks' | 'bots' | 'datasource' | 'team-members'
-    quota: number
+    metric: 'tasks' | 'team-members'
+    quota?: number
 }
 >
 
@@ -347,6 +350,12 @@ ErrorCode.INVALID_SAML_RESPONSE,
 }
 >
 
+export type ExistingAlertChannelErrorParams = BaseErrorParams<
+ErrorCode.EXISTING_ALERT_CHANNEL,
+{
+    email: string
+}
+>
 
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
@@ -361,6 +370,7 @@ export enum ErrorCode {
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
+    EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
     FLOW_FORM_NOT_FOUND = 'FLOW_FORM_NOT_FOUND',
     FILE_NOT_FOUND = 'FILE_NOT_FOUND',
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',

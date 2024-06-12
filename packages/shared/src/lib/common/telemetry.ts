@@ -64,13 +64,11 @@ type RequestTrialClicked = {
 }
 
 type UpgradeClicked = {
-    limitType?: 'team' | 'connections'
-    limit: number
+    limitType?: 'team'
 }
 
 type UpgradePopup = {
-    limitType?: 'team' | 'connections'
-    limit: number
+    limitType?: 'team'
 
 }
 
@@ -109,6 +107,12 @@ type FormsViewed = {
     formProps: Record<string, unknown>
 }
 
+type UserInvited = {
+    platformId: string
+    projectId?: string
+    email: string
+}
+
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     QUOTA_ALERT = 'quota.alert',
@@ -117,6 +121,7 @@ export enum TelemetryEventName {
     FLOW_ISSUE_CLICKED = 'flow.issue.clicked',
     FLOW_ISSUE_RESOLVED = 'flow.issue.resolved',
     UPGRADE_CLICKED = 'upgrade.clicked',
+    USER_INVITED = 'user.invited',
     OPENED_PRICING_FROM_DASHBOARD = 'pricing.viewed',
     UPGRADE_POPUP = 'upgrade.popup',
     CREATED_FLOW = 'flow.created',
@@ -167,6 +172,7 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD, OpenedFromDasahboard>
     | BaseTelemetryEvent<TelemetryEventName.COPILOT_GENERATED_CODE, CopilotGeneratedCode>
     | BaseTelemetryEvent<TelemetryEventName.FORMS_VIEWED, FormsViewed>
+    | BaseTelemetryEvent<TelemetryEventName.USER_INVITED, UserInvited>
     | BaseTelemetryEvent<TelemetryEventName.FORMS_SUBMITTED, FormsViewed>
     | BaseTelemetryEvent<TelemetryEventName.REWARDS_OPENED, RewardButtonClicked>
     | BaseTelemetryEvent<TelemetryEventName.REWARDS_INSTRUCTION_CLICKED, RewardInstructionsClicked>

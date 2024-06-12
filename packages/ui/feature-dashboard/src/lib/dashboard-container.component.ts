@@ -16,6 +16,8 @@ import { Project } from '@activepieces/shared';
 import { Router } from '@angular/router';
 import { MatSidenav } from '@angular/material/sidenav';
 import { IssuesService } from './services/issues.service';
+import { MatDialog } from '@angular/material/dialog';
+import { InviteUserDialogComponent } from './components/dialogs/invite-user-dialog/invite-user-dialog.component';
 
 @Component({
   templateUrl: './dashboard-container.component.html',
@@ -32,9 +34,10 @@ export class DashboardContainerComponent {
   showPlatform$: Observable<boolean>;
   @ViewChild('contactSalesSlideout') contactSalesSlideout: MatSidenav;
   contactSalesState$: Observable<boolean>;
-  isVersionMatch$?: Observable<boolean>;
   newUpdateMessage = $localize`New update available`;
   issuesCountCheck$: Observable<number>;
+  isVersionMatch$: Observable<boolean>;
+
   constructor(
     private flagService: FlagService,
     private embeddedService: EmbeddingService,
@@ -42,8 +45,9 @@ export class DashboardContainerComponent {
     private authenticationService: AuthenticationService,
     private platformService: PlatformService,
     public router: Router,
-    private contactSalesService: ContactSalesService,
-    private issuesService: IssuesService
+    private issuesService: IssuesService,
+    private matDialog: MatDialog,
+    private contactSalesService: ContactSalesService
   ) {
     this.contactSalesState$ =
       this.contactSalesService.contactSalesState.asObservable();
@@ -88,6 +92,9 @@ export class DashboardContainerComponent {
     this.router.navigate(['/platform']);
   }
 
+  openInviteAdminDialog() {
+    this.matDialog.open(InviteUserDialogComponent);
+  }
   navigateToProjectDashboard() {
     this.router.navigate(['/']);
   }

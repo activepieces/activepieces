@@ -36,6 +36,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.IS_CLOUD_PLATFORM,
+                value: false,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.PIECES_SYNC_MODE,
                 value: system.get(SystemProp.PIECES_SYNC_MODE),
                 created,
@@ -170,12 +176,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SIGN_UP_ENABLED,
-                value: system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.TELEMETRY_ENABLED,
                 value: system.getBoolean(SystemProp.TELEMETRY_ENABLED) ?? true,
                 created,
@@ -262,7 +262,6 @@ export const flagService = {
 
 export type FlagType =
     | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>
-    | BaseFlagStructure<ApFlagId.PLATFORM_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>

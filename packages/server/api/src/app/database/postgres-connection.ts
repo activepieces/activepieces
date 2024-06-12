@@ -133,6 +133,10 @@ import { AddUniqueNameToFolder1713643694049 } from './migration/postgres/1713643
 import { AddFeaturesToPlatform1714145914415 } from './migration/postgres/1714145914415-AddFeaturesToPlatform'
 import { UnifyEnterpriseWithCloud1714249840058 } from './migration/postgres/1714249840058-UnifyEnterpriseWithCloud'
 import { AddIssueEntityPostgres1714904516114 } from './migration/postgres/1714904516114-AddIssueEntityPostgres'
+import { AddAlertsEntityPostgres1716989780835 } from './migration/postgres/1716989780835-AddAlertsEntityPostgres'
+import { AddPremiumPiecesColumnPostgres1717370717678 } from './migration/postgres/1717370717678-AddPremiumPiecesColumnPostgres'
+import { AddUserInvitation1717960689650 } from './migration/postgres/1717960689650-AddUserInvitation'
+import { ModifyProjectMembers1717961669938 } from './migration/postgres/1717961669938-ModifyProjectMembers'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 
@@ -221,6 +225,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIssueEntityPostgres1714904516114,
         RemoveShowActivityLog1716105958530,
         AddDurationForRuns1716725027424,
+        AddAlertsEntityPostgres1716989780835,
+        AddUserInvitation1717960689650,
+        AddPremiumPiecesColumnPostgres1717370717678,
     ]
 
     const edition = getEdition()
@@ -291,7 +298,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddReferral1690459469381,
                 AddUserEmailToReferral1709500213947,
                 AddProjectBilling1708811745694,
-
+                
+                // New Migration After Unifying
+                ModifyProjectMembers1717961669938,
             )
             break
         case ApEdition.COMMUNITY:

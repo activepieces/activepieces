@@ -68,18 +68,6 @@ export class FlagService {
     );
   }
 
-  isSignedUpEnabled(): Observable<boolean> {
-    return this.getAllFlags().pipe(
-      map((flags) => {
-        const firstUser = flags['USER_CREATED'] as boolean;
-        if (!firstUser && flags['EDITION'] !== ApEdition.CLOUD) {
-          return true;
-        }
-        return flags['SIGN_UP_ENABLED'] as boolean;
-      })
-    );
-  }
-
   isTelemetryEnabled(): Observable<boolean> {
     return this.getAllFlags().pipe(
       map((flags) => {

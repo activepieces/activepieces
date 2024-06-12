@@ -6,14 +6,13 @@ import {
   Validators,
 } from '@angular/forms';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
-import { UiCommonModule } from '@activepieces/ui/common';
+import { PlatformUserService, UiCommonModule } from '@activepieces/ui/common';
 import { CommonModule } from '@angular/common';
 import {
   MAT_DIALOG_DATA,
   MatDialogModule,
   MatDialogRef,
 } from '@angular/material/dialog';
-import { PlatformUserService } from '../../../service/platform-user.service';
 import { PlatformRole } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 

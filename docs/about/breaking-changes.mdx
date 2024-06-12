@@ -1,0 +1,26 @@
+---
+title: "Breaking Changes"
+description: "This list shows all versions that include breaking changes and how to upgrade."
+icon: "hammer"
+---
+
+## 0.28.0
+
+### What has changed?
+
+- **Project Members:**
+    - The `EXTERNAL_CUSTOMER` role has been deprecated and replaced with the `OPERATOR` role. Please check the permissions page for more details.
+    - All pending invitations will be removed.
+    - The User Invitation entity has been introduced to send invitations. You can still use the Project Member API to add roles for the user, but it requires the user to exist. If you want to send an email, use the User Invitation, and later a record in the project member will be created after the user accepts and registers an account.
+- **Authentication:**
+    - The `SIGN_UP_ENABLED` environment variable, which allowed multiple users to sign up for different platforms/projects, has been removed. It has been replaced with inviting users to the same platform/project. All old users should continue to work normally.
+
+### When is action necessary?
+
+- **Project Members:**
+
+If you use the embedding SDK or the create project member API with the `EXTERNAL_CUSTOMER` role, you should start using the `OPERATOR` role instead.
+
+- **Authentication:**
+
+Multiple platforms/projects are no longer supported in the community edition. Technically, everything is still there, but you have to hack using the API as the authentication system has now changed. If you have already created the users/platforms, they should continue to work, and no action is required.

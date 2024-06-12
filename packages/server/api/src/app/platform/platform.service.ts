@@ -19,6 +19,10 @@ import {
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
 
 export const platformService = {
+    async hasAnyPlatforms(): Promise<boolean> {
+        const count = await repo.count()
+        return count > 0
+    },
     async create(params: AddParams): Promise<Platform> {
         const {
             ownerId,
@@ -58,6 +62,8 @@ export const platformService = {
             customDomainsEnabled: false,
             apiKeysEnabled: false,
             customAppearanceEnabled: false,
+            alertsEnabled: false,
+            premiumPieces: [],
         }
 
         const savedPlatform = await repo.save(newPlatform)
@@ -121,6 +127,8 @@ export const platformService = {
             ...spreadIfDefined('projectRolesEnabled', params.projectRolesEnabled),
             ...spreadIfDefined('customDomainsEnabled', params.customDomainsEnabled),
             ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
+            ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
+            ...spreadIfDefined('premiumPieces', params.premiumPieces),
             
         }
 
@@ -179,5 +187,6 @@ type UpdateParams = UpdatePlatformRequestBody & {
     manageTemplatesEnabled?: boolean
     apiKeysEnabled?: boolean
     projectRolesEnabled?: boolean
-    
+    alertsEnabled?: boolean   
+    premiumPieces?: string[]
 }

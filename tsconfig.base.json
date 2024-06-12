@@ -281,6 +281,9 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-krisp-call": [
+        "packages/pieces/community/krisp-call/src/index.ts"
+      ],
       "@activepieces/piece-lead-connector": [
         "packages/pieces/community/lead-connector/src/index.ts"
       ],
@@ -323,6 +326,12 @@
       "@activepieces/piece-mautic": [
         "packages/pieces/community/mautic/src/index.ts"
       ],
+      "@activepieces/piece-messagebird": [
+        "packages/pieces/community/messagebird/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-dynamics-365-business-central": [
+        "packages/ee/pieces/microsoft-dynamics-365-business-central/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-dynamics-crm": [
         "packages/ee/pieces/microsoft-dynamics-crm/src/index.ts"
       ],
@@ -333,7 +342,7 @@
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
       ],
       "@activepieces/piece-microsoft-sharepoint": [
-        "packages/pieces/community/microsoft-sharepoint/src/index.ts"
+        "packages/ee/pieces/sharepoint/src/index.ts"
       ],
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
@@ -466,6 +475,9 @@
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
       ],
+      "@activepieces/piece-snowflake": [
+        "packages/ee/pieces/snowflake/src/index.ts"
+      ],
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
       ],
@@ -581,6 +593,9 @@
       "@activepieces/piece-zerobounce": [
         "packages/pieces/community/zerobounce/src/index.ts"
       ],
+      "@activepieces/piece-zoho-books": [
+        "packages/pieces/community/zoho-books/src/index.ts"
+      ],
       "@activepieces/piece-zoho-crm": [
         "packages/pieces/community/zoho-crm/src/index.ts"
       ],
@@ -590,6 +605,7 @@
       "@activepieces/piece-zoom": [
         "packages/pieces/community/zoom/src/index.ts"
       ],
+      "@activepieces/piece-zuora": ["packages/ee/pieces/zuora/src/index.ts"],
       "@activepieces/pieces-common": [
         "packages/pieces/community/common/src/index.ts"
       ],

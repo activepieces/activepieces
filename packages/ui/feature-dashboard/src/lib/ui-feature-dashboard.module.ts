@@ -38,6 +38,9 @@ import {
   SyncProjectComponent,
 } from '@activepieces/ui-feature-git-sync';
 import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewards-dialog.component';
+import { NewAlertDialogComponent } from './components/dialogs/new-alert-dialog/new-alert-dialog.component';
+import { AdminConsoleButtonComponent } from './components/admin-console-button/admin-console-button.component';
+import { InviteUserButtonComponent } from './components/invite-user-button/invite-user-button.component';
 
 @NgModule({
   imports: [
@@ -63,6 +66,8 @@ import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewa
     DropdownSearchControlComponent,
     SelectAllDirective,
     ApDatePipe,
+    AdminConsoleButtonComponent,
+    InviteUserButtonComponent,
   ],
   declarations: [
     DashboardContainerComponent,
@@ -77,6 +82,7 @@ import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewa
     RenameFlowDialogComponent,
     NewConnectionDialogComponent,
     ContactSalesComponent,
+    NewAlertDialogComponent,
   ],
   providers: [DatePipe],
 })
