@@ -21,53 +21,12 @@ export const gmailNewEmailTrigger = createTrigger({
   displayName: 'New Email',
   description: 'Triggers when new mail is found in your Gmail inbox',
   props: {
-    subject: GmailProps.subject,
     from: GmailProps.from,
     to: GmailProps.to,
     label: GmailProps.label,
     category: GmailProps.category,
   },
-  sampleData: {
-    message: {
-      id: '183baac18543bef8',
-      threadId: '183baac18543bef8',
-      labelIds: ['UNREAD', 'CATEGORY_SOCIAL', 'INBOX'],
-      snippet: '',
-      payload: {
-        partId: '',
-        mimeType: 'multipart/alternative',
-        filename: '',
-        body: { size: 0 },
-      },
-      sizeEstimate: 107643,
-      historyId: '99742',
-      internalDate: '1665284181000',
-    },
-    body_html: '<div dir="ltr">Hello World</div>',
-    body_plain: 'Hello World',
-    subject: 'Hello World',
-    thread: {
-      id: '382baac18543beg8',
-      historyId: '183baac185',
-      messages: [
-        {
-          id: '183baac18543bef8',
-          threadId: '382baac18543beg8',
-          labelIds: ['UNREAD', 'CATEGORY_SOCIAL', 'INBOX'],
-          snippet: '',
-          payload: {
-            partId: '',
-            mimeType: 'multipart/alternative',
-            filename: '',
-            body: { size: 0 },
-          },
-          sizeEstimate: 107643,
-          historyId: '99742',
-          internalDate: '1665284181000',
-        },
-      ],
-    },
-  },
+  sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable({ auth, store, propsValue }) {
     return pollingHelper.onEnable(polling, {
@@ -102,7 +61,6 @@ export const gmailNewEmailTrigger = createTrigger({
 interface PropsValue {
   from: string | undefined;
   to: string | undefined;
-  subject: string | undefined;
   label: GmailLabel | undefined;
   category: string | undefined;
 }
@@ -129,7 +87,7 @@ const polling: Polling<PiecePropValueSchema<typeof gmailAuth>, PropsValue> = {
 async function getEmail(
   max_result: number,
   after_unix_seconds: number,
-  { from, to, subject, label, category }: PropsValue,
+  { from, to, label, category }: PropsValue,
   auth: OAuth2PropertyValue
 ) {
   return (
@@ -139,7 +97,7 @@ async function getEmail(
         access_token: auth.access_token,
         from: from as string,
         to: to as string,
-        subject: subject as string,
+        subject: undefined,
         label: label as GmailLabel,
         category: category as string,
         after: after_unix_seconds,

@@ -10,11 +10,9 @@ import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 
 export const gmailAuth = PieceAuth.OAuth2({
   description: '',
-
   authUrl: 'https://accounts.google.com/o/oauth2/auth',
   tokenUrl: 'https://oauth2.googleapis.com/token',
   required: true,
-  // TODO add https://www.googleapis.com/auth/gmail.readonly when we have the permission
   scope: [
     'https://www.googleapis.com/auth/gmail.send',
     'email',
