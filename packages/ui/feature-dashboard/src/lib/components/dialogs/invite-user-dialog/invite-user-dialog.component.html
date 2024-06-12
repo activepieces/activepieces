@@ -50,7 +50,7 @@
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label>Project Role</mat-label>
         <mat-select name="role" [formControl]="formGroup.controls.projectRole">
-          @for(projectRole of projectMemberRolesOptions; track projectRole){
+          @for(projectRole of avaiableRoles$ | async; track projectRole){
           <mat-option [value]="projectRole.value">{{projectRole.name}}</mat-option>
           }
         </mat-select>

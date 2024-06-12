@@ -9,7 +9,6 @@ import { fastifyRawBody } from 'fastify-raw-body'
 import fastifySocketIO from 'fastify-socket.io'
 import qs from 'qs'
 import { Socket } from 'socket.io'
-import { appConnectionsHooks } from './app-connection/app-connection-service/app-connection-hooks'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
@@ -23,7 +22,6 @@ import { getRedisConnection } from './database/redis-connection'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { analyticsModule } from './ee/analytics/analytics-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
-import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
@@ -329,7 +327,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             })
             projectHooks.setHooks(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
             flowRunHooks.setHooks(platformRunHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)

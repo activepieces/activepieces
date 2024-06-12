@@ -5,9 +5,19 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { BehaviorSubject, Observable, catchError, map, of, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  catchError,
+  forkJoin,
+  map,
+  of,
+  take,
+  tap,
+} from 'rxjs';
 import {
   AuthenticationService,
+  FlagService,
   NavigationService,
   ProjectService,
   UiCommonModule,
@@ -15,11 +25,11 @@ import {
 } from '@activepieces/ui/common';
 import { CommonModule } from '@angular/common';
 import {
+  ApFlagId,
   InvitationType,
   Platform,
   PlatformRole,
   ProjectMemberRole,
-  isNil,
 } from '@activepieces/shared';
 import { LottieModule } from 'ngx-lottie';
 import {
@@ -62,15 +72,7 @@ export class InviteUserDialogComponent {
     new BehaviorSubject<InvitationType>(InvitationType.PROJECT);
   currentProjectName$: Observable<string | undefined>;
   sendUser$: Observable<unknown>;
-
-  readonly projectMemberRolesOptions = Object.values(ProjectMemberRole)
-    .filter((f) => !isNil(RolesDisplayNames[f]))
-    .map((role) => {
-      return {
-        value: role,
-        name: RolesDisplayNames[role],
-      };
-    });
+  avaiableRoles$: Observable<{ value: ProjectMemberRole; name: string }[]>;
 
   constructor(
     private fb: FormBuilder,
@@ -80,6 +82,7 @@ export class InviteUserDialogComponent {
     private matsnackBar: MatSnackBar,
     private matDialog: MatDialog,
     private clipboard: Clipboard,
+    private flagService: FlagService,
     private dialogRef: MatDialogRef<InviteUserDialogComponent>,
     private navigationService: NavigationService,
     @Inject(MAT_DIALOG_DATA)
@@ -87,6 +90,28 @@ export class InviteUserDialogComponent {
       platform: Platform;
     }
   ) {
+    this.avaiableRoles$ = forkJoin([
+      this.flagService.isFlagEnabled(ApFlagId.IS_CLOUD_PLATFORM),
+      this.projectService.currentProject$.pipe(take(1)),
+    ]).pipe(
+      map(([isCloudPlatform, project]) => {
+        return Object.values(ProjectMemberRole)
+          .filter((f) => {
+            if (f === ProjectMemberRole.ADMIN) {
+              return true;
+            }
+            const showNonAdmin =
+              !isCloudPlatform || project?.plan.teamMembers !== 100;
+            return showNonAdmin;
+          })
+          .map((role) => {
+            return {
+              value: role,
+              name: RolesDisplayNames[role],
+            };
+          });
+      })
+    );
     this.currentProjectName$ = this.projectService.currentProject$.pipe(
       map((p) => p?.displayName)
     );

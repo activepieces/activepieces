@@ -23,6 +23,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
             await projectMembersLimit.limit({
                 projectId: request.principal.projectId,
                 platformId: request.principal.platform.id,
+                role: projectRole!,
             })
         }
         const platformId = request.principal.platform.id
