@@ -154,12 +154,6 @@ export class PieceMetadataService {
         }).pipe(map(pieces => pieces.filter(this.hasTriggers).map((p) => this.convertToFlowItemDetails(p, TriggerType.PIECE))));
     }
 
-    isPremiumPiece() {
-        return this.listAllFlowItemsDetailsForAction('').pipe(
-            map((pieces) => pieces.filter((piece) => piece.categories).map((piece) => piece.categories!.includes(PieceCategory.PREMIUM)))
-        )
-    }
-
     getPieceMetadata(name: string, version: string | undefined): Observable<PieceMetadataModel> {
         const cacheKey = `${name}_${version || '_latest'}`;
 
