@@ -105,6 +105,8 @@ export class RequestTrialButtonComponent {
   }
 
   openContactSales(): void {
-    this.matDialog.open(ContactSalesDialogComponent, {});
+    this.matDialog.open(ContactSalesDialogComponent, {
+      autoFocus: '.agree-button',
+    });
   }
 }

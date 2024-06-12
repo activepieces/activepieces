@@ -20,6 +20,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
           Close
         </ap-button>
         <ap-button
+          extraClasses="agree-button"
           (buttonClicked)="openBookMeetingPage()"
           mat-dialog-close
           btnSize="default"
