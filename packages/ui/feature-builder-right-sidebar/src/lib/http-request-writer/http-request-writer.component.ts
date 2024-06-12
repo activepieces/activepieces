@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
-import { CodeWriterDialogComponent } from '../input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component';
+import { RequestWriterDialogComponent } from './request-writer-dialog/request-writer-dialog.component';
 
 @Component({
   selector: 'app-http-request-writer',
@@ -38,8 +38,6 @@ export class HttpRequestWriterComponent {
     );
   }
   openCodeWriterDialog() {
-    this.dialogService.open(CodeWriterDialogComponent, {
-      data: '',
-    });
+    this.dialogService.open(RequestWriterDialogComponent);
   }
 }
