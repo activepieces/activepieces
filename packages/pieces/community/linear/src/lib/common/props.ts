@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { makeClient } from './client';
 import { LinearDocument } from '@linear/sdk';
 
@@ -19,18 +19,28 @@ export const props = {
           };
         }
         const client = makeClient(auth as string);
-        const teams = await client.listTeams({
-          first: 50,
-          orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
-        });
+        const options: DropdownOption<string>[] = [];
+
+        let hasNextPage = false;
+        let cursor;
+
+        do {
+          const teams = await client.listTeams({
+            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+            after: cursor,
+          });
+
+          for (const team of teams.nodes) {
+            options.push({ label: team.name, value: team.id });
+          }
+
+          hasNextPage = teams.pageInfo.hasNextPage;
+          cursor = teams.pageInfo.endCursor;
+        } while (hasNextPage);
+
         return {
           disabled: false,
-          options: teams.nodes.map((team: { name: any; id: any }) => {
-            return {
-              label: team.name,
-              value: team.id,
-            };
-          }),
+          options,
         };
       },
     }),
@@ -49,24 +59,35 @@ export const props = {
           };
         }
         const client = makeClient(auth as string);
-        const filter: LinearDocument.WorkflowStatesQueryVariables = {
-          filter: {
-            team: {
-              id: {
-                eq: team_id as string,
+        const options: DropdownOption<string>[] = [];
+
+        let hasNextPage = false;
+        let cursor;
+
+        do {
+          const filter: LinearDocument.WorkflowStatesQueryVariables = {
+            filter: {
+              team: {
+                id: {
+                  eq: team_id as string,
+                },
               },
             },
-          },
-        };
-        const statusList = await client.listIssueStates(filter);
+            after: cursor,
+          };
+          const statusList = await client.listIssueStates(filter);
+
+          for (const status of statusList.nodes) {
+            options.push({ label: status.name, value: status.id });
+          }
+
+          hasNextPage = statusList.pageInfo.hasNextPage;
+          cursor = statusList.pageInfo.endCursor;
+        } while (hasNextPage);
+
         return {
           disabled: false,
-          options: statusList.nodes.map((status: { name: any; id: any }) => {
-            return {
-              label: status.name,
-              value: status.id,
-            };
-          }),
+          options,
         };
       },
     }),
@@ -85,15 +106,28 @@ export const props = {
           };
         }
         const client = makeClient(auth as string);
-        const labels = await client.listIssueLabels();
+        const options: DropdownOption<string>[] = [];
+
+        let hasNextPage = false;
+        let cursor;
+
+        do {
+          const labels = await client.listIssueLabels({
+            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+            after: cursor,
+          });
+
+          for (const label of labels.nodes) {
+            options.push({ label: label.name, value: label.id });
+          }
+
+          hasNextPage = labels.pageInfo.hasNextPage;
+          cursor = labels.pageInfo.endCursor;
+        } while (hasNextPage);
+
         return {
           disabled: false,
-          options: labels.nodes.map((label: { name: any; id: any }) => {
-            return {
-              label: label.name,
-              value: label.id,
-            };
-          }),
+          options,
         };
       },
     }),
@@ -112,15 +146,28 @@ export const props = {
           };
         }
         const client = makeClient(auth as string);
-        const users = await client.listUsers();
+        const options: DropdownOption<string>[] = [];
+
+        let hasNextPage = false;
+        let cursor;
+
+        do {
+          const users = await client.listUsers({
+            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+            after: cursor,
+          });
+
+          for (const user of users.nodes) {
+            options.push({ label: user.name, value: user.id });
+          }
+
+          hasNextPage = users.pageInfo.hasNextPage;
+          cursor = users.pageInfo.endCursor;
+        } while (hasNextPage);
+
         return {
           disabled: false,
-          options: users.nodes.map((user: { name: any; id: any }) => {
-            return {
-              label: user.name,
-              value: user.id,
-            };
-          }),
+          options,
         };
       },
     }),
@@ -140,6 +187,7 @@ export const props = {
         }
         const client = makeClient(auth as string);
         const priorities = await client.listIssuePriorities();
+
         return {
           disabled: false,
           options: priorities.map((priority: { label: any; priority: any }) => {
@@ -205,19 +253,28 @@ export const props = {
           };
         }
         const client = makeClient(auth as string);
-        const filter: LinearDocument.ProjectsQueryVariables = {
-          first: 50,
-          orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
-        };
-        const projects = await client.listProjects(filter);
+        const options: DropdownOption<string>[] = [];
+
+        let hasNextPage = false;
+        let cursor;
+
+        do {
+          const projects = await client.listProjects({
+            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+            after: cursor,
+          });
+
+          for (const project of projects.nodes) {
+            options.push({ label: project.name, value: project.id });
+          }
+
+          hasNextPage = projects.pageInfo.hasNextPage;
+          cursor = projects.pageInfo.endCursor;
+        } while (hasNextPage);
+
         return {
           disabled: false,
-          options: projects.nodes.map((project) => {
-            return {
-              label: project.name,
-              value: project.id,
-            };
-          }),
+          options,
         };
       },
     }),
@@ -236,20 +293,37 @@ export const props = {
           };
         }
         const client = makeClient(auth as string);
-        const filter: Omit<LinearDocument.Team_TemplatesQueryVariables, "id"> = {
-          first: 50,
-          orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
-        };
-        const templatesConnection = await client.listTeamsTemplates(team_id as string, filter);
-        const templates = await templatesConnection.nodes;
+        const options: DropdownOption<string>[] = [];
+
+        let hasNextPage = false;
+        let cursor;
+
+        do {
+          const filter: Omit<
+            LinearDocument.Team_TemplatesQueryVariables,
+            'id'
+          > = {
+            after: cursor,
+            orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+          };
+          const templatesConnection = await client.listTeamsTemplates(
+            team_id as string,
+            filter
+          );
+
+          const templates = await templatesConnection.nodes;
+
+          for (const template of templates) {
+            options.push({ label: template.name, value: template.id });
+          }
+
+          hasNextPage = templatesConnection.pageInfo.hasNextPage;
+          cursor = templatesConnection.pageInfo.endCursor;
+        } while (hasNextPage);
+
         return {
           disabled: false,
-          options: templates.map((template) => {
-            return {
-              label: template.name,
-              value: template.id,
-            };
-          }),
+          options,
         };
       },
     }),
