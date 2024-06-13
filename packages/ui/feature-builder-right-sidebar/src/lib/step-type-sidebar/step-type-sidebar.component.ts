@@ -5,6 +5,7 @@ import {
   forkJoin,
   map,
   Observable,
+  of,
   startWith,
   Subject,
   switchMap,
@@ -44,11 +45,13 @@ import {
   StepTypeSideBarProps,
 } from '@activepieces/ui/feature-builder-store';
 import {
+  ContactSalesService,
   extractInitialPieceStepValuesAndValidity,
   FlagService,
   FlowItemDetails,
   getDefaultDisplayNameForPiece,
   getDisplayNameForTrigger,
+  PlatformService,
   TelemetryService,
 } from '@activepieces/ui/common';
 import { Actions, ofType } from '@ngrx/effects';
@@ -86,13 +89,17 @@ export class StepTypeSidebarComponent implements AfterViewInit {
   }[] = [];
   flowTypeSelected$: Observable<void>;
   triggersDetails$: Observable<FlowItemDetails[]>;
+  isPremium$: Observable<boolean>;
+  premiumPieces$: Observable<string[]>;
   constructor(
     private store: Store,
     private codeService: CodeService,
     private actions: Actions,
     private flagsService: FlagService,
     private telemetryService: TelemetryService,
-    private pieceMetadataService: PieceMetadataService
+    private pieceMetadataService: PieceMetadataService,
+    private contactSalesService: ContactSalesService,
+    private platformService: PlatformService
   ) {
     this.focusSearchInput$ = this.actions.pipe(
       ofType(CanvasActionType.SET_RIGHT_SIDEBAR),
@@ -215,45 +222,56 @@ export class StepTypeSidebarComponent implements AfterViewInit {
     flowItemDetails: FlowItemDetails;
     suggestion?: ActionBase | TriggerBase;
   }) {
-    this.flowTypeSelected$ = forkJoin({
-      currentFlow: this.store
-        .select(BuilderSelectors.selectCurrentFlow)
-        .pipe(take(1)),
-      rightSideBar: this.store
-        .select(BuilderSelectors.selectCurrentRightSideBar)
-        .pipe(take(1)),
-      currentStep: this.store
-        .select(BuilderSelectors.selectCurrentStep)
-        .pipe(take(1)),
-    }).pipe(
-      take(1),
-      tap((results) => {
-        if (!results.currentFlow) {
-          return;
-        }
-        if (this._showTriggers) {
-          this.replaceTrigger(flowItemDetails, suggestion);
-        } else {
-          const operation = this.constructAddOperation(
-            (results.rightSideBar.props as StepTypeSideBarProps).stepName,
-            results.currentFlow.version,
-            flowItemDetails.type as ActionType,
-            flowItemDetails,
-            (results.rightSideBar.props as StepTypeSideBarProps)
-              .stepLocationRelativeToParent,
-            suggestion
-          );
-          this.store.dispatch(
-            FlowsActions.addAction({
-              operation: operation,
+    this.flowTypeSelected$ = this.platformService
+      .isPremiumPieceAndEnabled(flowItemDetails.extra!.pieceName)
+      .pipe(
+        switchMap((isPremiumPieceAndEnabled) => {
+          if (!isPremiumPieceAndEnabled) {
+            this.contactSalesService.open(['PREMIUM_PIECES']);
+            return of(void 0);
+          }
+
+          return forkJoin({
+            currentFlow: this.store
+              .select(BuilderSelectors.selectCurrentFlow)
+              .pipe(take(1)),
+            rightSideBar: this.store
+              .select(BuilderSelectors.selectCurrentRightSideBar)
+              .pipe(take(1)),
+            currentStep: this.store
+              .select(BuilderSelectors.selectCurrentStep)
+              .pipe(take(1)),
+          }).pipe(
+            take(1),
+            tap((results) => {
+              if (!results.currentFlow) {
+                return;
+              }
+              if (this._showTriggers) {
+                this.replaceTrigger(flowItemDetails, suggestion);
+              } else {
+                const operation = this.constructAddOperation(
+                  (results.rightSideBar.props as StepTypeSideBarProps).stepName,
+                  results.currentFlow.version,
+                  flowItemDetails.type as ActionType,
+                  flowItemDetails,
+                  (results.rightSideBar.props as StepTypeSideBarProps)
+                    .stepLocationRelativeToParent,
+                  suggestion
+                );
+                this.store.dispatch(
+                  FlowsActions.addAction({
+                    operation: operation,
+                  })
+                );
+              }
+            }),
+            map(() => {
+              return void 0;
             })
           );
-        }
-      }),
-      map(() => {
-        return void 0;
-      })
-    );
+        })
+      );
   }
 
   private replaceTrigger(

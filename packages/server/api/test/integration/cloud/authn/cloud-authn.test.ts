@@ -206,6 +206,10 @@ describe('Authentication API', () => {
                 mockPlatform,
                 mockCustomDomain,
             } = await createMockPlatformAndDomain()
+
+            await databaseConnection.getRepository('platform').update(mockPlatform.id, {
+                projectRolesEnabled: true,
+            })
             const mockProject = createMockProject({
                 ownerId: mockPlatformOwner.id,
                 platformId: mockPlatform.id,
@@ -242,6 +246,7 @@ describe('Authentication API', () => {
             })
 
             const responseBody = response?.json()
+
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody?.platformId).toBe(mockPlatform.id)

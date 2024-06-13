@@ -154,4 +154,15 @@ export class PlatformService {
       })
     );
   }
+
+  isPremiumPieceAndEnabled(name: string) {
+    return this.currentPlatform().pipe(
+      map((platform) => {
+        if (!platform) {
+          return [];
+        }
+        return platform.premiumPieces.includes(name);
+      })
+    );
+  }
 }
