@@ -10,17 +10,16 @@
                     <app-project-switcher
                     ></app-project-switcher>
                 }
-             
                 @if((isInPlatformRoute$ | async) === true) {
                     <div class="ap-typography-headline-5 !ap-font-semibold" 
-                    i18n>Admin Console</div>
+                    i18n>Platform Admin</div>
                 }
                 <div class="ap-flex-grow"></div>  
-                <div class="ap-flex ap-items-center ap-gap-2">
-                    <app-request-trial-button-component></app-request-trial-button-component>
-                    <app-admin-console-button [isInPlatformRoute]="(isInPlatformRoute$ | async | defaultFalse)" [showPlatform]="showPlatform$ | async | defaultFalse"></app-admin-console-button>     
+                <div class="ap-flex ap-gap-2">
+                <app-request-trial-button-component></app-request-trial-button-component>
+                <app-invite-user-button></app-invite-user-button>   
+                <app-admin-console-button [isInPlatformRoute]="(isInPlatformRoute$ | async | defaultFalse)" [showPlatform]="showPlatform$ | async | defaultFalse"></app-admin-console-button>            
                 </div>
-                      
                 <div class="ap-flex ap-mx-3 ">
                     <app-tasks-progress></app-tasks-progress>
                 </div>

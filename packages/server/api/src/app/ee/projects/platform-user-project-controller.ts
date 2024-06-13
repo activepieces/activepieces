@@ -27,7 +27,9 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
 
     fastify.get('/', ListProjectRequestForUser, async (request) => {
         return platformProjectService.getAll({
-            principal: request.principal,
+            principalType: request.principal.type,
+            principalId: request.principal.id,
+            platformId: request.principal.platform.id,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? 10,
         })
@@ -38,7 +40,9 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
         SwitchTokenRequestForUser,
         async (request) => {
             const allProjects = await platformProjectService.getAll({
-                principal: request.principal,
+                principalType: request.principal.type,
+                principalId: request.principal.id,
+                platformId: request.principal.platform.id,
                 cursorRequest: null,
                 limit: 1000000,
             })

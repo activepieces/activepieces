@@ -27,7 +27,8 @@ type BaseEmailTemplateData<Name extends string, Vars extends Record<string, stri
 
 
 type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
-    projectName: string
+    projectOrPlatformName: string
+    role: string
     setupLink: string
 }>
 

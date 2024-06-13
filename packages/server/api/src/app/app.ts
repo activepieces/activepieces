@@ -9,7 +9,6 @@ import { fastifyRawBody } from 'fastify-raw-body'
 import fastifySocketIO from 'fastify-socket.io'
 import qs from 'qs'
 import { Socket } from 'socket.io'
-import { appConnectionsHooks } from './app-connection/app-connection-service/app-connection-hooks'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
@@ -23,7 +22,6 @@ import { getRedisConnection } from './database/redis-connection'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { analyticsModule } from './ee/analytics/analytics-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
-import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
@@ -87,6 +85,7 @@ import { storeEntryModule } from './store-entry/store-entry.module'
 import { tagsModule } from './tags/tags-module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { userModule } from './user/user.module'
+import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
 import { flowQueueConsumer } from './workers/flow-worker/consumer/flow-queue-consumer'
@@ -98,19 +97,16 @@ import {
     ProjectMember,
 } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ExecutionMode, initializeSentry, logger, QueueMode, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
+import { initializeSentry, logger, QueueMode, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
 import {
-    ActivepiecesError,
     ApEdition,
-    ApEnvironment,
     apId,
     AppConnectionWithoutSensitiveData,
-    CodeSandboxType,
-    ErrorCode,
     Flow,
     FlowRun,
     ProjectWithLimits,
     spreadIfDefined,
+    UserInvitation,
 } from '@activepieces/shared'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
@@ -152,6 +148,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     },
                 },
                 schemas: {
+                    'user-invitation': UserInvitation,
                     'project-member': ProjectMember,
                     project: ProjectWithLimits,
                     flow: Flow,
@@ -263,6 +260,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(issuesModule)
     await app.register(authnSsoSamlModule)
     await app.register(alertsModule)
+    await app.register(invitationModule)
     await setupBullMQBoard(app)
 
     app.get(
@@ -329,7 +327,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             })
             projectHooks.setHooks(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
             flowRunHooks.setHooks(platformRunHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -386,32 +383,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 
 
 const validateEnvPropsOnStartup = async (): Promise<void> => {
-    const codeSandboxType = system.get<CodeSandboxType>(
-        SystemProp.CODE_SANDBOX_TYPE,
-    )
-    const executionMode = system.get<ExecutionMode>(SystemProp.EXECUTION_MODE)
-    const signedUpEnabled =
-        system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
-    const environment = system.get(SystemProp.ENVIRONMENT)
     await encryptUtils.loadEncryptionKey(queueMode)
-
-    if (
-        executionMode === ExecutionMode.UNSANDBOXED &&
-        codeSandboxType !== CodeSandboxType.V8_ISOLATE &&
-        signedUpEnabled &&
-        environment === ApEnvironment.PRODUCTION
-    ) {
-        throw new ActivepiecesError(
-            {
-                code: ErrorCode.SYSTEM_PROP_INVALID,
-                params: {
-                    prop: SystemProp.EXECUTION_MODE,
-                },
-            },
-            'Allowing users to sign up is not allowed in unsandboxed mode, please check the configuration section in the documentation',
-        )
-    }
 }
 
 async function getAdapter() {

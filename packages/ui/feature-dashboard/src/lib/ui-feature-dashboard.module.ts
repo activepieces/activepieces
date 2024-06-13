@@ -40,6 +40,7 @@ import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewa
 import { NewAlertDialogComponent } from './components/dialogs/new-alert-dialog/new-alert-dialog.component';
 import { RequestTrialButtonComponent } from './components/request-trial-button/request-trial-button.component';
 import { AdminConsoleButtonComponent } from './components/admin-console-button/admin-console-button.component';
+import { InviteUserButtonComponent } from './components/invite-user-button/invite-user-button.component';
 
 @NgModule({
   imports: [
@@ -67,6 +68,7 @@ import { AdminConsoleButtonComponent } from './components/admin-console-button/a
     ApDatePipe,
     RequestTrialButtonComponent,
     AdminConsoleButtonComponent,
+    InviteUserButtonComponent,
   ],
   declarations: [
     DashboardContainerComponent,

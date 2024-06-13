@@ -1,13 +1,12 @@
 import { AuthenticationServiceHooks } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
-import { flagService } from '../../../../flags/flag.service'
 import { platformService } from '../../../../platform/platform.service'
 import { projectService } from '../../../../project/project-service'
 import { userService } from '../../../../user/user-service'
+import { userInvitationsService } from '../../../../user-invitations/user-invitation.service'
 import { licenseKeysService } from '../../../license-keys/license-keys-service'
 import { authenticationHelper } from './authentication-helper'
-import { ApFlagId } from '@activepieces/shared'
 
-const DEFAULT_PLATFORM_NAME = 'platform'
+const DEFAULT_PLATFORM_NAME = 'Activepieces'
 
 export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async preSignIn({ email, platformId, provider }) {
@@ -28,13 +27,17 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
         })
     },
     async postSignUp({ user }) {
-        const platformCreated = await flagService.getOne(
-            ApFlagId.PLATFORM_CREATED,
-        )
-        if (platformCreated?.value) {
+        const platformCreated = await platformService.hasAnyPlatforms()
+        if (platformCreated) {
+            await authenticationHelper.autoVerifyUserIfEligible(user)
+            await userInvitationsService.provisionUserInvitation({
+                email: user.email,
+                platformId: user.platformId!,
+            })    
+            const updatedUser = await userService.getOneOrFail({ id: user.id })
             const result = await authenticationHelper.getProjectAndTokenOrThrow(user)
             return {
-                user,
+                user: updatedUser,
                 ...result,
             }
         }
@@ -53,12 +56,12 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
 
         await licenseKeysService.checkKeyStatus(true)
 
-        await flagService.save({
-            id: ApFlagId.PLATFORM_CREATED,
-            value: true,
+        await userInvitationsService.provisionUserInvitation({
+            email: user.email,
+            platformId: user.platformId!,
         })
 
-        await authenticationHelper.autoVerifyUserIfEligible(user)
+        await userService.verify({ id: user.id })
         const updatedUser = await userService.getOneOrFail({ id: user.id })
         const result = await authenticationHelper.getProjectAndTokenOrThrow(updatedUser)
         return {

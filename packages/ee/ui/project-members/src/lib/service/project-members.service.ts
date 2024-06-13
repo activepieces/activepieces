@@ -8,11 +8,8 @@ import {
   environment,
 } from '@activepieces/ui/common';
 import {
-  AcceptInvitationRequest,
-  AcceptProjectResponse,
   ListProjectMembersRequestQuery,
-  ProjectMember,
-  AddProjectMemberRequestBody,
+  ProjectMemberWithUser,
 } from '@activepieces/ee-shared';
 import { ProjectMemberRole, SeekPage } from '@activepieces/shared';
 
@@ -40,7 +37,7 @@ export class ProjectMemberService {
         }
         return this.list({ projectId: project.id }).pipe(
           map((members) => {
-            const member = members.data.find((m) => m.email === user.email);
+            const member = members.data.find((m) => m.userId === user.id);
             return member?.role ?? null;
           })
         );
@@ -56,20 +53,6 @@ export class ProjectMemberService {
     return this.role$;
   }
 
-  accept(request: AcceptInvitationRequest): Observable<AcceptProjectResponse> {
-    return this.http.post<AcceptProjectResponse>(
-      environment.apiUrl + '/project-members/accept',
-      request
-    );
-  }
-
-  invite(request: AddProjectMemberRequestBody): Observable<void> {
-    return this.http.post<void>(
-      environment.apiUrl + '/project-members',
-      request
-    );
-  }
-
   delete(invitationId: string): Observable<void> {
     return this.http.delete<void>(
       environment.apiUrl + '/project-members/' + invitationId
@@ -78,13 +61,13 @@ export class ProjectMemberService {
 
   list(
     request: ListProjectMembersRequestQuery
-  ): Observable<SeekPage<ProjectMember>> {
+  ): Observable<SeekPage<ProjectMemberWithUser>> {
     const queryParams: { [key: string]: string | number } = {
       limit: request.limit ?? DEFAULT_PAGE_SIZE,
       cursor: request.cursor || '',
       projectId: request.projectId,
     };
-    return this.http.get<SeekPage<ProjectMember>>(
+    return this.http.get<SeekPage<ProjectMemberWithUser>>(
       environment.apiUrl + '/project-members',
       {
         params: queryParams,

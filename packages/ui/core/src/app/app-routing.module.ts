@@ -29,6 +29,13 @@ export const routes: Routes = [
     component: ImportFlowUriEncodedComponent,
   },
   {
+    path: 'invitation',
+    loadComponent: () =>
+      import('./modules/accept-invitation/accept-invitation.component').then(
+        (m) => m.AcceptInvitationComponent
+      ),
+  },
+  {
     path: 'templates/:templateId',
     component: ImportFlowComponent,
     data: {
