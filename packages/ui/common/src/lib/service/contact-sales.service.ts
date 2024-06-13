@@ -45,9 +45,6 @@ export const featuresNames = FEATURES.map((feature) => feature.label);
 })
 export class ContactSalesService {
   public contactSalesState = new BehaviorSubject<boolean>(false);
-
-  public selectedFeature = new BehaviorSubject<FeatureKey[]>([]);
-
   constructor(
     private http: HttpClient,
     private telemetryService: TelemetryService,
@@ -61,7 +58,6 @@ export class ContactSalesService {
         feature: features.length > 0 ? features[0].toString() : null,
       },
     });
-    this.selectedFeature.next(features);
     this.contactSalesState.next(true);
   }
 
@@ -69,42 +65,23 @@ export class ContactSalesService {
     this.contactSalesState.next(false);
   }
 
-  sendRequest({
-    name,
-    email,
-    domain,
-    message,
-    features,
-  }: {
+  sendRequest(req: {
     name: string;
     email: string;
-    domain: string;
-    message: string;
-    features: FeatureKey[];
+    numberOfEmployees: string;
+    companyName: string;
+    goal: string;
   }) {
     this.telemetryService.capture({
       name: TelemetryEventName.REQUEST_TRIAL_SUBMITTED,
-      payload: {},
+      payload: req,
     });
     return this.flagService.getAllFlags().pipe(
       take(1),
       switchMap((flags) => {
         return this.http.post<{ status: string; message?: string }>(
-          `https://sales.activepieces.com/submit-inapp-contact-form`,
-          {
-            name,
-            email,
-            domain,
-            message,
-            features: FEATURES.map((feature) => {
-              return {
-                key: feature.key,
-                label: feature.label,
-                checked: features.includes(feature.key),
-              };
-            }),
-            flags,
-          }
+          `https://cloud.activepieces.com/api/v1/webhooks/c0sK2GhG2ZSZRIq2uoKXU`,
+          { ...req, flags }
         );
       })
     );

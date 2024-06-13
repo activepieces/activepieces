@@ -4,9 +4,9 @@
 
 
     <div class="ap-px-10  ap-text-base ap-flex-auto ap-overflow-y-auto">    
-        <div class="ap-flex ap-flex-col ap-mt-6 ap-gap-4">
+        <div class="ap-flex ap-flex-col ap-mt-6 ap-gap-2">
             <div class="ap-flex ap-gap-4 ap-justify-between">
-                <mat-form-field class="ap-grow" appearance="outline" subscriptSizing="dynamic">
+                <mat-form-field class="ap-flex-grow" appearance="outline" >
                     <mat-label>Name</mat-label>
                     <input name="name" cdkFocusInitial matInput [formControl]="contactSalesForm.controls.name" 
                         autocomplete="off">
@@ -17,21 +17,29 @@
                             </mat-error>
                         }
                 </mat-form-field>
-                <mat-form-field class="ap-grow" appearance="outline" subscriptSizing="dynamic">
+                <mat-form-field class="ap-flex-grow" appearance="outline" >
                     <mat-label>Work email</mat-label>
                     <input name="text" type="email" cdkFocusInitial matInput [formControl]="contactSalesForm.controls.email" 
                         autocomplete="off" required>
-                        @if(contactSalesForm.controls.email.invalid)
-                        {
-                            <mat-error i18n>
-                                Please enter a valid email address.
+                        @if(contactSalesForm.controls.email.invalid) {
+                            <mat-error>
+                              @if(contactSalesForm.controls.email.getError('email')) {
+                              <ng-container i18n>Email is invalid </ng-container> }
+                              @if(contactSalesForm.controls.email.getError('required')) {
+                              <ng-container i18n>Email is required </ng-container> }
+                              @if(contactSalesForm.controls.email.getError(ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY))
+                              {
+                              <ng-container i18n
+                                >Email already has a trial key sent to it
+                              </ng-container>
+                              }
                             </mat-error>
-                        }
+                            }
                  
                 </mat-form-field>
             </div>
             <div class="ap-flex ap-gap-4 ap-justify-between">
-                <mat-form-field class="ap-grow" appearance="outline" subscriptSizing="dynamic">
+                <mat-form-field class="ap-flex-grow" appearance="outline" >
                     <mat-label i18n>Company Name </mat-label>
                     <input name="text" type="text" matInput i18n-placeholder autocomplete="off" [formControl]="contactSalesForm.controls.companyName">
                     @if(contactSalesForm.controls.companyName.invalid)
@@ -42,9 +50,9 @@
                     }
                     
                 </mat-form-field>
-                <mat-form-field class="ap-grow" appearance="outline" subscriptSizing="dynamic">
+                <mat-form-field class="ap-flex-grow" appearance="outline" >
                     <mat-label i18n>Number of Employees </mat-label>
-                    <mat-select [formControl]="contactSalesForm.controls.employeesNumber">
+                    <mat-select [formControl]="contactSalesForm.controls.numberOfEmployees">
                         @for(opt of numberOfEmployeesOptions; track opt)
                         { 
                             <mat-option [value]="opt">
@@ -54,7 +62,7 @@
                         
                      
                     </mat-select>
-                    @if(contactSalesForm.controls.employeesNumber.invalid)
+                    @if(contactSalesForm.controls.numberOfEmployees.invalid)
                     {
                         <mat-error i18n >
                             Number of employees is required.
@@ -115,9 +123,13 @@
     </div>
 
     <div  class=" ap-mt-[80px]  ap-flex ap-gap-2 ap-sticky ap-bottom-0 ap-z-50 ap-px-10 ap-py-4 ap-border-t ap-border ap-bg-white">
-        <ap-button type="submit" btnStyle="flat" btnColor="primary" i18n>
+        <ap-button type="submit" btnStyle="flat" btnColor="primary" [loading]="loading$ | async | defaultFalse" i18n>
             Submit
         </ap-button>
         <ap-button type="button" btnStyle="flat" btnColor="basic" (click)="closeSlideout()">Cancel</ap-button>
     </div>
 </form>
+
+@if(sendRequest$ | async)
+{
+}

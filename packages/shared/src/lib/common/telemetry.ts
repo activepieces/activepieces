@@ -148,7 +148,7 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, SignedUp>
     | BaseTelemetryEvent<TelemetryEventName.REFERRAL, Referral>
     | BaseTelemetryEvent<TelemetryEventName.REQUEST_TRIAL_CLICKED, RequestTrialClicked>
-    | BaseTelemetryEvent<TelemetryEventName.REQUEST_TRIAL_SUBMITTED, Record<string, never>>
+    | BaseTelemetryEvent<TelemetryEventName.REQUEST_TRIAL_SUBMITTED, Record<string, string>>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_ISSUE_CLICKED, FlowIssueClicked>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_ISSUE_RESOLVED, FlowIssueResolved>
     | BaseTelemetryEvent<TelemetryEventName.UPGRADE_CLICKED, UpgradeClicked>

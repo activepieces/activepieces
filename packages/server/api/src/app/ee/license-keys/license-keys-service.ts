@@ -5,7 +5,7 @@ import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, LicenseKeyEntity, LicenseKeyFeatures, LicenseKeyStatus, PieceType, Platform, PlatformRole, turnedOffFeatures, UserStatus } from '@activepieces/shared'
-const secretManagerLicenseKeysRoute = 'https://443b-109-237-199-55.ngrok-free.app/license-keys'
+const secretManagerLicenseKeysRoute = 'https://e909-109-237-199-55.ngrok-free.app/license-keys'
 const createKey = async (request: CreateTrialLicenseKeyRequestBody): Promise<void> => {
     const response = await fetch(`${secretManagerLicenseKeysRoute}`, {
         method: 'POST',

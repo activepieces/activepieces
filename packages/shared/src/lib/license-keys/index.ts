@@ -59,6 +59,7 @@ export const turnedOffFeatures: LicenseKeyFeatures = {
 export const CreateTrialLicenseKeyRequest =  {
     config: { allowedPrincipals: [
         PrincipalType.UNKNOWN,
+        PrincipalType.USER,
     ] },
     schema: {
         body: CreateTrialLicenseKeyRequestBody,

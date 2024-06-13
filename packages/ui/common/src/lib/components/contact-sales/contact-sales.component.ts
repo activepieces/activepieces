@@ -3,15 +3,28 @@ import {
   ContactSalesService,
   featuresNames,
 } from '../../service/contact-sales.service';
-import { BehaviorSubject, Observable, of, switchMap } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  catchError,
+  forkJoin,
+  switchMap,
+  tap,
+} from 'rxjs';
 import {
   FormBuilder,
   FormControl,
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { ApEdition } from '@activepieces/shared';
-import { AuthenticationService, FlagService } from '../../service';
+import { ApEdition, ErrorCode } from '@activepieces/shared';
+import {
+  AuthenticationService,
+  FlagService,
+  LicenseKeysService,
+} from '../../service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'ap-contact-sales',
@@ -19,7 +32,8 @@ import { AuthenticationService, FlagService } from '../../service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContactSalesComponent {
-  sendRequest$: Observable<void> | undefined;
+  readonly ErrorCode = ErrorCode;
+  sendRequest$: Observable<unknown> | undefined;
   logos = [
     'https://www.activepieces.com/logos/alan.svg',
     'https://www.activepieces.com/logos/contentful.svg',
@@ -50,11 +64,12 @@ export class ContactSalesComponent {
   ];
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   readonly featuresNames = featuresNames;
+  emailValueChanged$: Observable<string>;
   contactSalesForm: FormGroup<{
     name: FormControl<string>;
     email: FormControl<string>;
     companyName: FormControl<string>;
-    employeesNumber: FormControl<string>;
+    numberOfEmployees: FormControl<string>;
     goal: FormControl<string>;
   }>;
 
@@ -62,7 +77,9 @@ export class ContactSalesComponent {
     public authenticationService: AuthenticationService,
     public contactSalesService: ContactSalesService,
     private fb: FormBuilder,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private licenseKeysService: LicenseKeysService,
+    private snackbar: MatSnackBar
   ) {
     this.contactSalesForm = this.fb.group({
       companyName: this.fb.control<string>('', {
@@ -89,11 +106,15 @@ export class ContactSalesComponent {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      employeesNumber: this.fb.control<string>('', {
+      numberOfEmployees: this.fb.control<string>('', {
         nonNullable: true,
         validators: [Validators.required],
       }),
     });
+    this.emailValueChanged$ = this.createListenerToRemoveServerErrorOnChange(
+      this.contactSalesForm.controls.email,
+      ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY
+    );
   }
 
   closeSlideout() {
@@ -106,13 +127,88 @@ export class ContactSalesComponent {
       this.sendRequest$ = this.flagService.getEdition().pipe(
         switchMap((edition) => {
           if (edition === ApEdition.CLOUD) {
-            //just send the request to the flow.
+            return this.contactSalesService
+              .sendRequest(this.contactSalesForm.getRawValue())
+              .pipe(
+                tap(() => {
+                  tap(() => {
+                    this.snackbar.open(
+                      $localize`Our sales team will be in contact with you soon.`,
+                      '',
+                      {
+                        duration: 5000,
+                      }
+                    );
+                  });
+                })
+              );
           }
-
-          //send the request to both flow and secrets-manager through our backend.
-          return of(void 0);
+          const trialKeyGenerationRequest$ = this.licenseKeysService
+            .createKey({
+              email: this.contactSalesForm.getRawValue().email,
+            })
+            .pipe(
+              catchError((err: HttpErrorResponse) => {
+                if (
+                  err.error?.code === ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY
+                ) {
+                  this.contactSalesForm.controls.email.setErrors({
+                    [ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY]: true,
+                  });
+                } else {
+                  this.snackbar.open(
+                    $localize`Unexpected error please contact support on community.activepieces.com`
+                  );
+                }
+                this.loading$.next(false);
+                throw err;
+              })
+            );
+          return forkJoin({
+            trialKeyGenerationRequest$,
+            contactSalesRequest$: this.contactSalesService.sendRequest(
+              this.contactSalesForm.getRawValue()
+            ),
+          }).pipe(
+            tap(() => {
+              this.snackbar.open(
+                $localize`Please check your email for your trial key and further instructions.`,
+                '',
+                {
+                  duration: 5000,
+                }
+              );
+            })
+          );
+        }),
+        tap(() => {
+          this.closeSlideout();
         })
       );
     }
+  }
+  createListenerToRemoveServerErrorOnChange<T>(
+    control: FormControl<T>,
+    ...errorsNames: string[]
+  ): Observable<T> {
+    return control.valueChanges.pipe(
+      tap(() => {
+        const errors = control.errors;
+        errorsNames.forEach((errorName) => {
+          const doErrorsContainServerError =
+            errors && errors[errorName] !== undefined;
+          if (doErrorsContainServerError) {
+            if (Object.keys(errors).length > 1) {
+              errors[errorName] = undefined;
+              control.setErrors({
+                ...errors,
+              });
+            } else {
+              control.setErrors(null);
+            }
+          }
+        });
+      })
+    );
   }
 }
