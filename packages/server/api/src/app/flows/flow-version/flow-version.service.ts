@@ -494,14 +494,13 @@ async function validateAction({
     if (isNil(piece)) {
         return false
     }
-    const isPremiumPieceEnabled = await isPieceEnabledForProject(piece, projectId)
-    if (!isPremiumPieceEnabled) {
-        return false
-    }
+    await assertEnterprisePiecesEnabled(piece, projectId)
+
     const action = piece.actions[settings.actionName]
     if (isNil(action)) {
         return false
     }
+
     const props = action.props
     if (!isNil(piece.auth) && action.requireAuth) {
         props.auth = piece.auth
@@ -530,14 +529,10 @@ async function validateTrigger({
         name: settings.pieceName,
         version: settings.pieceVersion,
     })
-
     if (isNil(piece)) {
         return false
     }
-    const isPremiumPieceEnabled = await isPieceEnabledForProject(piece, projectId)
-    if (!isPremiumPieceEnabled) {
-        return false
-    }
+    await assertEnterprisePiecesEnabled(piece, projectId)
     const trigger = piece.triggers[settings.triggerName]
     if (isNil(trigger)) {
         return false
@@ -549,13 +544,23 @@ async function validateTrigger({
     return validateProps(props, settings.input)
 }
 
-async function isPieceEnabledForProject(piece: PieceMetadataModel, projectId: ProjectId): Promise<boolean> {
+async function assertEnterprisePiecesEnabled(piece: PieceMetadataModel, projectId: ProjectId): Promise<void> {
     if (!piece.categories?.includes(PieceCategory.PREMIUM)) {
-        return false
+        return
     }
     const project = await projectService.getOneOrThrow(projectId)
     const platform = await platformService.getOneOrThrow(project.platformId)
-    return platform.premiumPieces.includes(piece.name)
+    const enabledForPlatform = platform.premiumPieces.includes(piece.name)
+    if (enabledForPlatform) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.FEATURE_DISABLED,
+        params: {
+            message: `The platform doesn not include ${piece.name}`, 
+        },
+    })
+    
 }
 
 function validateProps(
