@@ -16,7 +16,7 @@ export type FeatureKey =
   | 'GIT_SYNC'
   | 'ISSUES'
   | 'ALERTS'
-  | 'PREMIUM_PIECES';
+  | 'ENTERPRISE_PIECES';
 export const unexpectedErrorMessage = $localize`An unexpected error occurred, please contact support`;
 export const codeGeneratorTooltip = $localize`Write code with assistance from AI`;
 export const disabledCodeGeneratorTooltip = $localize`Configure api key in the environment variables to generate code using AI`;

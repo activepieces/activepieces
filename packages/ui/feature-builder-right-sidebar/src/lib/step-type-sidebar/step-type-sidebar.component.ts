@@ -223,11 +223,11 @@ export class StepTypeSidebarComponent implements AfterViewInit {
     suggestion?: ActionBase | TriggerBase;
   }) {
     this.flowTypeSelected$ = this.platformService
-      .isPremiumPieceAndEnabled(flowItemDetails.extra!.pieceName)
+      .isPieceLocked(flowItemDetails)
       .pipe(
-        switchMap((isPremiumPieceAndEnabled) => {
-          if (!isPremiumPieceAndEnabled) {
-            this.contactSalesService.open(['PREMIUM_PIECES']);
+        switchMap((isPieceLocked) => {
+          if (isPieceLocked) {
+            this.contactSalesService.open(['ENTERPRISE_PIECES']);
             return of(void 0);
           }
 

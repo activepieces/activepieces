@@ -52,12 +52,14 @@ export class StepTypeItemComponent {
       this.loadingLogo$.next(false);
     };
   }
-  isPremiumPiece(categories: PieceCategory[] | undefined) {
+
+  isEnterprisePiece(categories: PieceCategory[] | undefined) {
     if (isNil(categories)) {
       return false;
     }
     return categories.includes(PieceCategory.PREMIUM);
   }
+
   openDocs(url: string) {
     window.open(url, '_blank', 'noopener');
   }
