@@ -16,8 +16,10 @@ import {
     PushGitRepoRequest,
 } from '@activepieces/ee-shared'
 import { Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
+    app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.gitSyncEnabled))
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })
 }
