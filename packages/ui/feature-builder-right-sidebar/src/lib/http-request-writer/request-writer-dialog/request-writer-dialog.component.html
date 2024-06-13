@@ -18,7 +18,7 @@
       </mat-step>
       <mat-step>
         <ng-template matStepLabel>Code Iteration</ng-template>
-        <!-- <ng-container *ngTemplateOutlet="editTemplate"></ng-container> -->
+        <ng-container *ngTemplateOutlet="editTemplate"></ng-container>
       </mat-step>
     </mat-stepper>
   </div>
@@ -70,6 +70,26 @@
   ></ng-container>
 </ng-template>
 
+<ng-template #editTemplate>
+
+  <div class="ap-typography-body-1 ap-text-description ap-mb-4" i18n>
+      Here is the code our AI wrote for you. Ask for changes or use the code in your action.
+  </div>
+  <ng-template #codeResult>{{ receivedCode$ | async }}</ng-template>
+  <div class="ap-mb-4">
+      <pre *ngIf="prisimFix === false"
+          class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card "><code class="language-js"><ng-container *ngTemplateOutlet="codeResult"> </ng-container></code></pre>
+      <pre *ngIf="prisimFix === true"
+          class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card "><code class="language-js"><ng-container *ngTemplateOutlet="codeResult"> </ng-container></code></pre>
+  </div>
+
+  <ng-container [ngTemplateOutlet]="promptFormTemplate" [ngTemplateOutletContext]="{
+          reprompt:true
+      }"></ng-container>
+</ng-template>
+
+<ng-container *ngIf="promptOperation$ | async"></ng-container>
+
 <ng-template #promptFormTemplate let-reprompt="reprompt">
   <form
     class="ap-flex ap-flex-col ap-gap-2"
@@ -120,6 +140,10 @@
           class="ap-w-full"
           appearance="outline"
           subscriptSizing="dynamic"
+          *ngIf="
+              (receivedCode$ | async) === undefined ||
+              (receivedCode$ | async) === ''
+            "
         >
           <mat-label i18n> Docs Reference </mat-label>
           <input
@@ -135,16 +159,6 @@
             matInput
             type="text"
             rows="4"
-          />
-
-          <input
-            *ngIf="receivedCode$ | async"
-            cdkFocusInitial
-            (keydown.enter)="$event.preventDefault(); $event.stopPropagation()"
-            (keyup.enter)="prompt(reprompt)"
-            [formControl]="promptForm.controls.reference"
-            matInput
-            type="text"
           />
         </mat-form-field>
       </div>

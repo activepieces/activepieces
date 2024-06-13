@@ -56,14 +56,13 @@ export class RequestWriterDialogComponent {
       this.loading$.next(true);
       this.promptForm.disable();
       const prompt: string = this.promptForm.controls.prompt.value;
-      const reference: string = this.promptForm.controls.reference.value;
+      // const reference: string = this.promptForm.controls.reference.value;
       this.promptOperation$ = this.requestWriterService
         .prompt({
           prompt,
-          reference,
         })
         .pipe(
-          tap((response: any) => {
+          tap((response) => {
             this.promptForm.enable();
             this.promptForm.controls.prompt.removeValidators(
               Validators.required
@@ -79,7 +78,6 @@ export class RequestWriterDialogComponent {
                 }[];
                 packages: string[];
               } = JSON.parse(response.result);
-              console.log(result, 'Res');
               this.receivedCode$.next(
                 result.code.replace(/\*\*\*NEW_LINE\*\*\*/g, '\n')
               );
@@ -91,7 +89,6 @@ export class RequestWriterDialogComponent {
               }
               this.prisimFix = !this.prisimFix;
               this.highlightPrism();
-              console.log(result, 'Res');
             } catch (e) {
               console.error('Copilot response not valid JSON.');
               console.error((e as Error).message);
