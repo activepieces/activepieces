@@ -47,9 +47,6 @@ export class UpgradeNoteComponent {
     this.contactSalesService.open([this.featureKey]);
   }
 
-  openTrialDialog(): void {
-    this.activationKeysService.openTrialDialog();
-  }
   openContactSalesDialog(): void {
     this.matDialog.open(ContactSalesDialogComponent, {
       autoFocus: '.agree-button',

@@ -20,7 +20,7 @@
             @else {
                     @if(isTrialKeyActivated$ | async)
                     {
-                        <ap-button  (buttonClicked)="openTrialDialog()" [fullWidthOfContainer]="true" btnColor="primary"
+                        <ap-button  (buttonClicked)="openRequestTrialSlide()" [fullWidthOfContainer]="true" btnColor="primary"
                         btnSize="large">
                         <div i18n
                             class="ap-text-body-2 !ap-font-semibold ap-items-center ap-justify-center">
@@ -29,7 +29,7 @@
                     </ap-button>
                     }
                     @else {
-                        <ap-button  (buttonClicked)="openTrialDialog()" [fullWidthOfContainer]="true" btnColor="primary"
+                        <ap-button  (buttonClicked)="openRequestTrialSlide()" [fullWidthOfContainer]="true" btnColor="primary"
                         btnSize="large">
                         <div i18n
                             class="ap-text-body-2 !ap-font-semibold ap-items-center ap-justify-center">

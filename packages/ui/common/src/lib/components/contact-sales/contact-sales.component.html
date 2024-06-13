@@ -1,75 +1,123 @@
-@if ((featureData$ | async); as featureData) {
-<form [formGroup]="contactSalesForm" (ngSubmit)="submitForm()" class="ap-flex ap-flex-col ap-h-screen">
-    <h2 class="ap-sticky ap-top-0 ap-z-50 ap-px-10 ap-py-4 ap-border-b ap-border ap-text-2xl ap-font-bold ap-bg-white">
-        Try Enterprise Features</h2>
+<h2 class="ap-sticky ap-top-0 ap-z-50 ap-px-10 ap-py-4 ap-border-b ap-border ap-text-2xl ap-font-bold ap-bg-white">
+    14-Day Enterprise Trial</h2>
+<form [formGroup]="contactSalesForm" (ngSubmit)="submitForm()" class=" ap-flex ap-flex-col ap-h-screen">
 
-    <div class="ap-px-10 ap-py-8 ap-text-base ap-flex-auto ap-overflow-y-auto">
-        <p>Get a 7-day trial of the Enterprise features, we will reach out on email.</p>
-        <div class="ap-mt-6">
+
+    <div class="ap-px-10  ap-text-base ap-flex-auto ap-overflow-y-auto">    
+        <div class="ap-flex ap-flex-col ap-mt-6 ap-gap-4">
             <div class="ap-flex ap-gap-4 ap-justify-between">
                 <mat-form-field class="ap-grow" appearance="outline" subscriptSizing="dynamic">
                     <mat-label>Name</mat-label>
-                    <input name="name" cdkFocusInitial matInput formControlName="name" i18n-placeholder
-                        autocomplete="off" required>
+                    <input name="name" cdkFocusInitial matInput [formControl]="contactSalesForm.controls.name" 
+                        autocomplete="off">
+                        @if(contactSalesForm.controls.name.invalid)
+                        {
+                            <mat-error i18n>
+                              Name is required
+                            </mat-error>
+                        }
                 </mat-form-field>
                 <mat-form-field class="ap-grow" appearance="outline" subscriptSizing="dynamic">
                     <mat-label>Work email</mat-label>
-                    <input name="text" type="email" cdkFocusInitial matInput formControlName="email" i18n-placeholder
+                    <input name="text" type="email" cdkFocusInitial matInput [formControl]="contactSalesForm.controls.email" 
                         autocomplete="off" required>
-                    <mat-error *ngIf="contactSalesForm.get('email')?.invalid">
-                        Please enter a valid email address.
-                    </mat-error>
+                        @if(contactSalesForm.controls.email.invalid)
+                        {
+                            <mat-error i18n>
+                                Please enter a valid email address.
+                            </mat-error>
+                        }
+                 
                 </mat-form-field>
             </div>
-            <div class="ap-mt-4 ap-flex">
+            <div class="ap-flex ap-gap-4 ap-justify-between">
                 <mat-form-field class="ap-grow" appearance="outline" subscriptSizing="dynamic">
-                    <mat-label>Company Website</mat-label>
-                    <input name="text" type="url" matInput i18n-placeholder autocomplete="off" formControlName="domain">
-                    <mat-error *ngIf="contactSalesForm.get('domain')?.invalid">
-                        Please enter a valid website.
-                    </mat-error>
+                    <mat-label i18n>Company Name </mat-label>
+                    <input name="text" type="text" matInput i18n-placeholder autocomplete="off" [formControl]="contactSalesForm.controls.companyName">
+                    @if(contactSalesForm.controls.companyName.invalid)
+                    {
+                        <mat-error i18n>
+                            Company name is required.
+                          </mat-error>
+                    }
+                    
+                </mat-form-field>
+                <mat-form-field class="ap-grow" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label i18n>Number of Employees </mat-label>
+                    <mat-select [formControl]="contactSalesForm.controls.employeesNumber">
+                        @for(opt of numberOfEmployeesOptions; track opt)
+                        { 
+                            <mat-option [value]="opt">
+                                {{ opt }}
+                              </mat-option>
+                        }
+                        
+                     
+                    </mat-select>
+                    @if(contactSalesForm.controls.employeesNumber.invalid)
+                    {
+                        <mat-error i18n >
+                            Number of employees is required.
+                          </mat-error>
+                    }
+                 
                 </mat-form-field>
             </div>
-            <div class="ap-mt-8">
-                <div class="ap-font-semibold">Primary reasons to try Enterprise*</div>
-
-                <div class="ap-text-sm ap-mt-2 ap-text-gray-500">{{ featureData.featureCount }} selected / 3 max</div>
-
-                <div class="ap-flex ap-flex-col ap-mt-2">
-                    <ng-container *ngFor="let feature of FEATURES; let i = index">
-                        <mat-checkbox color="primary" (change)="toggle(feature)"
-                            [disabled]="featureData.featureCount >= 3 && !hasFeature(feature)"
-                            [checked]="hasFeature(feature)"
-                            >
-
-                            <span class="ap-text-base">{{ feature.label }}</span>
-                        </mat-checkbox>
-                    </ng-container>
-                </div>
-            </div>
-
-            <div class="ap-mt-8">
-                <div class="ap-font-semibold">Optional: Add a message</div>
-                <p class="ap-mt-2 ap-text-gray-500">Even if you can't find a specific feature, describe your use case or
-                    requirements and we'll reach out to you.</p>
-                <mat-form-field class="ap-mt-4 ap-w-full">
-                    <textarea name="message" formControlName="message" matInput rows="5"></textarea>
-                </mat-form-field>
-            </div>
+            <mat-form-field class="ap-w-full">
+                <mat-label i18n>Goal</mat-label>
+                <mat-select [formControl]="contactSalesForm.controls.goal">
+                    @for(goal of goals; track goal)
+                    { 
+                        <mat-option [value]="goal.telemetryValue">
+                            {{ goal.displayName }}
+                          </mat-option>
+                    }
+                    
+                 
+                </mat-select>
+                @if(contactSalesForm.controls.goal.invalid)
+                {
+                    <mat-error i18n>
+                        Goal is required.
+                      </mat-error>
+                }
+          
+              </mat-form-field>
         </div>
+           
+                <div class="ap-mt-3 ap-font-semibold">Try Enterprise to access: </div>
+                <div class="ap-flex  ap-mt-3 ap-flex-wrap  ">
+                    @for(featureName of featuresNames; track featureName)
+                    {
+                    <div class="ap-flex ap-gap-3 ap-my-3 ap-basis-[50%]"> 
+                      
+                            <svg-icon class="ap-h-[20px] ap-w-[20px] ap-fill-success" src="assets/img/custom/check.svg" [applyClass]="true"></svg-icon>
+                            {{ 
+                                featureName
+                            }}
+                   
+                     
+                    </div>
+                }
+                </div>
+              
+
+                <div class="ap-text-body ap-font-semibold ap-mt-15 ap-mb-6  ap-text-center ">
+                    Deploy your automations securely with Activepieces
+                  </div>
+                <div class="ap-flex ap-gap-6 ap-justify-center ap-items-center">
+                    @for(logo of logos; track logo) {
+                        <img class="ap-h-6" [src]="logo" />
+                        }
+                </div>
+        
+            
     </div>
 
-    <div class="ap-flex ap-gap-2 ap-sticky ap-bottom-0 ap-z-50 ap-px-10 ap-py-4 ap-border-t ap-border ap-bg-white">
-        <ap-button type="submit" btnStyle="flat" btnColor="primary"
-            [disabled]="(pending$ | async) || (featureData.featureCount) === 0 || !contactSalesForm.valid">
-            <span *ngIf="(pending$ | async) === false">Submit</span>
-            <span *ngIf="(pending$ | async)" class="spinner-border spinner-border-sm" role="status"
-                aria-hidden="true"></span>
+    <div  class=" ap-mt-[80px]  ap-flex ap-gap-2 ap-sticky ap-bottom-0 ap-z-50 ap-px-10 ap-py-4 ap-border-t ap-border ap-bg-white">
+        <ap-button type="submit" btnStyle="flat" btnColor="primary" i18n>
+            Submit
         </ap-button>
         <ap-button type="button" btnStyle="flat" btnColor="basic" (click)="closeSlideout()">Cancel</ap-button>
     </div>
 </form>
-}
-
-<ng-container *ngIf="sendRequest$ | async"></ng-container>
-<ng-container *ngIf="updateFeatures$ | async"></ng-container>

@@ -13,30 +13,35 @@ export interface Feature {
 
 export const FEATURES: Feature[] = [
   {
-    label: 'Create Multiple Projects',
-    key: 'PROJECTS',
+    label: $localize`Multiple Projects`,
+    key: `PROJECTS`,
   },
-  { label: 'Brand Activepieces', key: 'BRANDING' },
-  { label: 'Control Pieces', key: 'PIECES' },
+  { label: $localize`Custom Branding`, key: `BRANDING` },
+  { label: `Control Pieces`, key: `PIECES` },
   {
-    label: 'Create Custom Templates',
-    key: 'TEMPLATES',
+    label: $localize`Custom Templates`,
+    key: `TEMPLATES`,
   },
-  { label: 'Access Full API', key: 'API' },
-  { label: 'Single Sign On', key: 'SSO' },
-  { label: 'Audit Logs', key: 'AUDIT_LOGS' },
+  { label: $localize`Access Full API`, key: `API` },
+  { label: $localize`Single Sign On`, key: `SSO` },
+  { label: $localize`Audit Logs`, key: `AUDIT_LOGS` },
   {
-    label: 'Team Collaboration via Git',
-    key: 'GIT_SYNC',
+    label: $localize`Team Collaboration via Git`,
+    key: `GIT_SYNC`,
   },
   {
-    label: 'Track Consecutive Failed Runs',
-    key: 'ISSUES',
+    label: $localize`Alerts on Failed Runs`,
+    key: `ISSUES`,
+  },
+  {
+    label: $localize`Enterprise Pieces`,
+    key: `ENTERPRISE_PIECES`,
   },
 ];
 
+export const featuresNames = FEATURES.map((feature) => feature.label);
 @Injectable({
-  providedIn: 'root',
+  providedIn: `root`,
 })
 export class ContactSalesService {
   public contactSalesState = new BehaviorSubject<boolean>(false);
@@ -85,7 +90,7 @@ export class ContactSalesService {
       take(1),
       switchMap((flags) => {
         return this.http.post<{ status: string; message?: string }>(
-          'https://sales.activepieces.com/submit-inapp-contact-form',
+          `https://sales.activepieces.com/submit-inapp-contact-form`,
           {
             name,
             email,

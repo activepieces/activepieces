@@ -1,68 +1,73 @@
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  Output,
-} from '@angular/core';
-import {
-  AuthenticationService,
   ContactSalesService,
-  FEATURES,
-  Feature,
-  FeatureKey,
-} from '@activepieces/ui/common';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { tap, map, catchError, startWith } from 'rxjs/operators';
-import { MatSnackBar } from '@angular/material/snack-bar';
+  featuresNames,
+} from '../../service/contact-sales.service';
+import { BehaviorSubject, Observable, of, switchMap } from 'rxjs';
 import {
   FormBuilder,
   FormControl,
   FormGroup,
   Validators,
 } from '@angular/forms';
+import { ApEdition } from '@activepieces/shared';
+import { AuthenticationService, FlagService } from '../../service';
 
 @Component({
-  selector: 'app-contact-sales',
+  selector: 'ap-contact-sales',
   templateUrl: './contact-sales.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContactSalesComponent {
   sendRequest$: Observable<void> | undefined;
-  updateFeatures$: Observable<void> | undefined;
-  pending$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  readonly FEATURES = FEATURES;
+  logos = [
+    'https://www.activepieces.com/logos/alan.svg',
+    'https://www.activepieces.com/logos/contentful.svg',
+    'https://www.activepieces.com/logos/plivo.svg',
+    'https://www.activepieces.com/logos/clickup.svg',
+  ];
+  goals = [
+    {
+      displayName: $localize`Internal automations in my company`,
+      telemetryValue: 'Use Activepieces internally in our company',
+    },
+
+    {
+      displayName: $localize`Embed Activepieces in our SaaS product`,
+      telemetryValue: 'Embed Activepieces in our SaaS product',
+    },
+    {
+      displayName: $localize`Resell Activepieces to clients`,
+      telemetryValue: `Use Activepieces with our agency's clients`,
+    },
+  ];
+  numberOfEmployeesOptions = [
+    '1,000+',
+    '501 - 1000',
+    '101 - 500',
+    '51 - 100',
+    '1 - 50',
+  ];
+  loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  readonly featuresNames = featuresNames;
   contactSalesForm: FormGroup<{
     name: FormControl<string>;
     email: FormControl<string>;
-    domain: FormControl<string>;
-    message: FormControl<string>;
-    features: FormControl<FeatureKey[]>;
+    companyName: FormControl<string>;
+    employeesNumber: FormControl<string>;
+    goal: FormControl<string>;
   }>;
-  featureData$: Observable<{
-    featureCount: number;
-    selected: FeatureKey[];
-  }> = of({
-    selected: [],
-    featureCount: 0,
-  });
-
-  @Output() cancel = new EventEmitter<void>();
 
   constructor(
     public authenticationService: AuthenticationService,
     public contactSalesService: ContactSalesService,
-    private snackbar: MatSnackBar,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private flagService: FlagService
   ) {
     this.contactSalesForm = this.fb.group({
-      domain: this.fb.control<string>('', {
+      companyName: this.fb.control<string>('', {
         nonNullable: true,
-        validators: [
-          Validators.required,
-          Validators.pattern(
-            '(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/?'
-          ),
-        ],
+        validators: [Validators.required],
       }),
       email: this.fb.control<string>(
         this.authenticationService.currentUser.email,
@@ -80,36 +85,15 @@ export class ContactSalesComponent {
           validators: [Validators.required],
         }
       ),
-      message: this.fb.control<string>('', {
+      goal: this.fb.control<string>('', {
         nonNullable: true,
-        validators: [],
+        validators: [Validators.required],
       }),
-      features: this.fb.control<FeatureKey[]>([], {
+      employeesNumber: this.fb.control<string>('', {
         nonNullable: true,
-        validators: [],
+        validators: [Validators.required],
       }),
     });
-    this.updateFeatures$ = this.contactSalesService.selectedFeature.pipe(
-      tap((features) => {
-        this.contactSalesForm.controls.features.setValue(features);
-      }),
-      map(() => void 0)
-    );
-  }
-
-  hasFeature(feature: Feature) {
-    return this.contactSalesForm.controls.features.value.includes(feature.key);
-  }
-
-  toggle(feature: Feature) {
-    const alreadyChecked =
-      this.contactSalesForm.controls.features.value.includes(feature.key);
-    const newFeatures = alreadyChecked
-      ? this.contactSalesForm.controls.features.value.filter(
-          (f) => f !== feature.key
-        )
-      : [...this.contactSalesForm.controls.features.value, feature.key];
-    this.contactSalesForm.controls.features.setValue(newFeatures);
   }
 
   closeSlideout() {
@@ -117,54 +101,18 @@ export class ContactSalesComponent {
   }
 
   submitForm() {
-    if (!this.pending$.value) {
-      this.pending$.next(true);
-      const { name, email, domain, message, features } =
-        this.contactSalesForm.value;
-      this.sendRequest$ = this.contactSalesService
-        .sendRequest({
-          name: name!,
-          email: email!,
-          domain: domain!,
-          message: message!,
-          features: features!,
+    if (this.contactSalesForm.valid) {
+      this.loading$.next(true);
+      this.sendRequest$ = this.flagService.getEdition().pipe(
+        switchMap((edition) => {
+          if (edition === ApEdition.CLOUD) {
+            //just send the request to the flow.
+          }
+
+          //send the request to both flow and secrets-manager through our backend.
+          return of(void 0);
         })
-        .pipe(
-          tap((response) => {
-            this.pending$.next(false);
-            if (!response.status || response.status === 'success') {
-              this.snackbar.open(
-                "We'll get in touch soon! Your request has been sent.",
-                '',
-                {
-                  duration: 3000,
-                }
-              );
-            } else if (response.status === 'error') {
-              const errorMessage =
-                response.message ||
-                'An error occurred while sending your request.';
-              this.snackbar.open(errorMessage, '', {
-                duration: 3000,
-                panelClass: ['error'],
-              });
-            }
-            this.closeSlideout();
-          }),
-          map(() => void 0),
-          catchError(() => {
-            this.pending$.next(false);
-            this.snackbar.open(
-              'Failed to send request due to a network or server error.',
-              '',
-              {
-                duration: 3000,
-                panelClass: ['error'],
-              }
-            );
-            return of(void 0);
-          })
-        );
+      );
     }
   }
 }
