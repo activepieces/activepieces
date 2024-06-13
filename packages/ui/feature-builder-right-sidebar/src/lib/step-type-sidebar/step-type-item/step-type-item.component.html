@@ -1,7 +1,4 @@
-<div class="item-container  ap-bg-white" 
-[class.ap-cursor-pointer]="clickable"
-[class.hover:ap-bg-hover]="clickable"
- >
+<div class="item-container  ap-bg-white" [class.ap-cursor-pointer]="clickable" [class.hover:ap-bg-hover]="clickable">
   <ng-container *ngIf="_flowItemDetails; else observableFlowItemDetails">
     <ng-container *ngTemplateOutlet="
         flowItemDetailsBody;
@@ -20,15 +17,16 @@
 
 <ng-template #flowItemDetailsBody let-itemDetails>
 
-  <div class="ap-flex ap-items-center ap-gap-4" >
+  <div class="ap-flex ap-items-center ap-gap-4">
     <div class="logo-container ap-relative ap-flex ">
       <div *ngIf="(loadingLogo$ | async)" class="ap-flex-grow ap-flex ap-items-center ap-justify-center ">
         <div class="spinner-grow ap-text-primary ">
           <span class="sr-only">...</span>
         </div>
       </div>
-  
-      <img *ngIf="!!!(loadingLogo$ | async)" @fadeIn class="type-logo" [attr.alt]="itemDetails.name" [src]="itemDetails.logoUrl" />
+
+      <img *ngIf="!!!(loadingLogo$ | async)" @fadeIn class="type-logo" [attr.alt]="itemDetails.name"
+        [src]="itemDetails.logoUrl" />
     </div>
     <div class="ap-flex ap-flex-col ap-gap-2">
       <div>
@@ -36,14 +34,22 @@
         <div class="description">{{ itemDetails.description }}</div>
       </div>
       <mat-chip-listbox *ngIf="itemDetails.suggestions" class="suggested-actions-or-triggers">
-        <mat-chip-option (click)="$event.stopPropagation(); suggestionClicked.emit(suggestion);" *ngFor="let suggestion of itemDetails.suggestions"><div class="ap-typography-caption">{{suggestion.displayName}} </div></mat-chip-option>
+        <mat-chip-option (click)="$event.stopPropagation(); suggestionClicked.emit(suggestion);"
+          *ngFor="let suggestion of itemDetails.suggestions">
+          <div class="ap-typography-caption">{{suggestion.displayName}} </div>
+        </mat-chip-option>
+        @if (isPremiumPiece(itemDetails.categories)) {
+        <mat-chip-option disabled>
+          <div class="ap-typography-caption">Premium</div>
+        </mat-chip-option>
+        }
       </mat-chip-listbox>
 
     </div>
 
   </div>
 
-  
+
 </ng-template>
 
 <ng-template #loading>

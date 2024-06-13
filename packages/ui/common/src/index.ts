@@ -39,3 +39,4 @@ export * from './lib/components/control-description/control-description.componen
 export * from './lib/components/dialogs';
 export * from './lib/components/control-description/control-description.component';
 export * from './lib/components/control-description/control-description.component';
+export * from './lib/components/contact-sales/contact-sales.component';
