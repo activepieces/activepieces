@@ -14,16 +14,16 @@ import { Observable, take } from 'rxjs';
 export class RequestWriterService {
   constructor(private websocketService: WebSocketService) {}
 
-  prompt(
+  fetchApiDetails(
     request: GenerateRequestBodyRequest
   ): Observable<GenerateRequestBodyResponse> {
     this.websocketService.socket.emit(
-      WebsocketServerEvent.GENERATE_CODE,
+      WebsocketServerEvent.REQUEST_WRITE,
       request
     );
     return this.websocketService.socket
       .fromEvent<GenerateRequestBodyResponse>(
-        WebsocketClientEvent.GENERATE_CODE_FINISHED
+        WebsocketClientEvent.REQUEST_WRITE_FINISHED
       )
       .pipe(take(1));
   }
