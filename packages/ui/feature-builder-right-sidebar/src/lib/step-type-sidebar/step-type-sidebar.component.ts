@@ -95,7 +95,6 @@ export class StepTypeSidebarComponent implements AfterViewInit {
   triggersDetails$: Observable<FlowItemDetails[]>;
   isPremium$: Observable<boolean>;
   premiumPieces$: Observable<string[]>;
-  showTrial$: Observable<boolean>;
   constructor(
     private store: Store,
     private codeService: CodeService,
@@ -158,11 +157,11 @@ export class StepTypeSidebarComponent implements AfterViewInit {
       switchMap((searchQuery) => {
         return this._showTriggers
           ? this.pieceMetadataService.listCoreFlowItemsDetailsForTrigger(
-              searchQuery ?? undefined
-            )
+            searchQuery ?? undefined
+          )
           : this.pieceMetadataService.listCoreFlowItemsDetailsForAction(
-              searchQuery ?? undefined
-            );
+            searchQuery ?? undefined
+          );
       }),
       tap(() => this.loading$.next(false))
     );
@@ -172,15 +171,15 @@ export class StepTypeSidebarComponent implements AfterViewInit {
       switchMap((searchQuery) => {
         const appItemsDetails = this._showTriggers
           ? this.pieceMetadataService.listAppFlowItemsDetailsForTrigger(
-              searchQuery ?? undefined
-            )
+            searchQuery ?? undefined
+          )
           : this.pieceMetadataService.listAppFlowItemsDetailsForAction(
-              searchQuery ?? undefined
-            );
-        return combineLatest([appItemsDetails, this.premiumPieces$]);
+            searchQuery ?? undefined
+          );
+        return combineLatest([appItemsDetails, this.premiumPieces$, this.isPremium$]);
       }),
-      map(([appItemsDetails, premiumPieces]) =>
-        this.filterItemsDetailsByPlatform(appItemsDetails, premiumPieces)
+      map(([appItemsDetails, premiumPieces, isPremium]) =>
+        this.filterItemsDetailsByPlatform(appItemsDetails, premiumPieces, isPremium)
       ),
       tap(() => this.loading$.next(false))
     );
@@ -190,15 +189,15 @@ export class StepTypeSidebarComponent implements AfterViewInit {
       switchMap((searchQuery) => {
         const allItemDetails = this._showTriggers
           ? this.pieceMetadataService.listAllFlowItemsDetailsForTrigger(
-              searchQuery ?? undefined
-            )
+            searchQuery ?? undefined
+          )
           : this.pieceMetadataService.listAllFlowItemsDetailsForAction(
-              searchQuery ?? undefined
-            );
-        return combineLatest([allItemDetails, this.premiumPieces$]);
+            searchQuery ?? undefined
+          );
+        return combineLatest([allItemDetails, this.premiumPieces$, this.isPremium$]);
       }),
-      map(([allItemDetails, premiumPieces]) =>
-        this.filterItemsDetailsByPlatform(allItemDetails, premiumPieces)
+      map(([allItemDetails, premiumPieces, isPremium]) =>
+        this.filterItemsDetailsByPlatform(allItemDetails, premiumPieces, isPremium)
       ),
       tap(() => this.loading$.next(false))
     );
@@ -239,51 +238,54 @@ export class StepTypeSidebarComponent implements AfterViewInit {
     flowItemDetails: FlowItemDetails;
     suggestion?: ActionBase | TriggerBase;
   }) {
-    this.showTrial$ = this.isPremiumPieceAndCommunityEdition(flowItemDetails);
-    if (!this.showTrial$) {
-      this.contactSalesService.open(['PREMIUM_PIECES']);
-      return void 0;
-    }
+    this.flowTypeSelected$ = this.isPremiumPieceAndCommunityEdition(flowItemDetails).pipe(
+      switchMap((isPremium) => {
+        if (!isPremium) {
+          this.contactSalesService.open(['PREMIUM_PIECES']);
+          return of(void 0);
+        }
 
-    this.flowTypeSelected$ = forkJoin({
-      currentFlow: this.store
-        .select(BuilderSelectors.selectCurrentFlow)
-        .pipe(take(1)),
-      rightSideBar: this.store
-        .select(BuilderSelectors.selectCurrentRightSideBar)
-        .pipe(take(1)),
-      currentStep: this.store
-        .select(BuilderSelectors.selectCurrentStep)
-        .pipe(take(1)),
-    }).pipe(
-      take(1),
-      tap((results) => {
-        if (!results.currentFlow) {
-          return;
-        }
-        if (this._showTriggers) {
-          this.replaceTrigger(flowItemDetails, suggestion);
-        } else {
-          const operation = this.constructAddOperation(
-            (results.rightSideBar.props as StepTypeSideBarProps).stepName,
-            results.currentFlow.version,
-            flowItemDetails.type as ActionType,
-            flowItemDetails,
-            (results.rightSideBar.props as StepTypeSideBarProps)
-              .stepLocationRelativeToParent,
-            suggestion
-          );
-          this.store.dispatch(
-            FlowsActions.addAction({
-              operation: operation,
-            })
-          );
-        }
-      }),
-      map(() => {
-        return void 0;
+        return forkJoin({
+          currentFlow: this.store
+            .select(BuilderSelectors.selectCurrentFlow)
+            .pipe(take(1)),
+          rightSideBar: this.store
+            .select(BuilderSelectors.selectCurrentRightSideBar)
+            .pipe(take(1)),
+          currentStep: this.store
+            .select(BuilderSelectors.selectCurrentStep)
+            .pipe(take(1)),
+        }).pipe(
+          take(1),
+          tap((results) => {
+            if (!results.currentFlow) {
+              return;
+            }
+            if (this._showTriggers) {
+              this.replaceTrigger(flowItemDetails, suggestion);
+            } else {
+              const operation = this.constructAddOperation(
+                (results.rightSideBar.props as StepTypeSideBarProps).stepName,
+                results.currentFlow.version,
+                flowItemDetails.type as ActionType,
+                flowItemDetails,
+                (results.rightSideBar.props as StepTypeSideBarProps)
+                  .stepLocationRelativeToParent,
+                suggestion
+              );
+              this.store.dispatch(
+                FlowsActions.addAction({
+                  operation: operation,
+                })
+              );
+            }
+          }),
+          map(() => {
+            return void 0;
+          })
+        )
       })
-    );
+    )
   }
 
   private replaceTrigger(
@@ -480,15 +482,20 @@ export class StepTypeSidebarComponent implements AfterViewInit {
           return false;
         }
 
-        return flowItemDetails.categories.includes(PieceCategory.PREMIUM);
+        return flowItemDetails.categories.includes(PieceCategory.PREMIUM)
       })
     );
   }
 
   private filterItemsDetailsByPlatform(
     itemDetails: FlowItemDetails[],
-    premiumPieces: string[]
+    premiumPieces: string[],
+    isPremium: boolean
   ): FlowItemDetails[] {
+    if (!isPremium) {
+      return itemDetails
+    }
+
     return itemDetails.filter(
       (piece) =>
         !piece.categories?.includes(PieceCategory.PREMIUM) ||
