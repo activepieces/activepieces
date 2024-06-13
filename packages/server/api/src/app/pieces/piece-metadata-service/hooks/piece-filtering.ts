@@ -52,10 +52,10 @@ export const filterPiecesBasedOnEmbedding = async ({
         return pieces
     }
 
-    const isPremiumPiece = (piece: PieceMetadataSchema) => piece.categories?.includes(PieceCategory.PREMIUM)
-    const isPieceEnabledForPlatform = (piece: PieceMetadataSchema) => isPremiumPiece(piece) && platform.premiumPieces.includes(piece.name)
+    const isEnterprisePremiumPiece = (piece: PieceMetadataSchema) => piece.categories?.includes(PieceCategory.PREMIUM)
+    const isPieceEnabledForPlatform = (piece: PieceMetadataSchema) => isEnterprisePremiumPiece(piece) && platform.premiumPieces.includes(piece.name)
 
-    return pieces.filter(piece => !isPremiumPiece(piece) || isPieceEnabledForPlatform(piece))
+    return pieces.filter(piece => !isEnterprisePremiumPiece(piece) || isPieceEnabledForPlatform(piece))
 }
 
 async function filterPiecesBasedOnFeatures(
