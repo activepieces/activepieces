@@ -31,7 +31,6 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { NewConnectionDialogComponent } from './components/dialogs/new-connection-dialog/new-connection-dialog.component';
 import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections';
-import { ContactSalesComponent } from './components/contact-sales/contact-sales.component';
 import { FormsModule } from '@angular/forms';
 import {
   PushFlowToGitButtonComponent,
@@ -81,7 +80,6 @@ import { AdminConsoleButtonComponent } from './components/admin-console-button/a
     ProjectSwitcherComponent,
     RenameFlowDialogComponent,
     NewConnectionDialogComponent,
-    ContactSalesComponent,
     NewAlertDialogComponent,
   ],
   providers: [DatePipe],

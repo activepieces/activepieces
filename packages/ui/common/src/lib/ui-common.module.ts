@@ -84,6 +84,7 @@ import { ConfirmActionDialogComponent } from './components/dialogs/confirm-actio
 import { DurationFormatterPipe } from './pipe';
 import { RequestTrialComponent } from './components/request-trial/request-trial.component';
 import { ContactSalesDialogComponent } from './components/dialogs/contact-sales-dialog/contact-sales-dialog.component';
+import { ContactSalesComponent } from './components/contact-sales/contact-sales.component';
 
 const exportedImports = [
   CommonModule,
@@ -164,6 +165,7 @@ const exportedDeclarations = [
   ConfirmActionDialogComponent,
   RequestTrialComponent,
   ContactSalesDialogComponent,
+  ContactSalesComponent
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

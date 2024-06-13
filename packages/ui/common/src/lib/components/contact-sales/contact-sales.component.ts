@@ -95,16 +95,6 @@ export class ContactSalesComponent {
       }),
       map(() => void 0)
     );
-    this.featureData$ =
-      this.contactSalesForm.controls.features.valueChanges.pipe(
-        startWith(this.contactSalesForm.controls.features.value),
-        map((features) => {
-          return {
-            selected: features,
-            featureCount: features.length,
-          };
-        })
-      );
   }
 
   hasFeature(feature: Feature) {
