@@ -16,6 +16,7 @@ import { appEventRoutingModule } from './app-event-routing/app-event-routing.mod
 import { authenticationServiceHooks } from './authentication/authentication-service/hooks'
 import { authenticationModule } from './authentication/authentication.module'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
+import { requestWriterModule } from './request-writer/request-writer.module'
 import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
@@ -248,7 +249,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(stepFileModule)
     await app.register(userModule)
     await app.register(authenticationModule)
-    await app.register(copilotModule)
+    await app.register(copilotModule),
+    await app.register(requestWriterModule),
     await app.register(platformModule)
     await app.register(formModule)
     await app.register(tagsModule)
