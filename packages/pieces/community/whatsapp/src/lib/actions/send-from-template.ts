@@ -45,7 +45,7 @@ export const sendFromTemplate = createAction({
     refreshers: ['listTemplate'],
     props: async (propsValue) => {
 
-    let properties = {};  
+    const properties = {};  
     if(propsValue && propsValue['listTemplate'] && propsValue['listTemplate']['template'] && propsValue['listTemplate']['template']['components'] && propsValue['listTemplate']['template']['components'].length > 0){
       const template = propsValue['listTemplate']['template']['components'];
 
@@ -118,7 +118,7 @@ return properties;
     const { access_token, phoneNumberId } = context.auth;
     const { to, listTemplate, template_params } = context.propsValue;
 
-    let components = [];
+    const components = [];
 
     if(listTemplate['template'] && listTemplate['template']['components'] && listTemplate['template']['components'].length > 0){
       const template = listTemplate['template']['components'];
