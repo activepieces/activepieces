@@ -10,7 +10,7 @@ import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { stepFileService } from '../step-file/step-file.service'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { logger } from '@activepieces/server-shared'
 import {
     ActionType,
@@ -36,6 +36,8 @@ import {
     PieceTriggerSettings,
     ProjectId, SeekPage, TriggerType, UserId,
 } from '@activepieces/shared'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
 
 const branchSettingsValidator = TypeCompiler.Compile(
     BranchActionSettingsWithValidation,
@@ -494,7 +496,7 @@ async function validateAction({
     if (isNil(piece)) {
         return false
     }
-    if ((getEdition() !== ApEdition.ENTERPRISE || getEdition() !== ApEdition.CLOUD) && piece.categories?.includes(PieceCategory.PREMIUM)) {
+    if (!isPremiumPieceAndInPlatform(piece, projectId)) {
         return false
     }
     const action = piece.actions[settings.actionName]
@@ -533,6 +535,9 @@ async function validateTrigger({
     if (isNil(piece)) {
         return false
     }
+    if (!isPremiumPieceAndInPlatform(piece, projectId)) {
+        return false
+    }
     const trigger = piece.triggers[settings.triggerName]
     if (isNil(trigger)) {
         return false
@@ -542,6 +547,17 @@ async function validateTrigger({
         props.auth = piece.auth
     }
     return validateProps(props, settings.input)
+}
+
+async function isPremiumPieceAndInPlatform(piece: PieceMetadataModel, projectId: ProjectId) {
+    if (!piece.categories?.includes(PieceCategory.PREMIUM)) {
+        return false
+    }
+
+    const project = await projectService.getOneOrThrow(projectId)
+    const platform = await platformService.getOneOrThrow(project.platformId)
+
+    return platform.premiumPieces.includes(piece.name)
 }
 
 function validateProps(

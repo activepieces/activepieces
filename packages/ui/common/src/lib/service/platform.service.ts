@@ -155,13 +155,13 @@ export class PlatformService {
     );
   }
 
-  getPremiumPieces() {
+  isPremiumPieceAndEnabled(name: string) {
     return this.currentPlatform().pipe(
       map((platform) => {
         if (!platform) {
           return [];
         }
-        return platform.premiumPieces;
+        return platform.premiumPieces.includes(name);
       })
     );
   }

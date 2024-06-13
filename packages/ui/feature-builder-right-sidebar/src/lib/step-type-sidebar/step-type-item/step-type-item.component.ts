@@ -52,7 +52,7 @@ export class StepTypeItemComponent {
       this.loadingLogo$.next(false);
     };
   }
-  isPremiumPieceAndCommunityEdition(categories: PieceCategory[] | undefined) {
+  isPremiumPiece(categories: PieceCategory[] | undefined) {
     if (isNil(categories)) {
       return false;
     }
