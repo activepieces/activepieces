@@ -1,6 +1,5 @@
-## Overview
-
-`pieces-microsoft-dynamics-crm` provides integration with Microsoft Dynamics CRM, enabling features for enterprise applications.
+# pieces-microsoft-dynamics-crm
+# PREMIUM PIECE ON ACTIVEPIECES
 
 ## Building
 
@@ -10,6 +9,6 @@ Run `nx build pieces-microsoft-dynamics-crm` to build the library.
 
 For detailed documentation, visit [Activepieces Documentation](https://www.activepieces.com/docs/getting-started/introduction).
 
-## License
+## PLEASE CHECK THE LICENESE
 
 This package is licensed under the The Activepieces Enterprise License. See the [LICENSE](https://github.com/activepieces/activepieces/blob/main/packages/ee/LICENSE) file for details.
