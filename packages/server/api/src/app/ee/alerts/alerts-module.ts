@@ -1,7 +1,7 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { alertsController } from './alerts-controller'
-import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 
 export const alertsModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
