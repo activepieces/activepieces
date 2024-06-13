@@ -5,8 +5,9 @@ import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { getEdition } from '../../helper/secret-helper'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
 import { stepFileService } from '../step-file/step-file.service'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
@@ -15,7 +16,6 @@ import { logger } from '@activepieces/server-shared'
 import {
     ActionType,
     ActivepiecesError,
-    ApEdition,
     apId,
     BranchActionSettingsWithValidation,
     Cursor,
@@ -36,8 +36,6 @@ import {
     PieceTriggerSettings,
     ProjectId, SeekPage, TriggerType, UserId,
 } from '@activepieces/shared'
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
 
 const branchSettingsValidator = TypeCompiler.Compile(
     BranchActionSettingsWithValidation,
@@ -496,7 +494,8 @@ async function validateAction({
     if (isNil(piece)) {
         return false
     }
-    if (!isPremiumPieceAndInPlatform(piece, projectId)) {
+    const isPremiumPieceEnabled = await isPieceEnabledForProject(piece, projectId)
+    if (!isPremiumPieceEnabled) {
         return false
     }
     const action = piece.actions[settings.actionName]
@@ -535,7 +534,8 @@ async function validateTrigger({
     if (isNil(piece)) {
         return false
     }
-    if (!isPremiumPieceAndInPlatform(piece, projectId)) {
+    const isPremiumPieceEnabled = await isPieceEnabledForProject(piece, projectId)
+    if (!isPremiumPieceEnabled) {
         return false
     }
     const trigger = piece.triggers[settings.triggerName]
@@ -549,14 +549,12 @@ async function validateTrigger({
     return validateProps(props, settings.input)
 }
 
-async function isPremiumPieceAndInPlatform(piece: PieceMetadataModel, projectId: ProjectId) {
+async function isPieceEnabledForProject(piece: PieceMetadataModel, projectId: ProjectId): Promise<boolean> {
     if (!piece.categories?.includes(PieceCategory.PREMIUM)) {
         return false
     }
-
     const project = await projectService.getOneOrThrow(projectId)
     const platform = await platformService.getOneOrThrow(project.platformId)
-
     return platform.premiumPieces.includes(piece.name)
 }
 

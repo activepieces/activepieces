@@ -53,9 +53,9 @@ export const filterPiecesBasedOnEmbedding = async ({
     }
 
     const isPremiumPiece = (piece: PieceMetadataSchema) => piece.categories?.includes(PieceCategory.PREMIUM)
-    const isInPlatform = (piece: PieceMetadataSchema) => isPremiumPiece(piece) && platform.premiumPieces.includes(piece.name)
+    const isPieceEnabledForPlatform = (piece: PieceMetadataSchema) => isPremiumPiece(piece) && platform.premiumPieces.includes(piece.name)
 
-    return pieces.filter(piece => !isPremiumPiece(piece) || isInPlatform(piece))
+    return pieces.filter(piece => !isPremiumPiece(piece) || isPieceEnabledForPlatform(piece))
 }
 
 async function filterPiecesBasedOnFeatures(
