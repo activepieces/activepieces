@@ -1,10 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import {
-  RequestTrialComponent,
   UserLoggedInGuard,
   showBasedOnEditionGuard,
-  enterpriseTrialGuard,
 } from '@activepieces/ui/common';
 import { ImportFlowUriEncodedResolver } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.resolver';
 import { ImportFlowUriEncodedComponent } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.component';
@@ -92,11 +90,7 @@ export const routes: Routes = [
     path: 'not-found',
     component: NotFoundComponent,
   },
-  {
-    path: 'enterprise-trial',
-    component: RequestTrialComponent,
-    canActivate: [enterpriseTrialGuard()],
-  },
+
   {
     path: '**',
     component: NotFoundComponent,

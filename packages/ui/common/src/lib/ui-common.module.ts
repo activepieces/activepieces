@@ -82,7 +82,6 @@ import { VersionHistoryIndicatorComponent } from './components/ap-version-status
 import { InsideBuilderDatePipe } from './pipe/inside-builder-date.pipe';
 import { ConfirmActionDialogComponent } from './components/dialogs/confirm-action-dialog/confirm-action-dialog.component';
 import { DurationFormatterPipe } from './pipe';
-import { RequestTrialComponent } from './components/request-trial/request-trial.component';
 import { ContactSalesDialogComponent } from './components/dialogs/contact-sales-dialog/contact-sales-dialog.component';
 import { ContactSalesComponent } from './components/contact-sales/contact-sales.component';
 
@@ -163,9 +162,8 @@ const exportedDeclarations = [
   DropdownPropertySearchPipe,
   LetterIconComponent,
   ConfirmActionDialogComponent,
-  RequestTrialComponent,
   ContactSalesDialogComponent,
-  ContactSalesComponent
+  ContactSalesComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

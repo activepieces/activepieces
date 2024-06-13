@@ -60,7 +60,7 @@ type FlowIssueResolved = {
 }
 
 type RequestTrialClicked = {
-    feature: string | null
+    location: string
 }
 
 type UpgradeClicked = {

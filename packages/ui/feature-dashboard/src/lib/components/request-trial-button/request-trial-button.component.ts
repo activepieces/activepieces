@@ -6,6 +6,7 @@ import {
   UiCommonModule,
   fadeIn400ms,
   ContactSalesDialogComponent,
+  ContactSalesService,
 } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { Observable, map, of, shareReplay, switchMap, tap } from 'rxjs';
@@ -48,7 +49,7 @@ import { MatDialog } from '@angular/material/dialog';
       btnColor="white"
       btnStyle="stroked"
       btnSize="medium"
-      (buttonClicked)="openRequestTrialDialog()"
+      (buttonClicked)="openEnterpriseTrialSlide()"
       i18n
     >
       <div class="ap-flex ap-gap-7 ap-items-center">
@@ -65,7 +66,8 @@ export class RequestTrialButtonComponent {
   constructor(
     private flagsService: FlagService,
     private matDialog: MatDialog,
-    private licenseKeysService: LicenseKeysService
+    private licenseKeysService: LicenseKeysService,
+    private contactSalesService: ContactSalesService
   ) {
     // TODO: Add another check to see if platform has key and the key isn't trial
     const platformKeyStatus$ = this.licenseKeysService
@@ -100,8 +102,8 @@ export class RequestTrialButtonComponent {
     );
   }
 
-  openRequestTrialDialog() {
-    this.licenseKeysService.openTrialDialog();
+  openEnterpriseTrialSlide() {
+    this.contactSalesService.open('Try Enterprise in Dashboard');
   }
 
   openContactSales(): void {

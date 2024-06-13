@@ -44,7 +44,7 @@ export class UpgradeNoteComponent {
   }
 
   openRequestTrialSlide(): void {
-    this.contactSalesService.open([this.featureKey]);
+    this.contactSalesService.open(this.featureKey);
   }
 
   openContactSalesDialog(): void {

@@ -51,11 +51,11 @@ export class ContactSalesService {
     private flagService: FlagService
   ) {}
 
-  public open(features: FeatureKey[]): void {
+  public open(location: string): void {
     this.telemetryService.capture({
       name: TelemetryEventName.REQUEST_TRIAL_CLICKED,
       payload: {
-        feature: features.length > 0 ? features[0].toString() : null,
+        location,
       },
     });
     this.contactSalesState.next(true);
