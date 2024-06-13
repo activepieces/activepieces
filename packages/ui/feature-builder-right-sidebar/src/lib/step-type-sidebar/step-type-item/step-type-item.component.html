@@ -33,16 +33,17 @@
         <div class="type-label">{{ itemDetails.name }}</div>
         <div class="description">{{ itemDetails.description }}</div>
       </div>
+      @if (isEnterprisePiece(itemDetails.categories)) {
+      <span
+        class="ap-flex ap-gap-0 ap-bg-blue-100 ap-w-[75px] ap-text-blue-800 ap-text-xs ap-font-medium ap-me-2 ap-px-2.5 ap-py-0.5 ap-rounded">
+        Enterprise
+      </span>
+      }
       <mat-chip-listbox *ngIf="itemDetails.suggestions" class="suggested-actions-or-triggers">
         <mat-chip-option (click)="$event.stopPropagation(); suggestionClicked.emit(suggestion);"
           *ngFor="let suggestion of itemDetails.suggestions">
           <div class="ap-typography-caption">{{suggestion.displayName}} </div>
         </mat-chip-option>
-        @if (isPremiumPiece(itemDetails.categories)) {
-        <mat-chip-option disabled>
-          <div class="ap-typography-caption">Enterprise</div>
-        </mat-chip-option>
-        }
       </mat-chip-listbox>
 
     </div>

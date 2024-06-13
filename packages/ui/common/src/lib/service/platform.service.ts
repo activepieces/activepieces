@@ -159,20 +159,25 @@ export class PlatformService {
     );
   }
 
-  isPieceLocked(flowItemDetails: FlowItemDetails) {
+  isPieceLocked(flowItemDetails: FlowItemDetails): Observable<boolean> {
     const categories = flowItemDetails.categories;
-    if (flowItemDetails.type !== ActionType.PIECE && flowItemDetails.type !== TriggerType.PIECE) {
-      return of(false)
+    if (
+      flowItemDetails.type !== ActionType.PIECE &&
+      flowItemDetails.type !== TriggerType.PIECE
+    ) {
+      return of(false);
     }
     if (!categories || !categories.includes(PieceCategory.PREMIUM)) {
-      return of(false)
+      return of(false);
     }
     return this.currentPlatform().pipe(
       map((platform) => {
         if (!platform) {
           return false;
         }
-        return !platform.premiumPieces.includes(flowItemDetails.extra!.pieceName);
+        return !platform.premiumPieces.includes(
+          flowItemDetails.extra!.pieceName
+        );
       })
     );
   }
