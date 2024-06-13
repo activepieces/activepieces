@@ -15,7 +15,6 @@ export type GenerateCodeResponse = Static<typeof GenerateCodeResponse>
 
 export const GenerateRequestBodyRequest = Type.Object({
     prompt: Type.String(),
-    reference: Type.String(),
 })
 
 export type GenerateRequestBodyRequest = Static<typeof GenerateRequestBodyRequest>
