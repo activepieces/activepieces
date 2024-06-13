@@ -61,19 +61,19 @@ export const googleContactsAddContactAction = createAction({
       ],
     };
     const contact: Record<string, unknown> = {};
-    if (context.propsValue['email']) {
+    if (context.propsValue['email'] && context.propsValue['email'] != "false") {
       contact['emailAddresses'] = [{ value: context.propsValue['email'] }];
     }
 
-    if (context.propsValue['phoneNumber']) {
+    if (context.propsValue['phoneNumber'] && context.propsValue['phoneNumber'] != "false") {
       contact['phoneNumbers'] = [{ value: context.propsValue['phoneNumber'] }];
     }
 
-    if (context.propsValue['company'] || context.propsValue['jobTitle']) {
+    if ((context.propsValue['company'] && context.propsValue['company'] != "false") || (context.propsValue['jobTitle'] && context.propsValue['jobTitle'] != "false")) {
       contact['organizations'] = [
         {
-          name: context.propsValue['company'] || undefined,
-          title: context.propsValue['jobTitle'] || undefined,
+          name: (context.propsValue['company'] && context.propsValue['company'] != "false") || undefined,
+          title: (context.propsValue['jobTitle'] && context.propsValue['jobTitle'] != "false") || undefined,
         },
       ];
     }
