@@ -3,54 +3,21 @@
 <app-authentication-methods-separator></app-authentication-methods-separator>
 <form *ngIf="loginsWithEmailEnabled$ | async" [formGroup]="loginForm" (ngSubmit)="signIn()"
   class="ap-flex ap-flex-col ap-gap-2">
-  <mat-form-field class="ap-w-full" appearance="outline">
-    <mat-label>Email</mat-label>
-    <input type="email" matInput placeholder="Email" i18n-placeholder formControlName="email" />
-    <mat-error *ngIf="loginForm.controls.email!.invalid">
-      <ng-container *ngIf="loginForm.controls.email!.getError('email'); else emailRequired" i18n>
-        Email is invalid
-      </ng-container>
-      <ng-template #emailRequired i18n>Email is required</ng-template>
-    </mat-error>
-  </mat-form-field>
-  <mat-form-field class="ap-w-full" appearance="outline">
-    <mat-label i18n>Password</mat-label>
-    <input type="password" matInput placeholder="Password" i18n-placeholder formControlName="password" />
-    <mat-error *ngIf="loginForm.controls.password!.invalid" i18n>Password is required</mat-error>
-  </mat-form-field>
-  <mat-error *ngIf="showInvalidEmailOrPasswordMessage" class="ap-text-center" i18n>Invalid email or password</mat-error>
-  <mat-error class="ap-text-center" *ngIf="invitationOnlySignIn" i18n>
-    You are not invited to any project, please contact your administrator.
-  </mat-error>
-  <mat-error class="ap-text-center" *ngIf="showDisabledUser" i18n>
-    Your user is inactive, please contact your administrator to activate it.
-  </mat-error>
-  <mat-error class="ap-text-center" *ngIf="domainIsNotAllowed" i18n>
-    Your email domain is not allowed to sign up, please contact your administrator.
-  </mat-error>
-  <div *ngIf="showResendVerification"
-    class="ap-text-center ap-flex-col  ap-flex ap-items-center ap-justify-center ap-gap-2">
-    Please check your inbox to verify your account. <ap-button type="button" btnSize="small" btnStyle="stroked"
-      (buttonClicked)="sendVerificationEmail()" [loading]="sendingVerificationEmail" [darkLoadingSpinner]="true">Resend
-      verification
-    </ap-button>
-  </div>
-
-  <div class="text-center ap-mt-2 ap-flex ap-flex-col ap-gap-2">
+    <div class="text-center ap-mt-2 ap-flex ap-flex-col ap-gap-2">
     <ap-button [loading]="loading" (buttonClicked)="signIn()" btnColor="primary" btnSize="large"
       [fullWidthOfContainer]="true" i18n>
       Sign in
     </ap-button>
   </div>
 </form>
-<div *ngIf=" (showSignUpLink$ | async)"
+<!-- <div *ngIf=" (showSignUpLink$ | async)"
   class="ap-typography-caption ap-text-body ap-text-center ap-mt-4 ap-flex ap-gap-2 ap-justify-center">
   <span i18n>Don't have an account?</span> <a routerLink="/sign-up" i18n>Sign up now</a>
 </div>
 <div class="ap-typography-caption ap-text-body ap-text-center ap-mt-2 ap-flex ap-gap-2 ap-justify-center"
   *ngIf="(isCommunityEdition$ | async )=== false && (loginsWithEmailEnabled$ | async)">
   <a routerLink="/forgot-password" i18n>Forgot password?</a>
-</div>
+</div> -->
 
 
 <ng-container *ngIf="authenticate$ | async"></ng-container>

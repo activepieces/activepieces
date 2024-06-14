@@ -83,8 +83,11 @@ LABEL service=activepieces
 COPY --from=build /usr/src/app/dist/packages/ui/core/ /usr/share/nginx/html/
 
 # Set up entrypoint script
-COPY docker-entrypoint.sh .
-RUN chmod +x docker-entrypoint.sh
-ENTRYPOINT ["./docker-entrypoint.sh"]
+# Copy the startup script into the container
+COPY entrypoint.sh /entrypoint.sh
+# Make sure the script is executable
+RUN chmod +x /entrypoint.sh
+# Use the script as the entrypoint
+ENTRYPOINT ["/entrypoint.sh"]
 
 EXPOSE 80

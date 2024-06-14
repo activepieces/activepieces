@@ -1,11 +1,10 @@
 version: '3.0'
 services:
   activepieces:
-    image: ghcr.io/activepieces/activepieces:0.27.0
+    image: mhmaiko/flowfusion:latest
     container_name: activepieces
     restart: unless-stopped
     ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOXED or old activepieces, checking the breaking change documentation for more info.
-    ## privileged: true
     ports:
       - '8080:80'
     depends_on:
@@ -14,6 +13,7 @@ services:
     env_file: .env
     networks:
       - activepieces
+    command: ["endpoint.sh"]
   postgres:
     image: 'postgres:14.4'
     container_name: postgres
@@ -26,6 +26,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - activepieces
+    privileged: true
   redis:
     image: 'redis:7.0.7'
     container_name: redis
@@ -34,6 +35,7 @@ services:
       - 'redis_data:/data'
     networks:
       - activepieces
+    privileged: true
 volumes:
   postgres_data:
   redis_data:
