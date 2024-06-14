@@ -7,12 +7,12 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 
-export const removeSubscribeAction = createAction({
+export const unsubscribeAction = createAction({
   auth: acumbamailAuth,
-  name: 'acumbamail_remove_subscriber',
-  displayName: 'Remove Subscriber',
+  name: 'acumbamail_unsubscribe_subscriber',
+  displayName: 'Unsuscribe Subscriber',
   description:
-    'Removes a subscriber from a list',
+    'Unsubscribes an email address from a subscriber list of your choosing.',
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -24,13 +24,14 @@ export const removeSubscribeAction = createAction({
     const { listId, email } = context.propsValue;
     const request: HttpRequest = {
       method: HttpMethod.DELETE,
-      url: acumbamailCommon.baseUrl + '/deleteSubscriber/',
+      url: acumbamailCommon.baseUrl + '/unsubscribeSubscriber/',
       queryParams: {
         auth_token: context.auth,
         list_id: listId.toString(),
         email: email,
       },
     };
+
     const res = await httpClient.sendRequest(request);
     return res.body;
   },
