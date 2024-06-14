@@ -4,6 +4,7 @@ import {
 } from '@fastify/type-provider-typebox'
 import { FastifyPluginAsync } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { platformService } from '../../platform/platform.service'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { gitRepoService } from './git-repo.service'
@@ -18,6 +19,7 @@ import {
 import { Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
+    app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.gitSyncEnabled))
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })
 }

@@ -18,6 +18,7 @@ export const FEATURES: Feature[] = [
   },
   { label: 'Brand Activepieces', key: 'BRANDING' },
   { label: 'Control Pieces', key: 'PIECES' },
+  { label: 'Enterprise Pieces', key: 'ENTERPRISE_PIECES' },
   {
     label: 'Create Custom Templates',
     key: 'TEMPLATES',
