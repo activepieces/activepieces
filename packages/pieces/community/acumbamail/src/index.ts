@@ -5,6 +5,7 @@ import { deleteSubscriberAction } from './lib/actions/delete-subscriber';
 import { deleteSubscriberListAction } from './lib/actions/delete-subscriber-list';
 import { duplicateTemplateAction } from './lib/actions/duplicate-template';
 import { searchSubscriberAction } from './lib/actions/search-subscriber';
+import { reallyDeleteSubscriberAction } from './lib/actions/really-delete-subscriber';
 
 export const acumbamailAuth = PieceAuth.SecretText({
   displayName: 'Auth Token',
@@ -31,6 +32,7 @@ export const acumbamail = createPiece({
     deleteSubscriberListAction,
     duplicateTemplateAction,
     searchSubscriberAction,
+    reallyDeleteSubscriberAction,
   ],
   triggers: [],
 });
