@@ -23,18 +23,23 @@ import { newFormSubmission } from './lib/triggers/new-form-submission';
 import { newOpportunity } from './lib/triggers/new-opportunity';
 
 const markdownDescription = `
-To use your own app, you need to create a Sub-Account application at https://developers.gohighlevel.com/, with the following scopes:
-- campaigns.readonly
-- contacts.write
-- contacts.readonly
-- locations.readonly
-- locations/tags.readonly
-- locations/tags.write
-- opportunities.readonly
-- opportunities.write
-- users.readonly
-- workflows.readonly
-- forms.readonly
+1. Go to the [Marketplace](https://marketplace.gohighlevel.com/) and sign up for a developer account.
+2. Navigate to **My Apps** and click on **Create App**.
+3. Provide app name.Then select **Private** as App Type, **Sub-Account** as Distribution Type. Click **Create App** Button.
+4. Add following scopes.
+   - campaigns.readonly
+   - contacts.write
+   - contacts.readonly
+   - locations.readonly
+   - locations/tags.readonly
+   - locations/tags.write
+   - opportunities.readonly
+   - opportunities.write
+   - users.readonly
+   - workflows.readonly
+   - forms.readonly
+5. Add redirect URLs.
+6. Create new Client key with valid name.Copy Client ID and Client Secret.
 `;
 
 export const leadConnectorAuth = PieceAuth.OAuth2({
