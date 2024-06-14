@@ -1,7 +1,9 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
-  createCustomApiCallAction,
-} from '@activepieces/pieces-common';
-import { createPiece, OAuth2PropertyValue, PieceAuth } from '@activepieces/pieces-framework';
+  createPiece,
+  OAuth2PropertyValue,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
 import { baseUrl, getContacts, leadConnectorHeaders } from './lib/common';
 
 import { PieceCategory } from '@activepieces/shared';
@@ -25,6 +27,7 @@ To use your own app, you need to create a Sub-Account application at https://dev
 - campaigns.readonly
 - contacts.write
 - contacts.readonly
+- locations.readonly
 - locations/tags.readonly
 - locations/tags.write
 - opportunities.readonly
@@ -41,6 +44,7 @@ export const leadConnectorAuth = PieceAuth.OAuth2({
     'campaigns.readonly',
     'contacts.write',
     'contacts.readonly',
+    'locations.readonly',
     'locations/tags.readonly',
     'locations/tags.write',
     'opportunities.readonly',
@@ -74,7 +78,7 @@ export const leadConnector = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/lead-connector.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ["kishanprmr","MoShizzle","abuaboud"],
+  authors: ['kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     createContact,
     updateContactAction,
