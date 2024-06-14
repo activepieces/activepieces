@@ -13,7 +13,7 @@ To obtain a Maileroo API key, follow these steps:
 2. Click on the domain you want to use
 3. Click on the **Create sending key** under the API section
 4. Click **New Sending Key**
-4. Copy the key under the **Sending Key** column
+5. Copy the key under the **Sending Key** column
 `;
 
 export const mailerooAuth = PieceAuth.SecretText({

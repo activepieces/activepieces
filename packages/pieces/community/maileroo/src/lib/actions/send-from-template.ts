@@ -14,7 +14,7 @@ export const sendFromTemplate = createAction({
   description: 'Send and email from a Maileroo template',
   props: {
     ...createCommonProps(),
-    template_id: Property.ShortText({
+    template_id: Property.Number({
       displayName: 'Template ID',
       description: 'The ID of the template to use',
       required: true,

@@ -15,8 +15,8 @@ export const createCommonProps = () => {
       required: true,
     }),
     from: Property.ShortText({
-      displayName: 'Sender Email (From)',
-      description: 'Sender email',
+      displayName: 'Sender Email(Your SMTP Email)',
+      description: 'Sender email. This should come from your SMTP accounts.',
       required: true,
     }),
     subject: Property.ShortText({
@@ -37,6 +37,11 @@ export const createCommonProps = () => {
     reply_to: Property.ShortText({
       displayName: 'Reply To',
       description: 'Email to receive replies on (defaults to sender)',
+      required: false,
+    }),
+    attachment: Property.File({
+      displayName: 'Attachment',
+      description: 'File to attach to the email you want to send',
       required: false,
     }),
   };
@@ -73,7 +78,7 @@ export const sendFormData = async (
     url: `https://smtp.maileroo.com/${url}`,
     body: formData,
     headers: {
-      HEADER_AUTH_KEY: auth,
+      ['X-API-Key']: auth,
       ...formData.getHeaders(),
     },
   });
