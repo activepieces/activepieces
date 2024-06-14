@@ -308,6 +308,9 @@
       "@activepieces/piece-mailer-lite": [
         "packages/pieces/community/mailer-lite/src/index.ts"
       ],
+      "@activepieces/piece-maileroo": [
+        "packages/pieces/community/maileroo/src/index.ts"
+      ],
       "@activepieces/piece-mastodon": [
         "packages/pieces/community/mastodon/src/index.ts"
       ],
