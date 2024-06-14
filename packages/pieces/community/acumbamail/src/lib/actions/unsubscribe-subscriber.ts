@@ -1,4 +1,4 @@
-import { acumbamailAuth } from '../../';
+import { acumbamailAuth } from '../..';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { acumbamailCommon } from '../common';
 import {
@@ -7,12 +7,12 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 
-export const reallyDeleteSubscriberAction = createAction({
+export const unsubscribeAction = createAction({
   auth: acumbamailAuth,
-  name: 'acumbamail_really_delete_subscriber',
-  displayName: 'Remove Subscriber',
+  name: 'acumbamail_unsubscribe_subscriber',
+  displayName: 'Unsuscribe Subscriber',
   description:
-    'Removes a subscriber from a list',
+    'Unsubscribes an email address from a subscriber list of your choosing.',
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -24,7 +24,7 @@ export const reallyDeleteSubscriberAction = createAction({
     const { listId, email } = context.propsValue;
     const request: HttpRequest = {
       method: HttpMethod.DELETE,
-      url: acumbamailCommon.baseUrl + '/deleteSubscriber/',
+      url: acumbamailCommon.baseUrl + '/unsubscribeSubscriber/',
       queryParams: {
         auth_token: context.auth,
         list_id: listId.toString(),

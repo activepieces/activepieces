@@ -1,11 +1,11 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { addUpdateSubscriberAction } from './lib/actions/add-subscriber';
 import { createSubscriberListAction } from './lib/actions/create-subscriber-list';
-import { deleteSubscriberAction } from './lib/actions/delete-subscriber';
+import { unsubscribeAction } from './lib/actions/unsubscribe-subscriber';
 import { deleteSubscriberListAction } from './lib/actions/delete-subscriber-list';
 import { duplicateTemplateAction } from './lib/actions/duplicate-template';
 import { searchSubscriberAction } from './lib/actions/search-subscriber';
-import { reallyDeleteSubscriberAction } from './lib/actions/really-delete-subscriber';
+import { removeSubscribeAction } from './lib/actions/delete-subscriber';
 
 export const acumbamailAuth = PieceAuth.SecretText({
   displayName: 'Auth Token',
@@ -28,11 +28,11 @@ export const acumbamail = createPiece({
   actions: [
     addUpdateSubscriberAction,
     createSubscriberListAction,
-    deleteSubscriberAction,
+    unsubscribeAction,
     deleteSubscriberListAction,
     duplicateTemplateAction,
     searchSubscriberAction,
-    reallyDeleteSubscriberAction,
+    removeSubscribeAction,
   ],
   triggers: [],
 });
