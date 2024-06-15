@@ -1,7 +1,23 @@
 steps:
+  # Docker Build
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/activepieces', '.']
+    args: ['build', '-t', 
+           'us-central1-docker.pkg.dev/${PROJECT_ID}/activepieces', 
+           '.']
+
+  # Docker Push
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/activepieces']
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args: ['run', 'deploy', 'activepieces', '--image', 'gcr.io/$PROJECT_ID/activepieces', '--platform', 'managed', '--region', 'us-central1']
+    args: ['push', 
+           'us-central1-docker.pkg.dev/${PROJECT_ID}/activepieces']
+
+  # Entrypoint, timeout and environment variables
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    timeout: 240s
+    args: ['compute', 'instances', 
+           'create-with-container', activevm',
+           '--container-image', 
+           'us-central1-docker.pkg.dev/${PROJECT_ID}/activepieces']
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=us-central1'
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
