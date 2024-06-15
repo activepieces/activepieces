@@ -60,7 +60,10 @@ export const licenseKeysService = {
             handleUnexpectedSecretsManagerError(errorMessage)
         }
     },
-    async getKey(license: string): Promise<LicenseKeyEntity | null> {
+    async getKey(license: string | undefined): Promise<LicenseKeyEntity | null> {
+        if (isNil(license)) {
+            return null
+        }
         const response = await fetch(`${secretManagerLicenseKeysRoute}/${license}`)
         if (response.status === StatusCodes.NOT_FOUND) {
             return null
@@ -154,6 +157,10 @@ const deletePrivatePieces: (platformId: string) => Promise<void> = async (platfo
 }
 
 async function downgradeToFreePlan(platformId: string): Promise<void> {
+    logger.info({
+        message: 'Downgrading platform to free plan',
+        platformId,
+    })
     await platformService.update({
         id: platformId,
         ...turnedOffFeatures,

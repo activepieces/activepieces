@@ -2,7 +2,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { licenseKeysService } from './license-keys-service'
 import { system, SystemProp } from '@activepieces/server-shared'
-import { CreateTrialLicenseKeyRequestBody, PrincipalType } from '@activepieces/shared'
+import { CreateTrialLicenseKeyRequestBody, isNil, PrincipalType } from '@activepieces/shared'
 
 const key = system.get<string>(SystemProp.LICENSE_KEY)
 
@@ -14,12 +14,13 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/status', async (_req, res) => {
-        if (!key) {
+        const licenseKey = await licenseKeysService.getKey(key)
+        if (isNil(licenseKey)) {
             return res.status(StatusCodes.NOT_FOUND).send({
                 message: 'No license key found',
             })
         }
-        return licenseKeysService.getKey(key)
+        return licenseKey
     })
 
 }

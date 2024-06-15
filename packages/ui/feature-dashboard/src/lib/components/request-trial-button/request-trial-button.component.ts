@@ -12,6 +12,7 @@ import { ApEdition, isNil } from '@activepieces/shared';
 import { Observable, catchError, map, of, shareReplay, switchMap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import dayjs from 'dayjs';
+import { StatusCodes } from 'http-status-codes';
 
 @Component({
   selector: 'app-request-trial-button-component',
@@ -70,7 +71,6 @@ export class RequestTrialButtonComponent {
     private licenseKeysService: LicenseKeysService,
     private contactSalesService: ContactSalesService
   ) {
-    // TODO: Add another check to see if platform has key and the key isn't trial
     const platformKeyStatus$ = this.licenseKeysService
       .getKey()
       .pipe(shareReplay(1));
@@ -80,11 +80,17 @@ export class RequestTrialButtonComponent {
           case ApEdition.ENTERPRISE:
             return platformKeyStatus$.pipe(
               map((res) => res.isTrial),
-              catchError(() => of(false))
+              catchError((e) => {
+                if (e.status === StatusCodes.NOT_FOUND) {
+                  return of(true);
+                }
+                console.error(e);
+                return of(false);
+              })
             );
           case ApEdition.COMMUNITY:
             return of(true);
-          default:
+          case ApEdition.CLOUD:
             return of(false);
         }
       })
