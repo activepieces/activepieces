@@ -8,7 +8,7 @@ import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 
-const appsumoRepo = databaseConnection.getRepository(AppSumoEntity)
+export const appsumoRepo = databaseConnection.getRepository(AppSumoEntity)
 
 type FlowPlanLimits = {
     nickname: string
