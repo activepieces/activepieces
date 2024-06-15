@@ -6,13 +6,21 @@ import {
 } from '@activepieces/pieces-framework';
 
 const markdown = `
-- Go to the "Dashboard" section.
-- Select the form where you want the trigger to occur.
-- Click on "Integrations" section.
-- Find "Webhooks" integration and click on "connect" to activate it.
-- In the webhook settings, paste this URL: 
-  \`{{webhookUrl}}\`
-- Click on "Submit".
+To set up the trigger for new form submissions, follow these steps:
+
+1. Go to the "Dashboard" section.
+2. Select the form where you want the trigger to occur.
+3. Click on the "Integrations" section.
+4. Find the "Webhooks" integration and click on "Connect" to activate it.
+5. In the webhook settings, paste the following URLs: 
+
+  **Test URL (Only generate sample data)**:
+  \`{{{webhookUrl}}/test\`
+  
+  **Trigger Flow URL**:
+  \`{{{webhookUrl}}\`
+  
+6. Click on "Submit".
 `;
 
 export const tallyFormsNewSubmission = createTrigger({
