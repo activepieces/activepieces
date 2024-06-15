@@ -9,17 +9,8 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 
            'us-central1-docker.pkg.dev/${PROJECT_ID}/nextpieces/nextpiece']
-
-  # Entrypoint, timeout and environment variables
-  # - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  #   entrypoint: 'gcloud'
-  #   timeout: 240s
-  #   args: ['compute', 'instances', 
-  #          'create-with-container', activevm',
-  #          '--container-image', 
-  #          'us-central1-docker.pkg.dev/${PROJECT_ID}/nextpieces/nextpiece']
-  #   env:
-  #     - 'CLOUDSDK_COMPUTE_REGION=us-central1'
-  #     - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
+  # Store the image in Artifact Registry
+images:
+  - 'us-central1-docker.pkg.dev/${PROJECT_ID}/nextpieces/nextpiece'
 options:
   logging: CLOUD_LOGGING_ONLY
