@@ -55,7 +55,6 @@ import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { referralModule } from './ee/referrals/referral.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
-import { trialTrackerModule } from './ee/trial-tracker/trial-tracker-module'
 import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
@@ -350,7 +349,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(usageTrackerModule)
-            await app.register(trialTrackerModule)
             await app.register(analyticsModule)
             await app.register(licenseKeysModule)
             setPlatformOAuthService({

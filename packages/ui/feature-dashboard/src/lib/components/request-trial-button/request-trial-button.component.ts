@@ -8,9 +8,10 @@ import {
   ContactSalesDialogComponent,
   ContactSalesService,
 } from '@activepieces/ui/common';
-import { ApEdition } from '@activepieces/shared';
-import { Observable, map, of, shareReplay, switchMap, tap } from 'rxjs';
+import { ApEdition, isNil } from '@activepieces/shared';
+import { Observable, catchError, map, of, shareReplay, switchMap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
+import dayjs from 'dayjs';
 
 @Component({
   selector: 'app-request-trial-button-component',
@@ -71,18 +72,20 @@ export class RequestTrialButtonComponent {
   ) {
     // TODO: Add another check to see if platform has key and the key isn't trial
     const platformKeyStatus$ = this.licenseKeysService
-      .getPlatformKeyStatus()
-      .pipe(tap(console.log), shareReplay(1));
+      .getKey()
+      .pipe(shareReplay(1));
     this.showButton$ = this.flagsService.getEdition().pipe(
       switchMap((ed) => {
-        if (ed === ApEdition.ENTERPRISE) {
-          return platformKeyStatus$.pipe(
-            map((res) => !res.valid || res.isTrial)
-          );
-        } else if (ed === ApEdition.COMMUNITY) {
-          return of(true);
-        } else {
-          return of(false);
+        switch (ed) {
+          case ApEdition.ENTERPRISE:
+            return platformKeyStatus$.pipe(
+              map((res) => res.isTrial),
+              catchError(() => of(false))
+            );
+          case ApEdition.COMMUNITY:
+            return of(true);
+          default:
+            return of(false);
         }
       })
     );
@@ -91,13 +94,9 @@ export class RequestTrialButtonComponent {
     );
     this.durationUntilTrialEnds$ = platformKeyStatus$.pipe(
       map((res) => {
-        if (res.expirayDate) {
-          const now = new Date();
-          const trialEnd = new Date(res.expirayDate);
-          const diffInTime = trialEnd.getTime() - now.getTime();
-          return diffInTime;
-        }
-        return -1;
+        return isNil(res.expiresAt)
+          ? -1
+          : dayjs(res.expiresAt).diff(dayjs(), 'milliseconds');
       })
     );
   }

@@ -4,8 +4,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../environments/environment';
 
 import {
-  LicenseKeyStatus,
   CreateTrialLicenseKeyRequestBody,
+  LicenseKeyEntity,
 } from '@activepieces/shared';
 
 @Injectable({
@@ -17,8 +17,8 @@ export class LicenseKeysService {
     return this.http.post<void>(`${environment.apiUrl}/license-keys`, req);
   }
 
-  getPlatformKeyStatus() {
-    return this.http.get<LicenseKeyStatus>(
+  getKey() {
+    return this.http.get<LicenseKeyEntity>(
       `${environment.apiUrl}/license-keys/status`
     );
   }

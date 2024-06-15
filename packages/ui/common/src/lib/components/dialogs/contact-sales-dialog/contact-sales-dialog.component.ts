@@ -4,10 +4,14 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   selector: 'ap-contact-sales-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <ap-dialog-title-template i18n>Contact Sales </ap-dialog-title-template>
-    <mat-dialog-content>
-      Would you like to book a meeting with us to discuss your enterpirse deal ?
+    <ap-dialog-title-template i18n>Upgrade Now</ap-dialog-title-template>
+    <mat-dialog-content class="ap-typography-body-2">
+      <p class="ap-mb-2">
+        Book a call with our sales team to learn more about our Enterprise
+        features<br />and get a quote that fits your requirements.
+      </p>
     </mat-dialog-content>
+
     <mat-dialog-actions align="end">
       <div class="ap-flex ap-gap-2.5">
         <ap-button
@@ -26,7 +30,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
           btnSize="default"
           i18n
         >
-          Agree
+          Book a call
         </ap-button>
       </div>
     </mat-dialog-actions>
@@ -34,6 +38,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 })
 export class ContactSalesDialogComponent {
   openBookMeetingPage() {
-    window.location.href = 'https://calendly.com/activepieces/30min';
+    window.open('https://calendly.com/activepieces/30min', '_blank');
   }
 }

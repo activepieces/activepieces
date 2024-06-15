@@ -37,7 +37,7 @@ export class UpgradeNoteComponent {
           return of(false);
         }
         return this.activationKeysService
-          .getPlatformKeyStatus()
+          .getKey()
           .pipe(map((res) => res.isTrial));
       })
     );

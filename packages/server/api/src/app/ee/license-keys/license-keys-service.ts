@@ -1,203 +1,122 @@
+import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
+import { isNil } from 'lodash'
 import { flagService } from '../../flags/flag.service'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, LicenseKeyEntity, LicenseKeyFeatures, LicenseKeyStatus, PieceType, Platform, PlatformRole, turnedOffFeatures, UserStatus } from '@activepieces/shared'
+import { logger } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, LicenseKeyEntity, PackageType, PlatformRole, UserStatus } from '@activepieces/shared'
+
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
-const createKey = async (request: CreateTrialLicenseKeyRequestBody): Promise<void> => {
-    const response = await fetch(`${secretManagerLicenseKeysRoute}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
-    })
-    if (response.status === StatusCodes.CONFLICT) {
-        throw new ActivepiecesError({
-            code: ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY,
-            params: request,
-        })
-    }
 
-    if (!response.ok) {
-        const errorMessage = JSON.stringify(await response.json())
-        handleUnexpectedSecretsManagerError(errorMessage)
-    }
-    
-}
-
-const activateKey: (request: { key: string }) => Promise<LicenseKeyEntity>  = async (request ) => {
-    const response = await fetch(`${secretManagerLicenseKeysRoute}/activate`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
-    })
-    if (response.status === StatusCodes.CONFLICT) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED,
-            params: request,
-        })
-    }
-    if (response.status === StatusCodes.NOT_FOUND) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ACTIVATION_KEY_NOT_FOUND,
-            params: request,
-        })
-    }
-    if (!response.ok) {
-        const errorMessage = JSON.stringify(await response.json())
-        handleUnexpectedSecretsManagerError(errorMessage)
-    }
-
-    const key: LicenseKeyEntity = await response.json()
-    const oldesetPlatform = await platformService.getOldestPlatform()
-    if (oldesetPlatform) {
-        await applyKeyToPlatform(oldesetPlatform.id, key.features)
-        return key
-    }
-    else {
-        throw new Error('Trying to activate a key when there is no platform created')
-    }
-}
-
-const handleUnexpectedSecretsManagerError = (message: string)=> {
+const handleUnexpectedSecretsManagerError = (message: string) => {
     logger.error(`[ERROR]: Unexpected error from secret manager: ${message}`)
     throw new Error(message)
-
 }
-
-type VerificationResult = {
-    valid: true
-    key: LicenseKeyEntity
-} |
-{
-    valid: false
-    key?: LicenseKeyEntity
-}
-
-const verifyKey = async (request: { key: string } ): Promise<VerificationResult> => {
-    const response = await fetch(`${secretManagerLicenseKeysRoute}/verify`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
-    })
-    if (!response.ok) {
-        const errorMessage = JSON.stringify(await response.json())
-        throw new Error(errorMessage)
-    }
-    return response.json()
-}
-
-const verifyKeyAndUpdatePlatform: (req: { key: string, platformId: string, throwErrorOnFailure?: boolean }) => Promise<Platform> = async ({ key, platformId, throwErrorOnFailure }) => {
-    try {
-        await  activateKey({ key })
-    }
-    catch (err) {
-        //  ABDUL TODO: Discuss unknown errors with MO 
-        if ((err instanceof ActivepiecesError) &&  err.error.code !== ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED) {
-            throw err
-        }
-    }
-
-    try {
-        const verificationResult = await verifyKey({ key })
-        if (!verificationResult.valid) {
-            if (throwErrorOnFailure) {
-                throw new Error(`[ERROR]: License key provided is invalid, key: ${key}`)
-            }
-            logger.error(`[ERROR]: License key provided is invalid, turning off enterprise features:${key}`)
-            return await deactivateKey(platformId)
-        }
-        logger.debug('License key provided is valid, turning on enterprise features.')
-       
-        return await applyKeyToPlatform(platformId, verificationResult.key.features)
-    }
-    catch (err) {
-        //  ABDUL TODO: Discuss unknown errors with MO 
-        logger.error(`[ERROR]: Error verifying license key: ${err}`)   
-        return (await platformService.getOldestPlatform())! 
-    }
-}
-/**Check license key in env then in platform */
-const checkKeyStatus: (throwErrorOnInvalid?: boolean) => Promise<Platform | undefined> = async (throwErrorOnInvalid) => {
-    const edition = system.getOrThrow<ApEdition>(SystemProp.EDITION)
-    if (edition === ApEdition.CLOUD || edition === ApEdition.COMMUNITY) {
-        return undefined
-    }
-    const licenseKeyInEnvironment = system.getOrThrow(SystemProp.LICENSE_KEY)
-    const oldestPlatform = await platformService.getOldestPlatform()
-    if (licenseKeyInEnvironment && oldestPlatform) {
-        return verifyKeyAndUpdatePlatform({
-            key: licenseKeyInEnvironment, platformId: oldestPlatform.id, throwErrorOnFailure: throwErrorOnInvalid,
-        })
-    }
-    else if (!oldestPlatform) {
-        logger.warn('[WARN]: Dealying license key activation until platform is created.')
-    }
-   
-    return undefined
-}
-
-const deactivateKey: (platformId: string) => Promise<Platform> =  async (platformId: string) => {
-
-    await deactivatePlatformUsersOtherThanAdmin(platformId)
-    await deletePrivatePieces(platformId)
-    return platformService.update({
-        id: platformId,
-        ...turnedOffFeatures,
-    })
-
-}
-
-const getKeyStatus: () => Promise<LicenseKeyStatus> = async () =>{
-    const licenseKeyInEnvironment = system.get(SystemProp.LICENSE_KEY)
-    if (!licenseKeyInEnvironment) {
-        return {
-            valid: false,
-            isTrial: false,
-            expirayDate: undefined,
-        }
-    }
-    const verificationResult = await verifyKey({ key: licenseKeyInEnvironment })
-    if (verificationResult.valid ) {
-        return {
-            valid: true,
-            isTrial: verificationResult.key.isTrial,
-            expirayDate: verificationResult.key.expires_at,
-        }
-    }
-    else if (verificationResult.key) {
-        return {
-            valid: false,
-            isTrial: verificationResult.key.isTrial,
-            expirayDate: verificationResult.key.expires_at,
-        } 
-    }
-    return {
-        valid: false,
-        isTrial: false,
-        expirayDate: undefined,
-    }
-}
-
-
-
 
 export const licenseKeysService = {
-    activateKey,
-    createKey,
-    verifyKeyAndUpdatePlatform,
-    checkKeyStatus,
-    getKeyStatus,
+    async requestTrial(request: CreateTrialLicenseKeyRequestBody): Promise<void> {
+        const response = await fetch(secretManagerLicenseKeysRoute, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request),
+        })
+        if (response.status === StatusCodes.CONFLICT) {
+            throw new ActivepiecesError({
+                code: ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY,
+                params: request,
+            })
+        }
+        if (!response.ok) {
+            const errorMessage = JSON.stringify(await response.json())
+            handleUnexpectedSecretsManagerError(errorMessage)
+        }
+    },
+    async activateKey(request: { key: string, platformId: string }): Promise<void> {
+        const response = await fetch(`${secretManagerLicenseKeysRoute}/activate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(request),
+        })
+        if (response.status === StatusCodes.CONFLICT) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED,
+                params: request,
+            })
+        }
+        if (response.status === StatusCodes.NOT_FOUND) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ACTIVATION_KEY_NOT_FOUND,
+                params: request,
+            })
+        }
+        if (!response.ok) {
+            const errorMessage = JSON.stringify(await response.json())
+            handleUnexpectedSecretsManagerError(errorMessage)
+        }
+    },
+    async getKey(license: string): Promise<LicenseKeyEntity | null> {
+        const response = await fetch(`${secretManagerLicenseKeysRoute}/${license}`)
+        if (response.status === StatusCodes.NOT_FOUND) {
+            return null
+        }
+        if (!response.ok) {
+            const errorMessage = JSON.stringify(await response.json())
+            handleUnexpectedSecretsManagerError(errorMessage)
+        }
+        return response.json()
+    },
+    async verifyKeyAndApplyLimits({ platformId, license }: { license: string | undefined, platformId: string }): Promise<void> {
+        if (isNil(license)) {
+            await downgradeToFreePlan(platformId)
+            return
+        }
+        try {
+            await this.activateKey({ key: license, platformId })
+        }
+        catch (e) {
+            // Ignore
+        }
+        try {
+            const key = await this.getKey(license)
+            const isExpired = isNil(key) || dayjs(key.expiresAt).isBefore(dayjs())
+            if (isExpired) {
+                await downgradeToFreePlan(platformId)
+                return
+            }
+            await platformService.update({
+                id: platformId,
+                ssoEnabled: key.ssoEnabled,
+                gitSyncEnabled: key.gitSyncEnabled,
+                showPoweredBy: key.showPoweredBy,
+                embeddingEnabled: key.embeddingEnabled,
+                auditLogEnabled: key.auditLogEnabled,
+                customAppearanceEnabled: key.customAppearanceEnabled,
+                manageProjectsEnabled: key.manageProjectsEnabled,
+                managePiecesEnabled: key.managePiecesEnabled,
+                manageTemplatesEnabled: key.manageTemplatesEnabled,
+                apiKeysEnabled: key.apiKeysEnabled,
+                customDomainsEnabled: key.customDomainsEnabled,
+                projectRolesEnabled: key.projectRolesEnabled,
+                flowIssuesEnabled: key.flowIssuesEnabled,
+                alertsEnabled: key.alertsEnabled,
+                premiumPieces: key.premiumPieces,
+            })
+        }
+
+        catch (e) {
+            logger.error(`[ERROR]: Failed to verify license key: ${e}`)
+        }
+
+    },
 }
 
-const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<void> = async (platformId: string)=> {
+const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<void> = async (platformId: string) => {
     const { data } = await userService.list({
         platformId,
     })
@@ -225,23 +144,40 @@ const deletePrivatePieces: (platformId: string) => Promise<void> = async (platfo
         release: latestRelease,
         platformId,
     })
-    const deletes = pieces.map((piece) => {
-        if (piece.pieceType === PieceType.CUSTOM && piece.id) {
-            return pieceMetadataService.delete({
-                id: piece.id,
-                projectId: piece.projectId,
-            })
-        }
-        return new Promise<void>((resolve) => resolve())
-    })
-    await Promise.all(deletes)
+    const piecesToDelete = pieces.filter((piece) => piece.packageType === PackageType.ARCHIVE && piece.id).map((piece) =>
+        pieceMetadataService.delete({
+            id: piece.id!,
+            projectId: piece.projectId,
+        }),
+    )
+    await Promise.all(piecesToDelete)
 }
 
-
-const applyKeyToPlatform: (platformId: string, features: LicenseKeyFeatures) => Promise<Platform> = async (platformId: string, features: LicenseKeyFeatures) => {
-    const updatedPlatform = await platformService.update({
+async function downgradeToFreePlan(platformId: string): Promise<void> {
+    await platformService.update({
         id: platformId,
-        ...features,
+        ...turnedOffFeatures,
     })
-    return updatedPlatform
+    await deactivatePlatformUsersOtherThanAdmin(platformId)
+    await deletePrivatePieces(platformId)
 }
+
+
+const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt' | 'activatedAt' | 'isTrial' | 'email' | 'customerName' | 'key'> = {
+    ssoEnabled: false,
+    gitSyncEnabled: false,
+    showPoweredBy: false,
+    embeddingEnabled: false,
+    auditLogEnabled: false,
+    customAppearanceEnabled: false,
+    manageProjectsEnabled: false,
+    managePiecesEnabled: false,
+    manageTemplatesEnabled: false,
+    apiKeysEnabled: false,
+    customDomainsEnabled: false,
+    projectRolesEnabled: false,
+    flowIssuesEnabled: false,
+    alertsEnabled: false,
+    premiumPieces: [],
+}
+

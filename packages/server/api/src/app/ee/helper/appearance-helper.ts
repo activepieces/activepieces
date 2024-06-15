@@ -20,21 +20,10 @@ export const appearanceHelper = {
 
 const enterpriseThemeChecker = async (platform: Platform) => {
     const edition = getEdition()
-    if (edition === ApEdition.COMMUNITY) {
-        return defaultTheme
-    }
- 
-    else if (edition === ApEdition.CLOUD) {
-        return generateTheme({
-            websiteName: platform.name,
-            fullLogoUrl: platform.fullLogoUrl,
-            favIconUrl: platform.favIconUrl,
-            logoIconUrl: platform.logoIconUrl,
-            primaryColor: platform.primaryColor,
-        })
-    }
-    else {
-        if (platform.customAppearanceEnabled) {
+    switch (edition) {
+        case ApEdition.COMMUNITY:
+            return defaultTheme
+        case ApEdition.CLOUD:
             return generateTheme({
                 websiteName: platform.name,
                 fullLogoUrl: platform.fullLogoUrl,
@@ -42,8 +31,16 @@ const enterpriseThemeChecker = async (platform: Platform) => {
                 logoIconUrl: platform.logoIconUrl,
                 primaryColor: platform.primaryColor,
             })
-        }  
-        return defaultTheme
+        case ApEdition.ENTERPRISE:
+            if (platform.customAppearanceEnabled) {
+                return generateTheme({
+                    websiteName: platform.name,
+                    fullLogoUrl: platform.fullLogoUrl,
+                    favIconUrl: platform.favIconUrl,
+                    logoIconUrl: platform.logoIconUrl,
+                    primaryColor: platform.primaryColor,
+                })
+            }
+            return defaultTheme
     }
-   
 }

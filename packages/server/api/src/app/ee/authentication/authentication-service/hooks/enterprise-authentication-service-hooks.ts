@@ -5,6 +5,7 @@ import { userService } from '../../../../user/user-service'
 import { userInvitationsService } from '../../../../user-invitations/user-invitation.service'
 import { licenseKeysService } from '../../../license-keys/license-keys-service'
 import { authenticationHelper } from './authentication-helper'
+import { system, SystemProp } from '@activepieces/server-shared'
 
 const DEFAULT_PLATFORM_NAME = 'Activepieces'
 
@@ -33,7 +34,7 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             await userInvitationsService.provisionUserInvitation({
                 email: user.email,
                 platformId: user.platformId!,
-            })    
+            })
             const updatedUser = await userService.getOneOrFail({ id: user.id })
             const result = await authenticationHelper.getProjectAndTokenOrThrow(user)
             return {
@@ -54,7 +55,10 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             platformId: platform.id,
         })
 
-        await licenseKeysService.checkKeyStatus(true)
+        await licenseKeysService.verifyKeyAndApplyLimits({
+            platformId: platform.id,
+            license: system.get<string>(SystemProp.LICENSE_KEY),
+        })
 
         await userInvitationsService.provisionUserInvitation({
             email: user.email,
