@@ -109,7 +109,7 @@ async function callback(listener: AppEventRouting, eventPayload: EventPayload): 
     if (flow.status !== FlowStatus.ENABLED || isNil(flow.publishedVersionId)) {
         return
     }
-    const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flow.publishedVersionId)
+    const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flow.id)
     assertNotNullOrUndefined(flowVersion, 'published version not found')
     const payloads = await webhookService.extractPayloadAndSave({
         flowVersion,
