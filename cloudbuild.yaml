@@ -2,7 +2,7 @@ steps:
   # Docker Build
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 
-           'us-central1-docker.pkg.dev/${PROJECT_ID}/activepieces','--network=cloudbuild', 
+           'us-central1-docker.pkg.dev/${PROJECT_ID}/activepieces',
            '.']
     env:  ['DOCKER_BUILDKIT=1']
   # Docker Push
