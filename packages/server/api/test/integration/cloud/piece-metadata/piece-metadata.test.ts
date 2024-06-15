@@ -522,7 +522,75 @@ describe('Piece Metadata API', () => {
             expect(responseBody?.[2].id).toBe(mockPieceMetadataC.id)
         })
 
-        it('Should list specific pieces with premium category when authenticated', async () => {
+        it('Should list non-premium pieces when embedded', async () => {
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save([mockUser])
+
+            const mockPlatform = createMockPlatform({
+                ownerId: mockUser.id,
+                filteredPieceNames: [],
+                filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
+                embeddingEnabled: true,
+            })
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+
+            const mockProject = await createProjectAndPlan({
+                platformId: mockPlatform.id,
+                ownerId: mockUser.id,
+            })
+
+            // arrange
+            const mockPieceMetadataA = createMockPieceMetadata({
+                name: 'a',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'a',
+                version: '0.31.0',
+                categories: [PieceCategory.PREMIUM],
+            })
+            const mockPieceMetadataB = createMockPieceMetadata({
+                name: 'b',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'b',
+                version: '1.0.0',
+                categories: [PieceCategory.PREMIUM],
+            })
+            const mockPieceMetadataC = createMockPieceMetadata({
+                name: 'c',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'c',
+                version: '1.1.0',
+            })
+            await databaseConnection
+                .getRepository('piece_metadata')
+                .save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC])
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/pieces',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+            logger.error(responseBody)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody).toHaveLength(1)
+            expect(responseBody?.[0].id).toBe(mockPieceMetadataC.id)
+        })
+
+        it('Should list premium pieces purchased with embedding', async () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save([mockUser])
 
@@ -531,9 +599,10 @@ describe('Piece Metadata API', () => {
                 filteredPieceNames: [],
                 filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
                 premiumPieces: ['a'],
+                embeddingEnabled: true,
             })
             await databaseConnection.getRepository('platform').save([mockPlatform])
-            
+
             const mockProject = await createProjectAndPlan({
                 platformId: mockPlatform.id,
                 ownerId: mockUser.id,
@@ -587,54 +656,8 @@ describe('Piece Metadata API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody).toHaveLength(2)
-            expect(responseBody?.[0].id).toBe(mockPieceMetadataC.id)
-            expect(responseBody?.[1].id).toBe(mockPieceMetadataA.id)
-            expect(responseBody?.[1].categories).toContainEqual(PieceCategory.PREMIUM)
-        })
-
-        it('Should list all pieces when unauthenticated', async () => {
-            // arrange
-            const mockPieceMetadataA = createMockPieceMetadata({
-                name: 'a',
-                pieceType: PieceType.OFFICIAL,
-                displayName: 'a',
-                version: '0.31.0',
-                categories: [PieceCategory.PREMIUM],
-            })
-            const mockPieceMetadataB = createMockPieceMetadata({
-                name: 'b',
-                pieceType: PieceType.OFFICIAL,
-                displayName: 'b',
-                version: '1.0.0',
-                categories: [PieceCategory.PREMIUM],
-            })
-            const mockPieceMetadataC = createMockPieceMetadata({
-                name: 'c',
-                pieceType: PieceType.OFFICIAL,
-                displayName: 'c',
-                version: '1.1.0',
-            })
-            await databaseConnection
-                .getRepository('piece_metadata')
-                .save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC])
-
-            // act
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/v1/pieces',
-            })
-
-            // assert
-            const responseBody = response?.json()
-            logger.error(responseBody)
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody).toHaveLength(3)
             expect(responseBody?.[0].id).toBe(mockPieceMetadataA.id)
-            expect(responseBody?.[0].categories).toContainEqual(PieceCategory.PREMIUM)
-            expect(responseBody?.[1].id).toBe(mockPieceMetadataB.id)
-            expect(responseBody?.[1].categories).toContainEqual(PieceCategory.PREMIUM)
-            expect(responseBody?.[2].id).toBe(mockPieceMetadataC.id)
+            expect(responseBody?.[1].id).toBe(mockPieceMetadataC.id)
         })
 
         it('Sorts by piece name', async () => {
@@ -683,7 +706,7 @@ describe('Piece Metadata API', () => {
 
         it('Allows filtered pieces if project filter is set to "ALLOWED"', async () => {
             // arrange
-            
+
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save([mockUser])
 
@@ -824,7 +847,7 @@ describe('Piece Metadata API', () => {
                 platformId: mockPlatform.id,
                 platformRole: PlatformRole.ADMIN,
             })
-            
+
             const mockProject = await createProjectAndPlan({
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,

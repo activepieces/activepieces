@@ -16,8 +16,9 @@ export const FEATURES: Feature[] = [
     label: $localize`Multiple Projects`,
     key: `PROJECTS`,
   },
-  { label: $localize`Custom Branding`, key: `BRANDING` },
-  { label: `Control Pieces`, key: `PIECES` },
+  { label: 'Brand Activepieces', key: 'BRANDING' },
+  { label: 'Control Pieces', key: 'PIECES' },
+  { label: 'Enterprise Pieces', key: 'ENTERPRISE_PIECES' },
   {
     label: $localize`Custom Templates`,
     key: `TEMPLATES`,

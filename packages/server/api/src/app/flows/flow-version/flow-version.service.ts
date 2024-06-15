@@ -6,10 +6,12 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
 import { stepFileService } from '../step-file/step-file.service'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { logger } from '@activepieces/server-shared'
 import {
     ActionType,
@@ -30,6 +32,7 @@ import {
     isNil,
     LoopOnItemsActionSettingsWithValidation,
     PieceActionSettings,
+    PieceCategory,
     PieceTriggerSettings,
     ProjectId, SeekPage, TriggerType, UserId,
 } from '@activepieces/shared'
@@ -491,10 +494,13 @@ async function validateAction({
     if (isNil(piece)) {
         return false
     }
+    await assertEnterprisePiecesEnabled(piece, projectId)
+
     const action = piece.actions[settings.actionName]
     if (isNil(action)) {
         return false
     }
+
     const props = action.props
     if (!isNil(piece.auth) && action.requireAuth) {
         props.auth = piece.auth
@@ -523,10 +529,10 @@ async function validateTrigger({
         name: settings.pieceName,
         version: settings.pieceVersion,
     })
-
     if (isNil(piece)) {
         return false
     }
+    await assertEnterprisePiecesEnabled(piece, projectId)
     const trigger = piece.triggers[settings.triggerName]
     if (isNil(trigger)) {
         return false
@@ -536,6 +542,25 @@ async function validateTrigger({
         props.auth = piece.auth
     }
     return validateProps(props, settings.input)
+}
+
+async function assertEnterprisePiecesEnabled(piece: PieceMetadataModel, projectId: ProjectId): Promise<void> {
+    if (!piece.categories?.includes(PieceCategory.PREMIUM)) {
+        return
+    }
+    const project = await projectService.getOneOrThrow(projectId)
+    const platform = await platformService.getOneOrThrow(project.platformId)
+    const enabledForPlatform = platform.premiumPieces.includes(piece.name)
+    if (enabledForPlatform) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.FEATURE_DISABLED,
+        params: {
+            message: `The platform doesn not include ${piece.name}`, 
+        },
+    })
+    
 }
 
 function validateProps(
