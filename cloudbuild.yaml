@@ -4,7 +4,7 @@ steps:
     args: ['build', '-t', 
            'us-central1-docker.pkg.dev/${PROJECT_ID}/activepieces','--network=cloudbuild', 
            '.']
-    env: 'DOCKER_BUILDKIT=1'
+    env:  ['DOCKER_BUILDKIT=1']
   # Docker Push
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 
