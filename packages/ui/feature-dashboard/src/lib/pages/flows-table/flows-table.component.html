@@ -1,16 +1,16 @@
-<div class="ap-h-[calc(100% - 6.5625rem)] ap-px-7.5 ap-relative ap-overflow-hidden"
+<div class="ap-h-full ap-px-4 sm:ap-px-7.5 ap-relative ap-overflow-y-auto sm:ap-overflow-y-clip ap-overflow-x-clip sm:ap-overflow-x-auto"
   [class.ap-hidden]="(areThereFlows$|async)===false">
-  <div class="ap-flex ap-h-full ">
-    <div class=" ap-min-w-[274px] ap-max-w-[274px]"
+  <div class="ap-flex ap-h-full ap-flex-col sm:ap-flex-row ap-w-full ap-gap-x-[30px]">
+    <div class="w-full sm:ap-[274px]"
       *ngIf="(hideFolders$ | async) === undefined ||(hideFolders$ | async) === false " #foldersSection>
-      <div class="ap-typography-headline-5 !ap-font-semibold ap-mb-7.5 ap-mt-20" i18n>My Flows</div>
+      <div class="ap-typography-headline-5 !ap-font-semibold ap-mb-2 sm:ap-mb-7.5 ap-mt-20" i18n>My Flows</div>
       <app-folders-list></app-folders-list>
     </div>
-    <div class="ap-h-full ap-w-[calc(100%-274px)] ap-pl-[30px] ap-pt-[80px]" [class.ap-w-full]="(hideFolders$ | async)"
+    <div class="ap-h-full ap-w-full ap-flex-1 sm:ap-pt-[80px]" [class.ap-w-full]="(hideFolders$ | async)"
       [class.!ap-pl-0]="(hideFolders$ | async)">
       <div class="ap-h-full ap-mb-[40px]">
         <div
-          class=" ap-rounded ap-border ap-border-solid ap-border-dividers ap-p-[30px] ap-pb-[80px] ap-flex ap-flex-col">
+          class="ap-rounded ap-border ap-overflow-x-auto ap-border-solid ap-border-dividers ap-p-4 sm:ap-p-[30px] ap-pb-16 sm:ap-pb-20 ap-flex ap-flex-col">
           <app-flows-table-title></app-flows-table-title>
           <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Flows" i18n-aria-label>
             <ng-container matColumnDef="name">
@@ -122,7 +122,7 @@
                 <span i18n>You don't have any flows yet</span>
               </ng-container>
               <ng-template #folderEmptyMessage>
-                <span i18n>This folder doesn't have any flows yet</span>
+                <span i18n class="ap-inline-block ap-pb-6">This folder doesn't have any flows yet</span>
               </ng-template>
             </div>
           </ng-container>
@@ -164,7 +164,7 @@
   @if(showRewards$ | async)
   {
   <div (click)="openRewardsDialog()"
-    class="ap-border ap-border-solid ap-border-dividers ap-top-[180px] ap-drop-shadow -ap-right-[85px] ap-transition-all ap-cursor-pointer hover:-ap-right-[14px] ap-py-2 ap-absolute ap-rounded-full ap-overflow-hidden ap-bg-white ap-px-4 ap-text-primary ap-flex ap-items-center ap-gap-2">
+    class="ap-border ap-border-solid ap-border-dividers ap-top-[180px] ap-drop-shadow -ap-right-[85px] ap-transition-all ap-cursor-pointer hover:-ap-right-[14px] ap-py-2 ap-fixed ap-rounded-full ap-overflow-hidden ap-bg-white ap-px-4 ap-text-primary ap-flex ap-items-center ap-gap-2">
     <div class="ap-relative">
       <div class="ap-p-0.5 ap-bg-[red] ap-rounded-full -ap-right-[2.5px] ap-top-0 ap-absolute">
       </div>

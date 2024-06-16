@@ -4,8 +4,8 @@
     </mat-sidenav>
     <mat-sidenav-content class="thin-scrollbars ">
         <div *ngIf="(isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false"
-            class="ap-absolute ap-z-50  ap-w-full ap-border-b ">
-            <div class="ap-flex ap-items-center  ap-my-5 ap-mx-[1.875rem]">
+            class="ap-absolute ap-z-50  ap-w-full ap-border-b ap-bg-white">
+            <div class="ap-flex ap-items-center  ap-py-5 ap-px-2 sm:ap-px-[1.875rem]">
                 @if((isInPlatformRoute$ | async) === undefined || (isInPlatformRoute$ | async) === false ) {
                     <app-project-switcher
                     ></app-project-switcher>
