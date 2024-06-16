@@ -423,6 +423,9 @@
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
+      "@activepieces/piece-reoon-verifier": [
+        "packages/pieces/community/reoon-verifier/src/index.ts"
+      ],
       "@activepieces/piece-resend": [
         "packages/pieces/community/resend/src/index.ts"
       ],
