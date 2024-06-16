@@ -161,6 +161,7 @@
     "ngx-timeago": "3.0.0",
     "node-cron": "3.0.3",
     "nodemailer": "6.9.9",
+    "nx-cloud": "19.0.0",
     "object-sizeof": "2.6.3",
     "openai": "4.47.1",
     "papaparse": "5.4.1",
