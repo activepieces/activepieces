@@ -6,7 +6,7 @@ export const createCommonProps = () => {
   return {
     to: Property.Array({
       displayName: 'To',
-      description: 'Emails of the recipients',
+      description: 'Emails of the recipients(Supports comma-separated emails)',
       required: true,
     }),
     from_name: Property.ShortText({
@@ -21,7 +21,7 @@ export const createCommonProps = () => {
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
-      description: undefined,
+      description: 'Subject of the email',
       required: true,
     }),
     bcc: Property.Array({
@@ -80,6 +80,20 @@ export const sendFormData = async (
     headers: {
       ['X-API-Key']: auth,
       ...formData.getHeaders(),
+    },
+  });
+};
+
+export const checkEmail = async (email: string, apiKey: string) => {
+  return httpClient.sendRequest({
+    url: 'https://verify.maileroo.net/check',
+    method: HttpMethod.POST,
+    body: JSON.stringify({
+      email_address: email,
+    }),
+    headers: {
+      'X-API-Key': apiKey,
+      'Content-Type': 'application/json',
     },
   });
 };
