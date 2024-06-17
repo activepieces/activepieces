@@ -39,6 +39,9 @@
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/community/amazon-s3/src/index.ts"
       ],
+      "@activepieces/piece-amazon-sqs": [
+        "packages/pieces/community/amazon-sqs/src/index.ts"
+      ],
       "@activepieces/piece-apitable": [
         "packages/pieces/community/apitable/src/index.ts"
       ],
