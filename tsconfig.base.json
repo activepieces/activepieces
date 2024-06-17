@@ -167,6 +167,9 @@
       "@activepieces/piece-file-helper": [
         "packages/pieces/community/file-helper/src/index.ts"
       ],
+      "@activepieces/piece-fliqr-ai": [
+        "packages/pieces/community/fliqr-ai/src/index.ts"
+      ],
       "@activepieces/piece-flowise": [
         "packages/pieces/community/flowise/src/index.ts"
       ],
