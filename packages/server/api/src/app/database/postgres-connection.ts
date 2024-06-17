@@ -283,16 +283,15 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 CascadeProjectDeleteToActivity1710720610670,
                 AddBranchTypeToGit1711073772867,
                 PiecesProjectLimits1712279318440,
+
                 // Cloud Only Migrations, before unifing the migrations.
                 ChangeToJsonToKeepKeysOrder1685991260335,
                 AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
                 RemoveUniqueonAppNameAppCredentials1705586178452,
                 CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669,
-
                 // Enterprise Only Migrations, before unifing the migrations.
                 MigrateEeUsersToOldestPlatform1701261357197,
                 UnifyEnterpriseWithCloud1714249840058,
-
                 // Cloud Only Entities, But we need to run them for Enterprise as well.
                 AddAppSumo1688943462327,
                 AddReferral1690459469381,

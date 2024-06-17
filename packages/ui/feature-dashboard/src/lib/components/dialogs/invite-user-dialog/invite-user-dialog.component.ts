@@ -31,7 +31,6 @@ import {
   PlatformRole,
   ProjectMemberRole,
 } from '@activepieces/shared';
-import { LottieModule } from 'ngx-lottie';
 import {
   MAT_DIALOG_DATA,
   MatDialog,
@@ -42,12 +41,19 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { StatusCodes } from 'http-status-codes';
 import { UpgradeDialogComponent, UpgradeDialogData } from 'ee-billing-ui';
 import { Clipboard, ClipboardModule } from '@angular/cdk/clipboard';
+import { LottieComponent, provideLottieOptions } from 'ngx-lottie';
+import player from 'lottie-web';
 
 @Component({
   templateUrl: './invite-user-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, UiCommonModule, LottieModule, ClipboardModule],
+  providers: [
+    provideLottieOptions({
+      player: () => player,
+    }),
+  ],
+  imports: [CommonModule, UiCommonModule, ClipboardModule, LottieComponent],
 })
 export class InviteUserDialogComponent {
   readonly inviteUserTitle = $localize`Invite User`;

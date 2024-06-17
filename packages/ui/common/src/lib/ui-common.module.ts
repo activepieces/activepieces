@@ -82,6 +82,7 @@ import { VersionHistoryIndicatorComponent } from './components/ap-version-status
 import { InsideBuilderDatePipe } from './pipe/inside-builder-date.pipe';
 import { ConfirmActionDialogComponent } from './components/dialogs/confirm-action-dialog/confirm-action-dialog.component';
 import { DurationFormatterPipe } from './pipe';
+import { ContactSalesDialogComponent } from './components/dialogs/contact-sales-dialog/contact-sales-dialog.component';
 import { ContactSalesComponent } from './components/contact-sales/contact-sales.component';
 
 const exportedImports = [
@@ -161,6 +162,7 @@ const exportedDeclarations = [
   DropdownPropertySearchPipe,
   LetterIconComponent,
   ConfirmActionDialogComponent,
+  ContactSalesDialogComponent,
   ContactSalesComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
