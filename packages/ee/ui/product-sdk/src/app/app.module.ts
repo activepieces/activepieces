@@ -3,7 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { createCustomElement } from '@angular/elements';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ReactiveFormsModule } from '@angular/forms';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { LoadingSpinnerDirective } from './directives/loading-spinner.directive';
@@ -36,28 +36,24 @@ export const componentsAndTheirElementTagNames = [
     DisableIntegrationModalComponent,
     CdkOverlayContainerDirective,
   ],
-  imports: [
-    MatButtonModule,
+  schemas: [],
+  exports: [], imports: [MatButtonModule,
     MatDialogModule,
     BrowserModule,
     BrowserAnimationsModule,
-    HttpClientModule,
     MatFormFieldModule,
     MatInputModule,
     MatCheckboxModule,
     MatSelectModule,
     AngularSvgIconModule.forRoot(),
-    ReactiveFormsModule,
-  ],
-  providers: [
-    AppComponent,
-    { provide: OverlayContainer, useClass: CdkOverlayContainer },
-  ],
-  schemas: [],
-  exports: [],
+    ReactiveFormsModule], providers: [
+      AppComponent,
+      { provide: OverlayContainer, useClass: CdkOverlayContainer },
+      provideHttpClient(withInterceptorsFromDi()),
+    ]
 })
 export class AppModule implements DoBootstrap {
-  constructor(private injector: Injector) {}
+  constructor(private injector: Injector) { }
 
   ngDoBootstrap() {
     for (const webElement of componentsAndTheirElementTagNames) {
