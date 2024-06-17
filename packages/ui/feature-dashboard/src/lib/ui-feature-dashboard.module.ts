@@ -38,6 +38,7 @@ import {
 } from '@activepieces/ui-feature-git-sync';
 import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewards-dialog.component';
 import { NewAlertDialogComponent } from './components/dialogs/new-alert-dialog/new-alert-dialog.component';
+import { RequestTrialButtonComponent } from './components/request-trial-button/request-trial-button.component';
 import { AdminConsoleButtonComponent } from './components/admin-console-button/admin-console-button.component';
 import { InviteUserButtonComponent } from './components/invite-user-button/invite-user-button.component';
 
@@ -65,6 +66,7 @@ import { InviteUserButtonComponent } from './components/invite-user-button/invit
     DropdownSearchControlComponent,
     SelectAllDirective,
     ApDatePipe,
+    RequestTrialButtonComponent,
     AdminConsoleButtonComponent,
     InviteUserButtonComponent,
   ],

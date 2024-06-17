@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { flowService } from '../../../../flows/flow/flow.service'
 import { flowRunRepo } from '../../../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../../../flows/flow-version/flow-version.service'
-import { getPieceTrigger } from '../../../../flows/trigger/hooks/trigger-utils'
+import { triggerUtils } from '../../../../flows/trigger/hooks/trigger-utils'
 import {
     AddParams,
     DelayedJobAddParams,
@@ -73,7 +73,7 @@ export const memoryQueueManager: MemoryQueueManager = {
                         return null
                     }
 
-                    const piece = await getPieceTrigger({
+                    const piece = await triggerUtils.getPieceTriggerOrThrow({
                         trigger,
                         projectId: flow.projectId,
                     })

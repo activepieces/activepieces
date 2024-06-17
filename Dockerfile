@@ -71,8 +71,12 @@ COPY packages/ui/core/nginx.standard.conf /etc/nginx/nginx.conf
 
 COPY --from=build /usr/src/app/LICENSE .
 
+RUN mkdir -p /usr/src/app/dist/packages/server/
+RUN mkdir -p /usr/src/app/dist/packages/engine/
+
 # Copy Output files to appropriate directory from build stage
-COPY --from=build /usr/src/app/dist dist
+COPY --from=build /usr/src/app/dist/packages/engine /usr/src/app/dist/packages/engine
+COPY --from=build /usr/src/app/dist/packages/server /usr/src/app/dist/packages/server
 
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/packages packages
