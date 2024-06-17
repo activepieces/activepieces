@@ -158,7 +158,7 @@
     "ngx-monaco-editor-v2": "17.0.1",
     "ngx-quill": "20.0.1",
     "ngx-skeleton-loader": "6.0.0",
-    "ngx-socket-io": "4.2.0",
+    "ngx-socket-io": "4.6.1",
     "ngx-timeago": "3.0.0",
     "node-cron": "3.0.3",
     "nodemailer": "6.9.9",
