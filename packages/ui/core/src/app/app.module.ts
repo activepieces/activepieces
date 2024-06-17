@@ -3,7 +3,10 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi,
+} from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { UiCommonModule, environment } from '@activepieces/ui/common';
 import { JwtModule } from '@auth0/angular-jwt';
@@ -68,9 +71,10 @@ export function playerFactory() {
     provideLottieOptions({
       player: () => player,
     }),
-    provideHttpClient(withInterceptorsFromDi())
+    provideHttpClient(withInterceptorsFromDi()),
   ],
-  bootstrap: [AppComponent], imports: [
+  bootstrap: [AppComponent],
+  imports: [
     CommonModule,
     BrowserModule,
     UiFeatureAuthenticationModule,
@@ -101,9 +105,10 @@ export function playerFactory() {
     UiCommonModule,
     LottieComponent,
     EeComponentsModule,
-    MonacoEditorModule.forRoot(monacoConfig)]
+    MonacoEditorModule.forRoot(monacoConfig),
+  ],
 })
-export class AppModule { }
+export class AppModule {}
 function extractHostname(url: string): string {
   // for relative urls we should return empty string
   if (url.startsWith('/')) {

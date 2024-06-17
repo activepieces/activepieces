@@ -10,7 +10,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PlanNamePipe } from './plan-name.pipe';
 import { LottieComponent, provideLottieOptions } from 'ngx-lottie';
 
-
 @NgModule({
   imports: [
     CommonModule,
@@ -27,7 +26,8 @@ import { LottieComponent, provideLottieOptions } from 'ngx-lottie';
     PlanNamePipe,
   ],
   exports: [PlansPageComponent, TasksProgressComponent, UpgradeDialogComponent],
-  providers: [DatePipe,
+  providers: [
+    DatePipe,
     provideLottieOptions({
       player: () => player,
     }),

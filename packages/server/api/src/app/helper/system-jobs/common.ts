@@ -25,8 +25,8 @@ export type SystemJobData<T extends SystemJobName = SystemJobName> =
                 T extends 'trigger-data-cleaner' ? Record<string, never> :
                     T extends 'pieces-sync' ? Record<string, never> :
                         T extends 'pieces-analytics' ? Record<string, never> :
-                           T extends 'trial-tracker' ? Record<string, never> :
-                            never
+                            T extends 'trial-tracker' ? Record<string, never> :
+                                never
 
 export type SystemJobDefinition<T extends SystemJobName> = {
     name: T
