@@ -46,19 +46,6 @@ import { StatusCodes } from 'http-status-codes';
         }@else { <b i18n>Contact Sales</b> } }
       </div>
     </ap-button>
-    } @else() {
-    <ap-button
-      btnColor="white"
-      btnStyle="stroked"
-      btnSize="medium"
-      (buttonClicked)="openEnterpriseTrialSlide()"
-      i18n
-    >
-      <div class="ap-flex ap-gap-7 ap-items-center">
-        <ap-hotspot> </ap-hotspot>
-        <b>Try Enterprise</b>
-      </div>
-    </ap-button>
     } } `,
 })
 export class RequestTrialButtonComponent {
