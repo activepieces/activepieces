@@ -51,6 +51,9 @@
       "@activepieces/piece-asana": [
         "packages/pieces/community/asana/src/index.ts"
       ],
+      "@activepieces/piece-aws-sqs": [
+        "packages/pieces/community/aws-sqs/src/index.ts"
+      ],
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"
       ],
