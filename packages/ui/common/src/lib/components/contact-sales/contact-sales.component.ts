@@ -126,11 +126,11 @@ export class ContactSalesComponent {
       this.loading$.next(true);
       this.sendRequest$ = this.flagService.getEdition().pipe(
         switchMap((edition) => {
-          if (edition === ApEdition.CLOUD) {
-            return this.contactSalesService
-              .sendRequest(this.contactSalesForm.getRawValue())
-              .pipe(
-                tap(() => {
+          switch (edition) {
+            case ApEdition.CLOUD:
+              return this.contactSalesService
+                .sendRequest(this.contactSalesForm.getRawValue())
+                .pipe(
                   tap(() => {
                     this.snackbar.open(
                       $localize`Our sales team will be in contact with you soon.`,
@@ -139,47 +139,50 @@ export class ContactSalesComponent {
                         duration: 5000,
                       }
                     );
-                  });
+                  })
+                );
+            case ApEdition.ENTERPRISE:
+            case ApEdition.COMMUNITY: {
+              const trialKeyGenerationRequest$ = this.licenseKeysService
+                .createKey({
+                  email: this.contactSalesForm.getRawValue().email,
+                })
+                .pipe(
+                  catchError((err: HttpErrorResponse) => {
+                    if (
+                      err.error?.code ===
+                      ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY
+                    ) {
+                      this.contactSalesForm.controls.email.setErrors({
+                        [ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY]: true,
+                      });
+                    } else {
+                      this.snackbar.open(
+                        $localize`Unexpected error please contact support on community.activepieces.com`
+                      );
+                    }
+                    this.loading$.next(false);
+                    throw err;
+                  })
+                );
+              return forkJoin({
+                trialKeyGenerationRequest$,
+                contactSalesRequest$: this.contactSalesService.sendRequest(
+                  this.contactSalesForm.getRawValue()
+                ),
+              }).pipe(
+                tap(() => {
+                  this.snackbar.open(
+                    $localize`Please check your email for your trial key and further instructions.`,
+                    '',
+                    {
+                      duration: 5000,
+                    }
+                  );
                 })
               );
+            }
           }
-          const trialKeyGenerationRequest$ = this.licenseKeysService
-            .createKey({
-              email: this.contactSalesForm.getRawValue().email,
-            })
-            .pipe(
-              catchError((err: HttpErrorResponse) => {
-                if (
-                  err.error?.code === ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY
-                ) {
-                  this.contactSalesForm.controls.email.setErrors({
-                    [ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY]: true,
-                  });
-                } else {
-                  this.snackbar.open(
-                    $localize`Unexpected error please contact support on community.activepieces.com`
-                  );
-                }
-                this.loading$.next(false);
-                throw err;
-              })
-            );
-          return forkJoin({
-            trialKeyGenerationRequest$,
-            contactSalesRequest$: this.contactSalesService.sendRequest(
-              this.contactSalesForm.getRawValue()
-            ),
-          }).pipe(
-            tap(() => {
-              this.snackbar.open(
-                $localize`Please check your email for your trial key and further instructions.`,
-                '',
-                {
-                  duration: 5000,
-                }
-              );
-            })
-          );
         }),
         tap(() => {
           this.closeSlideout();

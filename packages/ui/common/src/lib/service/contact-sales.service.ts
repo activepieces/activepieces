@@ -81,8 +81,16 @@ export class ContactSalesService {
       take(1),
       switchMap((flags) => {
         return this.http.post<{ status: string; message?: string }>(
-          `https://cloud.activepieces.com/api/v1/webhooks/c0sK2GhG2ZSZRIq2uoKXU`,
-          { ...req, flags }
+          'https://sales.activepieces.com/submit-inapp-contact-form',
+          {
+            name: req.name,
+            email: req.email,
+            numberOfEmployees: req.numberOfEmployees,
+            companyName: req.companyName,
+            goal: req.goal,
+            features: [],
+            flags,
+          }
         );
       })
     );
