@@ -187,6 +187,7 @@ export class FlagService {
   > {
     return this.getTheme().pipe(map((theme) => theme['materialWarnPalette']));
   }
+
   getPrimaryPalette(): Observable<
     Record<string, string | Record<string, string>>
   > {

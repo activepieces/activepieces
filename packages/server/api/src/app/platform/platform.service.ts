@@ -129,7 +129,6 @@ export const platformService = {
             ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
             ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
             ...spreadIfDefined('premiumPieces', params.premiumPieces),
-            
         }
 
         return repo.save(updatedPlatform)
@@ -151,7 +150,9 @@ export const platformService = {
             })
         }
         
-        return platform
+        return {
+            ...platform,
+        }
     },
 
     async getOne(id: PlatformId): Promise<Platform | null> {

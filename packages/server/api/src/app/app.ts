@@ -42,6 +42,7 @@ import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-tem
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
+import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { otpModule } from './ee/otp/otp-module'
@@ -259,7 +260,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(authnSsoSamlModule)
     await app.register(alertsModule)
     await app.register(invitationModule)
-
     await setupBullMQBoard(app)
 
     app.get(
@@ -321,7 +321,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
             await app.register(projectBillingModule)
-
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -351,6 +350,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(auditEventModule)
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
+            await app.register(licenseKeysModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -366,6 +366,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             await app.register(communityFlowTemplateModule)
+            await app.register(licenseKeysModule)
             break
     }
 

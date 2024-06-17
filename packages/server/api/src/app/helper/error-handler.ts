@@ -31,8 +31,10 @@ export const errorHandler = async (
             [ErrorCode.VALIDATION]: StatusCodes.CONFLICT,
             [ErrorCode.INVITATION_ONLY_SIGN_UP]: StatusCodes.FORBIDDEN,
             [ErrorCode.AUTHENTICATION]: StatusCodes.UNAUTHORIZED,
+            [ErrorCode.ACTIVATION_KEY_NOT_FOUND]: StatusCodes.NOT_FOUND,
+            [ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED]: StatusCodes.CONFLICT,
+            [ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY]: StatusCodes.CONFLICT,
         }
-
         const statusCode =
       statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST
 
