@@ -3,7 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { UiCommonModule, environment } from '@activepieces/ui/common';
 import { JwtModule } from '@auth0/angular-jwt';
@@ -15,7 +15,7 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { CommonModule } from '@angular/common';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
-import { LottieCacheModule, LottieModule } from 'ngx-lottie';
+import { LottieComponent, provideLottieOptions } from 'ngx-lottie';
 import player from 'lottie-web';
 import { ImportFlowUriEncodedComponent } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.component';
 import {
@@ -62,7 +62,15 @@ export function playerFactory() {
     ImportFlowUriEncodedComponent,
     FormsComponent,
   ],
-  imports: [
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  exports: [],
+  providers: [
+    provideLottieOptions({
+      player: () => player,
+    }),
+    provideHttpClient(withInterceptorsFromDi())
+  ],
+  bootstrap: [AppComponent], imports: [
     CommonModule,
     BrowserModule,
     UiFeatureAuthenticationModule,
@@ -76,7 +84,6 @@ export function playerFactory() {
       connectInZone: true,
     }),
     EffectsModule.forRoot(),
-    HttpClientModule,
     FontAwesomeModule,
     JwtModule.forRoot({
       config: {
@@ -92,16 +99,11 @@ export function playerFactory() {
     UiFeaturePiecesModule,
     AngularSvgIconModule.forRoot(),
     UiCommonModule,
-    LottieModule.forRoot({ player: playerFactory }),
-    LottieCacheModule.forRoot(),
+    LottieComponent,
     EeComponentsModule,
-    MonacoEditorModule.forRoot(monacoConfig),
-  ],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  exports: [],
-  bootstrap: [AppComponent],
+    MonacoEditorModule.forRoot(monacoConfig)]
 })
-export class AppModule {}
+export class AppModule { }
 function extractHostname(url: string): string {
   // for relative urls we should return empty string
   if (url.startsWith('/')) {
