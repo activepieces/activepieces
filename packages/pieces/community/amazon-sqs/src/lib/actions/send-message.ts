@@ -1,4 +1,4 @@
-import { amazonSqsAuth } from '@activepieces/piece-aws-sqs';
+import { amazonSqsAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { SQS } from 'aws-sdk';
 
@@ -31,6 +31,6 @@ export const sendMessage = createAction({
       QueueUrl: queueUrl,
       MessageBody: messageBody,
     };
-    await sqs.sendMessage(params).promise();
+    return sqs.sendMessage(params).promise();
   },
 });
