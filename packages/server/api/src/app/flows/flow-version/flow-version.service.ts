@@ -91,8 +91,7 @@ export const flowVersionService = {
                 const previousVersion = await flowVersionService.getFlowVersionOrThrow({
                     flowId: flowVersion.flowId,
                     versionId: userOperation.request.versionId,
-                    removeConnectionsName: false,
-                    removeSampleData: false,
+                    removeSecrets: false,
                 })
 
                 operations = handleImportFlowOperation(flowVersion, previousVersion)
@@ -221,8 +220,7 @@ export const flowVersionService = {
     async getFlowVersionOrThrow({
         flowId,
         versionId,
-        removeConnectionsName = false,
-        removeSampleData = false,
+        removeSecrets = false,
         entityManager,
     }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
         const flowVersion: FlowVersion | null = await flowVersionRepo(entityManager).findOne({
@@ -247,7 +245,9 @@ export const flowVersionService = {
             })
         }
 
-        return removeSecretsFromFlow(flowVersion, removeConnectionsName, removeSampleData)
+        return removeSecrets
+            ? removeSecretsFromFlow(flowVersion)
+            : flowVersion
     },
     async createEmptyVersion(
         flowId: FlowId,
@@ -290,20 +290,17 @@ async function applySingleOperation(
 
 async function removeSecretsFromFlow(
     flowVersion: FlowVersion,
-    removeConnectionNames: boolean,
-    removeSampleData: boolean,
 ): Promise<FlowVersion> {
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(
         JSON.stringify(flowVersion),
     )
     const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
     for (const step of steps) {
-        if (removeSampleData) {
-            step.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
-        }
-        if (removeConnectionNames) {
-            step.settings.input = replaceConnections(step.settings.input)
-        }
+        /*
+            Remove Sample Data & connections
+            */
+        step.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
+        step.settings.input = replaceConnections(step.settings.input)
     }
     return flowVersionWithArtifacts
 }
@@ -560,10 +557,10 @@ async function assertEnterprisePiecesEnabled(piece: PieceMetadataModel, projectI
     throw new ActivepiecesError({
         code: ErrorCode.FEATURE_DISABLED,
         params: {
-            message: `The platform doesn not include ${piece.name}`,
+            message: `The platform doesn not include ${piece.name}`, 
         },
     })
-
+    
 }
 
 function validateProps(
@@ -664,8 +661,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
 type GetFlowVersionOrThrowParams = {
     flowId: FlowId
     versionId: FlowVersionId | undefined
-    removeConnectionsName?: boolean
-    removeSampleData?: boolean
+    removeSecrets?: boolean
     entityManager?: EntityManager
 }
 

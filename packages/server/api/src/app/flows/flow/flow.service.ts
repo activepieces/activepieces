@@ -148,8 +148,7 @@ export const flowService = {
         id,
         projectId,
         versionId,
-        removeConnectionsName = false,
-        removeSampleData = false,
+        removeSecrets = false,
         entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow | null> {
         const flow = await flowRepo(entityManager).findOneBy({
@@ -164,8 +163,7 @@ export const flowService = {
         const flowVersion = await flowVersionService.getFlowVersionOrThrow({
             flowId: id,
             versionId,
-            removeConnectionsName,
-            removeSampleData,
+            removeSecrets,
             entityManager,
         })
 
@@ -179,16 +177,14 @@ export const flowService = {
         id,
         projectId,
         versionId,
-        removeConnectionsName = false,
-        removeSampleData = false,
+        removeSecrets = false,
         entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow> {
         const flow = await this.getOnePopulated({
             id,
             projectId,
             versionId,
-            removeConnectionsName,
-            removeSampleData,
+            removeSecrets,
             entityManager,
         })
         assertFlowIsNotNull(flow)
@@ -386,8 +382,7 @@ export const flowService = {
             id: flowId,
             projectId,
             versionId,
-            removeConnectionsName: true,
-            removeSampleData: true,
+            removeSecrets: true,
         })
 
         return {
@@ -479,8 +474,7 @@ type GetOneParams = {
 
 type GetOnePopulatedParams = GetOneParams & {
     versionId?: FlowVersionId
-    removeConnectionsName?: boolean
-    removeSampleData?: boolean
+    removeSecrets?: boolean
 }
 
 type GetTemplateParams = {
