@@ -62,6 +62,7 @@ export { STORE_KEY_MAX_LENGTH } from './lib/store-entry/store-entry'
 export { RetryFlowRequestBody } from './lib/flow-run/test-flow-run-request'
 export * from './lib/flows/dto/flow-template-request'
 export * from './lib/support-url'
+export * from './lib/license-keys'
 export * from './lib/invitations'
 
 // Look at https://github.com/sinclairzx81/typebox/issues/350

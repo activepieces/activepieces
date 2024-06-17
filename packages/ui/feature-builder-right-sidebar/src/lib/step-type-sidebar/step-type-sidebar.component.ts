@@ -227,7 +227,7 @@ export class StepTypeSidebarComponent implements AfterViewInit {
       .pipe(
         switchMap((isPieceLocked) => {
           if (isPieceLocked) {
-            this.contactSalesService.open(['ENTERPRISE_PIECES']);
+            this.contactSalesService.open('ENTERPRISE_PIECES');
             return of(void 0);
           }
 
