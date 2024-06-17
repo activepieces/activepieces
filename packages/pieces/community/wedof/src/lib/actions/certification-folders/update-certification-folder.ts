@@ -34,7 +34,7 @@ export const updateCertificationFolder = createAction({
         }),
         examinationPlace: Property.ShortText({
             displayName: 'Lieu de l\'examen',
-            description: "Lieu de l\'examen de certification ou lien https)",
+            description: "Lieu de l'examen de certification (ou lien https)",
             required: false,
         }),
         comment: Property.LongText({
