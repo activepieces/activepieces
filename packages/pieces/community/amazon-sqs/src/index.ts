@@ -1,6 +1,7 @@
 
 import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
 import { SQS } from 'aws-sdk';
+import { sendMessage } from "./lib/actions/send-message";
 
 export const amazonSqsAuth = PieceAuth.CustomAuth({
   props: {
@@ -168,7 +169,7 @@ export const awsSqs = createPiece({
   auth: amazonSqsAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: "https://cdn.activepieces.com/pieces/aws-sqs.png",
-  authors: [],
-  actions: [],
+  authors: ["abuaboud"],
+  actions: [sendMessage],
   triggers: [],
 });
