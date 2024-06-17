@@ -91,5 +91,10 @@
         "targetName": "lint"
       }
     }
-  ]
+  ],
+  "release": {
+    "version": {
+      "preVersionCommand": "npx nx run-many -t build"
+    }
+  }
 }

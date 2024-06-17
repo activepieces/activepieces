@@ -82,6 +82,7 @@
     "angular-svg-icon": "15.0.0",
     "angular2-uuid": "1.1.1",
     "async-mutex": "0.4.0",
+    "aws-sdk": "2.1642.0",
     "axios": "1.6.7",
     "bcrypt": "5.1.1",
     "buffer": "6.0.3",
