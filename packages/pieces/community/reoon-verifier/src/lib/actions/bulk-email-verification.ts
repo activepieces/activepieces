@@ -4,9 +4,9 @@ import { verifyEmails } from '../common/send-util';
 
 export const bulkEmailVerification = createAction({
   auth: reoonEmailVerifyAuth,
-  name: 'bulkEmailVerification',
-  displayName: 'Bulk Email Verification',
-  description: 'Verify list of emails',
+  name: 'bulkEmailVerificationTask',
+  displayName: 'Create Bulk Email Verification',
+  description: 'Creates bulk email verification task.',
   props: {
     taskName: Property.ShortText({
       displayName: 'Task Name',

@@ -28,3 +28,14 @@ export const verifyEmails = (
     },
   });
 };
+
+export async function verifyEmailsResult(taskId: string, apiKey: string) {
+  return await httpClient.sendRequest({
+    method: HttpMethod.GET,
+    url: 'https://emailverifier.reoon.com/api/v1/get-result-bulk-verification-task',
+    queryParams: {
+      key: apiKey,
+      task_id: taskId,
+    },
+  });
+}

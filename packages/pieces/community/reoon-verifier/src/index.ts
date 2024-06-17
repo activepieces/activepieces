@@ -4,12 +4,13 @@ import { verifySingleEmail } from './lib/common/send-util';
 import { HttpError } from '@activepieces/pieces-common';
 import { bulkEmailVerification } from './lib/actions/bulk-email-verification';
 import { PieceCategory } from '@activepieces/shared';
+import { bulkVerificationResult } from './lib/actions/bulk-email-verification-status';
 
 const description = `
 To obtain a Reoon API key, follow these steps:
-1. Go to https://emailverifier.reoon.com/api-settings
-2. Click on the **Create New API Key** button
-3. Enter a title for the API key
+1. Navigate to [API Setting](https://emailverifier.reoon.com/api-settings).
+2. Click on the **Create New API Key** button.
+3. Enter a valid title and copy the API key.
 `;
 
 export const reoonEmailVerifyAuth = PieceAuth.SecretText({
@@ -48,8 +49,9 @@ export const reoonEmailVerify = createPiece({
   minimumSupportedRelease: '0.20.0',
   categories: [PieceCategory.MARKETING],
   logoUrl: 'https://cdn.activepieces.com/pieces/reoon-verifier.png',
-  description: 'Verify an email or list of emails',
+  description:
+    'Email validation service that cleans invalid, temporary & unsafe email addresses.',
   authors: ['AnneMariel95'],
-  actions: [verifyEmail, bulkEmailVerification],
+  actions: [verifyEmail, bulkEmailVerification, bulkVerificationResult],
   triggers: [],
 });
