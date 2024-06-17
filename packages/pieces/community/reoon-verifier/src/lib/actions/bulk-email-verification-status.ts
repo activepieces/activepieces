@@ -6,7 +6,7 @@ export const bulkVerificationResult = createAction({
   auth: reoonEmailVerifyAuth,
   name: 'bulkVerificationResult',
   displayName: 'Get Bulk Verification Result',
-  description: 'Retrives result of bulk verification email by task ID.',
+  description: 'Retrieves result of bulk verification email by task ID.',
   props: {
     task_id: Property.ShortText({
       displayName: 'Task ID',
