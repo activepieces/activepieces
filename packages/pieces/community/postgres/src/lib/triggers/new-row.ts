@@ -71,13 +71,10 @@ export const newRow = createTrigger({
     description: 'triggered when a new row is added',
     props: {
         description: Property.MarkDown({
-            value: `
-                This trigger will fetch latest rows using the provided order by column (newest first), and then will keep polling until previous last row is reached.
-            `,
+            value: `**NOTE:** The trigger fetches the latest rows using the provided order by column (newest first), and then will keep polling until the previous last row is reached.`,
         }),
         table: Property.Dropdown({
             displayName: 'Table name',
-            description: 'Select a table',
             required: true,
             refreshers: ['auth'],
             refreshOnSearch: false,
@@ -113,7 +110,6 @@ export const newRow = createTrigger({
         }),
         order_by: Property.Dropdown({
             displayName: 'Column to order by',
-            description: 'Select a column',
             required: true,
             refreshers: ['table'],
             refreshOnSearch: false,
@@ -164,7 +160,7 @@ export const newRow = createTrigger({
         }),
         order_direction: Property.StaticDropdown<OrderDirection>({
             displayName: 'Order Direction',
-            description: 'Select the order direction',
+            description: 'The direction to sort by such that the newest rows are fetched first.',
             required: true,
             options: {
                 options: [

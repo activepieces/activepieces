@@ -53,7 +53,7 @@ export const fliqrAi = createPiece({
     createCustomApiCallAction({
       baseUrl: () => fliqrConfig.baseUrl,
       auth: fliqrAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         [fliqrConfig.accessTokenHeaderKey]: `${auth}`,
       }),
     }),
