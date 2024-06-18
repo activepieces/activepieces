@@ -10,8 +10,8 @@ import {
 export const sendFromTemplate = createAction({
   auth: mailerooAuth,
   name: 'sendFromTemplate',
-  displayName: 'Send from template',
-  description: 'Send and email from a Maileroo template',
+  displayName: 'Send Email using Template',
+  description: 'Sends an email from an existing template.',
   props: {
     ...createCommonProps(),
     template_id: Property.Number({
@@ -34,7 +34,11 @@ export const sendFromTemplate = createAction({
     formData.append('template_id', template_id);
     formData.append('template_data', JSON.stringify(template_data));
 
-    const res = await sendFormData('send-template', formData, context.auth);
+    const res = await sendFormData(
+      'send-template',
+      formData,
+      context.auth.apiKey
+    );
 
     return res.body;
   },
