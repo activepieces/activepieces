@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.27.0",
-  "rcVersion": "0.27.0-rc.8",
+  "version": "0.28.0",
+  "rcVersion": "0.28.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -121,6 +121,7 @@
     "google-auth-library": "8.9.0",
     "googleapis": "129.0.0",
     "http-status-codes": "2.2.0",
+    "https-proxy-agent": "7.0.4",
     "imap": "0.8.17",
     "imapflow": "1.0.152",
     "import-fresh": "3.3.0",
