@@ -22,7 +22,7 @@
                         <div class="ap-flex ap-items-center ap-justify-end">
                             <ap-button actionButton [disabled]="(isAdmin$ | async) === false"
                                 [tooltipText]="(isAdmin$ | async) === false ? permissionToAddMessage : ''"
-                                i18n-tooltipText (buttonClicked)="addAlert()" btnSize="medium" btnColor="primary" i18n>+
+                                i18n-tooltipText (buttonClicked)="addAlert()" btnSize="medium" btnColor="primary">+
                                 Add
                                 Email</ap-button>
                         </div>

@@ -42,7 +42,7 @@ export const lever = createPiece({
         return LEVER_BASE_URL;
       },
       auth: leverAuth,
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         const { apiKey } = auth as LeverAuth;
         return {
           Authorization:

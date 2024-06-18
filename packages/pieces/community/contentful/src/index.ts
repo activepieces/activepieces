@@ -24,7 +24,7 @@ export const contentful = createPiece({
     createCustomApiCallAction({
       baseUrl: () => `https://api.contentful.com`,
       auth: ContentfulAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as { apiKey: string }).apiKey}`,
       }),
     }),

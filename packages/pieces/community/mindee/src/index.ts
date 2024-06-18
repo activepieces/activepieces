@@ -28,7 +28,7 @@ export const mindee = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.mindee.net/v1',
       auth: mindeeAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Token ${auth}`,
       }),
     }),

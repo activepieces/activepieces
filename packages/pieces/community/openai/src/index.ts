@@ -72,7 +72,7 @@ export const openai = createPiece({
 		createCustomApiCallAction({
 			auth: openaiAuth,
 			baseUrl: () => baseUrl,
-			authMapping: (auth) => {
+			authMapping: async (auth) => {
 				return {
 					Authorization: `Bearer ${auth}`,
 				};

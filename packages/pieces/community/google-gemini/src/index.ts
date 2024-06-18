@@ -62,7 +62,7 @@ export const googleGemini = createPiece({
         return 'https://generativelanguage.googleapis.com/v1beta';
       },
       auth: googleGeminiAuth,
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth}`,
         };

@@ -42,7 +42,7 @@ export const calendly = createPiece({
     createCustomApiCallAction({
       baseUrl: () => calendlyCommon.baseUrl, // Replace with the actual base URL
       auth: calendlyAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),
