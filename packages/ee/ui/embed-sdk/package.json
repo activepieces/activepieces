@@ -5,7 +5,7 @@
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",
   "dependencies": {
-    "@nx/webpack": "18.0.7",
+    "@nx/webpack": "19.3.0",
     "tslib": "2.6.2"
   }
 }

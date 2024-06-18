@@ -7,6 +7,7 @@ import fastify, { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
 import fastifySocketIO from 'fastify-socket.io'
+import { isNil } from 'lodash'
 import qs from 'qs'
 import { Socket } from 'socket.io'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
@@ -42,6 +43,7 @@ import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-tem
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
+import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { otpModule } from './ee/otp/otp-module'
@@ -69,6 +71,7 @@ import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
 import { encryptUtils } from './helper/encryption'
 import { errorHandler } from './helper/error-handler'
+import { jwtUtils } from './helper/jwt-utils'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { getEdition } from './helper/secret-helper'
 import { systemJobsSchedule } from './helper/system-jobs'
@@ -259,7 +262,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(authnSsoSamlModule)
     await app.register(alertsModule)
     await app.register(invitationModule)
-
     await setupBullMQBoard(app)
 
     app.get(
@@ -321,7 +323,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
             await app.register(projectBillingModule)
-
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -351,6 +352,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(auditEventModule)
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
+            await app.register(licenseKeysModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -366,6 +368,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             await app.register(communityFlowTemplateModule)
+            await app.register(licenseKeysModule)
             break
     }
 
@@ -382,6 +385,13 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 const validateEnvPropsOnStartup = async (): Promise<void> => {
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
     await encryptUtils.loadEncryptionKey(queueMode)
+
+    const jwtSecret = await jwtUtils.getJwtSecret()
+    if (isNil(jwtSecret)) {
+        throw new Error(JSON.stringify({
+            message: 'AP_JWT_SECRET is undefined, please define it in the environment variables',
+        }))
+    }
 }
 
 async function getAdapter() {

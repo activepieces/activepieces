@@ -3,25 +3,21 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { ApDatePipe, UiCommonModule } from '@activepieces/ui/common';
 import { PlansPageComponent } from './plans-page/plans-page.component';
 import { UpgradeDialogComponent } from './upgrade-dialog/upgrade-dialog.component';
-import { LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
 import { RouterModule } from '@angular/router';
 import { TasksProgressComponent } from './tasks-progress/tasks-progress.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PlanNamePipe } from './plan-name.pipe';
-
-export function playerFactory() {
-  return player;
-}
+import { LottieComponent, provideLottieOptions } from 'ngx-lottie';
 
 @NgModule({
   imports: [
     CommonModule,
     UiCommonModule,
     MatProgressSpinnerModule,
-    LottieModule.forRoot({ player: playerFactory }),
     RouterModule,
     ApDatePipe,
+    LottieComponent,
   ],
   declarations: [
     PlansPageComponent,
@@ -30,6 +26,11 @@ export function playerFactory() {
     PlanNamePipe,
   ],
   exports: [PlansPageComponent, TasksProgressComponent, UpgradeDialogComponent],
-  providers: [DatePipe],
+  providers: [
+    DatePipe,
+    provideLottieOptions({
+      player: () => player,
+    }),
+  ],
 })
 export class EeBillingUiModule {}

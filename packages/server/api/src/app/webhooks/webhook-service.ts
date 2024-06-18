@@ -31,7 +31,8 @@ export const webhookService = {
                 await flowVersionService.getFlowVersionOrThrow({
                     flowId: flow.id,
                     versionId: undefined,
-                    removeSecrets: false,
+                    removeSampleData: false,
+                    removeConnectionsName: false,
                 })
             ).id
             : flow.publishedVersionId

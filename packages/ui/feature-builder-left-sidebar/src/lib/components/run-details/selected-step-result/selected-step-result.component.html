@@ -17,8 +17,8 @@
     </div>
   </div>
   <div class="ap-flex ap-flex-col ap-gap-2">
-    <div class="detail-item ap-flex ap-items-center">
-      <svg-icon src="assets/img/custom/duration.svg" [svgStyle]="{ width: '12px', height: '20px' }"></svg-icon>
+    <div class="ap-gap-2 ap-flex ap-items-center">
+      <svg-icon src="assets/img/custom/duration.svg" class="ap-fill-description ap-w-[16px] ap-h-[16px]"></svg-icon>
       <span i18n>Duration:</span>
       <span class="description"> {{ ((selectedStepResult.duration || 0)) | durationFormatter:false:true}}  </span>
     </div>
