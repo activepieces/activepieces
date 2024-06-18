@@ -9,8 +9,7 @@ const key = system.get<string>(SystemProp.LICENSE_KEY)
 export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/', CreateTrialLicenseKeyRequest, async (req) => {
-        const res = await licenseKeysService.requestTrial(req.body)
-        return res
+        return licenseKeysService.requestTrial(req.body)
     })
 
     app.get('/status', async (_req, res) => {

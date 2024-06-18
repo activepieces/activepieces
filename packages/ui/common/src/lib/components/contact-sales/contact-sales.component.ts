@@ -95,8 +95,8 @@ export class ContactSalesComponent {
       ),
       fullName: this.fb.control<string>(
         this.authenticationService.currentUser.firstName +
-        ' ' +
-        this.authenticationService.currentUser.lastName,
+          ' ' +
+          this.authenticationService.currentUser.lastName,
         {
           nonNullable: true,
           validators: [Validators.required],
