@@ -14,7 +14,6 @@ import {
     AppConnectionEntity,
     AppConnectionSchema,
 } from '../app-connection.entity'
-import { appConnectionsHooks } from './app-connection-hooks'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
@@ -59,10 +58,6 @@ export const appConnectionService = {
         }
     },
     async upsert(params: UpsertParams): Promise<AppConnection> {
-        await appConnectionsHooks
-            .getHooks()
-            .preUpsert({ projectId: params.projectId })
-
         const { projectId, request } = params
 
         const validatedConnectionValue = await validateConnectionValue({

@@ -1,20 +1,18 @@
 import { Type, Static } from "@sinclair/typebox";
 import { ProjectMemberRole } from "@activepieces/shared";
-import { ProjectMemberStatus } from "./project-member";
 
 export const AcceptInvitationRequest = Type.Object({
     token: Type.String()
 })
 export type AcceptInvitationRequest = Static<typeof AcceptInvitationRequest>;
 
-export const AddProjectMemberRequestBody = Type.Object({
+export const UpsertProjectMemberRequestBody = Type.Object({
     projectId: Type.String(),
-    email: Type.String(),
+    userId: Type.String(),
     role: Type.Enum(ProjectMemberRole),
-    status: Type.Optional(Type.Enum(ProjectMemberStatus, { default: ProjectMemberStatus.PENDING })),
 });
 
-export type AddProjectMemberRequestBody = Static<typeof AddProjectMemberRequestBody>;
+export type UpsertProjectMemberRequestBody = Static<typeof UpsertProjectMemberRequestBody>;
 
 export const ListProjectMembersRequestQuery = Type.Object({
     projectId: Type.String(),

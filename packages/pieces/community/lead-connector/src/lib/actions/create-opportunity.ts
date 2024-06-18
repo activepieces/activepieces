@@ -62,12 +62,14 @@ export const createOpportunityAction = createAction({
           pipeline as string
         );
         return {
-          options: pipelineObj.stages.map((stage: any) => {
-            return {
-              label: stage.name,
-              value: stage.id,
-            };
-          }),
+          options: pipelineObj
+            ? pipelineObj.stages.map((stage: any) => {
+                return {
+                  label: stage.name,
+                  value: stage.id,
+                };
+              })
+            : [],
         };
       },
     }),

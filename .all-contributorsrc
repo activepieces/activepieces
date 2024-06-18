@@ -1136,6 +1136,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "AnneMariel95",
+      "name": "Anne Mariel Catapang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/77142075?v=4",
+      "profile": "https://www.anne-mariel.com/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

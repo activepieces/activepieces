@@ -62,7 +62,7 @@ async function sendAlertsIfNeeded({
             await emailService.sendQuotaAlert({
                 templateName,
                 projectId,
-                resetDate: dayjs(resetDate).tz('PT').format('DD MMM YYYY, HH:mm [PT]'),
+                resetDate: dayjs(resetDate).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
             })
         }
     }

@@ -98,6 +98,7 @@ export class PieceMetadataService {
             name: piece.displayName,
             description: piece.description,
             logoUrl: piece.logoUrl,
+            categories: piece.categories,
             extra: {
                 packageType: piece.packageType,
                 pieceType: piece.pieceType,

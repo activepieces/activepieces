@@ -5,12 +5,15 @@ import { projectHooks } from './project-hooks'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, apId,
     ApId,
+    assertNotNullOrUndefined,
     ErrorCode,
     isNil,
     NotificationStatus,
+    PlatformRole,
     Project,
     ProjectId,
     spreadIfDefined,
+    User,
     UserId,
 } from '@activepieces/shared'
 
@@ -69,15 +72,30 @@ export const projectService = {
         return project
     },
 
-    async getUserProject(ownerId: UserId): Promise<Project | null> {
-        return repo().findOneBy({
-            ownerId,
-            deleted: IsNull(),
-        })
+    async getOneForUser(user: User): Promise<Project | null> {
+        assertNotNullOrUndefined(user.platformId, 'user.platformId')
+        switch (user.platformRole) {
+            case PlatformRole.ADMIN: {
+                return repo().findOneBy({
+                    platformId: user.platformId,
+                    deleted: IsNull(),
+                })
+            }
+            case PlatformRole.MEMBER: {
+                return repo().findOneBy({
+                    ownerId: user.id,
+                    platformId: user.platformId,
+                    deleted: IsNull(),
+                })
+            }
+        }
     },
 
     async getUserProjectOrThrow(ownerId: UserId): Promise<Project> {
-        const project = await this.getUserProject(ownerId)
+        const project = await repo().findOneBy({
+            ownerId,
+            deleted: IsNull(),
+        })
 
         if (isNil(project)) {
             throw new ActivepiecesError({

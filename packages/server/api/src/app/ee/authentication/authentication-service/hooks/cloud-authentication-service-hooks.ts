@@ -2,6 +2,7 @@ import { flagService } from '../../../../../app/flags/flag.service'
 import { AuthenticationServiceHooks } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { projectService } from '../../../../project/project-service'
 import { userService } from '../../../../user/user-service'
+import { userInvitationsService } from '../../../../user-invitations/user-invitation.service'
 import { appsumoService } from '../../../billing/appsumo/appsumo.service'
 import { otpService } from '../../../otp/otp-service'
 import { referralService } from '../../../referrals/referral.service'
@@ -55,6 +56,11 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
         }
 
         await authenticationHelper.autoVerifyUserIfEligible(user)
+        await userInvitationsService.provisionUserInvitation({
+            email: user.email,
+            platformId: user.platformId!,
+        })
+
         const updatedUser = await userService.getOneOrFail({ id: user.id })
         const { project, token, projectRole } = await authenticationHelper.getProjectAndTokenOrThrow(user)
 

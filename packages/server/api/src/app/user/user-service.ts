@@ -2,13 +2,9 @@ import dayjs from 'dayjs'
 import { IsNull } from 'typeorm'
 import { passwordHasher } from '../authentication/lib/password-hasher'
 import { repoFactory } from '../core/db/repo-factory'
-import { transaction } from '../core/db/transaction'
-import { projectMemberService } from '../ee/project-members/project-member.service'
-import { getEdition } from '../helper/secret-helper'
 import { UserEntity } from './user-entity'
 import {
     ActivepiecesError,
-    ApEdition,
     apId,
     ErrorCode,
     isNil,
@@ -116,25 +112,9 @@ export const userService = {
     },
 
     async delete({ id, platformId }: DeleteParams): Promise<void> {
-        return transaction(async (entityManager) => {
-            const user = await repo(entityManager).findOneByOrFail({
-                id,
-                platformId,
-            })
-
-            const edition = getEdition()
-            if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-                await projectMemberService.deleteAllByPlatformAndEmail({
-                    email: user.email,
-                    platformId,
-                    entityManager,
-                })
-            }
-
-            await repo(entityManager).delete({
-                id,
-                platformId,
-            })
+        await repo().delete({
+            id,
+            platformId,
         })
     },
 

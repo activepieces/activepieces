@@ -21,3 +21,4 @@ export * from './flow-builder.service';
 export * from './websocket.service';
 export * from './highlight.service';
 export * from './flow-renderer.service';
+export * from './license-keys.service';
