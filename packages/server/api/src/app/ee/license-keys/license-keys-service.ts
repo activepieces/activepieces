@@ -5,8 +5,9 @@ import { flagService } from '../../flags/flag.service'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
-import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, LicenseKeyEntity, PackageType, PlatformRole, UserStatus } from '@activepieces/shared'
+import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, LicenseKeyEntity, PackageType, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
+import { telemetry } from '../../helper/telemetry.utils'
 
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
@@ -59,6 +60,13 @@ export const licenseKeysService = {
             const errorMessage = JSON.stringify(await response.json())
             handleUnexpectedSecretsManagerError(errorMessage)
         }
+        rejectedPromiseHandler(telemetry.trackPlatform(request.platformId, {
+            name: TelemetryEventName.KEY_ACTIVIATED,
+            payload: {
+                date: dayjs().toISOString(),
+                key: request.key,
+            },
+        }))
     },
     async getKey(license: string | undefined): Promise<LicenseKeyEntity | null> {
         if (isNil(license)) {

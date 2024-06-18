@@ -67,7 +67,7 @@ export class ContactSalesService {
   }
 
   sendRequest(req: {
-    name: string;
+    fullName: string;
     email: string;
     numberOfEmployees: string;
     companyName: string;
@@ -83,7 +83,7 @@ export class ContactSalesService {
         return this.http.post<{ status: string; message?: string }>(
           'https://sales.activepieces.com/submit-inapp-contact-form',
           {
-            name: req.name,
+            fullName: req.fullName,
             email: req.email,
             numberOfEmployees: req.numberOfEmployees,
             companyName: req.companyName,
