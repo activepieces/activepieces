@@ -1145,6 +1145,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "codegino",
+      "name": "Carlo Gino Catapang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19299524?v=4",
+      "profile": "https://hi.carlogino.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
