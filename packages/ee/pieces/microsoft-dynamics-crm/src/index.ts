@@ -19,7 +19,13 @@ export const dynamicsCRMAuth = PieceAuth.OAuth2({
         'Host URL without trailing slash.For example **https://demo.crm.dynamics.com**',
       required: true,
     }),
-    tenatId: Property.ShortText({
+    proxyPort: Property.Number({
+      displayName: 'Proxy Port',
+      description:
+        'Port to use for establishing connections (only needed when proxying requests)',
+      required: false,
+    }),
+    tenantId: Property.ShortText({
       displayName: 'Tenant ID',
       description: 'You can find this in the Azure portal.',
       defaultValue: 'common',
@@ -34,9 +40,17 @@ export const dynamicsCRMAuth = PieceAuth.OAuth2({
     'profile',
     'offline_access',
   ],
-  authUrl: 'https://login.microsoftonline.com/{tenatId}/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/{tenatId}/oauth2/v2.0/token',
+  authUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/authorize',
+  tokenUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token',
 });
+
+export function getBaseUrl(host: string, port?: number): string {
+  let portStr = '';
+  if (port) {
+    portStr = `:${port}`;
+  }
+  return `${host}${portStr}`;
+}
 
 export const microsoftDynamicsCrm = createPiece({
   displayName: 'Microsoft Dynamics CRM',
@@ -54,9 +68,8 @@ export const microsoftDynamicsCrm = createPiece({
     createCustomApiCallAction({
       auth: dynamicsCRMAuth,
       baseUrl: (auth) => {
-        return `${
-          (auth as OAuth2PropertyValue).props?.['hostUrl']
-        }/api/data/v9.2`;
+        const props = (auth as OAuth2PropertyValue).props as { hostUrl: string, proxyPort: number };
+        return `${getBaseUrl(props?.['hostUrl'], props.proxyPort)}/api/data/v9.2`;
       },
       authMapping: (auth) => ({
         Authorization: `Bearer  ${(auth as OAuth2PropertyValue).access_token}`,
