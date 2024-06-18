@@ -10,8 +10,8 @@ import {
 export const sendEmail = createAction({
   auth: mailerooAuth,
   name: 'sendEmail',
-  displayName: 'Send an email',
-  description: 'send email',
+  displayName: 'Send Email',
+  description: 'Sends an email.',
   props: {
     ...createCommonProps(),
     content_type: Property.Dropdown<'text' | 'html'>({

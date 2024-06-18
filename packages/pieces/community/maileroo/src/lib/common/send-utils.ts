@@ -88,9 +88,9 @@ export const checkEmail = async (email: string, apiKey: string) => {
   return httpClient.sendRequest({
     url: 'https://verify.maileroo.net/check',
     method: HttpMethod.POST,
-    body: JSON.stringify({
+    body: {
       email_address: email,
-    }),
+    },
     headers: {
       'X-API-Key': apiKey,
       'Content-Type': 'application/json',

@@ -39,6 +39,9 @@
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/community/amazon-s3/src/index.ts"
       ],
+      "@activepieces/piece-amazon-sqs": [
+        "packages/pieces/community/amazon-sqs/src/index.ts"
+      ],
       "@activepieces/piece-apitable": [
         "packages/pieces/community/apitable/src/index.ts"
       ],
@@ -396,6 +399,9 @@
         "packages/pieces/community/pastefy/src/index.ts"
       ],
       "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
+      "@activepieces/piece-photoroom": [
+        "packages/pieces/community/photoroom/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
@@ -422,6 +428,9 @@
       ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
+      ],
+      "@activepieces/piece-reoon-verifier": [
+        "packages/pieces/community/reoon-verifier/src/index.ts"
       ],
       "@activepieces/piece-resend": [
         "packages/pieces/community/resend/src/index.ts"

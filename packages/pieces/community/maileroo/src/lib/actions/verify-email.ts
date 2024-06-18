@@ -5,8 +5,8 @@ import { mailerooAuth } from '../..';
 export const verifyEmail = createAction({
   auth: mailerooAuth,
   name: 'verifyEmail',
-  displayName: 'Verify email',
-  description: 'Verify an email',
+  displayName: 'Verify Email',
+  description: 'Verifies an email address.',
   props: {
     content: Property.ShortText({
       displayName: 'Email',

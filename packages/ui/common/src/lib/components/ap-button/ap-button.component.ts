@@ -14,6 +14,7 @@ import {
 })
 export class ApButtonComponent {
   _disabled: true | false | null = false;
+  @Input() extraClasses = '';
   @Input() onlyShowContent = false;
   @Input() loading = false;
   @Input() btnStyle: 'flat' | 'raised' | 'stroked' | 'basic' = 'flat';
@@ -31,7 +32,8 @@ export class ApButtonComponent {
   @Input() set btnSize(
     value: 'extraSmall' | 'small' | 'medium' | 'large' | 'default'
   ) {
-    this.btnSizeClass = this.btnClassesMap.get(value)!;
+    this.btnSizeClass =
+      this.btnClassesMap.get(value)! + ' ' + this.extraClasses;
   }
 
   get disabled() {

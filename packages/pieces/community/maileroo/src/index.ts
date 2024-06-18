@@ -13,15 +13,15 @@ import { verifyEmail } from './lib/actions/verify-email';
 
 const markdown = `
 For Sending API key, follow these steps:
-1. https://app.maileroo.com/domains
-2. Click on the domain you want to use
-3. Click on the **Create sending key** under the API section
-4. Click **New Sending Key**
-5. Copy the key under the **Sending Key** column
+1. Navigate to [Domains](https://app.maileroo.com/domains).
+2. Click on the domain you want to use.
+3. Click on the **Create sending key** under the API section.
+4. Click **New Sending Key**.
+5. Copy the key under the **Sending Key** column.
 
 For Verification API key, follow these steps:
-1. https://app.maileroo.com/verifications
-2. Copy the key under the **Verification API** section
+1. Navigate to [Verification API](https://app.maileroo.com/verifications).
+2. Copy the key under the **Verification API** section.
 `;
 
 export const mailerooAuth = PieceAuth.CustomAuth({
@@ -111,7 +111,7 @@ export const maileroo = createPiece({
     PieceCategory.BUSINESS_INTELLIGENCE,
     PieceCategory.COMMUNICATION,
   ],
-  description: 'Email delivery services',
+  description: 'Email Delivery Service with Real-Time Analytics and Reporting',
   authors: ['codegino'],
   actions: [sendEmail, sendFromTemplate, verifyEmail],
   triggers: [],

@@ -217,6 +217,7 @@ export const flagService = {
                 created,
                 updated,
             },
+            
         )
 
         return flags

@@ -16,6 +16,7 @@
                 }
                 <div class="ap-flex-grow"></div>  
                 <div class="ap-flex ap-gap-2">
+                <app-request-trial-button-component></app-request-trial-button-component>
                 <app-invite-user-button></app-invite-user-button>   
                 <app-admin-console-button [isInPlatformRoute]="(isInPlatformRoute$ | async | defaultFalse)" [showPlatform]="showPlatform$ | async | defaultFalse"></app-admin-console-button>            
                 </div>
@@ -48,7 +49,7 @@
 @if(showPoweredByAp$ | async)
 {
     <div
-    class="ap-sticky  ap-bg-transparent  ap-bottom-0 ap-pb-5 ap-z-50 ap-mr-5 ap-ml-28">
+    class="ap-sticky  ap-bg-transparent ap-pointer-events-none   ap-bottom-0 ap-pb-5 ap-z-50 ap-mr-5 ap-ml-28">
     <div class="ap-flex ap-justify-end  ap-bg-transparent">
         <ap-powered-by-activepieces></ap-powered-by-activepieces>
     </div>

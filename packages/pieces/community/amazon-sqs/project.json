@@ -1,0 +1,38 @@
+{
+  "name": "pieces-amazon-sqs",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/amazon-sqs/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/amazon-sqs",
+        "tsConfig": "packages/pieces/community/amazon-sqs/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/amazon-sqs/package.json",
+        "main": "packages/pieces/community/amazon-sqs/src/index.ts",
+        "assets": [
+          "packages/pieces/community/amazon-sqs/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-amazon-sqs {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  },
+  "tags": []
+}
