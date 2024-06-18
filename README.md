@@ -293,6 +293,10 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://klo.dev"><img src="https://avatars.githubusercontent.com/u/96867907?v=4?s=100" width="100px;" alt="Ala Shiban"/><br /><sub><b>Ala Shiban</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=AlaShibanAtKlo" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://hamedsh.medium.com"><img src="https://avatars.githubusercontent.com/u/6043214?v=4?s=100" width="100px;" alt="hamsh"/><br /><sub><b>hamsh</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=hamedsh" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.anne-mariel.com/"><img src="https://avatars.githubusercontent.com/u/77142075?v=4?s=100" width="100px;" alt="Anne Mariel Catapang"/><br /><sub><b>Anne Mariel Catapang</b></sub></a><br /><a href="#plugin-AnneMariel95" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://hi.carlogino.com"><img src="https://avatars.githubusercontent.com/u/19299524?v=4?s=100" width="100px;" alt="Carlo Gino Catapang"/><br /><sub><b>Carlo Gino Catapang</b></sub></a><br /><a href="#plugin-codegino" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/drona2938"><img src="https://avatars.githubusercontent.com/u/34496554?v=4?s=100" width="100px;" alt="Aditya Rathore"/><br /><sub><b>Aditya Rathore</b></sub></a><br /><a href="#plugin-drona2938" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
