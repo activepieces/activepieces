@@ -95,8 +95,8 @@ export class ContactSalesComponent {
       ),
       fullName: this.fb.control<string>(
         this.authenticationService.currentUser.firstName +
-          ' ' +
-          this.authenticationService.currentUser.lastName,
+        ' ' +
+        this.authenticationService.currentUser.lastName,
         {
           nonNullable: true,
           validators: [Validators.required],
@@ -130,10 +130,10 @@ export class ContactSalesComponent {
       switchMap((edition) => {
         switch (edition) {
           case ApEdition.CLOUD:
-            return this.contactSales();
+            return this.contactSales(true);
           case ApEdition.ENTERPRISE:
           case ApEdition.COMMUNITY: {
-            return forkJoin([this.requestKey(), this.contactSales()]);
+            return forkJoin([this.requestKey(), this.contactSales(false)]);
           }
         }
       }),
@@ -143,18 +143,20 @@ export class ContactSalesComponent {
     );
   }
 
-  contactSales() {
+  contactSales(notify: boolean) {
     return this.contactSalesService
       .sendRequest(this.contactSalesForm.getRawValue())
       .pipe(
         tap(() => {
-          this.snackbar.open(
-            $localize`Our sales team will be in contact with you soon.`,
-            '',
-            {
-              duration: 5000,
-            }
-          );
+          if (notify) {
+            this.snackbar.open(
+              $localize`Our sales team will be in contact with you soon.`,
+              '',
+              {
+                duration: 5000,
+              }
+            );
+          }
         })
       );
   }
