@@ -1,7 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { whatsappAuth } from '../..';
-import { supportedMediaTypes, capitalizeFirstLetter, mediaTypeSupportsCaption } from '../common/utils';
+import {
+  supportedMediaTypes,
+  capitalizeFirstLetter,
+  mediaTypeSupportsCaption,
+  commonProps,
+} from '../common/utils';
 
 export const sendMedia = createAction({
   auth: whatsappAuth,
@@ -9,6 +14,7 @@ export const sendMedia = createAction({
   displayName: 'Send Media',
   description: 'Send a media message through WhatsApp',
   props: {
+    phone_number_id: commonProps.phone_number_id,
     to: Property.ShortText({
       displayName: 'To',
       description: 'The recipient of the message',
@@ -26,7 +32,7 @@ export const sendMedia = createAction({
           })),
         };
       },
-      refreshers: []
+      refreshers: [],
     }),
     media: Property.ShortText({
       displayName: 'Media URL',
@@ -45,22 +51,25 @@ export const sendMedia = createAction({
     }),
   },
   async run(context) {
-    const { to, caption, media, type, filename } = context.propsValue;
-    const { access_token, phoneNumberId } = context.auth;
+    const { to, caption, media, type, filename, phone_number_id } =
+      context.propsValue;
+    const { access_token } = context.auth;
     const body = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
       to,
       type,
       [type]: {
-          link: media,
-      }
-    }
-    if (caption && mediaTypeSupportsCaption(type)) (body[type] as any).caption = caption;
-    if (filename && type === 'document') (body[type] as any).filename = filename;
+        link: media,
+      },
+    };
+    if (caption && mediaTypeSupportsCaption(type))
+      (body[type] as any).caption = caption;
+    if (filename && type === 'document')
+      (body[type] as any).filename = filename;
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`,
+      url: `https://graph.facebook.com/v17.0/${phone_number_id}/messages`,
       headers: {
         Authorization: 'Bearer ' + access_token,
       },
