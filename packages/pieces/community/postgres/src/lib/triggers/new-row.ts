@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { postgresAuth } from '../..';
 import { pgClient } from '../common';
 import format from 'pg-format';
+import dayjs from 'dayjs';
 
 type OrderDirection = 'ASC' | 'DESC';
 const polling: Polling<PiecePropValueSchema<typeof postgresAuth>, {
@@ -22,8 +23,10 @@ const polling: Polling<PiecePropValueSchema<typeof postgresAuth>, {
             const result = await client.query(query);
             const items = result.rows.map(function (row) {
                 const rowHash = crypto.createHash('md5').update(JSON.stringify(row)).digest('hex');
+                const isTimestamp = dayjs(row[propsValue.order_by]).isValid();
+                const orderValue = isTimestamp ? dayjs(row[propsValue.order_by]).toISOString() : row[propsValue.order_by];
                 return {
-                    id: row[propsValue.order_by] + '|' + rowHash,
+                    id: orderValue + '|' + rowHash,
                     data: row,
                 }
             });
@@ -110,6 +113,7 @@ export const newRow = createTrigger({
         }),
         order_by: Property.Dropdown({
             displayName: 'Column to order by',
+            description: 'Use something like a created timestamp or an auto-incrementing ID.',
             required: true,
             refreshers: ['table'],
             refreshOnSearch: false,
@@ -121,8 +125,6 @@ export const newRow = createTrigger({
                         placeholder: 'Please authenticate first',
                     };
                 }
-                console.log("HELLO");
-                console.log(table);
                 if (!table) {
                     return {
                         disabled: true,
