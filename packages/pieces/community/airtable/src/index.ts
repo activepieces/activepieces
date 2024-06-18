@@ -67,7 +67,7 @@ export const airtable = createPiece({
         return 'https://api.airtable.com/v0';
       },
       auth: airtableAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

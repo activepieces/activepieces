@@ -38,7 +38,7 @@ export const xero = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.xero.com/api.xro/2.0',
       auth: xeroAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

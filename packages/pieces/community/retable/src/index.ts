@@ -50,7 +50,7 @@ export const retable = createPiece({
     createCustomApiCallAction({
       baseUrl: () => retableCommon.baseUrl,
       auth: retableAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         ApiKey: auth as string,
       }),
     }),
