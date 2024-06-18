@@ -59,8 +59,21 @@ type FlowIssueResolved = {
     flowId: string
 }
 
+type RequestTrialSubmitted = {
+    fullName: string
+    email: string
+    numberOfEmployees: string
+    companyName: string
+    goal: string
+}
+
 type RequestTrialClicked = {
     location: string
+}
+
+type KeyActiviated = {
+    date: string
+    key: string
 }
 
 type UpgradeClicked = {
@@ -118,6 +131,7 @@ export enum TelemetryEventName {
     QUOTA_ALERT = 'quota.alert',
     REQUEST_TRIAL_CLICKED = 'request.trial.clicked',
     REQUEST_TRIAL_SUBMITTED = 'request.trial.submitted',
+    KEY_ACTIVIATED = 'key.activated',
     FLOW_ISSUE_CLICKED = 'flow.issue.clicked',
     FLOW_ISSUE_RESOLVED = 'flow.issue.resolved',
     UPGRADE_CLICKED = 'upgrade.clicked',
@@ -153,7 +167,8 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, SignedUp>
     | BaseTelemetryEvent<TelemetryEventName.REFERRAL, Referral>
     | BaseTelemetryEvent<TelemetryEventName.REQUEST_TRIAL_CLICKED, RequestTrialClicked>
-    | BaseTelemetryEvent<TelemetryEventName.REQUEST_TRIAL_SUBMITTED, Record<string, string>>
+    | BaseTelemetryEvent<TelemetryEventName.KEY_ACTIVIATED, KeyActiviated>
+    | BaseTelemetryEvent<TelemetryEventName.REQUEST_TRIAL_SUBMITTED, RequestTrialSubmitted>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_ISSUE_CLICKED, FlowIssueClicked>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_ISSUE_RESOLVED, FlowIssueResolved>
     | BaseTelemetryEvent<TelemetryEventName.UPGRADE_CLICKED, UpgradeClicked>
