@@ -15,7 +15,7 @@ export const getAccessTokenOrThrow = (auth: OAuth2PropertyValue | undefined): st
 export function createCustomApiCallAction({ auth, baseUrl, authMapping, description, displayName, name }: {
   auth?: PieceAuthProperty,
   baseUrl: (auth?: unknown) => string,
-  authMapping?: (auth: unknown) => HttpHeaders,
+  authMapping?: (auth: unknown) => HttpHeaders | Promise<HttpHeaders>,
 //   add description as a parameter that can be null
   description?: string | null,
   displayName?: string | null,
@@ -89,7 +89,7 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping, descript
       if (authMapping) {
         headersValue = {
           ...headersValue,
-          ...authMapping(context.auth)
+          ...(await authMapping(context.auth))
         }
       }
 
