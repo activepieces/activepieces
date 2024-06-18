@@ -131,10 +131,7 @@ const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<voi
     const { data } = await userService.list({
         platformId,
     })
-    const users = data.map(u => {
-        if (u.platformRole === PlatformRole.ADMIN) {
-            return new Promise<void>((resolve) => resolve())
-        }
+    const users = data.filter(f => f.platformRole !== PlatformRole.ADMIN).map(u => {
         logger.debug(`Deactivating user ${u.email}`)
         return userService.update({
             id: u.id,
@@ -165,10 +162,6 @@ const deletePrivatePieces: (platformId: string) => Promise<void> = async (platfo
 }
 
 async function downgradeToFreePlan(platformId: string): Promise<void> {
-    logger.info({
-        message: 'Downgrading platform to free plan',
-        platformId,
-    })
     await platformService.update({
         id: platformId,
         ...turnedOffFeatures,
