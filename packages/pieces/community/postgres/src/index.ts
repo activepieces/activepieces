@@ -5,7 +5,8 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { runQuery } from './lib/actions/run-query';
-import { createUpdateRow, pgClient } from './lib/triggers/create-update-row';
+import { newRow } from './lib/triggers/new-row';
+import { pgClient } from './lib/common';
 
 export const postgresAuth = PieceAuth.CustomAuth({
   props: {
@@ -62,12 +63,12 @@ export const postgresAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
-  validate: async ({auth}) => {
-    try{
+  validate: async ({ auth }) => {
+    try {
       const client = await pgClient(auth);
       await client.end();
     }
-    catch(e){
+    catch (e) {
       return {
         valid: false,
         error: JSON.stringify(e)
@@ -82,12 +83,11 @@ export const postgresAuth = PieceAuth.CustomAuth({
 export const postgres = createPiece({
   displayName: 'Postgres',
   description: "The world's most advanced open-source relational database",
-
   minimumSupportedRelease: '0.5.0',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   logoUrl: 'https://cdn.activepieces.com/pieces/postgres.png',
-  authors: ["Willianwg","dentych","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud", "AbdullahBitar"],
+  authors: ["AbdullahBitar", "Willianwg", "dentych", "kishanprmr", "AbdulTheActivePiecer", "khaledmashaly", "abuaboud"],
   auth: postgresAuth,
   actions: [runQuery],
-  triggers: [createUpdateRow],
+  triggers: [newRow],
 });
