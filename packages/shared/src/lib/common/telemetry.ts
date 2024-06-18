@@ -60,11 +60,11 @@ type FlowIssueResolved = {
 }
 
 type RequestTrialSubmitted = {
-    fullName: string;
-    email: string;
-    numberOfEmployees: string;
-    companyName: string;
-    goal: string;
+    fullName: string
+    email: string
+    numberOfEmployees: string
+    companyName: string
+    goal: string
 }
 
 type RequestTrialClicked = {

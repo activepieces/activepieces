@@ -2,12 +2,12 @@ import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
 import { isNil } from 'lodash'
 import { flagService } from '../../flags/flag.service'
+import { telemetry } from '../../helper/telemetry.utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, LicenseKeyEntity, PackageType, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
-import { telemetry } from '../../helper/telemetry.utils'
 
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 

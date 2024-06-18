@@ -94,7 +94,9 @@ export class ContactSalesComponent {
         }
       ),
       fullName: this.fb.control<string>(
-        this.authenticationService.currentUser.firstName + ' ' + this.authenticationService.currentUser.lastName,
+        this.authenticationService.currentUser.firstName +
+          ' ' +
+          this.authenticationService.currentUser.lastName,
         {
           nonNullable: true,
           validators: [Validators.required],
@@ -128,10 +130,10 @@ export class ContactSalesComponent {
       switchMap((edition) => {
         switch (edition) {
           case ApEdition.CLOUD:
-            return this.contactSales()
+            return this.contactSales();
           case ApEdition.ENTERPRISE:
           case ApEdition.COMMUNITY: {
-            return forkJoin([this.requestKey(), this.contactSales()])
+            return forkJoin([this.requestKey(), this.contactSales()]);
           }
         }
       }),
@@ -158,13 +160,11 @@ export class ContactSalesComponent {
   }
 
   requestKey() {
-    return this.licenseKeysService.createKey(this.contactSalesForm.getRawValue())
+    return this.licenseKeysService
+      .createKey(this.contactSalesForm.getRawValue())
       .pipe(
         catchError((err: HttpErrorResponse) => {
-          if (
-            err.error?.code ===
-            ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY
-          ) {
+          if (err.error?.code === ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY) {
             this.contactSalesForm.controls.email.setErrors({
               [ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY]: true,
             });

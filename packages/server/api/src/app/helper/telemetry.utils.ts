@@ -1,10 +1,10 @@
 import { Analytics } from '@segment/analytics-node'
 import { flagService } from '../flags/flag.service'
+import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { getEdition } from './secret-helper'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
 import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared'
-import { platformService } from '../platform/platform.service'
 
 const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED)
 
