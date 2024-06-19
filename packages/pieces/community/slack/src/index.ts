@@ -106,7 +106,7 @@ export const slack = createPiece({
 				return 'https://slack.com/api';
 			},
 			auth: slackAuth,
-			authMapping: (auth) => {
+			authMapping: async (auth) => {
 				return {
 					Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
 				};

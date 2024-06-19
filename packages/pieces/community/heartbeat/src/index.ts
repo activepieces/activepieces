@@ -32,7 +32,7 @@ export const Heartbeat = createPiece({
     createCustomApiCallAction({
       auth: heartbeatAuth,
       baseUrl: () => 'https://api.heartbeat.chat/v0',
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth}`,
         };

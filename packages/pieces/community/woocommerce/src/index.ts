@@ -75,7 +75,7 @@ export const woocommerce = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { baseUrl: string }).baseUrl,
       auth: wooAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
           `${(auth as { consumerKey: string }).consumerKey}:${
             (auth as { consumerSecret: string }).consumerSecret

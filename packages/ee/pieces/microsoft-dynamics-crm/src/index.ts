@@ -58,7 +58,7 @@ export const microsoftDynamicsCrm = createPiece({
           (auth as OAuth2PropertyValue).props?.['hostUrl']
         }/api/data/v9.2`;
       },
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer  ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

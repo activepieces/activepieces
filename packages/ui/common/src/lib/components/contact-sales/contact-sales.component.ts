@@ -66,7 +66,7 @@ export class ContactSalesComponent {
   readonly featuresNames = featuresNames;
   emailValueChanged$: Observable<string>;
   contactSalesForm: FormGroup<{
-    name: FormControl<string>;
+    fullName: FormControl<string>;
     email: FormControl<string>;
     companyName: FormControl<string>;
     numberOfEmployees: FormControl<string>;
@@ -93,7 +93,7 @@ export class ContactSalesComponent {
           validators: [Validators.required, Validators.email],
         }
       ),
-      name: this.fb.control<string>(
+      fullName: this.fb.control<string>(
         this.authenticationService.currentUser.firstName +
           ' ' +
           this.authenticationService.currentUser.lastName,
@@ -122,71 +122,74 @@ export class ContactSalesComponent {
   }
 
   submitForm() {
-    if (this.contactSalesForm.valid) {
-      this.loading$.next(true);
-      this.sendRequest$ = this.flagService.getEdition().pipe(
-        switchMap((edition) => {
-          if (edition === ApEdition.CLOUD) {
-            return this.contactSalesService
-              .sendRequest(this.contactSalesForm.getRawValue())
-              .pipe(
-                tap(() => {
-                  tap(() => {
-                    this.snackbar.open(
-                      $localize`Our sales team will be in contact with you soon.`,
-                      '',
-                      {
-                        duration: 5000,
-                      }
-                    );
-                  });
-                })
-              );
+    if (!this.contactSalesForm.valid) {
+      return;
+    }
+    this.loading$.next(true);
+    this.sendRequest$ = this.flagService.getEdition().pipe(
+      switchMap((edition) => {
+        switch (edition) {
+          case ApEdition.CLOUD:
+            return this.contactSales(true);
+          case ApEdition.ENTERPRISE:
+          case ApEdition.COMMUNITY: {
+            return forkJoin([this.requestKey(), this.contactSales(false)]);
           }
-          const trialKeyGenerationRequest$ = this.licenseKeysService
-            .createKey({
-              email: this.contactSalesForm.getRawValue().email,
-            })
-            .pipe(
-              catchError((err: HttpErrorResponse) => {
-                if (
-                  err.error?.code === ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY
-                ) {
-                  this.contactSalesForm.controls.email.setErrors({
-                    [ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY]: true,
-                  });
-                } else {
-                  this.snackbar.open(
-                    $localize`Unexpected error please contact support on community.activepieces.com`
-                  );
-                }
-                this.loading$.next(false);
-                throw err;
-              })
-            );
-          return forkJoin({
-            trialKeyGenerationRequest$,
-            contactSalesRequest$: this.contactSalesService.sendRequest(
-              this.contactSalesForm.getRawValue()
-            ),
-          }).pipe(
-            tap(() => {
-              this.snackbar.open(
-                $localize`Please check your email for your trial key and further instructions.`,
-                '',
-                {
-                  duration: 5000,
-                }
-              );
-            })
-          );
-        }),
+        }
+      }),
+      tap(() => {
+        this.closeSlideout();
+      })
+    );
+  }
+
+  contactSales(notify: boolean) {
+    return this.contactSalesService
+      .sendRequest(this.contactSalesForm.getRawValue())
+      .pipe(
         tap(() => {
-          this.closeSlideout();
+          if (notify) {
+            this.snackbar.open(
+              $localize`Our sales team will be in contact with you soon.`,
+              '',
+              {
+                duration: 5000,
+              }
+            );
+          }
         })
       );
-    }
   }
+
+  requestKey() {
+    return this.licenseKeysService
+      .createKey(this.contactSalesForm.getRawValue())
+      .pipe(
+        catchError((err: HttpErrorResponse) => {
+          if (err.error?.code === ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY) {
+            this.contactSalesForm.controls.email.setErrors({
+              [ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY]: true,
+            });
+          } else {
+            this.snackbar.open(
+              $localize`Unexpected error please contact support on community.activepieces.com`
+            );
+          }
+          this.loading$.next(false);
+          throw err;
+        }),
+        tap(() => {
+          this.snackbar.open(
+            $localize`Please check your email for your trial key and further instructions.`,
+            '',
+            {
+              duration: 5000,
+            }
+          );
+        })
+      );
+  }
+
   createListenerToRemoveServerErrorOnChange<T>(
     control: FormControl<T>,
     ...errorsNames: string[]
