@@ -19,43 +19,37 @@ export const dynamicsCRMAuth = PieceAuth.OAuth2({
         'Host URL without trailing slash.For example **https://demo.crm.dynamics.com**',
       required: true,
     }),
-    proxyPort: Property.Number({
-      displayName: 'Proxy Port',
-      description:
-        'Port to use for establishing connections (only needed when proxying requests)',
-      required: false,
-    }),
     tenantId: Property.ShortText({
       displayName: 'Tenant ID',
       description: 'You can find this in the Azure portal.',
       defaultValue: 'common',
       required: true,
     }),
+    proxyUrl: Property.ShortText({
+      displayName: 'Proxy URL with Port',
+      description:
+        'Only to use for establishing connections (only needed when proxying requests). For example **https://proxy.com:8080**.',
+      required: false,
+    }),
   },
   required: true,
-  scope: [
-    '{hostUrl}/.default',
-    'openid',
-    'email',
-    'profile',
-    'offline_access',
-  ],
+  scope: ['{hostUrl}/.default', 'openid', 'email', 'profile', 'offline_access'],
   authUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/authorize',
   tokenUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token',
 });
 
-export function getBaseUrl(host: string, port?: number): string {
-  let portStr = '';
-  if (port) {
-    portStr = `:${port}`;
+export function getBaseUrl(host: string, proxyUrl?: string): string {
+  if (proxyUrl) {
+    return proxyUrl;
   }
-  return `${host}${portStr}`;
+  return host;
 }
 
 export const microsoftDynamicsCrm = createPiece({
   displayName: 'Microsoft Dynamics CRM',
   auth: dynamicsCRMAuth,
-  description: 'Customer relationship management software package developed by Microsoft.',
+  description:
+    'Customer relationship management software package developed by Microsoft.',
   minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-dynamics-crm.png',
   authors: ['kishanprmr'],
@@ -68,8 +62,14 @@ export const microsoftDynamicsCrm = createPiece({
     createCustomApiCallAction({
       auth: dynamicsCRMAuth,
       baseUrl: (auth) => {
-        const props = (auth as OAuth2PropertyValue).props as { hostUrl: string, proxyPort: number };
-        return `${getBaseUrl(props?.['hostUrl'], props.proxyPort)}/api/data/v9.2`;
+        const props = (auth as OAuth2PropertyValue).props as {
+          hostUrl: string;
+          proxyUrl: string;
+        };
+        return `${getBaseUrl(
+          props?.['hostUrl'],
+          props.proxyUrl
+        )}/api/data/v9.2`;
       },
       authMapping: async (auth) => ({
         Authorization: `Bearer  ${(auth as OAuth2PropertyValue).access_token}`,

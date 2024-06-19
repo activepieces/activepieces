@@ -17,7 +17,7 @@ export function makeClient(auth: PiecePropValueSchema<typeof dynamicsCRMAuth>) {
   const client = new DynamicsCRMClient(
     auth.props?.['hostUrl'],
     auth.access_token,
-    auth.props?.['proxyPort'],
+    auth.props?.['proxyUrl']
   );
   return client;
 }
@@ -99,7 +99,10 @@ export const DynamicsCRMCommon = {
 
       const request: HttpRequest = {
         method: HttpMethod.GET,
-        url: `${getBaseUrl(authValue.props?.['hostUrl'], authValue.props?.['proxyPort'])}/api/data/v9.2/${entityUrlPath}`,
+        url: `${getBaseUrl(
+          authValue.props?.['hostUrl'],
+          authValue.props?.['proxyUrl']
+        )}/api/data/v9.2/${entityUrlPath}`,
         queryParams: {
           $select: entityprimaryNameAttribute,
         },
@@ -143,7 +146,9 @@ export const DynamicsCRMCommon = {
           auth as PiecePropValueSchema<typeof dynamicsCRMAuth>
         );
 
-        const typeRes = await client.fetchEntityTypeAttributes(entityType as unknown as string);
+        const typeRes = await client.fetchEntityTypeAttributes(
+          entityType as unknown as string
+        );
 
         if (!typeRes.value[0]) {
           return {

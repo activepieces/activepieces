@@ -16,7 +16,11 @@ import {
 import { getBaseUrl } from '../..';
 
 export class DynamicsCRMClient {
-  constructor(private hostUrl: string, private accessToken: string, private port?: number) {}
+  constructor(
+    private hostUrl: string,
+    private accessToken: string,
+    private proxyUrl?: string
+  ) {}
   async makeRequest<T extends HttpMessageBody>(
     method: HttpMethod,
     resourceUri: string,
@@ -24,7 +28,7 @@ export class DynamicsCRMClient {
     query?: QueryParams,
     body: any | undefined = undefined
   ): Promise<T> {
-    const baseUrl = getBaseUrl(this.hostUrl.replace(/\/$/, ''), this.port);
+    const baseUrl = getBaseUrl(this.hostUrl.replace(/\/$/, ''), this.proxyUrl);
     const res = await httpClient.sendRequest<T>({
       method: method,
       url: `${baseUrl}/api/data/v9.2` + resourceUri,
@@ -90,18 +94,14 @@ export class DynamicsCRMClient {
       `/${entityUrlPath}(${recordId})`
     );
   }
-  async fetchEntityTypes(
-  ): Promise<EntityTypeResponse> {
+  async fetchEntityTypes(): Promise<EntityTypeResponse> {
     // fetch entity type data
     return await this.makeRequest<EntityTypeResponse>(
       HttpMethod.GET,
       `/EntityDefinitions`,
       undefined,
       {
-        $select: [
-          'EntitySetName',
-          'LogicalName',
-        ].join(','),
+        $select: ['EntitySetName', 'LogicalName'].join(','),
       }
     );
   }
