@@ -33,7 +33,7 @@ export const supabase = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { url: string }).url,
       auth: supabaseAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as { apiKey: string }).apiKey}`,
       }),
     }),

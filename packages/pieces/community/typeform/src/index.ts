@@ -25,7 +25,7 @@ export const typeform = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.typeform.com',
       auth: typeformAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

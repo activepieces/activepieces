@@ -93,7 +93,7 @@ export const kimai = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { base_url: string }).base_url,
       auth: kimaiAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'X-AUTH-USER': (auth as { user: string }).user,
         'X-AUTH-TOKEN': (auth as { api_password: string }).api_password,
       }),

@@ -46,7 +46,7 @@ export const googleDocs = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://docs.googleapis.com/v1',
       auth: googleDocsAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

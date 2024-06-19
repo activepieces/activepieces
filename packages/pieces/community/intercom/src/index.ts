@@ -32,7 +32,7 @@ export const intercom = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.intercom.io',
       auth: intercomAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

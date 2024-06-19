@@ -22,7 +22,7 @@ export const certopus = createPiece({
     createCustomApiCallAction({
       baseUrl: () => certopusCommon.baseUrl, // Replace with the actual base URL
       auth: certopusAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'x-api-key': `${auth}`,
       }),
     }),
