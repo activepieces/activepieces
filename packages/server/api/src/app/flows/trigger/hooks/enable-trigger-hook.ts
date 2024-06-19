@@ -7,15 +7,14 @@ import {
 } from '../../../helper/engine-helper'
 import { getEdition } from '../../../helper/secret-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
-import { flowQueue } from '../../../workers/flow-worker/flow-queue'
-import { JobType } from '../../../workers/flow-worker/queues/queue'
+import { flowQueue } from '../../../workers/queue'
 import { triggerUtils } from './trigger-utils'
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import {
     TriggerStrategy,
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { JobType, system, SystemProp } from '@activepieces/server-shared'
 import {
     ApEdition,
     EngineResponseStatus,

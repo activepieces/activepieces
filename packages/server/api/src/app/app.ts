@@ -89,10 +89,9 @@ import { userModule } from './user/user.module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
-import { flowQueueConsumer } from './workers/flow-worker/consumer/flow-queue-consumer'
-import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
-import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-bullboard'
-import { webhookResponseWatcher } from './workers/flow-worker/webhook-response-watcher'
+import { flowWorker } from './workers/flow-worker'
+import { flowWorkerModule } from './workers/flow-worker-module'
+import { webhookResponseWatcher } from './workers/helper/webhook-response-watcher'
 import {
     GitRepoWithoutSensitiveData,
     ProjectMember,
@@ -262,7 +261,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(authnSsoSamlModule)
     await app.register(alertsModule)
     await app.register(invitationModule)
-    await setupBullMQBoard(app)
 
     app.get(
         '/redirect',
@@ -373,7 +371,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     }
 
     app.addHook('onClose', async () => {
-        await flowQueueConsumer.close()
+        await flowWorker.close()
         await systemJobsSchedule.close()
         await webhookResponseWatcher.shutdown()
     })

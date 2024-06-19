@@ -5,21 +5,10 @@ import { system, SystemProp } from '@activepieces/server-shared'
 import { apId } from '@activepieces/shared'
 
 const listeners = new Map<string, (flowResponse: EngineResponseWithId) => void>()
-
-export type EngineHttpResponse = {
-    status: number
-    body: unknown
-    headers: Record<string, string>
-}
-
-export type EngineResponseWithId = {
-    requestId: string
-    httpResponse: EngineHttpResponse
-}
-
 const WEBHOOK_TIMEOUT_MS =
     (system.getNumber(SystemProp.WEBHOOK_TIMEOUT_SECONDS) ?? 30) * 1000
 const HANDLER_ID = apId()
+
 export const webhookResponseWatcher = {
     getHandlerId(): string {
         return HANDLER_ID
@@ -82,4 +71,15 @@ export const webhookResponseWatcher = {
     async shutdown(): Promise<void> {
         await pubSub.unsubscribe(`engine-run:sync:${HANDLER_ID}`)
     },
+}
+
+export type EngineHttpResponse = {
+    status: number
+    body: unknown
+    headers: Record<string, string>
+}
+
+export type EngineResponseWithId = {
+    requestId: string
+    httpResponse: EngineHttpResponse
 }

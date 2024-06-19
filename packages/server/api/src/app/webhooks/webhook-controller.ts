@@ -5,10 +5,9 @@ import { tasksLimit } from '../ee/project-plan/tasks-limit'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
 import { getEdition } from '../helper/secret-helper'
-import { flowQueue } from '../workers/flow-worker/flow-queue'
-import { JobType } from '../workers/flow-worker/queues/queue'
-import { EngineHttpResponse, webhookResponseWatcher } from '../workers/flow-worker/webhook-response-watcher'
-import { logger } from '@activepieces/server-shared'
+import { EngineHttpResponse, webhookResponseWatcher } from '../workers/helper/webhook-response-watcher'
+import { flowQueue } from '../workers/queue'
+import { JobType, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,

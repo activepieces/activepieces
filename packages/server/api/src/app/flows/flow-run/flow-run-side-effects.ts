@@ -1,9 +1,8 @@
 import dayjs from 'dayjs'
 import { issuesService } from '../../ee/issues/issues-service'
-import { flowQueue } from '../../workers/flow-worker/flow-queue'
-import { JobType } from '../../workers/flow-worker/queues/queue'
+import { flowQueue } from '../../workers/queue'
 import { flowRunHooks } from './flow-run-hooks'
-import { logger } from '@activepieces/server-shared'
+import { JobType, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,

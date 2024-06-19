@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { webhookResponseWatcher } from '../../workers/flow-worker/webhook-response-watcher'
+import { webhookResponseWatcher } from '../../workers/helper/webhook-response-watcher'
 import { flowRunController as controller } from './flow-run-controller'
 
 export const flowRunModule: FastifyPluginAsync = async (app) => {

@@ -1,13 +1,13 @@
 import { StatusCodes } from 'http-status-codes'
-import { flowService } from '../../../flows/flow/flow.service'
-import { flowVersionService } from '../../../flows/flow-version/flow-version.service'
-import { webhookService } from '../../../webhooks/webhook-service'
-import { webhookSimulationService } from '../../../webhooks/webhook-simulation/webhook-simulation-service'
-import { EngineHttpResponse, webhookResponseWatcher } from '../webhook-response-watcher'
+import { flowService } from '../../flows/flow/flow.service'
+import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { webhookService } from '../../webhooks/webhook-service'
+import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
+import { EngineHttpResponse, webhookResponseWatcher } from '../helper/webhook-response-watcher'
 import { FlowStatus, isNil } from '@activepieces/shared'
 import { WebhookJobData } from 'server-worker'
 
-export const webhookConsumer = {
+export const webhookExecutor = {
     async consumeWebhook(data: WebhookJobData): Promise<void> {
         const { flowId, payload, simulate } = data
         const flow = await flowService.getOneById(flowId)

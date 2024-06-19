@@ -3,22 +3,17 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { FastifyAdapter } from '@bull-board/fastify'
 import basicAuth from '@fastify/basic-auth'
 import { FastifyInstance } from 'fastify'
-import { getEdition } from '../../../../helper/secret-helper'
-import { redisQueueManager } from './redis-queue'
+import { getEdition } from '../../helper/secret-helper'
+import { bullmqQueues } from './redis-queue'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
+import { ApEdition, isNil } from '@activepieces/shared'
+
 const QUEUE_BASE_PATH = '/ui'
 
-function isQueueEnabled(): boolean {
-    const edition = getEdition()
-    if (edition === ApEdition.CLOUD) {
-        return false
-    }
-    return system.getBoolean(SystemProp.QUEUE_UI_ENABLED) ?? false
-}
-
 export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
-    if (!isQueueEnabled()) {
+    const edition = getEdition()
+    const isQueueEnabled = (edition === ApEdition.CLOUD) && (system.getBoolean(SystemProp.QUEUE_UI_ENABLED) ?? false)
+    if (!isQueueEnabled) {
         return
     }
     const queueUsername = system.getOrThrow(SystemProp.QUEUE_UI_USERNAME)
@@ -28,7 +23,7 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     )
 
     await app.register(basicAuth, {
-        validate: (username, password, _req, reply, done) => {
+        validate: (username, password, _req, _reply, done) => {
             if (username === queueUsername && password === queuePassword) {
                 done()
             }
@@ -41,26 +36,10 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
 
     const serverAdapter = new FastifyAdapter()
     createBullBoard({
-        queues: [
-            new BullMQAdapter(redisQueueManager.getOneTimeJobQueue()),
-            new BullMQAdapter(redisQueueManager.getScheduledJobQueue()),
-            new BullMQAdapter(redisQueueManager.getWebhookJobQueue()),
-        ],
+        queues: Object.values(bullmqQueues).map((queue) => new BullMQAdapter(queue)),
         serverAdapter,
     })
-    const environment =
-        system.get(SystemProp.ENVIRONMENT) ?? ApEnvironment.DEVELOPMENT
-    switch (environment) {
-        case ApEnvironment.DEVELOPMENT:
-            serverAdapter.setBasePath(QUEUE_BASE_PATH)
-            break
-        case ApEnvironment.PRODUCTION:
-            serverAdapter.setBasePath(`/api${QUEUE_BASE_PATH}`)
-            break
-        case ApEnvironment.TESTING:
-            throw new Error('Not supported')
-    }
-
+    serverAdapter.setBasePath(`/api${QUEUE_BASE_PATH}`)
     app.addHook('onRequest', (req, reply, next) => {
         if (!req.routerPath.startsWith(QUEUE_BASE_PATH)) {
             next()

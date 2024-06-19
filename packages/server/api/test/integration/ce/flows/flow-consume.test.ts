@@ -1,8 +1,8 @@
 import { FastifyInstance } from 'fastify'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { flowWorker } from '../../../../src/app/workers/flow-worker/flow-worker'
-import { webhookResponseWatcher } from '../../../../src/app/workers/flow-worker/webhook-response-watcher'
+import { webhookResponseWatcher } from '../../../../src/app/workers/helper/webhook-response-watcher'
+import { flowJobExecutor } from '../../../../src/app/workers/job-executor/flow-job-executor'
 import {
     createMockFlow,
     createMockFlowRun,
@@ -131,7 +131,7 @@ describe('flow execution', () => {
         })
         await databaseConnection.getRepository('flow_run').save([mockFlowRun])
 
-        await flowWorker.executeFlow({
+        await flowJobExecutor.executeFlow({
             flowVersionId: mockFlowVersion.id,
             projectId: mockProject.id,
             environment: RunEnvironment.PRODUCTION,

@@ -148,7 +148,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         })
         return
     }
-    
+
     try {
         await tasksLimit.limit({
             projectId: jobData.projectId,
@@ -310,7 +310,7 @@ type ExtractFlowPiecesParams = {
     projectId: ProjectId
 }
 
-export const flowWorker = {
+export const flowJobExecutor = {
     executeFlow,
 }
 

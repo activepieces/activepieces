@@ -5,7 +5,7 @@ import {
     EngineHelperTriggerResult,
 } from '../../../helper/engine-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
-import { flowQueue } from '../../../workers/flow-worker/flow-queue'
+import { flowQueue } from '../../../workers/queue'
 import { triggerUtils } from './trigger-utils'
 import {
     TriggerBase,
