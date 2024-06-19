@@ -1163,6 +1163,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "coderbob2",
+      "name": "coderbob2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/47177246?v=4",
+      "profile": "https://github.com/coderbob2",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

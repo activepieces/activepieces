@@ -63,7 +63,7 @@ export const customerIo: any = createPiece({
       name: 'custom_track_api_call',
       description: 'CustomerIO Track Custom API Call (track.customer.io)',
       displayName: 'Track Custom API Call',
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
           `${(auth as CustomerIOAuth).track_site_id}:${(auth as CustomerIOAuth).track_api_key}`,
           'utf8'
@@ -77,7 +77,7 @@ export const customerIo: any = createPiece({
       name: 'custom_app_api_call',
       description: 'CustomerIO App Custom API Call (api.customer.io)',
       displayName: 'App Custom API Call',
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as CustomerIOAuth).api_bearer_token}`,
       }),
     })

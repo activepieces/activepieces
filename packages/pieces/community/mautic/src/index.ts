@@ -66,7 +66,7 @@ export const mautic = createPiece({
         const { base_url } = auth as PiecePropValueSchema<typeof mauticAuth>;
         return `${base_url.endsWith('/') ? base_url : base_url + '/'}api/`;
       },
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         const { username, password } = auth as PiecePropValueSchema<
           typeof mauticAuth
         >;

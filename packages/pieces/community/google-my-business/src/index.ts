@@ -30,7 +30,7 @@ export const googleBusiness = createPiece({
         return 'https://www.googleapis.com/business/v4';
       },
       auth: googleAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),
