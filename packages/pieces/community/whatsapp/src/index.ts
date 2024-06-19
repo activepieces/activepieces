@@ -1,11 +1,7 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { sendMessage } from './lib/actions/send-message';
 import { sendMedia } from './lib/actions/send-media';
-import { sendFromTemplate } from './lib/actions/send-from-template';
+import { sendTemplateMessageAction } from './lib/actions/send-from-template';
 
 const markdown = `
 To Obtain a Phone Number ID and a Permanent System User Access Token, follow these steps:
@@ -22,30 +18,29 @@ To Obtain a Phone Number ID and a Permanent System User Access Token, follow the
 `;
 
 export const whatsappAuth = PieceAuth.CustomAuth({
-  required: true,
-  description: markdown,
-  props: {
-    access_token: PieceAuth.SecretText({
-      displayName: 'System User Access Token',
-      description:
-        'The system user access token of your WhatsApp business account',
-      required: true,
-    }),
-    businessAccountId: Property.ShortText({
-      displayName: 'Business Account ID',
-      description: 'The business account ID of your WhatsApp business account',
-      required: true,
-    }),
-  },
+	required: true,
+	description: markdown,
+	props: {
+		access_token: PieceAuth.SecretText({
+			displayName: 'System User Access Token',
+			description: 'The system user access token of your WhatsApp business account.',
+			required: true,
+		}),
+		businessAccountId: Property.ShortText({
+			displayName: 'Business Account ID',
+			description: 'The business account ID of your WhatsApp business account.',
+			required: true,
+		}),
+	},
 });
 
 export const whatsapp = createPiece({
-  displayName: 'WhatsApp Business',
-  description: 'Manage your WhatsApp business account',
-  auth: whatsappAuth,
-  minimumSupportedRelease: '0.20.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/whatsapp.png',
-  authors: ['LevwTech'],
-  actions: [sendMessage, sendMedia, sendFromTemplate],
-  triggers: [],
+	displayName: 'WhatsApp Business',
+	description: 'Manage your WhatsApp business account',
+	auth: whatsappAuth,
+	minimumSupportedRelease: '0.20.0',
+	logoUrl: 'https://cdn.activepieces.com/pieces/whatsapp.png',
+	authors: ['LevwTech', 'kishanprmr'],
+	actions: [sendMessage, sendMedia, sendTemplateMessageAction],
+	triggers: [],
 });
