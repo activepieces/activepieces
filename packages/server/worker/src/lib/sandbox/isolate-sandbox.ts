@@ -2,7 +2,13 @@ import { exec } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { arch, cwd } from 'node:process'
-import { fileExists, logger, PiecesSource, system, SystemProp } from '@activepieces/server-shared'
+import {
+    fileExists,
+    logger,
+    PiecesSource,
+    system,
+    SystemProp,
+} from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     EngineOperation,
@@ -56,6 +62,20 @@ export class IsolateSandbox extends AbstractSandbox {
             const codeSandboxType = system.get(SystemProp.CODE_SANDBOX_TYPE)
             const dirsToBindArgs = this.getDirsToBindArgs()
 
+            const propagatedEnvVars = system
+                .getList(SystemProp.SANDBOX_PROPAGATED_ENV_VARS)
+                .filter(
+                    (envVar) =>
+                        ![
+                            'HOME',
+                            'NODE_OPTIONS',
+                            'AP_PIECES_SOURCE',
+                            'AP_CODE_SANDBOX_TYPE',
+                            'AP_BASE_CODE_DIRECTORY',
+                        ].includes(envVar),
+                )
+                .map((envVar) => `--env=${envVar}='${process.env[envVar]}'`)
+
             const fullCommand = [
                 ...dirsToBindArgs,
                 '--share-net',
@@ -71,6 +91,7 @@ export class IsolateSandbox extends AbstractSandbox {
                 `--env=AP_PIECES_SOURCE=${pieceSource}`,
                 `--env=AP_CODE_SANDBOX_TYPE=${codeSandboxType}`,
                 `--env=AP_BASE_CODE_DIRECTORY=${IsolateSandbox.cacheBindPath}/codes`,
+                ...propagatedEnvVars,
                 AbstractSandbox.nodeExecutablePath,
                 `${IsolateSandbox.cacheBindPath}/main.js`,
                 operationType,
