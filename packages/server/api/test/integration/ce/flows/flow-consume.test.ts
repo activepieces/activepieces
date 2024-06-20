@@ -1,8 +1,8 @@
 import { FastifyInstance } from 'fastify'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { webhookResponseWatcher } from '../../../../src/app/workers/helper/webhook-response-watcher'
-import { flowJobExecutor } from '../../../../src/app/workers/job-executor/flow-job-executor'
+import { webhookResponseWatcher } from '../../../../src/app/flow-worker/helper/webhook-response-watcher'
+import { flowJobExecutor } from '../../../../src/app/flow-worker/job-executor/flow-job-executor'
 import {
     createMockFlow,
     createMockFlowRun,

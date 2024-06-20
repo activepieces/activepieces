@@ -1,9 +1,13 @@
 import { JobStatus, QueueName } from '@activepieces/server-shared'
 import { JobData } from 'server-worker'
 
+export type PollResponse = {
+    data: JobData
+    id: string
+} | undefined
 export type ConsumerManager = {
     init(): Promise<void>
-    poll<T extends QueueName>(queueName: T, token: string): Promise<JobData | undefined>
+    poll<T extends QueueName>(queueName: T, token: string): Promise<PollResponse>
     update(params: UpdateParams): Promise<void>
     close(): Promise<void>
 }

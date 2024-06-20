@@ -2,7 +2,7 @@ import { Job, Worker } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
 import { ConsumerManager } from '../consumer/consumer-manager'
 import { JobStatus, logger, QueueName } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 
 const consumers: Record<string, Worker> = {}
 
@@ -11,7 +11,13 @@ export const redisConsumer: ConsumerManager = {
         const queue = consumers[jobType]
         assertNotNullOrUndefined(queue, 'Queue not found')
         const job = await queue.getNextJob(token)
-        return job?.data
+        if (isNil(job)) {
+            return undefined
+        }
+        return {
+            id: job.id!,
+            data: job.data,
+        }
     },
     async update({ queueName, jobId, status, token, message }): Promise<void> {
         const job = await Job.fromId(consumers[queueName], jobId)

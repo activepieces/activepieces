@@ -1,5 +1,4 @@
 import { flowRunService } from '../flows/flow-run/flow-run-service'
-import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { triggerHooks } from '../flows/trigger'
 import { dedupeService } from '../flows/trigger/dedupe'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
@@ -8,45 +7,24 @@ import { WebhookResponse } from '@activepieces/pieces-framework'
 import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { EventPayload,
     ExecutionType,
-    Flow,
     FlowId,
     FlowRun,
     FlowVersion,
-    isNil,
+    PopulatedFlow,
     ProgressUpdateType,
     RunEnvironment,
 } from '@activepieces/shared'
 
 export const webhookService = {
     async handshake({
-        flow,
+        populatedFlow,
         payload,
-        simulate,
     }: HandshakeParams): Promise<WebhookResponse | null> {
-        logger.info(`[WebhookService#handshake] flowId=${flow.id}`)
-
-        const { projectId } = flow
-        const flowVersionId = simulate
-            ? (
-                await flowVersionService.getFlowVersionOrThrow({
-                    flowId: flow.id,
-                    versionId: undefined,
-                    removeSampleData: false,
-                    removeConnectionsName: false,
-                })
-            ).id
-            : flow.publishedVersionId
-        if (isNil(flowVersionId)) {
-            logger.info(
-                `[WebhookService#handshake] flowInstance not found, flowId=${flow.id}`,
-            )
-            return null
-        }
-
-        const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
+        logger.info(`[WebhookService#handshake] flowId=${populatedFlow.id}`)
+        const { projectId } = populatedFlow
         const response = await triggerHooks.tryHandshake({
             projectId,
-            flowVersion,
+            flowVersion: populatedFlow.version,
             payload,
         })
         if (response !== null) {
@@ -134,9 +112,8 @@ type SaveSampleDataParams = {
 
 
 type HandshakeParams = {
-    flow: Flow
+    populatedFlow: PopulatedFlow
     payload: EventPayload
-    simulate: boolean
 }
 
 type SyncParams = {

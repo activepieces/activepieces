@@ -1,5 +1,6 @@
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
 import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
+import { flowQueue } from '../../../flow-worker/queue'
 import {
     engineHelper,
     EngineHelperResponse,
@@ -7,7 +8,6 @@ import {
 } from '../../../helper/engine-helper'
 import { getEdition } from '../../../helper/secret-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
-import { flowQueue } from '../../../workers/queue'
 import { triggerUtils } from './trigger-utils'
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import {

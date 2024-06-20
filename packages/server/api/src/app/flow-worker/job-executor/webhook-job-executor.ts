@@ -1,17 +1,16 @@
 import { StatusCodes } from 'http-status-codes'
 import { flowService } from '../../flows/flow/flow.service'
-import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { webhookService } from '../../webhooks/webhook-service'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
 import { EngineHttpResponse, webhookResponseWatcher } from '../helper/webhook-response-watcher'
-import { FlowStatus, isNil } from '@activepieces/shared'
+import { FlowStatus, isNil, PopulatedFlow } from '@activepieces/shared'
 import { WebhookJobData } from 'server-worker'
 
 export const webhookExecutor = {
     async consumeWebhook(data: WebhookJobData): Promise<void> {
         const { flowId, payload, simulate } = data
-        const flow = await flowService.getOneById(flowId)
-        if (isNil(flow)) {
+        const populatedFlow = await getPopulatedFlow(flowId, simulate)
+        if (isNil(populatedFlow)) {
             await stopAndReply(data, {
                 status: StatusCodes.GONE,
                 body: {},
@@ -20,9 +19,8 @@ export const webhookExecutor = {
             return
         }
         const handshakeResponse = await webhookService.handshake({
-            flow,
+            populatedFlow,
             payload,
-            simulate,
         })
         if (!isNil(handshakeResponse)) {
             await stopAndReply(data, {
@@ -33,7 +31,7 @@ export const webhookExecutor = {
             return
         }
 
-        if (flow.status !== FlowStatus.ENABLED && !simulate) {
+        if (populatedFlow.status !== FlowStatus.ENABLED && !simulate) {
             await stopAndReply(data, {
                 status: StatusCodes.NOT_FOUND,
                 body: {},
@@ -41,24 +39,19 @@ export const webhookExecutor = {
             })
             return
         }
-        const flowVersion = await flowVersionService.getFlowVersionOrThrow({
-            flowId: flow.id,
-            versionId: simulate ? undefined : flow.publishedVersionId!,
-        })
-
         const filteredPayloads = await webhookService.extractPayloadAndSave({
-            flowVersion,
+            flowVersion: populatedFlow.version,
             payload: data.payload,
-            projectId: flow.projectId,
+            projectId: populatedFlow.projectId,
         })
 
         if (simulate) {
-            await webhookSimulationService.delete({ flowId: flow.id, projectId: flow.projectId })
+            await webhookSimulationService.delete({ flowId: populatedFlow.id, projectId: populatedFlow.projectId })
             return
         }
         const runs = await webhookService.startAndSaveRuns({
-            flowVersion,
-            projectId: flow.projectId,
+            flowVersion: populatedFlow.version,
+            projectId: populatedFlow.projectId,
             synchronousHandlerId: webhookResponseWatcher.getHandlerId(),
             filteredPayloads,
         })
@@ -77,6 +70,18 @@ export const webhookExecutor = {
         }
     },
 
+}
+
+async function getPopulatedFlow(flowId: string, simulate: boolean): Promise<PopulatedFlow | null> {
+    const flow = await flowService.getOneById(flowId)
+    if (isNil(flow)) {
+        return null
+    }
+    return flowService.getOnePopulated({
+        id: flow.id,
+        projectId: flow.projectId,
+        versionId: simulate ? undefined : flow.publishedVersionId!,
+    })
 }
 
 async function stopAndReply(data: WebhookJobData, response: EngineHttpResponse): Promise<void> {

@@ -9,7 +9,10 @@ export const memoryConsumer: ConsumerManager = {
             await new Promise((resolve) => setTimeout(resolve, 500))
             return undefined
         }
-        return job.data
+        return {
+            id: job.id,
+            data: job.data,
+        }
     },
     async update(_params): Promise<void> {
         // 

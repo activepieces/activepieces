@@ -12,7 +12,7 @@ const QUEUE_BASE_PATH = '/ui'
 
 export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     const edition = getEdition()
-    const isQueueEnabled = (edition === ApEdition.CLOUD) && (system.getBoolean(SystemProp.QUEUE_UI_ENABLED) ?? false)
+    const isQueueEnabled = (edition !== ApEdition.CLOUD) && (system.getBoolean(SystemProp.QUEUE_UI_ENABLED) ?? false)
     if (!isQueueEnabled) {
         return
     }

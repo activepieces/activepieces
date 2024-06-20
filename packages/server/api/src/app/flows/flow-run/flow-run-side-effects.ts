@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { issuesService } from '../../ee/issues/issues-service'
-import { flowQueue } from '../../workers/queue'
+import { flowQueue } from '../../flow-worker/queue'
 import { flowRunHooks } from './flow-run-hooks'
 import { JobType, logger } from '@activepieces/server-shared'
 import {

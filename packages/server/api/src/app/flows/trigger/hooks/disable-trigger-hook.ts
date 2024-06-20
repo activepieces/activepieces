@@ -1,11 +1,11 @@
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
+import { flowQueue } from '../../../flow-worker/queue'
 import {
     engineHelper,
     EngineHelperResponse,
     EngineHelperTriggerResult,
 } from '../../../helper/engine-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
-import { flowQueue } from '../../../workers/queue'
 import { triggerUtils } from './trigger-utils'
 import {
     TriggerBase,
