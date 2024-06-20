@@ -15,7 +15,7 @@ export const httpReturnResponse = createAction({
       displayName: 'Headers',
       required: false,
     }),
-    body: Property.Json({
+    body: Property.LongText({
       displayName: 'Response',
       required: true,
     }),
