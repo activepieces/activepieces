@@ -21,7 +21,7 @@ export const progressService = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${engineConstants.workerToken}`,
+                    Authorization: `Bearer ${engineConstants.engineToken}`,
                 },
                 body: JSON.stringify(request),
             })

@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { webhookResponseWatcher } from '../../../../src/app/flow-worker/helper/webhook-response-watcher'
-import { flowJobExecutor } from '../../../../src/app/flow-worker/job-executor/flow-job-executor'
+import { generateEngineToken } from '../../../../src/app/helper/engine-helper'
 import {
     createMockFlow,
     createMockFlowRun,
@@ -24,6 +24,7 @@ import {
     RunEnvironment,
     TriggerType,
 } from '@activepieces/shared'
+import { flowJobExecutor } from 'server-worker'
 
 let app: FastifyInstance | null = null
 
@@ -131,6 +132,9 @@ describe('flow execution', () => {
         })
         await databaseConnection.getRepository('flow_run').save([mockFlowRun])
 
+        const engineToken = await generateEngineToken({
+            projectId: mockProject.id,
+        })
         await flowJobExecutor.executeFlow({
             flowVersionId: mockFlowVersion.id,
             projectId: mockProject.id,
@@ -140,7 +144,7 @@ describe('flow execution', () => {
             synchronousHandlerId: webhookResponseWatcher.getHandlerId(),
             progressUpdateType: ProgressUpdateType.NONE,
             executionType: ExecutionType.BEGIN,
-        })
+        }, engineToken)
 
         const flowRun = await databaseConnection
             .getRepository('flow_run')

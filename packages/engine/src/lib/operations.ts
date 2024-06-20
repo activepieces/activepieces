@@ -64,7 +64,7 @@ async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionRe
             flowVersion: input.flowVersion,
             excludedStepName: step.name,
             projectId: input.projectId,
-            workerToken: input.workerToken,
+            engineToken: input.engineToken,
         }),
         constants: EngineConstants.fromExecuteStepInput(input),
     })
@@ -123,7 +123,7 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                     executionState: await testExecutionContext.stateFromFlowVersion({
                         flowVersion: input.flowVersion,
                         projectId: input.projectId,
-                        workerToken: input.workerToken,
+                        engineToken: input.engineToken,
                     }),
                     searchValue: input.searchValue,
                     constants: EngineConstants.fromExecutePropertyInput(input),
@@ -169,7 +169,7 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                 const testExecutionState = await testExecutionContext.stateFromFlowVersion({
                     flowVersion: input.sourceFlowVersion,
                     projectId: input.projectId,
-                    workerToken: input.workerToken,
+                    engineToken: input.engineToken,
                 })
                 const output = await executeFlow(input, testExecutionState)
                 return output

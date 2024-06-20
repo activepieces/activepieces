@@ -142,7 +142,7 @@ async function getFlowResponse(
 
 const UpdateStepProgress = {
     config: {
-        allowedPrincipals: [PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.ENGINE],
     },
     schema: {
         body: UpdateRunProgressRequest,
@@ -151,7 +151,7 @@ const UpdateStepProgress = {
 
 const GetLockedVersionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.ENGINE],
     },
     schema: {
         querystring: Type.Object({

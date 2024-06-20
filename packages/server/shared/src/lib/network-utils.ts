@@ -1,13 +1,18 @@
 import dns from 'node:dns/promises'
 import { FastifyRequest } from 'fastify'
-import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
+import { system } from './system/system'
+import { SystemProp } from './system/system-prop'
 
 const GOOGLE_DNS = '216.239.32.10'
 const PUBLIC_IP_ADDRESS_QUERY = 'o-o.myaddr.l.google.com'
 const CLIENT_REAL_IP_HEADER = system.getOrThrow(
     SystemProp.CLIENT_REAL_IP_HEADER,
 )
+
+type IpMetadata = {
+    ip: string
+}
 
 let ipMetadata: IpMetadata | undefined
 
@@ -27,18 +32,14 @@ const getPublicIp = async (): Promise<IpMetadata> => {
     return ipMetadata
 }
 
-type IpMetadata = {
-    ip: string
-}
 
-export const extractClientRealIp = (request: FastifyRequest): string => {
+const extractClientRealIp = (request: FastifyRequest): string => {
     return request.headers[CLIENT_REAL_IP_HEADER] as string
 }
 
-export const getServerUrl = async (): Promise<string> => {
+const getApiUrl = async (): Promise<string> => {
     const environment = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
     let url = system.getOrThrow(SystemProp.FRONTEND_URL)
-    // Localhost doesn't work with webhooks, so we need try to use the public ip
     if (extractHostname(url) == 'localhost' && environment === ApEnvironment.PRODUCTION) {
         url = `http://${(await getPublicIp()).ip}`
     }
@@ -54,4 +55,9 @@ function extractHostname(url: string): string | null {
     catch (e) {
         return null
     }
+}
+
+export const networkUtls = {
+    getApiUrl,
+    extractClientRealIp
 }

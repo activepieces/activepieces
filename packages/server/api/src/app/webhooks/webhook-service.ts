@@ -2,9 +2,8 @@ import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { triggerHooks } from '../flows/trigger'
 import { dedupeService } from '../flows/trigger/dedupe'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
-import { getServerUrl } from '../helper/network-utils'
 import { WebhookResponse } from '@activepieces/pieces-framework'
-import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { logger, networkUtls, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { EventPayload,
     ExecutionType,
     FlowId,
@@ -83,7 +82,7 @@ export const webhookService = {
         return Promise.all(createFlowRuns)
     },
     async getWebhookPrefix(): Promise<string> {
-        return `${await getServerUrl()}v1/webhooks`
+        return `${await networkUtls.getApiUrl()}v1/webhooks`
     },
 
     async getWebhookUrl({

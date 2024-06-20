@@ -12,11 +12,11 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             retryExponential: 1,
             retryInterval: 1,
         },
-        params?.workerToken ?? 'workerToken',
+        params?.engineToken ?? 'engineToken',
         params?.projectId ?? 'projectId',
         params?.variableService ?? new VariableService({
             projectId: 'projectId',
-            workerToken: 'workerToken',
+            engineToken: 'engineToken',
         }),
         params?.testSingleStepMode ?? false,
         params?.filesServiceType ?? 'local',

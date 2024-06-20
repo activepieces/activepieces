@@ -1,3 +1,6 @@
+export * from './lib/job/job-data'
+export * from './lib/network-utils'
+export * from './lib/pieces/file-pieces-utils'
 export * from './lib/job'
 export * from './lib/exception-handler'
 export * from './lib/crypto'

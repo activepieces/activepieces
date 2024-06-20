@@ -6,9 +6,8 @@ import { triggerUtils } from '../../flows/trigger/hooks/trigger-utils'
 import { QueueManager } from '../queue/queue-manager'
 import { ApMemoryQueue } from './ap-memory-queue'
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
-import { JobType, logger, QueueName } from '@activepieces/server-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, WebhookJobData } from '@activepieces/server-shared'
 import { DelayPauseMetadata, Flow, FlowRunStatus, PauseType, ProgressUpdateType, RunEnvironment, TriggerType } from '@activepieces/shared'
-import { LATEST_JOB_DATA_SCHEMA_VERSION, OneTimeJobData, RepeatableJobType, ScheduledJobData, WebhookJobData } from 'server-worker'
 
 export const memoryQueues = {
     [QueueName.ONE_TIME]: new ApMemoryQueue<OneTimeJobData>(),

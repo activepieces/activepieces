@@ -1,10 +1,9 @@
 import { databaseConnection } from '../database/database-connection'
-import { getServerUrl } from '../helper/network-utils'
 import {
     AppEventRouting,
     AppEventRoutingEntity,
 } from './app-event-routing.entity'
-import { logger } from '@activepieces/server-shared'
+import { logger, networkUtls } from '@activepieces/server-shared'
 import { apId, FlowId, ProjectId } from '@activepieces/shared'
 
 const appEventRoutingRepo = databaseConnection.getRepository(
@@ -73,7 +72,7 @@ export const appEventRoutingService = {
     }: {
         appName: string
     }): Promise<string | undefined> {
-        const frontendUrl = await getServerUrl()
+        const frontendUrl = await networkUtls.getApiUrl()
         return `${frontendUrl}v1/app-events/${appName}`
     },
 }

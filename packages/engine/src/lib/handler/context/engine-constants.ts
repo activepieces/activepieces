@@ -40,7 +40,7 @@ export class EngineConstants {
         public readonly flowRunId: string,
         public readonly serverUrl: string,
         public readonly retryConstants: RetryConstants,
-        public readonly workerToken: string,
+        public readonly engineToken: string,
         public readonly projectId: ProjectId,
         public readonly variableService: VariableService,
         public readonly testSingleStepMode: boolean,
@@ -56,11 +56,11 @@ export class EngineConstants {
             input.flowRunId,
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
-            input.workerToken,
+            input.engineToken,
             input.projectId,
             new VariableService({
                 projectId: input.projectId,
-                workerToken: input.workerToken,
+                engineToken: input.engineToken,
             }),
             false,
             'local',
@@ -76,11 +76,11 @@ export class EngineConstants {
             'test-run',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
-            input.workerToken,
+            input.engineToken,
             input.projectId,
             new VariableService({
                 projectId: input.projectId,
-                workerToken: input.workerToken,
+                engineToken: input.engineToken,
             }),
             true,
             'db',
@@ -95,11 +95,11 @@ export class EngineConstants {
             'execute-property',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
-            input.workerToken,
+            input.engineToken,
             input.projectId,
             new VariableService({
                 projectId: input.projectId,
-                workerToken: input.workerToken,
+                engineToken: input.engineToken,
             }),
             true,
             'db',
@@ -114,11 +114,11 @@ export class EngineConstants {
             'execute-trigger',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
-            input.workerToken,
+            input.engineToken,
             input.projectId,
             new VariableService({
                 projectId: input.projectId,
-                workerToken: input.workerToken,
+                engineToken: input.engineToken,
             }),
             true,
             'db',
@@ -136,7 +136,7 @@ export class EngineConstants {
 
         const response = await fetch(getWorkerProjectEndpoint, {
             headers: {
-                Authorization: `Bearer ${this.workerToken}`,
+                Authorization: `Bearer ${this.engineToken}`,
             },
         })
 

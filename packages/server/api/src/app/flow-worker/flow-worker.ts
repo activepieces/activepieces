@@ -1,12 +1,9 @@
-import { nanoid } from 'nanoid'
-import { flowConsumer } from './consumer'
-import { flowJobExecutor } from './job-executor/flow-job-executor'
-import { repeatingJobExecutor } from './job-executor/reapeating-job-executor'
+import { repeatingJobExecutor } from './job-executor/repeating-job-executor'
 import { webhookExecutor } from './job-executor/webhook-job-executor'
-import { ApSemaphore, exceptionHandler, JobStatus, QueueName, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
-import { JobData, OneTimeJobData, RepeatingJobData, WebhookJobData } from 'server-worker'
+import { ApSemaphore, exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, system, SystemProp, WebhookJobData } from '@activepieces/server-shared'
+import { isNil } from '@activepieces/shared'
+import {  engineApiService, flowJobExecutor, workerApiService } from 'server-worker'
 
-const WORKER_TOKEN = nanoid()
 const WORKER_CONCURRENCY = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
 const workerLocks = new ApSemaphore(WORKER_CONCURRENCY)
 
@@ -21,7 +18,6 @@ export const flowWorker = {
     },
     async close(): Promise<void> {
         closed = true
-        await flowConsumer.close()
     },
 }
 
@@ -29,18 +25,18 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
     while (!closed) {
         try {
             await workerLocks.acquire()
-            const job = await flowConsumer.poll(queueName, WORKER_TOKEN)
-            if (!job) {
+            const job = await workerApiService().poll(queueName)
+            if (isNil(job)) {
                 workerLocks.release()
                 continue
             }
-            const { id, data } = job
-            consumeJob(queueName, data)
+            const { data, engineToken } = job
+            consumeJob(queueName, data, engineToken)
                 .then(() => {
-                    rejectedPromiseHandler(flowConsumer.update({ jobId: id, queueName, status: JobStatus.COMPLETED, message: '', token: WORKER_TOKEN }))
+                    rejectedPromiseHandler(engineApiService(engineToken).updateJobStatus(queueName, JobStatus.COMPLETED, ''))
                 })
                 .catch((e) => {
-                    rejectedPromiseHandler(flowConsumer.update({ jobId: id, queueName, status: JobStatus.FAILED, message: e.message, token: WORKER_TOKEN }))
+                    rejectedPromiseHandler(engineApiService(engineToken).updateJobStatus(queueName, JobStatus.FAILED, e.message))
                     exceptionHandler.handle(e)
                 }).finally(() => {
                     workerLocks.release()
@@ -53,10 +49,10 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
     }
 }
 
-async function consumeJob(queueName: QueueName, jobData: JobData): Promise<void> {
+async function consumeJob(queueName: QueueName, jobData: JobData, engineToken: string | undefined): Promise<void> {
     switch (queueName) {
         case QueueName.ONE_TIME:
-            await flowJobExecutor.executeFlow(jobData as OneTimeJobData)
+            await flowJobExecutor.executeFlow(jobData as OneTimeJobData, engineToken!)
             break
         case QueueName.SCHEDULED:
             await repeatingJobExecutor.executeRepeatingJob(jobData as RepeatingJobData)

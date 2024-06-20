@@ -61,6 +61,7 @@ import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
+import { flowConsumer } from './flow-worker/consumer'
 import { flowWorker } from './flow-worker/flow-worker'
 import { flowWorkerModule } from './flow-worker/flow-worker-module'
 import { webhookResponseWatcher } from './flow-worker/helper/webhook-response-watcher'
@@ -372,6 +373,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 
     app.addHook('onClose', async () => {
         await flowWorker.close()
+        await flowConsumer.close()
         await systemJobsSchedule.close()
         await webhookResponseWatcher.shutdown()
     })

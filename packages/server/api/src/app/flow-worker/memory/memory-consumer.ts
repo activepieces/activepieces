@@ -7,7 +7,7 @@ export const memoryConsumer: ConsumerManager = {
         const job = await memoryQueues[queueName].poll()
         if (isNil(job)) {
             await new Promise((resolve) => setTimeout(resolve, 500))
-            return undefined
+            return null
         }
         return {
             id: job.id,

@@ -3,9 +3,8 @@ import { isNil } from 'lodash'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { acquireLock } from '../../helper/lock'
 import { bullmqQueues } from './redis-queue'
-import { logger, QueueName } from '@activepieces/server-shared'
+import { LATEST_JOB_DATA_SCHEMA_VERSION, logger, QueueName, RepeatableJobType, ScheduledJobData } from '@activepieces/server-shared'
 import { ExecutionType, RunEnvironment, ScheduleType } from '@activepieces/shared'
-import { LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType, ScheduledJobData } from 'server-worker'
 
 export const redisMigrations = {
     async run(): Promise<void> {

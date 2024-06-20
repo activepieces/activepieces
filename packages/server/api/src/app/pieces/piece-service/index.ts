@@ -113,7 +113,6 @@ const getPiecePackage = async (
             return {
                 ...params,
                 pieceType: PieceType.CUSTOM,
-                directoryPath: undefined,
             }
         }
     }

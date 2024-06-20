@@ -3,8 +3,6 @@ import { projectLimitsService } from '../../../ee/project-plan/project-plan.serv
 import { flowQueue } from '../../../flow-worker/queue'
 import {
     engineHelper,
-    EngineHelperResponse,
-    EngineHelperTriggerResult,
 } from '../../../helper/engine-helper'
 import { getEdition } from '../../../helper/secret-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
@@ -14,7 +12,11 @@ import {
     TriggerStrategy,
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
-import { JobType, system, SystemProp } from '@activepieces/server-shared'
+import {
+    JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType,
+    system,
+    SystemProp,
+} from '@activepieces/server-shared'
 import {
     ApEdition,
     EngineResponseStatus,
@@ -27,8 +29,8 @@ import {
     TriggerType,
 } from '@activepieces/shared'
 import {
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    RepeatableJobType,
+    EngineHelperResponse,
+    EngineHelperTriggerResult,
 } from 'server-worker'
 
 const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
@@ -42,8 +44,7 @@ function constructEveryXMinuteCron(minute: number): string {
             return `*/${minute} * * * *`
         case ApEdition.COMMUNITY:
         case ApEdition.ENTERPRISE:
-            return `*/${
-                system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5
+            return `*/${system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5
             } * * * *`
     }
 }

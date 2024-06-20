@@ -34,7 +34,7 @@ export type EngineOperation =
 
 export type BaseEngineOperation = {
     projectId: ProjectId
-    workerToken: string
+    engineToken: string
     serverUrl: string
 }
 

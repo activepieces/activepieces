@@ -1,13 +1,12 @@
-import { JobType } from '@activepieces/server-shared'
-import { ApId, ScheduleOptions } from '@activepieces/shared'
 import {
-    DelayedJobData,
-    JobData,
+    DelayedJobData, JobData,
+    JobType,
     OneTimeJobData,
     RenewWebhookJobData,
     RepeatingJobData,
     WebhookJobData,
-} from 'server-worker'
+} from '@activepieces/server-shared'
+import { ApId, ScheduleOptions } from '@activepieces/shared'
 
 export type QueueManager = {
     init(): Promise<void>

@@ -3,8 +3,8 @@ import { flowService } from '../../flows/flow/flow.service'
 import { webhookService } from '../../webhooks/webhook-service'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
 import { EngineHttpResponse, webhookResponseWatcher } from '../helper/webhook-response-watcher'
+import { WebhookJobData } from '@activepieces/server-shared'
 import { FlowStatus, isNil, PopulatedFlow } from '@activepieces/shared'
-import { WebhookJobData } from 'server-worker'
 
 export const webhookExecutor = {
     async consumeWebhook(data: WebhookJobData): Promise<void> {

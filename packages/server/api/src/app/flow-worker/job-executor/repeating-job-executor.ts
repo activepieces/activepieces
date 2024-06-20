@@ -5,9 +5,8 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { triggerHooks } from '../../flows/trigger'
 import { dedupeService } from '../../flows/trigger/dedupe'
 import { flowQueue } from '../queue'
-import { logger } from '@activepieces/server-shared'
+import { DelayedJobData, logger, RenewWebhookJobData, RepeatableJobType, RepeatingJobData, ScheduledJobData } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, ExecutionType, FlowVersion, ProgressUpdateType, RunEnvironment, TriggerPayload } from '@activepieces/shared'
-import { DelayedJobData, RenewWebhookJobData, RepeatableJobType, RepeatingJobData, ScheduledJobData } from 'server-worker'
 
 export const repeatingJobExecutor = {
     executeRepeatingJob,

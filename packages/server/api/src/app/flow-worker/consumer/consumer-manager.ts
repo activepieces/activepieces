@@ -1,13 +1,8 @@
-import { JobStatus, QueueName } from '@activepieces/server-shared'
-import { JobData } from 'server-worker'
+import { ApQueueJob, JobStatus, QueueName } from '@activepieces/server-shared'
 
-export type PollResponse = {
-    data: JobData
-    id: string
-} | undefined
 export type ConsumerManager = {
     init(): Promise<void>
-    poll<T extends QueueName>(queueName: T, token: string): Promise<PollResponse>
+    poll<T extends QueueName>(queueName: T, workerId: string): Promise<Omit<ApQueueJob, 'engineToken'> | null>
     update(params: UpdateParams): Promise<void>
     close(): Promise<void>
 }

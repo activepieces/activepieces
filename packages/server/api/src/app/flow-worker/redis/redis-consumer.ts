@@ -12,7 +12,7 @@ export const redisConsumer: ConsumerManager = {
         assertNotNullOrUndefined(queue, 'Queue not found')
         const job = await queue.getNextJob(token)
         if (isNil(job)) {
-            return undefined
+            return null
         }
         return {
             id: job.id!,

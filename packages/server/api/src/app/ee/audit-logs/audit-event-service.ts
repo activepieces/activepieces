@@ -4,7 +4,6 @@ import {
     ApplicationEventHooks,
     CreateAuditEventParam,
 } from '../../helper/application-events'
-import { extractClientRealIp } from '../../helper/network-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { getEdition } from '../../helper/secret-helper'
@@ -16,7 +15,7 @@ import {
     ApplicationEvent,
     ApplicationEventName,
 } from '@activepieces/ee-shared'
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { networkUtls, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ApEdition,
     apId,
@@ -75,7 +74,7 @@ const saveEvent = async (
     request: FastifyRequest,
     rawEvent: CreateAuditEventParam,
 ) => {
-    if ([PrincipalType.UNKNOWN, PrincipalType.WORKER].includes(request.principal.type)) {
+    if ([PrincipalType.UNKNOWN, PrincipalType.ENGINE].includes(request.principal.type)) {
         return
     }
     const platform = await platformService.getOneOrThrow(request.principal.platform.id)
@@ -101,7 +100,7 @@ const saveEvent = async (
         projectDisplayName: project ? project.displayName : undefined,
         userEmail: userInformation.email,
         platformId: userInformation.platformId!,
-        ip: extractClientRealIp(request),
+        ip: networkUtls.extractClientRealIp(request),
     }
     let eventToSave: ApplicationEvent | undefined
     switch (rawEvent.action) {

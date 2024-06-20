@@ -2,8 +2,6 @@ import { appEventRoutingService } from '../../../app-event-routing/app-event-rou
 import { flowQueue } from '../../../flow-worker/queue'
 import {
     engineHelper,
-    EngineHelperResponse,
-    EngineHelperTriggerResult,
 } from '../../../helper/engine-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
 import { triggerUtils } from './trigger-utils'
@@ -20,6 +18,7 @@ import {
     TriggerHookType,
     TriggerType,
 } from '@activepieces/shared'
+import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
 
 export const disablePieceTrigger = async (
     params: DisableParams,
