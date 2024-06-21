@@ -84,7 +84,7 @@ async function updateFlowRunToLatestFlowVersionId(
 }
 
 function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): string {
-    const handlerId = webhookResponseWatcher.getHandlerId()
+    const handlerId = webhookResponseWatcher.getServerId()
     if (isNil(pauseMetadata)) {
         return handlerId
     }
@@ -201,6 +201,7 @@ export const flowRunService = {
                 projectId: flowRunToResume.projectId,
                 flowVersionId: flowRunToResume.flowVersionId,
                 synchronousHandlerId: returnHandlerId(pauseMetadata, requestId),
+                httpRequestId: requestId,
                 progressUpdateType,
                 executionType,
                 environment: RunEnvironment.PRODUCTION,
@@ -249,6 +250,7 @@ export const flowRunService = {
         executionType,
         synchronousHandlerId,
         progressUpdateType,
+        httpRequestId,
     }: StartParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
@@ -285,6 +287,7 @@ export const flowRunService = {
 
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,
+            httpRequestId,
             payload,
             synchronousHandlerId,
             executionType,
@@ -306,7 +309,8 @@ export const flowRunService = {
             payload,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: webhookResponseWatcher.getHandlerId(),
+            synchronousHandlerId: webhookResponseWatcher.getServerId(),
+            httpRequestId: undefined,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
         })
     },
@@ -442,7 +446,8 @@ type StartParams = {
     flowRunId?: FlowRunId
     environment: RunEnvironment
     payload: unknown
-    synchronousHandlerId?: string
+    synchronousHandlerId: string | undefined
+    httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType
     executionType: ExecutionType
 }

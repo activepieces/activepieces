@@ -2,6 +2,7 @@ import os from 'os'
 import path from 'path'
 import {
     ActivepiecesError,
+    ApEdition,
     CodeSandboxType,
     ErrorCode,
     isNil,
@@ -112,6 +113,9 @@ export const system = {
 
         return value
     },
+    getEdition(): ApEdition {
+        return this.getOrThrow<ApEdition>(SystemProp.EDITION)
+    }
 }
 
 const getEnvVar = (prop: SystemProp): string | undefined => {

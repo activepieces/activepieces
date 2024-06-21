@@ -1,7 +1,6 @@
-import { getEdition } from '../../helper/secret-helper'
 import { projectUsageService } from '../../project/usage/project-usage-service'
 import { projectLimitsService } from './project-plan.service'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { exceptionHandler, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -11,7 +10,7 @@ import {
 
 
 async function limit({ projectId }: { projectId: ProjectId }): Promise<void> {
-    const edition = getEdition()
+    const edition = system.getEdition()
 
     if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
         return

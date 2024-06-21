@@ -1,6 +1,5 @@
 import { fileService } from '../../file/file.service'
 import { engineHelper } from '../../helper/engine-helper'
-import { getEdition } from '../../helper/secret-helper'
 import { pieceMetadataService } from '../piece-metadata-service'
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ExecutionMode, logger, system, SystemProp } from '@activepieces/server-shared'
@@ -72,7 +71,7 @@ export const pieceService = {
 const assertInstallProjectEnabled = (scope: PieceScope): void => {
     if (scope === PieceScope.PROJECT) {
         const sandboxMode = system.getOrThrow(SystemProp.EXECUTION_MODE)
-        const edition = getEdition()
+        const edition = system.getEdition()
         if (
             sandboxMode === ExecutionMode.UNSANDBOXED &&
             [ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)

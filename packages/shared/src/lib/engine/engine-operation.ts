@@ -1,3 +1,4 @@
+import { Static, Type } from '@sinclair/typebox'
 import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
@@ -65,6 +66,7 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     executionType: T
     runEnvironment: RunEnvironment
     serverHandlerId: string | null
+    httpRequestId: string | null
     progressUpdateType: ProgressUpdateType
 }
 
@@ -151,6 +153,14 @@ type ExecuteOnEnableTriggerResponse = {
     listeners: AppEventListener[]
     scheduleOptions?: ScheduleOptions
 }
+
+export const EngineHttpResponse = Type.Object({
+    status: Type.Number(),
+    body: Type.Unknown(),
+    headers: Type.Record(Type.String(), Type.String()),
+})
+
+export type EngineHttpResponse = Static<typeof EngineHttpResponse>
 
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
     H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :

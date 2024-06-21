@@ -2,17 +2,17 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { tasksLimit } from '../ee/project-plan/tasks-limit'
-import { EngineHttpResponse, webhookResponseWatcher } from '../flow-worker/helper/webhook-response-watcher'
+import { webhookResponseWatcher } from '../flow-worker/helper/webhook-response-watcher'
 import { flowQueue } from '../flow-worker/queue'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
-import { getEdition } from '../helper/secret-helper'
-import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger } from '@activepieces/server-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ApEdition,
     apId,
+    EngineHttpResponse,
     ErrorCode,
     EventPayload,
     Flow,
@@ -88,7 +88,7 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
         data: {
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             requestId,
-            synchronousHandlerId: async ? null : webhookResponseWatcher.getHandlerId(),
+            synchronousHandlerId: async ? null : webhookResponseWatcher.getServerId(),
             payload,
             flowId: flow.id,
             simulate,
@@ -162,7 +162,7 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
 
     // TODO FIX AND REFACTOR
     // BEGIN EE
-    const edition = getEdition()
+    const edition = system.getEdition()
     if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
         try {
             await tasksLimit.limit({

@@ -3,6 +3,7 @@ import { isNil } from '@activepieces/shared'
 import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { workerApiService } from './api/server-api.service'
 import { flowJobExecutor } from './executors/flow-job-executor'
+import { webhookExecutor } from './executors/webhook-job-executor'
 
 const WORKER_CONCURRENCY = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
 const workerLocks = new ApSemaphore(WORKER_CONCURRENCY)
@@ -73,8 +74,8 @@ async function consumeJob(queueName: QueueName, jobData: JobData, engineToken: s
             })
             break
         case QueueName.WEBHOOK:{
-            // TODO URGENT NOW
-            throw new Error('Not implemented')
+            await webhookExecutor.consumeWebhook(jobData as WebhookJobData, engineToken, workerToken)
+            break;
         }
     }
 }

@@ -5,7 +5,6 @@ import { flagService } from '../../flags/flag.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { getEdition } from '../../helper/secret-helper'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { projectUsageService } from '../../project/usage/project-usage-service'
@@ -20,6 +19,7 @@ import {
     MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
+import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -145,7 +145,7 @@ function getTasksLimit(isCustomerPlatform: boolean, limit: number | undefined) {
 }
 
 async function isSubscribedInStripe(projectId: ProjectId): Promise<boolean> {
-    const isCloud = getEdition() === ApEdition.CLOUD
+    const isCloud = system.getEdition() === ApEdition.CLOUD
     if (!isCloud) {
         return false
     }

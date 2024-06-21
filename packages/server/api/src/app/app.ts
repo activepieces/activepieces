@@ -77,7 +77,6 @@ import { encryptUtils } from './helper/encryption'
 import { errorHandler } from './helper/error-handler'
 import { jwtUtils } from './helper/jwt-utils'
 import { openapiModule } from './helper/openapi/openapi.module'
-import { getEdition } from './helper/secret-helper'
 import { systemJobsSchedule } from './helper/system-jobs'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
@@ -299,7 +298,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     )
     await validateEnvPropsOnStartup()
 
-    const edition = getEdition()
+    const edition = system.getEdition()
     logger.info(`Activepieces ${edition} Edition`)
     switch (edition) {
         case ApEdition.CLOUD:

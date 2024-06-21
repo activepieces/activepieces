@@ -47,6 +47,7 @@ export class EngineConstants {
         public readonly filesServiceType: 'local' | 'db',
         public readonly progressUpdateType: ProgressUpdateType,
         public readonly serverHandlerId: string | null,
+        public readonly httpRequestId: string | null,
         public readonly resumePayload?: ResumePayload,
     ) { }
 
@@ -66,6 +67,7 @@ export class EngineConstants {
             'local',
             input.progressUpdateType,
             input.serverHandlerId ?? null,
+            input.httpRequestId ?? null,
             input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
         )
     }
@@ -86,6 +88,7 @@ export class EngineConstants {
             'db',
             ProgressUpdateType.NONE,
             null,
+            null,
         )
     }
 
@@ -105,6 +108,7 @@ export class EngineConstants {
             'db',
             ProgressUpdateType.NONE,
             null,
+            null,
         )
     }
 
@@ -123,6 +127,7 @@ export class EngineConstants {
             true,
             'db',
             ProgressUpdateType.NONE,
+            null,
             null,
         )
     }

@@ -4,7 +4,6 @@ import { flowQueue } from '../../../flow-worker/queue'
 import {
     generateEngineToken,
 } from '../../../helper/engine-helper'
-import { getEdition } from '../../../helper/secret-helper'
 import { triggerUtils } from './trigger-utils'
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import {
@@ -39,7 +38,7 @@ const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
 )
 
 function constructEveryXMinuteCron(minute: number): string {
-    const edition = getEdition()
+    const edition = system.getEdition()
     switch (edition) {
         case ApEdition.CLOUD:
             return `*/${minute} * * * *`
@@ -132,7 +131,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
                     timezone: 'UTC',
                 }
                 // BEGIN EE
-                const edition = getEdition()
+                const edition = system.getEdition()
                 if (edition === ApEdition.CLOUD) {
                     const plan = await projectLimitsService.getOrCreateDefaultPlan(projectId, DEFAULT_FREE_PLAN_LIMIT)
                     engineHelperResponse.result.scheduleOptions.cronExpression = constructEveryXMinuteCron(plan.minimumPollingInterval)

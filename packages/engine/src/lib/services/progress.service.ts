@@ -13,6 +13,7 @@ export const progressService = {
             const request: UpdateRunProgressRequest = {
                 runId: engineConstants.flowRunId,
                 workerHandlerId: engineConstants.serverHandlerId ?? null,
+                httpRequestId: engineConstants.httpRequestId ?? null,
                 runDetails: await flowExecutorContext.toResponse(),
                 progressUpdateType: engineConstants.progressUpdateType,
             }

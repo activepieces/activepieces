@@ -1,13 +1,12 @@
 import axios from 'axios'
 
-import { getEdition } from '../../../../helper/secret-helper'
 import {
     ClaimOAuth2Request,
     OAuth2Service,
     RefreshOAuth2Request,
 } from '../oauth2-service'
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { logger } from '@activepieces/server-shared'
+import { logger, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AppConnectionType,
@@ -28,7 +27,7 @@ async function refresh({
         refreshToken: connectionValue.refresh_token,
         pieceName,
         clientId: connectionValue.client_id,
-        edition: getEdition(),
+        edition: system.getEdition(),
         authorizationMethod: connectionValue.authorization_method,
         tokenUrl: connectionValue.token_url,
     }
@@ -57,7 +56,7 @@ async function claim({
             clientId: request.clientId,
             tokenUrl: request.tokenUrl,
             pieceName,
-            edition: getEdition(),
+            edition: system.getEdition(),
         }
         const value = (
             await axios.post<CloudOAuth2ConnectionValue>(

@@ -6,7 +6,6 @@ import {
 } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { getEdition } from '../../helper/secret-helper'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -15,7 +14,7 @@ import {
     ApplicationEvent,
     ApplicationEventName,
 } from '@activepieces/ee-shared'
-import { networkUtls, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { networkUtls, rejectedPromiseHandler, system } from '@activepieces/server-shared'
 import {
     ApEdition,
     apId,
@@ -78,7 +77,7 @@ const saveEvent = async (
         return
     }
     const platform = await platformService.getOneOrThrow(request.principal.platform.id)
-    const edition = getEdition()
+    const edition = system.getEdition()
     if (!platform.auditLogEnabled && edition !== ApEdition.CLOUD) {
         return
     }

@@ -1,10 +1,8 @@
 import { StatusCodes } from 'http-status-codes'
-import { webhookService } from '../../webhooks/webhook-service'
-import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
-import { EngineHttpResponse, webhookResponseWatcher } from '../helper/webhook-response-watcher'
-import { WebhookJobData } from '@activepieces/server-shared'
-import { FlowStatus, GetFlowVersionForWorkerRequestType, isNil } from '@activepieces/shared'
-import { engineApiService, workerApiService } from 'server-worker'
+import { WebhookJobData, logger } from '@activepieces/server-shared'
+import { EngineHttpResponse, FlowStatus, GetFlowVersionForWorkerRequestType, ProgressUpdateType, apId, isNil } from '@activepieces/shared'
+import { engineApiService, workerApiService } from '../api/server-api.service'
+import { webhookUtils } from '../utils/webhook-utils'
 
 export const webhookExecutor = {
     async consumeWebhook(data: WebhookJobData, engineToken: string, workerToken: string): Promise<void> {
@@ -13,21 +11,22 @@ export const webhookExecutor = {
             flowId,
             type: simulate ? GetFlowVersionForWorkerRequestType.LATEST : GetFlowVersionForWorkerRequestType.LOCKED,
         })
+
         if (isNil(populatedFlow)) {
-            await stopAndReply(data, {
+            await stopAndReply(workerToken, data, {
                 status: StatusCodes.GONE,
                 body: {},
                 headers: {},
             })
             return
         }
-        const handshakeResponse = await webhookService.handshake({
+        const handshakeResponse = await webhookUtils.handshake({
             engineToken,
             populatedFlow,
             payload,
         })
         if (!isNil(handshakeResponse)) {
-            await stopAndReply(data, {
+            await stopAndReply(workerToken, data, {
                 status: handshakeResponse.status,
                 headers: handshakeResponse.headers ?? {},
                 body: handshakeResponse.body,
@@ -36,23 +35,28 @@ export const webhookExecutor = {
         }
 
         if (populatedFlow.status !== FlowStatus.ENABLED && !simulate) {
-            await stopAndReply(data, {
+            await stopAndReply(workerToken, data, {
                 status: StatusCodes.NOT_FOUND,
                 body: {},
                 headers: {},
             })
             return
         }
-        const filteredPayloads = await webhookService.extractPayloadAndSave({
+        const filteredPayloads = await webhookUtils.extractPayloadAndSave({
             engineToken,
+            workerToken,
             flowVersion: populatedFlow.version,
-            payload: data.payload,
+            payload,
             projectId: populatedFlow.projectId,
         })
 
+
         if (simulate) {
-            await webhookSimulationService.delete({ flowId: populatedFlow.id, projectId: populatedFlow.projectId })
-            await stopAndReply(data, {
+            await workerApiService(workerToken).deleteWebhookSimluation({
+                flowId: populatedFlow.id,
+                projectId: populatedFlow.projectId,
+            })
+            await stopAndReply(workerToken, data, {
                 status: StatusCodes.OK,
                 body: {},
                 headers: {},
@@ -62,35 +66,32 @@ export const webhookExecutor = {
         const runs = await workerApiService(workerToken).startRuns({
             flowVersionId: populatedFlow.version.id,
             projectId: populatedFlow.projectId,
-            synchronousHandlerId: webhookResponseWatcher.getHandlerId(),
+            progressUpdateType: !isNil(data.synchronousHandlerId) ? ProgressUpdateType.WEBHOOK_RESPONSE : ProgressUpdateType.NONE,
+            synchronousHandlerId: data.synchronousHandlerId ?? undefined,
+            httpRequestId: data.requestId,
             payloads: filteredPayloads,
         })
         if (isNil(runs) || runs.length === 0 || isNil(runs[0])) {
-            await stopAndReply(data, {
+            await stopAndReply(workerToken, data, {
                 status: StatusCodes.NOT_FOUND,
                 body: {},
                 headers: {},
             })
             return
         }
-        if (!isNil(data.synchronousHandlerId)) {
-            const firstRun = runs[0]
-            const response = await webhookResponseWatcher.oneTimeListener(firstRun.id, true)
-            await stopAndReply(data, response)
-        }
     },
 
 }
 
 
-async function stopAndReply(data: WebhookJobData, response: EngineHttpResponse): Promise<void> {
-    const { requestId, synchronousHandlerId } = data
-    if (!isNil(synchronousHandlerId)) {
-        await webhookResponseWatcher.publish(
-            requestId,
-            synchronousHandlerId,
-            response,
-        )
+async function stopAndReply(workerToken: string, data: WebhookJobData, response: EngineHttpResponse): Promise<void> {
+    if (isNil(data.synchronousHandlerId)) {
+        return
     }
+    await workerApiService(workerToken).sendWebhookUpdate({
+        workerServerId: data.synchronousHandlerId,
+        requestId: data.requestId,
+        response,
+    })
 }
 

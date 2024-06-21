@@ -4,20 +4,36 @@ import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authoriza
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { EngineHttpResponse, webhookResponseWatcher } from './helper/webhook-response-watcher'
-import { assertNotNullOrUndefined, DisableFlowByEngineRequest, ExecutionState, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
-import { flowQueue } from './queue'
 import { triggerHooks } from '../flows/trigger'
+import { webhookResponseWatcher } from './helper/webhook-response-watcher'
+import { flowQueue } from './queue'
+import { GetRunForWorkerRequest, logger } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, DisableFlowByEngineRequest, EngineHttpResponse, ExecutionState, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
+    app.get('/runs/:runId', {
+        config: {
+            allowedPrincipals: [PrincipalType.WORKER],
+        },
+        schema: {
+            querystring: GetRunForWorkerRequest,
+        },
+    }, async (request) => {
+        const { runId } = request.query
+        return flowRunService.getOnePopulatedOrThrow({
+            id: runId,
+            projectId: request.principal.projectId,
+        })
+    })
+
     app.post('/update-run', UpdateStepProgress, async (request) => {
-        const { runId, workerHandlerId, runDetails, progressUpdateType } = request.body
-        if (progressUpdateType === ProgressUpdateType.WEBHOOK_RESPONSE && workerHandlerId) {
+        const { runId, workerHandlerId, runDetails, progressUpdateType, httpRequestId } = request.body
+        if (progressUpdateType === ProgressUpdateType.WEBHOOK_RESPONSE && workerHandlerId && httpRequestId) {
             await webhookResponseWatcher.publish(
-                runId,
+                httpRequestId,
                 workerHandlerId,
                 await getFlowResponse(runDetails),
             )
@@ -223,6 +239,6 @@ const DisableFlowRequest = {
         allowedPrincipals: [PrincipalType.ENGINE],
     },
     schema: {
-        body: DisableFlowByEngineRequest
-    }
+        body: DisableFlowByEngineRequest,
+    },
 }

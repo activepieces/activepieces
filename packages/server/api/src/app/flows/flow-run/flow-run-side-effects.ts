@@ -20,8 +20,9 @@ type StartParams = {
     flowRun: FlowRun
     executionType: ExecutionType
     payload: unknown
-    synchronousHandlerId?: string
+    synchronousHandlerId: string | undefined
     progressUpdateType: ProgressUpdateType
+    httpRequestId: string | undefined
 }
 
 type PauseParams = {
@@ -62,6 +63,7 @@ export const flowRunSideEffects = {
         executionType,
         payload,
         synchronousHandlerId,
+        httpRequestId,
         progressUpdateType,
     }: StartParams): Promise<void> {
         logger.info(
@@ -79,6 +81,7 @@ export const flowRunSideEffects = {
                 runId: flowRun.id,
                 flowVersionId: flowRun.flowVersionId,
                 payload,
+                httpRequestId,
                 executionType,
                 progressUpdateType,
             },

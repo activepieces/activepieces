@@ -67,12 +67,4 @@ export const appEventRoutingService = {
             flowId,
         })
     },
-    async getAppWebhookUrl({
-        appName,
-    }: {
-        appName: string
-    }): Promise<string | undefined> {
-        const frontendUrl = await networkUtls.getApiUrl()
-        return `${frontendUrl}v1/app-events/${appName}`
-    },
 }

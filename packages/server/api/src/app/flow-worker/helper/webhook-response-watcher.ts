@@ -2,25 +2,20 @@ import { logger } from '@sentry/utils'
 import { StatusCodes } from 'http-status-codes'
 import { pubSub } from '../../helper/pubsub'
 import { system, SystemProp } from '@activepieces/server-shared'
-import { apId } from '@activepieces/shared'
+import { apId, EngineHttpResponse } from '@activepieces/shared'
 
 const listeners = new Map<string, (flowResponse: EngineResponseWithId) => void>()
-const WEBHOOK_TIMEOUT_MS =
-    (system.getNumber(SystemProp.WEBHOOK_TIMEOUT_SECONDS) ?? 30) * 1000
-const HANDLER_ID = apId()
+const WEBHOOK_TIMEOUT_MS = (system.getNumber(SystemProp.WEBHOOK_TIMEOUT_SECONDS) ?? 30) * 1000
+const SERVER_ID = apId()
 
 export const webhookResponseWatcher = {
-    getHandlerId(): string {
-        return HANDLER_ID
-    },
-    removeListener(requestId: string): void {
-        listeners.delete(requestId)
+    getServerId(): string {
+        return SERVER_ID
     },
     async init(): Promise<void> {
         logger.info('[engineWatcher#init] Initializing engine run watcher')
-
         await pubSub.subscribe(
-            `engine-run:sync:${HANDLER_ID}`,
+            `engine-run:sync:${SERVER_ID}`,
             (_channel, message) => {
                 const parsedMessasge: EngineResponseWithId = JSON.parse(message)
                 const listener = listeners.get(parsedMessasge.requestId)
@@ -44,7 +39,7 @@ export const webhookResponseWatcher = {
                     headers: {},
                 }
                 timeout = setTimeout(() => {
-                    this.removeListener(requestId)
+                    listeners.delete(requestId)
                     resolve(defaultResponse)
                 }, WEBHOOK_TIMEOUT_MS)
 
@@ -52,8 +47,8 @@ export const webhookResponseWatcher = {
             const responseHandler = (flowResponse: EngineResponseWithId) => {
                 if (timeout) {
                     clearTimeout(timeout)
-                }
-                this.removeListener(requestId)
+                }                    
+                listeners.delete(requestId)
                 resolve(flowResponse.httpResponse)
             }
             listeners.set(requestId, responseHandler)
@@ -61,23 +56,18 @@ export const webhookResponseWatcher = {
     },
     async publish(
         requestId: string,
-        workerHandlerId: string,
+        workerServerId: string,
         httpResponse: EngineHttpResponse,
     ): Promise<void> {
         logger.info(`[engineWatcher#publish] requestId=${requestId}`)
         const message: EngineResponseWithId = { requestId, httpResponse }
-        await pubSub.publish(`engine-run:sync:${workerHandlerId}`, JSON.stringify(message))
+        await pubSub.publish(`engine-run:sync:${workerServerId}`, JSON.stringify(message))
     },
     async shutdown(): Promise<void> {
-        await pubSub.unsubscribe(`engine-run:sync:${HANDLER_ID}`)
+        await pubSub.unsubscribe(`engine-run:sync:${SERVER_ID}`)
     },
 }
 
-export type EngineHttpResponse = {
-    status: number
-    body: unknown
-    headers: Record<string, string>
-}
 
 export type EngineResponseWithId = {
     requestId: string

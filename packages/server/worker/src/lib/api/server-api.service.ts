@@ -1,5 +1,5 @@
 
-import { ApQueueJob, logger, PollJobRequest, QueueName, ResumeRunRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { ApQueueJob, DeleteWebhookSimulationRequest, GetRunForWorkerRequest, logger, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
 import { DisableFlowByEngineRequest, FlowRun, GetFlowVersionForWorkerRequest, PopulatedFlow, UpdateRunProgressRequest } from '@activepieces/shared'
 import axios, { isAxiosError } from 'axios'
 
@@ -25,9 +25,9 @@ export const workerApiService = (workerToken: string) => {
                 return response.data
             }
             catch (error) {
-                logger.error({
+                logger.trace({
                     message: JSON.stringify(error),
-                }, 'Failed to poll new jobs, retrying in 2 seconds')
+                }, 'Connection refused, retrying in 2 seconds')
                 await new Promise((resolve) => setTimeout(resolve, 2000))
                 return null
             }
@@ -35,8 +35,17 @@ export const workerApiService = (workerToken: string) => {
         async resumeRun(request: ResumeRunRequest): Promise<void> {
             await client.post('/v1/workers/resume-run', request)
         },
+        async deleteWebhookSimluation(request: DeleteWebhookSimulationRequest): Promise<void> {
+            await client.post('/v1/workers/delete-webhook-simulation', request)
+        },
+        async savePayloadsAsSampleData(request: SavePayloadRequest): Promise<void> {
+            return client.post('/v1/workers/save-payloads', request)
+        },
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
-            return await client.post('/v1/workers/submit-payloads', request)
+            return (await client.post('/v1/workers/submit-payloads', request)).data
+        },
+        async sendWebhookUpdate(request: SendWebhookUpdateRequest): Promise<void> {
+            await client.post('/v1/workers/send-webhook-update', request)
         },
         async updateJobStatus(request: UpdateJobRequest): Promise<void> {
             await client.post('/v1/workers/update-job', request)
@@ -53,6 +62,10 @@ export const engineApiService = (engineToken: string) => {
         },
     })
     return {
+        async getRun(request: GetRunForWorkerRequest): Promise<FlowRun> {
+            const response = await client.get('/v1/workers/runs/' + request.runId, {})
+            return response.data
+        },
         async updateRunStatus(request: UpdateRunProgressRequest): Promise<void> {
             await client.post('/v1/engine/update-run', request)
         },

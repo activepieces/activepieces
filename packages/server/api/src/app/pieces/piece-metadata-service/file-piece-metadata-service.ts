@@ -2,7 +2,6 @@ import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import importFresh from 'import-fresh'
 import { nanoid } from 'nanoid'
-import { getEdition } from '../../helper/secret-helper'
 import {
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
@@ -10,7 +9,7 @@ import { pieceMetadataServiceHooks } from './hooks'
 import { PieceMetadataService } from './piece-metadata-service'
 import { toPieceMetadataModelSummary } from '.'
 import { Piece, PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { exceptionHandler, filePiecesUtils, logger } from '@activepieces/server-shared'
+import { exceptionHandler, filePiecesUtils, logger, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -32,7 +31,7 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
 }
 async function findAllPieces(): Promise<PieceMetadata[]> {
     const pieces = await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
-    const enterprisePieces = getEdition() === ApEdition.ENTERPRISE ? await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'ee', 'pieces')) : []
+    const enterprisePieces = system.getEdition() === ApEdition.ENTERPRISE ? await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'ee', 'pieces')) : []
     return [...pieces, ...enterprisePieces]
 }
 

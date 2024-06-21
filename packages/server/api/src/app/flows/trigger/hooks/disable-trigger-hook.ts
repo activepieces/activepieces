@@ -3,7 +3,6 @@ import { flowQueue } from '../../../flow-worker/queue'
 import {
     generateEngineToken,
 } from '../../../helper/engine-helper'
-import { webhookService } from '../../../webhooks/webhook-service'
 import { triggerUtils } from './trigger-utils'
 import {
     TriggerBase,

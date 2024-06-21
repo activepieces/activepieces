@@ -31,7 +31,6 @@ import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { StepFileEntity } from '../flows/step-file/step-file.entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
-import { getEdition } from '../helper/secret-helper'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -49,7 +48,7 @@ import { ApEdition, ApEnvironment } from '@activepieces/shared'
 const databaseType = system.get(SystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
-    const edition = getEdition()
+    const edition = system.getEdition()
 
     const entities: EntitySchema[] = [
         TriggerEventEntity,

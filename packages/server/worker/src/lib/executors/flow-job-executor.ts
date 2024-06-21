@@ -1,12 +1,47 @@
-import { exceptionHandler, OneTimeJobData } from '@activepieces/server-shared'
-import { ActionType, ActivepiecesError, BeginExecuteFlowOperation, CodeAction, ErrorCode, ExecutionType, flowHelper, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, PackageType, PiecePackage, PrivatePiecePackage, ProjectId, PublicPiecePackage, RunEnvironment, SourceCode, TriggerType } from '@activepieces/shared'
+import { exceptionHandler, logger, OneTimeJobData } from '@activepieces/server-shared'
+import { ActionType, ActivepiecesError, BeginExecuteFlowOperation, CodeAction, ErrorCode, ExecutionType, flowHelper, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, PackageType, PiecePackage, PrivatePiecePackage, ProjectId, PublicPiecePackage, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, SourceCode, TriggerType } from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine/engine-runner'
 import { Sandbox } from '../sandbox'
 import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
 import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
+import dayjs from 'dayjs'
 
 
+async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, engineToken: string): Promise<Omit<BeginExecuteFlowOperation, 'serverUrl' | 'engineToken'> | Omit<ResumeExecuteFlowOperation, 'serverUrl' | 'engineToken'>> {
+    switch (jobData.executionType) {
+        case ExecutionType.BEGIN:
+            return {
+                flowVersion,
+                flowRunId: jobData.runId,
+                projectId: jobData.projectId,
+                serverHandlerId: jobData.synchronousHandlerId,
+                triggerPayload: jobData.payload,
+                executionType: ExecutionType.BEGIN,
+                runEnvironment: jobData.environment,
+                httpRequestId: jobData.httpRequestId ?? null,
+                progressUpdateType: jobData.progressUpdateType,
+            }
+        case ExecutionType.RESUME: {
+            const flowRun = await engineApiService(engineToken).getRun({
+                runId: jobData.runId,
+            })
+            return {
+                flowVersion,
+                flowRunId: jobData.runId,
+                projectId: jobData.projectId,
+                serverHandlerId: jobData.synchronousHandlerId,
+                tasks: flowRun.tasks ?? 0,
+                executionType: ExecutionType.RESUME,
+                steps: flowRun.steps,
+                runEnvironment: jobData.environment,
+                httpRequestId: jobData.httpRequestId ?? null,
+                resumePayload: jobData.payload as ResumePayload,
+                progressUpdateType: jobData.progressUpdateType,
+            }
+        }
+    }
+}
 async function executeFlow(jobData: OneTimeJobData, engineToken: string): Promise<void> {
     try {
         const flow = await engineApiService(engineToken).getFlowWithExactPieces({
@@ -23,18 +58,7 @@ async function executeFlow(jobData: OneTimeJobData, engineToken: string): Promis
             runEnvironment: jobData.environment,
         })
 
-        // TODO URGENT FIX FOR RESUME TRIGGER
-        const input: Omit<BeginExecuteFlowOperation, 'serverUrl' | 'engineToken'> = {
-            flowVersion: flow.version,
-            flowRunId: jobData.runId,
-            projectId: jobData.projectId,
-            serverHandlerId: jobData.synchronousHandlerId,
-            triggerPayload: jobData.payload,
-            executionType: ExecutionType.BEGIN,
-            runEnvironment: jobData.environment,
-            progressUpdateType: jobData.progressUpdateType,
-        }
-
+        const input = await prepareInput(flow.version, jobData, engineToken)
         const { result } = await engineRunner.executeFlow(
             engineToken,
             sandbox,
@@ -64,6 +88,7 @@ async function executeFlow(jobData: OneTimeJobData, engineToken: string): Promis
             await handleInternalError(jobData, engineToken, e as Error)
         }
     }
+    
 }
 
 async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: string): Promise<void> {
@@ -75,6 +100,7 @@ async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: st
             tasks: 0,
             tags: [],
         },
+        httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
         runId: jobData.runId,
@@ -89,6 +115,8 @@ async function handleTimeoutError(jobData: OneTimeJobData, engineToken: string):
             tasks: 0,
             tags: [],
         },
+
+        httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
         runId: jobData.runId,
@@ -104,6 +132,7 @@ async function handleInternalError(jobData: OneTimeJobData, engineToken: string,
             tasks: 0,
             tags: [],
         },
+        httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
         runId: jobData.runId,

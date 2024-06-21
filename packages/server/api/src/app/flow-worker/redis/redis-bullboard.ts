@@ -3,7 +3,6 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { FastifyAdapter } from '@bull-board/fastify'
 import basicAuth from '@fastify/basic-auth'
 import { FastifyInstance } from 'fastify'
-import { getEdition } from '../../helper/secret-helper'
 import { bullmqQueues } from './redis-queue'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, isNil } from '@activepieces/shared'
@@ -11,7 +10,7 @@ import { ApEdition, isNil } from '@activepieces/shared'
 const QUEUE_BASE_PATH = '/ui'
 
 export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
-    const edition = getEdition()
+    const edition = system.getEdition()
     const isQueueEnabled = (edition !== ApEdition.CLOUD) && (system.getBoolean(SystemProp.QUEUE_UI_ENABLED) ?? false)
     if (!isQueueEnabled) {
         return

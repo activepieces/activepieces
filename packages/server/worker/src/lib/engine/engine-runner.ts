@@ -4,13 +4,15 @@ import {
     DynamicPropsValue,
     PieceMetadata,
 } from '@activepieces/pieces-framework'
-import { logger, networkUtls } from '@activepieces/server-shared'
+import { logger, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
 import { ActivepiecesError, BeginExecuteFlowOperation, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteFlowOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthResponse, FlowRunResponse, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
 import chalk from 'chalk'
 import { Sandbox } from '../sandbox'
 import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
 import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
 import { triggerUtils } from '../trigger/hooks/trigger-util'
+import { webhookUtils } from '../utils/webhook-utils'
+import dayjs from 'dayjs'
 
 export type EngineHelperFlowResult = Pick<FlowRunResponse, 'status' | 'error'>
 
@@ -59,6 +61,7 @@ const execute = async <Result extends EngineHelperResult>(
         const sandboxPath = sandbox.getSandboxFolderPath()
 
         await fs.writeFile(`${sandboxPath}/input.json`, JSON.stringify(input))
+
         const sandboxResponse = await sandbox.runOperation(operationType, input)
 
         sandboxResponse.standardOutput.split('\n').forEach((f) => {
@@ -91,7 +94,9 @@ const execute = async <Result extends EngineHelperResult>(
     }
     finally {
         await sandboxProvisioner.release({ sandbox })
+
     }
+
 }
 
 function tryParseJson(value: unknown): unknown {
@@ -112,8 +117,8 @@ export const engineRunner = {
         engineToken: string,
         sandbox: Sandbox,
         operation:
-        | Omit<BeginExecuteFlowOperation, EngineConstants>
-        | Omit<ResumeExecuteFlowOperation, EngineConstants>,
+            | Omit<BeginExecuteFlowOperation, EngineConstants>
+            | Omit<ResumeExecuteFlowOperation, EngineConstants>,
     ): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
         logger.debug(
             {
@@ -139,30 +144,35 @@ export const engineRunner = {
             { hookType: operation.hookType, projectId: operation.projectId },
             '[EngineHelper#executeTrigger]',
         )
+        const startTime = dayjs().valueOf()
         // TODO URGENT Check if it's need to be exact
         const piecePackage = triggerUtils.getTriggerPiece(operation.flowVersion)
+        logger.info('ONE ' + (dayjs().valueOf() - startTime))
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName: piecePackage.pieceName,
             pieceVersion: piecePackage.pieceVersion,
             pieces: [piecePackage],
         })
-
+        logger.info('TWO ' + (dayjs().valueOf() - startTime))
         const input = {
             projectId: operation.projectId,
             hookType: operation.hookType,
             webhookUrl: operation.webhookUrl,
             pieceVersion: piecePackage,
             flowVersion: operation.flowVersion,
-            // TODO URGENT FIX
-            appWebhookUrl: '',
+            appWebhookUrl: await webhookUtils.getAppWebhookUrl({
+                appName: piecePackage.pieceName
+            }),
             serverUrl: await networkUtls.getApiUrl(),
-            // TODO URGENT FIX
-            webhookSecret: '',
+            webhookSecret: await webhookSecretsUtils.getWebhookSecret(operation.flowVersion),
             engineToken,
         }
-
-        return execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, input)
+        try {
+            return execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, input)
+        } finally {
+            logger.info('THREE ' + (dayjs().valueOf() - startTime))
+        }
     },
 
 }

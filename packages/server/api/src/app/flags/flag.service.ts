@@ -1,9 +1,8 @@
 import axios from 'axios'
 import { databaseConnection } from '../database/database-connection'
-import { getEdition, getSupportedAppWebhooks } from '../helper/secret-helper'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, Flag, isNil } from '@activepieces/shared'
 import { webhookUtils } from 'server-worker'
 
@@ -49,7 +48,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_PLATFORM_DEMO,
-                value: [ApEdition.CLOUD].includes(getEdition()),
+                value: [ApEdition.CLOUD].includes(system.getEdition()),
                 created,
                 updated,
             },
@@ -109,13 +108,13 @@ export const flagService = {
             },
             {
                 id: ApFlagId.EDITION,
-                value: getEdition(),
+                value: system.getEdition(),
                 created,
                 updated,
             },
             {
                 id: ApFlagId.SHOW_BILLING,
-                value: getEdition() === ApEdition.CLOUD,
+                value: system.getEdition() === ApEdition.CLOUD,
                 created,
                 updated,
             },
@@ -127,7 +126,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(getEdition())
+                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
                     ? this.getThirdPartyRedirectUrl(undefined, undefined)
                     : undefined,
                 created,
@@ -147,19 +146,19 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_DOCS,
-                value: getEdition() !== ApEdition.ENTERPRISE,
+                value: system.getEdition() !== ApEdition.ENTERPRISE,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.SHOW_COMMUNITY,
-                value: getEdition() !== ApEdition.ENTERPRISE,
+                value: system.getEdition() !== ApEdition.ENTERPRISE,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.PRIVATE_PIECES_ENABLED,
-                value: getEdition() !== ApEdition.COMMUNITY,
+                value: system.getEdition() !== ApEdition.COMMUNITY,
                 created,
                 updated,
             },
@@ -213,7 +212,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SUPPORTED_APP_WEBHOOKS,
-                value: getSupportedAppWebhooks(),
+                value: webhookSecretsUtils.getSupportedAppWebhooks(),
                 created,
                 updated,
             },

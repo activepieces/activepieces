@@ -22,6 +22,7 @@ export const redisConsumer: ConsumerManager = {
     async update({ queueName, jobId, status, token, message }): Promise<void> {
         const job = await Job.fromId(consumers[queueName], jobId)
         assertNotNullOrUndefined(job, 'Job not found')
+
         switch (status) {
             case JobStatus.COMPLETED:
                 await job.moveToCompleted({}, token, false)

@@ -1,20 +1,17 @@
-import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, FlowVersion, isNil } from '@activepieces/shared'
+import { FlowVersion, isNil } from '@activepieces/shared'
+import { system } from './system/system'
+import { SystemProp } from './system/system-prop'
 
 let webhookSecrets: Record<string, { webhookSecret: string }> | undefined =
-  undefined
+    undefined
 
-export function getEdition(): ApEdition {
-    const edition = system.get<ApEdition>(SystemProp.EDITION)
-
-    if (isNil(edition)) {
-        return ApEdition.COMMUNITY
-    }
-
-    return edition
+export const webhookSecretsUtils = {
+    getWebhookSecret,
+    getSupportedAppWebhooks,
+    getWebhookSecrets,
 }
 
-export async function getWebhookSecret(
+async function getWebhookSecret(
     flowVersion: FlowVersion,
 ): Promise<string | undefined> {
     const appName = flowVersion.trigger.settings.pieceName
@@ -31,15 +28,15 @@ export async function getWebhookSecret(
     return appConfig.webhookSecret
 }
 
-export function getSupportedAppWebhooks(): string[] {
+function getSupportedAppWebhooks(): string[] {
     return Object.keys(getWebhookSecrets())
 }
 
-export function getWebhookSecrets(): Record<
-string,
-{
-    webhookSecret: string
-}
+function getWebhookSecrets(): Record<
+    string,
+    {
+        webhookSecret: string
+    }
 > {
     const appSecret = system.get(SystemProp.APP_WEBHOOK_SECRETS)
     if (isNil(appSecret)) {
