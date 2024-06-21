@@ -61,5 +61,15 @@
   word-wrap: break-word;
 }
 .editor-allows-only-one-mention-as-value {
-  color: $body;
+  .ql-disabled{
+    color: $body ;
+  }
+  .ql-editor > *{
+    cursor:pointer !important;
+  }
+
+}
+
+.ql-disabled .ql-editor > *{
+ cursor: default !important
 }

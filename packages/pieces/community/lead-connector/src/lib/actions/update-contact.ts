@@ -167,7 +167,7 @@ export const updateContactAction = createAction({
       country: country,
       city: city,
       state: state,
-      address: address,
+      address1: address,
       postalCode: postalCode,
       timezone: timezone,
     };

@@ -9,7 +9,6 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "strictPropertyInitialization": false,
-    "disableSizeLimit": false
   },
   "files": [],
   "include": [],

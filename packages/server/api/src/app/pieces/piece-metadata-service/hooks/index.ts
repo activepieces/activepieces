@@ -1,5 +1,5 @@
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
-import { filterPiecesBasedUser } from './piece-filtering'
+import { filterPiecesBasedOnEmbedding, filterPiecesBasedUser } from './piece-filtering'
 import { sortAndOrderPieces } from './piece-sorting'
 import { PieceCategory, PieceOrderBy, PieceSortBy, PlatformId, SuggestionType } from '@activepieces/shared'
 
@@ -11,13 +11,20 @@ export const defaultPieceHooks: PieceMetadataServiceHooks = {
             params.pieces,
         )
         
-        return filterPiecesBasedUser({
+        const userBasedPieces = await filterPiecesBasedUser({
             categories: params.categories,
             searchQuery: params.searchQuery,
             pieces: sortedPieces,
             platformId: params.platformId,
             suggestionType: params.suggestionType,
         })
+
+        const platformEmbeddedBasedPieces = filterPiecesBasedOnEmbedding({
+            platformId: params.platformId,
+            pieces: userBasedPieces,
+        })
+
+        return platformEmbeddedBasedPieces
     },
 }
 

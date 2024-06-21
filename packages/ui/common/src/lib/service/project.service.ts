@@ -82,8 +82,14 @@ export class ProjectService {
       );
   }
 
+  // TODO: paginate the results
   getAll(): Observable<ProjectWithLimits[]> {
-    return this.list({ limit: 99999 }).pipe(map((res) => res.data));
+    return this.list({ limit: 100 }).pipe(
+      map((res) => res.data),
+      map((res) => {
+        return res.sort((a, b) => a.displayName.localeCompare(b.displayName));
+      })
+    );
   }
 
   list(

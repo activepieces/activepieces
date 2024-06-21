@@ -6,7 +6,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
-import { flowServiceHooks as hooks } from './flow-service-hooks'
+import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
 import { logger } from '@activepieces/server-shared'
@@ -148,7 +148,8 @@ export const flowService = {
         id,
         projectId,
         versionId,
-        removeSecrets = false,
+        removeConnectionsName = false,
+        removeSampleData = false,
         entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow | null> {
         const flow = await flowRepo(entityManager).findOneBy({
@@ -163,7 +164,8 @@ export const flowService = {
         const flowVersion = await flowVersionService.getFlowVersionOrThrow({
             flowId: id,
             versionId,
-            removeSecrets,
+            removeConnectionsName,
+            removeSampleData,
             entityManager,
         })
 
@@ -177,14 +179,16 @@ export const flowService = {
         id,
         projectId,
         versionId,
-        removeSecrets = false,
+        removeConnectionsName = false,
+        removeSampleData = false,
         entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow> {
         const flow = await this.getOnePopulated({
             id,
             projectId,
             versionId,
-            removeSecrets,
+            removeConnectionsName,
+            removeSampleData,
             entityManager,
         })
         assertFlowIsNotNull(flow)
@@ -285,7 +289,7 @@ export const flowService = {
         })
 
         if (flowToUpdate.status !== newStatus) {
-            const { scheduleOptions } = await hooks.preUpdateStatus({
+            const { scheduleOptions } = await flowSideEffects.preUpdateStatus({
                 flowToUpdate,
                 newStatus,
                 entityManager,
@@ -318,7 +322,7 @@ export const flowService = {
             },
         )
 
-        const { scheduleOptions } = await hooks.preUpdatePublishedVersionId({
+        const { scheduleOptions } = await flowSideEffects.preUpdatePublishedVersionId({
             flowToUpdate,
             flowVersionToPublish,
         })
@@ -355,8 +359,8 @@ export const flowService = {
                 id,
                 projectId,
             })
-
-            await hooks.preDelete({
+            
+            await flowSideEffects.preDelete({
                 flowToDelete,
             })
 
@@ -382,7 +386,8 @@ export const flowService = {
             id: flowId,
             projectId,
             versionId,
-            removeSecrets: true,
+            removeConnectionsName: true,
+            removeSampleData: true,
         })
 
         return {
@@ -474,7 +479,8 @@ type GetOneParams = {
 
 type GetOnePopulatedParams = GetOneParams & {
     versionId?: FlowVersionId
-    removeSecrets?: boolean
+    removeConnectionsName?: boolean
+    removeSampleData?: boolean
 }
 
 type GetTemplateParams = {
@@ -490,7 +496,7 @@ type CountParams = {
 
 type UpdateParams = {
     id: FlowId
-    userId: UserId
+    userId: UserId | null
     projectId: ProjectId
     operation: FlowOperationRequest
     lock?: boolean
@@ -505,7 +511,7 @@ type UpdateStatusParams = {
 
 type UpdatePublishedVersionIdParams = {
     id: FlowId
-    userId: UserId
+    userId: UserId | null
     projectId: ProjectId
 }
 
@@ -518,7 +524,7 @@ type NewFlow = Omit<Flow, 'created' | 'updated'>
 
 type LockFlowVersionIfNotLockedParams = {
     flowVersion: FlowVersion
-    userId: UserId
+    userId: UserId | null
     projectId: ProjectId
     entityManager: EntityManager
 }

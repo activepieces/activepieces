@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { DropdownOption } from '@activepieces/pieces-framework';
 import { UntypedFormControl } from '@angular/forms';
-import { Observable, map, startWith } from 'rxjs';
+import { BehaviorSubject, Observable, map, startWith } from 'rxjs';
 import deepEqual from 'deep-equal';
 
 @Pipe({
@@ -14,24 +14,33 @@ import deepEqual from 'deep-equal';
 export class DropdownSelectedValuesPipe implements PipeTransform {
   transform(
     options: DropdownOption<unknown>[],
-    formControl: UntypedFormControl
+    formControl: UntypedFormControl,
+    cache$?: BehaviorSubject<DropdownOption<unknown>[]>
   ): Observable<DropdownOption<unknown>[] | undefined> | undefined {
     return formControl.valueChanges.pipe(
       startWith(formControl.value),
       map((formControlValue) => {
+        let result: DropdownOption<unknown>[] = [];
         if (!Array.isArray(formControlValue)) {
           const initialValue = options.find((o) => {
             return deepEqual(o.value, formControlValue);
           });
           if (initialValue) {
-            return [initialValue];
+            result = [initialValue];
+            if (cache$) {
+              cache$.next(result);
+            }
           }
         } else {
-          return options.filter((o) => {
+          result = options.filter((o) => {
             return !!formControlValue.find((v) => deepEqual(v, o.value));
           });
+          if (result.length === formControlValue.length && cache$) {
+            cache$.next(result);
+          }
         }
-        return undefined;
+
+        return cache$?.value ?? result;
       })
     );
   }

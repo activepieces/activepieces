@@ -1,6 +1,6 @@
 import { engineHelper } from '../../../helper/engine-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
-import { getPieceTrigger } from './trigger-utils'
+import { triggerUtils } from './trigger-utils'
 import { logger } from '@activepieces/server-shared'
 import {
     FlowVersion,
@@ -19,7 +19,7 @@ export async function executeTrigger(
     let payloads: unknown[] = []
     switch (flowTrigger.type) {
         case TriggerType.PIECE: {
-            const pieceTrigger = await getPieceTrigger({
+            const pieceTrigger = await triggerUtils.getPieceTriggerOrThrow({
                 trigger: flowTrigger,
                 projectId,
             })

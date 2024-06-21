@@ -31,7 +31,7 @@ export const box = createPiece({
     createCustomApiCallAction({
       baseUrl: () => common.baseUrl,
       auth: boxAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

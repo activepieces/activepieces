@@ -9,6 +9,30 @@
     },
     {
       "cli": "nx",
+      "version": "19.2.0-beta.2",
+      "description": "Updates the default workspace data directory to .nx/workspace-data",
+      "implementation": "./src/migrations/update-19-2-0/move-workspace-data-directory",
+      "package": "nx",
+      "name": "19-2-0-move-graph-cache-directory"
+    },
+    {
+      "cli": "nx",
+      "version": "19.2.2-beta.0",
+      "description": "Updates the nx wrapper.",
+      "implementation": "./src/migrations/update-17-3-0/update-nxw",
+      "package": "nx",
+      "name": "19-2-2-update-nx-wrapper"
+    },
+    {
+      "version": "19.2.4-beta.0",
+      "description": "Set project name in nx.json explicitly",
+      "implementation": "./src/migrations/update-19-2-4/set-project-name",
+      "x-repair-skip": true,
+      "package": "nx",
+      "name": "19-2-4-set-project-name"
+    },
+    {
+      "cli": "nx",
       "version": "18.1.0-beta.1",
       "requires": {
         "@angular/core": ">=17.2.0"
@@ -38,11 +62,62 @@
       "name": "update-angular-cli-version-17-3-0"
     },
     {
-      "version": "17.3.0",
+      "cli": "nx",
+      "version": "19.1.0-beta.2",
+      "requires": {
+        "@angular/core": ">=18.0.0"
+      },
+      "description": "Update the @angular/cli package version to ~18.0.0.",
+      "factory": "./src/migrations/update-19-1-0/update-angular-cli",
+      "package": "@nx/angular",
+      "name": "update-angular-cli-version-18-0-0"
+    },
+    {
+      "cli": "nx",
+      "version": "19.2.1-beta.0",
+      "requires": {
+        "@angular-eslint/eslint-plugin": ">=18.0.0"
+      },
+      "description": "Installs the '@typescript-eslint/utils' package when having installed '@angular-eslint/eslint-plugin' or '@angular-eslint/eslint-plugin-template' with version >=18.0.0.",
+      "factory": "./src/migrations/update-19-2-1/add-typescript-eslint-utils",
+      "package": "@nx/angular",
+      "name": "add-typescript-eslint-utils"
+    },
+    {
+      "cli": "nx",
+      "version": "19.1.0-beta.6",
+      "description": "Migrate no-extra-semi rules into user config, out of nx extendable configs",
+      "implementation": "./src/migrations/update-19-1-0-migrate-no-extra-semi/migrate-no-extra-semi",
+      "package": "@nx/eslint-plugin",
+      "name": "update-19-1-0-rename-no-extra-semi"
+    },
+    {
+      "version": "18.0.0",
       "description": "Updates two-way bindings that have an invalid expression to use the longform expression instead.",
       "factory": "./migrations/invalid-two-way-bindings/bundle",
       "package": "@angular/core",
       "name": "invalid-two-way-bindings"
+    },
+    {
+      "version": "18.0.0",
+      "description": "Replace deprecated HTTP related modules with provider functions",
+      "factory": "./migrations/http-providers/bundle",
+      "package": "@angular/core",
+      "name": "migration-http-providers"
+    },
+    {
+      "version": "18.0.0-0",
+      "description": "Updates Angular Material to v18",
+      "factory": "./ng-update/index_bundled#updateToV18",
+      "package": "@angular/material",
+      "name": "migration-v18"
+    },
+    {
+      "version": "18.0.0-0",
+      "description": "Updates the Angular CDK to v18",
+      "factory": "./ng-update/index#updateToV18",
+      "package": "@angular/cdk",
+      "name": "migration-v18"
     }
   ]
 }

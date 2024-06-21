@@ -60,7 +60,9 @@ export class TestStepService {
     return this.websocketService.socket
       .fromEvent<StepRunResponse>(WebsocketClientEvent.TEST_STEP_FINISHED)
       .pipe(
-        filter((response) => response.id === id),
+        filter((response) => {
+          return response.id === id;
+        }),
         take(1)
       );
   }

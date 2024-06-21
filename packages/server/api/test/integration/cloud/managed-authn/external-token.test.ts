@@ -75,7 +75,7 @@ describe('Managed Authentication API', () => {
             expect(responseBody?.firstName).toBe(mockExternalTokenPayload.firstName)
             expect(responseBody?.lastName).toBe(mockExternalTokenPayload.lastName)
             expect(responseBody?.trackEvents).toBe(true)
-            expect(responseBody?.newsLetter).toBe(true)
+            expect(responseBody?.newsLetter).toBe(false)
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe('ACTIVE')
             expect(responseBody?.verified).toBe(true)
@@ -260,16 +260,15 @@ describe('Managed Authentication API', () => {
             const generatedProjectMember = await databaseConnection
                 .getRepository('project_member')
                 .findOneBy({
-                    email: mockedEmail,
+                    userId: responseBody?.id,
                     platformId: mockPlatform.id,
                     projectId: responseBody?.projectId,
                 })
 
             expect(generatedProjectMember?.projectId).toBe(responseBody?.projectId)
-            expect(generatedProjectMember?.email).toBe(mockedEmail)
+            expect(generatedProjectMember?.userId).toBe(responseBody?.id)
             expect(generatedProjectMember?.platformId).toBe(mockPlatform.id)
             expect(generatedProjectMember?.role).toBe('VIEWER')
-            expect(generatedProjectMember?.status).toBe('ACTIVE')
         })
 
         it('Adds new user to existing project', async () => {

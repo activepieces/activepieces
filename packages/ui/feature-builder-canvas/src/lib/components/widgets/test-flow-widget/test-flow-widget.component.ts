@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { combineLatest, map, Observable, of, tap } from 'rxjs';
 import {
-  InstanceRunService,
   WebSocketService,
   fadeIn400msWithoutOut,
   initializedRun,
@@ -15,12 +14,13 @@ import {
   TriggerType,
   WebsocketClientEvent,
   WebsocketServerEvent,
+  isFlowStateTerminal,
 } from '@activepieces/shared';
 import {
   BuilderSelectors,
   TestRunBarComponent,
 } from '@activepieces/ui/feature-builder-store';
-import { switchMap, take } from 'rxjs/operators';
+import { filter, switchMap, take, takeWhile } from 'rxjs/operators';
 import { canvasActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
@@ -38,7 +38,6 @@ export class TestFlowWidgetComponent implements OnInit {
   selectedFlow$: Observable<PopulatedFlow | undefined>;
   instanceRunStatusChecker$: Observable<FlowRun>;
   executeTest$: Observable<FlowRun | null>;
-  testResult$: Observable<FlowRun>;
   shouldHideTestWidget$: Observable<boolean>;
   testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
   isTriggerTested$: Observable<boolean>;
@@ -46,7 +45,6 @@ export class TestFlowWidgetComponent implements OnInit {
   readonly savingText = $localize`Saving...`;
   constructor(
     private store: Store,
-    private instanceRunService: InstanceRunService,
     private snackbar: MatSnackBar,
     private websockService: WebSocketService
   ) {}
@@ -93,10 +91,10 @@ export class TestFlowWidgetComponent implements OnInit {
       .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_STARTED)
       .pipe(
         take(1),
-        tap((flowRun) => {
+        switchMap((initialRunFromServer) => {
           this.store.dispatch(
             canvasActions.setRun({
-              run: flowRun ?? initializedRun,
+              run: initialRunFromServer ?? initializedRun,
             })
           );
           this.testRunSnackbar = this.snackbar.openFromComponent(
@@ -108,17 +106,38 @@ export class TestFlowWidgetComponent implements OnInit {
               },
             }
           );
-        })
-      );
-
-    this.testResult$ = this.websockService.socket
-      .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_FINISHED)
-      .pipe(
-        switchMap((flowRun) => {
-          return this.instanceRunService.get(flowRun.id);
-        }),
-        tap((instanceRun) => {
-          this.store.dispatch(canvasActions.setRun({ run: instanceRun }));
+          return this.websockService.socket
+            .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS)
+            .pipe(
+              switchMap((serverRun) => {
+                const runInStore$ = this.store.select(
+                  BuilderSelectors.selectCurrentFlowRun
+                );
+                return runInStore$.pipe(
+                  take(1),
+                  map((storeRun) => {
+                    return {
+                      storeRun,
+                      serverRun,
+                    };
+                  })
+                );
+              }),
+              filter(
+                (res) =>
+                  res.serverRun.id === initialRunFromServer.id &&
+                  res.storeRun !== undefined
+              ),
+              map((res) => res.serverRun),
+              tap((serverRun) => {
+                this.store.dispatch(
+                  canvasActions.setRun({
+                    run: serverRun,
+                  })
+                );
+              }),
+              takeWhile((serverRun) => !isFlowStateTerminal(serverRun.status))
+            );
         })
       );
   }

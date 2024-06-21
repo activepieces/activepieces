@@ -6,10 +6,12 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
 import { stepFileService } from '../step-file/step-file.service'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { logger } from '@activepieces/server-shared'
 import {
     ActionType,
@@ -30,8 +32,10 @@ import {
     isNil,
     LoopOnItemsActionSettingsWithValidation,
     PieceActionSettings,
+    PieceCategory,
     PieceTriggerSettings,
-    ProjectId, SeekPage, TriggerType, UserId } from '@activepieces/shared'
+    ProjectId, SeekPage, TriggerType, UserId,
+} from '@activepieces/shared'
 
 const branchSettingsValidator = TypeCompiler.Compile(
     BranchActionSettingsWithValidation,
@@ -87,7 +91,8 @@ export const flowVersionService = {
                 const previousVersion = await flowVersionService.getFlowVersionOrThrow({
                     flowId: flowVersion.flowId,
                     versionId: userOperation.request.versionId,
-                    removeSecrets: false,
+                    removeConnectionsName: false,
+                    removeSampleData: false,
                 })
 
                 operations = handleImportFlowOperation(flowVersion, previousVersion)
@@ -138,8 +143,9 @@ export const flowVersionService = {
         }
 
         mutatedFlowVersion.updated = dayjs().toISOString()
-        mutatedFlowVersion.updatedBy = userId
-
+        if (userId) {
+            mutatedFlowVersion.updatedBy = userId
+        }
         return flowVersionRepo(entityManager).save(mutatedFlowVersion)
     },
 
@@ -215,7 +221,8 @@ export const flowVersionService = {
     async getFlowVersionOrThrow({
         flowId,
         versionId,
-        removeSecrets = false,
+        removeConnectionsName = false,
+        removeSampleData = false,
         entityManager,
     }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
         const flowVersion: FlowVersion | null = await flowVersionRepo(entityManager).findOne({
@@ -240,9 +247,7 @@ export const flowVersionService = {
             })
         }
 
-        return removeSecrets
-            ? removeSecretsFromFlow(flowVersion)
-            : flowVersion
+        return removeSecretsFromFlow(flowVersion, removeConnectionsName, removeSampleData)
     },
     async createEmptyVersion(
         flowId: FlowId,
@@ -285,17 +290,20 @@ async function applySingleOperation(
 
 async function removeSecretsFromFlow(
     flowVersion: FlowVersion,
+    removeConnectionNames: boolean,
+    removeSampleData: boolean,
 ): Promise<FlowVersion> {
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(
         JSON.stringify(flowVersion),
     )
     const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
     for (const step of steps) {
-        /*
-            Remove Sample Data & connections
-            */
-        step.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
-        step.settings.input = replaceConnections(step.settings.input)
+        if (removeSampleData) {
+            step.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
+        }
+        if (removeConnectionNames) {
+            step.settings.input = replaceConnections(step.settings.input)
+        }
     }
     return flowVersionWithArtifacts
 }
@@ -489,10 +497,13 @@ async function validateAction({
     if (isNil(piece)) {
         return false
     }
+    await assertEnterprisePiecesEnabled(piece, projectId)
+
     const action = piece.actions[settings.actionName]
     if (isNil(action)) {
         return false
     }
+
     const props = action.props
     if (!isNil(piece.auth) && action.requireAuth) {
         props.auth = piece.auth
@@ -521,10 +532,10 @@ async function validateTrigger({
         name: settings.pieceName,
         version: settings.pieceVersion,
     })
-
     if (isNil(piece)) {
         return false
     }
+    await assertEnterprisePiecesEnabled(piece, projectId)
     const trigger = piece.triggers[settings.triggerName]
     if (isNil(trigger)) {
         return false
@@ -534,6 +545,25 @@ async function validateTrigger({
         props.auth = piece.auth
     }
     return validateProps(props, settings.input)
+}
+
+async function assertEnterprisePiecesEnabled(piece: PieceMetadataModel, projectId: ProjectId): Promise<void> {
+    if (!piece.categories?.includes(PieceCategory.PREMIUM)) {
+        return
+    }
+    const project = await projectService.getOneOrThrow(projectId)
+    const platform = await platformService.getOneOrThrow(project.platformId)
+    const enabledForPlatform = platform.premiumPieces.includes(piece.name)
+    if (enabledForPlatform) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.FEATURE_DISABLED,
+        params: {
+            message: `The platform doesn not include ${piece.name}`,
+        },
+    })
+
 }
 
 function validateProps(
@@ -634,14 +664,15 @@ function buildSchema(props: PiecePropertyMap): TSchema {
 type GetFlowVersionOrThrowParams = {
     flowId: FlowId
     versionId: FlowVersionId | undefined
-    removeSecrets?: boolean
+    removeConnectionsName?: boolean
+    removeSampleData?: boolean
     entityManager?: EntityManager
 }
 
 type NewFlowVersion = Omit<FlowVersion, 'created' | 'updated'>
 
 type ApplyOperationParams = {
-    userId: UserId
+    userId: UserId | null
     projectId: ProjectId
     flowVersion: FlowVersion
     userOperation: FlowOperationRequest

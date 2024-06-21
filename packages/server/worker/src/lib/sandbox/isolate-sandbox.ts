@@ -2,9 +2,11 @@ import { exec } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { arch, cwd } from 'node:process'
-import { logger, PiecesSource, system, SystemProp } from '@activepieces/server-shared'
+import { fileExists, logger, PiecesSource, system, SystemProp } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
+    EngineOperation,
+    EngineResponse,
     EngineResponseStatus,
 } from '@activepieces/shared'
 import {
@@ -32,7 +34,7 @@ export class IsolateSandbox extends AbstractSandbox {
         super(params)
     }
 
-    public override async recreate(): Promise<void> {
+    public override async cleanUp(): Promise<void> {
         logger.debug({ boxId: this.boxId }, '[IsolateSandbox#recreate]')
 
         await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --cleanup`)
@@ -40,7 +42,8 @@ export class IsolateSandbox extends AbstractSandbox {
     }
 
     public override async runOperation(
-        operation: string,
+        operationType: string,
+        _operation: EngineOperation,
     ): Promise<ExecuteSandboxResult> {
         const metaFile = this.getSandboxFilePath('meta.txt')
 
@@ -70,7 +73,7 @@ export class IsolateSandbox extends AbstractSandbox {
                 `--env=AP_BASE_CODE_DIRECTORY=${IsolateSandbox.cacheBindPath}/codes`,
                 AbstractSandbox.nodeExecutablePath,
                 `${IsolateSandbox.cacheBindPath}/main.js`,
-                operation,
+                operationType,
             ].join(' ')
 
             await IsolateSandbox.runIsolate(fullCommand)
@@ -107,6 +110,33 @@ export class IsolateSandbox extends AbstractSandbox {
         logger.trace(result, '[IsolateSandbox#runCommandLine] result')
 
         return result
+    }
+
+    protected async parseMetaFile(): Promise<Record<string, unknown>> {
+        const metaFile = this.getSandboxFilePath('meta.txt')
+        const lines = (await readFile(metaFile, { encoding: 'utf-8' })).split('\n')
+        const result: Record<string, unknown> = {}
+
+        lines.forEach((line: string) => {
+            const parts = line.split(':')
+            result[parts[0]] = parts[1]
+        })
+
+        return result
+    }
+
+    protected async parseFunctionOutput(): Promise<EngineResponse<unknown>> {
+        const outputFile = this.getSandboxFilePath('output.json')
+
+        if (!(await fileExists(outputFile))) {
+            throw new Error(`Output file not found in ${outputFile}`)
+        }
+
+        const output = JSON.parse(
+            await readFile(outputFile, { encoding: 'utf-8' }),
+        )
+        logger.trace(output, '[Sandbox#parseFunctionOutput] output')
+        return output
     }
 
     public override getSandboxFolderPath(): string {

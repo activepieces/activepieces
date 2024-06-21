@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 import { notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../..';
+import { isNil } from '@activepieces/shared';
 
 export const updatedDatabaseItem = createTrigger({
   auth: notionAuth,
@@ -120,17 +121,28 @@ const polling: Polling<
   OAuth2PropertyValue,
   { database_id: string | undefined }
 > = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+  strategy: DedupeStrategy.LAST_ITEM,
+  items: async ({ auth, propsValue, lastItemId }) => {
+    const lastItem = lastItemId as string;
+    let lastUpdatedDate: string | null;
+
+    if (lastItem) {
+      const lastUpdatedEpochMS = Number(lastItem.split('|')[1]);
+      lastUpdatedDate = dayjs(lastUpdatedEpochMS).toISOString();
+    } else {
+      lastUpdatedDate = lastItem;
+    }
+
     const items = await getResponse(
       auth,
       propsValue.database_id!,
-      lastFetchEpochMS === 0 ? null : dayjs(lastFetchEpochMS).toISOString()
+      lastUpdatedDate
     );
-    return items.results.map((item) => {
-      const object = item as { created_time: string };
+
+    return items.map((item: any) => {
+      const object = item as { last_edited_time: string; id: string };
       return {
-        epochMilliSeconds: dayjs(object.created_time).valueOf(),
+        id: object.id + '|' + dayjs(object.last_edited_time).valueOf(),
         data: item,
       };
     });
@@ -146,22 +158,36 @@ const getResponse = async (
     auth: authentication.access_token,
     notionVersion: '2022-02-22',
   });
-  return notion.databases.query({
-    database_id,
-    filter:
-      startDate == null
-        ? undefined
-        : {
+
+  let cursor;
+  let hasMore = true;
+  const results = [];
+  do {
+    const response = await notion.databases.query({
+      start_cursor: cursor,
+      database_id,
+      filter:
+        startDate == null
+          ? undefined
+          : {
             timestamp: 'last_edited_time',
             last_edited_time: {
-              after: startDate,
+              on_or_after: startDate,
             },
           },
-    sorts: [
-      {
-        timestamp: 'last_edited_time',
-        direction: startDate == null ? 'descending' : 'ascending',
-      },
-    ],
-  });
+      sorts: [
+        {
+          timestamp: 'last_edited_time',
+          direction: 'descending',
+        },
+      ],
+    });
+
+    hasMore = response.has_more;
+    cursor = response.next_cursor ?? undefined;
+
+    results.push(...response.results);
+  } while (hasMore && !isNil(startDate));
+
+  return results;
 };

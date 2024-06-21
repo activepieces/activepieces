@@ -69,7 +69,7 @@ export class VariableService {
             return ''
         }
         if (censorConnections) {
-            return '**CENSORED**'
+            return '**REDACTED**'
         }
         // Need to be resolved dynamically
         // Replace connection name with something that doesn't contain - or _, otherwise evalInScope would break

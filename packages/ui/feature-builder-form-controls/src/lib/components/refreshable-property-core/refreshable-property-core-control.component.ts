@@ -52,7 +52,7 @@ export class RefreshablePropertyCoreControlComponent {
 
   protected createRefreshers<
     T extends DropdownState<unknown> | PiecePropertyMap
-  >() {
+  >(refreshDropdownOptions$?: Observable<void>) {
     this.resetValueOnRefresherChange$ = this.stepChanged$.pipe(
       tap(() => {
         this.loading$.next(true);
@@ -76,10 +76,18 @@ export class RefreshablePropertyCoreControlComponent {
     );
     const search$ = this.getSearchRefresher();
     const singleTimeRefresher$ = of('singleTimeRefresher');
+    const refresh$ = refreshDropdownOptions$
+      ? refreshDropdownOptions$.pipe(
+          tap(() => {
+            this.loading$.next(true);
+          })
+        )
+      : of('');
     return combineLatest({
       refreshers: refreshers$,
-      search: search$.pipe(startWith('')),
+      search: search$,
       singleTimeRefresher: singleTimeRefresher$,
+      refresh$: refresh$,
     }).pipe(
       switchMap((res) => {
         return this.piecetaDataService
@@ -111,7 +119,13 @@ export class RefreshablePropertyCoreControlComponent {
     return this.property.type === PropertyType.DROPDOWN &&
       this.property.refreshOnSearch &&
       this.searchRefresher$
-      ? this.searchRefresher$
+      ? this.searchRefresher$.pipe(
+          startWith(''),
+          debounceTime(200),
+          tap(() => {
+            this.loading$.next(true);
+          })
+        )
       : of('');
   }
 

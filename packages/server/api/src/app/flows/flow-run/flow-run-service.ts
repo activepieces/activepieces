@@ -1,3 +1,4 @@
+import { In } from 'typeorm'
 import {
     APArrayContains,
     databaseConnection,
@@ -8,20 +9,21 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { telemetry } from '../../helper/telemetry.utils'
-import { engineResponseWatcher } from '../../workers/flow-worker/engine-response-watcher'
+import { webhookResponseWatcher } from '../../workers/flow-worker/webhook-response-watcher'
 import { flowService } from '../flow/flow.service'
 import { FlowRunEntity } from './flow-run-entity'
-import { flowRunHooks } from './flow-run-hooks'
 import { flowRunSideEffects } from './flow-run-side-effects'
-import { logger } from '@activepieces/server-shared'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
     Cursor,
     ErrorCode,
+    ExecutionState,
     ExecutionType,
     ExecutioOutputFile,
-    FileId,
+    FileCompression,
+    FileType,
     FlowId,
     FlowRetryStrategy,
     FlowRun,
@@ -29,8 +31,10 @@ import {
     FlowRunStatus,
     FlowVersionId,
     isNil,
+    MAX_LOG_SIZE,
     PauseMetadata,
     PauseType,
+    ProgressUpdateType,
     ProjectId,
     ResumePayload,
     RunEnvironment,
@@ -38,6 +42,7 @@ import {
     spreadIfDefined,
     TelemetryEventName,
 } from '@activepieces/shared'
+import { logSerializer } from 'server-worker'
 
 export const flowRunRepo =
     databaseConnection.getRepository<FlowRun>(FlowRunEntity)
@@ -78,6 +83,20 @@ async function updateFlowRunToLatestFlowVersionId(
     })
 }
 
+function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): string {
+    const handlerId = webhookResponseWatcher.getHandlerId()
+    if (isNil(pauseMetadata)) {
+        return handlerId
+    }
+
+    if (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId && pauseMetadata.handlerId) {
+        return pauseMetadata.handlerId
+    }
+    else {
+        return handlerId
+    }
+}
+
 export const flowRunService = {
     async list({
         projectId,
@@ -103,9 +122,13 @@ export const flowRunService = {
         let query = flowRunRepo.createQueryBuilder('flow_run').where({
             projectId,
             ...spreadIfDefined('flowId', flowId),
-            ...spreadIfDefined('status', status),
             environment: RunEnvironment.PRODUCTION,
         })
+        if (status) {
+            query = query.andWhere({
+                status: In(status),
+            })
+        }
         if (createdAfter) {
             query = query.andWhere('flow_run.created >= :createdAfter', {
                 createdAfter,
@@ -128,6 +151,7 @@ export const flowRunService = {
                 await flowRunService.addToQueue({
                     flowRunId,
                     executionType: ExecutionType.RESUME,
+                    progressUpdateType: ProgressUpdateType.NONE,
                 })
                 break
             case FlowRetryStrategy.ON_LATEST_VERSION: {
@@ -135,6 +159,7 @@ export const flowRunService = {
                 await flowRunService.addToQueue({
                     flowRunId,
                     executionType: ExecutionType.BEGIN,
+                    progressUpdateType: ProgressUpdateType.NONE,
                 })
                 break
             }
@@ -144,10 +169,12 @@ export const flowRunService = {
         flowRunId,
         resumePayload,
         requestId,
+        progressUpdateType,
         executionType,
     }: {
         flowRunId: FlowRunId
         requestId?: string
+        progressUpdateType: ProgressUpdateType
         resumePayload?: ResumePayload
         executionType: ExecutionType
     }): Promise<void> {
@@ -173,33 +200,38 @@ export const flowRunService = {
                 flowRunId: flowRunToResume.id,
                 projectId: flowRunToResume.projectId,
                 flowVersionId: flowRunToResume.flowVersionId,
+                synchronousHandlerId: returnHandlerId(pauseMetadata, requestId),
+                progressUpdateType,
                 executionType,
                 environment: RunEnvironment.PRODUCTION,
             })
         }
     },
-    async finish({
+    async updateStatus({
         flowRunId,
         status,
         tasks,
-        logsFileId,
+        executionState,
+        projectId,
         tags,
-    }: {
-        flowRunId: FlowRunId
-        status: FlowRunStatus
-        tasks: number
-        tags: string[]
-        logsFileId: FileId | null
-    }): Promise<FlowRun> {
+        duration,
+    }: FinishParams): Promise<FlowRun> {
+        const logFileId = await updateLogs({
+            flowRunId,
+            projectId,
+            executionState,
+        })
+
         await flowRunRepo.update(flowRunId, {
-            ...spreadIfDefined('logsFileId', logsFileId),
             status,
             tasks,
+            ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
+            ...spreadIfDefined('logsFileId', logFileId),
             terminationReason: undefined,
             tags,
             finishTime: new Date().toISOString(),
         })
-        const flowRun = await this.getOneOrThrow({
+        const flowRun = await this.getOnePopulatedOrThrow({
             id: flowRunId,
             projectId: undefined,
         })
@@ -216,7 +248,7 @@ export const flowRunService = {
         environment,
         executionType,
         synchronousHandlerId,
-        hookType,
+        progressUpdateType,
     }: StartParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
@@ -224,8 +256,6 @@ export const flowRunService = {
             id: flowVersion.flowId,
             projectId,
         })
-
-        await flowRunHooks.getHooks().onPreStart({ projectId })
 
         const flowRun = await getFlowRunOrCreate({
             id: flowRunId,
@@ -258,7 +288,7 @@ export const flowRunService = {
             payload,
             synchronousHandlerId,
             executionType,
-            hookType,
+            progressUpdateType,
         })
 
         return savedFlowRun
@@ -276,8 +306,8 @@ export const flowRunService = {
             payload,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: engineResponseWatcher.getHandlerId(),
-            hookType: HookType.AFTER_LOG,
+            synchronousHandlerId: webhookResponseWatcher.getHandlerId(),
+            progressUpdateType: ProgressUpdateType.TEST_FLOW,
         })
     },
 
@@ -286,11 +316,10 @@ export const flowRunService = {
             `[FlowRunService#pause] flowRunId=${params.flowRunId} pauseType=${params.pauseMetadata.type}`,
         )
 
-        const { flowRunId, logFileId, pauseMetadata } = params
+        const { flowRunId, pauseMetadata } = params
 
         await flowRunRepo.update(flowRunId, {
             status: FlowRunStatus.PAUSED,
-            logsFileId: logFileId,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             pauseMetadata: pauseMetadata as any,
         })
@@ -339,9 +368,47 @@ export const flowRunService = {
     },
 }
 
-export enum HookType {
-    BEFORE_LOG = 'BEFORE_LOG',
-    AFTER_LOG = 'AFTER_LOG',
+async function updateLogs({ flowRunId, projectId, executionState }: UpdateLogs): Promise<undefined | string> {
+    if (isNil(executionState)) {
+        return undefined
+    }
+    const flowRun = await flowRunRepo.findOneByOrFail({ id: flowRunId })
+    const serializedLogs = await logSerializer.serialize({
+        executionState,
+    })
+
+    if (serializedLogs.byteLength > MAX_LOG_SIZE) {
+        const errors = new Error(
+            'Execution Output is too large, maximum size is ' + MAX_LOG_SIZE,
+        )
+        exceptionHandler.handle(errors)
+        throw errors
+    }
+    const fileId = flowRun.logsFileId ?? apId()
+    await fileService.save({
+        fileId,
+        projectId,
+        data: serializedLogs,
+        type: FileType.FLOW_RUN_LOG,
+        compression: FileCompression.GZIP,
+    })
+    return fileId
+}
+
+type UpdateLogs = {
+    flowRunId: string 
+    projectId: ProjectId
+    executionState: ExecutionState | null
+}
+
+type FinishParams =  {
+    flowRunId: FlowRunId
+    projectId: string
+    status: FlowRunStatus
+    tasks: number
+    duration: number | undefined
+    executionState: ExecutionState | null
+    tags: string[]
 }
 
 type GetOrCreateParams = {
@@ -356,7 +423,7 @@ type GetOrCreateParams = {
 type ListParams = {
     projectId: ProjectId
     flowId: FlowId | undefined
-    status: FlowRunStatus | undefined
+    status: FlowRunStatus[] | undefined
     cursor: Cursor | null
     tags?: string[]
     limit: number
@@ -376,7 +443,7 @@ type StartParams = {
     environment: RunEnvironment
     payload: unknown
     synchronousHandlerId?: string
-    hookType?: HookType
+    progressUpdateType: ProgressUpdateType
     executionType: ExecutionType
 }
 
@@ -387,7 +454,6 @@ type TestParams = {
 
 type PauseParams = {
     flowRunId: FlowRunId
-    logFileId: FileId
     pauseMetadata: PauseMetadata
 }
 

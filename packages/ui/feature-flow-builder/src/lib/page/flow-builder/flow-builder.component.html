@@ -1,68 +1,79 @@
-<div class="box">
-  <div class="header ap-z-50">
-    <app-flow-builder-header></app-flow-builder-header>
-  </div>
-  <div class="content">
-    <div class="drawer-container">
-      <mat-drawer-container class="ap-h-full" #builderContainer>
-        <mat-drawer [disableClose]="true" mode="side" position="end"
-          [opened]="(rightSidebar$ | async) !== rightSideBarType.NONE" #rightSideDrawer
-          [style.width]="rightSidebarWidth" [style.overflow]="'visible'">
-          <div #dragHandleRight cdkDragLockAxis="x" cdkDrag
-            class="flow-builder-resizer-handle ap-flex ap-justify-center ap-items-center right-side-handle"
-            [class.active]="rightSidebarDragging" (cdkDragMoved)="
+<mat-sidenav-container class="ap-w-full ap-h-full">
+  <mat-sidenav-content class="thin-scrollbars">
+    <div class="box">
+      <div class="header ap-z-50">
+        <app-flow-builder-header></app-flow-builder-header>
+      </div>
+      <div class="content">
+        <div class="drawer-container">
+          <mat-drawer-container class="ap-h-full" #builderContainer>
+            <mat-drawer [disableClose]="true" mode="side" position="end"
+              [opened]="(rightSidebar$ | async) !== rightSideBarType.NONE" #rightSideDrawer
+              [style.width]="rightSidebarWidth" [style.overflow]="'visible'">
+              <div #dragHandleRight cdkDragLockAxis="x" cdkDrag
+                class="flow-builder-resizer-handle ap-flex ap-justify-center ap-items-center right-side-handle"
+                [class.active]="rightSidebarDragging" (cdkDragMoved)="
               rightDrawerHandleDrag($event, dragHandleRight, builderContainer)
             " (cdkDragStarted)="rightDrawerHandleDragStarted()" (cdkDragEnded)="rightDrawHandleDragStopped()">
-            <div class="knob"></div>
-          </div>
-          <div class="right-side-bar-container ap-overflow-hidden ap-h-full" [class.!ap-overflow-y-hidden]="
+                <div class="knob"></div>
+              </div>
+              <div class="right-side-bar-container ap-overflow-hidden ap-h-full" [class.!ap-overflow-y-hidden]="
               testingStepSectionIsRendered$ | async
             ">
-            <app-flow-right-sidebar></app-flow-right-sidebar>
-          </div>
-        </mat-drawer>
-        <mat-drawer-content [class.no-transition]="rightSidebarDragging || leftSidebarDragging">
-          <div class="box ap-relative ap-overflow-hidden ap-cursor-grab"
-            [class.!ap-cursor-grabbing]="(isPanning$| async) || (isDragging$ | async)" id="draggingContainer">
-            <div class="content canvas " #canvasWrapper appCanvasPanner>
-              <div class="ap-absolute ap-right-[0px]  transition-ease ap-z-50 ap-bottom-[20px] ap-right-[20px]"
-                id="mentionsDropdownContainer" [class.!ap-z-0]="dataInsertionPopupHidden$ | async"
-                [style.height]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen' ? 'calc(100% - 30px)' : mentionsDropdown.mentionsList?.nativeElement?.clientHeight + 'px'"
-                [style.width]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen' ? 'calc(100% - 30px)': mentionsDropdown.mentionsList?.nativeElement?.clientWidth + 'px'">
-                <app-builder-autocomplete-mentions-dropdown
-                  #mentionsDropdown></app-builder-autocomplete-mentions-dropdown>
+                <app-flow-right-sidebar></app-flow-right-sidebar>
               </div>
-              <div *ngIf="showPoweredByAp$ | async" class="ap-absolute ap-bottom-[20px] ap-right-[20px] ap-z-40">
-                <div class="ap-flex ap-items-center ap-justify-center">
-                  <ap-powered-by-activepieces></ap-powered-by-activepieces>
+            </mat-drawer>
+            <mat-drawer-content [class.no-transition]="rightSidebarDragging || leftSidebarDragging">
+              <div class="box ap-relative ap-overflow-hidden ap-cursor-grab"
+                [class.!ap-cursor-grabbing]="(isPanning$| async) || (isDragging$ | async)" id="draggingContainer">
+                <div class="content canvas " #canvasWrapper appCanvasPanner>
+                  <div class="ap-absolute ap-right-[0px]  transition-ease ap-z-50 ap-bottom-[20px] ap-right-[20px]"
+                    id="mentionsDropdownContainer" [class.!ap-z-0]="dataInsertionPopupHidden$ | async"
+                    [style.height]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen' ? 'calc(100% - 30px)' : mentionsDropdown.mentionsList?.nativeElement?.clientHeight + 'px'"
+                    [style.width]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen' ? 'calc(100% - 30px)': mentionsDropdown.mentionsList?.nativeElement?.clientWidth + 'px'">
+                    <app-builder-autocomplete-mentions-dropdown
+                      #mentionsDropdown></app-builder-autocomplete-mentions-dropdown>
+                  </div>
+                  <div *ngIf="showPoweredByAp$ | async" class="ap-absolute ap-bottom-[20px] ap-right-[20px] ap-z-40">
+                    <div class="ap-flex ap-items-center ap-justify-center">
+                      <ap-powered-by-activepieces></ap-powered-by-activepieces>
+                    </div>
+                  </div>
+                  <app-canvas-utils [flowVersion]="(viewedVersion$ | async)!"
+                    class="ap-absolute ap-left-[20px] ap-bottom-[20px] ap-z-40"></app-canvas-utils>
+                  <app-flow-item-tree></app-flow-item-tree>
+                  <div
+                    class="ap-absolute ap-left-[15px] ap-bottom-[80px] ap-bg-white ap-rounded-lg ap-z-40 ap-shadow-portal-ds">
+                    <ng-template [cdkPortalOutlet]="builderService.componentToShowInsidePortal$ | async"> </ng-template>
+                  </div>
                 </div>
               </div>
-              <app-canvas-utils [flowVersion]="(viewedVersion$ | async)!" class="ap-absolute ap-left-[20px] ap-bottom-[20px] ap-z-40"></app-canvas-utils>
-              <app-flow-item-tree></app-flow-item-tree>
-              <div
-                class="ap-absolute ap-left-[15px] ap-bottom-[80px] ap-bg-white ap-rounded-lg ap-z-40 ap-shadow-portal-ds">
-                <ng-template [cdkPortalOutlet]="builderService.componentToShowInsidePortal$ | async"> </ng-template>
-              </div>
-            </div>
-          </div>
-        </mat-drawer-content>
-        <mat-drawer [disableClose]="true" mode="side" position="start"
-          [opened]="(leftSidebar$ | async) !== leftSideBarType.NONE" [style.width]="leftSideBarWidth"
-          [style.overflow]="'visible'" #leftSideDrawer>
-          <div #dragHandleLeft cdkDragLockAxis="x" cdkDrag
-            class="flow-builder-resizer-handle ap-flex ap-justify-center ap-items-center left-side-handle"
-            (cdkDragMoved)="
+            </mat-drawer-content>
+            <mat-drawer [disableClose]="true" mode="side" position="start"
+              [opened]="(leftSidebar$ | async) !== leftSideBarType.NONE" [style.width]="leftSideBarWidth"
+              [style.overflow]="'visible'" #leftSideDrawer>
+              <div #dragHandleLeft cdkDragLockAxis="x" cdkDrag
+                class="flow-builder-resizer-handle ap-flex ap-justify-center ap-items-center left-side-handle"
+                (cdkDragMoved)="
               leftDrawerHandleDrag($event, dragHandleLeft, builderContainer)
             " [class.active]="leftSidebarDragging" (cdkDragStarted)="leftDrawerHandleDragStarted()"
-            (cdkDragEnded)="leftDrawerHandleDragEnded()">
-            <div class="knob"></div>
-          </div>
-          <app-flow-left-sidebar></app-flow-left-sidebar>
-        </mat-drawer>
-      </mat-drawer-container>
+                (cdkDragEnded)="leftDrawerHandleDragEnded()">
+                <div class="knob"></div>
+              </div>
+              <app-flow-left-sidebar></app-flow-left-sidebar>
+            </mat-drawer>
+          </mat-drawer-container>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
+  </mat-sidenav-content>
+
+  <mat-sidenav #contactSalesSlideout mode="over" disableClose="true" [opened]="contactSalesState$ | async"
+    position="end" class="ap-max-w-screen">
+    <ap-contact-sales (cancel)="closeContactSalesSlideout()"></ap-contact-sales>
+  </mat-sidenav>
+
+</mat-sidenav-container>
 <ng-container *ngIf="loadInitialData$ | async"></ng-container>
 <ng-container *ngIf="graphChanged$ | async"></ng-container>
 <ng-container *ngIf="importTemplate$ | async"></ng-container>
@@ -70,3 +81,4 @@
 <div class="ap-hidden">
   <ngx-monaco-editor [options]="codeEditorOptions"></ngx-monaco-editor>
 </div>
+<ng-container *ngIf="updateRun$ | async"></ng-container>

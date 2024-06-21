@@ -9,6 +9,7 @@ import { createRecordAction } from './lib/actions/create-record';
 import { deleteRecordAction } from './lib/actions/delete-record';
 import { getRecordAction } from './lib/actions/get-record';
 import { updateRecordAction } from './lib/actions/update-record';
+import { PieceCategory } from '@activepieces/shared';
 
 export const dynamicsCRMAuth = PieceAuth.OAuth2({
   props: {
@@ -40,9 +41,11 @@ export const dynamicsCRMAuth = PieceAuth.OAuth2({
 export const microsoftDynamicsCrm = createPiece({
   displayName: 'Microsoft Dynamics CRM',
   auth: dynamicsCRMAuth,
-  minimumSupportedRelease: '0.20.0',
+  description: 'Customer relationship management software package developed by Microsoft.',
+  minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-dynamics-crm.png',
   authors: ['kishanprmr'],
+  categories: [PieceCategory.PREMIUM, PieceCategory.SALES_AND_CRM],
   actions: [
     createRecordAction,
     deleteRecordAction,
@@ -55,7 +58,7 @@ export const microsoftDynamicsCrm = createPiece({
           (auth as OAuth2PropertyValue).props?.['hostUrl']
         }/api/data/v9.2`;
       },
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer  ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

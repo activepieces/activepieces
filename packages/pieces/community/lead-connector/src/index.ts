@@ -1,7 +1,9 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
-  createCustomApiCallAction,
-} from '@activepieces/pieces-common';
-import { createPiece, OAuth2PropertyValue, PieceAuth } from '@activepieces/pieces-framework';
+  createPiece,
+  OAuth2PropertyValue,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
 import { baseUrl, getContacts, leadConnectorHeaders } from './lib/common';
 
 import { PieceCategory } from '@activepieces/shared';
@@ -21,17 +23,23 @@ import { newFormSubmission } from './lib/triggers/new-form-submission';
 import { newOpportunity } from './lib/triggers/new-opportunity';
 
 const markdownDescription = `
-To use your own app, you need to create a Sub-Account application at https://developers.gohighlevel.com/, with the following scopes:
-- campaigns.readonly
-- contacts.write
-- contacts.readonly
-- locations/tags.readonly
-- locations/tags.write
-- opportunities.readonly
-- opportunities.write
-- users.readonly
-- workflows.readonly
-- forms.readonly
+1. Go to the [Marketplace](https://marketplace.gohighlevel.com/) and sign up for a developer account.
+2. Navigate to **My Apps** and click on **Create App**.
+3. Provide app name.Then select **Private** as App Type, **Sub-Account** as Distribution Type. Click **Create App** Button.
+4. Add following scopes.
+   - campaigns.readonly
+   - contacts.write
+   - contacts.readonly
+   - locations.readonly
+   - locations/tags.readonly
+   - locations/tags.write
+   - opportunities.readonly
+   - opportunities.write
+   - users.readonly
+   - workflows.readonly
+   - forms.readonly
+5. Add redirect URLs.
+6. Create new Client key with valid name.Copy Client ID and Client Secret.
 `;
 
 export const leadConnectorAuth = PieceAuth.OAuth2({
@@ -41,6 +49,7 @@ export const leadConnectorAuth = PieceAuth.OAuth2({
     'campaigns.readonly',
     'contacts.write',
     'contacts.readonly',
+    'locations.readonly',
     'locations/tags.readonly',
     'locations/tags.write',
     'opportunities.readonly',
@@ -74,7 +83,7 @@ export const leadConnector = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/lead-connector.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ["kishanprmr","MoShizzle","abuaboud"],
+  authors: ['kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     createContact,
     updateContactAction,
@@ -89,7 +98,7 @@ export const leadConnector = createPiece({
     createCustomApiCallAction({
       baseUrl: () => baseUrl,
       auth: leadConnectorAuth,
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
           ...leadConnectorHeaders,

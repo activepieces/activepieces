@@ -27,7 +27,7 @@ export const sendgrid = createPiece({
     createCustomApiCallAction({
       baseUrl: () => sendgridCommon.baseUrl,
       auth: sendgridAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

@@ -4,7 +4,7 @@
       {
         <div  class="ap-px-4 ap-py-3 ap-flex ap-border-solid ap-border-b ap-border-dividers" >
           <div class="ap-flex-grow">
-            <span class="ap-typography-subtitle-2" >{{title}}</span>
+            <span class="ap-typography-subtitle-2" >{{viewTitle}}</span>
           </div>
           <div class="ap-flex ap-items-center ap-gap-2">
             <svg-icon class="ap-h-[16px] ap-w-[16px] ap-cursor-pointer" src="/assets/img/custom/download.svg"
@@ -20,19 +20,24 @@
         </div>
       }
    
-      @if(showText)
+      @if(contentType === 'object')
       {
-        <div class="ap-px-4 ap-py-2 ap-text-wrap ap-break-all "> 
-          {{_content}} 
-        </div>
-      }
-      @else{
         <div class="ap-pl-2 ap-mb-2 thin-scrollbars">
           <json-editor
           [options]="jsonEditorOptions"
           [formControl]="jsonFormController" 
            #editor
         ></json-editor>
+        </div>
+      
+      }
+      @else{
+        <div class="ap-px-4 ap-py-2 ap-text-wrap ap-break-all ap-typography-body-2" 
+        [class.view-number]="contentType === 'number' || contentType === 'bigint'"
+        [class.view-string]="contentType === 'string' || contentType === 'undefined' || contentType === 'symbol' || contentType === 'function'"
+        [class.view-boolean]="contentType === 'boolean'"
+        > 
+       <pre>{{_content}}</pre>  
         </div>
       }
     </div>

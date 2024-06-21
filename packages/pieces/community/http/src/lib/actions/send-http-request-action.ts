@@ -13,7 +13,7 @@ import {
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import FormData from 'form-data';
 import { httpMethodDropdown } from '../common/props';
-import HttpsProxyAgent from 'https-proxy-agent';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import axios from 'axios';
 
 export const httpSendRequestAction = createAction({
@@ -190,14 +190,15 @@ export const httpSendRequestAction = createAction({
         assertNotNullOrUndefined(proxySettings, 'Proxy Settings');
         assertNotNullOrUndefined(proxySettings['proxy_host'], 'Proxy Host');
         assertNotNullOrUndefined(proxySettings['proxy_port'], 'Proxy Port');
-        const httpsAgent = HttpsProxyAgent({
-          host: proxySettings['proxy_host'],
-          port: proxySettings['proxy_port'],
-          auth: proxySettings['proxy_username']
-            ? `${proxySettings['proxy_username']}:${proxySettings['proxy_password']}`
-            : undefined,
-        });
+        let proxyUrl;
 
+        if (proxySettings.proxy_username && proxySettings.proxy_password) {
+          proxyUrl = `http://${proxySettings.proxy_username}:${proxySettings.proxy_password}@${proxySettings.proxy_host}:${proxySettings.proxy_port}`;
+        } else {
+          proxyUrl = `http://${proxySettings.proxy_host}:${proxySettings.proxy_port}`;
+        }
+  
+        const httpsAgent = new HttpsProxyAgent(proxyUrl)
         const axiosClient = axios.create({
           httpsAgent,
         });

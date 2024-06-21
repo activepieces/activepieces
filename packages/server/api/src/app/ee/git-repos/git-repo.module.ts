@@ -4,6 +4,7 @@ import {
 } from '@fastify/type-provider-typebox'
 import { FastifyPluginAsync } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { platformService } from '../../platform/platform.service'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { gitRepoService } from './git-repo.service'
@@ -15,9 +16,10 @@ import {
     PullGitRepoRequest,
     PushGitRepoRequest,
 } from '@activepieces/ee-shared'
-import { PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
+    app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.gitSyncEnabled))
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })
 }
@@ -82,6 +84,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
 const PullRepoFromProjectRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.SERVICE],
+        permission: Permission.WRITE_GIT_REPO,
     },
     schema: {
         description:
@@ -98,6 +101,7 @@ const PullRepoFromProjectRequestSchema = {
 const DeleteRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
+        permission: Permission.WRITE_GIT_REPO,
     },
     schema: {
         description: 'Delete a git repository information for a project.',
@@ -113,6 +117,7 @@ const DeleteRepoRequestSchema = {
 const PullRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
+        permission: Permission.WRITE_GIT_REPO,
     },
     schema: {
         description:
@@ -131,6 +136,7 @@ const PullRepoRequestSchema = {
 const PushRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
+        permission: Permission.WRITE_GIT_REPO,
     },
     schema: {
         description:
@@ -148,6 +154,7 @@ const PushRepoRequestSchema = {
 const ConfigureRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
+        permission: Permission.WRITE_GIT_REPO,
     },
     schema: {
         description: 'Upsert a git repository information for a project.',
@@ -161,6 +168,7 @@ const ConfigureRepoRequestSchema = {
 const ListRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_GIT_REPO,
     },
     schema: {
         querystring: Type.Object({

@@ -10,26 +10,32 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import {
   BuilderSelectors,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import {
   delay,
+  filter,
   firstValueFrom,
   map,
   Observable,
   of,
   switchMap,
   take,
+  takeWhile,
   tap,
 } from 'rxjs';
-import { MatDrawerContainer } from '@angular/material/sidenav';
+import { MatDrawerContainer, MatSidenav } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import {
+  FlowRun,
   FlowRunStatus,
   FlowVersion,
   TriggerType,
+  WebsocketClientEvent,
+  isFlowStateTerminal,
 } from '@activepieces/shared';
 import {
   LeftSideBarType,
@@ -42,6 +48,7 @@ import {
   WebSocketService,
   FlowRendererService,
   PlatformService,
+  ContactSalesService,
 } from '@activepieces/ui/common';
 import {
   flowDisplayNameInRouteData,
@@ -60,6 +67,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   rightSideBar?: ElementRef<HTMLElement>;
   @ViewChild('leftSideDrawer', { read: ElementRef })
   leftSideBar?: ElementRef<HTMLElement>;
+  @ViewChild('contactSalesSlideout') contactSalesSlideout: MatSidenav;
   rightSidebarWidth = '0';
   leftSideBarWidth = '0';
   leftSidebar$: Observable<LeftSideBarType>;
@@ -83,9 +91,11 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     readOnly: false,
     automaticLayout: true,
   };
+  updateRun$: Observable<unknown>;
   setTitle$?: Observable<void>;
   showPoweredByAp$: Observable<boolean>;
-  viewedVersion$:Observable<FlowVersion>;
+  viewedVersion$: Observable<FlowVersion>;
+  contactSalesState$: Observable<boolean>;
   constructor(
     private store: Store,
     private actRoute: ActivatedRoute,
@@ -100,7 +110,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     private platformService: PlatformService,
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
     private websocketService: WebSocketService,
-    private zoomingService: ZoomingService
+    private zoomingService: ZoomingService,
+    private contactSalesService: ContactSalesService
   ) {
     this.viewedVersion$ = this.store.select(BuilderSelectors.selectViewedVersion);
     this.showPoweredByAp$ = this.platformService.showPoweredByAp();
@@ -120,7 +131,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     this.isDragging$ = this.flowRendererService.isDragginStep$;
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
-          this.setTitle$ = this.appearanceService.setTitle(value[flowDisplayNameInRouteData])
+        this.setTitle$ = this.appearanceService.setTitle(value[flowDisplayNameInRouteData])
       }),
       map(() => void 0)
     );
@@ -131,6 +142,12 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     this.rightSidebar$ = this.store.select(
       BuilderSelectors.selectCurrentRightSideBarType
     );
+    this.contactSalesState$ =
+      this.contactSalesService.contactSalesState.asObservable();
+  }
+
+  closeContactSalesSlideout() {
+    this.contactSalesService.close();
   }
 
   @HostListener('wheel', ['$event'])
@@ -171,6 +188,21 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.websocketService.connect()
+    const runId = this.actRoute.snapshot.paramMap.get('runId') as string;
+    if (runId) {
+      this.updateRun$ = this.websocketService.socket.fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS)
+        .pipe(
+          filter((run) => run.id === runId),
+          tap((run) => {
+            this.store.dispatch(
+              canvasActions.setRun({
+                run,
+              })
+            );
+          }),
+          takeWhile((run) => !isFlowStateTerminal(run.status))
+        );
+    }
   }
 
   public get rightSideBarType() {

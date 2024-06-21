@@ -12,6 +12,7 @@ import {
     FlowRun,
     ListFlowRunsRequestQuery,
     PrincipalType,
+    ProgressUpdateType,
     RetryFlowRequestBody,
     SeekPage,
 
@@ -63,6 +64,7 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
                 headers,
                 queryParams,
             },
+            progressUpdateType: ProgressUpdateType.TEST_FLOW,
             executionType: ExecutionType.RESUME,
         })
     })
@@ -78,7 +80,8 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
 }
 
 const FlowRunFiltered = Type.Omit(FlowRun, ['logsFileId', 'terminationReason', 'pauseMetadata'])
-const FlowRunFilteredWithoutSteps = Type.Omit(FlowRunFiltered, ['steps'])
+const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['logsFileId', 'terminationReason', 'pauseMetadata', 'steps'])
+
 const ListRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
@@ -89,7 +92,7 @@ const ListRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListFlowRunsRequestQuery,
         response: {
-            [StatusCodes.OK]: SeekPage(FlowRunFilteredWithoutSteps),
+            [StatusCodes.OK]: SeekPage(FlowRunFilteredWithNoSteps),
         },
     },
 }

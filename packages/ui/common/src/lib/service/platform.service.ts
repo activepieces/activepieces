@@ -2,9 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../environments/environment';
 import {
+  ActionType,
   ApFlagId,
+  PieceCategory,
   Platform,
   SeekPage,
+  TriggerType,
   UpdatePlatformRequestBody,
   UserResponse,
 } from '@activepieces/shared';
@@ -20,6 +23,7 @@ import {
   tap,
 } from 'rxjs';
 import { FlagService } from './flag.service';
+import { FlowItemDetails } from '../models/flow-item-details';
 
 type PlatformFeature = keyof Platform;
 
@@ -109,6 +113,17 @@ export class PlatformService {
     return this.isFeatureDisabled('customDomainsEnabled');
   }
 
+  issuesDisabled() {
+    return this.currentPlatform().pipe(
+      map((platform) => {
+        if (!platform) {
+          return true;
+        }
+        return !platform.flowIssuesEnabled;
+      })
+    );
+  }
+
   manageProjectsDisabled() {
     return this.isFeatureDisabled('manageProjectsEnabled');
   }
@@ -140,6 +155,29 @@ export class PlatformService {
           return true;
         }
         return !platform.projectRolesEnabled;
+      })
+    );
+  }
+
+  isPieceLocked(flowItemDetails: FlowItemDetails): Observable<boolean> {
+    const categories = flowItemDetails.categories;
+    if (
+      flowItemDetails.type !== ActionType.PIECE &&
+      flowItemDetails.type !== TriggerType.PIECE
+    ) {
+      return of(false);
+    }
+    if (!categories || !categories.includes(PieceCategory.PREMIUM)) {
+      return of(false);
+    }
+    return this.currentPlatform().pipe(
+      map((platform) => {
+        if (!platform) {
+          return false;
+        }
+        return !platform.premiumPieces.includes(
+          flowItemDetails.extra!.pieceName
+        );
       })
     );
   }

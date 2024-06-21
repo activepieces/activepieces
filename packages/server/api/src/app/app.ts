@@ -2,13 +2,14 @@ import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart from '@fastify/multipart'
 import swagger from '@fastify/swagger'
+import { createAdapter } from '@socket.io/redis-adapter'
 import fastify, { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
 import fastifySocketIO from 'fastify-socket.io'
+import { isNil } from 'lodash'
 import qs from 'qs'
 import { Socket } from 'socket.io'
-import { appConnectionsHooks } from './app-connection/app-connection-service/app-connection-hooks'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
@@ -18,10 +19,10 @@ import { accessTokenManager } from './authentication/lib/access-token-manager'
 import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
-import { activityModule } from './ee/activity/activity-module'
+import { getRedisConnection } from './database/redis-connection'
+import { alertsModule } from './ee/alerts/alerts-module'
 import { analyticsModule } from './ee/analytics/analytics-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
-import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
@@ -31,6 +32,7 @@ import { enterpriseAuthenticationServiceHooks } from './ee/authentication/authen
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import { rbacMiddleware } from './ee/authentication/rbac/rbac-middleware'
+import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
 import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
@@ -38,9 +40,10 @@ import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
-import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
+import { issuesModule } from './ee/issues/issues-module'
+import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { otpModule } from './ee/otp/otp-module'
@@ -49,6 +52,7 @@ import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterpr
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { projectMemberModule } from './ee/project-members/project-member.module'
+import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { referralModule } from './ee/referrals/referral.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
@@ -65,8 +69,9 @@ import { stepFileModule } from './flows/step-file/step-file.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
-import { loadEncryptionKey } from './helper/encryption'
+import { encryptUtils } from './helper/encryption'
 import { errorHandler } from './helper/error-handler'
+import { jwtUtils } from './helper/jwt-utils'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { getEdition } from './helper/secret-helper'
 import { systemJobsSchedule } from './helper/system-jobs'
@@ -75,35 +80,34 @@ import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { platformModule } from './platform/platform.module'
+import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tagsModule } from './tags/tags-module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { userModule } from './user/user.module'
+import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
 import { flowQueueConsumer } from './workers/flow-worker/consumer/flow-queue-consumer'
-import { engineResponseWatcher } from './workers/flow-worker/engine-response-watcher'
-import { flowWorkerHooks } from './workers/flow-worker/flow-worker-hooks'
 import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
 import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-bullboard'
+import { webhookResponseWatcher } from './workers/flow-worker/webhook-response-watcher'
 import {
     GitRepoWithoutSensitiveData,
     ProjectMember,
 } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ExecutionMode, initializeSentry, logger, QueueMode, system, SystemProp } from '@activepieces/server-shared'
+import { initializeSentry, logger, QueueMode, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
 import {
-    ActivepiecesError,
     ApEdition,
-    ApEnvironment,
     apId,
     AppConnectionWithoutSensitiveData,
-    CodeSandboxType,
-    ErrorCode,
     Flow,
     FlowRun,
     ProjectWithLimits,
+    spreadIfDefined,
+    UserInvitation,
 } from '@activepieces/shared'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
@@ -145,6 +149,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     },
                 },
                 schemas: {
+                    'user-invitation': UserInvitation,
                     'project-member': ProjectMember,
                     project: ProjectWithLimits,
                     flow: Flow,
@@ -195,6 +200,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         cors: {
             origin: '*',
         },
+        ...spreadIfDefined('adapter', await getAdapter()),
         transports: ['websocket'],
     })
 
@@ -210,7 +216,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     })
 
     app.io.on('connection', (socket: Socket) => {
-        websocketService.init(socket)
+        rejectedPromiseHandler(websocketService.init(socket))
     })
 
     app.addHook('onRequest', async (request, reply) => {
@@ -252,6 +258,10 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await pieceSyncService.setup()
     await app.register(flowWorkerModule)
     await app.register(platformUserModule)
+    await app.register(issuesModule)
+    await app.register(authnSsoSamlModule)
+    await app.register(alertsModule)
+    await app.register(invitationModule)
     await setupBullMQBoard(app)
 
     app.get(
@@ -309,18 +319,15 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(activityModule)
             await app.register(usageTrackerModule)
             await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
             await app.register(projectBillingModule)
-
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
+            projectHooks.setHooks(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
-            flowWorkerHooks.setHooks(platformWorkerHooks)
             flowRunHooks.setHooks(platformRunHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -343,15 +350,15 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(activityModule)
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
+            await app.register(licenseKeysModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
+            projectHooks.setHooks(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
             flowRunHooks.setHooks(platformRunHooks)
-            flowWorkerHooks.setHooks(platformWorkerHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -361,13 +368,14 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             await app.register(communityFlowTemplateModule)
+            await app.register(licenseKeysModule)
             break
     }
 
     app.addHook('onClose', async () => {
         await flowQueueConsumer.close()
         await systemJobsSchedule.close()
-        await engineResponseWatcher.shutdown()
+        await webhookResponseWatcher.shutdown()
     })
 
     return app
@@ -375,30 +383,27 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 
 
 const validateEnvPropsOnStartup = async (): Promise<void> => {
-    const codeSandboxType = system.get<CodeSandboxType>(
-        SystemProp.CODE_SANDBOX_TYPE,
-    )
-    const executionMode = system.get<ExecutionMode>(SystemProp.EXECUTION_MODE)
-    const signedUpEnabled =
-        system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
-    const environment = system.get(SystemProp.ENVIRONMENT)
-    await loadEncryptionKey(queueMode)
+    await encryptUtils.loadEncryptionKey(queueMode)
 
-    if (
-        executionMode === ExecutionMode.UNSANDBOXED &&
-        codeSandboxType !== CodeSandboxType.V8_ISOLATE &&
-        signedUpEnabled &&
-        environment === ApEnvironment.PRODUCTION
-    ) {
-        throw new ActivepiecesError(
-            {
-                code: ErrorCode.SYSTEM_PROP_INVALID,
-                params: {
-                    prop: SystemProp.EXECUTION_MODE,
-                },
-            },
-            'Allowing users to sign up is not allowed in unsandboxed mode, please check the configuration section in the documentation',
-        )
+    const jwtSecret = await jwtUtils.getJwtSecret()
+    if (isNil(jwtSecret)) {
+        throw new Error(JSON.stringify({
+            message: 'AP_JWT_SECRET is undefined, please define it in the environment variables',
+        }))
+    }
+}
+
+async function getAdapter() {
+    const queue = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
+    switch (queue) {
+        case QueueMode.MEMORY: {
+            return undefined
+        }
+        case QueueMode.REDIS: {
+            const sub = getRedisConnection().duplicate()
+            const pub = getRedisConnection().duplicate()
+            return createAdapter(pub, sub)
+        }
     }
 }

@@ -49,7 +49,7 @@ export * from './lib/flows/dto/list-flows-request'
 export * from './lib/project'
 export { FileResponseInterface } from './lib/forms'
 export * from './lib/platform'
-import { TypeSystem } from '@sinclair/typebox/system'
+export { isFlowStateTerminal } from './lib/flow-run/execution/flow-execution'
 export * from './lib/tag'
 export * from './lib/websocket'
 export { GenerateCodeRequest, GenerateCodeResponse } from './lib/copilot'
@@ -61,6 +61,11 @@ export * from './lib/federated-authn'
 export { STORE_KEY_MAX_LENGTH } from './lib/store-entry/store-entry'
 export { RetryFlowRequestBody } from './lib/flow-run/test-flow-run-request'
 export * from './lib/flows/dto/flow-template-request'
-// Look at https://github.com/sinclairzx81/typebox/issues/350
-TypeSystem.ExactOptionalPropertyTypes = false
 export * from './lib/support-url'
+export * from './lib/license-keys'
+export * from './lib/invitations'
+
+// Look at https://github.com/sinclairzx81/typebox/issues/350
+import { TypeSystem } from '@sinclair/typebox/system'
+export * from './lib/flow-run/execution/flow-execution'
+TypeSystem.ExactOptionalPropertyTypes = false

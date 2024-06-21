@@ -6,7 +6,7 @@ import {
 } from 'typeorm'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
-import { ActivityEntity } from '../ee/activity/activity-entity'
+import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
@@ -16,6 +16,7 @@ import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { GitRepoEntity } from '../ee/git-repos/git-repo.entity'
+import { IssueEntity } from '../ee/issues/issues-entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { OtpEntity } from '../ee/otp/otp-entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
@@ -38,6 +39,7 @@ import { StoreEntryEntity } from '../store-entry/store-entry-entity'
 import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
 import { UserEntity } from '../user/user-entity'
+import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
@@ -68,6 +70,9 @@ function getEntities(): EntitySchema<unknown>[] {
         PlatformEntity,
         TagEntity,
         PieceTagEntity,
+        IssueEntity,
+        AlertEntity,
+        UserInvitationEntity,
     ]
 
     switch (edition) {
@@ -84,8 +89,6 @@ function getEntities(): EntitySchema<unknown>[] {
                 FlowTemplateEntity,
                 GitRepoEntity,
                 AuditEventEntity,
-                ActivityEntity,
-
                 // CLOUD
                 AppSumoEntity,
                 ReferralEntity,
@@ -120,9 +123,9 @@ export const commonProperties = {
 }
 
 export const databaseConnection =
-  databaseType === DatabaseType.SQLITE3
-      ? createSqlLiteDataSource()
-      : createPostgresDataSource()
+    databaseType === DatabaseType.SQLITE3
+        ? createSqlLiteDataSource()
+        : createPostgresDataSource()
 
 export function APArrayContains<T extends ObjectLiteral>(
     columnName: string,

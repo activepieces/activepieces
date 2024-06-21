@@ -6,6 +6,9 @@ import {
   ViewModeEnum,
   ViewModeActions,
   FlowsActions,
+  canvasActions,
+  RightSideBarType,
+  NO_PROPS,
 } from '@activepieces/ui/feature-builder-store';
 import { Router } from '@angular/router';
 import { PopulatedFlow } from '@activepieces/shared';
@@ -112,12 +115,25 @@ export class PublishButtonComponent implements OnInit {
     this.store.dispatch(FlowsActions.publish());
   }
   editFlowButtonClicked(flowId: string) {
+    this.closeRightSidebar();
     if (this.router.url.includes('/runs')) {
       this.router.navigate([`/flows/${flowId}`]);
     } else {
-      this.store.dispatch(
-        ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING })
-      );
+      setTimeout(() => {
+        this.store.dispatch(
+          ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING })
+        );
+      });
     }
+  }
+
+  private closeRightSidebar() {
+    this.store.dispatch(
+      canvasActions.setRightSidebar({
+        sidebarType: RightSideBarType.NONE,
+        props: NO_PROPS,
+        deselectCurrentStep: true,
+      })
+    );
   }
 }

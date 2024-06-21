@@ -10,14 +10,8 @@ import {
 import { distinctUntilChanged, map, Observable, switchMap, take } from 'rxjs';
 import { UUID } from 'angular2-uuid';
 import { Store } from '@ngrx/store';
-import { RunDetailsService } from './iteration-details.service';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
-import {
-  FlowRunStatus,
-  FlowRun,
-  StepOutput,
-  StepOutputStatus,
-} from '@activepieces/shared';
+import { FlowRunStatus, FlowRun, StepOutput } from '@activepieces/shared';
 import {
   BuilderSelectors,
   LeftSideBarType,
@@ -31,9 +25,25 @@ import {
   styleUrls: ['./run-details.component.scss'],
 })
 export class RunDetailsComponent implements OnInit {
+  readonly FlowRunStatus = FlowRunStatus;
+  @ViewChild('stepsResultsAccordion', { read: ElementRef })
+  stepsResultsAccordion: ElementRef<HTMLDivElement>;
+  @ViewChild('selectedStepResultContainer', { read: ElementRef })
+  selectedStepResultContainer: ElementRef<HTMLDivElement>;
   runResults: StepRunResult[] = [];
   selectedRun$: Observable<FlowRun | undefined>;
-  accordionRect: DOMRect;
+  private accordionRect: DOMRect = {
+    bottom: 0,
+    height: 0,
+    left: 0,
+    right: 0,
+    top: 0,
+    width: 0,
+    x: 0,
+    y: 0,
+    toJSON: () => '',
+  };
+
   resizerKnobIsBeingDragged = false;
   flowId: UUID;
   logs$: Observable<
@@ -44,26 +54,23 @@ export class RunDetailsComponent implements OnInit {
     | undefined
     | null
   >;
-  currentStepResult$: Observable<
-    Pick<StepRunResult, 'displayName' | 'output' | 'stepName'> | undefined
-  >;
+  currentStepResult$: Observable<StepOutput | undefined>;
   selectedStepName$: Observable<string | null>;
-  @ViewChild('stepsResultsAccordion', { read: ElementRef })
-  stepsResultsAccordion: ElementRef<HTMLDivElement>;
-  @ViewChild('selectedStepResultContainer', { read: ElementRef })
-  selectedStepResultContainer: ElementRef<HTMLDivElement>;
-
+  selectedStepDisplayName$: Observable<string>;
   constructor(
     private store: Store,
-    private runDetailsService: RunDetailsService,
     private ngZone: NgZone,
     private renderer2: Renderer2
   ) {
-    this.currentStepResult$ =
-      this.runDetailsService.currentStepResult$.asObservable();
+    this.currentStepResult$ = this.store.select(
+      BuilderSelectors.selectCurrentStepOutput
+    );
   }
 
   ngOnInit(): void {
+    this.selectedStepDisplayName$ = this.store.select(
+      BuilderSelectors.selectCurrentStepDisplayName
+    );
     this.selectedStepName$ = this.store.select(
       BuilderSelectors.selectCurrentStepName
     );
@@ -110,14 +117,6 @@ export class RunDetailsComponent implements OnInit {
     );
   }
 
-  public get actionStatusEnum() {
-    return StepOutputStatus;
-  }
-
-  public get InstanceRunStatus() {
-    return FlowRunStatus;
-  }
-
   resizerDragStarted(stepsResultsAccordion: HTMLElement) {
     this.resizerKnobIsBeingDragged = true;
     this.accordionRect = stepsResultsAccordion.getBoundingClientRect();
@@ -144,16 +143,20 @@ export class RunDetailsComponent implements OnInit {
   onResize() {
     //resets to initial state
     this.ngZone.runOutsideAngular(() => {
-      this.renderer2.setStyle(
-        this.stepsResultsAccordion.nativeElement,
-        'height',
-        `calc(50% - 1.8125rem)`
-      );
-      this.renderer2.setStyle(
-        this.selectedStepResultContainer.nativeElement,
-        'max-height',
-        `calc(50% - 1.8125rem)`
-      );
+      if (this.stepsResultsAccordion) {
+        this.renderer2.setStyle(
+          this.stepsResultsAccordion?.nativeElement,
+          'height',
+          `calc(50% - 1.8125rem)`
+        );
+      }
+      if (this.selectedStepResultContainer) {
+        this.renderer2.setStyle(
+          this.selectedStepResultContainer?.nativeElement,
+          'max-height',
+          `calc(50% - 1.8125rem)`
+        );
+      }
     });
   }
 }

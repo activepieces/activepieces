@@ -28,7 +28,7 @@ export const posthog = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://app.posthog.com',
       auth: posthogAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

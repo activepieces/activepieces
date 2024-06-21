@@ -76,6 +76,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
         },
+        flowIssuesEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
         cloudAuthEnabled: {
             type: Boolean,
             nullable: false,
@@ -156,8 +160,13 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
         },
-        showActivityLog: {
+        alertsEnabled: {
             type: Boolean,
+            nullable: false,
+        },
+        premiumPieces: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
             nullable: false,
         },
     },

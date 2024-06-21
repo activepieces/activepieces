@@ -40,6 +40,8 @@ export class PlanNamePipe implements PipeTransform {
         return 'AppSumo Tier 4';
       case 'appsumo_activepieces_tier5':
         return 'AppSumo Tier 5';
+      case 'appsumo_activepieces_tier6':
+        return 'AppSumo Tier 6';
     }
     return planName;
   }

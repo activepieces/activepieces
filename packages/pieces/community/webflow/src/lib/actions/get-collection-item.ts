@@ -1,46 +1,26 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { createAction } from '@activepieces/pieces-framework';
+
 import { webflowAuth } from '../..';
+import { webflowProps } from '../common/props';
+import { WebflowApiClient } from '../common/client';
 
 export const webflowGetCollectionItem = createAction({
-  auth: webflowAuth,
-  name: 'get_collection_item',
-  description: 'Get collection item in a collection by ID',
-  displayName: 'Get a Collection Item by ID',
-  props: {
-    collection_id: Property.ShortText({
-      displayName: 'Collection ID',
-      description: 'The ID of the collection',
-      required: true,
-    }),
-    collection_item_id: Property.ShortText({
-      displayName: 'Collection Item ID',
-      description: 'The ID of the collection item',
-      required: true,
-    }),
-  },
+	auth: webflowAuth,
+	name: 'get_collection_item',
+	description: 'Get collection item in a collection by ID',
+	displayName: 'Get a Collection Item by ID',
+	props: {
+		site_id: webflowProps.site_id,
+		collection_id: webflowProps.collection_id,
+		collection_item_id: webflowProps.collection_item_id,
+	},
 
-  async run(configValue) {
-    const accessToken = configValue.auth['access_token'];
-    const collectionId = configValue.propsValue['collection_id'];
-    const collectionItemId = configValue.propsValue['collection_item_id'];
+	async run(context) {
+		const collectionId = context.propsValue.collection_id;
+		const collectionItemId = context.propsValue.collection_item_id;
 
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `https://api.webflow.com/collections/${collectionId}/items/${collectionItemId}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: accessToken,
-      },
-    };
+		const client = new WebflowApiClient(context.auth.access_token);
 
-    const res = await httpClient.sendRequest<never>(request);
-
-    return res.body;
-  },
+		return await client.getCollectionItem(collectionId, collectionItemId);
+	},
 });

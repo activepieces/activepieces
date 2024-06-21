@@ -31,6 +31,7 @@ import { AuditEventTableComponent } from './components/audit-event-table/audit-e
 import { ApplyTagsComponent } from 'ui-feature-tags';
 import { UpdatesComponent } from './components/updates/updates.component';
 import { DomainTxtValidationDialogComponent } from './components/dialogs/domain-txt-validation-dialog/domain-txt-validation-dialog.component';
+import { EnableSAMLAuthnProviderDialogComponent } from './components/dialogs/enable-saml-authn-provider-dialog.component/enable-saml-authn-provider-dialog.component';
 
 @NgModule({
   imports: [
@@ -68,6 +69,7 @@ import { DomainTxtValidationDialogComponent } from './components/dialogs/domain-
     ConfigureConfederatedAuthnCardComponent,
     EnableFederatedAuthnProviderDialogComponent,
     ConfigureAllowingEmailLoginsCardComponent,
+    EnableSAMLAuthnProviderDialogComponent,
   ],
   providers: [DatePipe],
 })

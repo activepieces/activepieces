@@ -28,6 +28,8 @@ import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/
 import { AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 } from './migration/common/1701096458822-add-partial-unique-index-for-email-and-platform-id-is-null'
 import { AddTriggerTestStrategy1707087022764 } from './migration/common/1707087022764-add-trigger-test-strategy'
 import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-migrate-webhook'
+import { RemoveShowActivityLog1716105958530 } from './migration/common/1716105958530-RemoveShowActivityLog'
+import { AddDurationForRuns1716725027424 } from './migration/common/1716725027424-AddDurationForRuns'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -130,6 +132,11 @@ import { AddPlatformRoleToUser1713302610746 } from './migration/postgres/1713302
 import { AddUniqueNameToFolder1713643694049 } from './migration/postgres/1713643694049-AddUniqueNameToFolder'
 import { AddFeaturesToPlatform1714145914415 } from './migration/postgres/1714145914415-AddFeaturesToPlatform'
 import { UnifyEnterpriseWithCloud1714249840058 } from './migration/postgres/1714249840058-UnifyEnterpriseWithCloud'
+import { AddIssueEntityPostgres1714904516114 } from './migration/postgres/1714904516114-AddIssueEntityPostgres'
+import { AddAlertsEntityPostgres1716989780835 } from './migration/postgres/1716989780835-AddAlertsEntityPostgres'
+import { AddPremiumPiecesColumnPostgres1717370717678 } from './migration/postgres/1717370717678-AddPremiumPiecesColumnPostgres'
+import { AddUserInvitation1717960689650 } from './migration/postgres/1717960689650-AddUserInvitation'
+import { ModifyProjectMembers1717961669938 } from './migration/postgres/1717961669938-ModifyProjectMembers'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 
@@ -215,6 +222,12 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPlatformRoleToUser1713302610746,
         AddUniqueNameToFolder1713643694049,
         AddFeaturesToPlatform1714145914415,
+        AddIssueEntityPostgres1714904516114,
+        RemoveShowActivityLog1716105958530,
+        AddDurationForRuns1716725027424,
+        AddAlertsEntityPostgres1716989780835,
+        AddUserInvitation1717960689650,
+        AddPremiumPiecesColumnPostgres1717370717678,
     ]
 
     const edition = getEdition()
@@ -270,22 +283,23 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 CascadeProjectDeleteToActivity1710720610670,
                 AddBranchTypeToGit1711073772867,
                 PiecesProjectLimits1712279318440,
+
                 // Cloud Only Migrations, before unifing the migrations.
                 ChangeToJsonToKeepKeysOrder1685991260335,
                 AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
                 RemoveUniqueonAppNameAppCredentials1705586178452,
                 CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669,
-
                 // Enterprise Only Migrations, before unifing the migrations.
                 MigrateEeUsersToOldestPlatform1701261357197,
                 UnifyEnterpriseWithCloud1714249840058,
-
                 // Cloud Only Entities, But we need to run them for Enterprise as well.
                 AddAppSumo1688943462327,
                 AddReferral1690459469381,
                 AddUserEmailToReferral1709500213947,
                 AddProjectBilling1708811745694,
-
+                
+                // New Migration After Unifying
+                ModifyProjectMembers1717961669938,
             )
             break
         case ApEdition.COMMUNITY:

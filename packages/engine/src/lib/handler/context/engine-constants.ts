@@ -1,4 +1,4 @@
-import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, Project, ProjectId, ResumePayload, TriggerHookType } from '@activepieces/shared'
+import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, ProgressUpdateType, Project, ProjectId, ResumePayload, TriggerHookType } from '@activepieces/shared'
 import { VariableService } from '../../services/variable-service'
 
 type RetryConstants = {
@@ -45,6 +45,8 @@ export class EngineConstants {
         public readonly variableService: VariableService,
         public readonly testSingleStepMode: boolean,
         public readonly filesServiceType: 'local' | 'db',
+        public readonly progressUpdateType: ProgressUpdateType,
+        public readonly serverHandlerId: string | null,
         public readonly resumePayload?: ResumePayload,
     ) { }
 
@@ -62,6 +64,8 @@ export class EngineConstants {
             }),
             false,
             'local',
+            input.progressUpdateType,
+            input.serverHandlerId ?? null,
             input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
         )
     }
@@ -80,6 +84,8 @@ export class EngineConstants {
             }),
             true,
             'db',
+            ProgressUpdateType.NONE,
+            null,
         )
     }
 
@@ -97,6 +103,8 @@ export class EngineConstants {
             }),
             true,
             'db',
+            ProgressUpdateType.NONE,
+            null,
         )
     }
 
@@ -114,6 +122,8 @@ export class EngineConstants {
             }),
             true,
             'db',
+            ProgressUpdateType.NONE,
+            null,
         )
     }
 

@@ -1,4 +1,6 @@
 import { Analytics } from '@segment/analytics-node'
+import { flagService } from '../flags/flag.service'
+import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { getEdition } from './secret-helper'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
@@ -20,10 +22,18 @@ export const telemetry = {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 projectId,
+                firstSeenAt: user.created,
                 ...(await getMetadata()),
             },
         }
         analytics.identify(identify)
+    },
+    async trackPlatform(platformId: ProjectId, event: TelemetryEvent): Promise<void> {
+        if (!telemetryEnabled) {
+            return
+        }
+        const platform = await platformService.getOneOrThrow(platformId)
+        await this.trackUser(platform.ownerId, event)
     },
     async trackProject(
         projectId: ProjectId,
@@ -55,7 +65,7 @@ export const telemetry = {
 }
 
 async function getMetadata() {
-    const currentVersion = (await import('package.json')).version
+    const currentVersion = await flagService.getCurrentRelease()
     const edition = getEdition()
     return {
         activepiecesVersion: currentVersion,

@@ -7,7 +7,6 @@ import { canvasActions } from './canvas.action';
 import { EMPTY, of } from 'rxjs';
 import { BuilderSelectors } from '../builder.selector';
 import { LeftSideBarType, RightSideBarType } from '../../../model';
-import { RunDetailsService } from '../../../service/run-details.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FlowsActions } from '../../flow';
 import { FlowRunStatus } from '@activepieces/shared';
@@ -17,7 +16,6 @@ export class CanvasEffects {
   constructor(
     private actions$: Actions,
     private store: Store,
-    private runDetailsService: RunDetailsService,
     private snackbar: MatSnackBar
   ) {}
   loadInitial$ = createEffect(() => {
@@ -92,11 +90,7 @@ export class CanvasEffects {
       concatLatestFrom(() => [
         this.store.select(BuilderSelectors.selectCurrentFlowRun),
       ]),
-      tap(([{ run }, currentRun]) => {
-        if (run.id !== currentRun?.id) {
-          this.runDetailsService.currentStepResult$.next(undefined);
-        }
-      }),
+
       switchMap(() => {
         return of(
           canvasActions.setLeftSidebar({
@@ -110,8 +104,11 @@ export class CanvasEffects {
   selectTriggerOnTestRunEnd$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(canvasActions.setRun),
-      switchMap(({ run }) => {
-        if (run.status !== FlowRunStatus.RUNNING) {
+      concatLatestFrom(() => [
+        this.store.select(BuilderSelectors.selectCurrentStep),
+      ]),
+      switchMap(([{ run }, step]) => {
+        if (run.status !== FlowRunStatus.RUNNING && !step) {
           return of(canvasActions.selectStepByName({ stepName: 'trigger' }));
         }
         return EMPTY;

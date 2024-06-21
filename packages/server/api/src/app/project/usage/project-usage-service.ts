@@ -1,6 +1,7 @@
 import { getRedisConnection } from '../../database/redis-connection'
 import { projectMemberService } from '../../ee/project-members/project-member.service'
 import { apDayjs } from '../../helper/dayjs-helper'
+import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { projectService } from '../project-service'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEnvironment, ProjectUsage } from '@activepieces/shared'
@@ -8,7 +9,7 @@ import { ApEnvironment, ProjectUsage } from '@activepieces/shared'
 export const projectUsageService = {
     async getUsageForBillingPeriod(projectId: string, startBillingPeriod: string): Promise<ProjectUsage> {
         const flowTasks = await getTasksUsage(projectId, getCurrentingStartPeriod(startBillingPeriod))
-        const teamMembers = await projectMemberService.countTeamMembersIncludingOwner(projectId)
+        const teamMembers = await projectMemberService.countTeamMembers(projectId) + await userInvitationsService.countByProjectId(projectId)
         return {
             tasks: flowTasks,
             teamMembers,

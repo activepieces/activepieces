@@ -15,6 +15,8 @@ import {
   flowActionsUiInfo,
   ImportFlowDialogComponent,
   ImporFlowDialogData,
+  flowDeleteNoteWithGit,
+  flowDeleteNote,
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -31,6 +33,7 @@ import {
   MoveFlowToFolderDialogComponent,
   MoveFlowToFolderDialogData,
 } from '@activepieces/ui/feature-folders-store';
+import { SyncProjectService } from '@activepieces/ui-feature-git-sync';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -71,7 +74,8 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private flowService: FlowService,
     private flagService: FlagService,
     private embeddingService: EmbeddingService,
-    private navigationService: NavigationService
+    private navigationService: NavigationService,
+    private syncProjectService: SyncProjectService
   ) {
     this.hasFlowBeenPublished$ = this.store.select(
       BuilderSelectors.selectHasFlowBeenPublished
@@ -145,7 +149,12 @@ export class FlowBuilderHeaderComponent implements OnInit {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
       entityName: flow.version.displayName,
-      note: flowActionsUiInfo.delete.note,
+      note: '',
+      note$: this.syncProjectService.isDevelopment().pipe(
+        map((isDevelopment) => {
+          return isDevelopment ? flowDeleteNoteWithGit : flowDeleteNote;
+        })
+      ),
     };
     const dialogRef = this.matDialog.open(DeleteEntityDialogComponent, {
       data: dialogData,

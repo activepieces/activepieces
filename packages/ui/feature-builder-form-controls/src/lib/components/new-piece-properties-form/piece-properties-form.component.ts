@@ -15,7 +15,10 @@ import {
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { jsonValidator } from '@activepieces/ui/common';
+import {
+  getPropertyInitialValue,
+  jsonValidator,
+} from '@activepieces/ui/common';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { BehaviorSubject, Observable, distinctUntilChanged, tap } from 'rxjs';
 import deepEqual from 'deep-equal';
@@ -56,7 +59,6 @@ export class PiecePropertiesFormComponent
     valid: boolean;
   }>();
   readonly PropertyType = PropertyType;
-  sortedPropertiesByRequired: PiecePropertyMap;
   emitNewChanges$?: Observable<unknown>;
   stepChanged$ = new BehaviorSubject('');
   constructor(private fb: UntypedFormBuilder) {
@@ -82,24 +84,7 @@ export class PiecePropertiesFormComponent
   }
 
   private initializeForm() {
-    this.sortPropertiesByRequired();
     this.buildForm();
-  }
-
-  private sortPropertiesByRequired() {
-    const requiredProperties: PiecePropertyMap = {};
-    const optionalProperties: PiecePropertyMap = {};
-    Object.entries(this.propertiesMap).forEach(([key, value]) => {
-      if (value.required || value.type === PropertyType.MARKDOWN) {
-        requiredProperties[key] = value;
-      } else {
-        optionalProperties[key] = value;
-      }
-    });
-    this.sortedPropertiesByRequired = {
-      ...requiredProperties,
-      ...optionalProperties,
-    };
   }
 
   private buildForm() {
@@ -129,8 +114,12 @@ export class PiecePropertiesFormComponent
         this.form.controls[propertyName].addValidators(jsonValidator);
       }
     }
+
     this.customizedInputsChanged.emit({ propertyName, value });
-    this.form.controls[propertyName].setValue('', { emitEvent: false });
+    this.form.controls[propertyName].setValue(
+      getPropertyInitialValue(property, undefined),
+      { emitEvent: false }
+    );
     this.form.controls[propertyName].updateValueAndValidity({
       emitEvent: false,
     });

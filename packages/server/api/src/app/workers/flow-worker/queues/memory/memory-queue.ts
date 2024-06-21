@@ -3,11 +3,7 @@ import dayjs from 'dayjs'
 import { flowService } from '../../../../flows/flow/flow.service'
 import { flowRunRepo } from '../../../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../../../flows/flow-version/flow-version.service'
-import { getPieceTrigger } from '../../../../flows/trigger/hooks/trigger-utils'
-import {
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    RepeatableJobType,
-} from '../../job-data'
+import { triggerUtils } from '../../../../flows/trigger/hooks/trigger-utils'
 import {
     AddParams,
     DelayedJobAddParams,
@@ -26,10 +22,14 @@ import {
     Flow,
     FlowRunStatus,
     PauseType,
+    ProgressUpdateType,
     RunEnvironment,
     TriggerType,
 } from '@activepieces/shared'
-import { ApMemoryQueue } from 'server-worker'
+import {
+    ApMemoryQueue,
+    LATEST_JOB_DATA_SCHEMA_VERSION,
+    RepeatableJobType } from 'server-worker'
 
 type FlowWithRenewWebhook = {
     flow: Flow
@@ -73,7 +73,7 @@ export const memoryQueueManager: MemoryQueueManager = {
                         return null
                     }
 
-                    const piece = await getPieceTrigger({
+                    const piece = await triggerUtils.getPieceTriggerOrThrow({
                         trigger,
                         projectId: flow.projectId,
                     })
@@ -158,6 +158,8 @@ export const memoryQueueManager: MemoryQueueManager = {
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         flowVersionId: flowRun.flowVersionId,
                         jobType: RepeatableJobType.DELAYED_FLOW,
+                        synchronousHandlerId: delayPauseMetadata.handlerId ?? null,
+                        progressUpdateType: delayPauseMetadata.progressUpdateType ?? ProgressUpdateType.NONE,
                     },
                     delay,
                 }).catch((e) => logger.error(e, '[MemoryQueue#init] add'))

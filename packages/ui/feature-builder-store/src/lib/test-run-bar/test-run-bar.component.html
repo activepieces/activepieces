@@ -1,42 +1,65 @@
-<div class="ap-flex ap-items-center bar-container">
-  <ng-container *ngIf="selectedRun$ | async as selectedRun; else InitialisingRunTemplate">
-    <ap-state-icon *ngIf="selectedRun.status !== instanceRunStatus.PAUSED" [status]="selectedRun.status"
-      [showStatusText]="false"></ap-state-icon>
-    <ng-container [ngSwitch]="selectedRun.status">
-      <ng-container *ngSwitchCase="instanceRunStatus.SUCCEEDED">
-        <span class="ap-text-white" i18n>Run succeeded ({{ selectedRun.id }})</span>
-        <div class="ap-flex-grow"></div>
-      </ng-container>
-      <ng-container *ngSwitchCase="instanceRunStatus.STOPPED">
-        <span class="ap-text-white" i18n>Run succeeded ({{ selectedRun.id }})</span>
-        <div class="ap-flex-grow"></div>
-      </ng-container>
-      <ng-container *ngSwitchCase="instanceRunStatus.FAILED">
-        <span class="ap-text-white" i18n>Run failed ({{ selectedRun.id }})</span>
-        <div class="ap-flex-grow"></div>
-      </ng-container>
-      <ng-container *ngSwitchCase="instanceRunStatus.RUNNING">
-        <span class="ap-text-white" i18n>Flow is running</span>
-        <div class="ap-flex-grow"></div>
-      </ng-container>
-      <ng-container *ngSwitchCase="instanceRunStatus.PAUSED">
-        <span class="ap-text-white" i18n>Flow is paused ...</span>
-        <div class="ap-flex-grow"></div>
-      </ng-container>
-      <ng-container *ngSwitchCase="instanceRunStatus.TIMEOUT">
-        <span class="ap-text-white" i18n>Run exceeded {{sandboxTimeoutSeconds$ | async}} seconds, try to optimize your
+<div class="ap-flex ap-items-center ap-typography-body-2 ap-gap-2 ap-text-white">
+
+  @if(selectedRun$ | async; as selectedRun)
+  {
+    @if(selectedRun.status !== FlowRunStatus.PAUSED)
+    {
+        <ap-state-icon  [status]="selectedRun.status"
+        [showStatusText]="false"></ap-state-icon>
+
+   }
+    @switch(selectedRun.status)
+    {
+      @case (FlowRunStatus.SUCCEEDED) {
+        <div class="ap-flex ap-flex-col ap-gap-2">
+          <span i18n>Run succeeded ({{ selectedRun.id }})</span>
+        </div>
+       
+      }
+      @case (FlowRunStatus.STOPPED) {
+        <div class="ap-flex ap-flex-col ap-gap-2">
+          <span i18n>Run succeeded ({{ selectedRun.id }})</span>
+        </div>
+      }
+      @case (FlowRunStatus.FAILED) {
+        <div class="ap-flex ap-flex-col ap-gap-2">
+          <span i18n>Run failed ({{ selectedRun.id }})</span>
+        </div>
+      }
+      @case (FlowRunStatus.RUNNING) {
+        <span  i18n>Flow is running</span>
+      }
+      @case (FlowRunStatus.PAUSED) {
+        <span  i18n>Flow is paused ...</span>
+      }
+      @case (FlowRunStatus.QUOTA_EXCEEDED) {
+        <span  i18n>Run failed due to quota exceeded</span>
+      }
+      @case (FlowRunStatus.TIMEOUT) {
+        <span  i18n>Run exceeded {{sandboxTimeoutSeconds$ | async}} seconds, try to optimize your
           steps.</span>
-        <div class="ap-flex-grow"></div>
-      </ng-container>
-      <ng-container *ngSwitchCase="instanceRunStatus.INTERNAL_ERROR">
-        <span class="ap-text-white" i18n>Run failed for an unknown reason, contact support.</span>
-        <div class="ap-flex-grow"></div>
-      </ng-container>
-    </ng-container>
-  </ng-container>
-  <ng-template #InitialisingRunTemplate> Initialising run...</ng-template>
-  <ap-button [hidden]="hideExit$ | async" btnColor="basic" btnStyle="basic" btnSize="medium"
-    (buttonClicked)="exitButtonClicked.next()" i18n> Exit Run </ap-button>
+      }
+      @case (FlowRunStatus.INTERNAL_ERROR) {
+        <span  i18n>Run failed for an unknown reason, contact support.</span>
+      }
+    }
+  
+  }
+  @else()
+  {
+   Initialising run...
+  }
+
+  @if((hideExit$ | async | defaultFalse) === false)
+  {
+    <div class="ap-ml-3">
+
+      <ap-button  btnColor="basic" btnStyle="basic" btnSize="medium"
+      (buttonClicked)="exitButtonClicked.next()" i18n> Exit Run </ap-button>
+    </div>
+  }
+ 
+
 </div>
 
 <ng-container *ngIf="exitRun$|async"></ng-container>

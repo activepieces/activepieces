@@ -1,0 +1,109 @@
+
+
+@media screen and (min-height: 920px) {
+.ap-scroll {
+    &::-webkit-scrollbar {
+        width: 20px;
+      }
+    
+      &::-webkit-scrollbar-thumb {
+        background: $border;
+        background-clip: content-box;
+        border: 5px solid transparent;
+        border-radius: 40px;
+        scrollbar-width: thin;
+      }
+    
+      &::-webkit-scrollbar-thumb:hover {
+        background: rgba(179, 179, 179, 0.7);
+        background-clip: content-box;
+        border: 5px solid transparent;
+        border-radius: 40px;
+        scrollbar-width: thin;
+      }
+}
+    /* width */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  
+  /* Track */
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    background: $border;
+    border-radius: 40px;
+    scrollbar-width: thin;
+  }
+  
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(179, 179, 179, 0.7);
+  }
+  
+  .thin-scrollbars {
+    *{
+      &::-webkit-scrollbar {
+        width: 16px;
+      }
+    
+      &::-webkit-scrollbar-thumb {
+        background: $border;
+        background-clip: content-box;
+        border: 5px solid transparent;
+        border-radius: 40px;
+        scrollbar-width: thin;
+      }
+    
+      &::-webkit-scrollbar-thumb:hover {
+        background: rgba(179, 179, 179, 0.7);
+        background-clip: content-box;
+        border: 5px solid transparent;
+        border-radius: 40px;
+        scrollbar-width: thin;
+      }
+    }
+    &::-webkit-scrollbar {
+      width: 16px;
+    }
+  
+    &::-webkit-scrollbar-thumb {
+      background: $border;
+      background-clip: content-box;
+      border: 5px solid transparent;
+      border-radius: 40px;
+      scrollbar-width: thin;
+    }
+  
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(179, 179, 179, 0.7);
+      background-clip: content-box;
+      border: 5px solid transparent;
+      border-radius: 40px;
+      scrollbar-width: thin;
+    }
+    &.black-scrollbars{ 
+      &::-webkit-scrollbar-thumb {
+        background: $body;
+        background-clip: content-box;
+        border: 5px solid transparent;
+        border-radius: 40px;
+        scrollbar-width: thin;
+      }
+    
+      &::-webkit-scrollbar-thumb:hover {
+        background: rgba(114, 114, 114, 0.7);
+        background-clip: content-box;
+        border: 5px solid transparent;
+        border-radius: 40px;
+        scrollbar-width: thin;
+      }
+    }
+  }
+
+  
+  
+  }

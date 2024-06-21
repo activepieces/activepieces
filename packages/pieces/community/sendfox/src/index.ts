@@ -27,7 +27,7 @@ export const sendfox = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.sendfox.com',
       auth: sendfoxAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

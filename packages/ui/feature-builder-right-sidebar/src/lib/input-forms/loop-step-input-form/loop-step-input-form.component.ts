@@ -1,110 +1,104 @@
 import { Component, Input } from '@angular/core';
 import {
-  ControlValueAccessor,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
   Validators,
   FormControl,
   FormGroup,
   FormBuilder,
+  UntypedFormGroup,
 } from '@angular/forms';
 
-import { Observable, tap } from 'rxjs';
+import { Observable, of, tap } from 'rxjs';
 import {
   ActionType,
   LoopOnItemsAction,
   LoopOnItemsActionSettings,
+  UpdateActionRequest,
 } from '@activepieces/shared';
-import { fadeInUp400ms, InsertMentionOperation } from '@activepieces/ui/common';
+import { InsertMentionOperation } from '@activepieces/ui/common';
 import { InterpolatingTextFormControlComponent } from '@activepieces/ui/feature-builder-form-controls';
-import { LoopStepInputFormSchema } from '../input-forms-schema';
 import { InputFormCore } from '../input-form-core';
 import { Store } from '@ngrx/store';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import {
+  BuilderSelectors,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-loop-step-input-form',
   templateUrl: './loop-step-input-form.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      multi: true,
-      useExisting: LoopStepInputFormComponent,
-    },
-    {
-      provide: NG_VALIDATORS,
-      multi: true,
-      useExisting: LoopStepInputFormComponent,
-    },
-  ],
-  animations: [fadeInUp400ms],
 })
-export class LoopStepInputFormComponent
-  extends InputFormCore
-  implements ControlValueAccessor
-{
-  @Input({ required: true }) step!: LoopOnItemsAction;
-  loopStepForm: FormGroup<{ items: FormControl<string> }>;
-  updateComponentValue$: Observable<any>;
-  onChange: (val: Omit<LoopOnItemsActionSettings, 'inputUiInfo'>) => void = (
-    value: Omit<LoopOnItemsActionSettings, 'inputUiInfo'>
-  ) => {
-    //ignore
-    value;
-  };
-  onTouch: () => void = () => {
-    //ignore
-  };
-
+export class LoopStepInputFormComponent extends InputFormCore {
+  _step!: LoopOnItemsAction;
+  @Input({ required: true }) stepSettings: LoopOnItemsActionSettings;
+  @Input({ required: true }) set step(value: LoopOnItemsAction) {
+    this._step = value;
+    this.replaceOldControllerWithNewOne(value);
+  }
+  form: FormGroup<{ items: FormControl<string> }>;
+  updateComponentValue$: Observable<Partial<{ items: string }>>;
+  isReadOnly$: Observable<boolean> = of(false);
   constructor(
     store: Store,
     pieceService: PieceMetadataService,
     private formBuilder: FormBuilder
   ) {
     super(store, pieceService);
-    this.loopStepForm = this.formBuilder.group({
+    this.isReadOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(
+      tap((val) => {
+        if (val) {
+          this.form.disable({ emitEvent: false });
+        } else {
+          this.form.enable({ emitEvent: false });
+        }
+      })
+    );
+    this.form = this.formBuilder.group({
       items: new FormControl('', {
         nonNullable: true,
         validators: Validators.required,
       }),
     });
-    this.loopStepForm.controls.items.disable();
-    this.loopStepForm.markAllAsTouched();
-    this.updateComponentValue$ = this.loopStepForm.valueChanges.pipe(
-      tap(() => {
-        this.onChange({
-          ...this.loopStepForm.getRawValue(),
-        });
+    this.form.markAllAsTouched();
+    this.updateComponentValue$ = this.form.valueChanges.pipe(
+      tap((val) => {
+        const updateStep: UpdateActionRequest = {
+          displayName: this._step.displayName,
+          settings: {
+            ...this.stepSettings,
+            items: val.items || '',
+          },
+          name: this._step.name,
+          type: ActionType.LOOP_ON_ITEMS,
+          valid: this.form.valid,
+        };
+        this.store.dispatch(
+          FlowsActions.updateAction({ operation: updateStep })
+        );
       })
     );
   }
+  /**This is needed because otherwise the controller will always emit an update event and cause the listener to dispatch an update action */
+  private replaceOldControllerWithNewOne(value: LoopOnItemsAction) {
+    (this.form as UntypedFormGroup).removeControl('items', {
+      emitEvent: false,
+    });
+    this.form.addControl(
+      'items',
+      new FormControl(
+        {
+          value: value.settings.items,
+          disabled: this.form.disabled,
+        },
+        {
+          nonNullable: true,
+          validators: Validators.required,
+        }
+      ),
+      { emitEvent: false }
+    );
+  }
 
-  writeValue(obj: LoopStepInputFormSchema): void {
-    if (obj.type === ActionType.LOOP_ON_ITEMS) {
-      this.loopStepForm.patchValue(obj, { emitEvent: false });
-    }
-  }
-  registerOnChange(fn: (val: unknown) => void): void {
-    this.onChange = fn;
-  }
-  registerOnTouched(fn: () => void): void {
-    this.onTouch = fn;
-  }
-
-  validate() {
-    if (this.loopStepForm.invalid) {
-      return { invalid: true };
-    }
-    return null;
-  }
-
-  setDisabledState?(isDisabled: boolean): void {
-    if (isDisabled) {
-      this.loopStepForm.disable();
-    } else if (this.loopStepForm.disabled) {
-      this.loopStepForm.enable();
-    }
-  }
   async addMention(
     textControl: InterpolatingTextFormControlComponent,
     mentionOp: InsertMentionOperation

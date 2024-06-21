@@ -1,6 +1,7 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { flowService } from '../flows/flow/flow.service'
+import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { webhookService } from '../webhooks/webhook-service'
 import { AppEventRouting } from './app-event-routing.entity'
 import { appEventRoutingService } from './app-event-routing.service'
@@ -9,9 +10,12 @@ import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
 import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ALL_PRINCIPAL_TYPES,
+import {
+    ActivepiecesError, ALL_PRINCIPAL_TYPES,
+    assertNotNullOrUndefined,
     ErrorCode,
     EventPayload,
+    FlowStatus,
     isNil,
 } from '@activepieces/shared'
 
@@ -97,13 +101,24 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
     )
 }
 
-async function callback(listener: AppEventRouting, eventPayload: EventPayload) {
+async function callback(listener: AppEventRouting, eventPayload: EventPayload): Promise<void> {
     const flow = await flowService.getOneOrThrow({
         projectId: listener.projectId,
         id: listener.flowId,
     })
-    return webhookService.callback({
-        flow,
+    if (flow.status !== FlowStatus.ENABLED || isNil(flow.publishedVersionId)) {
+        return
+    }
+    const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flow.id)
+    assertNotNullOrUndefined(flowVersion, 'published version not found')
+    const payloads = await webhookService.extractPayloadAndSave({
+        flowVersion,
         payload: eventPayload,
+        projectId: flow.projectId,
+    })
+    await webhookService.startAndSaveRuns({
+        projectId: flow.projectId,
+        flowVersion,
+        filteredPayloads: payloads,
     })
 }

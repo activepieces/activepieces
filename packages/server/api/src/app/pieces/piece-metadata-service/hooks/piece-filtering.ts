@@ -34,6 +34,30 @@ export const filterPiecesBasedUser = async ({
     }))
 }
 
+export const filterPiecesBasedOnEmbedding = async ({
+    platformId,
+    pieces,
+}: {
+    platformId?: string
+    pieces: PieceMetadataSchema[]
+}): Promise<PieceMetadataSchema[]> => {
+    if (isNil(platformId)) {
+        return pieces
+    }
+    const platform = await platformService.getOne(platformId)
+    if (isNil(platform)) {
+        return pieces
+    }
+    if (!platform.embeddingEnabled) {
+        return pieces
+    }
+
+    const isEnterprisePremiumPiece = (piece: PieceMetadataSchema) => piece.categories?.includes(PieceCategory.PREMIUM)
+    const isPieceEnabledForPlatform = (piece: PieceMetadataSchema) => isEnterprisePremiumPiece(piece) && platform.premiumPieces.includes(piece.name)
+
+    return pieces.filter(piece => !isEnterprisePremiumPiece(piece) || isPieceEnabledForPlatform(piece))
+}
+
 async function filterPiecesBasedOnFeatures(
     platformId: PlatformId | undefined,
     pieces: PieceMetadataSchema[],
@@ -41,13 +65,7 @@ async function filterPiecesBasedOnFeatures(
     if (isNil(platformId)) {
         return pieces
     }
-    const platform = await platformService.getOneOrThrow(platformId)
-    return pieces.filter((piece) => {
-        if (piece.name === '@activepieces/piece-activity' && !platform.showActivityLog) {
-            return false
-        }
-        return true
-    })
+    return pieces
 }
 
 const filterBasedOnSearchQuery = ({

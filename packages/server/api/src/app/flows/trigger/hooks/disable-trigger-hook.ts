@@ -6,7 +6,7 @@ import {
 } from '../../../helper/engine-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
 import { flowQueue } from '../../../workers/flow-worker/flow-queue'
-import { getPieceTrigger } from './trigger-utils'
+import { triggerUtils } from './trigger-utils'
 import {
     TriggerBase,
     TriggerStrategy,
@@ -31,10 +31,14 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
         return null
     }
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = await getPieceTrigger({
+    const pieceTrigger = await triggerUtils.getPieceTrigger({
         trigger: flowTrigger,
         projectId,
     })
+
+    if (!pieceTrigger) {
+        return null
+    }
 
     try {
         return await engineHelper.executeTrigger({

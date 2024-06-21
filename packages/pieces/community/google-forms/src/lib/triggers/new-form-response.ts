@@ -21,6 +21,7 @@ export const newResponse = createTrigger({
   description: 'Triggers when there is new response',
   props: {
     form_id: googleFormsCommon.form_id,
+    include_team_drives: googleFormsCommon.include_team_drives,
   },
   sampleData: {
     responseId:

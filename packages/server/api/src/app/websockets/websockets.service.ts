@@ -1,4 +1,5 @@
 import { Socket } from 'socket.io'
+import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { WebsocketServerEvent } from '@activepieces/shared'
 
 export type WebsocketListener<T> = (socket: Socket) => (data: T) => Promise<void>
@@ -7,7 +8,9 @@ export type WebsocketListener<T> = (socket: Socket) => (data: T) => Promise<void
 const listener: Record<string, WebsocketListener<any>> = {}
 
 export const websocketService = {
-    init(socket: Socket): void {
+    async init(socket: Socket): Promise<void> {
+        const principal = await accessTokenManager.extractPrincipal(socket.handshake.auth.token)
+        await socket.join(principal.projectId)
         for (const [event, handler] of Object.entries(listener)) {
             socket.on(event, handler(socket))
         }

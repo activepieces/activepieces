@@ -165,7 +165,7 @@ describe('Project API', () => {
         it('it should list owned projects in platform', async () => {
             await mockBasicSetup()
             const { mockOwner: mockUserTwo, mockProject: mockProjectTwo, mockPlatform: mockPlatformTwo } = await mockBasicSetup()
-            
+
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserTwo.id,
@@ -201,6 +201,12 @@ describe('Project API', () => {
             })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
+            mockUser.platformId = mockPlatform.id
+            mockUser.platformRole = PlatformRole.ADMIN
+
+            await databaseConnection.getRepository('user').save(mockUser)
+
+
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
@@ -214,14 +220,12 @@ describe('Project API', () => {
             })
 
             const tasks = faker.number.int({ min: 1, max: 100000 })
-            const teamMembers = faker.number.int({ min: 1, max: 100 })
 
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
                 notifyStatus: NotificationStatus.NEVER,
                 plan: {
                     tasks,
-                    teamMembers,
                 },
             }
             const response = await app?.inject({
@@ -246,13 +250,11 @@ describe('Project API', () => {
             const { mockProject, mockApiKey } =
                 await createProjectAndPlatformAndApiKey()
             const tasks = faker.number.int({ min: 1, max: 100000 })
-            const teamMembers = faker.number.int({ min: 1, max: 100 })
             const request = {
                 displayName: faker.animal.bird(),
                 notifyStatus: NotificationStatus.NEVER,
                 plan: {
                     tasks,
-                    teamMembers,
                 },
             }
             const response = await app?.inject({
@@ -285,13 +287,11 @@ describe('Project API', () => {
             })
 
             const tasks = faker.number.int({ min: 1, max: 100000 })
-            const teamMembers = faker.number.int({ min: 1, max: 100 })
             const request: UpdateProjectPlatformRequest = {
                 displayName: faker.animal.bird(),
                 notifyStatus: NotificationStatus.NEVER,
                 plan: {
                     tasks,
-                    teamMembers,
                 },
             }
 
@@ -310,7 +310,6 @@ describe('Project API', () => {
             expect(responseBody.displayName).toBe(request.displayName)
             expect(responseBody.notifyStatus).toBe(request.notifyStatus)
             expect(responseBody.plan.tasks).toEqual(tasks)
-            expect(responseBody.plan.teamMembers).toEqual(teamMembers)
         })
 
         it('Fails if user is not platform owner', async () => {
@@ -403,10 +402,10 @@ describe('Project API', () => {
 
             // assert
             const responseBody = response?.json()
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-            expect(responseBody?.code).toBe('AUTHORIZATION')
-            expect(responseBody?.params?.projectId).toBe(mockProject.id)
-            expect(responseBody?.params?.userId).toBe(mockOwner.id)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
+            expect(responseBody?.params?.entityId).toBe(mockProject.id)
+            expect(responseBody?.params?.entityType).toBe('project')
         })
     })
 
@@ -620,6 +619,10 @@ async function createProjectAndPlatformAndApiKey(): Promise<{
         ownerId: mockUser.id,
     })
     await databaseConnection.getRepository('platform').save(mockPlatform)
+
+    mockUser.platformId = mockPlatform.id
+    mockUser.platformRole = PlatformRole.ADMIN
+    await databaseConnection.getRepository('user').save(mockUser)
 
     const mockProject = createMockProject({
         ownerId: mockUser.id,

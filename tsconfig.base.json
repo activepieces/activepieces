@@ -27,9 +27,6 @@
       "@activepieces/piece-activepieces": [
         "packages/pieces/community/activepieces/src/index.ts"
       ],
-      "@activepieces/piece-activity": [
-        "packages/pieces/community/activity/src/index.ts"
-      ],
       "@activepieces/piece-acumbamail": [
         "packages/pieces/community/acumbamail/src/index.ts"
       ],
@@ -42,8 +39,14 @@
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/community/amazon-s3/src/index.ts"
       ],
+      "@activepieces/piece-amazon-sqs": [
+        "packages/pieces/community/amazon-sqs/src/index.ts"
+      ],
       "@activepieces/piece-apitable": [
         "packages/pieces/community/apitable/src/index.ts"
+      ],
+      "@activepieces/piece-apollo": [
+        "packages/pieces/community/apollo/src/index.ts"
       ],
       "@activepieces/piece-approval": [
         "packages/pieces/community/approval/src/index.ts"
@@ -164,6 +167,9 @@
       "@activepieces/piece-file-helper": [
         "packages/pieces/community/file-helper/src/index.ts"
       ],
+      "@activepieces/piece-fliqr-ai": [
+        "packages/pieces/community/fliqr-ai/src/index.ts"
+      ],
       "@activepieces/piece-flowise": [
         "packages/pieces/community/flowise/src/index.ts"
       ],
@@ -281,6 +287,9 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-krisp-call": [
+        "packages/pieces/community/krisp-call/src/index.ts"
+      ],
       "@activepieces/piece-lead-connector": [
         "packages/pieces/community/lead-connector/src/index.ts"
       ],
@@ -305,6 +314,9 @@
       "@activepieces/piece-mailer-lite": [
         "packages/pieces/community/mailer-lite/src/index.ts"
       ],
+      "@activepieces/piece-maileroo": [
+        "packages/pieces/community/maileroo/src/index.ts"
+      ],
       "@activepieces/piece-mastodon": [
         "packages/pieces/community/mastodon/src/index.ts"
       ],
@@ -323,6 +335,12 @@
       "@activepieces/piece-mautic": [
         "packages/pieces/community/mautic/src/index.ts"
       ],
+      "@activepieces/piece-messagebird": [
+        "packages/pieces/community/messagebird/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-dynamics-365-business-central": [
+        "packages/ee/pieces/microsoft-dynamics-365-business-central/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-dynamics-crm": [
         "packages/ee/pieces/microsoft-dynamics-crm/src/index.ts"
       ],
@@ -333,7 +351,7 @@
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
       ],
       "@activepieces/piece-microsoft-sharepoint": [
-        "packages/pieces/community/microsoft-sharepoint/src/index.ts"
+        "packages/ee/pieces/sharepoint/src/index.ts"
       ],
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
@@ -384,8 +402,14 @@
         "packages/pieces/community/pastefy/src/index.ts"
       ],
       "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
+      "@activepieces/piece-photoroom": [
+        "packages/pieces/community/photoroom/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
+      ],
+      "@activepieces/piece-poper": [
+        "packages/pieces/community/poper/src/index.ts"
       ],
       "@activepieces/piece-postgres": [
         "packages/pieces/community/postgres/src/index.ts"
@@ -399,11 +423,17 @@
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
       ],
+      "@activepieces/piece-queue": [
+        "packages/pieces/community/queue/src/index.ts"
+      ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
       ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
+      ],
+      "@activepieces/piece-reoon-verifier": [
+        "packages/pieces/community/reoon-verifier/src/index.ts"
       ],
       "@activepieces/piece-resend": [
         "packages/pieces/community/resend/src/index.ts"
@@ -426,6 +456,9 @@
       ],
       "@activepieces/piece-schedule": [
         "packages/pieces/community/schedule/src/index.ts"
+      ],
+      "@activepieces/piece-segment": [
+        "packages/pieces/community/segment/src/index.ts"
       ],
       "@activepieces/piece-sendfox": [
         "packages/pieces/community/sendfox/src/index.ts"
@@ -456,6 +489,9 @@
       ],
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
+      ],
+      "@activepieces/piece-snowflake": [
+        "packages/ee/pieces/snowflake/src/index.ts"
       ],
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
@@ -495,6 +531,9 @@
       ],
       "@activepieces/piece-tally": [
         "packages/pieces/community/tally/src/index.ts"
+      ],
+      "@activepieces/piece-taskade": [
+        "packages/pieces/community/taskade/src/index.ts"
       ],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/community/telegram-bot/src/index.ts"
@@ -544,6 +583,9 @@
       "@activepieces/piece-whatsable": [
         "packages/pieces/community/whatsable/src/index.ts"
       ],
+      "@activepieces/piece-whatsapp": [
+        "packages/pieces/community/whatsapp/src/index.ts"
+      ],
       "@activepieces/piece-woocommerce": [
         "packages/pieces/community/woocommerce/src/index.ts"
       ],
@@ -563,6 +605,12 @@
       "@activepieces/piece-zendesk": [
         "packages/pieces/community/zendesk/src/index.ts"
       ],
+      "@activepieces/piece-zerobounce": [
+        "packages/pieces/community/zerobounce/src/index.ts"
+      ],
+      "@activepieces/piece-zoho-books": [
+        "packages/pieces/community/zoho-books/src/index.ts"
+      ],
       "@activepieces/piece-zoho-crm": [
         "packages/pieces/community/zoho-crm/src/index.ts"
       ],
@@ -572,6 +620,7 @@
       "@activepieces/piece-zoom": [
         "packages/pieces/community/zoom/src/index.ts"
       ],
+      "@activepieces/piece-zuora": ["packages/ee/pieces/zuora/src/index.ts"],
       "@activepieces/pieces-common": [
         "packages/pieces/community/common/src/index.ts"
       ],

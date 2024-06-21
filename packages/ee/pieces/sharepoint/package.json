@@ -1,0 +1,8 @@
+{
+  "name": "@activepieces/piece-microsoft-sharepoint",
+  "version": "0.0.4",
+  "license": {
+    "type": "COMMERCIAL",
+    "url": "https://raw.githubusercontent.com/activepieces/activepieces/main/packages/ee/LICENSE"
+  }
+}

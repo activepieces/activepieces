@@ -6,11 +6,13 @@ import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
 import { isNil } from 'lodash'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { assertUserHasPermissionToFlow } from '../../ee/authentication/rbac/rbac-middleware'
 import { eventsHooks } from '../../helper/application-events'
 import { projectService } from '../../project/project-service'
 import { flowService } from './flow.service'
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { ActivepiecesError,
+import {
+    ActivepiecesError,
     ApId,
     CountFlowsRequest,
     CreateFlowRequest,
@@ -48,12 +50,13 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
+        const userId = await extractUserIdFromPrincipal(request.principal)
+        await assertUserHasPermissionToFlow(request.principal, request.body.type)
+
         const flow = await flowService.getOnePopulatedOrThrow({
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-
-        const userId = await extractUserIdFromPrincipal(request.principal)
         await assertThatFlowIsNotBeingUsed(flow, userId)
         eventsHooks.get().send(request, {
             action: ApplicationEventName.UPDATED_FLOW,
@@ -64,7 +67,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
         const updatedFlow = await flowService.update({
             id: request.params.id,
-            userId,
+            userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
             projectId: request.principal.projectId,
             operation: request.body,
         })
@@ -109,10 +112,11 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
+        const userId = await extractUserIdFromPrincipal(request.principal)
         eventsHooks.get().send(request, {
             action: ApplicationEventName.DELETED_FLOW,
             flow,
-            userId: request.principal.id,
+            userId,
         })
         await flowService.delete({
             id: request.params.id,
@@ -171,7 +175,7 @@ const CreateFlowRequestOptions = {
 
 const UpdateFlowRequestOptions = {
     config: {
-        permission: Permission.WRITE_FLOW,
+        permission: Permission.UPDATE_FLOW_STATUS,
     },
     schema: {
         tags: ['flows'],

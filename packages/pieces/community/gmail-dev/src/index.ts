@@ -30,6 +30,7 @@ export const gmailDev = createPiece({
   description: 'Reading emails is a sensitive scope. This piece requires adding your own OAuth2 app to bypass approval.',
   auth: gmailDevAuth,
   minimumSupportedRelease: '0.20.0',
+  maximumSupportedRelease: '0.0.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/gmail-dev.png',
   authors: ['kishanprmr'],
   actions: [],
