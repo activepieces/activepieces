@@ -640,8 +640,7 @@ app-dashboard-container .mat-drawer {
 }
 mat-icon[data-mat-icon-name="custom_expand_more"],
 mat-icon[data-mat-icon-name="custom_expand_less"] {
-  width: 10px;
-  height: 10px;
+  --mat-menu-item-icon-size: 10px;
 }
 
 .progress-success circle {
