@@ -25,7 +25,7 @@ export const PublicPiecePackage = Type.Object({
     packageType: Type.Literal(PackageType.REGISTRY),
     pieceType: Type.Enum(PieceType),
     pieceName: Type.String(),
-    pieceVersion: Type.String()
+    pieceVersion: Type.String(),
 })
 
 export type PublicPiecePackage = Static<typeof PublicPiecePackage>

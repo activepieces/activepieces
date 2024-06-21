@@ -1,15 +1,18 @@
 import { StatusCodes } from 'http-status-codes'
-import { flowService } from '../../flows/flow/flow.service'
 import { webhookService } from '../../webhooks/webhook-service'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
 import { EngineHttpResponse, webhookResponseWatcher } from '../helper/webhook-response-watcher'
 import { WebhookJobData } from '@activepieces/server-shared'
-import { FlowStatus, isNil, PopulatedFlow } from '@activepieces/shared'
+import { FlowStatus, GetFlowVersionForWorkerRequestType, isNil } from '@activepieces/shared'
+import { engineApiService, workerApiService } from 'server-worker'
 
 export const webhookExecutor = {
-    async consumeWebhook(data: WebhookJobData): Promise<void> {
+    async consumeWebhook(data: WebhookJobData, engineToken: string, workerToken: string): Promise<void> {
         const { flowId, payload, simulate } = data
-        const populatedFlow = await getPopulatedFlow(flowId, simulate)
+        const populatedFlow = await engineApiService(engineToken).getFlowWithExactPieces({
+            flowId,
+            type: simulate ? GetFlowVersionForWorkerRequestType.LATEST : GetFlowVersionForWorkerRequestType.LOCKED,
+        })
         if (isNil(populatedFlow)) {
             await stopAndReply(data, {
                 status: StatusCodes.GONE,
@@ -19,6 +22,7 @@ export const webhookExecutor = {
             return
         }
         const handshakeResponse = await webhookService.handshake({
+            engineToken,
             populatedFlow,
             payload,
         })
@@ -40,6 +44,7 @@ export const webhookExecutor = {
             return
         }
         const filteredPayloads = await webhookService.extractPayloadAndSave({
+            engineToken,
             flowVersion: populatedFlow.version,
             payload: data.payload,
             projectId: populatedFlow.projectId,
@@ -47,13 +52,18 @@ export const webhookExecutor = {
 
         if (simulate) {
             await webhookSimulationService.delete({ flowId: populatedFlow.id, projectId: populatedFlow.projectId })
+            await stopAndReply(data, {
+                status: StatusCodes.OK,
+                body: {},
+                headers: {},
+            })
             return
         }
-        const runs = await webhookService.startAndSaveRuns({
-            flowVersion: populatedFlow.version,
+        const runs = await workerApiService(workerToken).startRuns({
+            flowVersionId: populatedFlow.version.id,
             projectId: populatedFlow.projectId,
             synchronousHandlerId: webhookResponseWatcher.getHandlerId(),
-            filteredPayloads,
+            payloads: filteredPayloads,
         })
         if (isNil(runs) || runs.length === 0 || isNil(runs[0])) {
             await stopAndReply(data, {
@@ -72,17 +82,6 @@ export const webhookExecutor = {
 
 }
 
-async function getPopulatedFlow(flowId: string, simulate: boolean): Promise<PopulatedFlow | null> {
-    const flow = await flowService.getOneById(flowId)
-    if (isNil(flow)) {
-        return null
-    }
-    return flowService.getOnePopulated({
-        id: flow.id,
-        projectId: flow.projectId,
-        versionId: simulate ? undefined : flow.publishedVersionId!,
-    })
-}
 
 async function stopAndReply(data: WebhookJobData, response: EngineHttpResponse): Promise<void> {
     const { requestId, synchronousHandlerId } = data

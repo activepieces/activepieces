@@ -3,6 +3,7 @@ import formBody from '@fastify/formbody'
 import fastifyMultipart from '@fastify/multipart'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
+import dayjs from 'dayjs'
 import fastify, { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
@@ -62,9 +63,8 @@ import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 import { flowConsumer } from './flow-worker/consumer'
-import { flowWorker } from './flow-worker/flow-worker'
-import { flowWorkerModule } from './flow-worker/flow-worker-module'
 import { webhookResponseWatcher } from './flow-worker/helper/webhook-response-watcher'
+import { workerModule } from './flow-worker/worker-module'
 import { formModule } from './flows/flow/form/form.module'
 import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
@@ -105,10 +105,12 @@ import {
     AppConnectionWithoutSensitiveData,
     Flow,
     FlowRun,
+    PrincipalType,
     ProjectWithLimits,
     spreadIfDefined,
     UserInvitation,
 } from '@activepieces/shared'
+import { flowWorker } from 'server-worker'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -256,7 +258,9 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(formModule)
     await app.register(tagsModule)
     await pieceSyncService.setup()
-    await app.register(flowWorkerModule)
+
+    const workerToken = await generateWorkerToken()
+    await app.register(workerModule(workerToken))
     await app.register(platformUserModule)
     await app.register(issuesModule)
     await app.register(authnSsoSamlModule)
@@ -406,4 +410,15 @@ async function getAdapter() {
             return createAdapter(pub, sub)
         }
     }
+}
+
+async function generateWorkerToken() {
+    return accessTokenManager.generateToken({
+        id: apId(),
+        type: PrincipalType.WORKER,
+        projectId: apId(),
+        platform: {
+            id: apId(),
+        },
+    }, dayjs.duration(10, 'year').asSeconds())
 }

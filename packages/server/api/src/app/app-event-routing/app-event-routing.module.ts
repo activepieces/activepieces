@@ -2,6 +2,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { flowService } from '../flows/flow/flow.service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
+import { generateEngineToken } from '../helper/engine-helper'
 import { webhookService } from '../webhooks/webhook-service'
 import { AppEventRouting } from './app-event-routing.entity'
 import { appEventRoutingService } from './app-event-routing.service'
@@ -111,7 +112,11 @@ async function callback(listener: AppEventRouting, eventPayload: EventPayload): 
     }
     const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flow.id)
     assertNotNullOrUndefined(flowVersion, 'published version not found')
+    const engineToken = await generateEngineToken({
+        projectId: listener.projectId,
+    })
     const payloads = await webhookService.extractPayloadAndSave({
+        engineToken,
         flowVersion,
         payload: eventPayload,
         projectId: flow.projectId,

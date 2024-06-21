@@ -1,7 +1,7 @@
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
 import { flowQueue } from '../../../flow-worker/queue'
 import {
-    engineHelper,
+    generateEngineToken,
 } from '../../../helper/engine-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
 import { triggerUtils } from './trigger-utils'
@@ -18,7 +18,7 @@ import {
     TriggerHookType,
     TriggerType,
 } from '@activepieces/shared'
-import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
+import { EngineHelperResponse, EngineHelperTriggerResult, engineRunner, webhookUtils } from 'server-worker'
 
 export const disablePieceTrigger = async (
     params: DisableParams,
@@ -40,10 +40,13 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
     }
 
     try {
-        return await engineHelper.executeTrigger({
+        const engineToken = await generateEngineToken({
+            projectId,
+        })
+        return await engineRunner.executeTrigger(engineToken, {
             hookType: TriggerHookType.ON_DISABLE,
             flowVersion,
-            webhookUrl: await webhookService.getWebhookUrl({
+            webhookUrl: await webhookUtils.getWebhookUrl({
                 flowId: flowVersion.flowId,
                 simulate,
             }),

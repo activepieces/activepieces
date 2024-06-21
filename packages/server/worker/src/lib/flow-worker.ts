@@ -1,17 +1,21 @@
-import { repeatingJobExecutor } from './job-executor/repeating-job-executor'
-import { webhookExecutor } from './job-executor/webhook-job-executor'
 import { ApSemaphore, exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, system, SystemProp, WebhookJobData } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
-import {  engineApiService, flowJobExecutor, workerApiService } from 'server-worker'
+import { repeatingJobExecutor } from './executors/repeating-job-executor'
+import { workerApiService } from './api/server-api.service'
+import { flowJobExecutor } from './executors/flow-job-executor'
 
 const WORKER_CONCURRENCY = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
 const workerLocks = new ApSemaphore(WORKER_CONCURRENCY)
 
 let closed = true
+let workerToken: string
 
 export const flowWorker = {
-    async init(): Promise<void> {
+    async init(generatedToken: string): Promise<void> {
         closed = false
+        workerToken = generatedToken
+    },
+    async start(): Promise<void> {
         for (const queueName of Object.values(QueueName)) {
             rejectedPromiseHandler(run(queueName))
         }
@@ -25,7 +29,7 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
     while (!closed) {
         try {
             await workerLocks.acquire()
-            const job = await workerApiService().poll(queueName)
+            const job = await workerApiService(workerToken).poll(queueName)
             if (isNil(job)) {
                 workerLocks.release()
                 continue
@@ -33,10 +37,17 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
             const { data, engineToken } = job
             consumeJob(queueName, data, engineToken)
                 .then(() => {
-                    rejectedPromiseHandler(engineApiService(engineToken).updateJobStatus(queueName, JobStatus.COMPLETED, ''))
+                    rejectedPromiseHandler(workerApiService(workerToken).updateJobStatus({
+                        status: JobStatus.COMPLETED,
+                        queueName,
+                    }))
                 })
                 .catch((e) => {
-                    rejectedPromiseHandler(engineApiService(engineToken).updateJobStatus(queueName, JobStatus.FAILED, e.message))
+                    rejectedPromiseHandler(workerApiService(workerToken).updateJobStatus({
+                        status: JobStatus.FAILED,
+                        queueName,
+                        message: e.message,
+                    }))
                     exceptionHandler.handle(e)
                 }).finally(() => {
                     workerLocks.release()
@@ -49,16 +60,21 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
     }
 }
 
-async function consumeJob(queueName: QueueName, jobData: JobData, engineToken: string | undefined): Promise<void> {
+async function consumeJob(queueName: QueueName, jobData: JobData, engineToken: string): Promise<void> {
     switch (queueName) {
         case QueueName.ONE_TIME:
-            await flowJobExecutor.executeFlow(jobData as OneTimeJobData, engineToken!)
+            await flowJobExecutor.executeFlow(jobData as OneTimeJobData, engineToken)
             break
         case QueueName.SCHEDULED:
-            await repeatingJobExecutor.executeRepeatingJob(jobData as RepeatingJobData)
+            await repeatingJobExecutor.executeRepeatingJob({
+                data: jobData as RepeatingJobData,
+                engineToken,
+                workerToken,
+            })
             break
-        case QueueName.WEBHOOK:
-            await webhookExecutor.consumeWebhook(jobData as WebhookJobData)
-            break
+        case QueueName.WEBHOOK:{
+            // TODO URGENT NOW
+            throw new Error('Not implemented')
+        }
     }
 }

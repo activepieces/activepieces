@@ -1,5 +1,3 @@
-import { engineHelper } from '../../../helper/engine-helper'
-import { webhookService } from '../../../webhooks/webhook-service'
 import { triggerUtils } from './trigger-utils'
 import {
     WebhookHandshakeStrategy,
@@ -13,6 +11,7 @@ import {
     TriggerPayload,
     TriggerType,
 } from '@activepieces/shared'
+import { engineRunner, webhookUtils } from 'server-worker'
 
 export async function tryHandshake(
     params: ExecuteHandshakeParams,
@@ -36,6 +35,7 @@ export async function tryHandshake(
           handshakeConfig.paramName.toLowerCase() in payload.headers
                 ) {
                     return executeHandshake({
+                        engineToken: params.engineToken,
                         flowVersion,
                         projectId,
                         payload,
@@ -49,6 +49,7 @@ export async function tryHandshake(
           handshakeConfig.paramName in payload.queryParams
                 ) {
                     return executeHandshake({
+                        engineToken: params.engineToken,
                         flowVersion,
                         projectId,
                         payload,
@@ -64,6 +65,7 @@ export async function tryHandshake(
           handshakeConfig.paramName in payload.body
                 ) {
                     return executeHandshake({
+                        engineToken: params.engineToken,
                         flowVersion,
                         projectId,
                         payload,
@@ -82,11 +84,11 @@ async function executeHandshake(
     params: ExecuteHandshakeParams,
 ): Promise<WebhookResponse> {
     const { flowVersion, projectId, payload } = params
-    const { result } = await engineHelper.executeTrigger({
+    const { result } = await engineRunner.executeTrigger(params.engineToken, {
         hookType: TriggerHookType.HANDSHAKE,
         flowVersion,
         triggerPayload: payload,
-        webhookUrl: await webhookService.getWebhookUrl({
+        webhookUrl: await webhookUtils.getWebhookUrl({
             flowId: flowVersion.flowId,
             simulate: false,
         }),
@@ -107,4 +109,5 @@ type ExecuteHandshakeParams = {
     flowVersion: FlowVersion
     projectId: ProjectId
     payload: TriggerPayload
+    engineToken: string
 }

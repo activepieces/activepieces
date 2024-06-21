@@ -13,6 +13,7 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { flowService } from '../flow/flow.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
+import { logSerializer } from './log-serializer'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -42,7 +43,6 @@ import {
     spreadIfDefined,
     TelemetryEventName,
 } from '@activepieces/shared'
-import { logSerializer } from 'server-worker'
 
 export const flowRunRepo =
     databaseConnection.getRepository<FlowRun>(FlowRunEntity)

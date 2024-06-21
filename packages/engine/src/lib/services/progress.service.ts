@@ -9,7 +9,7 @@ export const progressService = {
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
         return lock.runExclusive(async () => {        
             const { flowExecutorContext, engineConstants } = params
-            const url = new URL(`${EngineConstants.API_URL}v1/worker/flows/update-run`)
+            const url = new URL(`${EngineConstants.API_URL}v1/engine/update-run`)
             const request: UpdateRunProgressRequest = {
                 runId: engineConstants.flowRunId,
                 workerHandlerId: engineConstants.serverHandlerId ?? null,

@@ -2,10 +2,9 @@ import { appEventRoutingService } from '../../../app-event-routing/app-event-rou
 import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
 import { flowQueue } from '../../../flow-worker/queue'
 import {
-    engineHelper,
+    generateEngineToken,
 } from '../../../helper/engine-helper'
 import { getEdition } from '../../../helper/secret-helper'
-import { webhookService } from '../../../webhooks/webhook-service'
 import { triggerUtils } from './trigger-utils'
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import {
@@ -31,6 +30,8 @@ import {
 import {
     EngineHelperResponse,
     EngineHelperTriggerResult,
+    engineRunner,
+    webhookUtils,
 } from 'server-worker'
 
 const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
@@ -64,12 +65,16 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         projectId,
     })
 
-    const webhookUrl = await webhookService.getWebhookUrl({
+    const webhookUrl = await webhookUtils.getWebhookUrl({
         flowId: flowVersion.flowId,
         simulate,
     })
 
-    const engineHelperResponse = await engineHelper.executeTrigger({
+    const engineToken = await generateEngineToken({
+        projectId,
+    })
+
+    const engineHelperResponse = await engineRunner.executeTrigger(engineToken, {
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion,
         webhookUrl,

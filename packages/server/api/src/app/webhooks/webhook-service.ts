@@ -1,27 +1,29 @@
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { triggerHooks } from '../flows/trigger'
-import { dedupeService } from '../flows/trigger/dedupe'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
 import { WebhookResponse } from '@activepieces/pieces-framework'
-import { logger, networkUtls, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { EventPayload,
+import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
+import {
+    EventPayload,
     ExecutionType,
-    FlowId,
     FlowRun,
     FlowVersion,
     PopulatedFlow,
     ProgressUpdateType,
     RunEnvironment,
 } from '@activepieces/shared'
+import { triggerConsumer } from 'server-worker'
 
 export const webhookService = {
     async handshake({
         populatedFlow,
         payload,
+        engineToken,
     }: HandshakeParams): Promise<WebhookResponse | null> {
         logger.info(`[WebhookService#handshake] flowId=${populatedFlow.id}`)
         const { projectId } = populatedFlow
         const response = await triggerHooks.tryHandshake({
+            engineToken,
             projectId,
             flowVersion: populatedFlow.version,
             payload,
@@ -32,34 +34,24 @@ export const webhookService = {
         }
         return response
     },
-    async extractPayloadAndSave({ flowVersion, payload, projectId }: SaveSampleDataParams): Promise<unknown[]> {
-        const payloads: unknown[] = await triggerHooks.executeTrigger({
+    async extractPayloadAndSave({ flowVersion, payload, projectId, engineToken }: SaveSampleDataParams): Promise<unknown[]> {
+        const payloads: unknown[] = await triggerConsumer.extractPayloads(engineToken, {
             projectId,
             flowVersion,
             payload,
             simulate: false,
         })
 
-        const savePayloads = payloads.map((payload) => 
-            triggerEventService.saveEvent({
+        const savePayloads = payloads.map((payload) =>
+            rejectedPromiseHandler(triggerEventService.saveEvent({
                 flowId: flowVersion.flowId,
                 payload,
                 projectId,
-            }).catch((e) =>
-                logger.error(
-                    e,
-                    '[WebhookService#callback] triggerEventService.saveEvent',
-                ),
-            ),
-        )
-
-        const filterPayloads = await dedupeService.filterUniquePayloads(
-            flowVersion.id,
-            payloads,
+            })),
         )
 
         rejectedPromiseHandler(Promise.all(savePayloads))
-        return filterPayloads
+        return payloads
     },
     async startAndSaveRuns({
         projectId,
@@ -80,30 +72,12 @@ export const webhookService = {
             }),
         )
         return Promise.all(createFlowRuns)
-    },
-    async getWebhookPrefix(): Promise<string> {
-        return `${await networkUtls.getApiUrl()}v1/webhooks`
-    },
-
-    async getWebhookUrl({
-        flowId,
-        simulate,
-    }: GetWebhookUrlParams): Promise<string> {
-        const suffix: WebhookUrlSuffix = simulate ? '/test' : ''
-        const webhookPrefix = await this.getWebhookPrefix()
-        return `${webhookPrefix}/${flowId}${suffix}`
-    },
+    }
 }
 
-
-type WebhookUrlSuffix = '' | '/test'
-
-type GetWebhookUrlParams = {
-    flowId: FlowId
-    simulate?: boolean
-}
 
 type SaveSampleDataParams = {
+    engineToken: string
     projectId: string
     flowVersion: FlowVersion
     payload: EventPayload
@@ -113,6 +87,7 @@ type SaveSampleDataParams = {
 type HandshakeParams = {
     populatedFlow: PopulatedFlow
     payload: EventPayload
+    engineToken: string
 }
 
 type SyncParams = {

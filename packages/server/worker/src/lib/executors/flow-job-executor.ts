@@ -1,24 +1,27 @@
-import { ActionType, ActivepiecesError, BeginExecuteFlowOperation, CodeAction, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, PackageType, PiecePackage, PrivatePiecePackage, ProjectId, PublicPiecePackage, RunEnvironment, SourceCode, Trigger, TriggerType, flowHelper, isNil } from "@activepieces/shared";
-import { engineApiService } from "../api/server-api.service";
-import { sandboxProvisioner } from "../sandbox/provisioner/sandbox-provisioner";
-import { SandBoxCacheType } from "../sandbox/provisioner/sandbox-cache-key";
-import { Sandbox } from "../sandbox";
-import { OneTimeJobData, exceptionHandler } from "@activepieces/server-shared";
-import { engineRunner } from "../engine/engine-runner";
+import { exceptionHandler, OneTimeJobData } from '@activepieces/server-shared'
+import { ActionType, ActivepiecesError, BeginExecuteFlowOperation, CodeAction, ErrorCode, ExecutionType, flowHelper, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, PackageType, PiecePackage, PrivatePiecePackage, ProjectId, PublicPiecePackage, RunEnvironment, SourceCode, TriggerType } from '@activepieces/shared'
+import { engineApiService } from '../api/server-api.service'
+import { engineRunner } from '../engine/engine-runner'
+import { Sandbox } from '../sandbox'
+import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
+import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
 
 
 async function executeFlow(jobData: OneTimeJobData, engineToken: string): Promise<void> {
     try {
-        const flow = await engineApiService(engineToken).getFlowWithExactPieces(jobData.flowVersionId);
+        const flow = await engineApiService(engineToken).getFlowWithExactPieces({
+            versionId: jobData.flowVersionId,
+            type: GetFlowVersionForWorkerRequestType.EXACT,
+        })
         if (isNil(flow)) {
-            return;
+            return
         }
 
         const sandbox = await prepareSandbox({
             projectId: jobData.projectId,
             flowVersion: flow.version,
             runEnvironment: jobData.environment,
-        });
+        })
 
         // TODO URGENT FIX FOR RESUME TRIGGER
         const input: Omit<BeginExecuteFlowOperation, 'serverUrl' | 'engineToken'> = {
@@ -47,15 +50,18 @@ async function executeFlow(jobData: OneTimeJobData, engineToken: string): Promis
             }))
         }
 
-    } catch (e) {
-        const isQuotaExceededError = e instanceof ActivepiecesError && e.error.code === ErrorCode.QUOTA_EXCEEDED;
-        const isTimeoutError = e instanceof ActivepiecesError && e.error.code === ErrorCode.EXECUTION_TIMEOUT;
+    }
+    catch (e) {
+        const isQuotaExceededError = e instanceof ActivepiecesError && e.error.code === ErrorCode.QUOTA_EXCEEDED
+        const isTimeoutError = e instanceof ActivepiecesError && e.error.code === ErrorCode.EXECUTION_TIMEOUT
         if (isQuotaExceededError) {
-            await handleQuotaExceededError(jobData, engineToken);
-        } else if (isTimeoutError) {
-            await handleTimeoutError(jobData, engineToken);
-        } else {
-            await handleInternalError(jobData, engineToken, e as Error);
+            await handleQuotaExceededError(jobData, engineToken)
+        }
+        else if (isTimeoutError) {
+            await handleTimeoutError(jobData, engineToken)
+        }
+        else {
+            await handleInternalError(jobData, engineToken, e as Error)
         }
     }
 }
@@ -182,7 +188,7 @@ export const getPiecePackage = async (
             throw new Error('Not implemented')
         }
         case PackageType.REGISTRY: {
-            return pkg;
+            return pkg
         }
     }
 }
@@ -201,5 +207,5 @@ type ExtractFlowPiecesParams = {
 }
 
 export const flowJobExecutor = {
-    executeFlow
+    executeFlow,
 }

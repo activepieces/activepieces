@@ -1,4 +1,4 @@
-import { readFile, readdir, stat } from 'node:fs/promises'
+import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { logger } from '../logger'
@@ -34,11 +34,12 @@ async function findDirectoryByPackageName(packageName: string) {
             if (packageJson.name === packageName) {
                 return path
             }
-        } catch (e) {
+        }
+        catch (e) {
             logger.error({
                 name: 'findDirectoryByPackageName',
-                message: JSON.stringify(e)
-            }, 'Error finding directory by package name');
+                message: JSON.stringify(e),
+            }, 'Error finding directory by package name')
         }
     }
     return null

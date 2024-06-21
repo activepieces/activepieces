@@ -1,5 +1,5 @@
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { ApEdition, assertEqual, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from '@activepieces/shared'
+import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -133,14 +133,6 @@ export const triggerHelper = {
                 }
             case TriggerHookType.RUN: {
                 if (trigger.type === TriggerStrategy.APP_WEBHOOK) {
-                    if (params.edition === ApEdition.COMMUNITY) {
-                        return {
-                            success: false,
-                            message: 'App webhooks are not supported in community edition',
-                            output: [],
-                        }
-                    }
-
                     if (!params.appWebhookUrl) {
                         throw new Error(`App webhook url is not available for piece name ${pieceName}`)
                     }

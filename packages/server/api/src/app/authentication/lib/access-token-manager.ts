@@ -1,13 +1,15 @@
+import dayjs from 'dayjs'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, Principal } from '@activepieces/shared'
 
 export const accessTokenManager = {
-    async generateToken(principal: Principal): Promise<string> {
+    async generateToken(principal: Principal, expiresInSeconds: number = dayjs.duration(7, 'days').asSeconds()): Promise<string> {
         const secret = await jwtUtils.getJwtSecret()
 
         return jwtUtils.sign({
             payload: principal,
             key: secret,
+            expiresInSeconds,
         })
     },
 

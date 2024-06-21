@@ -1,14 +1,16 @@
-import { ActivepiecesError, BeginExecuteFlowOperation, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteFlowOperation, ExecuteTriggerResponse, ExecuteValidateAuthResponse, FlowRunResponse, ResumeExecuteFlowOperation, TriggerHookType } from "@activepieces/shared"
-import { Sandbox } from "../sandbox"
-import { logger, networkUtls,} from "@activepieces/server-shared"
 import fs from 'node:fs/promises'
-import chalk from 'chalk'
-import { sandboxProvisioner } from "../sandbox/provisioner/sandbox-provisioner"
 import {
     DropdownState,
     DynamicPropsValue,
     PieceMetadata,
 } from '@activepieces/pieces-framework'
+import { logger, networkUtls } from '@activepieces/server-shared'
+import { ActivepiecesError, BeginExecuteFlowOperation, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteFlowOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthResponse, FlowRunResponse, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
+import chalk from 'chalk'
+import { Sandbox } from '../sandbox'
+import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
+import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
+import { triggerUtils } from '../trigger/hooks/trigger-util'
 
 export type EngineHelperFlowResult = Pick<FlowRunResponse, 'status' | 'error'>
 
@@ -129,4 +131,38 @@ export const engineRunner = {
         }
         return execute(EngineOperationType.EXECUTE_FLOW, sandbox, input)
     },
+    async executeTrigger<T extends TriggerHookType>(
+        engineToken: string,
+        operation: Omit<ExecuteTriggerOperation<T>, EngineConstants>,
+    ): Promise<EngineHelperResponse<EngineHelperTriggerResult<T>>> {
+        logger.debug(
+            { hookType: operation.hookType, projectId: operation.projectId },
+            '[EngineHelper#executeTrigger]',
+        )
+        // TODO URGENT Check if it's need to be exact
+        const piecePackage = triggerUtils.getTriggerPiece(operation.flowVersion)
+        const sandbox = await sandboxProvisioner.provision({
+            type: SandBoxCacheType.PIECE,
+            pieceName: piecePackage.pieceName,
+            pieceVersion: piecePackage.pieceVersion,
+            pieces: [piecePackage],
+        })
+
+        const input = {
+            projectId: operation.projectId,
+            hookType: operation.hookType,
+            webhookUrl: operation.webhookUrl,
+            pieceVersion: piecePackage,
+            flowVersion: operation.flowVersion,
+            // TODO URGENT FIX
+            appWebhookUrl: '',
+            serverUrl: await networkUtls.getApiUrl(),
+            // TODO URGENT FIX
+            webhookSecret: '',
+            engineToken,
+        }
+
+        return execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, input)
+    },
+
 }

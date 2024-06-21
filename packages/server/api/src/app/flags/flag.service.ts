@@ -1,11 +1,11 @@
 import axios from 'axios'
 import { databaseConnection } from '../database/database-connection'
 import { getEdition, getSupportedAppWebhooks } from '../helper/secret-helper'
-import { webhookService } from '../webhooks/webhook-service'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, Flag, isNil } from '@activepieces/shared'
+import { webhookUtils } from 'server-worker'
 
 const flagRepo = databaseConnection.getRepository(FlagEntity)
 
@@ -183,7 +183,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.WEBHOOK_URL_PREFIX,
-                value: await webhookService.getWebhookPrefix(),
+                value: await webhookUtils.getWebhookPrefix(),
                 created,
                 updated,
             },

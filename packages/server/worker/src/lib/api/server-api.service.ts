@@ -1,35 +1,45 @@
 
-import { ApQueueJob, PollJobRequest, QueueName, logger } from '@activepieces/server-shared'
-import { PopulatedFlow, UpdateRunProgressRequest } from '@activepieces/shared'
+import { ApQueueJob, logger, PollJobRequest, QueueName, ResumeRunRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { DisableFlowByEngineRequest, FlowRun, GetFlowVersionForWorkerRequest, PopulatedFlow, UpdateRunProgressRequest } from '@activepieces/shared'
 import axios, { isAxiosError } from 'axios'
 
 const SERVER_URL = 'http://127.0.0.1:3000'
 
-export const workerApiService = () => {
+export const workerApiService = (workerToken: string) => {
     const client = axios.create({
         baseURL: SERVER_URL,
         headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${workerToken}`,
         },
     })
     return {
         async poll(queueName: QueueName): Promise<ApQueueJob | null> {
             try {
                 const request: PollJobRequest = {
-                    queueName: queueName,
+                    queueName,
                 }
-                const response = await client.get('/v1/flow-workers/poll', {
+                const response = await client.get('/v1/workers/poll', {
                     params: request,
                 })
                 return response.data
             }
             catch (error) {
                 logger.error({
-                    message: JSON.stringify(error)
-                }, `Failed to poll new jobs, retrying in 2 seconds`);
+                    message: JSON.stringify(error),
+                }, 'Failed to poll new jobs, retrying in 2 seconds')
                 await new Promise((resolve) => setTimeout(resolve, 2000))
                 return null
             }
+        },
+        async resumeRun(request: ResumeRunRequest): Promise<void> {
+            await client.post('/v1/workers/resume-run', request)
+        },
+        async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
+            return await client.post('/v1/workers/submit-payloads', request)
+        },
+        async updateJobStatus(request: UpdateJobRequest): Promise<void> {
+            await client.post('/v1/workers/update-job', request)
         },
     }
 }
@@ -42,24 +52,17 @@ export const engineApiService = (engineToken: string) => {
             Authorization: `Bearer ${engineToken}`,
         },
     })
-
     return {
         async updateRunStatus(request: UpdateRunProgressRequest): Promise<void> {
-            await client.post('/v1/worker/flows/update-run', request)
+            await client.post('/v1/engine/update-run', request)
         },
-        async updateJobStatus(queueName: QueueName, status: string, message: string): Promise<void> {
-            await client.post('/v1/flow-workers/update', {
-                queueName: queueName,
-                status: status,
-                message: message,
-            })
+        async removeStaleFlow(request: DisableFlowByEngineRequest): Promise<void> {
+            await client.post('/v1/engine/disable-flow', request)
         },
-        async getFlowWithExactPieces(flowVersionId: string): Promise<PopulatedFlow | null> {
+        async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
             try {
-                const response = await client.get('/v1/worker/flows', {
-                    params: {
-                        versionId: flowVersionId,
-                    },
+                const response = await client.get('/v1/engine/flows', {
+                    params: request,
                 })
                 return response.data
             }

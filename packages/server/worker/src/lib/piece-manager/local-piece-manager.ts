@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
 import { filePiecesUtils, logger, packageManager } from '@activepieces/server-shared'
-import { PackageType, PiecePackage, assertEqual, assertNotEqual, assertNotNullOrUndefined } from '@activepieces/shared'
+import { assertEqual, assertNotNullOrUndefined, PackageType, PiecePackage } from '@activepieces/shared'
 import { PieceManager } from './piece-manager'
 
 

@@ -1,6 +1,6 @@
 import dns from 'node:dns/promises'
-import { FastifyRequest } from 'fastify'
 import { ApEnvironment } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 
@@ -59,5 +59,5 @@ function extractHostname(url: string): string | null {
 
 export const networkUtls = {
     getApiUrl,
-    extractClientRealIp
+    extractClientRealIp,
 }

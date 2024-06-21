@@ -1,5 +1,5 @@
-import { Static, Type } from "@sinclair/typebox";
-import { JobData } from "./job-data";
+import { Static, Type } from '@sinclair/typebox'
+import { DelayedJobData, JobData } from './job-data'
 
 export enum JobType {
     WEBHOOK = 'WEBHOOK',
@@ -39,3 +39,17 @@ export const ApQueueJob = Type.Object({
 })
 
 export type ApQueueJob = Static<typeof ApQueueJob>
+
+
+export const SubmitPayloadsRequest = Type.Object({
+    flowVersionId: Type.String(),
+    projectId: Type.String(),
+    synchronousHandlerId: Type.Optional(Type.String()),
+    payloads: Type.Array(Type.Unknown()),
+})
+
+export type SubmitPayloadsRequest = Static<typeof SubmitPayloadsRequest>
+
+
+export const ResumeRunRequest = DelayedJobData
+export type ResumeRunRequest = Static<typeof ResumeRunRequest>

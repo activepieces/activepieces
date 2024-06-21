@@ -1,13 +1,10 @@
 
-import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
-import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import {
     getPiecePackage,
     pieceMetadataService,
 } from '../pieces/piece-metadata-service'
 import { encryptUtils } from './encryption'
-import { getEdition, getWebhookSecret } from './secret-helper'
 import { logger, networkUtls } from '@activepieces/server-shared'
 import {
     Action,
@@ -19,16 +16,13 @@ import {
     ExecuteExtractPieceMetadata,
     ExecutePropsOptions,
     ExecuteStepOperation,
-    ExecuteTriggerOperation,
     ExecuteValidateAuthOperation,
     flowHelper,
     FlowVersion,
-    PieceTrigger,
     PrincipalType,
     ProjectId,
-    TriggerHookType,
 } from '@activepieces/shared'
-import { EngineHelperActionResult, EngineHelperExtractPieceInformation, EngineHelperFlowResult, EngineHelperPropResult, EngineHelperResponse, EngineHelperTriggerResult, EngineHelperValidateAuthResult, engineRunner, Sandbox, SandBoxCacheType, sandboxProvisioner } from 'server-worker'
+import { EngineHelperActionResult, EngineHelperExtractPieceInformation, EngineHelperFlowResult, EngineHelperPropResult, EngineHelperResponse, EngineHelperValidateAuthResult, engineRunner, Sandbox, SandBoxCacheType, sandboxProvisioner } from 'server-worker'
 
 type GenerateEngineTokenParams = {
     projectId: ProjectId
@@ -52,61 +46,6 @@ export const generateEngineToken = ({
 }
 
 export const engineHelper = {
-    async executeTrigger<T extends TriggerHookType>(
-        operation: Omit<ExecuteTriggerOperation<T>, EngineConstants>,
-    ): Promise<EngineHelperResponse<EngineHelperTriggerResult<T>>> {
-        logger.debug(
-            { hookType: operation.hookType, projectId: operation.projectId },
-            '[EngineHelper#executeTrigger]',
-        )
-
-        const lockedFlowVersion = await flowVersionService.lockPieceVersions({
-            projectId: operation.projectId,
-            flowVersion: operation.flowVersion,
-        })
-
-        const triggerSettings = (lockedFlowVersion.trigger as PieceTrigger)
-            .settings
-        const { packageType, pieceType, pieceName, pieceVersion } = triggerSettings
-
-        const exactPieceVersion = await pieceMetadataService.getExactPieceVersion({
-            name: pieceName,
-            version: pieceVersion,
-            projectId: operation.projectId,
-        })
-
-        const sandbox = await sandboxProvisioner.provision({
-            type: SandBoxCacheType.PIECE,
-            pieceName,
-            pieceVersion: exactPieceVersion,
-            pieces: [
-                await getPiecePackage(operation.projectId, {
-                    packageType,
-                    pieceType,
-                    pieceName,
-                    pieceVersion: exactPieceVersion,
-                }),
-            ],
-        })
-
-        const input = {
-            ...operation,
-            pieceVersion: exactPieceVersion,
-            flowVersion: lockedFlowVersion,
-            edition: getEdition(),
-            appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({
-                appName: pieceName,
-            }),
-            serverUrl: await networkUtls.getApiUrl(),
-            webhookSecret: await getWebhookSecret(operation.flowVersion),
-            engineToken: await generateEngineToken({
-                projectId: operation.projectId,
-            }),
-        }
-
-        return engineRunner.execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, input)
-    },
-
     async executeProp(
         operation: Omit<ExecutePropsOptions, EngineConstants>,
     ): Promise<EngineHelperResponse<EngineHelperPropResult>> {
