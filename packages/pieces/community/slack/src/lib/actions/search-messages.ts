@@ -1,11 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../..';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import {  WebClient } from '@slack/web-api';
 
 export const searchMessages = createAction({
   name: 'searchMessages',
@@ -21,35 +16,30 @@ export const searchMessages = createAction({
   async run({ auth, propsValue }) {
     const userToken = auth.data['authed_user']?.access_token;
     if (userToken === undefined) {
-      throw new Error("Missing user token, please re-authenticate")
+      throw new Error('Missing user token, please re-authenticate');
     }
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: 'https://slack.com/api/search.messages',
-      queryParams: {
-        query: propsValue.query,
-        count: '100',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: userToken,
-      },
-    };
-
-    let page = 1;
-    let pageCount = Infinity;
+    const client = new WebClient(userToken);
     const matches = [];
-    while (page < pageCount) {
-      request.queryParams!.page = String(page);
-      const response = await httpClient.sendRequest(request);
 
-      if (!response.body.ok) {
-        throw new Error(response.body.error);
+    // We can't use the usual "for await ... of" syntax with client.paginate
+    // Because search.messages uses a bastardized version of cursor-based pagination
+    // Where you need to pass * as first cursor
+    // https://api.slack.com/methods/search.messages#arg_cursor
+    let cursor = '*';
+    do {
+      const page = await client.search.messages({
+        query: propsValue.query,
+        count: 100,
+        // @ts-expect-error TS2353 - SDK is not aware cursor is actually supported
+        cursor,
+      });
+      if (page.messages?.matches) {
+        matches.push(...page.messages.matches);
       }
-      pageCount = response.body['messages']['pagination']['page_count'];
-      page += 1;
-      matches.push(...response.body['messages']['matches']);
-    }
+      // @ts-expect-error TS2353 - SDK is not aware next_cursor is actually returned
+      cursor = page.messages?.pagination?.next_cursor;
+    } while (cursor);
+
     return matches;
   },
 });
