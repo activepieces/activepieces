@@ -68,6 +68,7 @@ export class FormsComponent implements OnInit {
         this.title = form.title;
         this.form = new FormGroup({});
         this.buildInputs(form.props.inputs);
+        this.inputs = form.props.inputs;
         this.populatedForm = form;
         this.webhookUrl =
           environment.apiUrl +
@@ -87,9 +88,7 @@ export class FormsComponent implements OnInit {
     if (this.form.valid && !this.loading) {
       this.markdownResponse.next(null);
       this.loading = true;
-
       const observables: Observable<string>[] = [];
-
       for (const key in this.form.value) {
         const isFileInput = this.inputs
           .filter((f) => f.type === FormInputType.FILE)
