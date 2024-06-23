@@ -23,6 +23,7 @@ import {
   VerifyEmailRequestBody,
 } from '@activepieces/ee-shared';
 import { FlagService } from './flag.service';
+import { TelemetryService } from './telemetry.service';
 
 type UserWithoutPassword = Omit<User, 'password'>;
 
@@ -40,7 +41,8 @@ export class AuthenticationService {
   constructor(
     private router: Router,
     private http: HttpClient,
-    private flagsService: FlagService
+    private flagsService: FlagService,
+    private telemetryService: TelemetryService
   ) {}
 
   get currentUser(): AuthenticationResponse {
@@ -72,13 +74,21 @@ export class AuthenticationService {
   signUp(
     request: SignUpRequest
   ): Observable<HttpResponse<AuthenticationResponse>> {
-    return this.http.post<AuthenticationResponse>(
-      environment.apiUrl + '/authentication/sign-up',
-      request,
-      {
-        observe: 'response',
-      }
-    );
+    return this.http
+      .post<AuthenticationResponse>(
+        environment.apiUrl + '/authentication/sign-up',
+        request,
+        {
+          observe: 'response',
+        }
+      )
+      .pipe(
+        tap((res) => {
+          if (res.body && !res.body.verified) {
+            this.telemetryService.init(res.body);
+          }
+        })
+      );
   }
 
   saveToken(token: string) {
