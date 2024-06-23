@@ -32,10 +32,6 @@ export function isEmpty<T>(value: T | null | undefined): boolean {
     return false
 }
 
-type Dictionary<T> = {
-    [key: string]: T
-}
-
 export function startCase(str: string): string {
     return str
         .replace(/([a-z])([A-Z])/g, '$1 $2')
