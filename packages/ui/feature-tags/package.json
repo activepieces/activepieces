@@ -4,7 +4,7 @@
   "peerDependencies": {
     "@activepieces/ui/common": "0.0.2",
     "rxjs": "7.8.1",
-    "@activepieces/shared": "0.10.106",
+    "@activepieces/shared": "0.10.107",
     "@angular/core": "18.0.3",
     "@angular/common": "18.0.3",
     "@angular/cdk": "18.0.3",

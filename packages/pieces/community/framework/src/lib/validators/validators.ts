@@ -1,5 +1,4 @@
 import dayjs, { OpUnitType } from 'dayjs';
-import { isEmpty, isInteger, isNil, isString } from 'lodash';
 import { ErrorMessages } from './errors';
 import {
   TypedValidatorFn,
@@ -8,6 +7,7 @@ import {
 } from './types';
 import { formatErrorMessage } from './utils';
 import { ApFile } from '../property';
+import { isEmpty } from '@activepieces/shared';
 
 class Validators {
   static pattern(
