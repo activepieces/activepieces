@@ -1,6 +1,7 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
+import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
@@ -116,8 +117,18 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         return {}
     })
 
-}
+    app.get('/files/:fileId', GetFileRequestParams, async (request, reply) => {
+        const { fileId } = request.params
+        const file = await fileService.getOneOrThrow({
+            fileId,
+        })
+        return reply
+            .type('application/zip')
+            .status(StatusCodes.OK)
+            .send(file.data)
+    })
 
+}
 
 
 async function getFlow(projectId: string, request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow> {
@@ -231,6 +242,17 @@ async function getFlowResponse(
 }
 
 
+
+const GetFileRequestParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        params: Type.Object({
+            fileId: Type.String(),
+        }),
+    },
+}
 
 const UpdateStepProgress = {
     config: {

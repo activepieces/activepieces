@@ -60,6 +60,12 @@ export const engineApiService = (engineToken: string) => {
         },
     })
     return {
+        async getFile(fileId: string): Promise<Buffer> {
+            const response = await client.get(`/v1/engine/files/${fileId}`, {
+                responseType: 'arraybuffer',
+            })
+            return response.data
+        },
         async updateJobStatus(request: UpdateJobRequest): Promise<void> {
             await client.post('/v1/engine/update-job', request)
         },

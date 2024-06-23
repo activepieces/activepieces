@@ -50,13 +50,15 @@ export const pieceEngineUtil = {
                 const pieceMetadata = await engineApiService(engineToken).getPiece(pieceName, {
                     version: pieceVersion,
                 })
+                const archive = await engineApiService(engineToken).getFile(pieceMetadata.archiveId!)
+
                 return {
                     packageType,
                     pieceType,
                     pieceName,
                     pieceVersion: pieceMetadata.version,
                     archiveId: pieceMetadata.archiveId!,
-                    archive: {},
+                    archive,
                 }
             }
             case PackageType.REGISTRY: {
