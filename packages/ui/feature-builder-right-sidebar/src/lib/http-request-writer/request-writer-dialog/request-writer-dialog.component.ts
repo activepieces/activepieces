@@ -46,7 +46,7 @@ export class RequestWriterDialogComponent {
     });
   }
 
-  prompt() {
+  prompt(reprompt = false) {
     if (this.promptForm.valid && !this.loading$.value) {
       this.loading$.next(true);
       this.promptForm.disable();
