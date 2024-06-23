@@ -28,11 +28,6 @@ export class RequestWriterDialogComponent {
   receivedCode$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   promptOperation$?: Observable<void>;
-  receivedInputs: {
-    key: string;
-    value: unknown;
-  }[] = [];
-  receivedPackages: string[] = [];
   prisimFix = false;
 
   constructor(
@@ -57,8 +52,9 @@ export class RequestWriterDialogComponent {
       this.promptForm.disable();
       const prompt: string = this.promptForm.controls.prompt.value;
       // const reference: string = this.promptForm.controls.reference.value;
+
       this.promptOperation$ = this.requestWriterService
-        .prompt({
+        .fetchApiDetails({
           prompt,
         })
         .pipe(
@@ -68,21 +64,10 @@ export class RequestWriterDialogComponent {
               Validators.required
             );
             this.promptForm.controls.prompt.setValue('');
-            this.promptForm.controls.reference.setValue('');
+            // this.promptForm.controls.reference.setValue('');
             try {
-              const result: {
-                code: string;
-                inputs: {
-                  key: string;
-                  value: unknown;
-                }[];
-                packages: string[];
-              } = JSON.parse(response.result);
-              this.receivedCode$.next(
-                result.code.replace(/\*\*\*NEW_LINE\*\*\*/g, '\n')
-              );
-              this.receivedInputs = result.inputs;
-              this.receivedPackages = result.packages;
+              const result = response.result;
+              this.receivedCode$.next(result);
               if (this.stepper.selected) {
                 this.stepper.selected.completed = true;
                 this.stepper.next();
