@@ -174,7 +174,7 @@
     "pg-format": "1.0.4",
     "pickleparser": "0.1.0",
     "pino-loki": "2.1.3",
-    "posthog-js": "1.83.0",
+    "posthog-js": "1.140.1",
     "priority-queue-typescript": "1.0.1",
     "prismjs": "1.29.0",
     "product-fruits": "1.0.23",
