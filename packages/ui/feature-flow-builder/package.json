@@ -8,7 +8,7 @@
     "rxjs": "7.8.1",
     "@activepieces/ui/feature-builder-store": "0.0.1",
     "@activepieces/ui/feature-builder-left-sidebar": "0.0.1",
-    "@activepieces/shared": "0.10.106",
+    "@activepieces/shared": "0.10.107",
     "@activepieces/ui-canvas-utils": "0.0.1",
     "@ctrl/ngx-codemirror": "5.1.1",
     "angular-svg-icon": "15.0.0",
