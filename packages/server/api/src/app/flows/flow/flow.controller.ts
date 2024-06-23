@@ -4,7 +4,6 @@ import {
 } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
-import { isNil } from 'lodash'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/rbac/rbac-middleware'
 import { eventsHooks } from '../../helper/application-events'
@@ -20,6 +19,7 @@ import {
     FlowOperationRequest,
     FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
+    isNil,
     ListFlowsRequest,
     Permission,
     PopulatedFlow,
