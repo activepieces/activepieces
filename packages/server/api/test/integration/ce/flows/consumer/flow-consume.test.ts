@@ -1,8 +1,7 @@
 import { FastifyInstance } from 'fastify'
-import { setupApp } from '../../../../src/app/app'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { webhookResponseWatcher } from '../../../../src/app/flow-worker/helper/webhook-response-watcher'
-import { generateEngineToken } from '../../../../src/app/helper/engine-helper'
+import { setupApp } from '../../../../../src/app/app'
+import { databaseConnection } from '../../../../../src/app/database/database-connection'
+import { generateEngineToken } from '../../../../../src/app/helper/engine-helper'
 import {
     createMockFlow,
     createMockFlowRun,
@@ -10,7 +9,7 @@ import {
     createMockPlatform,
     createMockProject,
     createMockUser,
-} from '../../../helpers/mocks'
+} from '../../../../helpers/mocks'
 import { fileCompressor } from '@activepieces/server-shared'
 import {
     ActionType,
@@ -141,7 +140,7 @@ describe('flow execution', () => {
             environment: RunEnvironment.PRODUCTION,
             runId: mockFlowRun.id,
             payload: {},
-            synchronousHandlerId: webhookResponseWatcher.getHandlerId(),
+            synchronousHandlerId: null,
             progressUpdateType: ProgressUpdateType.NONE,
             executionType: ExecutionType.BEGIN,
         }, engineToken)

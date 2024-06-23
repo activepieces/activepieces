@@ -3,7 +3,7 @@ import { ConsumerManager } from '../consumer/consumer-manager'
 import { memoryQueues } from './memory-queue'
 
 export const memoryConsumer: ConsumerManager = {
-    async poll(queueName, _token) {
+    async poll(queueName) {
         const job = await memoryQueues[queueName].poll()
         if (isNil(job)) {
             await new Promise((resolve) => setTimeout(resolve, 500))

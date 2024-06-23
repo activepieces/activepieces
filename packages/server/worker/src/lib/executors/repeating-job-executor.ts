@@ -10,6 +10,7 @@ export const repeatingJobExecutor = {
 
 async function executeRepeatingJob({ data, engineToken, workerToken }: Params): Promise<void> {
     const { flowVersionId, jobType } = data
+
     const populatedFlow = await engineApiService(engineToken).getFlowWithExactPieces({
         versionId: flowVersionId,
         type: GetFlowVersionForWorkerRequestType.EXACT,
@@ -17,10 +18,10 @@ async function executeRepeatingJob({ data, engineToken, workerToken }: Params): 
     const flowVersion = populatedFlow?.version ?? null
     const isStale = await isStaleFlowVersion(populatedFlow, jobType)
     if (isStale) {
+        logger.info(`[FlowQueueConsumer#executeRepeatingJob] Stale flowVersionId=${flowVersionId} ` + `publishedVersionId=${populatedFlow?.publishedVersionId}`)
         await engineApiService(engineToken).removeStaleFlow({
             flowId: populatedFlow?.id,
-            flowVersionId: flowVersionId,
-            projectId: data.projectId,
+            flowVersionId,
         })
         return
     }

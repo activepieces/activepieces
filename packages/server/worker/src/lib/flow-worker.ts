@@ -1,8 +1,8 @@
-import { ApSemaphore, exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, system, SystemProp, WebhookJobData } from '@activepieces/server-shared'
+import { ApSemaphore, exceptionHandler, JobData, JobStatus, logger, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, system, SystemProp, WebhookJobData } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
-import { repeatingJobExecutor } from './executors/repeating-job-executor'
-import { workerApiService } from './api/server-api.service'
+import { engineApiService, workerApiService } from './api/server-api.service'
 import { flowJobExecutor } from './executors/flow-job-executor'
+import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { webhookExecutor } from './executors/webhook-job-executor'
 
 const WORKER_CONCURRENCY = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
@@ -38,16 +38,16 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
             const { data, engineToken } = job
             consumeJob(queueName, data, engineToken)
                 .then(() => {
-                    rejectedPromiseHandler(workerApiService(workerToken).updateJobStatus({
+                    rejectedPromiseHandler(engineApiService(engineToken).updateJobStatus({
                         status: JobStatus.COMPLETED,
                         queueName,
                     }))
                 })
                 .catch((e) => {
-                    rejectedPromiseHandler(workerApiService(workerToken).updateJobStatus({
+                    rejectedPromiseHandler(engineApiService(engineToken).updateJobStatus({
                         status: JobStatus.FAILED,
                         queueName,
-                        message: e.message,
+                        message: e,
                     }))
                     exceptionHandler.handle(e)
                 }).finally(() => {
@@ -75,7 +75,7 @@ async function consumeJob(queueName: QueueName, jobData: JobData, engineToken: s
             break
         case QueueName.WEBHOOK:{
             await webhookExecutor.consumeWebhook(jobData as WebhookJobData, engineToken, workerToken)
-            break;
+            break
         }
     }
 }

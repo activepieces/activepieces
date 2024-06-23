@@ -1,14 +1,15 @@
 import * as crypto from 'crypto'
 import { randomBytes } from 'node:crypto'
 import { promisify } from 'util'
-import { localFileStore } from './store'
-import { QueueMode, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
     ErrorCode,
     isNil,
 } from '@activepieces/shared'
+import { localFileStore } from './local-store'
+import { QueueMode, system } from './system/system'
+import { SystemProp } from './system/system-prop'
 
 let secret: string | null
 const algorithm = 'aes-256-cbc'

@@ -47,6 +47,5 @@ else {
         }
 
         executeFromWorkerData().catch(e => console.error(e))
-
     }
 }

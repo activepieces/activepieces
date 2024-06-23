@@ -1,8 +1,8 @@
+import { WebhookResponse } from '@activepieces/pieces-framework'
 import { logger, networkUtls, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { EventPayload, FlowId, FlowVersion, PopulatedFlow } from '@activepieces/shared'
-import { triggerConsumer } from '../trigger/hooks/trigger-consumer'
 import { workerApiService } from '../api/server-api.service'
-import { WebhookResponse } from '@activepieces/pieces-framework'
+import { triggerConsumer } from '../trigger/hooks/trigger-consumer'
 
 export const webhookUtils = {
     async getWebhookPrefix(): Promise<string> {
@@ -24,7 +24,7 @@ export const webhookUtils = {
         const webhookPrefix = await this.getWebhookPrefix()
         return `${webhookPrefix}/${flowId}${suffix}`
     },
-    async extractPayloadAndSave({ flowVersion, payload, projectId, engineToken, workerToken}: SaveSampleDataParams): Promise<unknown[]> {
+    async extractPayloadAndSave({ flowVersion, payload, projectId, engineToken, workerToken }: SaveSampleDataParams): Promise<unknown[]> {
         const payloads: unknown[] = await triggerConsumer.extractPayloads(engineToken, {
             projectId,
             flowVersion,
@@ -46,7 +46,7 @@ export const webhookUtils = {
     }: HandshakeParams): Promise<WebhookResponse | null> {
         logger.info(`[WebhookService#handshake] flowId=${populatedFlow.id}`)
         const { projectId } = populatedFlow
-        const response = await triggerConsumer.tryHandshake({
+        const response = await triggerConsumer.tryHandshake(engineToken, {
             engineToken,
             projectId,
             flowVersion: populatedFlow.version,

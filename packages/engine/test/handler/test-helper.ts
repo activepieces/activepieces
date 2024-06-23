@@ -5,6 +5,7 @@ import { VariableService } from '../../src/lib/services/variable-service'
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
     return new EngineConstants(
         params?.flowId ?? 'flowId',
+        params?.flowVersionId ?? 'flowVersionId',
         params?.flowRunId ?? 'flowRunId',
         params?.serverUrl ?? 'http://127.0.0.1:3000',
         params?.retryConstants ?? {
@@ -22,6 +23,7 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
         params?.filesServiceType ?? 'local',
         params?.progressUpdateType ?? ProgressUpdateType.NONE,
         params?.serverHandlerId ?? null,
+        params?.httpRequestId ?? null,
         params?.resumePayload,
     )
 }

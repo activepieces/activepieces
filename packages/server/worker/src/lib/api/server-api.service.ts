@@ -1,6 +1,7 @@
 
+import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, DeleteWebhookSimulationRequest, GetRunForWorkerRequest, logger, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { DisableFlowByEngineRequest, FlowRun, GetFlowVersionForWorkerRequest, PopulatedFlow, UpdateRunProgressRequest } from '@activepieces/shared'
+import { DisableFlowByEngineRequest, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, UpdateRunProgressRequest } from '@activepieces/shared'
 import axios, { isAxiosError } from 'axios'
 
 const SERVER_URL = 'http://127.0.0.1:3000'
@@ -47,9 +48,6 @@ export const workerApiService = (workerToken: string) => {
         async sendWebhookUpdate(request: SendWebhookUpdateRequest): Promise<void> {
             await client.post('/v1/workers/send-webhook-update', request)
         },
-        async updateJobStatus(request: UpdateJobRequest): Promise<void> {
-            await client.post('/v1/workers/update-job', request)
-        },
     }
 }
 
@@ -62,8 +60,11 @@ export const engineApiService = (engineToken: string) => {
         },
     })
     return {
+        async updateJobStatus(request: UpdateJobRequest): Promise<void> {
+            await client.post('/v1/engine/update-job', request)
+        },
         async getRun(request: GetRunForWorkerRequest): Promise<FlowRun> {
-            const response = await client.get('/v1/workers/runs/' + request.runId, {})
+            const response = await client.get('/v1/engine/runs/' + request.runId, {})
             return response.data
         },
         async updateRunStatus(request: UpdateRunProgressRequest): Promise<void> {
@@ -71,6 +72,11 @@ export const engineApiService = (engineToken: string) => {
         },
         async removeStaleFlow(request: DisableFlowByEngineRequest): Promise<void> {
             await client.post('/v1/engine/disable-flow', request)
+        },
+        async getPiece(name: string, options: GetPieceRequestQuery): Promise<PieceMetadataModel> {
+            return (await client.get(`/v1/pieces/${encodeURIComponent(name)}`, {
+                params: options,
+            })).data
         },
         async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
             try {

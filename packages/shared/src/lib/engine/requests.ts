@@ -16,7 +16,6 @@ export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>
 export const DisableFlowByEngineRequest = Type.Object({
     flowId: Type.Optional(Type.String()),
     flowVersionId: Type.String(),
-    projectId: Type.String(),
 })
 export type DisableFlowByEngineRequest = Static<typeof DisableFlowByEngineRequest>
 export enum GetFlowVersionForWorkerRequestType {

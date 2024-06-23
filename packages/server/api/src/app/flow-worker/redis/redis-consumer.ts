@@ -1,16 +1,18 @@
 import { Job, Worker } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
 import { ConsumerManager } from '../consumer/consumer-manager'
-import { JobStatus, logger, QueueName } from '@activepieces/server-shared'
+import { JobStatus, logger, QueueName, system, SystemProp } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import dayjs from 'dayjs'
 
 const consumers: Record<string, Worker> = {}
+const sandboxTimeout = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 6000
 
 export const redisConsumer: ConsumerManager = {
-    async poll(jobType, token) {
+    async poll(jobType) {
         const queue = consumers[jobType]
         assertNotNullOrUndefined(queue, 'Queue not found')
-        const job = await queue.getNextJob(token)
+        const job = await queue.getNextJob('STATIC_TOKEN')
         if (isNil(job)) {
             return null
         }
@@ -19,16 +21,16 @@ export const redisConsumer: ConsumerManager = {
             data: job.data,
         }
     },
-    async update({ queueName, jobId, status, token, message }): Promise<void> {
+    async update({ queueName, jobId, status, message }): Promise<void> {
         const job = await Job.fromId(consumers[queueName], jobId)
         assertNotNullOrUndefined(job, 'Job not found')
 
         switch (status) {
             case JobStatus.COMPLETED:
-                await job.moveToCompleted({}, token, false)
+                await job.moveToCompleted({}, 'STATIC_TOKEN', false)
                 break
             case JobStatus.FAILED:
-                await job.moveToFailed(new Error(message), token, false)
+                await job.moveToFailed(new Error(message), 'STATIC_TOKEN', false)
                 break
         }
     },
@@ -36,6 +38,7 @@ export const redisConsumer: ConsumerManager = {
         for (const queueName of Object.values(QueueName)) {
             consumers[queueName] = new Worker(queueName, null, {
                 connection: createRedisClient(),
+                lockDuration: dayjs.duration(sandboxTimeout).add(5, 'seconds').milliseconds(),
             })
         }
         await Promise.all(Object.values(consumers).map((consumer) => consumer.waitUntilReady()))

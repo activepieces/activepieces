@@ -115,7 +115,7 @@ export const system = {
     },
     getEdition(): ApEdition {
         return this.getOrThrow<ApEdition>(SystemProp.EDITION)
-    }
+    },
 }
 
 const getEnvVar = (prop: SystemProp): string | undefined => {

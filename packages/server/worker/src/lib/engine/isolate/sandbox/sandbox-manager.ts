@@ -1,21 +1,21 @@
 import { logger } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
-import { Sandbox } from '.'
+import { IsolateSandbox } from './isolate-sandbox'
 
 const SANDBOX_LIMIT = 1000
 
-const sandboxes: Sandbox[] = new Array(SANDBOX_LIMIT)
+const sandboxes: IsolateSandbox[] = new Array(SANDBOX_LIMIT)
     .fill(null)
-    .map((_, i) => new Sandbox({ boxId: i }))
+    .map((_, i) => new IsolateSandbox({ boxId: i }))
 
 const lock: Mutex = new Mutex()
 
 export const sandboxManager = {
-    async allocate(cacheKey: string): Promise<Sandbox> {
+    async allocate(cacheKey: string): Promise<IsolateSandbox> {
         logger.debug({ cacheKey }, '[SandboxManager#allocate]')
 
-        const sandbox = await executeWithLock((): Sandbox => {
+        const sandbox = await executeWithLock((): IsolateSandbox => {
             const sandbox = findSandbox(cacheKey)
 
             if (isNil(sandbox)) {
@@ -66,7 +66,7 @@ const executeWithLock = async <T>(methodToExecute: () => T): Promise<T> => {
 }
 
 
-function findSandbox(cacheKey: string): Sandbox | undefined {
+function findSandbox(cacheKey: string): IsolateSandbox | undefined {
     const sandboxByKey = sandboxes.find(f => f.cacheKey === cacheKey && !f.inUse)
     if (!isNil(sandboxByKey)) {
         return sandboxByKey

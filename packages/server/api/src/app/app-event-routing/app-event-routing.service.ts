@@ -3,7 +3,7 @@ import {
     AppEventRouting,
     AppEventRoutingEntity,
 } from './app-event-routing.entity'
-import { logger, networkUtls } from '@activepieces/server-shared'
+import { logger } from '@activepieces/server-shared'
 import { apId, FlowId, ProjectId } from '@activepieces/shared'
 
 const appEventRoutingRepo = databaseConnection.getRepository(

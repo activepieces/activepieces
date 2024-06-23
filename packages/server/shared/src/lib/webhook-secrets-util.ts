@@ -33,10 +33,10 @@ function getSupportedAppWebhooks(): string[] {
 }
 
 function getWebhookSecrets(): Record<
-    string,
-    {
-        webhookSecret: string
-    }
+string,
+{
+    webhookSecret: string
+}
 > {
     const appSecret = system.get(SystemProp.APP_WEBHOOK_SECRETS)
     if (isNil(appSecret)) {

@@ -1,6 +1,6 @@
+import { EngineHttpResponse, ProgressUpdateType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { DelayedJobData, JobData } from './job-data'
-import { EngineHttpResponse, ProgressUpdateType } from '@activepieces/shared'
 
 export enum JobType {
     WEBHOOK = 'WEBHOOK',
@@ -51,7 +51,7 @@ export type DeleteWebhookSimulationRequest = Static<typeof DeleteWebhookSimulati
 export const SendWebhookUpdateRequest = Type.Object({
     workerServerId: Type.String(),
     requestId: Type.String(),
-    response: EngineHttpResponse
+    response: EngineHttpResponse,
 })
 export type SendWebhookUpdateRequest = Static<typeof SendWebhookUpdateRequest>
 

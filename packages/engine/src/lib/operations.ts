@@ -5,7 +5,6 @@ import {
     EngineOperationType,
     EngineResponse,
     EngineResponseStatus,
-    EngineTestOperation,
     ExecuteActionResponse,
     ExecuteExtractPieceMetadata,
     ExecuteFlowOperation,
@@ -163,16 +162,6 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                     status: EngineResponseStatus.OK,
                     response: output,
                 }
-            }
-            case EngineOperationType.EXECUTE_TEST_FLOW: {
-                const input = operation as EngineTestOperation
-                const testExecutionState = await testExecutionContext.stateFromFlowVersion({
-                    flowVersion: input.sourceFlowVersion,
-                    projectId: input.projectId,
-                    engineToken: input.engineToken,
-                })
-                const output = await executeFlow(input, testExecutionState)
-                return output
             }
         }
     }

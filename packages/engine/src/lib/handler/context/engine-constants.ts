@@ -37,6 +37,7 @@ export class EngineConstants {
 
     public constructor(
         public readonly flowId: string,
+        public readonly flowVersionId: string,
         public readonly flowRunId: string,
         public readonly serverUrl: string,
         public readonly retryConstants: RetryConstants,
@@ -54,6 +55,7 @@ export class EngineConstants {
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
+            input.flowVersion.id,
             input.flowRunId,
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
@@ -75,6 +77,7 @@ export class EngineConstants {
     public static fromExecuteStepInput(input: ExecuteStepOperation): EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
+            input.flowVersion.id,
             'test-run',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
@@ -95,6 +98,7 @@ export class EngineConstants {
     public static fromExecutePropertyInput(input: ExecutePropsOptions): EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
+            input.flowVersion.id,
             'execute-property',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
@@ -115,6 +119,7 @@ export class EngineConstants {
     public static fromExecuteTriggerInput(input: ExecuteTriggerOperation<TriggerHookType>): EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
+            input.flowVersion.id,
             'execute-trigger',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,

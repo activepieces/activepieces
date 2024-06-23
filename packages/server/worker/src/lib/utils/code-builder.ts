@@ -29,9 +29,17 @@ const INVALID_ARTIFACT_TEMPLATE_PATH =
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
 export const codeBuilder = {
+    buildPath({
+        sourceCodeId,
+        flowVersionId,
+        buildPath,
+    }: BuildPathParams): string {
+        return `${buildPath}/codes/${flowVersionId}/${sourceCodeId}`
+    },
     async processCodeStep({
         sourceCode,
         sourceCodeId,
+        flowVersionId,
         buildPath,
     }: ProcessCodeStepParams): Promise<void> {
         logger.debug({
@@ -41,7 +49,12 @@ export const codeBuilder = {
             buildPath,
         })
 
-        const codePath = `${buildPath}/codes/${sourceCodeId}`
+        const codePath = codeBuilder.buildPath({
+            sourceCodeId,
+            flowVersionId,
+            buildPath,
+
+        })
 
         try {
             const { code, packageJson } = sourceCode
@@ -132,9 +145,16 @@ const handleCompilationError = async ({
     await fs.writeFile(`${codePath}/index.js`, invalidArtifactContent, 'utf8')
 }
 
+type BuildPathParams = {
+    sourceCodeId: string
+    flowVersionId: string
+    buildPath: string
+}
+
 type ProcessCodeStepParams = {
     sourceCode: SourceCode
     sourceCodeId: string
+    flowVersionId: string
     buildPath: string
 }
 

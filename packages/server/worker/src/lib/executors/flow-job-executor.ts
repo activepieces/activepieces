@@ -1,11 +1,7 @@
-import { exceptionHandler, logger, OneTimeJobData } from '@activepieces/server-shared'
-import { ActionType, ActivepiecesError, BeginExecuteFlowOperation, CodeAction, ErrorCode, ExecutionType, flowHelper, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, PackageType, PiecePackage, PrivatePiecePackage, ProjectId, PublicPiecePackage, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, SourceCode, TriggerType } from '@activepieces/shared'
+import { exceptionHandler, OneTimeJobData } from '@activepieces/server-shared'
+import { ActivepiecesError, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
-import { engineRunner } from '../engine/engine-runner'
-import { Sandbox } from '../sandbox'
-import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
-import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
-import dayjs from 'dayjs'
+import { engineRunner } from '../engine'
 
 
 async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, engineToken: string): Promise<Omit<BeginExecuteFlowOperation, 'serverUrl' | 'engineToken'> | Omit<ResumeExecuteFlowOperation, 'serverUrl' | 'engineToken'>> {
@@ -52,16 +48,9 @@ async function executeFlow(jobData: OneTimeJobData, engineToken: string): Promis
             return
         }
 
-        const sandbox = await prepareSandbox({
-            projectId: jobData.projectId,
-            flowVersion: flow.version,
-            runEnvironment: jobData.environment,
-        })
-
         const input = await prepareInput(flow.version, jobData, engineToken)
         const { result } = await engineRunner.executeFlow(
             engineToken,
-            sandbox,
             input,
         )
 
@@ -88,8 +77,9 @@ async function executeFlow(jobData: OneTimeJobData, engineToken: string): Promis
             await handleInternalError(jobData, engineToken, e as Error)
         }
     }
-    
+
 }
+
 
 async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: string): Promise<void> {
     await engineApiService(engineToken).updateRunStatus({
@@ -145,95 +135,6 @@ function throwErrorToRetry(error: Error): void {
     throw error
 }
 
-function getCodeSteps(flowVersion: FlowVersion): { name: string, sourceCode: SourceCode }[] {
-    const steps = flowHelper.getAllSteps(flowVersion.trigger)
-    return steps.filter((step) => step.type === ActionType.CODE).map((step) => {
-        const codeAction = step as CodeAction
-        return {
-            name: codeAction.name,
-            sourceCode: codeAction.settings.sourceCode,
-        }
-    })
-}
-
-async function prepareSandbox({
-    projectId,
-    flowVersion,
-    runEnvironment,
-}: GetSandboxParams): Promise<Sandbox> {
-    const pieces = await extractFlowPieces({
-        flowVersion,
-        projectId,
-    })
-    const codeSteps = getCodeSteps(flowVersion)
-    switch (runEnvironment) {
-        case RunEnvironment.PRODUCTION:
-            return sandboxProvisioner.provision({
-                type: SandBoxCacheType.FLOW,
-                flowVersionId: flowVersion.id,
-                pieces,
-                codeSteps,
-            })
-        case RunEnvironment.TESTING:
-            return sandboxProvisioner.provision({
-                type: SandBoxCacheType.NONE,
-                pieces,
-                codeSteps,
-            })
-    }
-}
-
-const extractFlowPieces = async ({
-    projectId,
-    flowVersion,
-}: ExtractFlowPiecesParams): Promise<PiecePackage[]> => {
-    const pieces: PiecePackage[] = []
-    const steps = flowHelper.getAllSteps(flowVersion.trigger)
-
-    for (const step of steps) {
-        if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
-            const { packageType, pieceType, pieceName, pieceVersion } = step.settings
-            const piecePackage = await getPiecePackage(projectId, {
-                packageType,
-                pieceType,
-                pieceName,
-                pieceVersion,
-            })
-            pieces.push(piecePackage)
-        }
-    }
-
-    return pieces
-}
-
-
-export const getPiecePackage = async (
-    projectId: string,
-    pkg: PublicPiecePackage | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>,
-): Promise<PiecePackage> => {
-    switch (pkg.packageType) {
-        case PackageType.ARCHIVE: {
-            // TODO URGENT FIX
-            throw new Error('Not implemented')
-        }
-        case PackageType.REGISTRY: {
-            return pkg
-        }
-    }
-}
-
-
-
-type GetSandboxParams = {
-    projectId: ProjectId
-    flowVersion: FlowVersion
-    runEnvironment: RunEnvironment
-}
-
-type ExtractFlowPiecesParams = {
-    flowVersion: FlowVersion
-    projectId: ProjectId
-}
 
 export const flowJobExecutor = {
     executeFlow,

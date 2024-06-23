@@ -37,7 +37,6 @@ import {
     PauseType,
     ProgressUpdateType,
     ProjectId,
-    ResumePayload,
     RunEnvironment,
     SeekPage,
     spreadIfDefined,
@@ -71,16 +70,20 @@ const getFlowRunOrCreate = async (
     }
 }
 
-async function updateFlowRunToLatestFlowVersionId(
+async function updateFlowRunToLatestFlowVersionIdAndReturnPayload(
     flowRunId: FlowRunId,
-): Promise<void> {
-    const flowRun = await flowRunRepo.findOneByOrFail({ id: flowRunId })
+): Promise<unknown> {
+    const flowRun = await flowRunService.getOnePopulatedOrThrow({
+        id: flowRunId,
+        projectId: undefined,
+    })
     const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(
         flowRun.flowId,
     )
     await flowRunRepo.update(flowRunId, {
         flowVersionId: flowVersion.id,
     })
+    return flowRun.steps ? flowRun.steps[flowVersion.trigger.name] : undefined
 }
 
 function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): string {
@@ -155,8 +158,9 @@ export const flowRunService = {
                 })
                 break
             case FlowRetryStrategy.ON_LATEST_VERSION: {
-                await updateFlowRunToLatestFlowVersionId(flowRunId)
+                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(flowRunId)
                 await flowRunService.addToQueue({
+                    payload,
                     flowRunId,
                     executionType: ExecutionType.BEGIN,
                     progressUpdateType: ProgressUpdateType.NONE,
@@ -167,7 +171,7 @@ export const flowRunService = {
     },
     async addToQueue({
         flowRunId,
-        resumePayload,
+        payload,
         requestId,
         progressUpdateType,
         executionType,
@@ -175,7 +179,7 @@ export const flowRunService = {
         flowRunId: FlowRunId
         requestId?: string
         progressUpdateType: ProgressUpdateType
-        resumePayload?: ResumePayload
+        payload?: unknown
         executionType: ExecutionType
     }): Promise<void> {
         logger.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
@@ -196,7 +200,7 @@ export const flowRunService = {
         const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
         if (matchRequestId) {
             await flowRunService.start({
-                payload: resumePayload,
+                payload,
                 flowRunId: flowRunToResume.id,
                 projectId: flowRunToResume.projectId,
                 flowVersionId: flowRunToResume.flowVersionId,

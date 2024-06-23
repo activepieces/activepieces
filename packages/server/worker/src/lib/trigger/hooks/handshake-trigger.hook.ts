@@ -5,19 +5,26 @@ import {
 import {
     FlowVersion,
     isNil,
+    PieceTriggerSettings,
     ProjectId,
     TriggerHookType,
     TriggerPayload,
 } from '@activepieces/shared'
-import { engineRunner, webhookUtils } from 'server-worker'
+import { engineApiService } from '../../api/server-api.service'
+import { engineRunner } from '../../engine'
+import { webhookUtils } from '../../utils/webhook-utils'
 
 export async function tryHandshake(
+    engineToken: string,
     params: ExecuteHandshakeParams,
 ): Promise<WebhookResponse | null> {
     const { payload, flowVersion, projectId } = params
 
-    // TODO URGENT FIX
-    const handshakeConfig: any = null;
+    const settings = flowVersion.trigger.settings as PieceTriggerSettings
+    const pieceMetadata = await engineApiService(engineToken).getPiece(settings.pieceName, {
+        version: settings.pieceVersion,
+    })
+    const handshakeConfig = pieceMetadata.triggers?.[settings.triggerName]?.handshakeConfiguration
     if (isNil(handshakeConfig)) {
         return null
     }
@@ -68,9 +75,9 @@ export async function tryHandshake(
             break
         }
         default:
-            break;
+            break
     }
-    return null;
+    return null
 }
 
 async function executeHandshake(

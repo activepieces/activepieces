@@ -1,5 +1,4 @@
 import { fileService } from '../../file/file.service'
-import { engineHelper } from '../../helper/engine-helper'
 import { pieceMetadataService } from '../piece-metadata-service'
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ExecutionMode, logger, system, SystemProp } from '@activepieces/server-shared'
@@ -21,6 +20,7 @@ import {
     PlatformId,
     ProjectId,
 } from '@activepieces/shared'
+import { engineRunner } from 'server-worker'
 
 export const pieceService = {
     async installPiece(
@@ -118,7 +118,7 @@ const getPiecePackage = async (
 }
 
 const extractPieceInformation = async (request: ExecuteExtractPieceMetadata): Promise<PieceMetadata> => {
-    const engineResponse = await engineHelper.extractPieceMetadata(request)
+    const engineResponse = await engineRunner.extractPieceMetadata(request)
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
         throw new Error(engineResponse.standardError)

@@ -1,7 +1,8 @@
 import { enrichErrorContext, logger } from '@activepieces/server-shared'
-import { PiecePackage, SourceCode } from '@activepieces/shared'
+import { PiecePackage } from '@activepieces/shared'
+import { CodeArtifact } from '../../../engine-runner'
 import { sandboxCachePool } from '../files/sandbox-cache-pool'
-import { Sandbox } from '../index'
+import { IsolateSandbox } from '../isolate-sandbox'
 import { sandboxManager } from '../sandbox-manager'
 import { SandBoxCacheType, TypedProvisionCacheInfo } from './sandbox-cache-key'
 
@@ -10,7 +11,7 @@ export const sandboxProvisioner = {
         pieces = [],
         codeSteps = [],
         ...cacheInfo
-    }: ProvisionParams): Promise<Sandbox> {
+    }: ProvisionParams): Promise<IsolateSandbox> {
         try {
             const cachedSandbox = await sandboxCachePool.findOrCreate(cacheInfo)
 
@@ -58,11 +59,6 @@ export const sandboxProvisioner = {
     },
 }
 
-type CodeArtifact = {
-    name: string
-    sourceCode: SourceCode
-}
-
 type ProvisionParams<T extends SandBoxCacheType = SandBoxCacheType> =
   TypedProvisionCacheInfo<T> & {
       pieces?: PiecePackage[]
@@ -70,5 +66,5 @@ type ProvisionParams<T extends SandBoxCacheType = SandBoxCacheType> =
   }
 
 type ReleaseParams = {
-    sandbox: Sandbox
+    sandbox: IsolateSandbox
 }

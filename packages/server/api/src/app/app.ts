@@ -73,7 +73,6 @@ import { stepFileModule } from './flows/step-file/step-file.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
-import { encryptUtils } from './helper/encryption'
 import { errorHandler } from './helper/error-handler'
 import { jwtUtils } from './helper/jwt-utils'
 import { openapiModule } from './helper/openapi/openapi.module'
@@ -97,7 +96,7 @@ import {
     ProjectMember,
 } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { initializeSentry, logger, QueueMode, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
+import { encryptUtils, initializeSentry, logger, QueueMode, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
 import {
     ApEdition,
     apId,

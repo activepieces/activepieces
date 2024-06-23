@@ -1,5 +1,5 @@
 import { FlowVersion, ProjectId, TriggerHookType } from '@activepieces/shared'
-import { engineRunner } from '../../engine/engine-runner'
+import { engineRunner } from '../../engine'
 import { webhookUtils } from '../../utils/webhook-utils'
 
 export async function renewWebhook(params: Params): Promise<void> {

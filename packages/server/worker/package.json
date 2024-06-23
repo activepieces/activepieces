@@ -5,13 +5,13 @@
     "tslib": "^2.3.0",
     "@activepieces/shared": "*",
     "@activepieces/server-shared": "*",
-    "fs-extra": "11.2.0",
     "async-mutex": "0.4.0",
     "dayjs": "1.11.9",
     "axios": "1.6.7",
     "isolated-vm": "4.6.0",
     "chalk": "4.1.2",
-    "@activepieces/pieces-framework": "0.7.31"
+    "@activepieces/pieces-framework": "0.7.31",
+    "http-status-codes": "2.2.0"
   },
   "type": "commonjs",
   "main": "./src/index.js",

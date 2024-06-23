@@ -4,9 +4,9 @@ import { enrichErrorContext, logger, packageManager, system, SystemProp } from '
 import { PiecePackage, SourceCode } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
-import { pieceManager } from '../../piece-manager'
-import { codeBuilder } from '../../utils/code-builder'
-import { engineInstaller } from '../../utils/engine-installer'
+import { pieceManager } from '../../../../piece-manager'
+import { codeBuilder } from '../../../../utils/code-builder'
+import { engineInstaller } from '../../../../utils/engine-installer'
 import { CachedSandboxState } from './cached-sandbox-state'
 
 export class CachedSandbox {
@@ -128,6 +128,7 @@ export class CachedSandbox {
             codeBuilder.processCodeStep({
                 sourceCodeId: archive.name,
                 sourceCode: archive.sourceCode,
+                flowVersionId: archive.flowVersionId,
                 buildPath: this.path(),
             }),
         )
@@ -141,6 +142,7 @@ type CtorParams = {
 
 type CodeArtifact = {
     name: string
+    flowVersionId: string
     sourceCode: SourceCode
 }
 

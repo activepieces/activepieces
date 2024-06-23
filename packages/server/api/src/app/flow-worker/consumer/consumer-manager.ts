@@ -2,7 +2,7 @@ import { ApQueueJob, JobStatus, QueueName } from '@activepieces/server-shared'
 
 export type ConsumerManager = {
     init(): Promise<void>
-    poll<T extends QueueName>(queueName: T, workerId: string): Promise<Omit<ApQueueJob, 'engineToken'> | null>
+    poll<T extends QueueName>(queueName: T): Promise<Omit<ApQueueJob, 'engineToken'> | null>
     update(params: UpdateParams): Promise<void>
     close(): Promise<void>
 }
@@ -12,5 +12,4 @@ type UpdateParams = {
     queueName: QueueName
     status: JobStatus
     message: string
-    token: string
 }

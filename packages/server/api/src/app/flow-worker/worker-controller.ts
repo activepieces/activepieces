@@ -7,8 +7,8 @@ import { generateEngineToken } from '../helper/engine-helper'
 import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
 import { flowConsumer } from './consumer'
 import { webhookResponseWatcher } from './helper/webhook-response-watcher'
-import { DeleteWebhookSimulationRequest, JobData, logger, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, UpdateJobRequest, WebhookJobData } from '@activepieces/server-shared'
-import { apId, ExecutionType, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
+import { DeleteWebhookSimulationRequest, JobData, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendWebhookUpdateRequest, SubmitPayloadsRequest, WebhookJobData } from '@activepieces/server-shared'
+import { apId, ExecutionType, PrincipalType, RunEnvironment } from '@activepieces/shared'
 
 export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -22,24 +22,11 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const { queueName } = request.query
-        const job = await flowConsumer.poll(queueName, request.principal.id)
+        const job = await flowConsumer.poll(queueName)
         if (!job) {
             return null
         }
         return enrichEngineToken(queueName, job)
-    })
-
-    app.post('/update-job', {
-        config: {
-            allowedPrincipals: [PrincipalType.WORKER],
-        },
-        schema: {
-            body: UpdateJobRequest,
-        },
-    }, async (request) => {
-        const { id } = request.principal
-        const { queueName, status, message } = request.body
-        await flowConsumer.update({ jobId: id, queueName, status, message: message ?? 'NO_MESSAGE_AVAILABLE', token: 'WORKER' })
     })
 
     app.post('/delete-webhook-simulation', {
@@ -74,7 +61,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         schema: {
             body: SavePayloadRequest,
         },
-        
+
     }, async (request) => {
         const { flowId, projectId, payloads } = request.body
         const savePayloads = payloads.map((payload) =>
@@ -117,7 +104,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         return Promise.all(createFlowRuns)
     })
 
-    app.post('/resume', {
+    app.post('/resume-run', {
         config: {
             allowedPrincipals: [PrincipalType.WORKER],
         },
@@ -154,14 +141,16 @@ async function enrichEngineToken(queueName: QueueName, job: { id: string, data: 
 }
 
 async function getProjectId(queueName: QueueName, job: JobData) {
-    if (queueName === QueueName.ONE_TIME) {
-        return (job as OneTimeJobData).projectId
+    switch (queueName) {
+        case QueueName.ONE_TIME:
+            return (job as OneTimeJobData).projectId
+        case QueueName.WEBHOOK:{
+            // TODO add project it to the webhook data
+            const webhookData = (job as WebhookJobData)
+            const flow = await flowService.getOneById(webhookData.flowId)
+            return flow?.projectId ?? apId()
+        }
+        case QueueName.SCHEDULED:
+            return (job as ScheduledJobData).projectId
     }
-    if (queueName === QueueName.WEBHOOK) {
-        // TODO LATER
-        const webhookData = (job as WebhookJobData)
-        const flow = await flowService.getOneById(webhookData.flowId)
-        return flow?.projectId ?? apId()
-    }
-    return apId()
 }

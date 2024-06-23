@@ -9,7 +9,6 @@ import { ProjectId } from '../project/project'
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
     EXECUTE_STEP = 'EXECUTE_STEP',
-    EXECUTE_TEST_FLOW = 'EXECUTE_TEST_FLOW',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
@@ -87,13 +86,6 @@ export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
 
-export type EngineTestOperation = BeginExecuteFlowOperation & {
-    /**
-     * original flow version that the current test flow version is derived from.
-     * Used to generate the test execution context.
-     */
-    sourceFlowVersion: FlowVersion
-}
 
 export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOperation & {
     hookType: HT

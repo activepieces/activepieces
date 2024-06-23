@@ -37,7 +37,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
     })
 
     try {
-        const artifactPath = `${constants.baseCodeDirectory}/${action.name}/index.js`
+        const artifactPath = `${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`
         const codeModule: CodeModule = await import(artifactPath)
         const codeSandbox = await initCodeSandbox()
 

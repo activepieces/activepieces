@@ -5,10 +5,11 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { triggerHooks } from '../flows/trigger'
+import { flowConsumer } from './consumer'
 import { webhookResponseWatcher } from './helper/webhook-response-watcher'
 import { flowQueue } from './queue'
-import { GetRunForWorkerRequest, logger } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, DisableFlowByEngineRequest, EngineHttpResponse, ExecutionState, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { GetRunForWorkerRequest, system, SystemProp, UpdateJobRequest } from '@activepieces/server-shared'
+import { ApEnvironment, assertNotNullOrUndefined, DisableFlowByEngineRequest, EngineHttpResponse, ExecutionState, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -16,17 +17,35 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/runs/:runId', {
         config: {
-            allowedPrincipals: [PrincipalType.WORKER],
+            allowedPrincipals: [PrincipalType.ENGINE],
         },
         schema: {
-            querystring: GetRunForWorkerRequest,
+            params: GetRunForWorkerRequest,
         },
     }, async (request) => {
-        const { runId } = request.query
+        const { runId } = request.params
         return flowRunService.getOnePopulatedOrThrow({
             id: runId,
             projectId: request.principal.projectId,
         })
+    })
+
+    app.post('/update-job', {
+        config: {
+            allowedPrincipals: [PrincipalType.ENGINE],
+        },
+        schema: {
+            body: UpdateJobRequest,
+        },
+    }, async (request) => {
+        const environment = system.getOrThrow(SystemProp.ENVIRONMENT)
+        if (environment === ApEnvironment.TESTING) {
+            return {}
+        }
+        const { id } = request.principal
+        const { queueName, status, message } = request.body
+        await flowConsumer.update({ jobId: id, queueName, status, message: message ?? 'NO_MESSAGE_AVAILABLE' })
+        return {}
     })
 
     app.post('/update-run', UpdateStepProgress, async (request) => {
@@ -76,9 +95,9 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/disable-flow', DisableFlowRequest, async (request) => {
-        const { flowVersionId, projectId, flowId } = request.body
+        const { flowVersionId, flowId } = request.body
         const flow = isNil(flowId) ? null : await flowService.getOnePopulated({
-            projectId,
+            projectId: request.principal.projectId,
             versionId: flowVersionId,
             id: flowId,
         })
