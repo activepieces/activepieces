@@ -30,6 +30,7 @@ import { EeComponentsModule } from 'ee-components';
 import { UiFeatureAuthenticationModule } from '@activepieces/ui/feature-authentication';
 import { FormsComponent } from './modules/forms/forms.component';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
+import { InputFormControlPipe } from './modules/forms/input-form-control.pipe';
 
 const monacoConfig: NgxMonacoEditorConfig = {
   baseUrl: '/assets', // configure base path for monaco editor. Starting with version 8.0.0 it defaults to './assets'. Previous releases default to '/assets'
@@ -64,6 +65,7 @@ export function playerFactory() {
     ImportFlowComponent,
     ImportFlowUriEncodedComponent,
     FormsComponent,
+    InputFormControlPipe,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [],

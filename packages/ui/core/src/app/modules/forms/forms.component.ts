@@ -6,7 +6,7 @@ import {
   TelemetryEventName,
 } from '@activepieces/shared';
 import { TelemetryService, environment } from '@activepieces/ui/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -23,10 +23,12 @@ import {
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormResult, FormResultTypes, FormsService } from './forms.service';
 import { StatusCodes } from 'http-status-codes';
+import { getInputKey } from './input-form-control.pipe';
 
 @Component({
   selector: 'app-forms',
   templateUrl: './forms.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormsComponent implements OnInit {
   flow$: Observable<FormResponse>;
@@ -91,7 +93,7 @@ export class FormsComponent implements OnInit {
       for (const key in this.form.value) {
         const isFileInput = this.inputs
           .filter((f) => f.type === FormInputType.FILE)
-          .find((input) => this.getInputKey(input.displayName) === key);
+          .find((input) => getInputKey(input.displayName) === key);
 
         if (isFileInput && this.form.value[key]) {
           observables.push(this.toBase64(this.form.value[key]));
@@ -167,22 +169,12 @@ export class FormsComponent implements OnInit {
     }
   }
 
-  getInputKey(str: string) {
-    return str
-      .replace(/\s(.)/g, function ($1) {
-        return $1.toUpperCase();
-      })
-      .replace(/\s/g, '')
-      .replace(/^(.)/, function ($1) {
-        return $1.toLowerCase();
-      });
-  }
-
   buildInputs(inputs: FormInput[]) {
     inputs.forEach((prop) => {
+      const controlDefaultValue = this.getDefaultControlValue(prop);
       this.form.addControl(
-        this.getInputKey(prop.displayName),
-        new FormControl('', {
+        getInputKey(prop.displayName),
+        new FormControl(controlDefaultValue, {
           nonNullable: prop.required,
           validators: prop.required ? [Validators.required] : [],
         })
@@ -202,5 +194,16 @@ export class FormsComponent implements OnInit {
         observer.error(error);
       };
     });
+  }
+  private getDefaultControlValue(prop: FormInput) {
+    switch (prop.type) {
+      case FormInputType.TOGGLE:
+        return false;
+      case FormInputType.FILE:
+        return null;
+      case FormInputType.TEXT:
+      case FormInputType.TEXT_AREA:
+        return '';
+    }
   }
 }

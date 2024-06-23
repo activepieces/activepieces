@@ -2,60 +2,50 @@
   class="ap-h-screen ap-w-full ap-flex ap-items-center ap-justify-center ap-bg-center ap-bg-cover ap-bg-authBg ap-flex-col" *ngIf="flow$ | async as flow">
   @if(!error) {
     <form [formGroup]="form" (ngSubmit)="submit()" class="ap-flex ap-flex-col ap-gap-2">
-      <mat-card class="md:ap-min-w-[480px] md:ap-max-w-initial ap-min-w-[350px] ap-max-w-[350px] auth-card ap-max-h-[80vh] ap-overflow-scroll">
+      <mat-card class="md:ap-min-w-[480px] md:ap-max-w-initial ap-min-w-[350px] ap-max-w-[350px]  auth-card ap-max-h-[80vh] ap-overflow-y-auto">
         <div class="ap-typography-headline-5 ap-text-center ap-mb-6">{{ title }}</div>
         @for(input of flow.props.inputs; track input) {
-          @switch(input.type)
-          {
-            @case(FormInputType.TEXT) {
-              <mat-form-field class="ap-w-full ap-mb-4" appearance="outline" subscriptSizing="dynamic">
-                <mat-label>{{ input.displayName }}</mat-label>
-                <input matInput type="text" [formControlName]="getInputKey(input.displayName)">
-                <mat-hint>{{ input.description }}</mat-hint>
-                <mat-error *ngIf="form.controls[getInputKey(input.displayName)]?.invalid">
-                  {{ input.displayName }} is required
-                </mat-error>
-              </mat-form-field>
-            }
-            @case(FormInputType.FILE) {
-              <mat-form-field class="ap-w-full" subscriptSizing="dynamic">
-                <mat-label i18n>{{ input.displayName }}</mat-label>
-                <ap-file-upload [required]="input.required" #flowInput
-                  [formControlName]="getInputKey(input.displayName)" [extensions]="['.*']"></ap-file-upload>
-                <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
-                  (buttonClicked)="flowInput.fileInput.nativeElement.click()"></ap-icon-button>
-
-                <mat-hint>{{ input.description }}</mat-hint>
-                <mat-error *ngIf="form.controls[getInputKey(input.displayName)]?.invalid">
-                  {{ input.displayName }} is required
-                </mat-error>
-              </mat-form-field>
-            }
-            @case(FormInputType.TOGGLE){
-              <div class="app-w-full ap-mb-4">
-                <div>
-                  <mat-slide-toggle [formControlName]="getInputKey(input.displayName)" color="primary" i18n>{{ input.displayName }}</mat-slide-toggle>
+          @if(input.displayName | inputFormControl : form; as ctrl) {
+            @switch(input.type)
+            {
+              @case(FormInputType.TEXT) {
+                <mat-form-field class="ap-w-full " appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>{{ input.displayName }}</mat-label>
+                  <input matInput type="text" [formControl]="ctrl">
+                </mat-form-field>
+              }
+              @case(FormInputType.FILE) {
+                <mat-form-field class="ap-w-full" subscriptSizing="dynamic">
+                  <mat-label i18n>{{ input.displayName }}</mat-label>
+                  <ap-file-upload [required]="input.required" #flowInput
+                    [formControl]="ctrl" [extensions]="['.*']"></ap-file-upload>
+                  <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
+                    (buttonClicked)="flowInput.fileInput.nativeElement.click()"></ap-icon-button>
+                
+                </mat-form-field>
+              }
+              @case(FormInputType.TOGGLE){
+                <div class="ap-w-full ">
+                  <div>
+                    <mat-slide-toggle [formControl]="ctrl" color="primary" i18n>{{ input.displayName }}</mat-slide-toggle>
+                  </div>
+             
                 </div>
-                <markdown class="ap-typography-caption">{{ input.description }}</markdown>
-                <mat-error *ngIf="form.controls[getInputKey(input.displayName)]?.invalid" class="ap-mt-2">
-                  {{ input.displayName }} is required
-                </mat-error>
-              </div>
+              }
+              @case(FormInputType.TEXT_AREA) {
+                <mat-form-field class="ap-w-full " appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>{{ input.displayName }}</mat-label>
+                  <textarea matInput [formControl]="ctrl"></textarea>
+                </mat-form-field>
+              }
+              
             }
-            @case(FormInputType.TEXT_AREA) {
-              <mat-form-field class="ap-w-full ap-mb-4" appearance="outline" subscriptSizing="dynamic">
-                <mat-label>{{ input.displayName }}</mat-label>
-                <textarea matInput [formControlName]="getInputKey(input.displayName)"></textarea>
-                <mat-hint>{{ input.description }}</mat-hint>
-                <mat-error *ngIf="form.controls[getInputKey(input.displayName)]?.invalid">
-                  {{ input.displayName }} is required
-                </mat-error>
-              </mat-form-field>
-            }
-            
-          }
-        
-        
+            <ap-control-description
+            [description]="input.description"
+            [errorMessage]="input.displayName + ' is required'"
+            [passedFormControl]="ctrl"
+            ></ap-control-description>
+          }        
         }
 
         <div class="text-center ap-mt-6 ap-flex ap-flex-col ap-gap-2">
