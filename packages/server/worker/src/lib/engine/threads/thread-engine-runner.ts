@@ -75,7 +75,7 @@ export const threadEngineRunner: EngineRunner = {
 
         await prepareSandbox([operation], [])
 
-        return execute(operation, EngineOperationType.EXECUTE_TRIGGER_HOOK)
+        return execute(operation, EngineOperationType.EXTRACT_PIECE_METADATA)
     },
     async executeValidateAuth(engineToken, operation) {
         logger.debug({ operation }, '[threadEngineRunner#executeValidateAuth]')
@@ -232,6 +232,7 @@ type WorkerResult = {
     stdError: string
 
 }
+
 function createWorker(enginePath: string,
     operationType: string,
     operation: EngineOperation): Promise<WorkerResult> {
