@@ -8,7 +8,7 @@ import {
 import { TelemetryService, environment } from '@activepieces/ui/common';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import {
   Observable,
   Observer,
@@ -24,6 +24,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormResult, FormResultTypes, FormsService } from './forms.service';
 import { StatusCodes } from 'http-status-codes';
 import { getInputKey } from './input-form-control.pipe';
+import { FORMS_RESOLVE_DATA } from './forms.resolver';
 
 @Component({
   selector: 'app-forms',
@@ -31,15 +32,12 @@ import { getInputKey } from './input-form-control.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormsComponent implements OnInit {
-  flow$: Observable<FormResponse>;
   submitForm$: Observable<FormResult | null>;
   form: FormGroup;
-  inputs: FormInput[] = [];
   loading = false;
   error: string | null = null;
   webhookUrl: string | null = null;
-  title: string | null = null;
-  populatedForm: FormResponse | null = null;
+  flowForm: FormResponse | null = null;
   markdownResponse: Subject<string | null> = new Subject<string | null>();
   FormInputType = FormInputType;
 
@@ -48,40 +46,20 @@ export class FormsComponent implements OnInit {
     private snackBar: MatSnackBar,
     private formsService: FormsService,
     private telemteryService: TelemetryService,
-    private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.flow$ = this.route.paramMap.pipe(
-      switchMap((params) =>
-        this.formsService.get(params.get('flowId') as string)
-      ),
-      tap((form) => {
-        this.telemteryService.capture({
-          name: TelemetryEventName.FORMS_VIEWED,
-          payload: {
-            flowId: form.id,
-            formProps: form.props,
-            projectId: form.projectId,
-          },
-        });
-        this.title = form.title;
-        this.form = new FormGroup({});
-        this.buildInputs(form.props.inputs);
-        this.inputs = form.props.inputs;
-        this.populatedForm = form;
+    this.flowForm = this.route.snapshot.data[FORMS_RESOLVE_DATA];
+    this.form = new FormGroup({});
+    if(this.flowForm)
+      {
+        this.buildInputs(this.flowForm.props.inputs);
         this.webhookUrl =
           environment.apiUrl +
           '/webhooks/' +
-          this.populatedForm!.id +
-          (this.populatedForm!.props.waitForResponse ? '/sync' : '');
-      }),
-      catchError((err) => {
-        console.error(err);
-        this.router.navigate(['/not-found']);
-        throw err;
-      })
-    );
+          this.flowForm.id +
+          (this.flowForm.props.waitForResponse ? '/sync' : '');
+      }
   }
 
   async submit() {
@@ -105,9 +83,9 @@ export class FormsComponent implements OnInit {
           this.telemteryService.capture({
             name: TelemetryEventName.FORMS_SUBMITTED,
             payload: {
-              flowId: this.populatedForm!.id,
-              formProps: this.populatedForm!.props,
-              projectId: this.populatedForm!.projectId,
+              flowId: this.flowForm!.id,
+              formProps: this.flowForm!.props,
+              projectId: this.flowForm!.projectId,
             },
           });
           if(result)
@@ -201,7 +179,7 @@ export class FormsComponent implements OnInit {
   private createFormValueObservables() {
     const keys = Object.keys(this.form.value);
    return keys.reduce((acc,key) => { 
-    const isFileInput = this.inputs
+    const isFileInput = this.flowForm!.props.inputs
       .filter((f) => f.type === FormInputType.FILE)
       .find((input) => getInputKey(input.displayName) === key);
         return {

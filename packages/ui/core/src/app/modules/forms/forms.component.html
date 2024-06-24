@@ -1,10 +1,12 @@
 <div
-  class="ap-h-screen ap-w-full ap-flex ap-items-center ap-justify-center ap-bg-center ap-bg-cover ap-bg-authBg ap-flex-col" *ngIf="flow$ | async as flow">
+  class="ap-h-screen ap-w-full ap-flex ap-items-center ap-justify-center ap-bg-center ap-bg-cover ap-bg-authBg ap-flex-col" >
+  @if(flowForm)
+  {
   @if(!error) {
     <form [formGroup]="form" (ngSubmit)="submit()" class="ap-flex ap-flex-col ap-gap-2">
       <mat-card class="md:ap-min-w-[480px] md:ap-max-w-initial ap-min-w-[350px] ap-max-w-[350px]  auth-card ap-max-h-[80vh] ap-overflow-y-auto">
-        <div class="ap-typography-headline-5 ap-text-center ap-mb-6">{{ title }}</div>
-        @for(input of flow.props.inputs; track input) {
+        <div class="ap-typography-headline-5 ap-text-center ap-mb-6">{{ flowForm.title }}</div>
+        @for(input of flowForm.props.inputs; track input) {
           @if(input.displayName | inputFormControl : form; as ctrl) {
             @switch(input.type)
             {
@@ -16,11 +18,11 @@
               }
               @case(FormInputType.FILE) {
                 <mat-form-field class="ap-w-full" subscriptSizing="dynamic">
-                  <mat-label i18n>{{ input.displayName }}</mat-label>
-                  <ap-file-upload [required]="input.required" #flowInput
+                  <mat-label i18n class="ap-cursor-pointer" (click)="uploadInput.fileInput.nativeElement.click()">{{ input.displayName }}</mat-label>
+                  <ap-file-upload [required]="input.required" #uploadInput
                     [formControl]="ctrl" [extensions]="['.*']"></ap-file-upload>
                   <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
-                    (buttonClicked)="flowInput.fileInput.nativeElement.click()"></ap-icon-button>
+                    (buttonClicked)="uploadInput.fileInput.nativeElement.click()"></ap-icon-button>
                 
                 </mat-form-field>
               }
@@ -66,6 +68,8 @@
   @else {
     {{ error }}
   }
+  }
+
   <ap-powered-by-activepieces class="ap-mt-4 ap-pointer-events-none"></ap-powered-by-activepieces>
 </div>
 
