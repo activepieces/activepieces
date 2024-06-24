@@ -45,36 +45,34 @@ export class FormsComponent implements OnInit {
     private route: ActivatedRoute,
     private snackBar: MatSnackBar,
     private formsService: FormsService,
-    private telemteryService: TelemetryService,
+    private telemteryService: TelemetryService
   ) {}
 
   ngOnInit(): void {
     this.flowForm = this.route.snapshot.data[FORMS_RESOLVE_DATA];
     this.form = new FormGroup({});
-    if(this.flowForm)
-      {
-        this.buildInputs(this.flowForm.props.inputs);
-        this.webhookUrl =
-          environment.apiUrl +
-          '/webhooks/' +
-          this.flowForm.id +
-          (this.flowForm.props.waitForResponse ? '/sync' : '');
-      }
+    if (this.flowForm) {
+      this.buildInputs(this.flowForm.props.inputs);
+      this.webhookUrl =
+        environment.apiUrl +
+        '/webhooks/' +
+        this.flowForm.id +
+        (this.flowForm.props.waitForResponse ? '/sync' : '');
+    }
   }
 
   async submit() {
     if (this.form.valid && !this.loading) {
       this.markdownResponse.next(null);
       this.loading = true;
-      const observables= this.createFormValueObservables();
+      const observables = this.createFormValueObservables();
       this.submitForm$ = forkJoin(observables).pipe(
         map((values) => {
-          debugger;
           const formData = new FormData();
           Object.keys(values).forEach((key) => {
             formData.append(key, values[key] as string);
           });
-          return formData
+          return formData;
         }),
         switchMap((formData) =>
           this.formsService.submitForm(this.webhookUrl!, formData)
@@ -88,23 +86,21 @@ export class FormsComponent implements OnInit {
               projectId: this.flowForm!.projectId,
             },
           });
-          if(result)
-            {
-              if (result.type === FormResultTypes.MARKDOWN) {
-                this.markdownResponse.next(result.value as string);
-              } else if (result.type === FormResultTypes.FILE) {
-                const link = document.createElement('a');
-                // Your base64 string
-                const fileBase = result.value as FileResponseInterface;
-                link.download = fileBase.fileName;
-                link.href = fileBase.base64Url;
-                link.target = '_blank';
-                link.click();
-                // Clean up by revoking the object URL
-                URL.revokeObjectURL(fileBase.base64Url);
-              }
+          if (result) {
+            if (result.type === FormResultTypes.MARKDOWN) {
+              this.markdownResponse.next(result.value as string);
+            } else if (result.type === FormResultTypes.FILE) {
+              const link = document.createElement('a');
+              // Your base64 string
+              const fileBase = result.value as FileResponseInterface;
+              link.download = fileBase.fileName;
+              link.href = fileBase.base64Url;
+              link.target = '_blank';
+              link.click();
+              // Clean up by revoking the object URL
+              URL.revokeObjectURL(fileBase.base64Url);
             }
-         else {
+          } else {
             this.snackBar.open(
               `Your submission was successfully received.`,
               '',
@@ -178,14 +174,17 @@ export class FormsComponent implements OnInit {
   }
   private createFormValueObservables() {
     const keys = Object.keys(this.form.value);
-   return keys.reduce((acc,key) => { 
-    const isFileInput = this.flowForm!.props.inputs
-      .filter((f) => f.type === FormInputType.FILE)
-      .find((input) => getInputKey(input.displayName) === key);
-        return {
-          ...acc,
-          [key]: isFileInput && this.form.value[key]? this.toBase64(this.form.value[key]): of(this.form.value[key]),
-        }
-    },{} as {[key: string]: Observable<string | boolean>});
+    return keys.reduce((acc, key) => {
+      const isFileInput = this.flowForm!.props.inputs.filter(
+        (f) => f.type === FormInputType.FILE
+      ).find((input) => getInputKey(input.displayName) === key);
+      return {
+        ...acc,
+        [key]:
+          isFileInput && this.form.value[key]
+            ? this.toBase64(this.form.value[key])
+            : of(this.form.value[key]),
+      };
+    }, {} as { [key: string]: Observable<string | boolean> });
   }
 }

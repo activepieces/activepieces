@@ -15,7 +15,10 @@ import {
 } from 'ee-components';
 import { ApEdition } from '@activepieces/shared';
 import { FormsComponent } from './modules/forms/forms.component';
-import { FORMS_RESOLVE_DATA, FormsResolver } from './modules/forms/forms.resolver';
+import {
+  FORMS_RESOLVE_DATA,
+  FormsResolver,
+} from './modules/forms/forms.resolver';
 
 export const routes: Routes = [
   {
@@ -94,8 +97,8 @@ export const routes: Routes = [
     path: 'forms/:flowId',
     component: FormsComponent,
     resolve: {
-      [FORMS_RESOLVE_DATA]: FormsResolver
-    }
+      [FORMS_RESOLVE_DATA]: FormsResolver,
+    },
   },
   {
     path: 'not-found',

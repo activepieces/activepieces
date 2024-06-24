@@ -10,7 +10,10 @@ import { environment } from '@activepieces/ui/common';
 export class FormsService {
   constructor(private http: HttpClient) {}
 
-  submitForm(webhookUrl: string, request: FormData): Observable<FormResult | null> {
+  submitForm(
+    webhookUrl: string,
+    request: FormData
+  ): Observable<FormResult | null> {
     return this.http.post<FormResult | null>(webhookUrl, request);
   }
 
