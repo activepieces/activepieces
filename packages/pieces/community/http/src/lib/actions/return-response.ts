@@ -83,11 +83,6 @@ export const httpReturnResponse = createAction({
       response.body = bodyInput;
     }
 
-    // const response = {
-    //   status: context.propsValue.status ?? StatusCodes.OK,
-    //   body: context.propsValue.body,
-    //   headers: (context.propsValue.headers as Record<string, string>) ?? {},
-    // };
     context.run.stop({
       response: response,
     });
