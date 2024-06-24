@@ -2,13 +2,7 @@ import { exec } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { arch, cwd } from 'node:process'
-import {
-    fileExists,
-    logger,
-    PiecesSource,
-    system,
-    SystemProp,
-} from '@activepieces/server-shared'
+import { fileExists, logger, PiecesSource, system, SystemProp } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     EngineOperation,
@@ -58,24 +52,9 @@ export class IsolateSandbox extends AbstractSandbox {
         let verdict
 
         try {
-            const pieceSource = system.getOrThrow(SystemProp.PIECES_SOURCE)
-            const codeSandboxType = system.get(SystemProp.CODE_SANDBOX_TYPE)
+
             const dirsToBindArgs = this.getDirsToBindArgs()
-
-            const propagatedEnvVars = system
-                .getList(SystemProp.SANDBOX_PROPAGATED_ENV_VARS)
-                .filter(
-                    (envVar) =>
-                        ![
-                            'HOME',
-                            'NODE_OPTIONS',
-                            'AP_PIECES_SOURCE',
-                            'AP_CODE_SANDBOX_TYPE',
-                            'AP_BASE_CODE_DIRECTORY',
-                        ].includes(envVar),
-                )
-                .map((envVar) => `--env=${envVar}='${process.env[envVar]}'`)
-
+            const propagatedEnvVars = Object.entries(this.getEnvironmentVariables()).map(([ key, value ]) => `--env=${key}='${value}'`)
             const fullCommand = [
                 ...dirsToBindArgs,
                 '--share-net',
@@ -86,11 +65,6 @@ export class IsolateSandbox extends AbstractSandbox {
                 '--stdout=_standardOutput.txt',
                 '--stderr=_standardError.txt',
                 '--run',
-                '--env=HOME=/tmp/',
-                '--env=NODE_OPTIONS=\'--enable-source-maps\'',
-                `--env=AP_PIECES_SOURCE=${pieceSource}`,
-                `--env=AP_CODE_SANDBOX_TYPE=${codeSandboxType}`,
-                `--env=AP_BASE_CODE_DIRECTORY=${IsolateSandbox.cacheBindPath}/codes`,
                 ...propagatedEnvVars,
                 AbstractSandbox.nodeExecutablePath,
                 `${IsolateSandbox.cacheBindPath}/main.js`,
@@ -109,9 +83,9 @@ export class IsolateSandbox extends AbstractSandbox {
             const metaResult = await this.parseMetaFile()
             timeInSeconds = Number.parseFloat(metaResult['time'] as string)
             verdict =
-        metaResult['status'] == 'TO'
-            ? EngineResponseStatus.TIMEOUT
-            : EngineResponseStatus.ERROR
+                metaResult['status'] == 'TO'
+                    ? EngineResponseStatus.TIMEOUT
+                    : EngineResponseStatus.ERROR
         }
 
         const result = {
@@ -194,6 +168,19 @@ export class IsolateSandbox extends AbstractSandbox {
                 resolve(stdout)
             })
         })
+    }
+
+    private getEnvironmentVariables(): Record<string, string> {
+        const allowedEnvVariables = system.getList(SystemProp.SANDBOX_PROPAGATED_ENV_VARS)
+        const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
+        return {
+            ...propagatedEnvVars,
+            HOME: '/tmp/',
+            NODE_OPTIONS: '--enable-source-maps',
+            AP_CODE_SANDBOX_TYPE: system.getOrThrow(SystemProp.CODE_SANDBOX_TYPE),
+            AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
+            AP_BASE_CODE_DIRECTORY: `${IsolateSandbox.cacheBindPath}/codes`,
+        }
     }
 
     /**

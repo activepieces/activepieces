@@ -1,18 +1,8 @@
 import { cp, mkdir, rmdir } from 'node:fs/promises'
 import path from 'node:path'
 import { Worker } from 'worker_threads'
-import {
-    fileExists,
-    logger,
-    system,
-    SystemProp,
-} from '@activepieces/server-shared'
-import {
-    CodeSandboxType,
-    EngineOperation,
-    EngineResponse,
-    EngineResponseStatus,
-} from '@activepieces/shared'
+import { fileExists, logger, system, SystemProp } from '@activepieces/server-shared'
+import { CodeSandboxType, EngineOperation, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 import fs from 'fs-extra'
 import {
     AbstractSandbox,
@@ -26,22 +16,13 @@ const codeSandboxType = system.getOrThrow(SystemProp.CODE_SANDBOX_TYPE);
 let ivm: any;
 if (codeSandboxType === CodeSandboxType.V8_ISOLATE) {
   ivm = import('isolated-vm');
-  const _strongReference = ivm.Isolate;
+    const _strongReference = ivm.Isolate
 }
 /* eslint-enable */
 
-const memoryLimit = Math.floor(
-    Number(system.getOrThrow(SystemProp.SANDBOX_MEMORY_LIMIT)) / 1024,
-)
-
+const memoryLimit = Math.floor((Number(system.getOrThrow(SystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
 export class FileSandbox extends AbstractSandbox {
-    private readonly ENGINE_FILES = [
-        'codes',
-        'node_modules',
-        'main.js',
-        'main.js.map',
-        'package.json',
-    ]
+    private readonly ENGINE_FILES = ['codes', 'node_modules', 'main.js', 'main.js.map', 'package.json']
 
     public constructor(params: SandboxCtorParams) {
         super(params)
@@ -50,6 +31,7 @@ export class FileSandbox extends AbstractSandbox {
     public override async cleanUp(): Promise<void> {
         logger.debug({ boxId: this.boxId }, '[FileSandbox#recreate]')
 
+
         const sandboxFolderPath = this.getSandboxFolderPath()
 
         const sandboxFileExists = await fileExists(sandboxFolderPath)
@@ -57,6 +39,7 @@ export class FileSandbox extends AbstractSandbox {
             return
         }
         try {
+
             const files = await fs.readdir(sandboxFolderPath)
             for (const file of files) {
                 const filePath = path.join(sandboxFolderPath, file)
@@ -71,6 +54,7 @@ export class FileSandbox extends AbstractSandbox {
                     await rmdir(filePath, { recursive: true })
                 }
             }
+
         }
         catch (e) {
             logger.debug(
@@ -78,6 +62,7 @@ export class FileSandbox extends AbstractSandbox {
                 `[Sandbox#recreateCleanup] rmdir failure ${sandboxFolderPath}`,
             )
         }
+
     }
 
     public async runOperation(
@@ -86,14 +71,8 @@ export class FileSandbox extends AbstractSandbox {
     ): Promise<ExecuteSandboxResult> {
         const startTime = Date.now()
 
-        const enginePath = path.resolve(
-            path.join(this.getSandboxFolderPath(), 'main.js'),
-        )
-        const { engine, stdError, stdOut } = await createWorker(
-            enginePath,
-            operationType,
-            operation,
-        )
+        const enginePath = path.resolve(path.join(this.getSandboxFolderPath(), 'main.js'))
+        const { engine, stdError, stdOut } = await createWorker(enginePath, operationType, operation)
         return {
             timeInSeconds: (Date.now() - startTime) / 1000,
             verdict: engine.status,
@@ -119,12 +98,9 @@ export class FileSandbox extends AbstractSandbox {
         )
 
         if (!cacheChanged) {
-            logger.debug(
-                {
+            logger.debug({
                     cacheKey: this._cacheKey,
-                },
-                '[FileSandbox#setupCache] skip setup cache',
-            )
+            }, '[FileSandbox#setupCache] skip setup cache')
             return
         }
         const cacheExists = await fileExists(this.getSandboxFolderPath())
@@ -144,42 +120,23 @@ export class FileSandbox extends AbstractSandbox {
             }
         }
     }
-}
 
-function createWorker(
-    enginePath: string,
+
+}
+function createWorker(enginePath: string,
     operationType: string,
-    operation: EngineOperation,
-) {
+    operation: EngineOperation) {
     return new Promise<{
         engine: EngineResponse<unknown>
         stdOut: string
         stdError: string
     }>((resolve, reject) => {
-        const propagatedEnvVars = Object.fromEntries(
-            system
-                .getList(SystemProp.SANDBOX_PROPAGATED_ENV_VARS)
-                .filter(
-                    (envVar) =>
-                        ![
-                            'NODE_OPTIONS',
-                            'AP_CODE_SANDBOX_TYPE',
-                            'AP_PIECES_SOURCE',
-                        ].includes(envVar),
-                )
-                .map((envVar) => [envVar, process.env[envVar]]),
-        )
         const worker = new Worker(enginePath, {
             workerData: {
                 operationType,
                 operation,
             },
-            env: {
-                NODE_OPTIONS: '--enable-source-maps',
-                AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
-                AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
-                ...propagatedEnvVars,
-            },
+            env: getEnvironmentVariables(),
             resourceLimits: {
                 maxOldGenerationSizeMb: memoryLimit,
                 maxYoungGenerationSizeMb: memoryLimit,
@@ -229,4 +186,15 @@ function createWorker(
             reject({ status: EngineResponseStatus.ERROR, response: {} })
         })
     })
+}
+
+function getEnvironmentVariables(){ 
+    const allowedEnvVariables = system.getList(SystemProp.SANDBOX_PROPAGATED_ENV_VARS)
+    const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
+    return {
+        ...propagatedEnvVars,
+        NODE_OPTIONS: '--enable-source-maps',
+        AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
+        AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
+    }
 }
