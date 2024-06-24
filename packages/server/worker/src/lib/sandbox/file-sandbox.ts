@@ -99,7 +99,7 @@ export class FileSandbox extends AbstractSandbox {
 
         if (!cacheChanged) {
             logger.debug({
-                    cacheKey: this._cacheKey,
+                cacheKey: this._cacheKey,
             }, '[FileSandbox#setupCache] skip setup cache')
             return
         }
@@ -188,7 +188,7 @@ function createWorker(enginePath: string,
     })
 }
 
-function getEnvironmentVariables(){ 
+function getEnvironmentVariables() { 
     const allowedEnvVariables = system.getList(SystemProp.SANDBOX_PROPAGATED_ENV_VARS)
     const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
     return {

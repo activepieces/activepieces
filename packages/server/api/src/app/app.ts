@@ -7,7 +7,6 @@ import fastify, { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
 import fastifySocketIO from 'fastify-socket.io'
-import { isNil } from 'lodash'
 import qs from 'qs'
 import { Socket } from 'socket.io'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
@@ -105,6 +104,7 @@ import {
     AppConnectionWithoutSensitiveData,
     Flow,
     FlowRun,
+    isNil,
     ProjectWithLimits,
     spreadIfDefined,
     UserInvitation,

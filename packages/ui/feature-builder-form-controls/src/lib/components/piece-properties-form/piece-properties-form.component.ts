@@ -16,6 +16,7 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
+  EMPTY_SPACE_BETWEEN_INPUTS_IN_PIECE_PROPERTIES_FORM,
   getPropertyInitialValue,
   jsonValidator,
 } from '@activepieces/ui/common';
@@ -59,6 +60,8 @@ export class PiecePropertiesFormComponent
     valid: boolean;
   }>();
   readonly PropertyType = PropertyType;
+  readonly EMPTY_SPACE_BETWEEN_INPUTS_IN_PIECE_PROPERTIES_FORM =
+    EMPTY_SPACE_BETWEEN_INPUTS_IN_PIECE_PROPERTIES_FORM;
   emitNewChanges$?: Observable<unknown>;
   stepChanged$ = new BehaviorSubject('');
   constructor(private fb: UntypedFormBuilder) {
