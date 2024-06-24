@@ -32,7 +32,7 @@ import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { DropdownPropertyInitialValuePipe } from './pipes/dropdown-initial-value.pipe';
 import { isDropdownItemSelectedPipe } from './pipes/is-selected.pipe';
 import { ActionErrorHandlingFormControlComponent } from './components/action-error-handling-form-control/action-error-handling-form-control.component';
-import { PiecePropertiesFormComponent } from './components/new-piece-properties-form/piece-properties-form.component';
+import { PiecePropertiesFormComponent } from './components/piece-properties-form/piece-properties-form.component';
 import { JsonControlComponent } from './components/json-control/json-control.component';
 import { StaticDropdownControlComponent } from './components/static-dropdown-control/static-dropdown-control.component';
 import { RefreshableDropdownControlComponent } from './components/refreshable-dropdown-control/refreshable-dropdown-control.component';

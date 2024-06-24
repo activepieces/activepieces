@@ -1,7 +1,7 @@
 <ap-dialog-title-template i18n>Install Piece</ap-dialog-title-template>
 
 <mat-dialog-content>
-  <ap-markdown [data]="risksMarkdown"></ap-markdown>
+  <ap-markdown class="ap-mb-2" [data]="risksMarkdown"></ap-markdown>
   <form class="ap-flex ap-flex-col ap-gap-1 ap-mt-4" [formGroup]="addPieceForm" (submit)="addPiece()">
     <mat-form-field class="ap-w-full ap-mb-2" appearance="outline">
       <mat-label i18n>Piece name</mat-label>

@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { TelemetryService } from '@activepieces/ui/common';
+import {
+  AuthenticationService,
+  TelemetryService,
+} from '@activepieces/ui/common';
 import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 import { Observable, debounceTime, map, startWith, switchMap, tap } from 'rxjs';
 import {
@@ -46,15 +49,22 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
 
   constructor(
     private telemetryService: TelemetryService,
-    private pieceMetadataService: PieceMetadataService
+    private pieceMetadataService: PieceMetadataService,
+    private authenticationService: AuthenticationService
   ) {
     this.savePiecesSearch$ = this.searchControl.valueChanges.pipe(
       debounceTime(1000),
       switchMap((search) => {
+        const email =
+          this.authenticationService.currentUserSubject.value?.email;
+        if (!email) {
+          throw new Error('No email found');
+        }
         return this.telemetryService.savePiecesSearch({
           insideTemplates: true,
           search,
           target: 'both',
+          email: email,
         });
       }),
       map(() => void 0)

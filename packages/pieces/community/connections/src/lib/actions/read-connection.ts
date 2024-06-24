@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared';
 
 const markdown = `
 **Advanced Piece**
