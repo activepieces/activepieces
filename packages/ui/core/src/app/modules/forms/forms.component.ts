@@ -32,7 +32,7 @@ import { getInputKey } from './input-form-control.pipe';
 })
 export class FormsComponent implements OnInit {
   flow$: Observable<FormResponse>;
-  submitForm$: Observable<FormResult | undefined>;
+  submitForm$: Observable<FormResult | null>;
   form: FormGroup;
   inputs: FormInput[] = [];
   loading = false;
@@ -88,32 +88,20 @@ export class FormsComponent implements OnInit {
     if (this.form.valid && !this.loading) {
       this.markdownResponse.next(null);
       this.loading = true;
-      const observables: Observable<string>[] = [];
-      for (const key in this.form.value) {
-        const isFileInput = this.inputs
-          .filter((f) => f.type === FormInputType.FILE)
-          .find((input) => getInputKey(input.displayName) === key);
-
-        if (isFileInput && this.form.value[key]) {
-          observables.push(this.toBase64(this.form.value[key]));
-        } else {
-          observables.push(of(this.form.value[key]));
-        }
-      }
-
+      const observables= this.createFormValueObservables();
       this.submitForm$ = forkJoin(observables).pipe(
         map((values) => {
+          debugger;
           const formData = new FormData();
-          for (let i = 0; i < values.length; i++) {
-            const key = Object.keys(this.form.value)[i];
-            formData.append(key, values[i]);
-          }
-          return formData;
+          Object.keys(values).forEach((key) => {
+            formData.append(key, values[key] as string);
+          });
+          return formData
         }),
         switchMap((formData) =>
           this.formsService.submitForm(this.webhookUrl!, formData)
         ),
-        tap((result: FormResult) => {
+        tap((result: FormResult | null) => {
           this.telemteryService.capture({
             name: TelemetryEventName.FORMS_SUBMITTED,
             payload: {
@@ -122,19 +110,23 @@ export class FormsComponent implements OnInit {
               projectId: this.populatedForm!.projectId,
             },
           });
-          if (result.type === FormResultTypes.MARKDOWN) {
-            this.markdownResponse.next(result.value as string);
-          } else if (result.type === FormResultTypes.FILE) {
-            const link = document.createElement('a');
-            // Your base64 string
-            const fileBase = result.value as FileResponseInterface;
-            link.download = fileBase.fileName;
-            link.href = fileBase.base64Url;
-            link.target = '_blank';
-            link.click();
-            // Clean up by revoking the object URL
-            URL.revokeObjectURL(fileBase.base64Url);
-          } else {
+          if(result)
+            {
+              if (result.type === FormResultTypes.MARKDOWN) {
+                this.markdownResponse.next(result.value as string);
+              } else if (result.type === FormResultTypes.FILE) {
+                const link = document.createElement('a');
+                // Your base64 string
+                const fileBase = result.value as FileResponseInterface;
+                link.download = fileBase.fileName;
+                link.href = fileBase.base64Url;
+                link.target = '_blank';
+                link.click();
+                // Clean up by revoking the object URL
+                URL.revokeObjectURL(fileBase.base64Url);
+              }
+            }
+         else {
             this.snackBar.open(
               `Your submission was successfully received.`,
               '',
@@ -146,6 +138,7 @@ export class FormsComponent implements OnInit {
           this.loading = false;
         }),
         catchError((error) => {
+          console.error(error);
           if (error.status === StatusCodes.NOT_FOUND) {
             this.snackBar.open(
               `Flow is not found, please publish the flow`,
@@ -162,7 +155,7 @@ export class FormsComponent implements OnInit {
             });
           }
           this.loading = false;
-          return of(void 0);
+          return of(null);
         })
       );
     }
@@ -204,5 +197,17 @@ export class FormsComponent implements OnInit {
       case FormInputType.TEXT_AREA:
         return '';
     }
+  }
+  private createFormValueObservables() {
+    const keys = Object.keys(this.form.value);
+   return keys.reduce((acc,key) => { 
+    const isFileInput = this.inputs
+      .filter((f) => f.type === FormInputType.FILE)
+      .find((input) => getInputKey(input.displayName) === key);
+        return {
+          ...acc,
+          [key]: isFileInput && this.form.value[key]? this.toBase64(this.form.value[key]): of(this.form.value[key]),
+        }
+    },{} as {[key: string]: Observable<string | boolean>});
   }
 }
