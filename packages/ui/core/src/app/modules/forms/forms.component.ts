@@ -62,6 +62,7 @@ export class FormsComponent implements OnInit {
   }
 
   async submit() {
+    this.form.markAllAsTouched();
     if (this.form.valid && !this.loading) {
       this.markdownResponse.next(null);
       this.loading = true;
