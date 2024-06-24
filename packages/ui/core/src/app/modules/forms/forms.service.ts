@@ -12,7 +12,7 @@ export class FormsService {
 
   submitForm(
     webhookUrl: string,
-    request: FormData
+    request: Record<string, unknown>
   ): Observable<FormResult | null> {
     return this.http.post<FormResult | null>(webhookUrl, request);
   }

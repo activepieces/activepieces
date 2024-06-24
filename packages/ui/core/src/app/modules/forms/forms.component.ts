@@ -15,7 +15,6 @@ import {
   Subject,
   catchError,
   forkJoin,
-  map,
   of,
   switchMap,
   tap,
@@ -68,13 +67,6 @@ export class FormsComponent implements OnInit {
       this.loading = true;
       const observables = this.createFormValueObservables();
       this.submitForm$ = forkJoin(observables).pipe(
-        map((values) => {
-          const formData = new FormData();
-          Object.keys(values).forEach((key) => {
-            formData.append(key, values[key] as string);
-          });
-          return formData;
-        }),
         switchMap((formData) =>
           this.formsService.submitForm(this.webhookUrl!, formData)
         ),
