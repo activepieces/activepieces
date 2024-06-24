@@ -9,7 +9,7 @@ import { getEdition } from '../../../helper/secret-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
 import { flowQueue } from '../../../workers/flow-worker/flow-queue'
 import { JobType } from '../../../workers/flow-worker/queues/queue'
-import { getPieceTrigger } from './trigger-utils'
+import { triggerUtils } from './trigger-utils'
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import {
     TriggerStrategy,
@@ -59,7 +59,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         return null
     }
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = await getPieceTrigger({
+    const pieceTrigger = await triggerUtils.getPieceTriggerOrThrow({
         trigger: flowTrigger,
         projectId,
     })

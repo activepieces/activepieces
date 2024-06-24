@@ -15,7 +15,8 @@ export type FeatureKey =
   | 'AUDIT_LOGS'
   | 'GIT_SYNC'
   | 'ISSUES'
-  | 'ALERTS';
+  | 'ALERTS'
+  | 'ENTERPRISE_PIECES';
 export const unexpectedErrorMessage = $localize`An unexpected error occurred, please contact support`;
 export const codeGeneratorTooltip = $localize`Write code with assistance from AI`;
 export const disabledCodeGeneratorTooltip = $localize`Configure api key in the environment variables to generate code using AI`;
@@ -109,10 +110,7 @@ export const showPlatformDashboard$ = (
     showPlatformDemo,
   }).pipe(
     map(
-      ({ platformAdmin, showPlatformDemo }) =>
-        (showPlatformDemo || platformAdmin) &&
-        authenticationService.currentUser.projectRole !==
-          ProjectMemberRole.EXTERNAL_CUSTOMER
+      ({ platformAdmin, showPlatformDemo }) => showPlatformDemo || platformAdmin
     )
   );
 };

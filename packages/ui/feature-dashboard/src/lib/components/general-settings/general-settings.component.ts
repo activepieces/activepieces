@@ -71,16 +71,6 @@ export class GeneralSettingsComponent {
           validators: Validators.required,
         }
       ),
-      teamMembers: this.fb.control(
-        {
-          value: 5,
-          disabled: false,
-        },
-        {
-          nonNullable: true,
-          validators: Validators.required,
-        }
-      ),
     };
     this.formGroup = this.fb.group({
       displayName: this.fb.control(
@@ -133,7 +123,6 @@ export class GeneralSettingsComponent {
               ? undefined
               : {
                   tasks: this.formGroup.getRawValue().tasks,
-                  teamMembers: this.formGroup.getRawValue().teamMembers,
                 },
           });
         }),

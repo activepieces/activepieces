@@ -1,4 +1,3 @@
-import { jwtUtils } from '../../../helper/jwt-utils'
 import { getEdition } from '../../../helper/secret-helper'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -7,42 +6,36 @@ import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, User } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitation } from '@activepieces/shared'
 
 const EDITION = getEdition()
-
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
 
 const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
 
 export const emailService = {
-    async sendInvitation({ email, invitationId, projectId }: SendInvitationArgs): Promise<void> {
-        if (EDITION_IS_NOT_PAID) {
-            return
-        }
-
-        const project = await projectService.getOneOrThrow(projectId)
-
-        const token = await jwtUtils.sign({
-            payload: {
-                id: invitationId,
-            },
-            key: await jwtUtils.getJwtSecret(),
+    async sendInvitation({ userInvitation, invitationLink }: SendInvitationArgs): Promise<void> {
+        logger.info({
+            message: '[emailService#sendInvitation] sending invitation email',
+            email: userInvitation.email,
+            platformId: userInvitation.platformId,
+            projectId: userInvitation.projectId,
+            type: userInvitation.type,
+            projectRole: userInvitation.projectRole,
+            platformRole: userInvitation.platformRole,
         })
-
-        const setupLink = await platformDomainHelper.constructUrlFrom({
-            platformId: project.platformId,
-            path: `invitation?token=${token}&email=${encodeURIComponent(email)}`,
-        })
+        const { email, platformId } = userInvitation
+        const { name: projectOrPlatformName, role } = await getEntityNameForInvitation(userInvitation)
 
         await emailSender.send({
             emails: [email],
-            platformId: project.platformId,
+            platformId,
             templateData: {
                 name: 'invitation-email',
                 vars: {
-                    setupLink,
-                    projectName: project.displayName,
+                    setupLink: invitationLink,
+                    projectOrPlatformName,
+                    role,
                 },
             },
         })
@@ -167,10 +160,35 @@ export const emailService = {
     },
 }
 
+async function getEntityNameForInvitation(userInvitation: UserInvitation): Promise<{ name: string, role: string }> {
+    switch (userInvitation.type) {
+        case InvitationType.PLATFORM: {
+            const platform = await platformService.getOneOrThrow(userInvitation.platformId)
+            assertNotNullOrUndefined(userInvitation.platformRole, 'platformRole')
+            return {
+                name: platform.name,
+                role: capitalizeFirstLetter(userInvitation.platformRole),
+            }
+        }
+        case InvitationType.PROJECT: {
+            assertNotNullOrUndefined(userInvitation.projectId, 'projectId')
+            assertNotNullOrUndefined(userInvitation.projectRole, 'projectRole')
+            const project = await projectService.getOneOrThrow(userInvitation.projectId)
+            return {
+                name: project.displayName,
+                role: capitalizeFirstLetter(userInvitation.projectRole),
+            }
+        }
+    }
+}
+
+function capitalizeFirstLetter(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+}
+
 type SendInvitationArgs = {
-    email: string
-    invitationId: string
-    projectId: string
+    userInvitation: UserInvitation
+    invitationLink: string
 }
 
 type SendQuotaAlertArgs = {

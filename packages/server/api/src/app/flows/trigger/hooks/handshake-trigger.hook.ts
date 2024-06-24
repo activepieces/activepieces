@@ -1,6 +1,6 @@
 import { engineHelper } from '../../../helper/engine-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
-import { getPieceTrigger } from './trigger-utils'
+import { triggerUtils } from './trigger-utils'
 import {
     WebhookHandshakeStrategy,
     WebhookResponse,
@@ -20,7 +20,7 @@ export async function tryHandshake(
     const { payload, flowVersion, projectId } = params
     const flowTrigger = flowVersion.trigger
     if (flowTrigger.type === TriggerType.PIECE) {
-        const pieceTrigger = await getPieceTrigger({
+        const pieceTrigger = await triggerUtils.getPieceTriggerOrThrow({
             trigger: flowTrigger,
             projectId,
         })

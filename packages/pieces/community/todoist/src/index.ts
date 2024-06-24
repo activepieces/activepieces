@@ -30,7 +30,7 @@ export const todoist = createPiece({
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.todoist.com/rest/v2',
 			auth: todoistAuth,
-			authMapping: (auth) => ({
+			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
 			}),
 		}),

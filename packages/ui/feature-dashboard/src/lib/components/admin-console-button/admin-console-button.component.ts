@@ -7,14 +7,13 @@ import {
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { Observable, tap } from 'rxjs';
-
 @Component({
   selector: 'app-admin-console-button',
   standalone: true,
   imports: [CommonModule, UiCommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if(!isInPlatformRoute && showPlatform ) {
+    @if(showPlatform && !isInPlatformRoute){
     <ap-button
       btnColor="white"
       btnStyle="stroked"
@@ -34,7 +33,13 @@ import { Observable, tap } from 'rxjs';
         >
         </svg-icon>
         }
-        <b>Admin Console</b>
+        <svg-icon
+          [applyClass]="true"
+          class="ap-fill-black"
+          [svgStyle]="{ width: '18px', height: '18px' }"
+          src="assets/img/custom/dashboard/admin-console.svg"
+        ></svg-icon>
+        <b>Platform Admin</b>
       </div>
     </ap-button>
     } @if(isInPlatformRoute) {
@@ -46,7 +51,7 @@ import { Observable, tap } from 'rxjs';
       i18n
     >
       <div class="ap-flex ap-gap-2 ap-items-center">
-        <b>Exit Admin Console</b>
+        <b>Exit Platform Admin</b>
       </div>
     </ap-button>
     } @if(navigateToAdminConsole$ |async) {}

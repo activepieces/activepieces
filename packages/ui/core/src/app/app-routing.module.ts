@@ -29,6 +29,13 @@ export const routes: Routes = [
     component: ImportFlowUriEncodedComponent,
   },
   {
+    path: 'invitation',
+    loadComponent: () =>
+      import('./modules/accept-invitation/accept-invitation.component').then(
+        (m) => m.AcceptInvitationComponent
+      ),
+  },
+  {
     path: 'templates/:templateId',
     component: ImportFlowComponent,
     data: {
@@ -90,6 +97,7 @@ export const routes: Routes = [
     path: 'not-found',
     component: NotFoundComponent,
   },
+
   {
     path: '**',
     component: NotFoundComponent,

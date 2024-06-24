@@ -10,7 +10,6 @@ import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ErrorCode,
-    isNil,
     ListFlowTemplatesRequest,
     Principal,
     PrincipalType,
@@ -74,12 +73,10 @@ async function resolveTemplatesPlatformId(principal: Principal, platformId: stri
     if (principal.type === PrincipalType.UNKNOWN) {
         return system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID)
     }
-    const platform = await platformService.getOne(platformId)
-    if (!isNil(platform) && platform.manageTemplatesEnabled) {
-        return platform.id
-    }
-    return system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID)
-}
+    const platform = await platformService.getOneOrThrow(platformId)
+    return platform.id
+  
+}   
 
 const GetParams = {
     config: {

@@ -49,27 +49,27 @@ import { sendFile } from './lib/actions/send-file';
 import { getRegistrationFolderDocuments } from './lib/actions/registration-folders/list-registration-folder-documents';
 
 export const wedofAuth = PieceAuth.SecretText({
-  displayName: 'Clé API',
-  required: true,
-  description: 'Veuillez saisir votre clé API fournie par wedof',
-  validate: async ({ auth }) => {
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: wedofCommon.baseUrl + '/users/me',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Api-Key': auth,
-        },
-      });
-      return { valid: true };
-    } catch (error) {
-      return {
-        valid: false,
-        error: 'Clé Api invalide',
-      };
-    }
-  },
+    displayName: 'Clé API',
+    required: true,
+    description: 'Veuillez saisir votre clé API fournie par wedof',
+    validate: async ({auth}) => {
+        try {
+            await httpClient.sendRequest({
+                method: HttpMethod.GET,
+                url: wedofCommon.baseUrl + '/users/me',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Api-Key': auth,
+                },
+            });
+            return {valid: true};
+        } catch (error) {
+            return {
+                valid: false,
+                error: 'Clé Api invalide',
+            };
+        }
+    },
 });
 
 export const wedof = createPiece({

@@ -18,7 +18,8 @@ async function getStateFromDB(projectId: string): Promise<PopulatedFlow[]> {
             return flowService.getOnePopulatedOrThrow({
                 id: f.id,
                 projectId,
-                removeSecrets: false,
+                removeConnectionsName: false,
+                removeSampleData: true,
             })
         }),
     )

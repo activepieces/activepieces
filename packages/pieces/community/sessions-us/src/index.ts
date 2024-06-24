@@ -63,7 +63,7 @@ export const sessionsUs = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.app.sessions.us/api',
       auth: sessionAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'x-api-key': `${auth}`,
       }),
     }),

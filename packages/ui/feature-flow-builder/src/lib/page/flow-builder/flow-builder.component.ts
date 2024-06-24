@@ -25,7 +25,7 @@ import {
   takeWhile,
   tap,
 } from 'rxjs';
-import { MatDrawerContainer } from '@angular/material/sidenav';
+import { MatDrawerContainer, MatSidenav } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
@@ -48,6 +48,7 @@ import {
   WebSocketService,
   FlowRendererService,
   PlatformService,
+  ContactSalesService,
 } from '@activepieces/ui/common';
 import {
   flowDisplayNameInRouteData,
@@ -66,6 +67,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   rightSideBar?: ElementRef<HTMLElement>;
   @ViewChild('leftSideDrawer', { read: ElementRef })
   leftSideBar?: ElementRef<HTMLElement>;
+  @ViewChild('contactSalesSlideout') contactSalesSlideout: MatSidenav;
   rightSidebarWidth = '0';
   leftSideBarWidth = '0';
   leftSidebar$: Observable<LeftSideBarType>;
@@ -93,6 +95,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   setTitle$?: Observable<void>;
   showPoweredByAp$: Observable<boolean>;
   viewedVersion$: Observable<FlowVersion>;
+  contactSalesState$: Observable<boolean>;
   constructor(
     private store: Store,
     private actRoute: ActivatedRoute,
@@ -107,7 +110,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     private platformService: PlatformService,
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
     private websocketService: WebSocketService,
-    private zoomingService: ZoomingService
+    private zoomingService: ZoomingService,
+    private contactSalesService: ContactSalesService
   ) {
     this.viewedVersion$ = this.store.select(BuilderSelectors.selectViewedVersion);
     this.showPoweredByAp$ = this.platformService.showPoweredByAp();
@@ -138,6 +142,12 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     this.rightSidebar$ = this.store.select(
       BuilderSelectors.selectCurrentRightSideBarType
     );
+    this.contactSalesState$ =
+      this.contactSalesService.contactSalesState.asObservable();
+  }
+
+  closeContactSalesSlideout() {
+    this.contactSalesService.close();
   }
 
   @HostListener('wheel', ['$event'])

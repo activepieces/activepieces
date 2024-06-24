@@ -52,7 +52,7 @@ export const kizeoForms = createPiece({
     createCustomApiCallAction({
       baseUrl: () => endpoint,
       auth: kizeoFormsAuth,
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         return {
           Authorization: auth as string,
         };

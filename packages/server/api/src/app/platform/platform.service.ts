@@ -19,6 +19,10 @@ import {
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
 
 export const platformService = {
+    async hasAnyPlatforms(): Promise<boolean> {
+        const count = await repo.count()
+        return count > 0
+    },
     async create(params: AddParams): Promise<Platform> {
         const {
             ownerId,
@@ -125,7 +129,6 @@ export const platformService = {
             ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
             ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
             ...spreadIfDefined('premiumPieces', params.premiumPieces),
-            
         }
 
         return repo.save(updatedPlatform)
@@ -147,7 +150,9 @@ export const platformService = {
             })
         }
         
-        return platform
+        return {
+            ...platform,
+        }
     },
 
     async getOne(id: PlatformId): Promise<Platform | null> {

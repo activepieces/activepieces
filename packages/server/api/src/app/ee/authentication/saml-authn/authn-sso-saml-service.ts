@@ -1,9 +1,8 @@
 
-import { isNil } from 'lodash'
-import { generateRandomPassword } from '../../../helper/crypto'
 import { userService } from '../../../user/user-service'
 import { createSamlClient, IdpLoginResponse, SamlAttributes } from './saml-client'
-import { PlatformRole, SAMLAuthnProviderConfig, User } from '@activepieces/shared'
+import { cryptoUtils } from '@activepieces/server-shared'
+import { isNil, PlatformRole, SAMLAuthnProviderConfig, User } from '@activepieces/shared'
 
 export const authnSsoSamlService = {
     async login(platformId: string, samlProvider: SAMLAuthnProviderConfig): Promise<LoginResponse> {
@@ -34,7 +33,7 @@ const getOrCreateUser = async (platformId: string, attributes: SamlAttributes): 
         email,
         firstName: attributes.firstName,
         lastName: attributes.lastName,
-        password: await generateRandomPassword(),
+        password: await cryptoUtils.generateRandomPassword(),
         trackEvents: true,
         newsLetter: false,
         verified: true,

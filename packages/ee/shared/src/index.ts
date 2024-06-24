@@ -17,6 +17,5 @@ export * from './lib/managed-authn'
 export * from './lib/oauth-apps'
 export * from './lib/otp'
 export * from './lib/authn'
-
 export * from './lib/issues'
 export * from './lib/alerts'

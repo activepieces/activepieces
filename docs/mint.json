@@ -82,6 +82,16 @@
           ]
         },
         {
+          "group": "User Invitations",
+          "icon": "paper-plane",
+          "pages": [
+            "endpoints/user-invitations/schema",
+            "endpoints/user-invitations/create",
+            "endpoints/user-invitations/list",
+            "endpoints/user-invitations/delete"
+          ]
+        },
+        {
           "group": "Project Members",
           "icon": "user",
           "pages": [
@@ -146,7 +156,7 @@
     {
       "group": "Get Started",
       "pages": [
-        "install/options/overview",
+        "install/overview",
         "install/options/docker",
         "install/options/docker-compose",
         "install/options/easypanel",
@@ -233,6 +243,7 @@
     {
       "group": "Misc",
       "pages": [
+        "developers/misc/pieces-ci-cd",
         "developers/misc/scale-pieces",
         "developers/misc/repo-structure",
         "developers/misc/private-fork"
@@ -276,6 +287,7 @@
       "pages": [
         "about/i18n",
         "about/editions",
+        "about/breaking-changes",
         "about/changelog",
         "about/telemetry",
         "about/license"

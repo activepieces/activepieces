@@ -59,7 +59,7 @@ export const openRouter = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://openrouter.ai/api/v1',
       auth: openRouterAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),
