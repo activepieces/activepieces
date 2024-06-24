@@ -7,6 +7,7 @@ import {
 import { PieceCategory } from '@activepieces/shared';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
+import { testTrigger } from './lib/triggers/test';
 
 export const gmailAuth = PieceAuth.OAuth2({
   description: '',
@@ -51,6 +52,6 @@ export const gmail = createPiece({
     'khaledmashaly',
     'abuaboud',
   ],
-  triggers: [gmailNewEmailTrigger],
+  triggers: [gmailNewEmailTrigger, testTrigger],
   auth: gmailAuth,
 });
