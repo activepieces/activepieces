@@ -47,6 +47,7 @@ import { createTask } from './lib/actions/create-task';
 import { createActivitie } from './lib/actions/create-activitie';
 import { sendFile } from './lib/actions/send-file';
 import { getRegistrationFolderDocuments } from './lib/actions/registration-folders/list-registration-folder-documents';
+import {updateCertificationFolder} from "./lib/actions/certification-folders/update-certification-folder";
 
 export const wedofAuth = PieceAuth.SecretText({
     displayName: 'Clé API',
@@ -116,7 +117,8 @@ export const wedof = createPiece({
     listActivitiesAndTasks,
     createTask,
     createActivitie,
-    sendFile
+    sendFile,
+    updateCertificationFolder
   ],
   triggers: [
     ////////////// registrationFolders ////////////

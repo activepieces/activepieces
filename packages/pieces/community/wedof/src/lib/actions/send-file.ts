@@ -1,6 +1,6 @@
 import { wedofAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
 import { wedofCommon } from '../common/wedof';
 
 export const sendFile = createAction({
@@ -37,10 +37,48 @@ export const sendFile = createAction({
         displayName: 'Titre du fichier',
         required: false,
     }),
-    typeId: Property.Number({
+    typeId: Property.DynamicProperties({
+      displayName: 'Merge Fields',
+      refreshers: ['entityClass', 'Id'],
+      required: true,
+      props: async ({ context }) => {
+        if (!context) return {};
+        if (!context['propsValue'].entityClass || !context['propsValue'].Id) return {};
+    
+        const fields: DynamicPropsValue = {};
+    
+        try {
+          const res = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: `${wedofCommon.baseUrl}/${context['propsValue'].entityClass}/${context['propsValue'].Id}/files`,
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': context['auth'] as string,
+            },
+          });
+    
+          const data = res.body;
+          data.forEach((field: { key: string | number; label: any; options: any; }) => {
+            fields[field.key] = Property.StaticDropdown({
+              displayName: field.label,
+              options: field.options.map((option: { value: any; label: any; }) => ({
+                value: option.value,
+                label: option.label,
+              })),
+              required: false,
+            });
+          });
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
+    
+        return fields;
+      },
+    }),
+ /*   typeId: Property.Number({
       displayName: "Type de fichier",
       required: true,
-  }),
+  }),*/
     file: Property.File({
         displayName: "Fichier a envoyer",
         required: true,
