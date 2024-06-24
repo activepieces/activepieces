@@ -1,8 +1,7 @@
 import { mkdir } from 'fs/promises'
 import path from 'path'
-import { Worker } from 'worker_threads'
 import { fileExists, logger, networkUtls, packageManager, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
-import { Action, ActionType, assertNotNullOrUndefined, CodeSandboxType, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteStepOperation, flowHelper, FlowVersion, FlowVersionState, PiecePackage } from '@activepieces/shared'
+import { Action, ActionType, assertNotNullOrUndefined, CodeSandboxType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecuteStepOperation, flowHelper, FlowVersion, FlowVersionState, PiecePackage } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { pieceManager } from '../../piece-manager'
 import { codeBuilder } from '../../utils/code-builder'
@@ -10,10 +9,11 @@ import { engineInstaller } from '../../utils/engine-installer'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { CodeArtifact, EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { pieceEngineUtil } from '../flow-enginer-util'
+import { EngineWorker, WorkerResult } from './worker'
 
 const memoryLimit = Math.floor((Number(system.getOrThrow(SystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
 const sandboxPath = path.resolve('cache')
-
+const enginePath = path.join(sandboxPath, 'main.js')
 
 // This a workound to make isolated-vm work in the worker thread check https://github.com/laverdet/isolated-vm/pull/402
 /* eslint-disable */
@@ -162,8 +162,7 @@ async function prepareFlowSandbox(engineToken: string, flowVersion: FlowVersion)
 
 async function execute<Result extends EngineHelperResult>(operation: EngineOperation, operationType: EngineOperationType): Promise<EngineHelperResponse<Result>> {
     const startTime = Date.now()
-    const { engine, stdError, stdOut } = await createWorker(
-        path.join(sandboxPath, 'main.js'),
+    const { engine, stdError, stdOut } = await executeOperation(
         operationType,
         operation,
     )
@@ -226,56 +225,21 @@ async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[])
 
 }
 
-type WorkerResult = {
-    engine: EngineResponse<unknown>
-    stdOut: string
-    stdError: string
+const engineWorkers = new EngineWorker(2, enginePath, {
+    env: {
+        NODE_OPTIONS: '--enable-source-maps',
+        AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
+        AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
+    },
+    resourceLimits: {
+        maxOldGenerationSizeMb: memoryLimit,
+        maxYoungGenerationSizeMb: memoryLimit,
+        stackSizeMb: memoryLimit,
+    },
+})
 
-}
-
-function createWorker(enginePath: string,
-    operationType: string,
+async function executeOperation(
+    operationType: EngineOperationType,
     operation: EngineOperation): Promise<WorkerResult> {
-    return new Promise<WorkerResult>((resolve, reject) => {
-        const worker = new Worker(enginePath, {
-            workerData: { operation, operationType },
-            env: {
-                NODE_OPTIONS: '--enable-source-maps',
-                AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
-                AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
-            },
-            resourceLimits: {
-                maxOldGenerationSizeMb: memoryLimit,
-                maxYoungGenerationSizeMb: memoryLimit,
-                stackSizeMb: memoryLimit,
-            },
-        })
-        let stdError = ''
-        let stdOut = ''
-
-        worker.on('message', (m: { type: string, message: unknown }) => {
-            if (m.type === 'result') {
-                resolve({
-                    engine: m.message as EngineResponse<unknown>,
-                    stdOut,
-                    stdError,
-                })
-            }
-            else if (m.type === 'stdout') {
-                stdOut += m.message
-            }
-            else if (m.type === 'stderr') {
-                stdError += m.message
-            }
-        })
-
-        worker.on('error', () => {
-            reject({ status: EngineResponseStatus.ERROR, response: {} })
-        })
-
-        worker.on('exit', () => {
-            reject({ status: EngineResponseStatus.ERROR, response: {} })
-        })
-    })
-
+    return engineWorkers.executeTask(operationType, operation)
 }
