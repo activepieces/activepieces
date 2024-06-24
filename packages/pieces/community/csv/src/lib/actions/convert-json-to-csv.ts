@@ -18,12 +18,20 @@ export const unparseCSVTextAction = createAction({
   props: {
     csv_object: Property.Json({
       displayName: 'CSV JSON',
-      defaultValue: {},
+      defaultValue: {
+        fields: ['ID', 'Name'],
+        data: [
+          [1, 'John'],
+          [2, 'Rashid'],
+        ],
+      },
+      description:
+        'Provide column names in the **`fields`** property and column values in the **`data`** property, as shown in the example.',
       required: true,
     }),
     has_headers: Property.Checkbox({
-      displayName: 'CSV contains headers',
-      defaultValue: false,
+      displayName: 'Should the output CSV include headers?',
+      defaultValue: true,
       required: true,
     }),
     delimiter_type: Property.StaticDropdown({
