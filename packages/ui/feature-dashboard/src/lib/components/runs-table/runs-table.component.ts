@@ -254,8 +254,12 @@ export class RunsTableComponent implements OnInit {
       ...spreadIfDefined(CURSOR_QUERY_PARAM, this.paginator.cursor),
     };
   }
-  setParams(statuses: FlowRunStatus[], flowId: string) {
+  setParams(statuses: FlowRunStatus[], flowId: string, created: Date) {
     this.statusFilterControl.setValue(statuses);
     this.flowFilterControl.setValue(flowId);
+    this.dateFormGroup.setValue({
+      start: created,
+      end: null,
+    });
   }
 }
