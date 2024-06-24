@@ -133,14 +133,6 @@ export const triggerHelper = {
                 }
             case TriggerHookType.RUN: {
                 if (trigger.type === TriggerStrategy.APP_WEBHOOK) {
-                    if (params.edition === ApEdition.COMMUNITY) {
-                        return {
-                            success: false,
-                            message: 'App webhooks are not supported in community edition',
-                            output: [],
-                        }
-                    }
-
                     if (!params.appWebhookUrl) {
                         throw new Error(`App webhook url is not available for piece name ${pieceName}`)
                     }

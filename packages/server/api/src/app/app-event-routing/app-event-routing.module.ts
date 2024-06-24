@@ -6,6 +6,7 @@ import { webhookService } from '../webhooks/webhook-service'
 import { AppEventRouting } from './app-event-routing.entity'
 import { appEventRoutingService } from './app-event-routing.service'
 import { facebookLeads } from '@activepieces/piece-facebook-leads'
+import { intercom } from '@activepieces/piece-intercom'
 import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
@@ -23,12 +24,14 @@ const appWebhooks: Record<string, Piece> = {
     slack,
     square,
     'facebook-leads': facebookLeads,
+    intercom,
 }
 
 const pieceNames: Record<string, string> = {
     slack: '@activepieces/piece-slack',
     square: '@activepieces/piece-square',
     'facebook-leads': '@activepieces/piece-facebook-leads',
+    intercom: '@activepieces/piece-intercom',
 }
 
 export const appEventRoutingModule: FastifyPluginAsyncTypebox = async (app) => {
