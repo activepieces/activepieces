@@ -48,7 +48,7 @@ export const requestWriterService = {
                     name: 'fetch_api_details',
                 },
             },
-            temperature: 1,
+            temperature: 0.2,
         })
         assertNotNullOrUndefined(
             result.choices[0].message.tool_calls,
@@ -73,13 +73,30 @@ export const requestWriterService = {
                         properties: {
                             method: {
                                 type: 'string',
-                                description: 'The HTTP method of the request either GET, POST, PUT, PATCH, DELETE',
+                                description: 'The HTTP method of the request (GET, POST, PUT, PATCH, DELETE).',
                             },
-                            url: { type: 'string', description: 'the endpoint of a service api' },
-                            queryParams: { type: 'object', description: 'Query parameters required by the api' },
-                            jsonBodySchema: { type: 'object', description: 'Body needed of the post, patch, and put request if provided in the service docs' },
+                            baseURL: {
+                                type: 'string',
+                                description: 'The base URL of the API service endpoint.',
+                            },
+                            queryParams: {
+                                type: 'object',
+                                description: 'Query parameters required by this service API, expected as key-value pairs.',
+                                additionalProperties: {
+                                    type: 'string',
+                                    description: 'Each key represents the parameter name and the value is a description or default value.',
+                                },
+                            },
+                            jsonBodySchema: {
+                                type: 'object',
+                                description: 'JSON schema of the body required for POST, PATCH, and PUT requests, specified as key-value pairs where each key is a field name and the value describes the field.',
+                                additionalProperties: {
+                                    type: 'string',
+                                    description: 'Each key represents the field name and the value is a description or type of the field.',
+                                },
+                            },
                         },
-                        required: ['method', 'url', 'queryParams', 'jsonBodySchema'],
+                        required: ['method', 'baseURL', 'queryParams', 'jsonBodySchema'],
                     },
                 },
             },
