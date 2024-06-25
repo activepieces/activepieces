@@ -174,7 +174,7 @@ export class RunsComponent
         FlowRunStatus.QUOTA_EXCEEDED,
       ],
       issue.flowId,
-      new Date(issue.created.split('T')[0])
+      issue.created
     );
   }
 
