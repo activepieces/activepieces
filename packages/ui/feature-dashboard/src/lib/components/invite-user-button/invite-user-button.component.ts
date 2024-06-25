@@ -20,13 +20,13 @@ import { InviteUserDialogComponent } from '../dialogs/invite-user-dialog/invite-
       [darkLoadingSpinner]="true"
       i18n
     >
-      <div class="ap-flex ap-gap-2 ap-items-center">
+      <div class="ap-flex ap-gap-2 ap-items-center ap-whitespace-nowrap">
         <svg-icon
           [applyClass]="true"
           [svgStyle]="{ width: '18px', height: '18px' }"
           src="assets/img/custom/person_add.svg"
         ></svg-icon>
-        <b>Invite user</b>
+        <b class="ap-hidden sm:ap-inline-block">Invite user</b>
       </div>
     </ap-button>
     @if(openDialog$ | async) {}
