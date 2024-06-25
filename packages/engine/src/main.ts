@@ -16,8 +16,7 @@ async function executeFromFile(operationType: string): Promise<void> {
     await utils.writeToJsonFile(EngineConstants.OUTPUT_FILE, result)
 }
 
-async function executeFromWorkerData(): Promise<void> {
-    const { operation, operationType } = workerData
+async function executeFromWorkerData(operation: EngineOperation, operationType: EngineOperationType ): Promise<void> {
     const result = await execute(operationType, operation)
     assertNotNullOrUndefined(parentPort, 'parentPort')
     const resultParsed = JSON.parse(JSON.stringify(result))
@@ -30,22 +29,23 @@ if (operationType) {
     executeFromFile(operationType).catch(e => console.error(e))
 }
 else {
-    if (workerData) {
-        const originalLog = console.log
-        console.log = function (...args) {
-            assertNotNullOrUndefined(parentPort, 'parentPort')
-            parentPort.postMessage({ type: 'stdout', message: args.join(' ') })
-            originalLog.apply(console, args)
-        }
-
-
-        const originalError = console.error
-        console.error = function (...args) {
-            assertNotNullOrUndefined(parentPort, 'parentPort')
-            parentPort.postMessage({ type: 'stderr', message: args.join(' ') })
-            originalError.apply(console, args)
-        }
-
-        executeFromWorkerData().catch(e => console.error(e))
+    if (parentPort) {
+        parentPort.on('message', (m: { operation: EngineOperation, operationType: EngineOperationType }) => {
+                    const originalLog = console.log
+                    console.log = function (...args) {
+                        assertNotNullOrUndefined(parentPort, 'parentPort')
+                        parentPort.postMessage({ type: 'stdout', message: args.join(' ') })
+                        originalLog.apply(console, args)
+                    }
+            
+            
+                    const originalError = console.error
+                    console.error = function (...args) {
+                        assertNotNullOrUndefined(parentPort, 'parentPort')
+                        parentPort.postMessage({ type: 'stderr', message: args.join(' ') })
+                        originalError.apply(console, args)
+                    }
+                    executeFromWorkerData(m.operation,m.operationType).catch(e => console.error(e))
+        });
     }
 }
