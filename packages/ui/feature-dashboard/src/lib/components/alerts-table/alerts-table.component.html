@@ -9,7 +9,7 @@
             <span class="ap-typography-subtitle-2">Receive email alerts for issues in flow runs, quota alerts, and
                 manage the recipient emails.</span>
         </div>
-        <ap-markdown [data]="betaNote"> </ap-markdown>
+        <ap-markdown class="ap-mb-2" [data]="betaNote"> </ap-markdown>
         <div class=" ap-min-h-[70%]">
             <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Alerts" i18n-aria-label>
                 <ng-container matColumnDef="receiver">
@@ -22,7 +22,7 @@
                         <div class="ap-flex ap-items-center ap-justify-end">
                             <ap-button actionButton [disabled]="(isAdmin$ | async) === false"
                                 [tooltipText]="(isAdmin$ | async) === false ? permissionToAddMessage : ''"
-                                i18n-tooltipText (buttonClicked)="addAlert()" btnSize="medium" btnColor="primary" i18n>+
+                                i18n-tooltipText (buttonClicked)="addAlert()" btnSize="medium" btnColor="primary">+
                                 Add
                                 Email</ap-button>
                         </div>

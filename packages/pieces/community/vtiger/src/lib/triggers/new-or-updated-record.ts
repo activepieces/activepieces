@@ -17,7 +17,6 @@ import {
   prepareHttpRequest,
 } from '../common';
 import dayjs from 'dayjs';
-import { filter, sortBy } from 'lodash';
 
 export const newOrUpdatedRecord = createTrigger({
   auth: vtigerAuth,
@@ -127,14 +126,20 @@ const fetchRecords = async ({
     const records = response.body.result;
     const limit = propsValue['limit'] as number;
 
-    const newOrUpdatedRecords = filter(records, (record) => {
+    const newOrUpdatedRecords = records.filter((record) => {
       const watchTime = dayjs(record[propsValue['watchBy'] as string] ?? 0);
       return watchTime.diff(lastFetch) >= 0;
     });
-    const sortedRecords = sortBy(
-      newOrUpdatedRecords,
-      (record) => record[propsValue['watchBy'] as string]
-    );
+    const sortedRecords = newOrUpdatedRecords.sort((a, b) => {
+      const key = propsValue['watchBy'] as string;
+      if (a[key] < b[key]) {
+        return -1;
+      }
+      if (a[key] > b[key]) {
+        return 1;
+      }
+      return 0;
+    });
 
     if (limit > 0) {
       return sortedRecords.slice(0, limit);

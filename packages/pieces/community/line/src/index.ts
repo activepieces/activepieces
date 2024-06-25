@@ -23,7 +23,7 @@ export const line = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.line.me/v2',
       auth: lineAuth2,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

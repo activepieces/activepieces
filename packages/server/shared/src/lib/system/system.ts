@@ -95,6 +95,15 @@ export const system = {
         return value === 'true'
     },
 
+    getList(prop: SystemProp): string[] {
+        const values = getEnvVar(prop)
+
+        if (isNil(values)) {
+            return []
+        }
+        return values.split(',').map((value) => value.trim())
+    },
+
     getOrThrow<T extends string>(prop: SystemProp): T {
         const value = getEnvVar(prop) as T | undefined
 

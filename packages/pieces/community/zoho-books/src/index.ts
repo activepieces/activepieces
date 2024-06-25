@@ -63,7 +63,7 @@ export const zohoBooks = createPiece({
       baseUrl: (auth) =>
         `https://${(auth as OAuth2PropertyValue).data['location']}/books/v3`,
       auth: zohoBooksAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

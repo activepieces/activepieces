@@ -70,6 +70,7 @@ import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
 import { encryptUtils } from './helper/encryption'
 import { errorHandler } from './helper/error-handler'
+import { jwtUtils } from './helper/jwt-utils'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { getEdition } from './helper/secret-helper'
 import { systemJobsSchedule } from './helper/system-jobs'
@@ -103,6 +104,7 @@ import {
     AppConnectionWithoutSensitiveData,
     Flow,
     FlowRun,
+    isNil,
     ProjectWithLimits,
     spreadIfDefined,
     UserInvitation,
@@ -383,6 +385,13 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 const validateEnvPropsOnStartup = async (): Promise<void> => {
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
     await encryptUtils.loadEncryptionKey(queueMode)
+
+    const jwtSecret = await jwtUtils.getJwtSecret()
+    if (isNil(jwtSecret)) {
+        throw new Error(JSON.stringify({
+            message: 'AP_JWT_SECRET is undefined, please define it in the environment variables',
+        }))
+    }
 }
 
 async function getAdapter() {

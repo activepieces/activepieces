@@ -32,7 +32,7 @@ export const twilio = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.twilio.com/2010-04-01',
       auth: twilioAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
           `${(auth as { username: string }).username}:${
             (auth as { password: string }).password

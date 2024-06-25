@@ -67,7 +67,7 @@ export const zohoCrm = createPiece({
       baseUrl: (auth) =>
         `https://${(auth as OAuth2PropertyValue).data.location}/crm/v4`,
       auth: zohoCrmAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

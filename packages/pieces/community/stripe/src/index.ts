@@ -33,7 +33,7 @@ export const stripe = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.stripe.com/v1',
       auth: stripeAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

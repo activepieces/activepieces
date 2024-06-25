@@ -1,12 +1,12 @@
 import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
-import { isNil } from 'lodash'
 import { flagService } from '../../flags/flag.service'
+import { telemetry } from '../../helper/telemetry.utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
-import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, LicenseKeyEntity, PackageType, PlatformRole, UserStatus } from '@activepieces/shared'
+import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PackageType, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
 
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
@@ -59,6 +59,13 @@ export const licenseKeysService = {
             const errorMessage = JSON.stringify(await response.json())
             handleUnexpectedSecretsManagerError(errorMessage)
         }
+        rejectedPromiseHandler(telemetry.trackPlatform(request.platformId, {
+            name: TelemetryEventName.KEY_ACTIVIATED,
+            payload: {
+                date: dayjs().toISOString(),
+                key: request.key,
+            },
+        }))
     },
     async getKey(license: string | undefined): Promise<LicenseKeyEntity | null> {
         if (isNil(license)) {
@@ -123,10 +130,7 @@ const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<voi
     const { data } = await userService.list({
         platformId,
     })
-    const users = data.map(u => {
-        if (u.platformRole === PlatformRole.ADMIN) {
-            return new Promise<void>((resolve) => resolve())
-        }
+    const users = data.filter(f => f.platformRole !== PlatformRole.ADMIN).map(u => {
         logger.debug(`Deactivating user ${u.email}`)
         return userService.update({
             id: u.id,
@@ -157,10 +161,6 @@ const deletePrivatePieces: (platformId: string) => Promise<void> = async (platfo
 }
 
 async function downgradeToFreePlan(platformId: string): Promise<void> {
-    logger.info({
-        message: 'Downgrading platform to free plan',
-        platformId,
-    })
     await platformService.update({
         id: platformId,
         ...turnedOffFeatures,
