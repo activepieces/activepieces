@@ -259,7 +259,7 @@ export class RunsTableComponent implements OnInit {
     this.statusFilterControl.setValue(statuses);
     this.flowFilterControl.setValue(flowId);
     this.dateFormGroup.setValue({
-      start: dayjs(createdAt).set('millisecond', 0).toDate(),
+      start: dayjs(createdAt).toDate(),
       end: null,
     });
   }
