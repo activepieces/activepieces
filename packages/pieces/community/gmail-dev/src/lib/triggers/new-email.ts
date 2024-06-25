@@ -121,6 +121,7 @@ async function pollRecentMessages({
 
 	if (props.from) query.push(`from:(${props.from})`);
 	if (props.to) query.push(`to:(${props.to})`);
+	if (props.subject) query.push(`subject:(${props.subject})`);
 	if (props.label) query.push(`label:${props.label.name}`);
 	if (props.category) query.push(`category:${props.category}`);
 	if (afterUnixSeconds != null && afterUnixSeconds > 0) query.push(`after:${afterUnixSeconds}`);
