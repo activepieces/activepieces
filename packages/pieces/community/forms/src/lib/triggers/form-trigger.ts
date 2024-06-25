@@ -3,14 +3,24 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
+import { USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
 
-const markdown = `
-The form title is same as the flow's title. \n
-Form URL: \n
-**{{formUrl}}**
+const markdown = `**Published Form URL:**
+\`\`\`text
+{{formUrl}}
+\`\`\`
+Use this for production, views the published version of the form.
+<br>
+<br>
+**Draft Form URL:**
+\`\`\`text
+{{formUrl}}?${USE_DRAFT_QUERY_PARAM_NAME}=true
+\`\`\`
+Use this to generate sample data, views the draft version of the from.
 `;
 
 export const onFormSubmission = createTrigger({
+
   name: 'form_submission',
   displayName: 'On Form Submission',
   description: 'Trigger the flow by submitting a form.',
