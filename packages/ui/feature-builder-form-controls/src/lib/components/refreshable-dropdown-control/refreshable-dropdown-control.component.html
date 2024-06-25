@@ -54,6 +54,9 @@
             {{loadingText}}
           }
         }
+        @else() {
+          {{loadingText}}
+        }
       }
     </mat-select-trigger>
 
@@ -144,7 +147,7 @@
 
     @if(selectedItemsCache$ | async; as cache)
     { 
-      @for( c of cache; track c)
+      @for( c of cache; track c.value)
       {
         <mat-option [value]="c.value" class="!ap-hidden"> {{c.label}} </mat-option>
       }
