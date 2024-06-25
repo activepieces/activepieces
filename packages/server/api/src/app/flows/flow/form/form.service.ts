@@ -1,4 +1,5 @@
 import { flowVersionService } from '../../flow-version/flow-version.service'
+import { FlowSchema } from '../flow.entity'
 import { flowRepo } from '../flow.repo'
 import { ActivepiecesError, ErrorCode, FlowId, FormInputType, FormResponse, isNil, PopulatedFlow } from '@activepieces/shared'
 
@@ -22,8 +23,8 @@ const FORMS_TRIGGER_NAMES = [
 ]
 
 export const formService = {
-    getFormByFlowIdOrThrow: async (flowId: string): Promise<FormResponse> => {
-        const flow = await getPopulatedFlowById(flowId)
+    getFormByFlowIdOrThrow: async (flowId: string, useDraft?: boolean): Promise<FormResponse> => {
+        const flow = await getPopulatedFlowById(flowId, useDraft)
         if (!flow
             || !FORMS_TRIGGER_NAMES.includes(flow.version.trigger.settings.triggerName)
             || flow.version.trigger.settings.pieceName !== FORMS_PIECE_NAME) {
@@ -54,14 +55,31 @@ export const formService = {
 }
 
 
-async function getPopulatedFlowById(id: FlowId): Promise<PopulatedFlow | null> {
+const getFlowVersionIdForForm = (flow: FlowSchema, useDraft?: boolean) =>{
+    if (useDraft === true || useDraft === undefined) {
+        return undefined
+    }
+    else if (flow.publishedVersionId) {
+        return flow.publishedVersionId
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.FLOW_FORM_NOT_FOUND,
+        params: {
+            flowId: flow.id,
+            message: 'Flow form not found in published version of flow.',
+        },
+    })
+
+}
+async function getPopulatedFlowById(id: FlowId, useDraft?: boolean): Promise<PopulatedFlow | null> {
     const flow = await flowRepo().findOneBy({ id })
     if (isNil(flow)) {
         return null
     }
+    const versionId = getFlowVersionIdForForm(flow, useDraft)
     const flowVersion = await flowVersionService.getFlowVersionOrThrow({
         flowId: id,
-        versionId: undefined,
+        versionId,
     })
     return {
         ...flow,
