@@ -4,6 +4,7 @@ import {
   FormInputType,
   FormResponse,
   TelemetryEventName,
+  USE_DRAFT_QUERY_PARAM_NAME,
 } from '@activepieces/shared';
 import { TelemetryService, environment } from '@activepieces/ui/common';
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
@@ -24,6 +25,7 @@ import { FormResult, FormResultTypes, FormsService } from './forms.service';
 import { StatusCodes } from 'http-status-codes';
 import { getInputKey } from './input-form-control.pipe';
 import { FORMS_RESOLVE_DATA } from './forms.resolver';
+import { isNil } from 'lodash';
 
 @Component({
   selector: 'app-forms',
@@ -51,12 +53,19 @@ export class FormsComponent implements OnInit {
     this.flowForm = this.route.snapshot.data[FORMS_RESOLVE_DATA];
     this.form = new FormGroup({});
     if (this.flowForm) {
+      const useDraftQueryParam =
+        this.route.snapshot.queryParams[USE_DRAFT_QUERY_PARAM_NAME];
+      const useTestingEndpoint =
+        !isNil(useDraftQueryParam) &&
+        useDraftQueryParam.toLowerCase() === 'true';
+      const routePostfix = useTestingEndpoint
+        ? '/test'
+        : this.flowForm.props.waitForResponse
+        ? '/sync'
+        : '';
       this.buildInputs(this.flowForm.props.inputs);
       this.webhookUrl =
-        environment.apiUrl +
-        '/webhooks/' +
-        this.flowForm.id +
-        (this.flowForm.props.waitForResponse ? '/sync' : '');
+        environment.apiUrl + '/webhooks/' + this.flowForm.id + routePostfix;
     }
   }
 
@@ -79,7 +88,7 @@ export class FormsComponent implements OnInit {
               projectId: this.flowForm!.projectId,
             },
           });
-          if (result) {
+          if (result && Object.keys(result).length > 0) {
             if (result.type === FormResultTypes.MARKDOWN) {
               this.markdownResponse.next(result.value as string);
             } else if (result.type === FormResultTypes.FILE) {
