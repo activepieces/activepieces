@@ -20,6 +20,7 @@ import {
 import {
   AppConnection,
   AppConnectionStatus,
+  Permission,
   SeekPage,
 } from '@activepieces/shared';
 import { ConnectionsTableDataSource } from './connections-table.datasource';
@@ -30,6 +31,7 @@ import {
   CONNECTION_NAME_QUERY_PARAM,
   PIECE_NAME_QUERY_PARAM,
   AppConnectionsService,
+  TablePermissionsEnforcer,
 } from '@activepieces/ui/common';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { NewConnectionDialogComponent } from '../../components/dialogs/new-connection-dialog/new-connection-dialog.component';
@@ -41,7 +43,10 @@ import { FormControl } from '@angular/forms';
   templateUrl: './connections-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConnectionsTableComponent implements OnInit {
+export class ConnectionsTableComponent
+  extends TablePermissionsEnforcer
+  implements OnInit
+{
   @ViewChild(AddEditConnectionButtonComponent)
   createConnectionButton!: AddEditConnectionButtonComponent;
   @ViewChild(ApPaginatorComponent, { static: true })
@@ -52,7 +57,6 @@ export class ConnectionsTableComponent implements OnInit {
   title = $localize`Connections`;
   newConnectionPiece?: PieceMetadataModelSummary;
   newConnectionDialogClosed$?: Observable<PieceMetadataModelSummary>;
-  displayedColumns = ['app', 'name', 'status', 'created', 'updated', 'action'];
   deleteConnectionDialogClosed$?: Observable<void>;
   readonly AppConnectionStatus = AppConnectionStatus;
   filtersChanged$: Observable<void>;
@@ -67,6 +71,7 @@ export class ConnectionsTableComponent implements OnInit {
   searchControl: FormControl<string> = new FormControl<string>('', {
     nonNullable: true,
   });
+  isReadOnly = !this.hasPermission(Permission.WRITE_APP_CONNECTION);
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
@@ -74,6 +79,15 @@ export class ConnectionsTableComponent implements OnInit {
     private connectionService: AppConnectionsService,
     private dialogService: MatDialog
   ) {
+    super({
+      permissionsAndTheirColumns: [
+        {
+          permission: Permission.WRITE_APP_CONNECTION,
+          permissionColumns: ['action'],
+        },
+      ],
+      tableColumns: ['app', 'name', 'status', 'created', 'updated'],
+    });
     this.connectionNameFilterControl.setValue(
       this.activatedRoute.snapshot.queryParamMap.get(
         CONNECTION_NAME_QUERY_PARAM
