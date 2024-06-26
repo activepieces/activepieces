@@ -20,6 +20,7 @@ import {
   TelemetryEventName,
   ApFlagId,
   isNil,
+  Permission,
 } from '@activepieces/shared';
 import {
   ApPaginatorComponent,
@@ -28,6 +29,7 @@ import {
   FlagService,
   FoldersService,
   NavigationService,
+  TablePermissionsEnforcer,
   TelemetryService,
   downloadFlow,
   flowActionsUiInfo,
@@ -59,7 +61,10 @@ import { GitBranchType, GitPushOperationType } from '@activepieces/ee-shared';
 @Component({
   templateUrl: './flows-table.component.html',
 })
-export class FlowsTableComponent implements OnInit {
+export class FlowsTableComponent
+  extends TablePermissionsEnforcer
+  implements OnInit
+{
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
   readonly flowActionsUiInfo = flowActionsUiInfo;
@@ -68,14 +73,6 @@ export class FlowsTableComponent implements OnInit {
   moveFlowDialogClosed$: Observable<void>;
   dataSource!: FlowsTableDataSource;
   folderId$: Observable<FolderId | undefined>;
-  displayedColumns = [
-    'name',
-    'steps',
-    'folderName',
-    'created',
-    'status',
-    'action',
-  ];
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
   areThereFlows$?: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
@@ -86,6 +83,7 @@ export class FlowsTableComponent implements OnInit {
   hideFolders$ = this.embeddingService.getHideFolders$();
   showRewards$: Observable<boolean>;
   deleteFlowFromGit$?: Observable<void>;
+  isStatusReadOnly = !this.hasPermission(Permission.UPDATE_FLOW_STATUS);
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -100,6 +98,15 @@ export class FlowsTableComponent implements OnInit {
     private syncProjectService: SyncProjectService,
     @Inject(LOCALE_ID) public locale: string
   ) {
+    super({
+      permissionsAndTheirColumns: [
+        {
+          permission: Permission.WRITE_FLOW,
+          permissionColumns: ['action'],
+        },
+      ],
+      tableColumns: ['name', 'steps', 'folderName', 'created', 'status'],
+    });
     this.showAllFlows$ = this.listenToShowAllFolders();
     this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
     this.showRewards$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_REWARDS);
