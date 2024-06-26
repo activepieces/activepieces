@@ -1,6 +1,6 @@
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
-import importFresh from 'import-fresh'
+import importFresh from '@activepieces/import-fresh-webpack'
 import { nanoid } from 'nanoid'
 import {
     PieceMetadataSchema,

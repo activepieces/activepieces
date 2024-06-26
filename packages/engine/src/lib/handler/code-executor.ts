@@ -1,6 +1,6 @@
 import path from 'path'
+import importFresh from '@activepieces/import-fresh-webpack'
 import { ActionType, CodeAction, FlowVersionState, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
-import importFresh from 'import-fresh'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
