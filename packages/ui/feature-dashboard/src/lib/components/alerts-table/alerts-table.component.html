@@ -1,15 +1,19 @@
 <div class="ap-w-full ap-h-full">
-    @if(showUpgrade)
-    {
-    <ap-upgrade-note [insideTab]="true" [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote"
-        featureKey="ALERTS" videoUrl="https://cdn.activepieces.com/videos/showcase/alerts.mp4"></ap-upgrade-note>
-    } @else {
     <div class="ap-h-full">
         <div class="ap-p-[0.875rem]">
-            <span class="ap-typography-subtitle-2">Receive email alerts for issues in flow runs, quota alerts, and
-                manage the recipient emails.</span>
+            <span class="ap-typography-subtitle-2">Manage recipient emails for alert notifications.</span>
         </div>
-        <ap-markdown class="ap-mb-2" [data]="betaNote"> </ap-markdown>
+        <div
+            class="ap-px-[0.875rem] ap-py-[0.675rem] ap-mb-2 ap-border ap-border-solid ap-border-gray-200 ap-flex ap-justify-between ap-items-center">
+            <div>
+                <h3 class="ap-typography-subtitle-1">Alert Types</h3>
+                <ul class="ap-typography-body-2 ap-ml-4 ap-list-disc">
+                    <li class="ap-my-2">Immediate flow failure alerts up to 5 per hour 15 per day per flow</li>
+                    <li class="ap-mb-2">Usage limit alerts <strong>(enterprise only)</strong>
+                    </li>
+                </ul>
+            </div>
+        </div>
         <div class=" ap-min-h-[70%]">
             <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Alerts" i18n-aria-label>
                 <ng-container matColumnDef="receiver">
@@ -53,7 +57,6 @@
             </ng-container>
         </div>
     </div>
-    }
     <div [class.ap-hidden]="showUpgrade">
         <div class="ap-flex ap-justify-end">
             <ap-paginator> </ap-paginator>
