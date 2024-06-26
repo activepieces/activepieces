@@ -1,6 +1,6 @@
 import { Worker, WorkerOptions } from 'worker_threads'
-import { ApSemaphore, logger, system, SystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
+import { ApSemaphore, logger, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
+import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 
 export type WorkerResult = {
     engine: EngineResponse<unknown>
@@ -42,7 +42,7 @@ export class EngineWorker {
         }, 'Acquired worker')
         assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
         const worker = this.workers[workerIndex]
-
+        const environment = system.getOrThrow(SystemProp.ENVIRONMENT)
         try {
 
             const result = await new Promise<WorkerResult>((resolve, reject) => {
@@ -66,7 +66,6 @@ export class EngineWorker {
                 worker.on('message', (m: { type: string, message: unknown }) => {
                     if (m.type === 'result') {
                         cleanUp(worker, timeoutWorker)
-
                         resolve({
                             engine: m.message as EngineResponse<unknown>,
                             stdOut,
@@ -95,13 +94,19 @@ export class EngineWorker {
                     }, 'Worker exited')
                     cleanUp(worker, timeoutWorker)
                     this.workers[workerIndex] = new Worker(this.enginePath, this.engineOptions)
-                    reject({ status: EngineResponseStatus.ERROR, response: {} })
                 })
                 worker.postMessage({ operation, operationType })
             })
             return result
         }
         finally {
+            if (environment === ApEnvironment.DEVELOPMENT) {
+                logger.debug({
+                    workerIndex,
+                }, 'Removing worker in development mode to avoid caching issues')
+                rejectedPromiseHandler(worker.terminate())
+                this.workers[workerIndex] = new Worker(this.enginePath, this.engineOptions)
+            }
             logger.debug({
                 workerIndex,
             }, 'Releasing worker')
