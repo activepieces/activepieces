@@ -57,10 +57,8 @@
             </ng-container>
         </div>
     </div>
-    <div [class.ap-hidden]="showUpgrade">
-        <div class="ap-flex ap-justify-end">
-            <ap-paginator> </ap-paginator>
-        </div>
+    <div class="ap-flex ap-justify-end">
+        <ap-paginator> </ap-paginator>
     </div>
 </div>
 <ng-container *ngIf="deleteAlert$ | async"></ng-container>
