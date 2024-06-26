@@ -1,4 +1,4 @@
-import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, ProgressUpdateType, Project, ProjectId, ResumePayload, TriggerHookType } from '@activepieces/shared'
+import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, TriggerHookType } from '@activepieces/shared'
 import { VariableService } from '../../services/variable-service'
 
 type RetryConstants = {
@@ -38,6 +38,7 @@ export class EngineConstants {
     public constructor(
         public readonly flowId: string,
         public readonly flowVersionId: string,
+        public readonly flowVerionState: FlowVersionState,
         public readonly flowRunId: string,
         public readonly serverUrl: string,
         public readonly retryConstants: RetryConstants,
@@ -56,6 +57,7 @@ export class EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
             input.flowVersion.id,
+            input.flowVersion.state,
             input.flowRunId,
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
@@ -78,6 +80,7 @@ export class EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
             input.flowVersion.id,
+            input.flowVersion.state,
             'test-run',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
@@ -99,6 +102,7 @@ export class EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
             input.flowVersion.id,
+            input.flowVersion.state,
             'execute-property',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
@@ -120,6 +124,7 @@ export class EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
             input.flowVersion.id,
+            input.flowVersion.state,
             'execute-trigger',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,

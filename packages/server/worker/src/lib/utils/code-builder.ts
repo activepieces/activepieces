@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises'
-import { logger, PackageInfo, packageManager } from '@activepieces/server-shared'
+import { fileExists, logger, PackageInfo, packageManager } from '@activepieces/server-shared'
 import { SourceCode } from '@activepieces/shared'
 
 const TS_CONFIG_CONTENT = `
@@ -42,18 +42,17 @@ export const codeBuilder = {
         flowVersionId,
         buildPath,
     }: ProcessCodeStepParams): Promise<void> {
-        logger.debug({
-            name: 'CodeBuilder#processCodeStep',
-            sourceCode,
-            sourceCodeId,
-            buildPath,
-        })
-
         const codePath = codeBuilder.buildPath({
             sourceCodeId,
             flowVersionId,
             buildPath,
 
+        })
+        logger.debug({
+            name: 'CodeBuilder#processCodeStep',
+            sourceCode,
+            sourceCodeId,
+            codePath,
         })
 
         try {
@@ -83,6 +82,10 @@ export const codeBuilder = {
 }
 
 const createBuildDirectory = async (path: string): Promise<void> => {
+    const fsExists = await fileExists(path)
+    if (fsExists) {
+        await fs.rm(path, { recursive: true })
+    }
     await fs.mkdir(path, { recursive: true })
 }
 

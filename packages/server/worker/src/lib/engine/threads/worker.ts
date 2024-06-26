@@ -1,12 +1,14 @@
 import { Worker, WorkerOptions } from 'worker_threads'
-import { ApSemaphore } from '@activepieces/server-shared'
-import { EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
+import { ApSemaphore, logger, system, SystemProp } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 
 export type WorkerResult = {
     engine: EngineResponse<unknown>
     stdOut: string
     stdError: string
 }
+
+const sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
 
 export class EngineWorker {
     workers: Worker[]
@@ -28,21 +30,43 @@ export class EngineWorker {
         }
     }
 
-    async executeTask(operationType: EngineOperationType,
-        operation: EngineOperation) {
+    async executeTask(operationType: EngineOperationType, operation: EngineOperation): Promise<WorkerResult> {
+        logger.info({
+            operationType,
+            operation,
+        }, 'Executing operation')
         await this.lock.acquire()
-        const workerIndex = this.availableWorkerIndexes.pop()!
-        // Perform task with the worker
+        const workerIndex = this.availableWorkerIndexes.pop()
+        logger.debug({
+            workerIndex,
+        }, 'Acquired worker')
+        assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
+        const worker = this.workers[workerIndex]
+
         try {
-            // lock makes sure that availableWorkerIndexes is not empty.
-            const worker = this.workers[workerIndex]
+
             const result = await new Promise<WorkerResult>((resolve, reject) => {
                 let stdError = ''
                 let stdOut = ''
-                worker.removeAllListeners()
+
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                const timeoutWorker = setTimeout(async () => {
+                    resolve({
+                        engine: {
+                            status: EngineResponseStatus.TIMEOUT,
+                            response: {},
+                        },
+                        stdError: '',
+                        stdOut: '',
+                    })
+                    await worker.terminate()
+                }, sandboxRunTimeSeconds * 1000)
+
 
                 worker.on('message', (m: { type: string, message: unknown }) => {
                     if (m.type === 'result') {
+                        cleanUp(worker, timeoutWorker)
+
                         resolve({
                             engine: m.message as EngineResponse<unknown>,
                             stdOut,
@@ -58,11 +82,18 @@ export class EngineWorker {
                 })
 
                 worker.on('error', () => {
+                    cleanUp(worker, timeoutWorker)
                     this.workers[workerIndex] = new Worker(this.enginePath, this.engineOptions)
                     reject({ status: EngineResponseStatus.ERROR, response: {} })
                 })
 
                 worker.on('exit', () => {
+                    logger.error({
+                        stdError,
+                        stdOut,
+                        workerIndex,
+                    }, 'Worker exited')
+                    cleanUp(worker, timeoutWorker)
                     this.workers[workerIndex] = new Worker(this.enginePath, this.engineOptions)
                     reject({ status: EngineResponseStatus.ERROR, response: {} })
                 })
@@ -71,8 +102,18 @@ export class EngineWorker {
             return result
         }
         finally {
+            logger.debug({
+                workerIndex,
+            }, 'Releasing worker')
             this.availableWorkerIndexes.push(workerIndex)
             this.lock.release()
         }
     }
+}
+
+function cleanUp(worker: Worker, timeout: NodeJS.Timeout): void {
+    worker.removeAllListeners('exit')
+    worker.removeAllListeners('error')
+    worker.removeAllListeners('message')
+    clearTimeout(timeout)
 }

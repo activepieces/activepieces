@@ -1,7 +1,7 @@
 import { mkdir } from 'fs/promises'
 import path from 'path'
 import { fileExists, logger, networkUtls, packageManager, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
-import { Action, ActionType, assertNotNullOrUndefined, CodeSandboxType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecuteStepOperation, flowHelper, FlowVersion, FlowVersionState, PiecePackage } from '@activepieces/shared'
+import { Action, ActionType, assertNotNullOrUndefined, CodeSandboxType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecuteStepOperation, flowHelper, FlowVersion, FlowVersionState, isNil, PiecePackage } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { pieceManager } from '../../piece-manager'
 import { codeBuilder } from '../../utils/code-builder'
@@ -14,6 +14,8 @@ import { EngineWorker, WorkerResult } from './worker'
 const memoryLimit = Math.floor((Number(system.getOrThrow(SystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
 const sandboxPath = path.resolve('cache')
 const enginePath = path.join(sandboxPath, 'main.js')
+const workerConcurrency = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
+let engineWorkers: EngineWorker
 
 // This a workound to make isolated-vm work in the worker thread check https://github.com/laverdet/isolated-vm/pull/402
 /* eslint-disable */
@@ -151,7 +153,7 @@ export const threadEngineRunner: EngineRunner = {
     },
 }
 
-async function prepareFlowSandbox(engineToken: string, flowVersion: FlowVersion) {
+async function prepareFlowSandbox(engineToken: string, flowVersion: FlowVersion): Promise<void> {
     const pieces = await pieceEngineUtil.extractFlowPieces({
         flowVersion,
         engineToken,
@@ -225,21 +227,23 @@ async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[])
 
 }
 
-const engineWorkers = new EngineWorker(2, enginePath, {
-    env: {
-        NODE_OPTIONS: '--enable-source-maps',
-        AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
-        AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
-    },
-    resourceLimits: {
-        maxOldGenerationSizeMb: memoryLimit,
-        maxYoungGenerationSizeMb: memoryLimit,
-        stackSizeMb: memoryLimit,
-    },
-})
 
 async function executeOperation(
     operationType: EngineOperationType,
     operation: EngineOperation): Promise<WorkerResult> {
+    if (isNil(engineWorkers)) {
+        engineWorkers = new EngineWorker(workerConcurrency, enginePath, {
+            env: {
+                NODE_OPTIONS: '--enable-source-maps',
+                AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
+                AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
+            },
+            resourceLimits: {
+                maxOldGenerationSizeMb: memoryLimit,
+                maxYoungGenerationSizeMb: memoryLimit,
+                stackSizeMb: memoryLimit,
+            },
+        })
+    }
     return engineWorkers.executeTask(operationType, operation)
 }
