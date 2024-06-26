@@ -68,6 +68,14 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
         primaryColor,
         fullLogoUrl,
         platformName,
+        checkIssuesEnabled() {
+            return templateData.name === 'issue-created' && templateData.vars.isIssuesEnabled === 'true'
+        },
+        renderIssues() {
+            if (templateData.name === 'issues-reminder') {
+                return JSON.parse(templateData.vars.issues)
+            }
+        },
     })
 }
 
@@ -92,6 +100,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'verify-email': 'Verify your email address',
         'reset-password': 'Reset your password',
         'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
+        'issues-reminder': `You have unresolved issues for ${vars.projectName}`,
     }
 
     return templateToSubject[templateName]

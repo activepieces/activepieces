@@ -38,13 +38,15 @@ export const issuesService = {
         })
 
         if (updatedIssue.count === 1) {
-            const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flowId)
-            await emailService.sendIssueCreatedNotification({
-                projectId,
-                flowName: flowVersion.displayName,
-                createdAt: dayjs(date).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
-            })
+            await emailService.sendIssuesReminder({ projectId })
         }
+        
+        const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flowId)
+        await emailService.sendIssueCreatedNotification({
+            projectId,
+            flowName: flowVersion.displayName,
+            createdAt: dayjs(date).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
+        })
     },
     async get({ projectId, flowId }: { projectId: string, flowId: string }): Promise<Issue | null> {
         return repo.findOneBy({

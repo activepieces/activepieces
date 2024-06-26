@@ -1,7 +1,11 @@
+import dayjs from 'dayjs'
+import { getRedisConnection } from '../../../database/redis-connection'
 import { getEdition } from '../../../helper/secret-helper'
+import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
+import { issuesService } from '../../issues/issues-service'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
@@ -78,6 +82,67 @@ export const emailService = {
                     flowName,
                     createdAt,
                 },
+            },
+        })
+    },
+
+    async sendIssuesReminder({ projectId }: { projectId: string }): Promise<void> {
+        const project = await projectService.getOneOrThrow(projectId)
+        const platform = await platformService.getOneOrThrow(project.platformId)
+        if (!platform.flowIssuesEnabled || platform.embeddingEnabled) {
+            return
+        }
+        
+        const issues = await issuesService.list({ projectId, cursor: undefined, limit: 50 })
+        if (issues.data.length === 0) {
+            return
+        }
+
+        const reminderKey = `reminder:${projectId}`
+        const isEmailScheduled = await getRedisConnection().get(reminderKey)
+        if (isEmailScheduled) {
+            return
+        }
+
+        const endOfDay = dayjs().endOf('day')
+        await getRedisConnection().set(reminderKey, 0, 'EXAT', endOfDay.unix())
+        
+        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        
+        const issuesUrl = await platformDomainHelper.constructUrlFrom({
+            platformId: project.platformId,
+            path: 'runs?limit=10#Issues',
+        })
+
+        const issuesFormattedDate = issues.data.map((issue) => ({ 
+            ...issue, 
+            created: dayjs(issue.created).format('MMM d, h:mm a'),
+            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM d, h:mm a'), 
+        }))
+        
+        await systemJobsSchedule.upsertJob({
+            job: {
+                name: 'issues-reminder',
+                data: {},
+            },
+            schedule: {
+                type: 'one-time',
+                date: endOfDay,
+            },
+            async handler() {
+                await emailSender.send({
+                    emails,
+                    platformId: project.platformId,
+                    templateData: {
+                        name: 'issues-reminder',
+                        vars: {
+                            issuesUrl,
+                            issues: JSON.stringify(issuesFormattedDate),
+                            projectName: project.displayName,
+                        },
+                    },
+                })
             },
         })
     },
