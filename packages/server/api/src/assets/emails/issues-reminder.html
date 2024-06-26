@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100%;
+            margin: 0;
+            font-family: 'Graphik', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI',
+                'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+                'Droid Sans', 'Helvetica', sans-serif;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 98%;
+            margin-bottom: 28px;
+        }
+
+        h3 {
+            padding-bottom: 8px;
+            color: #000000;
+            font-size: 36px;
+            line-height: 44px;
+            text-align: left;
+            font-weight: 500;
+            font-family: 'Graphik', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI',
+                'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+                'Droid Sans', 'Helvetica', sans-serif;
+        }
+
+        th,
+        td {
+            padding: 18px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-family: 'Graphik', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI',
+                'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+                'Droid Sans', 'Helvetica', sans-serif;
+        }
+
+        th {
+            border-bottom: 1px solid #ddd;
+            color: black;
+        }
+
+        span {
+            padding-bottom: 30px;
+            font-size: 14px;
+            line-height: 24px;
+            color: #000001;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="https://www.activepieces.com" target="_blank" style="
+                                                color: #4353ff;
+                                                text-decoration: none;
+                                              "><img
+            src="http://cdn.mcauto-images-production.sendgrid.net/515abc4911512d94/8915d91a-9ecd-4dd9-9cea-21b061e1a97f/427x66.png"
+            width="160" border="0" alt="Activepieces logo" style="
+                                                  -ms-interpolation-mode: bicubic;
+                                                " /></a>
+    <h3>{{projectName}} issues summary</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Flow Name</th>
+                <th>Count</th>
+                <th>First Seen</th>
+                <th>Last Seen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#renderIssues}}
+            <tr>
+                <td>{{flowDisplayName}}</td>
+                <td>{{count}}</td>
+                <td>{{created}}</td>
+                <td>{{lastOccurrence}}</td>
+            </tr>
+            {{/renderIssues}}
+        </tbody>
+    </table>
+
+    <span>Activepieces, Inc. 398 11th Street,
+        2nd floor, San Francisco, CA 94103</span>
+
+</body>
+
+</html>
