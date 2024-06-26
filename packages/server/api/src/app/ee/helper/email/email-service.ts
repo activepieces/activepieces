@@ -44,6 +44,7 @@ export const emailService = {
     async sendIssueCreatedNotification({
         projectId,
         flowName,
+        flowRunId,
         createdAt,
     }: IssueCreatedArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
@@ -58,16 +59,19 @@ export const emailService = {
         const project = await projectService.getOneOrThrow(projectId)
 
         const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.alertsEnabled) {
+        if (platform.embeddingEnabled) {
             return
         }
-        // TODO remove the hardcoded limit
+
         const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        
+        const issueOrRunPath = platform.flowIssuesEnabled ? 'runs?limit=10#Issues' : `runs/${flowRunId}`
         const issueUrl = await platformDomainHelper.constructUrlFrom({
             platformId: project.platformId,
-            path: 'runs?limit=10#Issues',
+            path: issueOrRunPath,
         })
+        
         await emailSender.send({
             emails,
             platformId: project.platformId,
@@ -76,6 +80,7 @@ export const emailService = {
                 vars: {
                     issueUrl,
                     flowName,
+                    isIssuesEnabled: platform.flowIssuesEnabled.toString(),
                     createdAt,
                 },
             },
@@ -91,7 +96,7 @@ export const emailService = {
         assertNotNullOrUndefined(project, 'project')
 
         const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.alertsEnabled) {
+        if (!platform.alertsEnabled || platform.embeddingEnabled) {
             return
         }
 
@@ -207,5 +212,6 @@ type SendOtpArgs = {
 type IssueCreatedArgs = {
     projectId: string
     flowName: string
+    flowRunId: string
     createdAt: string
 }

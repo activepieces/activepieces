@@ -57,6 +57,7 @@ export const flowRunSideEffects = {
                 await issuesService.add({
                     flowId: flowRun.flowId,
                     projectId: flowRun.projectId,
+                    flowRunId: flowRun.id,
                 })
             }
         }
