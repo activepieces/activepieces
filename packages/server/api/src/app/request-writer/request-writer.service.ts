@@ -45,7 +45,7 @@ export const requestWriterService = {
             tool_choice: {
                 type: 'function',
                 function: {
-                    name: 'fetch_api_details',
+                    name: 'http_request',
                 },
             },
             temperature: 0.2,
@@ -66,37 +66,24 @@ export const requestWriterService = {
             {
                 type: 'function',
                 function: {
-                    name: 'fetch_api_details',
-                    description: 'Fetch API details from documentation of a service based on user prompt.',
+                    name: 'http_request',
+                    description: 'Generates a cURL command from API documentation based on user prompt.',
                     parameters: {
                         type: 'object',
                         properties: {
-                            method: {
+                            method: { type: 'string' },
+                            baseURL: { type: 'string' },
+                            queryParams: { 
                                 type: 'string',
-                                description: 'The HTTP method of the request (GET, POST, PUT, PATCH, DELETE).',
                             },
-                            baseURL: {
+                            body: { 
                                 type: 'string',
-                                description: 'The base URL of the API service endpoint.',
                             },
-                            queryParams: {
-                                type: 'object',
-                                description: 'Query parameters required by this service API, expected as key-value pairs.',
-                                additionalProperties: {
-                                    type: 'string',
-                                    description: 'Each key represents the parameter name and the value is a description or default value.',
-                                },
-                            },
-                            jsonBodySchema: {
-                                type: 'object',
-                                description: 'JSON schema of the body required for POST, PATCH, and PUT requests, specified as key-value pairs where each key is a field name and the value describes the field.',
-                                additionalProperties: {
-                                    type: 'string',
-                                    description: 'Each key represents the field name and the value is a description or type of the field.',
-                                },
+                            headers: { 
+                                type: 'string',
                             },
                         },
-                        required: ['method', 'baseURL', 'queryParams', 'jsonBodySchema'],
+                        required: ['method', 'baseURL'],
                     },
                 },
             },
