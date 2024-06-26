@@ -1,6 +1,5 @@
 import dayjs from 'dayjs'
 import { databaseConnection } from '../../database/database-connection'
-import { getRedisConnection } from '../../database/redis-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -11,11 +10,6 @@ import { Issue, IssueStatus, ListIssuesParams, PopulatedIssue } from '@activepie
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 const repo = databaseConnection.getRepository(IssueEntity)
-
-const HOUR_IN_SECONDS = 3600
-const DAY_IN_SECONDS = 86400
-const HOURLY_LIMIT = 5
-const DAILY_LIMIT = 15
 
 export const issuesService = {
     async add({ projectId, flowId, flowRunId }: { flowId: string, projectId: string, flowRunId: string }): Promise<void> {
@@ -42,28 +36,15 @@ export const issuesService = {
             flowId,
             status: IssueStatus.ONGOING,
         })
-
-        const hourlyFlowIdKey = `alerts:hourly:${flowId}`
-        const dailyFlowIdKey = `alerts:daily:${flowId}`
-        const hourlyFlowIdKeyInRedis = await getRedisConnection().incr(hourlyFlowIdKey)
-        if (hourlyFlowIdKeyInRedis === 1) {
-            await getRedisConnection().expire(hourlyFlowIdKey, HOUR_IN_SECONDS)
-        }
-
-        const dailyFlowIdKeyInRedis = await getRedisConnection().incr(dailyFlowIdKey)
-        if (dailyFlowIdKeyInRedis === 1) {
-            await getRedisConnection().expire(dailyFlowIdKey, DAY_IN_SECONDS)        
-        }
-
-        if (hourlyFlowIdKeyInRedis <= HOURLY_LIMIT && dailyFlowIdKeyInRedis <= DAILY_LIMIT) {
-            const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flowId)
-            await emailService.sendIssueCreatedNotification({
-                projectId,
-                flowRunId,
-                flowName: flowVersion.displayName,
-                createdAt: dayjs(date).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
-            })
-        }
+        
+        const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flowId)
+        await emailService.sendIssueCreatedNotification({
+            projectId,
+            flowId,
+            flowRunId,
+            flowName: flowVersion.displayName,
+            createdAt: dayjs(date).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
+        })
     },
     async get({ projectId, flowId }: { projectId: string, flowId: string }): Promise<Issue | null> {
         return repo.findOneBy({
