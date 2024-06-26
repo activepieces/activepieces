@@ -21,7 +21,7 @@ import { Observable, tap } from 'rxjs';
       (buttonClicked)="navigateToAdminConsole()"
       i18n
     >
-      <div class="ap-flex ap-gap-2 ap-items-center">
+      <div class="ap-flex ap-gap-2 ap-items-center ap-whitespace-nowrap">
         @if(isVersionMatch$ | async) {
         <svg-icon
           [applyClass]="true"
@@ -39,7 +39,7 @@ import { Observable, tap } from 'rxjs';
           [svgStyle]="{ width: '18px', height: '18px' }"
           src="assets/img/custom/dashboard/admin-console.svg"
         ></svg-icon>
-        <b>Platform Admin</b>
+        <b class="ap-hidden sm:ap-inline-block">Platform Admin</b>
       </div>
     </ap-button>
     } @if(isInPlatformRoute) {

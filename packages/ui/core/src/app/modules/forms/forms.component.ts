@@ -6,16 +6,15 @@ import {
   TelemetryEventName,
 } from '@activepieces/shared';
 import { TelemetryService, environment } from '@activepieces/ui/common';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import {
   Observable,
   Observer,
   Subject,
   catchError,
   forkJoin,
-  map,
   of,
   switchMap,
   tap,
@@ -23,21 +22,21 @@ import {
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormResult, FormResultTypes, FormsService } from './forms.service';
 import { StatusCodes } from 'http-status-codes';
+import { getInputKey } from './input-form-control.pipe';
+import { FORMS_RESOLVE_DATA } from './forms.resolver';
 
 @Component({
   selector: 'app-forms',
   templateUrl: './forms.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormsComponent implements OnInit {
-  flow$: Observable<FormResponse>;
-  submitForm$: Observable<FormResult | undefined>;
+  submitForm$: Observable<FormResult | null>;
   form: FormGroup;
-  inputs: FormInput[] = [];
   loading = false;
   error: string | null = null;
   webhookUrl: string | null = null;
-  title: string | null = null;
-  populatedForm: FormResponse | null = null;
+  flowForm: FormResponse | null = null;
   markdownResponse: Subject<string | null> = new Subject<string | null>();
   FormInputType = FormInputType;
 
@@ -45,94 +44,55 @@ export class FormsComponent implements OnInit {
     private route: ActivatedRoute,
     private snackBar: MatSnackBar,
     private formsService: FormsService,
-    private telemteryService: TelemetryService,
-    private router: Router
+    private telemteryService: TelemetryService
   ) {}
 
   ngOnInit(): void {
-    this.flow$ = this.route.paramMap.pipe(
-      switchMap((params) =>
-        this.formsService.get(params.get('flowId') as string)
-      ),
-      tap((form) => {
-        this.telemteryService.capture({
-          name: TelemetryEventName.FORMS_VIEWED,
-          payload: {
-            flowId: form.id,
-            formProps: form.props,
-            projectId: form.projectId,
-          },
-        });
-        this.title = form.title;
-        this.form = new FormGroup({});
-        this.buildInputs(form.props.inputs);
-        this.populatedForm = form;
-        this.webhookUrl =
-          environment.apiUrl +
-          '/webhooks/' +
-          this.populatedForm!.id +
-          (this.populatedForm!.props.waitForResponse ? '/sync' : '');
-      }),
-      catchError((err) => {
-        console.error(err);
-        this.router.navigate(['/not-found']);
-        throw err;
-      })
-    );
+    this.flowForm = this.route.snapshot.data[FORMS_RESOLVE_DATA];
+    this.form = new FormGroup({});
+    if (this.flowForm) {
+      this.buildInputs(this.flowForm.props.inputs);
+      this.webhookUrl =
+        environment.apiUrl +
+        '/webhooks/' +
+        this.flowForm.id +
+        (this.flowForm.props.waitForResponse ? '/sync' : '');
+    }
   }
 
   async submit() {
+    this.form.markAllAsTouched();
     if (this.form.valid && !this.loading) {
       this.markdownResponse.next(null);
       this.loading = true;
-
-      const observables: Observable<string>[] = [];
-
-      for (const key in this.form.value) {
-        const isFileInput = this.inputs
-          .filter((f) => f.type === FormInputType.FILE)
-          .find((input) => this.getInputKey(input.displayName) === key);
-
-        if (isFileInput && this.form.value[key]) {
-          observables.push(this.toBase64(this.form.value[key]));
-        } else {
-          observables.push(of(this.form.value[key]));
-        }
-      }
-
+      const observables = this.createFormValueObservables();
       this.submitForm$ = forkJoin(observables).pipe(
-        map((values) => {
-          const formData = new FormData();
-          for (let i = 0; i < values.length; i++) {
-            const key = Object.keys(this.form.value)[i];
-            formData.append(key, values[i]);
-          }
-          return formData;
-        }),
         switchMap((formData) =>
           this.formsService.submitForm(this.webhookUrl!, formData)
         ),
-        tap((result: FormResult) => {
+        tap((result: FormResult | null) => {
           this.telemteryService.capture({
             name: TelemetryEventName.FORMS_SUBMITTED,
             payload: {
-              flowId: this.populatedForm!.id,
-              formProps: this.populatedForm!.props,
-              projectId: this.populatedForm!.projectId,
+              flowId: this.flowForm!.id,
+              formProps: this.flowForm!.props,
+              projectId: this.flowForm!.projectId,
             },
           });
-          if (result.type === FormResultTypes.MARKDOWN) {
-            this.markdownResponse.next(result.value as string);
-          } else if (result.type === FormResultTypes.FILE) {
-            const link = document.createElement('a');
-            // Your base64 string
-            const fileBase = result.value as FileResponseInterface;
-            link.download = fileBase.fileName;
-            link.href = fileBase.base64Url;
-            link.target = '_blank';
-            link.click();
-            // Clean up by revoking the object URL
-            URL.revokeObjectURL(fileBase.base64Url);
+          if (result) {
+            if (result.type === FormResultTypes.MARKDOWN) {
+              this.markdownResponse.next(result.value as string);
+            } else if (result.type === FormResultTypes.FILE) {
+              const link = document.createElement('a');
+              // Your base64 string
+              const fileBase = result.value as FileResponseInterface;
+              link.download = fileBase.fileName;
+              link.href = fileBase.base64Url;
+              link.target = '_blank';
+              link.click();
+              // Clean up by revoking the object URL
+              URL.revokeObjectURL(fileBase.base64Url);
+            }
           } else {
             this.snackBar.open(
               `Your submission was successfully received.`,
@@ -145,6 +105,7 @@ export class FormsComponent implements OnInit {
           this.loading = false;
         }),
         catchError((error) => {
+          console.error(error);
           if (error.status === StatusCodes.NOT_FOUND) {
             this.snackBar.open(
               `Flow is not found, please publish the flow`,
@@ -161,28 +122,18 @@ export class FormsComponent implements OnInit {
             });
           }
           this.loading = false;
-          return of(void 0);
+          return of(null);
         })
       );
     }
   }
 
-  getInputKey(str: string) {
-    return str
-      .replace(/\s(.)/g, function ($1) {
-        return $1.toUpperCase();
-      })
-      .replace(/\s/g, '')
-      .replace(/^(.)/, function ($1) {
-        return $1.toLowerCase();
-      });
-  }
-
   buildInputs(inputs: FormInput[]) {
     inputs.forEach((prop) => {
+      const controlDefaultValue = this.getDefaultControlValue(prop);
       this.form.addControl(
-        this.getInputKey(prop.displayName),
-        new FormControl('', {
+        getInputKey(prop.displayName),
+        new FormControl(controlDefaultValue, {
           nonNullable: prop.required,
           validators: prop.required ? [Validators.required] : [],
         })
@@ -202,5 +153,31 @@ export class FormsComponent implements OnInit {
         observer.error(error);
       };
     });
+  }
+  private getDefaultControlValue(prop: FormInput) {
+    switch (prop.type) {
+      case FormInputType.TOGGLE:
+        return false;
+      case FormInputType.FILE:
+        return null;
+      case FormInputType.TEXT:
+      case FormInputType.TEXT_AREA:
+        return '';
+    }
+  }
+  private createFormValueObservables() {
+    const keys = Object.keys(this.form.value);
+    return keys.reduce((acc, key) => {
+      const isFileInput = this.flowForm!.props.inputs.filter(
+        (f) => f.type === FormInputType.FILE
+      ).find((input) => getInputKey(input.displayName) === key);
+      return {
+        ...acc,
+        [key]:
+          isFileInput && this.form.value[key]
+            ? this.toBase64(this.form.value[key])
+            : of(this.form.value[key]),
+      };
+    }, {} as { [key: string]: Observable<string | boolean> });
   }
 }

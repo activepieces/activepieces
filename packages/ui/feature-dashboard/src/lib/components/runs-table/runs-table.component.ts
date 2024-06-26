@@ -51,6 +51,7 @@ import { DropdownOption } from '@activepieces/pieces-framework';
 import { CommonModule } from '@angular/common';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import dayjs from 'dayjs';
 const allOptionValue = 'all';
 @Component({
   templateUrl: './runs-table.component.html',
@@ -254,8 +255,12 @@ export class RunsTableComponent implements OnInit {
       ...spreadIfDefined(CURSOR_QUERY_PARAM, this.paginator.cursor),
     };
   }
-  setParams(statuses: FlowRunStatus[], flowId: string) {
+  setParams(statuses: FlowRunStatus[], flowId: string, createdAt: string) {
     this.statusFilterControl.setValue(statuses);
     this.flowFilterControl.setValue(flowId);
+    this.dateFormGroup.setValue({
+      start: dayjs(createdAt).toDate(),
+      end: null,
+    });
   }
 }

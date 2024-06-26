@@ -233,11 +233,7 @@ async function executeOperation(
     operation: EngineOperation): Promise<WorkerResult> {
     if (isNil(engineWorkers)) {
         engineWorkers = new EngineWorker(workerConcurrency, enginePath, {
-            env: {
-                NODE_OPTIONS: '--enable-source-maps',
-                AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
-                AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
-            },
+            env: getEnvironmentVariables(),
             resourceLimits: {
                 maxOldGenerationSizeMb: memoryLimit,
                 maxYoungGenerationSizeMb: memoryLimit,
@@ -246,4 +242,17 @@ async function executeOperation(
         })
     }
     return engineWorkers.executeTask(operationType, operation)
+}
+
+
+
+function getEnvironmentVariables() { 
+    const allowedEnvVariables = system.getList(SystemProp.SANDBOX_PROPAGATED_ENV_VARS)
+    const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
+    return {
+        ...propagatedEnvVars,
+        NODE_OPTIONS: '--enable-source-maps',
+        AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
+        AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
+    }
 }
