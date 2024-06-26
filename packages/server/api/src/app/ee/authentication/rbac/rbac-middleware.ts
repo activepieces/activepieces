@@ -1,7 +1,7 @@
 import { FastifyRequest } from 'fastify'
 import { getEdition } from '../../../helper/secret-helper'
 import { projectMemberService } from '../../project-members/project-member.service'
-import { rolePermissions } from './access-control-list'
+import { rolePermissions } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApEdition,
