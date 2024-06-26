@@ -3,9 +3,13 @@
     <ap-icon-button extraClasses="ap-fill-body" iconFilename="sort.svg" [width]="18"
         [tooltipText]="getSortFoldersTooltipText()"
         (buttonClicked)="toggleFolderSorting()" [height]="18"></ap-icon-button>
-    <ap-icon-button extraClasses="ap-fill-body" iconFilename="add.svg" [width]="14"
-        tooltipText="New Folder" i18n-tooltipText
-        (buttonClicked)="createFolder()" [height]="14"></ap-icon-button>
+        @if(!isReadOnly)
+        {
+            <ap-icon-button extraClasses="ap-fill-body" iconFilename="add.svg" [width]="14"
+            tooltipText="New Folder" i18n-tooltipText
+            (buttonClicked)="createFolder()" [height]="14"></ap-icon-button>
+        }
+ 
 </div>
 <div class=" ap-overflow-scroll folders-list">
     <div class="ap-flex ap-items-center ap-gap-4 ap-p-4 ap-cursor-pointer hover:ap-bg-hover "
@@ -38,15 +42,16 @@
         <div class="ap-body-1 ap-flex-grow ap-break-all">
             {{folder.displayName}}
         </div>
-        <div class="ap-typography-body-1 ap-text-description ap-block group-hover:ap-hidden"
+        <div class="ap-typography-body-1 ap-text-description ap-block " [class.group-hover:ap-hidden]="!isReadOnly"
             [class.ap-hidden]="folderIdOfMenuOpened === folder.id">
             {{folder.numberOfFlows}}
         </div>
-        <div class="group-hover:ap-block ap-hidden" [class.!ap-block]="folderIdOfMenuOpened === folder.id">
+
+        <div [class.group-hover:ap-block]="!isReadOnly"  class="ap-hidden" [class.!ap-block]="folderIdOfMenuOpened === folder.id">
             <mat-icon [matMenuTriggerFor]="menu" (menuClosed)="folderIdOfMenuOpened=undefined"
                 (click)="$event.stopImmediatePropagation()"
                 (menuOpened)="folderIdOfMenuOpened=folder.id">more_vert</mat-icon>
-        </div>
+        </div> 
 
         <mat-menu [hasBackdrop]="true" #menu="matMenu" xPosition="before">
             <button mat-menu-item (click)="renameFolder(folder)">
