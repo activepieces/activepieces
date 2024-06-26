@@ -11,6 +11,7 @@ import {
   FlowOperationType,
   TelemetryEventName,
   ProjectWithLimits,
+  Permission,
 } from '@activepieces/shared';
 import { FoldersSelectors } from '@activepieces/ui/feature-folders-store';
 import { Store } from '@ngrx/store';
@@ -24,6 +25,7 @@ import {
   TelemetryService,
   EmbeddingService,
   ProjectService,
+  doesUserHavePermission,
 } from '@activepieces/ui/common';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -50,6 +52,7 @@ export class FlowsTableTitleComponent {
   openTemplatesDialog$?: Observable<void>;
   readonly flowActionsUiInfo = flowActionsUiInfo;
   hideFoldersList$ = this.embeddingService.getHideFolders$();
+  isReadOnly = !doesUserHavePermission(Permission.WRITE_FLOW);
   constructor(
     private store: Store,
     private flowService: FlowService,
