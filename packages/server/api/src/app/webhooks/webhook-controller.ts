@@ -6,11 +6,10 @@ import { webhookResponseWatcher } from '../flow-worker/helper/webhook-response-w
 import { flowQueue } from '../flow-worker/queue'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
-import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, system } from '@activepieces/server-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
-    ApEdition,
     apId,
     EngineHttpResponse,
     ErrorCode,
@@ -160,33 +159,21 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
         })
     }
 
-    // TODO FIX AND REFACTOR
-    // BEGIN EE
-    const edition = system.getEdition()
-    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-        try {
-            await tasksLimit.limit({
-                projectId: flow.projectId,
-            })
-        }
-        catch (e) {
-            if (
-                e instanceof ActivepiecesError &&
-                e.error.code === ErrorCode.QUOTA_EXCEEDED
-            ) {
-                logger.info(
-                    `[webhookController] removing flow.id=${flow.id} run out of flow quota`,
-                )
-                await flowService.updateStatus({
-                    id: flow.id,
-                    projectId: flow.projectId,
-                    newStatus: FlowStatus.DISABLED,
-                })
-            }
-            throw e
-        }
+    const exceededLimit = await tasksLimit.exceededLimit({
+        projectId: flow.projectId,
+    })
+    if (exceededLimit) {
+        logger.info({
+            message: 'disable webhook out of flow quota',
+            projectId: flow.projectId,
+            flowId: flow.id,
+        })
+        await flowService.updateStatus({
+            id: flow.id,
+            projectId: flow.projectId,
+            newStatus: FlowStatus.DISABLED,
+        })
     }
-    // END EE
 
     return flow
 }

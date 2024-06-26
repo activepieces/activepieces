@@ -52,7 +52,7 @@ export const webhookExecutor = {
 
 
         if (simulate) {
-            await workerApiService(workerToken).deleteWebhookSimluation({
+            await workerApiService(workerToken).deleteWebhookSimulation({
                 flowId: populatedFlow.id,
                 projectId: populatedFlow.projectId,
             })

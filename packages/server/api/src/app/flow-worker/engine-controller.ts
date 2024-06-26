@@ -1,6 +1,7 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
+import { tasksLimit } from '../ee/project-plan/tasks-limit'
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -10,7 +11,7 @@ import { flowConsumer } from './consumer'
 import { webhookResponseWatcher } from './helper/webhook-response-watcher'
 import { flowQueue } from './queue'
 import { GetRunForWorkerRequest, system, SystemProp, UpdateJobRequest } from '@activepieces/server-shared'
-import { ApEnvironment, assertNotNullOrUndefined, DisableFlowByEngineRequest, EngineHttpResponse, ExecutionState, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEnvironment, assertNotNullOrUndefined, DisableFlowByEngineRequest, EngineHttpResponse, ErrorCode, ExecutionState, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -83,6 +84,20 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         return {}
     })
 
+    app.post('/check-task-limit', CheckTaskLimitParams, async (request) => {
+        const exceededLimit = await tasksLimit.exceededLimit({
+            projectId: request.principal.projectId,
+        })
+        if (exceededLimit) {
+            throw new ActivepiecesError({
+                code: ErrorCode.QUOTA_EXCEEDED,
+                params: {
+                    metric: 'tasks',
+                },
+            })
+        }
+        return {}
+    })
 
     app.get('/flows', GetLockedVersionRequest, async (request) => {
         const populatedFlow = await getFlow(request.principal.projectId, request.query)
@@ -141,7 +156,7 @@ async function getFlow(projectId: string, request: GetFlowVersionForWorkerReques
             })
         }
         case GetFlowVersionForWorkerRequestType.EXACT: {
-            // TODO this can be optmized
+            // TODO this can be optimized
             const flowVersion = await flowVersionService.getOneOrThrow(request.versionId)
             return flowService.getOnePopulatedOrThrow({
                 id: flowVersion.flowId,
@@ -243,6 +258,12 @@ async function getFlowResponse(
 
 
 
+const CheckTaskLimitParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {},
+}
 const GetFileRequestParams = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE],

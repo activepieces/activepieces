@@ -47,6 +47,7 @@ async function executeFlow(jobData: OneTimeJobData, engineToken: string): Promis
         if (isNil(flow)) {
             return
         }
+        await engineApiService(engineToken).checkTaskLimit()
 
         const input = await prepareInput(flow.version, jobData, engineToken)
         const { result } = await engineRunner.executeFlow(

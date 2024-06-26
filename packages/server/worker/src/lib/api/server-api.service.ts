@@ -1,8 +1,9 @@
 
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ApQueueJob, DeleteWebhookSimulationRequest, GetRunForWorkerRequest, logger, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { DisableFlowByEngineRequest, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, UpdateRunProgressRequest } from '@activepieces/shared'
+import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { ActivepiecesError, DisableFlowByEngineRequest, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, UpdateRunProgressRequest } from '@activepieces/shared'
 import axios, { isAxiosError } from 'axios'
+import { StatusCodes } from 'http-status-codes'
 
 const SERVER_URL = 'http://127.0.0.1:3000'
 
@@ -36,7 +37,7 @@ export const workerApiService = (workerToken: string) => {
         async resumeRun(request: ResumeRunRequest): Promise<void> {
             await client.post('/v1/workers/resume-run', request)
         },
-        async deleteWebhookSimluation(request: DeleteWebhookSimulationRequest): Promise<void> {
+        async deleteWebhookSimulation(request: DeleteWebhookSimulationRequest): Promise<void> {
             await client.post('/v1/workers/delete-webhook-simulation', request)
         },
         async savePayloadsAsSampleData(request: SavePayloadRequest): Promise<void> {
@@ -83,6 +84,22 @@ export const engineApiService = (engineToken: string) => {
             return (await client.get(`/v1/pieces/${encodeURIComponent(name)}`, {
                 params: options,
             })).data
+        },
+        async checkTaskLimit(): Promise<void> {
+            try {
+                await client.post('/v1/engine/check-task-limit')
+            }
+            catch (error) {
+                if (isAxiosError(error) && error.response && error.response.status === StatusCodes.PAYMENT_REQUIRED) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.QUOTA_EXCEEDED,
+                        params: {
+                            metric: 'tasks',
+                        },
+                    })
+                }
+                exceptionHandler.handle(error)
+            }
         },
         async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
             try {

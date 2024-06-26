@@ -1,6 +1,6 @@
-import { isNil } from 'lodash'
 import { ConsumerManager } from '../consumer/consumer-manager'
 import { memoryQueues } from './memory-queue'
+import { isNil } from '@activepieces/shared'
 
 export const memoryConsumer: ConsumerManager = {
     async poll(queueName) {
