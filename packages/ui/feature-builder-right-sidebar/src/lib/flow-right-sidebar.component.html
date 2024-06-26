@@ -12,7 +12,7 @@
       class="ap-h-full"
       #editStepSection
       [class.top-resizer-section]="
-        (viewMode$ | async) === ViewModeEnum.BUILDING
+        (isReadOnly$ | async) === false
       "
       [class.ap-transition-all]="animateSectionsHeightChange"
     >
@@ -52,7 +52,7 @@
       </div>
     </div>
 
-    <ng-container *ngIf="(viewMode$ | async) === ViewModeEnum.BUILDING">
+    <ng-container *ngIf="(isReadOnly$ | async) === false">
       <ng-container *ngIf="currentStep$ | async as currentStep">
         <div class="resizer-area" #resizerArea>
           <ap-horizontal-sidebar-separator

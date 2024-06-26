@@ -55,7 +55,7 @@ export class FlowRightSidebarComponent implements OnInit {
   triggerSupportsLoadingTestData$: Observable<boolean>;
   isResizerGrabbed = false;
   triggerSupportsSimulation$: Observable<boolean>;
-  viewMode$: Observable<ViewModeEnum>;
+  isReadOnly$: Observable<boolean>;
   ViewModeEnum = ViewModeEnum;
   showDocs$: Observable<boolean>;
   currentStepPieceVersion$: Observable<
@@ -90,7 +90,7 @@ export class FlowRightSidebarComponent implements OnInit {
   }
 
   private checkForViewMode() {
-    this.viewMode$ = this.store.select(BuilderSelectors.selectViewMode);
+    this.isReadOnly$ = this.store.select(BuilderSelectors.selectReadOnly);
   }
 
   private checkIfTriggerSupportsLoadingTestData() {
