@@ -21,6 +21,7 @@
   },
   "private": true,
   "dependencies": {
+    "@activepieces/import-fresh-webpack": "3.3.0",
     "@angular/animations": "18.0.3",
     "@angular/cdk": "18.0.3",
     "@angular/common": "18.0.3",
@@ -125,7 +126,6 @@
     "https-proxy-agent": "7.0.4",
     "imap": "0.8.17",
     "imapflow": "1.0.152",
-    "import-fresh": "github:CHC383/import-fresh#feat/webpack",
     "ioredis": "5.3.2",
     "is-base64": "1.1.0",
     "isolated-vm": "4.6.0",
