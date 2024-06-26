@@ -58,6 +58,7 @@ export const flowRunSideEffects = {
                     flowId: flowRun.flowId,
                     projectId: flowRun.projectId,
                     flowRunId: flowRun.id,
+                    flowRunCreatedAt: flowRun.created,
                 })
             }
         }
