@@ -123,14 +123,7 @@ export const DashboardLayoutRouting: Routes = [
           [FLAGS_RESOLVE_DATA]: FlagsResolver,
           [PLATFORM_RESOLVER_KEY]: PlatformResolver,
         },
-        canActivate: [
-          showBasedOnRoles([
-            ProjectMemberRole.ADMIN,
-            ProjectMemberRole.EDITOR,
-            ProjectMemberRole.OPERATOR,
-            ProjectMemberRole.VIEWER,
-          ]),
-        ],
+        canActivate: [showBasedOnRoles([ProjectMemberRole.ADMIN])],
       },
       {
         data: {
