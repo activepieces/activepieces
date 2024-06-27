@@ -35,11 +35,14 @@
                 <div class="ap-flex-grow">
 
                 </div>
-                <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
+                @if((isReadOnly$ | async) === false) {
+                    <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
                     [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' :
                     (isSaving$ | async) === false?  'After the trigger is tested, you will be able to use its sample data in the next steps' : savingMessage"
                     [disabled]="(isValid$ | async) === false || (isSaving$ | async) === true"
                     (buttonClicked)="testStep()" i18n>Retest</ap-button>
+                }
+               
             </div>
 
             <mat-form-field class="ap-w-full ap-my-2" appearance="outline" subscriptSizing="dynamic">
