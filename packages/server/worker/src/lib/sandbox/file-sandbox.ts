@@ -15,7 +15,7 @@ import {
 const codeSandboxType = system.getOrThrow(SystemProp.CODE_SANDBOX_TYPE);
 let ivm: any;
 if (codeSandboxType === CodeSandboxType.V8_ISOLATE) {
-    ivm = import('isolated-vm');
+  ivm = import('isolated-vm');
     const _strongReference = ivm.Isolate
 }
 /* eslint-enable */
@@ -136,11 +136,7 @@ function createWorker(enginePath: string,
                 operationType,
                 operation,
             },
-            env: {
-                NODE_OPTIONS: '--enable-source-maps',
-                AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
-                AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
-            },
+            env: getEnvironmentVariables(),
             resourceLimits: {
                 maxOldGenerationSizeMb: memoryLimit,
                 maxYoungGenerationSizeMb: memoryLimit,
@@ -190,5 +186,15 @@ function createWorker(enginePath: string,
             reject({ status: EngineResponseStatus.ERROR, response: {} })
         })
     })
+}
 
+function getEnvironmentVariables() { 
+    const allowedEnvVariables = system.getList(SystemProp.SANDBOX_PROPAGATED_ENV_VARS)
+    const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
+    return {
+        ...propagatedEnvVars,
+        NODE_OPTIONS: '--enable-source-maps',
+        AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
+        AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
+    }
 }

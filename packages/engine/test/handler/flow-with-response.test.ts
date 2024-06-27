@@ -6,6 +6,18 @@ import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 describe('flow with response', () => {
 
     it('should execute return response successfully', async () => {
+        const input = {
+            status: 200,
+            headers: {
+                'random': 'header',
+            },
+            body: {
+                data: {
+                    'hello': 'world',
+                },
+                body_type: 'json',
+            },
+        }
         const response = {
             status: 200,
             headers: {
@@ -20,9 +32,10 @@ describe('flow with response', () => {
                 name: 'http',
                 pieceName: '@activepieces/piece-http',
                 actionName: 'return_response',
-                input: response,
+                input,
             }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
+
         expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
         expect(result.verdictResponse).toEqual({
             reason: FlowRunStatus.STOPPED,
