@@ -8,7 +8,7 @@ export const declareCertificationFolderSuccess = createAction({
   auth: wedofAuth,
   name: 'declareCertificationFolderSuccess',
   displayName: "Passer un dossier de certification à l'état : Réussi",
-  description: "Change l'état d'un dossier de certification vers: Réussi",
+  description: "Change l'état d'un dossier de certification vers : Réussi",
   props: {
     Id: Property.ShortText({
       displayName: 'N° du dossier de certification',

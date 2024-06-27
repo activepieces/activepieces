@@ -7,7 +7,7 @@ export const getCertificationFolderDocuments = createAction({
   auth: wedofAuth,
   name: 'getCertificationFolderDocuments',
   displayName: "Liste des documents d'un dossier de certification",
-  description: "Récupérer la list de documents d'un dossier de certification à partir de son n° de dossier",
+  description: "Récupérer la liste de documents d'un dossier de certification à partir de son n° de dossier",
   props: {
     Id: Property.ShortText({
       displayName: 'N° du dossier de certification',

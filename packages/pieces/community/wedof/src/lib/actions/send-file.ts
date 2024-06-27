@@ -1,6 +1,6 @@
 import { wedofAuth } from '../../index';
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { wedofCommon } from '../common/wedof';
 
 export const sendFile = createAction({
@@ -9,12 +9,6 @@ export const sendFile = createAction({
   displayName: "Envoyer un fichier",
   description: "Permet d'envoyer un fichier pour un dossier (Dossier de formation / Dossier de certification)",
   props: {
-    Id: Property.ShortText({
-      displayName: 'N° du dossier',
-      description:
-        'Sélectionner la propriété {Id} du dossier',
-      required: true,
-    }),
     entityClass: Property.StaticDropdown({
       displayName: "Choisir le type de dossier",
       description: "Permet de n'obtenir que les dossiers dans le type considéré - par défaut tous les types sont retournés",
@@ -22,16 +16,22 @@ export const sendFile = createAction({
       options: {
         options: [
           {
-            value: "CertificationFolder",
+            value: "certificationFolders",
             label: 'Dossier de certification',
           },
           {
-            value: "RegistrationFolder",
+            value: "registrationFolders",
             label: 'Dossier de formation',
           },
         ],
         disabled: false,
       },
+    }),
+    Id: Property.ShortText({
+      displayName: 'N° du dossier',
+      description:
+        'Sélectionner la propriété {Id} du dossier',
+      required: true,
     }),
     title: Property.ShortText({
         displayName: 'Titre du fichier',
@@ -41,44 +41,48 @@ export const sendFile = createAction({
       displayName: 'Merge Fields',
       refreshers: ['entityClass', 'Id'],
       required: true,
-      props: async ({ context }) => {
-        if (!context) return {};
-        if (!context['propsValue'].entityClass || !context['propsValue'].Id) return {};
-    
+      props: async ({ auth, entityClass, Id }) => {
         const fields: DynamicPropsValue = {};
-    
+        if (!entityClass) {
+          console.error('entityClass is undefined');
+          return {};
+        }
+        if (!Id) {
+          console.error('Id is undefined');
+          return {};
+        }
         try {
           const res = await httpClient.sendRequest({
             method: HttpMethod.GET,
-            url: `${wedofCommon.baseUrl}/${context['propsValue'].entityClass}/${context['propsValue'].Id}/files`,
+            url: `${wedofCommon.baseUrl}/${entityClass}/${Id}/files`,
             headers: {
               'Content-Type': 'application/json',
-              'X-Api-Key': context['auth'] as string,
+              'X-Api-Key': auth as unknown as string,
             },
           });
-    
           const data = res.body;
-          data.forEach((field: { key: string | number; label: any; options: any; }) => {
-            fields[field.key] = Property.StaticDropdown({
-              displayName: field.label,
-              options: field.options.map((option: { value: any; label: any; }) => ({
-                value: option.value,
-                label: option.label,
-              })),
-              required: false,
+          if (Array.isArray(data)) {
+            data.forEach((field: { id: string | number; name: any; }) => {
+              fields[field.id] = Property.StaticDropdown({
+                displayName: field.name,
+                options: {
+                  options: data.map((option: { typeId: any; name: any; }) => ({
+                    value: option.typeId,
+                    label: option.name,
+                  })),
+                  disabled: false,
+                },
+                required: false,
+              });
             });
-          });
+          }
         } catch (error) {
           console.error('Error fetching data:', error);
         }
-    
         return fields;
       },
     }),
- /*   typeId: Property.Number({
-      displayName: "Type de fichier",
-      required: true,
-  }),*/
+    
     file: Property.File({
         displayName: "Fichier a envoyer",
         required: true,
@@ -88,7 +92,7 @@ export const sendFile = createAction({
   async run(context) {
     const message = {
         title: context.propsValue.title ?? null,
-        typeId: context.propsValue.typeId,
+        typeId: context.propsValue.typeId[0],
         file: context.propsValue.file,
       };
       return (
