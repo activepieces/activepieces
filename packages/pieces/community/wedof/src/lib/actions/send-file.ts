@@ -92,7 +92,7 @@ export const sendFile = createAction({
   async run(context) {
     const message = {
         title: context.propsValue.title ?? null,
-        typeId: context.propsValue.typeId[0],
+        typeId: context.propsValue.typeId,
         file: context.propsValue.file,
       };
       return (
