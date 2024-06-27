@@ -59,8 +59,12 @@ import { InputFormCore } from '../input-form-core';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if (deps$ | async; as deps) {
+    @if (deps$ | async; as deps) { @if (deps.currentStep?.type ===
+    ActionType.PIECE && deps.currentStep?.settings.pieceName ===
+    "@activepieces/piece-http") {
     <app-http-request-writer></app-http-request-writer>
+    }
+
     <app-action-or-trigger-dropdown
       [items]="deps.triggersOrActions"
       [passedFormControl]="triggersOrActionsControl"
