@@ -24,7 +24,7 @@ export const validateRegistrationFolder = createAction({
     weeklyDuration: Property.Number({
       displayName: 'Intensité hebdomadaire',
       description:
-        'Intensité hebdomadaire de la formation, en heures par semaine.',
+        'Intensité hebdomadaire de la formation, en heures par semaine',
       required: false,
     }),
   },

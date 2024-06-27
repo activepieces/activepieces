@@ -8,7 +8,7 @@ export const declareCertificationFolderToControl = createAction({
   auth: wedofAuth,
   name: 'declareCertificationFolderToControl',
   displayName: "Passer un dossier de certification à l'état : À contrôler",
-  description: "Change l'état d'un dossier de certification vers: À contrôler",
+  description: "Change l'état d'un dossier de certification vers : À contrôler",
   props: {
     Id: Property.ShortText({
       displayName: 'N° du dossier de certification',

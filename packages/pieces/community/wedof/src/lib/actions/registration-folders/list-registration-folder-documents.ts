@@ -7,7 +7,7 @@ export const getRegistrationFolderDocuments = createAction({
   auth: wedofAuth,
   name: 'getRegistrationFolderDocuments',
   displayName: "Liste des documents d'un dossier de formation",
-  description: "Récupérer la list de documents d'un dossier de formation à partir de son n° de dossier",
+  description: "Récupérer la liste de documents d'un dossier de formation à partir de son n° de dossier",
   props: {
     Id: Property.ShortText({
       displayName: 'N° du dossier de formation',

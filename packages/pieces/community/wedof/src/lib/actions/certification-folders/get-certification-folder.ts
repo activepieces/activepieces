@@ -8,7 +8,7 @@ export const getCertificationFolder = createAction({
   name: 'getCertificationFolder',
   displayName: 'Récupérer un dossier de certification',
   description:
-    ' Récupérer un dossier de certification à partir de son n° de dossier',
+    'Récupérer un dossier de certification à partir de son n° de dossier',
   props: {
     Id: Property.ShortText({
       displayName: 'N° du dossier de formation',

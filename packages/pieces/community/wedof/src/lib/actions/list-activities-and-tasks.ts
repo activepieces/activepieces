@@ -9,12 +9,6 @@ export const listActivitiesAndTasks = createAction({
   displayName: "Liste de toutes les activités et tâches d'un dossier",
   description: "Liste de toutes les activités et tâches d'un dossier (Dossier de formation / Dossier de certification)",
   props: {
-    Id: Property.ShortText({
-      displayName: 'N° du dossier',
-      description:
-        'Sélectionner la propriété {Id} du dossier',
-      required: true,
-    }),
     entityClass: Property.StaticDropdown({
       displayName: "Choisir le type de dossier",
       description: "Permet de n'obtenir que les dossiers dans le type considéré - par défaut tous les types sont retournés",
@@ -22,16 +16,22 @@ export const listActivitiesAndTasks = createAction({
       options: {
         options: [
           {
-            value: "CertificationFolder",
+            value: "certificationFolders",
             label: 'Dossier de certification',
           },
           {
-            value: "RegistrationFolder",
+            value: "registrationFolders",
             label: 'Dossier de formation',
           },
         ],
         disabled: false,
       },
+    }),
+    Id: Property.ShortText({
+      displayName: 'N° du dossier',
+      description:
+        'Sélectionner la propriété {Id} du dossier',
+      required: true,
     }),
   },
   async run(context) {

@@ -1,8 +1,9 @@
 import { Property } from '@activepieces/pieces-framework';
 
 export const wedofCommon = {
-  baseUrl: 'https://www.wedof.fr/api',
-  host: 'https://www.wedof.fr/api',
+   baseUrl: 'https://staging.wedof.fr/api',
+  host: 'https://staging.wedof.fr/api',
+ 
 
   state: Property.StaticMultiSelectDropdown({
     displayName: 'Etat du dossier de formation',
@@ -271,8 +272,8 @@ export const wedofCommon = {
   }),
 
   forceMajeurAbsence: Property.StaticDropdown({
-    displayName: 'absence pour raison de force majeure',
-    description: "si absence pour raison de force majeure, 'Oui', sinon 'Non'",
+    displayName: 'Absence pour raison de force majeure',
+    description: "Si absence pour raison de force majeure, 'Oui', sinon 'Non'",
     required: false,
     defaultValue: false,
     options: {
@@ -374,7 +375,7 @@ export const wedofCommon = {
 
 
   certificationFolderState: Property.StaticMultiSelectDropdown({
-    displayName: 'Etat du dossier de certification',
+    displayName: 'État du dossier de certification',
     required: false,
     options: {
       options: [
@@ -775,7 +776,7 @@ export const wedofCommon = {
   }),
 
   qualiopiIndicators: Property.StaticDropdown({
-    displayName: 'Associée à Qualiop',
+    displayName: 'Associée à Qualiopi',
     required: false,
     options: {
       disabled: false,
