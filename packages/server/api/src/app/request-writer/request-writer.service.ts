@@ -67,7 +67,7 @@ export const requestWriterService = {
                 type: 'function',
                 function: {
                     name: 'http_request',
-                    description: 'Generates a cURL command from API documentation based on user prompt.',
+                    description: 'Generates a JSON object from API documentation based on user prompt.',
                     parameters: {
                         type: 'object',
                         properties: {
