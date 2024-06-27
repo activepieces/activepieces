@@ -68,9 +68,6 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
         primaryColor,
         fullLogoUrl,
         platformName,
-        checkIssuesEnabled() {
-            return templateData.name === 'issue-created' && templateData.vars.isIssuesEnabled === 'true'
-        },
         renderIssues() {
             if (templateData.name === 'issues-reminder') {
                 return JSON.parse(templateData.vars.issues)
