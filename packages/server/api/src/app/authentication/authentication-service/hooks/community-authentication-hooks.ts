@@ -1,4 +1,3 @@
-import { isNil } from 'lodash'
 import { flagService } from '../../../flags/flag.service'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -6,7 +5,7 @@ import { userService } from '../../../user/user-service'
 import { userInvitationsService } from '../../../user-invitations/user-invitation.service'
 import { accessTokenManager } from '../../lib/access-token-manager'
 import { AuthenticationServiceHooks } from './authentication-service-hooks'
-import { ActivepiecesError, ApFlagId, assertNotNullOrUndefined, ErrorCode, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
+import { ActivepiecesError, ApFlagId, assertNotNullOrUndefined, ErrorCode, isNil, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
 
 const DEFAULT_PLATFORM_NAME = 'platform'
 
