@@ -9,8 +9,9 @@ import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-bui
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { BehaviorSubject, Observable, map, startWith } from 'rxjs';
+import { Observable } from 'rxjs';
 import { RequestWriterDialogComponent } from './request-writer-dialog/request-writer-dialog.component';
+import { GeneratedCodeService } from './request-writer-dialog/request-writer-dialog.service';
 
 @Component({
   selector: 'app-http-request-writer',
@@ -25,12 +26,12 @@ export class HttpRequestWriterComponent {
   showGenerateCode$: Observable<boolean>;
   codeGeneratorTooltip = codeGeneratorTooltip;
   disabledCodeGeneratorTooltip = disabledCodeGeneratorTooltip;
-  private generatedCodeSubject = new BehaviorSubject<string>(''); // Subject to handle the generated code
-  generatedCode$ = this.generatedCodeSubject.asObservable(); // Observable to be used with async pipe
+  generatedCode: string | undefined;
 
   constructor(
     private dialogService: MatDialog,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private generatedCodeService: GeneratedCodeService
   ) {
     this.generateCodeEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.COPILOT_ENABLED
@@ -43,15 +44,12 @@ export class HttpRequestWriterComponent {
   openCodeWriterDialog() {
     const dialogRef = this.dialogService.open(RequestWriterDialogComponent);
 
-    dialogRef
-      .afterClosed()
-      .pipe(
-        map((code: string) => code || ''),
-        startWith('')
-      )
-      .subscribe((code) => {
-        console.log(JSON.parse(code));
-        this.generatedCodeSubject.next(code);
-      });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.generatedCode = result;
+        this.generatedCodeService.setGeneratedCode(result);
+        console.log('Dialog result:', result);
+      }
+    });
   }
 }

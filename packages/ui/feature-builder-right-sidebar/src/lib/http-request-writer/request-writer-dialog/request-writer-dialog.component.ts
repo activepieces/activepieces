@@ -16,6 +16,7 @@ import {
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
+import { GeneratedCodeService } from './request-writer-dialog.service';
 import { RequestWriterService } from './request-writer.service';
 @Component({
   selector: 'app-request-writer-dialog',
@@ -40,7 +41,8 @@ export class RequestWriterDialogComponent {
     private highlightService: HighlightService,
     private formBuilder: FormBuilder,
     private requestWriterService: RequestWriterService,
-    private dialogRef: MatDialogRef<RequestWriterDialogComponent> // Inject MatDialogRef
+    private generatedCodeService: GeneratedCodeService,
+    private dialogRef: MatDialogRef<RequestWriterDialogComponent>
   ) {
     this.promptForm = this.formBuilder.group({
       prompt: new FormControl('', {
@@ -75,6 +77,8 @@ export class RequestWriterDialogComponent {
             try {
               const result = response.result;
               this.receivedCode$.next(result);
+              this.generatedCodeService.setGeneratedCode(result);
+
               if (this.stepper.selected) {
                 this.stepper.selected.completed = true;
                 this.stepper.next();
