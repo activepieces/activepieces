@@ -20,7 +20,6 @@ export const abortCertificationFolder = createAction({
       required: false,
     }),
   },
-
   async run(context) {
     const message = {
       comment: context.propsValue.comment,
