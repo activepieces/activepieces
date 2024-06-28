@@ -27,10 +27,10 @@ export const sendFile = createAction({
         disabled: false,
       },
     }),
-    Id: Property.ShortText({
+    externalId: Property.ShortText({
       displayName: 'N° du dossier',
       description:
-        'Sélectionner la propriété {Id} du dossier',
+        'Sélectionner la propriété {externalId} du dossier',
       required: true,
     }),
     title: Property.ShortText({
@@ -102,7 +102,7 @@ export const sendFile = createAction({
             wedofCommon.baseUrl +
             '/' +
             context.propsValue.entityClass +
-            '/'+ context.propsValue.Id + '/files',
+            '/'+ context.propsValue.externalId + '/files',
           body: message,
           headers: {
             'Content-Type': 'application/json',

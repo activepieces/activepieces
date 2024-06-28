@@ -27,10 +27,10 @@ export const listActivitiesAndTasks = createAction({
         disabled: false,
       },
     }),
-    Id: Property.ShortText({
+    externalId: Property.ShortText({
       displayName: 'N° du dossier',
       description:
-        'Sélectionner la propriété {Id} du dossier',
+        'Sélectionner la propriété {externalId} du dossier',
       required: true,
     }),
   },
@@ -41,7 +41,7 @@ export const listActivitiesAndTasks = createAction({
         url:
           wedofCommon.baseUrl +
           '/activities/' +context.propsValue.entityClass+'/'+
-          context.propsValue.Id,
+          context.propsValue.externalId,
         headers: {
           'Content-Type': 'application/json',
           'X-Api-Key': context.auth as string,

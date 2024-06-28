@@ -28,10 +28,10 @@ export const createActivitie = createAction({
         disabled: false,
       },
     }),
-    Id: Property.ShortText({
+    externalId: Property.ShortText({
       displayName: 'N° du dossier',
       description:
-        'Sélectionner la propriété {Id} du dossier',
+        'Sélectionner la propriété {externalId} du dossier',
       required: true,
     }),
     title: Property.ShortText({
@@ -87,7 +87,7 @@ export const createActivitie = createAction({
             wedofCommon.baseUrl +
             '/activities/' +
             context.propsValue.entityClass +
-            '/'+ context.propsValue.Id,
+            '/'+ context.propsValue.externalId,
           body: message,
           headers: {
             'Content-Type': 'application/json',
