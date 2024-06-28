@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { alertsService } from '../../ee/alerts/alerts-service'
 import { issuesService } from '../../ee/issues/issues-service'
 import { flowQueue } from '../../workers/flow-worker/flow-queue'
 import { JobType } from '../../workers/flow-worker/queues/queue'
@@ -54,12 +55,13 @@ export const flowRunSideEffects = {
             .onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks! })
         if (flowRun.environment === RunEnvironment.PRODUCTION) {
             if (isFailedState(flowRun.status)) {
-                await issuesService.add({
+                const issue = await issuesService.add({
                     flowId: flowRun.flowId,
                     projectId: flowRun.projectId,
-                    flowRunId: flowRun.id,
                     flowRunCreatedAt: flowRun.created,
                 })
+
+                await alertsService.sendAlertOnFinish({ issue, flowRunId: flowRun.id })
             }
         }
     },

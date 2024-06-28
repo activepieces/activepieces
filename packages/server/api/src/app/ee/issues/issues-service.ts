@@ -4,7 +4,6 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
-import { emailService } from '../helper/email/email-service'
 import { IssueEntity } from './issues-entity'
 import { Issue, IssueStatus, ListIssuesParams, PopulatedIssue } from '@activepieces/ee-shared'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
@@ -12,7 +11,7 @@ import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, spreadIfDefi
 const repo = databaseConnection.getRepository(IssueEntity)
 
 export const issuesService = {
-    async add({ projectId, flowId, flowRunId, flowRunCreatedAt }: { flowId: string, projectId: string, flowRunId: string, flowRunCreatedAt: string }): Promise<void> {
+    async add({ projectId, flowId, flowRunCreatedAt }: { flowId: string, projectId: string, flowRunCreatedAt: string }): Promise<Issue> {
         const issueId = apId()
         const date = dayjs(flowRunCreatedAt).toISOString()
         await repo.createQueryBuilder()
@@ -31,20 +30,13 @@ export const issuesService = {
             .orIgnore()
             .execute()
 
-        await this.update({
+        const updatedIssue = await this.update({
             projectId,
             flowId,
             status: IssueStatus.ONGOING,
         })
         
-        const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flowId)
-        await emailService.sendIssueCreatedNotification({
-            projectId,
-            flowId,
-            flowRunId,
-            flowName: flowVersion.displayName,
-            createdAt: dayjs(date).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
-        })
+        return updatedIssue
     },
     async get({ projectId, flowId }: { projectId: string, flowId: string }): Promise<Issue | null> {
         return repo.findOneBy({

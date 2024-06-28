@@ -45,7 +45,7 @@ type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
 type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     issueUrl: string
     flowName: string
-    isIssuesEnabled: string
+    isIssue: string
     createdAt: string
 }>
 

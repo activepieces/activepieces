@@ -69,7 +69,7 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
         fullLogoUrl,
         platformName,
         checkIssuesEnabled() {
-            return templateData.name === 'issue-created' && templateData.vars.isIssuesEnabled === 'true'
+            return templateData.name === 'issue-created' && templateData.vars.isIssue === 'true'
         },
     })
 }

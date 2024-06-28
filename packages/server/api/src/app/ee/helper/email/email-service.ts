@@ -1,4 +1,3 @@
-import { getRedisConnection } from '../../../database/redis-connection'
 import { getEdition } from '../../../helper/secret-helper'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -13,11 +12,6 @@ const EDITION = getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
 
 const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
-
-const HOUR_IN_SECONDS = 3600
-const DAY_IN_SECONDS = 86400
-const HOURLY_LIMIT = 3
-const DAILY_LIMIT = 15
 
 export const emailService = {
     async sendInvitation({ userInvitation, invitationLink }: SendInvitationArgs): Promise<void> {
@@ -50,17 +44,12 @@ export const emailService = {
     async sendIssueCreatedNotification({
         projectId,
         flowName,
-        flowId,
-        flowRunId,
+        platformId,
+        issueOrRunsPath,
+        isIssue,
         createdAt,
     }: IssueCreatedArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
-            return
-        }
-
-        const project = await projectService.getOneOrThrow(projectId)
-        const platform = await platformService.getOneOrThrow(project.platformId)
-        if (platform.embeddingEnabled) {
             return
         }
 
@@ -71,45 +60,20 @@ export const emailService = {
             createdAt,
         })
 
-        const hourlyFlowIdKey = `alerts:hourly:${flowId}`
-        const dailyFlowIdKey = `alerts:daily:${flowId}`
-        const [hourlyFlowIdKeyInRedis, dailyFlowIdKeyInRedis] = await Promise.all([
-            getRedisConnection().incr(hourlyFlowIdKey),
-            getRedisConnection().incr(dailyFlowIdKey),
-        ])
-
-        if (hourlyFlowIdKeyInRedis === 1) {
-            await getRedisConnection().expire(hourlyFlowIdKey, HOUR_IN_SECONDS)
-        }
-
-        if (dailyFlowIdKeyInRedis === 1) {
-            await getRedisConnection().expire(dailyFlowIdKey, DAY_IN_SECONDS)        
-        }
-
-        if (hourlyFlowIdKeyInRedis > HOURLY_LIMIT || dailyFlowIdKeyInRedis > DAILY_LIMIT) {
-            return
-        }
-
         // TODO remove the hardcoded limit
         const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         
-        const issueOrRunPath = platform.flowIssuesEnabled ? 'runs?limit=10#Issues' : `runs/${flowRunId}`
-        const issueUrl = await platformDomainHelper.constructUrlFrom({
-            platformId: project.platformId,
-            path: issueOrRunPath,
-        })
-        
         await emailSender.send({
             emails,
-            platformId: project.platformId,
+            platformId,
             templateData: {
                 name: 'issue-created',
                 vars: {
-                    issueUrl,
                     flowName,
-                    isIssuesEnabled: platform.flowIssuesEnabled.toString(),
                     createdAt,
+                    isIssue: isIssue.toString(),
+                    issueUrl: issueOrRunsPath,
                 },
             },
         })
@@ -240,7 +204,8 @@ type SendOtpArgs = {
 type IssueCreatedArgs = {
     projectId: string
     flowName: string
-    flowId: string
-    flowRunId: string
+    platformId: string
+    isIssue: boolean
+    issueOrRunsPath: string
     createdAt: string
 }
