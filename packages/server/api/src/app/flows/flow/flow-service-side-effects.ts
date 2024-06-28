@@ -1,6 +1,7 @@
 import { EntityManager } from 'typeorm'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { triggerHooks } from '../trigger'
+import { exceptionHandler } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     Flow,
@@ -75,13 +76,18 @@ export const flowSideEffects = {
             flowToUpdate.status === FlowStatus.ENABLED &&
       flowToUpdate.publishedVersionId
         ) {
-            await triggerHooks.disable({
-                flowVersion: await flowVersionService.getOneOrThrow(
-                    flowToUpdate.publishedVersionId,
-                ),
-                projectId: flowToUpdate.projectId,
-                simulate: false,
-            })
+            try {
+                await triggerHooks.disable({
+                    flowVersion: await flowVersionService.getOneOrThrow(
+                        flowToUpdate.publishedVersionId,
+                    ),
+                    projectId: flowToUpdate.projectId,
+                    simulate: false,
+                })
+            }
+            catch (e) {
+                exceptionHandler.handle(e)
+            }
         }
 
         const enableResult = await triggerHooks.enable({
