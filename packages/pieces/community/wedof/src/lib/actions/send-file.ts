@@ -62,11 +62,11 @@ export const sendFile = createAction({
           });
           const data = res.body;
           if (Array.isArray(data)) {
-            data.forEach((field: { id: string | number; name: any; }) => {
+            data.forEach((field: { id: string | number; name: string; }) => {
               fields[field.id] = Property.StaticDropdown({
                 displayName: field.name,
                 options: {
-                  options: data.map((option: { typeId: any; name: any; }) => ({
+                  options: data.map((option: { typeId: string; name: string; }) => ({
                     value: option.typeId,
                     label: option.name,
                   })),
