@@ -1,9 +1,15 @@
-import { Platform, ProjectId, ProjectMemberRole } from '@activepieces/shared';
+import {
+  NotificationStatus,
+  Platform,
+  ProjectId,
+  ProjectMemberRole,
+} from '@activepieces/shared';
 import {
   ApPaginatorComponent,
   AuthenticationService,
   GenericSnackbarTemplateComponent,
   PLATFORM_RESOLVER_KEY,
+  ProjectService,
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { AsyncPipe } from '@angular/common';
@@ -15,13 +21,22 @@ import {
 } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, Observable, startWith, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  distinctUntilChanged,
+  startWith,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import { AlertsDataSource } from './alerts-table.datasource';
 import { AlertsService } from '../../services/alerts.service';
 import { MatDialog } from '@angular/material/dialog';
 import { NewAlertDialogComponent } from '../dialogs/new-alert-dialog/new-alert-dialog.component';
 import { Alert } from '@activepieces/ee-shared';
 import { ProjectMemberService } from 'ee-project-members';
+import { FormControl } from '@angular/forms';
 
 @Component({
   selector: 'app-alerts-table',
@@ -35,8 +50,6 @@ export class AlertsTableComponent implements OnInit {
   paginator: ApPaginatorComponent;
   readonly permissionToAddMessage = $localize`You don\'t have permissions to add email`;
   readonly permissionToDeleteMessage = $localize`You don\'t have permissions to delete email`;
-  readonly betaNote =
-    'Note: Basic alerts are free, and advanced alerts will only be <strong>Free</strong> during the <strong>BETA</strong> period.';
   upgradeNoteTitle = $localize`Unlock Alerts`;
   upgradeNote = $localize`Stay up to date with your flows, quota limits and updates with Alerts`;
   displayedColumns: string[] = ['receiver', 'action'];
@@ -47,14 +60,24 @@ export class AlertsTableComponent implements OnInit {
   addAlertDialogClosed$: Observable<void>;
   isAdmin$: Observable<boolean>;
   deleteAlert$: Observable<void> | undefined;
+  notificationControl: FormControl<NotificationStatus> = new FormControl(
+    NotificationStatus.NEVER,
+    {
+      nonNullable: true,
+    }
+  );
+  updateNotificationsValue$: Observable<unknown>;
+  currentProject: ProjectId;
   constructor(
     private dialogService: MatDialog,
     private alertsService: AlertsService,
     private route: ActivatedRoute,
     private authService: AuthenticationService,
     private snackBar: MatSnackBar,
-    private projectMemberService: ProjectMemberService
+    private projectMemberService: ProjectMemberService,
+    private projectService: ProjectService
   ) {
+    this.currentProject = this.authService.getProjectId();
     this.showUpgrade = !(
       this.route.snapshot.data[PLATFORM_RESOLVER_KEY] as Platform
     ).alertsEnabled;
@@ -67,6 +90,25 @@ export class AlertsTableComponent implements OnInit {
   ngOnInit(): void {
     this.currentProject$ = this.authService.getProjectId();
     this.isAdmin$ = this.projectMemberService.isRole(ProjectMemberRole.ADMIN);
+    this.updateNotificationsValue$ = this.projectService.currentProject$.pipe(
+      take(1),
+      tap((project) => {
+        this.notificationControl.setValue(NotificationStatus.NEVER);
+        if (project) {
+          this.notificationControl.setValue(project.notifyStatus);
+        }
+      }),
+      switchMap(() => {
+        return this.notificationControl.valueChanges.pipe(
+          distinctUntilChanged(),
+          switchMap((value) => {
+            return this.projectService.update(this.currentProject, {
+              notifyStatus: value,
+            });
+          })
+        );
+      })
+    );
     this.dataSource = new AlertsDataSource(
       this.route.queryParams,
       this.paginator,
@@ -98,5 +140,9 @@ export class AlertsTableComponent implements OnInit {
         this.refresh$.next(true);
       })
     );
+  }
+
+  get notificationStatus() {
+    return NotificationStatus;
   }
 }
