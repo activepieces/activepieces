@@ -8,6 +8,7 @@ import { apId, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 const consumers: Record<string, Worker> = {}
 const sandboxTimeout = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
 const serverId = apId()
+const WORKER_CONCURRENCY = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
 
 export const redisConsumer: ConsumerManager = {
     async poll(jobType) {
@@ -36,6 +37,9 @@ export const redisConsumer: ConsumerManager = {
         }
     },
     async init(): Promise<void> {
+        if (WORKER_CONCURRENCY === 0) {
+            return
+        }
         const lockDuration =  dayjs.duration(sandboxTimeout, 'seconds').add(5, 'seconds').asMilliseconds()
         for (const queueName of Object.values(QueueName)) {
             consumers[queueName] = new Worker(queueName, null, {
@@ -53,6 +57,9 @@ export const redisConsumer: ConsumerManager = {
         }
     },
     async close(): Promise<void> {
+        if (WORKER_CONCURRENCY === 0) {
+            return
+        }
         await Promise.all(Object.values(consumers).map((consumer) => consumer.close()))
     },
 }
