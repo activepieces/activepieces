@@ -25,7 +25,6 @@ export const abortCertificationFolder = createAction({
     const message = {
       comment: context.propsValue.comment,
     };
-
     return (
       await httpClient.sendRequest({
         method: HttpMethod.POST,
