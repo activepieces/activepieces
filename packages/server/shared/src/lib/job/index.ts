@@ -17,7 +17,7 @@ export enum JobStatus {
 export enum QueueName {
     WEBHOOK = 'webhookJobs',
     ONE_TIME = 'oneTimeJobs',
-    SCHEDULED = 'scheduledJobs',
+    SCHEDULED = 'repeatableJobs',
 }
 
 export const PollJobRequest = Type.Object({
