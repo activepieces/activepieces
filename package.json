@@ -22,6 +22,7 @@
   "private": true,
   "dependencies": {
     "@activepieces/import-fresh-webpack": "3.3.0",
+    "@actual-app/api": "6.8.1",
     "@angular/animations": "18.0.3",
     "@angular/cdk": "18.0.3",
     "@angular/common": "18.0.3",

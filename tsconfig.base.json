@@ -27,6 +27,9 @@
       "@activepieces/piece-activepieces": [
         "packages/pieces/community/activepieces/src/index.ts"
       ],
+      "@activepieces/piece-actualbudget": [
+        "packages/pieces/community/actualbudget/src/index.ts"
+      ],
       "@activepieces/piece-acumbamail": [
         "packages/pieces/community/acumbamail/src/index.ts"
       ],
