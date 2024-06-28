@@ -1,9 +1,7 @@
 export const environment = {
   production: false,
-  apiUrl:
-    'https://refactored-barnacle-wr7jg6vprgv635999-3000.app.github.dev/v1',
+  apiUrl: 'http://localhost:3000/v1',
   jwtTokenName: 'token',
-  redirectUrl:
-    'https://refactored-barnacle-wr7jg6vprgv635999-4200.app.github.dev/redirect',
+  redirectUrl: 'http://localhost:4200/redirect',
   userPropertyNameInLocalStorage: 'currentUser',
 };
