@@ -180,7 +180,15 @@ async function getFlow(projectId: string, request: GetFlowVersionForWorkerReques
                 id: request.flowId,
                 projectId,
             })
-            assertNotNullOrUndefined(rawFlow.publishedVersionId, 'Flow has no published version')
+            if (isNil(rawFlow.publishedVersionId)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        entityId: rawFlow.id,
+                        message: 'Flow has no published version',
+                    },
+                })
+            }
             return flowService.getOnePopulatedOrThrow({
                 id: rawFlow.id,
                 projectId,
