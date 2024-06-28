@@ -96,6 +96,7 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
     webhookSecret?: string
 }
 
+
 export type TriggerPayload<T = unknown> = {
     body: T
     headers: Record<string, string>

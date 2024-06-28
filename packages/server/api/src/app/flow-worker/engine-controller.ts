@@ -10,8 +10,8 @@ import { triggerHooks } from '../flows/trigger'
 import { flowConsumer } from './consumer'
 import { webhookResponseWatcher } from './helper/webhook-response-watcher'
 import { flowQueue } from './queue'
-import { GetRunForWorkerRequest, system, SystemProp, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEnvironment, assertNotNullOrUndefined, DisableFlowByEngineRequest, EngineHttpResponse, ErrorCode, ExecutionState, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { GetRunForWorkerRequest, logger, system, SystemProp, UpdateJobRequest } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEnvironment, assertNotNullOrUndefined, DisableFlowByEngineRequest, EngineHttpResponse, ErrorCode, ExecutionState, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -81,10 +81,21 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             })
         }
         app.io.to(populatedRun.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, populatedRun)
+        if (runDetails.status === FlowRunStatus.QUOTA_EXCEEDED) {
+            logger.info({
+                projectId: populatedRun.projectId,
+                runId: populatedRun.id,
+            }, 'Disabling flow due to quota exceeded')
+            await flowService.updateStatus({
+                id: populatedRun.flowId,
+                projectId: populatedRun.projectId,
+                newStatus: FlowStatus.DISABLED,
+            })
+        }
         return {}
     })
 
-    app.post('/check-task-limit', CheckTaskLimitParams, async (request) => {
+    app.get('/check-task-limit', CheckTaskLimitParams, async (request) => {
         const exceededLimit = await tasksLimit.exceededLimit({
             projectId: request.principal.projectId,
         })
@@ -110,7 +121,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         }
     })
 
-    app.post('/disable-flow', DisableFlowRequest, async (request) => {
+    app.post('/remove-stable-job', DisableFlowRequest, async (request) => {
         const { flowVersionId, flowId } = request.body
         const flow = isNil(flowId) ? null : await flowService.getOnePopulated({
             projectId: request.principal.projectId,

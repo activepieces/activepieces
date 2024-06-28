@@ -1,7 +1,7 @@
 
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, DisableFlowByEngineRequest, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, UpdateRunProgressRequest } from '@activepieces/shared'
+import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, system, SystemProp, UpdateJobRequest } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, DisableFlowByEngineRequest, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, UpdateRunProgressRequest } from '@activepieces/shared'
 import axios, { isAxiosError } from 'axios'
 import { StatusCodes } from 'http-status-codes'
 
@@ -78,7 +78,7 @@ export const engineApiService = (engineToken: string) => {
             await client.post('/v1/engine/update-run', request)
         },
         async removeStaleFlow(request: DisableFlowByEngineRequest): Promise<void> {
-            await client.post('/v1/engine/disable-flow', request)
+            await client.post('/v1/engine/remove-stable-job', request)
         },
         async getPiece(name: string, options: GetPieceRequestQuery): Promise<PieceMetadataModel> {
             return (await client.get(`/v1/pieces/${encodeURIComponent(name)}`, {
@@ -86,8 +86,12 @@ export const engineApiService = (engineToken: string) => {
             })).data
         },
         async checkTaskLimit(): Promise<void> {
+            const edition = system.getOrThrow(SystemProp.EDITION)
+            if (edition === ApEdition.COMMUNITY) {
+                return
+            }
             try {
-                await client.post('/v1/engine/check-task-limit')
+                await client.get('/v1/engine/check-task-limit')
             }
             catch (error) {
                 if (isAxiosError(error) && error.response && error.response.status === StatusCodes.PAYMENT_REQUIRED) {

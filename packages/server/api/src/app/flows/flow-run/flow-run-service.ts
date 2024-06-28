@@ -83,7 +83,7 @@ async function updateFlowRunToLatestFlowVersionIdAndReturnPayload(
     await flowRunRepo.update(flowRunId, {
         flowVersionId: flowVersion.id,
     })
-    return flowRun.steps ? flowRun.steps[flowVersion.trigger.name] : undefined
+    return flowRun.steps ? flowRun.steps[flowVersion.trigger.name]?.output : undefined
 }
 
 function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): string {

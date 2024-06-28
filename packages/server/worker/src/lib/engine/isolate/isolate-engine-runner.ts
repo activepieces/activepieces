@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import { encryptUtils, logger, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
-import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecuteStepOperation, flowHelper, FlowVersion, FlowVersionState, RunEnvironment } from '@activepieces/shared'
+import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { pieceEngineUtil } from '../flow-enginer-util'
@@ -52,11 +52,11 @@ export const isolateEngineRunner: EngineRunner = {
             pieceVersion: triggerPiece.pieceVersion,
             pieces: [triggerPiece],
         })
-        const input = {
+        const input: ExecuteTriggerOperation<TriggerHookType> = {
             projectId: operation.projectId,
             hookType: operation.hookType,
             webhookUrl: operation.webhookUrl,
-            pieceVersion: triggerPiece,
+            triggerPayload: operation.triggerPayload,
             flowVersion: lockedVersion,
             appWebhookUrl: await webhookUtils.getAppWebhookUrl({
                 appName: triggerPiece.pieceName,
@@ -77,7 +77,7 @@ export const isolateEngineRunner: EngineRunner = {
             pieces: [lockedPiece],
         })
 
-        const input = {
+        const input: ExecutePropsOptions = {
             ...operation,
             serverUrl: await networkUtls.getApiUrl(),
             engineToken,
@@ -94,7 +94,7 @@ export const isolateEngineRunner: EngineRunner = {
             pieceVersion: lockedPiece.pieceVersion,
             pieces: [lockedPiece],
         })
-        const input = {
+        const input: ExecuteValidateAuthOperation = {
             ...operation,
             serverUrl: await networkUtls.getApiUrl(),
             engineToken,

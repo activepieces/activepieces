@@ -1,7 +1,7 @@
 import { mkdir } from 'fs/promises'
 import path from 'path'
 import { fileExists, logger, networkUtls, packageManager, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
-import { Action, ActionType, assertNotNullOrUndefined, CodeSandboxType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecuteStepOperation, flowHelper, FlowVersion, FlowVersionState, isNil, PiecePackage } from '@activepieces/shared'
+import { Action, ActionType, assertNotNullOrUndefined, CodeSandboxType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, isNil, PiecePackage, TriggerHookType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { pieceManager } from '../../piece-manager'
 import { codeBuilder } from '../../utils/code-builder'
@@ -30,7 +30,7 @@ if (codeSandboxType === CodeSandboxType.V8_ISOLATE) {
 export const threadEngineRunner: EngineRunner = {
     async executeFlow(engineToken, operation) {
         logger.debug({
-            flowVersion: operation.flowVersion,
+            flowVersion: operation.flowVersion.id,
             projectId: operation.projectId,
         }, '[threadEngineRunner#executeFlow]')
         await prepareFlowSandbox(engineToken, operation.flowVersion)
@@ -55,11 +55,10 @@ export const threadEngineRunner: EngineRunner = {
             stepName: operation.flowVersion.trigger.name,
             flowVersion: operation.flowVersion,
         })
-        const input = {
+        const input: ExecuteTriggerOperation<TriggerHookType> = {
             projectId: operation.projectId,
             hookType: operation.hookType,
             webhookUrl: operation.webhookUrl,
-            pieceVersion: triggerPiece,
             triggerPayload: operation.triggerPayload,
             flowVersion: lockedVersion,
             appWebhookUrl: await webhookUtils.getAppWebhookUrl({
@@ -85,11 +84,12 @@ export const threadEngineRunner: EngineRunner = {
         const { piece } = operation
         const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, piece)
         await prepareSandbox([lockedPiece], [])
-        return execute({
+        const input: ExecuteValidateAuthOperation = {
             ...operation,
             serverUrl: await networkUtls.getApiUrl(),
             engineToken,
-        }, EngineOperationType.EXECUTE_VALIDATE_AUTH)
+        }
+        return execute(input, EngineOperationType.EXECUTE_VALIDATE_AUTH)
     },
     async executeAction(engineToken, operation) {
         logger.debug({
@@ -144,7 +144,7 @@ export const threadEngineRunner: EngineRunner = {
         const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, piece)
         await prepareSandbox([lockedPiece], [])
 
-        const input = {
+        const input: ExecutePropsOptions = {
             ...operation,
             serverUrl: await networkUtls.getApiUrl(),
             engineToken,
@@ -246,7 +246,7 @@ async function executeOperation(
 
 
 
-function getEnvironmentVariables() { 
+function getEnvironmentVariables() {
     const allowedEnvVariables = system.getList(SystemProp.SANDBOX_PROPAGATED_ENV_VARS)
     const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
     return {
