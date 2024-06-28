@@ -17,6 +17,9 @@ export const flowWorker = {
         workerToken = generatedToken
     },
     async start(): Promise<void> {
+        if (WORKER_CONCURRENCY === 0) {
+            return
+        }
         for (const queueName of Object.values(QueueName)) {
             rejectedPromiseHandler(run(queueName))
         }
