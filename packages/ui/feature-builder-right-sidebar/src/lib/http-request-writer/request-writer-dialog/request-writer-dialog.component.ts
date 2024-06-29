@@ -1,17 +1,23 @@
 import { HighlightService, UiCommonModule } from '@activepieces/ui/common';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Output,
+  ViewChild,
+} from '@angular/core';
 import {
   FormBuilder,
   FormControl,
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
+import { GeneratedCodeService } from './request-writer-dialog.service';
 import { RequestWriterService } from './request-writer.service';
-
 @Component({
   selector: 'app-request-writer-dialog',
   standalone: true,
@@ -21,6 +27,7 @@ import { RequestWriterService } from './request-writer.service';
 })
 export class RequestWriterDialogComponent {
   @ViewChild(MatStepper) stepper: MatStepper;
+  @Output() codeGenerated = new EventEmitter<string>();
   promptForm: FormGroup<{
     prompt: FormControl<string>;
     reference: FormControl<string>;
@@ -33,7 +40,9 @@ export class RequestWriterDialogComponent {
   constructor(
     private highlightService: HighlightService,
     private formBuilder: FormBuilder,
-    private requestWriterService: RequestWriterService
+    private requestWriterService: RequestWriterService,
+    private generatedCodeService: GeneratedCodeService,
+    private dialogRef: MatDialogRef<RequestWriterDialogComponent>
   ) {
     this.promptForm = this.formBuilder.group({
       prompt: new FormControl('', {
@@ -68,6 +77,7 @@ export class RequestWriterDialogComponent {
             try {
               const result = response.result;
               this.receivedCode$.next(result);
+
               if (this.stepper.selected) {
                 this.stepper.selected.completed = true;
                 this.stepper.next();
@@ -83,6 +93,11 @@ export class RequestWriterDialogComponent {
           map(() => void 0)
         );
     }
+  }
+
+  useGeneratedCode() {
+    this.generatedCodeService.setGeneratedCode(this.receivedCode$.value);
+    this.dialogRef.close();
   }
 
   private highlightPrism() {

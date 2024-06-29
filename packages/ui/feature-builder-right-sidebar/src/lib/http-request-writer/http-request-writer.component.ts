@@ -11,6 +11,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { RequestWriterDialogComponent } from './request-writer-dialog/request-writer-dialog.component';
+import { GeneratedCodeService } from './request-writer-dialog/request-writer-dialog.service';
 
 @Component({
   selector: 'app-http-request-writer',
@@ -25,10 +26,12 @@ export class HttpRequestWriterComponent {
   showGenerateCode$: Observable<boolean>;
   codeGeneratorTooltip = codeGeneratorTooltip;
   disabledCodeGeneratorTooltip = disabledCodeGeneratorTooltip;
+  generatedCode$: Observable<string | null>;
 
   constructor(
     private dialogService: MatDialog,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private generatedCodeService: GeneratedCodeService
   ) {
     this.generateCodeEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.COPILOT_ENABLED
@@ -36,7 +39,9 @@ export class HttpRequestWriterComponent {
     this.showGenerateCode$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COPILOT
     );
+    this.generatedCode$ = this.generatedCodeService.getGeneratedCode$();
   }
+
   openCodeWriterDialog() {
     this.dialogService.open(RequestWriterDialogComponent);
   }

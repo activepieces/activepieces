@@ -50,6 +50,7 @@
       btnSize="default"
       btnColor="primary"
       [disabled]="loading$ | async | defaultFalse"
+      (click)="useGeneratedCode()"
       i18n
     >
       Use Code
