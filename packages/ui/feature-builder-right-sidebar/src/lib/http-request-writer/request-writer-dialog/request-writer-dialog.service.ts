@@ -1,16 +1,17 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GeneratedCodeService {
-  private generatedCodeSource = new BehaviorSubject<string | undefined>(
-    undefined
-  );
-  generatedCode$ = this.generatedCodeSource.asObservable();
+  private generatedCodeSubject = new BehaviorSubject<string | null>(null);
 
-  setGeneratedCode(code: string | undefined) {
-    this.generatedCodeSource.next(code);
+  getGeneratedCode$(): Observable<string | null> {
+    return this.generatedCodeSubject.asObservable();
+  }
+
+  setGeneratedCode(code: string): void {
+    this.generatedCodeSubject.next(code);
   }
 }
