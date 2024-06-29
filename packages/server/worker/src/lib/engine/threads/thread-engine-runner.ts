@@ -1,6 +1,6 @@
 import { mkdir } from 'fs/promises'
 import path from 'path'
-import { fileExists, logger, networkUtls, packageManager, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
+import { acquireMemoryLock, fileExists, logger, networkUtls, packageManager, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
 import { Action, ActionType, assertNotNullOrUndefined, CodeSandboxType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, isNil, PiecePackage, TriggerHookType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { pieceManager } from '../../piece-manager'
@@ -179,24 +179,18 @@ async function execute<Result extends EngineHelperResult>(operation: EngineOpera
 
 async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[]): Promise<void> {
     await mkdir(sandboxPath, { recursive: true })
-    const buildJobs = codeSteps
-        .map(async (archive) => {
-            const indexPath = path.join(codeBuilder.buildPath({
-                buildPath: sandboxPath,
-                sourceCodeId: archive.name,
-                flowVersionId: archive.flowVersionId,
-            }), 'index.js')
-            const fExists = await fileExists(indexPath)
-            if (fExists && archive.flowVersionState === FlowVersionState.LOCKED) {
-                return new Promise<void>((resolve) => resolve())
-            }
-            return codeBuilder.processCodeStep({
-                sourceCodeId: archive.name,
-                sourceCode: archive.sourceCode,
-                flowVersionId: archive.flowVersionId,
-                buildPath: sandboxPath,
-            })
-        })
+    const buildJobs = codeSteps.map(async (archive) => {
+        const indexPath = path.join(codeBuilder.buildPath({
+            buildPath: sandboxPath,
+            sourceCodeId: archive.name,
+            flowVersionId: archive.flowVersionId,
+        }), 'index.js')
+        const fExists = await fileExists(indexPath)
+        if (fExists && archive.flowVersionState === FlowVersionState.LOCKED) {
+            return new Promise<void>((resolve) => resolve())
+        }
+        return prepareCode(archive, sandboxPath)
+    })
     await Promise.all(buildJobs)
 
     logger.info({
@@ -206,18 +200,22 @@ async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[])
         path: sandboxPath,
     })
 
-
-    const installationTimestamp = dayjs().valueOf()
-    await pieceManager.install({
-        projectPath: sandboxPath,
-        pieces,
-    })
-    logger.info({
-        timeTook: dayjs().valueOf() - installationTimestamp,
-        pieces,
-        sandboxPath,
-    }, 'Installing pieces in sandbox')
-
+    const pieceLock = await acquireMemoryLock(sandboxPath)
+    try {
+        const installationTimestamp = dayjs().valueOf()
+        await pieceManager.install({
+            projectPath: sandboxPath,
+            pieces,
+        })
+        logger.info({
+            timeTook: dayjs().valueOf() - installationTimestamp,
+            pieces,
+            sandboxPath,
+        }, 'Installing pieces in sandbox')
+    }
+    finally {
+        await pieceLock.release()
+    }
     logger.info({
         path: sandboxPath,
     }, 'Installing engine in sandbox')
@@ -227,6 +225,20 @@ async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[])
 
 }
 
+async function prepareCode(artifact: CodeArtifact, sandboxPath: string): Promise<void> {
+    const memoryLock = await acquireMemoryLock(sandboxPath)
+    try {
+        await codeBuilder.processCodeStep({
+            sourceCodeId: artifact.name,
+            sourceCode: artifact.sourceCode,
+            flowVersionId: artifact.flowVersionId,
+            buildPath: sandboxPath,
+        })
+    }
+    finally {
+        await memoryLock.release()
+    }
+}
 
 async function executeOperation(
     operationType: EngineOperationType,
@@ -246,7 +258,7 @@ async function executeOperation(
 
 
 
-function getEnvironmentVariables() {
+function getEnvironmentVariables(): Record<string, string | undefined> {
     const allowedEnvVariables = system.getList(SystemProp.SANDBOX_PROPAGATED_ENV_VARS)
     const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
     return {

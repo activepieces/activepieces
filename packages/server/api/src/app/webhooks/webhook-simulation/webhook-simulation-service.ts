@@ -1,8 +1,8 @@
 import { databaseConnection } from '../../database/database-connection'
-import { acquireLock, ApLock } from '../../helper/lock'
+import { acquireLock } from '../../helper/lock'
 import { WebhookSimulationEntity } from './webhook-simulation-entity'
 import { webhookSideEffects } from './webhook-simulation-side-effects'
-import { logger } from '@activepieces/server-shared'
+import { ApLock, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,

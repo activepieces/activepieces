@@ -46,7 +46,6 @@ export const codeBuilder = {
             sourceCodeId,
             flowVersionId,
             buildPath,
-
         })
         logger.debug({
             name: 'CodeBuilder#processCodeStep',

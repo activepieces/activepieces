@@ -1,3 +1,4 @@
+export * from './lib/memory-lock'
 export * from './lib/local-store'
 export * from './lib/encryption'
 export * from './lib/job/job-data'
