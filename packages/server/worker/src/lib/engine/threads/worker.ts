@@ -1,5 +1,5 @@
 import { Worker, WorkerOptions } from 'worker_threads'
-import { ApSemaphore, logger, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
+import { ApSemaphore, getEngineTimeout, logger, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
 import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 
 export type WorkerResult = {
@@ -8,7 +8,6 @@ export type WorkerResult = {
     stdError: string
 }
 
-const sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
 
 export class EngineWorker {
     workers: Worker[]
@@ -43,6 +42,7 @@ export class EngineWorker {
         assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
         const worker = this.workers[workerIndex]
         const environment = system.getOrThrow(SystemProp.ENVIRONMENT)
+        const timeout = getEngineTimeout(operationType)
         try {
 
             const result = await new Promise<WorkerResult>((resolve, reject) => {
@@ -60,7 +60,7 @@ export class EngineWorker {
                         stdOut: '',
                     })
                     await worker.terminate()
-                }, sandboxRunTimeSeconds * 1000)
+                }, timeout * 1000)
 
 
                 worker.on('message', (m: { type: string, message: unknown }) => {

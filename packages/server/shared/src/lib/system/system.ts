@@ -59,10 +59,14 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.PIECES_SOURCE]: PiecesSource.CLOUD_AND_DB,
     [SystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [SystemProp.SANDBOX_MEMORY_LIMIT]: '524288',
+    /*
+     @deprecated, replease with FLOW_TIMEOUT_SECONDS
+    */
     [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
+    [SystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [SystemProp.TELEMETRY_ENABLED]: 'true',
     [SystemProp.TEMPLATES_SOURCE_URL]:
-    'https://cloud.activepieces.com/api/v1/flow-templates',
+        'https://cloud.activepieces.com/api/v1/flow-templates',
     [SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
 }
 

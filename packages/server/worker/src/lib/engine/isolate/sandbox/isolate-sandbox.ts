@@ -2,8 +2,8 @@ import { exec } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import process, { arch, cwd } from 'node:process'
-import { fileExists, logger, PiecesSource, system, SystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, EngineOperation, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
+import { fileExists, getEngineTimeout, logger, PiecesSource, system, SystemProp } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 import { ExecuteSandboxResult } from '../../engine-runner'
 
 export type SandboxCtorParams = {
@@ -26,7 +26,7 @@ const getIsolateExecutableName = (): string => {
 }
 
 export class IsolateSandbox {
-    public static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
+
     protected static readonly nodeExecutablePath = process.execPath
     private static readonly isolateExecutableName = getIsolateExecutableName()
     private static readonly cacheBindPath = '/root'
@@ -51,7 +51,7 @@ export class IsolateSandbox {
     }
 
     public async runOperation(
-        operationType: string,
+        operationType: EngineOperationType,
         _operation: EngineOperation,
     ): Promise<ExecuteSandboxResult> {
         const metaFile = this.getSandboxFilePath('meta.txt')
@@ -62,6 +62,7 @@ export class IsolateSandbox {
 
         try {
 
+            const timeout = getEngineTimeout(operationType)
             const dirsToBindArgs = this.getDirsToBindArgs()
             const propagatedEnvVars = Object.entries(this.getEnvironmentVariables()).map(([ key, value ]) => `--env=${key}='${value}'`)
             const fullCommand = [
@@ -69,7 +70,7 @@ export class IsolateSandbox {
                 '--share-net',
                 `--box-id=${this.boxId}`,
                 '--processes',
-                `--wall-time=${IsolateSandbox.sandboxRunTimeSeconds}`,
+                `--wall-time=${timeout}`,
                 `--meta=${metaFile}`,
                 '--stdout=_standardOutput.txt',
                 '--stderr=_standardError.txt',

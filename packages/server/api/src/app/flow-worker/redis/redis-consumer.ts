@@ -2,11 +2,10 @@ import { Job, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 import { createRedisClient } from '../../database/redis-connection'
 import { ConsumerManager } from '../consumer/consumer-manager'
-import { JobStatus, QueueName, system, SystemProp } from '@activepieces/server-shared'
+import { flowTimeoutSandbox, JobStatus, QueueName, system, SystemProp, triggerTimeoutSandbox } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 
 const consumers: Record<string, Worker> = {}
-const sandboxTimeout = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
 const serverId = apId()
 const WORKER_CONCURRENCY = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
 
@@ -40,8 +39,8 @@ export const redisConsumer: ConsumerManager = {
         if (WORKER_CONCURRENCY === 0) {
             return
         }
-        const lockDuration =  dayjs.duration(sandboxTimeout, 'seconds').add(5, 'seconds').asMilliseconds()
         for (const queueName of Object.values(QueueName)) {
+            const lockDuration = getLockDurationInMs(queueName)
             consumers[queueName] = new Worker(queueName, null, {
                 connection: createRedisClient(),
                 lockDuration,
@@ -62,4 +61,16 @@ export const redisConsumer: ConsumerManager = {
         }
         await Promise.all(Object.values(consumers).map((consumer) => consumer.close()))
     },
+}
+
+
+function getLockDurationInMs(queueName: QueueName) {
+    switch (queueName) {
+        case QueueName.WEBHOOK:
+            return  dayjs.duration(triggerTimeoutSandbox, 'seconds').add(5, 'seconds').asMilliseconds()
+        case QueueName.ONE_TIME:
+            return  dayjs.duration(flowTimeoutSandbox, 'seconds').add(5, 'seconds').asMilliseconds()
+        case QueueName.SCHEDULED:
+            return  dayjs.duration(triggerTimeoutSandbox, 'seconds').add(5, 'seconds').asMilliseconds()
+    }
 }

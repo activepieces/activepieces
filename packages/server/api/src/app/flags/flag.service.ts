@@ -2,7 +2,7 @@ import axios from 'axios'
 import { databaseConnection } from '../database/database-connection'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
-import { system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
+import { flowTimeoutSandbox, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, Flag, isNil } from '@activepieces/shared'
 import { webhookUtils } from 'server-worker'
 
@@ -193,8 +193,8 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SANDBOX_RUN_TIME_SECONDS,
-                value: system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS),
+                id: ApFlagId.FLOW_RUN_TIME_SECONDS,
+                value: flowTimeoutSandbox,
                 created,
                 updated,
             },

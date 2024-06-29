@@ -9,7 +9,7 @@ import { engineInstaller } from '../../utils/engine-installer'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { CodeArtifact, EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { pieceEngineUtil } from '../flow-enginer-util'
-import { EngineWorker, WorkerResult } from './worker'
+import { EngineWorker } from './worker'
 
 const memoryLimit = Math.floor((Number(system.getOrThrow(SystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
 const sandboxPath = path.resolve('cache')
@@ -164,10 +164,17 @@ async function prepareFlowSandbox(engineToken: string, flowVersion: FlowVersion)
 
 async function execute<Result extends EngineHelperResult>(operation: EngineOperation, operationType: EngineOperationType): Promise<EngineHelperResponse<Result>> {
     const startTime = Date.now()
-    const { engine, stdError, stdOut } = await executeOperation(
-        operationType,
-        operation,
-    )
+    if (isNil(engineWorkers)) {
+        engineWorkers = new EngineWorker(workerConcurrency, enginePath, {
+            env: getEnvironmentVariables(),
+            resourceLimits: {
+                maxOldGenerationSizeMb: memoryLimit,
+                maxYoungGenerationSizeMb: memoryLimit,
+                stackSizeMb: memoryLimit,
+            },
+        })
+    }
+    const { engine, stdError, stdOut } = await engineWorkers.executeTask(operationType, operation)
     return engineRunnerUtils.readResults({
         timeInSeconds: (Date.now() - startTime) / 1000,
         verdict: engine.status,
@@ -240,21 +247,6 @@ async function prepareCode(artifact: CodeArtifact, sandboxPath: string): Promise
     }
 }
 
-async function executeOperation(
-    operationType: EngineOperationType,
-    operation: EngineOperation): Promise<WorkerResult> {
-    if (isNil(engineWorkers)) {
-        engineWorkers = new EngineWorker(workerConcurrency, enginePath, {
-            env: getEnvironmentVariables(),
-            resourceLimits: {
-                maxOldGenerationSizeMb: memoryLimit,
-                maxYoungGenerationSizeMb: memoryLimit,
-                stackSizeMb: memoryLimit,
-            },
-        })
-    }
-    return engineWorkers.executeTask(operationType, operation)
-}
 
 
 
