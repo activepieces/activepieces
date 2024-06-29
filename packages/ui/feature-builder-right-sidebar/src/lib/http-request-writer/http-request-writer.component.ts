@@ -26,7 +26,7 @@ export class HttpRequestWriterComponent {
   showGenerateCode$: Observable<boolean>;
   codeGeneratorTooltip = codeGeneratorTooltip;
   disabledCodeGeneratorTooltip = disabledCodeGeneratorTooltip;
-  generatedCode: string | undefined;
+  generatedCode$: Observable<string | null>;
 
   constructor(
     private dialogService: MatDialog,
@@ -39,17 +39,10 @@ export class HttpRequestWriterComponent {
     this.showGenerateCode$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COPILOT
     );
+    this.generatedCode$ = this.generatedCodeService.getGeneratedCode$();
   }
 
   openCodeWriterDialog() {
-    const dialogRef = this.dialogService.open(RequestWriterDialogComponent);
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.generatedCode = result;
-        this.generatedCodeService.setGeneratedCode(result);
-        console.log('Dialog result:', result);
-      }
-    });
+    this.dialogService.open(RequestWriterDialogComponent);
   }
 }
