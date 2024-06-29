@@ -29,7 +29,7 @@ export async function extractPayloads(
     }
     else {
         logger.error({
-            error: result.message,
+            result,
             pieceName: params.flowVersion.trigger.settings.pieceName,
             pieceVersion: params.flowVersion.trigger.settings.pieceVersion,
             flowId: flowVersion.flowId,

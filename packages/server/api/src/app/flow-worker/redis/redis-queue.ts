@@ -54,14 +54,12 @@ export const redisQueue: QueueManager = {
     },
     async removeRepeatingJob({ id }): Promise<void> {
         const client = await bullmqQueues[QueueName.SCHEDULED].client
-        const repeatJobKey = await client.get(repeatingJobKey(id))
+        const repeatJobKey = await findRepeatableJobKey(id)
         if (isNil(repeatJobKey)) {
             exceptionHandler.handle(new Error(`Couldn't find job key for id "${id}"`))
             return
         }
         const result = await bullmqQueues[QueueName.SCHEDULED].removeRepeatableByKey(repeatJobKey)
-        await client.del(repeatingJobKey(id))
-
         if (!result) {
             throw new ActivepiecesError({
                 code: ErrorCode.JOB_REMOVAL_FAILURE,
@@ -70,8 +68,22 @@ export const redisQueue: QueueManager = {
                 },
             })
         }
+        await client.del(repeatingJobKey(id))
     },
 }
+
+async function findRepeatableJobKey(id: ApId): Promise<string | undefined> {
+    const client = await bullmqQueues[QueueName.SCHEDULED].client
+    const jobKey = await client.get(repeatingJobKey(id))
+    if (isNil(jobKey)) {
+        logger.warn({ jobKey: id }, 'Job key not found in redis, trying to find it in the queue')
+        // TODO: this temporary solution for jobs that doesn't have repeatJobKey in redis, it's also confusing because it search by flowVersionId
+        const jobs = await bullmqQueues[QueueName.SCHEDULED].getJobs()
+        return jobs.filter(f => !isNil(f) && !isNil(f.data)).find((f) => f.data.flowVersionId === id)?.repeatJobKey
+    }
+    return jobKey
+}
+
 
 async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOOK | JobType.ONE_TIME>): Promise<void> {
     const { id, data, priority } = params
@@ -80,6 +92,7 @@ async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOO
         priority: priority === 'high' ? 1 : undefined,
     })
 }
+
 async function addDelayedJob(params: AddParams<JobType.DELAYED>): Promise<void> {
     const { id, data, delay } = params
     await bullmqQueues[QueueName.SCHEDULED].add(id, data, {

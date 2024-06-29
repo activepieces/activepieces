@@ -18,7 +18,11 @@ async function executeRepeatingJob({ data, engineToken, workerToken }: Params): 
     const flowVersion = populatedFlow?.version ?? null
     const isStale = await isStaleFlowVersion(populatedFlow, jobType)
     if (isStale) {
-        logger.info(`[FlowQueueConsumer#executeRepeatingJob] Stale flowVersionId=${flowVersionId} ` + `publishedVersionId=${populatedFlow?.publishedVersionId}`)
+        logger.info({
+            message: '[FlowQueueConsumer#executeRepeatingJob]',
+            flowVersionId,
+            publishedVersionId: populatedFlow?.publishedVersionId,
+        }, 'removing stale flow')
         await engineApiService(engineToken).removeStaleFlow({
             flowId: populatedFlow?.id,
             flowVersionId,
