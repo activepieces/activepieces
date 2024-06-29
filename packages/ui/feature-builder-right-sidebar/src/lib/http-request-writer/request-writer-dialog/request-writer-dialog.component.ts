@@ -77,7 +77,6 @@ export class RequestWriterDialogComponent {
             try {
               const result = response.result;
               this.receivedCode$.next(result);
-              this.generatedCodeService.setGeneratedCode(result);
 
               if (this.stepper.selected) {
                 this.stepper.selected.completed = true;
@@ -97,7 +96,8 @@ export class RequestWriterDialogComponent {
   }
 
   useGeneratedCode() {
-    this.dialogRef.close(this.receivedCode$.value);
+    this.generatedCodeService.setGeneratedCode(this.receivedCode$.value);
+    this.dialogRef.close();
   }
 
   private highlightPrism() {
