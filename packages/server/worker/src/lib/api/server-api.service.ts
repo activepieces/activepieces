@@ -1,7 +1,7 @@
 
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, system, SystemProp, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, DisableFlowByEngineRequest, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, UpdateRunProgressRequest } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest } from '@activepieces/shared'
 import axios, { isAxiosError } from 'axios'
 import { StatusCodes } from 'http-status-codes'
 
@@ -77,7 +77,7 @@ export const engineApiService = (engineToken: string) => {
         async updateRunStatus(request: UpdateRunProgressRequest): Promise<void> {
             await client.post('/v1/engine/update-run', request)
         },
-        async removeStaleFlow(request: DisableFlowByEngineRequest): Promise<void> {
+        async removeStaleFlow(request: RemoveStableJobEngineRequest): Promise<void> {
             await client.post('/v1/engine/remove-stable-job', request)
         },
         async getPiece(name: string, options: GetPieceRequestQuery): Promise<PieceMetadataModel> {

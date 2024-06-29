@@ -13,11 +13,11 @@ export const UpdateRunProgressRequest = Type.Object({
 
 export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>
 
-export const DisableFlowByEngineRequest = Type.Object({
+export const RemoveStableJobEngineRequest = Type.Object({
     flowId: Type.Optional(Type.String()),
     flowVersionId: Type.String(),
 })
-export type DisableFlowByEngineRequest = Static<typeof DisableFlowByEngineRequest>
+export type RemoveStableJobEngineRequest = Static<typeof RemoveStableJobEngineRequest>
 export enum GetFlowVersionForWorkerRequestType {
     LATEST = 'LATEST',
     LOCKED = 'LOCKED',
