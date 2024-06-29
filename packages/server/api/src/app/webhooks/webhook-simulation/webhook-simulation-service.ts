@@ -79,17 +79,20 @@ export const webhookSimulationService = {
             await lock.release()
         }
     },
-
-    async get(params: GetParams): Promise<WebhookSimulation> {
+    async get(params: GetParams): Promise<WebhookSimulation | null> {
         logger.debug(params, '[WebhookSimulationService#getByFlowId] params')
 
         const { flowId, projectId } = params
 
-        const webhookSimulation = await webhookSimulationRepo.findOneBy({
+        return webhookSimulationRepo.findOneBy({
             flowId,
             projectId,
         })
-
+    },
+    async getOrThrow(params: GetParams): Promise<WebhookSimulation> {
+        const webhookSimulation = await this.get(params)
+        const { flowId, projectId } = params
+        
         if (isNil(webhookSimulation)) {
             logger.debug('[WebhookSimulationService#getByFlowId] not found')
             throw new ActivepiecesError({
@@ -99,7 +102,6 @@ export const webhookSimulationService = {
                 },
             })
         }
-
         return webhookSimulation
     },
 
@@ -121,7 +123,9 @@ export const webhookSimulationService = {
                 flowId,
                 projectId,
             })
-
+            if (isNil(webhookSimulation)) {
+                return
+            }
             await webhookSideEffects.preDelete({
                 flowId,
                 projectId,
