@@ -25,6 +25,7 @@ import {
   BehaviorSubject,
   Observable,
   distinctUntilChanged,
+  map,
   startWith,
   switchMap,
   take,
@@ -68,6 +69,7 @@ export class AlertsTableComponent implements OnInit {
   );
   updateNotificationsValue$: Observable<unknown>;
   currentProject: ProjectId;
+  selectTriggerDisplayName$: Observable<string | undefined>;
   optionItems: {
     name: NotificationStatus;
     displayName: string;
@@ -102,6 +104,15 @@ export class AlertsTableComponent implements OnInit {
     this.showUpgrade = !(
       this.route.snapshot.data[PLATFORM_RESOLVER_KEY] as Platform
     ).alertsEnabled;
+    this.selectTriggerDisplayName$ = this.notificationControl.valueChanges.pipe(
+      map((value) => {
+        const item = this.optionItems.find((opt) => opt.name === value);
+        if (item) {
+          return $localize`${item.displayName}`;
+        }
+        return undefined;
+      })
+    );
   }
 
   capitalizeChannel(channel: string) {
@@ -165,11 +176,5 @@ export class AlertsTableComponent implements OnInit {
 
   get notificationStatus() {
     return NotificationStatus;
-  }
-
-  get selectTriggerValue() {
-    return this.optionItems.find(
-      (opt) => opt.name === this.notificationControl.value
-    )?.displayName;
   }
 }

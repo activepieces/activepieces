@@ -26,7 +26,7 @@
                 <mat-label>Alerts on Runs Frequency</mat-label>
                 <mat-select i18n-placeholder [formControl]="notificationControl">
                     <mat-select-trigger>
-                        {{selectTriggerValue}}
+                        {{selectTriggerDisplayName$ | async}}
                     </mat-select-trigger>
                     @for (opt of optionItems; track opt.name) {
                     <mat-option i18n [value]="opt.name">
