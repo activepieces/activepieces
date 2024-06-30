@@ -3,6 +3,7 @@ import fsPath from 'path'
 import { isEmpty } from '@activepieces/shared'
 import { enrichErrorContext } from './exception-handler'
 import { exec } from './exec'
+import { fileExists } from './file-system'
 import { logger } from './logger'
 
 type PackageManagerOutput = {
@@ -72,6 +73,13 @@ export const packageManager = {
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {
+        const fExists = await fileExists(fsPath.join(path, 'package.json'))
+        if (fExists) {
+            return {
+                stdout: 'N/A',
+                stderr: 'N/A',
+            }
+        }
         return runCommand(path, 'init')
     },
 
@@ -99,7 +107,7 @@ export const packageManager = {
 
 const replaceRelativeSystemLinkWithAbsolute = async (filePath: string) => {
     try {
-    // Inside the isolate sandbox, the relative path is not valid
+        // Inside the isolate sandbox, the relative path is not valid
 
         const stats = await fs.stat(filePath)
 

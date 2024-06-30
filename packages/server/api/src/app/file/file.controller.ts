@@ -1,27 +1,30 @@
-import { FastifyInstance, FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { fileService } from './file.service'
-import { FileId } from '@activepieces/shared'
+import { PrincipalType } from '@activepieces/shared'
 
-export const fileController = async (fastify: FastifyInstance) => {
-    fastify.get(
-        '/:fileId',
-        async (
-            request: FastifyRequest<{
-                Params: {
-                    fileId: FileId
-                }
-            }>,
-            reply,
-        ) => {
-            const file = await fileService.getOneOrThrow({
-                projectId: request.principal.projectId,
-                fileId: request.params.fileId,
-            })
-            return reply
-                .type('application/zip')
-                .status(StatusCodes.OK)
-                .send(file.data)
-        },
-    )
+export const fileController: FastifyPluginAsyncTypebox = async (app) => {
+    app.get('/:fileId', GetFileRequest, async (request, reply) => {
+        const { fileId } = request.params
+        const file = await fileService.getOneOrThrow({
+            projectId: request.principal.projectId,
+            fileId,
+        })
+        return reply
+            .type('application/zip')
+            .status(StatusCodes.OK)
+            .send(file.data)
+    })
 }
+
+const GetFileRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+    schema: {
+        params: Type.Object({
+            fileId: Type.String(),
+        }),
+    },
+}
+

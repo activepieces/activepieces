@@ -1,5 +1,5 @@
 import { mkdir, writeFile } from 'node:fs/promises'
-import { dirname } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileExists, packageManager } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
@@ -15,8 +15,19 @@ export class RegistryPieceManager extends PieceManager {
         pieces,
     }: InstallParams): Promise<void> {
         await this.savePackageArchivesToDiskIfNotCached(pieces)
-        const dependencies = pieces.map((piece) => this.pieceToDependency(piece))
 
+        const enrichedDependencies = await Promise.all(
+            pieces.map(async (piece) => {
+                const pkg = this.pieceToDependency(piece)
+                const fExists = await fileExists(join(projectPath, 'node_modules', pkg.alias))
+                return { pkg, fExists }
+            }),
+        )
+        const dependencies = enrichedDependencies.filter(({ fExists }) => !fExists).map(({ pkg }) => pkg)
+
+        if (dependencies.length === 0) {
+            return
+        }
         await packageManager.add({
             path: projectPath,
             dependencies,

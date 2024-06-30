@@ -176,9 +176,18 @@
           ]
         },
         "install/setup-ssl",
-        "install/architecture",
         "install/enterprise",
         "install/troubleshooting"
+      ]
+    },
+    {
+      "group": "Architecture",
+      "pages": [
+        "install/architecture/overview",
+        "install/architecture/workers",
+        "install/architecture/engine",
+        "install/architecture/stack"
+        
       ]
     },
     {
@@ -245,7 +254,6 @@
       "pages": [
         "developers/misc/pieces-ci-cd",
         "developers/misc/scale-pieces",
-        "developers/misc/repo-structure",
         "developers/misc/private-fork"
       ]
     },

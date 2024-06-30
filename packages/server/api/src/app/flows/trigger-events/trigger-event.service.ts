@@ -1,11 +1,10 @@
 import dayjs from 'dayjs'
 import { LessThan } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
-import { engineHelper } from '../../helper/engine-helper'
+import {  generateEngineToken } from '../../helper/engine-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
-import { webhookService } from '../../webhooks/webhook-service'
 import { flowService } from '../flow/flow.service'
 import { stepFileService } from '../step-file/step-file.service'
 import { TriggerEventEntity } from './trigger-event.entity'
@@ -25,6 +24,7 @@ import {
     TriggerHookType,
     TriggerType,
 } from '@activepieces/shared'
+import { engineRunner, webhookUtils } from 'server-worker'
 
 export const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
 
@@ -70,10 +70,13 @@ export const triggerEventService = {
                     flowId: flow.id,
                     stepName: trigger.name,
                 })
-                const { result: testResult } = await engineHelper.executeTrigger({
+                const engineToken = await generateEngineToken({
+                    projectId,
+                })
+                const { result: testResult } = await engineRunner.executeTrigger(engineToken, {
                     hookType: TriggerHookType.TEST,
                     flowVersion: flow.version,
-                    webhookUrl: await webhookService.getWebhookUrl({
+                    webhookUrl: await webhookUtils.getWebhookUrl({
                         flowId: flow.id,
                         simulate: true,
                     }),
