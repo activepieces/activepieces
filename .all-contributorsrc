@@ -1172,6 +1172,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Raamyy",
+      "name": "Ramy Gamal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29176293?v=4",
+      "profile": "https://raamyy.netlify.app",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
