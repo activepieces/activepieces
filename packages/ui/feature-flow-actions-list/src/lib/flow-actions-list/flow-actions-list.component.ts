@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { PopulatedFlow, isNil } from '@activepieces/shared';
+import { Permission, PopulatedFlow, isNil } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
 
 import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
@@ -26,6 +26,7 @@ import {
   ImportFlowDialogComponent,
   SyncProjectService,
   UiCommonModule,
+  doesUserHavePermission,
   downloadFlow,
   flowActionsUiInfo,
   flowDeleteNote,
@@ -49,6 +50,7 @@ import { MatMenu } from '@angular/material/menu';
 })
 export class FlowActionsListComponent {
   readonly flowActionsUiInfo = flowActionsUiInfo;
+  hasWritePermission = doesUserHavePermission(Permission.WRITE_FLOW);
   @Input({ required: true }) flow!: PopulatedFlow;
   @Input() showImportAction = false;
   @Input({ required: true }) inBuilder = false;
