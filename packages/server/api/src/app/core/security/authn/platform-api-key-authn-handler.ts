@@ -91,7 +91,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid project id',
+                    message: 'invalid project id for api key',
                 },
             })
         }
@@ -173,7 +173,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid project id',
+                    message: 'invalid project id and platform id',
                 },
             })
         }

@@ -1,4 +1,5 @@
-import { engineHelper } from '../../helper/engine-helper'
+
+import { generateEngineToken } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import {
     ActionType,
@@ -9,6 +10,7 @@ import {
     isNil,
     ProjectId,
     StepRunResponse } from '@activepieces/shared'
+import { engineRunner } from 'server-worker'
 
 export const stepRunService = {
     async create({
@@ -30,12 +32,16 @@ export const stepRunService = {
                 },
             })
         }
-        const { result, standardError, standardOutput } =
-      await engineHelper.executeAction({
-          stepName,
-          flowVersion,
-          projectId,
-      })
+        const engineToken = await generateEngineToken({
+            projectId,
+        })
+
+        const { result, standardError, standardOutput } = await engineRunner.executeAction(engineToken, {
+            stepName,
+            flowVersion,
+            projectId,
+        })
+        
         return {
             success: result.success,
             output: result.output,

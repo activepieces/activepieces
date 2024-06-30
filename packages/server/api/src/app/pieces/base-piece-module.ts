@@ -4,7 +4,7 @@ import {
 } from '@fastify/type-provider-typebox'
 import { flagService } from '../flags/flag.service'
 import { flowService } from '../flows/flow/flow.service'
-import { engineHelper } from '../helper/engine-helper'
+import { generateEngineToken } from '../helper/engine-helper'
 import {
     getPiecePackage,
     pieceMetadataService,
@@ -24,6 +24,7 @@ import {
     PieceOptionRequest,
     PrincipalType,
 } from '@activepieces/shared'
+import { engineRunner } from 'server-worker'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
@@ -141,7 +142,10 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 id: flowId,
                 versionId: flowVersionId,
             })
-            const { result } = await engineHelper.executeProp({
+            const engineToken = await generateEngineToken({
+                projectId,
+            })
+            const { result } = await engineRunner.executeProp(engineToken, {
                 piece: await getPiecePackage(projectId, {
                     packageType,
                     pieceType,

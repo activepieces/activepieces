@@ -1,7 +1,6 @@
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { DataSource, MigrationInterface } from 'typeorm'
-import { getEdition } from '../helper/secret-helper'
 import { commonProperties } from './database-connection'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -119,7 +118,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddUserInvitationSqlite1717943564437,
         AddPremiumPiecesColumnSqlite1717443603235,
     ]
-    const edition = getEdition()
+    const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
         throw new Error(`Edition ${edition} not supported in sqlite3 mode`)
     }

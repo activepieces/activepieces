@@ -44,7 +44,7 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
         '/:id',
         {
             config: {
-                allowedPrincipals: [PrincipalType.WORKER],
+                allowedPrincipals: [PrincipalType.ENGINE],
             },
             schema: {
                 params: Type.Object({
@@ -72,7 +72,7 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                allowedPrincipals: [PrincipalType.WORKER],
+                allowedPrincipals: [PrincipalType.ENGINE],
             },
             schema: {
                 body: StepFileUpsert,
@@ -91,7 +91,7 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
         '/:id',
         {
             config: {
-                allowedPrincipals: [PrincipalType.WORKER],
+                allowedPrincipals: [PrincipalType.ENGINE],
             },
             schema: {
                 params: Type.Object({

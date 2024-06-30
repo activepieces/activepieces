@@ -14,9 +14,6 @@ import {
     SuggestionType,
 } from '@activepieces/shared'
 
-const pieceSource = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
-
-
 const initPieceMetadataService = (): PieceMetadataService => {
     const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
     switch (source) {
@@ -54,27 +51,9 @@ export const getPiecePackage = async (
             }
         }
         case PackageType.REGISTRY: {
-            const directoryPath = await getDirectoryPath(projectId, pkg)
-            return {
-                ...pkg,
-                directoryPath,
-            }
+            return pkg
         }
     }
-}
-
-
-async function getDirectoryPath(projectId: string,
-    pkg: Omit<PublicPiecePackage, 'directoryPath'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>): Promise<string | undefined> {
-    if (pieceSource !== PiecesSource.FILE) {
-        return undefined
-    }
-    const pieceMetadata = await pieceMetadataService.getOrThrow({
-        name: pkg.pieceName,
-        version: pkg.pieceVersion,
-        projectId,
-    })
-    return pieceMetadata.directoryPath
 }
 
 export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | PieceMetadataModel>(

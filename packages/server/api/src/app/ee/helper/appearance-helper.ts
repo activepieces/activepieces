@@ -1,6 +1,6 @@
 import { defaultTheme, generateTheme } from '../../flags/theme'
-import { getEdition } from '../../helper/secret-helper'
 import { platformService } from '../../platform/platform.service'
+import { system } from '@activepieces/server-shared'
 import { ApEdition, isNil, Platform } from '@activepieces/shared'
 
 const getPlatformByIdOrFallback = async (platformId: string | null) => {
@@ -19,7 +19,7 @@ export const appearanceHelper = {
 }
 
 const enterpriseThemeChecker = async (platform: Platform) => {
-    const edition = getEdition()
+    const edition = system.getEdition()
     switch (edition) {
         case ApEdition.COMMUNITY:
             return defaultTheme

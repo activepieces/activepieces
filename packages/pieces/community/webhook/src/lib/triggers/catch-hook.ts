@@ -60,6 +60,9 @@ export const catchWebhook = createTrigger({
       required: false,
       refreshers: ['authType'],
       props: async ({ authType }) => {
+        if (!authType) {
+          return {};
+        }
         const authTypeEnum = authType.toString() as AuthType;
         let fields: DynamicPropsValue = {};
         switch (authTypeEnum) {

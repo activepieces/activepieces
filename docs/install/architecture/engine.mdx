@@ -1,0 +1,18 @@
+---
+title: "Engine" 
+icon: "brain"
+---
+
+The Engine file contains the following types of operations:
+
+- **Extract Piece Metadata**: Extracts metadata when installing new pieces.
+- **Execute Step**: Executes a single test step.
+- **Execute Flow**: Executes a flow.
+- **Execute Property**: Executes dynamic dropdowns or dynamic properties.
+- **Execute Trigger Hook**: Executes actions such as OnEnable, OnDisable, or extracting payloads.
+- **Execute Auth Validation**: Validates the authentication of the connection.
+
+The engine takes the flow JSON with an engine token scoped to this project and implements the API provided for the piece framework, such as:
+- Storage Service: A simple key/value persistent store for the piece framework.
+- File Service: A helper to store files either locally or in a database, such as for testing steps.
+- Fetch Metadata: Retrieves metadata of the current running project.
