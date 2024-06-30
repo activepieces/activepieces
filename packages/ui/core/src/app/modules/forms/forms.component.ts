@@ -16,6 +16,7 @@ import {
   Subject,
   catchError,
   forkJoin,
+  isNil,
   of,
   switchMap,
   tap,
@@ -25,7 +26,6 @@ import { FormResult, FormResultTypes, FormsService } from './forms.service';
 import { StatusCodes } from 'http-status-codes';
 import { getInputKey } from './input-form-control.pipe';
 import { FORMS_RESOLVE_DATA } from './forms.resolver';
-import { isNil } from 'lodash';
 
 @Component({
   selector: 'app-forms',

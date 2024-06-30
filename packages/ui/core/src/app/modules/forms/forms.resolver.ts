@@ -2,13 +2,13 @@ import { inject } from '@angular/core';
 import { ResolveFn, Router } from '@angular/router';
 import {
   FormResponse,
+  isNil,
   TelemetryEventName,
   USE_DRAFT_QUERY_PARAM_NAME,
 } from '@activepieces/shared';
 import { FormsService } from './forms.service';
 import { catchError, tap } from 'rxjs';
 import { TelemetryService } from '@activepieces/ui/common';
-import { isNil } from 'lodash';
 export const FORMS_RESOLVE_DATA = 'FORM';
 export const FormsResolver: ResolveFn<FormResponse> = (route) => {
   const formsService = inject(FormsService);
