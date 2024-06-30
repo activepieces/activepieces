@@ -26,6 +26,7 @@ import {
   EmbeddingService,
   ProjectService,
   doesUserHavePermission,
+  unpermittedTooltip,
 } from '@activepieces/ui/common';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -52,7 +53,8 @@ export class FlowsTableTitleComponent {
   openTemplatesDialog$?: Observable<void>;
   readonly flowActionsUiInfo = flowActionsUiInfo;
   hideFoldersList$ = this.embeddingService.getHideFolders$();
-  isReadOnly = !doesUserHavePermission(Permission.WRITE_FLOW);
+  readonly isReadOnly = !doesUserHavePermission(Permission.WRITE_FLOW);
+  readonly unpermittedTooltip = unpermittedTooltip;
   constructor(
     private store: Store,
     private flowService: FlowService,

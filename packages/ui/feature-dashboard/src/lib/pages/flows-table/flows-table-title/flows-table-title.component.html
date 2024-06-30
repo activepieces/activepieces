@@ -28,15 +28,16 @@
             </div>
         </ng-template>
     </ng-template>
-    @if(!isReadOnly)
-    {
+  
+
         <div class="ap-flex ap-items-center ap-gap-2">
-            <ap-button btnColor="basic" btnSize="medium" *ngIf="currentProject$ | async as proj" [loading]="creatingFlow"
+           
+            <ap-button [disabled]="isReadOnly" [tooltipText]="isReadOnly? unpermittedTooltip: ''" btnColor="basic" btnSize="medium" *ngIf="currentProject$ | async as proj" [loading]="creatingFlow"
                 (buttonClicked)="importFlow(proj.id)">
                 <span class="ap-flex ap-gap-2" i18n><svg-icon [src]="flowActionsUiInfo.import.icon"
                         [class]="flowActionsUiInfo.iconSizeTailWind" [applyClass]="true"> </svg-icon>Import Flow</span>
             </ap-button>
-            <ap-button btnColor="primary" [matMenuTriggerFor]="newFlowMenu" btnSize="medium" [loading]="creatingFlow">
+            <ap-button btnColor="primary" [disabled]="isReadOnly" [tooltipText]="isReadOnly? unpermittedTooltip: ''" [matMenuTriggerFor]="newFlowMenu" btnSize="medium" [loading]="creatingFlow">
                 <div class="ap-flex ap-gap-2 ap-items-center ap-whitespace-nowrap" i18n> New Flow <svg-icon class="ap-fill-white"
                         [applyClass]="true" [svgStyle]="{ width: '16px', height: '16px' }"
                         src="assets/img/custom/chevron.svg">
@@ -59,7 +60,6 @@
                 </button>
             </mat-menu>
         </div>
-    }
   
 
 </div>
