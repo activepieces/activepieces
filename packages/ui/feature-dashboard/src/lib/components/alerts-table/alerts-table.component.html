@@ -5,18 +5,11 @@
         featureKey="ALERTS" videoUrl="https://cdn.activepieces.com/videos/showcase/alerts.mp4"></ap-upgrade-note>
     } @else {
     <div class="ap-h-full">
-        <div class="ap-flex ap-w-full ap-items-center ap-justify-between ap-pt-[0.375rem]">
-            <span class="ap-typography-subtitle-2">Manage recipient emails for alert notifications.</span>
-            <mat-form-field class="ap-mt-2">
-                <mat-label>Alerts Frequency</mat-label>
-                <mat-select i18n-placeholder [formControl]="notificationControl">
-                    <mat-option [value]="notificationStatus.NEW_ISSUE">On New Issue</mat-option>
-                    <mat-option [value]="notificationStatus.ALWAYS">Always</mat-option>
-                    <mat-option [value]="notificationStatus.NEVER">Never</mat-option>
-                </mat-select>
-            </mat-form-field>
+        <div class="ap-w-full ap-pt-[0.375rem]">
+            <span class="ap-typography-subtitle-2">Get periodic alerts for flow failures and manage recipient emails for
+                alert notifications.</span>
         </div>
-        <div class="ap-px-[0.875rem] ap-py-[0.675rem] ap-mb-2 ap-border ap-border-solid ap-border-gray-200">
+        <div class="ap-px-[0.875rem] ap-py-[0.675rem] ap-my-2 ap-border ap-border-solid ap-border-gray-200">
             <div>
                 <h3 class="ap-typography-subtitle-1">Alert Types</h3>
                 <ul class="ap-typography-body-2 ap-ml-4 ap-list-disc">
@@ -26,6 +19,30 @@
                     <!-- <li class="ap-mb-2">Reminders for ongoing issues <strong>(enterprise only)</strong></li> -->
                 </ul>
             </div>
+        </div>
+
+        <div class="ap-mt-4 ap-w-full ap-flex ap-flex-col">
+            <span class="ap-typography-subtitle-1">Settings</span>
+            <mat-form-field class="ap-mt-2 ap-w-[20%]">
+                <mat-label>Alerts on Runs Frequency</mat-label>
+                <mat-select i18n-placeholder [formControl]="notificationControl">
+                    <mat-select-trigger>
+                        {{selectTriggerValue}}
+                    </mat-select-trigger>
+                    @for (opt of optionItems; track opt.name) {
+                    <mat-option i18n [value]="opt.name">
+                        <div class="ap-flex ap-items-center ap-gap-[2px]">
+                            <div>
+                                <div>{{opt.displayName}}</div>
+                                <div class="ap-typography-caption ap-text-description">
+                                    {{opt.description}}
+                                </div>
+                            </div>
+                        </div>
+                    </mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
         </div>
 
         <div class=" ap-min-h-[70%]">

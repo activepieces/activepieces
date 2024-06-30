@@ -68,6 +68,27 @@ export class AlertsTableComponent implements OnInit {
   );
   updateNotificationsValue$: Observable<unknown>;
   currentProject: ProjectId;
+  optionItems: {
+    name: NotificationStatus;
+    displayName: string;
+    description: string;
+  }[] = [
+    {
+      name: NotificationStatus.NEW_ISSUE,
+      displayName: 'On New Issue',
+      description: 'Get run alerts only when a new issue occurs',
+    },
+    {
+      name: NotificationStatus.ALWAYS,
+      displayName: 'Always',
+      description: 'Get alerts for every flow run failure',
+    },
+    {
+      name: NotificationStatus.NEVER,
+      displayName: 'Never',
+      description: 'Disable alerts for flow runs',
+    },
+  ];
   constructor(
     private dialogService: MatDialog,
     private alertsService: AlertsService,
@@ -144,5 +165,11 @@ export class AlertsTableComponent implements OnInit {
 
   get notificationStatus() {
     return NotificationStatus;
+  }
+
+  get selectTriggerValue() {
+    return this.optionItems.find(
+      (opt) => opt.name === this.notificationControl.value
+    )?.displayName;
   }
 }
