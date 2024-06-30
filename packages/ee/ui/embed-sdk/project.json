@@ -26,7 +26,6 @@
         "tsConfig": "packages/ee/ui/embed-sdk/tsconfig.lib.json",
         "assets": [],
         "webpackConfig": "packages/ee/ui/embed-sdk/webpack.config.js",
-        "isolatedConfig": true,
         "generatePackageJson": true,
         "babelUpwardRootMode": true
       },
