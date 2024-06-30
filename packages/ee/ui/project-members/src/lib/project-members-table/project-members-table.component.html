@@ -37,7 +37,6 @@
             {{ member.created | apDate : 'mdhm' }}
           </td>
         </ng-container>
-        @if(!isReadOnly) {
           <ng-container matColumnDef="action">
             <th mat-header-cell *matHeaderCellDef>
             </th>
@@ -46,14 +45,12 @@
                 <ap-icon-button *ngIf="
                     (projectOwnerId$ | async) !== invitation.userId &&
                     (isCurrentUserAdmin$ | async)
-                  " tooltipText="Delete Invitation" i18n-tooltipText iconFilename="trash.svg" color="warn" [width]="20"
+                    
+                  " [buttonDisabled]="isReadOnly" [tooltipText]="deleteInvitationTooltip" iconFilename="trash.svg" color="warn" [width]="20"
                   [height]="20" (buttonClicked)="deleteInvitation(invitation)"></ap-icon-button>
               </div>
             </td>
-          </ng-container>
-  
-        }
-    
+          </ng-container>    
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>

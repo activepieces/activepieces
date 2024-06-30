@@ -6,8 +6,9 @@ import {
   AuthenticationService,
   PROJECT_ROLE_DISABLED_RESOLVER_KEY,
   ProjectService,
-  TablePermissionsEnforcer,
+  TableCore,
   UserInvitationService,
+  unpermittedTooltip,
 } from '@activepieces/ui/common';
 import { RolesDisplayNames } from '../utils';
 import { ActivatedRoute } from '@angular/router';
@@ -32,10 +33,7 @@ export type UserInvitedOrMember = {
   styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProjectMembersTableComponent
-  extends TablePermissionsEnforcer
-  implements OnInit
-{
+export class ProjectMembersTableComponent extends TableCore implements OnInit {
   dataSource!: ProjectMembersTableDataSource;
   dialogClosed$: Observable<void> | undefined;
   deleteInvitation$: Observable<void> | undefined;
@@ -44,12 +42,14 @@ export class ProjectMembersTableComponent
   inviteLoading = false;
   isFeatureLocked = false;
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
-
+  isReadOnly = !this.hasPermission(Permission.WRITE_INVITATION);
+  readonly deleteInvitationTooltip = this.isReadOnly
+    ? unpermittedTooltip
+    : $localize`Delete Invitation`;
   title = $localize`Project Members`;
   RolesDisplayNames = RolesDisplayNames;
   upgradeNoteTitle = $localize`Bring Your Team`;
   upgradeNote = $localize`Invite your teammates to a project, assigning the appropriate roles and permissions for building and debugging flows.`;
-  isReadOnly = !this.hasPermission(Permission.WRITE_INVITATION);
   constructor(
     private projectService: ProjectService,
     private projectMemberService: ProjectMemberService,
@@ -59,13 +59,7 @@ export class ProjectMembersTableComponent
     private activatedRoute: ActivatedRoute
   ) {
     super({
-      permissionsAndTheirColumns: [
-        {
-          permission: Permission.WRITE_INVITATION,
-          permissionColumns: ['action'],
-        },
-      ],
-      tableColumns: ['email', 'role', 'status', 'created'],
+      tableColumns: ['email', 'role', 'status', 'created', 'action'],
     });
   }
   ngOnInit(): void {
