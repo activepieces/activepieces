@@ -26,13 +26,13 @@ export const declareRegistrationFolderServicedone = createAction({
     trainingDuration: Property.Number({
       displayName: 'Durée totale de la formation',
       description:
-        "précise la durée totale de la formation afin de calculer le % d'absence",
+        "Précise la durée totale de la formation afin de calculer le % d'absence",
       required: false,
     }),
     code: Property.ShortText({
       displayName: 'Code de sortie de formation',
       description:
-        'Sélectionner la proprieté {code} du bloc Raisons de sortie de formation',
+        'Sélectionner la propriété {code} du bloc Raisons de sortie de formation',
       required: false,
     }),
   },

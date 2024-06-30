@@ -3,12 +3,12 @@ import { wedofAuth } from '../../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wedofCommon } from '../../common/wedof';
 
-export const billRegistrationFolder = createAction({
+export const updateCompletionRate = createAction({
   auth: wedofAuth,
-  name: 'billRegistrationFolder',
-  displayName: 'Facturer le dossier de formation',
+  name: 'updateCompletionRate',
+  displayName: "Mettre à jour l'assiduité d'un apprenant",
   description:
-    'Associe le dossier de formation à un n° de facture et transmets les informations de facturation au financeur (EDOF par exemple)',
+    "Mettre à jour le taux d'avancement en % d'assiduité d'un apprenant pour un Dossier de formation donné.",
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',
@@ -16,33 +16,24 @@ export const billRegistrationFolder = createAction({
         'Sélectionner la propriété {externalId} du dossier de formation',
       required: true,
     }),
-    billNumber: Property.ShortText({
-      displayName: 'N° de facture',
-      description: 'N° de la facture à associer',
+    completionRate: Property.Number({
+      displayName: "Taux d'avancement",
+      description: "Taux d'avancement en % compris entre 0% et 100%. Uniquement sous format d'un entier. Uniquement possible à l'état En formation et Sortie de formation",
       required: true,
-    }),
-    vatRate: Property.Number({
-      displayName: 'TVA',
-      description:
-        'Permet de forcer un Taux de TVA en %. Par défaut la TVA est calculée à partir des données du dossier de formation',
-      required: false,
     }),
   },
   async run(context) {
     const message = {
-      billNumber: context.propsValue.billNumber,
-      vatRate: context.propsValue.vatRate,
+        completionRate: context.propsValue.completionRate,
     };
-
     return (
       await httpClient.sendRequest({
-        method: HttpMethod.POST,
+        method: HttpMethod.PUT,
+        body: message,
         url:
           wedofCommon.baseUrl +
           '/registrationFolders/' +
-          context.propsValue.externalId +
-          '/billing',
-        body: message,
+          context.propsValue.externalId,
         headers: {
           'Content-Type': 'application/json',
           'X-Api-Key': context.auth as string,
