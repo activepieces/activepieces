@@ -37,15 +37,31 @@ const extractClientRealIp = (request: FastifyRequest): string => {
     return request.headers[CLIENT_REAL_IP_HEADER] as string
 }
 
-const getApiUrl = async (): Promise<string> => {
-    const environment = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
-    let url = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
-    if (extractHostname(url) == 'localhost' && environment === ApEnvironment.PRODUCTION) {
-        url = `http://${(await getPublicIp()).ip}`
-    }
+const appendSlashAndApi = (url: string): string => {
     const slash = url.endsWith('/') ? '' : '/'
     return `${url}${slash}api/`
 }
+
+const getApiUrlForTheWorker = (): string => {
+    if (system.isApp()) {
+        return 'http://127.0.0.1:3000'
+    }
+    const url = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
+    return appendSlashAndApi(url)
+}
+
+const getApiUrl = async (): Promise<string> => {
+    const environment = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
+    let url = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
+    
+    if (extractHostname(url) === 'localhost' && environment === ApEnvironment.PRODUCTION) {
+        url = `http://${(await getPublicIp()).ip}`
+    }
+
+    return appendSlashAndApi(url)
+}
+
+
 
 function extractHostname(url: string): string | null {
     try {
@@ -60,4 +76,5 @@ function extractHostname(url: string): string | null {
 export const networkUtls = {
     getApiUrl,
     extractClientRealIp,
+    getApiUrlFromEnvironment: getApiUrlForTheWorker,
 }
