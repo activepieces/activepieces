@@ -7,11 +7,15 @@ import {
 } from '@activepieces/ui/common';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Output,
+} from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { RequestWriterDialogComponent } from './request-writer-dialog/request-writer-dialog.component';
-import { GeneratedCodeService } from './request-writer-dialog/request-writer-dialog.service';
 
 @Component({
   selector: 'app-http-request-writer',
@@ -21,17 +25,16 @@ import { GeneratedCodeService } from './request-writer-dialog/request-writer-dia
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HttpRequestWriterComponent {
-  dialogClosed$?: Observable<unknown>;
+  @Output() httpRequestGenerated = new EventEmitter<Record<string, unknown>>();
+  dialogClosed$?: Observable<Record<string, unknown>>;
   generateCodeEnabled$: Observable<boolean>;
   showGenerateCode$: Observable<boolean>;
   codeGeneratorTooltip = codeGeneratorTooltip;
   disabledCodeGeneratorTooltip = disabledCodeGeneratorTooltip;
-  generatedCode$: Observable<string | null>;
 
   constructor(
     private dialogService: MatDialog,
-    private flagService: FlagService,
-    private generatedCodeService: GeneratedCodeService
+    private flagService: FlagService
   ) {
     this.generateCodeEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.COPILOT_ENABLED
@@ -39,10 +42,17 @@ export class HttpRequestWriterComponent {
     this.showGenerateCode$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COPILOT
     );
-    this.generatedCode$ = this.generatedCodeService.getGeneratedCode$();
   }
 
   openCodeWriterDialog() {
-    this.dialogService.open(RequestWriterDialogComponent);
+    const dialogRef = this.dialogService.open(RequestWriterDialogComponent);
+
+    this.dialogClosed$ = dialogRef.afterClosed().pipe(
+      tap((result) => {
+        if (result) {
+          this.httpRequestGenerated.emit(result);
+        }
+      })
+    );
   }
 }

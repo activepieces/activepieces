@@ -1,12 +1,6 @@
 import { HighlightService, UiCommonModule } from '@activepieces/ui/common';
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  Output,
-  ViewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -16,7 +10,6 @@ import {
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
-import { GeneratedCodeService } from './request-writer-dialog.service';
 import { RequestWriterService } from './request-writer.service';
 @Component({
   selector: 'app-request-writer-dialog',
@@ -27,7 +20,6 @@ import { RequestWriterService } from './request-writer.service';
 })
 export class RequestWriterDialogComponent {
   @ViewChild(MatStepper) stepper: MatStepper;
-  @Output() codeGenerated = new EventEmitter<string>();
   promptForm: FormGroup<{
     prompt: FormControl<string>;
     reference: FormControl<string>;
@@ -41,7 +33,6 @@ export class RequestWriterDialogComponent {
     private highlightService: HighlightService,
     private formBuilder: FormBuilder,
     private requestWriterService: RequestWriterService,
-    private generatedCodeService: GeneratedCodeService,
     private dialogRef: MatDialogRef<RequestWriterDialogComponent>
   ) {
     this.promptForm = this.formBuilder.group({
@@ -76,7 +67,7 @@ export class RequestWriterDialogComponent {
             // this.promptForm.controls.reference.setValue('');
             try {
               const result = response.result;
-              this.receivedCode$.next(result);
+              this.receivedCode$.next(JSON.parse(result));
 
               if (this.stepper.selected) {
                 this.stepper.selected.completed = true;
@@ -96,8 +87,7 @@ export class RequestWriterDialogComponent {
   }
 
   useGeneratedCode() {
-    this.generatedCodeService.setGeneratedCode(this.receivedCode$.value);
-    this.dialogRef.close();
+    this.dialogRef.close(this.receivedCode$.value);
   }
 
   private highlightPrism() {

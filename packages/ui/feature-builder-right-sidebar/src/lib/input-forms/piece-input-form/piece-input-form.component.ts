@@ -62,7 +62,9 @@ import { InputFormCore } from '../input-form-core';
     @if (deps$ | async; as deps) { @if (deps.currentStep?.type ===
     ActionType.PIECE && deps.currentStep?.settings.pieceName ===
     "@activepieces/piece-http") {
-    <app-http-request-writer></app-http-request-writer>
+    <app-http-request-writer
+      (httpRequestGenerated)="httpRequestGenerated($event)"
+    ></app-http-request-writer>
     }
 
     <app-action-or-trigger-dropdown
@@ -483,5 +485,27 @@ export class PieceInputFormComponent extends InputFormCore {
     } catch (e) {
       return value;
     }
+  }
+
+  convertHeadersToKeyValuePairs(headersString: string) {
+    const headersArray = headersString
+      .split(',')
+      .map((header) => header.trim());
+    const headersObject = {} as Record<string, unknown>;
+
+    headersArray.forEach((header) => {
+      const [key, value] = header.split(':').map((item) => item.trim());
+      headersObject[key] = value;
+    });
+
+    return headersObject;
+  }
+
+  httpRequestGenerated(request: Record<string, any>): void {
+    const headers = this.convertHeadersToKeyValuePairs(request['headers']);
+    this.form.patchValue({
+      ...request,
+      headers,
+    });
   }
 }
