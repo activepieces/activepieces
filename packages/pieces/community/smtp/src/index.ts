@@ -87,13 +87,13 @@ export const smtp = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/smtp.png',
   categories: [PieceCategory.CORE],
   authors: [
+    'tahboubali',
     'abaza738',
     'kishanprmr',
     'MoShizzle',
     'khaledmashaly',
     'abuaboud',
-    'pfernandez98',
-    'tahboubali'
+    'pfernandez98'
   ],
   auth: smtpAuth,
   actions: [sendEmail],
