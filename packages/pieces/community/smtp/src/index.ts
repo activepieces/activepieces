@@ -93,6 +93,7 @@ export const smtp = createPiece({
     'khaledmashaly',
     'abuaboud',
     'pfernandez98',
+    'tahboubali'
   ],
   auth: smtpAuth,
   actions: [sendEmail],
