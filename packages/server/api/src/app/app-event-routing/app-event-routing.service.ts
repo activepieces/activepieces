@@ -1,5 +1,4 @@
 import { databaseConnection } from '../database/database-connection'
-import { getServerUrl } from '../helper/network-utils'
 import {
     AppEventRouting,
     AppEventRoutingEntity,
@@ -67,13 +66,5 @@ export const appEventRoutingService = {
             projectId,
             flowId,
         })
-    },
-    async getAppWebhookUrl({
-        appName,
-    }: {
-        appName: string
-    }): Promise<string | undefined> {
-        const frontendUrl = await getServerUrl()
-        return `${frontendUrl}v1/app-events/${appName}`
     },
 }

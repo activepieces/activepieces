@@ -21,7 +21,7 @@ import {
   jsonValidator,
 } from '@activepieces/ui/common';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { BehaviorSubject, Observable, distinctUntilChanged, tap } from 'rxjs';
+import { Observable, distinctUntilChanged, tap } from 'rxjs';
 import deepEqual from 'deep-equal';
 import { PopulatedFlow } from '@activepieces/shared';
 import { createFormControlsWithTheirValidators } from './properties-controls-helper';
@@ -63,7 +63,6 @@ export class PiecePropertiesFormComponent
   readonly EMPTY_SPACE_BETWEEN_INPUTS_IN_PIECE_PROPERTIES_FORM =
     EMPTY_SPACE_BETWEEN_INPUTS_IN_PIECE_PROPERTIES_FORM;
   emitNewChanges$?: Observable<unknown>;
-  stepChanged$ = new BehaviorSubject('');
   constructor(private fb: UntypedFormBuilder) {
     super();
   }
@@ -80,9 +79,6 @@ export class PiecePropertiesFormComponent
       stepName?.currentValue !== stepName?.previousValue
     ) {
       this.initializeForm();
-      if (stepName?.currentValue !== stepName?.previousValue) {
-        this.stepChanged$.next(stepName.currentValue);
-      }
     }
   }
 

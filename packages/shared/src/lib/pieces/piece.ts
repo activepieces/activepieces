@@ -26,7 +26,6 @@ export const PublicPiecePackage = Type.Object({
     pieceType: Type.Enum(PieceType),
     pieceName: Type.String(),
     pieceVersion: Type.String(),
-    directoryPath: Type.Union([Type.Undefined(), Type.String()]),
 })
 
 export type PublicPiecePackage = Static<typeof PublicPiecePackage>

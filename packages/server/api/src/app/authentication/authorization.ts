@@ -9,7 +9,7 @@ import {
 
 // TODO REMOVE
 export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
-    if (request.principal.type !== PrincipalType.WORKER) {
+    if (request.principal.type !== PrincipalType.ENGINE) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {},

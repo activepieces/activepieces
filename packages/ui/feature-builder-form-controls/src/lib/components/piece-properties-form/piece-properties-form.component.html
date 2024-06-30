@@ -140,7 +140,7 @@
             [pieceMetaData]="pieceMetaData"
             [propertyName]="property.key + ''"
             [property]="property.value"
-            [stepChanged$]="stepChanged$.asObservable()"
+            [stepName]="stepName"
           ></app-refreshable-dropdown-control>
         }
         @case (PropertyType.MULTI_SELECT_DROPDOWN) {
@@ -154,7 +154,7 @@
             [pieceMetaData]="pieceMetaData"
             [propertyName]="property.key + ''"
             [property]="property.value"
-            [stepChanged$]="stepChanged$.asObservable()"
+            [stepName]="stepName"
           ></app-refreshable-dropdown-control>
         }
         @case (PropertyType.CHECKBOX) {
@@ -212,7 +212,7 @@
             [stepMetaDataForMentions]="stepMetaDataForMentions"
             [hideCustomizedInputs]="hideCustomizedInputs"
             (customizedInputsChanged)="dynamicPropertyCustomizedInputsChangedHandler($event)"
-            [stepChanged$]="stepChanged$.asObservable()"
+            [stepName]="stepName"
           ></app-dynamic-property-control>
         }
         @case (PropertyType.ARRAY) {

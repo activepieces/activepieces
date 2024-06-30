@@ -3,11 +3,11 @@ import formBody from '@fastify/formbody'
 import fastifyMultipart from '@fastify/multipart'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
+import dayjs from 'dayjs'
 import fastify, { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
 import fastifySocketIO from 'fastify-socket.io'
-import { isNil } from 'lodash'
 import qs from 'qs'
 import { Socket } from 'socket.io'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
@@ -61,6 +61,9 @@ import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
+import { flowConsumer } from './flow-worker/consumer'
+import { webhookResponseWatcher } from './flow-worker/helper/webhook-response-watcher'
+import { workerModule } from './flow-worker/worker-module'
 import { formModule } from './flows/flow/form/form.module'
 import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
@@ -69,11 +72,9 @@ import { stepFileModule } from './flows/step-file/step-file.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
-import { encryptUtils } from './helper/encryption'
 import { errorHandler } from './helper/error-handler'
 import { jwtUtils } from './helper/jwt-utils'
 import { openapiModule } from './helper/openapi/openapi.module'
-import { getEdition } from './helper/secret-helper'
 import { systemJobsSchedule } from './helper/system-jobs'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
@@ -89,26 +90,25 @@ import { userModule } from './user/user.module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
-import { flowQueueConsumer } from './workers/flow-worker/consumer/flow-queue-consumer'
-import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
-import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-bullboard'
-import { webhookResponseWatcher } from './workers/flow-worker/webhook-response-watcher'
 import {
     GitRepoWithoutSensitiveData,
     ProjectMember,
 } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { initializeSentry, logger, QueueMode, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
+import { encryptUtils, initializeSentry, logger, QueueMode, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
 import {
     ApEdition,
     apId,
     AppConnectionWithoutSensitiveData,
     Flow,
     FlowRun,
+    isNil,
+    PrincipalType,
     ProjectWithLimits,
     spreadIfDefined,
     UserInvitation,
 } from '@activepieces/shared'
+import { flowWorker } from 'server-worker'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -256,13 +256,14 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(formModule)
     await app.register(tagsModule)
     await pieceSyncService.setup()
-    await app.register(flowWorkerModule)
+
+    const workerToken = await generateWorkerToken()
+    await app.register(workerModule(workerToken))
     await app.register(platformUserModule)
     await app.register(issuesModule)
     await app.register(authnSsoSamlModule)
     await app.register(alertsModule)
     await app.register(invitationModule)
-    await setupBullMQBoard(app)
 
     app.get(
         '/redirect',
@@ -296,7 +297,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     )
     await validateEnvPropsOnStartup()
 
-    const edition = getEdition()
+    const edition = system.getEdition()
     logger.info(`Activepieces ${edition} Edition`)
     switch (edition) {
         case ApEdition.CLOUD:
@@ -373,7 +374,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     }
 
     app.addHook('onClose', async () => {
-        await flowQueueConsumer.close()
+        await flowWorker.close()
+        await flowConsumer.close()
         await systemJobsSchedule.close()
         await webhookResponseWatcher.shutdown()
     })
@@ -406,4 +408,15 @@ async function getAdapter() {
             return createAdapter(pub, sub)
         }
     }
+}
+
+async function generateWorkerToken() {
+    return accessTokenManager.generateToken({
+        id: apId(),
+        type: PrincipalType.WORKER,
+        projectId: apId(),
+        platform: {
+            id: apId(),
+        },
+    }, dayjs.duration(10, 'year').asSeconds())
 }

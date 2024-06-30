@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
-import { logger, packageManager } from '@activepieces/server-shared'
-import { PackageType, PiecePackage } from '@activepieces/shared'
+import { filePiecesUtils, logger, packageManager } from '@activepieces/server-shared'
+import { assertEqual, assertNotNullOrUndefined, PackageType, PiecePackage } from '@activepieces/shared'
 import { PieceManager } from './piece-manager'
 
 
@@ -30,18 +30,15 @@ export class LocalPieceManager extends PieceManager {
         await linkFrameworkPackages(projectPath, baseLinkPath, frameworkPackages)
 
         for (const piece of pieces) {
-            if (piece.packageType === PackageType.REGISTRY) {
-                const directoryPath = piece.directoryPath
-                await updatePackageJson(directoryPath!, frameworkPackages)
-                await packageManager.link({
-                    packageName: piece.pieceName,
-                    path: projectPath,
-                    linkPath: directoryPath!,
-                })
-            }
-            else {
-                throw new Error('Pieces in local piece manager must be of type REGISTRY.')
-            }
+            assertEqual(piece.packageType, PackageType.REGISTRY, 'packageType', `Piece ${piece.pieceName} is not of type REGISTRY`)
+            const directoryPath = await filePiecesUtils.findDirectoryByPackageName(piece.pieceName)
+            assertNotNullOrUndefined(directoryPath, `directoryPath for ${piece.pieceName} is null or undefined`)
+            await updatePackageJson(directoryPath, frameworkPackages)
+            await packageManager.link({
+                packageName: piece.pieceName,
+                path: projectPath,
+                linkPath: directoryPath,
+            })
         }
     }
 }

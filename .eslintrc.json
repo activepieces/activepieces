@@ -18,6 +18,12 @@
               }
             ]
           }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["lodash", "lodash/*"]
+          }
         ]
       }
     },

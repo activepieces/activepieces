@@ -1,8 +1,7 @@
 import dayjs from 'dayjs'
 import { Equal, FindOperator, ILike } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
-import { encryptUtils } from '../../helper/encryption'
-import { engineHelper } from '../../helper/engine-helper'
+import { generateEngineToken } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -16,9 +15,10 @@ import {
 } from '../app-connection.entity'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { encryptUtils, exceptionHandler, logger, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
+    ApEnvironment,
     apId,
     AppConnection,
     AppConnectionId,
@@ -37,6 +37,7 @@ import {
     ValidateConnectionNameRequestBody,
     ValidateConnectionNameResponse,
 } from '@activepieces/shared'
+import { engineRunner } from 'server-worker'
 
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
@@ -294,6 +295,10 @@ function decryptConnection(
 const engineValidateAuth = async (
     params: EngineValidateAuthParams,
 ): Promise<void> => {
+    const environment = system.getOrThrow(SystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
+        return
+    }
     const { pieceName, auth, projectId } = params
 
     const pieceMetadata = await pieceMetadataService.getOrThrow({
@@ -302,7 +307,10 @@ const engineValidateAuth = async (
         version: undefined,
     })
 
-    const engineResponse = await engineHelper.executeValidateAuth({
+    const engineToken = await generateEngineToken({
+        projectId,
+    })
+    const engineResponse = await engineRunner.executeValidateAuth(engineToken, {
         piece: await getPiecePackage(projectId, {
             pieceName,
             pieceVersion: pieceMetadata.version,

@@ -61,6 +61,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ImgFallbackDirective } from './directives/image-fallback.directive';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
+import { MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS } from '@angular/material/button-toggle';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { ArrayFormControlComponent } from './components/array-form-control/array-form-control.component';
 import { UpgradeNoteComponent } from '././components/upgrade-note/upgrade-note.component';
@@ -205,6 +206,13 @@ export function markedOptionsFactory() {
   ],
   providers: [
     { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 2500 } },
+    {
+      provide: MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS,
+      useValue: {
+        hideMultipleSelectionIndicator: true,
+        hideSingleSelectionIndicator: true,
+      },
+    },
     {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
       useValue: { appearance: 'outline' },

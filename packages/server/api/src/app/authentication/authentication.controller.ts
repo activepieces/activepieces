@@ -1,7 +1,6 @@
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { eventsHooks } from '../helper/application-events'
-import { getEdition } from '../helper/secret-helper'
 import { resolvePlatformIdForAuthnRequest } from '../platform/platform-utils'
 import { authenticationService } from './authentication-service'
 import { Provider } from './authentication-service/hooks/authentication-service-hooks'
@@ -14,7 +13,7 @@ import {
     SignUpRequest,
 } from '@activepieces/shared'
 
-const edition = getEdition()
+const edition = system.getEdition()
 
 export const authenticationController: FastifyPluginAsyncTypebox = async (
     app,

@@ -6,6 +6,16 @@ export function isNil<T>(value: T | null | undefined): value is null | undefined
     return value === null || value === undefined
 }
 
+export function kebabCase(str: string): string {
+    return str
+        .replace(/([a-z])([A-Z])/g, '$1-$2') // Handle camelCase by adding hyphen between lowercase and uppercase letters
+        .replace(/\s+/g, '-')                // Replace spaces with hyphens
+        .replace(/_/g, '-')                  // Replace underscores with hyphens
+        .toLowerCase()                       // Convert to lowercase
+        .replace(/^-+|-+$/g, '')            // Remove leading and trailing hyphens
+}
+
+
 export function isEmpty<T>(value: T | null | undefined): boolean {
     if (value == null) {
         return true
@@ -21,6 +31,25 @@ export function isEmpty<T>(value: T | null | undefined): boolean {
 
     return false
 }
+
+export function startCase(str: string): string {
+    return str
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/^[a-z]/, match => match.toUpperCase())
+        .replace(/\b[a-z]/g, match => match.toUpperCase())
+}
+
+export function camelCase(str: string): string {
+    return str
+        .replace(/([-_][a-z])/g, group => group.toUpperCase()
+            .replace('-', '')
+            .replace('_', ''))
+}
+
+
+
 
 export function pickBy<T extends Record<string, unknown>>(
     object: T,

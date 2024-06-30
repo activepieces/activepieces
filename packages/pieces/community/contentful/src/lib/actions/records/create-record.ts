@@ -5,8 +5,15 @@ import {
 } from '@activepieces/pieces-framework';
 import { ContentfulAuth, PropertyKeys, makeClient } from '../../common';
 import { ContentfulProperty } from '../../properties';
-import keyBy from 'lodash/keyBy';
 import { FieldProcessors } from '../../properties/processors';
+
+function keyBy<T>(array: T[], key: keyof T): { [key: string]: T } {
+  return (array || []).reduce((result, item) => {
+    const keyValue = key ? item[key] : (item as unknown as string);
+    result[keyValue as unknown as string] = item;
+    return result;
+  }, {} as { [key: string]: T });
+}
 
 export const ContentfulCreateRecordAction = createAction({
   name: 'contentful_record_create',

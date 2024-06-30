@@ -24,7 +24,7 @@ export const webhookSimulationController: FastifyPluginCallbackTypebox = (
         const { flowId } = req.query
         const { projectId } = req.principal
 
-        return webhookSimulationService.get({
+        return webhookSimulationService.getOrThrow({
             flowId,
             projectId,
         })

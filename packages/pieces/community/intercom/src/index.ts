@@ -8,6 +8,8 @@ import { PieceCategory } from '@activepieces/shared';
 import { createContact } from './lib/actions/create-contact.action';
 import { getOrCreateContact } from './lib/actions/create-or-get-contact.action';
 import { sendMessage } from './lib/actions/send-message.action';
+import crypto from 'node:crypto';
+import { noteAddedToConversation } from './lib/triggers/note-added-to-conversation';
 
 export const intercomAuth = PieceAuth.OAuth2({
   authUrl: 'https://app.intercom.com/oauth',
@@ -23,8 +25,15 @@ export const intercom = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/intercom.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: intercomAuth,
-  triggers: [],
-  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  triggers: [noteAddedToConversation],
+  authors: [
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+    'AdamSelene',
+  ],
   actions: [
     getOrCreateContact,
     createContact,
@@ -37,4 +46,27 @@ export const intercom = createPiece({
       }),
     }),
   ],
+  events: {
+    parseAndReply: ({ payload }) => {
+      const payloadBody = payload.body as PayloadBody;
+      return {
+        event: payloadBody.topic,
+        identifierValue: payloadBody.app_id,
+      };
+    },
+    verify: ({ payload, webhookSecret }) => {
+      const signature = payload.headers['x-hub-signature'];
+      const hmac = crypto.createHmac('sha1', webhookSecret);
+      hmac.update(`${payload.rawBody}`);
+      const computedSignature = `sha1=${hmac.digest('hex')}`;
+      return signature === computedSignature;
+    },
+  },
 });
+
+type PayloadBody = {
+  type: string;
+  topic: string;
+  id: string;
+  app_id: string;
+};
