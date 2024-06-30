@@ -76,7 +76,7 @@
   <div class="ap-typography-body-1 ap-text-description ap-mb-4" i18n>
       Here is the code our AI wrote for you. Ask for changes or use the code in your action.
   </div>
-  <ng-template #codeResult>{{ receivedCode$ | async }}</ng-template>
+  <ng-template #codeResult>{{ receivedCode$ | async | json }}</ng-template>
   <div class="ap-mb-4">
       <pre *ngIf="prisimFix === false"
           class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card "><code class="language-js"><ng-container *ngTemplateOutlet="codeResult"> </ng-container></code></pre>
