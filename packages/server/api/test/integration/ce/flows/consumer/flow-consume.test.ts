@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
-import { setupApp } from '../../../../../src/app/app'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { generateEngineToken } from '../../../../../src/app/helper/engine-helper'
+import { setupServer } from '../../../../../src/app/server'
 import {
     createMockFlow,
     createMockFlowRun,
@@ -29,7 +29,7 @@ let app: FastifyInstance | null = null
 
 beforeAll(async () => {
     await databaseConnection.initialize()
-    app = await setupApp()
+    app = await setupServer()
     await app.listen({
         host: '0.0.0.0',
         port: 3000,

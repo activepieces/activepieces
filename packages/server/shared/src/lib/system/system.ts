@@ -25,6 +25,12 @@ export enum PiecesSource {
     FILE = 'FILE',
 }
 
+export enum ContainerType  {
+    WORKER = 'WORKER',
+    APP = 'APP',
+    WORKER_AND_APP = 'WORKER_AND_APP',
+}
+
 export enum QueueMode {
     REDIS = 'REDIS',
     MEMORY = 'MEMORY',
@@ -44,7 +50,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.CODE_SANDBOX_TYPE]: CodeSandboxType.NO_OP,
     [SystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
     [SystemProp.DB_TYPE]: DatabaseType.POSTGRES,
-    [SystemProp.EDITION]: 'ce',
+    [SystemProp.EDITION]: ApEdition.COMMUNITY,
+    [SystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
     [SystemProp.EXECUTION_DATA_RETENTION_DAYS]: '14',
     [SystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
     [SystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
@@ -128,6 +135,16 @@ export const system = {
     },
     getEdition(): ApEdition {
         return this.getOrThrow<ApEdition>(SystemProp.EDITION)
+    },
+    isWorker(): boolean {
+        return [ContainerType.WORKER, ContainerType.WORKER_AND_APP].includes(
+            this.getOrThrow<ContainerType>(SystemProp.CONTAINER_TYPE),
+        )
+    },
+    isApp(): boolean {
+        return [ContainerType.APP, ContainerType.WORKER_AND_APP].includes(
+            this.getOrThrow<ContainerType>(SystemProp.CONTAINER_TYPE),
+        )
     },
 }
 

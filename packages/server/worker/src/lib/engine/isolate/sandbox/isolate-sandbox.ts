@@ -6,7 +6,7 @@ import { fileExists, getEngineTimeout, logger, PiecesSource, system, SystemProp 
 import { assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 import { ExecuteSandboxResult } from '../../engine-runner'
 
-export type SandboxCtorParams = {
+type SandboxCtorParams = {
     boxId: number
 }
 

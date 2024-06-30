@@ -1,9 +1,9 @@
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
+import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockApiKey,
@@ -32,7 +32,7 @@ let app: FastifyInstance | null = null
 
 beforeAll(async () => {
     await databaseConnection.initialize()
-    app = await setupApp()
+    app = await setupServer()
 })
 
 afterAll(async () => {

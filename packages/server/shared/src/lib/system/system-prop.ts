@@ -86,4 +86,7 @@ export enum SystemProp {
     CLOUDFLARE_AUTH_EMAIL = 'CLOUDFLARE_AUTH_EMAIL',
     CLOUDFLARE_ZONE_ID = 'CLOUDFLARE_ZONE_ID',
     CLOUDFLARE_API_KEY = 'CLOUDFLARE_API_KEY',
+
+    // Workers & App Variables, (Work In Progress)
+    CONTAINER_TYPE = 'CONTAINER_TYPE',
 }
