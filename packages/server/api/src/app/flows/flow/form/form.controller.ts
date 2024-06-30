@@ -9,7 +9,7 @@ import {
 
 export const formController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:flowId', GetFormRequest, async (request) => {
-        return formService.getFormByFlowIdOrThrow(request.params.flowId, request.query.useDraft)
+        return formService.getFormByFlowIdOrThrow(request.params.flowId, request.query.useDraft ?? false)
     })
 }
 

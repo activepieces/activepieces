@@ -28,6 +28,13 @@ export const onFormSubmission = createTrigger({
     about: Property.MarkDown({
       value: markdown,
     }),
+    waitForResponse: Property.Checkbox({
+      displayName: 'Wait for Response',
+      description:
+        'If enabled, the form will return the flow output to the frontend. Make sure to use the Return Response action to return a response.',
+      defaultValue: false,
+      required: true,
+    }),
     inputs: Property.Array({
       displayName: 'Inputs',
       required: true,
@@ -57,13 +64,6 @@ export const onFormSubmission = createTrigger({
           required: true,
         }),
       },
-    }),
-    waitForResponse: Property.Checkbox({
-      displayName: 'Wait for Response',
-      description:
-        'If enabled, the form will return the flow output to the frontend. Make sure to use the Return Response action to return a response.',
-      defaultValue: true,
-      required: true,
     }),
   },
   sampleData: {},
