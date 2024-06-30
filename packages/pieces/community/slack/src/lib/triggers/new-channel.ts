@@ -37,7 +37,7 @@ export const channelCreated = createTrigger({
     const response = await client.conversations.list({
       exclude_archived: true,
       limit: 10,
-      types: 'public_channel',
+      types: 'public_channel,private_channel',
     });
     if (!response.channels) {
       return [];
