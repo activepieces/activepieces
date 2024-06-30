@@ -4,7 +4,6 @@
   "dependencies": {
     "@activepieces/pieces-framework": "*",
     "@activepieces/pieces-common": "*",
-    "crypto-js": "4.2.0",
     "dayjs": "1.11.9",
     "lodash": "4.17.21",
     "tslib": "2.6.2",

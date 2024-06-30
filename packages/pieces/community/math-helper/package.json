@@ -3,7 +3,7 @@
   "version": "0.0.8",
   "dependencies": {
     "@activepieces/pieces-framework": "0.7.31",
-    "@activepieces/shared": "0.10.106",
+    "@activepieces/shared": "0.10.108",
     "tslib": "2.6.2"
   }
 }
