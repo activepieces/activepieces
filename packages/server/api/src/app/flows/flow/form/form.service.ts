@@ -1,5 +1,6 @@
 import { flowVersionService } from '../../flow-version/flow-version.service'
 import { flowRepo } from '../flow.repo'
+import { logger } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, FlowId, FormInputType, FormResponse, isNil, PopulatedFlow } from '@activepieces/shared'
 
 const FORMS_PIECE_NAME = '@activepieces/piece-forms'
@@ -22,8 +23,8 @@ const FORMS_TRIGGER_NAMES = [
 ]
 
 export const formService = {
-    getFormByFlowIdOrThrow: async (flowId: string): Promise<FormResponse> => {
-        const flow = await getPopulatedFlowById(flowId)
+    getFormByFlowIdOrThrow: async (flowId: string, useDraft: boolean): Promise<FormResponse> => {
+        const flow = await getPopulatedFlowById(flowId, useDraft)
         if (!flow
             || !FORMS_TRIGGER_NAMES.includes(flow.version.trigger.settings.triggerName)
             || flow.version.trigger.settings.pieceName !== FORMS_PIECE_NAME) {
@@ -35,33 +36,25 @@ export const formService = {
                 },
             })
         }
+        logger.info(flow.version.trigger.settings)
         const triggerName = flow.version.trigger.settings.triggerName
-        if (triggerName === FILE_TRIGGER) {
-            return {
-                id: flow.id,
-                title: flow.version.displayName,
-                props: SIMPLE_FILE_PROPS,
-                projectId: flow.projectId,
-            }
-        }
         return {
             id: flow.id,
             title: flow.version.displayName,
-            props: flow.version.trigger.settings.input,
+            props: triggerName === FILE_TRIGGER ? SIMPLE_FILE_PROPS : flow.version.trigger.settings.input,
             projectId: flow.projectId,
         }
     },
 }
 
-
-async function getPopulatedFlowById(id: FlowId): Promise<PopulatedFlow | null> {
+async function getPopulatedFlowById(id: FlowId, useDraft: boolean): Promise<PopulatedFlow | null> {
     const flow = await flowRepo().findOneBy({ id })
-    if (isNil(flow)) {
+    if (isNil(flow) || (isNil(flow.publishedVersionId) && !useDraft)) {
         return null
     }
     const flowVersion = await flowVersionService.getFlowVersionOrThrow({
         flowId: id,
-        versionId: undefined,
+        versionId: useDraft ? undefined : flow.publishedVersionId!,
     })
     return {
         ...flow,
