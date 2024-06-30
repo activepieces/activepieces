@@ -72,18 +72,18 @@ export const requestWriterService = {
                         type: 'object',
                         properties: {
                             method: { type: 'string' },
-                            baseURL: { type: 'string' },
+                            url: { type: 'string' },
                             queryParams: { 
                                 type: 'string',
                             },
                             body: { 
                                 type: 'string',
                             },
-                            headers: { 
+                            headers: {
                                 type: 'string',
                             },
                         },
-                        required: ['method', 'baseURL'],
+                        required: ['method', 'url'],
                     },
                 },
             },
