@@ -1,7 +1,7 @@
 import { EngineHttpResponse, EngineOperationType, ProgressUpdateType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { system } from '../system/system'
-import { SystemProp } from '../system/system-prop'
+import { SharedSystemProp } from '../system/system-prop'
 import { DelayedJobData, JobData } from './job-data'
 
 export enum JobType {
@@ -83,8 +83,8 @@ export type GetRunForWorkerRequest = Static<typeof GetRunForWorkerRequest>
 export const ResumeRunRequest = DelayedJobData
 export type ResumeRunRequest = Static<typeof ResumeRunRequest>
 
-export const flowTimeoutSandbox = system.getNumber(SystemProp.FLOW_TIMEOUT_SECONDS) ?? system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
-export const triggerTimeoutSandbox = system.getNumber(SystemProp.TRIGGER_TIMEOUT_SECONDS) ?? 60
+export const flowTimeoutSandbox = system.getNumber(SharedSystemProp.FLOW_TIMEOUT_SECONDS) ?? system.getNumber(SharedSystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
+export const triggerTimeoutSandbox = system.getNumber(SharedSystemProp.TRIGGER_TIMEOUT_SECONDS) ?? 60
 
 
 export function getEngineTimeout(operationType: EngineOperationType): number {

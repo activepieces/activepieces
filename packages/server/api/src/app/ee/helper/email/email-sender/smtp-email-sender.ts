@@ -4,7 +4,7 @@ import nodemailer, { Transporter } from 'nodemailer'
 import { defaultTheme } from '../../../../flags/theme'
 import { platformService } from '../../../../platform/platform.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import { isNil, Platform } from '@activepieces/shared'
 
 const isSmtpConfigured = (platform: Platform | null): boolean => {
@@ -13,7 +13,7 @@ const isSmtpConfigured = (platform: Platform | null): boolean => {
     }
 
     const isPlatformSmtpConfigured = !isNil(platform) && isConfigured(platform.smtpHost, platform.smtpPort?.toString(), platform.smtpUser, platform.smtpPassword)
-    const isSmtpSystemConfigured = isConfigured(system.get(SystemProp.SMTP_HOST), system.get(SystemProp.SMTP_PORT), system.get(SystemProp.SMTP_USERNAME), system.get(SystemProp.SMTP_PASSWORD))
+    const isSmtpSystemConfigured = isConfigured(system.get(AppSystemProp.SMTP_HOST), system.get(AppSystemProp.SMTP_PORT), system.get(AppSystemProp.SMTP_USERNAME), system.get(AppSystemProp.SMTP_PASSWORD))
 
     return isPlatformSmtpConfigured || isSmtpSystemConfigured
 }
@@ -27,8 +27,8 @@ export const smtpEmailSender: SMTPEmailSender = {
     async send({ emails, platformId, templateData }) {
         const platform = await getPlatform(platformId)
         const emailSubject = getEmailSubject(templateData.name, templateData.vars)
-        const senderName = platform?.name ?? system.get(SystemProp.SMTP_SENDER_NAME)
-        const senderEmail = platform?.smtpSenderEmail ?? system.get(SystemProp.SMTP_SENDER_EMAIL)
+        const senderName = platform?.name ?? system.get(AppSystemProp.SMTP_SENDER_NAME)
+        const senderEmail = platform?.smtpSenderEmail ?? system.get(AppSystemProp.SMTP_SENDER_EMAIL)
 
         if (!isSmtpConfigured(platform)) {
             return
@@ -73,12 +73,12 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
 
 const initSmtpClient = (platform: Platform | null): Transporter => {
     return nodemailer.createTransport({
-        host: platform?.smtpHost ?? system.getOrThrow(SystemProp.SMTP_HOST),
-        port: platform?.smtpPort ?? Number.parseInt(system.getOrThrow(SystemProp.SMTP_PORT)),
-        secure: platform?.smtpUseSSL ?? system.getBoolean(SystemProp.SMTP_USE_SSL),
+        host: platform?.smtpHost ?? system.getOrThrow(AppSystemProp.SMTP_HOST),
+        port: platform?.smtpPort ?? Number.parseInt(system.getOrThrow(AppSystemProp.SMTP_PORT)),
+        secure: platform?.smtpUseSSL ?? system.getBoolean(AppSystemProp.SMTP_USE_SSL),
         auth: {
-            user: platform?.smtpUser ?? system.getOrThrow(SystemProp.SMTP_USERNAME),
-            pass: platform?.smtpPassword ?? system.getOrThrow(SystemProp.SMTP_PASSWORD),
+            user: platform?.smtpUser ?? system.getOrThrow(AppSystemProp.SMTP_USERNAME),
+            pass: platform?.smtpPassword ?? system.getOrThrow(AppSystemProp.SMTP_PASSWORD),
         },
     })
 }

@@ -1,4 +1,4 @@
-import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment, isNil } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import { extractProvisionCacheKey, ProvisionCacheInfo, SandBoxCacheType } from '../provisioner/sandbox-cache-key'
@@ -49,7 +49,7 @@ const sandboxNoCachePool = {
     },
 }
 
-export const sandboxCachePool = system.get(SystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT ? sandboxNoCachePool : sandboxKeyCachePool
+export const sandboxCachePool = system.get(SharedSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT ? sandboxNoCachePool : sandboxKeyCachePool
 
 const getOrThrow = ({ key }: GetOrThrowParams): CachedSandbox => {
     const cachedSandbox = cachedSandboxes.get(key)

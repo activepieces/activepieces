@@ -4,19 +4,19 @@ import { FastifyAdapter } from '@bull-board/fastify'
 import basicAuth from '@fastify/basic-auth'
 import { FastifyInstance } from 'fastify'
 import { bullMqGroups } from './redis-queue'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, logger, system } from '@activepieces/server-shared'
 import { ApEdition, isNil } from '@activepieces/shared'
 
 const QUEUE_BASE_PATH = '/ui'
 
 export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     const edition = system.getEdition()
-    const isQueueEnabled = (edition !== ApEdition.CLOUD) && (system.getBoolean(SystemProp.QUEUE_UI_ENABLED) ?? false)
+    const isQueueEnabled = (edition !== ApEdition.CLOUD) && (system.getBoolean(AppSystemProp.QUEUE_UI_ENABLED) ?? false)
     if (!isQueueEnabled) {
         return
     }
-    const queueUsername = system.getOrThrow(SystemProp.QUEUE_UI_USERNAME)
-    const queuePassword = system.getOrThrow(SystemProp.QUEUE_UI_PASSWORD)
+    const queueUsername = system.getOrThrow(AppSystemProp.QUEUE_UI_USERNAME)
+    const queuePassword = system.getOrThrow(AppSystemProp.QUEUE_UI_PASSWORD)
     logger.info(
         '[setupBullMQBoard] Setting up bull board, visit /ui to see the queues',
     )

@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises'
-import { encryptUtils, logger, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
+import { hashUtils, logger, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
 import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
@@ -197,7 +197,7 @@ async function getSandboxForAction(
                 type: SandBoxCacheType.CODE,
                 flowId,
                 name: action.name,
-                sourceCodeHash: encryptUtils.hashObject(action.settings.sourceCode),
+                sourceCodeHash: hashUtils.hashObject(action.settings.sourceCode),
                 codeSteps: [
                     {
                         name: action.name,

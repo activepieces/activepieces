@@ -8,7 +8,7 @@ import {
     CustomDomainStatus,
     ListCustomDomainsRequest,
 } from '@activepieces/ee-shared'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { SharedSystemProp, system } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
 
 type HostnameDetailsResponse = {
@@ -20,7 +20,7 @@ type HostnameDetailsResponse = {
 const customDomainRepo =
     databaseConnection.getRepository<CustomDomain>(CustomDomainEntity)
 
-const isCloudEdition = system.getEdition() === ApEdition.CLOUD && system.getOrThrow(SystemProp.ENVIRONMENT) !== ApEnvironment.TESTING
+const isCloudEdition = system.getEdition() === ApEdition.CLOUD && system.getOrThrow(SharedSystemProp.ENVIRONMENT) !== ApEnvironment.TESTING
 
 export const customDomainService = {
     async delete(request: { id: string, platformId: string }): Promise<void> {

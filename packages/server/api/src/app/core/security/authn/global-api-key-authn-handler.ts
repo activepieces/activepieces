@@ -1,6 +1,6 @@
 import { FastifyRequest } from 'fastify'
 import { BaseSecurityHandler } from '../security-handler'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -11,7 +11,7 @@ import {
 
 export class GlobalApiKeyAuthnHandler extends BaseSecurityHandler {
     private static readonly HEADER_NAME = 'api-key'
-    private static readonly API_KEY = system.get(SystemProp.API_KEY)
+    private static readonly API_KEY = system.get(AppSystemProp.API_KEY)
 
     protected canHandle(request: FastifyRequest): Promise<boolean> {
         const routeMatches =

@@ -1,9 +1,9 @@
 import { copyFile } from 'node:fs/promises'
-import { fileExists, logger, system, SystemProp } from '@activepieces/server-shared'
+import { fileExists, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 
 const engineExecutablePath = system.getOrThrow(
-    SystemProp.ENGINE_EXECUTABLE_PATH,
+    SharedSystemProp.ENGINE_EXECUTABLE_PATH,
 )
 
 /**
@@ -12,7 +12,7 @@ const engineExecutablePath = system.getOrThrow(
 export const engineInstaller = {
     async install({ path }: InstallParams): Promise<void> {
         logger.debug({ path }, '[engineInstaller#install]')
-        const isDev = system.getOrThrow(SystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT
+        const isDev = system.getOrThrow(SharedSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT
 
         const engineFileExists = await fileExists(`${path}/main.js`)
         if (!engineFileExists || isDev) {

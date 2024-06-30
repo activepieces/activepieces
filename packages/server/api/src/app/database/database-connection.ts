@@ -42,10 +42,10 @@ import { UserInvitationEntity } from '../user-invitations/user-invitation.entity
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, DatabaseType, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 
-const databaseType = system.get(SystemProp.DB_TYPE)
+const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
     const edition = system.getEdition()
@@ -106,7 +106,7 @@ function getEntities(): EntitySchema<unknown>[] {
 }
 
 const getSynchronize = (): boolean => {
-    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
 
     const value: Partial<Record<ApEnvironment, boolean>> = {
         [ApEnvironment.TESTING]: true,
@@ -131,7 +131,7 @@ export function APArrayContains<T extends ObjectLiteral>(
     values: string[],
     query: SelectQueryBuilder<T>,
 ): SelectQueryBuilder<T> {
-    const databaseType = system.get(SystemProp.DB_TYPE)
+    const databaseType = system.get(AppSystemProp.DB_TYPE)
     switch (databaseType) {
         case DatabaseType.POSTGRES:
             return query.andWhere({

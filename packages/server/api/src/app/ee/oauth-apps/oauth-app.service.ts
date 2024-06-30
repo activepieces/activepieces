@@ -1,4 +1,5 @@
 import { databaseConnection } from '../../database/database-connection'
+import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { OAuthAppEntity, OAuthAppWithSecret } from './oauth-app.entity'
@@ -7,7 +8,6 @@ import {
     OAuthApp,
     UpsertOAuth2AppRequest,
 } from '@activepieces/ee-shared'
-import { encryptUtils } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,

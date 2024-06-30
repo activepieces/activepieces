@@ -6,7 +6,7 @@ import {
     WhereExpressionBuilder,
 } from 'typeorm'
 import { atob, btoa, decodeByType, encodeByType } from './pagination-utils'
-import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, DatabaseType, system } from '@activepieces/server-shared'
 
 export enum Order {
     ASC = 'ASC',
@@ -130,7 +130,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
         where: WhereExpressionBuilder,
         cursors: CursorParam,
     ): void {
-        const dbType = system.get(SystemProp.DB_TYPE)
+        const dbType = system.get(AppSystemProp.DB_TYPE)
         const operator = this.getOperator()
         let queryString: string
 

@@ -1,10 +1,10 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { licenseKeysService } from './license-keys-service'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import { CreateTrialLicenseKeyRequestBody, isNil, PrincipalType } from '@activepieces/shared'
 
-const key = system.get<string>(SystemProp.LICENSE_KEY)
+const key = system.get<string>(AppSystemProp.LICENSE_KEY)
 
 export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
 

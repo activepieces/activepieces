@@ -7,12 +7,12 @@ import { systemJobsSchedule } from '../helper/system-jobs'
 import { PieceMetadataEntity } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, logger, system } from '@activepieces/server-shared'
 import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const piecesRepo = repoFactory(PieceMetadataEntity)
-const syncMode = system.get<PieceSyncMode>(SystemProp.PIECES_SYNC_MODE)
+const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
 export const pieceSyncService = {
     async setup(): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {

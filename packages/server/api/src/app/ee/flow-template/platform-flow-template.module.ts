@@ -5,7 +5,7 @@ import { platformService } from '../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { flowTemplateService } from './flow-template.service'
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -71,7 +71,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
 }
 async function resolveTemplatesPlatformId(principal: Principal, platformId: string): Promise<string> {
     if (principal.type === PrincipalType.UNKNOWN) {
-        return system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID)
+        return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
     }
     const platform = await platformService.getOneOrThrow(platformId)
     return platform.id

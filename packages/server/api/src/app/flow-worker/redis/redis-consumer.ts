@@ -3,14 +3,13 @@ import dayjs from 'dayjs'
 import { createRedisClient } from '../../database/redis-connection'
 import { ConsumerManager } from '../consumer/consumer-manager'
 import { queueHelper } from '../queue/queue-manager'
-import { flowTimeoutSandbox, JobStatus, QueueName, system, SystemProp, triggerTimeoutSandbox } from '@activepieces/server-shared'
+import { flowTimeoutSandbox, JobStatus, QueueName, triggerTimeoutSandbox } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 
 type ConsumerGroup = Record<string, Worker>
 const consumerGroups: Record<string, ConsumerGroup> = {}
 
 const serverId = apId()
-const WORKER_CONCURRENCY = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
 
 export const redisConsumer: ConsumerManager = {
     async poll(groupId, jobType) {
@@ -40,16 +39,10 @@ export const redisConsumer: ConsumerManager = {
         }
     },
     async init(): Promise<void> {
-        if (WORKER_CONCURRENCY === 0) {
-            return
-        }
         const sharedConsumers = Object.values(QueueName).map((queueName) => ensureWorkerExists(null, queueName))
         await Promise.all(sharedConsumers)
     },
     async close(): Promise<void> {
-        if (WORKER_CONCURRENCY === 0) {
-            return
-        }
         const promises = Object.values(consumerGroups).map((consumerGroup) => {
             return Promise.all(Object.values(consumerGroup).map((consumer) => consumer.close()))
         })

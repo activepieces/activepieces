@@ -7,7 +7,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs'
 import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
 import { UserEntity } from '../../user/user-entity'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import { Platform } from '@activepieces/shared'
 
 const userRepo = databaseConnection.getRepository(UserEntity)
@@ -53,7 +53,7 @@ async function sendUsageReport(reports: UsageReport[]): Promise<void> {
 }
 
 async function constructUsageReport(platform: Platform, startDate: string, endDate: string): Promise<UsageReport> {
-    const licenseKey = system.getOrThrow(SystemProp.LICENSE_KEY)
+    const licenseKey = system.getOrThrow(AppSystemProp.LICENSE_KEY)
     const version = await flagService.getCurrentRelease()
     const addedProjects = await getAddedProjects(platform.id, startDate, endDate)
     const addedUsers = await getAddedUsers(platform.id, startDate, endDate)

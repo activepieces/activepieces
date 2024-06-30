@@ -8,7 +8,7 @@ import {
     isNil,
     PieceSyncMode,
 } from '@activepieces/shared'
-import { SystemProp } from './system-prop'
+import { AppSystemProp, SharedSystemProp, SystemProp, WorkerSystemProps } from './system-prop'
 
 
 export enum CopilotInstanceTypes {
@@ -42,39 +42,39 @@ export enum DatabaseType {
 }
 
 const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
-    [SystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: 'true',
-    [SystemProp.API_RATE_LIMIT_AUTHN_MAX]: '50',
-    [SystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: '1 minute',
-    [SystemProp.CLIENT_REAL_IP_HEADER]: 'x-real-ip',
-    [SystemProp.CLOUD_AUTH_ENABLED]: 'true',
-    [SystemProp.CODE_SANDBOX_TYPE]: CodeSandboxType.NO_OP,
-    [SystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
-    [SystemProp.DB_TYPE]: DatabaseType.POSTGRES,
-    [SystemProp.EDITION]: ApEdition.COMMUNITY,
-    [SystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
-    [SystemProp.EXECUTION_DATA_RETENTION_DAYS]: '14',
-    [SystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
-    [SystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
-    [SystemProp.AZURE_OPENAI_API_VERSION]: '2023-06-01-preview',
-    [SystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
-    [SystemProp.ENVIRONMENT]: 'prod',
-    [SystemProp.EXECUTION_MODE]: 'UNSANDBOXED',
-    [SystemProp.FLOW_WORKER_CONCURRENCY]: '10',
-    [SystemProp.LOG_LEVEL]: 'info',
-    [SystemProp.LOG_PRETTY]: 'false',
-    [SystemProp.PACKAGE_ARCHIVE_PATH]: 'dist/archives',
-    [SystemProp.PIECES_SOURCE]: PiecesSource.CLOUD_AND_DB,
-    [SystemProp.QUEUE_MODE]: QueueMode.REDIS,
-    [SystemProp.SANDBOX_MEMORY_LIMIT]: '524288',
+    [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: 'true',
+    [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: '50',
+    [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: '1 minute',
+    [AppSystemProp.CLIENT_REAL_IP_HEADER]: 'x-real-ip',
+    [AppSystemProp.CLOUD_AUTH_ENABLED]: 'true',
+    [SharedSystemProp.CODE_SANDBOX_TYPE]: CodeSandboxType.NO_OP,
+    [AppSystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
+    [AppSystemProp.DB_TYPE]: DatabaseType.POSTGRES,
+    [SharedSystemProp.EDITION]: ApEdition.COMMUNITY,
+    [SharedSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
+    [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '14',
+    [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
+    [AppSystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
+    [AppSystemProp.AZURE_OPENAI_API_VERSION]: '2023-06-01-preview',
+    [SharedSystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
+    [SharedSystemProp.ENVIRONMENT]: 'prod',
+    [SharedSystemProp.EXECUTION_MODE]: 'UNSANDBOXED',
+    [WorkerSystemProps.FLOW_WORKER_CONCURRENCY]: '10',
+    [SharedSystemProp.LOG_LEVEL]: 'info',
+    [SharedSystemProp.LOG_PRETTY]: 'false',
+    [SharedSystemProp.PACKAGE_ARCHIVE_PATH]: 'dist/archives',
+    [SharedSystemProp.PIECES_SOURCE]: PiecesSource.CLOUD_AND_DB,
+    [AppSystemProp.QUEUE_MODE]: QueueMode.REDIS,
+    [SharedSystemProp.SANDBOX_MEMORY_LIMIT]: '524288',
     /*
      @deprecated, replease with FLOW_TIMEOUT_SECONDS
     */
-    [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
-    [SystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
-    [SystemProp.TELEMETRY_ENABLED]: 'true',
-    [SystemProp.TEMPLATES_SOURCE_URL]:
+    [SharedSystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
+    [SharedSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
+    [AppSystemProp.TELEMETRY_ENABLED]: 'true',
+    [AppSystemProp.TEMPLATES_SOURCE_URL]:
         'https://cloud.activepieces.com/api/v1/flow-templates',
-    [SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
+    [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
 }
 
 export const system = {
@@ -134,16 +134,16 @@ export const system = {
         return value
     },
     getEdition(): ApEdition {
-        return this.getOrThrow<ApEdition>(SystemProp.EDITION)
+        return this.getOrThrow<ApEdition>(SharedSystemProp.EDITION)
     },
     isWorker(): boolean {
         return [ContainerType.WORKER, ContainerType.WORKER_AND_APP].includes(
-            this.getOrThrow<ContainerType>(SystemProp.CONTAINER_TYPE),
+            this.getOrThrow<ContainerType>(SharedSystemProp.CONTAINER_TYPE),
         )
     },
     isApp(): boolean {
         return [ContainerType.APP, ContainerType.WORKER_AND_APP].includes(
-            this.getOrThrow<ContainerType>(SystemProp.CONTAINER_TYPE),
+            this.getOrThrow<ContainerType>(SharedSystemProp.CONTAINER_TYPE),
         )
     },
 }

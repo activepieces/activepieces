@@ -5,7 +5,7 @@ import { resolvePlatformIdForAuthnRequest } from '../platform/platform-utils'
 import { authenticationService } from './authentication-service'
 import { Provider } from './authentication-service/hooks/authentication-service-hooks'
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
@@ -57,10 +57,10 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
 
 const rateLimitOptions: RateLimitOptions = {
     max: Number.parseInt(
-        system.getOrThrow(SystemProp.API_RATE_LIMIT_AUTHN_MAX),
+        system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_MAX),
         10,
     ),
-    timeWindow: system.getOrThrow(SystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
+    timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
 }
 
 const SignUpRequestOptions = {

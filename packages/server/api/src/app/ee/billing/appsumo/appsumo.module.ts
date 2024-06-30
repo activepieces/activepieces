@@ -3,16 +3,16 @@ import { Static, Type } from '@sinclair/typebox'
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appsumoService } from './appsumo.service'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 
 export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(appsumoController, { prefix: '/v1/appsumo' })
 }
 
-const exchangeCredentialUsername = system.get(SystemProp.APPSUMO_TOKEN)
-const exchangeCredentialPassword = system.get(SystemProp.APPSUMO_TOKEN)
-const token = system.get(SystemProp.APPSUMO_TOKEN)
+const exchangeCredentialUsername = system.get(AppSystemProp.APPSUMO_TOKEN)
+const exchangeCredentialPassword = system.get(AppSystemProp.APPSUMO_TOKEN)
+const token = system.get(AppSystemProp.APPSUMO_TOKEN)
 
 const ActionRequest = Type.Object({
     action: Type.String(),

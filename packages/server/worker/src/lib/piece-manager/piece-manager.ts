@@ -1,5 +1,5 @@
 import { resolve } from 'node:path'
-import { enrichErrorContext, PackageInfo, system, SystemProp } from '@activepieces/server-shared'
+import { enrichErrorContext, PackageInfo, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     getPackageAliasForPiece,
     getPackageArchivePathForPiece,
@@ -9,7 +9,7 @@ import {
 } from '@activepieces/shared'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(
-    system.getOrThrow(SystemProp.PACKAGE_ARCHIVE_PATH),
+    system.getOrThrow(SharedSystemProp.PACKAGE_ARCHIVE_PATH),
 )
 
 export abstract class PieceManager {

@@ -1,6 +1,6 @@
 
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, system, SystemProp, UpdateJobRequest } from '@activepieces/server-shared'
+import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SharedSystemProp, SubmitPayloadsRequest, system, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest } from '@activepieces/shared'
 import axios, { isAxiosError } from 'axios'
 import { StatusCodes } from 'http-status-codes'
@@ -86,7 +86,7 @@ export const engineApiService = (engineToken: string) => {
             })).data
         },
         async checkTaskLimit(): Promise<void> {
-            const edition = system.getOrThrow(SystemProp.EDITION)
+            const edition = system.getOrThrow(SharedSystemProp.EDITION)
             if (edition === ApEdition.COMMUNITY) {
                 return
             }

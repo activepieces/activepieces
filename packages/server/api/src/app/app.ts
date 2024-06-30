@@ -66,6 +66,7 @@ import { stepFileModule } from './flows/step-file/step-file.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
+import { encryptUtils } from './helper/encryption'
 import { jwtUtils } from './helper/jwt-utils'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { systemJobsSchedule } from './helper/system-jobs'
@@ -89,7 +90,7 @@ import {
     ProjectMember,
 } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { encryptUtils, logger, QueueMode, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, logger, QueueMode, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     ApEdition,
     ApEnvironment,
@@ -325,7 +326,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
 
 const validateEnvPropsOnStartup = async (): Promise<void> => {
-    const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
+    const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
     await encryptUtils.loadEncryptionKey(queueMode)
 
     const jwtSecret = await jwtUtils.getJwtSecret()
@@ -337,7 +338,7 @@ const validateEnvPropsOnStartup = async (): Promise<void> => {
 }
 
 async function getAdapter() {
-    const queue = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
+    const queue = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
     switch (queue) {
         case QueueMode.MEMORY: {
             return undefined
@@ -361,10 +362,10 @@ export async function appPostBoot(): Promise<void> {
 / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
-The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.`)
+The application started on ${system.get(SharedSystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.`)
 
-    const environment = system.get(SystemProp.ENVIRONMENT)
-    const piecesSource = system.getOrThrow(SystemProp.PIECES_SOURCE)
+    const environment = system.get(SharedSystemProp.ENVIRONMENT)
+    const piecesSource = system.getOrThrow(SharedSystemProp.PIECES_SOURCE)
     const pieces = process.env.AP_DEV_PIECES
 
     logger.warn(
@@ -382,7 +383,7 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
     if (!isNil(oldestPlatform)) {
         await licenseKeysService.verifyKeyAndApplyLimits({
             platformId: oldestPlatform.id,
-            license: system.get<string>(SystemProp.LICENSE_KEY),
+            license: system.get<string>(AppSystemProp.LICENSE_KEY),
         })
     }
 }
