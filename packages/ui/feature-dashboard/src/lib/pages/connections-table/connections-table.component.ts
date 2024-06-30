@@ -31,7 +31,8 @@ import {
   CONNECTION_NAME_QUERY_PARAM,
   PIECE_NAME_QUERY_PARAM,
   AppConnectionsService,
-  TablePermissionsEnforcer,
+  TableCore,
+  unpermittedTooltip,
 } from '@activepieces/ui/common';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { NewConnectionDialogComponent } from '../../components/dialogs/new-connection-dialog/new-connection-dialog.component';
@@ -43,10 +44,7 @@ import { FormControl } from '@angular/forms';
   templateUrl: './connections-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConnectionsTableComponent
-  extends TablePermissionsEnforcer
-  implements OnInit
-{
+export class ConnectionsTableComponent extends TableCore implements OnInit {
   @ViewChild(AddEditConnectionButtonComponent)
   createConnectionButton!: AddEditConnectionButtonComponent;
   @ViewChild(ApPaginatorComponent, { static: true })
@@ -55,6 +53,11 @@ export class ConnectionsTableComponent
   dataSource!: ConnectionsTableDataSource;
   refreshTableForReruns$: Subject<boolean> = new Subject();
   title = $localize`Connections`;
+  isReadOnly = !this.hasPermission(Permission.WRITE_APP_CONNECTION);
+  readonly unpermittedTooltip = unpermittedTooltip;
+  readonly deleteConnectionTooltip = this.isReadOnly
+    ? unpermittedTooltip
+    : $localize`Delete Connection`;
   newConnectionPiece?: PieceMetadataModelSummary;
   newConnectionDialogClosed$?: Observable<PieceMetadataModelSummary>;
   deleteConnectionDialogClosed$?: Observable<void>;
@@ -71,7 +74,6 @@ export class ConnectionsTableComponent
   searchControl: FormControl<string> = new FormControl<string>('', {
     nonNullable: true,
   });
-  isReadOnly = !this.hasPermission(Permission.WRITE_APP_CONNECTION);
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
@@ -80,13 +82,7 @@ export class ConnectionsTableComponent
     private dialogService: MatDialog
   ) {
     super({
-      permissionsAndTheirColumns: [
-        {
-          permission: Permission.WRITE_APP_CONNECTION,
-          permissionColumns: ['action'],
-        },
-      ],
-      tableColumns: ['app', 'name', 'status', 'created', 'updated'],
+      tableColumns: ['app', 'name', 'status', 'created', 'updated', 'action'],
     });
     this.connectionNameFilterControl.setValue(
       this.activatedRoute.snapshot.queryParamMap.get(
