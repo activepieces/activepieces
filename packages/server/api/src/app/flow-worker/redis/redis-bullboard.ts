@@ -13,6 +13,7 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     const edition = system.getEdition()
     const isQueueEnabled = (edition !== ApEdition.CLOUD) && (system.getBoolean(AppSystemProp.QUEUE_UI_ENABLED) ?? false)
     if (!isQueueEnabled) {
+        logger.info('[setupBullMQBoard] Queue UI is disabled')
         return
     }
     const queueUsername = system.getOrThrow(AppSystemProp.QUEUE_UI_USERNAME)

@@ -31,7 +31,7 @@ const getSecret = async (): Promise<string> => {
     if (secret !== null) {
         return secret
     }
-    secret = system.get(SharedSystemProp.JWT_SECRET) ?? null
+    secret = system.get(AppSystemProp.JWT_SECRET) ?? null
 
     if (queueMode === QueueMode.MEMORY) {
         if (isNil(secret)) {
@@ -46,24 +46,24 @@ const getSecret = async (): Promise<string> => {
             {
                 code: ErrorCode.SYSTEM_PROP_INVALID,
                 params: {
-                    prop: SharedSystemProp.JWT_SECRET,
+                    prop: AppSystemProp.JWT_SECRET,
                 },
             },
-            `System property AP_${SharedSystemProp.JWT_SECRET} must be defined`,
+            `System property AP_${AppSystemProp.JWT_SECRET} must be defined`,
         )
     }
     return secret
 }
 
 const getSecretFromStore = async (): Promise<string | null> => {
-    return localFileStore.load(SharedSystemProp.JWT_SECRET)
+    return localFileStore.load(AppSystemProp.JWT_SECRET)
 }
 
 const generateAndStoreSecret = async (): Promise<string> => {
     const secretLengthInBytes = 32
     const secretBuffer = await promisify(randomBytes)(secretLengthInBytes)
     const secret = secretBuffer.toString('base64')
-    await localFileStore.save(SharedSystemProp.JWT_SECRET, secret)
+    await localFileStore.save(AppSystemProp.JWT_SECRET, secret)
     return secret
 }
 

@@ -43,6 +43,7 @@ export enum AppSystemProp {
     SMTP_SENDER_NAME = 'SMTP_SENDER_NAME',
     SMTP_SENDER_EMAIL = 'SMTP_SENDER_EMAIL',
     SMTP_USE_SSL = 'SMTP_USE_SSL',
+    JWT_SECRET = 'JWT_SECRET',
     TELEMETRY_ENABLED = 'TELEMETRY_ENABLED',
     TEMPLATES_SOURCE_URL = 'TEMPLATES_SOURCE_URL',
     TRIGGER_DEFAULT_POLL_INTERVAL = 'TRIGGER_DEFAULT_POLL_INTERVAL',
@@ -73,9 +74,6 @@ export enum SharedSystemProp  {
     FLOW_TIMEOUT_SECONDS = 'FLOW_TIMEOUT_SECONDS',
     APP_WEBHOOK_SECRETS = 'APP_WEBHOOK_SECRETS',
 
-    // TODO this should be removed and moved back to the app
-    JWT_SECRET = 'JWT_SECRET',
-
     /**
      * @deprecated It's replaced now with flow timeout and trigger timeout.
      */
@@ -103,4 +101,5 @@ export enum SharedSystemProp  {
 
 export enum WorkerSystemProps {
     FLOW_WORKER_CONCURRENCY = 'FLOW_WORKER_CONCURRENCY',
+    WORKER_TOKEN = 'WORKER_TOKEN',
 }
