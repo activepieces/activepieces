@@ -1,16 +1,17 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { PopulatedFlow } from '@activepieces/shared';
+import { Permission, PopulatedFlow } from '@activepieces/shared';
 import {
   PushToGitDialogComponent,
   PushToGitDialogData,
 } from '../dialogs/push-to-git-dialog/push-to-git-dialog.component';
 import { Observable, map, switchMap, tap } from 'rxjs';
 import { GitRepo } from '@activepieces/ee-shared';
-import { ProjectService, SyncProjectService, flowActionsUiInfo } from '@activepieces/ui/common';
+import { ProjectService, SyncProjectService, doesUserHavePermission, flowActionsUiInfo } from '@activepieces/ui/common';
 import { AsyncPipe } from '@angular/common';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { MatMenuItem } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-push-flow-to-git-button',
@@ -21,14 +22,13 @@ import { MatMenuItem } from '@angular/material/menu';
     MatMenuItem,
     AngularSvgIconModule,
     AsyncPipe,
+    MatTooltipModule
   ],
 })
 export class PushFlowToGitButtonComponent {
   readonly flowActionsUiInfo = flowActionsUiInfo;
-
   @Input({ required: true }) flow!: PopulatedFlow;
-
-
+  hasPermission = doesUserHavePermission(Permission.WRITE_GIT_REPO);
   openPushDialog$?: Observable<void>;
   openConfigureRepoDialog$?: Observable<GitRepo | null>;
   show$: Observable<boolean>;
