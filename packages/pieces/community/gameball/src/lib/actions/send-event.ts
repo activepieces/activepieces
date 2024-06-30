@@ -10,13 +10,13 @@ export const sendEvent = createAction({
   description: 'Send an event to gameball',
   props: {
     playerUniqueId: Property.ShortText({
-			displayName: 'Your Player Unique Id',
-			required: true,
-		}),
+      displayName: 'Your Player Unique Id',
+      required: true,
+    }),
     eventName: Property.ShortText({
-			displayName: 'Event Name',
-			required: true,
-		}),
+      displayName: 'Event Name',
+      required: true,
+    }),
   },
   async run(context) {
     const res = await httpClient.sendRequest<string[]>({
@@ -30,7 +30,7 @@ export const sendEvent = createAction({
         "playerUniqueId": context.propsValue.playerUniqueId,
         "events": {
           [context.propsValue.eventName]: {
-            
+
           }
         }
       }
