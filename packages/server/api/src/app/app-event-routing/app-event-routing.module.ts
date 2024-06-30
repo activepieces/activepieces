@@ -1,22 +1,17 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
-import { flowService } from '../flows/flow/flow.service'
-import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { webhookService } from '../webhooks/webhook-service'
-import { AppEventRouting } from './app-event-routing.entity'
+import { flowQueue } from '../flow-worker/queue'
 import { appEventRoutingService } from './app-event-routing.service'
 import { facebookLeads } from '@activepieces/piece-facebook-leads'
 import { intercom } from '@activepieces/piece-intercom'
 import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
-import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError, ALL_PRINCIPAL_TYPES,
-    assertNotNullOrUndefined,
+    apId,
     ErrorCode,
-    EventPayload,
-    FlowStatus,
     isNil,
 } from '@activepieces/shared'
 
@@ -92,8 +87,21 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                     event,
                     identifierValue,
                 })
-                rejectedPromiseHandler(Promise.all(listeners.map((listener) => {
-                    return callback(listener, eventPayload)
+                rejectedPromiseHandler(Promise.all(listeners.map(async (listener) => {
+                    const requestId = apId()
+                    await flowQueue.add({
+                        id: requestId,
+                        type: JobType.WEBHOOK,
+                        data: {
+                            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                            requestId,
+                            synchronousHandlerId: null,
+                            payload: eventPayload,
+                            flowId: listener.flowId,
+                            simulate: false,
+                        },
+                        priority: 'medium',
+                    })
                 })))
             }
             return requestReply
@@ -102,26 +110,4 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                 .send(reply?.body ?? {})
         },
     )
-}
-
-async function callback(listener: AppEventRouting, eventPayload: EventPayload): Promise<void> {
-    const flow = await flowService.getOneOrThrow({
-        projectId: listener.projectId,
-        id: listener.flowId,
-    })
-    if (flow.status !== FlowStatus.ENABLED || isNil(flow.publishedVersionId)) {
-        return
-    }
-    const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flow.id)
-    assertNotNullOrUndefined(flowVersion, 'published version not found')
-    const payloads = await webhookService.extractPayloadAndSave({
-        flowVersion,
-        payload: eventPayload,
-        projectId: flow.projectId,
-    })
-    await webhookService.startAndSaveRuns({
-        projectId: flow.projectId,
-        flowVersion,
-        filteredPayloads: payloads,
-    })
 }

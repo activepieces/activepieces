@@ -3,7 +3,6 @@ import { StatusCodes } from 'http-status-codes'
 import { repoFactory } from '../core/db/repo-factory'
 import { flagService } from '../flags/flag.service'
 import { parseAndVerify } from '../helper/json-validator'
-import { getEdition } from '../helper/secret-helper'
 import { systemJobsSchedule } from '../helper/system-jobs'
 import { PieceMetadataEntity } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
@@ -91,7 +90,7 @@ async function existsInDatabase({ name, version }: { name: string, version: stri
 
 async function getVersions({ name }: { name: string }): Promise<ListVersionsResponse> {
     const queryParams = new URLSearchParams()
-    queryParams.append('edition', getEdition())
+    queryParams.append('edition', system.getEdition())
     queryParams.append('release', await flagService.getCurrentRelease())
     queryParams.append('name', name)
     const url = `${CLOUD_API_URL}/versions?${queryParams.toString()}`
@@ -108,7 +107,7 @@ async function getOrThrow({ name, version }: { name: string, version: string }):
 
 async function listPieces(): Promise<PieceMetadataModelSummary[]> {
     const queryParams = new URLSearchParams()
-    queryParams.append('edition', getEdition())
+    queryParams.append('edition', system.getEdition())
     queryParams.append('release', await flagService.getCurrentRelease())
     const url = `${CLOUD_API_URL}?${queryParams.toString()}`
     const response = await fetch(url)

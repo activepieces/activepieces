@@ -71,7 +71,7 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (
             }>,
             reply,
         ) => {
-            if (request.principal.type !== PrincipalType.WORKER) {
+            if (request.principal.type !== PrincipalType.ENGINE) {
                 return reply.status(StatusCodes.FORBIDDEN)
             }
             else {

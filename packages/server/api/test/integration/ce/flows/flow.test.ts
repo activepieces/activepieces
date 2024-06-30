@@ -3,13 +3,7 @@ import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
-import {
-    createMockFlow,
-    createMockFlowVersion,
-    createMockPlatform,
-    createMockProject,
-    createMockUser,
-} from '../../../helpers/mocks'
+import { createMockFlow, createMockFlowVersion, createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
 import {
     FlowOperationType,
     FlowStatus,

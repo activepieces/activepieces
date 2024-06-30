@@ -2,7 +2,6 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { engineHelper } from '../../../../src/app/helper/engine-helper'
 import { pieceMetadataService } from '../../../../src/app/pieces/piece-metadata-service'
 import { generateMockToken } from '../../../helpers/auth'
 import {
@@ -14,7 +13,6 @@ import {
 } from '../../../helpers/mocks'
 import {
     apId,
-    EngineResponseStatus,
     PackageType,
     PlatformRole,
     PrincipalType,
@@ -24,6 +22,7 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
+    
     await databaseConnection.initialize()
     app = await setupApp()
 })
@@ -70,16 +69,7 @@ describe('AppConnection API', () => {
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadata])
 
             pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
-
-            engineHelper.executeValidateAuth = jest.fn().mockResolvedValue({
-                status: EngineResponseStatus.OK,
-                result: {
-                    valid: true,
-                },
-                standardError: '',
-                standardOutput: '',
-            })
-
+            
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
@@ -146,14 +136,6 @@ describe('AppConnection API', () => {
 
             pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
-            engineHelper.executeValidateAuth = jest.fn().mockResolvedValue({
-                status: EngineResponseStatus.OK,
-                result: {
-                    valid: true,
-                },
-                standardError: '',
-                standardOutput: '',
-            })
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,

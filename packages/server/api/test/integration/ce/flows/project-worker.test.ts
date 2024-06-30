@@ -34,7 +34,7 @@ describe('Project Worker API', () => {
             await databaseConnection.getRepository('project').save([mockProject])
 
             const mockToken = await generateMockToken({
-                type: PrincipalType.WORKER,
+                type: PrincipalType.ENGINE,
                 projectId: mockProject.id,
             })
 

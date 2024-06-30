@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.28.0",
-  "rcVersion": "0.28.0-rc.0",
+  "rcVersion": "0.28.0-fast-workers",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -21,6 +21,7 @@
   },
   "private": true,
   "dependencies": {
+    "@activepieces/import-fresh-webpack": "3.3.0",
     "@angular/animations": "18.0.3",
     "@angular/cdk": "18.0.3",
     "@angular/common": "18.0.3",
@@ -125,7 +126,6 @@
     "https-proxy-agent": "7.0.4",
     "imap": "0.8.17",
     "imapflow": "1.0.152",
-    "import-fresh": "3.3.0",
     "ioredis": "5.3.2",
     "is-base64": "1.1.0",
     "isolated-vm": "4.6.0",
@@ -167,7 +167,6 @@
     "nx-cloud": "19.0.0",
     "object-sizeof": "2.6.3",
     "openai": "4.47.1",
-    "papaparse": "5.4.1",
     "pdf-parse": "1.1.1",
     "pdf-text-reader": "4.1.0",
     "pg": "8.11.3",
@@ -185,6 +184,7 @@
     "redlock": "5.0.0-beta.2",
     "rss-parser": "3.13.0",
     "rxjs": "7.8.1",
+    "safe-flat": "2.1.0",
     "samlify": "2.8.10",
     "semver": "7.6.0",
     "shade-generator": "1.2.7",

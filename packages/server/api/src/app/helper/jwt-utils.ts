@@ -5,8 +5,7 @@ import jwtLibrary, {
     SignOptions,
     VerifyOptions,
 } from 'jsonwebtoken'
-import { localFileStore } from './store'
-import { QueueMode, system, SystemProp } from '@activepieces/server-shared'
+import { localFileStore, QueueMode, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -81,7 +80,6 @@ export const jwtUtils = {
             expiresIn: expiresInSeconds,
             issuer: ISSUER,
         }
-
         return new Promise((resolve, reject) => {
             jwtLibrary.sign(payload, key, signOptions, (err, token) => {
                 if (err) {

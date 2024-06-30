@@ -1,4 +1,3 @@
-import { getEdition } from '../../helper/secret-helper'
 import { customDomainService } from '../custom-domains/custom-domain.service'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
@@ -57,7 +56,7 @@ async function getFrontendDomain(
     platformId: string | undefined | null,
 ): Promise<string> {
     let domain = system.getOrThrow(SystemProp.FRONTEND_URL)
-    if (platformId && [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(getEdition())) {
+    if (platformId && [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())) {
         const customDomain = await customDomainService.getOneByPlatform({
             platformId,
         })

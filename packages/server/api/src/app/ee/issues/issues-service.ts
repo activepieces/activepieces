@@ -12,9 +12,9 @@ import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, spreadIfDefi
 const repo = databaseConnection.getRepository(IssueEntity)
 
 export const issuesService = {
-    async add({ projectId, flowId }: { flowId: string, projectId: string }): Promise<void> {
+    async add({ projectId, flowId, flowRunCreatedAt }: { flowId: string, projectId: string, flowRunCreatedAt: string }): Promise<void> {
         const issueId = apId()
-        const date = dayjs().toISOString()
+        const date = dayjs(flowRunCreatedAt).toISOString()
         await repo.createQueryBuilder()
             .insert()
             .into(IssueEntity)

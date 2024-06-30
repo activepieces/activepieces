@@ -1,9 +1,7 @@
-import { readdir, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
-import importFresh from 'import-fresh'
+import importFresh from '@activepieces/import-fresh-webpack'
 import { nanoid } from 'nanoid'
-import { getEdition } from '../../helper/secret-helper'
 import {
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
@@ -11,7 +9,7 @@ import { pieceMetadataServiceHooks } from './hooks'
 import { PieceMetadataService } from './piece-metadata-service'
 import { toPieceMetadataModelSummary } from '.'
 import { Piece, PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { exceptionHandler, filePiecesUtils, logger, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -33,13 +31,13 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
 }
 async function findAllPieces(): Promise<PieceMetadata[]> {
     const pieces = await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
-    const enterprisePieces = getEdition() === ApEdition.ENTERPRISE ? await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'ee', 'pieces')) : []
+    const enterprisePieces = system.getEdition() === ApEdition.ENTERPRISE ? await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'ee', 'pieces')) : []
     return [...pieces, ...enterprisePieces]
 }
 
 async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
     try {
-        const paths = await traverseFolder(folderPath)
+        const paths = await filePiecesUtils.findAllPiecesFolder(folderPath)
         const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
         return pieces.filter((p): p is PieceMetadata => p !== null)
     }
@@ -48,29 +46,6 @@ async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]
         logger.warn({ name: 'FilePieceMetadataService#loadPiecesFromFolder', message: err.message, stack: err.stack })
         return []
     }
-}
-
-async function traverseFolder(folderPath: string): Promise<string[]> {
-    const paths = []
-    const files = await readdir(folderPath)
-
-    for (const file of files) {
-        const filePath = join(folderPath, file)
-        const fileStats = await stat(filePath)
-        if (
-            fileStats.isDirectory() &&
-            file !== 'node_modules' &&
-            file !== 'dist' &&
-            file !== 'framework' &&
-            file !== 'common'
-        ) {
-            paths.push(...(await traverseFolder(filePath)))
-        }
-        else if (file === 'package.json') {
-            paths.push(folderPath)
-        }
-    }
-    return paths
 }
 
 async function loadPieceFromFolder(

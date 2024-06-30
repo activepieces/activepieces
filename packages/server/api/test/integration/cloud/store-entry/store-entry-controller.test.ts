@@ -27,7 +27,7 @@ describe('Store-entries API', () => {
         await databaseConnection.getRepository('user').save(mockUser)
 
         testToken = await generateMockToken({
-            type: PrincipalType.WORKER,
+            type: PrincipalType.ENGINE,
             id: apId(),
             projectId,
         })

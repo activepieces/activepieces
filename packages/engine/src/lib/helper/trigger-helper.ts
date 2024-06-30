@@ -1,5 +1,5 @@
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { ApEdition, assertEqual, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from '@activepieces/shared'
+import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -27,7 +27,7 @@ export const triggerHelper = {
 
         const { resolvedInput } = await variableService({
             projectId: params.projectId,
-            workerToken: params.workerToken,
+            engineToken: params.engineToken,
         }).resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: input,
             executionState: FlowExecutorContext.empty(),
@@ -35,7 +35,7 @@ export const triggerHelper = {
 
         const { processedInput, errors } = await variableService({
             projectId: params.projectId,
-            workerToken: params.workerToken,
+            engineToken: params.engineToken,
         }).applyProcessorsAndValidators(resolvedInput, trigger.props, piece.auth)
 
         if (Object.keys(errors).length > 0) {
@@ -49,7 +49,7 @@ export const triggerHelper = {
             store: createContextStore({
                 prefix,
                 flowId: params.flowVersion.flowId,
-                workerToken: params.workerToken,
+                engineToken: params.engineToken,
             }),
             app: {
                 createListeners({ events, identifierKey, identifierValue }: Listener): void {
@@ -114,7 +114,7 @@ export const triggerHelper = {
                         output: await trigger.test({
                             ...context,
                             files: createFilesService({
-                                workerToken: params.workerToken!,
+                                engineToken: params.engineToken!,
                                 stepName: triggerName,
                                 flowId: params.flowVersion.flowId,
                                 type: 'db',
@@ -168,7 +168,7 @@ export const triggerHelper = {
                 const items = await trigger.run({
                     ...context,
                     files: createFilesService({
-                        workerToken: params.workerToken!,
+                        engineToken: params.engineToken!,
                         flowId: params.flowVersion.flowId,
                         stepName: triggerName,
                         type: 'memory',
