@@ -161,12 +161,7 @@ export class SidenavRoutesListComponent implements OnInit {
         route: 'settings',
         showInSideNav$: this.embeddingService.getIsInEmbedding$().pipe(
           take(1),
-          map(
-            (isInEmbedding) =>
-              !isInEmbedding &&
-              this.authenticationService.currentUser.projectRole ===
-                ProjectMemberRole.ADMIN
-          )
+          map((isInEmbedding) => !isInEmbedding)
         ),
         showLock$: of(false),
       },

@@ -680,6 +680,9 @@
       "ee-components": ["packages/ee/ui/components/src/index.ts"],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "ee-project-members": ["packages/ee/ui/project-members/src/index.ts"],
+      "@activepieces/ui-feature-flow-actions-list": [
+        "packages/ui/feature-flow-actions-list/src/index.ts"
+      ],
       "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-ee-platform": ["packages/ee/ui/platform/src/index.ts"],
       "ui-feature-flow-builder": [

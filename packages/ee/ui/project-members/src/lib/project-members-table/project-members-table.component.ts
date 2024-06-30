@@ -115,8 +115,4 @@ export class ProjectMembersTableComponent
         break;
     }
   }
-
-  get projectMemberRole() {
-    return ProjectMemberRole;
-  }
 }

@@ -3,7 +3,6 @@ import { ActivatedRoute } from '@angular/router';
 import {
   map,
   Observable,
-  of,
   shareReplay,
   startWith,
   Subject,
@@ -19,7 +18,6 @@ import {
   FlowOperationType,
   TelemetryEventName,
   ApFlagId,
-  isNil,
   Permission,
 } from '@activepieces/shared';
 import {
@@ -31,32 +29,18 @@ import {
   NavigationService,
   TablePermissionsEnforcer,
   TelemetryService,
-  downloadFlow,
   flowActionsUiInfo,
-  flowDeleteNote,
-  flowDeleteNoteWithGit,
 } from '@activepieces/ui/common';
 import { FlowService } from '@activepieces/ui/common';
 import { ARE_THERE_FLOWS_FLAG } from '../../resolvers/are-there-flows.resolver';
-import {
-  DeleteEntityDialogComponent,
-  DeleteEntityDialogData,
-} from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import {
-  FolderActions,
-  FoldersSelectors,
-  MoveFlowToFolderDialogComponent,
-  MoveFlowToFolderDialogData,
-} from '@activepieces/ui/feature-folders-store';
+import { FoldersSelectors } from '@activepieces/ui/feature-folders-store';
+import { RewardsDialogComponent } from '../../components/dialogs/rewards-dialog/rewards-dialog.component';
 import {
   RenameFlowDialogComponent,
   RenameFlowDialogData,
 } from '../../components/dialogs/rename-flow-dialog/rename-flow-dialog.component';
-import { RewardsDialogComponent } from '../../components/dialogs/rewards-dialog/rewards-dialog.component';
-import { SyncProjectService } from '@activepieces/ui-feature-git-sync';
-import { GitBranchType, GitPushOperationType } from '@activepieces/ee-shared';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -69,21 +53,16 @@ export class FlowsTableComponent
   paginator!: ApPaginatorComponent;
   readonly flowActionsUiInfo = flowActionsUiInfo;
   creatingFlow = false;
-  deleteFlowDialogClosed$: Observable<void>;
-  moveFlowDialogClosed$: Observable<void>;
   dataSource!: FlowsTableDataSource;
   folderId$: Observable<FolderId | undefined>;
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
   areThereFlows$?: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   showAllFlows$: Observable<boolean>;
-  duplicateFlow$?: Observable<void>;
-  downloadTemplate$?: Observable<void>;
-  renameFlow$?: Observable<boolean>;
   hideFolders$ = this.embeddingService.getHideFolders$();
   showRewards$: Observable<boolean>;
-  deleteFlowFromGit$?: Observable<void>;
   isStatusReadOnly = !this.hasPermission(Permission.UPDATE_FLOW_STATUS);
+  renameFlow$?: Observable<unknown>;
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -95,7 +74,6 @@ export class FlowsTableComponent
     private embeddingService: EmbeddingService,
     private telemetryService: TelemetryService,
     private flagService: FlagService,
-    private syncProjectService: SyncProjectService,
     @Inject(LOCALE_ID) public locale: string
   ) {
     super({
@@ -166,53 +144,6 @@ export class FlowsTableComponent
     });
   }
 
-  deleteFlow(flow: PopulatedFlow) {
-    const dialogData: DeleteEntityDialogData = {
-      deleteEntity$: this.flowService.delete(flow.id),
-      entityName: flow.version.displayName,
-      note: '',
-      note$: this.syncProjectService.isDevelopment().pipe(
-        map((isDevelopment) => {
-          return isDevelopment ? flowDeleteNoteWithGit : flowDeleteNote;
-        })
-      ),
-    };
-    const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
-      data: dialogData,
-    });
-    this.deleteFlowDialogClosed$ = dialogRef.beforeClosed().pipe(
-      tap((res) => {
-        if (res) {
-          this.deleteFlowFromGit$ = this.syncProjectService.get().pipe(
-            switchMap((repo) => {
-              if (
-                isNil(repo) ||
-                repo.branchType !== GitBranchType.DEVELOPMENT
-              ) {
-                return of(undefined);
-              }
-              return this.syncProjectService.push(repo.id, {
-                type: GitPushOperationType.DELETE_FLOW,
-                flowId: flow.id,
-                commitMessage: `chore: deleted flow ${flow.version.displayName}`,
-              });
-            }),
-            map(() => void 0)
-          );
-
-          this.refreshTableAtCurrentCursor$.next(true);
-          this.store.dispatch(
-            FolderActions.deleteFlow({
-              flowDisplayName: flow.version.displayName,
-            })
-          );
-        }
-      }),
-      map(() => {
-        return void 0;
-      })
-    );
-  }
   toggleFlowStatus(flow: PopulatedFlow, control: FormControl<boolean>) {
     if (control.enabled) {
       control.disable();
@@ -237,38 +168,6 @@ export class FlowsTableComponent
         );
     }
   }
-  duplicate(flow: PopulatedFlow) {
-    this.duplicateFlow$ = this.flowService.duplicate(flow.id);
-  }
-  export(flow: PopulatedFlow) {
-    this.downloadTemplate$ = this.flowService
-      .exportTemplate(flow.id, undefined)
-      .pipe(
-        tap(downloadFlow),
-        map(() => {
-          return void 0;
-        })
-      );
-  }
-  moveFlow(flow: PopulatedFlow) {
-    const data: MoveFlowToFolderDialogData = {
-      flowId: flow.id,
-      folderId: flow.folderId,
-      flowDisplayName: flow.version.displayName,
-      inBuilder: false,
-    };
-    this.moveFlowDialogClosed$ = this.dialogService
-      .open(MoveFlowToFolderDialogComponent, { data })
-      .afterClosed()
-      .pipe(
-        tap((val: boolean) => {
-          if (val) {
-            this.refreshTableAtCurrentCursor$.next(true);
-          }
-        }),
-        map(() => void 0)
-      );
-  }
   renameFlow(flow: PopulatedFlow) {
     const data: RenameFlowDialogData = { flow };
     this.renameFlow$ = this.dialogService
@@ -282,6 +181,7 @@ export class FlowsTableComponent
         })
       );
   }
+
   openRewardsDialog() {
     this.dialogService.open(RewardsDialogComponent);
     this.telemetryService.capture({
@@ -290,5 +190,8 @@ export class FlowsTableComponent
         source: 'rewards-button',
       },
     });
+  }
+  refreshTable() {
+    this.refreshTableAtCurrentCursor$.next(true);
   }
 }

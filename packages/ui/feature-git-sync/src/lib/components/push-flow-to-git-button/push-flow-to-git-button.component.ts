@@ -7,8 +7,7 @@ import {
 } from '../dialogs/push-to-git-dialog/push-to-git-dialog.component';
 import { Observable, map, switchMap, tap } from 'rxjs';
 import { GitRepo } from '@activepieces/ee-shared';
-import { SyncProjectService } from '../../services/sync-project.service';
-import { ProjectService, flowActionsUiInfo } from '@activepieces/ui/common';
+import { ProjectService, SyncProjectService, flowActionsUiInfo } from '@activepieces/ui/common';
 import { AsyncPipe } from '@angular/common';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { MatMenuItem } from '@angular/material/menu';
