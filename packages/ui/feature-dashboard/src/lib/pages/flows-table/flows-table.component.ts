@@ -27,7 +27,7 @@ import {
   FlagService,
   FoldersService,
   NavigationService,
-  TablePermissionsEnforcer,
+  TableCore,
   TelemetryService,
   flowActionsUiInfo,
 } from '@activepieces/ui/common';
@@ -45,10 +45,7 @@ import {
 @Component({
   templateUrl: './flows-table.component.html',
 })
-export class FlowsTableComponent
-  extends TablePermissionsEnforcer
-  implements OnInit
-{
+export class FlowsTableComponent extends TableCore implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
   readonly flowActionsUiInfo = flowActionsUiInfo;
@@ -77,13 +74,14 @@ export class FlowsTableComponent
     @Inject(LOCALE_ID) public locale: string
   ) {
     super({
-      permissionsAndTheirColumns: [
-        {
-          permission: Permission.WRITE_FLOW,
-          permissionColumns: ['action'],
-        },
+      tableColumns: [
+        'name',
+        'steps',
+        'folderName',
+        'created',
+        'status',
+        'action',
       ],
-      tableColumns: ['name', 'steps', 'folderName', 'created', 'status'],
     });
     this.showAllFlows$ = this.listenToShowAllFolders();
     this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
