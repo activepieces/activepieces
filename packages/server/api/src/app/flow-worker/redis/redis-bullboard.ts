@@ -3,7 +3,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { FastifyAdapter } from '@bull-board/fastify'
 import basicAuth from '@fastify/basic-auth'
 import { FastifyInstance } from 'fastify'
-import { bullmqQueues } from './redis-queue'
+import { bullMqGroups } from './redis-queue'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, isNil } from '@activepieces/shared'
 
@@ -35,7 +35,7 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
 
     const serverAdapter = new FastifyAdapter()
     createBullBoard({
-        queues: Object.values(bullmqQueues).map((queue) => new BullMQAdapter(queue)),
+        queues: Object.values(bullMqGroups).map((group) => Object.values(group)).flat().map((queue) => new BullMQAdapter(queue)),
         serverAdapter,
     })
     serverAdapter.setBasePath(`/api${QUEUE_BASE_PATH}`)

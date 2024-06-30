@@ -1,7 +1,7 @@
 import { Job } from 'bullmq'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { acquireLock } from '../../helper/lock'
-import { bullmqQueues } from './redis-queue'
+import { bullMqGroups } from './redis-queue'
 import { LATEST_JOB_DATA_SCHEMA_VERSION, logger, QueueName, RepeatableJobType, ScheduledJobData } from '@activepieces/server-shared'
 import { ExecutionType, isNil, RunEnvironment, ScheduleType } from '@activepieces/shared'
 
@@ -32,9 +32,14 @@ export const redisMigrations = {
     },
 }
 
-async function getJobsToMigrate(): Promise<Array<Job<ScheduledJobData> | undefined>> {
-    const scheduledJobs = await bullmqQueues[QueueName.SCHEDULED].getJobs()
-    return scheduledJobs.filter((job) => !isNil(job?.data) && job.data.schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION)
+async function getJobsToMigrate(): Promise<(Job<ScheduledJobData> | undefined)[]> {
+    // TODO make the migration works for all queues instead of default one.
+    const result = []
+    for (const key of Object.keys(bullMqGroups)) {
+        const scheduledJobs = await bullMqGroups[key][QueueName.SCHEDULED].getJobs()
+        result.push(scheduledJobs.filter((job) => !isNil(job?.data) && job.data.schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION))
+    }
+    return result.flat()
 }
 
 async function migrateJob(job: Job<ScheduledJobData>): Promise<void> {

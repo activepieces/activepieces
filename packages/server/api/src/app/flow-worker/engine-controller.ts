@@ -46,7 +46,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         }
         const { id } = request.principal
         const { queueName, status, message } = request.body
-        await flowConsumer.update({ jobId: id, queueName, status, message: message ?? 'NO_MESSAGE_AVAILABLE' })
+        await flowConsumer.update(null, { jobId: id, queueName, status, message: message ?? 'NO_MESSAGE_AVAILABLE' })
         return {}
     })
 
@@ -129,7 +129,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             id: flowId,
         })
         if (isNil(flow)) {
-            await flowQueue.removeRepeatingJob({
+            await flowQueue.removeRepeatingJob(null, {
                 id: flowVersionId,
             })
             return

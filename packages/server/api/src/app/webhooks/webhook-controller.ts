@@ -81,7 +81,7 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
     const flow = await getFlowOrThrow(flowId)
     const payload = await convertRequest(request)
     const requestId = apId()
-    await flowQueue.add({
+    await flowQueue.add(null, {
         id: requestId,
         type: JobType.WEBHOOK,
         data: {

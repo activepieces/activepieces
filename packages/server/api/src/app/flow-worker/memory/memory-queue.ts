@@ -7,7 +7,7 @@ import { QueueManager } from '../queue/queue-manager'
 import { ApMemoryQueue } from './ap-memory-queue'
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, WebhookJobData } from '@activepieces/server-shared'
-import { DelayPauseMetadata, Flow, FlowRunStatus, PauseType, ProgressUpdateType, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { apId, DelayPauseMetadata, Flow, FlowRunStatus, PauseType, ProgressUpdateType, RunEnvironment, TriggerType } from '@activepieces/shared'
 
 export const memoryQueues = {
     [QueueName.ONE_TIME]: new ApMemoryQueue<OneTimeJobData>(),
@@ -15,8 +15,10 @@ export const memoryQueues = {
     [QueueName.WEBHOOK]: new ApMemoryQueue<WebhookJobData>(),
 }
 
+const runnerGroupId = apId()
+
 export const memoryQueue: QueueManager = {
-    async removeRepeatingJob({ id }) {
+    async removeRepeatingJob(_groupId, { id }) {
         await memoryQueues[QueueName.SCHEDULED].remove(id)
     },
     async init(): Promise<void> {
@@ -24,7 +26,7 @@ export const memoryQueue: QueueManager = {
         await renewEnabledRepeating()
         await addDelayedRun()
     },
-    async add(params) {
+    async add(_groupId, params) {
         const { type, data, id } = params
         switch (type) {
             case JobType.ONE_TIME: {
@@ -82,7 +84,7 @@ async function addDelayedRun(): Promise<void> {
                 dayjs(delayPauseMetadata.resumeDateTime).diff(dayjs(), 'ms'),
             )
 
-            memoryQueue.add({
+            memoryQueue.add(runnerGroupId, {
                 id: flowRun.id,
                 type: JobType.DELAYED,
                 data: {
@@ -105,7 +107,7 @@ async function renewEnabledRepeating(): Promise<void> {
     const enabledFlows = await flowService.getAllEnabled()
     const enabledRepeatingFlows = enabledFlows.filter((flow) => flow.schedule)
     enabledRepeatingFlows.forEach((flow) => {
-        memoryQueue.add({
+        memoryQueue.add(runnerGroupId, {
             id: flow.id,
             type: JobType.REPEATING,
             data: {
@@ -161,7 +163,7 @@ async function renewWebhooks(): Promise<void> {
         )
     ).filter((flow): flow is FlowWithRenewWebhook => flow !== null)
     enabledRenewWebhookFlows.forEach(({ flow, scheduleOptions }) => {
-        memoryQueue.add({
+        memoryQueue.add(runnerGroupId, {
             id: flow.id,
             type: JobType.REPEATING,
             data: {

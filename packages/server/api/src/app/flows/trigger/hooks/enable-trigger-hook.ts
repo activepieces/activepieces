@@ -102,7 +102,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
             const renewConfiguration = pieceTrigger.renewConfiguration
             switch (renewConfiguration?.strategy) {
                 case WebhookRenewStrategy.CRON: {
-                    await flowQueue.add({
+                    await flowQueue.add(null, {
                         id: flowVersion.id,
                         type: JobType.REPEATING,
                         data: {
@@ -138,7 +138,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
                 }
                 // END EE
             }
-            await flowQueue.add({
+            await flowQueue.add(null, {
                 id: flowVersion.id,
                 type: JobType.REPEATING,
                 data: {
