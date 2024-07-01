@@ -1,7 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { FlowId, FormResponse } from '@activepieces/shared';
+import {
+  FlowId,
+  FormResponse,
+  USE_DRAFT_QUERY_PARAM_NAME,
+} from '@activepieces/shared';
 import { environment } from '@activepieces/ui/common';
 
 @Injectable({
@@ -17,13 +21,9 @@ export class FormsService {
     return this.http.post<FormResult | null>(webhookUrl, request);
   }
 
-  get(flowId: FlowId): Observable<FormResponse> {
-    const params: Record<string, string> = {};
+  get(flowId: FlowId, useDraft?: boolean): Observable<FormResponse> {
     return this.http.get<FormResponse>(
-      environment.apiUrl + '/forms/' + flowId,
-      {
-        params: params,
-      }
+      `${environment.apiUrl}/forms/${flowId}?${USE_DRAFT_QUERY_PARAM_NAME}=${useDraft}`
     );
   }
 }

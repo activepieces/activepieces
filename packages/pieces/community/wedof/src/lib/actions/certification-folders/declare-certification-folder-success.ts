@@ -8,18 +8,18 @@ export const declareCertificationFolderSuccess = createAction({
   auth: wedofAuth,
   name: 'declareCertificationFolderSuccess',
   displayName: "Passer un dossier de certification à l'état : Réussi",
-  description: "Change l'état d'un dossier de certification vers: Réussi",
+  description: "Change l'état d'un dossier de certification vers : Réussi",
   props: {
-    Id: Property.ShortText({
+    externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',
       description:
-        'Sélectionner la propriété {Id} du dossier de certification',
+        'Sélectionner la propriété {externalId} du dossier de certification',
       required: true,
     }),
     detailedResult: Property.ShortText({
-        displayName: "Détail du résultat de l'examen",
-        required: false,
-      }),
+      displayName: "Détail du résultat de l'examen",
+      required: false,
+    }),
     europeanLanguageLevel: wedofCommon.europeanLanguageLevel,
     issueDate: Property.DateTime({
       displayName: "Date d'obtention de la certification",
@@ -27,12 +27,13 @@ export const declareCertificationFolderSuccess = createAction({
       required: true,
     }),
     digitalProofLink: Property.ShortText({
-        displayName: "Lieu de passage de l'examen",
-        required: false,
-      }),
+      displayName:
+        "Lien vers la preuve numérique de l'obtention de la certification",
+      required: false,
+    }),
     gradePass: wedofCommon.gradePass,
     comment: Property.LongText({
-      displayName: "Commentaire",
+      displayName: 'Commentaire',
       required: false,
     }),
   },
@@ -40,8 +41,8 @@ export const declareCertificationFolderSuccess = createAction({
     const message = {
       detailedResult: context.propsValue.detailedResult,
       issueDate: context.propsValue.issueDate
-      ? dayjs(context.propsValue.issueDate).format('YYYY-MM-DD')
-      : null,
+        ? dayjs(context.propsValue.issueDate).format('YYYY-MM-DD')
+        : null,
       digitalProofLink: context.propsValue.digitalProofLink,
       europeanLanguageLevel: context.propsValue.europeanLanguageLevel,
       gradePass: context.propsValue.gradePass,
@@ -53,7 +54,7 @@ export const declareCertificationFolderSuccess = createAction({
         url:
           wedofCommon.baseUrl +
           '/certificationFolders/' +
-          context.propsValue.Id +
+          context.propsValue.externalId +
           '/success',
         body: message,
         headers: {

@@ -9,7 +9,7 @@ export const updateCertificationFolder = createAction({
     name: 'updateCertificationFolder',
     displayName: 'Mettre à jour un dossier de certification',
     description:
-        "Met à jour certaines informations modifiable d'un dossier de certification",
+        "Met à jour certaines informations modifiables d'un dossier de certification",
     props: {
         externalId: Property.ShortText({
             displayName: 'N° du dossier de certification',
@@ -39,7 +39,7 @@ export const updateCertificationFolder = createAction({
         }),
         comment: Property.LongText({
             displayName: 'Commentaire',
-            description: "Commentaire (non visible par l'apprenant)",
+            description: "Commentaire (non-visible par l'apprenant)",
             required: false,
         }),
         verbatim: Property.ShortText({
@@ -52,6 +52,11 @@ export const updateCertificationFolder = createAction({
             description: 'Tarif en €',
             required: false,
         }),
+        tags: Property.Array({
+            displayName: "Tags",
+            description: "Liste de tags associée au dossier de certification, si vous souhaitez garder vos précédents tags, il faut les réécrire dans le champ",
+            required: false,
+          }),
     },
     async run(context) {
         const message = {
@@ -63,7 +68,8 @@ export const updateCertificationFolder = createAction({
             examinationPlace: context.propsValue.examinationPlace,
             comment: context.propsValue.comment,
             verbatim: context.propsValue.verbatim,
-            amountHt: context.propsValue.amountHt
+            amountHt: context.propsValue.amountHt,
+            tags: context.propsValue.tags as string[],
         };
         return (
             await httpClient.sendRequest({
