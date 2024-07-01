@@ -64,7 +64,7 @@ export class NewAlertDialogComponent {
           }),
           tap(() => {
             if (!invalidEmail) {
-              this.dialogRef.close();
+              this.dialogRef.close(true);
             }
           })
         );

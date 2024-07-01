@@ -1,5 +1,10 @@
 import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION,     logger,
     RepeatableJobType } from '@activepieces/server-shared'
+import dayjs from 'dayjs'
+import { alertsService } from '../../ee/alerts/alerts-service'
+import { issuesService } from '../../ee/issues/issues-service'
+import { flowQueue } from '../../flow-worker/queue'
+import { flowRunHooks } from './flow-run-hooks'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -11,10 +16,6 @@ import {
     ProgressUpdateType,
     RunEnvironment,
 } from '@activepieces/shared'
-import dayjs from 'dayjs'
-import { issuesService } from '../../ee/issues/issues-service'
-import { flowQueue } from '../../flow-worker/queue'
-import { flowRunHooks } from './flow-run-hooks'
 
 type StartParams = {
     flowRun: FlowRun
@@ -51,11 +52,13 @@ export const flowRunSideEffects = {
             .onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks! })
         if (flowRun.environment === RunEnvironment.PRODUCTION) {
             if (isFailedState(flowRun.status)) {
-                await issuesService.add({
+                const issue = await issuesService.add({
                     flowId: flowRun.flowId,
                     projectId: flowRun.projectId,
                     flowRunCreatedAt: flowRun.created,
                 })
+
+                await alertsService.sendAlertOnFinish({ issue, flowRunId: flowRun.id })
             }
         }
     },
