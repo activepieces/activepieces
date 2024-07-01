@@ -12,7 +12,17 @@
     "@activepieces/ui/feature-builder-canvas": "0.0.1",
     "@activepieces/ui/feature-builder-form-controls": "0.0.3",
     "@activepieces/ui/feature-builder-right-sidebar": "0.0.1",
-    "@activepieces/ui/feature-templates": "0.0.1"
+    "@activepieces/ui/feature-templates": "0.0.1",
+    "@angular/router": "18.0.3",
+    "@angular/core": "18.0.3",
+    "@ngrx/store": "17.0.1",
+    "rxjs": "7.8.1",
+    "@angular/material": "18.0.3",
+    "@angular/cdk": "18.0.3",
+    "@angular/common": "18.0.3",
+    "@ctrl/ngx-codemirror": "5.1.1",
+    "angular-svg-icon": "15.0.0",
+    "ngx-timeago": "3.0.0"
   },
   "dependencies": {},
   "sideEffects": false
