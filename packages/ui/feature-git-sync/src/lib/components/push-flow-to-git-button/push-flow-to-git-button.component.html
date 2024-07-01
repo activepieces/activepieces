@@ -1,5 +1,5 @@
 @if (show$ | async) {
-  <button mat-menu-item (click)="openPushDialog()">
+  <button mat-menu-item (click)="openPushDialog()" [disabled]="!hasPermission" [matTooltip]="!hasPermission? unpermittedTooltip: ''">
     <div class="ap-flex ap-gap-3 ap-items-center">
       <svg-icon [src]="flowActionsUiInfo.pushToGit.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
       [applyClass]="true"></svg-icon>

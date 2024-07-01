@@ -7,10 +7,10 @@ import {
   GenericSnackbarTemplateComponent,
   PLATFORM_RESOLVER_KEY,
   ProjectService,
+  SyncProjectService,
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { Platform, ProjectWithLimits } from '@activepieces/shared';
-import { SyncProjectService } from '../../services/sync-project.service';
 import { ConfigureRepoDialogComponent } from '../dialogs/configure-repo-dialog/configure-repo-dialog.component';
 import { PullFromGitDialogComponent, PullFromGitDialogData } from '../dialogs/pull-from-git-dialog/pull-from-git-dialog.component';
 import { AsyncPipe } from '@angular/common';

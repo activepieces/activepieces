@@ -9,6 +9,7 @@ import { Observable, switchMap, tap } from 'rxjs';
 import {
   Flow,
   FlowOperationType,
+  Permission,
   TelemetryEventName,
 } from '@activepieces/shared';
 import {
@@ -16,6 +17,7 @@ import {
   TelemetryService,
   AuthenticationService,
   PlatformService,
+  doesUserHavePermission,
 } from '@activepieces/ui/common';
 import { demoTemplate } from './demo-flow-template';
 
@@ -30,6 +32,7 @@ export class EmptyFlowsTableComponent {
   openToDemo$: Observable<Flow>;
   showPoweredByAp$: Observable<boolean>;
   @Output() openTemplatesDialog = new EventEmitter();
+  allowedToCreateFlow = doesUserHavePermission(Permission.WRITE_FLOW);
   constructor(
     private router: Router,
     private flowService: FlowService,

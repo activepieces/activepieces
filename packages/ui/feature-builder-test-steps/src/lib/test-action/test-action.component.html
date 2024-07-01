@@ -66,11 +66,14 @@
             </div>
             <div class="ap-flex-grow">
             </div>
-            <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                [tooltipText]="(currentStepValidity$ | async) === false ? 'Please fix the step inputs first' :
-                 (isSaving$ | async) === false? 'Test step to generate sample data to use in the next steps' : savingMessage"
-                [disabled]="(currentStepValidity$ | async) === false || (isSaving$ | async) === true"
-                (buttonClicked)="testStep()" i18n>Retest</ap-button>
+                @if((isReadOnly$ | async) === false)
+                {
+                    <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
+                    [tooltipText]="(currentStepValidity$ | async) === false ? 'Please fix the step inputs first' :
+                     (isSaving$ | async) === false? 'Test step to generate sample data to use in the next steps' : savingMessage"
+                    [disabled]="(currentStepValidity$ | async) === false || (isSaving$ | async) === true"
+                    (buttonClicked)="testStep()" i18n>Retest</ap-button>
+                } 
         </div>
         <div *ngIf="res.date" class="ap-typography-body-2 ap-text-body ap--mt-2 ap-mb-4 ap-pl-0.5">
             {{ res.date | timeago:true}}
