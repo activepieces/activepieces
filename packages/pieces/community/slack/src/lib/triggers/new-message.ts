@@ -1,15 +1,7 @@
-import {
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackChannel, slackInfo } from '../common/props';
 import { slackAuth } from '../../';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { WebClient } from '@slack/web-api';
 
 const sampleData = {
   client_msg_id: '2767cf34-0651-44e0-b9c8-1b167ce9b7a9',
@@ -47,7 +39,7 @@ export const newMessage = createTrigger({
   description: 'Triggers when a new message is received',
   props: {
     info: slackInfo,
-    channel: slackChannel,
+    channel: slackChannel(true),
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: sampleData,
@@ -55,7 +47,7 @@ export const newMessage = createTrigger({
     // Older OAuth2 has team_id, newer has team.id
     const teamId =
       context.auth.data['team_id'] ?? context.auth.data['team']['id'];
-    await context.app.createListeners({
+    context.app.createListeners({
       events: ['message'],
       identifierValue: teamId,
     });
@@ -63,28 +55,26 @@ export const newMessage = createTrigger({
   onDisable: async (context) => {
     // Ignored
   },
-  test: async (context) => {
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: 'https://slack.com/api/conversations.history',
-      queryParams: {
-        channel: context.propsValue.channel,
-        limit: '10',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
-      },
-    };
-    const response = await httpClient.sendRequest(request);
 
-    return response.body.messages.map((message: any) => ({
-      ...message,
+  test: async (context) => {
+    const client = new WebClient(context.auth.access_token);
+    const response = await client.conversations.history({
       channel: context.propsValue.channel,
-      event_ts: '1678231735.586539',
-      channel_type: 'channel',
-    }));
+      limit: 10,
+    });
+    if (!response.messages) {
+      return [];
+    }
+    return response.messages.map((message) => {
+      return {
+        ...message,
+        channel: context.propsValue.channel,
+        event_ts: '1678231735.586539',
+        channel_type: 'channel',
+      };
+    });
   },
+
   run: async (context) => {
     const payloadBody = context.payload.body as PayloadBody;
     if (payloadBody.event.channel === context.propsValue.channel) {

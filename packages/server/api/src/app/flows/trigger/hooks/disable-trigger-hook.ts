@@ -42,7 +42,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
         const engineToken = await generateEngineToken({
             projectId,
         })
-        return await engineRunner.executeTrigger(engineToken, {
+        const result = await engineRunner.executeTrigger(engineToken, {
             hookType: TriggerHookType.ON_DISABLE,
             flowVersion,
             webhookUrl: await webhookUtils.getWebhookUrl({
@@ -51,6 +51,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
             }),
             projectId,
         })
+        return result
     }
     catch (error) {
         exceptionHandler.handle(error)

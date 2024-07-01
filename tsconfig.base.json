@@ -134,6 +134,9 @@
       "@activepieces/piece-date-helper": [
         "packages/pieces/community/date-helper/src/index.ts"
       ],
+      "@activepieces/piece-datocms": [
+        "packages/pieces/community/datocms/src/index.ts"
+      ],
       "@activepieces/piece-deepl": [
         "packages/pieces/community/deepl/src/index.ts"
       ],
