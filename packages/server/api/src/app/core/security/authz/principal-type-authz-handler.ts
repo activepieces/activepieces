@@ -1,10 +1,10 @@
-import { FastifyRequest } from 'fastify'
-import { BaseSecurityHandler } from '../security-handler'
 import {
     ActivepiecesError,
     ErrorCode,
     PrincipalType,
 } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
+import { BaseSecurityHandler } from '../security-handler'
 
 export class PrincipalTypeAuthzHandler extends BaseSecurityHandler {
     private static readonly IGNORED_ROUTES = [
@@ -15,7 +15,7 @@ export class PrincipalTypeAuthzHandler extends BaseSecurityHandler {
 
     private static readonly DEFAULT_ALLOWED_PRINCIPAL_TYPES = [
         PrincipalType.USER,
-        PrincipalType.WORKER,
+        PrincipalType.ENGINE,
         PrincipalType.SERVICE,
     ]
 

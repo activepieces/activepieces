@@ -1,3 +1,5 @@
+import { Alert, AlertChannel, ListAlertsParams, Issue } from '@activepieces/ee-shared'
+import { ActivepiecesError, ApId, apId, ErrorCode, SeekPage } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { databaseConnection } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -7,8 +9,6 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { AlertEntity } from './alerts-entity'
 import { alertsHandler } from './alerts-handler'
-import { Alert, AlertChannel, Issue, ListAlertsParams } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApId, apId, ErrorCode, SeekPage } from '@activepieces/shared'
 
 const repo = databaseConnection.getRepository(AlertEntity)
 

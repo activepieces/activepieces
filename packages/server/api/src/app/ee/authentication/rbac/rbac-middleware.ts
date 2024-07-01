@@ -1,7 +1,5 @@
-import { FastifyRequest } from 'fastify'
-import { getEdition } from '../../../helper/secret-helper'
-import { projectMemberService } from '../../project-members/project-member.service'
-import { rolePermissions } from './access-control-list'
+import { rolePermissions } from '@activepieces/ee-shared'
+import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -13,8 +11,10 @@ import {
     PrincipalType,
     ProjectMemberRole,
 } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
+import { projectMemberService } from '../../project-members/project-member.service'
 
-const EDITION_IS_COMMUNITY = getEdition() === ApEdition.COMMUNITY
+const EDITION_IS_COMMUNITY = system.getEdition() === ApEdition.COMMUNITY
 
 export const rbacMiddleware = async (req: FastifyRequest): Promise<void> => {
     if (ignoreRequest(req)) {
@@ -27,7 +27,7 @@ export async function assertUserHasPermissionToFlow(
     principal: Principal,
     operationType: FlowOperationType,
 ): Promise<void> {
-    const edition = getEdition()
+    const edition = system.getEdition()
     if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
         return
     }

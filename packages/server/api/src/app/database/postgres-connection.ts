@@ -1,4 +1,6 @@
 import { TlsOptions } from 'node:tls'
+import { system, SystemProp } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -19,7 +21,6 @@ import { ModifyBilling1694902537045 } from '../ee/database/migrations/postgres/1
 import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/postgres/1695916063833-AddDatasourcesLimit'
 import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
-import { getEdition } from '../helper/secret-helper'
 import { commonProperties } from './database-connection'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
@@ -137,8 +138,6 @@ import { AddAlertsEntityPostgres1716989780835 } from './migration/postgres/17169
 import { AddPremiumPiecesColumnPostgres1717370717678 } from './migration/postgres/1717370717678-AddPremiumPiecesColumnPostgres'
 import { AddUserInvitation1717960689650 } from './migration/postgres/1717960689650-AddUserInvitation'
 import { ModifyProjectMembers1717961669938 } from './migration/postgres/1717961669938-ModifyProjectMembers'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -230,7 +229,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPremiumPiecesColumnPostgres1717370717678,
     ]
 
-    const edition = getEdition()
+    const edition = system.getEdition()
     switch (edition) {
         case ApEdition.CLOUD:
         case ApEdition.ENTERPRISE:

@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddDeletedToProjectPostgres1710243591721 implements MigrationInterface {
     name = 'AddDeletedToProjectPostgres1710243591721'

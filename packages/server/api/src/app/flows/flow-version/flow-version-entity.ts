@@ -1,10 +1,10 @@
+import { Flow, FlowVersion, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
     JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
-import { Flow, FlowVersion, User } from '@activepieces/shared'
 
 type FlowVersionSchema = {
     flow: Flow

@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddExternalIdSqlite1698857968495 implements MigrationInterface {
     name = 'AddExternalIdSqlite1698857968495'

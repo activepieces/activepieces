@@ -1,6 +1,6 @@
+import { SeekPage } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { CursorResult } from './paginator'
-import { SeekPage } from '@activepieces/shared'
 
 export function atob(value: string): string {
     return Buffer.from(value, 'base64').toString()

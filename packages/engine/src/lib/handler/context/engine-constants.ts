@@ -1,4 +1,4 @@
-import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, ProgressUpdateType, Project, ProjectId, ResumePayload, TriggerHookType } from '@activepieces/shared'
+import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, TriggerHookType } from '@activepieces/shared'
 import { VariableService } from '../../services/variable-service'
 
 type RetryConstants = {
@@ -37,35 +37,41 @@ export class EngineConstants {
 
     public constructor(
         public readonly flowId: string,
+        public readonly flowVersionId: string,
+        public readonly flowVerionState: FlowVersionState,
         public readonly flowRunId: string,
         public readonly serverUrl: string,
         public readonly retryConstants: RetryConstants,
-        public readonly workerToken: string,
+        public readonly engineToken: string,
         public readonly projectId: ProjectId,
         public readonly variableService: VariableService,
         public readonly testSingleStepMode: boolean,
         public readonly filesServiceType: 'local' | 'db',
         public readonly progressUpdateType: ProgressUpdateType,
         public readonly serverHandlerId: string | null,
+        public readonly httpRequestId: string | null,
         public readonly resumePayload?: ResumePayload,
     ) { }
 
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
+            input.flowVersion.id,
+            input.flowVersion.state,
             input.flowRunId,
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
-            input.workerToken,
+            input.engineToken,
             input.projectId,
             new VariableService({
                 projectId: input.projectId,
-                workerToken: input.workerToken,
+                engineToken: input.engineToken,
             }),
             false,
             'local',
             input.progressUpdateType,
             input.serverHandlerId ?? null,
+            input.httpRequestId ?? null,
             input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
         )
     }
@@ -73,18 +79,21 @@ export class EngineConstants {
     public static fromExecuteStepInput(input: ExecuteStepOperation): EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
+            input.flowVersion.id,
+            input.flowVersion.state,
             'test-run',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
-            input.workerToken,
+            input.engineToken,
             input.projectId,
             new VariableService({
                 projectId: input.projectId,
-                workerToken: input.workerToken,
+                engineToken: input.engineToken,
             }),
             true,
             'db',
             ProgressUpdateType.NONE,
+            null,
             null,
         )
     }
@@ -92,18 +101,21 @@ export class EngineConstants {
     public static fromExecutePropertyInput(input: ExecutePropsOptions): EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
+            input.flowVersion.id,
+            input.flowVersion.state,
             'execute-property',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
-            input.workerToken,
+            input.engineToken,
             input.projectId,
             new VariableService({
                 projectId: input.projectId,
-                workerToken: input.workerToken,
+                engineToken: input.engineToken,
             }),
             true,
             'db',
             ProgressUpdateType.NONE,
+            null,
             null,
         )
     }
@@ -111,18 +123,21 @@ export class EngineConstants {
     public static fromExecuteTriggerInput(input: ExecuteTriggerOperation<TriggerHookType>): EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
+            input.flowVersion.id,
+            input.flowVersion.state,
             'execute-trigger',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
-            input.workerToken,
+            input.engineToken,
             input.projectId,
             new VariableService({
                 projectId: input.projectId,
-                workerToken: input.workerToken,
+                engineToken: input.engineToken,
             }),
             true,
             'db',
             ProgressUpdateType.NONE,
+            null,
             null,
         )
     }
@@ -136,7 +151,7 @@ export class EngineConstants {
 
         const response = await fetch(getWorkerProjectEndpoint, {
             headers: {
-                Authorization: `Bearer ${this.workerToken}`,
+                Authorization: `Bearer ${this.engineToken}`,
             },
         })
 

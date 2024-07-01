@@ -1,4 +1,9 @@
 import {
+    AddDomainRequest,
+    ListCustomDomainsRequest,
+} from '@activepieces/ee-shared'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
+import {
     FastifyPluginAsyncTypebox,
     Static,
     Type,
@@ -7,11 +12,6 @@ import { HttpStatusCode } from 'axios'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { customDomainService } from './custom-domain.service'
-import {
-    AddDomainRequest,
-    ListCustomDomainsRequest,
-} from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
 
 const GetOneRequest = Type.Object({
     id: Type.String(),

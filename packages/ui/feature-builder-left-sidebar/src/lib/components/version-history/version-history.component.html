@@ -61,6 +61,7 @@
                             </div>
                         </button>
                         <button *ngIf="(draftVersionId$| async) !== version.id" mat-menu-item
+                            [disabled]="userHasPermissionToUpdateFlow"
                             (click)="useAsDraft(version,flowVersions.data.length - idx)">
                             <div class="ap-flex ap-gap-2 ap-items-center" i18n>
                                 <svg-icon src="assets/img/custom/pencil-underline.svg" class="ap-w-[20px] ap-h-[20px]"

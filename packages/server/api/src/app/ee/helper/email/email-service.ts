@@ -1,14 +1,13 @@
-import { getEdition } from '../../../helper/secret-helper'
+import { AlertChannel, OtpType } from '@activepieces/ee-shared'
+import { logger, system } from '@activepieces/server-shared'
+import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitation } from '@activepieces/shared'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
-import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { logger } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitation } from '@activepieces/shared'
 
-const EDITION = getEdition()
+const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
 
 const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD

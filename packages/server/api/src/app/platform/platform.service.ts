@@ -1,7 +1,3 @@
-import { databaseConnection } from '../database/database-connection'
-import { defaultTheme } from '../flags/theme'
-import { userService } from '../user/user-service'
-import { PlatformEntity } from './platform.entity'
 import {
     ActivepiecesError,
     apId,
@@ -15,6 +11,10 @@ import {
     spreadIfDefined,
     UpdatePlatformRequestBody,
     UserId } from '@activepieces/shared'
+import { databaseConnection } from '../database/database-connection'
+import { defaultTheme } from '../flags/theme'
+import { userService } from '../user/user-service'
+import { PlatformEntity } from './platform.entity'
 
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
 

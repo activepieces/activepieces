@@ -2,9 +2,14 @@ import {
   FlowOperationType,
   FlowVersion,
   FlowVersionMetadata,
+  Permission,
   SeekPage,
 } from '@activepieces/shared';
-import { FlowService, VersionHisoricalStatus } from '@activepieces/ui/common';
+import {
+  FlowService,
+  VersionHisoricalStatus,
+  doesUserHavePermission,
+} from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   FlowsActions,
@@ -47,6 +52,9 @@ export class VersionHistoryComponent {
   draftVersionId$: Observable<string>;
   displayVersion$?: Observable<unknown>;
   viewedVersion$: Observable<FlowVersionMetadata>;
+  userHasPermissionToUpdateFlow = !doesUserHavePermission(
+    Permission.WRITE_FLOW
+  );
   constructor(
     private flowService: FlowService,
     private store: Store,

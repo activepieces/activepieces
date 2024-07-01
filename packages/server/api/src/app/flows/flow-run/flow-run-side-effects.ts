@@ -1,10 +1,10 @@
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION,     logger,
+    RepeatableJobType } from '@activepieces/server-shared'
 import dayjs from 'dayjs'
 import { alertsService } from '../../ee/alerts/alerts-service'
 import { issuesService } from '../../ee/issues/issues-service'
-import { flowQueue } from '../../workers/flow-worker/flow-queue'
-import { JobType } from '../../workers/flow-worker/queues/queue'
+import { flowQueue } from '../../flow-worker/queue'
 import { flowRunHooks } from './flow-run-hooks'
-import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -16,17 +16,14 @@ import {
     ProgressUpdateType,
     RunEnvironment,
 } from '@activepieces/shared'
-import {
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    RepeatableJobType,
-} from 'server-worker'
 
 type StartParams = {
     flowRun: FlowRun
     executionType: ExecutionType
     payload: unknown
-    synchronousHandlerId?: string
+    synchronousHandlerId: string | undefined
     progressUpdateType: ProgressUpdateType
+    httpRequestId: string | undefined
 }
 
 type PauseParams = {
@@ -70,6 +67,7 @@ export const flowRunSideEffects = {
         executionType,
         payload,
         synchronousHandlerId,
+        httpRequestId,
         progressUpdateType,
     }: StartParams): Promise<void> {
         logger.info(
@@ -87,6 +85,7 @@ export const flowRunSideEffects = {
                 runId: flowRun.id,
                 flowVersionId: flowRun.flowVersionId,
                 payload,
+                httpRequestId,
                 executionType,
                 progressUpdateType,
             },

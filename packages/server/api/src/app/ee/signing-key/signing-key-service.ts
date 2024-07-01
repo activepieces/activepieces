@@ -1,6 +1,3 @@
-import { databaseConnection } from '../../database/database-connection'
-import { SigningKeyEntity } from './signing-key-entity'
-import { signingKeyGenerator } from './signing-key-generator'
 import { AddSigningKeyResponse, SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
@@ -10,6 +7,9 @@ import {
     PlatformId,
     SeekPage,
 } from '@activepieces/shared'
+import { databaseConnection } from '../../database/database-connection'
+import { SigningKeyEntity } from './signing-key-entity'
+import { signingKeyGenerator } from './signing-key-generator'
 
 const repo = databaseConnection.getRepository<SigningKey>(SigningKeyEntity)
 

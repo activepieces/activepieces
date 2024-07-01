@@ -1,3 +1,17 @@
+import {
+    CustomDomain,
+    OtpType,
+} from '@activepieces/ee-shared'
+import {
+    apId,
+    InvitationStatus,
+    InvitationType,
+    Platform,
+    PlatformRole,
+    ProjectMemberRole,
+    User,
+    UserStatus,
+} from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
@@ -19,20 +33,6 @@ import {
     createMockSignInRequest,
     createMockSignUpRequest,
 } from '../../../helpers/mocks/authn'
-import {
-    CustomDomain,
-    OtpType,
-} from '@activepieces/ee-shared'
-import {
-    apId,
-    InvitationStatus,
-    InvitationType,
-    Platform,
-    PlatformRole,
-    ProjectMemberRole,
-    User,
-    UserStatus,
-} from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
