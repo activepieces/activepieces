@@ -5,7 +5,20 @@ import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from
 import { assertRoleHasPermission } from '../ee/authentication/rbac/rbac-middleware'
 import { projectMembersLimit } from '../ee/project-plan/members-limit'
 import { userInvitationsService } from './user-invitation.service'
-import { AcceptUserInvitationRequest, ALL_PRINCIPAL_TYPES, InvitationType, ListUserInvitationsRequest, Permission, PrincipalType, SeekPage, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import {
+    AcceptUserInvitationRequest,
+    ALL_PRINCIPAL_TYPES,
+    EndpointScope,
+    InvitationType,
+    ListUserInvitationsRequest,
+    Permission,
+    PrincipalType,
+    SeekPage,
+    SendUserInvitationRequest,
+    SERVICE_KEY_SECURITY_OPENAPI,
+    UserInvitation,
+    UserInvitationWithLink,
+} from '@activepieces/shared'
 
 
 export const invitationModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -45,7 +58,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
             projectId: request.query.type === InvitationType.PROJECT ? request.principal.projectId : null,
             type: request.query.type,
             status: request.query.status,
-            cursor: request.query.cursor ?? null, 
+            cursor: request.query.cursor ?? null,
             limit: request.query.limit ?? 10,
         })
         await reply.status(StatusCodes.OK).send(invitations)
@@ -126,6 +139,7 @@ const DeleteInvitationRequestParams = {
 const CreateUserInvitationRequestParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         body: SendUserInvitationRequest,
