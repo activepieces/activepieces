@@ -5,7 +5,7 @@ import { NotificationStatus } from '@activepieces/shared'
 
 const HOUR_IN_SECONDS = 3600
 const DAY_IN_SECONDS = 86400
-const HOURLY_LIMIT = 3
+const HOURLY_LIMIT = 5
 const DAILY_LIMIT = 15
 
 export const alertsHandler = {
