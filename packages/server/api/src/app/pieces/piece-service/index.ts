@@ -1,7 +1,7 @@
 import { fileService } from '../../file/file.service'
 import { pieceMetadataService } from '../piece-metadata-service'
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ExecutionMode, logger, system, SystemProp } from '@activepieces/server-shared'
+import { ExecutionMode, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AddPieceRequestBody,
@@ -70,7 +70,7 @@ export const pieceService = {
 
 const assertInstallProjectEnabled = (scope: PieceScope): void => {
     if (scope === PieceScope.PROJECT) {
-        const sandboxMode = system.getOrThrow(SystemProp.EXECUTION_MODE)
+        const sandboxMode = system.getOrThrow(SharedSystemProp.EXECUTION_MODE)
         const edition = system.getEdition()
         if (
             sandboxMode === ExecutionMode.UNSANDBOXED &&

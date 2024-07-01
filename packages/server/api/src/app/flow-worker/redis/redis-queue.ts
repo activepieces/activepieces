@@ -1,6 +1,6 @@
 import { DefaultJobOptions, Queue } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
-import { AddParams, QueueManager } from '../queue/queue-manager'
+import { AddParams, queueHelper, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
 import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
@@ -16,50 +16,48 @@ const defaultJobOptions: DefaultJobOptions = {
 }
 const repeatingJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
-export const bullmqQueues: Record<string, Queue> = {}
+type ConsumerGroup = Record<string, Queue>
+export const bullMqGroups: Record<string, ConsumerGroup> = {}
 
 export const redisQueue: QueueManager = {
     async init(): Promise<void> {
-        for (const queueName of Object.values(QueueName)) {
-            bullmqQueues[queueName] = new Queue(
-                queueName,
-                {
-                    connection: createRedisClient(),
-                    defaultJobOptions,
-                },
-            )
-        }
-        await Promise.all(Object.values(bullmqQueues).map((queue) => queue.waitUntilReady()))
+        const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(null, queueName))
+        await Promise.all(queues)
         await redisMigrations.run()
         logger.info('[redisQueueManager#init] Redis queues initialized')
     },
-    async add(params): Promise<void> {
+    async add(groupId, params): Promise<void> {
         const { type } = params
         switch (type) {
             case JobType.REPEATING: {
-                await addRepeatingJob(params)
+                await addRepeatingJob(groupId, params)
                 break
             }
             case JobType.DELAYED: {
-                await addDelayedJob(params)
+                await addDelayedJob(groupId, params)
                 break
             }
-            case JobType.ONE_TIME:
-                await addJobWithPriority(bullmqQueues[QueueName.ONE_TIME], params)
+            case JobType.ONE_TIME:{
+                const queue = await ensureQueueExists(groupId, QueueName.ONE_TIME)
+                await addJobWithPriority(queue, params)
                 break
-            case JobType.WEBHOOK:
-                await addJobWithPriority(bullmqQueues[QueueName.WEBHOOK], params)
+            }
+            case JobType.WEBHOOK:{
+                const queue = await ensureQueueExists(groupId, QueueName.WEBHOOK)
+                await addJobWithPriority(queue, params)
                 break
+            }
         }
     },
-    async removeRepeatingJob({ id }): Promise<void> {
-        const client = await bullmqQueues[QueueName.SCHEDULED].client
-        const repeatJobKey = await findRepeatableJobKey(id)
+    async removeRepeatingJob(groupId, { id }): Promise<void> {
+        const queue = await ensureQueueExists(groupId, QueueName.SCHEDULED)
+        const client = await queue.client
+        const repeatJobKey = await findRepeatableJobKey(groupId, id)
         if (isNil(repeatJobKey)) {
             exceptionHandler.handle(new Error(`Couldn't find job key for id "${id}"`))
             return
         }
-        const result = await bullmqQueues[QueueName.SCHEDULED].removeRepeatableByKey(repeatJobKey)
+        const result = await queue.removeRepeatableByKey(repeatJobKey)
         if (!result) {
             throw new ActivepiecesError({
                 code: ErrorCode.JOB_REMOVAL_FAILURE,
@@ -72,18 +70,38 @@ export const redisQueue: QueueManager = {
     },
 }
 
-async function findRepeatableJobKey(id: ApId): Promise<string | undefined> {
-    const client = await bullmqQueues[QueueName.SCHEDULED].client
+async function findRepeatableJobKey(groupId: string | null, id: ApId): Promise<string | undefined> {
+    const queue = await ensureQueueExists(groupId, QueueName.SCHEDULED)
+    const client = await queue.client
     const jobKey = await client.get(repeatingJobKey(id))
     if (isNil(jobKey)) {
         logger.warn({ jobKey: id }, 'Job key not found in redis, trying to find it in the queue')
         // TODO: this temporary solution for jobs that doesn't have repeatJobKey in redis, it's also confusing because it search by flowVersionId
-        const jobs = await bullmqQueues[QueueName.SCHEDULED].getJobs()
+        const jobs = await queue.getJobs()
         return jobs.filter(f => !isNil(f) && !isNil(f.data)).find((f) => f.data.flowVersionId === id)?.repeatJobKey
     }
     return jobKey
 }
 
+async function ensureQueueExists(groupId: string | null, queueName: QueueName): Promise<Queue> {
+    const key = groupId ?? 'default'
+    if (isNil(bullMqGroups[key])) {
+        bullMqGroups[key] = {}
+    }
+    if (!isNil(bullMqGroups[key][queueName])) {
+        return bullMqGroups[key][queueName]
+    }
+    const queueAlias = queueHelper.getQueueName(groupId, queueName)
+    bullMqGroups[key][queueName] = new Queue(
+        queueAlias,
+        {
+            connection: createRedisClient(),
+            defaultJobOptions,
+        },
+    )
+    await bullMqGroups[key][queueName].waitUntilReady()
+    return bullMqGroups[key][queueName]
+}
 
 async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOOK | JobType.ONE_TIME>): Promise<void> {
     const { id, data, priority } = params
@@ -93,17 +111,19 @@ async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOO
     })
 }
 
-async function addDelayedJob(params: AddParams<JobType.DELAYED>): Promise<void> {
+async function addDelayedJob(groupId: string | null, params: AddParams<JobType.DELAYED>): Promise<void> {
     const { id, data, delay } = params
-    await bullmqQueues[QueueName.SCHEDULED].add(id, data, {
+    const queue = await ensureQueueExists(groupId, QueueName.SCHEDULED)
+    await queue.add(id, data, {
         jobId: id,
         delay,
     })
 }
 
-async function addRepeatingJob(params: AddParams<JobType.REPEATING>): Promise<void> {
+async function addRepeatingJob(groupId: string | null, params: AddParams<JobType.REPEATING>): Promise<void> {
     const { id, data, scheduleOptions } = params
-    const job = await bullmqQueues[QueueName.SCHEDULED].add(id, data, {
+    const queue = await ensureQueueExists(groupId, QueueName.SCHEDULED)
+    const job = await queue.add(id, data, {
         jobId: id,
         repeat: {
             pattern: scheduleOptions.cronExpression,
@@ -113,6 +133,6 @@ async function addRepeatingJob(params: AddParams<JobType.REPEATING>): Promise<vo
     if (isNil(job.repeatJobKey)) {
         return
     }
-    const client = await bullmqQueues[QueueName.SCHEDULED].client
+    const client = await queue.client
     await client.set(repeatingJobKey(id), job.repeatJobKey)
 }

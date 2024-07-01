@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { Equal, FindOperator, ILike } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
+import { encryptUtils } from '../../helper/encryption'
 import { generateEngineToken } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -15,7 +16,7 @@ import {
 } from '../app-connection.entity'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
-import { encryptUtils, exceptionHandler, logger, system, SystemProp } from '@activepieces/server-shared'
+import { exceptionHandler, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -295,7 +296,7 @@ function decryptConnection(
 const engineValidateAuth = async (
     params: EngineValidateAuthParams,
 ): Promise<void> => {
-    const environment = system.getOrThrow(SystemProp.ENVIRONMENT)
+    const environment = system.getOrThrow(SharedSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return
     }

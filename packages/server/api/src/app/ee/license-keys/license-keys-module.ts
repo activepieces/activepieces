@@ -3,7 +3,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs'
 import { platformService } from '../../platform/platform.service'
 import { licenseKeysController } from './license-keys-controller'
 import { licenseKeysService } from './license-keys-service'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 
 export const licenseKeysModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -23,7 +23,7 @@ export const licenseKeysModule: FastifyPluginAsyncTypebox = async (app) => {
             }
             await licenseKeysService.verifyKeyAndApplyLimits({
                 platformId: platform.id,
-                license: system.get<string>(SystemProp.LICENSE_KEY),
+                license: system.get<string>(AppSystemProp.LICENSE_KEY),
             })
         },
     })

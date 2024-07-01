@@ -5,7 +5,7 @@ import { projectLimitsService } from '../../project-plan/project-plan.service'
 import { projectBillingService } from '../project-billing/project-billing.service'
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 
 const appsumoRepo = databaseConnection.getRepository(AppSumoEntity)
@@ -96,7 +96,7 @@ export const appsumoService = {
         const activation_email = appSumoLicense?.activation_email ?? rawEmail
         const appSumoPlan = appsumoService.getPlanInformation(plan_id)
         const user = await userService.getByPlatformAndEmail({
-            platformId: system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID),
+            platformId: system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID),
             email: activation_email,
         })
         if (!isNil(user)) {

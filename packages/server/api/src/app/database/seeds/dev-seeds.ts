@@ -2,13 +2,13 @@ import { authenticationService } from '../../authentication/authentication-servi
 import { Provider } from '../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { FlagEntity } from '../../flags/flag.entity'
 import { databaseConnection } from '../database-connection'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
+import {  logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 
 const DEV_DATA_SEEDED_FLAG = 'DEV_DATA_SEEDED'
 
 const currentEnvIsNotDev = (): boolean => {
-    const env = system.get(SystemProp.ENVIRONMENT)
+    const env = system.get(SharedSystemProp.ENVIRONMENT)
     return env !== ApEnvironment.DEVELOPMENT
 }
 

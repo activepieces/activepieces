@@ -1,12 +1,12 @@
 
 import { getRedisConnection } from '../../../database/redis-connection'
 import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework'
-import { QueueMode, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, QueueMode, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 
 const DUPLICATE_RECORD_EXPIRATION_SECONDS = 30
 
-const MEMORY_QUEUE = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
+const MEMORY_QUEUE = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
 
 export const dedupeService = {
     filterUniquePayloads: async (flowVersionId: string, payloads: unknown[]): Promise<unknown[]> => {

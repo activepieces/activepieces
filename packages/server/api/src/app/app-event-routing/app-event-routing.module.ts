@@ -86,7 +86,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                 })
                 rejectedPromiseHandler(Promise.all(listeners.map(async (listener) => {
                     const requestId = apId()
-                    await flowQueue.add({
+                    await flowQueue.add(null, {
                         id: requestId,
                         type: JobType.WEBHOOK,
                         data: {

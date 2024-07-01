@@ -1,6 +1,6 @@
 import { FastifyInstance, LightMyRequestResponse } from 'fastify'
-import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import { createMockUser } from '../../../helpers/mocks'
 import { apId, PrincipalType, User } from '@activepieces/shared'
@@ -9,7 +9,7 @@ let app: FastifyInstance | null = null
 
 beforeAll(async () => {
     await databaseConnection.initialize()
-    app = await setupApp()
+    app = await setupServer()
 })
 
 afterAll(async () => {

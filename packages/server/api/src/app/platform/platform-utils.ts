@@ -2,7 +2,7 @@ import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { userService } from '../user/user-service'
 import { platformService } from './platform.service'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, isNil, Principal, PrincipalType } from '@activepieces/shared'
 
 const edition = system.getEdition()
@@ -63,7 +63,7 @@ const getPlatformIdForHostname = async (
 
 async function getDefaultPlatformId(): Promise<null | string> {
     if (edition === ApEdition.CLOUD) {
-        return system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID)
+        return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
     }
     const platform = await platformService.getOldestPlatform()
     return platform?.id ?? null

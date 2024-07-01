@@ -3,7 +3,7 @@ import { projectMemberService } from '../../ee/project-members/project-member.se
 import { apDayjs } from '../../helper/dayjs-helper'
 import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { projectService } from '../project-service'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment, ProjectUsage } from '@activepieces/shared'
 
 export const projectUsageService = {
@@ -39,7 +39,7 @@ async function increaseTasks(projectId: string, incrementBy: number): Promise<nu
 }
 
 async function incrementOrCreateRedisRecord(projectId: string, startBillingPeriod: string, incrementBy: number): Promise<number> {
-    const environment = system.get(SystemProp.ENVIRONMENT)
+    const environment = system.get(SharedSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return 0
     }
@@ -48,7 +48,7 @@ async function incrementOrCreateRedisRecord(projectId: string, startBillingPerio
 }
 
 async function getTasksUsage(projectId: string, startBillingPeriod: string): Promise<number> {
-    const environment = system.get(SystemProp.ENVIRONMENT)
+    const environment = system.get(SharedSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return 0
     }

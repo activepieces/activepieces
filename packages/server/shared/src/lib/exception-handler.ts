@@ -1,9 +1,9 @@
 import * as Sentry from '@sentry/node'
 import { logger } from './logger'
 import { system } from './system/system'
-import { SystemProp } from './system/system-prop'
+import { SharedSystemProp } from './system/system-prop'
 
-const sentryDsn = system.get(SystemProp.SENTRY_DSN)
+const sentryDsn = system.get(SharedSystemProp.SENTRY_DSN)
 
 export const initializeSentry = () => {
     if (sentryDsn) {
@@ -36,7 +36,7 @@ export const exceptionHandler = {
 
 
 const ENRICH_ERROR_CONTEXT =
-    system.getBoolean(SystemProp.ENRICH_ERROR_CONTEXT) ?? false
+    system.getBoolean(SharedSystemProp.ENRICH_ERROR_CONTEXT) ?? false
 
 
 export const enrichErrorContext = ({

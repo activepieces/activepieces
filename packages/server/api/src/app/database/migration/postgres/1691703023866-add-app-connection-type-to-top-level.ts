@@ -1,6 +1,6 @@
 import * as crypto from 'crypto'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, logger, system } from '@activepieces/server-shared'
 
 type AppConnectionValue = {
     type: string
@@ -53,7 +53,7 @@ implements MigrationInterface {
 function decryptObject<T>(encryptedObject: { iv: string, data: string }): T {
     const iv = Buffer.from(encryptedObject.iv, 'hex')
     const key = Buffer.from(
-        system.getOrThrow(SystemProp.ENCRYPTION_KEY),
+        system.getOrThrow(AppSystemProp.ENCRYPTION_KEY),
         'binary',
     )
     const decipher = crypto.createDecipheriv(algorithm, key, iv)

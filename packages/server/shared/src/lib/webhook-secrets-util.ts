@@ -1,6 +1,6 @@
 import { FlowVersion, isNil } from '@activepieces/shared'
 import { system } from './system/system'
-import { SystemProp } from './system/system-prop'
+import { SharedSystemProp } from './system/system-prop'
 
 let webhookSecrets: Record<string, { webhookSecret: string }> | undefined =
     undefined
@@ -38,7 +38,7 @@ string,
     webhookSecret: string
 }
 > {
-    const appSecret = system.get(SystemProp.APP_WEBHOOK_SECRETS)
+    const appSecret = system.get(SharedSystemProp.APP_WEBHOOK_SECRETS)
     if (isNil(appSecret)) {
         return {}
     }

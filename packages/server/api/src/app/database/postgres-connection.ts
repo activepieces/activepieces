@@ -136,15 +136,15 @@ import { AddAlertsEntityPostgres1716989780835 } from './migration/postgres/17169
 import { AddPremiumPiecesColumnPostgres1717370717678 } from './migration/postgres/1717370717678-AddPremiumPiecesColumnPostgres'
 import { AddUserInvitation1717960689650 } from './migration/postgres/1717960689650-AddUserInvitation'
 import { ModifyProjectMembers1717961669938 } from './migration/postgres/1717961669938-ModifyProjectMembers'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 
 const getSslConfig = (): boolean | TlsOptions => {
-    const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
+    const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
 
     if (useSsl === 'true') {
         return {
-            ca: system.get(SystemProp.POSTGRES_SSL_CA)?.replace(/\\n/g, '\n'),
+            ca: system.get(AppSystemProp.POSTGRES_SSL_CA)?.replace(/\\n/g, '\n'),
         }
     }
 
@@ -313,7 +313,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
 }
 
 const getMigrationConfig = (): MigrationConfig => {
-    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
         return {}
@@ -328,7 +328,7 @@ const getMigrationConfig = (): MigrationConfig => {
 
 export const createPostgresDataSource = (): DataSource => {
     const migrationConfig = getMigrationConfig()
-    const url = system.get(SystemProp.POSTGRES_URL)
+    const url = system.get(AppSystemProp.POSTGRES_URL)
 
     if (!isNil(url)) {
         return new DataSource({
@@ -340,12 +340,12 @@ export const createPostgresDataSource = (): DataSource => {
         })
     }
 
-    const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
-    const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
-    const password = system.getOrThrow(SystemProp.POSTGRES_PASSWORD)
-    const serializedPort = system.getOrThrow(SystemProp.POSTGRES_PORT)
+    const database = system.getOrThrow(AppSystemProp.POSTGRES_DATABASE)
+    const host = system.getOrThrow(AppSystemProp.POSTGRES_HOST)
+    const password = system.getOrThrow(AppSystemProp.POSTGRES_PASSWORD)
+    const serializedPort = system.getOrThrow(AppSystemProp.POSTGRES_PORT)
     const port = Number.parseInt(serializedPort, 10)
-    const username = system.getOrThrow(SystemProp.POSTGRES_USERNAME)
+    const username = system.getOrThrow(AppSystemProp.POSTGRES_USERNAME)
 
     return new DataSource({
         type: 'postgres',

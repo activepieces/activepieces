@@ -1,9 +1,9 @@
-import { PiecesSource, system, SystemProp } from '@activepieces/server-shared'
+import { PiecesSource, SharedSystemProp, system } from '@activepieces/server-shared'
 import { LocalPieceManager } from './local-piece-manager'
 import { PieceManager } from './piece-manager'
 import { RegistryPieceManager } from './registry-piece-manager'
 
-const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
+const source = system.getOrThrow<PiecesSource>(SharedSystemProp.PIECES_SOURCE)
 
 const getPieceManager = (): PieceManager => {
     const pieceManagerVariant: Record<PiecesSource, new () => PieceManager> = {

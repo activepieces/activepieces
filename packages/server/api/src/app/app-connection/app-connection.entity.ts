@@ -4,7 +4,7 @@ import {
     BaseColumnSchemaPart,
     JSONB_COLUMN_TYPE,
 } from '../database/database-common'
-import { EncryptedObject } from '@activepieces/server-shared'
+import { EncryptedObject } from '../helper/encryption'
 import {
     AppConnection,
     AppConnectionStatus,

@@ -1,12 +1,11 @@
 import fs from 'fs'
 import path from 'path'
-import { system } from './system/system'
-import { SystemProp } from './system/system-prop'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 
 export const localFileStore = {
     async save(key: string, value: string): Promise<void> {
         const settingsFilePath = path.join(
-            system.getOrThrow(SystemProp.CONFIG_PATH),
+            system.getOrThrow(AppSystemProp.CONFIG_PATH),
             'settings.json',
         )
         const settings = getSettingsFilePath()
@@ -26,7 +25,7 @@ export const localFileStore = {
 
 const getSettingsFilePath = () => {
     const settingsFilePath = path.join(
-        system.getOrThrow(SystemProp.CONFIG_PATH),
+        system.getOrThrow(AppSystemProp.CONFIG_PATH),
         'settings.json',
     )
     try {

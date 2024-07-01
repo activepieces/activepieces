@@ -3,7 +3,7 @@ import {
     ChatCompletionMessageParam,
     ChatCompletionTool,
 } from 'openai/resources'
-import { CopilotInstanceTypes, logger, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, CopilotInstanceTypes, logger, system } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
 
 type GenerateCodeParams = {
@@ -13,15 +13,15 @@ type GenerateCodeParams = {
 
 function getOpenAI(): OpenAI {
     let openai
-    const apiKey = system.getOrThrow(SystemProp.OPENAI_API_KEY)
-    const openaiInstanceType = system.getOrThrow<CopilotInstanceTypes>(SystemProp.COPILOT_INSTANCE_TYPE)
+    const apiKey = system.getOrThrow(AppSystemProp.OPENAI_API_KEY)
+    const openaiInstanceType = system.getOrThrow<CopilotInstanceTypes>(AppSystemProp.COPILOT_INSTANCE_TYPE)
 
     switch (openaiInstanceType) {
         case CopilotInstanceTypes.AZURE_OPENAI: {
-            const apiVersion = system.getOrThrow(SystemProp.AZURE_OPENAI_API_VERSION)
+            const apiVersion = system.getOrThrow(AppSystemProp.AZURE_OPENAI_API_VERSION)
             openai = new OpenAI({
                 apiKey,
-                baseURL: system.getOrThrow(SystemProp.AZURE_OPENAI_ENDPOINT),
+                baseURL: system.getOrThrow(AppSystemProp.AZURE_OPENAI_ENDPOINT),
                 defaultQuery: { 'api-version': apiVersion },
                 defaultHeaders: { 'api-key': apiKey },
             })
@@ -30,7 +30,7 @@ function getOpenAI(): OpenAI {
         case CopilotInstanceTypes.OPENAI: {
             openai = new OpenAI({
                 apiKey,
-                baseURL: system.get(SystemProp.OPENAI_API_BASE_URL),
+                baseURL: system.get(AppSystemProp.OPENAI_API_BASE_URL),
             })
             break
         }

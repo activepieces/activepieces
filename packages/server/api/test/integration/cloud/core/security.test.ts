@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { setupApp } from '../../../../src/app/app'
 import { securityHandlerChain } from '../../../../src/app/core/security/security-handler-chain'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockFlow,
@@ -23,7 +23,7 @@ let app: FastifyInstance | null = null
 
 beforeAll(async () => {
     await databaseConnection.initialize()
-    app = await setupApp()
+    app = await setupServer()
 })
 
 afterAll(async () => {

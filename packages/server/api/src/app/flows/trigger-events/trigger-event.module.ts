@@ -2,7 +2,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { flowService } from '../flow/flow.service'
 import { triggerEventService } from './trigger-event.service'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import {
     ListTriggerEventsRequest,
     TestPollingTriggerRequest,
@@ -19,7 +19,7 @@ export const triggerEventModule: FastifyPluginAsyncTypebox = async (app) => {
         },
         schedule: {
             type: 'repeated',
-            cron: `0 * */${system.getNumber(SystemProp.EXECUTION_DATA_RETENTION_DAYS)} * *`,
+            cron: `0 * */${system.getNumber(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)} * *`,
         },
         async handler() {
             await triggerEventService.deleteEventsOlderThanFourteenDay()

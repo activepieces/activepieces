@@ -1,6 +1,6 @@
 import { mkdir } from 'fs/promises'
 import path from 'path'
-import { acquireMemoryLock, fileExists, logger, networkUtls, packageManager, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
+import { acquireMemoryLock, fileExists, logger, networkUtls, packageManager, SharedSystemProp, system, webhookSecretsUtils, WorkerSystemProps } from '@activepieces/server-shared'
 import { Action, ActionType, assertNotNullOrUndefined, CodeSandboxType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, isNil, PiecePackage, TriggerHookType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { pieceManager } from '../../piece-manager'
@@ -11,15 +11,15 @@ import { CodeArtifact, EngineHelperResponse, EngineHelperResult, EngineRunner, e
 import { pieceEngineUtil } from '../flow-enginer-util'
 import { EngineWorker } from './worker'
 
-const memoryLimit = Math.floor((Number(system.getOrThrow(SystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
+const memoryLimit = Math.floor((Number(system.getOrThrow(SharedSystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
 const sandboxPath = path.resolve('cache')
 const enginePath = path.join(sandboxPath, 'main.js')
-const workerConcurrency = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
+const workerConcurrency = system.getNumber(WorkerSystemProps.FLOW_WORKER_CONCURRENCY) ?? 10
 let engineWorkers: EngineWorker
 
 // This a workound to make isolated-vm work in the worker thread check https://github.com/laverdet/isolated-vm/pull/402
 /* eslint-disable */
-const codeSandboxType = system.getOrThrow(SystemProp.CODE_SANDBOX_TYPE);
+const codeSandboxType = system.getOrThrow(SharedSystemProp.CODE_SANDBOX_TYPE);
 let ivm: any;
 if (codeSandboxType === CodeSandboxType.V8_ISOLATE) {
     ivm = import('isolated-vm');
@@ -251,13 +251,13 @@ async function prepareCode(artifact: CodeArtifact, sandboxPath: string): Promise
 
 
 function getEnvironmentVariables(): Record<string, string | undefined> {
-    const allowedEnvVariables = system.getList(SystemProp.SANDBOX_PROPAGATED_ENV_VARS)
+    const allowedEnvVariables = system.getList(SharedSystemProp.SANDBOX_PROPAGATED_ENV_VARS)
     const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
     return {
         ...propagatedEnvVars,
         NODE_OPTIONS: '--enable-source-maps',
-        AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
-        AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
+        AP_CODE_SANDBOX_TYPE: system.get(SharedSystemProp.CODE_SANDBOX_TYPE),
+        AP_PIECES_SOURCE: system.getOrThrow(SharedSystemProp.PIECES_SOURCE),
         AP_BASE_CODE_DIRECTORY: `${sandboxPath}/codes`,
     }
 }

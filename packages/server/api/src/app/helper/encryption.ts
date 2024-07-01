@@ -1,15 +1,15 @@
 import * as crypto from 'crypto'
 import { randomBytes } from 'node:crypto'
 import { promisify } from 'util'
+
+import { localFileStore } from './local-store'
+import { AppSystemProp, QueueMode, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
     ErrorCode,
     isNil,
 } from '@activepieces/shared'
-import { localFileStore } from './local-store'
-import { QueueMode, system } from './system/system'
-import { SystemProp } from './system/system-prop'
 
 let secret: string | null
 const algorithm = 'aes-256-cbc'
@@ -21,10 +21,10 @@ export type EncryptedObject = {
 }
 
 const loadEncryptionKey = async (queueMode: QueueMode): Promise<void> => {
-    secret = system.get(SystemProp.ENCRYPTION_KEY) ?? null
+    secret = system.get(AppSystemProp.ENCRYPTION_KEY) ?? null
     if (queueMode === QueueMode.MEMORY) {
         if (isNil(secret)) {
-            secret = await localFileStore.load(SystemProp.ENCRYPTION_KEY)
+            secret = await localFileStore.load(AppSystemProp.ENCRYPTION_KEY)
         }
         if (isNil(secret)) {
             secret = await generateAndStoreSecret()
@@ -35,10 +35,10 @@ const loadEncryptionKey = async (queueMode: QueueMode): Promise<void> => {
             {
                 code: ErrorCode.SYSTEM_PROP_INVALID,
                 params: {
-                    prop: SystemProp.ENCRYPTION_KEY,
+                    prop: AppSystemProp.ENCRYPTION_KEY,
                 },
             },
-            `System property AP_${SystemProp.ENCRYPTION_KEY} must be defined`,
+            `System property AP_${AppSystemProp.ENCRYPTION_KEY} must be defined`,
         )
     }
 }
@@ -47,7 +47,7 @@ const generateAndStoreSecret = async (): Promise<string> => {
     const secretLengthInBytes = 16
     const secretBuffer = await promisify(randomBytes)(secretLengthInBytes)
     const secret = secretBuffer.toString('hex') // Convert to hexadecimal
-    await localFileStore.save(SystemProp.ENCRYPTION_KEY, secret)
+    await localFileStore.save(AppSystemProp.ENCRYPTION_KEY, secret)
     return secret
 }
 
@@ -87,20 +87,12 @@ function decryptString(encryptedObject: EncryptedObject): string {
     return decrypted
 }
 
-function hashObject(object: Record<string, unknown>) {
-    const algorithm = 'sha256'
-    const hash = crypto.createHash(algorithm)
-    hash.update(JSON.stringify(object))
-    return hash.digest('hex')
-}
-
 function get16ByteKey(): string {
     assertNotNullOrUndefined(secret, 'secret is not defined')
     return secret
 }
 
 export const encryptUtils = {
-    hashObject,
     decryptString,
     decryptObject,
     encryptObject,

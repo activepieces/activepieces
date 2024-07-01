@@ -1,4 +1,4 @@
-import { networkUtls, system, SystemProp } from '@activepieces/server-shared'
+import { networkUtls, SharedSystemProp, system } from '@activepieces/server-shared'
 
 type DomainHelper = {
     constructFrontendUrlFromRequest({
@@ -32,7 +32,7 @@ let _domainHelper: DomainHelper = {
         domain: string
         path: string
     }): Promise<string> {
-        const frontendUrl = system.getOrThrow(SystemProp.FRONTEND_URL)
+        const frontendUrl = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
         return `${frontendUrl}${frontendUrl.endsWith('/') ? '' : '/'}${path}`
     },
 }
