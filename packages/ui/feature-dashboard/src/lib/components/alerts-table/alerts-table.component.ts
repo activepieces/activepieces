@@ -71,21 +71,26 @@ export class AlertsTableComponent implements OnInit {
   );
   updateNotificationsValue$: Observable<unknown>;
   currentProject: ProjectId;
+  projectTasks$: Observable<number>;
   selectTriggerDisplayName$: Observable<string | undefined>;
   optionItems: {
     name: NotificationStatus;
+    description: string;
     displayName: string;
   }[] = [
     {
       name: NotificationStatus.NEW_ISSUE,
-      displayName: $localize`New Issue`,
+      description: $localize`Get an alert only when a new issue happens`,
+      displayName: $localize`First Seen`,
     },
     {
       name: NotificationStatus.ALWAYS,
+      description: $localize`Get an alert on every flow failure`,
       displayName: $localize`Every Failed Run`,
     },
     {
       name: NotificationStatus.NEVER,
+      description: $localize`Disable flow failure alerts`,
       displayName: $localize`Never`,
     },
   ];
@@ -98,7 +103,7 @@ export class AlertsTableComponent implements OnInit {
     private projectMemberService: ProjectMemberService,
     private projectService: ProjectService
   ) {
-    this.currentProject = this.authService.getProjectId();
+    this.currentProject$ = this.authService.getProjectId();
     this.showUpgrade = !(
       this.route.snapshot.data[PLATFORM_RESOLVER_KEY] as Platform
     ).alertsEnabled;
@@ -114,7 +119,6 @@ export class AlertsTableComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.currentProject$ = this.authService.getProjectId();
     this.isAdmin$ = this.projectMemberService.isRole(ProjectMemberRole.ADMIN);
     this.updateNotificationsValue$ = this.projectService.currentProject$.pipe(
       take(1),
@@ -140,6 +144,15 @@ export class AlertsTableComponent implements OnInit {
             this.updatingAlertsFrequency$.next(false);
           })
         );
+      })
+    );
+    this.projectTasks$ = this.projectService.currentProject$.pipe(
+      take(1),
+      map((project) => {
+        if (project) {
+          return project.plan.tasks;
+        }
+        return 0;
       })
     );
     this.dataSource = new AlertsDataSource(

@@ -11,10 +11,12 @@
         </div>
         <div class="ap-mb-6 ap-border ap-border-solid ap-border-gray-200">
             <div class="ap-p-4">
-                <h3 class="ap-typography-subtitle-1 !ap-font-semibold" i18n>When Will I Get Alerts? </h3>
-                <ul class="ap-typography-body-2 ap-ml-4 ap-list-disc" >
-                    <li class="ap-my-2" i18n>When a run fails. (5 Alerts an hour capped at 15 alerts a day per flow)</li>
-                    <li class="ap-mb-2" i18n>When usage hits the limit you set. <strong>(Enterprise only)</strong></li>
+                <h3 class="ap-typography-subtitle-1 !ap-font-semibold" i18n>Alert Types</h3>
+                <ul class="ap-typography-body-2 ap-ml-4 ap-list-disc">
+                    <li class="ap-my-2" i18n>Flow failure alerts limited to 5/hour and 15/day per flow to avoid spam.
+                    </li>
+                    <li class="ap-mb-2" i18n>Nearing and exceeding the task usage quota ({{projectTasks$ | async}}
+                        tasks/month).</li>
                     <!-- TODO: Add when reminders is finished -->
                     <!-- <li class="ap-mb-2">Reminders for ongoing issues <strong>(enterprise only)</strong></li> -->
                 </ul>
@@ -26,11 +28,17 @@
                 <mat-form-field class="ap-w-[350px]" subscriptSizing="dynamic">
                     <mat-label>Send Run Alerts On</mat-label>
                     <mat-select i18n-placeholder [formControl]="notificationControl">
+                        <mat-select-trigger>
+                            {{selectTriggerDisplayName$ | async}}
+                        </mat-select-trigger>
                         @for (opt of optionItems; track opt.name) {
                         <mat-option i18n [value]="opt.name">
                             <div class="ap-flex ap-items-center ap-gap-[2px]">
                                 <div>
                                     <div>{{opt.displayName}}</div>
+                                    <div class="ap-typography-caption ap-text-description">
+                                        {{opt.description}}
+                                    </div>
                                 </div>
                             </div>
                         </mat-option>
@@ -38,11 +46,11 @@
                     </mat-select>
                 </mat-form-field>
                 @if(updatingAlertsFrequency$ | async) {
-                    <div  class="spinner-border dark-spinner" role="status"> </div>
+                <div class="spinner-border dark-spinner" role="status"> </div>
                 }
 
             </div>
-           
+
         </div>
 
         <div class=" ap-min-h-[70%]">
@@ -75,16 +83,16 @@
                 <tr mat-row [class.ap-hidden]="dataSource === undefined || (dataSource.isLoading$ | async) "
                     *matRowDef="let row; columns: displayedColumns"></tr>
             </table>
-         @if(dataSource === undefined ||  (dataSource.isLoading$ | async) === true){
-                <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
-                    <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
-                    </ap-loading-icon>
-                </div>
-             }
+            @if(dataSource === undefined || (dataSource.isLoading$ | async) === true){
+            <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
+                <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
+                </ap-loading-icon>
+            </div>
+            }
             @if(dataSource.data.length===0 && (dataSource.isLoading$ | async) === false){
-                <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-mt-[30px]" i18n>
-                    No recipient emails have been added to this project
-                </div>
+            <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-mt-[30px]" i18n>
+                No recipient emails have been added to this project
+            </div>
             }
         </div>
     </div>
@@ -96,5 +104,5 @@
     </div>
 </div>
 @if(deleteAlert$ | async){}
-@if(updateNotificationsValue$  | async) {}
+@if(updateNotificationsValue$ | async) {}
 @if(addAlertDialogClosed$ | async) {}
