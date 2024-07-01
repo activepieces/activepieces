@@ -7,7 +7,7 @@ import {
 } from '../dialogs/push-to-git-dialog/push-to-git-dialog.component';
 import { Observable, map, switchMap, tap } from 'rxjs';
 import { GitRepo } from '@activepieces/ee-shared';
-import { ProjectService, SyncProjectService, doesUserHavePermission, flowActionsUiInfo } from '@activepieces/ui/common';
+import { ProjectService, SyncProjectService, doesUserHavePermission, flowActionsUiInfo, unpermittedTooltip } from '@activepieces/ui/common';
 import { AsyncPipe } from '@angular/common';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { MatMenuItem } from '@angular/material/menu';
@@ -27,6 +27,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 })
 export class PushFlowToGitButtonComponent {
   readonly flowActionsUiInfo = flowActionsUiInfo;
+  readonly unpermittedTooltip = unpermittedTooltip;
   @Input({ required: true }) flow!: PopulatedFlow;
   hasPermission = doesUserHavePermission(Permission.WRITE_GIT_REPO);
   openPushDialog$?: Observable<void>;
