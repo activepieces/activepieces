@@ -197,6 +197,7 @@
     "sqlstring": "2.3.3",
     "ssh2-sftp-client": "9.1.0",
     "string-replace-async": "3.0.2",
+    "string-strip-html": "8.5.0",
     "stripe": "14.3.0",
     "subsink": "1.0.2",
     "tiktoken": "1.0.11",
