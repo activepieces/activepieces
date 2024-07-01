@@ -1,17 +1,17 @@
 <form class="ng-submitted">
   <div class="ap-mb-2 ap-flex ap-justify-between ap-items-center">
     <div></div>
-    <ng-container *ngIf="showGenerateCode$ | async as showCode">
+    <ng-container *ngIf="showGeneratedHttpRequest$ | async as showCode">
       <ap-button
         type="button"
         btnStyle="stroked"
         btnSize="medium"
-        (buttonClicked)="openCodeWriterDialog()"
-        [disabled]="(generateCodeEnabled$ | async) === false"
+        (buttonClicked)="openHttpRequestWriterDialog()"
+        [disabled]="(generateHttpRequestEnabled$ | async) === false"
         [tooltipText]="
-          (generateCodeEnabled$ | async)
-            ? codeGeneratorTooltip
-            : disabledCodeGeneratorTooltip
+          (generateHttpRequestEnabled$ | async)
+            ? httpRequestGeneratorTooltip
+            : disableHttpRequestGeneratorTooltip
         "
         i18n-tooltipText
       >

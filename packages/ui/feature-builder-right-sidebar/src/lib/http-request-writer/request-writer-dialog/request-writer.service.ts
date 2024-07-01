@@ -18,12 +18,12 @@ export class RequestWriterService {
     request: GenerateRequestBodyRequest
   ): Observable<GenerateRequestBodyResponse> {
     this.websocketService.socket.emit(
-      WebsocketServerEvent.REQUEST_WRITE,
+      WebsocketServerEvent.GENERATE_HTTP_REQUEST,
       request
     );
     return this.websocketService.socket
       .fromEvent<GenerateRequestBodyResponse>(
-        WebsocketClientEvent.REQUEST_WRITE_FINISHED
+        WebsocketClientEvent.GENERATE_HTTP_REQUEST_FINISHED
       )
       .pipe(take(1));
   }

@@ -2,8 +2,8 @@ import { ApFlagId } from '@activepieces/shared';
 import {
   FlagService,
   UiCommonModule,
-  codeGeneratorTooltip,
-  disabledCodeGeneratorTooltip,
+  httpRequestGeneratorTooltip,
+  disabledHttpRequestGeneratorTooltip,
 } from '@activepieces/ui/common';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { CommonModule } from '@angular/common';
@@ -27,24 +27,24 @@ import { RequestWriterDialogComponent } from './request-writer-dialog/request-wr
 export class HttpRequestWriterComponent {
   @Output() httpRequestGenerated = new EventEmitter<Record<string, unknown>>();
   dialogClosed$?: Observable<Record<string, unknown>>;
-  generateCodeEnabled$: Observable<boolean>;
-  showGenerateCode$: Observable<boolean>;
-  codeGeneratorTooltip = codeGeneratorTooltip;
-  disabledCodeGeneratorTooltip = disabledCodeGeneratorTooltip;
+  generateHttpRequestEnabled$: Observable<boolean>;
+  showGeneratedHttpRequest$: Observable<boolean>;
+  httpRequestGeneratorTooltip = httpRequestGeneratorTooltip;
+  disableHttpRequestGeneratorTooltip = disabledHttpRequestGeneratorTooltip;
 
   constructor(
     private dialogService: MatDialog,
     private flagService: FlagService
   ) {
-    this.generateCodeEnabled$ = this.flagService.isFlagEnabled(
+    this.generateHttpRequestEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.COPILOT_ENABLED
     );
-    this.showGenerateCode$ = this.flagService.isFlagEnabled(
+    this.showGeneratedHttpRequest$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COPILOT
     );
   }
 
-  openCodeWriterDialog() {
+  openHttpRequestWriterDialog() {
     const dialogRef = this.dialogService.open(RequestWriterDialogComponent);
 
     this.dialogClosed$ = dialogRef.afterClosed().pipe(

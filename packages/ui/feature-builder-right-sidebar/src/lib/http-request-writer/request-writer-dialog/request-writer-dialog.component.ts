@@ -24,7 +24,7 @@ export class RequestWriterDialogComponent {
     prompt: FormControl<string>;
     reference: FormControl<string>;
   }>;
-  receivedCode$: BehaviorSubject<string> = new BehaviorSubject<string>('');
+  receivedRequest$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   promptOperation$?: Observable<void>;
   prisimFix = false;
@@ -67,7 +67,7 @@ export class RequestWriterDialogComponent {
             // this.promptForm.controls.reference.setValue('');
             try {
               const result = response.result;
-              this.receivedCode$.next(JSON.parse(result));
+              this.receivedRequest$.next(JSON.parse(result));
 
               if (this.stepper.selected) {
                 this.stepper.selected.completed = true;
@@ -87,7 +87,7 @@ export class RequestWriterDialogComponent {
   }
 
   useGeneratedCode() {
-    this.dialogRef.close(this.receivedCode$.value);
+    this.dialogRef.close(this.receivedRequest$.value);
   }
 
   private highlightPrism() {

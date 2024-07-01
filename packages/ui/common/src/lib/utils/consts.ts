@@ -17,7 +17,9 @@ export type FeatureKey =
   | 'ISSUES';
 export const unexpectedErrorMessage = $localize`An unexpected error occurred, please contact support`;
 export const codeGeneratorTooltip = $localize`Write code with assistance from AI`;
+export const httpRequestGeneratorTooltip = $localize`Write http requests with assistance from AI`;
 export const disabledCodeGeneratorTooltip = $localize`Configure api key in the environment variables to generate code using AI`;
+export const disabledHttpRequestGeneratorTooltip = $localize`Configure api key in the environment variables to generate http requests using AI`;
 
 export const flowActionsUiInfo = {
   duplicate: {

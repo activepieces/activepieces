@@ -1,5 +1,5 @@
 <ap-dialog-title-template i18n
-  >Fill HTTP requets with AI
+  >Http Request Copilot
   <!-- <span class="ap-typography-caption ap-text-primary ap-mt-1">BETA</span> -->
 </ap-dialog-title-template>
 
@@ -8,8 +8,8 @@
     <mat-stepper linear #stepper>
       <mat-step
         [completed]="
-          (receivedCode$ | async) !== undefined &&
-          (receivedCode$ | async) !== ''
+          (receivedRequest$ | async) !== undefined &&
+          (receivedRequest$ | async) !== ''
         "
         [editable]="false"
       >
@@ -31,7 +31,8 @@
     </ap-button>
     <ap-button
       *ngIf="
-        (receivedCode$ | async) === undefined || (receivedCode$ | async) === ''
+        (receivedRequest$ | async) === undefined ||
+        (receivedRequest$ | async) === ''
       "
       cdkFocusInitial
       btnSize="default"
@@ -44,7 +45,8 @@
     </ap-button>
     <ap-button
       *ngIf="
-        (receivedCode$ | async) !== undefined && (receivedCode$ | async) !== ''
+        (receivedRequest$ | async) !== undefined &&
+        (receivedRequest$ | async) !== ''
       "
       cdkFocusInitial
       btnSize="default"
@@ -53,15 +55,14 @@
       (click)="useGeneratedCode()"
       i18n
     >
-      Use Code
+      Use Generated Request
     </ap-button>
   </div>
 </mat-dialog-actions>
 
 <ng-template #promptTemplate>
   <div class="ap-typography-body-1 ap-text-description ap-mb-4" i18n>
-    Let AI help you write code for this step. Write your prompt below to get
-    started.
+    Let AI generate an HTTP request for this step.
   </div>
   <ng-container
     [ngTemplateOutlet]="promptFormTemplate"
@@ -72,21 +73,28 @@
 </ng-template>
 
 <ng-template #editTemplate>
-
   <div class="ap-typography-body-1 ap-text-description ap-mb-4" i18n>
-      Here is the code our AI wrote for you. Ask for changes or use the code in your action.
+    Here is the code our AI wrote for you. Ask for changes or use the code in
+    your action.
   </div>
-  <ng-template #codeResult>{{ receivedCode$ | async | json }}</ng-template>
+  <ng-template #codeResult>{{ receivedRequest$ | async | json }}</ng-template>
   <div class="ap-mb-4">
-      <pre *ngIf="prisimFix === false"
-          class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card "><code class="language-js"><ng-container *ngTemplateOutlet="codeResult"> </ng-container></code></pre>
-      <pre *ngIf="prisimFix === true"
-          class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card "><code class="language-js"><ng-container *ngTemplateOutlet="codeResult"> </ng-container></code></pre>
+    <pre
+      *ngIf="prisimFix === false"
+      class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card"
+    ><code class="language-js"><ng-container *ngTemplateOutlet="codeResult"> </ng-container></code></pre>
+    <pre
+      *ngIf="prisimFix === true"
+      class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card"
+    ><code class="language-js"><ng-container *ngTemplateOutlet="codeResult"> </ng-container></code></pre>
   </div>
 
-  <ng-container [ngTemplateOutlet]="promptFormTemplate" [ngTemplateOutletContext]="{
-          reprompt:true
-      }"></ng-container>
+  <ng-container
+    [ngTemplateOutlet]="promptFormTemplate"
+    [ngTemplateOutletContext]="{
+      reprompt: true
+    }"
+  ></ng-container>
 </ng-template>
 
 <ng-container *ngIf="promptOperation$ | async"></ng-container>
@@ -105,12 +113,12 @@
           subscriptSizing="dynamic"
         >
           <mat-label i18n>
-            {{ (receivedCode$ | async) ? 'Request Adjustment' : 'Prompt' }}
+            {{ (receivedRequest$ | async) ? 'Request Adjustment' : 'Prompt' }}
           </mat-label>
           <textarea
             *ngIf="
-              (receivedCode$ | async) === undefined ||
-              (receivedCode$ | async) === ''
+              (receivedRequest$ | async) === undefined ||
+              (receivedRequest$ | async) === ''
             "
             class="!ap-resize-none"
             cdkFocusInitial
@@ -123,7 +131,7 @@
           ></textarea>
 
           <input
-            *ngIf="receivedCode$ | async"
+            *ngIf="receivedRequest$ | async"
             cdkFocusInitial
             (keydown.enter)="$event.preventDefault(); $event.stopPropagation()"
             (keyup.enter)="prompt(reprompt)"
@@ -142,15 +150,15 @@
           appearance="outline"
           subscriptSizing="dynamic"
           *ngIf="
-              (receivedCode$ | async) === undefined ||
-              (receivedCode$ | async) === ''
-            "
+            (receivedRequest$ | async) === undefined ||
+            (receivedRequest$ | async) === ''
+          "
         >
           <mat-label i18n> Docs Reference </mat-label>
           <input
             *ngIf="
-              (receivedCode$ | async) === undefined ||
-              (receivedCode$ | async) === ''
+              (receivedRequest$ | async) === undefined ||
+              (receivedRequest$ | async) === ''
             "
             class="!ap-resize-none"
             cdkFocusInitial
@@ -163,7 +171,7 @@
           />
         </mat-form-field>
       </div>
-      <div *ngIf="receivedCode$ | async">
+      <div *ngIf="receivedRequest$ | async">
         <ap-button
           btnColor="primary"
           btnStyle="stroked"
