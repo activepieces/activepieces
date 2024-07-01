@@ -1,10 +1,15 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  TriggerStrategy,
+  Property,
+} from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   getAccessTokenOrThrow,
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
+import { stripHtml } from 'string-strip-html';
 import { intercomAuth } from '../..';
 import { intercomCommon } from '../common';
 
@@ -13,7 +18,12 @@ export const noteAddedToConversation = createTrigger({
   name: 'noteAddedToConversation',
   displayName: 'Note added to conversation',
   description: 'Triggers when a note is added to a conversation',
-  props: {},
+  props: {
+    keyword: Property.ShortText({
+      displayName: 'Keyword (optional)',
+      required: false,
+    }),
+  },
   sampleData: {},
   auth: intercomAuth,
   type: TriggerStrategy.APP_WEBHOOK,
@@ -37,6 +47,28 @@ export const noteAddedToConversation = createTrigger({
     // implement webhook deletion logic
   },
   async run(context) {
-    return [context.payload.body];
+    const keyword = context.propsValue.keyword;
+    const payloadBody = context.payload.body as IntercomPayloadBodyType;
+    if (
+      !keyword ||
+      payloadBody?.data?.item?.conversation_parts.conversation_parts.some(
+        (part) => stripHtml(part.body).result.split(/\s/).some((word) => word === keyword)
+      )
+    ) {
+      return [payloadBody];
+    }
+    return [];
   },
 });
+
+type IntercomPayloadBodyType = {
+  data: {
+    item: {
+      conversation_parts: {
+        conversation_parts: {
+          body: string;
+        }[];
+      };
+    };
+  };
+};

@@ -21,7 +21,7 @@ export const intercomAuth = PieceAuth.OAuth2({
 export const intercom = createPiece({
   displayName: 'Intercom',
   description: 'Customer messaging platform for sales, marketing, and support',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.29.0', // introduction of new intercom APP_WEBHOOK
   logoUrl: 'https://cdn.activepieces.com/pieces/intercom.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: intercomAuth,
