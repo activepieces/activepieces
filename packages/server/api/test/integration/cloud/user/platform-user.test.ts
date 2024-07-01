@@ -1,4 +1,9 @@
 
+import {
+    PlatformRole,
+    PrincipalType,
+    UserStatus,
+} from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
@@ -11,11 +16,6 @@ import {
     mockBasicSetup,
     setupMockApiKeyServiceAccount,
 } from '../../../helpers/mocks'
-import {
-    PlatformRole,
-    PrincipalType,
-    UserStatus,
-} from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

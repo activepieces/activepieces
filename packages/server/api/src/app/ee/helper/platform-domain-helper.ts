@@ -1,6 +1,6 @@
-import { customDomainService } from '../custom-domains/custom-domain.service'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
+import { customDomainService } from '../custom-domains/custom-domain.service'
 
 export const platformDomainHelper = {
     async constructUrlFrom({

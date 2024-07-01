@@ -1,3 +1,8 @@
+import {
+    ApiKeyResponseWithValue,
+    UpsertProjectMemberRequestBody,
+} from '@activepieces/ee-shared'
+import { Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -13,11 +18,6 @@ import {
     createMockProjectMember,
     createMockUser,
 } from '../../../helpers/mocks'
-import {
-    ApiKeyResponseWithValue,
-    UpsertProjectMemberRequestBody,
-} from '@activepieces/ee-shared'
-import { Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

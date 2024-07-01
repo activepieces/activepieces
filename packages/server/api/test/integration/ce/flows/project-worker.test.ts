@@ -1,10 +1,10 @@
+import { PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import { createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
-import { PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

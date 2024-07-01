@@ -1,9 +1,9 @@
+import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import { webhookSimulationService } from './webhook-simulation-service'
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 
 export const webhookSimulationController: FastifyPluginCallbackTypebox = (
     app,

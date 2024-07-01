@@ -1,15 +1,15 @@
-import dayjs from 'dayjs'
-import { databaseConnection } from '../../database/database-connection'
-import { userService } from '../../user/user-service'
-import { emailService } from '../helper/email/email-service'
-import { otpGenerator } from './lib/otp-generator'
-import { OtpEntity } from './otp-entity'
 import {
     OtpModel,
     OtpState,
     OtpType,
 } from '@activepieces/ee-shared'
 import { apId, PlatformId, User, UserId } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { databaseConnection } from '../../database/database-connection'
+import { userService } from '../../user/user-service'
+import { emailService } from '../helper/email/email-service'
+import { otpGenerator } from './lib/otp-generator'
+import { OtpEntity } from './otp-entity'
 
 const TEN_MINUTES = 10 * 60 * 1000
 

@@ -4,10 +4,11 @@
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/strict",
-    "plugin:import/recommended"
+    "plugin:import-x/warnings"
   ],
   "ignorePatterns": [
-    "!**/*"
+    "!**/*",
+    "node_modules/**/*"
   ],
   "overrides": [
     {
@@ -101,7 +102,8 @@
           "in-try-catch"
         ],
         "default-case-last": "error",
-        "import/order": [
+        "import-x/no-duplicates": "error",
+        "import-x/order": [
           "error",
           {
             "alphabetize": {
@@ -109,7 +111,6 @@
             }
           }
         ],
-        "import/no-duplicates": "error",
         "sort-imports": [
           "error",
           {
@@ -129,11 +130,11 @@
     }
   ],
   "settings": {
-    "import/resolver": {
-      "typescript": {
-        "alwaysTryTypes": true,
-        "project": "**/tsconfig.*?.json"
-      },
+    "import/ignore:": [
+      "node_modules"
+    ],
+    "import-x/resolver": {
+      "typescript": true,
       "node": true
     }
   }

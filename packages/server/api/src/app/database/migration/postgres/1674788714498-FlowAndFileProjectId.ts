@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {

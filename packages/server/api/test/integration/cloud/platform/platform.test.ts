@@ -1,10 +1,3 @@
-import { faker } from '@faker-js/faker'
-import { FastifyInstance } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { generateMockToken } from '../../../helpers/auth'
-import { createMockPlatform, createMockUser, mockBasicSetup } from '../../../helpers/mocks'
 import {
     apId,
     FilteredPieceBehavior,
@@ -14,6 +7,13 @@ import {
     PrincipalType,
     UpdatePlatformRequestBody,
 } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { setupApp } from '../../../../src/app/app'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../helpers/auth'
+import { createMockPlatform, createMockUser, mockBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 

@@ -1,6 +1,6 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
 import { apId } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RemoveCollections1680986182074 implements MigrationInterface {
     name = 'RemoveCollections1680986182074'

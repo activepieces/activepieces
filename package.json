@@ -284,7 +284,7 @@
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.0.0",
     "eslint-import-resolver-typescript": "3.6.1",
-    "eslint-plugin-import": "2.29.1",
+    "eslint-plugin-import-x": "0.5.2",
     "eslint-plugin-prettier": "4.2.1",
     "eslint-plugin-rxjs": "5.0.3",
     "eslint-plugin-rxjs-angular": "2.0.1",
