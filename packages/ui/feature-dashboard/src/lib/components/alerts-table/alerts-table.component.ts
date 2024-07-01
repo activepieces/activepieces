@@ -24,6 +24,7 @@ import { ActivatedRoute } from '@angular/router';
 import {
   BehaviorSubject,
   Observable,
+  delay,
   distinctUntilChanged,
   map,
   startWith,
@@ -49,6 +50,7 @@ import { FormControl } from '@angular/forms';
 export class AlertsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator: ApPaginatorComponent;
+  updatingAlertsFrequency$ = new BehaviorSubject<boolean>(false);
   readonly permissionToAddMessage = $localize`You don\'t have permissions to add email`;
   readonly permissionToDeleteMessage = $localize`You don\'t have permissions to delete email`;
   upgradeNoteTitle = $localize`Unlock Alerts`;
@@ -58,7 +60,7 @@ export class AlertsTableComponent implements OnInit {
   dataSource: AlertsDataSource;
   currentProject$: ProjectId;
   refresh$ = new BehaviorSubject<boolean>(true);
-  addAlertDialogClosed$: Observable<void>;
+  addAlertDialogClosed$?: Observable<unknown>;
   isAdmin$: Observable<boolean>;
   deleteAlert$: Observable<void> | undefined;
   notificationControl: FormControl<NotificationStatus> = new FormControl(
@@ -73,22 +75,18 @@ export class AlertsTableComponent implements OnInit {
   optionItems: {
     name: NotificationStatus;
     displayName: string;
-    description: string;
   }[] = [
     {
       name: NotificationStatus.NEW_ISSUE,
-      displayName: 'On New Issue',
-      description: 'Get run alerts only when a new issue occurs',
+      displayName: $localize`New Issue`,
     },
     {
       name: NotificationStatus.ALWAYS,
-      displayName: 'Always',
-      description: 'Get alerts for every flow run failure',
+      displayName: $localize`Every Failed Run`,
     },
     {
       name: NotificationStatus.NEVER,
-      displayName: 'Never',
-      description: 'Disable alerts for flow runs',
+      displayName: $localize`Never`,
     },
   ];
   constructor(
@@ -108,15 +106,11 @@ export class AlertsTableComponent implements OnInit {
       map((value) => {
         const item = this.optionItems.find((opt) => opt.name === value);
         if (item) {
-          return $localize`${item.displayName}`;
+          return item.displayName;
         }
         return undefined;
       })
     );
-  }
-
-  capitalizeChannel(channel: string) {
-    return channel.charAt(0).toUpperCase() + channel.slice(1).toLowerCase();
   }
 
   ngOnInit(): void {
@@ -133,10 +127,17 @@ export class AlertsTableComponent implements OnInit {
       switchMap(() => {
         return this.notificationControl.valueChanges.pipe(
           distinctUntilChanged(),
+          tap(() => {
+            this.updatingAlertsFrequency$.next(true);
+          }),
           switchMap((value) => {
             return this.projectService.update(this.currentProject, {
               notifyStatus: value,
             });
+          }),
+          delay(300),
+          tap(() => {
+            this.updatingAlertsFrequency$.next(false);
           })
         );
       })
@@ -157,8 +158,10 @@ export class AlertsTableComponent implements OnInit {
       })
       .afterClosed()
       .pipe(
-        tap(() => {
-          this.refresh$.next(true);
+        tap((res) => {
+          if (res) {
+            this.refresh$.next(true);
+          }
         })
       );
   }
@@ -172,9 +175,5 @@ export class AlertsTableComponent implements OnInit {
         this.refresh$.next(true);
       })
     );
-  }
-
-  get notificationStatus() {
-    return NotificationStatus;
   }
 }
