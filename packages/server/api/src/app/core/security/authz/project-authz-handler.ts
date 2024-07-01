@@ -1,7 +1,7 @@
+import { ActivepiecesError, ErrorCode, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { requestUtils } from '../../request/request-utils'
 import { BaseSecurityHandler } from '../security-handler'
-import { ActivepiecesError, ErrorCode, PrincipalType } from '@activepieces/shared'
 
 export class ProjectAuthzHandler extends BaseSecurityHandler {
     private static readonly IGNORED_ROUTES = [

@@ -1,13 +1,6 @@
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import importFresh from '@activepieces/import-fresh-webpack'
-import { nanoid } from 'nanoid'
-import {
-    PieceMetadataSchema,
-} from '../piece-metadata-entity'
-import { pieceMetadataServiceHooks } from './hooks'
-import { PieceMetadataService } from './piece-metadata-service'
-import { toPieceMetadataModelSummary } from '.'
 import { Piece, PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { exceptionHandler, filePiecesUtils, logger, system } from '@activepieces/server-shared'
 import {
@@ -22,6 +15,13 @@ import {
     PieceType,
     ProjectId,
 } from '@activepieces/shared'
+import { nanoid } from 'nanoid'
+import {
+    PieceMetadataSchema,
+} from '../piece-metadata-entity'
+import { pieceMetadataServiceHooks } from './hooks'
+import { PieceMetadataService } from './piece-metadata-service'
+import { toPieceMetadataModelSummary } from '.'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const pieces = await findAllPieces()

@@ -1,15 +1,15 @@
 import {
+    ApiKeyResponseWithoutValue,
+    ApiKeyResponseWithValue,
+    CreateApiKeyRequest } from '@activepieces/ee-shared'
+import { ApId, assertNotNullOrUndefined, SeekPage } from '@activepieces/shared'
+import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { apiKeyService } from './api-key-service'
-import {
-    ApiKeyResponseWithoutValue,
-    ApiKeyResponseWithValue,
-    CreateApiKeyRequest } from '@activepieces/ee-shared'
-import { ApId, assertNotNullOrUndefined, SeekPage } from '@activepieces/shared'
 
 export const apiKeyModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.apiKeysEnabled))

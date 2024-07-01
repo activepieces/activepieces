@@ -1,5 +1,3 @@
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -9,6 +7,8 @@ import {
     ProjectId,
     UserId,
 } from '@activepieces/shared'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
 
 export const adminPlatformService = {
     async add({

@@ -1,10 +1,5 @@
 import { randomBytes } from 'crypto'
 import { promisify } from 'util'
-import jwtLibrary, {
-    DecodeOptions,
-    SignOptions,
-    VerifyOptions,
-} from 'jsonwebtoken'
 import { localFileStore, QueueMode, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -12,6 +7,11 @@ import {
     isNil,
     spreadIfDefined,
 } from '@activepieces/shared'
+import jwtLibrary, {
+    DecodeOptions,
+    SignOptions,
+    VerifyOptions,
+} from 'jsonwebtoken'
 
 export enum JwtSignAlgorithm {
     HS256 = 'HS256',

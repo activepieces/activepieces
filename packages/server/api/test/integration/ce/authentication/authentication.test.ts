@@ -1,3 +1,4 @@
+import { UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -8,7 +9,6 @@ import {
     createMockSignInRequest,
     createMockSignUpRequest,
 } from '../../../helpers/mocks/authn'
-import { UserStatus } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

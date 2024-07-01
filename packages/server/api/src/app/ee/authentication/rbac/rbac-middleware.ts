@@ -1,5 +1,3 @@
-import { FastifyRequest } from 'fastify'
-import { projectMemberService } from '../../project-members/project-member.service'
 import { rolePermissions } from '@activepieces/ee-shared'
 import { system } from '@activepieces/server-shared'
 import {
@@ -13,6 +11,8 @@ import {
     PrincipalType,
     ProjectMemberRole,
 } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
+import { projectMemberService } from '../../project-members/project-member.service'
 
 const EDITION_IS_COMMUNITY = system.getEdition() === ApEdition.COMMUNITY
 

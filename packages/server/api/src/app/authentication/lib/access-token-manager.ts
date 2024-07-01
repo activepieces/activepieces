@@ -1,5 +1,5 @@
-import { jwtUtils } from '../../helper/jwt-utils'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, Principal } from '@activepieces/shared'
+import { jwtUtils } from '../../helper/jwt-utils'
 
 export const accessTokenManager = {
     async generateToken(principal: Principal, expiresInSeconds: number = 7 * 30 * 24 * 60 * 60): Promise<string> {

@@ -1,10 +1,4 @@
 import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { userService } from '../user-service'
-import {
     ApId,
     assertNotNullOrUndefined,
     EndpointScope,
@@ -13,6 +7,12 @@ import {
     UpdateUserRequestBody,
     UserResponse,
 } from '@activepieces/shared'
+import {
+    FastifyPluginAsyncTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { userService } from '../user-service'
 
 export const platformUserController: FastifyPluginAsyncTypebox = async (app) => {
 

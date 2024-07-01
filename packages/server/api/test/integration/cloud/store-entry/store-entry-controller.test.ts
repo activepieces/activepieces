@@ -1,9 +1,9 @@
+import { apId, PrincipalType, User } from '@activepieces/shared'
 import { FastifyInstance, LightMyRequestResponse } from 'fastify'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import { createMockUser } from '../../../helpers/mocks'
-import { apId, PrincipalType, User } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

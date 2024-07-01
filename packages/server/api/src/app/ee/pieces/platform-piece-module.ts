@@ -1,11 +1,4 @@
 import {
-    FastifyPluginAsyncTypebox,
-    FastifyPluginCallbackTypebox,
-    Type } from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { pieceService } from '../../pieces/piece-service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import {
     ActivepiecesError,
     AddPieceRequestBody,
     EndpointScope,
@@ -15,6 +8,13 @@ import {
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
+import {
+    FastifyPluginAsyncTypebox,
+    FastifyPluginCallbackTypebox,
+    Type } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { pieceService } from '../../pieces/piece-service'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 
 export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })

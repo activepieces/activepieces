@@ -1,11 +1,11 @@
-import { authenticationService } from '../../../authentication/authentication-service'
-import { resolvePlatformIdFromEmail } from '../../../platform/platform-utils'
-import { platformService } from '../../../platform/platform.service'
-import { providers } from './authn-provider/authn-provider'
 import { AuthenticationResponse,
     FederatedAuthnLoginResponse,
     ThirdPartyAuthnProviderEnum,
 } from '@activepieces/shared'
+import { authenticationService } from '../../../authentication/authentication-service'
+import { resolvePlatformIdFromEmail } from '../../../platform/platform-utils'
+import { platformService } from '../../../platform/platform.service'
+import { providers } from './authn-provider/authn-provider'
 
 export const federatedAuthnService = {
     async login({

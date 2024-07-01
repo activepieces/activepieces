@@ -1,6 +1,6 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
-import { ApEdition } from '@activepieces/shared'
 
 export class UnifyEnterpriseWithCloud1714249840058 implements MigrationInterface {
     name = 'UnifyEnterpriseWithCloud1714249840058'
