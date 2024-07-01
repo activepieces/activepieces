@@ -4,7 +4,7 @@
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/strict",
-    "plugin:import-x/warnings"
+    "plugin:import-x/recommended"
   ],
   "ignorePatterns": [
     "!**/*",
@@ -22,6 +22,7 @@
         ]
       },
       "rules": {
+        "import-x/no-unresolved": "off",
         "no-console": "error",
         "object-shorthand": "error",
         "@typescript-eslint/switch-exhaustiveness-check": "error",
@@ -134,7 +135,9 @@
       "node_modules"
     ],
     "import-x/resolver": {
-      "typescript": true,
+      "typescript": {
+        "alwaysTryTypes": false
+      },
       "node": true
     }
   }
