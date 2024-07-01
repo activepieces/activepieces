@@ -11,6 +11,7 @@ import {
     ExecutionType,
     FlowRun,
     ListFlowRunsRequestQuery,
+    Permission,
     PrincipalType,
     ProgressUpdateType,
     RetryFlowRequestBody,
@@ -127,10 +128,14 @@ const ResumeFlowRunRequest = {
 }
 
 const RetryFlowRequest = {
+    config: {
+        permission: Permission.RETRY_RUN,
+    },
     schema: {
         params: Type.Object({
             id: ApId,
         }),
         querystring: RetryFlowRequestBody,
+         
     },
 }
