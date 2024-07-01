@@ -1,9 +1,8 @@
-import { Platform, ProjectId, ProjectMemberRole } from '@activepieces/shared';
+import { ProjectId, ProjectMemberRole } from '@activepieces/shared';
 import {
   ApPaginatorComponent,
   AuthenticationService,
   GenericSnackbarTemplateComponent,
-  PLATFORM_RESOLVER_KEY,
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { AsyncPipe } from '@angular/common';
@@ -35,12 +34,7 @@ export class AlertsTableComponent implements OnInit {
   paginator: ApPaginatorComponent;
   readonly permissionToAddMessage = $localize`You don\'t have permissions to add email`;
   readonly permissionToDeleteMessage = $localize`You don\'t have permissions to delete email`;
-  readonly betaNote =
-    'Note: Basic alerts are free, and advanced alerts will only be <strong>Free</strong> during the <strong>BETA</strong> period.';
-  upgradeNoteTitle = $localize`Unlock Alerts`;
-  upgradeNote = $localize`Stay up to date with your flows, quota limits and updates with Alerts`;
   displayedColumns: string[] = ['receiver', 'action'];
-  showUpgrade = true;
   dataSource: AlertsDataSource;
   currentProject$: ProjectId;
   refresh$ = new BehaviorSubject<boolean>(true);
@@ -54,11 +48,7 @@ export class AlertsTableComponent implements OnInit {
     private authService: AuthenticationService,
     private snackBar: MatSnackBar,
     private projectMemberService: ProjectMemberService
-  ) {
-    this.showUpgrade = !(
-      this.route.snapshot.data[PLATFORM_RESOLVER_KEY] as Platform
-    ).alertsEnabled;
-  }
+  ) {}
 
   capitalizeChannel(channel: string) {
     return channel.charAt(0).toUpperCase() + channel.slice(1).toLowerCase();
