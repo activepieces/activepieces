@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.28.0",
-  "rcVersion": "0.29.0-rc.1",
+  "rcVersion": "0.29.0-test-1",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -128,7 +128,7 @@
     "imapflow": "1.0.152",
     "ioredis": "5.3.2",
     "is-base64": "1.1.0",
-    "isolated-vm": "4.6.0",
+    "isolated-vm": "5.0.1",
     "jimp": "0.22.12",
     "js-yaml": "4.1.0",
     "jsdom": "23.0.1",
