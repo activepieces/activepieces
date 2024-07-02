@@ -1,4 +1,4 @@
-import { flowTimeoutSandbox, JobStatus, QueueName, system, SystemProp, triggerTimeoutSandbox } from '@activepieces/server-shared'
+import { exceptionHandler, flowTimeoutSandbox, JobStatus, memoryLock, QueueName, system, SystemProp, triggerTimeoutSandbox } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { Job, Worker } from 'bullmq'
 import dayjs from 'dayjs'
@@ -11,15 +11,31 @@ const WORKER_CONCURRENCY = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) 
 
 export const redisConsumer: ConsumerManager = {
     async poll(jobType) {
-        const worker = consumers[jobType]
-        assertNotNullOrUndefined(worker, 'Queue not found')
-        const job = await worker.getNextJob(serverId)
-        if (isNil(job)) {
-            return null
+        let lock
+        try {
+            lock =  await memoryLock.acquire(`poll-${jobType}`, 5000)
+            const worker = consumers[jobType]
+            assertNotNullOrUndefined(worker, 'Queue not found')
+            const job = await worker.getNextJob(serverId)
+            if (isNil(job)) {
+                return null
+            }
+            return {
+                id: job.id!,
+                data: job.data,
+            }
         }
-        return {
-            id: job.id!,
-            data: job.data,
+        catch (e) {
+            if (memoryLock.isTimeoutError(e)) {
+                return null
+            }
+            exceptionHandler.handle(e)
+            throw e
+        }
+        finally {
+            if (lock) {
+                await lock.release()
+            }
         }
     },
     async update({ queueName, jobId, status, message }): Promise<void> {
@@ -45,15 +61,11 @@ export const redisConsumer: ConsumerManager = {
                 connection: createRedisClient(),
                 lockDuration,
                 maxStalledCount: 5,
-                drainDelay: 5,
                 stalledInterval: 30000,
             })
         }
         await Promise.all(Object.values(consumers).map((consumer) => consumer.waitUntilReady()))
-        for (const queueName of Object.values(QueueName)) {
-            const worker = consumers[queueName]
-            await worker.startStalledCheckTimer()
-        }
+ 
     },
     async close(): Promise<void> {
         if (WORKER_CONCURRENCY === 0) {

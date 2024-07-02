@@ -1,6 +1,7 @@
-import { DeleteWebhookSimulationRequest, JobData, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendWebhookUpdateRequest, SubmitPayloadsRequest, WebhookJobData } from '@activepieces/server-shared'
-import { apId, ExecutionType, PrincipalType, RunEnvironment } from '@activepieces/shared'
+import { DeleteWebhookSimulationRequest, JobData, logger, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendWebhookUpdateRequest, SubmitPayloadsRequest, WebhookJobData } from '@activepieces/server-shared'
+import { apId, ExecutionType, isNil, PrincipalType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import dayjs from 'dayjs'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { dedupeService } from '../flows/trigger/dedupe'
@@ -21,8 +22,15 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             querystring: PollJobRequest,
         },
     }, async (request) => {
+        const took = dayjs().valueOf()
         const { queueName } = request.query
         const job = await flowConsumer.poll(queueName)
+        if (queueName === QueueName.ONE_TIME) {
+            logger.info({ 
+                queueName, took: dayjs().valueOf() - took, 
+                isNull: isNil(job),
+            }, 'poll')
+        }
         if (!job) {
             return null
         }
