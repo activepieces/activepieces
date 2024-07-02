@@ -10,6 +10,8 @@ import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
 import { databaseConnection } from '../../../database/database-connection'
 import { FlowRunEntity } from '../../../flows/flow-run/flow-run-entity'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
+import { SystemJobName } from '../../../helper/system-jobs/common'
+import { registerJobHandler } from '../../../helper/system-jobs/job-handlers'
 import { projectService } from '../../../project/project-service'
 import { projectUsageService } from '../../../project/usage/project-usage-service'
 import { projectLimitsService } from '../../project-plan/project-plan.service'
@@ -24,15 +26,12 @@ const EVERY_4_HOURS = '59 */4 * * *'
 export const projectBillingModule: FastifyPluginAsyncTypebox = async (app) => {
     await systemJobsSchedule.upsertJob({
         job: {
-            name: 'project-usage-report',
+            name: SystemJobName.PROJECT_USAGE_REPORT,
             data: {},
         },
         schedule: {
             type: 'repeated',
             cron: EVERY_4_HOURS,
-        },
-        async handler(job) {
-            await sendProjectRecords(job.timestamp)
         },
     })
     await app.register(projectBillingController, { prefix: '/v1/project-billing' })
@@ -160,6 +159,6 @@ const projectBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
             }
         },
     )
-
 }
 
+registerJobHandler(SystemJobName.PROJECT_USAGE_REPORT, sendProjectRecords)

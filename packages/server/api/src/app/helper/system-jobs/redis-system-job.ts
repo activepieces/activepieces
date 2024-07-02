@@ -1,14 +1,13 @@
 import { logger } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
+import { isNil, spreadIfDefined } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 import { createRedisClient } from '../../database/redis-connection'
-import { JobSchedule, SystemJobData, SystemJobDefinition, SystemJobHandler, SystemJobName, SystemJobSchedule } from './common'
+import { JobSchedule, SystemJobData, SystemJobDefinition, SystemJobName, SystemJobSchedule } from './common'
+import { getJobHandler } from './job-handlers'
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
-
-const jobHandlers = new Map<SystemJobName, SystemJobHandler>()
 
 let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
 let systemJobWorker: Worker<SystemJobData, unknown, SystemJobName>
@@ -34,7 +33,7 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
             async (job) => {
                 logger.debug({ name: 'RedisSystemJob#systemJobWorker' }, `Executing job (${job.name})`)
 
-                const jobHandler = getJobHandlerOrThrow(job.name)
+                const jobHandler = getJobHandler(job.name)
                 await jobHandler(job.data)
             },
             {
@@ -49,20 +48,15 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
         ])
     },
 
-    async upsertJob({ job, schedule, handler }): Promise<void> {
+    async upsertJob({ job, schedule }): Promise<void> {
         logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Upserting job')
-        if (await jobNotInQueue(job.name)) {
+        if (await jobNotInQueue(job.name, job.jobId)) {
             logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Adding job to queue')
             await addJobToQueue({
                 job,
                 schedule,
             })
         }
-
-        setJobHandler({
-            name: job.name,
-            handler,
-        })
     },
 
     async close(): Promise<void> {
@@ -78,64 +72,43 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
 }
 
 const addJobToQueue = async <T extends SystemJobName>({ job, schedule }: AddJobToQueueParams<T>): Promise<void> => {
-    const jobOptions = configureJobOptions(schedule)
+    const jobOptions = configureJobOptions({ schedule, jobId: job.jobId })
     await systemJobsQueue.add(job.name, job.data, jobOptions)
 }
 
-const configureJobOptions = (schedule: JobSchedule): JobsOptions => {
-    switch (schedule.type) {
-        case 'one-time': {
-            const now = dayjs()
-            return {
-                delay: schedule.date.diff(now, 'milliseconds'),
-            }
+const configureJobOptions = ({ schedule, jobId }: { schedule: JobSchedule, jobId?: string }): JobsOptions => {
+    const config: JobsOptions = {}
+    
+    if (schedule.type === 'one-time') {
+        const now = dayjs()
+        config.delay = schedule.date.diff(now, 'milliseconds')
+    }
+    else if (schedule.type === 'repeated') {
+        config.repeat = {
+            pattern: schedule.cron,
+            tz: 'UTC',
         }
+    }
 
-        case 'repeated': {
-            return {
-                repeat: {
-                    pattern: schedule.cron,
-                    tz: 'UTC',
-                },
-            }
-        }
+    return {
+        ...config,
+        ...spreadIfDefined('jobId', jobId),
     }
 }
 
-const setJobHandler = <T extends SystemJobName>({ name, handler }: SetJobHandlerParams<T>): void => {
-    logger.info({ name: 'RedisSystemJob#setJobHandler', jobName: name }, 'Setting job handler')
-    jobHandlers.set(name, handler)
-}
-
-
-const getJobHandlerOrThrow = (name: string): SystemJobHandler => {
-    const jobHandler = jobHandlers.get(name as SystemJobName)
-
-    if (isNil(jobHandler)) {
-        throw new Error(`No handler for job ${name}`)
-    }
-
-    return jobHandler
-}
-
-const jobNotInQueue = async (name: SystemJobName): Promise<boolean> => {
-    const job = await getJobByName(name)
+const jobNotInQueue = async (name: SystemJobName, jobId?: string): Promise<boolean> => {
+    const job = await getJobByNameAndJobId(name, jobId)
     return isNil(job)
 }
 
-const getJobByName = async <T extends SystemJobName>(name: T): Promise<SystemJob<T> | undefined> => {
+const getJobByNameAndJobId = async <T extends SystemJobName>(name: T, jobId?: string): Promise<SystemJob | undefined> => {
     const allSystemJobs = await systemJobsQueue.getJobs()
-    return allSystemJobs.find(job => job.name === name) as SystemJob<T> | undefined
+    return allSystemJobs.find(job => jobId ? (job.name === name && job.id === jobId) : job.name === name) as SystemJob | undefined
 }
 
-type SystemJob<T extends SystemJobName> = Job<SystemJobData<T>, unknown>
+type SystemJob = Job<SystemJobData, unknown>
 
 type AddJobToQueueParams<T extends SystemJobName> = {
     job: SystemJobDefinition<T>
     schedule: JobSchedule
-}
-
-type SetJobHandlerParams<T extends SystemJobName> = {
-    name: T
-    handler: SystemJobHandler<T>
 }
