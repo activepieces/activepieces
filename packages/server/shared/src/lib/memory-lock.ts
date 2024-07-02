@@ -1,11 +1,16 @@
-import { Mutex } from 'async-mutex'
+import { E_ALREADY_LOCKED, Mutex, MutexInterface, withTimeout } from 'async-mutex'
 
 const memoryLocks = new Map<string, MutexLockWrapper>()
 class MutexLockWrapper {
-    private lock: Mutex
+    private lock: MutexInterface
 
-    constructor() {
-        this.lock = new Mutex()
+    constructor(key?: number) {
+        if (key) {
+            this.lock = withTimeout(new Mutex(), key)
+        }
+        else {
+            this.lock = new Mutex()
+        }
     }
 
     async acquire(): Promise<void> {
@@ -18,16 +23,21 @@ class MutexLockWrapper {
 }
 
 
-export const acquireMemoryLock = async (key: string): Promise<ApLock> => {
-    let lock = memoryLocks.get(key)
-    if (!lock) {
-        lock = new MutexLockWrapper()
-        memoryLocks.set(key, lock)
-    }
-    await lock.acquire()
-    return lock
-}
 
+export const memoryLock = {
+    acquire: async (key: string, timeout?: number): Promise<ApLock> => {
+        let lock = memoryLocks.get(key)
+        if (!lock) {
+            lock = new MutexLockWrapper(timeout)
+            memoryLocks.set(key, lock)
+        }
+        await lock.acquire()
+        return lock
+    },
+    isTimeoutError: (e: unknown): boolean => {
+        return e === E_ALREADY_LOCKED
+    },
+}
 
 export type ApLock = {
     release(): Promise<unknown>

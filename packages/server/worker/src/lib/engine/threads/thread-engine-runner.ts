@@ -1,6 +1,6 @@
 import { mkdir } from 'fs/promises'
 import path from 'path'
-import { acquireMemoryLock, fileExists, logger, networkUtls, packageManager, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
+import { fileExists, logger, memoryLock, networkUtls, packageManager, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
 import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, isNil, PiecePackage, TriggerHookType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { pieceManager } from '../../piece-manager'
@@ -177,7 +177,7 @@ async function execute<Result extends EngineHelperResult>(operation: EngineOpera
 }
 
 async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[]): Promise<void> {
-    const memoryLock = await acquireMemoryLock(sandboxPath)
+    const lock = await memoryLock.acquire(sandboxPath)
     try {
 
         await mkdir(sandboxPath, { recursive: true })
@@ -221,7 +221,7 @@ async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[])
         })
     }
     finally {
-        await memoryLock.release()
+        await lock.release()
     }
 
 }
