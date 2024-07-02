@@ -1,9 +1,9 @@
+import { AppSystemProp, logger, SharedSystemProp, system } from '@activepieces/server-shared'
+import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared'
 import { Analytics } from '@segment/analytics-node'
 import { flagService } from '../flags/flag.service'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
-import { AppSystemProp, logger, SharedSystemProp, system } from '@activepieces/server-shared'
-import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared'
 
 const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 

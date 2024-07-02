@@ -1,13 +1,13 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
-import { StatusCodes } from 'http-status-codes'
-import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { stepFileService } from './step-file.service'
 import {
     ALL_PRINCIPAL_TYPES,
     PrincipalType,
     StepFileUpsert,
 } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { Type } from '@sinclair/typebox'
+import { StatusCodes } from 'http-status-codes'
+import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { stepFileService } from './step-file.service'
 
 export const stepFileModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)

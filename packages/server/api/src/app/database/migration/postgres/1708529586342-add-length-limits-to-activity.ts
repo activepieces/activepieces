@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class AddLengthLimitsToActivity1708529586342 implements MigrationInterface {
     name = 'AddLengthLimitsToActivity1708529586342'

@@ -1,10 +1,3 @@
-import { QueryFailedError } from 'typeorm'
-import { flagService } from '../../flags/flag.service'
-import { telemetry } from '../../helper/telemetry.utils'
-import { userService } from '../../user/user-service'
-import { passwordHasher } from '../lib/password-hasher'
-import { authenticationServiceHooks as hooks } from './hooks'
-import { Provider } from './hooks/authentication-service-hooks'
 import { cryptoUtils, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -20,6 +13,13 @@ import {
     UserId,
     UserStatus,
 } from '@activepieces/shared'
+import { QueryFailedError } from 'typeorm'
+import { flagService } from '../../flags/flag.service'
+import { telemetry } from '../../helper/telemetry.utils'
+import { userService } from '../../user/user-service'
+import { passwordHasher } from '../lib/password-hasher'
+import { authenticationServiceHooks as hooks } from './hooks'
+import { Provider } from './hooks/authentication-service-hooks'
 
 export const authenticationService = {
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {

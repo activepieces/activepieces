@@ -20,7 +20,7 @@ import { updateMessage } from './lib/actions/update-message';
 import { findUserByEmailAction } from './lib/actions/find-user-by-email';
 import { updateProfileAction } from './lib/actions/update-profile';
 import { createChannelAction } from './lib/actions/create-channel';
-import { newChannelTrigger } from './lib/triggers/new-channel';
+import { channelCreated } from './lib/triggers/new-channel';
 import { addRectionToMessageAction } from './lib/actions/add-reaction-to-message';
 import { getChannelHistory } from './lib/actions/get-channel-history';
 
@@ -120,7 +120,7 @@ export const slack = createPiece({
       },
     }),
   ],
-  triggers: [newMessage, newReactionAdded, newChannelTrigger],
+  triggers: [newMessage, newReactionAdded, channelCreated],
 });
 
 type PayloadBody = {

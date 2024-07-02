@@ -32,3 +32,5 @@ export const FormResponse = Type.Object({
 })
 
 export type FormResponse = Static<typeof FormResponse>
+
+export const USE_DRAFT_QUERY_PARAM_NAME = 'useDraft'

@@ -1,11 +1,3 @@
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
-import { pieceTagService } from '../../tags/pieces/piece-tag.service'
-import { userService } from '../../user/user-service'
-import { projectMemberService } from '../project-members/project-member.service'
-import { projectLimitsService } from '../project-plan/project-plan.service'
-import { externalTokenExtractor } from './lib/external-token-extractor'
 import {
     DEFAULT_PLATFORM_LIMIT,
 } from '@activepieces/ee-shared'
@@ -18,6 +10,14 @@ import {
     Project,
     User,
 } from '@activepieces/shared'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
+import { pieceTagService } from '../../tags/pieces/piece-tag.service'
+import { userService } from '../../user/user-service'
+import { projectMemberService } from '../project-members/project-member.service'
+import { projectLimitsService } from '../project-plan/project-plan.service'
+import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = {
     async externalToken({

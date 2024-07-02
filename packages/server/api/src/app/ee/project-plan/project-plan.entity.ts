@@ -1,3 +1,4 @@
+import { Project, ProjectPlan } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -5,7 +6,6 @@ import {
     BaseColumnSchemaPart,
     isPostgres,
 } from '../../database/database-common'
-import { Project, ProjectPlan } from '@activepieces/shared'
 
 export type ProjectPlanSchema = {
     project: Project

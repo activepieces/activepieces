@@ -1,8 +1,8 @@
 
-import { getRedisConnection } from '../../../database/redis-connection'
 import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework'
 import { AppSystemProp, QueueMode, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
+import { getRedisConnection } from '../../../database/redis-connection'
 
 const DUPLICATE_RECORD_EXPIRATION_SECONDS = 30
 

@@ -1,3 +1,12 @@
+import {
+    ActivepiecesError,
+    ALL_PRINCIPAL_TYPES,
+    apId,
+    EndpointScope,
+    ErrorCode,
+    Principal,
+    PrincipalType,
+} from '@activepieces/shared'
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { securityHandlerChain } from '../../../../src/app/core/security/security-handler-chain'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -9,15 +18,6 @@ import {
     createMockProject,
     setupMockApiKeyServiceAccount,
 } from '../../../helpers/mocks'
-import {
-    ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
-    apId,
-    EndpointScope,
-    ErrorCode,
-    Principal,
-    PrincipalType,
-} from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

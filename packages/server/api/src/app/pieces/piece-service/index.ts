@@ -1,5 +1,3 @@
-import { fileService } from '../../file/file.service'
-import { pieceMetadataService } from '../piece-metadata-service'
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ExecutionMode, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
@@ -21,6 +19,8 @@ import {
     ProjectId,
 } from '@activepieces/shared'
 import { engineRunner } from 'server-worker'
+import { fileService } from '../../file/file.service'
+import { pieceMetadataService } from '../piece-metadata-service'
 
 export const pieceService = {
     async installPiece(

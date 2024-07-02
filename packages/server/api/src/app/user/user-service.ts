@@ -1,8 +1,3 @@
-import dayjs from 'dayjs'
-import { IsNull } from 'typeorm'
-import { passwordHasher } from '../authentication/lib/password-hasher'
-import { repoFactory } from '../core/db/repo-factory'
-import { UserEntity } from './user-entity'
 import {
     ActivepiecesError,
     apId,
@@ -18,6 +13,11 @@ import {
     UserMeta,
     UserStatus,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { IsNull } from 'typeorm'
+import { passwordHasher } from '../authentication/lib/password-hasher'
+import { repoFactory } from '../core/db/repo-factory'
+import { UserEntity } from './user-entity'
 
 
 const repo = repoFactory(UserEntity)

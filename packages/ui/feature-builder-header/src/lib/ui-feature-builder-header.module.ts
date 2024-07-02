@@ -12,7 +12,7 @@ import { EeBillingUiModule } from 'ee-billing-ui';
 import { VersionHistroryButtonComponent } from './components/version-history-button/version-history-button.component';
 import { RunsButtonComponent } from './components/runs-button/runs-button.component';
 import { PushFlowToGitButtonComponent } from '@activepieces/ui-feature-git-sync';
-
+import { FlowActionsListComponent } from '@activepieces/ui-feature-flow-actions-list';
 const exportedDeclarations = [
   FlowBuilderHeaderComponent,
   SupportComponent,
@@ -29,6 +29,7 @@ const exportedDeclarations = [
     UiFeatureBuilderFormControlsModule,
     EeBillingUiModule,
     PushFlowToGitButtonComponent,
+    FlowActionsListComponent,
   ],
   declarations: [...exportedDeclarations, RunsButtonComponent],
   exports: [...exportedDeclarations],

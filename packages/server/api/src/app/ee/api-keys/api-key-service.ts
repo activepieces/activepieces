@@ -1,5 +1,3 @@
-import { databaseConnection } from '../../database/database-connection'
-import { ApiKeyEntity } from './api-key-entity'
 import {
     ApiKey,
     ApiKeyResponseWithValue,
@@ -14,6 +12,8 @@ import {
     secureApId,
     SeekPage,
 } from '@activepieces/shared'
+import { databaseConnection } from '../../database/database-connection'
+import { ApiKeyEntity } from './api-key-entity'
 
 const API_KEY_TOKEN_LENGTH = 64
 const repo = databaseConnection.getRepository<ApiKey>(ApiKeyEntity)

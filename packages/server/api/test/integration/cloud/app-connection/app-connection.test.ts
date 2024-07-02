@@ -1,3 +1,10 @@
+import {
+    apId,
+    PackageType,
+    PlatformRole,
+    PrincipalType,
+    ProjectMemberRole,
+} from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -11,13 +18,6 @@ import {
     createMockProjectMember,
     createMockUser,
 } from '../../../helpers/mocks'
-import {
-    apId,
-    PackageType,
-    PlatformRole,
-    PrincipalType,
-    ProjectMemberRole,
-} from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

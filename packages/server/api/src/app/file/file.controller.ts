@@ -1,7 +1,7 @@
+import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { fileService } from './file.service'
-import { PrincipalType } from '@activepieces/shared'
 
 export const fileController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:fileId', GetFileRequest, async (request, reply) => {

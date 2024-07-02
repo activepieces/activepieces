@@ -1,3 +1,5 @@
+import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
+import { apId, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -8,8 +10,6 @@ import {
     createMockCustomDomain,
     mockBasicSetup,
 } from '../../../helpers/mocks'
-import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
-import { apId, PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

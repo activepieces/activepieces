@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
 import { ApEdition, apId } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258 implements MigrationInterface {
     name = 'MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258'

@@ -1,6 +1,6 @@
-import Redis, { RedisOptions } from 'ioredis'
 import { AppSystemProp, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
+import Redis, { RedisOptions } from 'ioredis'
 
 const url = system.get(AppSystemProp.REDIS_URL)
 const username = system.get(AppSystemProp.REDIS_USER)

@@ -1,6 +1,6 @@
-import { EntitySchemaColumnOptions } from 'typeorm'
 import { AppSystemProp, DatabaseType, system } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
+import { EntitySchemaColumnOptions } from 'typeorm'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 

@@ -1,10 +1,10 @@
+import { OtpType } from '@activepieces/ee-shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { setupServer } from '../../../../src/app/server'
 import { CLOUD_PLATFORM_ID, createMockPlatform, createMockUser } from '../../../helpers/mocks'
-import { OtpType } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
 

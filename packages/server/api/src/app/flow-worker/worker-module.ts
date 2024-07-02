@@ -1,4 +1,5 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { flowWorker } from 'server-worker'
 import { flowConsumer } from './consumer'
 import { flowEngineWorker } from './engine-controller'
 import { flowQueue } from './queue'

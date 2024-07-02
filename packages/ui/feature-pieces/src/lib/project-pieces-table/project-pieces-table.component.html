@@ -16,10 +16,8 @@
       @if (managePiecesEnabled$| async) {
       <ap-button [disabled]="(isAdmin$ | async) === false"
         [tooltipText]="(isAdmin$ | async) === false ? permissionMessage : ''" btnColor="primary"
-        btnSize='medium' (buttonClicked)="managePieces()">
-        <span>
+        btnSize='medium' (buttonClicked)="managePieces()" i18n>
           Manage Pieces
-        </span>
       </ap-button>
       }
     </div>

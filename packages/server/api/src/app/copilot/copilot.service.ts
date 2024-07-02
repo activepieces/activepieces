@@ -1,10 +1,10 @@
+import { AppSystemProp, CopilotInstanceTypes, logger, system } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
 import OpenAI from 'openai'
 import {
     ChatCompletionMessageParam,
     ChatCompletionTool,
 } from 'openai/resources'
-import { AppSystemProp, CopilotInstanceTypes, logger, system } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
 
 type GenerateCodeParams = {
     prompt: string

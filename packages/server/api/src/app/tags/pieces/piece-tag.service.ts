@@ -1,8 +1,8 @@
+import { apId } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { tagService } from '../tag-service'
 import { PieceTagEntity } from './piece-tag.entity'
-import { apId } from '@activepieces/shared'
 
 
 const pieceTagsRepo = repoFactory(PieceTagEntity)

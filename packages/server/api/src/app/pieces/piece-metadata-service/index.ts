@@ -1,8 +1,3 @@
-import { fileService } from '../../file/file.service'
-import { PieceMetadataSchema } from '../piece-metadata-entity'
-import { FastDbPieceMetadataService } from './db-piece-metadata-service'
-import { FilePieceMetadataService } from './file-piece-metadata-service'
-import { PieceMetadataService } from './piece-metadata-service'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { PiecesSource, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
@@ -13,6 +8,11 @@ import {
     PublicPiecePackage,
     SuggestionType,
 } from '@activepieces/shared'
+import { fileService } from '../../file/file.service'
+import { PieceMetadataSchema } from '../piece-metadata-entity'
+import { FastDbPieceMetadataService } from './db-piece-metadata-service'
+import { FilePieceMetadataService } from './file-piece-metadata-service'
+import { PieceMetadataService } from './piece-metadata-service'
 
 const initPieceMetadataService = (): PieceMetadataService => {
     const source = system.getOrThrow<PiecesSource>(SharedSystemProp.PIECES_SOURCE)

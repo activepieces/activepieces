@@ -1,7 +1,7 @@
+import { AppSystemProp, QueueMode, system } from '@activepieces/server-shared'
 import { SystemJobSchedule } from './common'
 import { memorySystemJobSchedulerService } from './memory-system-jobs'
 import { redisSystemJobSchedulerService } from './redis-system-job'
-import { AppSystemProp, QueueMode, system } from '@activepieces/server-shared'
 
 
 const queueMode = system.get<QueueMode>(AppSystemProp.QUEUE_MODE)

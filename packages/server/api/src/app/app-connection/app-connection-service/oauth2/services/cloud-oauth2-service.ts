@@ -1,10 +1,4 @@
-import axios from 'axios'
 
-import {
-    ClaimOAuth2Request,
-    OAuth2Service,
-    RefreshOAuth2Request,
-} from '../oauth2-service'
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { logger, system } from '@activepieces/server-shared'
 import {
@@ -13,6 +7,12 @@ import {
     CloudOAuth2ConnectionValue,
     ErrorCode,
 } from '@activepieces/shared'
+import axios from 'axios'
+import {
+    ClaimOAuth2Request,
+    OAuth2Service,
+    RefreshOAuth2Request,
+} from '../oauth2-service'
 
 export const cloudOAuth2Service: OAuth2Service<CloudOAuth2ConnectionValue> = {
     refresh,

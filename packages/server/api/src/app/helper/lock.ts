@@ -1,7 +1,7 @@
+import { acquireMemoryLock, ApLock, AppSystemProp, exceptionHandler, QueueMode, system } from '@activepieces/server-shared'
 import { Redis } from 'ioredis'
 import RedLock from 'redlock'
 import { createRedisClient } from '../database/redis-connection'
-import { acquireMemoryLock, ApLock, AppSystemProp, exceptionHandler, QueueMode, system } from '@activepieces/server-shared'
 
 let redLock: RedLock
 let redisConnection: Redis

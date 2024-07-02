@@ -1,3 +1,4 @@
+import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -10,7 +11,6 @@ import {
     createMockUser,
     mockBasicSetup,
 } from '../../../helpers/mocks'
-import { PlatformRole, PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

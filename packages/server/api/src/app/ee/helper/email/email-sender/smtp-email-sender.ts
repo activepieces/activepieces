@@ -1,11 +1,11 @@
 import { readFile } from 'node:fs/promises'
+import { AppSystemProp, system } from '@activepieces/server-shared'
+import { isNil, Platform } from '@activepieces/shared'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
 import { defaultTheme } from '../../../../flags/theme'
 import { platformService } from '../../../../platform/platform.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
-import { AppSystemProp, system } from '@activepieces/server-shared'
-import { isNil, Platform } from '@activepieces/shared'
 
 const isSmtpConfigured = (platform: Platform | null): boolean => {
     const isConfigured = (host: string | undefined, port: string | undefined, user: string | undefined, password: string | undefined): boolean => {

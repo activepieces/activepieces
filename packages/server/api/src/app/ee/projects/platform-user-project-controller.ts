@@ -1,12 +1,4 @@
 import {
-    FastifyPluginCallbackTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { platformService } from '../../platform/platform.service'
-import { platformProjectService } from './platform-project-service'
-import {
     ActivepiecesError,
     ErrorCode,
     ListProjectRequestForUserQueryParams,
@@ -14,6 +6,14 @@ import {
     ProjectWithLimits,
     SeekPage,
 } from '@activepieces/shared'
+import {
+    FastifyPluginCallbackTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { platformService } from '../../platform/platform.service'
+import { platformProjectService } from './platform-project-service'
 
 export const usersProjectController: FastifyPluginCallbackTypebox = (
     fastify,
