@@ -8,8 +8,7 @@
     <mat-stepper linear #stepper>
       <mat-step
         [completed]="
-          (receivedRequest$ | async) !== undefined &&
-          (receivedRequest$ | async) !== ''
+          (generatedRequest$ | async) !== undefined
         "
         [editable]="false"
       >
@@ -17,7 +16,7 @@
         <ng-container *ngTemplateOutlet="promptTemplate"></ng-container>
       </mat-step>
       <mat-step>
-        <ng-template matStepLabel>Code Iteration</ng-template>
+        <ng-template matStepLabel>Request Iteration</ng-template>
         <ng-container *ngTemplateOutlet="editTemplate"></ng-container>
       </mat-step>
     </mat-stepper>
@@ -31,8 +30,8 @@
     </ap-button>
     <ap-button
       *ngIf="
-        (receivedRequest$ | async) === undefined ||
-        (receivedRequest$ | async) === ''
+        (generatedRequest$ | async) === undefined || 
+        (generatedRequest$| async) === null  
       "
       cdkFocusInitial
       btnSize="default"
@@ -45,8 +44,8 @@
     </ap-button>
     <ap-button
       *ngIf="
-        (receivedRequest$ | async) !== undefined &&
-        (receivedRequest$ | async) !== ''
+        (generatedRequest$ | async) !== undefined && 
+        (generatedRequest$| async) !== null
       "
       cdkFocusInitial
       btnSize="default"
@@ -66,9 +65,7 @@
   </div>
   <ng-container
     [ngTemplateOutlet]="promptFormTemplate"
-    [ngTemplateOutletContext]="{
-      reprompt: false
-    }"
+
   ></ng-container>
 </ng-template>
 
@@ -77,7 +74,7 @@
     Here is the code our AI wrote for you. Ask for changes or use the code in
     your action.
   </div>
-  <ng-template #codeResult>{{ receivedRequest$ | async | json }}</ng-template>
+  <ng-template #codeResult>{{ generatedRequest$ | async | json }}</ng-template>
   <div class="ap-mb-4">
     <pre
       *ngIf="prisimFix === false"
@@ -91,9 +88,6 @@
 
   <ng-container
     [ngTemplateOutlet]="promptFormTemplate"
-    [ngTemplateOutletContext]="{
-      reprompt: true
-    }"
   ></ng-container>
 </ng-template>
 
@@ -107,38 +101,26 @@
   >
     <div class="ap-flex ap-items-center ap-gap-2">
       <div class="smaller-input ap-flex ap-flex-col ap-gap-2 ap-flex-grow">
+  
         <mat-form-field
           class="ap-w-full"
           appearance="outline"
           subscriptSizing="dynamic"
         >
           <mat-label i18n>
-            {{ (receivedRequest$ | async) ? 'Request Adjustment' : 'Prompt' }}
-          </mat-label>
+            Prompt         
+           </mat-label>
           <textarea
-            *ngIf="
-              (receivedRequest$ | async) === undefined ||
-              (receivedRequest$ | async) === ''
-            "
             class="!ap-resize-none"
             cdkFocusInitial
             (keydown.enter)="$event.preventDefault(); $event.stopPropagation()"
-            (keyup.enter)="prompt(reprompt)"
+            (keyup.enter)="prompt()"
             [formControl]="promptForm.controls.prompt"
             matInput
             type="text"
             rows="4"
           ></textarea>
 
-          <input
-            *ngIf="receivedRequest$ | async"
-            cdkFocusInitial
-            (keydown.enter)="$event.preventDefault(); $event.stopPropagation()"
-            (keyup.enter)="prompt(reprompt)"
-            [formControl]="promptForm.controls.prompt"
-            matInput
-            type="text"
-          />
 
           <mat-error *ngIf="promptForm.controls.prompt.invalid" i18n
             >Prompt is required
@@ -150,20 +132,21 @@
           appearance="outline"
           subscriptSizing="dynamic"
           *ngIf="
-            (receivedRequest$ | async) === undefined ||
-            (receivedRequest$ | async) === ''
+            (generatedRequest$ | async) === undefined || 
+            (generatedRequest$| async) === null  
+ 
           "
         >
           <mat-label i18n> Docs Reference </mat-label>
           <input
             *ngIf="
-              (receivedRequest$ | async) === undefined ||
-              (receivedRequest$ | async) === ''
+              (generatedRequest$ | async) === undefined || 
+            (generatedRequest$| async) === null  
             "
             class="!ap-resize-none"
             cdkFocusInitial
             (keydown.enter)="$event.preventDefault(); $event.stopPropagation()"
-            (keyup.enter)="prompt(reprompt)"
+            (keyup.enter)="prompt()"
             [formControl]="promptForm.controls.reference"
             matInput
             type="text"
@@ -171,7 +154,7 @@
           />
         </mat-form-field>
       </div>
-      <div *ngIf="receivedRequest$ | async">
+      <div *ngIf="generatedRequest$ | async">
         <ap-button
           btnColor="primary"
           btnStyle="stroked"

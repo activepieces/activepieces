@@ -125,6 +125,7 @@ import { InputFormCore } from '../input-form-core';
       <ap-loading-icon> </ap-loading-icon>
     </div>
     } @if (renameStepBasedOnSelectedTriggerOrAction$ | async) {}
+    @if(modifyBodyData$ | async){}
   `,
 })
 export class PieceInputFormComponent extends InputFormCore {
@@ -146,6 +147,7 @@ export class PieceInputFormComponent extends InputFormCore {
   form = this.fb.group({});
   isFormReadOnly$: Observable<boolean>;
   readonly ActionType = ActionType;
+  modifyBodyData$?: Observable<unknown>;
   constructor(
     store: Store,
     pieceService: PieceMetadataService,
@@ -487,25 +489,26 @@ export class PieceInputFormComponent extends InputFormCore {
     }
   }
 
-  convertHeadersToKeyValuePairs(headersString: string) {
-    const headersArray = headersString
-      .split(',')
-      .map((header) => header.trim());
-    const headersObject = {} as Record<string, unknown>;
-
-    headersArray.forEach((header) => {
-      const [key, value] = header.split(':').map((item) => item.trim());
-      headersObject[key] = value;
-    });
-
-    return headersObject;
-  }
-
   httpRequestGenerated(request: Record<string, any>): void {
-    const headers = this.convertHeadersToKeyValuePairs(request['headers']);
-    this.form.patchValue({
+    let correctedRequest: Record<string, string | object> = {
       ...request,
-      headers,
-    });
+    };
+    if (request['body']) {
+      this.modifyBodyData$ = this.form.controls['body'].valueChanges.pipe(
+        take(1),
+        tap(() => {
+          setTimeout(() => {
+            this.form.controls['body'].setValue(request['body']);
+          });
+        })
+      );
+    } else {
+      correctedRequest = {
+        ...correctedRequest,
+        body_type: 'none',
+      };
+    }
+    this.form.reset(correctedRequest, { emitEvent: false });
+    this.form.patchValue(correctedRequest);
   }
 }

@@ -11,6 +11,7 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { RequestWriterService } from './request-writer.service';
+import { CodeService } from '@activepieces/ui/feature-builder-store';
 @Component({
   selector: 'app-request-writer-dialog',
   standalone: true,
@@ -24,7 +25,8 @@ export class RequestWriterDialogComponent {
     prompt: FormControl<string>;
     reference: FormControl<string>;
   }>;
-  receivedRequest$: BehaviorSubject<string> = new BehaviorSubject<string>('');
+  generatedRequest$: BehaviorSubject<Record<string, unknown> | null> =
+    new BehaviorSubject<Record<string, unknown> | null>(null);
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   promptOperation$?: Observable<void>;
   prisimFix = false;
@@ -33,7 +35,8 @@ export class RequestWriterDialogComponent {
     private highlightService: HighlightService,
     private formBuilder: FormBuilder,
     private requestWriterService: RequestWriterService,
-    private dialogRef: MatDialogRef<RequestWriterDialogComponent>
+    private dialogRef: MatDialogRef<RequestWriterDialogComponent>,
+    private codeService: CodeService
   ) {
     this.promptForm = this.formBuilder.group({
       prompt: new FormControl('', {
@@ -46,13 +49,11 @@ export class RequestWriterDialogComponent {
     });
   }
 
-  prompt(reprompt = false) {
+  prompt() {
     if (this.promptForm.valid && !this.loading$.value) {
       this.loading$.next(true);
       this.promptForm.disable();
       const prompt: string = this.promptForm.controls.prompt.value;
-      // const reference: string = this.promptForm.controls.reference.value;
-
       this.promptOperation$ = this.requestWriterService
         .fetchApiDetails({
           prompt,
@@ -60,18 +61,16 @@ export class RequestWriterDialogComponent {
         .pipe(
           tap((response) => {
             this.promptForm.enable();
-            this.promptForm.controls.prompt.removeValidators(
-              Validators.required
-            );
-            this.promptForm.controls.prompt.setValue('');
-            // this.promptForm.controls.reference.setValue('');
             try {
-              const result = response.result;
-              this.receivedRequest$.next(JSON.parse(result));
-
+              this.generatedRequest$.next(
+                this.beautifyResponsePresentation(response.result)
+              );
               if (this.stepper.selected) {
                 this.stepper.selected.completed = true;
                 this.stepper.next();
+                this.promptForm.controls.prompt.setValue(
+                  this.promptForm.controls.prompt.value
+                );
               }
               this.prisimFix = !this.prisimFix;
               this.highlightPrism();
@@ -87,12 +86,77 @@ export class RequestWriterDialogComponent {
   }
 
   useGeneratedCode() {
-    this.dialogRef.close(this.receivedRequest$.value);
+    if (this.generatedRequest$.value) {
+      this.dialogRef.close(
+        this.parseResponseAndMatchItToHttpPieceProperties(
+          this.generatedRequest$.value
+        )
+      );
+    }
   }
 
   private highlightPrism() {
     setTimeout(() => {
       this.highlightService.highlightAll();
     }, 10);
+  }
+  tryParsingJson(string: string) {
+    try {
+      return JSON.parse(string);
+    } catch (err) {
+      console.error('Error parsing JSON string');
+      console.error(err);
+      return {};
+    }
+  }
+
+  beautifyResponsePresentation(responseString: string) {
+    const response = this.tryParsingJson(responseString);
+    const beautifiedResponse: Record<string, unknown> = { ...response };
+    for (const key in response) {
+      if (key === 'queryParams' || key === 'headers' || key === 'body') {
+        beautifiedResponse[key] = this.tryParsingJson(
+          this.codeService.beautifyJson(this.tryParsingJson(response[key]))
+        );
+      }
+    }
+    return beautifiedResponse;
+  }
+  parseResponseAndMatchItToHttpPieceProperties(
+    response: Record<string, unknown>
+  ) {
+    let correctedResponse = {
+      ...response,
+    };
+    const queryParams = response['queryParams'];
+    const headers = response['headers'];
+    if (headers) {
+      correctedResponse = {
+        ...correctedResponse,
+        headers,
+      };
+    }
+    if (queryParams) {
+      correctedResponse = {
+        ...correctedResponse,
+        queryParams,
+      };
+    }
+    if (response['body']) {
+      correctedResponse = {
+        ...correctedResponse,
+        body_type: 'json',
+        body: {
+          data: this.codeService.beautifyJson(response['body']),
+        },
+      };
+    } else {
+      correctedResponse = {
+        ...correctedResponse,
+        body_type: 'none',
+      };
+    }
+
+    return correctedResponse;
   }
 }
