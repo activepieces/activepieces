@@ -131,6 +131,9 @@
       "@activepieces/piece-data-mapper": [
         "packages/pieces/community/data-mapper/src/index.ts"
       ],
+      "@activepieces/piece-data-summarizer": [
+        "packages/pieces/community/data-summarizer/src/index.ts"
+      ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/community/date-helper/src/index.ts"
       ],
@@ -193,6 +196,9 @@
       ],
       "@activepieces/piece-gcloud-pubsub": [
         "packages/pieces/community/gcloud-pubsub/src/index.ts"
+      ],
+      "@activepieces/piece-gelato": [
+        "packages/pieces/community/gelato/src/index.ts"
       ],
       "@activepieces/piece-generatebanners": [
         "packages/pieces/community/generatebanners/src/index.ts"
