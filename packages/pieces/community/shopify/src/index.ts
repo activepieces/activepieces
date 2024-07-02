@@ -129,7 +129,7 @@ export const shopify = createPiece({
         return getBaseUrl((auth as { shopName: string }).shopName);
       },
       auth: shopifyAuth,
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         const typedAuth = auth as { adminToken: string };
         return {
           'X-Shopify-Access-Token': typedAuth.adminToken,

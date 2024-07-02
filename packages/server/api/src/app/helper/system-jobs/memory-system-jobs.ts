@@ -1,7 +1,7 @@
+import { logger } from '@activepieces/server-shared'
 import dayjs from 'dayjs'
 import cron from 'node-cron'
 import { SystemJobSchedule } from './common'
-import { logger } from '@activepieces/server-shared'
 
 const scheduled: Record<string, boolean> = {}
 

@@ -1,17 +1,30 @@
 import { readFile } from 'node:fs/promises'
+import { system, SystemProp } from '@activepieces/server-shared'
+import { isNil, Platform } from '@activepieces/shared'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
 import { defaultTheme } from '../../../../flags/theme'
 import { platformService } from '../../../../platform/platform.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { isNil, Platform } from '@activepieces/shared'
 
-/**
- * Sends emails using SMTP
- */
-export const smtpEmailSender: EmailSender = {
-    async send({ email, platformId, templateData }) {
+const isSmtpConfigured = (platform: Platform | null): boolean => {
+    const isConfigured = (host: string | undefined, port: string | undefined, user: string | undefined, password: string | undefined): boolean => {
+        return !isNil(host) && !isNil(port) && !isNil(user) && !isNil(password)
+    }
+
+    const isPlatformSmtpConfigured = !isNil(platform) && isConfigured(platform.smtpHost, platform.smtpPort?.toString(), platform.smtpUser, platform.smtpPassword)
+    const isSmtpSystemConfigured = isConfigured(system.get(SystemProp.SMTP_HOST), system.get(SystemProp.SMTP_PORT), system.get(SystemProp.SMTP_USERNAME), system.get(SystemProp.SMTP_PASSWORD))
+
+    return isPlatformSmtpConfigured || isSmtpSystemConfigured
+}
+
+
+type SMTPEmailSender = EmailSender & {
+    isSmtpConfigured: (platform: Platform | null) => boolean
+}
+
+export const smtpEmailSender: SMTPEmailSender = {
+    async send({ emails, platformId, templateData }) {
         const platform = await getPlatform(platformId)
         const emailSubject = getEmailSubject(templateData.name, templateData.vars)
         const senderName = platform?.name ?? system.get(SystemProp.SMTP_SENDER_NAME)
@@ -30,23 +43,12 @@ export const smtpEmailSender: EmailSender = {
 
         await smtpClient.sendMail({
             from: `${senderName} <${senderEmail}>`,
-            to: email,
+            to: emails.join(','),
             subject: emailSubject,
             html: emailBody,
         })
     },
-}
-
-
-const isSmtpConfigured = (platform: Platform | null): boolean => {
-    const isConfigured = (host: string | undefined, port: string | undefined, user: string | undefined, password: string | undefined): boolean => {
-        return !isNil(host) && !isNil(port) && !isNil(user) && !isNil(password)
-    }
-
-    const isPlatformSmtpConfigured = platform && isConfigured(platform.smtpHost, platform.smtpPort?.toString(), platform.smtpUser, platform.smtpPassword)
-    const isSmtpSystemConfigured = isConfigured(system.get(SystemProp.SMTP_HOST), system.get(SystemProp.SMTP_PORT), system.get(SystemProp.SMTP_USERNAME), system.get(SystemProp.SMTP_PASSWORD))
-
-    return isPlatformSmtpConfigured || isSmtpSystemConfigured
+    isSmtpConfigured,
 }
 
 const getPlatform = async (platformId: string | undefined): Promise<Platform | null> => {

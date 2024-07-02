@@ -13,15 +13,12 @@ export class DurationFormatterPipe implements PipeTransform {
   ): string {
     try {
       if (durationInMs < 1000) {
-        return $localize`${(durationInMs || 1).toFixed()} ${
+        return $localize`${durationInMs.toFixed()} ${
           short ? 'ms' : 'milliseconds'
         }`;
       }
       const durationInSeconds = allowFractions
-        ? Math.max(
-            0.01,
-            parseFloat((durationInMs / 1000).toFixed(fractionDigits))
-          )
+        ? Math.max(0, parseFloat((durationInMs / 1000).toFixed(fractionDigits)))
         : Math.ceil(durationInMs / 1000);
 
       if (durationInSeconds < 60) {
@@ -36,7 +33,13 @@ export class DurationFormatterPipe implements PipeTransform {
       const durationInHours = allowFractions
         ? parseFloat((durationInMinutes / 60).toFixed(fractionDigits))
         : Math.ceil(durationInMinutes / 60);
-      return $localize`${durationInHours} ${short ? 'h' : 'hours'}`;
+      if (durationInHours < 24) {
+        return $localize`${durationInHours} ${short ? 'h' : 'hours'}`;
+      }
+      const durationInDays = allowFractions
+        ? parseFloat((durationInHours / 24).toFixed(fractionDigits))
+        : Math.ceil(durationInHours / 24);
+      return $localize`${durationInDays} ${short ? 'd' : 'days'}`;
     } catch (ex) {
       console.error(ex);
       return '';

@@ -1,163 +1,154 @@
-<ng-container *ngIf="signedUpEnabled$ | async as signedUpEnabled; else signUpDisabled">
-  <ng-container *ngIf="!signUpDone; else verificationTemplate">
-    <div class="ap-typography-headline-5 ap-text-center ap-mb-4 md" i18n>
-      Let's Get Started!
+<ng-container *ngIf="!signUpDone; else verificationTemplate">
+  <div class="ap-typography-headline-5 ap-text-center ap-mb-4 md" i18n>
+    Let's Get Started!
+  </div>
+  <ap-third-party-auth [isForSignup]="true"></ap-third-party-auth>
+  <app-authentication-methods-separator></app-authentication-methods-separator>
+  <form *ngIf="emailLoginsEnabled$ | async" [formGroup]="registrationForm" (ngSubmit)="signUp()"
+    class="ap-flex ap-flex-col ap-gap-2">
+    <div class="ap-flex ap-gap-1 md:ap-gap-4 ap-items-center ap-flex-col md:ap-flex-row">
+      <mat-form-field class="ap-w-full md:ap-w-initial" appearance="outline">
+        <mat-label i18n>First Name</mat-label>
+        <input matInput placeholder="John/Jane" formControlName="firstName" />
+        <mat-error *ngIf="registrationForm.controls.firstName.invalid" i18n>
+          First name is required
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field class="ap-w-full md:ap-w-initial" appearance="outline">
+        <mat-label i18n>Last Name</mat-label>
+        <input matInput placeholder="Doe" formControlName="lastName" />
+        <mat-error *ngIf="registrationForm.controls.lastName.invalid" i18n>
+          Last name is required
+        </mat-error>
+      </mat-form-field>
     </div>
-    <ap-third-party-auth [isForSignup]="true"></ap-third-party-auth>
-    <app-authentication-methods-separator></app-authentication-methods-separator>
-    <form *ngIf="emailLoginsEnabled$ | async" [formGroup]="registrationForm" (ngSubmit)="signUp()"
-      class="ap-flex ap-flex-col ap-gap-2">
-      <div class="ap-flex ap-gap-1 md:ap-gap-4 ap-items-center ap-flex-col md:ap-flex-row">
-        <mat-form-field class="ap-w-full md:ap-w-initial" appearance="outline">
-          <mat-label i18n>First Name</mat-label>
-          <input matInput placeholder="John/Jane" formControlName="firstName" />
-          <mat-error *ngIf="registrationForm.controls.firstName.invalid" i18n>
-            First name is required
-          </mat-error>
-        </mat-form-field>
-        <mat-form-field class="ap-w-full md:ap-w-initial" appearance="outline">
-          <mat-label i18n>Last Name</mat-label>
-          <input matInput placeholder="Doe" formControlName="lastName" />
-          <mat-error *ngIf="registrationForm.controls.lastName.invalid" i18n>
-            Last name is required
-          </mat-error>
-        </mat-form-field>
-      </div>
 
-      <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label i18n>Email</mat-label>
-        <input type="email" matInput placeholder="Email" i18n-placeholder formControlName="email" />
+    <mat-form-field class="ap-w-full" appearance="outline">
+      <mat-label i18n>Email</mat-label>
+      <input type="email" matInput placeholder="Email" i18n-placeholder formControlName="email" />
 
-        <mat-error *ngIf="registrationForm.controls.email.invalid">
-          <ng-container *ngIf="
+      <mat-error *ngIf="registrationForm.controls.email.invalid">
+        <ng-container *ngIf="
               registrationForm.controls.email.getError('email') ||
                 registrationForm.controls.email.getError('invalidEmail');
             " i18n>
-            Email is invalid
-          </ng-container>
-          <ng-container *ngIf="registrationForm.controls.email.getError(emailIsUsedErrorName)" i18n>
-            Email is used
-          </ng-container>
-          <ng-container *ngIf="registrationForm.controls.email.getError('required')" i18n>Email is
-            required</ng-container>
+          Email is invalid
+        </ng-container>
+        <ng-container *ngIf="registrationForm.controls.email.getError(emailIsUsedErrorName)" i18n>
+          Email is used
+        </ng-container>
+        <ng-container *ngIf="registrationForm.controls.email.getError('required')" i18n>Email is
+          required</ng-container>
 
-        </mat-error>
-
-      </mat-form-field>
-
-      <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label i18n>Password</mat-label>
-        <input (focus)="menuTrigger.openMenu()" (blur)="menuTrigger.closeMenu()" type="password" matInput
-          placeholder="Password" i18n-placeholder formControlName="password" />
-        <mat-error *ngIf="registrationForm.controls['password'].invalid">
-          <ng-container *ngIf="getPasswordError('required'); else invalidPasswordMessage" i18n>
-            Password is required
-          </ng-container>
-          <ng-template #invalidPasswordMessage i18n>Password is invalid</ng-template>
-        </mat-error>
-        <div #menuTrigger="matMenuTrigger" [matMenuTriggerFor]="menu" class="hidden-trigger"></div>
-      </mat-form-field>
-      <mat-error class="ap-text-center" *ngIf="invitationOnlySignup && !emailChanged" i18n>
-        You are not invited to any project, please contact your administrator.
       </mat-error>
-      <mat-error class="ap-text-center" *ngIf="domainIsNotAllowed && !emailChanged" i18n>
-        Your email domain is not allowed to sign up, please contact your administrator.
+
+    </mat-form-field>
+
+    <mat-form-field class="ap-w-full" appearance="outline">
+      <mat-label i18n>Password</mat-label>
+      <input (focus)="menuTrigger.openMenu()" (blur)="menuTrigger.closeMenu()" type="password" matInput
+        placeholder="Password" i18n-placeholder formControlName="password" />
+      <mat-error *ngIf="registrationForm.controls['password'].invalid">
+        <ng-container *ngIf="getPasswordError('required'); else invalidPasswordMessage" i18n>
+          Password is required
+        </ng-container>
+        <ng-template #invalidPasswordMessage i18n>Password is invalid</ng-template>
       </mat-error>
-      <mat-menu #menu="matMenu" [hasBackdrop]="true">
-        <div class="ap-mx-2">
-          <div class="ap-flex ap-gap-4 ap-items-center"
-            [class.invalid-password-condition]="getPasswordError('lowercase')">
-            <svg-icon [svgStyle]="{ width: '13px', height: '13px' }"
-              src="assets/img/custom/auth/checks/check-invalid.svg" class="grey-check">
-            </svg-icon>
-            <svg-icon [svgStyle]="{ width: '13px', height: '13px' }"
-              src="assets/img/custom/auth/checks/check-correct.svg" class="green-check">
-            </svg-icon>
-            <span i18n>Lowercase</span>
-          </div>
-          <div class="ap-flex ap-gap-4 ap-items-center"
-            [class.invalid-password-condition]="getPasswordError('uppercase')">
-            <svg-icon [svgStyle]="{ width: '13px', height: '13px' }"
-              src="assets/img/custom/auth/checks/check-invalid.svg" class="grey-check">
-            </svg-icon>
-            <svg-icon [svgStyle]="{ width: '13px', height: '13px' }"
-              src="assets/img/custom/auth/checks/check-correct.svg" class="green-check">
-            </svg-icon>
-            <span i18n>Uppercase</span>
-          </div>
-          <div class="ap-flex ap-gap-4 ap-items-center" [class.invalid-password-condition]="
+      <div #menuTrigger="matMenuTrigger" [matMenuTriggerFor]="menu" class="hidden-trigger"></div>
+    </mat-form-field>
+    <mat-error class="ap-text-center" *ngIf="invitationOnlySignup && !emailChanged" i18n>
+      You are not invited to any project, please contact your administrator.
+    </mat-error>
+    <mat-error class="ap-text-center" *ngIf="domainIsNotAllowed && !emailChanged" i18n>
+      Your email domain is not allowed to sign up, please contact your administrator.
+    </mat-error>
+    <mat-menu #menu="matMenu" [hasBackdrop]="true">
+      <div class="ap-mx-2">
+        <div class="ap-flex ap-gap-4 ap-items-center"
+          [class.invalid-password-condition]="getPasswordError('lowercase')">
+          <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-invalid.svg"
+            class="grey-check">
+          </svg-icon>
+          <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-correct.svg"
+            class="green-check">
+          </svg-icon>
+          <span i18n>Lowercase</span>
+        </div>
+        <div class="ap-flex ap-gap-4 ap-items-center"
+          [class.invalid-password-condition]="getPasswordError('uppercase')">
+          <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-invalid.svg"
+            class="grey-check">
+          </svg-icon>
+          <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-correct.svg"
+            class="green-check">
+          </svg-icon>
+          <span i18n>Uppercase</span>
+        </div>
+        <div class="ap-flex ap-gap-4 ap-items-center" [class.invalid-password-condition]="
               getPasswordError('specialCharacter')
             ">
-            <svg-icon [svgStyle]="{ width: '13px', height: '13px' }"
-              src="assets/img/custom/auth/checks/check-invalid.svg" class="grey-check">
-            </svg-icon>
-            <svg-icon [svgStyle]="{ width: '13px', height: '13px' }"
-              src="assets/img/custom/auth/checks/check-correct.svg" class="green-check">
-            </svg-icon>
-            <span i18n>Special Character</span>
-          </div>
-          <div class="ap-flex ap-gap-4 ap-items-center" [class.invalid-password-condition]="getPasswordError('number')">
-            <svg-icon [svgStyle]="{ width: '13px', height: '13px' }"
-              src="assets/img/custom/auth/checks/check-invalid.svg" class="grey-check">
-            </svg-icon>
-            <svg-icon [svgStyle]="{ width: '13px', height: '13px' }"
-              src="assets/img/custom/auth/checks/check-correct.svg" class="green-check">
-            </svg-icon>
-            <span i18n>Number</span>
-          </div>
-          <div class="ap-flex ap-gap-4 ap-items-center" [class.invalid-password-condition]="
+          <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-invalid.svg"
+            class="grey-check">
+          </svg-icon>
+          <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-correct.svg"
+            class="green-check">
+          </svg-icon>
+          <span i18n>Special Character</span>
+        </div>
+        <div class="ap-flex ap-gap-4 ap-items-center" [class.invalid-password-condition]="getPasswordError('number')">
+          <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-invalid.svg"
+            class="grey-check">
+          </svg-icon>
+          <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-correct.svg"
+            class="green-check">
+          </svg-icon>
+          <span i18n>Number</span>
+        </div>
+        <div class="ap-flex ap-gap-4 ap-items-center" [class.invalid-password-condition]="
               getPasswordError('maxlength') ||
               getPasswordError('minlength') ||
               getPasswordError('required')
             ">
-            <svg-icon [svgStyle]="{ width: '13px', height: '13px' }"
-              src="assets/img/custom/auth/checks/check-invalid.svg" class="grey-check">
-            </svg-icon>
-            <svg-icon [svgStyle]="{ width: '13px', height: '13px' }"
-              src="assets/img/custom/auth/checks/check-correct.svg" class="green-check">
-            </svg-icon>
-            <span i18n>8-64 Characters</span>
-          </div>
+          <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-invalid.svg"
+            class="grey-check">
+          </svg-icon>
+          <svg-icon [svgStyle]="{ width: '13px', height: '13px' }" src="assets/img/custom/auth/checks/check-correct.svg"
+            class="green-check">
+          </svg-icon>
+          <span i18n>8-64 Characters</span>
         </div>
-      </mat-menu>
-
-      <mat-checkbox *ngIf="showNewsLetterCheckbox$| async" id="news_letter" class="news_letter" color="primary"
-        formControlName="newsLetter" i18n>Receive
-        updates
-        and
-        newsletters from activepieces</mat-checkbox>
-
-      <div class="text-center">
-        <ap-button [loading]="loading" btnColor="primary" [fullWidthOfContainer]="true" i18n>
-          Sign up
-        </ap-button>
       </div>
-    </form>
-    <div class="ap-text-center ap-typography-caption ap-mt-2"
-      *ngIf="(termsOfServiceUrl$ | async) || (privacyPolicyUrl$ | async)">
+    </mat-menu>
 
-      <span i18n>By creating an account, you agree to our </span>
+    <mat-checkbox *ngIf="showNewsLetterCheckbox$| async" id="news_letter" class="news_letter" color="primary"
+      formControlName="newsLetter" i18n>Receive
+      updates
+      and
+      newsletters from activepieces</mat-checkbox>
 
-      <a *ngIf=" termsOfServiceUrl$ | async as url" [href]="url" target="_blank" rel="noopener" i18n>terms of
-        service</a><br>
-      <span i18n> and </span>
-      <a *ngIf="privacyPolicyUrl$ | async as url" [href]="url" target="_blank" rel="noopener" i18n>privacy policy</a>.
-
+    <div class="text-center">
+      <ap-button [loading]="loading" btnColor="primary" [fullWidthOfContainer]="true" i18n>
+        Sign up
+      </ap-button>
     </div>
-    <div class="ap-text-center ap-typography-caption ap-mt-2">
-      <a (click)="goBackToSignIn()" class="ap-cursor-pointer" i18n>Already have an account? </a>
-    </div>
-  </ng-container>
+  </form>
+  <div class="ap-text-center ap-typography-caption ap-mt-2"
+    *ngIf="(termsOfServiceUrl$ | async) || (privacyPolicyUrl$ | async)">
 
+    <span i18n>By creating an account, you agree to our </span>
+
+    <a *ngIf=" termsOfServiceUrl$ | async as url" [href]="url" target="_blank" rel="noopener" i18n>terms of
+      service</a><br>
+    <span i18n> and </span>
+    <a *ngIf="privacyPolicyUrl$ | async as url" [href]="url" target="_blank" rel="noopener" i18n>privacy policy</a>.
+
+  </div>
+  <div class="ap-text-center ap-typography-caption ap-mt-2">
+    <a (click)="goBackToSignIn()" class="ap-cursor-pointer" i18n>Already have an account? </a>
+  </div>
 </ng-container>
 
-<ng-template #signUpDisabled>
-  <div class="ap-text-center ap-mb-4 md" i18n>Signing up is disabled.</div>
-  <div class="ap-text-center ap-mt-2" i18n>
-    If you are the owner, please refer to the configuration section in the documentation to learn how to
-    enable it.
-  </div>
-</ng-template>
+
 
 <ng-template #verificationTemplate>
   <app-send-email-for-auth-action [email]="registrationForm.value.email!"

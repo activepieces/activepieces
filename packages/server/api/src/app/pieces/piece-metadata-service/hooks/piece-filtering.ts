@@ -1,7 +1,8 @@
-import Fuse from 'fuse.js'
-import { PieceMetadataSchema } from '../../piece-metadata-entity'
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
 import { isNil, PieceCategory, PlatformId, SuggestionType } from '@activepieces/shared'
+import Fuse from 'fuse.js'
+import { platformService } from '../../../platform/platform.service'
+import { PieceMetadataSchema } from '../../piece-metadata-entity'
 
 
 const pieceFilterKeys = [{
@@ -31,6 +32,30 @@ export const filterPiecesBasedUser = async ({
         categories,
         pieces: filterBasedOnSearchQuery({ searchQuery, pieces, suggestionType }),
     }))
+}
+
+export const filterPiecesBasedOnEmbedding = async ({
+    platformId,
+    pieces,
+}: {
+    platformId?: string
+    pieces: PieceMetadataSchema[]
+}): Promise<PieceMetadataSchema[]> => {
+    if (isNil(platformId)) {
+        return pieces
+    }
+    const platform = await platformService.getOne(platformId)
+    if (isNil(platform)) {
+        return pieces
+    }
+    if (!platform.embeddingEnabled) {
+        return pieces
+    }
+
+    const isEnterprisePremiumPiece = (piece: PieceMetadataSchema) => piece.categories?.includes(PieceCategory.PREMIUM)
+    const isPieceEnabledForPlatform = (piece: PieceMetadataSchema) => isEnterprisePremiumPiece(piece) && platform.premiumPieces.includes(piece.name)
+
+    return pieces.filter(piece => !isEnterprisePremiumPiece(piece) || isPieceEnabledForPlatform(piece))
 }
 
 async function filterPiecesBasedOnFeatures(

@@ -1,6 +1,6 @@
+import { ApEdition, isNil } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
-import { ApEdition, isNil } from '@activepieces/shared'
 
 export class MigrateEeUsersToOldestPlatform1701261357197
 implements MigrationInterface {

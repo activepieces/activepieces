@@ -25,7 +25,7 @@ export const updateOpportunityAction = createAction({
     pipeline: Property.Dropdown({
       displayName: 'Pipeline',
       description: 'The ID of the pipeline to use.',
-      required: false,
+      required: true,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {
@@ -90,12 +90,14 @@ export const updateOpportunityAction = createAction({
           pipeline as string
         );
         return {
-          options: pipelineObj.stages.map((stage: any) => {
-            return {
-              label: stage.name,
-              value: stage.id,
-            };
-          }),
+          options: pipelineObj
+            ? pipelineObj.stages.map((stage: any) => {
+                return {
+                  label: stage.name,
+                  value: stage.id,
+                };
+              })
+            : [],
         };
       },
     }),
@@ -186,7 +188,11 @@ export const updateOpportunityAction = createAction({
 
     let originalData: any;
     if (!title || !stage || !status)
-      originalData = await getOpportunity(auth.access_token, pipeline, opportunity);
+      originalData = await getOpportunity(
+        auth.access_token,
+        pipeline,
+        opportunity
+      );
 
     return await updateOpportunity(auth.access_token, opportunity, {
       pipelineId: pipeline ?? originalData.pipelineId,

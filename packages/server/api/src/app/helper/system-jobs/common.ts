@@ -1,6 +1,6 @@
 
-import { Dayjs } from 'dayjs'
 import { ProjectId } from '@activepieces/shared'
+import { Dayjs } from 'dayjs'
 
 export type SystemJobName =
     | 'hard-delete-project'
@@ -8,6 +8,7 @@ export type SystemJobName =
     | 'usage-report'
     | 'pieces-analytics'
     | 'pieces-sync'
+    | 'trial-tracker'
     | 'trigger-data-cleaner'
 
 type HardDeleteProjectSystemJobData = {
@@ -24,7 +25,8 @@ export type SystemJobData<T extends SystemJobName = SystemJobName> =
                 T extends 'trigger-data-cleaner' ? Record<string, never> :
                     T extends 'pieces-sync' ? Record<string, never> :
                         T extends 'pieces-analytics' ? Record<string, never> :
-                            never
+                            T extends 'trial-tracker' ? Record<string, never> :
+                                never
 
 export type SystemJobDefinition<T extends SystemJobName> = {
     name: T

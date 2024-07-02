@@ -1,31 +1,32 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
-import { flowService } from '../flows/flow/flow.service'
-import { webhookService } from '../webhooks/webhook-service'
-import { AppEventRouting } from './app-event-routing.entity'
-import { appEventRoutingService } from './app-event-routing.service'
 import { facebookLeads } from '@activepieces/piece-facebook-leads'
+import { intercom } from '@activepieces/piece-intercom'
 import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
-import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError, ALL_PRINCIPAL_TYPES,
+    apId,
     ErrorCode,
-    EventPayload,
     isNil,
 } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyRequest } from 'fastify'
+import { flowQueue } from '../flow-worker/queue'
+import { appEventRoutingService } from './app-event-routing.service'
 
 const appWebhooks: Record<string, Piece> = {
     slack,
     square,
     'facebook-leads': facebookLeads,
+    intercom,
 }
 
 const pieceNames: Record<string, string> = {
     slack: '@activepieces/piece-slack',
     square: '@activepieces/piece-square',
     'facebook-leads': '@activepieces/piece-facebook-leads',
+    intercom: '@activepieces/piece-intercom',
 }
 
 export const appEventRoutingModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -86,8 +87,21 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                     event,
                     identifierValue,
                 })
-                rejectedPromiseHandler(Promise.all(listeners.map((listener) => {
-                    return callback(listener, eventPayload)
+                rejectedPromiseHandler(Promise.all(listeners.map(async (listener) => {
+                    const requestId = apId()
+                    await flowQueue.add({
+                        id: requestId,
+                        type: JobType.WEBHOOK,
+                        data: {
+                            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                            requestId,
+                            synchronousHandlerId: null,
+                            payload: eventPayload,
+                            flowId: listener.flowId,
+                            simulate: false,
+                        },
+                        priority: 'medium',
+                    })
                 })))
             }
             return requestReply
@@ -96,15 +110,4 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                 .send(reply?.body ?? {})
         },
     )
-}
-
-async function callback(listener: AppEventRouting, eventPayload: EventPayload) {
-    const flow = await flowService.getOneOrThrow({
-        projectId: listener.projectId,
-        id: listener.flowId,
-    })
-    return webhookService.callback({
-        flow,
-        payload: eventPayload,
-    })
 }

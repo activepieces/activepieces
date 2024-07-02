@@ -1,4 +1,4 @@
-<div class="ap-flex ap-mb-[25px]">
+<div class="ap-flex sm:ap-mb-[25px] ap-min-w-[415px]">
     <ng-container *ngIf="showAllFlows$|async;else folderTemplate">
         <div class="ap-flex-grow ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
                 src="assets/img/custom/all-flows.svg" class="ap-h-[15px] ap-w-[15px] ap-fill-bleached-gray"
@@ -28,35 +28,39 @@
             </div>
         </ng-template>
     </ng-template>
-    <div class="ap-flex ap-items-center ap-gap-2">
-        <ap-button btnColor="basic" btnSize="medium" *ngIf="currentProject$ | async as proj" [loading]="creatingFlow"
-            (buttonClicked)="importFlow(proj.id)">
-            <span class="ap-flex ap-gap-2" i18n><svg-icon [src]="flowActionsUiInfo.import.icon"
-                    [class]="flowActionsUiInfo.iconSizeTailWind" [applyClass]="true"> </svg-icon>Import Flow</span>
-        </ap-button>
-        <ap-button btnColor="primary" [matMenuTriggerFor]="newFlowMenu" btnSize="medium" [loading]="creatingFlow">
-            <div class="ap-flex ap-gap-2 ap-items-center" i18n> New Flow <svg-icon class="ap-fill-white"
-                    [applyClass]="true" [svgStyle]="{ width: '16px', height: '16px' }"
-                    src="assets/img/custom/chevron.svg">
-                </svg-icon></div>
-        </ap-button>
-        <mat-menu #newFlowMenu="matMenu" xPosition="before">
-            <button mat-menu-item (click)="createFlowButtonClicked()">
-                <div class="ap-flex ap-gap-2 ap-items-center">
+  
 
-                    <svg-icon class="ap-fill-body" [applyClass]="true" [svgStyle]="{ width: '14px', height: '14px' }"
-                        src="assets/img/custom/add.svg"> </svg-icon>
-                    From Scratch
-                </div>
-            </button>
-            <button mat-menu-item (click)="openTemplatesDialog()">
-                <div class="ap-flex ap-gap-2 ap-items-center">
-                    <svg-icon class="ap-fill-body" [applyClass]="true" [svgStyle]="{ width: '18px', height: '18px' }"
-                        src="assets/img/custom/dashboard/templates.svg"> </svg-icon>Use a Template
-                </div>
-            </button>
-        </mat-menu>
-    </div>
+        <div class="ap-flex ap-items-center ap-gap-2">
+           
+            <ap-button [disabled]="isReadOnly" [tooltipText]="isReadOnly? unpermittedTooltip: ''" btnColor="basic" btnSize="medium" *ngIf="currentProject$ | async as proj" [loading]="creatingFlow"
+                (buttonClicked)="importFlow(proj.id)">
+                <span class="ap-flex ap-gap-2" i18n><svg-icon [src]="flowActionsUiInfo.import.icon"
+                        [class]="flowActionsUiInfo.iconSizeTailWind" [applyClass]="true"> </svg-icon>Import Flow</span>
+            </ap-button>
+            <ap-button btnColor="primary" [disabled]="isReadOnly" [tooltipText]="isReadOnly? unpermittedTooltip: ''" [matMenuTriggerFor]="newFlowMenu" btnSize="medium" [loading]="creatingFlow">
+                <div class="ap-flex ap-gap-2 ap-items-center ap-whitespace-nowrap" i18n> New Flow <svg-icon class="ap-fill-white"
+                        [applyClass]="true" [svgStyle]="{ width: '16px', height: '16px' }"
+                        src="assets/img/custom/chevron.svg">
+                    </svg-icon></div>
+            </ap-button>
+            <mat-menu #newFlowMenu="matMenu" xPosition="before">
+                <button mat-menu-item (click)="createFlowButtonClicked()">
+                    <div class="ap-flex ap-gap-2 ap-items-center">
+    
+                        <svg-icon class="ap-fill-body" [applyClass]="true" [svgStyle]="{ width: '14px', height: '14px' }"
+                            src="assets/img/custom/add.svg"> </svg-icon>
+                        From Scratch
+                    </div>
+                </button>
+                <button mat-menu-item (click)="openTemplatesDialog()">
+                    <div class="ap-flex ap-gap-2 ap-items-center">
+                        <svg-icon class="ap-fill-body" [applyClass]="true" [svgStyle]="{ width: '18px', height: '18px' }"
+                            src="assets/img/custom/dashboard/templates.svg"> </svg-icon>Use a Template
+                    </div>
+                </button>
+            </mat-menu>
+        </div>
+  
 
 </div>
 

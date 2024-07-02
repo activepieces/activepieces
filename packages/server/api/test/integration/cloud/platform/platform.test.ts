@@ -1,10 +1,3 @@
-import { faker } from '@faker-js/faker'
-import { FastifyInstance } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { generateMockToken } from '../../../helpers/auth'
-import { createMockPlatform, createMockUser, mockBasicSetup } from '../../../helpers/mocks'
 import {
     apId,
     FilteredPieceBehavior,
@@ -14,6 +7,13 @@ import {
     PrincipalType,
     UpdatePlatformRequestBody,
 } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { setupApp } from '../../../../src/app/app'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../helpers/auth'
+import { createMockPlatform, createMockUser, mockBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -187,7 +187,7 @@ describe('Platform API', () => {
                 },
 
             }
-            const mockPlatform = createMockPlatform({ ownerId: mockOwnerUser.id, smtpPassword: faker.internet.password(), federatedAuthProviders: providers })
+            const mockPlatform = createMockPlatform({ ownerId: mockOwnerUser.id, smtpPassword: faker.internet.password(), federatedAuthProviders: providers, flowIssuesEnabled: false, alertsEnabled: false, premiumPieces: [] })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             await databaseConnection.getRepository('user').update(mockOwnerUser.id, {
@@ -217,7 +217,7 @@ describe('Platform API', () => {
             const responseBody = response?.json()
 
 
-            expect(Object.keys(responseBody).length).toBe(37)
+            expect(Object.keys(responseBody).length).toBe(39)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwnerUser.id)
             expect(responseBody.name).toBe(mockPlatform.name)
@@ -233,6 +233,9 @@ describe('Platform API', () => {
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
             expect(responseBody.fullLogoUrl).toBe(mockPlatform.fullLogoUrl)
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
+            expect(responseBody.alertsEnabled).toBe(false)
+            expect(responseBody.flowIssuesEnabled).toBe(false)
+            expect(responseBody.premiumPieces).toStrictEqual([])
         })
 
 

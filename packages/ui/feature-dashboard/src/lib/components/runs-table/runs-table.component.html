@@ -3,10 +3,13 @@
     <div class="ap-flex ap-gap-2">
       <mat-form-field class="!ap-min-w-[15.625rem]">
         <mat-label i18n>Filter by Status</mat-label>
-        <mat-select [formControl]="statusFilterControl">
-          <mat-option [value]="allOptionValue" i18n>All</mat-option>
+        <mat-select [formControl]="statusFilterControl" multiple>
+          <mat-option selectAll [allValues]="allStatuses" i18n>All</mat-option>
           <mat-option [value]="ExecutionOutputStatus.RUNNING" i18n>Running</mat-option>
           <mat-option [value]="ExecutionOutputStatus.FAILED" i18n>Failed</mat-option>
+          <mat-option [value]="ExecutionOutputStatus.TIMEOUT" i18n>Timeout</mat-option>
+          <mat-option [value]="ExecutionOutputStatus.INTERNAL_ERROR" i18n>Internal Error</mat-option>
+          <mat-option [value]="ExecutionOutputStatus.STOPPED" i18n>Stopped</mat-option>
           <mat-option [value]="ExecutionOutputStatus.SUCCEEDED" i18n>Succeeded</mat-option>
           <mat-option [value]="ExecutionOutputStatus.PAUSED" i18n>Paused</mat-option>
         </mat-select>
@@ -95,19 +98,24 @@
               <mat-icon>more_vert</mat-icon>
             </button>
             <mat-menu #menu="matMenu" xPosition="before">
-              <button mat-menu-item (click)="retryFlow(run, FlowRetryStrategy.ON_LATEST_VERSION)">
+              <button mat-menu-item (click)="retryFlow(run, FlowRetryStrategy.ON_LATEST_VERSION)"
+              [disabled]="!hasPermissionToRetryFlow">
                 <div class="ap-flex ap-items-center">
                   <mat-icon>loop</mat-icon>
                   <span i18n>Retry on Latest Version</span>
                 </div>
               </button>
-              <button *ngIf="run.status !== ExecutionOutputStatus.SUCCEEDED" mat-menu-item
+              @if(run.status !== ExecutionOutputStatus.SUCCEEDED)
+              {
+                <button  mat-menu-item [disabled]="!hasPermissionToRetryFlow"
                 (click)="retryFlow(run, FlowRetryStrategy.FROM_FAILED_STEP)">
                 <div class="ap-flex ap-items-center">
                   <mat-icon>replay</mat-icon>
                   <span i18n>Retry From Failed Step</span>
                 </div>
               </button>
+              }
+
             </mat-menu>
           </td>
         </ng-container>

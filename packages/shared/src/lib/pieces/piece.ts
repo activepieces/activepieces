@@ -26,7 +26,6 @@ export const PublicPiecePackage = Type.Object({
     pieceType: Type.Enum(PieceType),
     pieceName: Type.String(),
     pieceVersion: Type.String(),
-    directoryPath: Type.Union([Type.Undefined(), Type.String()]),
 })
 
 export type PublicPiecePackage = Static<typeof PublicPiecePackage>
@@ -49,4 +48,5 @@ export enum PieceCategory {
     PAYMENT_PROCESSING = 'PAYMENT_PROCESSING',
     MARKETING = 'MARKETING',
     SALES_AND_CRM = 'SALES_AND_CRM',
+    PREMIUM = 'PREMIUM', 
 }

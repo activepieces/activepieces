@@ -23,7 +23,7 @@ export const bettermode = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { region: string }).region, // replace with the actual base URL
       auth: bettermodeAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

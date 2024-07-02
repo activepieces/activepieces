@@ -16,7 +16,7 @@ export const slackSendMessageAction = createAction({
   description: 'Send message to a channel',
   props: {
     info: slackInfo,
-    channel: slackChannel,
+    channel: slackChannel(true),
     text: Property.LongText({
       displayName: 'Message',
       description: 'The text of your message',

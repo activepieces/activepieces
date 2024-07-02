@@ -7,6 +7,7 @@ import {
   AuthenticationResponse,
   ClaimTokenRequest,
   FederatedAuthnLoginResponse,
+  Permission,
   PlatformRole,
   Principal,
   ProjectId,
@@ -21,11 +22,24 @@ import {
   CreateOtpRequestBody,
   ResetPasswordRequestBody,
   VerifyEmailRequestBody,
+  rolePermissions,
 } from '@activepieces/ee-shared';
 import { FlagService } from './flag.service';
+import { TelemetryService } from './telemetry.service';
 
 type UserWithoutPassword = Omit<User, 'password'>;
-
+export const currentUser: () => AuthenticationResponse = () => {
+  return JSON.parse(
+    localStorage.getItem(environment.userPropertyNameInLocalStorage) || '{}'
+  );
+};
+export const doesUserHavePermission = (permission: Permission) => {
+  const role = currentUser()?.projectRole;
+  if (!role) {
+    return true;
+  }
+  return rolePermissions[role].includes(permission);
+};
 @Injectable({
   providedIn: 'root',
 })
@@ -40,13 +54,12 @@ export class AuthenticationService {
   constructor(
     private router: Router,
     private http: HttpClient,
-    private flagsService: FlagService
+    private flagsService: FlagService,
+    private telemetryService: TelemetryService
   ) {}
 
   get currentUser(): AuthenticationResponse {
-    return JSON.parse(
-      localStorage.getItem(environment.userPropertyNameInLocalStorage) || '{}'
-    );
+    return currentUser();
   }
 
   getRole(): ProjectMemberRole | undefined {
@@ -72,13 +85,21 @@ export class AuthenticationService {
   signUp(
     request: SignUpRequest
   ): Observable<HttpResponse<AuthenticationResponse>> {
-    return this.http.post<AuthenticationResponse>(
-      environment.apiUrl + '/authentication/sign-up',
-      request,
-      {
-        observe: 'response',
-      }
-    );
+    return this.http
+      .post<AuthenticationResponse>(
+        environment.apiUrl + '/authentication/sign-up',
+        request,
+        {
+          observe: 'response',
+        }
+      )
+      .pipe(
+        tap((res) => {
+          if (res.body && !res.body.verified) {
+            this.telemetryService.init(res.body);
+          }
+        })
+      );
   }
 
   saveToken(token: string) {

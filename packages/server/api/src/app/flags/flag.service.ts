@@ -1,11 +1,10 @@
+import { flowTimeoutSandbox, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
+import { ApEdition, ApFlagId, Flag, isNil } from '@activepieces/shared'
 import axios from 'axios'
+import { webhookUtils } from 'server-worker'
 import { databaseConnection } from '../database/database-connection'
-import { getEdition, getSupportedAppWebhooks } from '../helper/secret-helper'
-import { webhookService } from '../webhooks/webhook-service'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApFlagId, Flag, isNil } from '@activepieces/shared'
 
 const flagRepo = databaseConnection.getRepository(FlagEntity)
 
@@ -36,6 +35,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.IS_CLOUD_PLATFORM,
+                value: false,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.PIECES_SYNC_MODE,
                 value: system.get(SystemProp.PIECES_SYNC_MODE),
                 created,
@@ -43,7 +48,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_PLATFORM_DEMO,
-                value: [ApEdition.CLOUD].includes(getEdition()),
+                value: [ApEdition.CLOUD].includes(system.getEdition()),
                 created,
                 updated,
             },
@@ -103,13 +108,13 @@ export const flagService = {
             },
             {
                 id: ApFlagId.EDITION,
-                value: getEdition(),
+                value: system.getEdition(),
                 created,
                 updated,
             },
             {
                 id: ApFlagId.SHOW_BILLING,
-                value: getEdition() === ApEdition.CLOUD,
+                value: system.getEdition() === ApEdition.CLOUD,
                 created,
                 updated,
             },
@@ -121,7 +126,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(getEdition())
+                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
                     ? this.getThirdPartyRedirectUrl(undefined, undefined)
                     : undefined,
                 created,
@@ -141,19 +146,19 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_DOCS,
-                value: getEdition() !== ApEdition.ENTERPRISE,
+                value: system.getEdition() !== ApEdition.ENTERPRISE,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.SHOW_COMMUNITY,
-                value: getEdition() !== ApEdition.ENTERPRISE,
+                value: system.getEdition() !== ApEdition.ENTERPRISE,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.PRIVATE_PIECES_ENABLED,
-                value: getEdition() !== ApEdition.COMMUNITY,
+                value: system.getEdition() !== ApEdition.COMMUNITY,
                 created,
                 updated,
             },
@@ -170,12 +175,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SIGN_UP_ENABLED,
-                value: system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.TELEMETRY_ENABLED,
                 value: system.getBoolean(SystemProp.TELEMETRY_ENABLED) ?? true,
                 created,
@@ -183,7 +182,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.WEBHOOK_URL_PREFIX,
-                value: await webhookService.getWebhookPrefix(),
+                value: await webhookUtils.getWebhookPrefix(),
                 created,
                 updated,
             },
@@ -194,8 +193,8 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SANDBOX_RUN_TIME_SECONDS,
-                value: system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS),
+                id: ApFlagId.FLOW_RUN_TIME_SECONDS,
+                value: flowTimeoutSandbox,
                 created,
                 updated,
             },
@@ -213,10 +212,11 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SUPPORTED_APP_WEBHOOKS,
-                value: getSupportedAppWebhooks(),
+                value: webhookSecretsUtils.getSupportedAppWebhooks(),
                 created,
                 updated,
             },
+            
         )
 
         return flags
@@ -262,7 +262,6 @@ export const flagService = {
 
 export type FlagType =
     | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>
-    | BaseFlagStructure<ApFlagId.PLATFORM_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>

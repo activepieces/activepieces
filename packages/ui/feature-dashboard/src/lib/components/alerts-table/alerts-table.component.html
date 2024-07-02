@@ -1,0 +1,64 @@
+<div class="ap-w-full ap-h-full">
+    @if(showUpgrade)
+    {
+    <ap-upgrade-note [insideTab]="true" [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote"
+        featureKey="ALERTS" videoUrl="https://cdn.activepieces.com/videos/showcase/alerts.mp4"></ap-upgrade-note>
+    } @else {
+    <div class="ap-h-full">
+        <div class="ap-p-[0.875rem]">
+            <span class="ap-typography-subtitle-2">Receive email alerts for issues in flow runs, quota alerts, and
+                manage the recipient emails.</span>
+        </div>
+        <ap-markdown class="ap-mb-2" [data]="betaNote"> </ap-markdown>
+        <div class=" ap-min-h-[70%]">
+            <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Alerts" i18n-aria-label>
+                <ng-container matColumnDef="receiver">
+                    <th mat-header-cell *matHeaderCellDef i18n>Email</th>
+                    <td mat-cell *matCellDef="let alert">{{ alert.receiver }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="action">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="ap-flex ap-items-center ap-justify-end">
+                            <ap-button actionButton [disabled]="(isAdmin$ | async) === false"
+                                [tooltipText]="(isAdmin$ | async) === false ? permissionToAddMessage : ''"
+                                i18n-tooltipText (buttonClicked)="addAlert()" btnSize="medium" btnColor="primary">+
+                                Add
+                                Email</ap-button>
+                        </div>
+                    </th>
+                    <td mat-cell *matCellDef="let alert">
+                        <div class="ap-float-right ap-text-center ap-w-[4.4375rem]">
+                            <ap-icon-button tooltipText="Delete Alert" [buttonDisabled]="(isAdmin$ | async) === false"
+                                [tooltipText]="(isAdmin$ | async) === false ? permissionToDeleteMessage : ''"
+                                i18n-tooltipText iconFilename="trash.svg" color="warn" [width]="20" [height]="20"
+                                (buttonClicked)="deleteAlert(alert)" [height]="16"></ap-icon-button>
+                        </div>
+                    </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row [class.ap-hidden]="dataSource === undefined || (dataSource.isLoading$ | async) "
+                    *matRowDef="let row; columns: displayedColumns"></tr>
+            </table>
+            <ng-container *ngIf="dataSource === undefined ||  (dataSource.isLoading$ | async) === true">
+                <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
+                    <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
+                    </ap-loading-icon>
+                </div>
+            </ng-container>
+            <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
+                <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-mt-[30px]" i18n>
+                    No recipient emails have been added to this project
+                </div>
+            </ng-container>
+        </div>
+    </div>
+    }
+    <div [class.ap-hidden]="showUpgrade">
+        <div class="ap-flex ap-justify-end">
+            <ap-paginator> </ap-paginator>
+        </div>
+    </div>
+</div>
+<ng-container *ngIf="deleteAlert$ | async"></ng-container>
+@if(addAlertDialogClosed$ | async) {}

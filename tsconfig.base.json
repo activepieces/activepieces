@@ -39,6 +39,9 @@
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/community/amazon-s3/src/index.ts"
       ],
+      "@activepieces/piece-amazon-sqs": [
+        "packages/pieces/community/amazon-sqs/src/index.ts"
+      ],
       "@activepieces/piece-apitable": [
         "packages/pieces/community/apitable/src/index.ts"
       ],
@@ -131,6 +134,9 @@
       "@activepieces/piece-date-helper": [
         "packages/pieces/community/date-helper/src/index.ts"
       ],
+      "@activepieces/piece-datocms": [
+        "packages/pieces/community/datocms/src/index.ts"
+      ],
       "@activepieces/piece-deepl": [
         "packages/pieces/community/deepl/src/index.ts"
       ],
@@ -164,6 +170,9 @@
       "@activepieces/piece-file-helper": [
         "packages/pieces/community/file-helper/src/index.ts"
       ],
+      "@activepieces/piece-fliqr-ai": [
+        "packages/pieces/community/fliqr-ai/src/index.ts"
+      ],
       "@activepieces/piece-flowise": [
         "packages/pieces/community/flowise/src/index.ts"
       ],
@@ -184,6 +193,9 @@
       ],
       "@activepieces/piece-freshsales": [
         "packages/pieces/community/freshsales/src/index.ts"
+      ],
+      "@activepieces/piece-gameball": [
+        "packages/pieces/community/gameball/src/index.ts"
       ],
       "@activepieces/piece-gcloud-pubsub": [
         "packages/pieces/community/gcloud-pubsub/src/index.ts"
@@ -281,6 +293,9 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-krisp-call": [
+        "packages/pieces/community/krisp-call/src/index.ts"
+      ],
       "@activepieces/piece-lead-connector": [
         "packages/pieces/community/lead-connector/src/index.ts"
       ],
@@ -305,6 +320,9 @@
       "@activepieces/piece-mailer-lite": [
         "packages/pieces/community/mailer-lite/src/index.ts"
       ],
+      "@activepieces/piece-maileroo": [
+        "packages/pieces/community/maileroo/src/index.ts"
+      ],
       "@activepieces/piece-mastodon": [
         "packages/pieces/community/mastodon/src/index.ts"
       ],
@@ -323,6 +341,12 @@
       "@activepieces/piece-mautic": [
         "packages/pieces/community/mautic/src/index.ts"
       ],
+      "@activepieces/piece-messagebird": [
+        "packages/pieces/community/messagebird/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-dynamics-365-business-central": [
+        "packages/ee/pieces/microsoft-dynamics-365-business-central/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-dynamics-crm": [
         "packages/ee/pieces/microsoft-dynamics-crm/src/index.ts"
       ],
@@ -333,7 +357,7 @@
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
       ],
       "@activepieces/piece-microsoft-sharepoint": [
-        "packages/pieces/community/microsoft-sharepoint/src/index.ts"
+        "packages/ee/pieces/sharepoint/src/index.ts"
       ],
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
@@ -384,6 +408,9 @@
         "packages/pieces/community/pastefy/src/index.ts"
       ],
       "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
+      "@activepieces/piece-photoroom": [
+        "packages/pieces/community/photoroom/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
@@ -410,6 +437,9 @@
       ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
+      ],
+      "@activepieces/piece-reoon-verifier": [
+        "packages/pieces/community/reoon-verifier/src/index.ts"
       ],
       "@activepieces/piece-resend": [
         "packages/pieces/community/resend/src/index.ts"
@@ -465,6 +495,9 @@
       ],
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
+      ],
+      "@activepieces/piece-snowflake": [
+        "packages/ee/pieces/snowflake/src/index.ts"
       ],
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
@@ -581,6 +614,9 @@
       "@activepieces/piece-zerobounce": [
         "packages/pieces/community/zerobounce/src/index.ts"
       ],
+      "@activepieces/piece-zoho-books": [
+        "packages/pieces/community/zoho-books/src/index.ts"
+      ],
       "@activepieces/piece-zoho-crm": [
         "packages/pieces/community/zoho-crm/src/index.ts"
       ],
@@ -590,6 +626,7 @@
       "@activepieces/piece-zoom": [
         "packages/pieces/community/zoom/src/index.ts"
       ],
+      "@activepieces/piece-zuora": ["packages/ee/pieces/zuora/src/index.ts"],
       "@activepieces/pieces-common": [
         "packages/pieces/community/common/src/index.ts"
       ],
@@ -649,6 +686,9 @@
       "ee-components": ["packages/ee/ui/components/src/index.ts"],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "ee-project-members": ["packages/ee/ui/project-members/src/index.ts"],
+      "@activepieces/ui-feature-flow-actions-list": [
+        "packages/ui/feature-flow-actions-list/src/index.ts"
+      ],
       "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-ee-platform": ["packages/ee/ui/platform/src/index.ts"],
       "ui-feature-flow-builder": [

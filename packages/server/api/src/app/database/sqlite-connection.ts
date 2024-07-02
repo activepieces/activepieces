@@ -1,7 +1,8 @@
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
+import { system, SystemProp } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
-import { getEdition } from '../helper/secret-helper'
 import { commonProperties } from './database-connection'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -45,8 +46,9 @@ import { AddPlatformRole1713271221154 } from './migration/sqlite/1713271221154-A
 import { AddUniqueNameToFolderSqlite1713645171373 } from './migration/sqlite/1713645171373-AddUniqueNameToFolderSqlite'
 import { AddFeatureFlagsToPlatform1714137103728 } from './migration/sqlite/1714137103728-AddFeatureFlagsToPlatform'
 import { AddIssueEntitySqlite1714900626443 } from './migration/sqlite/1714900626443-AddIssueEntitySqlite'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment } from '@activepieces/shared'
+import { AddAlertsEntitySqlite1717239613259 } from './migration/sqlite/1717239613259-AddAlertsEntitySqlite'
+import { AddPremiumPiecesColumnSqlite1717443603235 } from './migration/sqlite/1717443603235-AddPremiumPiecesColumnSqlite'
+import { AddUserInvitationSqlite1717943564437 } from './migration/sqlite/1717943564437-AddUserInvitationSqlite'
 
 
 const getSqliteDatabaseFilePath = (): string => {
@@ -112,8 +114,11 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIssueEntitySqlite1714900626443,
         RemoveShowActivityLog1716105958530,
         AddDurationForRuns1716725027424,
+        AddAlertsEntitySqlite1717239613259,
+        AddUserInvitationSqlite1717943564437,
+        AddPremiumPiecesColumnSqlite1717443603235,
     ]
-    const edition = getEdition()
+    const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
         throw new Error(`Edition ${edition} not supported in sqlite3 mode`)
     }

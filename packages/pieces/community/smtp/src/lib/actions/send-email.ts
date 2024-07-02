@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { smtpAuth } from '../..';
 import { smtpCommon } from '../common';
-import { Attachment } from 'nodemailer/lib/mailer';
+import { Attachment, Headers } from 'nodemailer/lib/mailer';
 import mime from 'mime-types';
 
 export const sendEmail = createAction({
@@ -11,8 +11,12 @@ export const sendEmail = createAction({
   description: 'Send an email using a custom SMTP server.',
   props: {
     from: Property.ShortText({
-      displayName: 'From',
+      displayName: 'From Email',
       required: true,
+    }),
+    senderName: Property.ShortText({
+      displayName: "Sender Name",
+      required: false,
     }),
     to: Property.Array({
       displayName: 'To',
@@ -56,6 +60,10 @@ export const sendEmail = createAction({
       displayName: 'Body',
       required: true,
     }),
+    customHeaders: Property.Object({
+      displayName: 'Custom Headers',
+      required: false,
+    }),
     attachment: Property.File({
       displayName: 'Attachment',
       description: 'File to attach to the email you want to send',
@@ -90,7 +98,7 @@ export const sendEmail = createAction({
     }
 
     const info = await transporter.sendMail({
-      from: propsValue.from,
+      from: getFrom(propsValue.senderName, propsValue.from),
       to: propsValue.to.join(','),
       cc: propsValue.cc?.join(','),
       inReplyTo: propsValue.replyTo,
@@ -99,8 +107,16 @@ export const sendEmail = createAction({
       text: propsValue.body_type === 'plain_text' ? propsValue.body : undefined,
       html: propsValue.body_type === 'html' ? propsValue.body : undefined,
       attachments: attachment ? attachment_data : undefined,
+      headers: propsValue.customHeaders as Headers,
     });
 
     return info;
   },
 });
+
+function getFrom(senderName: string|undefined, from: string) {
+  if (senderName) {
+    return `"${senderName}" <${from}>`
+  } 
+  return from;
+}

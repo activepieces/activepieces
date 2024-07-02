@@ -41,7 +41,7 @@ export const nifty = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://openapi.niftypm.com/api/v1.0',
       auth: niftyAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

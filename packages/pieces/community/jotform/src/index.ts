@@ -57,7 +57,7 @@ export const jotform = createPiece({
       baseUrl: (auth) =>
         jotformCommon.baseUrl((auth as { region: string }).region),
       auth: jotformAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         APIKEY: (auth as { apiKey: string }).apiKey,
       }),
     }),

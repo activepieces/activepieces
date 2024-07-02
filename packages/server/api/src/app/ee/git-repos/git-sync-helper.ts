@@ -1,12 +1,12 @@
 import fs from 'fs/promises'
 import path from 'path'
+import { ProjectSyncError } from '@activepieces/ee-shared'
+import { Flow, FlowOperationType, PopulatedFlow } from '@activepieces/shared'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
 import { GitFile } from './project-diff/project-diff.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
-import { ProjectSyncError } from '@activepieces/ee-shared'
-import { Flow, FlowOperationType, PopulatedFlow } from '@activepieces/shared'
 
 
 async function getStateFromDB(projectId: string): Promise<PopulatedFlow[]> {
@@ -18,7 +18,8 @@ async function getStateFromDB(projectId: string): Promise<PopulatedFlow[]> {
             return flowService.getOnePopulatedOrThrow({
                 id: f.id,
                 projectId,
-                removeSecrets: false,
+                removeConnectionsName: false,
+                removeSampleData: true,
             })
         }),
     )

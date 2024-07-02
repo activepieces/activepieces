@@ -18,7 +18,7 @@ export const matomo = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { domain: string }).domain,
       auth: matomoAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as { tokenAuth: string }).tokenAuth}`,
       }),
     }),

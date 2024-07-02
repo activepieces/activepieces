@@ -286,6 +286,20 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MrAkber"><img src="https://avatars.githubusercontent.com/u/170118042?v=4?s=100" width="100px;" alt="MrAkber"/><br /><sub><b>MrAkber</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=MrAkber" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/marek-slavicek"><img src="https://avatars.githubusercontent.com/u/136325104?v=4?s=100" width="100px;" alt="marek-slavicek"/><br /><sub><b>marek-slavicek</b></sub></a><br /><a href="#plugin-marek-slavicek" title="Plugin/utility libraries">🔌</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/hugh-codes"><img src="https://avatars.githubusercontent.com/u/166336705?v=4?s=100" width="100px;" alt="hugh-codes"/><br /><sub><b>hugh-codes</b></sub></a><br /><a href="#plugin-hugh-codes" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/alewis001"><img src="https://avatars.githubusercontent.com/u/3482446?v=4?s=100" width="100px;" alt="Alex Lewis"/><br /><sub><b>Alex Lewis</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Aalewis001" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://yual.in"><img src="https://avatars.githubusercontent.com/u/21105863?v=4?s=100" width="100px;" alt="Yuanlin Lin"/><br /><sub><b>Yuanlin Lin</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=yuaanlin" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://klo.dev"><img src="https://avatars.githubusercontent.com/u/96867907?v=4?s=100" width="100px;" alt="Ala Shiban"/><br /><sub><b>Ala Shiban</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=AlaShibanAtKlo" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://hamedsh.medium.com"><img src="https://avatars.githubusercontent.com/u/6043214?v=4?s=100" width="100px;" alt="hamsh"/><br /><sub><b>hamsh</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=hamedsh" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.anne-mariel.com/"><img src="https://avatars.githubusercontent.com/u/77142075?v=4?s=100" width="100px;" alt="Anne Mariel Catapang"/><br /><sub><b>Anne Mariel Catapang</b></sub></a><br /><a href="#plugin-AnneMariel95" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://hi.carlogino.com"><img src="https://avatars.githubusercontent.com/u/19299524?v=4?s=100" width="100px;" alt="Carlo Gino Catapang"/><br /><sub><b>Carlo Gino Catapang</b></sub></a><br /><a href="#plugin-codegino" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/drona2938"><img src="https://avatars.githubusercontent.com/u/34496554?v=4?s=100" width="100px;" alt="Aditya Rathore"/><br /><sub><b>Aditya Rathore</b></sub></a><br /><a href="#plugin-drona2938" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/coderbob2"><img src="https://avatars.githubusercontent.com/u/47177246?v=4?s=100" width="100px;" alt="coderbob2"/><br /><sub><b>coderbob2</b></sub></a><br /><a href="#plugin-coderbob2" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://raamyy.netlify.app"><img src="https://avatars.githubusercontent.com/u/29176293?v=4?s=100" width="100px;" alt="Ramy Gamal"/><br /><sub><b>Ramy Gamal</b></sub></a><br /><a href="#plugin-Raamyy" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
   </tbody>
 </table>
 

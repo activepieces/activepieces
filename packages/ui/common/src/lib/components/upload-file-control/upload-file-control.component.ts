@@ -141,6 +141,5 @@ export class UploadFileControlComponent
       this.errorState = newState || false;
       this.stateChanges.next();
     }
-    console.log(this.ngControl?.invalid);
   }
 }

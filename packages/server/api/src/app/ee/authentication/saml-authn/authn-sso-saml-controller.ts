@@ -1,20 +1,20 @@
+import { ActivepiecesError, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
 import { platformService } from '../../../platform/platform.service'
 import { authenticationHelper } from '../authentication-service/hooks/authentication-helper'
 import { authnSsoSamlService } from './authn-sso-saml-service'
-import { ActivepiecesError, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
 
 export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/login', LoginRequest, async (req, res) => {
-        const { saml } = await getSamlConfigOrThrow(req)
-        const loginResponse = await authnSsoSamlService.login(req.hostname, saml)
+        const { saml, platformId } = await getSamlConfigOrThrow(req)
+        const loginResponse = await authnSsoSamlService.login(platformId, saml)
         return res.redirect(loginResponse.redirectUrl)
     })
     app.post('/acs', AcsRequest, async (req, res) => {
         const { saml, platformId } = await getSamlConfigOrThrow(req)
-        const user = await authnSsoSamlService.acs(req.hostname, platformId, saml, {
+        const user = await authnSsoSamlService.acs( platformId, saml, {
             body: req.body,
             query: req.query,
         })

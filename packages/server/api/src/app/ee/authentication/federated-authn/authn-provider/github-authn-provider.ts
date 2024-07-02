@@ -1,5 +1,3 @@
-import { flagService } from '../../../../flags/flag.service'
-import { AuthnProvider, FebderatedAuthnIdToken } from './authn-provider'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
@@ -7,6 +5,8 @@ import {
     isNil,
     Platform,
 } from '@activepieces/shared'
+import { flagService } from '../../../../flags/flag.service'
+import { AuthnProvider, FebderatedAuthnIdToken } from './authn-provider'
 
 function getClientIdAndSecret(platform: Platform): {
     clientId: string

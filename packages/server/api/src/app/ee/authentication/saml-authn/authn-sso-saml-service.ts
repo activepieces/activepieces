@@ -1,21 +1,20 @@
 
-import { isNil } from 'lodash'
-import { generateRandomPassword } from '../../../helper/crypto'
+import { cryptoUtils } from '@activepieces/server-shared'
+import { isNil, PlatformRole, SAMLAuthnProviderConfig, User } from '@activepieces/shared'
 import { userService } from '../../../user/user-service'
 import { createSamlClient, IdpLoginResponse, SamlAttributes } from './saml-client'
-import { PlatformRole, SAMLAuthnProviderConfig, User } from '@activepieces/shared'
 
 export const authnSsoSamlService = {
-    async login(hostname: string, samlProvider: SAMLAuthnProviderConfig): Promise<LoginResponse> {
-        const client = await createSamlClient(hostname, samlProvider)
+    async login(platformId: string, samlProvider: SAMLAuthnProviderConfig): Promise<LoginResponse> {
+        const client = await createSamlClient(platformId, samlProvider)
         const redirectUrl = client.getLoginUrl()
         return {
             redirectUrl,
         }
     },
 
-    async acs(hostname: string, platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<User> {
-        const client = await createSamlClient(hostname, samlProvider)
+    async acs(platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<User> {
+        const client = await createSamlClient(platformId, samlProvider)
         const attributes = await client.parseAndValidateLoginResponse(idpLoginResponse)
         return getOrCreateUser(platformId, attributes)
     },
@@ -34,7 +33,7 @@ const getOrCreateUser = async (platformId: string, attributes: SamlAttributes): 
         email,
         firstName: attributes.firstName,
         lastName: attributes.lastName,
-        password: await generateRandomPassword(),
+        password: await cryptoUtils.generateRandomPassword(),
         trackEvents: true,
         newsLetter: false,
         verified: true,

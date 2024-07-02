@@ -1,16 +1,16 @@
-<div class="ap-h-[calc(100% - 6.5625rem)] ap-px-7.5 ap-relative ap-overflow-hidden"
+<div class="ap-h-[calc(100% - 6.5625rem)]  ap-px-4 sm:ap-px-7.5 ap-relative ap-overflow-y-auto sm:ap-overflow-y-clip ap-overflow-x-clip sm:ap-overflow-x-auto"
   [class.ap-hidden]="(areThereFlows$|async)===false">
-  <div class="ap-flex ap-h-full ">
-    <div class=" ap-min-w-[274px] ap-max-w-[274px]"
+  <div class="ap-flex ap-h-full ap-flex-col sm:ap-flex-row ap-w-full ap-gap-x-[30px]">
+    <div class="ap-w-full sm:ap-min-w-[274px] sm:ap-max-w-[274px] sm:ap-[274px]"
       *ngIf="(hideFolders$ | async) === undefined ||(hideFolders$ | async) === false " #foldersSection>
-      <div class="ap-typography-headline-5 !ap-font-semibold ap-mb-7.5 ap-mt-20" i18n>My Flows</div>
+      <div class="ap-typography-headline-5 !ap-font-semibold ap-mb-2 sm:ap-mb-7.5 ap-mt-20" i18n>My Flows</div>
       <app-folders-list></app-folders-list>
     </div>
-    <div class="ap-h-full ap-w-[calc(100%-274px)] ap-pl-[30px] ap-pt-[80px]" [class.ap-w-full]="(hideFolders$ | async)"
+    <div class="ap-h-full ap-w-full ap-flex-1 sm:ap-pt-[80px]" [class.ap-w-full]="(hideFolders$ | async)"
       [class.!ap-pl-0]="(hideFolders$ | async)">
       <div class="ap-h-full ap-mb-[40px]">
         <div
-          class=" ap-rounded ap-border ap-border-solid ap-border-dividers ap-p-[30px] ap-pb-[80px] ap-flex ap-flex-col">
+          class="ap-rounded ap-border ap-overflow-x-auto ap-border-solid ap-border-dividers ap-p-4 sm:ap-p-[30px] ap-pb-16 sm:ap-pb-20 ap-flex ap-flex-col">
           <app-flows-table-title></app-flows-table-title>
           <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Flows" i18n-aria-label>
             <ng-container matColumnDef="name">
@@ -35,12 +35,31 @@
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef i18n>Status</th>
               <td mat-cell *matCellDef="let flow">
-                <div class="ap-px-1 ap-flex ap-gap-2 ap-items-center">
-                  <mat-slide-toggle color="primary" [class.ap-cursor-not-allowed]="flow.instanceToggleControl.disabled"
+                <div class="ap-px-1 ap-flex ap-items-center ap-gap-1" >
+                    
+                  @if(isStatusReadOnly) {
+                    @if(flow.instanceToggleControl.disabled)
+                    {
+                     <ng-container i18n>Not Published</ng-container>
+                    }
+                    @else{
+                     @if(flow.instanceToggleControl.value)
+                     {
+                       <ng-container i18n>On</ng-container>
+                     }
+                     @else{
+                       <ng-container i18n>Off</ng-container>
+                     }
+                    }
+                   }
+                  @else {
+                    <mat-slide-toggle color="primary" [class.ap-cursor-not-allowed]="flow.instanceToggleControl.disabled"
                     (click)="$event.stopImmediatePropagation(); toggleFlowStatus(flow,flow.instanceToggleControl)"
                     [formControl]="flow.instanceToggleControl"
                     [matTooltip]="flow.instanceToggleControl.value | flowStatus: flow.instanceToggleControl.disabled"></mat-slide-toggle>
-                  <div class="ap-min-h-[30px] ap-min-w-[30px] ap-flex ap-items-center ap-justify-center">
+             
+                  }
+                  <div class="ap-min-h-[30px]  ap-flex ap-items-center ap-justify-center">
                     <svg-icon [src]="flow | triggerIcon"
                       *ngIf="flow.instanceToggleControl.value && !flowsUpdateStatusRequest$[flow.id]"
                       [matTooltip]="flow | triggerTooltip:locale" class="ap-w-[25px] ap-h-[25px] ap-fill-body"
@@ -49,7 +68,7 @@
                     <div *ngIf="flowsUpdateStatusRequest$[flow.id]" class="spinner-border dark-spinner" role="status">
                     </div>
                   </div>
-
+             
                 </div>
               </td>
             </ng-container>
@@ -63,49 +82,16 @@
 
               </th>
               <td mat-cell *matCellDef="let flow" class="!ap-text-center">
-                <button mat-icon-button (click)="$event.stopImmediatePropagation()" [matMenuTriggerFor]="menu">
+                <button mat-icon-button (click)="$event.stopImmediatePropagation()" [matMenuTriggerFor]="actionsList.menuElement">
                   <mat-icon>more_vert</mat-icon>
                 </button>
-                <mat-menu #menu="matMenu" xPosition="before">
-                  <button mat-menu-item (click)="renameFlow(flow)">
-                    <div class="ap-flex ap-gap-3 ap-items-center">
-                      <svg-icon [src]="flowActionsUiInfo.rename.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
-                        [applyClass]="true"></svg-icon>
-                      <span i18n>{{flowActionsUiInfo.rename.text}}</span>
-                    </div>
-                  </button>
-                  <button mat-menu-item (click)="moveFlow(flow)">
-                    <div class="ap-flex ap-gap-3 ap-items-center">
-                      <svg-icon [src]="flowActionsUiInfo.move.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
-                        [applyClass]="true"></svg-icon>
-                      <span i18n>{{flowActionsUiInfo.move.text}}</span>
-                    </div>
-                  </button>
-                  <button mat-menu-item (click)="duplicate(flow)">
-                    <div class="ap-flex ap-gap-3 ap-items-center">
-                      <svg-icon [src]="flowActionsUiInfo.duplicate.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
-                        [applyClass]="true"></svg-icon>
-                      <span i18n>{{flowActionsUiInfo.duplicate.text}}</span>
-                    </div>
-                  </button>
-                  <button mat-menu-item (click)="export(flow)">
-                    <div class="ap-flex ap-gap-3 ap-items-center">
-                      <svg-icon [src]="flowActionsUiInfo.export.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
-                        [applyClass]="true"></svg-icon>
-                      <span i18n>{{flowActionsUiInfo.export.text}}</span>
-                    </div>
-                  </button>
-                  <ap-share-flow-template-dialog [flow]="flow"></ap-share-flow-template-dialog>
-                  <app-push-flow-to-git-button [flow]="flow"></app-push-flow-to-git-button>
-
-                  <button (click)="deleteFlow(flow)" mat-menu-item>
-                    <div class="ap-flex ap-gap-3 ap-items-center">
-                      <svg-icon [src]="flowActionsUiInfo.delete.icon"
-                        [class]="'ap-fill-danger '+flowActionsUiInfo.iconSizeTailWind" [applyClass]="true"></svg-icon>
-                      <span class="ap-text-danger">{{flowActionsUiInfo.delete.text}}</span>
-                    </div>
-                  </button>
-                </mat-menu>
+                  <ap-flow-actions-list #actionsList
+                   [flow]="flow" 
+                  [inBuilder]="true" 
+                  (renameFlow)="renameFlow(flow)"
+                   (flowDuplicated)="refreshTable()" 
+                   (flowDeleted)="refreshTable()"
+                  (flowMoved)="refreshTable()" ></ap-flow-actions-list>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -113,8 +99,6 @@
             <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openBuilder(row, $event)"
               (auxclick)="openBuilder(row, $event)" mat-row contextmenu="mymenu"
               [class.ap-hidden]="dataSource.isLoading$ | async" *matRowDef="let row; columns: displayedColumns"></tr>
-
-
           </table>
           <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
             <div class="ap-flex ap-items-center ap-justify-center ap-my-8  ap-flex-grow">
@@ -122,7 +106,7 @@
                 <span i18n>You don't have any flows yet</span>
               </ng-container>
               <ng-template #folderEmptyMessage>
-                <span i18n>This folder doesn't have any flows yet</span>
+                <span i18n class="ap-inline-block ap-pb-6">This folder doesn't have any flows yet</span>
               </ng-template>
             </div>
           </ng-container>
@@ -148,23 +132,16 @@
   </div>
   <app-empty-flows-table (openTemplatesDialog)="actionHandler.openTemplatesDialog(true)"></app-empty-flows-table>
 </ng-container>
-
-
-<ng-container *ngIf="deleteFlowDialogClosed$ | async"></ng-container>
-<ng-container *ngIf="moveFlowDialogClosed$ | async"></ng-container>
 <ng-container *ngFor="let obs$ of flowsUpdateStatusRequest$ | keyvalue">
   <ng-container *ngIf="obs$.value | async"></ng-container>
 </ng-container>
 <ng-container *ngIf="showAllFlows$ | async"></ng-container>
-<ng-container *ngIf="duplicateFlow$ | async"></ng-container>
-<ng-container *ngIf="downloadTemplate$ | async"></ng-container>
-<ng-container *ngIf="renameFlow$ | async"></ng-container>
 
 <ng-template #rewards>
   @if(showRewards$ | async)
   {
   <div (click)="openRewardsDialog()"
-    class="ap-border ap-border-solid ap-border-dividers ap-top-[180px] ap-drop-shadow -ap-right-[85px] ap-transition-all ap-cursor-pointer hover:-ap-right-[14px] ap-py-2 ap-absolute ap-rounded-full ap-overflow-hidden ap-bg-white ap-px-4 ap-text-primary ap-flex ap-items-center ap-gap-2">
+    class="ap-border ap-border-solid ap-border-dividers ap-top-[180px] ap-drop-shadow -ap-right-[85px] ap-transition-all ap-cursor-pointer hover:-ap-right-[14px] ap-py-2 ap-fixed ap-rounded-full ap-overflow-hidden ap-bg-white ap-px-4 ap-text-primary ap-flex ap-items-center ap-gap-2">
     <div class="ap-relative">
       <div class="ap-p-0.5 ap-bg-[red] ap-rounded-full -ap-right-[2.5px] ap-top-0 ap-absolute">
       </div>
@@ -177,4 +154,4 @@
   }
 </ng-template>
 
-@if (deleteFlowFromGit$ |async) {}
+@if(renameFlow$ | async) {}

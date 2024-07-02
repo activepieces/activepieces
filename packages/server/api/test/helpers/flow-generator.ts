@@ -1,5 +1,5 @@
-import { faker } from '@faker-js/faker'
 import { Action, ActionType, apId, FlowStatus, FlowVersion, FlowVersionState, PackageType, PieceType, PopulatedFlow, Trigger, TriggerType } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
 
 
 export const flowGenerator = {

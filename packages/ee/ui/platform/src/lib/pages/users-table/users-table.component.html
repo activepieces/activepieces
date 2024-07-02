@@ -5,12 +5,16 @@
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef i18n>Name</th>
       <td mat-cell *matCellDef="let user">
-        {{ user.firstName + ' ' + user.lastName }}
+        {{ user.name }}
       </td>
     </ng-container>
     <ng-container matColumnDef="email">
       <th mat-header-cell *matHeaderCellDef i18n>Email</th>
       <td mat-cell *matCellDef="let user">{{ user.email }}</td>
+    </ng-container>
+    <ng-container matColumnDef="externalId">
+      <th mat-header-cell *matHeaderCellDef i18n>External Id</th>
+      <td mat-cell *matCellDef="let user">{{ user.externalId }}</td>
     </ng-container>
     <ng-container matColumnDef="platformRole">
       <th mat-header-cell *matHeaderCellDef i18n>Role</th>
@@ -27,7 +31,7 @@
     <ng-container matColumnDef="status">
       <th mat-header-cell *matHeaderCellDef i18n>Status</th>
       <td mat-cell *matCellDef="let user">
-        {{ user.status === UserStatus.INACTIVE ? deactivated : active }}
+        {{ user.status === UserOrInvitedRowStatus.INVITED ? invited: (user.status === UserOrInvitedRowStatus.INACTIVE ? deactivated : active) }}
       </td>
     </ng-container>
 
@@ -36,17 +40,17 @@
       <td mat-cell *matCellDef="let user">
         <div class="ap-w-[7.3125rem] ap-float-right ap-flex ap-gap-2 ap-justify-center">
           <ap-icon-button (buttonClicked)="updateUser(user)" i18n-tooltipText tooltipText="Update User"
-            iconFilename="pencil-underline.svg" [buttonDisabled]="user.id === platformOwnerId" [width]="20" [height]="20"
+            iconFilename="pencil-underline.svg" [buttonDisabled]="user.id === platformOwnerId || user.status === UserOrInvitedRowStatus.INVITED" [width]="20" [height]="20"
             [height]="16"></ap-icon-button>
           <ap-icon-button (buttonClicked)="activateUser(user)" i18n-tooltipText tooltipText="Activate User"
-            iconFilename="reactivate.svg" *ngIf="user.status === UserStatus.INACTIVE" [width]="20" [height]="20"
+            iconFilename="reactivate.svg" *ngIf="user.status === UserOrInvitedRowStatus.INACTIVE" [width]="20" [height]="20"
             [height]="16"></ap-icon-button>
           <ap-icon-button (buttonClicked)="deactivateUser(user)" i18n-tooltipText tooltipText="Deactivate User"
-            iconFilename="suspend.svg" [buttonDisabled]="user.id === platformOwnerId"
-            *ngIf="user.status === UserStatus.ACTIVE" [width]="20" [height]="20" [height]="16"></ap-icon-button>
+            iconFilename="suspend.svg" [buttonDisabled]="user.id === platformOwnerId || user.status === UserOrInvitedRowStatus.INVITED"
+            *ngIf="user.status === UserOrInvitedRowStatus.ACTIVE || user.status === UserOrInvitedRowStatus.INVITED" [width]="20" [height]="20" [height]="16"></ap-icon-button>
 
           <ap-icon-button (buttonClicked)="deleteUser(user)" [buttonDisabled]="disableDeleteButton(user)"
-            i18n-tooltipText iconFilename="trash.svg" tooltipText="Delete User" [height]="16" [width]="20"
+            i18n-tooltipText iconFilename="trash.svg" [tooltipText]="user.status === UserOrInvitedRowStatus.INVITED ? 'Delete invitation': 'Delete user'" [height]="16" [width]="20"
             color="warn"></ap-icon-button>
         </div>
       </td>

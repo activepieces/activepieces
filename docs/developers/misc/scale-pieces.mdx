@@ -13,11 +13,11 @@ To use the CLI, you need to clone the repository and use it with npm.
 
 ## Generate Pieces Using AI
 
-You can use the CLI to generate the following pieces: authentication and actions. The CLI supports OpenAPI specifications in both JSON and YAML formats.
+You can use the CLI to generate a piece with its authentication and actions. The CLI supports OpenAPI specifications in both JSON and YAML formats.
 
 ### From OpenAPI URL
 
-You can obtain an OpenAPI specification from sources like [apis.guru](https://apis.guru/?q=slack) using the following command:
+You can get an OpenAPI specification URL from sources like [apis.guru](https://apis.guru/?q=slack). Here’s how you can use it:
 
 ```bash
 AP_OPENAI_KEY=YOUR_OPENAI_KEY npm run cli pieces scale https://api.apis.guru/v2/specs/slack.com/1.7.0/openapi.json

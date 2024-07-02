@@ -1,17 +1,7 @@
-import { randomBytes as randomBytesCallback } from 'node:crypto'
-import { promisify } from 'node:util'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
-import { pieceTagService } from '../../tags/pieces/piece-tag.service'
-import { userService } from '../../user/user-service'
-import { projectMemberService } from '../project-members/project-member.service'
-import { projectLimitsService } from '../project-plan/project-plan.service'
-import { externalTokenExtractor } from './lib/external-token-extractor'
 import {
     DEFAULT_PLATFORM_LIMIT,
-    ProjectMemberStatus,
 } from '@activepieces/ee-shared'
+import { cryptoUtils } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
     PiecesFilterType,
@@ -20,6 +10,14 @@ import {
     Project,
     User,
 } from '@activepieces/shared'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
+import { pieceTagService } from '../../tags/pieces/piece-tag.service'
+import { userService } from '../../user/user-service'
+import { projectMemberService } from '../project-members/project-member.service'
+import { projectLimitsService } from '../project-plan/project-plan.service'
+import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = {
     async externalToken({
@@ -39,9 +37,8 @@ export const managedAuthnService = {
 
         const projectMember = await projectMemberService.upsert({
             projectId: project.id,
-            email: externalPrincipal.externalEmail,
+            userId: user.id,
             role: externalPrincipal.role,
-            status: ProjectMemberStatus.ACTIVE,
         })
 
 
@@ -103,7 +100,7 @@ const getOrCreateUser = async (
 
     const { password: _, ...newUser } = await userService.create({
         email: externalEmail,
-        password: await generateRandomPassword(),
+        password: await cryptoUtils.generateRandomPassword(),
         firstName: externalFirstName,
         lastName: externalLastName,
         trackEvents: true,
@@ -157,13 +154,6 @@ const getPiecesList = async ({
             return []
         }
     }
-}
-
-const randomBytes = promisify(randomBytesCallback)
-
-const generateRandomPassword = async (): Promise<string> => {
-    const passwordBytes = await randomBytes(32)
-    return passwordBytes.toString('hex')
 }
 
 type AuthenticateParams = {

@@ -1,25 +1,7 @@
-import dayjs from 'dayjs'
-import { Equal, FindOperator, ILike } from 'typeorm'
-import { databaseConnection } from '../../database/database-connection'
-import { decryptObject, encryptObject } from '../../helper/encryption'
-import { engineHelper } from '../../helper/engine-helper'
-import { acquireLock } from '../../helper/lock'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import {
-    getPiecePackage,
-    pieceMetadataService,
-} from '../../pieces/piece-metadata-service'
-import {
-    AppConnectionEntity,
-    AppConnectionSchema,
-} from '../app-connection.entity'
-import { appConnectionsHooks } from './app-connection-hooks'
-import { oauth2Handler } from './oauth2'
-import { oauth2Util } from './oauth2/oauth2-util'
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { encryptUtils, exceptionHandler, logger, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
+    ApEnvironment,
     apId,
     AppConnection,
     AppConnectionId,
@@ -38,6 +20,24 @@ import {
     ValidateConnectionNameRequestBody,
     ValidateConnectionNameResponse,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { engineRunner } from 'server-worker'
+import { Equal, FindOperator, ILike } from 'typeorm'
+import { databaseConnection } from '../../database/database-connection'
+import { generateEngineToken } from '../../helper/engine-helper'
+import { acquireLock } from '../../helper/lock'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import {
+    getPiecePackage,
+    pieceMetadataService,
+} from '../../pieces/piece-metadata-service'
+import {
+    AppConnectionEntity,
+    AppConnectionSchema,
+} from '../app-connection.entity'
+import { oauth2Handler } from './oauth2'
+import { oauth2Util } from './oauth2/oauth2-util'
 
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
@@ -59,10 +59,6 @@ export const appConnectionService = {
         }
     },
     async upsert(params: UpsertParams): Promise<AppConnection> {
-        await appConnectionsHooks
-            .getHooks()
-            .preUpsert({ projectId: params.projectId })
-
         const { projectId, request } = params
 
         const validatedConnectionValue = await validateConnectionValue({
@@ -70,7 +66,7 @@ export const appConnectionService = {
             projectId,
         })
 
-        const encryptedConnectionValue = encryptObject({
+        const encryptedConnectionValue = encryptUtils.encryptObject({
             ...validatedConnectionValue,
             ...request.value,
         })
@@ -288,7 +284,7 @@ const validateConnectionValue = async (
 function decryptConnection(
     encryptedConnection: AppConnectionSchema,
 ): AppConnection {
-    const value = decryptObject<AppConnectionValue>(encryptedConnection.value)
+    const value = encryptUtils.decryptObject<AppConnectionValue>(encryptedConnection.value)
     const connection: AppConnection = {
         ...encryptedConnection,
         value,
@@ -299,6 +295,10 @@ function decryptConnection(
 const engineValidateAuth = async (
     params: EngineValidateAuthParams,
 ): Promise<void> => {
+    const environment = system.getOrThrow(SystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
+        return
+    }
     const { pieceName, auth, projectId } = params
 
     const pieceMetadata = await pieceMetadataService.getOrThrow({
@@ -307,7 +307,10 @@ const engineValidateAuth = async (
         version: undefined,
     })
 
-    const engineResponse = await engineHelper.executeValidateAuth({
+    const engineToken = await generateEngineToken({
+        projectId,
+    })
+    const engineResponse = await engineRunner.executeValidateAuth(engineToken, {
         piece: await getPiecePackage(projectId, {
             pieceName,
             pieceVersion: pieceMetadata.version,
@@ -378,7 +381,7 @@ async function lockAndRefreshConnection({
 
         await repo.update(refreshedAppConnection.id, {
             status: AppConnectionStatus.ACTIVE,
-            value: encryptObject(refreshedAppConnection.value),
+            value: encryptUtils.encryptObject(refreshedAppConnection.value),
         })
         return refreshedAppConnection
     }

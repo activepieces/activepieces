@@ -1,4 +1,10 @@
 import {
+    ListOAuth2AppRequest,
+    OAuthApp,
+    UpsertOAuth2AppRequest,
+} from '@activepieces/ee-shared'
+import { assertNotNullOrUndefined, SeekPage } from '@activepieces/shared'
+import {
     FastifyPluginAsyncTypebox,
     Static,
     Type,
@@ -6,12 +12,6 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { oauthAppService } from './oauth-app.service'
-import {
-    ListOAuth2AppRequest,
-    OAuthApp,
-    UpsertOAuth2AppRequest,
-} from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined, SeekPage } from '@activepieces/shared'
 
 export const oauthAppModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(readOauthAppModule)

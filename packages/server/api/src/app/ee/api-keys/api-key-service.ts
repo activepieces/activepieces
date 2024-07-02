@@ -1,10 +1,8 @@
-import { databaseConnection } from '../../database/database-connection'
-import { hashSHA256 } from '../../helper/crypto'
-import { ApiKeyEntity } from './api-key-entity'
 import {
     ApiKey,
     ApiKeyResponseWithValue,
 } from '@activepieces/ee-shared'
+import { cryptoUtils } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -14,6 +12,8 @@ import {
     secureApId,
     SeekPage,
 } from '@activepieces/shared'
+import { databaseConnection } from '../../database/database-connection'
+import { ApiKeyEntity } from './api-key-entity'
 
 const API_KEY_TOKEN_LENGTH = 64
 const repo = databaseConnection.getRepository<ApiKey>(ApiKeyEntity)
@@ -39,7 +39,7 @@ export const apiKeyService = {
     async getByValueOrThrow(key: string): Promise<ApiKey> {
         assertNotNullOrUndefined(key, 'key')
         return repo.findOneByOrFail({
-            hashedValue: hashSHA256(key),
+            hashedValue: cryptoUtils.hashSHA256(key),
         })
     },
     async list({ platformId }: ListParams): Promise<SeekPage<ApiKey>> {
@@ -78,7 +78,7 @@ export function generateApiKey() {
     const secretKey = `sk-${secretValue}`
     return {
         secret: secretKey,
-        secretHashed: hashSHA256(secretKey),
+        secretHashed: cryptoUtils.hashSHA256(secretKey),
         secretTruncated: secretKey.slice(-4),
     }
 }

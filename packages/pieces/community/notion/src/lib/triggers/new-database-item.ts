@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 import { notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../..';
+import { isNil } from '@activepieces/shared';
 
 export const newDatabaseItem = createTrigger({
   auth: notionAuth,
@@ -123,19 +124,19 @@ const polling: Polling<
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
     const lastItem = lastItemId as string;
-    let lastCreateddDate: string | null;
+    let lastCreatedDate: string | null;
 
     if (lastItem) {
       const lastUpdatedEpochMS = Number(lastItem.split('|')[1]);
-      lastCreateddDate = dayjs(lastUpdatedEpochMS).toISOString();
+      lastCreatedDate = dayjs(lastUpdatedEpochMS).toISOString();
     } else {
-      lastCreateddDate = lastItem;
+      lastCreatedDate = lastItem;
     }
 
     const items = await getResponse(
       auth,
       propsValue.database_id!,
-      lastCreateddDate
+      lastCreatedDate
     );
     return items.map((item: any) => {
       const object = item as { created_time: string; id: string };
@@ -185,7 +186,7 @@ const getResponse = async (
     cursor = response.next_cursor ?? undefined;
 
     results.push(...response.results);
-  } while (hasMore);
+  } while (hasMore && !isNil(startDate));
 
   return results;
 };

@@ -14,7 +14,9 @@ export type FeatureKey =
   | 'SSO'
   | 'AUDIT_LOGS'
   | 'GIT_SYNC'
-  | 'ISSUES';
+  | 'ISSUES'
+  | 'ALERTS'
+  | 'ENTERPRISE_PIECES';
 export const unexpectedErrorMessage = $localize`An unexpected error occurred, please contact support`;
 export const codeGeneratorTooltip = $localize`Write code with assistance from AI`;
 export const httpRequestGeneratorTooltip = $localize`Write http requests with assistance from AI`;
@@ -56,7 +58,7 @@ export const flowActionsUiInfo = {
   },
   iconSizeTailWind: 'ap-w-[20px] ap-h-[20px]',
 };
-
+export const unpermittedTooltip = $localize`Permission needed`;
 export const flowDeleteNoteWithGit = $localize`This will permanently delete the flow, all its data and any background runs.
 You can't undo this action including git branch.`;
 export const flowDeleteNote = $localize`This will permanently delete the flow, all its data and any background runs.`;
@@ -110,10 +112,7 @@ export const showPlatformDashboard$ = (
     showPlatformDemo,
   }).pipe(
     map(
-      ({ platformAdmin, showPlatformDemo }) =>
-        (showPlatformDemo || platformAdmin) &&
-        authenticationService.currentUser.projectRole !==
-          ProjectMemberRole.EXTERNAL_CUSTOMER
+      ({ platformAdmin, showPlatformDemo }) => showPlatformDemo || platformAdmin
     )
   );
 };

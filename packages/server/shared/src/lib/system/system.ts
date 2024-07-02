@@ -2,6 +2,7 @@ import os from 'os'
 import path from 'path'
 import {
     ActivepiecesError,
+    ApEdition,
     CodeSandboxType,
     ErrorCode,
     isNil,
@@ -58,11 +59,14 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.PIECES_SOURCE]: PiecesSource.CLOUD_AND_DB,
     [SystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [SystemProp.SANDBOX_MEMORY_LIMIT]: '524288',
+    /*
+     @deprecated, replease with FLOW_TIMEOUT_SECONDS
+    */
     [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
-    [SystemProp.SIGN_UP_ENABLED]: 'false',
+    [SystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [SystemProp.TELEMETRY_ENABLED]: 'true',
     [SystemProp.TEMPLATES_SOURCE_URL]:
-    'https://cloud.activepieces.com/api/v1/flow-templates',
+        'https://cloud.activepieces.com/api/v1/flow-templates',
     [SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
 }
 
@@ -96,6 +100,15 @@ export const system = {
         return value === 'true'
     },
 
+    getList(prop: SystemProp): string[] {
+        const values = getEnvVar(prop)
+
+        if (isNil(values)) {
+            return []
+        }
+        return values.split(',').map((value) => value.trim())
+    },
+
     getOrThrow<T extends string>(prop: SystemProp): T {
         const value = getEnvVar(prop) as T | undefined
 
@@ -112,6 +125,9 @@ export const system = {
         }
 
         return value
+    },
+    getEdition(): ApEdition {
+        return this.getOrThrow<ApEdition>(SystemProp.EDITION)
     },
 }
 

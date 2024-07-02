@@ -28,7 +28,7 @@ export const constantContact = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.cc.email/v3', // Replace with the actual base URL
       auth: constantContactAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

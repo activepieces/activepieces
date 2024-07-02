@@ -1,0 +1,38 @@
+{
+  "name": "pieces-customer-io",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/customer-io/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/customer-io",
+        "tsConfig": "packages/pieces/community/customer-io/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/customer-io/package.json",
+        "main": "packages/pieces/community/customer-io/src/index.ts",
+        "assets": [
+          "packages/pieces/community/customer-io/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-customer-io {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  },
+  "tags": []
+}

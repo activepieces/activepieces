@@ -1,26 +1,10 @@
-import { EntityManager, Equal, In, IsNull } from 'typeorm'
-import { repoFactory } from '../../core/db/repo-factory'
-import { transaction } from '../../core/db/transaction'
-import { flagService } from '../../flags/flag.service'
-import { flowService } from '../../flows/flow/flow.service'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { getEdition } from '../../helper/secret-helper'
-import { ProjectEntity } from '../../project/project-entity'
-import { projectService } from '../../project/project-service'
-import { projectUsageService } from '../../project/usage/project-usage-service'
-import { userService } from '../../user/user-service'
-import { projectBillingService } from '../billing/project-billing/project-billing.service'
-import { ProjectMemberEntity } from '../project-members/project-member.entity'
-import { projectLimitsService } from '../project-plan/project-plan.service'
-import { platformProjectSideEffects } from './platform-project-side-effects'
 import {
     ApSubscriptionStatus,
     DEFAULT_FREE_PLAN_LIMIT,
     MAXIMUM_ALLOWED_TASKS,
-    ProjectMemberStatus,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
+import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -31,7 +15,6 @@ import {
     isNil,
     PlatformId,
     PlatformRole,
-    Principal,
     PrincipalType,
     Project,
     ProjectId,
@@ -39,22 +22,28 @@ import {
     SeekPage,
     spreadIfDefined,
 } from '@activepieces/shared'
+import { EntityManager, Equal, In, IsNull } from 'typeorm'
+import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
+import { flagService } from '../../flags/flag.service'
+import { flowService } from '../../flows/flow/flow.service'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { ProjectEntity } from '../../project/project-entity'
+import { projectService } from '../../project/project-service'
+import { projectUsageService } from '../../project/usage/project-usage-service'
+import { userService } from '../../user/user-service'
+import { projectBillingService } from '../billing/project-billing/project-billing.service'
+import { ProjectMemberEntity } from '../project-members/project-member.entity'
+import { projectLimitsService } from '../project-plan/project-plan.service'
+import { platformProjectSideEffects } from './platform-project-side-effects'
 
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
 export const platformProjectService = {
-    async getAll({
-        principal,
-        externalId,
-        cursorRequest,
-        limit,
-    }: {
-        principal: Principal
-        externalId?: string
-        cursorRequest: Cursor | null
-        limit: number
-    }): Promise<SeekPage<ProjectWithLimits>> {
+    async getAll(params: GetAllParams): Promise<SeekPage<ProjectWithLimits>> {
+        const { cursorRequest, limit } = params
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: ProjectEntity,
@@ -65,7 +54,7 @@ export const platformProjectService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const filters = await createFilters(principal, externalId)
+        const filters = await createFilters(params)
         const queryBuilder = projectRepo()
             .createQueryBuilder('project')
             .leftJoinAndMapOne(
@@ -95,7 +84,6 @@ export const platformProjectService = {
                 const newTasks = getTasksLimit(isCustomerProject, request.plan.tasks)
                 await projectLimitsService.upsert(
                     {
-                        ...spreadIfDefined('teamMembers', request.plan.teamMembers),
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
                         ...spreadIfDefined('tasks', newTasks),
@@ -143,12 +131,21 @@ export const platformProjectService = {
     },
 }
 
+type GetAllParams = {
+    principalType: PrincipalType
+    principalId: string
+    platformId: string
+    externalId?: string
+    cursorRequest: Cursor | null
+    limit: number
+}
+
 function getTasksLimit(isCustomerPlatform: boolean, limit: number | undefined) {
     return isCustomerPlatform ? limit : Math.min(limit ?? MAXIMUM_ALLOWED_TASKS, MAXIMUM_ALLOWED_TASKS)
 }
 
 async function isSubscribedInStripe(projectId: ProjectId): Promise<boolean> {
-    const isCloud = getEdition() === ApEdition.CLOUD
+    const isCloud = system.getEdition() === ApEdition.CLOUD
     if (!isCloud) {
         return false
     }
@@ -161,22 +158,18 @@ function isCustomerPlatform(platformId: string | undefined): boolean {
     }
     return !flagService.isCloudPlatform(platformId)
 }
-async function createFilters(
-    principal: Principal,
-    externalId?: string | undefined,
-) {
-    const platformId = principal.platform.id
+async function createFilters({ platformId, principalType, principalId, externalId }: GetAllParams) {
     const commonFilter = {
         deleted: IsNull(),
         ...spreadIfDefined('platformId', platformId),
         ...spreadIfDefined('externalId', externalId),
     }
-    switch (principal.type) {
+    switch (principalType) {
         case PrincipalType.SERVICE: {
             return commonFilter
         }
         case PrincipalType.USER: {
-            const user = await userService.getMetaInfo({ id: principal.id })
+            const user = await userService.getMetaInfo({ id: principalId })
             assertNotNullOrUndefined(user, 'User not found')
             if (user.platformRole === PlatformRole.ADMIN) {
                 return commonFilter
@@ -184,7 +177,7 @@ async function createFilters(
             else {
                 const ids = await getIdsOfProjects({
                     platformId,
-                    email: user.email,
+                    userId: user.id,
                 })
                 return [
                     {
@@ -209,11 +202,10 @@ async function createFilters(
     }
 }
 
-async function getIdsOfProjects({ platformId, email }: { platformId: string, email: string }): Promise<string[]> {
+async function getIdsOfProjects({ platformId, userId }: { platformId: string, userId: string }): Promise<string[]> {
     const members = await projectMemberRepo().findBy({
-        email,
+        userId,
         platformId: Equal(platformId),
-        status: Equal(ProjectMemberStatus.ACTIVE),
     })
     return members.map((member) => member.projectId)
 }

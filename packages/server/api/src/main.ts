@@ -1,10 +1,12 @@
+import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { ApEnvironment, isNil } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { flowWorker } from 'server-worker'
 import { setupApp } from './app/app'
 import { databaseConnection } from './app/database/database-connection'
 import { seedDevData } from './app/database/seeds/dev-seeds'
-import { enforceLimits } from './app/ee/helper/license-validator'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
-import { ApEnvironment } from '@activepieces/shared'
+import { licenseKeysService } from './app/ee/license-keys/license-keys-service'
+import { platformService } from './app/platform/platform.service'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
@@ -12,6 +14,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
             host: '0.0.0.0',
             port: 3000,
         })
+        await flowWorker.start()
 
         logger.info(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
@@ -38,7 +41,13 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
                 `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
             )
         }
-        await enforceLimits()
+        const oldestPlatform = await platformService.getOldestPlatform()
+        if (!isNil(oldestPlatform)) {
+            await licenseKeysService.verifyKeyAndApplyLimits({
+                platformId: oldestPlatform.id,
+                license: system.get<string>(SystemProp.LICENSE_KEY),
+            })
+        }
     }
     catch (err) {
         logger.error(err)
@@ -77,7 +86,6 @@ const main = async (): Promise<void> => {
     await databaseConnection.runMigrations()
     await seedDevData()
     const app = await setupApp()
-
     process.on('SIGINT', () => {
         stop(app).catch((e) => logger.error(e, '[Main#stop]'))
     })

@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddScheduleOptions1687384796637 implements MigrationInterface {
     name = 'AddScheduleOptions1687384796637'
