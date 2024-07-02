@@ -1,11 +1,3 @@
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
-import { assertRoleHasPermission } from '../ee/authentication/rbac/rbac-middleware'
-import { projectMembersLimit } from '../ee/project-plan/members-limit'
-import { projectService } from '../project/project-service'
-import { userInvitationsService } from './user-invitation.service'
 import {
     AcceptUserInvitationRequest,
     ActivepiecesError,
@@ -23,6 +15,14 @@ import {
     UserInvitation,
     UserInvitationWithLink,
 } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
+import { assertRoleHasPermission } from '../ee/authentication/rbac/rbac-middleware'
+import { projectMembersLimit } from '../ee/project-plan/members-limit'
+import { projectService } from '../project/project-service'
+import { userInvitationsService } from './user-invitation.service'
 
 
 export const invitationModule: FastifyPluginAsyncTypebox = async (app) => {
