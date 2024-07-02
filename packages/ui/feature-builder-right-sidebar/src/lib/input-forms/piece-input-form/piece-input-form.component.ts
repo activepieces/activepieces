@@ -487,7 +487,7 @@ export class PieceInputFormComponent extends InputFormCore {
     }
   }
 
-  convertHeadersToKeyValuePairs(headersString: string) {
+  convertJsonStringToKeyValuePairs(headersString: string) {
     const headersArray = headersString
       .split(',')
       .map((header) => header.trim());
@@ -502,10 +502,14 @@ export class PieceInputFormComponent extends InputFormCore {
   }
 
   httpRequestGenerated(request: Record<string, any>): void {
-    const headers = this.convertHeadersToKeyValuePairs(request['headers']);
+    // this.form.reset();
+
+    const headers = this.convertJsonStringToKeyValuePairs(request['headers']);
+
     this.form.patchValue({
       ...request,
       headers,
     });
+    this.form.setValue({ body: '123' });
   }
 }
