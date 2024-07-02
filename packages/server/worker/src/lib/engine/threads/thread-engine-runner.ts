@@ -14,7 +14,8 @@ import { EngineWorker } from './worker'
 const memoryLimit = Math.floor((Number(system.getOrThrow(SystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
 const sandboxPath = path.resolve('cache')
 const enginePath = path.join(sandboxPath, 'main.js')
-const workerConcurrency = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
+// TODO seperate this to a config file from flow worker concurrency as execute step is different operation
+const workerConcurrency = Math.max(5, system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10)
 let engineWorkers: EngineWorker
 
 export const threadEngineRunner: EngineRunner = {
