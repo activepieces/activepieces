@@ -3,8 +3,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 export const countUniques = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'countUniques',
-  displayName: 'Count Uniques',
-  description: 'Counts the number of unique values of a given list of fields',
+  displayName: 'count uniques',
+  description: 'counts the number of unique values of multiple fields',
   props: {
     values: Property.Array({
       displayName: "Values",
@@ -15,6 +15,7 @@ export const countUniques = createAction({
   async run({ propsValue }) {
     const values = propsValue.values
     return {
+      values: values,
       numUniques: numUniques(values)
     }
   },
