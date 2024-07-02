@@ -13,9 +13,11 @@ export const redisConsumer: ConsumerManager = {
     async poll(jobType) {
         let lock
         try {
-            lock =  await memoryLock.acquire(`poll-${jobType}`, 5000)
+            lock = await memoryLock.acquire(`poll-${jobType}`, 5000)
             const worker = consumers[jobType]
             assertNotNullOrUndefined(worker, 'Queue not found')
+            // The worker.getNextJob() method holds the connection until a job is available, but it can only be called once at a time.
+            // To handle multiple workers, we are storing them in memory while waiting for a job to become available.
             const job = await worker.getNextJob(serverId)
             if (isNil(job)) {
                 return null
@@ -65,7 +67,11 @@ export const redisConsumer: ConsumerManager = {
             })
         }
         await Promise.all(Object.values(consumers).map((consumer) => consumer.waitUntilReady()))
+<<<<<<< HEAD
  
+=======
+
+>>>>>>> 035885d8c02b6ac29ebe3b4747d658cd21234fbd
     },
     async close(): Promise<void> {
         if (WORKER_CONCURRENCY === 0) {
@@ -79,10 +85,10 @@ export const redisConsumer: ConsumerManager = {
 function getLockDurationInMs(queueName: QueueName) {
     switch (queueName) {
         case QueueName.WEBHOOK:
-            return  dayjs.duration(triggerTimeoutSandbox, 'seconds').add(5, 'seconds').asMilliseconds()
+            return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(5, 'seconds').asMilliseconds()
         case QueueName.ONE_TIME:
-            return  dayjs.duration(flowTimeoutSandbox, 'seconds').add(5, 'seconds').asMilliseconds()
+            return dayjs.duration(flowTimeoutSandbox, 'seconds').add(5, 'seconds').asMilliseconds()
         case QueueName.SCHEDULED:
-            return  dayjs.duration(triggerTimeoutSandbox, 'seconds').add(5, 'seconds').asMilliseconds()
+            return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(5, 'seconds').asMilliseconds()
     }
 }
