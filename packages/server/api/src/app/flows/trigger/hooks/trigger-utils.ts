@@ -1,4 +1,3 @@
-import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { TriggerBase } from '@activepieces/pieces-framework'
 import {
     ActivepiecesError,
@@ -7,6 +6,7 @@ import {
     PieceTrigger,
     ProjectId,
 } from '@activepieces/shared'
+import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 
 
 export const triggerUtils = {

@@ -224,6 +224,7 @@ export class FlowsEffects {
       concatLatestFrom(() => [
         this.store.select(BuilderSelectors.selectCurrentStep),
         this.store.select(BuilderSelectors.selectCurrentFlowRun),
+        this.store.select(BuilderSelectors.selectReadOnly),
       ]),
       tap(() => {
         this.builderAutocompleteService.currentAutocompleteInputId$.next(null);
@@ -231,17 +232,20 @@ export class FlowsEffects {
           null
         );
       }),
-      switchMap(([{ stepName }, step, run]) => {
+      switchMap(([{ stepName }, step, run, isReadOnly]) => {
         if (step) {
           switch (step.type) {
             case TriggerType.EMPTY:
-              return of(
-                canvasActions.setRightSidebar({
-                  sidebarType: RightSideBarType.TRIGGER_TYPE,
-                  props: NO_PROPS,
-                  deselectCurrentStep: false,
-                })
-              );
+              if (!isReadOnly) {
+                return of(
+                  canvasActions.setRightSidebar({
+                    sidebarType: RightSideBarType.TRIGGER_TYPE,
+                    props: NO_PROPS,
+                    deselectCurrentStep: false,
+                  })
+                );
+              }
+              return EMPTY;
             case ActionType.BRANCH:
             case ActionType.CODE:
             case ActionType.LOOP_ON_ITEMS:

@@ -1,6 +1,6 @@
+import { UserInvitation } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart } from '../database/database-common'
-import { UserInvitation } from '@activepieces/shared'
 
 export const UserInvitationEntity = new EntitySchema<UserInvitation>({
     name: 'user_invitation',

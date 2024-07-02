@@ -1,3 +1,4 @@
+import { FilteredPieceBehavior, LocalesEnum, Platform, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -6,7 +7,6 @@ import {
     isPostgres,
     JSONB_COLUMN_TYPE,
 } from '../database/database-common'
-import { FilteredPieceBehavior, LocalesEnum, Platform, User } from '@activepieces/shared'
 
 type PlatformSchema = Platform & {
     owner: User

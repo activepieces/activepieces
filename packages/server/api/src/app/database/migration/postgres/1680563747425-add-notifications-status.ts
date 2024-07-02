@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class addNotificationsStatus1680563747425 implements MigrationInterface {
     name = 'addNotificationsStatus1680563747425'

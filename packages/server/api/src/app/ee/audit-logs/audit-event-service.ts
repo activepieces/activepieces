@@ -1,15 +1,3 @@
-import { FastifyRequest } from 'fastify'
-import { databaseConnection } from '../../database/database-connection'
-import {
-    ApplicationEventHooks,
-    CreateAuditEventParam,
-} from '../../helper/application-events'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
-import { userService } from '../../user/user-service'
-import { AuditEventEntity } from './audit-event-entity'
 import {
     ApplicationEvent,
     ApplicationEventName,
@@ -24,6 +12,18 @@ import {
     PrincipalType,
     SeekPage,
 } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
+import { databaseConnection } from '../../database/database-connection'
+import {
+    ApplicationEventHooks,
+    CreateAuditEventParam,
+} from '../../helper/application-events'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
+import { AuditEventEntity } from './audit-event-entity'
 
 const auditLogRepo = databaseConnection.getRepository(AuditEventEntity)
 

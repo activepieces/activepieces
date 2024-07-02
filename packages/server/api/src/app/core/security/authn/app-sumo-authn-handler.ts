@@ -1,6 +1,6 @@
+import { Principal, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { BaseSecurityHandler } from '../security-handler'
-import { Principal, PrincipalType } from '@activepieces/shared'
 
 const ROUTE_PREFIX = '/v1/appsumo'
 

@@ -1,12 +1,12 @@
+import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { ApEnvironment, isNil } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { flowWorker } from 'server-worker'
 import { setupApp } from './app/app'
 import { databaseConnection } from './app/database/database-connection'
 import { seedDevData } from './app/database/seeds/dev-seeds'
 import { licenseKeysService } from './app/ee/license-keys/license-keys-service'
 import { platformService } from './app/platform/platform.service'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
-import { ApEnvironment, isNil } from '@activepieces/shared'
-import { flowWorker } from 'server-worker'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {

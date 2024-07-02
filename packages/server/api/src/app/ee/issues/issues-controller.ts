@@ -1,7 +1,7 @@
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { issuesService } from './issues-service'
 import { ListIssuesParams, UpdateIssueRequestBody } from '@activepieces/ee-shared'
 import { ApId, PrincipalType } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { issuesService } from './issues-service'
 
 export const issuesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListIssuesRequest, async (req) => {

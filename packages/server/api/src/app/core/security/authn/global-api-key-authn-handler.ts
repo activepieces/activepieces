@@ -1,5 +1,3 @@
-import { FastifyRequest } from 'fastify'
-import { BaseSecurityHandler } from '../security-handler'
 import { system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -8,6 +6,8 @@ import {
     isNil,
     PrincipalType,
 } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
+import { BaseSecurityHandler } from '../security-handler'
 
 export class GlobalApiKeyAuthnHandler extends BaseSecurityHandler {
     private static readonly HEADER_NAME = 'api-key'

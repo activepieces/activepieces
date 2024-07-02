@@ -1,7 +1,7 @@
 import { mkdir } from 'fs/promises'
 import path from 'path'
 import { acquireMemoryLock, fileExists, logger, networkUtls, packageManager, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
-import { Action, ActionType, assertNotNullOrUndefined, CodeSandboxType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, isNil, PiecePackage, TriggerHookType } from '@activepieces/shared'
+import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, isNil, PiecePackage, TriggerHookType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { pieceManager } from '../../piece-manager'
 import { codeBuilder } from '../../utils/code-builder'
@@ -16,16 +16,6 @@ const sandboxPath = path.resolve('cache')
 const enginePath = path.join(sandboxPath, 'main.js')
 const workerConcurrency = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
 let engineWorkers: EngineWorker
-
-// This a workound to make isolated-vm work in the worker thread check https://github.com/laverdet/isolated-vm/pull/402
-/* eslint-disable */
-const codeSandboxType = system.getOrThrow(SystemProp.CODE_SANDBOX_TYPE);
-let ivm: any;
-if (codeSandboxType === CodeSandboxType.V8_ISOLATE) {
-    ivm = import('isolated-vm');
-    const _strongReference = ivm.Isolate
-}
-/* eslint-enable */
 
 export const threadEngineRunner: EngineRunner = {
     async executeFlow(engineToken, operation) {
@@ -163,6 +153,7 @@ async function prepareFlowSandbox(engineToken: string, flowVersion: FlowVersion)
 }
 
 async function execute<Result extends EngineHelperResult>(operation: EngineOperation, operationType: EngineOperationType): Promise<EngineHelperResponse<Result>> {
+
     const startTime = Date.now()
     if (isNil(engineWorkers)) {
         engineWorkers = new EngineWorker(workerConcurrency, enginePath, {
@@ -185,30 +176,31 @@ async function execute<Result extends EngineHelperResult>(operation: EngineOpera
 }
 
 async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[]): Promise<void> {
-    await mkdir(sandboxPath, { recursive: true })
-    const buildJobs = codeSteps.map(async (archive) => {
-        const indexPath = path.join(codeBuilder.buildPath({
-            buildPath: sandboxPath,
-            sourceCodeId: archive.name,
-            flowVersionId: archive.flowVersionId,
-        }), 'index.js')
-        const fExists = await fileExists(indexPath)
-        if (fExists && archive.flowVersionState === FlowVersionState.LOCKED) {
-            return new Promise<void>((resolve) => resolve())
-        }
-        return prepareCode(archive, sandboxPath)
-    })
-    await Promise.all(buildJobs)
-
-    logger.info({
-        sandboxPath,
-    }, 'Running flow in sandbox')
-    await packageManager.init({
-        path: sandboxPath,
-    })
-
-    const pieceLock = await acquireMemoryLock(sandboxPath)
+    const memoryLock = await acquireMemoryLock(sandboxPath)
     try {
+
+        await mkdir(sandboxPath, { recursive: true })
+        const buildJobs = codeSteps.map(async (archive) => {
+            const indexPath = path.join(codeBuilder.buildPath({
+                buildPath: sandboxPath,
+                sourceCodeId: archive.name,
+                flowVersionId: archive.flowVersionId,
+            }), 'index.js')
+            const fExists = await fileExists(indexPath)
+            if (fExists && archive.flowVersionState === FlowVersionState.LOCKED) {
+                return new Promise<void>((resolve) => resolve())
+            }
+            return prepareCode(archive, sandboxPath)
+        })
+        await Promise.all(buildJobs)
+
+        logger.info({
+            sandboxPath,
+        }, 'Running flow in sandbox')
+        await packageManager.init({
+            path: sandboxPath,
+        })
+
         const installationTimestamp = dayjs().valueOf()
         await pieceManager.install({
             projectPath: sandboxPath,
@@ -219,32 +211,28 @@ async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[])
             pieces,
             sandboxPath,
         }, 'Installing pieces in sandbox')
-    }
-    finally {
-        await pieceLock.release()
-    }
-    logger.info({
-        path: sandboxPath,
-    }, 'Installing engine in sandbox')
-    await engineInstaller.install({
-        path: sandboxPath,
-    })
 
-}
-
-async function prepareCode(artifact: CodeArtifact, sandboxPath: string): Promise<void> {
-    const memoryLock = await acquireMemoryLock(sandboxPath)
-    try {
-        await codeBuilder.processCodeStep({
-            sourceCodeId: artifact.name,
-            sourceCode: artifact.sourceCode,
-            flowVersionId: artifact.flowVersionId,
-            buildPath: sandboxPath,
+        logger.info({
+            path: sandboxPath,
+        }, 'Installing engine in sandbox')
+        await engineInstaller.install({
+            path: sandboxPath,
         })
     }
     finally {
         await memoryLock.release()
     }
+
+}
+
+async function prepareCode(artifact: CodeArtifact, sandboxPath: string): Promise<void> {
+    await codeBuilder.processCodeStep({
+        sourceCodeId: artifact.name,
+        sourceCode: artifact.sourceCode,
+        flowVersionId: artifact.flowVersionId,
+        buildPath: sandboxPath,
+    })
+
 }
 
 
