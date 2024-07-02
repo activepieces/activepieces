@@ -67,11 +67,7 @@ export const redisConsumer: ConsumerManager = {
             })
         }
         await Promise.all(Object.values(consumers).map((consumer) => consumer.waitUntilReady()))
-<<<<<<< HEAD
- 
-=======
 
->>>>>>> 035885d8c02b6ac29ebe3b4747d658cd21234fbd
     },
     async close(): Promise<void> {
         if (WORKER_CONCURRENCY === 0) {
