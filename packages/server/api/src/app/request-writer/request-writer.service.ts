@@ -67,7 +67,9 @@ export const requestWriterService = {
                 type: 'function',
                 function: {
                     name: 'http_request',
-                    description: 'Generates a JSON object from API documentation based on user prompt.',
+                    description: `Generates a JSON object from API documentation based on user prompt.
+                    Make sure that the queryParams, body and headers are all valid JSON strings, if not needed, leave them empty.
+                    `,
                     parameters: {
                         type: 'object',
                         properties: {
