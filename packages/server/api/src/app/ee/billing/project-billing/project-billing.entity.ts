@@ -1,10 +1,10 @@
+import { ProjectBilling } from '@activepieces/ee-shared'
+import { Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
 } from '../../../database/database-common'
-import { ProjectBilling } from '@activepieces/ee-shared'
-import { Project } from '@activepieces/shared'
 
 type ProjectBillingSchema = ProjectBilling & {
     project: Project

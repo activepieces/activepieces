@@ -11,7 +11,8 @@ import {
   NO_PROPS,
 } from '@activepieces/ui/feature-builder-store';
 import { Router } from '@angular/router';
-import { PopulatedFlow } from '@activepieces/shared';
+import { Permission, PopulatedFlow } from '@activepieces/shared';
+import { doesUserHavePermission } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-publish-or-edit-flow-button',
@@ -20,6 +21,9 @@ import { PopulatedFlow } from '@activepieces/shared';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PublishButtonComponent implements OnInit {
+  readonly userHasPermissionToPublish = doesUserHavePermission(
+    Permission.UPDATE_FLOW_STATUS
+  );
   flowState$: Observable<{
     isSaving: boolean;
     isPublishing: boolean;
@@ -36,6 +40,9 @@ export class PublishButtonComponent implements OnInit {
   viewMode$: Observable<ViewModeEnum>;
   ViewModeEnum = ViewModeEnum;
   flow$: Observable<PopulatedFlow>;
+  viewLatestVersionText = this.userHasPermissionToPublish
+    ? $localize`Edit Flow`
+    : $localize`View Draft`;
   constructor(private store: Store, private router: Router) {
     this.viewMode$ = this.store.select(BuilderSelectors.selectViewMode);
     this.flow$ = this.store.select(BuilderSelectors.selectCurrentFlow);

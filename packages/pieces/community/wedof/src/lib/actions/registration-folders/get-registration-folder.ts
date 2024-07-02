@@ -8,7 +8,7 @@ export const getRegistrationFolder = createAction({
   name: 'getRegistrationFolder',
   displayName: 'Récupérer un dossier de formation',
   description:
-    ' Récupérer un dossier de formation à partir de son n° de dossier',
+    'Récupérer un dossier de formation à partir de son n° de dossier',
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',

@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822
 implements MigrationInterface {

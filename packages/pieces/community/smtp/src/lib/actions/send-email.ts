@@ -11,8 +11,12 @@ export const sendEmail = createAction({
   description: 'Send an email using a custom SMTP server.',
   props: {
     from: Property.ShortText({
-      displayName: 'From',
+      displayName: 'From Email',
       required: true,
+    }),
+    senderName: Property.ShortText({
+      displayName: "Sender Name",
+      required: false,
     }),
     to: Property.Array({
       displayName: 'To',
@@ -94,7 +98,7 @@ export const sendEmail = createAction({
     }
 
     const info = await transporter.sendMail({
-      from: propsValue.from,
+      from: getFrom(propsValue.senderName, propsValue.from),
       to: propsValue.to.join(','),
       cc: propsValue.cc?.join(','),
       inReplyTo: propsValue.replyTo,
@@ -109,3 +113,10 @@ export const sendEmail = createAction({
     return info;
   },
 });
+
+function getFrom(senderName: string|undefined, from: string) {
+  if (senderName) {
+    return `"${senderName}" <${from}>`
+  } 
+  return from;
+}

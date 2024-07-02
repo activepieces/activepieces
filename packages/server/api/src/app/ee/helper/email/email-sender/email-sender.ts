@@ -1,7 +1,7 @@
-import { logEmailSender } from './log-email-sender'
-import { smtpEmailSender } from './smtp-email-sender'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
+import { logEmailSender } from './log-email-sender'
+import { smtpEmailSender } from './smtp-email-sender'
 
 export type EmailSender = {
     send: (args: SendArgs) => Promise<void>

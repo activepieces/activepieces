@@ -1,10 +1,10 @@
+import { Flow, Project, StepFile } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
     BLOB_COLUMN_TYPE,
 } from '../../database/database-common'
-import { Flow, Project, StepFile } from '@activepieces/shared'
 
 type StepFileSchema = StepFile & {
     project: Project

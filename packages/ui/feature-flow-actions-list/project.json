@@ -1,0 +1,29 @@
+{
+  "name": "ui-feature-flow-actions-list",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ui/feature-flow-actions-list/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "options": {
+        "project": "packages/ui/feature-flow-actions-list/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/ui/feature-flow-actions-list/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/ui/feature-flow-actions-list/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

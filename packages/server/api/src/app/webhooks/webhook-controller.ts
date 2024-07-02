@@ -1,19 +1,9 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { tasksLimit } from '../ee/project-plan/tasks-limit'
-import { flowRepo } from '../flows/flow/flow.repo'
-import { flowService } from '../flows/flow/flow.service'
-import { getEdition } from '../helper/secret-helper'
-import { flowQueue } from '../workers/flow-worker/flow-queue'
-import { JobType } from '../workers/flow-worker/queues/queue'
-import { EngineHttpResponse, webhookResponseWatcher } from '../workers/flow-worker/webhook-response-watcher'
-import { logger } from '@activepieces/server-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
-    ApEdition,
     apId,
+    EngineHttpResponse,
     ErrorCode,
     EventPayload,
     Flow,
@@ -22,7 +12,14 @@ import {
     isNil,
     WebhookUrlParams,
 } from '@activepieces/shared'
-import { LATEST_JOB_DATA_SCHEMA_VERSION } from 'server-worker'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { tasksLimit } from '../ee/project-plan/tasks-limit'
+import { webhookResponseWatcher } from '../flow-worker/helper/webhook-response-watcher'
+import { flowQueue } from '../flow-worker/queue'
+import { flowRepo } from '../flows/flow/flow.repo'
+import { flowService } from '../flows/flow/flow.service'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -90,7 +87,7 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
         data: {
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             requestId,
-            synchronousHandlerId: async ? null : webhookResponseWatcher.getHandlerId(),
+            synchronousHandlerId: async ? null : webhookResponseWatcher.getServerId(),
             payload,
             flowId: flow.id,
             simulate,
@@ -162,33 +159,21 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
         })
     }
 
-    // TODO FIX AND REFACTOR
-    // BEGIN EE
-    const edition = getEdition()
-    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-        try {
-            await tasksLimit.limit({
-                projectId: flow.projectId,
-            })
-        }
-        catch (e) {
-            if (
-                e instanceof ActivepiecesError &&
-                e.error.code === ErrorCode.QUOTA_EXCEEDED
-            ) {
-                logger.info(
-                    `[webhookController] removing flow.id=${flow.id} run out of flow quota`,
-                )
-                await flowService.updateStatus({
-                    id: flow.id,
-                    projectId: flow.projectId,
-                    newStatus: FlowStatus.DISABLED,
-                })
-            }
-            throw e
-        }
+    const exceededLimit = await tasksLimit.exceededLimit({
+        projectId: flow.projectId,
+    })
+    if (exceededLimit) {
+        logger.info({
+            message: 'disable webhook out of flow quota',
+            projectId: flow.projectId,
+            flowId: flow.id,
+        })
+        await flowService.updateStatus({
+            id: flow.id,
+            projectId: flow.projectId,
+            newStatus: FlowStatus.DISABLED,
+        })
     }
-    // END EE
 
     return flow
 }

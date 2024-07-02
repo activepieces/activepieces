@@ -1,13 +1,13 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { storeEntryService } from './store-entry.service'
 import {
     DeleteStoreEntryRequest,
     GetStoreEntryRequest,
     PrincipalType,
     PutStoreEntryRequest,
 } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { storeEntryService } from './store-entry.service'
 
 export const storeEntryController: FastifyPluginAsyncTypebox = async (
     fastify,
@@ -71,7 +71,7 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (
             }>,
             reply,
         ) => {
-            if (request.principal.type !== PrincipalType.WORKER) {
+            if (request.principal.type !== PrincipalType.ENGINE) {
                 return reply.status(StatusCodes.FORBIDDEN)
             }
             else {

@@ -1,10 +1,10 @@
-import { databaseConnection } from '../../database/database-connection'
-import { ProjectPlanEntity } from './project-plan.entity'
 import { DEFAULT_FREE_PLAN_LIMIT, FlowPlanLimits } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     apId, ErrorCode, isNil, ProjectPlan,
 } from '@activepieces/shared'
+import { databaseConnection } from '../../database/database-connection'
+import { ProjectPlanEntity } from './project-plan.entity'
 
 const projectPlanRepo =
     databaseConnection.getRepository<ProjectPlan>(ProjectPlanEntity)

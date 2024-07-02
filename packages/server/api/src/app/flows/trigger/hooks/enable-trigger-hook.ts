@@ -1,21 +1,13 @@
-import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
-import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
-import {
-    engineHelper,
-    EngineHelperResponse,
-    EngineHelperTriggerResult,
-} from '../../../helper/engine-helper'
-import { getEdition } from '../../../helper/secret-helper'
-import { webhookService } from '../../../webhooks/webhook-service'
-import { flowQueue } from '../../../workers/flow-worker/flow-queue'
-import { JobType } from '../../../workers/flow-worker/queues/queue'
-import { triggerUtils } from './trigger-utils'
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import {
     TriggerStrategy,
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
-import { system, SystemProp } from '@activepieces/server-shared'
+import {
+    JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType,
+    system,
+    SystemProp,
+} from '@activepieces/server-shared'
 import {
     ApEdition,
     EngineResponseStatus,
@@ -28,23 +20,31 @@ import {
     TriggerType,
 } from '@activepieces/shared'
 import {
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    RepeatableJobType,
+    EngineHelperResponse,
+    EngineHelperTriggerResult,
+    engineRunner,
+    webhookUtils,
 } from 'server-worker'
+import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
+import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
+import { flowQueue } from '../../../flow-worker/queue'
+import {
+    generateEngineToken,
+} from '../../../helper/engine-helper'
+import { triggerUtils } from './trigger-utils'
 
 const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
     system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5,
 )
 
 function constructEveryXMinuteCron(minute: number): string {
-    const edition = getEdition()
+    const edition = system.getEdition()
     switch (edition) {
         case ApEdition.CLOUD:
             return `*/${minute} * * * *`
         case ApEdition.COMMUNITY:
         case ApEdition.ENTERPRISE:
-            return `*/${
-                system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5
+            return `*/${system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5
             } * * * *`
     }
 }
@@ -64,12 +64,16 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         projectId,
     })
 
-    const webhookUrl = await webhookService.getWebhookUrl({
+    const webhookUrl = await webhookUtils.getWebhookUrl({
         flowId: flowVersion.flowId,
         simulate,
     })
 
-    const engineHelperResponse = await engineHelper.executeTrigger({
+    const engineToken = await generateEngineToken({
+        projectId,
+    })
+
+    const engineHelperResponse = await engineRunner.executeTrigger(engineToken, {
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion,
         webhookUrl,
@@ -127,7 +131,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
                     timezone: 'UTC',
                 }
                 // BEGIN EE
-                const edition = getEdition()
+                const edition = system.getEdition()
                 if (edition === ApEdition.CLOUD) {
                     const plan = await projectLimitsService.getOrCreateDefaultPlan(projectId, DEFAULT_FREE_PLAN_LIMIT)
                     engineHelperResponse.result.scheduleOptions.cronExpression = constructEveryXMinuteCron(plan.minimumPollingInterval)

@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669 implements MigrationInterface {
     name = 'CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669'

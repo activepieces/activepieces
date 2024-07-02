@@ -1,6 +1,6 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
 import { apId } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
     name = 'AddAlertsEntitySqlite1717239613259'

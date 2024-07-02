@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class AddSlugToGitRepo1709151540095 implements MigrationInterface {
     name = 'AddSlugToGitRepo1709151540095'

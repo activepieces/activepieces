@@ -1,18 +1,3 @@
-import { In } from 'typeorm'
-import {
-    APArrayContains,
-    databaseConnection,
-} from '../../database/database-connection'
-import { fileService } from '../../file/file.service'
-import { flowVersionService } from '../../flows/flow-version/flow-version.service'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { Order } from '../../helper/pagination/paginator'
-import { telemetry } from '../../helper/telemetry.utils'
-import { webhookResponseWatcher } from '../../workers/flow-worker/webhook-response-watcher'
-import { flowService } from '../flow/flow.service'
-import { FlowRunEntity } from './flow-run-entity'
-import { flowRunSideEffects } from './flow-run-side-effects'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -36,13 +21,27 @@ import {
     PauseType,
     ProgressUpdateType,
     ProjectId,
-    ResumePayload,
     RunEnvironment,
     SeekPage,
     spreadIfDefined,
     TelemetryEventName,
 } from '@activepieces/shared'
-import { logSerializer } from 'server-worker'
+import { In } from 'typeorm'
+import {
+    APArrayContains,
+    databaseConnection,
+} from '../../database/database-connection'
+import { fileService } from '../../file/file.service'
+import { webhookResponseWatcher } from '../../flow-worker/helper/webhook-response-watcher'
+import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { Order } from '../../helper/pagination/paginator'
+import { telemetry } from '../../helper/telemetry.utils'
+import { flowService } from '../flow/flow.service'
+import { FlowRunEntity } from './flow-run-entity'
+import { flowRunSideEffects } from './flow-run-side-effects'
+import { logSerializer } from './log-serializer'
 
 export const flowRunRepo =
     databaseConnection.getRepository<FlowRun>(FlowRunEntity)
@@ -71,20 +70,24 @@ const getFlowRunOrCreate = async (
     }
 }
 
-async function updateFlowRunToLatestFlowVersionId(
+async function updateFlowRunToLatestFlowVersionIdAndReturnPayload(
     flowRunId: FlowRunId,
-): Promise<void> {
-    const flowRun = await flowRunRepo.findOneByOrFail({ id: flowRunId })
+): Promise<unknown> {
+    const flowRun = await flowRunService.getOnePopulatedOrThrow({
+        id: flowRunId,
+        projectId: undefined,
+    })
     const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(
         flowRun.flowId,
     )
     await flowRunRepo.update(flowRunId, {
         flowVersionId: flowVersion.id,
     })
+    return flowRun.steps ? flowRun.steps[flowVersion.trigger.name]?.output : undefined
 }
 
 function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): string {
-    const handlerId = webhookResponseWatcher.getHandlerId()
+    const handlerId = webhookResponseWatcher.getServerId()
     if (isNil(pauseMetadata)) {
         return handlerId
     }
@@ -155,8 +158,9 @@ export const flowRunService = {
                 })
                 break
             case FlowRetryStrategy.ON_LATEST_VERSION: {
-                await updateFlowRunToLatestFlowVersionId(flowRunId)
+                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(flowRunId)
                 await flowRunService.addToQueue({
+                    payload,
                     flowRunId,
                     executionType: ExecutionType.BEGIN,
                     progressUpdateType: ProgressUpdateType.NONE,
@@ -167,7 +171,7 @@ export const flowRunService = {
     },
     async addToQueue({
         flowRunId,
-        resumePayload,
+        payload,
         requestId,
         progressUpdateType,
         executionType,
@@ -175,7 +179,7 @@ export const flowRunService = {
         flowRunId: FlowRunId
         requestId?: string
         progressUpdateType: ProgressUpdateType
-        resumePayload?: ResumePayload
+        payload?: unknown
         executionType: ExecutionType
     }): Promise<void> {
         logger.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
@@ -196,11 +200,12 @@ export const flowRunService = {
         const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
         if (matchRequestId) {
             await flowRunService.start({
-                payload: resumePayload,
+                payload,
                 flowRunId: flowRunToResume.id,
                 projectId: flowRunToResume.projectId,
                 flowVersionId: flowRunToResume.flowVersionId,
                 synchronousHandlerId: returnHandlerId(pauseMetadata, requestId),
+                httpRequestId: requestId,
                 progressUpdateType,
                 executionType,
                 environment: RunEnvironment.PRODUCTION,
@@ -249,6 +254,7 @@ export const flowRunService = {
         executionType,
         synchronousHandlerId,
         progressUpdateType,
+        httpRequestId,
     }: StartParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
@@ -285,6 +291,7 @@ export const flowRunService = {
 
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,
+            httpRequestId,
             payload,
             synchronousHandlerId,
             executionType,
@@ -306,7 +313,8 @@ export const flowRunService = {
             payload,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: webhookResponseWatcher.getHandlerId(),
+            synchronousHandlerId: webhookResponseWatcher.getServerId(),
+            httpRequestId: undefined,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
         })
     },
@@ -442,7 +450,8 @@ type StartParams = {
     flowRunId?: FlowRunId
     environment: RunEnvironment
     payload: unknown
-    synchronousHandlerId?: string
+    synchronousHandlerId: string | undefined
+    httpRequestId: string | undefined
     progressUpdateType: ProgressUpdateType
     executionType: ExecutionType
 }

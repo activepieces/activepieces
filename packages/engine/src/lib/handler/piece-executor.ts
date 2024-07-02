@@ -72,17 +72,17 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             store: createContextStore({
                 prefix: '',
                 flowId: constants.flowId,
-                workerToken: constants.workerToken,
+                engineToken: constants.engineToken,
             }),
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             files: createFilesService({
-                workerToken: constants.workerToken,
+                engineToken: constants.engineToken,
                 stepName: action.name,
                 flowId: constants.flowId,
                 type: constants.filesServiceType,
             }),
             server: {
-                token: constants.workerToken,
+                token: constants.engineToken,
                 apiUrl: constants.apiUrl,
                 publicUrl: constants.serverUrl,
             },
@@ -90,7 +90,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             tags: createTagsManager(hookResponse),
             connections: createConnectionManager({
                 projectId: constants.projectId,
-                workerToken: constants.workerToken,
+                engineToken: constants.engineToken,
                 hookResponse,
             }),
             serverUrl: constants.serverUrl,
@@ -155,11 +155,11 @@ const createTagsManager = (hookResponse: HookResponse): TagsManager => {
     }
 }
 
-const createConnectionManager = ({ workerToken, projectId, hookResponse }: { projectId: string, workerToken: string, hookResponse: HookResponse }): ConnectionsManager => {
+const createConnectionManager = ({ engineToken, projectId, hookResponse }: { projectId: string, engineToken: string, hookResponse: HookResponse }): ConnectionsManager => {
     return {
         get: async (key: string) => {
             try {
-                const connection = await createConnectionService({ projectId, workerToken }).obtain(key)
+                const connection = await createConnectionService({ projectId, engineToken }).obtain(key)
                 hookResponse.tags.push(`connection:${key}`)
                 return connection
             }
