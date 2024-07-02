@@ -1,4 +1,4 @@
-import { E_ALREADY_LOCKED, Mutex, MutexInterface, withTimeout } from 'async-mutex'
+import { E_TIMEOUT, Mutex, MutexInterface, withTimeout } from 'async-mutex'
 
 const memoryLocks = new Map<string, MutexLockWrapper>()
 class MutexLockWrapper {
@@ -35,7 +35,7 @@ export const memoryLock = {
         return lock
     },
     isTimeoutError: (e: unknown): boolean => {
-        return e === E_ALREADY_LOCKED
+        return e === E_TIMEOUT
     },
 }
 
