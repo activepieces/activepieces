@@ -1,7 +1,7 @@
+import { NotificationStatus } from '@activepieces/shared'
 import { getRedisConnection } from '../../database/redis-connection'
 import { emailService } from '../helper/email/email-service'
 import { platformDomainHelper } from '../helper/platform-domain-helper'
-import { NotificationStatus } from '@activepieces/shared'
 
 const HOUR_IN_SECONDS = 3600
 const DAY_IN_SECONDS = 86400
@@ -16,7 +16,9 @@ export const alertsHandler = {
 
 async function sendAlertOnNewIssue(params: IssueParams): Promise<void> {
     const { platformId, issueCount } = params
-    if (issueCount > 1) {
+
+    const isOldIssue = issueCount > 1
+    if (isOldIssue) {
         return
     }
 

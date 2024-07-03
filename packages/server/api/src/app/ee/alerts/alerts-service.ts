@@ -1,4 +1,4 @@
-import { Alert, AlertChannel, ListAlertsParams, Issue } from '@activepieces/ee-shared'
+import { Alert, AlertChannel, Issue, ListAlertsParams } from '@activepieces/ee-shared'
 import { ActivepiecesError, ApId, apId, ErrorCode, SeekPage } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { databaseConnection } from '../../database/database-connection'
@@ -13,7 +13,7 @@ import { alertsHandler } from './alerts-handler'
 const repo = databaseConnection.getRepository(AlertEntity)
 
 export const alertsService = {
-    async sendAlertOnFinish({ issue, flowRunId }: { issue: Issue, flowRunId: string }): Promise<void> {
+    async sendAlertOnRunFinish({ issue, flowRunId }: { issue: Issue, flowRunId: string }): Promise<void> {
         const project = await projectService.getOneOrThrow(issue.projectId)
         const platform = await platformService.getOneOrThrow(project.platformId)
         if (platform.embeddingEnabled) {
