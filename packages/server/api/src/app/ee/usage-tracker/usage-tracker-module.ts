@@ -17,6 +17,7 @@ const projectRepo = databaseConnection.getRepository(ProjectEntity)
 const platformRepo = databaseConnection.getRepository(PlatformEntity)
 
 export const usageTrackerModule: FastifyPluginAsyncTypebox = async () => {
+    systemJobHandlers.registerJobHandler(SystemJobName.USAGE_REPORT, sendUsageReport)
     await systemJobsSchedule.upsertJob({
         job: {
             name: SystemJobName.USAGE_REPORT,
@@ -103,8 +104,6 @@ async function getAddedProjects(platformId: string, startDate: string, endDate: 
         timestamp: project.created,
     }))
 }
-
-systemJobHandlers.registerJobHandler(SystemJobName.USAGE_REPORT, sendUsageReport)
 
 type UsageReport = {
     timestamp: string

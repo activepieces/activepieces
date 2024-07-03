@@ -24,6 +24,7 @@ const flowRunRepo =
 const EVERY_4_HOURS = '59 */4 * * *'
 
 export const projectBillingModule: FastifyPluginAsyncTypebox = async (app) => {
+    systemJobHandlers.registerJobHandler(SystemJobName.PROJECT_USAGE_REPORT, sendProjectRecords)
     await systemJobsSchedule.upsertJob({
         job: {
             name: SystemJobName.PROJECT_USAGE_REPORT,
@@ -160,5 +161,3 @@ const projectBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
         },
     )
 }
-
-systemJobHandlers.registerJobHandler(SystemJobName.PROJECT_USAGE_REPORT, sendProjectRecords)

@@ -5,14 +5,17 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { systemJobsSchedule } from '../../helper/system-jobs'
-import { flowService } from '../flow/flow.service'
-import { triggerEventService } from './trigger-event.service'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
+import { flowService } from '../flow/flow.service'
+import { triggerEventService } from './trigger-event.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
 export const triggerEventModule: FastifyPluginAsyncTypebox = async (app) => {
+    systemJobHandlers.registerJobHandler(SystemJobName.TRIGGER_DATA_CLEANER, async function triggerDataCleanerJobHandler(): Promise<void> {
+        await triggerEventService.deleteEventsOlderThanFourteenDay()
+    })
     await app.register(triggerEventController, { prefix: '/v1/trigger-events' })
     await systemJobsSchedule.upsertJob({
         job: {
@@ -86,8 +89,4 @@ const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
     )
 }
 
-async function triggerDataCleanerJobHandler(): Promise<void> {
-    await triggerEventService.deleteEventsOlderThanFourteenDay()
-}
 
-systemJobHandlers.registerJobHandler(SystemJobName.TRIGGER_DATA_CLEANER, triggerDataCleanerJobHandler)

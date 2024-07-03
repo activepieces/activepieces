@@ -5,7 +5,11 @@ import { flowWorker } from 'server-worker'
 import { setupApp } from './app/app'
 import { databaseConnection } from './app/database/database-connection'
 import { seedDevData } from './app/database/seeds/dev-seeds'
+import { emailService } from './app/ee/helper/email/email-service'
 import { licenseKeysService } from './app/ee/license-keys/license-keys-service'
+import { SystemJobName } from './app/helper/system-jobs/common'
+import { systemJobHandlers } from './app/helper/system-jobs/job-handlers'
+import { pieceSyncService } from './app/pieces/piece-sync-service'
 import { platformService } from './app/platform/platform.service'
 
 const start = async (app: FastifyInstance): Promise<void> => {
@@ -48,6 +52,10 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
                 license: system.get<string>(SystemProp.LICENSE_KEY),
             })
         }
+        systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
+            await pieceSyncService.sync()
+        })
+        systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendingRemindersJobHandler)
     }
     catch (err) {
         logger.error(err)

@@ -5,7 +5,6 @@ import dayjs from 'dayjs'
 import { getRedisConnection } from '../../../database/redis-connection'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobData, SystemJobName } from '../../../helper/system-jobs/common'
-import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
@@ -217,27 +216,27 @@ export const emailService = {
             templateData: otpToTemplate[type],
         })
     },
-}
-
-async function sendingRemindersJobHandler(job: SystemJobData<{
-    emails: string[]
-    platformId: string
-    issuesUrl: string
-    issuesWithFormattedDate: PopulatedIssue[]
-    projectDisplayName: string
-}>): Promise<void> {
-    await emailSender.send({
-        emails: job.emails,
-        platformId: job.platformId,
-        templateData: {
-            name: 'issues-reminder',
-            vars: {
-                issuesUrl: job.issuesUrl,
-                issues: JSON.stringify(job.issuesWithFormattedDate),
-                projectName: job.projectDisplayName,
+    
+    async sendingRemindersJobHandler(job: SystemJobData<{
+        emails: string[]
+        platformId: string
+        issuesUrl: string
+        issuesWithFormattedDate: PopulatedIssue[]
+        projectDisplayName: string
+    }>): Promise<void> {
+        await emailSender.send({
+            emails: job.emails,
+            platformId: job.platformId,
+            templateData: {
+                name: 'issues-reminder',
+                vars: {
+                    issuesUrl: job.issuesUrl,
+                    issues: JSON.stringify(job.issuesWithFormattedDate),
+                    projectName: job.projectDisplayName,
+                },
             },
-        },
-    })
+        })
+    },
 }
 
 async function getEntityNameForInvitation(userInvitation: UserInvitation): Promise<{ name: string, role: string }> {
@@ -265,8 +264,6 @@ async function getEntityNameForInvitation(userInvitation: UserInvitation): Promi
 function capitalizeFirstLetter(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
 }
-
-systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, sendingRemindersJobHandler)
 
 type SendInvitationArgs = {
     userInvitation: UserInvitation

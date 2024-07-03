@@ -12,6 +12,7 @@ const flowRepo = repoFactory(FlowEntity)
 const flowVersionRepo = repoFactory(FlowVersionEntity)
 export const piecesAnalyticsService = {
     async init(): Promise<void> {
+        systemJobHandlers.registerJobHandler(SystemJobName.PIECES_ANALYTICS, piecesAnalyticsHandler)
         await systemJobsSchedule.upsertJob({
             job: {
                 name: SystemJobName.PIECES_ANALYTICS,
@@ -82,5 +83,3 @@ async function piecesAnalyticsHandler(): Promise<void> {
     }
     logger.info('Synced pieces analytics finished')
 }
-
-systemJobHandlers.registerJobHandler(SystemJobName.PIECES_ANALYTICS, piecesAnalyticsHandler)
