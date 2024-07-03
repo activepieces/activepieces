@@ -13,5 +13,5 @@ export enum Permission {
     READ_GIT_REPO = 'READ_GIT_REPO',
     RETRY_RUN = 'RETRY_RUN',
     READ_ISSUES = 'READ_ISSUES',
-    WRITE_ISSUES ='WRITE_ISSUES',
+    WRITE_ISSUES = 'WRITE_ISSUES',
 }
