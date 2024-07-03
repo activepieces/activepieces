@@ -55,8 +55,8 @@ function setupTimeZone(): void {
 
 const main = async (): Promise<void> => {
     setupTimeZone()
-    await databaseConnection.initialize()
-    await databaseConnection.runMigrations()
+    await databaseConnection().initialize()
+    await databaseConnection().runMigrations()
     await seedDevData()
     const app = await setupServer()
 

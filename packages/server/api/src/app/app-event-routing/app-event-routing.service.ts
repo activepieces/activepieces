@@ -6,7 +6,7 @@ import {
     AppEventRoutingEntity,
 } from './app-event-routing.entity'
 
-const appEventRoutingRepo = databaseConnection.getRepository(
+const appEventRoutingRepo = databaseConnection().getRepository(
     AppEventRoutingEntity,
 )
 

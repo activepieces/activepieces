@@ -18,12 +18,12 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
+    await databaseConnection().initialize()
     app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -36,10 +36,10 @@ describe('Enterprise User API', () => {
             const { mockOwner: mockOwnerTwo, mockPlatform: mockPlatformTwo } =
         createMockPlatformWithOwner()
 
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('user')
                 .save([mockOwnerOne, mockOwnerTwo])
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('platform')
                 .save([mockPlatformOne, mockPlatformTwo])
 
@@ -116,10 +116,10 @@ describe('Enterprise User API', () => {
                 status: UserStatus.ACTIVE,
             })
 
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('user')
                 .save([mockOwner, mockUser])
-            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
 
             const testToken = await generateMockToken({
                 id: mockOwner.id,
@@ -181,7 +181,7 @@ describe('Enterprise User API', () => {
             // arrange
             const { mockPlatform, mockOwner } = createMockPlatformWithOwner()
 
-            await databaseConnection.getRepository('user').update(mockOwner.id, {
+            await databaseConnection().getRepository('user').update(mockOwner.id, {
                 platformRole: PlatformRole.MEMBER,
             })
             const testToken = await generateMockToken({
@@ -218,7 +218,7 @@ describe('Enterprise User API', () => {
             const { mockOwner, mockPlatform } = await mockBasicSetup()
 
             const mockEditor = createMockUser({ platformId: mockPlatform.id })
-            await databaseConnection.getRepository('user').save([mockEditor])
+            await databaseConnection().getRepository('user').save([mockEditor])
 
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
@@ -246,7 +246,7 @@ describe('Enterprise User API', () => {
             const { mockPlatform } = await mockBasicSetup()
 
             const mockUser = createMockUser({ platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER })
-            await databaseConnection.getRepository('user').save([mockUser])
+            await databaseConnection().getRepository('user').save([mockUser])
 
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,

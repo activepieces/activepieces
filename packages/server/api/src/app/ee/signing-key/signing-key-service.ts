@@ -11,7 +11,7 @@ import { databaseConnection } from '../../database/database-connection'
 import { SigningKeyEntity } from './signing-key-entity'
 import { signingKeyGenerator } from './signing-key-generator'
 
-const repo = databaseConnection.getRepository<SigningKey>(SigningKeyEntity)
+const repo = databaseConnection().getRepository<SigningKey>(SigningKeyEntity)
 
 export const signingKeyService = {
     async add({ platformId, displayName }: AddParams): Promise<AddSigningKeyResponse> {

@@ -16,7 +16,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { flowService } from '../flow/flow.service'
 import { FolderEntity } from './folder.entity'
 
-export const folderRepo = databaseConnection.getRepository(FolderEntity)
+export const folderRepo = databaseConnection().getRepository(FolderEntity)
 
 export const flowFolderService = {
     async delete({

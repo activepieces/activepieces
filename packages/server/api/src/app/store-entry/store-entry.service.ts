@@ -8,7 +8,7 @@ import { databaseConnection } from '../database/database-connection'
 import { StoreEntryEntity } from './store-entry-entity'
 
 const storeEntryRepo =
-  databaseConnection.getRepository<StoreEntry>(StoreEntryEntity)
+  databaseConnection().getRepository<StoreEntry>(StoreEntryEntity)
 
 export const storeEntryService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: PutStoreEntryRequest }): Promise<StoreEntry | null> {

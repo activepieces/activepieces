@@ -26,7 +26,7 @@ import { flowService } from '../flow/flow.service'
 import { stepFileService } from '../step-file/step-file.service'
 import { TriggerEventEntity } from './trigger-event.entity'
 
-export const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
+export const triggerEventRepo = databaseConnection().getRepository(TriggerEventEntity)
 
 export const triggerEventService = {
     async saveEvent({

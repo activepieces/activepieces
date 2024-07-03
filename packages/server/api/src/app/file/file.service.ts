@@ -31,7 +31,7 @@ type DeleteOneParams = {
     projectId: ProjectId
 }
 
-const fileRepo = databaseConnection.getRepository<File>(FileEntity)
+const fileRepo = databaseConnection().getRepository<File>(FileEntity)
 
 export const fileService = {
     async save({

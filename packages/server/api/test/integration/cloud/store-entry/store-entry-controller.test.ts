@@ -8,12 +8,12 @@ import { createMockUser } from '../../../helpers/mocks'
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
+    await databaseConnection().initialize()
     app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -24,7 +24,7 @@ describe('Store-entries API', () => {
 
     beforeEach(async () => {
         mockUser = createMockUser()
-        await databaseConnection.getRepository('user').save(mockUser)
+        await databaseConnection().getRepository('user').save(mockUser)
 
         testToken = await generateMockToken({
             type: PrincipalType.ENGINE,

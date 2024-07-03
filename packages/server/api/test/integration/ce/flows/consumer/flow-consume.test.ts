@@ -28,7 +28,7 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
+    await databaseConnection().initialize()
     app = await setupServer()
     await app.listen({
         host: '0.0.0.0',
@@ -37,26 +37,26 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
 describe('flow execution', () => {
     it('should execute simple flow with code and data mapper', async () => {
         const mockUser = createMockUser()
-        await databaseConnection.getRepository('user').save([mockUser])
+        await databaseConnection().getRepository('user').save([mockUser])
 
         const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-        await databaseConnection.getRepository('platform').save([mockPlatform])
+        await databaseConnection().getRepository('platform').save([mockPlatform])
 
         const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
-        await databaseConnection.getRepository('project').save([mockProject])
+        await databaseConnection().getRepository('project').save([mockProject])
 
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
             status: FlowStatus.ENABLED,
         })
-        await databaseConnection.getRepository('flow').save([mockFlow])
+        await databaseConnection().getRepository('flow').save([mockFlow])
 
         const mockFlowVersion = createMockFlowVersion({
             flowId: mockFlow.id,
@@ -119,7 +119,7 @@ describe('flow execution', () => {
                 },
             },
         })
-        await databaseConnection
+        await databaseConnection()
             .getRepository('flow_version')
             .save([mockFlowVersion])
 
@@ -129,7 +129,7 @@ describe('flow execution', () => {
             flowId: mockFlow.id,
             status: FlowRunStatus.RUNNING,
         })
-        await databaseConnection.getRepository('flow_run').save([mockFlowRun])
+        await databaseConnection().getRepository('flow_run').save([mockFlowRun])
 
         const engineToken = await generateEngineToken({
             projectId: mockProject.id,
@@ -145,14 +145,14 @@ describe('flow execution', () => {
             executionType: ExecutionType.BEGIN,
         }, engineToken)
 
-        const flowRun = await databaseConnection
+        const flowRun = await databaseConnection()
             .getRepository('flow_run')
             .findOneByOrFail({
                 id: mockFlowRun.id,
             })
         expect(flowRun.status).toEqual(FlowRunStatus.SUCCEEDED)
 
-        const file = await databaseConnection
+        const file = await databaseConnection()
             .getRepository('file')
             .findOneByOrFail({
                 id: flowRun.logsFileId,

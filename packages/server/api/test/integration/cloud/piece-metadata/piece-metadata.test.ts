@@ -25,16 +25,16 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
+    await databaseConnection().initialize()
     app = await setupServer()
 })
 
 beforeEach(async () => {
-    await databaseConnection.getRepository('piece_metadata').delete({})
+    await databaseConnection().getRepository('piece_metadata').delete({})
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -47,7 +47,7 @@ describe('Piece Metadata API', () => {
                 version: '0.0.1',
                 pieceType: PieceType.OFFICIAL,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save(mockPieceMetadata1)
 
@@ -56,7 +56,7 @@ describe('Piece Metadata API', () => {
                 version: '0.0.2',
                 pieceType: PieceType.OFFICIAL,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save(mockPieceMetadata2)
 
@@ -93,19 +93,19 @@ describe('Piece Metadata API', () => {
                 name: '@activepieces/a',
                 pieceType: PieceType.OFFICIAL,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save(mockPieceMetadata)
 
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save([mockUser])
+            await databaseConnection().getRepository('user').save([mockUser])
 
             const mockPlatform = createMockPlatform({
                 ownerId: mockUser.id,
                 filteredPieceNames: [],
                 filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             })
-            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
 
             const mockProject = await createProjectAndPlan({
                 platformId: mockPlatform.id,
@@ -141,7 +141,7 @@ describe('Piece Metadata API', () => {
                 pieceType: PieceType.OFFICIAL,
                 displayName: 'a',
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save(mockPieceMetadata)
 
@@ -190,14 +190,14 @@ describe('Piece Metadata API', () => {
     describe('List Piece Metadata endpoint', () => {
         it('Should list platform and project pieces', async () => {
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save([mockUser])
+            await databaseConnection().getRepository('user').save([mockUser])
 
             const mockPlatform = createMockPlatform({
                 ownerId: mockUser.id,
                 filteredPieceNames: [],
                 filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             })
-            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
 
             const mockProject = await createProjectAndPlan({
                 platformId: mockPlatform.id,
@@ -234,7 +234,7 @@ describe('Piece Metadata API', () => {
                 platformId: mockPlatform.id,
                 displayName: 'd',
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([
                     mockPieceMetadataA,
@@ -307,7 +307,7 @@ describe('Piece Metadata API', () => {
                 platformId: mockPlatform.id,
                 displayName: 'c',
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC])
 
@@ -363,7 +363,7 @@ describe('Piece Metadata API', () => {
                 displayName: 'a',
                 version: '0.1.1',
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC, mockPieceMetadataD])
 
@@ -434,7 +434,7 @@ describe('Piece Metadata API', () => {
                 displayName: 'a',
                 version: '1.0.0',
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB])
 
@@ -487,7 +487,7 @@ describe('Piece Metadata API', () => {
                 displayName: 'c',
                 version: '1.1.0',
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC])
 
@@ -524,7 +524,7 @@ describe('Piece Metadata API', () => {
 
         it('Should list non-premium pieces when embedded', async () => {
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save([mockUser])
+            await databaseConnection().getRepository('user').save([mockUser])
 
             const mockPlatform = createMockPlatform({
                 ownerId: mockUser.id,
@@ -532,7 +532,7 @@ describe('Piece Metadata API', () => {
                 filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
                 embeddingEnabled: true,
             })
-            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
 
             const mockProject = await createProjectAndPlan({
                 platformId: mockPlatform.id,
@@ -560,7 +560,7 @@ describe('Piece Metadata API', () => {
                 displayName: 'c',
                 version: '1.1.0',
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC])
 
@@ -592,7 +592,7 @@ describe('Piece Metadata API', () => {
 
         it('Should list premium pieces purchased with embedding', async () => {
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save([mockUser])
+            await databaseConnection().getRepository('user').save([mockUser])
 
             const mockPlatform = createMockPlatform({
                 ownerId: mockUser.id,
@@ -601,7 +601,7 @@ describe('Piece Metadata API', () => {
                 premiumPieces: ['a'],
                 embeddingEnabled: true,
             })
-            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
 
             const mockProject = await createProjectAndPlan({
                 platformId: mockPlatform.id,
@@ -629,7 +629,7 @@ describe('Piece Metadata API', () => {
                 displayName: 'c',
                 version: '1.1.0',
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC])
 
@@ -672,7 +672,7 @@ describe('Piece Metadata API', () => {
                 pieceType: PieceType.OFFICIAL,
                 displayName: 'b',
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB])
 
@@ -708,7 +708,7 @@ describe('Piece Metadata API', () => {
             // arrange
 
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save([mockUser])
+            await databaseConnection().getRepository('user').save([mockUser])
 
             const mockPlatform = createMockPlatform({
                 ownerId: mockUser.id,
@@ -716,9 +716,9 @@ describe('Piece Metadata API', () => {
                 filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             })
 
-            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
 
-            await databaseConnection.getRepository('user').update(mockUser.id, {
+            await databaseConnection().getRepository('user').update(mockUser.id, {
                 platformId: mockPlatform.id,
                 platformRole: PlatformRole.ADMIN,
             })
@@ -739,7 +739,7 @@ describe('Piece Metadata API', () => {
                 pieceType: PieceType.OFFICIAL,
                 displayName: 'b',
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB])
 
@@ -771,7 +771,7 @@ describe('Piece Metadata API', () => {
         it('Allows filtered pieces if platform filter is set to "ALLOWED"', async () => {
             // arrange
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save([mockUser])
+            await databaseConnection().getRepository('user').save([mockUser])
 
             const mockPlatform = createMockPlatform({
                 ownerId: mockUser.id,
@@ -779,9 +779,9 @@ describe('Piece Metadata API', () => {
                 filteredPieceBehavior: FilteredPieceBehavior.ALLOWED,
             })
 
-            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
 
-            await databaseConnection.getRepository('user').update(mockUser.id, {
+            await databaseConnection().getRepository('user').update(mockUser.id, {
                 platformId: mockPlatform.id,
                 platformRole: PlatformRole.ADMIN,
             })
@@ -801,7 +801,7 @@ describe('Piece Metadata API', () => {
                 pieceType: PieceType.OFFICIAL,
                 displayName: 'b',
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB])
 
@@ -833,7 +833,7 @@ describe('Piece Metadata API', () => {
         it('Blocks filtered pieces if platform filter is set to "BLOCKED"', async () => {
             // arrange
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save([mockUser])
+            await databaseConnection().getRepository('user').save([mockUser])
 
             const mockPlatform = createMockPlatform({
                 ownerId: mockUser.id,
@@ -841,9 +841,9 @@ describe('Piece Metadata API', () => {
                 filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             })
 
-            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
 
-            await databaseConnection.getRepository('user').update(mockUser.id, {
+            await databaseConnection().getRepository('user').update(mockUser.id, {
                 platformId: mockPlatform.id,
                 platformRole: PlatformRole.ADMIN,
             })
@@ -862,7 +862,7 @@ describe('Piece Metadata API', () => {
                 pieceType: PieceType.OFFICIAL,
                 displayName: 'b',
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save([mockPieceMetadataA, mockPieceMetadataB])
 
@@ -908,13 +908,13 @@ async function createProjectAndPlan({
         platformId,
         ownerId,
     })
-    await databaseConnection.getRepository('project').save([project])
+    await databaseConnection().getRepository('project').save([project])
 
     const projectPlan = createMockPlan({
         projectId: project.id,
         piecesFilterType,
         pieces,
     })
-    await databaseConnection.getRepository('project_plan').save([projectPlan])
+    await databaseConnection().getRepository('project_plan').save([projectPlan])
     return project
 }

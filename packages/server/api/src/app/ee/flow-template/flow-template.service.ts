@@ -17,7 +17,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { FlowTemplateEntity } from './flow-template.entity'
 
 const templateRepo =
-  databaseConnection.getRepository<FlowTemplate>(FlowTemplateEntity)
+  databaseConnection().getRepository<FlowTemplate>(FlowTemplateEntity)
 
 export const flowTemplateService = {
     upsert: async (

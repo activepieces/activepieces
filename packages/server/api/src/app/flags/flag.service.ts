@@ -6,7 +6,7 @@ import { databaseConnection } from '../database/database-connection'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
 
-const flagRepo = databaseConnection.getRepository(FlagEntity)
+const flagRepo = databaseConnection().getRepository(FlagEntity)
 
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {

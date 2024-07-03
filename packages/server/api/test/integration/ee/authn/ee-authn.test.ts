@@ -15,7 +15,7 @@ import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
+    await databaseConnection().initialize()
     app = await setupServer()
 })
 
@@ -24,11 +24,11 @@ beforeEach(async () => {
     stripeHelper.getOrCreateCustomer = jest
         .fn()
         .mockResolvedValue(faker.string.alphanumeric())
-    await databaseConnection.getRepository('flag').delete({})
+    await databaseConnection().getRepository('flag').delete({})
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -72,18 +72,18 @@ describe('Authentication API', () => {
         const mockPlatformId = faker.string.nanoid(21)
 
         const mockPlatformOwner = createMockUser({ platformId: mockPlatformId })
-        await databaseConnection.getRepository('user').save([mockPlatformOwner])
+        await databaseConnection().getRepository('user').save([mockPlatformOwner])
 
         const mockPlatform = createMockPlatform({
             id: mockPlatformId,
             ownerId: mockPlatformOwner.id,
         })
-        await databaseConnection.getRepository('platform').save(mockPlatform)
+        await databaseConnection().getRepository('platform').save(mockPlatform)
 
         const mockCustomDomain = createMockCustomDomain({
             platformId: mockPlatform.id,
         })
-        await databaseConnection
+        await databaseConnection()
             .getRepository('custom_domain')
             .save(mockCustomDomain)
 

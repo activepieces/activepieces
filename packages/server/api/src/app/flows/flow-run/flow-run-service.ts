@@ -44,7 +44,7 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { logSerializer } from './log-serializer'
 
 export const flowRunRepo =
-    databaseConnection.getRepository<FlowRun>(FlowRunEntity)
+    databaseConnection().getRepository<FlowRun>(FlowRunEntity)
 
 const getFlowRunOrCreate = async (
     params: GetOrCreateParams,

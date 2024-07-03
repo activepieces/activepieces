@@ -10,9 +10,9 @@ import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
 import { UserEntity } from '../../user/user-entity'
 
-const userRepo = databaseConnection.getRepository(UserEntity)
-const projectRepo = databaseConnection.getRepository(ProjectEntity)
-const platformRepo = databaseConnection.getRepository(PlatformEntity)
+const userRepo = databaseConnection().getRepository(UserEntity)
+const projectRepo = databaseConnection().getRepository(ProjectEntity)
+const platformRepo = databaseConnection().getRepository(PlatformEntity)
 
 export const usageTrackerModule: FastifyPluginAsyncTypebox = async () => {
     await systemJobsSchedule.upsertJob({

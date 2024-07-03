@@ -1,7 +1,8 @@
 import { AppSystemProp, DatabaseType, SharedSystemProp, system } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 import {
     ArrayContains,
+    DataSource,
     EntitySchema,
     ObjectLiteral,
     SelectQueryBuilder,
@@ -121,10 +122,17 @@ export const commonProperties = {
     synchronize: getSynchronize(),
 }
 
-export const databaseConnection =
-    databaseType === DatabaseType.SQLITE3
-        ? createSqlLiteDataSource()
-        : createPostgresDataSource()
+let _databaseConnection: DataSource | null = null
+
+export const databaseConnection = () => {
+    if (isNil(_databaseConnection)) {
+        _databaseConnection = databaseType === DatabaseType.SQLITE3
+            ? createSqlLiteDataSource()
+            : createPostgresDataSource()
+    }
+    return _databaseConnection
+}
+
 
 export function APArrayContains<T extends ObjectLiteral>(
     columnName: string,

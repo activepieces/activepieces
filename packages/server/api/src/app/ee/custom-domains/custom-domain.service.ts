@@ -18,7 +18,7 @@ type HostnameDetailsResponse = {
 }
 
 const customDomainRepo =
-    databaseConnection.getRepository<CustomDomain>(CustomDomainEntity)
+    databaseConnection().getRepository<CustomDomain>(CustomDomainEntity)
 
 const isCloudEdition = system.getEdition() === ApEdition.CLOUD && system.getOrThrow(SharedSystemProp.ENVIRONMENT) !== ApEnvironment.TESTING
 

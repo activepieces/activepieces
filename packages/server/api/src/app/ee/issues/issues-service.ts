@@ -9,7 +9,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
 import { emailService } from '../helper/email/email-service'
 import { IssueEntity } from './issues-entity'
-const repo = databaseConnection.getRepository(IssueEntity)
+const repo = databaseConnection().getRepository(IssueEntity)
 
 export const issuesService = {
     async add({ projectId, flowId, flowRunCreatedAt }: { flowId: string, projectId: string, flowRunCreatedAt: string }): Promise<void> {

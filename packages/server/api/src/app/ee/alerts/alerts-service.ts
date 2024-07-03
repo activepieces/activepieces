@@ -6,7 +6,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { AlertEntity } from './alerts-entity'
 
-const repo = databaseConnection.getRepository(AlertEntity)
+const repo = databaseConnection().getRepository(AlertEntity)
 
 export const alertsService = {
     async add({ projectId, channel, receiver }: AddPrams): Promise<void> {

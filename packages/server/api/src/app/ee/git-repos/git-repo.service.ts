@@ -25,7 +25,7 @@ import { gitSyncHelper } from './git-sync-helper'
 import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
 
-const repo = databaseConnection.getRepository(GitRepoEntity)
+const repo = databaseConnection().getRepository(GitRepoEntity)
 
 export const gitRepoService = {
     async upsert(request: ConfigureRepoRequest): Promise<GitRepo> {

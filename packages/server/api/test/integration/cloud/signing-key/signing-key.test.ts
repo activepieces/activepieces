@@ -15,12 +15,12 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
+    await databaseConnection().initialize()
     app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -65,16 +65,16 @@ describe('Signing Key API', () => {
             const mockUser = createMockUser({
                 platformRole: PlatformRole.MEMBER,
             })
-            await databaseConnection.getRepository('user').save([mockUser])
+            await databaseConnection().getRepository('user').save([mockUser])
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
 
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('signing_key')
                 .save(mockSigningKey)
 
@@ -111,7 +111,7 @@ describe('Signing Key API', () => {
                 platformId: mockPlatform.id,
             })
 
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('signing_key')
                 .save(mockSigningKey)
 
@@ -148,13 +148,13 @@ describe('Signing Key API', () => {
             const mockUserTwo = createMockUser({
                 platformRole: PlatformRole.ADMIN,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('user')
                 .save([mockUser, mockUserTwo])
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             const mockPlatformTwo = createMockPlatform({ ownerId: mockUserTwo.id })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('platform')
                 .save([mockPlatform, mockPlatformTwo])
 
@@ -162,7 +162,7 @@ describe('Signing Key API', () => {
                 platformId: mockPlatform.id,
             })
 
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('signing_key')
                 .save(mockSigningKey)
 
@@ -201,7 +201,7 @@ describe('Signing Key API', () => {
                 platformId: mockPlatformTwo.id,
             })
 
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('signing_key')
                 .save([mockSigningKeyOne, mockSigningKeyTwo])
 

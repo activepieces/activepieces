@@ -7,7 +7,7 @@ import { databaseConnection } from '../../database/database-connection'
 import { ProjectPlanEntity } from './project-plan.entity'
 
 const projectPlanRepo =
-    databaseConnection.getRepository<ProjectPlan>(ProjectPlanEntity)
+    databaseConnection().getRepository<ProjectPlan>(ProjectPlanEntity)
 
 export const projectLimitsService = {
     async upsert(

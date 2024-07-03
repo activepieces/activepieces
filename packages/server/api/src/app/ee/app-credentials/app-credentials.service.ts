@@ -10,7 +10,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { AppCredentialEntity } from './app-credentials.entity'
 
 export const appCredentialRepo =
-  databaseConnection.getRepository(AppCredentialEntity)
+  databaseConnection().getRepository(AppCredentialEntity)
 
 export const appCredentialService = {
     async list(

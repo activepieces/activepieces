@@ -23,12 +23,12 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
+    await databaseConnection().initialize()
     app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -43,16 +43,16 @@ describe('Flow API', () => {
             const mockPlatformId = apId()
             const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
             const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection.getRepository('user').save([mockOwner, mockUser])
+            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockProject = createMockProject({
                 ownerId: mockOwner.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('project').save([mockProject])
+            await databaseConnection().getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
@@ -60,7 +60,7 @@ describe('Flow API', () => {
                 projectId: mockProject.id,
                 role: testRole,
             })
-            await databaseConnection.getRepository('project_member').save([mockProjectMember])
+            await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
@@ -98,16 +98,16 @@ describe('Flow API', () => {
             const mockPlatformId = apId()
             const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
             const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection.getRepository('user').save([mockOwner, mockUser])
+            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockProject = createMockProject({
                 ownerId: mockOwner.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('project').save([mockProject])
+            await databaseConnection().getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
@@ -115,7 +115,7 @@ describe('Flow API', () => {
                 projectId: mockProject.id,
                 role: testRole,
             })
-            await databaseConnection.getRepository('project_member').save([mockProjectMember])
+            await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
@@ -185,16 +185,16 @@ describe('Flow API', () => {
             const mockPlatformId = apId()
             const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
             const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection.getRepository('user').save([mockOwner, mockUser])
+            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockProject = createMockProject({
                 ownerId: mockOwner.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('project').save([mockProject])
+            await databaseConnection().getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
@@ -202,23 +202,23 @@ describe('Flow API', () => {
                 projectId: mockProject.id,
                 role,
             })
-            await databaseConnection.getRepository('project_member').save([mockProjectMember])
+            await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
             const mockFlow = createMockFlow({
                 projectId: mockProject.id,
                 status: FlowStatus.DISABLED,
             })
-            await databaseConnection.getRepository('flow').save([mockFlow])
+            await databaseConnection().getRepository('flow').save([mockFlow])
 
             const mockFlowVersion = createMockFlowVersion({
                 flowId: mockFlow.id,
                 updatedBy: mockUser.id,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('flow_version')
                 .save([mockFlowVersion])
 
-            await databaseConnection.getRepository('flow').update(mockFlow.id, {
+            await databaseConnection().getRepository('flow').update(mockFlow.id, {
                 publishedVersionId: mockFlowVersion.id,
             })
 
@@ -271,16 +271,16 @@ describe('Flow API', () => {
             const mockPlatformId = apId()
             const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
             const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection.getRepository('user').save([mockOwner, mockUser])
+            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockProject = createMockProject({
                 ownerId: mockOwner.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('project').save([mockProject])
+            await databaseConnection().getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
@@ -288,23 +288,23 @@ describe('Flow API', () => {
                 projectId: mockProject.id,
                 role,
             })
-            await databaseConnection.getRepository('project_member').save([mockProjectMember])
+            await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
             const mockFlow = createMockFlow({
                 projectId: mockProject.id,
                 status: FlowStatus.DISABLED,
             })
-            await databaseConnection.getRepository('flow').save([mockFlow])
+            await databaseConnection().getRepository('flow').save([mockFlow])
 
             const mockFlowVersion = createMockFlowVersion({
                 flowId: mockFlow.id,
                 updatedBy: mockUser.id,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('flow_version')
                 .save([mockFlowVersion])
 
-            await databaseConnection.getRepository('flow').update(mockFlow.id, {
+            await databaseConnection().getRepository('flow').update(mockFlow.id, {
                 publishedVersionId: mockFlowVersion.id,
             })
 
@@ -349,16 +349,16 @@ describe('Flow API', () => {
             const mockPlatformId = apId()
             const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
             const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection.getRepository('user').save([mockOwner, mockUser])
+            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockProject = createMockProject({
                 ownerId: mockOwner.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('project').save([mockProject])
+            await databaseConnection().getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
@@ -366,7 +366,7 @@ describe('Flow API', () => {
                 projectId: mockProject.id,
                 role: testRole,
             })
-            await databaseConnection.getRepository('project_member').save([mockProjectMember])
+            await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,

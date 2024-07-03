@@ -17,7 +17,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { OAuthAppEntity, OAuthAppWithSecret } from './oauth-app.entity'
 
-const oauthRepo = databaseConnection.getRepository(OAuthAppEntity)
+const oauthRepo = databaseConnection().getRepository(OAuthAppEntity)
 
 export const oauthAppService = {
     async upsert({

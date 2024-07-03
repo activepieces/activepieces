@@ -8,7 +8,7 @@ import { projectLimitsService } from '../../project-plan/project-plan.service'
 import { projectBillingService } from '../project-billing/project-billing.service'
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
 
-const appsumoRepo = databaseConnection.getRepository(AppSumoEntity)
+const appsumoRepo = databaseConnection().getRepository(AppSumoEntity)
 
 type FlowPlanLimits = {
     nickname: string

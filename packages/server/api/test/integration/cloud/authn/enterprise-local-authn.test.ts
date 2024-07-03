@@ -10,12 +10,12 @@ import { createMockOtp, createMockUser } from '../../../helpers/mocks'
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
+    await databaseConnection().initialize()
     app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -26,14 +26,14 @@ describe('Enterprise Local Authn API', () => {
                 verified: false,
                 status: UserStatus.ACTIVE,
             })
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockOtp = createMockOtp({
                 userId: mockUser.id,
                 type: OtpType.EMAIL_VERIFICATION,
                 state: OtpState.PENDING,
             })
-            await databaseConnection.getRepository('otp').save(mockOtp)
+            await databaseConnection().getRepository('otp').save(mockOtp)
 
             const mockVerifyEmailRequest = {
                 userId: mockUser.id,
@@ -51,12 +51,12 @@ describe('Enterprise Local Authn API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(response?.body).toBe('')
 
-            const user = await databaseConnection
+            const user = await databaseConnection()
                 .getRepository('user')
                 .findOneBy({ id: mockUser.id })
             expect(user?.status).toBe(UserStatus.ACTIVE)
             expect(user?.verified).toBe(true)
-            const otp = await databaseConnection
+            const otp = await databaseConnection()
                 .getRepository('otp')
                 .findOneBy({ id: mockOtp.id })
             expect(otp?.state).toBe(OtpState.CONFIRMED)
@@ -67,7 +67,7 @@ describe('Enterprise Local Authn API', () => {
                 verified: false,
                 status: UserStatus.ACTIVE,
             })
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const correctOtp = '123456'
             const mockOtp = createMockOtp({
@@ -76,7 +76,7 @@ describe('Enterprise Local Authn API', () => {
                 value: correctOtp,
                 state: OtpState.PENDING,
             })
-            await databaseConnection.getRepository('otp').save(mockOtp)
+            await databaseConnection().getRepository('otp').save(mockOtp)
 
             const incorrectOtp = '654321'
             const mockVerifyEmailRequest = {
@@ -96,7 +96,7 @@ describe('Enterprise Local Authn API', () => {
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_OTP')
 
-            const user = await databaseConnection
+            const user = await databaseConnection()
                 .getRepository('user')
                 .findOneBy({ id: mockUser.id })
             expect(user?.status).toBe(UserStatus.ACTIVE)
@@ -108,7 +108,7 @@ describe('Enterprise Local Authn API', () => {
                 verified: false,
                 status: UserStatus.ACTIVE,
             })
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockOtp = createMockOtp({
                 userId: mockUser.id,
@@ -116,7 +116,7 @@ describe('Enterprise Local Authn API', () => {
                 updated: dayjs().subtract(31, 'minutes').toISOString(),
                 state: OtpState.PENDING,
             })
-            await databaseConnection.getRepository('otp').save(mockOtp)
+            await databaseConnection().getRepository('otp').save(mockOtp)
 
             const mockVerifyEmailRequest = {
                 userId: mockUser.id,
@@ -135,7 +135,7 @@ describe('Enterprise Local Authn API', () => {
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_OTP')
 
-            const user = await databaseConnection
+            const user = await databaseConnection()
                 .getRepository('user')
                 .findOneBy({ id: mockUser.id })
             expect(user?.status).toBe(UserStatus.ACTIVE)
@@ -147,14 +147,14 @@ describe('Enterprise Local Authn API', () => {
                 verified: false,
                 status: UserStatus.ACTIVE,
             })
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockOtp = createMockOtp({
                 userId: mockUser.id,
                 type: OtpType.EMAIL_VERIFICATION,
                 state: OtpState.CONFIRMED,
             })
-            await databaseConnection.getRepository('otp').save(mockOtp)
+            await databaseConnection().getRepository('otp').save(mockOtp)
 
             const mockVerifyEmailRequest = {
                 userId: mockUser.id,
@@ -173,7 +173,7 @@ describe('Enterprise Local Authn API', () => {
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_OTP')
 
-            const user = await databaseConnection
+            const user = await databaseConnection()
                 .getRepository('user')
                 .findOneBy({ id: mockUser.id })
             expect(user?.verified).toBe(false)
@@ -183,14 +183,14 @@ describe('Enterprise Local Authn API', () => {
     describe('Reset Password Endpoint', () => {
         it('Updates user password', async () => {
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockOtp = createMockOtp({
                 userId: mockUser.id,
                 type: OtpType.PASSWORD_RESET,
                 state: OtpState.PENDING,
             })
-            await databaseConnection.getRepository('otp').save(mockOtp)
+            await databaseConnection().getRepository('otp').save(mockOtp)
 
             const mockResetPasswordRequest = {
                 userId: mockUser.id,
@@ -209,7 +209,7 @@ describe('Enterprise Local Authn API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(response?.body).toBe('')
 
-            const user = await databaseConnection
+            const user = await databaseConnection()
                 .getRepository('user')
                 .findOneBy({ id: mockUser.id })
             expect(user?.password).not.toBe(mockUser.password)
@@ -217,7 +217,7 @@ describe('Enterprise Local Authn API', () => {
 
         it('Fails if OTP is wrong', async () => {
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const correctOtp = '123456'
             const mockOtp = createMockOtp({
@@ -225,7 +225,7 @@ describe('Enterprise Local Authn API', () => {
                 type: OtpType.PASSWORD_RESET,
                 value: correctOtp,
             })
-            await databaseConnection.getRepository('otp').save(mockOtp)
+            await databaseConnection().getRepository('otp').save(mockOtp)
 
             const incorrectOtp = '654321'
             const mockResetPasswordRequest = {
@@ -246,7 +246,7 @@ describe('Enterprise Local Authn API', () => {
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_OTP')
 
-            const user = await databaseConnection
+            const user = await databaseConnection()
                 .getRepository('user')
                 .findOneBy({ id: mockUser.id })
             expect(user?.password).toBe(mockUser.password)

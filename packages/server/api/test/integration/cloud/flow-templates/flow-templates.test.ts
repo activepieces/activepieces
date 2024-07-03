@@ -19,12 +19,12 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
+    await databaseConnection().initialize()
     app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -154,7 +154,7 @@ async function createMockPlatformTemplate({ platformId }: { platformId: string }
         projectId: mockProject.id,
         type: TemplateType.PLATFORM,
     })
-    await databaseConnection
+    await databaseConnection()
         .getRepository('flow_template')
         .save(mockPlatformTemplate)
 
@@ -162,7 +162,7 @@ async function createMockPlatformTemplate({ platformId }: { platformId: string }
         platformId: mockPlatform.id,
         platformRole: PlatformRole.MEMBER,
     })
-    await databaseConnection.getRepository('user').save(mockUser)
+    await databaseConnection().getRepository('user').save(mockUser)
 
     return { mockOwner, mockUser, mockPlatform, mockProject, mockPlatformTemplate }
 }

@@ -18,7 +18,7 @@ import { projectBillingService } from '../billing/project-billing/project-billin
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { ReferralEntity } from './referral.entity'
 
-const referralRepo = databaseConnection.getRepository(ReferralEntity)
+const referralRepo = databaseConnection().getRepository(ReferralEntity)
 
 export const referralService = {
     async add({ referringUserId, referredUserId, referredUserEmail }: AddParams): Promise<void> {

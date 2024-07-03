@@ -9,7 +9,7 @@ import { CLOUD_PLATFORM_ID, createMockPlatform, createMockUser } from '../../../
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
+    await databaseConnection().initialize()
     app = await setupServer()
 })
 
@@ -18,7 +18,7 @@ beforeEach(() => {
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -26,11 +26,11 @@ describe('OTP API', () => {
     describe('Create and Send Endpoint', () => {
         it('Generates new OTP', async () => {
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({ id: CLOUD_PLATFORM_ID, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-            await databaseConnection.getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
+            await databaseConnection().getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
 
             const mockCreateOtpRequest = {
                 email: mockUser.email,
@@ -50,11 +50,11 @@ describe('OTP API', () => {
 
         it('Sends OTP to user', async () => {
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({ id: CLOUD_PLATFORM_ID, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-            await databaseConnection.getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
+            await databaseConnection().getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
             
             const mockCreateOtpRequest = {
                 email: mockUser.email,
@@ -83,11 +83,11 @@ describe('OTP API', () => {
 
         it('OTP is unique per user per OTP type', async () => {
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({ id: CLOUD_PLATFORM_ID, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-            await databaseConnection.getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
+            await databaseConnection().getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
 
             const mockCreateOtpRequest = {
                 email: mockUser.email,
@@ -111,7 +111,7 @@ describe('OTP API', () => {
             expect(response1?.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(response2?.statusCode).toBe(StatusCodes.NO_CONTENT)
 
-            const otpCount = await databaseConnection.getRepository('otp').countBy({
+            const otpCount = await databaseConnection().getRepository('otp').countBy({
                 userId: mockUser.id,
                 type: mockCreateOtpRequest.type,
             })

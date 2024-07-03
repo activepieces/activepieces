@@ -9,12 +9,12 @@ import { createMockPlatform, createMockProject, createMockUser } from '../../../
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
+    await databaseConnection().initialize()
     app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -23,15 +23,15 @@ describe('Project Worker API', () => {
         it('Returns worker project', async () => {
             // arrange
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save([mockUser])
+            await databaseConnection().getRepository('user').save([mockUser])
 
             const mockPlatform = createMockPlatform({
                 ownerId: mockUser.id,
             })
-            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
 
             const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
-            await databaseConnection.getRepository('project').save([mockProject])
+            await databaseConnection().getRepository('project').save([mockProject])
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.ENGINE,

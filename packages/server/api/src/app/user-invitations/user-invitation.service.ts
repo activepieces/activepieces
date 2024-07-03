@@ -15,7 +15,7 @@ import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
 
-const repo = databaseConnection.getRepository(UserInvitationEntity)
+const repo = databaseConnection().getRepository(UserInvitationEntity)
 const INVITATION_EXPIREY_DAYS = 1
 
 export const userInvitationsService = {

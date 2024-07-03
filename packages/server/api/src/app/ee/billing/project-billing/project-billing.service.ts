@@ -10,7 +10,7 @@ import { ProjectBillingEntity } from './project-billing.entity'
 import { stripeHelper } from './stripe-helper'
 
 const projectBillingRepo =
-    databaseConnection.getRepository<ProjectBilling>(ProjectBillingEntity)
+    databaseConnection().getRepository<ProjectBilling>(ProjectBillingEntity)
 
 export const projectBillingService = {
     async getOrCreateForProject(projectId: string): Promise<ProjectBilling> {

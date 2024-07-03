@@ -24,7 +24,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { appCredentialService } from '../app-credentials/app-credentials.service'
 import { ConnectionKeyEntity } from './connection-key.entity'
 
-const connectionKeyRepo = databaseConnection.getRepository(ConnectionKeyEntity)
+const connectionKeyRepo = databaseConnection().getRepository(ConnectionKeyEntity)
 
 export const connectionKeyService = {
     async getConnection({

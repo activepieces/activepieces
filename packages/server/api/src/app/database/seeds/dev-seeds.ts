@@ -13,13 +13,13 @@ const currentEnvIsNotDev = (): boolean => {
 }
 
 const devDataAlreadySeeded = async (): Promise<boolean> => {
-    const flagRepo = databaseConnection.getRepository(FlagEntity)
+    const flagRepo = databaseConnection().getRepository(FlagEntity)
     const devSeedsFlag = await flagRepo.findOneBy({ id: DEV_DATA_SEEDED_FLAG })
     return devSeedsFlag?.value === true
 }
 
 const setDevDataSeededFlag = async (): Promise<void> => {
-    const flagRepo = databaseConnection.getRepository(FlagEntity)
+    const flagRepo = databaseConnection().getRepository(FlagEntity)
 
     await flagRepo.save({
         id: DEV_DATA_SEEDED_FLAG,

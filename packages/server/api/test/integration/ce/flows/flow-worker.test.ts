@@ -17,12 +17,12 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
+    await databaseConnection().initialize()
     app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -37,17 +37,17 @@ describe('Flow API for Worker', () => {
                 ownerId: mockOwner.id,
             })
 
-            await databaseConnection.getRepository('project').save([mockProject2])
+            await databaseConnection().getRepository('project').save([mockProject2])
 
             const mockFlow = createMockFlow({
                 projectId: mockProject.id,
             })
-            await databaseConnection.getRepository('flow').save([mockFlow])
+            await databaseConnection().getRepository('flow').save([mockFlow])
 
             const mockFlowVersion = createMockFlowVersion({
                 flowId: mockFlow.id,
             })
-            await databaseConnection.getRepository('flow_version').save([mockFlowVersion])
+            await databaseConnection().getRepository('flow_version').save([mockFlowVersion])
 
             const mockToken = await generateMockToken({
                 id: apId(),

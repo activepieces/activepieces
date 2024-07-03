@@ -17,7 +17,7 @@ import { projectBillingService } from './project-billing.service'
 import { stripeHelper, stripeWebhookSecret, TASKS_PAYG_PRICE_ID } from './stripe-helper'
 
 const flowRunRepo =
-    databaseConnection.getRepository<FlowRun>(FlowRunEntity)
+    databaseConnection().getRepository<FlowRun>(FlowRunEntity)
 
 const EVERY_4_HOURS = '59 */4 * * *'
 

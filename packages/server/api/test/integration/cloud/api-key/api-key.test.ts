@@ -14,12 +14,12 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
+    await databaseConnection().initialize()
     app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -68,12 +68,12 @@ describe('API Key API', () => {
                 platformId: mockPlatform.id,
                 platformRole: PlatformRole.MEMBER,
             })
-            await databaseConnection.getRepository('user').save([mockUser])
+            await databaseConnection().getRepository('user').save([mockUser])
             const mockApiKey = createMockApiKey({
                 platformId: mockPlatform.id,
             })
 
-            await databaseConnection.getRepository('api_key').save(mockApiKey)
+            await databaseConnection().getRepository('api_key').save(mockApiKey)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -108,7 +108,7 @@ describe('API Key API', () => {
                 platformId: mockPlatformTwo.id,
             })
 
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('api_key')
                 .save([mockKeyOne, mockKeyTwo])
 

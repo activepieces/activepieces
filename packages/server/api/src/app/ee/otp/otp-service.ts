@@ -13,7 +13,7 @@ import { OtpEntity } from './otp-entity'
 
 const TEN_MINUTES = 10 * 60 * 1000
 
-const repo = databaseConnection.getRepository(OtpEntity)
+const repo = databaseConnection().getRepository(OtpEntity)
 
 export const otpService = {
     async createAndSend({

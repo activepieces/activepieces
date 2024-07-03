@@ -40,7 +40,7 @@ import {
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 
-const repo = databaseConnection.getRepository(AppConnectionEntity)
+const repo = databaseConnection().getRepository(AppConnectionEntity)
 
 export const appConnectionService = {
     async validateConnectionName({ connectionName, projectId }: ValidateConnectionNameRequestBody & { projectId: ProjectId }): Promise<ValidateConnectionNameResponse> {

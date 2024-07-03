@@ -16,7 +16,7 @@ import { databaseConnection } from '../../database/database-connection'
 import { ApiKeyEntity } from './api-key-entity'
 
 const API_KEY_TOKEN_LENGTH = 64
-const repo = databaseConnection.getRepository<ApiKey>(ApiKeyEntity)
+const repo = databaseConnection().getRepository<ApiKey>(ApiKeyEntity)
 
 export const apiKeyService = {
     async add({

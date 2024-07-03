@@ -25,7 +25,7 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
 
-const auditLogRepo = databaseConnection.getRepository(AuditEventEntity)
+const auditLogRepo = databaseConnection().getRepository(AuditEventEntity)
 
 type AuditLogService = {
     send: ApplicationEventHooks['send']

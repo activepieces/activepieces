@@ -16,7 +16,7 @@ import { defaultTheme } from '../flags/theme'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
-const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
+const repo = databaseConnection().getRepository<Platform>(PlatformEntity)
 
 export const platformService = {
     async hasAnyPlatforms(): Promise<boolean> {
