@@ -24,7 +24,7 @@ let _domainHelper: DomainHelper = {
         domain: string
         path: string
     }): Promise<string> {
-        return `${await networkUtls.getApiUrl()}${path}`
+        return `${await networkUtls.getPublicUrl()}${path}`
     },
     async constructFrontendUrlFromRequest({
         path,

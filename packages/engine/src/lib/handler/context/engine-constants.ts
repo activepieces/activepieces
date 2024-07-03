@@ -14,7 +14,6 @@ const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
 }
 
 export class EngineConstants {
-    public static readonly API_URL = 'http://127.0.0.1:3000/'
     public static readonly BASE_CODE_DIRECTORY = process.env.AP_BASE_CODE_DIRECTORY ?? './codes'
     public static readonly INPUT_FILE = './input.json'
     public static readonly OUTPUT_FILE = './output.json'
@@ -22,10 +21,6 @@ export class EngineConstants {
 
 
     private project: Project | null = null
-
-    public get apiUrl(): string {
-        return EngineConstants.API_URL
-    }
 
     public get baseCodeDirectory(): string {
         return EngineConstants.BASE_CODE_DIRECTORY
@@ -40,7 +35,8 @@ export class EngineConstants {
         public readonly flowVersionId: string,
         public readonly flowVerionState: FlowVersionState,
         public readonly flowRunId: string,
-        public readonly serverUrl: string,
+        public readonly publicUrl: string,
+        public readonly internalApiUrl: string,
         public readonly retryConstants: RetryConstants,
         public readonly engineToken: string,
         public readonly projectId: ProjectId,
@@ -59,13 +55,15 @@ export class EngineConstants {
             input.flowVersion.id,
             input.flowVersion.state,
             input.flowRunId,
-            input.serverUrl,
+            input.publicUrl,
+            input.internalApiUrl,
             DEFAULT_RETRY_CONSTANTS,
             input.engineToken,
             input.projectId,
             new VariableService({
                 projectId: input.projectId,
                 engineToken: input.engineToken,
+                apiUrl: input.internalApiUrl,
             }),
             false,
             'local',
@@ -82,13 +80,15 @@ export class EngineConstants {
             input.flowVersion.id,
             input.flowVersion.state,
             'test-run',
-            input.serverUrl,
+            input.publicUrl,
+            addTrailingSlashIfMissing(input.internalApiUrl),
             DEFAULT_RETRY_CONSTANTS,
             input.engineToken,
             input.projectId,
             new VariableService({
                 projectId: input.projectId,
                 engineToken: input.engineToken,
+                apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
             }),
             true,
             'db',
@@ -104,13 +104,15 @@ export class EngineConstants {
             input.flowVersion.id,
             input.flowVersion.state,
             'execute-property',
-            input.serverUrl,
+            input.publicUrl,
+            addTrailingSlashIfMissing(input.internalApiUrl),
             DEFAULT_RETRY_CONSTANTS,
             input.engineToken,
             input.projectId,
             new VariableService({
                 projectId: input.projectId,
                 engineToken: input.engineToken,
+                apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
             }),
             true,
             'db',
@@ -126,13 +128,15 @@ export class EngineConstants {
             input.flowVersion.id,
             input.flowVersion.state,
             'execute-trigger',
-            input.serverUrl,
+            input.publicUrl,
+            addTrailingSlashIfMissing(input.internalApiUrl),
             DEFAULT_RETRY_CONSTANTS,
             input.engineToken,
             input.projectId,
             new VariableService({
                 projectId: input.projectId,
                 engineToken: input.engineToken,
+                apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
             }),
             true,
             'db',
@@ -147,7 +151,7 @@ export class EngineConstants {
             return this.project
         }
 
-        const getWorkerProjectEndpoint = `${EngineConstants.API_URL}v1/worker/project`
+        const getWorkerProjectEndpoint = `${this.internalApiUrl}v1/worker/project`
 
         const response = await fetch(getWorkerProjectEndpoint, {
             headers: {
@@ -163,4 +167,9 @@ export class EngineConstants {
         const project = await this.getProject()
         return project.externalId
     }
+}
+
+
+const addTrailingSlashIfMissing = (url: string): string => {
+    return url.endsWith('/') ? url : url + '/'
 }

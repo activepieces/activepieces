@@ -42,15 +42,15 @@ const appendSlashAndApi = (url: string): string => {
     return `${url}${slash}api/`
 }
 
-const getApiUrlForTheWorker = (): string => {
+const getInternalApiUrl = (): string => {
     if (system.isApp()) {
-        return 'http://127.0.0.1:3000'
+        return 'http://127.0.0.1:3000/'
     }
     const url = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
     return appendSlashAndApi(url)
 }
 
-const getApiUrl = async (): Promise<string> => {
+const getPublicUrl = async (): Promise<string> => {
     const environment = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
     let url = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
     
@@ -74,7 +74,7 @@ function extractHostname(url: string): string | null {
 }
 
 export const networkUtls = {
-    getApiUrl,
+    getPublicUrl,
     extractClientRealIp,
-    getApiUrlFromEnvironment: getApiUrlForTheWorker,
+    getInternalApiUrl,
 }

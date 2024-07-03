@@ -1,7 +1,6 @@
 import fs from 'fs/promises'
 import { ApFile } from '@activepieces/pieces-framework'
 import { isString } from '@activepieces/shared'
-import { EngineConstants } from '../handler/context/engine-constants'
 
 const DB_PREFIX_URL = 'db://'
 const FILE_PREFIX_URL = 'file://'
@@ -11,13 +10,13 @@ const MAXIMUM_MB = MAXIMUM / 1024 / 1024
 
 export type DefaultFileSystem = 'db' | 'local' | 'memory'
 
-export function createFilesService({ stepName, type, flowId, engineToken }: { stepName: string, type: DefaultFileSystem, flowId: string, engineToken: string }) {
+export function createFilesService({ stepName, type, flowId, engineToken, apiUrl }: { apiUrl: string, stepName: string, type: DefaultFileSystem, flowId: string, engineToken: string }) {
     return {
         async write({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> {
             switch (type) {
                 // TODO remove db as it now generates a signed url
                 case 'db':
-                    return writeDbFile({ stepName, flowId, fileName, data, engineToken })
+                    return writeDbFile({ stepName, flowId, fileName, data, engineToken, apiUrl })
                 case 'local':
                     return writeLocalFile({ stepName, fileName, data })
                 case 'memory':
@@ -42,13 +41,13 @@ export function isApFilePath(dbPath: unknown): dbPath is string {
     return dbPath.startsWith(FILE_PREFIX_URL) || dbPath.startsWith(DB_PREFIX_URL) || dbPath.startsWith(MEMORY_PREFIX_URL)
 }
 
-export async function handleAPFile({ engineToken, path }: { engineToken: string, path: string }) {
+export async function handleAPFile({ engineToken, path, apiUrl }: { engineToken: string, path: string, apiUrl: string }) {
     if (path.startsWith(MEMORY_PREFIX_URL)) {
         return readMemoryFile(path)
     }
     // TODO REMOVE DB AS IT NOW GENERATES A SIGNED URL
     else if (path.startsWith(DB_PREFIX_URL)) {
-        return readDbFile({ engineToken, absolutePath: path })
+        return readDbFile({ engineToken, absolutePath: path, apiUrl })
     }
     else if (path.startsWith(FILE_PREFIX_URL)) {
         return readLocalFile(path)
@@ -82,7 +81,7 @@ async function readMemoryFile(absolutePath: string): Promise<ApFile> {
 }
 
 
-async function writeDbFile({ stepName, flowId, fileName, data, engineToken }: { stepName: string, flowId: string, fileName: string, data: Buffer, engineToken: string }): Promise<string> {
+async function writeDbFile({ stepName, flowId, fileName, data, engineToken, apiUrl }: { apiUrl: string, stepName: string, flowId: string, fileName: string, data: Buffer, engineToken: string }): Promise<string> {
     const formData = new FormData()
     formData.append('stepName', stepName)
     formData.append('name', fileName)
@@ -97,7 +96,7 @@ async function writeDbFile({ stepName, flowId, fileName, data, engineToken }: { 
         }))
     }
 
-    const response = await fetch(EngineConstants.API_URL + 'v1/step-files', {
+    const response = await fetch(apiUrl + 'v1/step-files', {
         method: 'POST',
         headers: {
             Authorization: 'Bearer ' + engineToken,
@@ -113,9 +112,9 @@ async function writeDbFile({ stepName, flowId, fileName, data, engineToken }: { 
     return result.url
 }
 
-async function readDbFile({ engineToken, absolutePath }: { engineToken: string, absolutePath: string }): Promise<ApFile> {
+async function readDbFile({ engineToken, absolutePath, apiUrl }: { engineToken: string, absolutePath: string, apiUrl: string }): Promise<ApFile> {
     const fileId = absolutePath.replace(DB_PREFIX_URL, '')
-    const response = await fetch(`${EngineConstants.API_URL}v1/step-files/${encodeURIComponent(fileId)}`, {
+    const response = await fetch(`${apiUrl}v1/step-files/${encodeURIComponent(fileId)}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

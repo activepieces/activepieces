@@ -3,8 +3,9 @@ import { ActivepiecesError, BeginExecuteFlowOperation, ErrorCode, ExecutionType,
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
 
+type EngineConstants = 'internalApiUrl' | 'publicUrl' | 'engineToken'
 
-async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, engineToken: string): Promise<Omit<BeginExecuteFlowOperation, 'serverUrl' | 'engineToken'> | Omit<ResumeExecuteFlowOperation, 'serverUrl' | 'engineToken'>> {
+async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, engineToken: string): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
     switch (jobData.executionType) {
         case ExecutionType.BEGIN:
             return {

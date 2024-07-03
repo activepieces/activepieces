@@ -60,6 +60,7 @@ async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionRe
     const output = await flowExecutor.getExecutorForAction(step.type).handle({
         action: step,
         executionState: await testExecutionContext.stateFromFlowVersion({
+            apiUrl: input.internalApiUrl,
             flowVersion: input.flowVersion,
             excludedStepName: step.name,
             projectId: input.projectId,
@@ -120,6 +121,7 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                     params: input,
                     piecesSource: EngineConstants.PIECE_SOURCES,
                     executionState: await testExecutionContext.stateFromFlowVersion({
+                        apiUrl: input.internalApiUrl,
                         flowVersion: input.flowVersion,
                         projectId: input.projectId,
                         engineToken: input.engineToken,

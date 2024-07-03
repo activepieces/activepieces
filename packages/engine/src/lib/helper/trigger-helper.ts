@@ -26,6 +26,7 @@ export const triggerHelper = {
         }
 
         const { resolvedInput } = await variableService({
+            apiUrl: constants.internalApiUrl,
             projectId: params.projectId,
             engineToken: params.engineToken,
         }).resolve<StaticPropsValue<PiecePropertyMap>>({
@@ -34,6 +35,7 @@ export const triggerHelper = {
         })
 
         const { processedInput, errors } = await variableService({
+            apiUrl: constants.internalApiUrl,
             projectId: params.projectId,
             engineToken: params.engineToken,
         }).applyProcessorsAndValidators(resolvedInput, trigger.props, piece.auth)
@@ -47,6 +49,7 @@ export const triggerHelper = {
         let scheduleOptions: ScheduleOptions | undefined = undefined
         const context = {
             store: createContextStore({
+                apiUrl: constants.internalApiUrl,
                 prefix,
                 flowId: params.flowVersion.flowId,
                 engineToken: params.engineToken,
@@ -114,6 +117,7 @@ export const triggerHelper = {
                         output: await trigger.test({
                             ...context,
                             files: createFilesService({
+                                apiUrl: constants.internalApiUrl,
                                 engineToken: params.engineToken!,
                                 stepName: triggerName,
                                 flowId: params.flowVersion.flowId,
@@ -168,6 +172,7 @@ export const triggerHelper = {
                 const items = await trigger.run({
                     ...context,
                     files: createFilesService({
+                        apiUrl: constants.internalApiUrl,
                         engineToken: params.engineToken!,
                         flowId: params.flowVersion.flowId,
                         stepName: triggerName,

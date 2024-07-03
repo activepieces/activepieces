@@ -14,7 +14,8 @@ export const isolateEngineRunner: EngineRunner = {
         const input: ExecuteFlowOperation = {
             ...operation,
             engineToken,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
         }
         const sandbox = await prepareFlowSandbox(engineToken, operation.runEnvironment, operation.flowVersion)
         return execute(EngineOperationType.EXECUTE_FLOW, sandbox, input)
@@ -61,7 +62,8 @@ export const isolateEngineRunner: EngineRunner = {
             appWebhookUrl: await webhookUtils.getAppWebhookUrl({
                 appName: triggerPiece.pieceName,
             }),
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             webhookSecret: await webhookSecretsUtils.getWebhookSecret(lockedVersion),
             engineToken,
         }
@@ -79,7 +81,8 @@ export const isolateEngineRunner: EngineRunner = {
 
         const input: ExecutePropsOptions = {
             ...operation,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
 
@@ -96,7 +99,8 @@ export const isolateEngineRunner: EngineRunner = {
         })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
         return execute(EngineOperationType.EXECUTE_VALIDATE_AUTH, sandbox, input)
@@ -123,7 +127,8 @@ export const isolateEngineRunner: EngineRunner = {
             flowVersion: lockedFlowVersion,
             stepName: operation.stepName,
             projectId: operation.projectId,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
 

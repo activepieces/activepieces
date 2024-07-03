@@ -7,7 +7,7 @@ import { logger } from '@activepieces/server-shared'
 import { ActivepiecesError, BeginExecuteFlowOperation, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowRunResponse, FlowVersionState, ResumeExecuteFlowOperation, SourceCode, TriggerHookType } from '@activepieces/shared'
 import chalk from 'chalk'
 
-type EngineConstants = 'serverUrl' | 'engineToken'
+type EngineConstants = 'publicUrl' | 'internalApiUrl' | 'engineToken'
 
 export type CodeArtifact = {
     name: string

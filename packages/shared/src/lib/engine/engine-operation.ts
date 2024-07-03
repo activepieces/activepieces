@@ -35,7 +35,8 @@ export type EngineOperation =
 export type BaseEngineOperation = {
     projectId: ProjectId
     engineToken: string
-    serverUrl: string
+    internalApiUrl: string
+    publicUrl: string
 }
 
 export type ExecuteValidateAuthOperation = BaseEngineOperation & {

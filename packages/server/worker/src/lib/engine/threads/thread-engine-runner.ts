@@ -29,7 +29,8 @@ export const threadEngineRunner: EngineRunner = {
         const input: ExecuteFlowOperation = {
             ...operation,
             engineToken,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
         }
 
         return execute(input, EngineOperationType.EXECUTE_FLOW)
@@ -55,7 +56,8 @@ export const threadEngineRunner: EngineRunner = {
             appWebhookUrl: await webhookUtils.getAppWebhookUrl({
                 appName: triggerPiece.pieceName,
             }),
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             webhookSecret: await webhookSecretsUtils.getWebhookSecret(lockedVersion),
             engineToken,
         }
@@ -77,7 +79,8 @@ export const threadEngineRunner: EngineRunner = {
         await prepareSandbox([lockedPiece], [])
         const input: ExecuteValidateAuthOperation = {
             ...operation,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
         return execute(input, EngineOperationType.EXECUTE_VALIDATE_AUTH)
@@ -116,7 +119,8 @@ export const threadEngineRunner: EngineRunner = {
             flowVersion: lockedFlowVersion,
             stepName: operation.stepName,
             projectId: operation.projectId,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
 
@@ -137,7 +141,8 @@ export const threadEngineRunner: EngineRunner = {
 
         const input: ExecutePropsOptions = {
             ...operation,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
         return execute(input, EngineOperationType.EXECUTE_PROPERTY)

@@ -8,7 +8,7 @@ import { StatusCodes } from 'http-status-codes'
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
 }
-const apiUrl = removeTrailingSlash(networkUtls.getApiUrlFromEnvironment())
+const apiUrl = removeTrailingSlash(networkUtls.getInternalApiUrl())
 
 export const workerApiService = (workerToken: string) => {
     const client = axios.create({
