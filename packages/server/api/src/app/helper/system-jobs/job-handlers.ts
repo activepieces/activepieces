@@ -4,8 +4,8 @@ import { SystemJobHandler, SystemJobName } from './common'
 const jobHandlers = new Map<SystemJobName, SystemJobHandler>()
 
 export const systemJobHandlers = {
-    registerJobHandler(name: SystemJobName, handler: SystemJobHandler): void {
-        jobHandlers.set(name, handler)
+    registerJobHandler<T extends SystemJobName>(name: T, handler: SystemJobHandler<T>): void {
+        jobHandlers.set(name, handler as SystemJobHandler)
     },
     getJobHandler(name: SystemJobName): SystemJobHandler {
         const jobHandler = jobHandlers.get(name)

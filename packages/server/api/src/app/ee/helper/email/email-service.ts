@@ -4,7 +4,7 @@ import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitati
 import dayjs from 'dayjs'
 import { getRedisConnection } from '../../../database/redis-connection'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
-import { SystemJobData, SystemJobName } from '../../../helper/system-jobs/common'
+import { SystemJobName } from '../../../helper/system-jobs/common'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
@@ -217,13 +217,13 @@ export const emailService = {
         })
     },
     
-    async sendingRemindersJobHandler(job: SystemJobData<{
+    async sendingRemindersJobHandler(job: {
         emails: string[]
         platformId: string
         issuesUrl: string
         issuesWithFormattedDate: PopulatedIssue[]
         projectDisplayName: string
-    }>): Promise<void> {
+    }): Promise<void> {
         await emailSender.send({
             emails: job.emails,
             platformId: job.platformId,

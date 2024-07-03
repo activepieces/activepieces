@@ -1,3 +1,5 @@
+import { PopulatedIssue } from '@activepieces/ee-shared'
+import { ProjectId } from '@activepieces/shared'
 import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
@@ -8,18 +10,40 @@ export enum SystemJobName {
     PIECES_SYNC = 'pieces-sync',
     TRIAL_TRACKER = 'trial-tracker',
     TRIGGER_DATA_CLEANER = 'trigger-data-cleaner',
-    ISSUES_REMINDER = 'issues-reminder',
+    ISSUES_REMINDER = 'ISSUES_REMINDER',
 }
 
-export type SystemJobData<T = any> = T
+type HardDeleteProjectSystemJobData = {
+    projectId: ProjectId
+}
+type IssuesReminderSystemJobData = {
+    emails: string[]
+    platformId: string
+    issuesUrl: string
+    issuesWithFormattedDate: PopulatedIssue[]
+    projectDisplayName: string
+}
 
-export type SystemJobDefinition<T extends SystemJobName, D = SystemJobData> = {
+type SystemJobDataMap = {
+    [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
+    [SystemJobName.ISSUES_REMINDER]: IssuesReminderSystemJobData
+    [SystemJobName.PROJECT_USAGE_REPORT]: Record<string, never>
+    [SystemJobName.USAGE_REPORT]: Record<string, never>
+    [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
+    [SystemJobName.PIECES_SYNC]: Record<string, never>
+    [SystemJobName.TRIAL_TRACKER]: Record<string, never>
+    [SystemJobName.TRIGGER_DATA_CLEANER]: Record<string, never>
+}
+
+export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
+
+export type SystemJobDefinition<T extends SystemJobName> = {
     name: T
-    data: D
+    data: SystemJobData<T>
     jobId?: string
 }
 
-export type SystemJobHandler<T = any> = (data: T) => Promise<void>
+export type SystemJobHandler<T extends SystemJobName = SystemJobName> = (data: SystemJobData<T>) => Promise<void>
 
 type OneTimeJobSchedule = {
     type: 'one-time'
@@ -31,17 +55,15 @@ type RepeatedJobSchedule = {
     cron: string
 }
 
-export type JobSchedule =
-    | OneTimeJobSchedule
-    | RepeatedJobSchedule
+export type JobSchedule = OneTimeJobSchedule | RepeatedJobSchedule
 
-type UpsertJobParams<T extends SystemJobName, D = SystemJobData> = {
-    job: SystemJobDefinition<T, D>
+type UpsertJobParams<T extends SystemJobName> = {
+    job: SystemJobDefinition<T>
     schedule: JobSchedule
 }
 
 export type SystemJobSchedule = {
     init(): Promise<void>
-    upsertJob<T extends SystemJobName, D = SystemJobData>(params: UpsertJobParams<T, D>): Promise<void>
+    upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<void>
     close(): Promise<void>
 }

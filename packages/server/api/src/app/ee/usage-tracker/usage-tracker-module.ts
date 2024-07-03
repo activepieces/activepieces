@@ -6,7 +6,7 @@ import { Between, Equal } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
 import { flagService } from '../../flags/flag.service'
 import { systemJobsSchedule } from '../../helper/system-jobs'
-import { SystemJobName } from '../../helper/system-jobs/common'
+import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
@@ -30,9 +30,9 @@ export const usageTrackerModule: FastifyPluginAsyncTypebox = async () => {
     })
 }
 
-async function sendUsageReport(timestamp: number): Promise<void> {
-    const startOfDay = dayjs(timestamp).startOf('day').toISOString()
-    const endOfDay = dayjs(timestamp).endOf('day').toISOString()
+async function sendUsageReport(job: SystemJobData<SystemJobName.USAGE_REPORT>): Promise<void> {
+    const startOfDay = dayjs(job.timestamp).startOf('day').toISOString()
+    const endOfDay = dayjs(job.timestamp).endOf('day').toISOString()
     const platforms = await platformRepo.find()
     const reports = []
     for (const platform of platforms) {

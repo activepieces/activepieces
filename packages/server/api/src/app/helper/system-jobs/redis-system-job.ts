@@ -101,12 +101,12 @@ const jobNotInQueue = async (name: SystemJobName, jobId?: string): Promise<boole
     return isNil(job)
 }
 
-const getJobByNameAndJobId = async <T extends SystemJobName>(name: T, jobId?: string): Promise<SystemJob | undefined> => {
+const getJobByNameAndJobId = async <T extends SystemJobName>(name: T, jobId?: string): Promise<SystemJob<T> | undefined> => {
     const allSystemJobs = await systemJobsQueue.getJobs()
-    return allSystemJobs.find(job => jobId ? (job.name === name && job.id === jobId) : job.name === name) as SystemJob | undefined
+    return allSystemJobs.find(job => jobId ? (job.name === name && job.id === jobId) : job.name === name) as SystemJob<T> | undefined
 }
 
-type SystemJob = Job<SystemJobData, unknown>
+type SystemJob<T extends SystemJobName> = Job<SystemJobData<T>, unknown>
 
 type AddJobToQueueParams<T extends SystemJobName> = {
     job: SystemJobDefinition<T>
