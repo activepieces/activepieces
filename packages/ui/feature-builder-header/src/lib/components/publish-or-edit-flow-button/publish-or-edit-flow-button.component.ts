@@ -86,6 +86,7 @@ export class PublishButtonComponent implements OnInit {
     );
     this.buttonTooltipText$ = combineLatest({
       buttonIsDisabled: this.disablePublishButton$,
+      flowState: this.flowState$,
       flowHasSteps: this.store.select(BuilderSelectors.selectFlowHasAnySteps),
       isCurrentFlowVersionPublished: this.isCurrentFlowVersionPublished$,
       isShowingPublishedVersion: this.store.select(
@@ -101,6 +102,9 @@ export class PublishButtonComponent implements OnInit {
         } else if (res.isCurrentFlowVersionPublished) {
           return $localize`Published`;
         } else if (res.buttonIsDisabled) {
+          if (res.flowState.isSaving || res.flowState.isPublishing) {
+            return '';
+          }
           return $localize`Your flow has invalid steps`;
         }
         return $localize`Publish Flow`;
