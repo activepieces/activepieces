@@ -215,9 +215,6 @@
       "@activepieces/piece-gmail": [
         "packages/pieces/community/gmail/src/index.ts"
       ],
-      "@activepieces/piece-gmail-dev": [
-        "packages/pieces/community/gmail-dev/src/index.ts"
-      ],
       "@activepieces/piece-google-calendar": [
         "packages/pieces/community/google-calendar/src/index.ts"
       ],
@@ -641,6 +638,9 @@
       "@activepieces/ui-feature-builder-header": [
         "packages/ui/feature-builder-header/src/index.ts"
       ],
+      "@activepieces/ui-feature-flow-actions-list": [
+        "packages/ui/feature-flow-actions-list/src/index.ts"
+      ],
       "@activepieces/ui-feature-git-sync": [
         "packages/ui/feature-git-sync/src/index.ts"
       ],
@@ -686,9 +686,6 @@
       "ee-components": ["packages/ee/ui/components/src/index.ts"],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "ee-project-members": ["packages/ee/ui/project-members/src/index.ts"],
-      "@activepieces/ui-feature-flow-actions-list": [
-        "packages/ui/feature-flow-actions-list/src/index.ts"
-      ],
       "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-ee-platform": ["packages/ee/ui/platform/src/index.ts"],
       "ui-feature-flow-builder": [
