@@ -1,6 +1,5 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import {
-  ConversationsListResponse,
   UsersListResponse,
   WebClient,
 } from '@slack/web-api';
@@ -12,13 +11,12 @@ export const slackInfo = Property.MarkDown({
 	  2. Click on Add apps to this channel.
 	  3. Search for and add the bot.
     
-  Channels dropdown will fetch upto 2000 channels.If you can't find the desired channel, you can obtain the Channel ID by right-clicking on the channel in Slack, selecting **View Channel Details**, and copying the Channel ID.
-  Then, press **(X)** to enter the Channel ID in the dropdown and paste it.`,
+    **Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(X)** and type the name directly.
+  `
 });
 export const slackChannel = <R extends boolean>(required: R) =>
   Property.Dropdown<string, R>({
     displayName: 'Channel',
-    description: 'Channel, private group, or IM channel to send message to.',
     required,
     refreshers: [],
     async options({ auth }) {
@@ -83,7 +81,6 @@ export const blocks = Property.Json({
 
 export const userId = Property.Dropdown<string>({
   displayName: 'User',
-  description: 'Message receiver',
   required: true,
   refreshers: [],
   async options({ auth }) {
@@ -123,7 +120,6 @@ export const userId = Property.Dropdown<string>({
 
 export const text = Property.LongText({
   displayName: 'Message',
-  description: 'The text of your message',
   required: true,
 });
 
