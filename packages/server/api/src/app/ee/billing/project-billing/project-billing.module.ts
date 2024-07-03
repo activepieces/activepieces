@@ -11,7 +11,7 @@ import { databaseConnection } from '../../../database/database-connection'
 import { FlowRunEntity } from '../../../flows/flow-run/flow-run-entity'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobName } from '../../../helper/system-jobs/common'
-import { registerJobHandler } from '../../../helper/system-jobs/job-handlers'
+import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { projectService } from '../../../project/project-service'
 import { projectUsageService } from '../../../project/usage/project-usage-service'
 import { projectLimitsService } from '../../project-plan/project-plan.service'
@@ -161,4 +161,4 @@ const projectBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     )
 }
 
-registerJobHandler(SystemJobName.PROJECT_USAGE_REPORT, sendProjectRecords)
+systemJobHandlers.registerJobHandler(SystemJobName.PROJECT_USAGE_REPORT, sendProjectRecords)

@@ -6,7 +6,7 @@ import { platformService } from '../../platform/platform.service'
 import { licenseKeysController } from './license-keys-controller'
 import { licenseKeysService } from './license-keys-service'
 import { SystemJobName } from '../../helper/system-jobs/common'
-import { registerJobHandler } from '../../helper/system-jobs/job-handlers'
+import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 
 export const licenseKeysModule: FastifyPluginAsyncTypebox = async (app) => {
     await systemJobsSchedule.upsertJob({
@@ -33,4 +33,4 @@ async function licenseKeyJobHandler(): Promise<void> {
     })
 }
 
-registerJobHandler(SystemJobName.TRIAL_TRACKER, licenseKeyJobHandler)
+systemJobHandlers.registerJobHandler(SystemJobName.TRIAL_TRACKER, licenseKeyJobHandler)

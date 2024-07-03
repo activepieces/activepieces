@@ -3,7 +3,7 @@ import { ProjectId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
-import { registerJobHandler } from '../../helper/system-jobs/job-handlers'
+import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { platformProjectService } from './platform-project-service'
 
 export const platformProjectSideEffects = {
@@ -28,7 +28,7 @@ const hardDeleteProjectJobHandler = async (job: SystemJobData<{ projectId: strin
     await platformProjectService.hardDelete({ id: job.projectId })
 }
 
-registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, hardDeleteProjectJobHandler)
+systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, hardDeleteProjectJobHandler)
 
 type OnSoftDeleteParams = {
     id: ProjectId

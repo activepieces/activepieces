@@ -2,7 +2,7 @@ import { logger } from '@activepieces/server-shared'
 import dayjs from 'dayjs'
 import cron from 'node-cron'
 import { SystemJobSchedule } from './common'
-import { getJobHandler } from './job-handlers'
+import { systemJobHandlers } from './job-handlers'
 
 const scheduled: Record<string, boolean> = {}
 
@@ -14,7 +14,7 @@ export const memorySystemJobSchedulerService: SystemJobSchedule = {
         if (scheduled[job.name]) {
             return
         }
-        const jobHandler = getJobHandler(job.name)
+        const jobHandler = systemJobHandlers.getJobHandler(job.name)
         switch (schedule.type) {
             case 'one-time': {
                 const diff = schedule.date.diff(dayjs(), 'milliseconds')

@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import { getRedisConnection } from '../../../database/redis-connection'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobData, SystemJobName } from '../../../helper/system-jobs/common'
-import { registerJobHandler } from '../../../helper/system-jobs/job-handlers'
+import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
@@ -266,7 +266,7 @@ function capitalizeFirstLetter(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
 }
 
-registerJobHandler(SystemJobName.ISSUES_REMINDER, sendingRemindersJobHandler)
+systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, sendingRemindersJobHandler)
 
 type SendInvitationArgs = {
     userInvitation: UserInvitation

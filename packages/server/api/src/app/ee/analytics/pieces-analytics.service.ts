@@ -5,7 +5,7 @@ import { FlowEntity } from '../../flows/flow/flow.entity'
 import { FlowVersionEntity } from '../../flows/flow-version/flow-version-entity'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
-import { registerJobHandler } from '../../helper/system-jobs/job-handlers'
+import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
 const flowRepo = repoFactory(FlowEntity)
@@ -83,4 +83,4 @@ async function piecesAnalyticsHandler(): Promise<void> {
     logger.info('Synced pieces analytics finished')
 }
 
-registerJobHandler(SystemJobName.PIECES_ANALYTICS, piecesAnalyticsHandler)
+systemJobHandlers.registerJobHandler(SystemJobName.PIECES_ANALYTICS, piecesAnalyticsHandler)

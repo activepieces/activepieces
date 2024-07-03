@@ -7,7 +7,7 @@ import { databaseConnection } from '../../database/database-connection'
 import { flagService } from '../../flags/flag.service'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
-import { registerJobHandler } from '../../helper/system-jobs/job-handlers'
+import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
 import { UserEntity } from '../../user/user-entity'
@@ -104,7 +104,7 @@ async function getAddedProjects(platformId: string, startDate: string, endDate: 
     }))
 }
 
-registerJobHandler(SystemJobName.USAGE_REPORT, sendUsageReport)
+systemJobHandlers.registerJobHandler(SystemJobName.USAGE_REPORT, sendUsageReport)
 
 type UsageReport = {
     timestamp: string

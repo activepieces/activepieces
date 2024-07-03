@@ -8,7 +8,7 @@ import { flagService } from '../flags/flag.service'
 import { parseAndVerify } from '../helper/json-validator'
 import { systemJobsSchedule } from '../helper/system-jobs'
 import { SystemJobName } from '../helper/system-jobs/common'
-import { registerJobHandler } from '../helper/system-jobs/job-handlers'
+import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { PieceMetadataEntity } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
 
@@ -124,4 +124,4 @@ async function syncPiecesJobHandler(): Promise<void> {
     await pieceSyncService.sync()
 }
 
-registerJobHandler(SystemJobName.PIECES_SYNC, syncPiecesJobHandler)
+systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, syncPiecesJobHandler)

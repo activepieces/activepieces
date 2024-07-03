@@ -8,7 +8,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs'
 import { flowService } from '../flow/flow.service'
 import { triggerEventService } from './trigger-event.service'
 import { SystemJobName } from '../../helper/system-jobs/common'
-import { registerJobHandler } from '../../helper/system-jobs/job-handlers'
+import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -90,4 +90,4 @@ async function triggerDataCleanerJobHandler(): Promise<void> {
     await triggerEventService.deleteEventsOlderThanFourteenDay()
 }
 
-registerJobHandler(SystemJobName.TRIGGER_DATA_CLEANER, triggerDataCleanerJobHandler)
+systemJobHandlers.registerJobHandler(SystemJobName.TRIGGER_DATA_CLEANER, triggerDataCleanerJobHandler)

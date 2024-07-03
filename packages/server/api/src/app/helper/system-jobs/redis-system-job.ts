@@ -4,7 +4,7 @@ import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 import { createRedisClient } from '../../database/redis-connection'
 import { JobSchedule, SystemJobData, SystemJobDefinition, SystemJobName, SystemJobSchedule } from './common'
-import { getJobHandler } from './job-handlers'
+import { systemJobHandlers } from './job-handlers'
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
@@ -33,7 +33,7 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
             async (job) => {
                 logger.debug({ name: 'RedisSystemJob#systemJobWorker' }, `Executing job (${job.name})`)
 
-                const jobHandler = getJobHandler(job.name)
+                const jobHandler = systemJobHandlers.getJobHandler(job.name)
                 await jobHandler(job.data)
             },
             {
