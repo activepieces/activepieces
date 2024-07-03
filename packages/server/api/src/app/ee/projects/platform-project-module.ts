@@ -1,6 +1,6 @@
 import { logger } from '@activepieces/server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
+import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { projectWorkerController } from '../../project/project-worker-controller'
 import { platformProjectController } from './platform-project-controller'
@@ -8,7 +8,7 @@ import { platformProjectService } from './platform-project-service'
 import { usersProjectController } from './platform-user-project-controller'
 
 export const platformProjectModule: FastifyPluginAsyncTypebox = async (app) => {
-    systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, async (job: SystemJobData<{ projectId: string }>): Promise<void> => {
+    systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, async (job: { projectId: string }): Promise<void> => {
         logger.info({ name: 'PlatformProjectSideEffects#hardDeleteProjectJobHandler', projectId: job.projectId })
         await platformProjectService.hardDelete({ id: job.projectId })
     })
