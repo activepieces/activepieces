@@ -6,6 +6,10 @@ export const countUniques = createAction({
   displayName: 'count uniques',
   description: 'counts the number of unique values of multiple fields',
   props: {
+    note: Property.MarkDown({
+      displayName: "Note",
+      description: "If you'd like to use the values with a previous step, click the X first."
+    }),
     values: Property.Array({
       displayName: "Values",
       description: "Enter your values here",

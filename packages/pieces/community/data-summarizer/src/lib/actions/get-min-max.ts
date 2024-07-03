@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { checkValueIsNumber, ErrorInfo, ValueInfo } from '../common'
 
 export const getMinMax = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -6,6 +7,10 @@ export const getMinMax = createAction({
   displayName: 'Min/Max',
   description: 'Gets the smallest and greatest values from a list of values',
   props: {
+    note: Property.MarkDown({
+      displayName: "Note",
+      description: "If you'd like to use the values with a previous step, click the X first."
+    }),
     values: Property.Array({
       displayName: 'Values',
       description: 'Enter your values here',
@@ -14,36 +19,22 @@ export const getMinMax = createAction({
   },
   async run({ propsValue }) {
     const values = propsValue.values;
-    let first = values[0];
-    if (typeof first === 'string') {
-      const parse = parseInt(first);
-      if (!Number.isNaN(parse)) first = parse;
+    const first = values[0];
+    let res = checkValueIsNumber(first, 0);
+    if (!res.isNumber) {
+      return res.info
     }
-    if (typeof first !== 'number') {
-      return {
-        error: `Failed to get the min/max values; invalid type given for value #1.
-                Expected type number, received (${typeof first})`,
-        first: first
-      };
-    }
-    let min = first;
-    let max = first;
+    let min = res.value;
+    let max = res.value;
 
-    for (const index in values) {
-      let value = values[index];
-      if (typeof value === 'string') {
-        const parse = parseInt(value);
-        if (!Number.isNaN(parse)) value = parse;
+    for (let i = 0; i < values.length; i++) {
+      const value = values[i];
+      res = checkValueIsNumber(value, i)
+      if (!res.isNumber) {
+        return res.info
       }
-      if (typeof value !== 'number') {
-        return {
-          error: `Failed to get the min/max values; invalid type given for value #${index + 1}.
-                Expected type number, received (${typeof value})`,
-          value: value
-        };
-      }
-      max = Math.max(max, value);
-      min = Math.min(min, value);
+      max = Math.max(max, res.value);
+      min = Math.min(min, res.value);
     }
 
     return {

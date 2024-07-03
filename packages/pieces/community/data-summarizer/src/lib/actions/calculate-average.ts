@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { checkValueIsNumber, ErrorInfo, ValueInfo } from '../common'
 
 export const calculateAverage = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -6,6 +7,10 @@ export const calculateAverage = createAction({
   displayName: 'Calculate Average',
   description: 'Calculates the average of a list of values',
   props: {
+    note: Property.MarkDown({
+      displayName: "Note",
+      description: "If you'd like to use the values with a previous step, click the X first."
+    }),
     values: Property.Array({
       displayName: "Values",
       description: "Enter your values here",
@@ -16,20 +21,13 @@ export const calculateAverage = createAction({
     const values = propsValue.values;
     let sum = 0
 
-    for (const index in values) {
-        let value = values[index]
-        if (typeof value === 'string') {
-          const parse = parseInt(value)
-          if (!Number.isNaN(parse)) value = parse
+    for (let i = 0; i < values.length; i++) {
+        const value = values[i]
+        const res = checkValueIsNumber(value, i)
+        if (!res.isNumber) {
+          return res.info
         }
-        if (typeof value !== 'number') {
-            return {
-                error: `Failed to calculate average; invalid type given for value #${index + 1}.
-                Expected type number, received (${typeof value})`,
-                value: value,
-            }
-        }
-        sum += value
+        sum += res.value
     }
 
     return {
