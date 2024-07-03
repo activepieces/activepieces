@@ -4,12 +4,54 @@
     <ap-upgrade-note [insideTab]="true" [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote"
         featureKey="ALERTS" videoUrl="https://cdn.activepieces.com/videos/showcase/alerts.mp4"></ap-upgrade-note>
     } @else {
-    <div class="ap-h-full">
-        <div class="ap-p-[0.875rem]">
-            <span class="ap-typography-subtitle-2">Receive email alerts for issues in flow runs, quota alerts, and
-                manage the recipient emails.</span>
+    <div class="ap-h-full ap-px-3 ">
+        <div class="ap-w-full ap-my-6">
+            <span class="ap-typography-subtitle-2" i18n>Manage runs alerts and recipient emails for
+                alert notifications.</span>
         </div>
-        <ap-markdown class="ap-mb-2" [data]="betaNote"> </ap-markdown>
+        <div class="ap-mb-6 ap-border ap-border-solid ap-border-gray-200">
+            <div class="ap-p-4">
+                <h3 class="ap-typography-subtitle-1 !ap-font-semibold" i18n>Alert Types</h3>
+                <ul class="ap-typography-body-2 ap-ml-4 ap-list-disc">
+                    <li class="ap-my-2" i18n>Flow failure alerts limited to 5/hour and 15/day per flow to avoid spam.
+                    </li>
+                    <li class="ap-mb-2" i18n>Nearing and exceeding the task usage quota ({{projectTasks$ | async}}
+                        tasks/month).</li>
+                    <li class="ap-mb-2">Reminders for ongoing issues</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="ap-w-full ap-mb-5">
+            <div class="ap-flex ap-gap-3 ap-items-center">
+                <mat-form-field class="ap-w-[350px]" subscriptSizing="dynamic">
+                    <mat-label>Send Run Alerts On</mat-label>
+                    <mat-select i18n-placeholder [formControl]="notificationControl">
+                        <mat-select-trigger>
+                            {{selectTriggerDisplayName$ | async}}
+                        </mat-select-trigger>
+                        @for (opt of optionItems; track opt.name) {
+                        <mat-option i18n [value]="opt.name">
+                            <div class="ap-flex ap-items-center ap-gap-[2px]">
+                                <div>
+                                    <div>{{opt.displayName}}</div>
+                                    <div class="ap-typography-caption ap-text-description">
+                                        {{opt.description}}
+                                    </div>
+                                </div>
+                            </div>
+                        </mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+                @if(updatingAlertsFrequency$ | async) {
+                <div class="spinner-border dark-spinner" role="status"> </div>
+                }
+
+            </div>
+
+        </div>
+
         <div class=" ap-min-h-[70%]">
             <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Alerts" i18n-aria-label>
                 <ng-container matColumnDef="receiver">
@@ -40,17 +82,17 @@
                 <tr mat-row [class.ap-hidden]="dataSource === undefined || (dataSource.isLoading$ | async) "
                     *matRowDef="let row; columns: displayedColumns"></tr>
             </table>
-            <ng-container *ngIf="dataSource === undefined ||  (dataSource.isLoading$ | async) === true">
-                <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
-                    <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
-                    </ap-loading-icon>
-                </div>
-            </ng-container>
-            <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
-                <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-mt-[30px]" i18n>
-                    No recipient emails have been added to this project
-                </div>
-            </ng-container>
+            @if(dataSource === undefined || (dataSource.isLoading$ | async) === true){
+            <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
+                <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
+                </ap-loading-icon>
+            </div>
+            }
+            @if(dataSource.data.length===0 && (dataSource.isLoading$ | async) === false){
+            <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-mt-[30px]" i18n>
+                No recipient emails have been added to this project
+            </div>
+            }
         </div>
     </div>
     }
@@ -60,5 +102,6 @@
         </div>
     </div>
 </div>
-<ng-container *ngIf="deleteAlert$ | async"></ng-container>
+@if(deleteAlert$ | async){}
+@if(updateNotificationsValue$ | async) {}
 @if(addAlertDialogClosed$ | async) {}
