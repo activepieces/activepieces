@@ -36,6 +36,7 @@ export const SendUserInvitationRequest = Type.Object({
     email: Type.String(),
     type: Type.Enum(InvitationType),
     platformRole: Type.Optional(Type.Enum(PlatformRole)),
+    projectId: Type.Union([Type.String(), Type.Null()]),
     projectRole: Type.Optional(Type.Enum(ProjectMemberRole)),
 })
 
