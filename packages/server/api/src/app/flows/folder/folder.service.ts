@@ -10,13 +10,13 @@ import {
     FolderId,
     isNil, ProjectId,
 } from '@activepieces/shared'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { flowService } from '../flow/flow.service'
 import { FolderEntity } from './folder.entity'
 
-export const folderRepo = databaseConnection().getRepository(FolderEntity)
+export const folderRepo = repoFactory(FolderEntity)
 
 export const flowFolderService = {
     async delete({
@@ -27,7 +27,7 @@ export const flowFolderService = {
         folderId: FolderId
     }): Promise<void> {
         const folder = await this.getOneOrThrow({ projectId, folderId })
-        await folderRepo.delete({
+        await folderRepo().delete({
             id: folder.id,
             projectId,
         })
@@ -52,7 +52,7 @@ export const flowFolderService = {
                 params: { message: 'Folder displayName is used' },
             })
         }
-        await folderRepo.update(folder.id, {
+        await folderRepo().update(folder.id, {
             displayName: request.displayName,
         })
         return this.getOneOrThrow({ projectId, folderId })
@@ -76,12 +76,12 @@ export const flowFolderService = {
             })
         }
         const folderId = apId()
-        await folderRepo.upsert({
+        await folderRepo().upsert({
             id: folderId,
             projectId,
             displayName: request.displayName,
         }, ['projectId', 'displayName'])
-        const folder = await folderRepo.findOneByOrFail({ projectId, id: folderId })
+        const folder = await folderRepo().findOneByOrFail({ projectId, id: folderId })
         return {
             ...folder,
             numberOfFlows: 0,
@@ -107,7 +107,7 @@ export const flowFolderService = {
             },
         })
         const paginationResponse = await paginator.paginate(
-            folderRepo.createQueryBuilder('folder').where({ projectId }),
+            folderRepo().createQueryBuilder('folder').where({ projectId }),
         )
         const numberOfFlowForEachFolder: Promise<number>[] = []
         const dtosList: FolderDto[] = []
@@ -131,7 +131,7 @@ export const flowFolderService = {
         projectId: ProjectId
         displayName: string
     }): Promise<Folder | null> {
-        return folderRepo.createQueryBuilder('folder')
+        return folderRepo().createQueryBuilder('folder')
             .where('folder.projectId = :projectId', { projectId })
             .andWhere('LOWER(folder.displayName) = LOWER(:displayName)', { displayName })
             .getOne()
@@ -143,7 +143,7 @@ export const flowFolderService = {
         projectId: ProjectId
         folderId: FolderId
     }): Promise<FolderDto> {
-        const folder = await folderRepo.findOneBy({ projectId, id: folderId })
+        const folder = await folderRepo().findOneBy({ projectId, id: folderId })
         if (!folder) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,

@@ -27,9 +27,9 @@ import {
     TelemetryEventName,
 } from '@activepieces/shared'
 import { In } from 'typeorm'
+import { repoFactory } from '../../core/db/repo-factory'
 import {
     APArrayContains,
-    databaseConnection,
 } from '../../database/database-connection'
 import { fileService } from '../../file/file.service'
 import { webhookResponseWatcher } from '../../flow-worker/helper/webhook-response-watcher'
@@ -43,8 +43,7 @@ import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { logSerializer } from './log-serializer'
 
-export const flowRunRepo =
-    databaseConnection().getRepository<FlowRun>(FlowRunEntity)
+export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 
 const getFlowRunOrCreate = async (
     params: GetOrCreateParams,
@@ -80,7 +79,7 @@ async function updateFlowRunToLatestFlowVersionIdAndReturnPayload(
     const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(
         flowRun.flowId,
     )
-    await flowRunRepo.update(flowRunId, {
+    await flowRunRepo().update(flowRunId, {
         flowVersionId: flowVersion.id,
     })
     return flowRun.steps ? flowRun.steps[flowVersion.trigger.name]?.output : undefined
@@ -122,7 +121,7 @@ export const flowRunService = {
             },
         })
 
-        let query = flowRunRepo.createQueryBuilder('flow_run').where({
+        let query = flowRunRepo().createQueryBuilder('flow_run').where({
             projectId,
             ...spreadIfDefined('flowId', flowId),
             environment: RunEnvironment.PRODUCTION,
@@ -184,7 +183,7 @@ export const flowRunService = {
     }): Promise<void> {
         logger.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
 
-        const flowRunToResume = await flowRunRepo.findOneBy({
+        const flowRunToResume = await flowRunRepo().findOneBy({
             id: flowRunId,
         })
 
@@ -227,7 +226,7 @@ export const flowRunService = {
             executionState,
         })
 
-        await flowRunRepo.update(flowRunId, {
+        await flowRunRepo().update(flowRunId, {
             status,
             tasks,
             ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
@@ -274,7 +273,7 @@ export const flowRunService = {
 
         flowRun.status = FlowRunStatus.RUNNING
 
-        const savedFlowRun = await flowRunRepo.save(flowRun)
+        const savedFlowRun = await flowRunRepo().save(flowRun)
 
         telemetry
             .trackProject(flow.projectId, {
@@ -326,19 +325,19 @@ export const flowRunService = {
 
         const { flowRunId, pauseMetadata } = params
 
-        await flowRunRepo.update(flowRunId, {
+        await flowRunRepo().update(flowRunId, {
             status: FlowRunStatus.PAUSED,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             pauseMetadata: pauseMetadata as any,
         })
 
-        const flowRun = await flowRunRepo.findOneByOrFail({ id: flowRunId })
+        const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
 
         await flowRunSideEffects.pause({ flowRun })
     },
 
     async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
-        const flowRun = await flowRunRepo.findOneBy({
+        const flowRun = await flowRunRepo().findOneBy({
             projectId: params.projectId,
             id: params.id,
         })
@@ -380,7 +379,7 @@ async function updateLogs({ flowRunId, projectId, executionState }: UpdateLogs):
     if (isNil(executionState)) {
         return undefined
     }
-    const flowRun = await flowRunRepo.findOneByOrFail({ id: flowRunId })
+    const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
     const serializedLogs = await logSerializer.serialize({
         executionState,
     })

@@ -3,16 +3,16 @@ import { Platform } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import { Between, Equal } from 'typeorm'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { flagService } from '../../flags/flag.service'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
 import { UserEntity } from '../../user/user-entity'
 
-const userRepo = databaseConnection().getRepository(UserEntity)
-const projectRepo = databaseConnection().getRepository(ProjectEntity)
-const platformRepo = databaseConnection().getRepository(PlatformEntity)
+const userRepo = repoFactory(UserEntity)
+const projectRepo = repoFactory(ProjectEntity)
+const platformRepo = repoFactory(PlatformEntity)
 
 export const usageTrackerModule: FastifyPluginAsyncTypebox = async () => {
     await systemJobsSchedule.upsertJob({
@@ -27,7 +27,7 @@ export const usageTrackerModule: FastifyPluginAsyncTypebox = async () => {
         async handler(job) {
             const startOfDay = dayjs(job.timestamp).startOf('day').toISOString()
             const endOfDay = dayjs(job.timestamp).endOf('day').toISOString()
-            const platforms = await platformRepo.find()
+            const platforms = await platformRepo().find()
             const reports = []
             for (const platform of platforms) {
                 if (flagService.isCloudPlatform(platform.id)) {
@@ -57,10 +57,10 @@ async function constructUsageReport(platform: Platform, startDate: string, endDa
     const version = await flagService.getCurrentRelease()
     const addedProjects = await getAddedProjects(platform.id, startDate, endDate)
     const addedUsers = await getAddedUsers(platform.id, startDate, endDate)
-    const activeProjects = await projectRepo.countBy({
+    const activeProjects = await projectRepo().countBy({
         platformId: Equal(platform.id),
     })
-    const activeUsers = await userRepo.countBy({
+    const activeUsers = await userRepo().countBy({
         platformId: Equal(platform.id),
     })
     return {
@@ -83,7 +83,7 @@ async function constructUsageReport(platform: Platform, startDate: string, endDa
 }
 
 async function getAddedUsers(platformId: string, startDate: string, endDate: string): Promise<UsageReport['details']['projects']> {
-    const users = await userRepo.findBy({
+    const users = await userRepo().findBy({
         platformId: Equal(platformId),
         created: Between(startDate, endDate),
     })
@@ -95,7 +95,7 @@ async function getAddedUsers(platformId: string, startDate: string, endDate: str
 }
 
 async function getAddedProjects(platformId: string, startDate: string, endDate: string): Promise<UsageReport['details']['projects']> {
-    const projects = await projectRepo.findBy({
+    const projects = await projectRepo().findBy({
         created: Between(startDate, endDate),
         platformId: Equal(platformId),
     })

@@ -7,7 +7,7 @@ import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
-import { databaseConnection } from '../../../database/database-connection'
+import { repoFactory } from '../../../core/db/repo-factory'
 import { FlowRunEntity } from '../../../flows/flow-run/flow-run-entity'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { projectService } from '../../../project/project-service'
@@ -16,8 +16,7 @@ import { projectLimitsService } from '../../project-plan/project-plan.service'
 import { projectBillingService } from './project-billing.service'
 import { stripeHelper, stripeWebhookSecret, TASKS_PAYG_PRICE_ID } from './stripe-helper'
 
-const flowRunRepo =
-    databaseConnection().getRepository<FlowRun>(FlowRunEntity)
+const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 
 const EVERY_4_HOURS = '59 */4 * * *'
 
@@ -43,7 +42,7 @@ async function sendProjectRecords(timestamp: number): Promise<void> {
 
     const startOfDay = dayjs(timestamp).startOf('day').toISOString()
     const endOfDay = dayjs(timestamp).endOf('day').toISOString()
-    const projectIds = await flowRunRepo.createQueryBuilder('flowRun')
+    const projectIds = await flowRunRepo().createQueryBuilder('flowRun')
         .select('DISTINCT "projectId"')
         .where({
             created: MoreThanOrEqual(startOfDay),

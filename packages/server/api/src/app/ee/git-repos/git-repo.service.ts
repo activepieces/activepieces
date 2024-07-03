@@ -15,7 +15,7 @@ import {
     isNil,
     SeekPage,
 } from '@activepieces/shared'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { flowService } from '../../flows/flow/flow.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
@@ -25,13 +25,13 @@ import { gitSyncHelper } from './git-sync-helper'
 import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
 
-const repo = databaseConnection().getRepository(GitRepoEntity)
+const repo = repoFactory(GitRepoEntity)
 
 export const gitRepoService = {
     async upsert(request: ConfigureRepoRequest): Promise<GitRepo> {
-        const existingRepo = await repo.findOneBy({ projectId: request.projectId })
+        const existingRepo = await repo().findOneBy({ projectId: request.projectId })
         const id = existingRepo?.id ?? apId()
-        await repo.upsert(
+        await repo().upsert(
             {
                 id,
                 projectId: request.projectId,
@@ -43,10 +43,10 @@ export const gitRepoService = {
             },
             ['projectId'],
         )
-        return repo.findOneByOrFail({ id })
+        return repo().findOneByOrFail({ id })
     },
     async getOneByProjectOrThrow({ projectId }: { projectId: string }): Promise<GitRepo> {
-        const gitRepo = await repo.findOneByOrFail({ projectId })
+        const gitRepo = await repo().findOneByOrFail({ projectId })
         if (isNil(gitRepo)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -58,7 +58,7 @@ export const gitRepoService = {
         return gitRepo
     },
     async getOrThrow({ id }: { id: string }): Promise<GitRepo> {
-        const gitRepo = await repo.findOneByOrFail({ id })
+        const gitRepo = await repo().findOneByOrFail({ id })
         if (isNil(gitRepo)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -71,7 +71,7 @@ export const gitRepoService = {
         return gitRepo
     },
     async list({ projectId }: { projectId: string }): Promise<SeekPage<GitRepo>> {
-        const repos = await repo.findBy({ projectId })
+        const repos = await repo().findBy({ projectId })
         return paginationHelper.createPage<GitRepo>(repos, null)
     },
     async push({ id, userId, request }: PushParams): Promise<void> {
@@ -89,7 +89,7 @@ export const gitRepoService = {
                 })
                 const flowName = mappingState.findSourceId(request.flowId) ?? request.flowId
                 await gitSyncHelper.upsertFlowToGit(flowName, flow, flowFolderPath)
-                await repo.update({ id: gitRepo.id }, {
+                await repo().update({ id: gitRepo.id }, {
                     mapping: mappingState.mapFlow({
                         sourceId: flowName,
                         targetId: flow.id,
@@ -100,7 +100,7 @@ export const gitRepoService = {
             }
             case GitPushOperationType.DELETE_FLOW: {
                 const mappingState = gitRepo.mapping ? new ProjectMappingState(gitRepo.mapping) : ProjectMappingState.empty()
-                await repo.update({ id: gitRepo.id }, {
+                await repo().update({ id: gitRepo.id }, {
                     mapping: mappingState.deleteFlow(request.flowId),
                 })
                 await gitSyncHelper.deleteFlowFromGit(request.flowId, flowFolderPath)
@@ -155,12 +155,12 @@ export const gitRepoService = {
                     break
             }
         }
-        await repo.update({ id: gitRepo.id }, { mapping: newMapState })
+        await repo().update({ id: gitRepo.id }, { mapping: newMapState })
         const errors = (await Promise.all(publishJobs)).filter((f): f is ProjectSyncError => f !== null)
         return toResponse(operations, errors)
     },
     async delete({ id, projectId }: DeleteParams): Promise<void> {
-        const gitRepo = await repo.findOneBy({ id, projectId })
+        const gitRepo = await repo().findOneBy({ id, projectId })
         if (isNil(gitRepo)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -170,7 +170,7 @@ export const gitRepoService = {
                 },
             })
         }
-        await repo.delete({ id, projectId })
+        await repo().delete({ id, projectId })
     },
 }
 

@@ -2,26 +2,26 @@ import { AppSystemProp, flowTimeoutSandbox, SharedSystemProp, system, webhookSec
 import { ApEdition, ApFlagId, Flag, isNil } from '@activepieces/shared'
 import axios from 'axios'
 import { webhookUtils } from 'server-worker'
-import { databaseConnection } from '../database/database-connection'
+import { repoFactory } from '../core/db/repo-factory'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
 
-const flagRepo = databaseConnection().getRepository(FlagEntity)
+const flagRepo = repoFactory(FlagEntity)
 
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {
-        return flagRepo.save({
+        return flagRepo().save({
             id: flag.id,
             value: flag.value,
         })
     },
     async getOne(flagId: ApFlagId): Promise<Flag | null> {
-        return flagRepo.findOneBy({
+        return flagRepo().findOneBy({
             id: flagId,
         })
     },
     async getAll(): Promise<Flag[]> {
-        const flags = await flagRepo.find({})
+        const flags = await flagRepo().find({})
         const now = new Date().toISOString()
         const created = now
         const updated = now

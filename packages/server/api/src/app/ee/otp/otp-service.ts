@@ -5,7 +5,7 @@ import {
 } from '@activepieces/ee-shared'
 import { apId, PlatformId, User, UserId } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { userService } from '../../user/user-service'
 import { emailService } from '../helper/email/email-service'
 import { otpGenerator } from './lib/otp-generator'
@@ -13,7 +13,7 @@ import { OtpEntity } from './otp-entity'
 
 const TEN_MINUTES = 10 * 60 * 1000
 
-const repo = databaseConnection().getRepository(OtpEntity)
+const repo = repoFactory(OtpEntity)
 
 export const otpService = {
     async createAndSend({
@@ -28,7 +28,7 @@ export const otpService = {
         if (!user) {
             return
         }
-        const existingOtp = await repo.findOneBy({
+        const existingOtp = await repo().findOneBy({
             userId: user.id,
             type,
         })
@@ -44,7 +44,7 @@ export const otpService = {
             value: otpGenerator.generate(),
             state: OtpState.PENDING,
         }
-        await repo.upsert(newOtp, ['userId', 'type'])
+        await repo().upsert(newOtp, ['userId', 'type'])
         await emailService.sendOtp({
             platformId,
             user,
@@ -54,7 +54,7 @@ export const otpService = {
     },
 
     async confirm({ userId, type, value }: ConfirmParams): Promise<boolean> {
-        const otp = await repo.findOneByOrFail({
+        const otp = await repo().findOneByOrFail({
             userId,
             type,
         })
@@ -63,7 +63,7 @@ export const otpService = {
         const otpMatches = otp.value === value
         const verdict = otpIsNotExpired && otpMatches && otpIsPending
         if (verdict) {
-            await repo.update(otp.id, {
+            await repo().update(otp.id, {
                 state: OtpState.CONFIRMED,
             })
         }

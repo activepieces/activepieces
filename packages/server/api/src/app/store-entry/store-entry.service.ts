@@ -4,16 +4,15 @@ import {
     PutStoreEntryRequest,
     StoreEntry,
 } from '@activepieces/shared'
-import { databaseConnection } from '../database/database-connection'
+import { repoFactory } from '../core/db/repo-factory'
 import { StoreEntryEntity } from './store-entry-entity'
 
-const storeEntryRepo =
-  databaseConnection().getRepository<StoreEntry>(StoreEntryEntity)
+const storeEntryRepo = repoFactory<StoreEntry>(StoreEntryEntity)
 
 export const storeEntryService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: PutStoreEntryRequest }): Promise<StoreEntry | null> {
 
-        const insertResult = await storeEntryRepo.upsert({
+        const insertResult = await storeEntryRepo().upsert({
             id: apId(),
             key: request.key,
             value: request.value,
@@ -36,7 +35,7 @@ export const storeEntryService = {
         projectId: ProjectId
         key: string
     }): Promise<StoreEntry | null> {
-        return storeEntryRepo.findOneBy({
+        return storeEntryRepo().findOneBy({
             projectId,
             key,
         })
@@ -48,7 +47,7 @@ export const storeEntryService = {
         projectId: ProjectId
         key: string
     }): Promise<void> {
-        await storeEntryRepo.delete({
+        await storeEntryRepo().delete({
             projectId,
             key,
         })

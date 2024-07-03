@@ -13,7 +13,7 @@ import {
     SeekPage,
 } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import {
     ApplicationEventHooks,
     CreateAuditEventParam,
@@ -25,7 +25,7 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
 
-const auditLogRepo = databaseConnection().getRepository(AuditEventEntity)
+const auditLogRepo = repoFactory(AuditEventEntity)
 
 type AuditLogService = {
     send: ApplicationEventHooks['send']
@@ -60,7 +60,7 @@ export const auditLogService: AuditLogService = {
             },
         })
         const paginationResponse = await paginator.paginate(
-            auditLogRepo.createQueryBuilder('audit_event').where({ platformId }),
+            auditLogRepo().createQueryBuilder('audit_event').where({ platformId }),
         )
         return paginationHelper.createPage<ApplicationEvent>(
             paginationResponse.data,
@@ -189,5 +189,5 @@ const saveEvent = async (
             break
         }
     }
-    await auditLogRepo.save(eventToSave)
+    await auditLogRepo().save(eventToSave)
 }

@@ -9,7 +9,7 @@ import {
     FileType,
     isNil,
     ProjectId } from '@activepieces/shared'
-import { databaseConnection } from '../database/database-connection'
+import { repoFactory } from '../core/db/repo-factory'
 import { FileEntity } from './file.entity'
 
 type SaveParams = {
@@ -31,7 +31,7 @@ type DeleteOneParams = {
     projectId: ProjectId
 }
 
-const fileRepo = databaseConnection().getRepository<File>(FileEntity)
+const fileRepo = repoFactory<File>(FileEntity)
 
 export const fileService = {
     async save({
@@ -51,7 +51,7 @@ export const fileService = {
             compression,
         }
 
-        const savedFile = await fileRepo.save(file)
+        const savedFile = await fileRepo().save(file)
 
         logger.info(
             `[FileService#save] fileId=${savedFile.id} data.length=${data.length}`,
@@ -61,7 +61,7 @@ export const fileService = {
     },
 
     async getOne({ projectId, fileId }: GetOneParams): Promise<File | null> {
-        const file = await fileRepo.findOneBy({
+        const file = await fileRepo().findOneBy({
             projectId,
             id: fileId,
         })
@@ -96,6 +96,6 @@ export const fileService = {
 
     async delete({ fileId, projectId }: DeleteOneParams): Promise<void> {
         logger.info('Deleted file with Id ' + fileId)
-        await fileRepo.delete({ id: fileId, projectId })
+        await fileRepo().delete({ id: fileId, projectId })
     },
 }

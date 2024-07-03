@@ -11,16 +11,16 @@ import {
     spreadIfDefined,
     UpdatePlatformRequestBody,
     UserId } from '@activepieces/shared'
-import { databaseConnection } from '../database/database-connection'
+import { repoFactory } from '../core/db/repo-factory'
 import { defaultTheme } from '../flags/theme'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
-const repo = databaseConnection().getRepository<Platform>(PlatformEntity)
+const repo = repoFactory<Platform>(PlatformEntity)
 
 export const platformService = {
     async hasAnyPlatforms(): Promise<boolean> {
-        const count = await repo.count()
+        const count = await repo().count()
         return count > 0
     },
     async create(params: AddParams): Promise<Platform> {
@@ -66,7 +66,7 @@ export const platformService = {
             premiumPieces: [],
         }
 
-        const savedPlatform = await repo.save(newPlatform)
+        const savedPlatform = await repo().save(newPlatform)
 
         await userService.addOwnerToPlatform({
             id: ownerId,
@@ -78,7 +78,7 @@ export const platformService = {
     },
 
     async getOldestPlatform(): Promise<Platform | null> {
-        return repo.findOne({
+        return repo().findOne({
             where: {},
             order: {
                 created: 'ASC',
@@ -131,11 +131,11 @@ export const platformService = {
             ...spreadIfDefined('premiumPieces', params.premiumPieces),
         }
 
-        return repo.save(updatedPlatform)
+        return repo().save(updatedPlatform)
     },
 
     async getOneOrThrow(id: PlatformId): Promise<Platform> {
-        const platform = await repo.findOneBy({
+        const platform = await repo().findOneBy({
             id,
         })
 
@@ -156,7 +156,7 @@ export const platformService = {
     },
 
     async getOne(id: PlatformId): Promise<Platform | null> {
-        return repo.findOneBy({
+        return repo().findOneBy({
             id,
         })
     },

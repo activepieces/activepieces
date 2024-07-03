@@ -4,13 +4,12 @@ import {
     UpsertAppCredentialRequest,
 } from '@activepieces/ee-shared'
 import { apId, Cursor, ProjectId, SeekPage } from '@activepieces/shared'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { AppCredentialEntity } from './app-credentials.entity'
 
-export const appCredentialRepo =
-  databaseConnection().getRepository(AppCredentialEntity)
+export const appCredentialRepo = repoFactory(AppCredentialEntity)
 
 export const appCredentialService = {
     async list(
@@ -29,7 +28,7 @@ export const appCredentialService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        let queryBuilder = appCredentialRepo
+        let queryBuilder = appCredentialRepo()
             .createQueryBuilder('app_credential')
             .where({ projectId })
         if (appName !== undefined) {
@@ -39,7 +38,7 @@ export const appCredentialService = {
         return paginationHelper.createPage<AppCredential>(data, cursor)
     },
     async getOneOrThrow(id: AppCredentialId): Promise<AppCredential> {
-        return appCredentialRepo.findOneByOrFail({ id })
+        return appCredentialRepo().findOneByOrFail({ id })
     },
     async upsert({
         projectId,
@@ -49,7 +48,7 @@ export const appCredentialService = {
         request: UpsertAppCredentialRequest
     }): Promise<AppCredential | null> {
         const newId = request.id ?? apId()
-        await appCredentialRepo.upsert(
+        await appCredentialRepo().upsert(
             {
                 id: newId,
                 projectId,
@@ -57,10 +56,10 @@ export const appCredentialService = {
             },
             ['id'],
         )
-        return appCredentialRepo.findOneBy({ projectId, appName: request.appName })
+        return appCredentialRepo().findOneBy({ projectId, appName: request.appName })
     },
     async delete({ id, projectId }: DeleteParams): Promise<void> {
-        await appCredentialRepo.delete({
+        await appCredentialRepo().delete({
             id,
             projectId,
         })

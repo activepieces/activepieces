@@ -5,7 +5,7 @@ import {
 } from '@activepieces/ee-shared'
 import { SharedSystemProp, system } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { cloudflareHostnameServices } from './cloudflare-api.service'
@@ -17,8 +17,7 @@ type HostnameDetailsResponse = {
     hostname: string
 }
 
-const customDomainRepo =
-    databaseConnection().getRepository<CustomDomain>(CustomDomainEntity)
+const customDomainRepo = repoFactory<CustomDomain>(CustomDomainEntity)
 
 const isCloudEdition = system.getEdition() === ApEdition.CLOUD && system.getOrThrow(SharedSystemProp.ENVIRONMENT) !== ApEnvironment.TESTING
 
@@ -32,13 +31,13 @@ export const customDomainService = {
                 await cloudflareHostnameServices.delete(hostnameDetails.data.result[0].id)
             }
         }
-        await customDomainRepo.delete({
+        await customDomainRepo().delete({
             id: request.id,
             platformId: request.platformId,
         })
     },
     async getOneByIdOrThrow(id: string) {
-        const customDomain = await customDomainRepo.findOneBy({
+        const customDomain = await customDomainRepo().findOneBy({
             id,
         })
 
@@ -56,14 +55,14 @@ export const customDomainService = {
     async getOneByDomain(request: {
         domain: string
     }): Promise<CustomDomain | null> {
-        return customDomainRepo.findOneBy({
+        return customDomainRepo().findOneBy({
             domain: request.domain,
         })
     },
     async getOneByPlatform(request: {
         platformId: string
     }): Promise<CustomDomain | null> {
-        return customDomainRepo.findOneBy({
+        return customDomainRepo().findOneBy({
             platformId: request.platformId,
         })
     },
@@ -87,7 +86,7 @@ export const customDomainService = {
         platformId: string
         id: string
     }): Promise<{ status: string }> {
-        const customDomain = await customDomainRepo.findOneBy({
+        const customDomain = await customDomainRepo().findOneBy({
             id: request.id,
         })
 
@@ -105,7 +104,7 @@ export const customDomainService = {
         const patchResult = await cloudflareHostnameServices.update(hostnameDetails.data.result[0].id)
         const status = patchResult.data.result.status
 
-        await customDomainRepo.update({
+        await customDomainRepo().update({
             platformId: request.platformId,
             id: request.id,
         }, {
@@ -121,7 +120,7 @@ export const customDomainService = {
             customDomain: CustomDomain
             cloudflareHostnameData: null | HostnameDetailsResponse
         }> {
-        const customDomain = await customDomainRepo.save({
+        const customDomain = await customDomainRepo().save({
             id: apId(),
             domain: request.domain,
             platformId: request.platformId,
@@ -163,7 +162,7 @@ export const customDomainService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = customDomainRepo
+        const queryBuilder = customDomainRepo()
             .createQueryBuilder('custom_domain')
             .where({
                 platformId,

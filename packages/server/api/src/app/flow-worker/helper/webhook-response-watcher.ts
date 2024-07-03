@@ -2,7 +2,7 @@ import { AppSystemProp, system } from '@activepieces/server-shared'
 import { apId, EngineHttpResponse } from '@activepieces/shared'
 import { logger } from '@sentry/utils'
 import { StatusCodes } from 'http-status-codes'
-import { pubSub } from '../../helper/pubsub'
+import { pubsub } from '../../helper/pubsub'
 
 const listeners = new Map<string, (flowResponse: EngineResponseWithId) => void>()
 const WEBHOOK_TIMEOUT_MS = (system.getNumber(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) ?? 30) * 1000
@@ -14,7 +14,7 @@ export const webhookResponseWatcher = {
     },
     async init(): Promise<void> {
         logger.info('[engineWatcher#init] Initializing engine run watcher')
-        await pubSub.subscribe(
+        await pubsub().subscribe(
             `engine-run:sync:${SERVER_ID}`,
             (_channel, message) => {
                 const parsedMessasge: EngineResponseWithId = JSON.parse(message)
@@ -61,10 +61,10 @@ export const webhookResponseWatcher = {
     ): Promise<void> {
         logger.info(`[engineWatcher#publish] requestId=${requestId}`)
         const message: EngineResponseWithId = { requestId, httpResponse }
-        await pubSub.publish(`engine-run:sync:${workerServerId}`, JSON.stringify(message))
+        await pubsub().publish(`engine-run:sync:${workerServerId}`, JSON.stringify(message))
     },
     async shutdown(): Promise<void> {
-        await pubSub.unsubscribe(`engine-run:sync:${SERVER_ID}`)
+        await pubsub().unsubscribe(`engine-run:sync:${SERVER_ID}`)
     },
 }
 

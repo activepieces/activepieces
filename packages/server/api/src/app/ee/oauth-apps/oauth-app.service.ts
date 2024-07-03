@@ -11,13 +11,13 @@ import {
     isNil,
     SeekPage,
 } from '@activepieces/shared'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { OAuthAppEntity, OAuthAppWithSecret } from './oauth-app.entity'
 
-const oauthRepo = databaseConnection().getRepository(OAuthAppEntity)
+const oauthRepo = repoFactory(OAuthAppEntity)
 
 export const oauthAppService = {
     async upsert({
@@ -27,7 +27,7 @@ export const oauthAppService = {
         platformId: string
         request: UpsertOAuth2AppRequest
     }): Promise<OAuthApp> {
-        await oauthRepo.upsert(
+        await oauthRepo().upsert(
             {
                 platformId,
                 ...request,
@@ -36,7 +36,7 @@ export const oauthAppService = {
             },
             ['platformId', 'pieceName'],
         )
-        const connection = await oauthRepo.findOneByOrFail({
+        const connection = await oauthRepo().findOneByOrFail({
             platformId,
             pieceName: request.pieceName,
         })
@@ -51,7 +51,7 @@ export const oauthAppService = {
         pieceName: string
         clientId?: string
     }): Promise<OAuthAppWithSecret> {
-        const oauthApp = await oauthRepo.findOneByOrFail({
+        const oauthApp = await oauthRepo().findOneByOrFail({
             platformId,
             pieceName,
             clientId,
@@ -79,7 +79,7 @@ export const oauthAppService = {
             },
         })
         const { data, cursor } = await paginator.paginate(
-            oauthRepo.createQueryBuilder('oauth_app').where({ platformId }),
+            oauthRepo().createQueryBuilder('oauth_app').where({ platformId }),
         )
         return paginationHelper.createPage<OAuthApp>(data, cursor)
     },
@@ -90,7 +90,7 @@ export const oauthAppService = {
         platformId: string
         id: string
     }): Promise<void> {
-        const oauthApp = await oauthRepo.findOneBy({ platformId, id })
+        const oauthApp = await oauthRepo().findOneBy({ platformId, id })
         if (isNil(oauthApp)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -99,6 +99,6 @@ export const oauthAppService = {
                 },
             })
         }
-        await oauthRepo.delete({ platformId, id })
+        await oauthRepo().delete({ platformId, id })
     },
 }

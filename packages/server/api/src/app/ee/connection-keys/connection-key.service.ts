@@ -18,13 +18,13 @@ import { ActivepiecesError, apId, AppConnection,
 } from '@activepieces/shared'
 import jsonwebtoken from 'jsonwebtoken'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { appCredentialService } from '../app-credentials/app-credentials.service'
 import { ConnectionKeyEntity } from './connection-key.entity'
 
-const connectionKeyRepo = databaseConnection().getRepository(ConnectionKeyEntity)
+const connectionKeyRepo = repoFactory(ConnectionKeyEntity)
 
 export const connectionKeyService = {
     async getConnection({
@@ -127,7 +127,7 @@ export const connectionKeyService = {
                 format: 'pem',
             },
         })
-        const savedConnection: ConnectionKey = await connectionKeyRepo.save({
+        const savedConnection: ConnectionKey = await connectionKeyRepo().save({
             id: apId(),
             projectId,
             settings: {
@@ -159,14 +159,14 @@ export const connectionKeyService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = connectionKeyRepo
+        const queryBuilder = connectionKeyRepo()
             .createQueryBuilder('connection_key')
             .where({ projectId })
         const { data, cursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<ConnectionKey>(data, cursor)
     },
     async delete(id: ConnectionKeyId): Promise<void> {
-        await connectionKeyRepo.delete({
+        await connectionKeyRepo().delete({
             id,
         })
     },
@@ -176,7 +176,7 @@ async function getConnectioName(request: {
     projectId: string
     token: string
 }): Promise<string | null> {
-    const connectionKeys = await connectionKeyRepo.findBy({
+    const connectionKeys = await connectionKeyRepo().findBy({
         projectId: request.projectId,
     })
     let connectionName: string | null = null

@@ -1,9 +1,10 @@
 
 import { logger, system } from '@activepieces/server-shared'
-import  { FastifyInstance } from 'fastify'
+import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
 import { databaseConnection } from './app/database/database-connection'
 import { seedDevData } from './app/database/seeds/dev-seeds'
+import { initializeLock } from './app/helper/lock'
 import { setupServer } from './app/server'
 import { workerPostBoot } from './app/worker'
 
@@ -55,9 +56,12 @@ function setupTimeZone(): void {
 
 const main = async (): Promise<void> => {
     setupTimeZone()
-    await databaseConnection().initialize()
-    await databaseConnection().runMigrations()
-    await seedDevData()
+    if (system.isApp()) {
+        await databaseConnection().initialize()
+        await databaseConnection().runMigrations()
+        await seedDevData()
+        initializeLock()
+    }
     const app = await setupServer()
 
     process.on('SIGINT', () => {

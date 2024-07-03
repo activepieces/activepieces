@@ -23,7 +23,7 @@ import {
 import dayjs from 'dayjs'
 import { engineRunner } from 'server-worker'
 import { Equal, FindOperator, ILike } from 'typeorm'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
 import { generateEngineToken } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'
@@ -40,7 +40,7 @@ import {
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 
-const repo = databaseConnection().getRepository(AppConnectionEntity)
+const repo = repoFactory(AppConnectionEntity)
 
 export const appConnectionService = {
     async validateConnectionName({ connectionName, projectId }: ValidateConnectionNameRequestBody & { projectId: ProjectId }): Promise<ValidateConnectionNameResponse> {
@@ -52,7 +52,7 @@ export const appConnectionService = {
                 error: 'Connection name is invalid',
             }
         }
-        const connection = await repo.findOneBy({ name: connectionName, projectId })
+        const connection = await repo().findOneBy({ name: connectionName, projectId })
         const isValid = isNil(connection)
         return {
             isValid,
@@ -72,7 +72,7 @@ export const appConnectionService = {
             ...request.value,
         })
 
-        const existingConnection = await repo.findOneBy({
+        const existingConnection = await repo().findOneBy({
             name: request.name,
             projectId,
         })
@@ -85,9 +85,9 @@ export const appConnectionService = {
             projectId,
         }
 
-        await repo.upsert(connection, ['name', 'projectId'])
+        await repo().upsert(connection, ['name', 'projectId'])
 
-        const updatedConnection = await repo.findOneByOrFail({
+        const updatedConnection = await repo().findOneByOrFail({
             name: request.name,
             projectId,
         })
@@ -98,7 +98,7 @@ export const appConnectionService = {
         projectId,
         name,
     }: GetOneByName): Promise<AppConnection | null> {
-        const encryptedAppConnection = await repo.findOneBy({
+        const encryptedAppConnection = await repo().findOneBy({
             projectId,
             name,
         })
@@ -120,7 +120,7 @@ export const appConnectionService = {
     },
 
     async getOneOrThrow(params: GetOneParams): Promise<AppConnection> {
-        const connectionById = await repo.findOneBy({
+        const connectionById = await repo().findOneBy({
             id: params.id,
             projectId: params.projectId,
         })
@@ -140,7 +140,7 @@ export const appConnectionService = {
     },
 
     async delete(params: DeleteParams): Promise<void> {
-        await repo.delete(params)
+        await repo().delete(params)
     },
 
     async list({
@@ -171,7 +171,7 @@ export const appConnectionService = {
         if (!isNil(name)) {
             querySelector.name = ILike(`%${name}%`)
         }
-        const queryBuilder = repo
+        const queryBuilder = repo()
             .createQueryBuilder('app_connection')
             .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
@@ -196,7 +196,7 @@ export const appConnectionService = {
     },
 
     async countByProject({ projectId }: CountByProjectParams): Promise<number> {
-        return repo.countBy({ projectId })
+        return repo().countBy({ projectId })
     },
 }
 
@@ -367,7 +367,7 @@ async function lockAndRefreshConnection({
     let appConnection: AppConnection | null = null
 
     try {
-        const encryptedAppConnection = await repo.findOneBy({
+        const encryptedAppConnection = await repo().findOneBy({
             projectId,
             name,
         })
@@ -380,7 +380,7 @@ async function lockAndRefreshConnection({
         }
         const refreshedAppConnection = await refresh(appConnection)
 
-        await repo.update(refreshedAppConnection.id, {
+        await repo().update(refreshedAppConnection.id, {
             status: AppConnectionStatus.ACTIVE,
             value: encryptUtils.encryptObject(refreshedAppConnection.value),
         })
@@ -390,7 +390,7 @@ async function lockAndRefreshConnection({
         exceptionHandler.handle(e)
         if (!isNil(appConnection) && oauth2Util.isUserError(e)) {
             appConnection.status = AppConnectionStatus.ERROR
-            await repo.update(appConnection.id, {
+            await repo().update(appConnection.id, {
                 status: appConnection.status,
                 updated: dayjs().toISOString(),
             })

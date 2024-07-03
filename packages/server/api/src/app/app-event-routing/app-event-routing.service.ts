@@ -1,12 +1,12 @@
 import { logger } from '@activepieces/server-shared'
 import { apId, FlowId, ProjectId } from '@activepieces/shared'
-import { databaseConnection } from '../database/database-connection'
+import { repoFactory } from '../core/db/repo-factory'
 import {
     AppEventRouting,
     AppEventRoutingEntity,
 } from './app-event-routing.entity'
 
-const appEventRoutingRepo = databaseConnection().getRepository(
+const appEventRoutingRepo = repoFactory(
     AppEventRoutingEntity,
 )
 
@@ -20,7 +20,7 @@ export const appEventRoutingService = {
         event: string
         identifierValue: string
     }): Promise<AppEventRouting[]> {
-        return appEventRoutingRepo.findBy({ appName, event, identifierValue })
+        return appEventRoutingRepo().findBy({ appName, event, identifierValue })
     },
     async createListeners({
         appName,
@@ -40,7 +40,7 @@ export const appEventRoutingService = {
         )
         const upsertCommands: Promise<unknown>[] = []
         events.forEach((event) => {
-            const upsert = appEventRoutingRepo.upsert(
+            const upsert = appEventRoutingRepo().upsert(
                 {
                     id: apId(),
                     appName,
@@ -62,7 +62,7 @@ export const appEventRoutingService = {
         projectId: ProjectId
         flowId: FlowId
     }): Promise<void> {
-        await appEventRoutingRepo.delete({
+        await appEventRoutingRepo().delete({
             projectId,
             flowId,
         })

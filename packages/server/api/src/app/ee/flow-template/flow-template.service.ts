@@ -12,12 +12,11 @@ import {
     TemplateType,
 } from '@activepieces/shared'
 import { ArrayContains, ArrayOverlap, Equal, ILike } from 'typeorm'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { FlowTemplateEntity } from './flow-template.entity'
 
-const templateRepo =
-  databaseConnection().getRepository<FlowTemplate>(FlowTemplateEntity)
+const templateRepo = repoFactory<FlowTemplate>(FlowTemplateEntity)
 
 export const flowTemplateService = {
     upsert: async (
@@ -35,7 +34,7 @@ export const flowTemplateService = {
         const flowTemplate: FlowVersionTemplate = template
         const newTags = tags ?? []
         const newId = id ?? apId()
-        await templateRepo.upsert(
+        await templateRepo().upsert(
             {
                 id: newId,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -53,7 +52,7 @@ export const flowTemplateService = {
             },
             ['id'],
         )
-        return templateRepo.findOneByOrFail({
+        return templateRepo().findOneByOrFail({
             id: newId,
         })
     },
@@ -74,14 +73,14 @@ export const flowTemplateService = {
         }
         commonFilters.platformId = Equal(platformId)
         commonFilters.type = Equal(TemplateType.PLATFORM)
-        const templates = await templateRepo
+        const templates = await templateRepo()
             .createQueryBuilder('flow_template')
             .where(commonFilters)
             .getMany()
         return paginationHelper.createPage(templates, null)
     },
     getOrThrow: async (id: string): Promise<FlowTemplate> => {
-        const template = await templateRepo.findOneBy({
+        const template = await templateRepo().findOneBy({
             id,
         })
         if (isNil(template)) {
@@ -95,7 +94,7 @@ export const flowTemplateService = {
         return template
     },
     async delete({ id }: { id: string }): Promise<void> {
-        await templateRepo.delete({
+        await templateRepo().delete({
             id,
         })
     },

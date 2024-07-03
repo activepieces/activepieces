@@ -5,9 +5,9 @@ import { createRedisClient } from '../database/redis-connection'
 
 let redLock: RedLock
 let redisConnection: Redis
-const queueMode = system.get(AppSystemProp.QUEUE_MODE)!
+const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
 
-const initializeLock = () => {
+export const initializeLock = () => {
     switch (queueMode) {
         case QueueMode.REDIS: {
             redisConnection = createRedisClient()
@@ -61,5 +61,3 @@ export const acquireLock = async ({
             throw new Error(`Unknown queue mode: ${queueMode}`)
     }
 }
-
-initializeLock()

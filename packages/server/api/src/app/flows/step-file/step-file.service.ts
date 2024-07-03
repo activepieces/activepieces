@@ -8,12 +8,12 @@ import {
     StepFileUpsert,
     StepFileWithUrl,
 } from '@activepieces/shared'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { domainHelper } from '../../helper/domain-helper'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { StepFileEntity } from './step-file.entity'
 
-const stepFileRepo = databaseConnection().getRepository<StepFile>(StepFileEntity)
+const stepFileRepo = repoFactory<StepFile>(StepFileEntity)
 
 type FileToken = {
     fileId: string
@@ -31,7 +31,7 @@ export const stepFileService = {
     }): Promise<StepFile | null> {
         const fileId = apId()
         const bufferFile = request.file as Buffer
-        await stepFileRepo.upsert(
+        await stepFileRepo().upsert(
             {
                 id: fileId,
                 flowId: request.flowId,
@@ -45,7 +45,7 @@ export const stepFileService = {
         )
         return encrichWithUrl(
             hostname,
-            await stepFileRepo.findOneByOrFail({
+            await stepFileRepo().findOneByOrFail({
                 id: fileId,
                 projectId,
             }),
@@ -57,7 +57,7 @@ export const stepFileService = {
                 jwt: token,
                 key: await jwtUtils.getJwtSecret(),
             })
-            const file = await stepFileRepo.findOneByOrFail({
+            const file = await stepFileRepo().findOneByOrFail({
                 id: decodedToken.fileId,
             })
             return file
@@ -72,7 +72,7 @@ export const stepFileService = {
         }
     },
     async get({ projectId, id }: StepFileGet): Promise<StepFile | null> {
-        const file = stepFileRepo.findOneBy({
+        const file = stepFileRepo().findOneBy({
             id,
             projectId,
         })
@@ -87,7 +87,7 @@ export const stepFileService = {
         return file
     },
     async delete({ projectId, id }: StepFileGet): Promise<void> {
-        const file = stepFileRepo.findOneBy({
+        const file = stepFileRepo().findOneBy({
             id,
             projectId,
         })
@@ -99,7 +99,7 @@ export const stepFileService = {
                 },
             })
         }
-        await stepFileRepo.delete({
+        await stepFileRepo().delete({
             id,
             projectId,
         })
@@ -113,7 +113,7 @@ export const stepFileService = {
         flowId: string
         stepName: string
     }): Promise<void> {
-        await stepFileRepo.delete({
+        await stepFileRepo().delete({
             projectId,
             flowId,
             stepName,

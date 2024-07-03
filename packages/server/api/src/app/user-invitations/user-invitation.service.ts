@@ -2,8 +2,7 @@
 import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { IsNull, MoreThanOrEqual } from 'typeorm'
-
-import { databaseConnection } from '../database/database-connection'
+import { repoFactory } from '../core/db/repo-factory'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../ee/helper/email/email-service'
 import { platformDomainHelper } from '../ee/helper/platform-domain-helper'
@@ -15,12 +14,12 @@ import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
 
-const repo = databaseConnection().getRepository(UserInvitationEntity)
+const repo = repoFactory(UserInvitationEntity)
 const INVITATION_EXPIREY_DAYS = 1
 
 export const userInvitationsService = {
     async countByProjectId(projectId: string): Promise<number> {
-        return repo.countBy({
+        return repo().countBy({
             projectId,
         })
     },
@@ -34,7 +33,7 @@ export const userInvitationsService = {
         }
         const platform = await platformService.getOneOrThrow(platformId)
         const ONE_DAY_AGO = dayjs().subtract(INVITATION_EXPIREY_DAYS, 'day').toISOString()
-        const invitations = await repo.findBy([
+        const invitations = await repo().findBy([
             {
                 email,
                 platformId,
@@ -66,7 +65,7 @@ export const userInvitationsService = {
                     break
                 }
             }
-            await repo.delete({
+            await repo().delete({
                 id: invitation.id,
             })
         }
@@ -79,7 +78,7 @@ export const userInvitationsService = {
         projectRole,
         platformRole,
     }: CreateParams): Promise<UserInvitationWithLink> {
-        const invitation = await repo.findOneBy({
+        const invitation = await repo().findOneBy({
             email,
             platformId,
             projectId: isNil(projectId) ? IsNull() : projectId,
@@ -88,7 +87,7 @@ export const userInvitationsService = {
             return invitation
         }
         const id = apId()
-        await repo.upsert({
+        await repo().upsert({
             id,
             status: InvitationStatus.PENDING,
             type,
@@ -128,7 +127,7 @@ export const userInvitationsService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = repo.createQueryBuilder('user_invitation').where({
+        const queryBuilder = repo().createQueryBuilder('user_invitation').where({
             platformId: params.platformId,
             ...spreadIfDefined('projectId', params.projectId),
             ...spreadIfDefined('status', params.status),
@@ -139,13 +138,13 @@ export const userInvitationsService = {
     },
     async delete({ id, platformId }: PlatformAndIdParams): Promise<void> {
         const invitation = await this.getOneOrThrow({ id, platformId })
-        await repo.delete({
+        await repo().delete({
             id: invitation.id,
             platformId,
         })
     },
     async getOneOrThrow({ id, platformId }: PlatformAndIdParams): Promise<UserInvitation> {
-        const invitation = await repo.findOneBy({
+        const invitation = await repo().findOneBy({
             id,
             platformId,
         })
@@ -164,7 +163,7 @@ export const userInvitationsService = {
         const invitation = await getByInvitationTokenOrThrow(
             invitationToken,
         )
-        await repo.update(invitation.id, {
+        await repo().update(invitation.id, {
             status: InvitationStatus.ACCEPTED,
         })
         await userInvitationsService.provisionUserInvitation({
@@ -183,7 +182,7 @@ export const userInvitationsService = {
         email,
         platformId,
     }: ProvisionUserInvitationParams): Promise<boolean> {
-        const invitations = await repo.findBy({
+        const invitations = await repo().findBy({
             email,
             platformId,
             status: InvitationStatus.ACCEPTED,
@@ -195,7 +194,7 @@ export const userInvitationsService = {
         platformId,
         projectId,
     }: GetOneByPlatformIdAndEmailParams): Promise<UserInvitation | null> {
-        return repo.findOneBy({
+        return repo().findOneBy({
             email,
             platformId,
             projectId: isNil(projectId) ? IsNull() : projectId,
@@ -248,7 +247,7 @@ async function getByInvitationTokenOrThrow(
             jwt: invitationToken,
             key: await jwtUtils.getJwtSecret(),
         })
-    const userInvitation = await repo.findOneBy({
+    const userInvitation = await repo().findOneBy({
         id: projectMemberId,
     })
     if (isNil(userInvitation)) {
