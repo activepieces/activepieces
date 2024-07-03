@@ -8,6 +8,7 @@ import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
 import qs from 'qs'
 import { setupApp } from './app'
+import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
 import { setupWorker } from './worker'
 
@@ -45,6 +46,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         },
     })
 
+
     await app.register(fastifyFavicon)
     await app.register(fastifyMultipart, {
         attachFieldsToBody: 'keyValues',
@@ -78,6 +80,8 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         { parseAs: 'string' },
         app.getDefaultJsonParser('ignore', 'ignore'),
     )
+    await app.register(healthModule)
+
     return app
 }
 
