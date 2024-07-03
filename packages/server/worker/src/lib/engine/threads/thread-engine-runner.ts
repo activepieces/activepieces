@@ -1,6 +1,6 @@
 import { mkdir } from 'fs/promises'
 import path from 'path'
-import { acquireMemoryLock, fileExists, logger, networkUtls, packageManager, SharedSystemProp, system, SystemProp, webhookSecretsUtils, WorkerSystemProps } from '@activepieces/server-shared'
+import { fileExists, logger, memoryLock, networkUtls, packageManager, SharedSystemProp, system, webhookSecretsUtils, WorkerSystemProps } from '@activepieces/server-shared'
 import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, isNil, PiecePackage, TriggerHookType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { pieceManager } from '../../piece-manager'
@@ -14,7 +14,8 @@ import { EngineWorker } from './worker'
 const memoryLimit = Math.floor((Number(system.getOrThrow(SharedSystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
 const sandboxPath = path.resolve('cache')
 const enginePath = path.join(sandboxPath, 'main.js')
-const workerConcurrency = system.getNumber(WorkerSystemProps.FLOW_WORKER_CONCURRENCY) ?? 10
+// TODO seperate this to a config file from flow worker concurrency as execute step is different operation
+const workerConcurrency = Math.max(5, system.getNumber(WorkerSystemProps.FLOW_WORKER_CONCURRENCY) ?? 10)
 let engineWorkers: EngineWorker
 
 export const threadEngineRunner: EngineRunner = {
@@ -176,7 +177,7 @@ async function execute<Result extends EngineHelperResult>(operation: EngineOpera
 }
 
 async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[]): Promise<void> {
-    const memoryLock = await acquireMemoryLock(sandboxPath)
+    const lock = await memoryLock.acquire(sandboxPath)
     try {
 
         await mkdir(sandboxPath, { recursive: true })
@@ -220,7 +221,7 @@ async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[])
         })
     }
     finally {
-        await memoryLock.release()
+        await lock.release()
     }
 
 }

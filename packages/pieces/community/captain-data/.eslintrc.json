@@ -1,6 +1,6 @@
 {
   "extends": [
-    "../../../../.eslintrc.base.json"
+    "../../../../.eslintrc.json"
   ],
   "ignorePatterns": [
     "!**/*"
@@ -13,7 +13,11 @@
         "*.js",
         "*.jsx"
       ],
-      "rules": {}
+      "rules": {},
+        "extends": [
+        "plugin:prettier/recommended"
+        ],
+      "plugins": ["prettier"]
     },
     {
       "files": [

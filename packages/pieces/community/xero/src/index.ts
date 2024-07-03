@@ -20,7 +20,14 @@ export const xeroAuth = PieceAuth.OAuth2({
   authUrl: 'https://login.xero.com/identity/connect/authorize',
   tokenUrl: 'https://identity.xero.com/connect/token',
   required: true,
-  scope: ['accounting.contacts', 'accounting.transactions'],
+  scope: [
+    'openid',
+    'profile',
+    'email',
+    'offline_access',
+    'accounting.contacts',
+    'accounting.transactions',
+  ],
 });
 
 export const xero = createPiece({
@@ -29,7 +36,7 @@ export const xero = createPiece({
 
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/xero.png',
-  authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ['kanarelo', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: xeroAuth,
   actions: [

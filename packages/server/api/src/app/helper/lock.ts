@@ -1,4 +1,4 @@
-import { acquireMemoryLock, ApLock, AppSystemProp, exceptionHandler, QueueMode, system } from '@activepieces/server-shared'
+import { ApLock, AppSystemProp, exceptionHandler, memoryLock, QueueMode, system } from '@activepieces/server-shared'
 import { Redis } from 'ioredis'
 import RedLock from 'redlock'
 import { createRedisClient } from '../database/redis-connection'
@@ -56,7 +56,7 @@ export const acquireLock = async ({
         case QueueMode.REDIS:
             return acquireRedisLock(key, timeout)
         case QueueMode.MEMORY:
-            return acquireMemoryLock(key)
+            return memoryLock.acquire(key, timeout)
         default:
             throw new Error(`Unknown queue mode: ${queueMode}`)
     }

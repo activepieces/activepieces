@@ -1,4 +1,4 @@
-import { flowTimeoutSandbox, JobStatus, QueueName, triggerTimeoutSandbox } from '@activepieces/server-shared'
+import { exceptionHandler, flowTimeoutSandbox, JobStatus, memoryLock, QueueName, triggerTimeoutSandbox } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { Job, Worker } from 'bullmq'
 import dayjs from 'dayjs'
@@ -13,15 +13,33 @@ const serverId = apId()
 
 export const redisConsumer: ConsumerManager = {
     async poll(groupId, jobType) {
-        const worker = await ensureWorkerExists(groupId, jobType)
-        assertNotNullOrUndefined(worker, 'Queue not found')
-        const job = await worker.getNextJob(serverId)
-        if (isNil(job)) {
-            return null
+        let lock
+        try {
+            lock = await memoryLock.acquire(`poll-${groupId}-${jobType}`, 5000)
+            const worker = await ensureWorkerExists(groupId, jobType)
+            assertNotNullOrUndefined(worker, 'Queue not found')
+            // The worker.getNextJob() method holds the connection until a job is available, but it can only be called once at a time.
+            // To handle multiple workers, we are storing them in memory while waiting for a job to become available.
+            const job = await worker.getNextJob(serverId)
+            if (isNil(job)) {
+                return null
+            }
+            return {
+                id: job.id!,
+                data: job.data,
+            }
         }
-        return {
-            id: job.id!,
-            data: job.data,
+        catch (e) {
+            if (memoryLock.isTimeoutError(e)) {
+                return null
+            }
+            exceptionHandler.handle(e)
+            throw e
+        }
+        finally {
+            if (lock) {
+                await lock.release()
+            }
         }
     },
     async update(groupId, { queueName, jobId, status, message }): Promise<void> {
