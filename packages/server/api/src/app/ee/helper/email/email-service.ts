@@ -12,6 +12,8 @@ const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(ED
 
 const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
 
+const MAX_ISSUES_EMAIL_LIMT = 50
+
 export const emailService = {
     async sendInvitation({ userInvitation, invitationLink }: SendInvitationArgs): Promise<void> {
         logger.info({
@@ -60,7 +62,7 @@ export const emailService = {
         })
 
         // TODO remove the hardcoded limit
-        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
+        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         
         await emailSender.send({
@@ -92,7 +94,7 @@ export const emailService = {
         }
 
         // TODO remove the hardcoded limit
-        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
+        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
 
         await emailSender.send({
