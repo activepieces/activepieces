@@ -10,10 +10,10 @@ import {
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { setupServer } from '../../../..//src/app/server'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import { createMockPlatform, createMockUser, mockBasicSetup } from '../../../helpers/mocks'
-import { setupServer } from '../../../..//src/app/server'
 
 let app: FastifyInstance | null = null
 

@@ -1,3 +1,5 @@
+import { initializeSentry, logger, system } from '@activepieces/server-shared'
+import { apId } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart from '@fastify/multipart'
@@ -8,8 +10,6 @@ import qs from 'qs'
 import { setupApp } from './app'
 import { errorHandler } from './helper/error-handler'
 import { setupWorker } from './worker'
-import { initializeSentry, logger, system } from '@activepieces/server-shared'
-import { apId } from '@activepieces/shared'
 
 
 export const setupServer = async (): Promise<FastifyInstance> => {

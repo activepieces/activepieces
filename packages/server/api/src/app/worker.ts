@@ -1,9 +1,9 @@
-import dayjs from 'dayjs'
-import { FastifyInstance } from 'fastify'
-import { accessTokenManager } from './authentication/lib/access-token-manager'
 import { logger, system, WorkerSystemProps } from '@activepieces/server-shared'
 import { apId, isNil, PrincipalType } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { FastifyInstance } from 'fastify'
 import { flowWorker } from 'server-worker'
+import { accessTokenManager } from './authentication/lib/access-token-manager'
 
 
 export const setupWorker = async (app: FastifyInstance): Promise<void> => {

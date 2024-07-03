@@ -6,7 +6,7 @@
     "@activepieces/ui/feature-folders-store": "0.0.1",
     "@activepieces/ui/feature-builder-store": "0.0.1",
     "@activepieces/ui/feature-builder-left-sidebar": "0.0.1",
-    "@activepieces/shared": "0.10.109",
+    "@activepieces/shared": "0.10.110",
     "@activepieces/ui-canvas-utils": "0.0.1",
     "@activepieces/ui-feature-builder-header": "0.0.1",
     "@activepieces/ui/feature-builder-canvas": "0.0.1",
