@@ -32,8 +32,8 @@
 
         <div class="ap-flex ap-items-center ap-gap-2">
            
-            <ap-button [disabled]="isReadOnly" [tooltipText]="isReadOnly? unpermittedTooltip: ''" btnColor="basic" btnSize="medium" *ngIf="currentProject$ | async as proj" [loading]="creatingFlow"
-                (buttonClicked)="importFlow(proj.id)">
+            <ap-button [disabled]="isReadOnly" [tooltipText]="isReadOnly? unpermittedTooltip: ''" btnColor="basic" btnSize="medium"  [loading]="creatingFlow"
+                (buttonClicked)="importFlow()">
                 <span class="ap-flex ap-gap-2" i18n><svg-icon [src]="flowActionsUiInfo.import.icon"
                         [class]="flowActionsUiInfo.iconSizeTailWind" [applyClass]="true"> </svg-icon>Import Flow</span>
             </ap-button>
@@ -66,3 +66,4 @@
 
 <ng-container *ngIf="createFlow$ | async"></ng-container>
 <ng-container *ngIf="openTemplatesDialog$ | async"></ng-container>
+@if(importFlow$ | async) {}

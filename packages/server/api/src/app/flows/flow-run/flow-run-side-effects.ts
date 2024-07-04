@@ -12,6 +12,7 @@ import {
     RunEnvironment,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { alertsService } from '../../ee/alerts/alerts-service'
 import { issuesService } from '../../ee/issues/issues-service'
 import { flowQueue } from '../../flow-worker/queue'
 import { flowRunHooks } from './flow-run-hooks'
@@ -29,7 +30,7 @@ type PauseParams = {
     flowRun: FlowRun
 }
 
-const calculateDelayForResumeJob = (
+const calculateDelayForPausedRun = (
     resumeDateTimeIsoString: string,
 ): number => {
     const now = dayjs()
@@ -51,11 +52,13 @@ export const flowRunSideEffects = {
             .onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks! })
         if (flowRun.environment === RunEnvironment.PRODUCTION) {
             if (isFailedState(flowRun.status)) {
-                await issuesService.add({
+                const issue = await issuesService.add({
                     flowId: flowRun.flowId,
                     projectId: flowRun.projectId,
                     flowRunCreatedAt: flowRun.created,
                 })
+
+                await alertsService.sendAlertOnRunFinish({ issue, flowRunId: flowRun.id })
             }
         }
     },
@@ -120,7 +123,7 @@ export const flowRunSideEffects = {
                         jobType: RepeatableJobType.DELAYED_FLOW,
                         flowVersionId: flowRun.flowVersionId,
                     },
-                    delay: calculateDelayForResumeJob(pauseMetadata.resumeDateTime),
+                    delay: calculateDelayForPausedRun(pauseMetadata.resumeDateTime),
                 })
                 break
             case PauseType.WEBHOOK:

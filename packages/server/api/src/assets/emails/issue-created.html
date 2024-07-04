@@ -375,8 +375,13 @@
                                           <ul>
                                             <li>First seen at: {{createdAt}}<br /></li>
                                           </ul>
+                                          {{#checkIssuesEnabled}}
                                           Please review the issue, fix it, and mark it as resolved <br />in Runs →
                                           Issues in your dashboard.
+                                          {{/checkIssuesEnabled}}
+                                          {{^checkIssuesEnabled}}
+                                          Please review the flow and fix it.
+                                          {{/checkIssuesEnabled}}
                                         </td>
                                       </tr>
                                       <tr>
@@ -411,8 +416,15 @@
                                                               padding: 16px 20px;
                                                               display: block;
                                                               color: #ffffff;
-                                                            "><span class="link-button" style="color: #ffffff">View
-                                                      Issues</span></a>
+                                                            ">
+                                                    <span class="link-button" style="color: #ffffff">
+                                                      {{#checkIssuesEnabled}}
+                                                      View Issues
+                                                      {{/checkIssuesEnabled}}
+                                                      {{^checkIssuesEnabled}}
+                                                      View Run
+                                                      {{/checkIssuesEnabled}}
+                                                    </span></a>
                                                 </td>
                                               </tr>
                                             </tbody>
