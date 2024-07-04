@@ -1,42 +1,49 @@
-
+import { PopulatedIssue } from '@activepieces/ee-shared'
 import { ProjectId } from '@activepieces/shared'
 import { Dayjs } from 'dayjs'
 
-export type SystemJobName =
-    | 'hard-delete-project'
-    | 'project-usage-report'
-    | 'usage-report'
-    | 'pieces-analytics'
-    | 'pieces-sync'
-    | 'trial-tracker'
-    | 'trigger-data-cleaner'
-    | 'issues-reminder'
+export enum SystemJobName {
+    HARD_DELETE_PROJECT = 'hard-delete-project',
+    PROJECT_USAGE_REPORT = 'project-usage-report',
+    USAGE_REPORT = 'usage-report',
+    PIECES_ANALYTICS = 'pieces-analytics',
+    PIECES_SYNC = 'pieces-sync',
+    TRIAL_TRACKER = 'trial-tracker',
+    TRIGGER_DATA_CLEANER = 'trigger-data-cleaner',
+    ISSUES_REMINDER = 'ISSUES_REMINDER',
+}
 
 type HardDeleteProjectSystemJobData = {
     projectId: ProjectId
 }
+type IssuesReminderSystemJobData = {
+    emails: string[]
+    platformId: string
+    issuesUrl: string
+    issuesWithFormattedDate: PopulatedIssue[]
+    projectDisplayName: string
+}
 
-type ProjectUsageReportSystemJobData = Record<string, never>
-type UsageReportSystemJobData = Record<string, never>
+type SystemJobDataMap = {
+    [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
+    [SystemJobName.ISSUES_REMINDER]: IssuesReminderSystemJobData
+    [SystemJobName.PROJECT_USAGE_REPORT]: Record<string, never>
+    [SystemJobName.USAGE_REPORT]: Record<string, never>
+    [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
+    [SystemJobName.PIECES_SYNC]: Record<string, never>
+    [SystemJobName.TRIAL_TRACKER]: Record<string, never>
+    [SystemJobName.TRIGGER_DATA_CLEANER]: Record<string, never>
+}
 
-export type SystemJobData<T extends SystemJobName = SystemJobName> =
-    T extends 'hard-delete-project' ? HardDeleteProjectSystemJobData :
-        T extends 'project-usage-report' ? ProjectUsageReportSystemJobData :
-            T extends 'usage-report' ? UsageReportSystemJobData :
-                T extends 'trigger-data-cleaner' ? Record<string, never> :
-                    T extends 'pieces-sync' ? Record<string, never> :
-                        T extends 'pieces-analytics' ? Record<string, never> :
-                            T extends 'trial-tracker' ? Record<string, never> :
-                                T extends 'issues-reminder' ? Record<string, never> :
-                                    never
+export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
 
 export type SystemJobDefinition<T extends SystemJobName> = {
     name: T
     data: SystemJobData<T>
+    jobId?: string
 }
 
 export type SystemJobHandler<T extends SystemJobName = SystemJobName> = (data: SystemJobData<T>) => Promise<void>
-
 
 type OneTimeJobSchedule = {
     type: 'one-time'
@@ -48,17 +55,12 @@ type RepeatedJobSchedule = {
     cron: string
 }
 
-export type JobSchedule =
-    | OneTimeJobSchedule
-    | RepeatedJobSchedule
-
+export type JobSchedule = OneTimeJobSchedule | RepeatedJobSchedule
 
 type UpsertJobParams<T extends SystemJobName> = {
     job: SystemJobDefinition<T>
     schedule: JobSchedule
-    handler: SystemJobHandler<T>
 }
-
 
 export type SystemJobSchedule = {
     init(): Promise<void>

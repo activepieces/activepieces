@@ -6,6 +6,8 @@ import { Between, Equal } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
 import { flagService } from '../../flags/flag.service'
 import { systemJobsSchedule } from '../../helper/system-jobs'
+import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
 import { UserEntity } from '../../user/user-entity'
@@ -15,34 +17,31 @@ const projectRepo = databaseConnection.getRepository(ProjectEntity)
 const platformRepo = databaseConnection.getRepository(PlatformEntity)
 
 export const usageTrackerModule: FastifyPluginAsyncTypebox = async () => {
+    systemJobHandlers.registerJobHandler(SystemJobName.USAGE_REPORT, sendUsageReport)
     await systemJobsSchedule.upsertJob({
         job: {
-            name: 'usage-report',
+            name: SystemJobName.USAGE_REPORT,
             data: {},
         },
         schedule: {
             type: 'repeated',
             cron: '*/59 23 * * *',
         },
-        async handler(job) {
-            const startOfDay = dayjs(job.timestamp).startOf('day').toISOString()
-            const endOfDay = dayjs(job.timestamp).endOf('day').toISOString()
-            const platforms = await platformRepo.find()
-            const reports = []
-            for (const platform of platforms) {
-                if (flagService.isCloudPlatform(platform.id)) {
-                    continue
-                }
-                const report = await constructUsageReport(platform, startOfDay, endOfDay)
-                reports.push(report)
-            }
-            await sendUsageReport(reports)
-
-        },
     })
 }
 
-async function sendUsageReport(reports: UsageReport[]): Promise<void> {
+async function sendUsageReport(job: SystemJobData<SystemJobName.USAGE_REPORT>): Promise<void> {
+    const startOfDay = dayjs(job.timestamp).startOf('day').toISOString()
+    const endOfDay = dayjs(job.timestamp).endOf('day').toISOString()
+    const platforms = await platformRepo.find()
+    const reports = []
+    for (const platform of platforms) {
+        if (flagService.isCloudPlatform(platform.id)) {
+            continue
+        }
+        const report = await constructUsageReport(platform, startOfDay, endOfDay)
+        reports.push(report)
+    }
     await fetch('https://cloud.activepieces.com/api/v1/webhooks/ophE6T5QJBe7O3QT0sjvn', {
         method: 'POST',
         headers: {
@@ -105,7 +104,6 @@ async function getAddedProjects(platformId: string, startDate: string, endDate: 
         timestamp: project.created,
     }))
 }
-
 
 type UsageReport = {
     timestamp: string

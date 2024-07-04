@@ -1,9 +1,10 @@
-import dayjs from 'dayjs'
-import { getRedisConnection } from '../../../database/redis-connection'
-import { AlertChannel, OtpType } from '@activepieces/ee-shared'
+import { AlertChannel, OtpType, PopulatedIssue } from '@activepieces/ee-shared'
 import { logger, system } from '@activepieces/server-shared'
 import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitation } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { getRedisConnection } from '../../../database/redis-connection'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
+import { SystemJobName } from '../../../helper/system-jobs/common'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
@@ -114,7 +115,7 @@ export const emailService = {
             path: 'runs?limit=10#Issues',
         })
 
-        const issuesFormattedDate = issues.data.map((issue) => ({ 
+        const issuesWithFormattedDate = issues.data.map((issue) => ({ 
             ...issue, 
             created: dayjs(issue.created).format('MMM d, h:mm a'),
             lastOccurrence: dayjs(issue.lastOccurrence).format('MMM d, h:mm a'), 
@@ -122,26 +123,19 @@ export const emailService = {
         
         await systemJobsSchedule.upsertJob({
             job: {
-                name: 'issues-reminder',
-                data: {},
+                name: SystemJobName.ISSUES_REMINDER,
+                data: {
+                    emails,
+                    issuesUrl,
+                    issuesWithFormattedDate,
+                    platformId: project.platformId,
+                    projectDisplayName: project.displayName,
+                },
+                jobId: `issues-reminder-${projectId}`,
             },
             schedule: {
                 type: 'one-time',
                 date: endOfDay,
-            },
-            async handler() {
-                await emailSender.send({
-                    emails,
-                    platformId: project.platformId,
-                    templateData: {
-                        name: 'issues-reminder',
-                        vars: {
-                            issuesUrl,
-                            issues: JSON.stringify(issuesFormattedDate),
-                            projectName: project.displayName,
-                        },
-                    },
-                })
             },
         })
     },
@@ -220,6 +214,27 @@ export const emailService = {
             emails: [user.email],
             platformId: platformId ?? undefined,
             templateData: otpToTemplate[type],
+        })
+    },
+    
+    async sendingRemindersJobHandler(job: {
+        emails: string[]
+        platformId: string
+        issuesUrl: string
+        issuesWithFormattedDate: PopulatedIssue[]
+        projectDisplayName: string
+    }): Promise<void> {
+        await emailSender.send({
+            emails: job.emails,
+            platformId: job.platformId,
+            templateData: {
+                name: 'issues-reminder',
+                vars: {
+                    issuesUrl: job.issuesUrl,
+                    issues: JSON.stringify(job.issuesWithFormattedDate),
+                    projectName: job.projectDisplayName,
+                },
+            },
         })
     },
 }

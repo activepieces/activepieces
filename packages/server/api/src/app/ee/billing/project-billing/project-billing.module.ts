@@ -10,6 +10,8 @@ import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
 import { databaseConnection } from '../../../database/database-connection'
 import { FlowRunEntity } from '../../../flows/flow-run/flow-run-entity'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
+import { SystemJobData, SystemJobName } from '../../../helper/system-jobs/common'
+import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { projectService } from '../../../project/project-service'
 import { projectUsageService } from '../../../project/usage/project-usage-service'
 import { projectLimitsService } from '../../project-plan/project-plan.service'
@@ -22,27 +24,25 @@ const flowRunRepo =
 const EVERY_4_HOURS = '59 */4 * * *'
 
 export const projectBillingModule: FastifyPluginAsyncTypebox = async (app) => {
+    systemJobHandlers.registerJobHandler(SystemJobName.PROJECT_USAGE_REPORT, sendProjectRecords)
     await systemJobsSchedule.upsertJob({
         job: {
-            name: 'project-usage-report',
+            name: SystemJobName.PROJECT_USAGE_REPORT,
             data: {},
         },
         schedule: {
             type: 'repeated',
             cron: EVERY_4_HOURS,
         },
-        async handler(job) {
-            await sendProjectRecords(job.timestamp)
-        },
     })
     await app.register(projectBillingController, { prefix: '/v1/project-billing' })
 }
 
-async function sendProjectRecords(timestamp: number): Promise<void> {
+async function sendProjectRecords(job: SystemJobData<SystemJobName.PROJECT_USAGE_REPORT>): Promise<void> {
     logger.info('Running project-daily-report')
 
-    const startOfDay = dayjs(timestamp).startOf('day').toISOString()
-    const endOfDay = dayjs(timestamp).endOf('day').toISOString()
+    const startOfDay = dayjs(job.timestamp).startOf('day').toISOString()
+    const endOfDay = dayjs(job.timestamp).endOf('day').toISOString()
     const projectIds = await flowRunRepo.createQueryBuilder('flowRun')
         .select('DISTINCT "projectId"')
         .where({
@@ -68,7 +68,7 @@ async function sendProjectRecords(timestamp: number): Promise<void> {
         logger.info({ projectId, tasks: usage.tasks, includedTasks: projectBilling.includedTasks }, 'Sending usage record to stripe')
         await stripe.subscriptionItems.createUsageRecord(item.id, {
             quantity: Math.max(usage.tasks - projectBilling.includedTasks, 0),
-            timestamp: dayjs(timestamp).unix(),
+            timestamp: dayjs(job.timestamp).unix(),
             action: 'set',
         })
     }
@@ -160,6 +160,4 @@ const projectBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
             }
         },
     )
-
 }
-
