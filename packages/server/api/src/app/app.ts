@@ -14,6 +14,7 @@ import {
     ProjectWithLimits,
     spreadIfDefined,
     UserInvitation,
+    WorkerMachineType,
 } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -51,6 +52,7 @@ import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
+import { emailService } from './ee/helper/email/email-service'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
@@ -72,9 +74,6 @@ import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
-import { flowConsumer } from './flow-worker/consumer'
-import { webhookResponseWatcher } from './flow-worker/helper/webhook-response-watcher'
-import { workerModule } from './flow-worker/worker-module'
 import { formModule } from './flows/flow/form/form.module'
 import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
@@ -87,6 +86,8 @@ import { encryptUtils } from './helper/encryption'
 import { jwtUtils } from './helper/jwt-utils'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { systemJobsSchedule } from './helper/system-jobs'
+import { SystemJobName } from './helper/system-jobs/common'
+import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
@@ -102,6 +103,9 @@ import { userModule } from './user/user.module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
+import { flowConsumer } from './workers/consumer'
+import { webhookResponseWatcher } from './workers/helper/webhook-response-watcher'
+import { workerModule } from './workers/worker-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -277,6 +281,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flagHooks.set(enterpriseFlagsHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
+            systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
+                await pieceSyncService.sync()
+            })
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
+            initializeSentry()
             break
         case ApEdition.ENTERPRISE:
             await app.register(customDomainModule)
@@ -296,6 +305,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
             await app.register(licenseKeysModule)
+            systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
+                await pieceSyncService.sync()
+            })
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })

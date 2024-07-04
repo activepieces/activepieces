@@ -45,7 +45,15 @@ type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
 type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     issueUrl: string
     flowName: string
+    isIssue: string
     createdAt: string
+}>
+
+type IssuesReminderTemplateData = BaseEmailTemplateData<'issues-reminder', {
+    issuesUrl: string
+    issues: string
+    issuesCount: string
+    projectName: string
 }>
 
 export type EmailTemplateData =
@@ -54,6 +62,7 @@ export type EmailTemplateData =
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
+  | IssuesReminderTemplateData
 
 type SendArgs = {
     emails: string[]

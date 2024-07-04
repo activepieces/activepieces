@@ -9,7 +9,7 @@ import { Observable, Subject } from 'rxjs';
 import { startWith } from 'rxjs';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
 import { AuditEventDataSource } from './audit-event-table.datasource';
-import { AuditEventService } from '../../service/audit-event-service';
+import { AuditEventService } from '../../service/audit-event.service';
 import {
   ApplicationEvent,
   ApplicationEventName,

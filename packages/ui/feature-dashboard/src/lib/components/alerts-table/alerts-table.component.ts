@@ -1,9 +1,15 @@
-import { Platform, ProjectId, ProjectMemberRole } from '@activepieces/shared';
+import {
+  NotificationStatus,
+  Platform,
+  ProjectId,
+  ProjectMemberRole,
+} from '@activepieces/shared';
 import {
   ApPaginatorComponent,
   AuthenticationService,
   GenericSnackbarTemplateComponent,
   PLATFORM_RESOLVER_KEY,
+  ProjectService,
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { AsyncPipe } from '@angular/common';
@@ -15,13 +21,24 @@ import {
 } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, Observable, startWith, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  delay,
+  distinctUntilChanged,
+  map,
+  startWith,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import { AlertsDataSource } from './alerts-table.datasource';
 import { AlertsService } from '../../services/alerts.service';
 import { MatDialog } from '@angular/material/dialog';
 import { NewAlertDialogComponent } from '../dialogs/new-alert-dialog/new-alert-dialog.component';
 import { Alert } from '@activepieces/ee-shared';
 import { ProjectMemberService } from 'ee-project-members';
+import { FormControl } from '@angular/forms';
 
 @Component({
   selector: 'app-alerts-table',
@@ -33,10 +50,9 @@ import { ProjectMemberService } from 'ee-project-members';
 export class AlertsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator: ApPaginatorComponent;
+  updatingAlertsFrequency$ = new BehaviorSubject<boolean>(false);
   readonly permissionToAddMessage = $localize`You don\'t have permissions to add email`;
   readonly permissionToDeleteMessage = $localize`You don\'t have permissions to delete email`;
-  readonly betaNote =
-    'Note: Basic alerts are free, and advanced alerts will only be <strong>Free</strong> during the <strong>BETA</strong> period.';
   upgradeNoteTitle = $localize`Unlock Alerts`;
   upgradeNote = $localize`Stay up to date with your flows, quota limits and updates with Alerts`;
   displayedColumns: string[] = ['receiver', 'action'];
@@ -44,29 +60,101 @@ export class AlertsTableComponent implements OnInit {
   dataSource: AlertsDataSource;
   currentProject$: ProjectId;
   refresh$ = new BehaviorSubject<boolean>(true);
-  addAlertDialogClosed$: Observable<void>;
+  addAlertDialogClosed$?: Observable<unknown>;
   isAdmin$: Observable<boolean>;
   deleteAlert$: Observable<void> | undefined;
+  notificationControl: FormControl<NotificationStatus> = new FormControl(
+    NotificationStatus.NEVER,
+    {
+      nonNullable: true,
+    }
+  );
+  updateNotificationsValue$: Observable<unknown>;
+  currentProject: ProjectId;
+  projectTasks$: Observable<number>;
+  selectTriggerDisplayName$: Observable<string | undefined>;
+  optionItems: {
+    name: NotificationStatus;
+    description: string;
+    displayName: string;
+  }[] = [
+    {
+      name: NotificationStatus.NEW_ISSUE,
+      description: $localize`Get an alert only when a new issue happens`,
+      displayName: $localize`First Seen`,
+    },
+    {
+      name: NotificationStatus.ALWAYS,
+      description: $localize`Get an alert on every flow failure`,
+      displayName: $localize`Every Failed Run`,
+    },
+    {
+      name: NotificationStatus.NEVER,
+      description: $localize`Disable flow failure alerts`,
+      displayName: $localize`Never`,
+    },
+  ];
   constructor(
     private dialogService: MatDialog,
     private alertsService: AlertsService,
     private route: ActivatedRoute,
     private authService: AuthenticationService,
     private snackBar: MatSnackBar,
-    private projectMemberService: ProjectMemberService
+    private projectMemberService: ProjectMemberService,
+    private projectService: ProjectService
   ) {
+    this.currentProject$ = this.authService.getProjectId();
     this.showUpgrade = !(
       this.route.snapshot.data[PLATFORM_RESOLVER_KEY] as Platform
     ).alertsEnabled;
-  }
-
-  capitalizeChannel(channel: string) {
-    return channel.charAt(0).toUpperCase() + channel.slice(1).toLowerCase();
+    this.selectTriggerDisplayName$ = this.notificationControl.valueChanges.pipe(
+      map((value) => {
+        const item = this.optionItems.find((opt) => opt.name === value);
+        if (item) {
+          return item.displayName;
+        }
+        return undefined;
+      })
+    );
   }
 
   ngOnInit(): void {
-    this.currentProject$ = this.authService.getProjectId();
     this.isAdmin$ = this.projectMemberService.isRole(ProjectMemberRole.ADMIN);
+    this.updateNotificationsValue$ = this.projectService.currentProject$.pipe(
+      take(1),
+      tap((project) => {
+        this.notificationControl.setValue(NotificationStatus.NEVER);
+        if (project) {
+          this.notificationControl.setValue(project.notifyStatus);
+        }
+      }),
+      switchMap(() => {
+        return this.notificationControl.valueChanges.pipe(
+          distinctUntilChanged(),
+          tap(() => {
+            this.updatingAlertsFrequency$.next(true);
+          }),
+          switchMap((value) => {
+            return this.projectService.update(this.currentProject, {
+              notifyStatus: value,
+            });
+          }),
+          delay(300),
+          tap(() => {
+            this.updatingAlertsFrequency$.next(false);
+          })
+        );
+      })
+    );
+    this.projectTasks$ = this.projectService.currentProject$.pipe(
+      take(1),
+      map((project) => {
+        if (project) {
+          return project.plan.tasks;
+        }
+        return 0;
+      })
+    );
     this.dataSource = new AlertsDataSource(
       this.route.queryParams,
       this.paginator,
@@ -83,8 +171,10 @@ export class AlertsTableComponent implements OnInit {
       })
       .afterClosed()
       .pipe(
-        tap(() => {
-          this.refresh$.next(true);
+        tap((res) => {
+          if (res) {
+            this.refresh$.next(true);
+          }
         })
       );
   }

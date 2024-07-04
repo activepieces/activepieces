@@ -77,4 +77,5 @@ export const networkUtls = {
     getPublicUrl,
     extractClientRealIp,
     getInternalApiUrl,
+    getPublicIp,
 }

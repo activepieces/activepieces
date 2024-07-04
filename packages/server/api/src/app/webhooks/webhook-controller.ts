@@ -16,10 +16,10 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { tasksLimit } from '../ee/project-plan/tasks-limit'
-import { webhookResponseWatcher } from '../flow-worker/helper/webhook-response-watcher'
-import { flowQueue } from '../flow-worker/queue'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
+import { webhookResponseWatcher } from '../workers/helper/webhook-response-watcher'
+import { flowQueue } from '../workers/queue'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 

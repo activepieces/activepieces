@@ -49,7 +49,7 @@ import { AddIssueEntitySqlite1714900626443 } from './migration/sqlite/1714900626
 import { AddAlertsEntitySqlite1717239613259 } from './migration/sqlite/1717239613259-AddAlertsEntitySqlite'
 import { AddPremiumPiecesColumnSqlite1717443603235 } from './migration/sqlite/1717443603235-AddPremiumPiecesColumnSqlite'
 import { AddUserInvitationSqlite1717943564437 } from './migration/sqlite/1717943564437-AddUserInvitationSqlite'
-
+import { AddWorkerMachineSqlite1720100928449 } from './migration/sqlite/1720100928449-AddWorkerMachineSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -117,6 +117,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddAlertsEntitySqlite1717239613259,
         AddUserInvitationSqlite1717943564437,
         AddPremiumPiecesColumnSqlite1717443603235,
+        AddWorkerMachineSqlite1720100928449,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

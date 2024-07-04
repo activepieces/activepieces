@@ -27,10 +27,10 @@ import {
 } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
 import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
-import { flowQueue } from '../../../flow-worker/queue'
 import {
     generateEngineToken,
 } from '../../../helper/engine-helper'
+import { flowQueue } from '../../../workers/queue'
 import { triggerUtils } from './trigger-utils'
 
 const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
