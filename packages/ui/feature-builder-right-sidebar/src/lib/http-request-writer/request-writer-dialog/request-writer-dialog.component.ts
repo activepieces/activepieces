@@ -1,6 +1,12 @@
 import { HighlightService, UiCommonModule } from '@activepieces/ui/common';
+import { CodeService } from '@activepieces/ui/feature-builder-store';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -11,7 +17,6 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { RequestWriterService } from './request-writer.service';
-import { CodeService } from '@activepieces/ui/feature-builder-store';
 @Component({
   selector: 'app-request-writer-dialog',
   standalone: true,
@@ -19,12 +24,15 @@ import { CodeService } from '@activepieces/ui/feature-builder-store';
   templateUrl: './request-writer-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RequestWriterDialogComponent {
+export class RequestWriterDialogComponent implements OnInit {
   @ViewChild(MatStepper) stepper: MatStepper;
   promptForm: FormGroup<{
     prompt: FormControl<string>;
     reference: FormControl<string>;
   }>;
+  method$: any;
+  url$: any;
+  body$: any;
   generatedRequest$: BehaviorSubject<Record<string, unknown> | null> =
     new BehaviorSubject<Record<string, unknown> | null>(null);
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
@@ -47,6 +55,18 @@ export class RequestWriterDialogComponent {
         nonNullable: true,
       }),
     });
+  }
+
+  ngOnInit() {
+    this.method$ = this.generatedRequest$.pipe(
+      map((request) => request?.['method'] || '')
+    );
+
+    this.url$ = this.generatedRequest$.pipe(
+      map((request) => request?.['url'] || '')
+    );
+
+    this.body$ = this.generatedRequest$.pipe(map((req) => req?.['body'] || ''));
   }
 
   prompt() {
