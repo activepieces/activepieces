@@ -45,16 +45,17 @@ import { ComponentPortal } from '@angular/cdk/portal';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlowsTableTitleComponent {
+  readonly flowActionsUiInfo = flowActionsUiInfo;
+  readonly isReadOnly = !doesUserHavePermission(Permission.WRITE_FLOW);
+  readonly unpermittedTooltip = unpermittedTooltip;
   creatingFlow = false;
   currentFolder$: Observable<FolderDto | undefined>;
   createFlow$?: Observable<PopulatedFlow>;
   showAllFlows$: Observable<boolean>;
   currentProject$: Observable<ProjectWithLimits>;
   openTemplatesDialog$?: Observable<void>;
-  readonly flowActionsUiInfo = flowActionsUiInfo;
   hideFoldersList$ = this.embeddingService.getHideFolders$();
-  readonly isReadOnly = !doesUserHavePermission(Permission.WRITE_FLOW);
-  readonly unpermittedTooltip = unpermittedTooltip;
+  importFlow$?: Observable<unknown>;
   constructor(
     private store: Store,
     private flowService: FlowService,
@@ -157,9 +158,14 @@ export class FlowsTableTitleComponent {
     this.cd.markForCheck();
   }
 
-  importFlow(projectId: string) {
-    const data: ImporFlowDialogData = { projectId: projectId };
-    this.matDialog.open(ImportFlowDialogComponent, { data });
+  async importFlow() {
+    this.importFlow$ = this.currentProject$.pipe(
+      take(1),
+      tap((proj) => {
+        const data: ImporFlowDialogData = { projectId: proj.id };
+        this.matDialog.open(ImportFlowDialogComponent, { data });
+      })
+    );
   }
 
   private showBlogNotification(blogUrl: string) {
