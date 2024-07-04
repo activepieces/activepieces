@@ -1,17 +1,18 @@
-import { getEdition } from '../../../helper/secret-helper'
+import { AlertChannel, OtpType } from '@activepieces/ee-shared'
+import { logger, system } from '@activepieces/server-shared'
+import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitation } from '@activepieces/shared'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
-import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { logger } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitation } from '@activepieces/shared'
 
-const EDITION = getEdition()
+const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
 
 const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
+
+const MAX_ISSUES_EMAIL_LIMT = 50
 
 export const emailService = {
     async sendInvitation({ userInvitation, invitationLink }: SendInvitationArgs): Promise<void> {
@@ -44,39 +45,36 @@ export const emailService = {
     async sendIssueCreatedNotification({
         projectId,
         flowName,
+        platformId,
+        issueOrRunsPath,
+        isIssue,
         createdAt,
     }: IssueCreatedArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
         }
+
         logger.info({
             name: '[emailService#sendIssueCreatedNotification]',
             projectId,
             flowName,
             createdAt,
         })
-        const project = await projectService.getOneOrThrow(projectId)
 
-        const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.alertsEnabled) {
-            return
-        }
         // TODO remove the hardcoded limit
-        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
+        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        const issueUrl = await platformDomainHelper.constructUrlFrom({
-            platformId: project.platformId,
-            path: 'runs?limit=10#Issues',
-        })
+        
         await emailSender.send({
             emails,
-            platformId: project.platformId,
+            platformId,
             templateData: {
                 name: 'issue-created',
                 vars: {
-                    issueUrl,
                     flowName,
                     createdAt,
+                    isIssue: isIssue.toString(),
+                    issueUrl: issueOrRunsPath,
                 },
             },
         })
@@ -91,12 +89,12 @@ export const emailService = {
         assertNotNullOrUndefined(project, 'project')
 
         const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.alertsEnabled) {
+        if (!platform.alertsEnabled || platform.embeddingEnabled) {
             return
         }
 
         // TODO remove the hardcoded limit
-        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
+        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
 
         await emailSender.send({
@@ -207,5 +205,8 @@ type SendOtpArgs = {
 type IssueCreatedArgs = {
     projectId: string
     flowName: string
+    platformId: string
+    isIssue: boolean
+    issueOrRunsPath: string
     createdAt: string
 }

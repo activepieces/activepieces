@@ -88,6 +88,9 @@
       "@activepieces/piece-calendly": [
         "packages/pieces/community/calendly/src/index.ts"
       ],
+      "@activepieces/piece-captain-data": [
+        "packages/pieces/community/captain-data/src/index.ts"
+      ],
       "@activepieces/piece-cartloom": [
         "packages/pieces/community/cartloom/src/index.ts"
       ],
@@ -136,6 +139,9 @@
       ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/community/date-helper/src/index.ts"
+      ],
+      "@activepieces/piece-datocms": [
+        "packages/pieces/community/datocms/src/index.ts"
       ],
       "@activepieces/piece-deepl": [
         "packages/pieces/community/deepl/src/index.ts"
@@ -194,6 +200,9 @@
       "@activepieces/piece-freshsales": [
         "packages/pieces/community/freshsales/src/index.ts"
       ],
+      "@activepieces/piece-gameball": [
+        "packages/pieces/community/gameball/src/index.ts"
+      ],
       "@activepieces/piece-gcloud-pubsub": [
         "packages/pieces/community/gcloud-pubsub/src/index.ts"
       ],
@@ -214,9 +223,6 @@
       ],
       "@activepieces/piece-gmail": [
         "packages/pieces/community/gmail/src/index.ts"
-      ],
-      "@activepieces/piece-gmail-dev": [
-        "packages/pieces/community/gmail-dev/src/index.ts"
       ],
       "@activepieces/piece-google-calendar": [
         "packages/pieces/community/google-calendar/src/index.ts"
@@ -640,6 +646,9 @@
       ],
       "@activepieces/ui-feature-builder-header": [
         "packages/ui/feature-builder-header/src/index.ts"
+      ],
+      "@activepieces/ui-feature-flow-actions-list": [
+        "packages/ui/feature-flow-actions-list/src/index.ts"
       ],
       "@activepieces/ui-feature-git-sync": [
         "packages/ui/feature-git-sync/src/index.ts"

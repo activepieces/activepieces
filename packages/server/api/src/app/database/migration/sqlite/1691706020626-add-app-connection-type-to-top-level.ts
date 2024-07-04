@@ -1,6 +1,5 @@
+import { encryptUtils, logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { encryptUtils } from '../../../helper/encryption'
-import { logger } from '@activepieces/server-shared'
 
 type AppConnectionValue = {
     type: string

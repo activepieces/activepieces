@@ -2,8 +2,8 @@
   "name": "@activepieces/piece-math-helper",
   "version": "0.0.8",
   "dependencies": {
+    "@activepieces/shared": "0.10.109",
     "@activepieces/pieces-framework": "0.7.32",
-    "@activepieces/shared": "0.10.107",
     "tslib": "2.6.2"
   }
 }

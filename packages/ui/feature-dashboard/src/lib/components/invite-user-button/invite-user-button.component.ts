@@ -1,9 +1,14 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PlatformService, UiCommonModule } from '@activepieces/ui/common';
+import {
+  PlatformService,
+  UiCommonModule,
+  doesUserHavePermission,
+} from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, tap, take } from 'rxjs';
 import { InviteUserDialogComponent } from '../dialogs/invite-user-dialog/invite-user-dialog.component';
+import { Permission } from '@activepieces/shared';
 
 @Component({
   selector: 'app-invite-user-button',
@@ -11,6 +16,7 @@ import { InviteUserDialogComponent } from '../dialogs/invite-user-dialog/invite-
   imports: [CommonModule, UiCommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    @if(isAllowed) {
     <ap-button
       btnColor="white"
       btnStyle="stroked"
@@ -29,11 +35,13 @@ import { InviteUserDialogComponent } from '../dialogs/invite-user-dialog/invite-
         <b class="ap-hidden sm:ap-inline-block">Invite user</b>
       </div>
     </ap-button>
-    @if(openDialog$ | async) {}
+
+    } @if(openDialog$ | async) {}
   `,
 })
 export class InviteUserButtonComponent {
   loading = false;
+  isAllowed = doesUserHavePermission(Permission.WRITE_INVITATION);
   openDialog$?: Observable<unknown>;
   constructor(
     private matDialog: MatDialog,

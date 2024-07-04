@@ -1,7 +1,7 @@
-import { logEmailSender } from './log-email-sender'
-import { smtpEmailSender } from './smtp-email-sender'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
+import { logEmailSender } from './log-email-sender'
+import { smtpEmailSender } from './smtp-email-sender'
 
 export type EmailSender = {
     send: (args: SendArgs) => Promise<void>
@@ -45,6 +45,7 @@ type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
 type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     issueUrl: string
     flowName: string
+    isIssue: string
     createdAt: string
 }>
 

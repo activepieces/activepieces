@@ -12,6 +12,7 @@ import {
   ProjectId,
   SeekPage,
   spreadIfDefined,
+  Permission,
 } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -44,6 +45,7 @@ import {
   executionsPageFragments,
   EmbeddingService,
   SelectAllDirective,
+  TableCore,
 } from '@activepieces/ui/common';
 import { FormControl, FormGroup } from '@angular/forms';
 import { RunsService } from '../../services/runs.service';
@@ -67,7 +69,7 @@ const allOptionValue = 'all';
   ],
   selector: 'app-runs-table',
 })
-export class RunsTableComponent implements OnInit {
+export class RunsTableComponent extends TableCore implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
   readonly allOptionValue = allOptionValue;
@@ -76,7 +78,6 @@ export class RunsTableComponent implements OnInit {
     nonNullable: true,
   });
   dataSource!: RunsTableDataSource;
-  displayedColumns = ['flowName', 'status', 'started', 'duration', 'action'];
   refreshTableForReruns$: Subject<boolean> = new Subject();
   statusFilterControl: FormControl<FlowRunStatus[]> = new FormControl([], {
     nonNullable: true,
@@ -97,7 +98,7 @@ export class RunsTableComponent implements OnInit {
   retryFlow$?: Observable<void>;
   setInitialFilters$?: Observable<void>;
   allStatuses = Object.values(FlowRunStatus);
-
+  hasPermissionToRetryFlow = this.hasPermission(Permission.RETRY_RUN);
   constructor(
     private activatedRoute: ActivatedRoute,
     private projectService: ProjectService,
@@ -108,6 +109,9 @@ export class RunsTableComponent implements OnInit {
     private authenticationService: AuthenticationService,
     private embeddingService: EmbeddingService
   ) {
+    super({
+      tableColumns: ['flowName', 'status', 'started', 'duration', 'action'],
+    });
     this.flowFilterControl.setValue(
       this.activatedRoute.snapshot.queryParamMap.get(FLOW_QUERY_PARAM) ||
         this.allOptionValue

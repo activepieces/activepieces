@@ -1,7 +1,6 @@
-import { EntitySchemaColumnOptions } from 'typeorm'
-import { getEdition } from '../helper/secret-helper'
 import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
+import { EntitySchemaColumnOptions } from 'typeorm'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -47,5 +46,5 @@ export const BaseColumnSchemaPart = {
 }
 
 export function isNotOneOfTheseEditions(editions: ApEdition[]): boolean {
-    return !editions.includes(getEdition())
+    return !editions.includes(system.getEdition())
 }

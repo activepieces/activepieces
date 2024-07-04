@@ -169,6 +169,10 @@ export class InviteUserDialogComponent {
           email: email!,
           type: type!,
           platformRole: platformRole!,
+          projectId:
+            type === InvitationType.PLATFORM
+              ? null
+              : this.authService.getProjectId()!,
           projectRole:
             type === InvitationType.PLATFORM ? undefined : projectRole!,
         })

@@ -1,6 +1,6 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
-import { ApEdition } from '@activepieces/shared'
 
 export class MakePlatformNotNullable1705969874745 implements MigrationInterface {
     name = 'MakePlatformNotNullable1705969874745'

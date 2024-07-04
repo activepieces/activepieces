@@ -1,3 +1,4 @@
+import { system, SystemProp } from '@activepieces/server-shared'
 import { AuthenticationServiceHooks } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { platformService } from '../../../../platform/platform.service'
 import { projectService } from '../../../../project/project-service'
@@ -5,7 +6,6 @@ import { userService } from '../../../../user/user-service'
 import { userInvitationsService } from '../../../../user-invitations/user-invitation.service'
 import { licenseKeysService } from '../../../license-keys/license-keys-service'
 import { authenticationHelper } from './authentication-helper'
-import { system, SystemProp } from '@activepieces/server-shared'
 
 const DEFAULT_PLATFORM_NAME = 'Activepieces'
 

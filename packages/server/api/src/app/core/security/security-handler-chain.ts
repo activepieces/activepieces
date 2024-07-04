@@ -1,3 +1,4 @@
+import { Principal } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { AccessTokenAuthnHandler } from './authn/access-token-authn-handler'
 import { AnonymousAuthnHandler } from './authn/anonymous-authn-handler'
@@ -6,7 +7,6 @@ import { GlobalApiKeyAuthnHandler } from './authn/global-api-key-authn-handler'
 import { PlatformApiKeyAuthnHandler } from './authn/platform-api-key-authn-handler'
 import { PrincipalTypeAuthzHandler } from './authz/principal-type-authz-handler'
 import { ProjectAuthzHandler } from './authz/project-authz-handler'
-import { Principal } from '@activepieces/shared'
 
 const AUTHN_HANDLERS = [
     new AppSumoAuthnHandler(),

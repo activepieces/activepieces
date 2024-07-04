@@ -12,7 +12,7 @@ export const getChannelHistory = createAction({
     'Retrieve all messages from a specific channel ("conversation") between specified timestamps',
   props: {
     info: slackInfo,
-    channel: slackChannel,
+    channel: slackChannel(true),
     oldest: Property.Number({
       displayName: 'Oldest',
       description:

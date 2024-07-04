@@ -1,10 +1,10 @@
+import { File, FileCompression, FileType, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
     BLOB_COLUMN_TYPE,
 } from '../database/database-common'
-import { File, FileCompression, FileType, Project } from '@activepieces/shared'
 
 type FileSchema = File & {
     project: Project

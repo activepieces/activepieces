@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
 import { Observable, tap, map, switchMap, take, BehaviorSubject } from 'rxjs';
-import { FolderDto } from '@activepieces/shared';
+import { FolderDto, Permission } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import {
   FolderActions,
@@ -14,6 +14,8 @@ import {
   DeleteEntityDialogData,
   FoldersService,
   NavigationService,
+  doesUserHavePermission,
+  unpermittedTooltip,
 } from '@activepieces/ui/common';
 import { NewFolderDialogComponent } from '../../../components/dialogs/new-folder-dialog/new-folder-dialog.component';
 import {
@@ -31,6 +33,10 @@ export class FoldersListComponent {
   sortFolders$: BehaviorSubject<'asc' | 'desc'> = new BehaviorSubject<
     'asc' | 'desc'
   >('asc');
+  isReadOnly = !doesUserHavePermission(Permission.WRITE_FLOW);
+  newFolderTooltip = this.isReadOnly
+    ? unpermittedTooltip
+    : $localize`New folder`;
   allFlowsNumber$: Observable<number>;
   uncategorizedFlowsNumber$: Observable<number>;
   folders$: Observable<FolderDto[]>;

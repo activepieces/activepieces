@@ -1,3 +1,17 @@
+import {
+    ApiKeyResponseWithValue,
+    UpdateProjectPlatformRequest,
+} from '@activepieces/ee-shared'
+import {
+    apId,
+    FlowStatus,
+    NotificationStatus,
+    Platform,
+    PlatformRole,
+    PrincipalType,
+    Project,
+    User,
+} from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -13,20 +27,6 @@ import {
     createMockUser,
     mockBasicSetup,
 } from '../../../helpers/mocks'
-import {
-    ApiKeyResponseWithValue,
-    UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared'
-import {
-    apId,
-    FlowStatus,
-    NotificationStatus,
-    Platform,
-    PlatformRole,
-    PrincipalType,
-    Project,
-    User,
-} from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

@@ -1,22 +1,8 @@
-import { FastifyRequest } from 'fastify'
-import { databaseConnection } from '../../database/database-connection'
-import {
-    ApplicationEventHooks,
-    CreateAuditEventParam,
-} from '../../helper/application-events'
-import { extractClientRealIp } from '../../helper/network-utils'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { getEdition } from '../../helper/secret-helper'
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
-import { userService } from '../../user/user-service'
-import { AuditEventEntity } from './audit-event-entity'
 import {
     ApplicationEvent,
     ApplicationEventName,
 } from '@activepieces/ee-shared'
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { networkUtls, rejectedPromiseHandler, system } from '@activepieces/server-shared'
 import {
     ApEdition,
     apId,
@@ -26,6 +12,18 @@ import {
     PrincipalType,
     SeekPage,
 } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
+import { databaseConnection } from '../../database/database-connection'
+import {
+    ApplicationEventHooks,
+    CreateAuditEventParam,
+} from '../../helper/application-events'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
+import { AuditEventEntity } from './audit-event-entity'
 
 const auditLogRepo = databaseConnection.getRepository(AuditEventEntity)
 
@@ -75,11 +73,11 @@ const saveEvent = async (
     request: FastifyRequest,
     rawEvent: CreateAuditEventParam,
 ) => {
-    if ([PrincipalType.UNKNOWN, PrincipalType.WORKER].includes(request.principal.type)) {
+    if ([PrincipalType.UNKNOWN, PrincipalType.ENGINE].includes(request.principal.type)) {
         return
     }
     const platform = await platformService.getOneOrThrow(request.principal.platform.id)
-    const edition = getEdition()
+    const edition = system.getEdition()
     if (!platform.auditLogEnabled && edition !== ApEdition.CLOUD) {
         return
     }
@@ -101,7 +99,7 @@ const saveEvent = async (
         projectDisplayName: project ? project.displayName : undefined,
         userEmail: userInformation.email,
         platformId: userInformation.platformId!,
-        ip: extractClientRealIp(request),
+        ip: networkUtls.extractClientRealIp(request),
     }
     let eventToSave: ApplicationEvent | undefined
     switch (rawEvent.action) {

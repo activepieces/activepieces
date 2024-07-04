@@ -1,11 +1,11 @@
 import { readFile } from 'node:fs/promises'
+import { system, SystemProp } from '@activepieces/server-shared'
+import { isNil, Platform } from '@activepieces/shared'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
 import { defaultTheme } from '../../../../flags/theme'
 import { platformService } from '../../../../platform/platform.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { isNil, Platform } from '@activepieces/shared'
 
 const isSmtpConfigured = (platform: Platform | null): boolean => {
     const isConfigured = (host: string | undefined, port: string | undefined, user: string | undefined, password: string | undefined): boolean => {
@@ -68,6 +68,9 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
         primaryColor,
         fullLogoUrl,
         platformName,
+        checkIssuesEnabled() {
+            return templateData.name === 'issue-created' && templateData.vars.isIssue === 'true'
+        },
     })
 }
 

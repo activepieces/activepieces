@@ -1,9 +1,5 @@
-import dayjs from 'dayjs'
-import { issuesService } from '../../ee/issues/issues-service'
-import { flowQueue } from '../../workers/flow-worker/flow-queue'
-import { JobType } from '../../workers/flow-worker/queues/queue'
-import { flowRunHooks } from './flow-run-hooks'
-import { logger } from '@activepieces/server-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION,     logger,
+    RepeatableJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -15,24 +11,26 @@ import {
     ProgressUpdateType,
     RunEnvironment,
 } from '@activepieces/shared'
-import {
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    RepeatableJobType,
-} from 'server-worker'
+import dayjs from 'dayjs'
+import { alertsService } from '../../ee/alerts/alerts-service'
+import { issuesService } from '../../ee/issues/issues-service'
+import { flowQueue } from '../../flow-worker/queue'
+import { flowRunHooks } from './flow-run-hooks'
 
 type StartParams = {
     flowRun: FlowRun
     executionType: ExecutionType
     payload: unknown
-    synchronousHandlerId?: string
+    synchronousHandlerId: string | undefined
     progressUpdateType: ProgressUpdateType
+    httpRequestId: string | undefined
 }
 
 type PauseParams = {
     flowRun: FlowRun
 }
 
-const calculateDelayForResumeJob = (
+const calculateDelayForPausedRun = (
     resumeDateTimeIsoString: string,
 ): number => {
     const now = dayjs()
@@ -54,11 +52,13 @@ export const flowRunSideEffects = {
             .onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks! })
         if (flowRun.environment === RunEnvironment.PRODUCTION) {
             if (isFailedState(flowRun.status)) {
-                await issuesService.add({
+                const issue = await issuesService.add({
                     flowId: flowRun.flowId,
                     projectId: flowRun.projectId,
                     flowRunCreatedAt: flowRun.created,
                 })
+
+                await alertsService.sendAlertOnRunFinish({ issue, flowRunId: flowRun.id })
             }
         }
     },
@@ -67,6 +67,7 @@ export const flowRunSideEffects = {
         executionType,
         payload,
         synchronousHandlerId,
+        httpRequestId,
         progressUpdateType,
     }: StartParams): Promise<void> {
         logger.info(
@@ -84,6 +85,7 @@ export const flowRunSideEffects = {
                 runId: flowRun.id,
                 flowVersionId: flowRun.flowVersionId,
                 payload,
+                httpRequestId,
                 executionType,
                 progressUpdateType,
             },
@@ -121,7 +123,7 @@ export const flowRunSideEffects = {
                         jobType: RepeatableJobType.DELAYED_FLOW,
                         flowVersionId: flowRun.flowVersionId,
                     },
-                    delay: calculateDelayForResumeJob(pauseMetadata.resumeDateTime),
+                    delay: calculateDelayForPausedRun(pauseMetadata.resumeDateTime),
                 })
                 break
             case PauseType.WEBHOOK:

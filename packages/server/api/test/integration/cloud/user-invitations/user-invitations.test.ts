@@ -1,3 +1,7 @@
+import {
+    ApiKeyResponseWithValue,
+} from '@activepieces/ee-shared'
+import { InvitationType, Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, SendUserInvitationRequest, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -13,10 +17,6 @@ import {
     createMockUser,
     createMockUserInvitation,
 } from '../../../helpers/mocks'
-import {
-    ApiKeyResponseWithValue,
-} from '@activepieces/ee-shared'
-import { InvitationType, Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, SendUserInvitationRequest, User } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -50,9 +50,10 @@ describe('User Invitation API', () => {
             })
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRole: ProjectMemberRole.ADMIN,
                 email: faker.internet.email(),
                 type: InvitationType.PLATFORM,
+                projectRole: undefined,
+                projectId: null,
                 platformRole: PlatformRole.ADMIN,
             }
             const response = await app?.inject({
@@ -86,6 +87,7 @@ describe('User Invitation API', () => {
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
                 projectRole: ProjectMemberRole.ADMIN,
                 email: faker.internet.email(),
+                projectId: null,
                 type: InvitationType.PLATFORM,
                 platformRole: PlatformRole.ADMIN,
             }
@@ -113,6 +115,7 @@ describe('User Invitation API', () => {
                 projectRole: ProjectMemberRole.ADMIN,
                 email: faker.internet.email(),
                 type: InvitationType.PLATFORM,
+                projectId: null,
                 platformRole: PlatformRole.ADMIN,
             }
             const response = await app?.inject({
@@ -129,11 +132,56 @@ describe('User Invitation API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
         })
 
-        it('Invite user to Project Member', async () => {
-            const { mockOwnerToken } = await createBasicEnvironment({})
+        it('Invite user to other platform project should fail', async () => {
+            const { mockApiKey } = await createBasicEnvironment({})
+            const { mockProject: mockProject2 } = await createBasicEnvironment({})
+
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
                 projectRole: ProjectMemberRole.ADMIN,
                 email: faker.internet.email(),
+                projectId: mockProject2.id,
+                type: InvitationType.PROJECT,
+            }
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/user-invitations',
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+                body: mockInviteProjectMemberRequest,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            const responseBody = response?.json()
+            expect(responseBody?.code).toBe('AUTHORIZATION')
+        })
+
+        it('Invite user to Project Member using api key', async () => {
+            const { mockApiKey, mockProject } = await createBasicEnvironment({})
+            const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
+                projectRole: ProjectMemberRole.ADMIN,
+                email: faker.internet.email(),
+                projectId: mockProject.id, 
+                type: InvitationType.PROJECT,
+            }
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/user-invitations',
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+                body: mockInviteProjectMemberRequest,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        })
+
+        it('Invite user to Project Member', async () => {
+            const { mockOwnerToken, mockProject } = await createBasicEnvironment({})
+            const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
+                projectRole: ProjectMemberRole.ADMIN,
+                email: faker.internet.email(),
+                projectId: mockProject.id,
                 type: InvitationType.PROJECT,
             }
             const response = await app?.inject({
@@ -156,6 +204,7 @@ describe('User Invitation API', () => {
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
                 projectRole: ProjectMemberRole.EDITOR,
                 email: faker.internet.email(),
+                projectId: mockProject.id,
                 type: InvitationType.PROJECT,
             }
             const mockProjectMember = createMockProjectMember({
@@ -228,6 +277,7 @@ describe('User Invitation API', () => {
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
                 projectRole: ProjectMemberRole.EDITOR,
                 email: faker.internet.email(),
+                projectId: mockProject.id,
                 type: InvitationType.PROJECT,
             }
             const mockProjectMember = createMockProjectMember({

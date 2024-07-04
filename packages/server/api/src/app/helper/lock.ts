@@ -1,28 +1,11 @@
-import { Mutex } from 'async-mutex'
+import { ApLock, exceptionHandler, memoryLock, QueueMode, system, SystemProp } from '@activepieces/server-shared'
 import { Redis } from 'ioredis'
 import RedLock from 'redlock'
 import { createRedisClient } from '../database/redis-connection'
-import { exceptionHandler, QueueMode, system, SystemProp } from '@activepieces/server-shared'
 
 let redLock: RedLock
 let redisConnection: Redis
-const memoryLocks = new Map<string, MutexLockWrapper>()
 const queueMode = system.get(SystemProp.QUEUE_MODE)!
-class MutexLockWrapper {
-    private lock: Mutex
-
-    constructor() {
-        this.lock = new Mutex()
-    }
-
-    async acquire(): Promise<void> {
-        await this.lock.acquire()
-    }
-
-    async release(): Promise<void> {
-        this.lock.release()
-    }
-}
 
 const initializeLock = () => {
     switch (queueMode) {
@@ -43,15 +26,6 @@ const initializeLock = () => {
     }
 }
 
-const acquireMemoryLock = async (key: string): Promise<ApLock> => {
-    let lock = memoryLocks.get(key)
-    if (!lock) {
-        lock = new MutexLockWrapper()
-        memoryLocks.set(key, lock)
-    }
-    await lock.acquire()
-    return lock
-}
 
 const acquireRedisLock = async (
     key: string,
@@ -74,10 +48,6 @@ type AcquireLockParams = {
     timeout?: number
 }
 
-export type ApLock = {
-    release(): Promise<unknown>
-}
-
 export const acquireLock = async ({
     key,
     timeout = 3000,
@@ -86,7 +56,7 @@ export const acquireLock = async ({
         case QueueMode.REDIS:
             return acquireRedisLock(key, timeout)
         case QueueMode.MEMORY:
-            return acquireMemoryLock(key)
+            return memoryLock.acquire(key, timeout)
         default:
             throw new Error(`Unknown queue mode: ${queueMode}`)
     }

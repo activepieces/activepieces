@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises'
-import { logger, PackageInfo, packageManager } from '@activepieces/server-shared'
+import { fileExists, logger, PackageInfo, packageManager } from '@activepieces/server-shared'
 import { SourceCode } from '@activepieces/shared'
 
 const TS_CONFIG_CONTENT = `
@@ -29,19 +29,30 @@ const INVALID_ARTIFACT_TEMPLATE_PATH =
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
 export const codeBuilder = {
+    buildPath({
+        sourceCodeId,
+        flowVersionId,
+        buildPath,
+    }: BuildPathParams): string {
+        return `${buildPath}/codes/${flowVersionId}/${sourceCodeId}`
+    },
     async processCodeStep({
         sourceCode,
         sourceCodeId,
+        flowVersionId,
         buildPath,
     }: ProcessCodeStepParams): Promise<void> {
+        const codePath = codeBuilder.buildPath({
+            sourceCodeId,
+            flowVersionId,
+            buildPath,
+        })
         logger.debug({
             name: 'CodeBuilder#processCodeStep',
             sourceCode,
             sourceCodeId,
-            buildPath,
+            codePath,
         })
-
-        const codePath = `${buildPath}/codes/${sourceCodeId}`
 
         try {
             const { code, packageJson } = sourceCode
@@ -70,6 +81,10 @@ export const codeBuilder = {
 }
 
 const createBuildDirectory = async (path: string): Promise<void> => {
+    const fsExists = await fileExists(path)
+    if (fsExists) {
+        await fs.rm(path, { recursive: true })
+    }
     await fs.mkdir(path, { recursive: true })
 }
 
@@ -132,9 +147,16 @@ const handleCompilationError = async ({
     await fs.writeFile(`${codePath}/index.js`, invalidArtifactContent, 'utf8')
 }
 
+type BuildPathParams = {
+    sourceCodeId: string
+    flowVersionId: string
+    buildPath: string
+}
+
 type ProcessCodeStepParams = {
     sourceCode: SourceCode
     sourceCodeId: string
+    flowVersionId: string
     buildPath: string
 }
 
