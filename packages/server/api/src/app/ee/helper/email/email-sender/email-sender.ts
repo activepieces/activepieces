@@ -52,6 +52,7 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
 type IssuesReminderTemplateData = BaseEmailTemplateData<'issues-reminder', {
     issuesUrl: string
     issues: string
+    issuesCount: string
     projectName: string
 }>
 

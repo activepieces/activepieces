@@ -58,6 +58,7 @@
             border-collapse: collapse;
             width: 98%;
             margin-bottom: 28px;
+            margin-top: 18px;
         }
 
         h3 {
@@ -70,6 +71,7 @@
             font-family: 'Graphik', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI',
                 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
                 'Droid Sans', 'Helvetica', sans-serif;
+            margin-bottom: 18px;
         }
 
         th,
@@ -98,6 +100,22 @@
         .header {
             margin-top: 32px;
         }
+
+        .header span {
+            padding-bottom: 16px;
+            color: #000001;
+            font-family: 'Graphik',
+                '-apple-system',
+                'BlinkMacSystemFont', 'Segoe UI',
+                'Roboto', 'Oxygen', 'Ubuntu',
+                'Cantarell', 'Fira Sans',
+                'Droid Sans', 'Helvetica',
+                sans-serif !important;
+            font-size: 20px;
+            line-height: 30px;
+            text-align: left;
+            min-width: auto !important;
+        }
     </style>
 </head>
 
@@ -112,6 +130,7 @@
                                                   -ms-interpolation-mode: bicubic;
                                                 " /></a>
         <h3>{{projectName}} issues summary</h3>
+        <span>There are {{issuesCount}} unresolved issues for {{projectName}}.</span>
     </div>
 
     <table>

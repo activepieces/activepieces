@@ -1,4 +1,3 @@
-import { PopulatedIssue } from '@activepieces/ee-shared'
 import { ProjectId } from '@activepieces/shared'
 import { Dayjs } from 'dayjs'
 
@@ -17,11 +16,9 @@ type HardDeleteProjectSystemJobData = {
     projectId: ProjectId
 }
 type IssuesReminderSystemJobData = {
-    emails: string[]
+    projectId: ProjectId
+    projectName: string
     platformId: string
-    issuesUrl: string
-    issuesWithFormattedDate: PopulatedIssue[]
-    projectDisplayName: string
 }
 
 type SystemJobDataMap = {

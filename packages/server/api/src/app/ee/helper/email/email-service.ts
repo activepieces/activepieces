@@ -1,4 +1,4 @@
-import { AlertChannel, OtpType, PopulatedIssue } from '@activepieces/ee-shared'
+import { AlertChannel, OtpType } from '@activepieces/ee-shared'
 import { logger, system } from '@activepieces/server-shared'
 import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitation } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -92,11 +92,6 @@ export const emailService = {
             return
         }
         
-        const issues = await issuesService.list({ projectId, cursor: undefined, limit: 50 })
-        if (issues.data.length === 0) {
-            return
-        }
-
         const reminderKey = `reminder:${projectId}`
         const isEmailScheduled = await getRedisConnection().get(reminderKey)
         if (isEmailScheduled) {
@@ -106,29 +101,13 @@ export const emailService = {
         const endOfDay = dayjs().endOf('day')
         await getRedisConnection().set(reminderKey, 0, 'EXAT', endOfDay.unix())
         
-        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        
-        const issuesUrl = await platformDomainHelper.constructUrlFrom({
-            platformId: project.platformId,
-            path: 'runs?limit=10#Issues',
-        })
-
-        const issuesWithFormattedDate = issues.data.map((issue) => ({ 
-            ...issue, 
-            created: dayjs(issue.created).format('MMM d, h:mm a'),
-            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM d, h:mm a'), 
-        }))
-        
         await systemJobsSchedule.upsertJob({
             job: {
                 name: SystemJobName.ISSUES_REMINDER,
                 data: {
-                    emails,
-                    issuesUrl,
-                    issuesWithFormattedDate,
-                    platformId: project.platformId,
-                    projectDisplayName: project.displayName,
+                    projectId,
+                    platformId: platform.id,
+                    projectName: project.displayName,
                 },
                 jobId: `issues-reminder-${projectId}`,
             },
@@ -217,21 +196,39 @@ export const emailService = {
     },
     
     async sendingRemindersJobHandler(job: {
-        emails: string[]
+        projectId: string
         platformId: string
-        issuesUrl: string
-        issuesWithFormattedDate: PopulatedIssue[]
-        projectDisplayName: string
+        projectName: string
     }): Promise<void> {
+        const issues = await issuesService.list({ projectId: job.projectId, cursor: undefined, limit: 50 })
+        if (issues.data.length === 0) {
+            return
+        }
+
+        const alerts = await alertsService.list({ projectId: job.projectId, cursor: undefined, limit: 50 })
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        
+        const issuesUrl = await platformDomainHelper.constructUrlFrom({
+            platformId: job.platformId,
+            path: 'runs?limit=10#Issues',
+        })
+
+        const issuesWithFormattedDate = issues.data.map((issue) => ({ 
+            ...issue, 
+            created: dayjs(issue.created).format('MMM d, h:mm a'),
+            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM d, h:mm a'), 
+        }))
+
         await emailSender.send({
-            emails: job.emails,
+            emails,
             platformId: job.platformId,
             templateData: {
                 name: 'issues-reminder',
                 vars: {
-                    issuesUrl: job.issuesUrl,
-                    issues: JSON.stringify(job.issuesWithFormattedDate),
-                    projectName: job.projectDisplayName,
+                    issuesUrl,
+                    issuesCount: issues.data.length.toString(),
+                    projectName: job.projectName,
+                    issues: JSON.stringify(issuesWithFormattedDate),
                 },
             },
         })
