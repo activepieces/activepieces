@@ -12,13 +12,19 @@ export enum WorkerMachineType {
     SHARED = 'SHARED',
 }
 
+export const MachineInformation = Type.Object({
+    cpuUsagePercentage: Type.Number(),
+    ramUsagePercentage: Type.Number(),
+    totalAvailableRamInBytes: Type.Number(),
+    ip: Type.String(),
+})
+export type MachineInformation = Static<typeof MachineInformation>
+
 export const WorkerMachine = Type.Object({
     ...BaseModelSchema,
     platformId: ApId,
     type: Type.Enum(WorkerMachineType),
-    cpuUsage: Type.Number(),
-    ramUsage: Type.Number(),
-    totalRamInBytes: Type.Number(),
+    information: MachineInformation,
 })
 
 export type WorkerMachine = Static<typeof WorkerMachine>
@@ -29,11 +35,6 @@ export const WorkerMachineWithStatus = Type.Composite([WorkerMachine, Type.Objec
 
 export type WorkerMachineWithStatus = Static<typeof WorkerMachineWithStatus>
 
-export const WorkerMachineHealthcheckRequest = Type.Object({
-    ramInBytes: Type.Number(),
-    cpuUsage: Type.Number(),
-    ramUsage: Type.Number(),
-    totalRamInBytes: Type.Number(),
-})
+export const WorkerMachineHealthcheckRequest = MachineInformation
 
 export type WorkerMachineHealthcheckRequest = Static<typeof WorkerMachineHealthcheckRequest>

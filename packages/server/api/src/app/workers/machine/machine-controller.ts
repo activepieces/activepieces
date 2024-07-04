@@ -27,12 +27,13 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
 
 
     app.post('/heartbeat', HeartbeatParams, async (request) => {
-        const { cpuUsage, ramUsage, totalRamInBytes } = request.body
+        const { cpuUsagePercentage, ramUsagePercentage, totalAvailableRamInBytes, ip } = request.body
         const workerPrincipal = request.principal as unknown as WorkerPrincipal
         await machineService.upsert({
-            cpuUsage,
-            ramUsage,
-            totalRamInBytes,
+            cpuUsagePercentage,
+            ramUsagePercentage,
+            totalAvailableRamInBytes,
+            ip,
             workerPrincipal,
         })
     })

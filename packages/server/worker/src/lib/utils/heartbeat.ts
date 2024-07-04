@@ -1,4 +1,5 @@
 import os from 'os'
+import { networkUtls } from '@activepieces/server-shared'
 import { WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 
 async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
@@ -14,11 +15,13 @@ async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         return acc + (1 - idle / total)
     }, 0) / cpus.length * 100
 
+    const ip = (await networkUtls.getPublicIp()).ip
+
     return {
-        cpuUsage,
-        ramUsage,
-        totalRamInBytes,
-        ramInBytes,
+        cpuUsagePercentage: cpuUsage,
+        ramUsagePercentage: ramUsage,
+        totalAvailableRamInBytes: totalRamInBytes,
+        ip,
     }
 }
 

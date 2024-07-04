@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddWorkerMachineEntitySqlite1720054334074 implements MigrationInterface {
-    name = 'AddWorkerMachineEntitySqlite1720054334074'
+export class AddWorkerMachineSqlite1720100928449 implements MigrationInterface {
+    name = 'AddWorkerMachineSqlite1720100928449'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -11,9 +11,7 @@ export class AddWorkerMachineEntitySqlite1720054334074 implements MigrationInter
                 "updated" datetime NOT NULL DEFAULT (datetime('now')),
                 "platformId" varchar(21),
                 "type" varchar NOT NULL,
-                "cpuUsage" float NOT NULL,
-                "ramUsage" float NOT NULL,
-                "totalRamInBytes" bigint NOT NULL
+                "information" text NOT NULL
             )
         `)
         await queryRunner.query(`
@@ -23,9 +21,7 @@ export class AddWorkerMachineEntitySqlite1720054334074 implements MigrationInter
                 "updated" datetime NOT NULL DEFAULT (datetime('now')),
                 "platformId" varchar(21),
                 "type" varchar NOT NULL,
-                "cpuUsage" float NOT NULL,
-                "ramUsage" float NOT NULL,
-                "totalRamInBytes" bigint NOT NULL,
+                "information" text NOT NULL,
                 CONSTRAINT "FK_7f3c83a5162a2de787dc62bf519" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
         `)
@@ -36,18 +32,14 @@ export class AddWorkerMachineEntitySqlite1720054334074 implements MigrationInter
                     "updated",
                     "platformId",
                     "type",
-                    "cpuUsage",
-                    "ramUsage",
-                    "totalRamInBytes"
+                    "information"
                 )
             SELECT "id",
                 "created",
                 "updated",
                 "platformId",
                 "type",
-                "cpuUsage",
-                "ramUsage",
-                "totalRamInBytes"
+                "information"
             FROM "worker_machine"
         `)
         await queryRunner.query(`
@@ -71,9 +63,7 @@ export class AddWorkerMachineEntitySqlite1720054334074 implements MigrationInter
                 "updated" datetime NOT NULL DEFAULT (datetime('now')),
                 "platformId" varchar(21),
                 "type" varchar NOT NULL,
-                "cpuUsage" float NOT NULL,
-                "ramUsage" float NOT NULL,
-                "totalRamInBytes" bigint NOT NULL
+                "information" text NOT NULL
             )
         `)
         await queryRunner.query(`
@@ -83,18 +73,14 @@ export class AddWorkerMachineEntitySqlite1720054334074 implements MigrationInter
                     "updated",
                     "platformId",
                     "type",
-                    "cpuUsage",
-                    "ramUsage",
-                    "totalRamInBytes"
+                    "information"
                 )
             SELECT "id",
                 "created",
                 "updated",
                 "platformId",
                 "type",
-                "cpuUsage",
-                "ramUsage",
-                "totalRamInBytes"
+                "information"
             FROM "temporary_worker_machine"
         `)
         await queryRunner.query(`

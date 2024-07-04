@@ -9,9 +9,12 @@ const OFFLINE_THRESHOLD = dayjs.duration(60, 's').asMilliseconds()
 export const machineService = {
     async upsert(request: UpsertParams): Promise<void> {
         await workerRepo().upsert({
-            cpuUsage: request.cpuUsage,
-            ramUsage: request.ramUsage,
-            totalRamInBytes: request.totalRamInBytes,
+            information: {
+                cpuUsagePercentage: request.cpuUsagePercentage,
+                ramUsagePercentage: request.ramUsagePercentage,
+                totalAvailableRamInBytes: request.totalAvailableRamInBytes,
+                ip: request.ip,
+            },
             updated: dayjs().toISOString(),
             id: request.workerPrincipal.id,
             ...spreadIfDefined('platformId', request.workerPrincipal.platform?.id),
@@ -28,8 +31,9 @@ export const machineService = {
 }
 
 type UpsertParams = {
-    cpuUsage: number
-    ramUsage: number
-    totalRamInBytes: number
+    cpuUsagePercentage: number
+    ramUsagePercentage: number
+    totalAvailableRamInBytes: number
+    ip: string
     workerPrincipal: WorkerPrincipal
 }

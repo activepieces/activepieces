@@ -11,9 +11,7 @@ import { WorkersService } from '../../service/workers.service';
 export class WorkersTableDataSource extends DataSource<WorkerMachine> {
   data: WorkerMachine[] = [];
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
-  constructor(
-    private workersService: WorkersService
-  ) {
+  constructor(private workersService: WorkersService) {
     super();
   }
 
@@ -24,11 +22,13 @@ export class WorkersTableDataSource extends DataSource<WorkerMachine> {
    */
 
   connect(): Observable<WorkerMachine[]> {
-   this.isLoading$.next(true);
-   return this.workersService.list().pipe(tap((res)=>{
-    this.isLoading$.next(false); 
-    this.data=res; 
-   }))
+    this.isLoading$.next(true);
+    return this.workersService.list().pipe(
+      tap((res) => {
+        this.isLoading$.next(false);
+        this.data = res;
+      })
+    );
   }
 
   /**

@@ -4,6 +4,7 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
+    JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
 
 type WorkerMachineSchema = WorkerMachine & {
@@ -21,14 +22,8 @@ export const WorkerMachineEntity = new EntitySchema<WorkerMachineSchema>({
         type: {
             type: String,
         },
-        cpuUsage: {
-            type: 'float',
-        },
-        ramUsage: {
-            type: 'float',
-        },
-        totalRamInBytes: {
-            type: 'bigint',
+        information: {
+            type: JSONB_COLUMN_TYPE,
         },
     },
     relations: {

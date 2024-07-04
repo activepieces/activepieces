@@ -33,7 +33,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
     { fragmentName: 'ApiKeys' },
     { fragmentName: 'SSO' },
     { fragmentName: 'AuditLog' },
-    {fragmentName: 'Workers'}
+    { fragmentName: 'Workers' },
   ];
   removeSigningKey = false;
   removeMailServer = false;

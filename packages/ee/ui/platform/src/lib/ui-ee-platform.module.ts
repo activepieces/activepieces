@@ -43,7 +43,6 @@ import { WorkerMachinesTableComponent } from './components/workers-table/workers
     ApplyTagsComponent,
     UpdatesComponent,
     ApDatePipe,
-    
   ],
   declarations: [
     PlatformDashboardContainerComponent,
@@ -72,7 +71,7 @@ import { WorkerMachinesTableComponent } from './components/workers-table/workers
     EnableFederatedAuthnProviderDialogComponent,
     ConfigureAllowingEmailLoginsCardComponent,
     EnableSAMLAuthnProviderDialogComponent,
-    WorkerMachinesTableComponent
+    WorkerMachinesTableComponent,
   ],
   providers: [DatePipe],
 })

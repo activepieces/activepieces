@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddWorkerMachineEntity1720054602927 implements MigrationInterface {
-    name = 'AddWorkerMachineEntity1720054602927'
+export class AddWorkerMachine1720101280025 implements MigrationInterface {
+    name = 'AddWorkerMachine1720101280025'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -11,9 +11,7 @@ export class AddWorkerMachineEntity1720054602927 implements MigrationInterface {
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "platformId" character varying(21),
                 "type" character varying NOT NULL,
-                "cpuUsage" double precision NOT NULL,
-                "ramUsage" double precision NOT NULL,
-                "totalRamInBytes" bigint NOT NULL,
+                "information" jsonb NOT NULL,
                 CONSTRAINT "PK_9d6b1b7507214e3480582ef32e7" PRIMARY KEY ("id")
             )
         `)

@@ -10,7 +10,7 @@ export class WorkersService {
   constructor(private http: HttpClient) {}
   list() {
     return this.http.get<WorkerMachine[]>(
-      environment.apiUrl + '/worker-machines',
+      environment.apiUrl + '/worker-machines'
     );
   }
 }

@@ -60,4 +60,5 @@ function extractHostname(url: string): string | null {
 export const networkUtls = {
     getApiUrl,
     extractClientRealIp,
+    getPublicIp,
 }
