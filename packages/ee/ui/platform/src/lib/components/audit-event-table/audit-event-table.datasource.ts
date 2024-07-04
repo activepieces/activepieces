@@ -1,7 +1,7 @@
 import { DataSource } from '@angular/cdk/collections';
 import { Observable, BehaviorSubject, tap, switchMap, map } from 'rxjs';
 import { combineLatest } from 'rxjs';
-import { AuditEventService } from '../../service/audit-event-service';
+import { AuditEventService } from '../../service/audit-event.service';
 import { ApplicationEvent } from '@activepieces/ee-shared';
 import {
   ApPaginatorComponent,

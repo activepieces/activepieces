@@ -25,13 +25,6 @@ export class PlatformSettingsComponent implements AfterViewInit {
   @ViewChild('tabs') tabGroup?: MatTabGroup;
   title = $localize`Settings`;
   fragmentChanged$: Observable<string | null>;
-  readonly apiKeysTabTitle = $localize`API Keys`;
-  readonly signingKeysTabTitle = $localize`Signing Keys`;
-  readonly AuditLogTabTitle = $localize`Audit Log`;
-  readonly customDomainTabTitle = $localize`Custom Domains`;
-  readonly accountManagementEmailTabTitle = $localize`Mail Server`;
-  readonly newUpdateMessage = $localize`New update available`;
-
   readonly tabIndexFragmentMap = [
     { fragmentName: 'Updates' },
     { fragmentName: 'SigningKeys' },
@@ -40,6 +33,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
     { fragmentName: 'ApiKeys' },
     { fragmentName: 'SSO' },
     { fragmentName: 'AuditLog' },
+    {fragmentName: 'Workers'}
   ];
   removeSigningKey = false;
   removeMailServer = false;

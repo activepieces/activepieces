@@ -32,6 +32,7 @@ import { ApplyTagsComponent } from 'ui-feature-tags';
 import { UpdatesComponent } from './components/updates/updates.component';
 import { DomainTxtValidationDialogComponent } from './components/dialogs/domain-txt-validation-dialog/domain-txt-validation-dialog.component';
 import { EnableSAMLAuthnProviderDialogComponent } from './components/dialogs/enable-saml-authn-provider-dialog.component/enable-saml-authn-provider-dialog.component';
+import { WorkerMachinesTableComponent } from './components/workers-table/workers-table.component';
 
 @NgModule({
   imports: [
@@ -42,6 +43,7 @@ import { EnableSAMLAuthnProviderDialogComponent } from './components/dialogs/ena
     ApplyTagsComponent,
     UpdatesComponent,
     ApDatePipe,
+    
   ],
   declarations: [
     PlatformDashboardContainerComponent,
@@ -70,6 +72,7 @@ import { EnableSAMLAuthnProviderDialogComponent } from './components/dialogs/ena
     EnableFederatedAuthnProviderDialogComponent,
     ConfigureAllowingEmailLoginsCardComponent,
     EnableSAMLAuthnProviderDialogComponent,
+    WorkerMachinesTableComponent
   ],
   providers: [DatePipe],
 })
