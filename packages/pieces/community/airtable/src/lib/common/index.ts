@@ -6,7 +6,6 @@ import {
 } from '@activepieces/pieces-common';
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import Airtable from 'airtable';
-import { isNil } from 'lodash';
 import {
   AirtableBase,
   AirtableEnterpriseFields,
@@ -16,6 +15,7 @@ import {
   AirtableTable,
   AirtableView,
 } from './models';
+import { isNil } from '@activepieces/shared';
 
 export const airtableCommon = {
   base: Property.Dropdown({

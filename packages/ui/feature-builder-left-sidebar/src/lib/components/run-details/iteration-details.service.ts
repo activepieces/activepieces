@@ -12,8 +12,10 @@ export class RunDetailsService {
   > = new BehaviorSubject<
     Pick<StepRunResult, 'displayName' | 'output' | 'stepName'> | undefined
   >(undefined);
-  iterationStepResultState$: Subject<
-    Pick<StepRunResult, 'stepName' | 'output'>
-  > = new Subject();
+  iterationStepResultState$: BehaviorSubject<
+    Pick<StepRunResult, 'stepName' | 'output'> | undefined
+  > = new BehaviorSubject<
+    Pick<StepRunResult, 'stepName' | 'output'> | undefined
+  >(undefined);
   hideAllIterationsInput$: Subject<boolean> = new Subject();
 }

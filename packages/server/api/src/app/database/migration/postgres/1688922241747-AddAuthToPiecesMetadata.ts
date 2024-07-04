@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddAuthToPiecesMetadata1688922241747
 implements MigrationInterface {

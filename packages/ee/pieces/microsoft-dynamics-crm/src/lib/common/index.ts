@@ -9,32 +9,50 @@ import {
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
-import { dynamicsCRMAuth } from '../../';
+import { dynamicsCRMAuth, getBaseUrl } from '../../';
 import { DynamicsCRMClient } from './client';
-import { EntityAttributeType, EntityDetails } from './constants';
+import { EntityAttributeType } from './constants';
 
 export function makeClient(auth: PiecePropValueSchema<typeof dynamicsCRMAuth>) {
   const client = new DynamicsCRMClient(
     auth.props?.['hostUrl'],
-    auth.access_token
+    auth.access_token,
+    auth.props?.['proxyUrl']
   );
   return client;
 }
 
 export const DynamicsCRMCommon = {
   entityType: (description: string) =>
-    Property.StaticDropdown({
+    Property.Dropdown({
       displayName: 'Entity Type',
+      refreshers: [],
       description,
       required: true,
-      options: {
-        disabled: false,
-        options: Object.keys(EntityDetails).map((key) => {
+      options: async ({ auth }) => {
+        if (!auth) {
           return {
-            label: EntityDetails[key].displayName,
-            value: EntityDetails[key].value,
+            disabled: true,
+            options: [],
+            placeholder: '',
           };
-        }),
+        }
+
+        const client = makeClient(
+          auth as PiecePropValueSchema<typeof dynamicsCRMAuth>
+        );
+
+        const res = await client.fetchEntityTypes();
+
+        return {
+          disabled: false,
+          options: res.value.map((val) => {
+            return {
+              label: val.EntitySetName,
+              value: val.EntitySetName,
+            };
+          }),
+        };
       },
     }),
   recordId: Property.Dropdown({
@@ -50,10 +68,23 @@ export const DynamicsCRMCommon = {
         };
       }
 
-      const entityUrlPath = EntityDetails[entityType as string].urlPath;
-      const entityPrimaryKey = EntityDetails[entityType as string].primaryKey;
-      const entityprimaryNameAttribute =
-        EntityDetails[entityType as string].primaryNameAttribute;
+      const client = makeClient(
+        auth as PiecePropValueSchema<typeof dynamicsCRMAuth>
+      );
+
+      const res = await client.fetchEntityTypeAttributes(entityType as string);
+
+      if (!res.value[0]) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select entity type first.',
+        };
+      }
+
+      const entityUrlPath = entityType as string;
+      const entityPrimaryKey = res.value[0].PrimaryIdAttribute;
+      const entityprimaryNameAttribute = res.value[0].PrimaryNameAttribute;
 
       const authValue = auth as PiecePropValueSchema<typeof dynamicsCRMAuth>;
 
@@ -68,7 +99,10 @@ export const DynamicsCRMCommon = {
 
       const request: HttpRequest = {
         method: HttpMethod.GET,
-        url: `${authValue.props?.['hostUrl']}/api/data/v9.2/${entityUrlPath}`,
+        url: `${getBaseUrl(
+          authValue.props?.['hostUrl'],
+          authValue.props?.['proxyUrl']
+        )}/api/data/v9.2/${entityUrlPath}`,
         queryParams: {
           $select: entityprimaryNameAttribute,
         },
@@ -112,8 +146,20 @@ export const DynamicsCRMCommon = {
           auth as PiecePropValueSchema<typeof dynamicsCRMAuth>
         );
 
-        const res = await client.fetchEntityAttributes(
+        const typeRes = await client.fetchEntityTypeAttributes(
           entityType as unknown as string
+        );
+
+        if (!typeRes.value[0]) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please select entity type first.',
+          };
+        }
+
+        const res = await client.fetchEntityAttributes(
+          typeRes.value[0].LogicalName
         );
 
         for (const field of res.value) {
@@ -156,7 +202,7 @@ export const DynamicsCRMCommon = {
               case EntityAttributeType.STATE:
               case EntityAttributeType.STATUS: {
                 const options = await client.fetchOptionFieldValues(
-                  entityType as unknown as string,
+                  typeRes.value[0].LogicalName,
                   field.LogicalName,
                   field.AttributeType
                 );

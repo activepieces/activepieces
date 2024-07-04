@@ -59,6 +59,10 @@ type ErrorParams =
     | UserIsInActiveErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
+    | ExistingAlertChannelErrorParams
+    | ActivationKeyNotFoundParams
+    | ActivationKeyNotAlreadyActivated
+    | EmailAlreadyHasActivationKey
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -67,7 +71,9 @@ export type BaseErrorParams<T, V> = {
 
 export type InvitationOnlySignUpParams = BaseErrorParams<
 ErrorCode.INVITATION_ONLY_SIGN_UP,
-Record<string, never>
+{
+    message?: string
+}
 >
 
 export type InvalidClaimParams = BaseErrorParams<ErrorCode.INVALID_CLAIM, { redirectUrl: string, tokenUrl: string, clientId: string }>
@@ -317,8 +323,8 @@ ErrorCode.INVALID_APP_CONNECTION,
 export type QuotaExceededParams = BaseErrorParams<
 ErrorCode.QUOTA_EXCEEDED,
 {
-    metric: 'connections' | 'tasks' | 'bots' | 'datasource' | 'team-members'
-    quota: number
+    metric: 'tasks' | 'team-members'
+    quota?: number
 }
 >
 
@@ -347,8 +353,24 @@ ErrorCode.INVALID_SAML_RESPONSE,
 }
 >
 
+export type ExistingAlertChannelErrorParams = BaseErrorParams<
+ErrorCode.EXISTING_ALERT_CHANNEL,
+{
+    email: string
+}
+>
 
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
+
+export type ActivationKeyNotFoundParams = BaseErrorParams<ErrorCode.ACTIVATION_KEY_NOT_FOUND, {
+    key: string
+}>
+export type ActivationKeyNotAlreadyActivated = BaseErrorParams<ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED, {
+    key: string
+}>
+export type EmailAlreadyHasActivationKey = BaseErrorParams<ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY, {
+    email: string
+}>
 
 export enum ErrorCode {
     AUTHENTICATION = 'AUTHENTICATION',
@@ -361,6 +383,7 @@ export enum ErrorCode {
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
+    EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
     FLOW_FORM_NOT_FOUND = 'FLOW_FORM_NOT_FOUND',
     FILE_NOT_FOUND = 'FILE_NOT_FOUND',
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
@@ -396,4 +419,7 @@ export enum ErrorCode {
     TRIGGER_FAILED = 'TRIGGER_FAILED',
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
     VALIDATION = 'VALIDATION',
+    ACTIVATION_KEY_NOT_FOUND = 'ACTIVATION_KEY_NOT_FOUND',
+    ACTIVATION_KEY_ALREADY_ACTIVATED = 'ACTIVATION_KEY_ALREADY_ACTIVATED',
+    EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
 }

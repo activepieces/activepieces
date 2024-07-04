@@ -1,9 +1,3 @@
-import dayjs from 'dayjs'
-import Stripe from 'stripe'
-import { getEdition } from '../../../helper/secret-helper'
-import { projectService } from '../../../project/project-service'
-import { projectUsageService } from '../../../project/usage/project-usage-service'
-import { projectBillingService } from './project-billing.service'
 import { getTasksPriceId } from '@activepieces/ee-shared'
 import { exceptionHandler, system, SystemProp } from '@activepieces/server-shared'
 import {
@@ -12,6 +6,11 @@ import {
     ProjectId,
     UserMeta,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import Stripe from 'stripe'
+import { projectService } from '../../../project/project-service'
+import { projectUsageService } from '../../../project/usage/project-usage-service'
+import { projectBillingService } from './project-billing.service'
 
 export const stripeWebhookSecret = system.get(
     SystemProp.STRIPE_WEBHOOK_SECRET,
@@ -21,7 +20,7 @@ export const TASKS_PAYG_PRICE_ID = getTasksPriceId(system.get(SystemProp.STRIPE_
 
 
 function getStripe(): Stripe | undefined {
-    const edition = getEdition()
+    const edition = system.getEdition()
     if (edition !== ApEdition.CLOUD) {
         return undefined
     }
@@ -35,7 +34,7 @@ async function getOrCreateCustomer(
     user: UserMeta,
     projectId: ProjectId,
 ): Promise<string | undefined> {
-    const edition = getEdition()
+    const edition = system.getEdition()
     const stripe = getStripe()
     if (edition !== ApEdition.CLOUD) {
         return undefined

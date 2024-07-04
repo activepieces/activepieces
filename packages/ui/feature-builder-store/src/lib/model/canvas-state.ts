@@ -19,7 +19,10 @@ export interface CanvasState {
         }
       | typeof NO_PROPS;
   };
-  selectedRun: FlowRun | undefined;
+  runInfo: {
+    selectedRun: FlowRun | undefined;
+    loopIndexes: Record<string, number>;
+  };
   selectedStepName: string;
   viewedVersion: FlowVersion;
   clickedAddBtnId?: number;

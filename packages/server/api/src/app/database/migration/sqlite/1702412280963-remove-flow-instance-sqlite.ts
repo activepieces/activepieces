@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RemoveFlowInstanceSqlite1702412280963
 implements MigrationInterface {

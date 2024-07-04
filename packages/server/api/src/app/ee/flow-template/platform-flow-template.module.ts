@@ -1,21 +1,20 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Static, Type } from '@sinclair/typebox'
-import { StatusCodes } from 'http-status-codes'
-import { platformService } from '../../platform/platform.service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { flowTemplateService } from './flow-template.service'
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
 import { system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ErrorCode,
-    isNil,
     ListFlowTemplatesRequest,
     Principal,
     PrincipalType,
     TemplateType,
 } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { Static, Type } from '@sinclair/typebox'
+import { StatusCodes } from 'http-status-codes'
+import { platformService } from '../../platform/platform.service'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { flowTemplateService } from './flow-template.service'
 
 export const platformFlowTemplateModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowTemplateController, { prefix: '/v1/flow-templates' })
@@ -74,12 +73,10 @@ async function resolveTemplatesPlatformId(principal: Principal, platformId: stri
     if (principal.type === PrincipalType.UNKNOWN) {
         return system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID)
     }
-    const platform = await platformService.getOne(platformId)
-    if (!isNil(platform) && platform.manageTemplatesEnabled) {
-        return platform.id
-    }
-    return system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID)
-}
+    const platform = await platformService.getOneOrThrow(platformId)
+    return platform.id
+  
+}   
 
 const GetParams = {
     config: {

@@ -36,7 +36,7 @@ export const robolly = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.robolly.com',
       auth: robollyAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

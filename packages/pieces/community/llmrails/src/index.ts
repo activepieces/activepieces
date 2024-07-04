@@ -42,7 +42,7 @@ export const llmrails = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.llmrails.com/v1',
       auth: llmrailsAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'X-API-KEY': auth as string,
       }),
     }),

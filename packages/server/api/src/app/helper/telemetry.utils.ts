@@ -1,9 +1,9 @@
-import { Analytics } from '@segment/analytics-node'
-import { flagService } from '../flags/flag.service'
-import { projectService } from '../project/project-service'
-import { getEdition } from './secret-helper'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
 import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared'
+import { Analytics } from '@segment/analytics-node'
+import { flagService } from '../flags/flag.service'
+import { platformService } from '../platform/platform.service'
+import { projectService } from '../project/project-service'
 
 const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED)
 
@@ -26,6 +26,13 @@ export const telemetry = {
             },
         }
         analytics.identify(identify)
+    },
+    async trackPlatform(platformId: ProjectId, event: TelemetryEvent): Promise<void> {
+        if (!telemetryEnabled) {
+            return
+        }
+        const platform = await platformService.getOneOrThrow(platformId)
+        await this.trackUser(platform.ownerId, event)
     },
     async trackProject(
         projectId: ProjectId,
@@ -58,7 +65,7 @@ export const telemetry = {
 
 async function getMetadata() {
     const currentVersion = await flagService.getCurrentRelease()
-    const edition = getEdition()
+    const edition = system.getEdition()
     return {
         activepiecesVersion: currentVersion,
         activepiecesEnvironment: system.get(SystemProp.ENVIRONMENT),

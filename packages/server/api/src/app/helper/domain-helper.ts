@@ -1,5 +1,4 @@
-import { getServerUrl } from './network-utils'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { networkUtls, system, SystemProp } from '@activepieces/server-shared'
 
 type DomainHelper = {
     constructFrontendUrlFromRequest({
@@ -25,7 +24,7 @@ let _domainHelper: DomainHelper = {
         domain: string
         path: string
     }): Promise<string> {
-        return `${await getServerUrl()}${path}`
+        return `${await networkUtls.getApiUrl()}${path}`
     },
     async constructFrontendUrlFromRequest({
         path,

@@ -33,7 +33,7 @@ export const surveymonkey = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.surveymonkey.com/v3',
       auth: smAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

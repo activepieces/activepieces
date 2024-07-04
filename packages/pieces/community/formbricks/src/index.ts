@@ -37,11 +37,11 @@ export const formBricksAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-    validate: async () => {
-      return {
+  validate: async () => {
+    return {
       valid: true
-      }
-    },
+    }
+  },
 });
 
 
@@ -52,11 +52,11 @@ export const formbricks = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/formbricks.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
-  authors: ["kanarelo","kishanprmr","MoShizzle","abuaboud"],
+  authors: ["kanarelo", "kishanprmr", "MoShizzle", "abuaboud"],
   actions: [
     createCustomApiCallAction({
       auth: formBricksAuth,
-      authMapping(auth) {
+      authMapping: async (auth) => {
         return {
           'x-Api-Key': (auth as FormBricksAuthType).apiKey,
         };

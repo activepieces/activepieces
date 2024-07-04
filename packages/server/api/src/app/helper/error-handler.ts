@@ -1,7 +1,7 @@
-import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 
 
 export const errorHandler = async (
@@ -18,6 +18,7 @@ export const errorHandler = async (
             [ErrorCode.PERMISSION_DENIED]: StatusCodes.FORBIDDEN,
             [ErrorCode.ENTITY_NOT_FOUND]: StatusCodes.NOT_FOUND,
             [ErrorCode.EXISTING_USER]: StatusCodes.CONFLICT,
+            [ErrorCode.EXISTING_ALERT_CHANNEL]: StatusCodes.CONFLICT,
             [ErrorCode.FLOW_IN_USE]: StatusCodes.CONFLICT,
             [ErrorCode.AUTHORIZATION]: StatusCodes.FORBIDDEN,
             [ErrorCode.SIGN_UP_DISABLED]: StatusCodes.FORBIDDEN,
@@ -30,8 +31,10 @@ export const errorHandler = async (
             [ErrorCode.VALIDATION]: StatusCodes.CONFLICT,
             [ErrorCode.INVITATION_ONLY_SIGN_UP]: StatusCodes.FORBIDDEN,
             [ErrorCode.AUTHENTICATION]: StatusCodes.UNAUTHORIZED,
+            [ErrorCode.ACTIVATION_KEY_NOT_FOUND]: StatusCodes.NOT_FOUND,
+            [ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED]: StatusCodes.CONFLICT,
+            [ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY]: StatusCodes.CONFLICT,
         }
-
         const statusCode =
       statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST
 

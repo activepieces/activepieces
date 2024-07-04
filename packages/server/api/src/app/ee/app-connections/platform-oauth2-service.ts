@@ -1,3 +1,10 @@
+import { PropertyType } from '@activepieces/pieces-framework'
+import {
+    AppConnectionType,
+    assertNotNullOrUndefined,
+    isNil,
+    PlatformOAuth2ConnectionValue,
+} from '@activepieces/shared'
 import {
     ClaimOAuth2Request,
     OAuth2Service,
@@ -8,13 +15,6 @@ import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { OAuthAppWithSecret } from '../oauth-apps/oauth-app.entity'
 import { oauthAppService } from '../oauth-apps/oauth-app.service'
-import { PropertyType } from '@activepieces/pieces-framework'
-import {
-    AppConnectionType,
-    assertNotNullOrUndefined,
-    isNil,
-    PlatformOAuth2ConnectionValue,
-} from '@activepieces/shared'
 
 export const platformOAuth2Service: OAuth2Service<PlatformOAuth2ConnectionValue> =
   {

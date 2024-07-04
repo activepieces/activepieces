@@ -1,3 +1,4 @@
+import { UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -8,7 +9,6 @@ import {
     createMockSignInRequest,
     createMockSignUpRequest,
 } from '../../../helpers/mocks/authn'
-import { ApFlagId, UserStatus } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -19,6 +19,9 @@ beforeAll(async () => {
 
 beforeEach(async () => {
     await databaseConnection.getRepository('flag').delete({})
+    await databaseConnection.getRepository('project').delete({})
+    await databaseConnection.getRepository('platform').delete({})
+    await databaseConnection.getRepository('user').delete({})
 })
 
 afterAll(async () => {
@@ -60,25 +63,6 @@ describe('Authentication API', () => {
             expect(responseBody?.token).toBeDefined()
         })
 
-        it('Fails if USER_CREATED flag is set, and sign-up is disabled', async () => {
-            // arrange
-            const mockSignUpRequest = createMockSignUpRequest()
-            await databaseConnection.getRepository('flag').save({
-                id: ApFlagId.USER_CREATED,
-                value: true,
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/authentication/sign-up',
-                body: mockSignUpRequest,
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-        })
-
         it('Creates new project for user', async () => {
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
@@ -90,9 +74,9 @@ describe('Authentication API', () => {
                 body: mockSignUpRequest,
             })
 
+            const responseBody = response?.json()
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            const responseBody = response?.json()
 
             const project = await databaseConnection
                 .getRepository('project')

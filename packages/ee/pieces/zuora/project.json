@@ -1,0 +1,30 @@
+{
+  "name": "pieces-zuora",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ee/pieces/zuora/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/ee/pieces/zuora",
+        "tsConfig": "packages/ee/pieces/zuora/tsconfig.lib.json",
+        "packageJson": "packages/ee/pieces/zuora/package.json",
+        "main": "packages/ee/pieces/zuora/src/index.ts",
+        "assets": ["packages/ee/pieces/zuora/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-zuora {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  },
+  "tags": []
+}

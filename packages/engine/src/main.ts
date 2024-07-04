@@ -1,5 +1,5 @@
 import { argv } from 'process'
-import { parentPort, workerData } from 'worker_threads'
+import { parentPort } from 'worker_threads'
 import {
     assertNotNullOrUndefined,
     EngineOperation,
@@ -16,8 +16,7 @@ async function executeFromFile(operationType: string): Promise<void> {
     await utils.writeToJsonFile(EngineConstants.OUTPUT_FILE, result)
 }
 
-async function executeFromWorkerData(): Promise<void> {
-    const { operation, operationType } = workerData
+async function executeFromWorkerData(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
     const result = await execute(operationType, operation)
     assertNotNullOrUndefined(parentPort, 'parentPort')
     const resultParsed = JSON.parse(JSON.stringify(result))
@@ -30,7 +29,7 @@ if (operationType) {
     executeFromFile(operationType).catch(e => console.error(e))
 }
 else {
-    if (workerData) {
+    if (parentPort) {
         const originalLog = console.log
         console.log = function (...args) {
             assertNotNullOrUndefined(parentPort, 'parentPort')
@@ -38,15 +37,14 @@ else {
             originalLog.apply(console, args)
         }
 
-
         const originalError = console.error
         console.error = function (...args) {
             assertNotNullOrUndefined(parentPort, 'parentPort')
             parentPort.postMessage({ type: 'stderr', message: args.join(' ') })
             originalError.apply(console, args)
         }
-
-        executeFromWorkerData().catch(e => console.error(e))
-
+        parentPort.on('message', (m: { operation: EngineOperation, operationType: EngineOperationType }) => {
+            executeFromWorkerData(m.operation, m.operationType).catch(e => console.error(e))
+        })
     }
 }

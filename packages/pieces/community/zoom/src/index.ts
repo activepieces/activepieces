@@ -29,7 +29,7 @@ export const zoom = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.zoom.us/v2',
       auth: zoomAuth,
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         const typedAuth = auth as OAuth2PropertyValue;
         return {
           Authorization: `Bearer ${typedAuth.access_token}`,

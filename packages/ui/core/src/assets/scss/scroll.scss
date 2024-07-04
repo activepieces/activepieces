@@ -46,43 +46,64 @@
   
   .thin-scrollbars {
     *{
-    @extend .ap-scroll;
+      &::-webkit-scrollbar {
+        width: 16px;
+      }
+    
+      &::-webkit-scrollbar-thumb {
+        background: $border;
+        background-clip: content-box;
+        border: 5px solid transparent;
+        border-radius: 40px;
+        scrollbar-width: thin;
+      }
+    
+      &::-webkit-scrollbar-thumb:hover {
+        background: rgba(179, 179, 179, 0.7);
+        background-clip: content-box;
+        border: 5px solid transparent;
+        border-radius: 40px;
+        scrollbar-width: thin;
+      }
     }
-   
-    @extend .ap-scroll;
-   
-  }
-  .thin-scrollbars.black-scrollbars {
-    @extend .ap-scroll;
+    &::-webkit-scrollbar {
+      width: 16px;
+    }
   
     &::-webkit-scrollbar-thumb {
-      background: $body;
-     
+      background: $border;
+      background-clip: content-box;
+      border: 5px solid transparent;
+      border-radius: 40px;
+      scrollbar-width: thin;
     }
   
     &::-webkit-scrollbar-thumb:hover {
-      background: $body;
-     
+      background: rgba(179, 179, 179, 0.7);
+      background-clip: content-box;
+      border: 5px solid transparent;
+      border-radius: 40px;
+      scrollbar-width: thin;
     }
-  
-    mat-tab-header {
-      border-bottom-color: $outline;
-      border-style: solid;
-      border-bottom-width: 1px;
-  
-      .mat-mdc-tab-labels {
-        padding-left: .75rem;
+    &.black-scrollbars{ 
+      &::-webkit-scrollbar-thumb {
+        background: $body;
+        background-clip: content-box;
+        border: 5px solid transparent;
+        border-radius: 40px;
+        scrollbar-width: thin;
       }
-  
-      .mdc-tab {
-        fill: var(--mat-tab-header-inactive-label-text-color)
-      }
-  
-      .mdc-tab--active {
-        fill: var(--mat-tab-header-active-label-text-color);
+    
+      &::-webkit-scrollbar-thumb:hover {
+        background: rgba(114, 114, 114, 0.7);
+        background-clip: content-box;
+        border: 5px solid transparent;
+        border-radius: 40px;
+        scrollbar-width: thin;
       }
     }
-  
   }
+
+  
   
   }

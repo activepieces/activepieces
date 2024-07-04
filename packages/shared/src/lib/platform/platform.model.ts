@@ -48,12 +48,14 @@ export const Platform = Type.Object({
     customDomainsEnabled: Type.Boolean(),
     apiKeysEnabled: Type.Boolean(),
     flowIssuesEnabled: Type.Boolean(),
+    alertsEnabled: Type.Boolean(),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum)),
     ssoEnabled: Type.Boolean(),
     enforceAllowedAuthDomains: Type.Boolean(),
     allowedAuthDomains: Type.Array(Type.String()),
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: Type.Boolean(),
+    premiumPieces: Type.Array(Type.String()),
 })
 
 export type Platform = Static<typeof Platform>

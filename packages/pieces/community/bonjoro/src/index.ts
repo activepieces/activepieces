@@ -17,7 +17,7 @@ export const bonjoro = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://www.bonjoro.com/api/v2', // replace with the actual base URL
       auth: bonjoroAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as { apiKey: string }).apiKey}`,
       }),
     }),

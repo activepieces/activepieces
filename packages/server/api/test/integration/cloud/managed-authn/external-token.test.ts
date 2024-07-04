@@ -1,3 +1,4 @@
+import { apId, PiecesFilterType, PieceType, ProjectMemberRole } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -14,7 +15,6 @@ import {
     createMockTag,
     createMockUser,
 } from '../../../helpers/mocks'
-import { apId, PiecesFilterType, PieceType, ProjectMemberRole } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -260,16 +260,15 @@ describe('Managed Authentication API', () => {
             const generatedProjectMember = await databaseConnection
                 .getRepository('project_member')
                 .findOneBy({
-                    email: mockedEmail,
+                    userId: responseBody?.id,
                     platformId: mockPlatform.id,
                     projectId: responseBody?.projectId,
                 })
 
             expect(generatedProjectMember?.projectId).toBe(responseBody?.projectId)
-            expect(generatedProjectMember?.email).toBe(mockedEmail)
+            expect(generatedProjectMember?.userId).toBe(responseBody?.id)
             expect(generatedProjectMember?.platformId).toBe(mockPlatform.id)
             expect(generatedProjectMember?.role).toBe('VIEWER')
-            expect(generatedProjectMember?.status).toBe('ACTIVE')
         })
 
         it('Adds new user to existing project', async () => {

@@ -61,7 +61,7 @@ export const microsoftExcel = createPiece({
     createCustomApiCallAction({
       baseUrl: () => excelCommon.baseUrl,
       auth: excelAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

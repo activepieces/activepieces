@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import {
   DropdownProperty,
   DropdownState,
@@ -32,7 +38,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: ``,
 })
-export class RefreshablePropertyCoreControlComponent {
+export class RefreshablePropertyCoreControlComponent implements OnChanges {
   @Input({ required: true }) property:
     | DropdownProperty<unknown, boolean>
     | MultiSelectDropdownProperty<unknown, boolean>
@@ -42,13 +48,23 @@ export class RefreshablePropertyCoreControlComponent {
   @Input({ required: true }) actionOrTriggerName: string;
   @Input({ required: true }) propertyName: string;
   @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;
+  @Input({ required: true }) stepName: string;
   loading$ = new BehaviorSubject<boolean>(true);
   resetValueOnRefresherChange$?: Observable<unknown>;
-  @Input({ required: true }) stepChanged$: Observable<string>;
+  stepChanged$ = new BehaviorSubject<string>('');
   constructor(
     private piecetaDataService: PieceMetadataService,
     private searchRefresher$?: Observable<string>
   ) {}
+  ngOnChanges(changes: SimpleChanges): void {
+    const stepName = changes['stepName'];
+    if (
+      stepName?.firstChange ||
+      stepName?.currentValue !== stepName?.previousValue
+    ) {
+      this.stepChanged$.next(stepName.currentValue);
+    }
+  }
 
   protected createRefreshers<
     T extends DropdownState<unknown> | PiecePropertyMap

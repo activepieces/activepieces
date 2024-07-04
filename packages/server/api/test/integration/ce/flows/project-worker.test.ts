@@ -1,10 +1,10 @@
+import { PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import { createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
-import { PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -34,7 +34,7 @@ describe('Project Worker API', () => {
             await databaseConnection.getRepository('project').save([mockProject])
 
             const mockToken = await generateMockToken({
-                type: PrincipalType.WORKER,
+                type: PrincipalType.ENGINE,
                 projectId: mockProject.id,
             })
 

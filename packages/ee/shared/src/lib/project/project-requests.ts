@@ -5,7 +5,6 @@ export const UpdateProjectPlatformRequest = Type.Object({
     notifyStatus: Type.Optional(Type.Enum(NotificationStatus)),
     displayName: Type.Optional(Type.String()),
     plan: Type.Optional(Type.Object({
-        teamMembers: Type.Optional(Type.Number({})),
         tasks: Type.Optional(Type.Number({})),
         pieces: Type.Optional(Type.Array(Type.String({}))),
         piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),

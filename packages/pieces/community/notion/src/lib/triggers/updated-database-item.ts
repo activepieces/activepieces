@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 import { notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../..';
+import { isNil } from '@activepieces/shared';
 
 export const updatedDatabaseItem = createTrigger({
   auth: notionAuth,
@@ -169,11 +170,11 @@ const getResponse = async (
         startDate == null
           ? undefined
           : {
-              timestamp: 'last_edited_time',
-              last_edited_time: {
-                on_or_after: startDate,
-              },
+            timestamp: 'last_edited_time',
+            last_edited_time: {
+              on_or_after: startDate,
             },
+          },
       sorts: [
         {
           timestamp: 'last_edited_time',
@@ -186,7 +187,7 @@ const getResponse = async (
     cursor = response.next_cursor ?? undefined;
 
     results.push(...response.results);
-  } while (hasMore);
+  } while (hasMore && !isNil(startDate));
 
   return results;
 };

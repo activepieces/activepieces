@@ -1,20 +1,22 @@
 import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { userService } from '../user-service'
-import { UpdateUserRequestBody } from '@activepieces/ee-shared'
-import {
     ApId,
     assertNotNullOrUndefined,
     EndpointScope,
     PrincipalType,
     SeekPage,
+    UpdateUserRequestBody,
     UserResponse,
 } from '@activepieces/shared'
+import {
+    FastifyPluginAsyncTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { userService } from '../user-service'
 
 export const platformUserController: FastifyPluginAsyncTypebox = async (app) => {
+
+
     app.get('/', ListUsersRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')

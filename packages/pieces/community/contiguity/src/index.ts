@@ -22,7 +22,7 @@ export const contiguity = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.contiguity.com/v1', // Replace with the actual base URL
       auth: contigAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         authorization: `Token ${auth}`,
       }),
     }),

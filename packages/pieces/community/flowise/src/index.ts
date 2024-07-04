@@ -90,7 +90,7 @@ export const flowise = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { base_url: string }).base_url,
       auth: flowiseAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${
           (auth as { access_token: string }).access_token
         }`,

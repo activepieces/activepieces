@@ -1,10 +1,10 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
-import { auditLogService } from './audit-event-service'
 import { ListAuditEventsRequest } from '@activepieces/ee-shared'
 import {
     assertNotNullOrUndefined,
 } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { auditLogService } from './audit-event-service'
 
 export const auditEventModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.auditLogEnabled))

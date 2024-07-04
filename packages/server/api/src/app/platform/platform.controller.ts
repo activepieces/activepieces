@@ -1,11 +1,4 @@
 import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
-import { platformService } from './platform.service'
-import {
     ApId,
     assertEqual,
     EndpointScope,
@@ -14,6 +7,13 @@ import {
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdatePlatformRequestBody,
 } from '@activepieces/shared'
+import {
+    FastifyPluginAsyncTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+import { platformService } from './platform.service'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {

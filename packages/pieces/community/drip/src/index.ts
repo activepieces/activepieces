@@ -28,7 +28,7 @@ export const drip = createPiece({
     createCustomApiCallAction({
       baseUrl: () => `https://api.getdrip.com/v2/`,
       auth: dripAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(auth as string).toString(
           'base64'
         )}`,

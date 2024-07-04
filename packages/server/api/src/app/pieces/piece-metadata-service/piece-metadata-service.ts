@@ -1,4 +1,3 @@
-import { EntityManager } from 'typeorm'
 import { PieceMetadata, 
     PieceMetadataModel,
     PieceMetadataModelSummary } from '@activepieces/pieces-framework'
@@ -13,6 +12,7 @@ import {
     ProjectId,
     SuggestionType,
 } from '@activepieces/shared'
+import { EntityManager } from 'typeorm'
 
 type ListParams = {
     release: string

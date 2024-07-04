@@ -51,7 +51,7 @@ export const baserow = createPiece({
         return (auth as { apiUrl: string }).apiUrl;
       },
       auth: baserowAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Token ${(auth as { token: string }).token}`,
       }),
     }),

@@ -1,4 +1,6 @@
-import { ActionType, CodeAction, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
+import path from 'path'
+import importFresh from '@activepieces/import-fresh-webpack'
+import { ActionType, CodeAction, FlowVersionState, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
@@ -37,8 +39,8 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
     })
 
     try {
-        const artifactPath = `${constants.baseCodeDirectory}/${action.name}/index.js`
-        const codeModule: CodeModule = await import(artifactPath)
+        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
+        const codeModule: CodeModule = constants.flowVerionState === FlowVersionState.DRAFT ? await importFresh(artifactPath) : await import(artifactPath)
         const codeSandbox = await initCodeSandbox()
 
         const output = await codeSandbox.runCodeModule({

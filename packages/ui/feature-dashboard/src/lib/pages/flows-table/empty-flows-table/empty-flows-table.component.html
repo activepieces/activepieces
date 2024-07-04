@@ -1,48 +1,54 @@
 <div class="ap-flex ap-flex-col ap-gap-4 ap-h-full ap-text-center ap-items-center ap-justify-center"
   [style.height]="(showPoweredByAp$ | async) === true? 'calc(100% - 4.375rem)':'100%'">
   <svg-icon src="/assets/img/custom/empty-collections.svg" [style]="{width: '360px', height:'162px' }"></svg-icon>
-  <div class="text-container">
-    <div class="ap-typography-headline-6 ap-font-medium " i18n>Create Your First Flow</div>
-
-  </div>
-  <div class="ap-flex ap-gap-4 ap-justify-center ap-mt-4 ap-items-center">
-    <div class="ap-flex ap-items-center ap-flex-col ap-justify-center ap-gap-3">
-      <div (click)="openToDemo()"
-        class="ap-flex ap-items-center ap-gap-2 ap-justify-center ap-flex-col ap-border ap-border-outline ap-h-[249px] ap-w-[200px] ap-rounded ap-bg-white ap-rounded-lg ap-cursor-pointer ap-transition-colors hover:ap-border-primary hover:ap-bg-primary-light ">
-        <ng-container *ngIf="!openToDemo$">
-          <svg-icon src="assets/img/custom/arrow_right.svg" [applyClass]="true"
-            class="ap-fill-primary ap-w-[26px]  ap-h-[26px]"></svg-icon>
-          <div class="ap-typography-subtitle-1 ap-text-primary" i18n>Demo Flow</div>
-          <div class="ap-typography-subtitle-2 ap-text-description ap-px-3" i18n>
-            Learn from our Gelato maker demo flow
-          </div>
-        </ng-container>
-
-        <ap-loading-icon *ngIf="!!openToDemo$" [outlineLoader]="false" [whiteLoader]="false" height="40px" width="40px">
-        </ap-loading-icon>
-      </div>
-
-
-    </div>
-
-
-    <div class="ap-h-full ap-border-r ap-border-solid ap-border-dividers">
-    </div>
-    <div class="ap-flex ap-items-center ap-flex-col ap-justify-center ap-gap-3">
-      <div (click)="openTemplatesDialog.emit()"
-        class="ap-flex ap-items-center ap-gap-2 ap-justify-center ap-flex-col ap-border ap-border-outline ap-h-[249px] ap-w-[200px] ap-rounded ap-bg-white ap-rounded-lg ap-cursor-pointer ap-transition-colors hover:ap-border-primary hover:ap-bg-primary-light ">
-
-        <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
-          class="ap-fill-primary ap-w-[26px]  ap-h-[26px] "></svg-icon>
-        <div class="ap-typography-subtitle-1 ap-text-primary" i18n>Build Flow </div>
-        <div class="ap-typography-subtitle-2 ap-text-description ap-px-3" i18n>
-          Start building your first flow
+ 
+  @if(allowedToCreateFlow) {
+      <div class="ap-typography-headline-6 ap-font-medium " i18n>Create Your First Flow</div>
+  
+    <div class="ap-flex ap-gap-4 ap-justify-center ap-mt-4 ap-items-center">
+      <div class="ap-flex ap-items-center ap-flex-col ap-justify-center ap-gap-3">
+        <div (click)="openToDemo()"
+          class="ap-flex ap-items-center ap-gap-2 ap-justify-center ap-flex-col ap-border ap-border-outline ap-h-[249px] ap-w-[200px] ap-rounded ap-bg-white ap-rounded-lg ap-cursor-pointer ap-transition-colors hover:ap-border-primary hover:ap-bg-primary-light ">
+          <ng-container *ngIf="!openToDemo$">
+            <svg-icon src="assets/img/custom/arrow_right.svg" [applyClass]="true"
+              class="ap-fill-primary ap-w-[26px]  ap-h-[26px]"></svg-icon>
+            <div class="ap-typography-subtitle-1 ap-text-primary" i18n>Demo Flow</div>
+            <div class="ap-typography-subtitle-2 ap-text-description ap-px-3" i18n>
+              Learn from our Gelato maker demo flow
+            </div>
+          </ng-container>
+  
+          <ap-loading-icon *ngIf="!!openToDemo$" [outlineLoader]="false" [whiteLoader]="false" height="40px" width="40px">
+          </ap-loading-icon>
         </div>
-
+  
+  
       </div>
-
+  
+  
+      <div class="ap-h-full ap-border-r ap-border-solid ap-border-dividers">
+      </div>
+      <div class="ap-flex ap-items-center ap-flex-col ap-justify-center ap-gap-3">
+        <div (click)="openTemplatesDialog.emit()"
+          class="ap-flex ap-items-center ap-gap-2 ap-justify-center ap-flex-col ap-border ap-border-outline ap-h-[249px] ap-w-[200px] ap-rounded ap-bg-white ap-rounded-lg ap-cursor-pointer ap-transition-colors hover:ap-border-primary hover:ap-bg-primary-light ">
+  
+          <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
+            class="ap-fill-primary ap-w-[26px]  ap-h-[26px] "></svg-icon>
+          <div class="ap-typography-subtitle-1 ap-text-primary" i18n>Build Flow </div>
+          <div class="ap-typography-subtitle-2 ap-text-description ap-px-3" i18n>
+            Start building your first flow
+          </div>
+  
+        </div>
+  
+      </div>
     </div>
-  </div>
+  }
+  @else {
+    <div class="ap-typography-headline-6 ap-font-medium " i18n>Please Ask Your Admin to Create a Flow</div>
+
+  }
+ 
 
 </div>
 <ng-container *ngIf="openToDemo$ | async"></ng-container>

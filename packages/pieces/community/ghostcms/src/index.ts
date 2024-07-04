@@ -64,7 +64,7 @@ export const ghostcms = createPiece({
       baseUrl: (auth) =>
         `${(auth as { baseUrl: string }).baseUrl}/ghost/api/admin`,
       auth: ghostAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Ghost ${common.jwtFromApiKey(
           (auth as { apiKey: string }).apiKey
         )}`,

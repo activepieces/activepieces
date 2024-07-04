@@ -9,6 +9,7 @@ import {
 
 @Directive({
   selector: '[apCheckOverflow]',
+  exportAs: 'apCheckOverflow',
   standalone: true,
 })
 export class CheckOverflowDirective implements AfterViewInit, OnDestroy {
@@ -27,7 +28,7 @@ export class CheckOverflowDirective implements AfterViewInit, OnDestroy {
   }
 
   private startObserving() {
-    this.resizeObserver = new ResizeObserver((entries) => {
+    this.resizeObserver = new ResizeObserver(() => {
       this.checkOverflow();
     });
 
@@ -40,11 +41,13 @@ export class CheckOverflowDirective implements AfterViewInit, OnDestroy {
     }
   }
 
-  private checkOverflow() {
-    const element: HTMLElement = this.elementRef.nativeElement;
-    const overflown =
-      element.scrollWidth > element.clientWidth ||
-      element.scrollHeight > element.clientHeight;
-    this.isOverflowed.emit(overflown);
+  checkOverflow() {
+    setTimeout(() => {
+      const element: HTMLElement = this.elementRef.nativeElement;
+      const overflown =
+        element.scrollWidth > element.clientWidth ||
+        element.scrollHeight > element.clientHeight;
+      this.isOverflowed.emit(overflown);
+    });
   }
 }

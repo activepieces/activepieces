@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddUniqueNameToFolderSqlite1713645171373 implements MigrationInterface {
     name = 'AddUniqueNameToFolderSqlite1713645171373'

@@ -30,7 +30,7 @@ export const googleForms = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://forms.googleapis.com/v1',
       auth: googleFormsAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

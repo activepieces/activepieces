@@ -1,11 +1,3 @@
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
-import { userService } from '../../user/user-service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { projectLimitsService } from '../project-plan/project-plan.service'
-import { platformProjectService } from './platform-project-service'
 import {
     CreatePlatformProjectRequest,
     DEFAULT_PLATFORM_LIMIT,
@@ -24,6 +16,14 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { projectLimitsService } from '../project-plan/project-plan.service'
+import { platformProjectService } from './platform-project-service'
 
 const DEFAULT_LIMIT_SIZE = 50
 
@@ -50,7 +50,9 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         assertNotNullOrUndefined(platformId, 'platformId')
         return platformProjectService.getAll({
             externalId: request.query.externalId,
-            principal: request.principal,
+            principalType: request.principal.type,
+            principalId: request.principal.id,
+            platformId: request.principal.platform.id,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
         })
@@ -59,7 +61,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     app.post('/:id', UpdateProjectRequest, async (request) => {
         const project = await projectService.getOneOrThrow(request.params.id)
         const haveTokenForTheProject = request.principal.projectId === project.id
-        const ownThePlatform = isPlatformAdmin(request.principal, project.platformId)
+        const ownThePlatform = await isPlatformAdmin(request.principal, project.platformId)
         if (!haveTokenForTheProject && !ownThePlatform) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,

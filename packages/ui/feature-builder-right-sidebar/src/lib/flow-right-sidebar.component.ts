@@ -7,7 +7,15 @@ import {
   Renderer2,
   ViewChild,
 } from '@angular/core';
-import { map, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
+import {
+  combineLatest,
+  map,
+  Observable,
+  of,
+  shareReplay,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { Store } from '@ngrx/store';
 import { FormControl } from '@angular/forms';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
@@ -55,9 +63,9 @@ export class FlowRightSidebarComponent implements OnInit {
   triggerSupportsLoadingTestData$: Observable<boolean>;
   isResizerGrabbed = false;
   triggerSupportsSimulation$: Observable<boolean>;
-  viewMode$: Observable<ViewModeEnum>;
   ViewModeEnum = ViewModeEnum;
   showDocs$: Observable<boolean>;
+  shouldShowTestStepArea$: Observable<boolean>;
   currentStepPieceVersion$: Observable<
     | {
         version: string | undefined;
@@ -86,11 +94,18 @@ export class FlowRightSidebarComponent implements OnInit {
     this.listenToStepChangeAndAnimateResizer();
     this.checkIfTriggerSupportsLoadingTestData();
     this.checkIfTriggerSupportsSimulation();
-    this.checkForViewMode();
+    this.setShouldShowTestStepArea();
   }
 
-  private checkForViewMode() {
-    this.viewMode$ = this.store.select(BuilderSelectors.selectViewMode);
+  private setShouldShowTestStepArea() {
+    this.shouldShowTestStepArea$ = combineLatest({
+      isReadOnly: this.store.select(BuilderSelectors.selectReadOnly),
+      sampleData: this.store.select(BuilderSelectors.selectStepTestSampleData),
+    }).pipe(
+      map((res) => {
+        return !res.isReadOnly || !!res.sampleData;
+      })
+    );
   }
 
   private checkIfTriggerSupportsLoadingTestData() {

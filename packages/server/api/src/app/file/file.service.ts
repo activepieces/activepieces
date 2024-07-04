@@ -1,5 +1,3 @@
-import { databaseConnection } from '../database/database-connection'
-import { FileEntity } from './file.entity'
 import { fileCompressor, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -11,6 +9,8 @@ import {
     FileType,
     isNil,
     ProjectId } from '@activepieces/shared'
+import { databaseConnection } from '../database/database-connection'
+import { FileEntity } from './file.entity'
 
 type SaveParams = {
     fileId?: FileId | undefined

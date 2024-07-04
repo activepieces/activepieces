@@ -1,12 +1,3 @@
-import { databaseConnection } from '../../database/database-connection'
-import { flowService } from '../../flows/flow/flow.service'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { projectService } from '../../project/project-service'
-import { gitHelper } from './git-helper'
-import { GitRepoEntity } from './git-repo.entity'
-import { gitSyncHelper } from './git-sync-helper'
-import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
-import { ProjectMappingState } from './project-diff/project-mapping-state'
 import {
     ConfigureRepoRequest,
     GitPushOperationType,
@@ -24,6 +15,15 @@ import {
     isNil,
     SeekPage,
 } from '@activepieces/shared'
+import { databaseConnection } from '../../database/database-connection'
+import { flowService } from '../../flows/flow/flow.service'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { projectService } from '../../project/project-service'
+import { gitHelper } from './git-helper'
+import { GitRepoEntity } from './git-repo.entity'
+import { gitSyncHelper } from './git-sync-helper'
+import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
+import { ProjectMappingState } from './project-diff/project-mapping-state'
 
 const repo = databaseConnection.getRepository(GitRepoEntity)
 
@@ -84,6 +84,8 @@ export const gitRepoService = {
                 const flow = await flowService.getOnePopulatedOrThrow({
                     id: request.flowId,
                     projectId: project.id,
+                    removeConnectionsName: false,
+                    removeSampleData: true,
                 })
                 const flowName = mappingState.findSourceId(request.flowId) ?? request.flowId
                 await gitSyncHelper.upsertFlowToGit(flowName, flow, flowFolderPath)

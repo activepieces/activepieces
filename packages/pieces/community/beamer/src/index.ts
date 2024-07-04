@@ -29,7 +29,7 @@ export const beamer = createPiece({
     createCustomApiCallAction({
       baseUrl: () => beamerCommon.baseUrl,
       auth: beamerAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'Beamer-Api-Key': `Bearer ${auth}`,
       }),
     }),

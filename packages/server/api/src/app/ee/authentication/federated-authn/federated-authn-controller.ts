@@ -1,11 +1,4 @@
 import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { eventsHooks } from '../../../helper/application-events'
-import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
-import { federatedAuthnService } from './federated-authn-service'
-import {
     ApplicationEventName,
 } from '@activepieces/ee-shared'
 import {
@@ -14,6 +7,13 @@ import {
     ClaimTokenRequest,
     ThirdPartyAuthnProviderEnum,
 } from '@activepieces/shared'
+import {
+    FastifyPluginAsyncTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import { eventsHooks } from '../../../helper/application-events'
+import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
+import { federatedAuthnService } from './federated-authn-service'
 
 export const federatedAuthnController: FastifyPluginAsyncTypebox = async (
     app,

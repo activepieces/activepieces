@@ -1,17 +1,6 @@
-import { Provider } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
-import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
-import { flagService } from '../../../../flags/flag.service'
-import { getEdition } from '../../../../helper/secret-helper'
-import { platformService } from '../../../../platform/platform.service'
-import { projectService } from '../../../../project/project-service'
-import { userService } from '../../../../user/user-service'
-import { projectMemberService } from '../../../project-members/project-member.service'
-import {
-    ProjectMemberStatus,
-} from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
-    ApEdition,
+    assertNotNullOrUndefined,
     ErrorCode,
     isNil,
     PrincipalType,
@@ -19,33 +8,46 @@ import {
     ProjectMemberRole,
     User,
 } from '@activepieces/shared'
+import { Provider } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
+import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
+import { flagService } from '../../../../flags/flag.service'
+import { platformService } from '../../../../platform/platform.service'
+import { projectService } from '../../../../project/project-service'
+import { userService } from '../../../../user/user-service'
+import { userInvitationsService } from '../../../../user-invitations/user-invitation.service'
+import { projectMemberService } from '../../../project-members/project-member.service'
+import { platformProjectService } from '../../../projects/platform-project-service'
 
 async function getProjectForUserOrThrow(user: User): Promise<Project> {
     const invitedProject = await getProjectMemberOrThrow(user)
-    if (isNil(invitedProject)) {
-        const ownerProject = await projectService.getUserProject(user.id)
-        if (isNil(ownerProject)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'project',
-                    message: `no projects found for the user=${user.id}`,
-                },
-            })
-        }
-        return ownerProject
+    if (!isNil(invitedProject)) {
+        return invitedProject
     }
-    return invitedProject
+    throw new ActivepiecesError({
+        code: ErrorCode.ENTITY_NOT_FOUND,
+        params: {
+            entityType: 'project',
+            message: `no projects found for the user=${user.id}`,
+        },
+    })
 }
 
 const getProjectMemberOrThrow = async (user: User): Promise<Project | null> => {
-    const platformProjects = await projectMemberService.listByUser(user)
+    const { platformId } = user
+    assertNotNullOrUndefined(platformId, 'platformId')
+    const platformProjects = await platformProjectService.getAll({
+        principalType: PrincipalType.USER,
+        principalId: user.id,
+        platformId,
+        cursorRequest: null,
+        limit: 1,
+    })
 
-    if (platformProjects.length === 0) {
+    if (platformProjects.data.length === 0) {
         return null
     }
 
-    return projectService.getOneOrThrow(platformProjects[0].projectId)
+    return projectService.getOneOrThrow(platformProjects.data[0].id)
 }
 
 const populateTokenWithPlatformInfo = async ({
@@ -71,16 +73,12 @@ type PopulateTokenWithPlatformInfoParams = {
 }
 
 async function autoVerifyUserIfEligible(user: User): Promise<void> {
-    const edition = getEdition()
-    if (edition === ApEdition.ENTERPRISE) {
-        await userService.verify({ id: user.id })
-        return
-    }
-    const projects = await projectMemberService.listByUser(user)
-    const activeInAnyProject = !isNil(
-        projects.find((f) => f.status === ProjectMemberStatus.ACTIVE),
-    )
-    if (activeInAnyProject) {
+    assertNotNullOrUndefined(user.platformId, 'platformId')
+    const isInvited = await userInvitationsService.hasAnyAcceptedInvitations({
+        platformId: user.platformId,
+        email: user.email,
+    })
+    if (isInvited) {
         await userService.verify({
             id: user.id,
         })
@@ -110,35 +108,7 @@ async function getProjectAndTokenOrThrow(
     }
 }
 
-async function isInvitedToProject({
-    email,
-    platformId,
-}: {
-    email: string
-    platformId: string
-}): Promise<boolean> {
-    const platformProjects = await projectMemberService.listByUser({
-        email,
-        platformId,
-    })
-    return platformProjects.length > 0
-}
 
-async function assertUserIsInvitedToAnyProject({
-    email,
-    platformId,
-}: {
-    email: string
-    platformId: string
-}): Promise<void> {
-    const isInvited = await isInvitedToProject({ email, platformId })
-    if (!isInvited) {
-        throw new ActivepiecesError({
-            code: ErrorCode.INVITATION_ONLY_SIGN_UP,
-            params: {},
-        })
-    }
-}
 
 async function assertEmailAuthIsEnabled({
     platformId,
@@ -181,8 +151,8 @@ async function assertDomainIsAllowed({
     }
     const emailDomain = email.split('@')[1]
     const isAllowedDomaiin =
-    !platform.enforceAllowedAuthDomains ||
-    platform.allowedAuthDomains.includes(emailDomain)
+        !platform.enforceAllowedAuthDomains ||
+        platform.allowedAuthDomains.includes(emailDomain)
 
     if (!isAllowedDomaiin) {
         throw new ActivepiecesError({
@@ -194,6 +164,26 @@ async function assertDomainIsAllowed({
     }
 }
 
+async function assertUserIsInvitedToPlatformOrProject({
+    email,
+    platformId,
+}: {
+    email: string
+    platformId: string
+}): Promise<void> {
+    const isInvited = await userInvitationsService.hasAnyAcceptedInvitations({
+        platformId,
+        email,
+    })
+    if (!isInvited) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVITATION_ONLY_SIGN_UP,
+            params: {},
+        })
+    }
+}
+
+
 async function assertUserIsInvitedAndDomainIsAllowed({
     email,
     platformId,
@@ -203,9 +193,9 @@ async function assertUserIsInvitedAndDomainIsAllowed({
 }): Promise<void> {
     await assertDomainIsAllowed({ email, platformId })
     const customerPlatformEnabled =
-    !isNil(platformId) && !flagService.isCloudPlatform(platformId)
+        !isNil(platformId) && !flagService.isCloudPlatform(platformId)
     if (customerPlatformEnabled) {
-        await assertUserIsInvitedToAnyProject({ email, platformId })
+        await assertUserIsInvitedToPlatformOrProject({ email, platformId })
     }
 }
 

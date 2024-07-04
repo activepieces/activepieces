@@ -2,40 +2,38 @@ import { DataSource } from '@angular/cdk/collections';
 
 import {
   Observable,
-  combineLatest,
-  switchMap,
   tap,
   map,
   BehaviorSubject,
   catchError,
   of,
+  forkJoin,
+  switchMap,
 } from 'rxjs';
-import { ProjectMember, ProjectMemberStatus } from '@activepieces/ee-shared';
-import { ProjectMemberService } from '../service/project-members.service';
 import {
-  ApPaginatorComponent,
   AuthenticationService,
-  CURSOR_QUERY_PARAM,
-  LIMIT_QUERY_PARAM,
+  UserInvitationService,
 } from '@activepieces/ui/common';
-import { Params } from '@angular/router';
-import { ProjectMemberRole } from '@activepieces/shared';
+import {
+  UserInvitedOrMember,
+  TeamMemberStatus,
+} from './project-members-table.component';
+import { InvitationType, UserInvitation } from '@activepieces/shared';
+import { ProjectMemberService } from '../service/project-members.service';
 
 /**
  * Data source for the LogsTable view. This class should
  * encapsulate all logic for fetching and manipulating the displayed data
  * (including sorting, pagination, and filtering).
  */
-export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
-  data: ProjectMember[] = [];
+export class ProjectMembersTableDataSource extends DataSource<UserInvitedOrMember> {
+  data: UserInvitedOrMember[] = [];
   public isLoading$ = new BehaviorSubject(false);
   constructor(
-    private authenticationService: AuthenticationService,
+    private userInvitedService: UserInvitationService,
+    private authentticationService: AuthenticationService,
     private projectMemberService: ProjectMemberService,
-    private refresh$: Observable<boolean>,
-    private fakeData = false,
-    private paginator: ApPaginatorComponent,
-    private queryParams$: Observable<Params>
+    private refresh$: Observable<boolean>
   ) {
     super();
   }
@@ -45,50 +43,46 @@ export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
    * the returned stream emits new items.
    * @returns A stream of the items to be rendered.
    */
-  connect(): Observable<ProjectMember[]> {
-    return combineLatest({
-      refresh: this.refresh$,
-      queryParams: this.queryParams$,
-    }).pipe(
-      switchMap((res) => {
-        if (!this.fakeData) {
-          return this.projectMemberService
-            .list({
-              projectId: this.authenticationService.getProjectId(),
-              cursor: res.queryParams[CURSOR_QUERY_PARAM],
-              limit: res.queryParams[LIMIT_QUERY_PARAM],
-            })
-            .pipe(
-              tap((res) => {
-                this.paginator.setNextAndPrevious(res.next, res.previous);
-              }),
-              catchError((e: any) => {
-                console.error(e);
-                return of({
-                  next: undefined,
-                  previous: undefined,
-                  data: [],
-                });
-              })
-            );
-        }
-        const member: ProjectMember = {
-          id: this.authenticationService.currentUser.id,
-          created: this.authenticationService.currentUser.created,
-          email: this.authenticationService.currentUser.email,
-          role: ProjectMemberRole.ADMIN,
-          status: ProjectMemberStatus.ACTIVE,
-          projectId: this.authenticationService.getProjectId(),
-          updated: this.authenticationService.currentUser.updated,
-        };
-        return of({
-          next: undefined,
-          previous: undefined,
-          data: [member],
+  connect(): Observable<UserInvitedOrMember[]> {
+    return this.refresh$.pipe(
+      switchMap(() =>
+        forkJoin({
+          projectInvitations: this.userInvitedService.list({
+            type: InvitationType.PROJECT,
+            limit: 1000,
+          }),
+          projectMembers: this.projectMemberService.list({
+            limit: 1000,
+            projectId: this.authentticationService.getProjectId(),
+          }),
+        })
+      ),
+      tap(({ projectInvitations, projectMembers }) => {
+        const invitations = projectInvitations.data.map(
+          (member: UserInvitation) => {
+            return {
+              email: member.email,
+              role: member.projectRole!,
+              status: TeamMemberStatus.PENDING,
+              created: member.created,
+              id: member.id,
+            };
+          }
+        );
+        const members = projectMembers.data.map((member) => {
+          return {
+            email: member.user.email,
+            role: member.role,
+            status: TeamMemberStatus.ACTIVE,
+            created: member.created,
+            id: member.id,
+          };
         });
+        this.data = [...invitations, ...members];
       }),
-      tap((members) => {
-        this.data = members.data;
+      catchError((e: any) => {
+        console.error(e);
+        return of([]);
       }),
       map(() => this.data)
     );

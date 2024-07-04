@@ -15,6 +15,7 @@ import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { FlowService, TelemetryService } from '../../../service';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 
 type ImportTemplateWithoutExistingFlowData = { projectId: string };
 type ImportFlowToOverwriteFlowData = { flowToOverwriteId: string };
@@ -28,12 +29,14 @@ export type ImporFlowDialogData =
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImportFlowDialogComponent {
+  readonly INVALID_JSON_ERROR = 'INVALID_JSON_ERROR';
   fileControl = new FormControl<null | File>(null, {
     validators: Validators.required,
   });
   loading = false;
   importFLow$?: Observable<void>;
   showOverWritingFlowNote = false;
+  removeInvalidJsonOnValueChanged$: Observable<unknown>;
   constructor(
     private matDialog: MatDialog,
     private flowService: FlowService,
@@ -45,6 +48,17 @@ export class ImportFlowDialogComponent {
     private cd: ChangeDetectorRef
   ) {
     this.showOverWritingFlowNote = this.isOverwritingFlow(this.data);
+    this.removeInvalidJsonOnValueChanged$ = this.fileControl.valueChanges.pipe(
+      tap(() => {
+        const errors = this.fileControl.errors;
+        if (errors && errors[this.INVALID_JSON_ERROR]) {
+          this.fileControl.setErrors({
+            ...errors,
+            [this.INVALID_JSON_ERROR]: undefined,
+          });
+        }
+      })
+    );
   }
 
   submit() {
@@ -58,7 +72,9 @@ export class ImportFlowDialogComponent {
     if (this.fileControl.value === null) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const template: FlowTemplate = JSON.parse(reader.result as string);
+      const template: FlowTemplate = this.parseTemplateJson(
+        reader.result as string
+      );
       if (this.isOverwritingFlow(this.data)) {
         this.importFLow$ = this.importFlow(
           this.data.flowToOverwriteId,
@@ -69,15 +85,7 @@ export class ImportFlowDialogComponent {
         this.importFLow$ = this.createFlow({
           displayName: template.name,
           projectId: this.data.projectId,
-        }).pipe(
-          switchMap((flow) => this.importFlow(flow.id, template, false)),
-          catchError((err) => {
-            console.error(err);
-            this.snackBar.open($localize`The uploaded template is invalid`);
-            this.loading = false;
-            return of(void 0);
-          })
-        );
+        }).pipe(switchMap((flow) => this.importFlow(flow.id, template, false)));
       }
       this.cd.markForCheck();
     };
@@ -121,7 +129,17 @@ export class ImportFlowDialogComponent {
       )
       .pipe(
         map(() => void 0),
-        catchError((err) => {
+        catchError((err: HttpErrorResponse) => {
+          this.loading = false;
+          if (err.status === HttpStatusCode.BadRequest) {
+            this.fileControl.setErrors({
+              [this.INVALID_JSON_ERROR]: true,
+            });
+          } else {
+            this.snackBar.open(
+              $localize`Unexpected error, please contact support`
+            );
+          }
           console.error(err);
           return of(void 0);
         })
@@ -141,5 +159,18 @@ export class ImportFlowDialogComponent {
     data: ImporFlowDialogData
   ): data is ImportFlowToOverwriteFlowData {
     return Object.keys(data).some((k) => k === 'flowToOverwriteId');
+  }
+
+  private parseTemplateJson(json: string) {
+    try {
+      return JSON.parse(json);
+    } catch (e) {
+      this.loading = false;
+      this.cd.markForCheck();
+      this.fileControl.setErrors({
+        [this.INVALID_JSON_ERROR]: true,
+      });
+      throw e;
+    }
   }
 }

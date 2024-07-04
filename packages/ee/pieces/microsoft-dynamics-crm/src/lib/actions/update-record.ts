@@ -4,7 +4,6 @@ import {
 } from '@activepieces/pieces-framework';
 import { dynamicsCRMAuth } from '../../';
 import { DynamicsCRMCommon, makeClient } from '../common';
-import { EntityDetails } from '../common/constants';
 
 export const updateRecordAction = createAction({
   auth: dynamicsCRMAuth,
@@ -21,7 +20,7 @@ export const updateRecordAction = createAction({
   async run(context) {
     const { entityType, recordId, fields } = context.propsValue;
 
-    const entityUrlPath = EntityDetails[entityType].urlPath;
+    const entityUrlPath = entityType as string;
 
     const client = makeClient(
       context.auth as PiecePropValueSchema<typeof dynamicsCRMAuth>

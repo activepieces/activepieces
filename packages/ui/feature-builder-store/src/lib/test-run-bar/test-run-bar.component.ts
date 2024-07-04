@@ -39,7 +39,7 @@ export class TestRunBarComponent implements OnInit {
           }
         })
       );
-    this.sandboxTimeoutSeconds$ = this.flagsService.getSandboxTimeout();
+    this.sandboxTimeoutSeconds$ = this.flagsService.getFlowRunTimeout();
     this.exitRun$ = this.exitButtonClicked.pipe(
       switchMap(() => this.store.select(BuilderSelectors.selectDraftVersion)),
       tap((draftVersion) => {

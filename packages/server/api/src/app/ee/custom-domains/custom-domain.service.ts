@@ -1,9 +1,3 @@
-import { databaseConnection } from '../../database/database-connection'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { getEdition } from '../../helper/secret-helper'
-import { cloudflareHostnameServices } from './cloudflare-api.service'
-import { CustomDomainEntity } from './custom-domain.entity'
 import {
     CustomDomain,
     CustomDomainStatus,
@@ -11,6 +5,11 @@ import {
 } from '@activepieces/ee-shared'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
+import { databaseConnection } from '../../database/database-connection'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { cloudflareHostnameServices } from './cloudflare-api.service'
+import { CustomDomainEntity } from './custom-domain.entity'
 
 type HostnameDetailsResponse = {
     txtName: string
@@ -21,7 +20,7 @@ type HostnameDetailsResponse = {
 const customDomainRepo =
     databaseConnection.getRepository<CustomDomain>(CustomDomainEntity)
 
-const isCloudEdition = getEdition() === ApEdition.CLOUD && system.getOrThrow(SystemProp.ENVIRONMENT) !== ApEnvironment.TESTING
+const isCloudEdition = system.getEdition() === ApEdition.CLOUD && system.getOrThrow(SystemProp.ENVIRONMENT) !== ApEnvironment.TESTING
 
 export const customDomainService = {
     async delete(request: { id: string, platformId: string }): Promise<void> {

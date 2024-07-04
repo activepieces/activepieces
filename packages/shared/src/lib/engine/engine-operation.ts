@@ -1,3 +1,4 @@
+import { Static, Type } from '@sinclair/typebox'
 import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
@@ -8,7 +9,6 @@ import { ProjectId } from '../project/project'
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
     EXECUTE_STEP = 'EXECUTE_STEP',
-    EXECUTE_TEST_FLOW = 'EXECUTE_TEST_FLOW',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
@@ -34,7 +34,7 @@ export type EngineOperation =
 
 export type BaseEngineOperation = {
     projectId: ProjectId
-    workerToken: string
+    engineToken: string
     serverUrl: string
 }
 
@@ -65,6 +65,7 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     executionType: T
     runEnvironment: RunEnvironment
     serverHandlerId: string | null
+    httpRequestId: string | null
     progressUpdateType: ProgressUpdateType
 }
 
@@ -85,23 +86,16 @@ export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
 
-export type EngineTestOperation = BeginExecuteFlowOperation & {
-    /**
-     * original flow version that the current test flow version is derived from.
-     * Used to generate the test execution context.
-     */
-    sourceFlowVersion: FlowVersion
-}
 
 export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOperation & {
     hookType: HT
     flowVersion: FlowVersion
     webhookUrl: string
     triggerPayload?: TriggerPayload
-    edition?: string
     appWebhookUrl?: string
     webhookSecret?: string
 }
+
 
 export type TriggerPayload<T = unknown> = {
     body: T
@@ -152,6 +146,14 @@ type ExecuteOnEnableTriggerResponse = {
     listeners: AppEventListener[]
     scheduleOptions?: ScheduleOptions
 }
+
+export const EngineHttpResponse = Type.Object({
+    status: Type.Number(),
+    body: Type.Unknown(),
+    headers: Type.Record(Type.String(), Type.String()),
+})
+
+export type EngineHttpResponse = Static<typeof EngineHttpResponse>
 
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
     H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :

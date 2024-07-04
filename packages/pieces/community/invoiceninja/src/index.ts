@@ -52,7 +52,7 @@ export const invoiceninja = createPiece({
       baseUrl: (auth) =>
         `${(auth as { base_url: string }).base_url.replace(/\/$/, '')}/api/v1`,
       auth: invoiceninjaAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'X-Api-Token': (auth as { access_token: string }).access_token,
       }),
     }),

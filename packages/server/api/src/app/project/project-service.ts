@@ -1,16 +1,21 @@
-import { IsNull } from 'typeorm'
-import { repoFactory } from '../core/db/repo-factory'
-import { ProjectEntity } from './project-entity'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, apId,
     ApId,
+    assertNotNullOrUndefined,
     ErrorCode,
     isNil,
     NotificationStatus,
+    PlatformRole,
     Project,
     ProjectId,
     spreadIfDefined,
+    User,
     UserId,
 } from '@activepieces/shared'
+import { IsNull } from 'typeorm'
+import { repoFactory } from '../core/db/repo-factory'
+import { ProjectEntity } from './project-entity'
+import { projectHooks } from './project-hooks'
 
 const repo = repoFactory(ProjectEntity)
 
@@ -21,8 +26,9 @@ export const projectService = {
             ...params,
             notifyStatus: NotificationStatus.ALWAYS,
         }
-
-        return repo().save(newProject)
+        const savedProject = await repo().save(newProject)
+        rejectedPromiseHandler(projectHooks.getHooks().postCreate(savedProject))
+        return savedProject
     },
 
     async getOne(projectId: ProjectId | undefined): Promise<Project | null> {
@@ -66,15 +72,30 @@ export const projectService = {
         return project
     },
 
-    async getUserProject(ownerId: UserId): Promise<Project | null> {
-        return repo().findOneBy({
-            ownerId,
-            deleted: IsNull(),
-        })
+    async getOneForUser(user: User): Promise<Project | null> {
+        assertNotNullOrUndefined(user.platformId, 'user.platformId')
+        switch (user.platformRole) {
+            case PlatformRole.ADMIN: {
+                return repo().findOneBy({
+                    platformId: user.platformId,
+                    deleted: IsNull(),
+                })
+            }
+            case PlatformRole.MEMBER: {
+                return repo().findOneBy({
+                    ownerId: user.id,
+                    platformId: user.platformId,
+                    deleted: IsNull(),
+                })
+            }
+        }
     },
 
     async getUserProjectOrThrow(ownerId: UserId): Promise<Project> {
-        const project = await this.getUserProject(ownerId)
+        const project = await repo().findOneBy({
+            ownerId,
+            deleted: IsNull(),
+        })
 
         if (isNil(project)) {
             throw new ActivepiecesError({

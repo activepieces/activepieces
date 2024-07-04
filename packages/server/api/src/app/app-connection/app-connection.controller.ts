@@ -1,10 +1,3 @@
-import {
-    FastifyPluginCallbackTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../helper/application-events'
-import { appConnectionService } from './app-connection-service/app-connection-service'
 import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ApId,
@@ -19,6 +12,13 @@ import {
     ValidateConnectionNameRequestBody,
     ValidateConnectionNameResponse,
 } from '@activepieces/shared'
+import {
+    FastifyPluginCallbackTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { eventsHooks } from '../helper/application-events'
+import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (
     app,

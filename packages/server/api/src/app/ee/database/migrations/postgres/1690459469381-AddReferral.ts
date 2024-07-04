@@ -1,6 +1,6 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../../../database/database-common'
-import { ApEdition } from '@activepieces/shared'
 
 export class AddReferral1690459469381 implements MigrationInterface {
     name = 'AddReferral1690459469381'

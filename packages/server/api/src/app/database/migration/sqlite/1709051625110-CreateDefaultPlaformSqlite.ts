@@ -1,6 +1,6 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
 import { apId } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterface {
     name = 'CreateDefaultPlaformSqlite1709051625110'

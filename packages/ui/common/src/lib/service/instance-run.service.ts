@@ -30,7 +30,7 @@ export class InstanceRunService {
     projectId: string,
     params: ListFlowRunsRequestQuery
   ): Observable<SeekPage<FlowRun>> {
-    const queryParams: { [key: string]: string | number } = {
+    const queryParams: { [key: string]: string | number | string[] } = {
       projectId: projectId,
     };
     if (params.status) {

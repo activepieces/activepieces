@@ -19,7 +19,7 @@ export default [
   createCustomApiCallAction({
     baseUrl: () => 'https://my.clockodo.com/api', // Replace with the actual base URL
     auth: clockodoAuth,
-    authMapping: (auth) => ({
+    authMapping: async (auth) => ({
       'X-ClockodoApiUser': (auth as { email: string }).email,
       'X-ClockodoApiKey': (auth as { token: string }).token,
       'X-Clockodo-External-Application': (auth as { company_name: string })

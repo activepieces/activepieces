@@ -1,3 +1,23 @@
+import {
+    ApplicationEventName,
+    FlowCreatedEvent,
+    GitRepoWithoutSensitiveData,
+    ProjectMember,
+} from '@activepieces/ee-shared'
+import { PieceMetadata } from '@activepieces/pieces-framework'
+import { encryptUtils, initializeSentry, logger, QueueMode, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
+import {
+    ApEdition,
+    apId,
+    AppConnectionWithoutSensitiveData,
+    Flow,
+    FlowRun,
+    isNil,
+    ProjectWithLimits,
+    spreadIfDefined,
+    UserInvitation,
+    WorkerMachineType,
+} from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart from '@fastify/multipart'
@@ -8,8 +28,8 @@ import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
 import fastifySocketIO from 'fastify-socket.io'
 import qs from 'qs'
+import { flowWorker } from 'server-worker'
 import { Socket } from 'socket.io'
-import { appConnectionsHooks } from './app-connection/app-connection-service/app-connection-hooks'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
@@ -20,9 +40,9 @@ import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { getRedisConnection } from './database/redis-connection'
+import { alertsModule } from './ee/alerts/alerts-module'
 import { analyticsModule } from './ee/analytics/analytics-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
-import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
@@ -41,8 +61,10 @@ import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
+import { emailService } from './ee/helper/email/email-service'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
+import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { otpModule } from './ee/otp/otp-module'
@@ -51,6 +73,7 @@ import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterpr
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { projectMemberModule } from './ee/project-members/project-member.module'
+import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { referralModule } from './ee/referrals/referral.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
@@ -67,48 +90,29 @@ import { stepFileModule } from './flows/step-file/step-file.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
-import { loadEncryptionKey } from './helper/encryption'
 import { errorHandler } from './helper/error-handler'
+import { jwtUtils } from './helper/jwt-utils'
 import { openapiModule } from './helper/openapi/openapi.module'
-import { getEdition } from './helper/secret-helper'
 import { systemJobsSchedule } from './helper/system-jobs'
+import { SystemJobName } from './helper/system-jobs/common'
+import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { platformModule } from './platform/platform.module'
+import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tagsModule } from './tags/tags-module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { userModule } from './user/user.module'
+import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
-import { flowQueueConsumer } from './workers/flow-worker/consumer/flow-queue-consumer'
-import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
-import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-bullboard'
-import { webhookResponseWatcher } from './workers/flow-worker/webhook-response-watcher'
-import {
-    ApplicationEventName,
-    FlowCreatedEvent,
-    GitRepoWithoutSensitiveData,
-    ProjectMember,
-} from '@activepieces/ee-shared'
-import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ExecutionMode, initializeSentry, logger, QueueMode, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
-import {
-    ActivepiecesError,
-    ApEdition,
-    ApEnvironment,
-    apId,
-    AppConnectionWithoutSensitiveData,
-    CodeSandboxType,
-    ErrorCode,
-    Flow,
-    FlowRun,
-    ProjectWithLimits,
-    spreadIfDefined,
-} from '@activepieces/shared'
+import { flowConsumer } from './workers/consumer'
+import { webhookResponseWatcher } from './workers/helper/webhook-response-watcher'
+import { workerModule } from './workers/worker-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -150,6 +154,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                 },
                 schemas: {
                     [ApplicationEventName.FLOW_CREATED]: FlowCreatedEvent,
+                    'user-invitation': UserInvitation,
                     'project-member': ProjectMember,
                     project: ProjectWithLimits,
                     flow: Flow,
@@ -161,7 +166,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             },
             info: {
                 title: 'Activepieces Documentation',
-                version: '0.14.3',
+                version: '0.0.0',
             },
             externalDocs: {
                 url: 'https://www.activepieces.com/docs',
@@ -256,12 +261,17 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(formModule)
     await app.register(tagsModule)
     await pieceSyncService.setup()
-    await app.register(flowWorkerModule)
+
+    const workerToken = await accessTokenManager.generateWorkerToken({
+        type: WorkerMachineType.SHARED,
+        platformId: null,
+    })
+    await app.register(workerModule(workerToken))
     await app.register(platformUserModule)
     await app.register(issuesModule)
     await app.register(authnSsoSamlModule)
-
-    await setupBullMQBoard(app)
+    await app.register(alertsModule)
+    await app.register(invitationModule)
 
     app.get(
         '/redirect',
@@ -324,17 +334,20 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
             await app.register(projectBillingModule)
-
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
+            projectHooks.setHooks(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
             flowRunHooks.setHooks(platformRunHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
+            systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
+                await pieceSyncService.sync()
+            })
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             initializeSentry()
             break
         case ApEdition.ENTERPRISE:
@@ -354,9 +367,15 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(auditEventModule)
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
+            await app.register(licenseKeysModule)
+            systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
+                await pieceSyncService.sync()
+            })
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
+            projectHooks.setHooks(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
             flowRunHooks.setHooks(platformRunHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
@@ -368,11 +387,13 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             await app.register(communityFlowTemplateModule)
+            await app.register(licenseKeysModule)
             break
     }
 
     app.addHook('onClose', async () => {
-        await flowQueueConsumer.close()
+        await flowWorker.close()
+        await flowConsumer.close()
         await systemJobsSchedule.close()
         await webhookResponseWatcher.shutdown()
     })
@@ -382,31 +403,14 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 
 
 const validateEnvPropsOnStartup = async (): Promise<void> => {
-    const codeSandboxType = system.get<CodeSandboxType>(
-        SystemProp.CODE_SANDBOX_TYPE,
-    )
-    const executionMode = system.get<ExecutionMode>(SystemProp.EXECUTION_MODE)
-    const signedUpEnabled =
-        system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
-    const environment = system.get(SystemProp.ENVIRONMENT)
-    await loadEncryptionKey(queueMode)
+    await encryptUtils.loadEncryptionKey(queueMode)
 
-    if (
-        executionMode === ExecutionMode.UNSANDBOXED &&
-        codeSandboxType !== CodeSandboxType.V8_ISOLATE &&
-        signedUpEnabled &&
-        environment === ApEnvironment.PRODUCTION
-    ) {
-        throw new ActivepiecesError(
-            {
-                code: ErrorCode.SYSTEM_PROP_INVALID,
-                params: {
-                    prop: SystemProp.EXECUTION_MODE,
-                },
-            },
-            'Allowing users to sign up is not allowed in unsandboxed mode, please check the configuration section in the documentation',
-        )
+    const jwtSecret = await jwtUtils.getJwtSecret()
+    if (isNil(jwtSecret)) {
+        throw new Error(JSON.stringify({
+            message: 'AP_JWT_SECRET is undefined, please define it in the environment variables',
+        }))
     }
 }
 
@@ -423,3 +427,4 @@ async function getAdapter() {
         }
     }
 }
+

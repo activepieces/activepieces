@@ -70,7 +70,7 @@ export const talkable = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://www.talkable.com/api/v2',
       auth: talkableAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as { api_key: string }).api_key}`,
       }),
     }),

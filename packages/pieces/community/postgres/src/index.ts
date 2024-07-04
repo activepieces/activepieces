@@ -5,6 +5,8 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { runQuery } from './lib/actions/run-query';
+import { newRow } from './lib/triggers/new-row';
+import { pgClient } from './lib/common';
 
 export const postgresAuth = PieceAuth.CustomAuth({
   props: {
@@ -14,9 +16,9 @@ export const postgresAuth = PieceAuth.CustomAuth({
       description:
         ' A string indicating the hostname of the PostgreSQL server to connect to.',
     }),
-    port: Property.ShortText({
+    port: Property.Number({
       displayName: 'Port',
-      defaultValue: '5432',
+      defaultValue: 5432,
       description:
         'An integer indicating the port of the PostgreSQL server to connect to.',
       required: true,
@@ -50,7 +52,7 @@ export const postgresAuth = PieceAuth.CustomAuth({
       description:
         'Verify the server certificate against trusted CAs or a CA provided in the certificate field below. This will fail if the database server is using a self signed certificate.',
       required: true,
-      defaultValue: true,
+      defaultValue: false,
     }),
     certificate: Property.LongText({
       displayName: 'Certificate',
@@ -61,17 +63,31 @@ export const postgresAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
+  validate: async ({ auth }) => {
+    try {
+      const client = await pgClient(auth);
+      await client.end();
+    }
+    catch (e) {
+      return {
+        valid: false,
+        error: JSON.stringify(e)
+      };
+    }
+    return {
+      valid: true,
+    };
+  }
 });
 
 export const postgres = createPiece({
   displayName: 'Postgres',
   description: "The world's most advanced open-source relational database",
-
   minimumSupportedRelease: '0.5.0',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   logoUrl: 'https://cdn.activepieces.com/pieces/postgres.png',
-  authors: ["Willianwg","dentych","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ["AbdullahBitar", "Willianwg", "dentych", "kishanprmr", "AbdulTheActivePiecer", "khaledmashaly", "abuaboud"],
   auth: postgresAuth,
   actions: [runQuery],
-  triggers: [],
+  triggers: [newRow],
 });

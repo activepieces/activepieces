@@ -23,6 +23,7 @@ export class WebSocketService {
     return {
       url: resolveSocketUrl(environment.apiUrl),
       options: {
+        path: '/api/socket.io',
         transports: ['websocket'],
         auth: {
           token: this.authenticationService.getToken(),
@@ -34,7 +35,6 @@ export class WebSocketService {
 
 function resolveSocketUrl(url: string): string {
   const isRelative = url.startsWith('/');
-
   if (isRelative) {
     const urlCon = new URL(url, window.location.href).href;
     return urlCon
@@ -42,6 +42,5 @@ function resolveSocketUrl(url: string): string {
       .replace('http', 'ws')
       .split('/api')[0];
   }
-
-  return url.split('/v1')[0].replace('http', 'ws');
+  return url.replace('https', 'wss').replace('http', 'ws').split('/api')[0];
 }

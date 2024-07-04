@@ -45,7 +45,7 @@ export const freshdesk = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { base_url: string }).base_url,
       auth: freshdeskAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: (auth as { access_token: string }).access_token,
       }),
     }),

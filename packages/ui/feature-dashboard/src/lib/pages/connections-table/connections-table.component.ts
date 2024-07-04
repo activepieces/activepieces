@@ -20,6 +20,7 @@ import {
 import {
   AppConnection,
   AppConnectionStatus,
+  Permission,
   SeekPage,
 } from '@activepieces/shared';
 import { ConnectionsTableDataSource } from './connections-table.datasource';
@@ -30,6 +31,8 @@ import {
   CONNECTION_NAME_QUERY_PARAM,
   PIECE_NAME_QUERY_PARAM,
   AppConnectionsService,
+  TableCore,
+  unpermittedTooltip,
 } from '@activepieces/ui/common';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { NewConnectionDialogComponent } from '../../components/dialogs/new-connection-dialog/new-connection-dialog.component';
@@ -41,7 +44,7 @@ import { FormControl } from '@angular/forms';
   templateUrl: './connections-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConnectionsTableComponent implements OnInit {
+export class ConnectionsTableComponent extends TableCore implements OnInit {
   @ViewChild(AddEditConnectionButtonComponent)
   createConnectionButton!: AddEditConnectionButtonComponent;
   @ViewChild(ApPaginatorComponent, { static: true })
@@ -50,9 +53,13 @@ export class ConnectionsTableComponent implements OnInit {
   dataSource!: ConnectionsTableDataSource;
   refreshTableForReruns$: Subject<boolean> = new Subject();
   title = $localize`Connections`;
+  isReadOnly = !this.hasPermission(Permission.WRITE_APP_CONNECTION);
+  readonly unpermittedTooltip = unpermittedTooltip;
+  readonly deleteConnectionTooltip = this.isReadOnly
+    ? unpermittedTooltip
+    : $localize`Delete Connection`;
   newConnectionPiece?: PieceMetadataModelSummary;
   newConnectionDialogClosed$?: Observable<PieceMetadataModelSummary>;
-  displayedColumns = ['app', 'name', 'status', 'created', 'updated', 'action'];
   deleteConnectionDialogClosed$?: Observable<void>;
   readonly AppConnectionStatus = AppConnectionStatus;
   filtersChanged$: Observable<void>;
@@ -74,6 +81,9 @@ export class ConnectionsTableComponent implements OnInit {
     private connectionService: AppConnectionsService,
     private dialogService: MatDialog
   ) {
+    super({
+      tableColumns: ['app', 'name', 'status', 'created', 'updated', 'action'],
+    });
     this.connectionNameFilterControl.setValue(
       this.activatedRoute.snapshot.queryParamMap.get(
         CONNECTION_NAME_QUERY_PARAM
