@@ -9,15 +9,13 @@ export const getMinMax = createAction({
     note: common.note,
     values: Property.Array({
       displayName: 'Values',
-      description: 'Enter your values here.',
       required: true
     })
   },
   async run({ propsValue }) {
     const result = common.validateArray(propsValue.values);
-    if (result.hasError) {
+    if (result.hasError) 
       throw new Error(JSON.stringify(result.error));
-    }
     return {
       max: Math.max(...result.values),
       min: Math.min(...result.values)

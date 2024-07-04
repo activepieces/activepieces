@@ -9,7 +9,6 @@ export const calculateSum = createAction({
     note: common.note,
     values: Property.Array({
       displayName: "Values",
-      description: "Enter your values here.",
       required: true,
     })
   },
