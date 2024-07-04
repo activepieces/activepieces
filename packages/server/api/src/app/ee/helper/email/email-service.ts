@@ -85,7 +85,7 @@ export const emailService = {
         })
     },
 
-    async sendIssuesReminder({ projectId }: { projectId: string }): Promise<void> {
+    async scheduleIssuesReminder({ projectId }: { projectId: string }): Promise<void> {
         const project = await projectService.getOneOrThrow(projectId)
         const platform = await platformService.getOneOrThrow(project.platformId)
         if (!platform.flowIssuesEnabled || platform.embeddingEnabled) {

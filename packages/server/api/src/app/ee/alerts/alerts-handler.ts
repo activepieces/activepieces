@@ -14,9 +14,9 @@ export const alertsHandler = {
     [NotificationStatus.NEW_ISSUE]: async (params: IssueParams): Promise<void> => sendAlertOnNewIssue(params),
 }
 
-async function sendReminder(params: IssueRemindersParams): Promise<void> {
+async function scheduleSendingReminder(params: IssueRemindersParams): Promise<void> {
     if (params.issueCount === 1) {
-        await emailService.sendIssuesReminder({ projectId: params.projectId })
+        await emailService.scheduleIssuesReminder({ projectId: params.projectId })
     }
 
     return
@@ -35,7 +35,7 @@ async function sendAlertOnNewIssue(params: IssueParams): Promise<void> {
         path: 'runs?limit=10#Issues',
     })
 
-    await sendReminder({ projectId: params.projectId, issueCount: params.issueCount })
+    await scheduleSendingReminder({ projectId: params.projectId, issueCount: params.issueCount })
     await emailService.sendIssueCreatedNotification({
         ...params,
         issueOrRunsPath: issueUrl,
@@ -62,7 +62,7 @@ async function sendAlertOnFlowRun(params: IssueParams): Promise<void> {
         path: `runs/${flowRunId}`,
     })
 
-    await sendReminder({ projectId: params.projectId, issueCount: params.issueCount })
+    await scheduleSendingReminder({ projectId: params.projectId, issueCount: params.issueCount })
     await emailService.sendIssueCreatedNotification({
         ...params,
         issueOrRunsPath: flowRunsUrl,
