@@ -42,6 +42,7 @@ import { TagEntity } from '../tags/tag-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
+import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
 
@@ -72,6 +73,7 @@ function getEntities(): EntitySchema<unknown>[] {
         IssueEntity,
         AlertEntity,
         UserInvitationEntity,
+        WorkerMachineEntity,
     ]
 
     switch (edition) {
