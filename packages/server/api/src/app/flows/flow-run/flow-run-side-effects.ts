@@ -14,7 +14,7 @@ import {
 import dayjs from 'dayjs'
 import { alertsService } from '../../ee/alerts/alerts-service'
 import { issuesService } from '../../ee/issues/issues-service'
-import { flowQueue } from '../../flow-worker/queue'
+import { flowQueue } from '../../workers/queue'
 import { flowRunHooks } from './flow-run-hooks'
 
 type StartParams = {
