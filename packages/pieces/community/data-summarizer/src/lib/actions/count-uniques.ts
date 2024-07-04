@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { common } from '../common';
+import { isNil } from '@activepieces/shared';
 
 export const countUniques = createAction({
   name: 'countUniques',
@@ -9,10 +10,10 @@ export const countUniques = createAction({
     note: common.note,
     values: Property.Array({
       displayName: "Values",
-      required: true, 
+      required: true,
     }),
-    fieldsExplanation: Property.MarkDown({ 
-      value: "If the data you're passing in is an object, you can specify certain fields to filter on!"
+    fieldsExplanation: Property.MarkDown({
+      value: "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave this blank."
     }),
     fields: Property.Array({
       displayName: "Fields",
@@ -29,35 +30,28 @@ export const countUniques = createAction({
   },
 });
 
-function validateFields(fields: unknown[]|null): string[]|null {
-  if (fields === null) 
-    return null
-  if (fields.every(value => typeof value === 'string')) {
+function validateFields(fields: unknown[] | null): string[] | null {
+  if (!isNil(fields) && Array.isArray(fields) && fields.every(value => typeof value === 'string')) {
     return fields as string[]
   }
   else return null
 }
 
-function numUniques<T>(values: T[], fields: string[]|null = null) {
-  if (fields != null) {
-      const map = values.map(value => {
-          if (typeof value !== 'object') return value
-          const obj: {[k: string]: any} = {}
-          for (const key in value) {
-              if (fields.includes(key)) {
-                  obj[key] = value[key]
-              }
-          }
-          if (Object.keys(obj).length === 0) {
-              return undefined
-          }
-          return obj
-      })
-      const filter = map.filter(value => value !== undefined)
-      if (filter.length !== 0) 
-          values = filter as T[]
-      else 
-          return null
+function numUniques<T>(values: T[], fields: string[] | null = null) {
+  if (isNil(fields)) {
+    return new Set(values.map(value => JSON.stringify(value))).size
   }
-  return new Set(values.map(value => JSON.stringify(value))).size
+  const newValues = values.map(value => {
+    const obj: { [k: string]: unknown } = {}
+    if (typeof value !== 'object') {
+      return obj
+    }
+    for (const key in value) {
+      if (fields.includes(key)) {
+        obj[key] = value[key]
+      }
+    }
+    return obj
+  })
+  return new Set(newValues.map(value => JSON.stringify(value))).size
 }
