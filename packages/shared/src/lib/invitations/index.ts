@@ -19,9 +19,9 @@ export const UserInvitation = Type.Object({
     status: Type.Enum(InvitationStatus),
     type: Type.Enum(InvitationType),
     platformId: Type.String(),
-    platformRole: Type.Optional(Type.Enum(PlatformRole)),
-    projectId: Type.Optional(Type.String()),
-    projectRole: Type.Optional(Type.Enum(ProjectMemberRole)),
+    platformRole: Type.Optional(Type.Union([Type.Enum(PlatformRole), Type.Null()])),
+    projectId: Nullable(Type.String()),
+    projectRole: Type.Optional(Type.Union([Type.Enum(ProjectMemberRole), Type.Null()])),
 })
 
 export type UserInvitation = Static<typeof UserInvitation>

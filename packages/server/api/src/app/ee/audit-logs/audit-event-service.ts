@@ -97,7 +97,10 @@ async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam): Prom
     const valid = eventSchema(eventToSave)
     assertEqual(valid, true, 'Event validation', 'true')
     const appEvent = await auditLogRepo.save(eventToSave as ApplicationEvent)
-    logger.info(appEvent, '[AuditEventService#saveEvent] Audit event saved')
+    logger.info({
+        message: '[AuditEventService#saveEvent] Audit event saved',
+        appEvent,
+    })
 }
 
 type MetaInformation = {
