@@ -3,6 +3,7 @@ import { calculateAverage } from './lib/actions/calculate-average';
 import { calculateSum } from './lib/actions/calculate-sum';
 import { countUniques } from './lib/actions/count-uniques';
 import { getMinMax } from './lib/actions/get-min-max';
+import { PieceCategory } from '@activepieces/shared';
 
 export const dataSummarizer = createPiece({
   displayName: 'Data Summarizer',
@@ -11,5 +12,6 @@ export const dataSummarizer = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/data-summarizer.svg',
   authors: ['tahboubali'],
   actions: [calculateAverage, calculateSum, countUniques, getMinMax],
-  triggers: []
+  triggers: [],
+  categories: [PieceCategory.CORE]
 });
