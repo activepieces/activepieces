@@ -53,7 +53,6 @@ describe('User Invitation API', () => {
                 email: faker.internet.email(),
                 type: InvitationType.PLATFORM,
                 projectRole: undefined,
-                projectId: null,
                 platformRole: PlatformRole.ADMIN,
             }
             const response = await app?.inject({

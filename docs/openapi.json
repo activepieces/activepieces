@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Activepieces Documentation",
-    "version": "0.14.3"
+    "version": "0.0.0"
   },
   "components": {
     "securitySchemes": {
@@ -66,16 +66,23 @@
           "platformRole": {
             "anyOf": [
               {
-                "type": "string",
-                "enum": [
-                  "ADMIN"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "ADMIN"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "MEMBER"
+                    ]
+                  }
                 ]
               },
               {
-                "type": "string",
-                "enum": [
-                  "MEMBER"
-                ]
+                "type": "null"
               }
             ]
           },
@@ -85,28 +92,35 @@
           "projectRole": {
             "anyOf": [
               {
-                "type": "string",
-                "enum": [
-                  "ADMIN"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "ADMIN"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "EDITOR"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "OPERATOR"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "VIEWER"
+                    ]
+                  }
                 ]
               },
               {
-                "type": "string",
-                "enum": [
-                  "EDITOR"
-                ]
-              },
-              {
-                "type": "string",
-                "enum": [
-                  "OPERATOR"
-                ]
-              },
-              {
-                "type": "string",
-                "enum": [
-                  "VIEWER"
-                ]
+                "type": "null"
               }
             ]
           }
@@ -214,6 +228,12 @@
                 "type": "string",
                 "enum": [
                   "ALWAYS"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "NEW_ISSUE"
                 ]
               }
             ]
@@ -6776,56 +6796,59 @@
           },
           {
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "enum": [
-                    "FAILED"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "enum": [
-                    "QUOTA_EXCEEDED"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "enum": [
-                    "INTERNAL_ERROR"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "enum": [
-                    "PAUSED"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "enum": [
-                    "RUNNING"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "enum": [
-                    "STOPPED"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "enum": [
-                    "SUCCEEDED"
-                  ]
-                },
-                {
-                  "type": "string",
-                  "enum": [
-                    "TIMEOUT"
-                  ]
-                }
-              ]
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "FAILED"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "QUOTA_EXCEEDED"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "INTERNAL_ERROR"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "PAUSED"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "RUNNING"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "STOPPED"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "SUCCEEDED"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "TIMEOUT"
+                    ]
+                  }
+                ]
+              }
             },
             "in": "query",
             "name": "status",
@@ -8206,6 +8229,10 @@
                       }
                     ]
                   },
+                  "projectId": {
+                    "type": "string",
+                    "nullable": true
+                  },
                   "projectRole": {
                     "anyOf": [
                       {
@@ -8307,16 +8334,23 @@
                     "platformRole": {
                       "anyOf": [
                         {
-                          "type": "string",
-                          "enum": [
-                            "ADMIN"
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ADMIN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MEMBER"
+                              ]
+                            }
                           ]
                         },
                         {
-                          "type": "string",
-                          "enum": [
-                            "MEMBER"
-                          ]
+                          "type": "null"
                         }
                       ]
                     },
@@ -8326,30 +8360,40 @@
                     "projectRole": {
                       "anyOf": [
                         {
-                          "type": "string",
-                          "enum": [
-                            "ADMIN"
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ADMIN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "EDITOR"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "OPERATOR"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "VIEWER"
+                              ]
+                            }
                           ]
                         },
                         {
-                          "type": "string",
-                          "enum": [
-                            "EDITOR"
-                          ]
-                        },
-                        {
-                          "type": "string",
-                          "enum": [
-                            "OPERATOR"
-                          ]
-                        },
-                        {
-                          "type": "string",
-                          "enum": [
-                            "VIEWER"
-                          ]
+                          "type": "null"
                         }
                       ]
+                    },
+                    "link": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -8537,6 +8581,12 @@
                           "enum": [
                             "ALWAYS"
                           ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "NEW_ISSUE"
+                          ]
                         }
                       ]
                     },
@@ -8723,6 +8773,12 @@
                                 "enum": [
                                   "ALWAYS"
                                 ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NEW_ISSUE"
+                                ]
                               }
                             ]
                           },
@@ -8874,6 +8930,12 @@
                         "enum": [
                           "ALWAYS"
                         ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "NEW_ISSUE"
+                        ]
                       }
                     ]
                   },
@@ -8883,9 +8945,6 @@
                   "plan": {
                     "type": "object",
                     "properties": {
-                      "teamMembers": {
-                        "type": "number"
-                      },
                       "tasks": {
                         "type": "number"
                       },
@@ -8968,6 +9027,12 @@
                           "type": "string",
                           "enum": [
                             "ALWAYS"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "NEW_ISSUE"
                           ]
                         }
                       ]
