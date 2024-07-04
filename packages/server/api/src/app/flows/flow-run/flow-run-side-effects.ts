@@ -1,3 +1,4 @@
+import { ApplicationEventName } from '@activepieces/ee-shared'
 import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION,     logger,
     RepeatableJobType } from '@activepieces/server-shared'
 import {
@@ -14,6 +15,7 @@ import {
 import dayjs from 'dayjs'
 import { alertsService } from '../../ee/alerts/alerts-service'
 import { issuesService } from '../../ee/issues/issues-service'
+import { eventsHooks } from '../../helper/application-events'
 import { flowQueue } from '../../workers/queue'
 import { flowRunHooks } from './flow-run-hooks'
 
@@ -61,6 +63,12 @@ export const flowRunSideEffects = {
                 await alertsService.sendAlertOnRunFinish({ issue, flowRunId: flowRun.id })
             }
         }
+        eventsHooks.get().sendWorkerEvent(flowRun.projectId, {
+            action: ApplicationEventName.FLOW_RUN_FINISHED,
+            data: {
+                flowRun,
+            },
+        })
     },
     async start({
         flowRun,
@@ -88,6 +96,12 @@ export const flowRunSideEffects = {
                 httpRequestId,
                 executionType,
                 progressUpdateType,
+            },
+        })
+        eventsHooks.get().sendWorkerEvent(flowRun.projectId, {
+            action: ApplicationEventName.FLOW_RUN_STARTED,
+            data: {
+                flowRun,
             },
         })
     },

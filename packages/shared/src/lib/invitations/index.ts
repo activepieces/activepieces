@@ -20,7 +20,7 @@ export const UserInvitation = Type.Object({
     type: Type.Enum(InvitationType),
     platformId: Type.String(),
     platformRole: Type.Optional(Type.Union([Type.Enum(PlatformRole), Type.Null()])),
-    projectId: Type.Optional(Type.String()),
+    projectId: Nullable(Type.String()),
     projectRole: Type.Optional(Type.Union([Type.Enum(ProjectMemberRole), Type.Null()])),
 })
 

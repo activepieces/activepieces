@@ -1,21 +1,7 @@
-import {
-    GitRepoWithoutSensitiveData,
-    ProjectMember,
-} from '@activepieces/ee-shared'
+import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FlowUpdatedEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { encryptUtils, initializeSentry, logger, QueueMode, rejectedPromiseHandler, system, SystemProp } from '@activepieces/server-shared'
-import {
-    ApEdition,
-    apId,
-    AppConnectionWithoutSensitiveData,
-    Flow,
-    FlowRun,
-    isNil,
-    ProjectWithLimits,
-    spreadIfDefined,
-    UserInvitation,
-    WorkerMachineType,
-} from '@activepieces/shared'
+import { ApEdition, apId, AppConnectionWithoutSensitiveData, Flow, FlowRun, isNil, ProjectWithLimits, spreadIfDefined, UserInvitation, WorkerMachineType } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart from '@fastify/multipart'
@@ -151,6 +137,21 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     },
                 },
                 schemas: {
+                    [ApplicationEventName.FLOW_CREATED]: FlowCreatedEvent,
+                    [ApplicationEventName.FLOW_DELETED]: FlowDeletedEvent,
+                    [ApplicationEventName.FLOW_UPDATED]: FlowUpdatedEvent,
+                    [ApplicationEventName.CONNECTION_UPSERTED]: ConnectionEvent,
+                    [ApplicationEventName.CONNECTION_DELETED]: ConnectionEvent,
+                    [ApplicationEventName.FOLDER_CREATED]: FolderEvent,
+                    [ApplicationEventName.FOLDER_UPDATED]: FolderEvent,
+                    [ApplicationEventName.FOLDER_DELETED]: FolderEvent,
+                    [ApplicationEventName.FLOW_RUN_STARTED]: FlowRunEvent,
+                    [ApplicationEventName.FLOW_RUN_FINISHED]: FlowRunEvent,
+                    [ApplicationEventName.USER_SIGNED_UP]: SignUpEvent,
+                    [ApplicationEventName.USER_SIGNED_IN]: AuthenticationEvent,
+                    [ApplicationEventName.USER_PASSWORD_RESET]: AuthenticationEvent,
+                    [ApplicationEventName.USER_EMAIL_VERIFIED]: AuthenticationEvent,
+                    [ApplicationEventName.SIGNING_KEY_CREATED]: SigningKeyEvent,
                     'user-invitation': UserInvitation,
                     'project-member': ProjectMember,
                     project: ProjectWithLimits,
@@ -303,7 +304,9 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await validateEnvPropsOnStartup()
 
     const edition = system.getEdition()
-    logger.info(`Activepieces ${edition} Edition`)
+    logger.info({
+        edition,
+    }, 'Activepieces Edition')
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(appCredentialModule)
