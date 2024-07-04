@@ -138,6 +138,7 @@ import { AddAlertsEntityPostgres1716989780835 } from './migration/postgres/17169
 import { AddPremiumPiecesColumnPostgres1717370717678 } from './migration/postgres/1717370717678-AddPremiumPiecesColumnPostgres'
 import { AddUserInvitation1717960689650 } from './migration/postgres/1717960689650-AddUserInvitation'
 import { ModifyProjectMembers1717961669938 } from './migration/postgres/1717961669938-ModifyProjectMembers'
+import { AddWorkerMachineEntity1720054602927 } from './migration/postgres/1720054602927-AddWorkerMachineEntity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -227,6 +228,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddAlertsEntityPostgres1716989780835,
         AddUserInvitation1717960689650,
         AddPremiumPiecesColumnPostgres1717370717678,
+        AddWorkerMachineEntity1720054602927,
     ]
 
     const edition = system.getEdition()

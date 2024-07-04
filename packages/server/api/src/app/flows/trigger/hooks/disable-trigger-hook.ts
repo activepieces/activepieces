@@ -13,10 +13,10 @@ import {
 } from '@activepieces/shared'
 import { EngineHelperResponse, EngineHelperTriggerResult, engineRunner, webhookUtils } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
-import { flowQueue } from '../../../flow-worker/queue'
 import {
     generateEngineToken,
 } from '../../../helper/engine-helper'
+import { flowQueue } from '../../../workers/queue'
 import { triggerUtils } from './trigger-utils'
 
 export const disablePieceTrigger = async (

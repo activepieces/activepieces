@@ -12,7 +12,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
-import { flowQueue } from '../flow-worker/queue'
+import { flowQueue } from '../workers/queue'
 import { appEventRoutingService } from './app-event-routing.service'
 
 const appWebhooks: Record<string, Piece> = {

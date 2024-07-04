@@ -144,7 +144,7 @@ async function getProjectId(queueName: QueueName, job: JobData) {
     switch (queueName) {
         case QueueName.ONE_TIME:
             return (job as OneTimeJobData).projectId
-        case QueueName.WEBHOOK:{
+        case QueueName.WEBHOOK: {
             // TODO add project it to the webhook data
             const webhookData = (job as WebhookJobData)
             const flow = await flowService.getOneById(webhookData.flowId)

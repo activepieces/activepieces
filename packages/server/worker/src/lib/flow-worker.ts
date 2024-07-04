@@ -9,11 +9,15 @@ const WORKER_CONCURRENCY = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) 
 
 let closed = true
 let workerToken: string
+let heartbeatInterval: NodeJS.Timeout
 
 export const flowWorker = {
     async init(generatedToken: string): Promise<void> {
         closed = false
         workerToken = generatedToken
+        heartbeatInterval = setInterval(() => {
+            rejectedPromiseHandler(workerApiService(workerToken).heartbeat())
+        }, 15000)
     },
     async start(): Promise<void> {
         if (WORKER_CONCURRENCY === 0) {
@@ -27,6 +31,7 @@ export const flowWorker = {
     },
     async close(): Promise<void> {
         closed = true
+        clearTimeout(heartbeatInterval)
     },
 }
 

@@ -1,4 +1,5 @@
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, Principal } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, Principal, PrincipalType, WorkerMachineType, WorkerPrincipal } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { jwtUtils } from '../../helper/jwt-utils'
 
 export const accessTokenManager = {
@@ -11,6 +12,28 @@ export const accessTokenManager = {
             expiresInSeconds,
         })
     },
+
+    async generateWorkerToken({ type, platformId }: { platformId: string | null, type: WorkerMachineType }) {
+        const workerPrincipal: WorkerPrincipal = {
+            id: apId(),
+            type: PrincipalType.WORKER,
+            platform: isNil(platformId) ? null : {
+                id: platformId,
+            },
+            worker: {
+                type,
+            },
+        }
+
+        const secret = await jwtUtils.getJwtSecret()
+
+        return jwtUtils.sign({
+            payload: workerPrincipal,
+            key: secret,
+            expiresInSeconds: dayjs.duration(100, 'year').asSeconds(),
+        })
+    },
+    
 
     async extractPrincipal(token: string): Promise<Principal> {
         const secret = await jwtUtils.getJwtSecret()

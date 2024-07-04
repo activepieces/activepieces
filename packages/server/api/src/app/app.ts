@@ -11,17 +11,16 @@ import {
     Flow,
     FlowRun,
     isNil,
-    PrincipalType,
     ProjectWithLimits,
     spreadIfDefined,
     UserInvitation,
+    WorkerMachineType,
 } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart from '@fastify/multipart'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
-import dayjs from 'dayjs'
 import fastify, { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
@@ -80,9 +79,6 @@ import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
-import { flowConsumer } from './flow-worker/consumer'
-import { webhookResponseWatcher } from './flow-worker/helper/webhook-response-watcher'
-import { workerModule } from './flow-worker/worker-module'
 import { formModule } from './flows/flow/form/form.module'
 import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
@@ -109,6 +105,9 @@ import { userModule } from './user/user.module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
+import { flowConsumer } from './workers/consumer'
+import { webhookResponseWatcher } from './workers/helper/webhook-response-watcher'
+import { workerModule } from './workers/worker-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -257,7 +256,10 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(tagsModule)
     await pieceSyncService.setup()
 
-    const workerToken = await generateWorkerToken()
+    const workerToken = await accessTokenManager.generateWorkerToken({
+        type: WorkerMachineType.SHARED,
+        platformId: null,
+    })
     await app.register(workerModule(workerToken))
     await app.register(platformUserModule)
     await app.register(issuesModule)
@@ -410,13 +412,3 @@ async function getAdapter() {
     }
 }
 
-async function generateWorkerToken() {
-    return accessTokenManager.generateToken({
-        id: apId(),
-        type: PrincipalType.WORKER,
-        projectId: apId(),
-        platform: {
-            id: apId(),
-        },
-    }, dayjs.duration(10, 'year').asSeconds())
-}
