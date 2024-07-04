@@ -59,6 +59,7 @@ import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
+import { emailService } from './ee/helper/email/email-service'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
@@ -91,6 +92,8 @@ import { errorHandler } from './helper/error-handler'
 import { jwtUtils } from './helper/jwt-utils'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { systemJobsSchedule } from './helper/system-jobs'
+import { SystemJobName } from './helper/system-jobs/common'
+import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
@@ -336,6 +339,10 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             flagHooks.set(enterpriseFlagsHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
+            systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
+                await pieceSyncService.sync()
+            })
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             initializeSentry()
             break
         case ApEdition.ENTERPRISE:
@@ -356,6 +363,10 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
             await app.register(licenseKeysModule)
+            systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
+                await pieceSyncService.sync()
+            })
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })

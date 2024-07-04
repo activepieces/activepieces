@@ -7,6 +7,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { flagService } from '../flags/flag.service'
 import { parseAndVerify } from '../helper/json-validator'
 import { systemJobsSchedule } from '../helper/system-jobs'
+import { SystemJobName } from '../helper/system-jobs/common'
 import { PieceMetadataEntity } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
 
@@ -22,15 +23,12 @@ export const pieceSyncService = {
         await pieceSyncService.sync()
         await systemJobsSchedule.upsertJob({
             job: {
-                name: 'pieces-sync',
+                name: SystemJobName.PIECES_SYNC,
                 data: {},
             },
             schedule: {
                 type: 'repeated',
                 cron: '0 */1 * * *',
-            },
-            async handler() {
-                await pieceSyncService.sync()
             },
         })
     },
