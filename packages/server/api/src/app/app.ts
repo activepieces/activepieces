@@ -342,7 +342,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
                 await pieceSyncService.sync()
             })
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendingRemindersJobHandler)
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             initializeSentry()
             break
         case ApEdition.ENTERPRISE:
@@ -366,7 +366,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
                 await pieceSyncService.sync()
             })
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendingRemindersJobHandler)
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })

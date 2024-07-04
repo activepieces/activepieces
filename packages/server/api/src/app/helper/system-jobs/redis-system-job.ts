@@ -79,14 +79,18 @@ const addJobToQueue = async <T extends SystemJobName>({ job, schedule }: AddJobT
 const configureJobOptions = ({ schedule, jobId }: { schedule: JobSchedule, jobId?: string }): JobsOptions => {
     const config: JobsOptions = {}
     
-    if (schedule.type === 'one-time') {
-        const now = dayjs()
-        config.delay = schedule.date.diff(now, 'milliseconds')
-    }
-    else if (schedule.type === 'repeated') {
-        config.repeat = {
-            pattern: schedule.cron,
-            tz: 'UTC',
+    switch (schedule.type) {
+        case 'one-time': {
+            const now = dayjs()
+            config.delay = schedule.date.diff(now, 'milliseconds')
+            break
+        }
+        case 'repeated': {
+            config.repeat = {
+                pattern: schedule.cron,
+                tz: 'UTC',
+            }
+            break
         }
     }
 

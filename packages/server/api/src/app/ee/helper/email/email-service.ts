@@ -2,9 +2,6 @@ import { AlertChannel, OtpType } from '@activepieces/ee-shared'
 import { logger, system } from '@activepieces/server-shared'
 import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitation } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { getRedisConnection } from '../../../database/redis-connection'
-import { systemJobsSchedule } from '../../../helper/system-jobs'
-import { SystemJobName } from '../../../helper/system-jobs/common'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
@@ -84,40 +81,6 @@ export const emailService = {
             },
         })
     },
-
-    async scheduleIssuesReminder({ projectId }: { projectId: string }): Promise<void> {
-        const project = await projectService.getOneOrThrow(projectId)
-        const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.flowIssuesEnabled || platform.embeddingEnabled) {
-            return
-        }
-        
-        const reminderKey = `reminder:${projectId}`
-        const isEmailScheduled = await getRedisConnection().get(reminderKey)
-        if (isEmailScheduled) {
-            return
-        }
-
-        const endOfDay = dayjs().endOf('day')
-        await getRedisConnection().set(reminderKey, 0, 'EXAT', endOfDay.unix())
-        
-        await systemJobsSchedule.upsertJob({
-            job: {
-                name: SystemJobName.ISSUES_REMINDER,
-                data: {
-                    projectId,
-                    platformId: platform.id,
-                    projectName: project.displayName,
-                },
-                jobId: `issues-reminder-${projectId}`,
-            },
-            schedule: {
-                type: 'one-time',
-                date: endOfDay,
-            },
-        })
-    },
-
     async sendQuotaAlert({ projectId, resetDate, templateName }: SendQuotaAlertArgs): Promise<void> {
         if (EDITION_IS_NOT_CLOUD) {
             return
@@ -195,7 +158,7 @@ export const emailService = {
         })
     },
     
-    async sendingRemindersJobHandler(job: {
+    async sendReminderJobHandler(job: {
         projectId: string
         platformId: string
         projectName: string
