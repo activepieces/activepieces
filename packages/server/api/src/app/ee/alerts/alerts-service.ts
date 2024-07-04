@@ -19,7 +19,7 @@ export const alertsService = {
         if (platform.embeddingEnabled) {
             return
         }
-        
+
         const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(issue.flowId)
 
         await alertsHandler[project.notifyStatus]({
