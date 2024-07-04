@@ -13,7 +13,7 @@ export const countUniques = createAction({
       required: true,
     }),
     fieldsExplanation: Property.MarkDown({
-      value: "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave this blank."
+      value: "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave fields empty."
     }),
     fields: Property.Array({
       displayName: "Fields",
