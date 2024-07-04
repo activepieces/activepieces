@@ -1,5 +1,5 @@
 <ap-dialog-title-template i18n
-  >Http Request Copilot
+  >HTTP Request Copilot
   <!-- <span class="ap-typography-caption ap-text-primary ap-mt-1">BETA</span> -->
 </ap-dialog-title-template>
 
@@ -7,16 +7,14 @@
   <div class="ap-max-w-[40.625rem]">
     <mat-stepper linear #stepper>
       <mat-step
-        [completed]="
-          (generatedRequest$ | async) !== undefined
-        "
+        [completed]="(generatedRequest$ | async) !== undefined"
         [editable]="false"
       >
-        <ng-template matStepLabel>Generate From Reference</ng-template>
+        <ng-template matStepLabel>Descripe Your Request</ng-template>
         <ng-container *ngTemplateOutlet="promptTemplate"></ng-container>
       </mat-step>
       <mat-step>
-        <ng-template matStepLabel>Request Iteration</ng-template>
+        <ng-template matStepLabel>Review Output</ng-template>
         <ng-container *ngTemplateOutlet="editTemplate"></ng-container>
       </mat-step>
     </mat-stepper>
@@ -30,8 +28,8 @@
     </ap-button>
     <ap-button
       *ngIf="
-        (generatedRequest$ | async) === undefined || 
-        (generatedRequest$| async) === null  
+        (generatedRequest$ | async) === undefined ||
+        (generatedRequest$ | async) === null
       "
       cdkFocusInitial
       btnSize="default"
@@ -44,8 +42,8 @@
     </ap-button>
     <ap-button
       *ngIf="
-        (generatedRequest$ | async) !== undefined && 
-        (generatedRequest$| async) !== null
+        (generatedRequest$ | async) !== undefined &&
+        (generatedRequest$ | async) !== null
       "
       cdkFocusInitial
       btnSize="default"
@@ -63,19 +61,18 @@
   <div class="ap-typography-body-1 ap-text-description ap-mb-4" i18n>
     Let AI generate an HTTP request for this step.
   </div>
-  <ng-container
-    [ngTemplateOutlet]="promptFormTemplate"
-
-  ></ng-container>
+  <ng-container [ngTemplateOutlet]="promptFormTemplate"></ng-container>
 </ng-template>
 
 <ng-template #editTemplate>
   <div class="ap-typography-body-1 ap-text-description ap-mb-4" i18n>
-    Here is the code our AI wrote for you. Ask for changes or use the code in
-    your action.
+    Here is the AI generated request by your description. Click the button below
+    to use it in the HTTP step.
   </div>
-  <ng-template #codeResult>{{ generatedRequest$ | async | json }}</ng-template>
-  <div class="ap-mb-4">
+  <div class=""></div>
+  <ng-template #requestBodyResult>{{ body$ | async | json }}</ng-template>
+  <!-- <ng-template #codeResult>{{ generatedRequest$ | async | json }}</ng-template> -->
+  <!-- <div class="ap-mb-4">
     <pre
       *ngIf="prisimFix === false"
       class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card"
@@ -84,11 +81,23 @@
       *ngIf="prisimFix === true"
       class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card"
     ><code class="language-js"><ng-container *ngTemplateOutlet="codeResult"> </ng-container></code></pre>
+  </div> -->
+  <div class="ap-mb-4">
+    <div
+      class="ap-flex ap-gap-2 thin-scrollbars ap-text-sm ap-px-4 ap-pt-4 !ap-bg-gray-card"
+    >
+      <strong class="ap-text-primary">{{ method$ | async }}</strong>
+      <pre>{{ url$ | async }}</pre>
+    </div>
+    <pre
+      *ngIf="prisimFix === false"
+      class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card"
+    ><code class="language-js"><ng-container *ngTemplateOutlet="requestBodyResult"> </ng-container></code></pre>
+    <pre
+      *ngIf="prisimFix === true"
+      class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card"
+    ><code class="language-js"><ng-container *ngTemplateOutlet="requestBodyResult"> </ng-container></code></pre>
   </div>
-
-  <ng-container
-    [ngTemplateOutlet]="promptFormTemplate"
-  ></ng-container>
 </ng-template>
 
 <ng-container *ngIf="promptOperation$ | async"></ng-container>
@@ -101,15 +110,12 @@
   >
     <div class="ap-flex ap-items-center ap-gap-2">
       <div class="smaller-input ap-flex ap-flex-col ap-gap-2 ap-flex-grow">
-  
         <mat-form-field
           class="ap-w-full"
           appearance="outline"
           subscriptSizing="dynamic"
         >
-          <mat-label i18n>
-            Prompt         
-           </mat-label>
+          <mat-label i18n> Prompt </mat-label>
           <textarea
             class="!ap-resize-none"
             cdkFocusInitial
@@ -121,7 +127,6 @@
             rows="4"
           ></textarea>
 
-
           <mat-error *ngIf="promptForm.controls.prompt.invalid" i18n
             >Prompt is required
           </mat-error>
@@ -132,16 +137,15 @@
           appearance="outline"
           subscriptSizing="dynamic"
           *ngIf="
-            (generatedRequest$ | async) === undefined || 
-            (generatedRequest$| async) === null  
- 
+            (generatedRequest$ | async) === undefined ||
+            (generatedRequest$ | async) === null
           "
         >
           <mat-label i18n> Docs Reference </mat-label>
           <input
             *ngIf="
-              (generatedRequest$ | async) === undefined || 
-            (generatedRequest$| async) === null  
+              (generatedRequest$ | async) === undefined ||
+              (generatedRequest$ | async) === null
             "
             class="!ap-resize-none"
             cdkFocusInitial
@@ -154,7 +158,7 @@
           />
         </mat-form-field>
       </div>
-      <div *ngIf="generatedRequest$ | async">
+      <!-- <div *ngIf="generatedRequest$ | async">
         <ap-button
           btnColor="primary"
           btnStyle="stroked"
@@ -165,7 +169,7 @@
           i18n
           >Ask</ap-button
         >
-      </div>
+      </div> -->
     </div>
   </form>
 </ng-template>
