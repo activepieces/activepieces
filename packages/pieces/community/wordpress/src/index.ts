@@ -121,7 +121,7 @@ export const wordpress = createPiece({
       baseUrl: (auth) =>
         (auth as { website_url: string }).website_url.trim() + '/wp-json/wp/v2',
       auth: wordpressAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
           `${(auth as { username: string }).username}:${
             (auth as { password: string }).password

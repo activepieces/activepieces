@@ -3,11 +3,10 @@ import { MAT_DIALOG_DATA, MatDialogRef, MatDialogContent, MatDialogActions, MatD
 import { GitBranchType, GitRepo } from '@activepieces/ee-shared';
 import { FormBuilder, FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Observable, switchMap, tap } from 'rxjs';
-import { SyncProjectService } from '../../../services/sync-project.service';
 import { AsyncPipe } from '@angular/common';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatError, MatHint } from '@angular/material/form-field';
-import { ProjectService, UiCommonModule } from '@activepieces/ui/common';
+import { ProjectService, SyncProjectService, UiCommonModule } from '@activepieces/ui/common';
 
 type ConfigureRepoDialogData = {
   repo?: GitRepo;

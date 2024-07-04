@@ -4,10 +4,11 @@
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/strict",
-    "plugin:import/recommended"
+    "plugin:import-x/recommended"
   ],
   "ignorePatterns": [
-    "!**/*"
+    "!**/*",
+    "node_modules/**/*"
   ],
   "overrides": [
     {
@@ -21,6 +22,7 @@
         ]
       },
       "rules": {
+        "import-x/no-unresolved": "off",
         "no-console": "error",
         "object-shorthand": "error",
         "@typescript-eslint/switch-exhaustiveness-check": "error",
@@ -101,7 +103,8 @@
           "in-try-catch"
         ],
         "default-case-last": "error",
-        "import/order": [
+        "import-x/no-duplicates": "error",
+        "import-x/order": [
           "error",
           {
             "alphabetize": {
@@ -109,7 +112,6 @@
             }
           }
         ],
-        "import/no-duplicates": "error",
         "sort-imports": [
           "error",
           {
@@ -129,10 +131,12 @@
     }
   ],
   "settings": {
-    "import/resolver": {
+    "import/ignore:": [
+      "node_modules"
+    ],
+    "import-x/resolver": {
       "typescript": {
-        "alwaysTryTypes": true,
-        "project": "**/tsconfig.*?.json"
+        "alwaysTryTypes": false
       },
       "node": true
     }

@@ -1,5 +1,5 @@
 import { AuthenticationServiceHooks } from './authentication-service-hooks'
-import { communityAuthenticationServiceHooks } from './community-service-hooks'
+import { communityAuthenticationServiceHooks } from './community-authentication-hooks'
 
 let hooks = communityAuthenticationServiceHooks
 

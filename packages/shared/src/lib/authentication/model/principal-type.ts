@@ -1,7 +1,8 @@
 export enum PrincipalType {
     USER = 'USER',
-    WORKER = 'WORKER',
+    ENGINE = 'ENGINE',
     SERVICE = 'SERVICE',
+    WORKER = 'WORKER',
     UNKNOWN = 'UNKNOWN',
 
     /**

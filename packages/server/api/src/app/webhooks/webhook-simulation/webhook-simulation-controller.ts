@@ -1,9 +1,9 @@
+import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import { webhookSimulationService } from './webhook-simulation-service'
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 
 export const webhookSimulationController: FastifyPluginCallbackTypebox = (
     app,
@@ -24,7 +24,7 @@ export const webhookSimulationController: FastifyPluginCallbackTypebox = (
         const { flowId } = req.query
         const { projectId } = req.principal
 
-        return webhookSimulationService.get({
+        return webhookSimulationService.getOrThrow({
             flowId,
             projectId,
         })

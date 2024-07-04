@@ -27,7 +27,7 @@ export const googleTasks = createPiece({
     createCustomApiCallAction({
       baseUrl: () => googleTasksCommon.baseUrl,
       auth: googleTasksAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

@@ -1,3 +1,5 @@
+import { GitBranchType } from '@activepieces/ee-shared'
+import { PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -11,8 +13,6 @@ import {
     createMockUser,
     mockBasicSetup,
 } from '../../../helpers/mocks'
-import { GitBranchType } from '@activepieces/ee-shared'
-import { PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

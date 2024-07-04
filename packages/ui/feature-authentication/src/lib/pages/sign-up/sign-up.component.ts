@@ -50,7 +50,6 @@ export class SignUpComponent implements OnInit {
   emailChanged = false;
   emailValueChanged$: Observable<string>;
   signUp$: Observable<void> | undefined;
-  signedUpEnabled$: Observable<boolean>;
   privacyPolicyUrl$: Observable<string>;
   termsOfServiceUrl$: Observable<string>;
   signUpDone = false;
@@ -78,7 +77,6 @@ export class SignUpComponent implements OnInit {
     );
     this.showNewsLetterCheckbox$ = this.getShowNewsLetterCheckbox$();
     this.registrationForm = this.buildForm();
-    this.signedUpEnabled$ = this.flagService.isSignedUpEnabled();
     this.emailValueChanged$ = this.getEmailInputListener$();
   }
   ngOnInit(): void {

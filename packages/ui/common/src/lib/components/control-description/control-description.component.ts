@@ -33,6 +33,7 @@ import { CheckOverflowDirective } from '../../directives';
         <div
           class="ap-typography-caption"
           apCheckOverflow
+          #overflowTracker="apCheckOverflow"
           (isOverflowed)="isOverFlown = $event"
         >
           <markdown
@@ -52,8 +53,9 @@ import { CheckOverflowDirective } from '../../directives';
       <div class="ap-flex ap-items-start">
         <button
           class="ap-underline ap-typography-caption ap-mt-2"
+          type="button"
           *ngIf="isExpanded || isOverFlown"
-          (click)="isExpanded = !isExpanded"
+          (click)="isExpanded = !isExpanded; overflowTracker.checkOverflow()"
         >
           {{ isExpanded ? 'less' : 'more' }}
         </button>

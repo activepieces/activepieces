@@ -1,5 +1,3 @@
-import { isAxiosError } from 'axios'
-import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { PropertyType } from '@activepieces/pieces-framework'
 import {
     ActivepiecesError,
@@ -11,6 +9,8 @@ import {
     ErrorCode,
     OAuth2GrantType,
 } from '@activepieces/shared'
+import { isAxiosError } from 'axios'
+import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 
 export const oauth2Util = {
     formatOAuth2Response,

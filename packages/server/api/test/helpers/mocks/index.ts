@@ -1,13 +1,3 @@
-import { faker } from '@faker-js/faker'
-import bcrypt from 'bcrypt'
-import dayjs from 'dayjs'
-import { databaseConnection } from '../../../src/app/database/database-connection'
-import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
-import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
-import { encryptString } from '../../../src/app/helper/encryption'
-import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
-import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
-import { TagEntitySchema } from '../../../src/app/tags/tag-entity'
 import {
     ApiKey,
     ApplicationEvent,
@@ -22,11 +12,12 @@ import {
     OtpState,
     OtpType,
     ProjectMember,
-    ProjectMemberStatus,
     SigningKey,
 } from '@activepieces/ee-shared'
+import { encryptUtils } from '@activepieces/server-shared'
 import {
     apId,
+    assertNotNullOrUndefined,
     File,
     FileCompression,
     FileType,
@@ -38,6 +29,8 @@ import {
     FlowTemplate,
     FlowVersion,
     FlowVersionState,
+    InvitationStatus,
+    InvitationType,
     NotificationStatus,
     PackageType,
     PiecesFilterType,
@@ -51,8 +44,18 @@ import {
     TemplateType,
     TriggerType,
     User,
+    UserInvitation,
     UserStatus,
 } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
+import bcrypt from 'bcrypt'
+import dayjs from 'dayjs'
+import { databaseConnection } from '../../../src/app/database/database-connection'
+import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
+import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
+import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
+import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
+import { TagEntitySchema } from '../../../src/app/tags/tag-entity'
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 
@@ -87,7 +90,7 @@ export const createMockOAuthApp = (
         platformId: oAuthApp?.platformId ?? apId(),
         pieceName: oAuthApp?.pieceName ?? faker.lorem.word(),
         clientId: oAuthApp?.clientId ?? apId(),
-        clientSecret: encryptString(faker.lorem.word()),
+        clientSecret: encryptUtils.encryptString(faker.lorem.word()),
     }
 }
 
@@ -123,6 +126,21 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
         teamMembers: plan?.teamMembers ?? 0,
         tasks: plan?.tasks ?? 0,
+    }
+}
+
+export const createMockUserInvitation = (userInvitation: Partial<UserInvitation>): UserInvitation => {
+    return {
+        id: userInvitation.id ?? apId(),
+        created: userInvitation.created ?? faker.date.recent().toISOString(),
+        updated: userInvitation.updated ?? faker.date.recent().toISOString(),
+        email: userInvitation.email ?? faker.internet.email(),
+        type: userInvitation.type ?? faker.helpers.enumValue(InvitationType),
+        platformId: userInvitation.platformId ?? apId(),
+        projectId: userInvitation.projectId,
+        projectRole: userInvitation.projectRole,
+        platformRole: userInvitation.platformRole,
+        status: userInvitation.status ?? faker.helpers.enumValue(InvitationStatus),
     }
 }
 
@@ -177,13 +195,13 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         filteredPieceBehavior:
             platform?.filteredPieceBehavior ??
             faker.helpers.enumValue(FilteredPieceBehavior),
-        smtpHost: platform?.smtpHost ?? faker.internet.domainName(),
-        smtpPort: platform?.smtpPort ?? faker.internet.port(),
-        smtpUser: platform?.smtpUser ?? faker.internet.userName(),
-        smtpPassword: platform?.smtpPassword ?? faker.internet.password(),
+        smtpHost: platform?.smtpHost,
+        smtpPort: platform?.smtpPort,
+        smtpUser: platform?.smtpUser,
+        smtpPassword: platform?.smtpPassword,
         flowIssuesEnabled: platform?.flowIssuesEnabled ?? faker.datatype.boolean(),
-        smtpUseSSL: platform?.smtpUseSSL ?? faker.datatype.boolean(),
-        smtpSenderEmail: platform?.smtpSenderEmail ?? faker.internet.email(),
+        smtpUseSSL: platform?.smtpUseSSL,
+        smtpSenderEmail: platform?.smtpSenderEmail,
         privacyPolicyUrl: platform?.privacyPolicyUrl ?? faker.internet.url(),
         gitSyncEnabled: platform?.gitSyncEnabled ?? faker.datatype.boolean(),
         termsOfServiceUrl: platform?.termsOfServiceUrl ?? faker.internet.url(),
@@ -197,6 +215,8 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         apiKeysEnabled: platform?.apiKeysEnabled ?? faker.datatype.boolean(),
         customDomainsEnabled: platform?.customDomainsEnabled ?? faker.datatype.boolean(),
         projectRolesEnabled: platform?.projectRolesEnabled ?? faker.datatype.boolean(),
+        alertsEnabled: platform?.alertsEnabled ?? faker.datatype.boolean(),
+        premiumPieces: platform?.premiumPieces ?? [],
     }
 }
 
@@ -228,16 +248,15 @@ export const createMockPlatformWithOwner = (
 export const createMockProjectMember = (
     projectMember?: Partial<ProjectMember>,
 ): ProjectMember => {
+    assertNotNullOrUndefined(projectMember?.userId, 'userId')
     return {
         id: projectMember?.id ?? apId(),
         created: projectMember?.created ?? faker.date.recent().toISOString(),
         updated: projectMember?.updated ?? faker.date.recent().toISOString(),
-        platformId: projectMember?.platformId ?? null,
-        email: projectMember?.email ?? faker.internet.email(),
+        platformId: projectMember?.platformId ?? apId(),
+        userId: projectMember?.userId,
         projectId: projectMember?.projectId ?? apId(),
         role: projectMember?.role ?? faker.helpers.enumValue(ProjectMemberRole),
-        status:
-            projectMember?.status ?? faker.helpers.enumValue(ProjectMemberStatus),
     }
 }
 
@@ -305,21 +324,6 @@ export const createMockSigningKey = (
     }
 }
 
-export const createProjectMember = (
-    projectMember: Partial<ProjectMember>,
-): ProjectMember => {
-    return {
-        id: projectMember.id ?? apId(),
-        email: projectMember.email ?? faker.internet.email(),
-        platformId: projectMember.platformId ?? apId(),
-        projectId: projectMember.projectId ?? apId(),
-        role: projectMember.role ?? faker.helpers.enumValue(ProjectMember.Role),
-        status:
-            projectMember.status ?? faker.helpers.enumValue(ProjectMember.Status),
-        created: projectMember.created ?? faker.date.recent().toISOString(),
-        updated: projectMember.updated ?? faker.date.recent().toISOString(),
-    }
-}
 
 export const createMockTag = (tag?: Partial<Omit<TagEntitySchema, 'platform'>>): Omit<TagEntitySchema, 'platform'> => {
     return {
@@ -369,6 +373,7 @@ export const createMockPieceMetadata = (
         packageType:
             pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
         archiveId: pieceMetadata?.archiveId,
+        categories: pieceMetadata?.categories ?? [],
     }
 }
 

@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '../helper/execution-errors'
 
-export const createConnectionService = ({ projectId, workerToken }: CreateConnectionServiceParams): ConnectionService => {
+export const createConnectionService = ({ projectId, engineToken }: CreateConnectionServiceParams): ConnectionService => {
     return {
         async obtain(connectionName: string): Promise<ConnectionValue> {
             const url = `${EngineConstants.API_URL}v1/worker/app-connections/${encodeURIComponent(connectionName)}?projectId=${projectId}`
@@ -12,7 +12,7 @@ export const createConnectionService = ({ projectId, workerToken }: CreateConnec
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
-                        Authorization: `Bearer ${workerToken}`,
+                        Authorization: `Bearer ${engineToken}`,
                     },
                 })
 
@@ -80,7 +80,7 @@ type ConnectionService = {
 
 type CreateConnectionServiceParams = {
     projectId: string
-    workerToken: string
+    engineToken: string
 }
 
 type HandleResponseErrorParams = {

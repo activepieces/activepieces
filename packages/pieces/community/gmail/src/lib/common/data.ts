@@ -16,7 +16,7 @@ interface SearchMailProps {
   access_token: string;
   from: string;
   to: string;
-  subject: string;
+  subject?: string;
   label: GmailLabel;
   category: string;
   after?: number;

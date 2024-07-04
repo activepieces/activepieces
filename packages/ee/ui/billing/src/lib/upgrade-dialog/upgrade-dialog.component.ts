@@ -11,8 +11,7 @@ import { TelemetryEventName } from '@activepieces/shared';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 export type UpgradeDialogData = {
-  limitType: 'connections' | 'team';
-  limit: number;
+  limitType: 'team';
 };
 
 @Component({
@@ -35,7 +34,6 @@ export class UpgradeDialogComponent implements OnInit {
     this.telemetryService.capture({
       name: TelemetryEventName.UPGRADE_POPUP,
       payload: {
-        limit: this.data.limit,
         limitType: this.data.limitType,
       },
     });
@@ -45,7 +43,6 @@ export class UpgradeDialogComponent implements OnInit {
     this.telemetryService.capture({
       name: TelemetryEventName.UPGRADE_CLICKED,
       payload: {
-        limit: this.data.limit,
         limitType: this.data.limitType,
       },
     });

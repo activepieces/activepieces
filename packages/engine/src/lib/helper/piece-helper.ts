@@ -32,7 +32,7 @@ export const pieceHelper = {
         try {
             const { resolvedInput } = await variableService({
                 projectId: params.projectId,
-                workerToken: params.workerToken,
+                engineToken: params.engineToken,
             }).resolve<
             StaticPropsValue<PiecePropertyMap>
             >({
@@ -42,7 +42,7 @@ export const pieceHelper = {
             const ctx = {
                 searchValue,
                 server: {
-                    token: params.workerToken,
+                    token: params.engineToken,
                     apiUrl: EngineConstants.API_URL,
                     publicUrl: params.serverUrl,
                 },

@@ -1,18 +1,17 @@
 import { randomBytes } from 'crypto'
 import { promisify } from 'util'
-import jwtLibrary, {
-    DecodeOptions,
-    SignOptions,
-    VerifyOptions,
-} from 'jsonwebtoken'
-import { localFileStore } from './store'
-import { QueueMode, system, SystemProp } from '@activepieces/server-shared'
+import { localFileStore, QueueMode, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
     isNil,
     spreadIfDefined,
 } from '@activepieces/shared'
+import jwtLibrary, {
+    DecodeOptions,
+    SignOptions,
+    VerifyOptions,
+} from 'jsonwebtoken'
 
 export enum JwtSignAlgorithm {
     HS256 = 'HS256',
@@ -81,7 +80,6 @@ export const jwtUtils = {
             expiresIn: expiresInSeconds,
             issuer: ISSUER,
         }
-
         return new Promise((resolve, reject) => {
             jwtLibrary.sign(payload, key, signOptions, (err, token) => {
                 if (err) {

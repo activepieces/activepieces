@@ -57,7 +57,7 @@ export const straico = createPiece({
     createCustomApiCallAction({
       auth: straicoAuth,
       baseUrl: () => baseUrl,
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth}`,
         };

@@ -36,8 +36,8 @@ export class ProjectsTableComponent implements AfterViewInit {
   displayedColumns = [
     'displayName',
     'created',
-    'tasks',
     'users',
+    'tasks',
     'externalId',
     'action',
   ];

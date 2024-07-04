@@ -1,9 +1,3 @@
-import { EntitySchema } from 'typeorm'
-import {
-    ApIdSchema,
-    BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
-} from '../../database/database-common'
 import {
     Flow,
     FlowRun,
@@ -13,6 +7,12 @@ import {
     Project,
     TriggerEvent,
 } from '@activepieces/shared'
+import { EntitySchema } from 'typeorm'
+import {
+    ApIdSchema,
+    BaseColumnSchemaPart,
+    JSONB_COLUMN_TYPE,
+} from '../../database/database-common'
 
 export type FlowSchema = Flow & {
     versions: FlowVersion[]

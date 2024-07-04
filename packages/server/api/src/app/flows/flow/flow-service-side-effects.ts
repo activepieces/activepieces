@@ -1,6 +1,3 @@
-import { EntityManager } from 'typeorm'
-import { flowVersionService } from '../flow-version/flow-version.service'
-import { triggerHooks } from '../trigger'
 import {
     assertNotNullOrUndefined,
     Flow,
@@ -11,6 +8,9 @@ import {
     ScheduleOptions,
     ScheduleType,
 } from '@activepieces/shared'
+import { EntityManager } from 'typeorm'
+import { flowVersionService } from '../flow-version/flow-version.service'
+import { triggerHooks } from '../trigger'
 
 export const flowSideEffects = {
     async preUpdateStatus({

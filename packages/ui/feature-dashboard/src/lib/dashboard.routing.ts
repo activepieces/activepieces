@@ -42,6 +42,7 @@ export const DashboardLayoutRouting: Routes = [
           showBasedOnRoles([
             ProjectMemberRole.ADMIN,
             ProjectMemberRole.EDITOR,
+            ProjectMemberRole.OPERATOR,
             ProjectMemberRole.VIEWER,
           ]),
         ],
@@ -57,6 +58,7 @@ export const DashboardLayoutRouting: Routes = [
           showBasedOnRoles([
             ProjectMemberRole.ADMIN,
             ProjectMemberRole.EDITOR,
+            ProjectMemberRole.OPERATOR,
             ProjectMemberRole.VIEWER,
           ]),
         ],
@@ -89,6 +91,7 @@ export const DashboardLayoutRouting: Routes = [
           showBasedOnRoles([
             ProjectMemberRole.ADMIN,
             ProjectMemberRole.EDITOR,
+            ProjectMemberRole.OPERATOR,
             ProjectMemberRole.VIEWER,
           ]),
         ],
@@ -100,6 +103,14 @@ export const DashboardLayoutRouting: Routes = [
         path: 'connections',
         pathMatch: 'full',
         component: ConnectionsTableComponent,
+        canActivate: [
+          showBasedOnRoles([
+            ProjectMemberRole.ADMIN,
+            ProjectMemberRole.EDITOR,
+            ProjectMemberRole.OPERATOR,
+            ProjectMemberRole.VIEWER,
+          ]),
+        ],
       },
       {
         data: {
@@ -116,6 +127,7 @@ export const DashboardLayoutRouting: Routes = [
           showBasedOnRoles([
             ProjectMemberRole.ADMIN,
             ProjectMemberRole.EDITOR,
+            ProjectMemberRole.OPERATOR,
             ProjectMemberRole.VIEWER,
           ]),
         ],
@@ -135,6 +147,7 @@ export const DashboardLayoutRouting: Routes = [
           showBasedOnRoles([
             ProjectMemberRole.ADMIN,
             ProjectMemberRole.EDITOR,
+            ProjectMemberRole.OPERATOR,
             ProjectMemberRole.VIEWER,
           ]),
         ],

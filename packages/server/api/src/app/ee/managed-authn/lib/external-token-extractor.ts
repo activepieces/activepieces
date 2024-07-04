@@ -1,9 +1,9 @@
-import { Static, Type } from '@sinclair/typebox'
-import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
-import { signingKeyService } from '../../signing-key/signing-key-service'
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
+import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
+import { signingKeyService } from '../../signing-key/signing-key-service'
 
 const ALGORITHM = JwtSignAlgorithm.RS256
 

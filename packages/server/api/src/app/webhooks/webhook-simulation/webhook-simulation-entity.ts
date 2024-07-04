@@ -1,9 +1,9 @@
+import { WebhookSimulation } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
 } from '../../database/database-common'
-import { WebhookSimulation } from '@activepieces/shared'
 
 export type WebhookSimulationSchema = WebhookSimulation
 

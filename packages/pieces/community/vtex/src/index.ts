@@ -80,7 +80,7 @@ export const vtex = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => `https://${(auth as { hostUrl: string }).hostUrl}`,
       auth: vtexAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'X-VTEX-API-AppKey': (auth as { appKey: string }).appKey,
         'X-VTEX-API-AppToken': (auth as { appToken: string }).appToken,
       }),

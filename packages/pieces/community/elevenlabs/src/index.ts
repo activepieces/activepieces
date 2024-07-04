@@ -47,7 +47,7 @@ export const elevenlabs = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.elevenlabs.io',
       auth: elevenlabsAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'xi-api-key': `${auth}`,
       }),
     }),

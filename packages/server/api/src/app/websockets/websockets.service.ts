@@ -1,6 +1,6 @@
+import { WebsocketServerEvent } from '@activepieces/shared'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
-import { WebsocketServerEvent } from '@activepieces/shared'
 
 export type WebsocketListener<T> = (socket: Socket) => (data: T) => Promise<void>
 

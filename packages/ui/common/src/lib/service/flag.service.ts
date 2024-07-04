@@ -68,18 +68,6 @@ export class FlagService {
     );
   }
 
-  isSignedUpEnabled(): Observable<boolean> {
-    return this.getAllFlags().pipe(
-      map((flags) => {
-        const firstUser = flags['USER_CREATED'] as boolean;
-        if (!firstUser && flags['EDITION'] !== ApEdition.CLOUD) {
-          return true;
-        }
-        return flags['SIGN_UP_ENABLED'] as boolean;
-      })
-    );
-  }
-
   isTelemetryEnabled(): Observable<boolean> {
     return this.getAllFlags().pipe(
       map((flags) => {
@@ -139,10 +127,10 @@ export class FlagService {
     );
   }
 
-  getSandboxTimeout(): Observable<number> {
+  getFlowRunTimeout(): Observable<number> {
     return this.getAllFlags().pipe(
       map((flags) => {
-        return Number(flags[ApFlagId.SANDBOX_RUN_TIME_SECONDS]);
+        return Number(flags[ApFlagId.FLOW_RUN_TIME_SECONDS]);
       })
     );
   }
@@ -199,6 +187,7 @@ export class FlagService {
   > {
     return this.getTheme().pipe(map((theme) => theme['materialWarnPalette']));
   }
+
   getPrimaryPalette(): Observable<
     Record<string, string | Record<string, string>>
   > {

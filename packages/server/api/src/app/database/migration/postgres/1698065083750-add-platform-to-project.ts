@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddPlatformToProject1698065083750 implements MigrationInterface {
     name = 'AddPlatformToProject1698065083750'

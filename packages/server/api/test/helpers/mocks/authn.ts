@@ -1,5 +1,5 @@
-import { faker } from '@faker-js/faker'
 import { SignInRequest, SignUpRequest } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
 
 export const createMockSignUpRequest = (
     signUpRequest?: Partial<SignUpRequest>,

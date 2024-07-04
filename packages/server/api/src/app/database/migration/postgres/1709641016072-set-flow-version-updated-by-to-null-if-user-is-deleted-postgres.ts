@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072 implements MigrationInterface {
     name = 'SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072'

@@ -16,7 +16,7 @@ export const showPlatformSettingsGuard: () => Observable<boolean> = () => {
   return shouldShouldPlatformDashboard$.pipe(
     tap((showPlatformSettings) => {
       if (!showPlatformSettings) {
-        router.navigate(['/404']);
+        router.navigate(['/not-found']);
       }
     })
   );

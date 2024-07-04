@@ -91,10 +91,10 @@ export class TestFlowWidgetComponent implements OnInit {
       .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_STARTED)
       .pipe(
         take(1),
-        switchMap((flowRun) => {
+        switchMap((initialRunFromServer) => {
           this.store.dispatch(
             canvasActions.setRun({
-              run: flowRun ?? initializedRun,
+              run: initialRunFromServer ?? initializedRun,
             })
           );
           this.testRunSnackbar = this.snackbar.openFromComponent(
@@ -109,15 +109,34 @@ export class TestFlowWidgetComponent implements OnInit {
           return this.websockService.socket
             .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS)
             .pipe(
-              filter((run) => run.id === flowRun.id),
-              tap((run) => {
-                this.store.dispatch(
-                  canvasActions.setRun({
-                    run,
+              switchMap((serverRun) => {
+                const runInStore$ = this.store.select(
+                  BuilderSelectors.selectCurrentFlowRun
+                );
+                return runInStore$.pipe(
+                  take(1),
+                  map((storeRun) => {
+                    return {
+                      storeRun,
+                      serverRun,
+                    };
                   })
                 );
               }),
-              takeWhile((run) => !isFlowStateTerminal(run.status))
+              filter(
+                (res) =>
+                  res.serverRun.id === initialRunFromServer.id &&
+                  res.storeRun !== undefined
+              ),
+              map((res) => res.serverRun),
+              tap((serverRun) => {
+                this.store.dispatch(
+                  canvasActions.setRun({
+                    run: serverRun,
+                  })
+                );
+              }),
+              takeWhile((serverRun) => !isFlowStateTerminal(serverRun.status))
             );
         })
       );

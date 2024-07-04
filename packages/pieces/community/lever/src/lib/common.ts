@@ -55,12 +55,53 @@ export const LeverFieldMapping: Record<
       value: propsValues[0] as unknown as string,
     }),
   },
-  'text-no': {
+  'yes-no': {
     buildActivepieceType: (fields, field) =>
       (fields[field.id] = Property.Checkbox({
         displayName: field.text,
         description: field.description,
         required: field.required,
+      })),
+    buildLeverType: (id, propsValues) => {
+      const value = propsValues[0] as unknown as boolean;
+      return {
+        id,
+        value: value === true ? 'yes' : value === false ? 'no' : 'null',
+      };
+    },
+  },
+  dropdown: {
+    buildActivepieceType: (fields, field) =>
+      (fields[field.id] = Property.StaticDropdown({
+        displayName: field.text,
+        description: field.description,
+        required: field.required,
+        options: {
+          disabled: false,
+          options:
+            field.options?.map((option: { text: string; optionId: string }) => {
+              return { value: option.text, label: option.text };
+            }) || [],
+        },
+      })),
+    buildLeverType: (id, propsValues) => ({
+      id,
+      value: propsValues[0] as unknown as string,
+    }),
+  },
+  'multiple-choice': {
+    buildActivepieceType: (fields, field) =>
+      (fields[field.id] = Property.StaticDropdown({
+        displayName: field.text,
+        description: field.description,
+        required: field.required,
+        options: {
+          disabled: false,
+          options:
+            field.options?.map((option: { text: string; optionId: string }) => {
+              return { value: option.text, label: option.text };
+            }) || [],
+        },
       })),
     buildLeverType: (id, propsValues) => ({
       id,
@@ -83,7 +124,7 @@ export const LeverFieldMapping: Record<
       })),
     buildLeverType: (id, propsValues) => ({
       id,
-      value: propsValues[0] as unknown as string,
+      value: propsValues[0] as unknown as string[],
     }),
   },
   'score-system': {

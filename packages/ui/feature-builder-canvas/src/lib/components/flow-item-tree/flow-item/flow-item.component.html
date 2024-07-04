@@ -1,7 +1,7 @@
 <div [ngStyle]="flowGraphContainer">
   <ng-container *ngIf="!isTrigger && (readOnly$ | async)===false">
     <div class="ap-relative" apTrackHover #itemContentHoverTracker="hoverTrackerDirective" >
-      <div #flowItem class="ap-z-50 ap-cursor-pointer ap-relative" mwlDraggable (mouseup)="mouseUp()"
+      <div #flowItem class="ap-z-50 ap-relative" mwlDraggable (mouseup)="mouseUp()"
         (mouseleave)="mouseUp()" (mousedown)="mouseDown($event,draggableContainer)"
          #draggableContainer
         [ghostElementTemplate]="ItemContent.stepDragTemplate" [touchStartLongPress]="touchStartLongPress"
@@ -31,7 +31,7 @@
   <ng-container *ngIf="isTrigger || (readOnly$ | async)===true">
     <div #flowItem class=" ap-relative ap-z-50" apTrackHover
     #itemContentHoverTracker="hoverTrackerDirective" >
-      <div class="ap-cursor-pointer">
+      <div>
         <app-flow-item-content #ItemContent [flowItem]="_flowItemData.content!" 
         [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
       </div>

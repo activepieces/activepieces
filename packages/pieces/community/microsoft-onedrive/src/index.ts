@@ -37,7 +37,7 @@ export const microsoftOneDrive = createPiece({
     createCustomApiCallAction({
       baseUrl: () => oneDriveCommon.baseUrl,
       auth: oneDriveAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

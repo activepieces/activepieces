@@ -1,13 +1,9 @@
-import { databaseConnection } from '../../database/database-connection'
-import { decryptString, encryptString } from '../../helper/encryption'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { OAuthAppEntity, OAuthAppWithSecret } from './oauth-app.entity'
 import {
     ListOAuth2AppRequest,
     OAuthApp,
     UpsertOAuth2AppRequest,
 } from '@activepieces/ee-shared'
+import { encryptUtils } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -16,6 +12,10 @@ import {
     isNil,
     SeekPage,
 } from '@activepieces/shared'
+import { databaseConnection } from '../../database/database-connection'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { OAuthAppEntity, OAuthAppWithSecret } from './oauth-app.entity'
 
 const oauthRepo = databaseConnection.getRepository(OAuthAppEntity)
 
@@ -31,7 +31,7 @@ export const oauthAppService = {
             {
                 platformId,
                 ...request,
-                clientSecret: encryptString(request.clientSecret),
+                clientSecret: encryptUtils.encryptString(request.clientSecret),
                 id: apId(),
             },
             ['platformId', 'pieceName'],
@@ -58,7 +58,7 @@ export const oauthAppService = {
         })
         return {
             ...oauthApp,
-            clientSecret: decryptString(oauthApp.clientSecret),
+            clientSecret: encryptUtils.decryptString(oauthApp.clientSecret),
         }
     },
     async list({

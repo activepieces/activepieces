@@ -1,5 +1,23 @@
 import { EntityAttributeType } from './constants';
 
+export type EntityTypeResponse = {
+  '@odata.context': string;
+  value: {
+    '@odata.type': string;
+    LogicalName: string;
+    EntitySetName: string;
+  }[];
+};
+
+export type EntityTypeAttributesResponse = {
+  '@odata.context': string;
+  value: {
+    '@odata.type': string;
+    PrimaryIdAttribute: string;
+    PrimaryNameAttribute: string;
+    LogicalName: string;
+  }[];
+};
 export type EntityAttributeResponse = {
   '@odata.context': string;
   value: {

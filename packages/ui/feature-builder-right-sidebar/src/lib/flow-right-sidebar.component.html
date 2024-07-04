@@ -1,18 +1,16 @@
-<ng-container *ngIf="rightSidebarType$ | async as rightSidebarType">
-  <app-step-type-sidebar
-    [showTriggers]="rightSidebarType === sidebarType.TRIGGER_TYPE"
-    *ngIf="
-      rightSidebarType === sidebarType.STEP_TYPE ||
-      rightSidebarType === sidebarType.TRIGGER_TYPE
-    "
-  ></app-step-type-sidebar>
-
-  <ng-container *ngIf="rightSidebarType === sidebarType.EDIT_STEP">
+@if(rightSidebarType$ | async;as rightSidebarType) {
+  @if( rightSidebarType === sidebarType.STEP_TYPE ||
+  rightSidebarType === sidebarType.TRIGGER_TYPE)  {
+    <app-step-type-sidebar
+      [showTriggers]="rightSidebarType === sidebarType.TRIGGER_TYPE"
+    ></app-step-type-sidebar>
+  }
+@if(rightSidebarType === sidebarType.EDIT_STEP) {
     <div
       class="ap-h-full"
       #editStepSection
       [class.top-resizer-section]="
-        (viewMode$ | async) === ViewModeEnum.BUILDING
+        (shouldShowTestStepArea$ | async)
       "
       [class.ap-transition-all]="animateSectionsHeightChange"
     >
@@ -23,11 +21,13 @@
         <app-edit-step-sidebar> </app-edit-step-sidebar>
       </div>
 
-      <div
-        *ngIf="currentStepPieceVersion$ | async as result"
+      @if(currentStepPieceVersion$ | async; as result)
+      {
+        <div
         class="ap-bg-white ap-body-2 !ap-text-description ap-w-full ap-px-4 ap-py-1 ap-z-40 ap-flex ap-items-center ap-gap-1"
       >
-        <ng-container *ngIf="showDocs$ | async; else showLink">
+      @if(showDocs$ | async)
+      {
           <a
             href="https://activepieces.com/docs/developers/piece-reference/piece-versioning"
             target="_blank"
@@ -35,64 +35,81 @@
             class="no-link-styling !ap-flex !ap-items-center !ap-gap-2 !ap-cursor-pointer"
             [matTooltip]="result.tooltipText"
           >
+          @if(!result.latest)
+          {
             <div
-              *ngIf="!result.latest"
-              class="ap-rounded-full ap-border ap-border-warn ap-bg-warn ap-h-[8px] ap-w-[8px]"
-            ></div>
-            v{{ result.version }}
-          </a>
-        </ng-container>
-        <ng-template #showLink>
-          <div
-            *ngIf="!result.latest"
             class="ap-rounded-full ap-border ap-border-warn ap-bg-warn ap-h-[8px] ap-w-[8px]"
           ></div>
-          v{{ result.version }}
-        </ng-template>
-      </div>
-    </div>
+          }
+          
+            v{{ result.version }}
+          </a>
+      }
+     
+      @else {
 
-    <ng-container *ngIf="(viewMode$ | async) === ViewModeEnum.BUILDING">
-      <ng-container *ngIf="currentStep$ | async as currentStep">
-        <div class="resizer-area" #resizerArea>
-          <ap-horizontal-sidebar-separator
-            [elevateResizerOnTestingStep]="true"
-            [resizerArea]="resizerArea"
-            topStyle="calc( 100% - 10px )"
-            (resetTopResizerSectionHeight)="resetTopResizerSectionHeight()"
-            (resizerDragged)="resizerDragged($event)"
-            (resizerDragStarted)="resizerDragStarted()"
-            (resizerDragStopped)="isResizerGrabbed = false"
+        @if(!result.latest)
+        {
+          <div
+          class="ap-rounded-full ap-border ap-border-warn ap-bg-warn ap-h-[8px] ap-w-[8px]"
+        ></div>
+        }
+        
+          v{{ result.version }}
+      }
+   
+      </div>
+      }
+      
+    </div>
+    @if((shouldShowTestStepArea$ | async)){
+      @if(currentStep$ | async; as currentStep) {
+          <div class="resizer-area" #resizerArea>
+            <ap-horizontal-sidebar-separator
+              [elevateResizerOnTestingStep]="true"
+              [resizerArea]="resizerArea"
+              topStyle="calc( 100% - 10px )"
+              (resetTopResizerSectionHeight)="resetTopResizerSectionHeight()"
+              (resizerDragged)="resizerDragged($event)"
+              (resizerDragStarted)="resizerDragStarted()"
+              (resizerDragStopped)="isResizerGrabbed = false"
+            >
+            </ap-horizontal-sidebar-separator>
+          </div>
+          <div
+            class="bottom-resizer-section ap-overflow-y-auto thin-scrollbars"
+            #selectedStepResultContainer
           >
-          </ap-horizontal-sidebar-separator>
-        </div>
-        <div
-          class="bottom-resizer-section ap-overflow-y-auto thin-scrollbars"
-          #selectedStepResultContainer
-        >
-          <app-test-action
-            *ngIf="
-              currentStep.type === ActionType.PIECE ||
-              currentStep.type === ActionType.BRANCH ||
-              currentStep.type === ActionType.LOOP_ON_ITEMS ||
-              currentStep.type === ActionType.CODE
-            "
+          @if( currentStep.type === ActionType.PIECE ||
+          currentStep.type === ActionType.BRANCH ||
+          currentStep.type === ActionType.LOOP_ON_ITEMS ||
+          currentStep.type === ActionType.CODE){
+            <app-test-action
             [step]="currentStep"
           ></app-test-action>
-
-          <app-test-polling-trigger
-            *ngIf="triggerSupportsLoadingTestData$ | async"
+          }
+         
+          @if(triggerSupportsLoadingTestData$ | async)
+          {
+            <app-test-polling-trigger
           ></app-test-polling-trigger>
-
-          <app-test-piece-webhook-trigger
-            *ngIf="triggerSupportsSimulation$ | async"
+          }
+       
+          @if(triggerSupportsSimulation$ | async)
+          {
+            <app-test-piece-webhook-trigger
           ></app-test-piece-webhook-trigger>
-        </div>
-      </ng-container>
-    </ng-container>
-  </ng-container>
-  <ng-container *ngIf="elevateResizer$ | async"></ng-container>
-  <ng-container
-    *ngIf="builderService.savingStepOrTriggerData$ | async"
-  ></ng-container
-></ng-container>
+          }
+           
+          </div>
+      }
+       
+    }
+    
+}
+  
+
+@if(elevateResizer$ | async) {}
+@if(builderService.savingStepOrTriggerData$ | async) {}
+}
+

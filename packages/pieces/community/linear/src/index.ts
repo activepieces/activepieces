@@ -6,6 +6,7 @@ import { linearUpdateIssue } from './lib/actions/issues/update-issue';
 import { linearCreateProject } from './lib/actions/projects/create-project';
 import { linearUpdateProject } from './lib/actions/projects/update-project';
 import { linearNewIssue } from './lib/triggers/new-issue';
+import { linearRawGraphqlQuery } from './lib/actions/raw-graphql-query';
 
 const markdown = `
 To obtain your API key, follow these steps:
@@ -37,7 +38,7 @@ export const linear = createPiece({
   auth: linearAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/linear.png',
-  authors: ["lldiegon","kishanprmr","abuaboud"],
+  authors: ['lldiegon', 'kishanprmr', 'abuaboud'],
   categories: [PieceCategory.PRODUCTIVITY],
   actions: [
     linearCreateIssue,
@@ -45,6 +46,7 @@ export const linear = createPiece({
     linearCreateProject,
     linearUpdateProject,
     linearCreateComment,
+    linearRawGraphqlQuery,
   ],
   triggers: [linearNewIssue],
 });

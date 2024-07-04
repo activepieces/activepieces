@@ -1,6 +1,6 @@
+import { AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FlowUpdatedEvent, FolderEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyRequest } from 'fastify'
-import { AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FlowUpdatedEvent, FolderEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 
 export const AuditEventParam = Type.Pick(Type.Union([
     ConnectionEvent,

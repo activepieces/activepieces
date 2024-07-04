@@ -28,7 +28,7 @@ export const taskade = createPiece({
 		createCustomApiCallAction({
 			baseUrl: () => 'https://www.taskade.com/api/v1',
 			auth: taskadeAuth,
-			authMapping: (auth) => ({ Authorization: `Bearer ${auth as string}` }),
+			authMapping: async (auth) => ({ Authorization: `Bearer ${auth as string}` }),
 		}),
 	],
 	triggers: [],

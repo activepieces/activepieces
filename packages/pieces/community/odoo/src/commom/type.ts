@@ -47,6 +47,14 @@ export type GetCompanyParams = {
     fields?: any[];
 };
 
+export type GetRecordsParams = {
+    model: string;
+    domain?: any[];
+    fields?: any[];
+    offset?: number;
+    limit?: number;
+};
+
 export type SaveContactParams = {
     name: string;
     phone: string;

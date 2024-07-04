@@ -1,8 +1,14 @@
+import {
+    apId,
+    PackageType,
+    PlatformRole,
+    PrincipalType,
+    ProjectMemberRole,
+} from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { engineHelper } from '../../../../src/app/helper/engine-helper'
 import { pieceMetadataService } from '../../../../src/app/pieces/piece-metadata-service'
 import { generateMockToken } from '../../../helpers/auth'
 import {
@@ -12,18 +18,11 @@ import {
     createMockProjectMember,
     createMockUser,
 } from '../../../helpers/mocks'
-import {
-    apId,
-    EngineResponseStatus,
-    PackageType,
-    PlatformRole,
-    PrincipalType,
-    ProjectMemberRole,
-} from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
+    
     await databaseConnection.initialize()
     app = await setupApp()
 })
@@ -38,7 +37,6 @@ describe('AppConnection API', () => {
         it.each([
             ProjectMemberRole.ADMIN,
             ProjectMemberRole.EDITOR,
-            ProjectMemberRole.EXTERNAL_CUSTOMER,
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
             const mockPlatformId = apId()
@@ -56,7 +54,7 @@ describe('AppConnection API', () => {
             await databaseConnection.getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
-                email: mockUser.email,
+                userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
                 role: testRole,
@@ -71,16 +69,7 @@ describe('AppConnection API', () => {
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadata])
 
             pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
-
-            engineHelper.executeValidateAuth = jest.fn().mockResolvedValue({
-                status: EngineResponseStatus.OK,
-                result: {
-                    valid: true,
-                },
-                standardError: '',
-                standardOutput: '',
-            })
-
+            
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
@@ -132,7 +121,7 @@ describe('AppConnection API', () => {
             await databaseConnection.getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
-                email: mockUser.email,
+                userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
                 role: ProjectMemberRole.VIEWER,
@@ -147,14 +136,6 @@ describe('AppConnection API', () => {
 
             pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
-            engineHelper.executeValidateAuth = jest.fn().mockResolvedValue({
-                status: EngineResponseStatus.OK,
-                result: {
-                    valid: true,
-                },
-                standardError: '',
-                standardOutput: '',
-            })
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
@@ -201,7 +182,6 @@ describe('AppConnection API', () => {
             ProjectMemberRole.ADMIN,
             ProjectMemberRole.EDITOR,
             ProjectMemberRole.VIEWER,
-            ProjectMemberRole.EXTERNAL_CUSTOMER,
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
             const mockPlatformId = apId()
@@ -219,7 +199,7 @@ describe('AppConnection API', () => {
             await databaseConnection.getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
-                email: mockUser.email,
+                userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
                 role: testRole,

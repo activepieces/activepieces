@@ -7,6 +7,7 @@ import {
     GetAllContactsParams,
     GetCompanyParams,
     GetContactParams,
+    GetRecordsParams,
     OdooConfig,
     RenderReportParams,
     SaveCompanyParams,
@@ -197,6 +198,16 @@ class Odoo {
             name: name,
             fields: fields,
             isCompany: true
+        })
+    }
+
+    async getRecords<T = any>({model, domain, fields, offset, limit}: GetRecordsParams): Promise<T> {
+        return this.execute_kw<T>({
+            model: model,
+            method: "search_read",
+            params: [
+                [domain, fields, offset, limit]
+            ]
         })
     }
 

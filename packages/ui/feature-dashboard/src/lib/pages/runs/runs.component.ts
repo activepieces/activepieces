@@ -17,9 +17,9 @@ import { TabsPageCoreComponent } from '../../components/tabs-page-core/tabs-page
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 import { PopulatedIssue } from '@activepieces/ee-shared';
-import { FlowRunStatus } from '@activepieces/shared';
 import { IssuesService } from '../../services/issues.service';
 import { Observable, take } from 'rxjs';
+import { FlowRunStatus } from '@activepieces/shared';
 
 @Component({
   selector: 'app-executions',
@@ -33,7 +33,19 @@ import { Observable, take } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class=" ap-px-[30px] ap-pt-[50px]">
-      <ap-page-title title="Runs" i18n-title></ap-page-title>
+      <ap-page-title title="Runs" i18n-title>
+        @if((isInEmbedding$ | async) === false) {
+        <ap-button
+          actionButton
+          i18n-tooltipText
+          (buttonClicked)="goToAlerts()"
+          btnSize="medium"
+          btnColor="primary"
+          i18n
+          >Set Alerts</ap-button
+        >
+        }
+      </ap-page-title>
       @if(isInEmbedding$ | async) {
       <app-runs-table #runsTable></app-runs-table>
       } @else() {
@@ -154,6 +166,19 @@ export class RunsComponent
     if (this.tabGroup) {
       this.tabGroup.selectedIndex = runsTabIndex;
     }
-    this.runsTable?.setParams(FlowRunStatus.FAILED, issue.flowId);
+    this.runsTable?.setParams(
+      [
+        FlowRunStatus.FAILED,
+        FlowRunStatus.TIMEOUT,
+        FlowRunStatus.INTERNAL_ERROR,
+        FlowRunStatus.QUOTA_EXCEEDED,
+      ],
+      issue.flowId,
+      issue.created
+    );
+  }
+
+  goToAlerts() {
+    this.router.navigate(['/settings'], { fragment: 'Alerts' });
   }
 }

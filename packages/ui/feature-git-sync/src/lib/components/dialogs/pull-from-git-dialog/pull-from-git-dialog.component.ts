@@ -2,12 +2,11 @@ import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, map, of, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { SyncProjectService } from '../../../services/sync-project.service';
 import { ProjectOperationType, ProjectSyncPlanOperation } from '@activepieces/ee-shared';
 import { AsyncPipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { MatList, MatListItem, MatListItemIcon, MatListItemTitle } from '@angular/material/list';
-import { UiCommonModule } from '@activepieces/ui/common';
+import { SyncProjectService, UiCommonModule } from '@activepieces/ui/common';
 
 export type PullFromGitDialogData = {
   operations: ProjectSyncPlanOperation[]

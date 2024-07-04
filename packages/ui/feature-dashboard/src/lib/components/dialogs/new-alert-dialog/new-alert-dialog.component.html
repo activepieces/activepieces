@@ -1,0 +1,34 @@
+<ap-dialog-title-template i18n>New Alert Receiver
+</ap-dialog-title-template>
+<mat-dialog-content>
+    <form class="ap-flex ap-flex-col ap-gap-1 md:ap-w-[500px]" [formGroup]="newAlertForm" (submit)="addAlert()">
+        <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label i18n>Email</mat-label>
+            <input formControlName="receiver" matInput type="email" placeholder="john.doe@activepieces.com" />
+            <mat-error *ngIf="newAlertForm.controls.receiver.invalid">
+                <ng-container *ngIf="
+                    newAlertForm.controls.receiver.getError('exists');
+                    else emailRequired
+                  ">
+                    <span i18n>This email already exists in the alerts list.</span>
+                </ng-container>
+                <ng-template #emailRequired>
+                    <span i18n>Email is Required</span>
+                </ng-template>
+            </mat-error>
+        </mat-form-field>
+    </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
+            Cancel
+        </ap-button>
+        <ap-button btnSize="default" type="submit" (click)="addAlert();" btnColor="primary" i18n>
+            Add
+        </ap-button>
+    </div>
+</mat-dialog-actions>
+
+<ng-container *ngIf="creatingAlert$ | async"></ng-container>

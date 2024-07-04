@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FetchError, StorageError } from '../helper/execution-errors'
 
-export const createStorageService = ({ workerToken }: CreateStorageServiceParams): StorageService => {
+export const createStorageService = ({ engineToken }: CreateStorageServiceParams): StorageService => {
     return {
         async get(key: string): Promise<StoreEntry | null> {
             const url = buildUrl(key)
@@ -13,7 +13,7 @@ export const createStorageService = ({ workerToken }: CreateStorageServiceParams
             try {
                 const response = await fetch(url, {
                     headers: {
-                        Authorization: `Bearer ${workerToken}`,
+                        Authorization: `Bearer ${engineToken}`,
                     },
                 })
 
@@ -42,7 +42,7 @@ export const createStorageService = ({ workerToken }: CreateStorageServiceParams
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${workerToken}`,
+                        Authorization: `Bearer ${engineToken}`,
                     },
                     body: JSON.stringify(request),
                 })
@@ -71,7 +71,7 @@ export const createStorageService = ({ workerToken }: CreateStorageServiceParams
                 const response = await fetch(url, {
                     method: 'DELETE',
                     headers: {
-                        Authorization: `Bearer ${workerToken}`,
+                        Authorization: `Bearer ${engineToken}`,
                     },
                 })
 
@@ -94,11 +94,11 @@ export const createStorageService = ({ workerToken }: CreateStorageServiceParams
     }
 }
 
-export function createContextStore({ prefix, flowId, workerToken }: { prefix: string, flowId: FlowId, workerToken: string }): Store {
+export function createContextStore({ prefix, flowId, engineToken }: { prefix: string, flowId: FlowId, engineToken: string }): Store {
     return {
         async put<T>(key: string, value: T, scope = StoreScope.FLOW): Promise<T> {
             const modifiedKey = createKey(prefix, scope, flowId, key)
-            await createStorageService({ workerToken }).put({
+            await createStorageService({ engineToken }).put({
                 key: modifiedKey,
                 value,
             })
@@ -106,13 +106,13 @@ export function createContextStore({ prefix, flowId, workerToken }: { prefix: st
         },
         async delete(key: string, scope = StoreScope.FLOW): Promise<void> {
             const modifiedKey = createKey(prefix, scope, flowId, key)
-            await createStorageService({ workerToken }).delete({
+            await createStorageService({ engineToken }).delete({
                 key: modifiedKey,
             })
         },
         async get<T>(key: string, scope = StoreScope.FLOW): Promise<T | null> {
             const modifiedKey = createKey(prefix, scope, flowId, key)
-            const storeEntry = await createStorageService({ workerToken }).get(modifiedKey)
+            const storeEntry = await createStorageService({ engineToken }).get(modifiedKey)
             if (storeEntry === null) {
                 return null
             }
@@ -154,7 +154,7 @@ const handleFetchError = ({ url, cause }: HandleFetchErrorParams): never => {
 }
 
 type CreateStorageServiceParams = {
-    workerToken: string
+    engineToken: string
 }
 
 type StorageService = {

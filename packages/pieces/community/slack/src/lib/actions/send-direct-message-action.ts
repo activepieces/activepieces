@@ -41,9 +41,3 @@ export const slackSendDirectMessageAction = createAction({
   },
 });
 
-type UserListResponse = {
-  members: {
-    id: string;
-    name: string;
-  }[];
-};

@@ -1,7 +1,7 @@
+import { ActivepiecesError, ErrorCode, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { requestUtils } from '../../request/request-utils'
 import { BaseSecurityHandler } from '../security-handler'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 
 export class ProjectAuthzHandler extends BaseSecurityHandler {
     private static readonly IGNORED_ROUTES = [
@@ -13,6 +13,8 @@ export class ProjectAuthzHandler extends BaseSecurityHandler {
         '/v1/webhooks/:flowId',
         '/v1/webhooks/:flowId/test',
         '/v1/webhooks/:flowId/sync',
+        // This works for both platform and project, we have to check this manually
+        '/v1/user-invitations',
     ]
 
     protected canHandle(request: FastifyRequest): Promise<boolean> {
@@ -23,6 +25,9 @@ export class ProjectAuthzHandler extends BaseSecurityHandler {
     }
 
     protected doHandle(request: FastifyRequest): Promise<void> {
+        if (request.principal.type === PrincipalType.WORKER) {
+            return Promise.resolve()
+        }
         const projectId = requestUtils.extractProjectId(request)
 
         if (projectId && projectId !== request.principal.projectId) {

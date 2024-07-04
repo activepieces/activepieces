@@ -1,0 +1,32 @@
+{
+  "name": "pieces-microsoft-dynamics-365-business-central",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ee/pieces/microsoft-dynamics-365-business-central/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/ee/pieces/microsoft-dynamics-365-business-central",
+        "tsConfig": "packages/ee/pieces/microsoft-dynamics-365-business-central/tsconfig.lib.json",
+        "packageJson": "packages/ee/pieces/microsoft-dynamics-365-business-central/package.json",
+        "main": "packages/ee/pieces/microsoft-dynamics-365-business-central/src/index.ts",
+        "assets": [
+          "packages/ee/pieces/microsoft-dynamics-365-business-central/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-microsoft-dynamics-365-business-central {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  },
+  "tags": []
+}

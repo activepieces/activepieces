@@ -1,14 +1,14 @@
+import {
+    Issue,
+    IssueStatus,
+} from '@activepieces/ee-shared'
+import { Flow, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
     TIMESTAMP_COLUMN_TYPE,
 } from '../../database/database-common'
-import {
-    Issue,
-    IssueStatus,
-} from '@activepieces/ee-shared'
-import { Flow, Project } from '@activepieces/shared'
 
 
 type IssueSchema = Issue & {

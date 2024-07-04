@@ -23,7 +23,7 @@ export const bannerbear = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://sync.api.bannerbear.com/v2',
       auth: bannerbearAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

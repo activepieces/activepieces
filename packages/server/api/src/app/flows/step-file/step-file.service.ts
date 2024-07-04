@@ -1,7 +1,3 @@
-import { databaseConnection } from '../../database/database-connection'
-import { domainHelper } from '../../helper/domain-helper'
-import { jwtUtils } from '../../helper/jwt-utils'
-import { StepFileEntity } from './step-file.entity'
 import {
     ActivepiecesError,
     apId,
@@ -12,6 +8,10 @@ import {
     StepFileUpsert,
     StepFileWithUrl,
 } from '@activepieces/shared'
+import { databaseConnection } from '../../database/database-connection'
+import { domainHelper } from '../../helper/domain-helper'
+import { jwtUtils } from '../../helper/jwt-utils'
+import { StepFileEntity } from './step-file.entity'
 
 const stepFileRepo = databaseConnection.getRepository<StepFile>(StepFileEntity)
 

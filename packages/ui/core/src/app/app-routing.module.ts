@@ -15,6 +15,10 @@ import {
 } from 'ee-components';
 import { ApEdition } from '@activepieces/shared';
 import { FormsComponent } from './modules/forms/forms.component';
+import {
+  FORMS_RESOLVE_DATA,
+  FormsResolver,
+} from './modules/forms/forms.resolver';
 
 export const routes: Routes = [
   {
@@ -27,6 +31,13 @@ export const routes: Routes = [
       combination: ImportFlowUriEncodedResolver,
     },
     component: ImportFlowUriEncodedComponent,
+  },
+  {
+    path: 'invitation',
+    loadComponent: () =>
+      import('./modules/accept-invitation/accept-invitation.component').then(
+        (m) => m.AcceptInvitationComponent
+      ),
   },
   {
     path: 'templates/:templateId',
@@ -85,11 +96,15 @@ export const routes: Routes = [
   {
     path: 'forms/:flowId',
     component: FormsComponent,
+    resolve: {
+      [FORMS_RESOLVE_DATA]: FormsResolver,
+    },
   },
   {
     path: 'not-found',
     component: NotFoundComponent,
   },
+
   {
     path: '**',
     component: NotFoundComponent,

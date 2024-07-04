@@ -1,18 +1,7 @@
-import Ajv from 'ajv'
-import { FastifyRequest } from 'fastify'
-import { databaseConnection } from '../../database/database-connection'
-import { AuditEventParam } from '../../helper/application-events'
-import { extractClientRealIp } from '../../helper/network-utils'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
-import { userService } from '../../user/user-service'
-import { AuditEventEntity } from './audit-event-entity'
 import {
     ApplicationEvent,
 } from '@activepieces/ee-shared'
-import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { logger, networkUtls, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     apId,
     assertEqual,
@@ -20,6 +9,16 @@ import {
     PrincipalType,
     SeekPage,
 } from '@activepieces/shared'
+import Ajv from 'ajv'
+import { FastifyRequest } from 'fastify'
+import { databaseConnection } from '../../database/database-connection'
+import { AuditEventParam } from '../../helper/application-events'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
+import { AuditEventEntity } from './audit-event-entity'
 
 const auditLogRepo = databaseConnection.getRepository(AuditEventEntity)
 
@@ -35,7 +34,7 @@ export const auditLogService = {
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
             userId: request.principal.id,
-            ip: extractClientRealIp(request),
+            ip: networkUtls.extractClientRealIp(request),
         }, params))
     },
     sendWorkerEvent(projectId: string, params: AuditEventParam): void {

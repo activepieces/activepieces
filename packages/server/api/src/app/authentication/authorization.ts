@@ -1,4 +1,3 @@
-import { onRequestHookHandler, preSerializationHookHandler } from 'fastify'
 import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -6,10 +5,11 @@ import {
     isObject,
     PrincipalType,
 } from '@activepieces/shared'
+import { onRequestHookHandler, preSerializationHookHandler } from 'fastify'
 
 // TODO REMOVE
 export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
-    if (request.principal.type !== PrincipalType.WORKER) {
+    if (request.principal.type !== PrincipalType.ENGINE) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {},

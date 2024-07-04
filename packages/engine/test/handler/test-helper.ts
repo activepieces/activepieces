@@ -1,10 +1,12 @@
-import { Action, ActionErrorHandlingOptions, ActionType, BranchAction, BranchCondition, CodeAction, LoopOnItemsAction, PackageType, PieceAction, PieceType, ProgressUpdateType } from '@activepieces/shared'
+import { Action, ActionErrorHandlingOptions, ActionType, BranchAction, BranchCondition, CodeAction, FlowVersionState, LoopOnItemsAction, PackageType, PieceAction, PieceType, ProgressUpdateType } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 import { VariableService } from '../../src/lib/services/variable-service'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
     return new EngineConstants(
         params?.flowId ?? 'flowId',
+        params?.flowVersionId ?? 'flowVersionId',
+        params?.flowVerionState ?? FlowVersionState.DRAFT,
         params?.flowRunId ?? 'flowRunId',
         params?.serverUrl ?? 'http://127.0.0.1:3000',
         params?.retryConstants ?? {
@@ -12,16 +14,17 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             retryExponential: 1,
             retryInterval: 1,
         },
-        params?.workerToken ?? 'workerToken',
+        params?.engineToken ?? 'engineToken',
         params?.projectId ?? 'projectId',
         params?.variableService ?? new VariableService({
             projectId: 'projectId',
-            workerToken: 'workerToken',
+            engineToken: 'engineToken',
         }),
         params?.testSingleStepMode ?? false,
         params?.filesServiceType ?? 'local',
         params?.progressUpdateType ?? ProgressUpdateType.NONE,
         params?.serverHandlerId ?? null,
+        params?.httpRequestId ?? null,
         params?.resumePayload,
     )
 }

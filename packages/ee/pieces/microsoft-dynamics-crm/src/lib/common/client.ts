@@ -10,10 +10,17 @@ import { EntityAttributeType } from './constants';
 import {
   EntityAttributeOptionsResponse,
   EntityAttributeResponse,
+  EntityTypeAttributesResponse,
+  EntityTypeResponse,
 } from './types';
+import { getBaseUrl } from '../..';
 
 export class DynamicsCRMClient {
-  constructor(private hostUrl: string, private accessToken: string) {}
+  constructor(
+    private hostUrl: string,
+    private accessToken: string,
+    private proxyUrl?: string
+  ) {}
   async makeRequest<T extends HttpMessageBody>(
     method: HttpMethod,
     resourceUri: string,
@@ -21,7 +28,7 @@ export class DynamicsCRMClient {
     query?: QueryParams,
     body: any | undefined = undefined
   ): Promise<T> {
-    const baseUrl = this.hostUrl.replace(/\/$/, '');
+    const baseUrl = getBaseUrl(this.hostUrl.replace(/\/$/, ''), this.proxyUrl);
     const res = await httpClient.sendRequest<T>({
       method: method,
       url: `${baseUrl}/api/data/v9.2` + resourceUri,
@@ -85,6 +92,34 @@ export class DynamicsCRMClient {
     return await this.makeRequest(
       HttpMethod.DELETE,
       `/${entityUrlPath}(${recordId})`
+    );
+  }
+  async fetchEntityTypes(): Promise<EntityTypeResponse> {
+    // fetch entity type data
+    return await this.makeRequest<EntityTypeResponse>(
+      HttpMethod.GET,
+      `/EntityDefinitions`,
+      undefined,
+      {
+        $select: ['EntitySetName', 'LogicalName'].join(','),
+      }
+    );
+  }
+  async fetchEntityTypeAttributes(
+    entitySetName: string
+  ): Promise<EntityTypeAttributesResponse> {
+    return await this.makeRequest<EntityTypeAttributesResponse>(
+      HttpMethod.GET,
+      `/EntityDefinitions`,
+      undefined,
+      {
+        $select: [
+          'PrimaryIdAttribute',
+          'PrimaryNameAttribute',
+          'LogicalName',
+        ].join(','),
+        $filter: `EntitySetName eq '${entitySetName}'`,
+      }
     );
   }
   async fetchEntityAttributes(

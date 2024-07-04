@@ -1,21 +1,15 @@
-import { FastifyInstance } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { generateMockToken } from '../../../helpers/auth'
-import {
-    createMockFlow,
-    createMockFlowVersion,
-    createMockPlatform,
-    createMockProject,
-    createMockUser,
-} from '../../../helpers/mocks'
 import {
     FlowOperationType,
     FlowStatus,
     FlowVersionState,
     PrincipalType,
 } from '@activepieces/shared'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { setupApp } from '../../../../src/app/app'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../helpers/auth'
+import { createMockFlow, createMockFlowVersion, createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 

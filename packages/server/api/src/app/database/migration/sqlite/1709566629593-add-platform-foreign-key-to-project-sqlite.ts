@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddPlatformForeignKeyToProjectSqlite1709566629593 implements MigrationInterface {
     name = 'AddPlatformForeignKeyToProjectSqlite1709566629593'

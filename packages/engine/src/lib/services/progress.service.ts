@@ -9,10 +9,11 @@ export const progressService = {
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
         return lock.runExclusive(async () => {        
             const { flowExecutorContext, engineConstants } = params
-            const url = new URL(`${EngineConstants.API_URL}v1/worker/flows/update-run`)
+            const url = new URL(`${EngineConstants.API_URL}v1/engine/update-run`)
             const request: UpdateRunProgressRequest = {
                 runId: engineConstants.flowRunId,
                 workerHandlerId: engineConstants.serverHandlerId ?? null,
+                httpRequestId: engineConstants.httpRequestId ?? null,
                 runDetails: await flowExecutorContext.toResponse(),
                 progressUpdateType: engineConstants.progressUpdateType,
             }
@@ -21,7 +22,7 @@ export const progressService = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${engineConstants.workerToken}`,
+                    Authorization: `Bearer ${engineConstants.engineToken}`,
                 },
                 body: JSON.stringify(request),
             })

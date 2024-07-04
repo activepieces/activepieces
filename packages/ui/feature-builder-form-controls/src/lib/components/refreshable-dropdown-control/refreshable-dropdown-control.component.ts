@@ -18,7 +18,7 @@ import {
 import { DynamicInputToggleComponent } from '../dynamic-input-toggle/dynamic-input-toggle.component';
 import deepEqual from 'deep-equal';
 import { DropdownSelectedValuesPipe } from '../../pipes/dropdown-selected-values.pipe';
-import { BehaviorSubject, Observable, startWith, tap } from 'rxjs';
+import { BehaviorSubject, Observable, merge, startWith, tap } from 'rxjs';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { DropdownLabelsJoinerPipe } from '../../pipes/dropdown-labels-joiner.pipe';
 import { FormControl, UntypedFormControl } from '@angular/forms';
@@ -59,7 +59,11 @@ export class RefreshableDropdownControlComponent
     this.options$ = this.createRefreshers(
       this.refresh$.pipe(startWith(undefined))
     );
-    this.invalidateCache$ = this.passedFormControl.valueChanges.pipe(
+
+    this.invalidateCache$ = merge(
+      this.passedFormControl.valueChanges,
+      this.stepChanged$.asObservable()
+    ).pipe(
       tap(() => {
         this.selectedItemsCache$.next([]);
       })

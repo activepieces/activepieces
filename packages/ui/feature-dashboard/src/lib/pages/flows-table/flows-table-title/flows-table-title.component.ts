@@ -11,6 +11,7 @@ import {
   FlowOperationType,
   TelemetryEventName,
   ProjectWithLimits,
+  Permission,
 } from '@activepieces/shared';
 import { FoldersSelectors } from '@activepieces/ui/feature-folders-store';
 import { Store } from '@ngrx/store';
@@ -24,6 +25,8 @@ import {
   TelemetryService,
   EmbeddingService,
   ProjectService,
+  doesUserHavePermission,
+  unpermittedTooltip,
 } from '@activepieces/ui/common';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -42,14 +45,17 @@ import { ComponentPortal } from '@angular/cdk/portal';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlowsTableTitleComponent {
+  readonly flowActionsUiInfo = flowActionsUiInfo;
+  readonly isReadOnly = !doesUserHavePermission(Permission.WRITE_FLOW);
+  readonly unpermittedTooltip = unpermittedTooltip;
   creatingFlow = false;
   currentFolder$: Observable<FolderDto | undefined>;
   createFlow$?: Observable<PopulatedFlow>;
   showAllFlows$: Observable<boolean>;
   currentProject$: Observable<ProjectWithLimits>;
   openTemplatesDialog$?: Observable<void>;
-  readonly flowActionsUiInfo = flowActionsUiInfo;
   hideFoldersList$ = this.embeddingService.getHideFolders$();
+  importFlow$?: Observable<unknown>;
   constructor(
     private store: Store,
     private flowService: FlowService,
@@ -152,9 +158,14 @@ export class FlowsTableTitleComponent {
     this.cd.markForCheck();
   }
 
-  importFlow(projectId: string) {
-    const data: ImporFlowDialogData = { projectId: projectId };
-    this.matDialog.open(ImportFlowDialogComponent, { data });
+  async importFlow() {
+    this.importFlow$ = this.currentProject$.pipe(
+      take(1),
+      tap((proj) => {
+        const data: ImporFlowDialogData = { projectId: proj.id };
+        this.matDialog.open(ImportFlowDialogComponent, { data });
+      })
+    );
   }
 
   private showBlogNotification(blogUrl: string) {

@@ -1,20 +1,19 @@
+import { Issue, IssueStatus, ListIssuesParams, PopulatedIssue } from '@activepieces/ee-shared'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { databaseConnection } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
-import { emailService } from '../helper/email/email-service'
 import { IssueEntity } from './issues-entity'
-import { Issue, IssueStatus, ListIssuesParams, PopulatedIssue } from '@activepieces/ee-shared'
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 const repo = databaseConnection.getRepository(IssueEntity)
 
 export const issuesService = {
-    async add({ projectId, flowId }: { flowId: string, projectId: string }): Promise<void> {
+    async add({ projectId, flowId, flowRunCreatedAt }: { flowId: string, projectId: string, flowRunCreatedAt: string }): Promise<Issue> {
         const issueId = apId()
-        const date = dayjs().toISOString()
+        const date = dayjs(flowRunCreatedAt).toISOString()
         await repo.createQueryBuilder()
             .insert()
             .into(IssueEntity)
@@ -36,16 +35,8 @@ export const issuesService = {
             flowId,
             status: IssueStatus.ONGOING,
         })
-
-        if (updatedIssue.count === 1) {
-            const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flowId)
-            await emailService.sendIssueCreatedNotification({
-                projectId,
-                flowName: flowVersion.displayName,
-                count: updatedIssue.count,
-                createdAt: dayjs(date).format('DD MMM YYYY, HH:mm'),
-            })
-        }
+        
+        return updatedIssue
     },
     async get({ projectId, flowId }: { projectId: string, flowId: string }): Promise<Issue | null> {
         return repo.findOneBy({

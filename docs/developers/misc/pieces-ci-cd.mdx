@@ -1,0 +1,32 @@
+---
+title: 'Custom Pieces CI/CD'
+icon: 'hammer'
+---
+
+You can use the CLI to sync custom pieces. There is no need to rebuild the Docker image as they are loaded directly from npm.
+
+### How It Works
+
+Use the CLI to sync items from `packages/pieces/custom/` to instances. In production, Activepieces acts as an npm registry, storing all piece versions.
+
+The CLI scans the directory for `package.json` files, checking the **name** and **version** of each piece. If a piece isn't uploaded, it packages and uploads it via the API.
+
+### Usage
+
+To use the CLI, follow these steps:
+
+1. Generate an API Key from the Admin Interface. Go to Settings and generate the API Key.
+2. Install the CLI by cloning the repository.
+3. Run the following command, replacing `API_KEY` with your generated API Key and `INSTANCE_URL` with your instance URL:
+
+
+```bash
+AP_API_KEY=your_api_key_here npm run sync-pieces -- --apiUrl https://INSTANCE_URL/api
+```
+
+### Developer Workflow
+
+1. Developers create and modify the pieces offline.
+2. Increment the piece version in their corresponding `package.json`. For more information, refer to the [piece versioning](../../developers/piece-reference/piece-versioning) documentation.
+3. Open a pull request towards the main branch.
+4. Once the pull request is merged to the main branch, manually run the CLI or use a GitHub/GitLab Action to trigger the synchronization process.

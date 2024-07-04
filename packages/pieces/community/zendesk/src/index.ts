@@ -53,7 +53,7 @@ export const zendesk = createPiece({
           (auth as { subdomain: string }).subdomain
         }.zendesk.com/api/v2`,
       auth: zendeskAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
           `${(auth as { email: string }).email}/token:${
             (auth as { token: string }).token

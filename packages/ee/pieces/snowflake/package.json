@@ -1,0 +1,8 @@
+{
+  "name": "@activepieces/piece-snowflake",
+  "version": "0.0.8",
+  "license": {
+    "type": "COMMERCIAL",
+    "url": "https://raw.githubusercontent.com/activepieces/activepieces/main/packages/ee/LICENSE"
+  }
+}
