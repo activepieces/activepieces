@@ -42,7 +42,6 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.READ_GIT_REPO,
         Permission.RETRY_RUN,
         Permission.READ_ISSUES,
-        Permission.WRITE_ISSUES
     ],
     [ProjectMemberRole.VIEWER]: [
         Permission.READ_APP_CONNECTION,
