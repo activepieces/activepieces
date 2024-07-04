@@ -159,10 +159,13 @@ export class FlowsTableTitleComponent {
   }
 
   async importFlow() {
-   this.importFlow$ = (this.currentProject$.pipe(take(1),tap((proj)=>{
-    const data: ImporFlowDialogData = { projectId: proj.id };
-     this.matDialog.open(ImportFlowDialogComponent, { data });
-   }))) 
+    this.importFlow$ = this.currentProject$.pipe(
+      take(1),
+      tap((proj) => {
+        const data: ImporFlowDialogData = { projectId: proj.id };
+        this.matDialog.open(ImportFlowDialogComponent, { data });
+      })
+    );
   }
 
   private showBlogNotification(blogUrl: string) {
