@@ -163,7 +163,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             },
             info: {
                 title: 'Activepieces Documentation',
-                version: '0.14.3',
+                version: '0.0.0',
             },
             externalDocs: {
                 url: 'https://www.activepieces.com/docs',
