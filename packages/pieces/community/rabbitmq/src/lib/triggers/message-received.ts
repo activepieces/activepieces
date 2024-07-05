@@ -33,9 +33,6 @@ const polling: Polling<PiecePropValueSchema<typeof rabbitmqAuth>, {
         }, { noAck: false });
       });
 
-      await channel.close();
-      await connection.close();
-
       return [{ id: dayjs().toISOString(), data: message }];
     } finally {
       if (channel) {
