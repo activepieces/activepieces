@@ -40,7 +40,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
 
     try {
         const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
-        const codeModule: CodeModule = constants.flowVerionState === FlowVersionState.DRAFT ? await importFresh(artifactPath) : await import(artifactPath)
+        const codeModule: CodeModule = constants.flowVersionState === FlowVersionState.DRAFT ? await importFresh(artifactPath) : await import(artifactPath)
         const codeSandbox = await initCodeSandbox()
 
         const output = await codeSandbox.runCodeModule({

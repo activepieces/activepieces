@@ -33,7 +33,7 @@ export class EngineConstants {
     public constructor(
         public readonly flowId: string,
         public readonly flowVersionId: string,
-        public readonly flowVerionState: FlowVersionState,
+        public readonly flowVersionState: FlowVersionState,
         public readonly flowRunId: string,
         public readonly publicUrl: string,
         public readonly internalApiUrl: string,

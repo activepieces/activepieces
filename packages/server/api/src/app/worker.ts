@@ -1,6 +1,5 @@
 import { logger, system, WorkerSystemProps } from '@activepieces/server-shared'
-import { apId, isNil, PrincipalType } from '@activepieces/shared'
-import dayjs from 'dayjs'
+import { isNil, WorkerMachineType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { flowWorker } from 'server-worker'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
@@ -28,12 +27,8 @@ async function generateWorkerToken(): Promise<string> {
     if (!isNil(workerToken)) {
         return workerToken
     }
-    return accessTokenManager.generateToken({
-        id: apId(),
-        type: PrincipalType.WORKER,
-        projectId: apId(),
-        platform: {
-            id: apId(),
-        },
-    }, dayjs.duration(10, 'year').asSeconds())
+    return accessTokenManager.generateWorkerToken({
+        type: WorkerMachineType.SHARED,
+        platformId: null,
+    })
 }
