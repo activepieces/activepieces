@@ -1,7 +1,4 @@
-<ap-dialog-title-template i18n
-  >HTTP Request Copilot
-  <!-- <span class="ap-typography-caption ap-text-primary ap-mt-1">BETA</span> -->
-</ap-dialog-title-template>
+<ap-dialog-title-template i18n>HTTP Request Copilot </ap-dialog-title-template>
 
 <mat-dialog-content>
   <div class="ap-max-w-[40.625rem]">
@@ -69,19 +66,7 @@
     Here is the AI generated request by your description. Click the button below
     to use it in the HTTP step.
   </div>
-  <div class=""></div>
   <ng-template #requestBodyResult>{{ body$ | async | json }}</ng-template>
-  <!-- <ng-template #codeResult>{{ generatedRequest$ | async | json }}</ng-template> -->
-  <!-- <div class="ap-mb-4">
-    <pre
-      *ngIf="prisimFix === false"
-      class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card"
-    ><code class="language-js"><ng-container *ngTemplateOutlet="codeResult"> </ng-container></code></pre>
-    <pre
-      *ngIf="prisimFix === true"
-      class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card"
-    ><code class="language-js"><ng-container *ngTemplateOutlet="codeResult"> </ng-container></code></pre>
-  </div> -->
   <div class="ap-mb-4">
     <div
       class="ap-flex ap-gap-2 thin-scrollbars ap-text-sm ap-px-4 ap-pt-4 !ap-bg-gray-card"
@@ -132,7 +117,7 @@
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field
+        <!-- <mat-form-field
           class="ap-w-full"
           appearance="outline"
           subscriptSizing="dynamic"
@@ -156,7 +141,7 @@
             type="text"
             rows="4"
           />
-        </mat-form-field>
+        </mat-form-field> -->
       </div>
       <!-- <div *ngIf="generatedRequest$ | async">
         <ap-button

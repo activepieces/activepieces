@@ -142,6 +142,7 @@ export class RequestWriterDialogComponent implements OnInit {
     }
     return beautifiedResponse;
   }
+
   parseResponseAndMatchItToHttpPieceProperties(
     response: Record<string, unknown>
   ) {
@@ -165,9 +166,9 @@ export class RequestWriterDialogComponent implements OnInit {
     if (response['body']) {
       correctedResponse = {
         ...correctedResponse,
-        body_type: 'json',
+        body_type: 'form_data',
         body: {
-          data: this.codeService.beautifyJson(response['body']),
+          data: response['body'],
         },
       };
     } else {
