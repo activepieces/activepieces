@@ -2,47 +2,36 @@ import {
   createTrigger,
   TriggerStrategy,
   PiecePropValueSchema,
-  Property, CustomAuthProperty, CustomAuthProps, StaticPropsValue
-
+  Property,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { rabbitmqAuth } from '../../index';
 import { rabbitmqConnect } from '../common';
 import dayjs from 'dayjs';
-import { Connection, Channel } from 'amqplib';
 
 const polling: Polling<PiecePropValueSchema<typeof rabbitmqAuth>, {
   queue: string
 }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
-    let connection: Connection|null = null;
-    let channel: Channel|null = null;
-    let message = null;
+    const connection = await rabbitmqConnect(auth);
+    const channel = await connection.createChannel();
 
-    try {
-      connection = await rabbitmqConnect(auth);
-      channel = await connection.createChannel();
+    await channel.checkQueue(propsValue.queue);
 
-      await channel.checkQueue(propsValue.queue);
+    const message = await new Promise((resolve, reject) => {
+      channel.consume(propsValue.queue, (msg) => {
+        if (msg) {
+          channel?.ack(msg);
+          resolve(JSON.parse(msg.content.toString()));
+        } else {
+          reject('No message.');
+        }
+      }, { noAck: false });
+    });
 
-      message = await new Promise((resolve, reject) => {
-        channel?.consume(propsValue.queue, (msg) => {
-          if (msg) {
-            channel?.ack(msg);
-            resolve(JSON.parse(msg.content.toString()));
-          } else {
-            reject('No message.');
-          }
-        }, { noAck: false });
-      });
-
-    } catch (err) {
-      console.error(err);
-    } finally {
-      if (channel) await channel.close();
-      if (connection) await connection.close();
-    }
+    await channel.close();
+    await connection.close();
 
     return [{ id: dayjs().toISOString(), data: message }];
   },

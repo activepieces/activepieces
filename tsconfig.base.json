@@ -435,6 +435,9 @@
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
       ],
+      "@activepieces/piece-rabbitmq": [
+        "packages/pieces/community/rabbitmq/src/index.ts"
+      ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],

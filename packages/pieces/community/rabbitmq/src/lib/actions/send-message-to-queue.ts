@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { rabbitmqAuth } from '../..';
 import { rabbitmqConnect } from '../common';
-import { Connection, Channel } from 'amqplib';
 
 export const sendMessageToQueue = createAction({
   auth: rabbitmqAuth,
@@ -26,30 +25,23 @@ export const sendMessageToQueue = createAction({
     }),
   },
   async run(context) {
-    let connection: Connection|null = null;
-    let channel: Channel|null = null;
-    let returnState = false;
+    const queue = context.propsValue.queue;
 
-    try {
-      const queue = context.propsValue.queue;
+    const connection = await rabbitmqConnect(context.auth);
+    const channel = await connection.createChannel();
 
-      connection = await rabbitmqConnect(context.auth);
-      channel = await connection.createChannel();
+    await channel.checkQueue(queue);
 
-      await channel.checkQueue(queue);
+    const result = channel.sendToQueue(
+      queue,
+      Buffer.from(JSON.stringify(context.propsValue.data))
+    );
 
-      returnState = channel.sendToQueue(
-        queue,
-        Buffer.from(JSON.stringify(context.propsValue.data))
-      );
-    } catch (err) {
-      returnState = false;
-      console.error(err);
-    } finally {
-      if (channel) await channel.close();
-      if (connection) await connection.close();
+    await channel.close();
+    await connection.close();
+
+    if (!result) {
+      throw new Error('Failed to send message to queue');
     }
-
-    return returnState;
   }
 });

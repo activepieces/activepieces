@@ -31,7 +31,7 @@ export const rabbitmqAuth = PieceAuth.CustomAuth({
 });
 
 export const rabbitmq = createPiece({
-  displayName: "Rabbitmq",
+  displayName: "RabbitMQ",
   auth: rabbitmqAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: "https://cdn.activepieces.com/pieces/rabbitmq.png",

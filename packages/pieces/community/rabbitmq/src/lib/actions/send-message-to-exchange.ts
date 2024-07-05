@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { rabbitmqAuth } from '../..';
 import { rabbitmqConnect } from '../common';
-import { Connection, Channel } from 'amqplib';
 
 export const sendMessageToExchange = createAction({
   auth: rabbitmqAuth,
@@ -35,29 +34,22 @@ export const sendMessageToExchange = createAction({
     const exchange = context.propsValue.exchange;
     const routingKey = context.propsValue.routingKey || '';
 
-    let connection: Connection|null = null;
-    let channel: Channel|null = null;
-    let returnState = false;
+    const connection = await rabbitmqConnect(context.auth);
+    const channel = await connection.createChannel();
 
-    try {
-      connection = await rabbitmqConnect(context.auth);
-      channel = await connection.createChannel();
+    await channel.checkExchange(exchange);
 
-      await channel.checkExchange(exchange);
+    const result = channel.publish(
+      exchange,
+      routingKey,
+      Buffer.from(JSON.stringify(context.propsValue.data))
+    );
 
-      returnState = channel.publish(
-        exchange,
-        routingKey,
-        Buffer.from(JSON.stringify(context.propsValue.data))
-      );
-    } catch (err) {
-      returnState = false;
-      console.error(err);
-    } finally {
-      if (channel) await channel.close();
-      if (connection) await connection.close();
+    await channel.close();
+    await connection.close();
+
+    if (!result) {
+      throw new Error('Failed to send message to exchange');
     }
-
-    return returnState;
   }
 });

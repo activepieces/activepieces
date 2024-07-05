@@ -9,7 +9,7 @@ export async function rabbitmqConnect(
     if (err) {
       throw err;
     }
-    console.log('Connected to RabbitMQ');
+
     return conn;
   });
 }
