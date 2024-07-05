@@ -259,7 +259,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(formModule)
     await app.register(tagsModule)
     await pieceSyncService.setup()
-
     const workerToken = await accessTokenManager.generateWorkerToken({
         type: WorkerMachineType.SHARED,
         platformId: null,
@@ -270,9 +269,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(authnSsoSamlModule)
     await app.register(alertsModule)
     await app.register(invitationModule)
-    systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
-        await pieceSyncService.sync()
-    })
     app.get(
         '/redirect',
         async (
