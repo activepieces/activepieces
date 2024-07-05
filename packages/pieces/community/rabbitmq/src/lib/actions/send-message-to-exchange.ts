@@ -25,31 +25,38 @@ export const sendMessageToExchange = createAction({
       required: true,
       defaultValue: {
         "key": "value",
-        "nested": {"key": "value"},
+        "nested": { "key": "value" },
         "array": ["value1", "value2"]
       },
     }),
   },
   async run(context) {
-    const exchange = context.propsValue.exchange;
-    const routingKey = context.propsValue.routingKey || '';
+    let connection;
+    let channel;
+    try {
+      const exchange = context.propsValue.exchange;
+      const routingKey = context.propsValue.routingKey || '';
 
-    const connection = await rabbitmqConnect(context.auth);
-    const channel = await connection.createChannel();
+      connection = await rabbitmqConnect(context.auth);
+      channel = await connection.createChannel();
 
-    await channel.checkExchange(exchange);
+      await channel.checkExchange(exchange);
 
-    const result = channel.publish(
-      exchange,
-      routingKey,
-      Buffer.from(JSON.stringify(context.propsValue.data))
-    );
+      const result = channel.publish(
+        exchange,
+        routingKey,
+        Buffer.from(JSON.stringify(context.propsValue.data))
+      );
 
-    await channel.close();
-    await connection.close();
-
-    if (!result) {
-      throw new Error('Failed to send message to exchange');
+      if (!result) {
+        throw new Error('Failed to send message to exchange');
+      }
+      return result;
+    } finally {
+      if (channel)
+        await channel.close();
+      if (connection)
+        await connection.close();
     }
   }
 });

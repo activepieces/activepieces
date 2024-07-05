@@ -73,6 +73,7 @@
     "@slack/web-api": "7.0.4",
     "@socket.io/redis-adapter": "8.2.1",
     "@supabase/supabase-js": "2.33.1",
+    "@types/amqplib": "0.10.5",
     "@types/imapflow": "1.0.18",
     "@types/js-yaml": "4.0.9",
     "@types/pg-format": "1.0.5",

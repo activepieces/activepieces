@@ -14,26 +14,37 @@ const polling: Polling<PiecePropValueSchema<typeof rabbitmqAuth>, {
 }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
-    const connection = await rabbitmqConnect(auth);
-    const channel = await connection.createChannel();
+    let connection;
+    let channel: any;
+    try {
+      connection = await rabbitmqConnect(auth);
+      channel = await connection.createChannel();
 
-    await channel.checkQueue(propsValue.queue);
+      await channel.checkQueue(propsValue.queue);
 
-    const message = await new Promise((resolve, reject) => {
-      channel.consume(propsValue.queue, (msg) => {
-        if (msg) {
-          channel?.ack(msg);
-          resolve(JSON.parse(msg.content.toString()));
-        } else {
-          reject('No message.');
-        }
-      }, { noAck: false });
-    });
+      const message = await new Promise((resolve, reject) => {
+        channel.consume(propsValue.queue, (msg: any) => {
+          if (msg) {
+            channel?.ack(msg);
+            resolve(JSON.parse(msg.content.toString()));
+          } else {
+            reject('No message.');
+          }
+        }, { noAck: false });
+      });
 
-    await channel.close();
-    await connection.close();
+      await channel.close();
+      await connection.close();
 
-    return [{ id: dayjs().toISOString(), data: message }];
+      return [{ id: dayjs().toISOString(), data: message }];
+    } finally {
+      if (channel) {
+        await channel.close();
+      }
+      if (connection) {
+        await connection.close();
+      }
+    }
   },
 };
 
@@ -52,21 +63,21 @@ export const messageReceived = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async test(context) {
-      const { store, auth, propsValue } = context;
-      return await pollingHelper.test(polling, { store, auth, propsValue });
+    const { store, auth, propsValue } = context;
+    return await pollingHelper.test(polling, { store, auth, propsValue });
   },
   async onEnable(context) {
-      const { store, auth, propsValue } = context;
-      await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    const { store, auth, propsValue } = context;
+    await pollingHelper.onEnable(polling, { store, auth, propsValue });
   },
 
   async onDisable(context) {
-      const { store, auth, propsValue } = context;
-      await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    const { store, auth, propsValue } = context;
+    await pollingHelper.onDisable(polling, { store, auth, propsValue });
   },
 
   async run(context) {
-      const { store, auth, propsValue } = context;
-      return await pollingHelper.poll(polling, { store, auth, propsValue });
+    const { store, auth, propsValue } = context;
+    return await pollingHelper.poll(polling, { store, auth, propsValue });
   },
 });

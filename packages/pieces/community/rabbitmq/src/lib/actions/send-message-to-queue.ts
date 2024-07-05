@@ -19,29 +19,40 @@ export const sendMessageToQueue = createAction({
       required: true,
       defaultValue: {
         "key": "value",
-        "nested": {"key": "value"},
+        "nested": { "key": "value" },
         "array": ["value1", "value2"]
       },
     }),
   },
   async run(context) {
     const queue = context.propsValue.queue;
+    let connection;
+    let channel;
+    try {
+      connection = await rabbitmqConnect(context.auth);
+      channel = await connection.createChannel();
 
-    const connection = await rabbitmqConnect(context.auth);
-    const channel = await connection.createChannel();
+      await channel.checkQueue(queue);
 
-    await channel.checkQueue(queue);
+      const result = channel.sendToQueue(
+        queue,
+        Buffer.from(JSON.stringify(context.propsValue.data))
+      );
 
-    const result = channel.sendToQueue(
-      queue,
-      Buffer.from(JSON.stringify(context.propsValue.data))
-    );
+      await channel.close();
+      await connection.close();
 
-    await channel.close();
-    await connection.close();
-
-    if (!result) {
-      throw new Error('Failed to send message to queue');
+      if (!result) {
+        throw new Error('Failed to send message to exchange');
+      }
+      return result;
+    } finally {
+      if (channel) {
+        await channel.close();
+      }
+      if (connection) {
+        await connection.close();
+      }
     }
   }
 });
