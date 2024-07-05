@@ -270,7 +270,9 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(authnSsoSamlModule)
     await app.register(alertsModule)
     await app.register(invitationModule)
-
+    systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
+        await pieceSyncService.sync()
+    })
     app.get(
         '/redirect',
         async (
@@ -342,9 +344,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             flagHooks.set(enterpriseFlagsHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
-            systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
-                await pieceSyncService.sync()
-            })
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             initializeSentry()
             break
@@ -366,9 +365,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
             await app.register(licenseKeysModule)
-            systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
-                await pieceSyncService.sync()
-            })
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
