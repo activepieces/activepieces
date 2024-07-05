@@ -24,10 +24,6 @@ export const AuditEventEntity = new EntitySchema<AuditEventSchema>({
         userEmail: {
             type: String,
         },
-        projectDisplayName: {
-            type: String,
-            nullable: true,
-        },
         data: {
             type: JSONB_COLUMN_TYPE,
         },
@@ -37,6 +33,7 @@ export const AuditEventEntity = new EntitySchema<AuditEventSchema>({
         },
         userId: {
             type: String,
+            nullable: true,
         },
     },
     indices: [

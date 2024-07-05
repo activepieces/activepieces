@@ -22,15 +22,18 @@ import {
   LIMIT_QUERY_PARAM,
   NavigationService,
   ProjectService,
+  TableCore,
   TelemetryService,
   UiCommonModule,
   executionsPageFragments,
+  unpermittedTooltip,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { PopulatedIssue } from '@activepieces/ee-shared';
 import {
   ApEdition,
   NotificationStatus,
+  Permission,
   ProjectId,
   TelemetryEventName,
   spreadIfDefined,
@@ -55,20 +58,13 @@ import { FormControl } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, UiCommonModule, ApDatePipe],
 })
-export class IssuesTableComponent implements OnInit {
+export class IssuesTableComponent extends TableCore implements OnInit {
   readonly betaNote =
     'Note: This feature is in <strong>BETA</strong> and will only be <strong>Free</strong> during the <strong>BETA</strong> period.';
   @Input({ required: true }) isFeatureDisabled = true;
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator: ApPaginatorComponent;
   dataSource: IssuesDataSource;
-  displayedColumns: string[] = [
-    'name',
-    'count',
-    'firstSeen',
-    'lastSeen',
-    'action',
-  ];
   resolve$: Observable<unknown>;
   currentProject: ProjectId;
   updateNotificationsValue$: Observable<unknown>;
@@ -77,6 +73,12 @@ export class IssuesTableComponent implements OnInit {
   refresh$ = new BehaviorSubject<boolean>(true);
   readonly upgradeNoteTitle = $localize`Unlock Issues`;
   readonly upgradeNote = $localize`Centralized issue tracking without digging through pages of flow runs.`;
+  readonly hasPermissionToResolveIssues = this.hasPermission(
+    Permission.WRITE_ISSUES
+  );
+  readonly resolveIssueButtonTooltip = this.hasPermissionToResolveIssues
+    ? ''
+    : unpermittedTooltip;
   @Output()
   issueClicked = new EventEmitter<{ issue: PopulatedIssue }>();
   constructor(
@@ -89,7 +91,11 @@ export class IssuesTableComponent implements OnInit {
     private embeddingService: EmbeddingService,
     private flagsService: FlagService,
     private projectService: ProjectService
-  ) {}
+  ) {
+    super({
+      tableColumns: ['name', 'count', 'firstSeen', 'lastSeen', 'action'],
+    });
+  }
   ngOnInit(): void {
     this.currentProject = this.authService.getProjectId();
     this.dataSource = new IssuesDataSource(

@@ -76,7 +76,7 @@
 
         <ng-container matColumnDef="duration">
           <th mat-header-cell *matHeaderCellDef i18n>Duration</th>
-          <td mat-cell *matCellDef="let run">{{ run.duration ? (run.duration | durationFormatter: false: true) : '-' }}
+          <td mat-cell *matCellDef="let run">{{ run.duration !== undefined ? (run.duration | durationFormatter: false: true) : '-' }}
           </td>
         </ng-container>
         <ng-container matColumnDef="status">
