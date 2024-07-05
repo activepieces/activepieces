@@ -1,4 +1,4 @@
-import { system, SystemProp } from '@activepieces/server-shared'
+import { SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { logEmailSender } from './log-email-sender'
 import { smtpEmailSender } from './smtp-email-sender'
@@ -8,7 +8,7 @@ export type EmailSender = {
 }
 
 const getEmailSenderInstance = (): EmailSender => {
-    const env = system.get(SystemProp.ENVIRONMENT)
+    const env = system.get(SharedSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.PRODUCTION) {
         return smtpEmailSender

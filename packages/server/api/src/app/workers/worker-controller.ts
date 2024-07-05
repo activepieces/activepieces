@@ -22,7 +22,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const { queueName } = request.query
-        const job = await flowConsumer.poll(queueName)
+        const job = await flowConsumer.poll(null, queueName)
         if (!job) {
             return null
         }

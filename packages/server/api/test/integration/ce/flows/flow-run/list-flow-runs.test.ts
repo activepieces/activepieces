@@ -1,18 +1,18 @@
 import { PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { setupApp } from '../../../../../src/app/app'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
+import { setupServer } from '../../../../../src/app/server'
 import { generateMockToken } from '../../../../helpers/auth'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    await databaseConnection().initialize()
+    app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 

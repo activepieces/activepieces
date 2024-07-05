@@ -1,4 +1,4 @@
-import { GetRunForWorkerRequest, logger, system, SystemProp, UpdateJobRequest } from '@activepieces/server-shared'
+import { GetRunForWorkerRequest, logger, SharedSystemProp, system, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEnvironment, EngineHttpResponse, ErrorCode, ExecutionState, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -40,13 +40,13 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             body: UpdateJobRequest,
         },
     }, async (request) => {
-        const environment = system.getOrThrow(SystemProp.ENVIRONMENT)
+        const environment = system.getOrThrow(SharedSystemProp.ENVIRONMENT)
         if (environment === ApEnvironment.TESTING) {
             return {}
         }
         const { id } = request.principal
         const { queueName, status, message } = request.body
-        await flowConsumer.update({ jobId: id, queueName, status, message: message ?? 'NO_MESSAGE_AVAILABLE' })
+        await flowConsumer.update(null, { jobId: id, queueName, status, message: message ?? 'NO_MESSAGE_AVAILABLE' })
         return {}
     })
 
@@ -129,7 +129,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             id: flowId,
         })
         if (isNil(flow)) {
-            await flowQueue.removeRepeatingJob({
+            await flowQueue.removeRepeatingJob(null, {
                 id: flowVersionId,
             })
             return

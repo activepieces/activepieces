@@ -11,7 +11,7 @@ import {
 } from '@activepieces/shared'
 import Ajv from 'ajv'
 import { FastifyRequest } from 'fastify'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { AuditEventParam } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -20,7 +20,7 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
 
-const auditLogRepo = databaseConnection.getRepository(AuditEventEntity)
+const auditLogRepo = repoFactory(AuditEventEntity)
 
 const ajv = new Ajv({ removeAdditional: 'all' })
 const eventSchema = ajv.compile<ApplicationEvent>(ApplicationEvent)
@@ -59,7 +59,7 @@ export const auditLogService = {
             },
         })
         const paginationResponse = await paginator.paginate(
-            auditLogRepo.createQueryBuilder('audit_event')
+            auditLogRepo().createQueryBuilder('audit_event')
                 .where({ platformId }),
         )
         return paginationHelper.createPage<ApplicationEvent>(
@@ -96,7 +96,7 @@ async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam): Prom
     }
     const valid = eventSchema(eventToSave)
     assertEqual(valid, true, 'Event validation', 'true')
-    const appEvent = await auditLogRepo.save(eventToSave as ApplicationEvent)
+    const appEvent = await auditLogRepo().save(eventToSave as ApplicationEvent)
     logger.info({
         message: '[AuditEventService#saveEvent] Audit event saved',
         appEvent,

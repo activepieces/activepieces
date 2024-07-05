@@ -1,16 +1,19 @@
 
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, system, SystemProp, UpdateJobRequest } from '@activepieces/server-shared'
+import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, networkUtls, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SharedSystemProp, SubmitPayloadsRequest, system, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import axios, { isAxiosError } from 'axios'
 import { StatusCodes } from 'http-status-codes'
 import { heartbeat } from '../utils/heartbeat'
 
-const SERVER_URL = 'http://127.0.0.1:3000'
+const removeTrailingSlash = (url: string): string => {
+    return url.endsWith('/') ? url.slice(0, -1) : url
+}
+const apiUrl = removeTrailingSlash(networkUtls.getInternalApiUrl())
 
 export const workerApiService = (workerToken: string) => {
     const client = axios.create({
-        baseURL: SERVER_URL,
+        baseURL: apiUrl,
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${workerToken}`,
@@ -59,7 +62,7 @@ export const workerApiService = (workerToken: string) => {
 
 export const engineApiService = (engineToken: string) => {
     const client = axios.create({
-        baseURL: SERVER_URL,
+        baseURL: apiUrl,
         headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${engineToken}`,
@@ -91,7 +94,7 @@ export const engineApiService = (engineToken: string) => {
             })).data
         },
         async checkTaskLimit(): Promise<void> {
-            const edition = system.getOrThrow(SystemProp.EDITION)
+            const edition = system.getOrThrow(SharedSystemProp.EDITION)
             if (edition === ApEdition.COMMUNITY) {
                 return
             }

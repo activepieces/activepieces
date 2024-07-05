@@ -1,7 +1,8 @@
-import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment } from '@activepieces/shared'
+import { AppSystemProp, DatabaseType, SharedSystemProp, system } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 import {
     ArrayContains,
+    DataSource,
     EntitySchema,
     ObjectLiteral,
     SelectQueryBuilder,
@@ -46,7 +47,7 @@ import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
 
-const databaseType = system.get(SystemProp.DB_TYPE)
+const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
     const edition = system.getEdition()
@@ -108,7 +109,7 @@ function getEntities(): EntitySchema<unknown>[] {
 }
 
 const getSynchronize = (): boolean => {
-    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
 
     const value: Partial<Record<ApEnvironment, boolean>> = {
         [ApEnvironment.TESTING]: true,
@@ -123,17 +124,24 @@ export const commonProperties = {
     synchronize: getSynchronize(),
 }
 
-export const databaseConnection =
-    databaseType === DatabaseType.SQLITE3
-        ? createSqlLiteDataSource()
-        : createPostgresDataSource()
+let _databaseConnection: DataSource | null = null
+
+export const databaseConnection = () => {
+    if (isNil(_databaseConnection)) {
+        _databaseConnection = databaseType === DatabaseType.SQLITE3
+            ? createSqlLiteDataSource()
+            : createPostgresDataSource()
+    }
+    return _databaseConnection
+}
+
 
 export function APArrayContains<T extends ObjectLiteral>(
     columnName: string,
     values: string[],
     query: SelectQueryBuilder<T>,
 ): SelectQueryBuilder<T> {
-    const databaseType = system.get(SystemProp.DB_TYPE)
+    const databaseType = system.get(AppSystemProp.DB_TYPE)
     switch (databaseType) {
         case DatabaseType.POSTGRES:
             return query.andWhere({

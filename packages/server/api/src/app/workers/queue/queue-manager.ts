@@ -2,6 +2,7 @@ import {
     DelayedJobData, JobData,
     JobType,
     OneTimeJobData,
+    QueueName,
     RenewWebhookJobData,
     RepeatingJobData,
     WebhookJobData,
@@ -10,10 +11,15 @@ import { ApId, ScheduleOptions } from '@activepieces/shared'
 
 export type QueueManager = {
     init(): Promise<void>
-    add<JT extends JobType>(params: AddParams<JT>): Promise<void>
-    removeRepeatingJob(params: RemoveParams): Promise<void>
+    add<JT extends JobType>(groupId: string | null, params: AddParams<JT>): Promise<void>
+    removeRepeatingJob(groupId: string | null, params: RemoveParams): Promise<void>
 }
 
+export const queueHelper = {
+    getQueueName: (groupId: string | null, queueName: QueueName): string => {
+        return groupId ? `${groupId}:${queueName}` : queueName
+    },
+}
 
 type RemoveParams = {
     id: ApId

@@ -82,7 +82,7 @@ export const flowRunSideEffects = {
             `[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`,
         )
 
-        await flowQueue.add({
+        await flowQueue.add(null, {
             id: flowRun.id,
             type: JobType.ONE_TIME,
             priority: isNil(synchronousHandlerId) ? 'medium' : 'high',
@@ -124,7 +124,7 @@ export const flowRunSideEffects = {
 
         switch (pauseMetadata.type) {
             case PauseType.DELAY:
-                await flowQueue.add({
+                await flowQueue.add(null, {
                     id: flowRun.id,
                     type: JobType.DELAYED,
                     data: {

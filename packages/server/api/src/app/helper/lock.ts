@@ -1,13 +1,13 @@
-import { ApLock, exceptionHandler, memoryLock, QueueMode, system, SystemProp } from '@activepieces/server-shared'
+import { ApLock, AppSystemProp, exceptionHandler, memoryLock, QueueMode, system } from '@activepieces/server-shared'
 import { Redis } from 'ioredis'
 import RedLock from 'redlock'
 import { createRedisClient } from '../database/redis-connection'
 
 let redLock: RedLock
 let redisConnection: Redis
-const queueMode = system.get(SystemProp.QUEUE_MODE)!
+const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
 
-const initializeLock = () => {
+export const initializeLock = () => {
     switch (queueMode) {
         case QueueMode.REDIS: {
             redisConnection = createRedisClient()
@@ -61,5 +61,3 @@ export const acquireLock = async ({
             throw new Error(`Unknown queue mode: ${queueMode}`)
     }
 }
-
-initializeLock()

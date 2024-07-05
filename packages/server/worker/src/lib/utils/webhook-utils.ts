@@ -6,14 +6,14 @@ import { triggerConsumer } from '../trigger/hooks/trigger-consumer'
 
 export const webhookUtils = {
     async getWebhookPrefix(): Promise<string> {
-        return `${await networkUtls.getApiUrl()}v1/webhooks`
+        return `${await networkUtls.getPublicUrl()}v1/webhooks`
     },
     async getAppWebhookUrl({
         appName,
     }: {
         appName: string
     }): Promise<string | undefined> {
-        const frontendUrl = await networkUtls.getApiUrl()
+        const frontendUrl = await networkUtls.getPublicUrl()
         return `${frontendUrl}v1/app-events/${appName}`
     },
     async getWebhookUrl({

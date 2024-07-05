@@ -4,9 +4,9 @@ import {
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
 import {
+    AppSystemProp,
     JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType,
     system,
-    SystemProp,
 } from '@activepieces/server-shared'
 import {
     ApEdition,
@@ -34,7 +34,7 @@ import { flowQueue } from '../../../workers/queue'
 import { triggerUtils } from './trigger-utils'
 
 const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
-    system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5,
+    system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5,
 )
 
 function constructEveryXMinuteCron(minute: number): string {
@@ -44,7 +44,7 @@ function constructEveryXMinuteCron(minute: number): string {
             return `*/${minute} * * * *`
         case ApEdition.COMMUNITY:
         case ApEdition.ENTERPRISE:
-            return `*/${system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5
+            return `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5
             } * * * *`
     }
 }
@@ -102,7 +102,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
             const renewConfiguration = pieceTrigger.renewConfiguration
             switch (renewConfiguration?.strategy) {
                 case WebhookRenewStrategy.CRON: {
-                    await flowQueue.add({
+                    await flowQueue.add(null, {
                         id: flowVersion.id,
                         type: JobType.REPEATING,
                         data: {
@@ -138,7 +138,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
                 }
                 // END EE
             }
-            await flowQueue.add({
+            await flowQueue.add(null, {
                 id: flowVersion.id,
                 type: JobType.REPEATING,
                 data: {

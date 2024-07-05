@@ -2,19 +2,19 @@ import { Issue, IssueStatus, ListIssuesParams, PopulatedIssue } from '@activepie
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
 import { IssueEntity } from './issues-entity'
-const repo = databaseConnection.getRepository(IssueEntity)
+const repo = repoFactory(IssueEntity)
 
 export const issuesService = {
     async add({ projectId, flowId, flowRunCreatedAt }: { flowId: string, projectId: string, flowRunCreatedAt: string }): Promise<Issue> {
         const issueId = apId()
         const date = dayjs(flowRunCreatedAt).toISOString()
-        await repo.createQueryBuilder()
+        await repo().createQueryBuilder()
             .insert()
             .into(IssueEntity)
             .values({
@@ -39,7 +39,7 @@ export const issuesService = {
         return updatedIssue
     },
     async get({ projectId, flowId }: { projectId: string, flowId: string }): Promise<Issue | null> {
-        return repo.findOneBy({
+        return repo().findOneBy({
             projectId,
             flowId,
         })
@@ -56,7 +56,7 @@ export const issuesService = {
             },
         })
 
-        const query = repo.createQueryBuilder(IssueEntity.options.name).where({
+        const query = repo().createQueryBuilder(IssueEntity.options.name).where({
             projectId,
             status: IssueStatus.ONGOING,
         })
@@ -74,7 +74,7 @@ export const issuesService = {
     },
 
     async updateById({ projectId, id, status }: UpdateParams): Promise<void> {
-        const flowIssue = await repo.findOneBy({
+        const flowIssue = await repo().findOneBy({
             id,
             projectId,
         })
@@ -92,7 +92,7 @@ export const issuesService = {
                 flowId: flowIssue.flowId,
             },
         }))
-        await repo.update({
+        await repo().update({
             id,
         }, {
             status,
@@ -106,9 +106,9 @@ export const issuesService = {
         status: IssueStatus
     }): Promise<Issue> {
         if (status != IssueStatus.RESOLEVED) {
-            await repo.increment({ projectId, flowId }, 'count', 1)
+            await repo().increment({ projectId, flowId }, 'count', 1)
         }
-        await repo.update({
+        await repo().update({
             projectId,
             flowId,
         }, {
@@ -117,13 +117,13 @@ export const issuesService = {
             status,
             updated: new Date().toISOString(),
         })
-        return repo.findOneByOrFail({
+        return repo().findOneByOrFail({
             projectId,
             flowId,
         })
     },
     async count({ projectId }: { projectId: ApId }): Promise<number> {
-        return repo.count({
+        return repo().count({
             where: {
                 projectId,
                 status: IssueStatus.ONGOING,

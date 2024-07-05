@@ -1,5 +1,5 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, logger, system } from '@activepieces/server-shared'
 import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
@@ -14,7 +14,7 @@ import { pieceMetadataService } from './piece-metadata-service'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const piecesRepo = repoFactory(PieceMetadataEntity)
-const syncMode = system.get<PieceSyncMode>(SystemProp.PIECES_SYNC_MODE)
+const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
 export const pieceSyncService = {
     async setup(): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {

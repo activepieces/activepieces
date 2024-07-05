@@ -1,7 +1,7 @@
 import { Alert, AlertChannel, Issue, ListAlertsParams } from '@activepieces/ee-shared'
 import { ActivepiecesError, ApId, apId, ErrorCode, SeekPage } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -10,7 +10,7 @@ import { projectService } from '../../project/project-service'
 import { AlertEntity } from './alerts-entity'
 import { alertsHandler } from './alerts-handler'
 
-const repo = databaseConnection.getRepository(AlertEntity)
+const repo = repoFactory(AlertEntity)
 
 export const alertsService = {
     async sendAlertOnRunFinish({ issue, flowRunId }: { issue: Issue, flowRunId: string }): Promise<void> {
@@ -34,7 +34,7 @@ export const alertsService = {
     },
     async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
         const alertId = apId()
-        const existingAlert = await repo.findOneBy({
+        const existingAlert = await repo().findOneBy({
             projectId,
             receiver,
         })
@@ -48,7 +48,7 @@ export const alertsService = {
             })
         }
 
-        await repo.createQueryBuilder()
+        await repo().createQueryBuilder()
             .insert()
             .into(AlertEntity)
             .values({
@@ -72,7 +72,7 @@ export const alertsService = {
             },
         })
 
-        const query = repo.createQueryBuilder(AlertEntity.options.name).where({
+        const query = repo().createQueryBuilder(AlertEntity.options.name).where({
             projectId,
         })
 
@@ -81,7 +81,7 @@ export const alertsService = {
         return paginationHelper.createPage<Alert>(data, newCursor)
     },
     async delete({ alertId }: { alertId: ApId }): Promise<void> {
-        await repo.delete({
+        await repo().delete({
             id: alertId,
         })
     },

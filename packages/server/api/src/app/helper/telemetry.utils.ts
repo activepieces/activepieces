@@ -1,11 +1,11 @@
-import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared'
 import { Analytics } from '@segment/analytics-node'
 import { flagService } from '../flags/flag.service'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 
-const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED)
+const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 
 const analytics = new Analytics({ writeKey: '42TtMD2Fh9PEIcDO2CagCGFmtoPwOmqK' })
 
@@ -68,7 +68,7 @@ async function getMetadata() {
     const edition = system.getEdition()
     return {
         activepiecesVersion: currentVersion,
-        activepiecesEnvironment: system.get(SystemProp.ENVIRONMENT),
+        activepiecesEnvironment: system.get(SharedSystemProp.ENVIRONMENT),
         activepiecesEdition: edition,
     }
 }

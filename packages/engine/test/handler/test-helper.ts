@@ -6,9 +6,10 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
     return new EngineConstants(
         params?.flowId ?? 'flowId',
         params?.flowVersionId ?? 'flowVersionId',
-        params?.flowVerionState ?? FlowVersionState.DRAFT,
+        params?.flowVersionState ?? FlowVersionState.DRAFT,
         params?.flowRunId ?? 'flowRunId',
-        params?.serverUrl ?? 'http://127.0.0.1:3000',
+        params?.publicUrl ?? 'http://127.0.0.1:3000',
+        params?.internalApiUrl ??  'http://127.0.0.1:3000',
         params?.retryConstants ?? {
             maxAttempts: 2,
             retryExponential: 1,
@@ -19,6 +20,7 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
         params?.variableService ?? new VariableService({
             projectId: 'projectId',
             engineToken: 'engineToken',
+            apiUrl: 'http://127.0.0.1:3000',
         }),
         params?.testSingleStepMode ?? false,
         params?.filesServiceType ?? 'local',

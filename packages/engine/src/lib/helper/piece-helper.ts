@@ -31,6 +31,7 @@ export const pieceHelper = {
 
         try {
             const { resolvedInput } = await variableService({
+                apiUrl: constants.internalApiUrl,
                 projectId: params.projectId,
                 engineToken: params.engineToken,
             }).resolve<
@@ -43,8 +44,8 @@ export const pieceHelper = {
                 searchValue,
                 server: {
                     token: params.engineToken,
-                    apiUrl: EngineConstants.API_URL,
-                    publicUrl: params.serverUrl,
+                    apiUrl: constants.internalApiUrl,
+                    publicUrl: params.publicUrl,
                 },
                 project: {
                     id: params.projectId,
