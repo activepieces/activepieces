@@ -77,7 +77,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
             id: request.params.id,
             platformId: request.principal.platform.id,
         })
-        await assertPermission(app, request, reply, invitation.projectId, invitation.type)
+        await assertPermission(app, request, reply, invitation.projectId ?? undefined, invitation.type)
         await userInvitationsService.delete({
             id: request.params.id,
             platformId: request.principal.platform.id,

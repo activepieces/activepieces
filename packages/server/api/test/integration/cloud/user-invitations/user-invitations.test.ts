@@ -52,8 +52,6 @@ describe('User Invitation API', () => {
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
                 email: faker.internet.email(),
                 type: InvitationType.PLATFORM,
-                projectRole: undefined,
-                projectId: null,
                 platformRole: PlatformRole.ADMIN,
             }
             const response = await app?.inject({

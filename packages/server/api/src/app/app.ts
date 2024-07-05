@@ -1,21 +1,5 @@
-import {
-    GitRepoWithoutSensitiveData,
-    ProjectMember,
-} from '@activepieces/ee-shared'
+import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FlowUpdatedEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { AppSystemProp, logger, QueueMode, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
-import {
-    ApEdition,
-    ApEnvironment,
-    AppConnectionWithoutSensitiveData,
-    Flow,
-    FlowRun,
-    isNil,
-    ProjectWithLimits,
-    spreadIfDefined,
-    UserInvitation,
-    WorkerMachineType,
-} from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
@@ -106,6 +90,8 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { webhookResponseWatcher } from './workers/helper/webhook-response-watcher'
 import { workerModule } from './workers/worker-module'
+import { Flow, ProjectWithLimits, UserInvitation, FlowRun, AppConnectionWithoutSensitiveData, spreadIfDefined, WorkerMachineType, ApEdition, isNil, ApEnvironment } from '@activepieces/shared'
+import { AppSystemProp, initializeSentry, logger, QueueMode, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -127,6 +113,21 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     },
                 },
                 schemas: {
+                    [ApplicationEventName.FLOW_CREATED]: FlowCreatedEvent,
+                    [ApplicationEventName.FLOW_DELETED]: FlowDeletedEvent,
+                    [ApplicationEventName.FLOW_UPDATED]: FlowUpdatedEvent,
+                    [ApplicationEventName.CONNECTION_UPSERTED]: ConnectionEvent,
+                    [ApplicationEventName.CONNECTION_DELETED]: ConnectionEvent,
+                    [ApplicationEventName.FOLDER_CREATED]: FolderEvent,
+                    [ApplicationEventName.FOLDER_UPDATED]: FolderEvent,
+                    [ApplicationEventName.FOLDER_DELETED]: FolderEvent,
+                    [ApplicationEventName.FLOW_RUN_STARTED]: FlowRunEvent,
+                    [ApplicationEventName.FLOW_RUN_FINISHED]: FlowRunEvent,
+                    [ApplicationEventName.USER_SIGNED_UP]: SignUpEvent,
+                    [ApplicationEventName.USER_SIGNED_IN]: AuthenticationEvent,
+                    [ApplicationEventName.USER_PASSWORD_RESET]: AuthenticationEvent,
+                    [ApplicationEventName.USER_EMAIL_VERIFIED]: AuthenticationEvent,
+                    [ApplicationEventName.SIGNING_KEY_CREATED]: SigningKeyEvent,
                     'user-invitation': UserInvitation,
                     'project-member': ProjectMember,
                     project: ProjectWithLimits,
@@ -139,7 +140,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             },
             info: {
                 title: 'Activepieces Documentation',
-                version: '0.14.3',
+                version: '0.0.0',
             },
             externalDocs: {
                 url: 'https://www.activepieces.com/docs',
@@ -210,7 +211,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(formModule)
     await app.register(tagsModule)
     await pieceSyncService.setup()
-
     await app.register(platformUserModule)
     await app.register(issuesModule)
     await app.register(authnSsoSamlModule)
@@ -245,7 +245,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await validateEnvPropsOnStartup()
 
     const edition = system.getEdition()
-    logger.info(`Activepieces ${edition} Edition`)
+    logger.info({
+        edition,
+    }, 'Activepieces Edition')
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(appCredentialModule)
@@ -281,9 +283,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flagHooks.set(enterpriseFlagsHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
-            systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
-                await pieceSyncService.sync()
-            })
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             initializeSentry()
             break
@@ -305,9 +304,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
             await app.register(licenseKeysModule)
-            systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
-                await pieceSyncService.sync()
-            })
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             setPlatformOAuthService({
                 service: platformOAuth2Service,

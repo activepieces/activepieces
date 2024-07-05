@@ -22,14 +22,13 @@ export const webhookResponseWatcher = {
                 if (listener) {
                     listener(parsedMessasge)
                 }
-                logger.info(
-                    `[engineWatcher#init] message=${parsedMessasge.requestId}`,
+                logger.info({ requestId: parsedMessasge.requestId }, '[engineWatcher#init]',
                 )
             },
         )
     },
     async oneTimeListener(requestId: string, timeoutRequest: boolean): Promise<EngineHttpResponse> {
-        logger.info(`[engineWatcher#listen] requestId=${requestId}`)
+        logger.info({ requestId }, '[engineWatcher#listen]')
         return new Promise((resolve) => {
             let timeout: NodeJS.Timeout
             if (timeoutRequest) {
@@ -59,7 +58,7 @@ export const webhookResponseWatcher = {
         workerServerId: string,
         httpResponse: EngineHttpResponse,
     ): Promise<void> {
-        logger.info(`[engineWatcher#publish] requestId=${requestId}`)
+        logger.info({ requestId }, '[engineWatcher#publish]')
         const message: EngineResponseWithId = { requestId, httpResponse }
         await pubsub().publish(`engine-run:sync:${workerServerId}`, JSON.stringify(message))
     },

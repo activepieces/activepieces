@@ -8,6 +8,7 @@ import { flagService } from '../flags/flag.service'
 import { parseAndVerify } from '../helper/json-validator'
 import { systemJobsSchedule } from '../helper/system-jobs'
 import { SystemJobName } from '../helper/system-jobs/common'
+import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { PieceMetadataEntity } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
 
@@ -20,6 +21,9 @@ export const pieceSyncService = {
             logger.info('Piece sync service is disabled')
             return
         }
+        systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
+            await pieceSyncService.sync()
+        })
         await pieceSyncService.sync()
         await systemJobsSchedule.upsertJob({
             job: {
