@@ -1,9 +1,10 @@
 
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, system, SystemProp, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import axios, { isAxiosError } from 'axios'
 import { StatusCodes } from 'http-status-codes'
+import { heartbeat } from '../utils/heartbeat'
 
 const SERVER_URL = 'http://127.0.0.1:3000'
 
@@ -16,6 +17,10 @@ export const workerApiService = (workerToken: string) => {
         },
     })
     return {
+        async heartbeat(): Promise<void> {
+            const request: WorkerMachineHealthcheckRequest = await heartbeat.getSystemInfo()
+            await client.post('/v1/worker-machines/heartbeat', request)
+        },
         async poll(queueName: QueueName): Promise<ApQueueJob | null> {
             try {
                 const request: PollJobRequest = {

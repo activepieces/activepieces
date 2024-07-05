@@ -49,12 +49,20 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     createdAt: string
 }>
 
+type IssuesReminderTemplateData = BaseEmailTemplateData<'issues-reminder', {
+    issuesUrl: string
+    issues: string
+    issuesCount: string
+    projectName: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
   | QuotaEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
+  | IssuesReminderTemplateData
 
 type SendArgs = {
     emails: string[]
