@@ -6,6 +6,7 @@ import { VariableService } from '../../src/lib/services/variable-service'
 const variableService = new VariableService({
     projectId: 'PROJECT_ID',
     engineToken: 'WORKER_TOKEN',
+    apiUrl:'http://127.0.0.1:3000',
 })
 
 const executionState = FlowExecutorContext.empty()
