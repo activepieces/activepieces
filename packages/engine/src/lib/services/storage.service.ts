@@ -64,7 +64,7 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
         },
 
         async delete(request: DeleteStoreEntryRequest): Promise<null> {
-            const url = buildUrl(request.key)
+            const url = buildUrl(apiUrl, request.key)
 
             try {
                 const response = await fetch(url, {
