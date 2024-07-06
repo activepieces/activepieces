@@ -33,13 +33,7 @@ export const redisMigrations = {
 }
 
 async function getJobsToMigrate(): Promise<(Job<ScheduledJobData> | undefined)[]> {
-    // TODO make the migration works for all queues instead of default one.
-    const result = []
-    for (const key of Object.keys(bullMqGroups)) {
-        const scheduledJobs = await bullMqGroups[key][QueueName.SCHEDULED].getJobs()
-        result.push(scheduledJobs.filter((job) => !isNil(job?.data) && job.data.schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION))
-    }
-    return result.flat()
+    return (await bullMqGroups[QueueName.SCHEDULED].getJobs()).filter((job) => !isNil(job?.data) && job.data.schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION)
 }
 
 async function migrateJob(job: Job<ScheduledJobData>): Promise<void> {
