@@ -39,9 +39,6 @@ export const sendMessageToQueue = createAction({
         Buffer.from(JSON.stringify(context.propsValue.data))
       );
 
-      await channel.close();
-      await connection.close();
-
       if (!result) {
         throw new Error('Failed to send message to exchange');
       }

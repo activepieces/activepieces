@@ -10,38 +10,39 @@ import { rabbitmqConnect } from '../common';
 import dayjs from 'dayjs';
 
 const polling: Polling<PiecePropValueSchema<typeof rabbitmqAuth>, {
-  queue: string
+  queue: string,
+  maxMessagesPerPoll: number,
 }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
-    let connection;
-    let channel: any;
+    const connection = await rabbitmqConnect(auth);
+    const channel = await connection.createChannel();
+    const messages = [];
+
     try {
-      connection = await rabbitmqConnect(auth);
-      channel = await connection.createChannel();
+      const queueInfo = await channel.checkQueue(propsValue.queue);
 
-      await channel.checkQueue(propsValue.queue);
+      if (queueInfo.messageCount === 0) {
+        return [];
+      }
 
-      const message = await new Promise((resolve, reject) => {
-        channel.consume(propsValue.queue, (msg: any) => {
-          if (msg) {
-            channel?.ack(msg);
-            resolve(JSON.parse(msg.content.toString()));
-          } else {
-            reject('No message.');
-          }
-        }, { noAck: false });
-      });
-
-      return [{ id: dayjs().toISOString(), data: message }];
+      for (let i = 0; i < propsValue.maxMessagesPerPoll; i++) {
+        const message = await channel.get(propsValue.queue);
+        if (!message) {
+          break;
+        }
+        messages.push({
+          id: dayjs().toISOString(),
+          data: JSON.parse(message.content.toString()),
+        });
+        channel.ack(message);
+      }
     } finally {
-      if (channel) {
-        await channel.close();
-      }
-      if (connection) {
-        await connection.close();
-      }
+      await channel.close();
+      await connection.close();
     }
+
+    return messages;
   },
 };
 
@@ -55,6 +56,12 @@ export const messageReceived = createTrigger({
       displayName: 'Queue',
       description: 'The name of the queue to listen to',
       required: true,
+    }),
+    maxMessagesPerPoll: Property.Number({
+      displayName: 'Max Messages Per Poll',
+      description: 'The maximum number of messages to fetch per poll',
+      required: true,
+      defaultValue: 50,
     }),
   },
   sampleData: {},
