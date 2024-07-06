@@ -50,7 +50,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SharedSystemProp.CODE_SANDBOX_TYPE]: CodeSandboxType.NO_OP,
     [AppSystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
     [AppSystemProp.DB_TYPE]: DatabaseType.POSTGRES,
-    [SharedSystemProp.EDITION]: ApEdition.COMMUNITY,
+    [AppSystemProp.EDITION]: ApEdition.COMMUNITY,
     [SharedSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '14',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
@@ -134,7 +134,7 @@ export const system = {
         return value
     },
     getEdition(): ApEdition {
-        return this.getOrThrow<ApEdition>(SharedSystemProp.EDITION)
+        return this.getOrThrow<ApEdition>(AppSystemProp.EDITION)
     },
     isWorker(): boolean {
         return [ContainerType.WORKER, ContainerType.WORKER_AND_APP].includes(

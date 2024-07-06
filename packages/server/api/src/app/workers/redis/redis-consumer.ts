@@ -1,26 +1,23 @@
 import { exceptionHandler, flowTimeoutSandbox, JobStatus, memoryLock, QueueName, triggerTimeoutSandbox } from '@activepieces/server-shared'
-import { apId, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { Job, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 import { createRedisClient } from '../../database/redis-connection'
 import { ConsumerManager } from '../consumer/consumer-manager'
-import { queueHelper } from '../queue/queue-manager'
 
-type ConsumerGroup = Record<string, Worker>
-const consumerGroups: Record<string, ConsumerGroup> = {}
+const consumerGroups: Record<string, Worker>  = {}
 
-const serverId = apId()
 
 export const redisConsumer: ConsumerManager = {
-    async poll(groupId, jobType) {
+    async poll(jobType, { token }) {
         let lock
         try {
-            lock = await memoryLock.acquire(`poll-${groupId}-${jobType}`, 5000)
-            const worker = await ensureWorkerExists(groupId, jobType)
+            lock = await memoryLock.acquire(`poll-${jobType}`, 5000)
+            const worker = await ensureWorkerExists(jobType)
             assertNotNullOrUndefined(worker, 'Queue not found')
             // The worker.getNextJob() method holds the connection until a job is available, but it can only be called once at a time.
             // To handle multiple workers, we are storing them in memory while waiting for a job to become available.
-            const job = await worker.getNextJob(serverId)
+            const job = await worker.getNextJob(token)
             if (isNil(job)) {
                 return null
             }
@@ -42,22 +39,23 @@ export const redisConsumer: ConsumerManager = {
             }
         }
     },
-    async update(groupId, { queueName, jobId, status, message }): Promise<void> {
-        const worker = await ensureWorkerExists(groupId, queueName)
+    async update({ queueName, jobId, status, message, token }): Promise<void> {
+        const worker = await ensureWorkerExists(queueName)
         const job = await Job.fromId(worker, jobId)
         assertNotNullOrUndefined(job, 'Job not found')
-
+        assertNotNullOrUndefined(token, 'Token not found')
+        
         switch (status) {
             case JobStatus.COMPLETED:
-                await job.moveToCompleted({}, serverId, false)
+                await job.moveToCompleted({}, token, false)
                 break
             case JobStatus.FAILED:
-                await job.moveToFailed(new Error(message), serverId, false)
+                await job.moveToFailed(new Error(message), token, false)
                 break
         }
     },
     async init(): Promise<void> {
-        const sharedConsumers = Object.values(QueueName).map((queueName) => ensureWorkerExists(null, queueName))
+        const sharedConsumers = Object.values(QueueName).map((queueName) => ensureWorkerExists(queueName))
         await Promise.all(sharedConsumers)
     },
     async close(): Promise<void> {
@@ -69,26 +67,21 @@ export const redisConsumer: ConsumerManager = {
 }
 
 
-async function ensureWorkerExists(groupId: string | null, queueName: QueueName): Promise<Worker> {
-    const key = groupId ?? 'default'
-    if (isNil(consumerGroups[key])) {
-        consumerGroups[key] = {}
-    }
-    if (!isNil(consumerGroups[key][queueName])) {
-        return consumerGroups[key][queueName]
+async function ensureWorkerExists( queueName: QueueName): Promise<Worker> {
+    if (!isNil(consumerGroups[queueName])) {
+        return consumerGroups[queueName]
     }
     const lockDuration = getLockDurationInMs(queueName)
-    const queueAlias = queueHelper.getQueueName(groupId, queueName)
-    consumerGroups[key][queueName] = new Worker(queueAlias, null, {
+    consumerGroups[queueName] = new Worker(queueName, null, {
         connection: createRedisClient(),
         lockDuration,
         maxStalledCount: 5,
         drainDelay: 5,
         stalledInterval: 30000,
     })
-    await consumerGroups[key][queueName].waitUntilReady()
-    await consumerGroups[key][queueName].startStalledCheckTimer()
-    return consumerGroups[key][queueName]
+    await consumerGroups[queueName].waitUntilReady()
+    await consumerGroups[queueName].startStalledCheckTimer()
+    return consumerGroups[queueName]
 }
 
 function getLockDurationInMs(queueName: QueueName): number {

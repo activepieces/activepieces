@@ -23,9 +23,9 @@ import {
 import dayjs from 'dayjs'
 import { engineRunner } from 'server-worker'
 import { Equal, FindOperator, ILike } from 'typeorm'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
-import { generateEngineToken } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -308,7 +308,7 @@ const engineValidateAuth = async (
         version: undefined,
     })
 
-    const engineToken = await generateEngineToken({
+    const engineToken = await accessTokenManager.generateEngineToken({
         projectId,
     })
     const engineResponse = await engineRunner.executeValidateAuth(engineToken, {

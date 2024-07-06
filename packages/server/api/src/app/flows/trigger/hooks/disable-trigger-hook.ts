@@ -13,9 +13,8 @@ import {
 } from '@activepieces/shared'
 import { EngineHelperResponse, EngineHelperTriggerResult, engineRunner, webhookUtils } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
-import {
-    generateEngineToken,
-} from '../../../helper/engine-helper'
+
+import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
 import { flowQueue } from '../../../workers/queue'
 import { triggerUtils } from './trigger-utils'
 
@@ -39,7 +38,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
     }
 
     try {
-        const engineToken = await generateEngineToken({
+        const engineToken = await accessTokenManager.generateEngineToken({
             projectId,
         })
         const result = await engineRunner.executeTrigger(engineToken, {
@@ -80,14 +79,14 @@ async function sideeffect(
         case TriggerStrategy.WEBHOOK: {
             const renewConfiguration = pieceTrigger.renewConfiguration
             if (renewConfiguration?.strategy === WebhookRenewStrategy.CRON) {
-                await flowQueue.removeRepeatingJob(null, {
+                await flowQueue.removeRepeatingJob({
                     id: flowVersion.id,
                 })
             }
             break
         }
         case TriggerStrategy.POLLING:
-            await flowQueue.removeRepeatingJob(null, {
+            await flowQueue.removeRepeatingJob({
                 id: flowVersion.id,
             })
             break

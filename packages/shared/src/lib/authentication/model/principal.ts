@@ -22,3 +22,10 @@ export type WorkerPrincipal = {
         type: WorkerMachineType
     }
 }
+
+export type EnginePrincipal = {
+    id: ApId
+    type: PrincipalType.ENGINE
+    queueToken: string | undefined
+    projectId: ProjectId   
+}

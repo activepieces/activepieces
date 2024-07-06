@@ -17,9 +17,9 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { engineRunner } from 'server-worker'
+import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { flagService } from '../flags/flag.service'
 import { flowService } from '../flows/flow/flow.service'
-import { generateEngineToken } from '../helper/engine-helper'
 import {
     getPiecePackage,
     pieceMetadataService,
@@ -142,7 +142,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 id: flowId,
                 versionId: flowVersionId,
             })
-            const engineToken = await generateEngineToken({
+            const engineToken = await accessTokenManager.generateEngineToken({
                 projectId,
             })
             const { result } = await engineRunner.executeProp(engineToken, {
