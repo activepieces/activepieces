@@ -1,7 +1,7 @@
 
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, networkUtls, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SharedSystemProp, SubmitPayloadsRequest, system, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, networkUtls, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SharedSystemProp, SubmitPayloadsRequest, system, UpdateJobRequest, WorkerSystemProps } from '@activepieces/server-shared'
+import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import axios, { isAxiosError } from 'axios'
 import { StatusCodes } from 'http-status-codes'
 import { heartbeat } from '../utils/heartbeat'
@@ -94,10 +94,6 @@ export const engineApiService = (engineToken: string) => {
             })).data
         },
         async checkTaskLimit(): Promise<void> {
-            const edition = system.getOrThrow(SharedSystemProp.EDITION)
-            if (edition === ApEdition.COMMUNITY) {
-                return
-            }
             try {
                 await client.get('/v1/engine/check-task-limit')
             }

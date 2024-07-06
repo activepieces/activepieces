@@ -1,5 +1,5 @@
 import { GetRunForWorkerRequest, logger, SharedSystemProp, system, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEnvironment, EngineHttpResponse, ErrorCode, ExecutionState, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, EngineHttpResponse, ErrorCode, ExecutionState, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -96,6 +96,10 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/check-task-limit', CheckTaskLimitParams, async (request) => {
+        const edition = system.getEdition()
+        if (edition === ApEdition.COMMUNITY) {
+            return {}
+        }
         const exceededLimit = await tasksLimit.exceededLimit({
             projectId: request.principal.projectId,
         })
