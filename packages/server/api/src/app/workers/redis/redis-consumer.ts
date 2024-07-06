@@ -1,5 +1,5 @@
 import { exceptionHandler, flowTimeoutSandbox, JobStatus, memoryLock, QueueName, triggerTimeoutSandbox } from '@activepieces/server-shared'
-import { apId, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { Job, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 import { createRedisClient } from '../../database/redis-connection'
@@ -7,10 +7,9 @@ import { ConsumerManager } from '../consumer/consumer-manager'
 
 const consumerGroups: Record<string, Worker>  = {}
 
-const serverId = apId()
 
 export const redisConsumer: ConsumerManager = {
-    async poll(jobType) {
+    async poll(jobType, { token }) {
         let lock
         try {
             lock = await memoryLock.acquire(`poll-${jobType}`, 5000)
@@ -18,7 +17,7 @@ export const redisConsumer: ConsumerManager = {
             assertNotNullOrUndefined(worker, 'Queue not found')
             // The worker.getNextJob() method holds the connection until a job is available, but it can only be called once at a time.
             // To handle multiple workers, we are storing them in memory while waiting for a job to become available.
-            const job = await worker.getNextJob(serverId)
+            const job = await worker.getNextJob(token)
             if (isNil(job)) {
                 return null
             }
@@ -40,17 +39,18 @@ export const redisConsumer: ConsumerManager = {
             }
         }
     },
-    async update({ queueName, jobId, status, message }): Promise<void> {
+    async update({ queueName, jobId, status, message, token }): Promise<void> {
         const worker = await ensureWorkerExists(queueName)
         const job = await Job.fromId(worker, jobId)
         assertNotNullOrUndefined(job, 'Job not found')
-
+        assertNotNullOrUndefined(token, 'Token not found')
+        
         switch (status) {
             case JobStatus.COMPLETED:
-                await job.moveToCompleted({}, serverId, false)
+                await job.moveToCompleted({}, token, false)
                 break
             case JobStatus.FAILED:
-                await job.moveToFailed(new Error(message), serverId, false)
+                await job.moveToFailed(new Error(message), token, false)
                 break
         }
     },

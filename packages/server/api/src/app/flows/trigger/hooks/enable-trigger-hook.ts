@@ -26,10 +26,8 @@ import {
     webhookUtils,
 } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
+import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
 import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
-import {
-    generateEngineToken,
-} from '../../../helper/engine-helper'
 import { flowQueue } from '../../../workers/queue'
 import { triggerUtils } from './trigger-utils'
 
@@ -69,7 +67,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         simulate,
     })
 
-    const engineToken = await generateEngineToken({
+    const engineToken = await accessTokenManager.generateEngineToken({
         projectId,
     })
 

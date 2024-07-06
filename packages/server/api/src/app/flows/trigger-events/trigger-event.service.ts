@@ -17,8 +17,8 @@ import {
 import dayjs from 'dayjs'
 import { engineRunner, webhookUtils } from 'server-worker'
 import { LessThan } from 'typeorm'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { repoFactory } from '../../core/db/repo-factory'
-import {  generateEngineToken } from '../../helper/engine-helper'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
@@ -70,7 +70,7 @@ export const triggerEventService = {
                     flowId: flow.id,
                     stepName: trigger.name,
                 })
-                const engineToken = await generateEngineToken({
+                const engineToken = await accessTokenManager.generateEngineToken({
                     projectId,
                 })
                 const { result: testResult } = await engineRunner.executeTrigger(engineToken, {

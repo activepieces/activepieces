@@ -9,7 +9,7 @@ import {
     ProjectId,
     StepRunResponse } from '@activepieces/shared'
 import { engineRunner } from 'server-worker'
-import { generateEngineToken } from '../../helper/engine-helper'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { flowVersionService } from '../flow-version/flow-version.service'
 
 export const stepRunService = {
@@ -32,7 +32,7 @@ export const stepRunService = {
                 },
             })
         }
-        const engineToken = await generateEngineToken({
+        const engineToken = await accessTokenManager.generateEngineToken({
             projectId,
         })
 
