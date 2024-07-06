@@ -36,7 +36,7 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
 
     const serverAdapter = new FastifyAdapter()
     createBullBoard({
-        queues: Object.values(bullMqGroups).map((group) => Object.values(group)).flat().map((queue) => new BullMQAdapter(queue)),
+        queues: Object.values(bullMqGroups).map((queue) => new BullMQAdapter(queue)),
         serverAdapter,
     })
     serverAdapter.setBasePath(`/api${QUEUE_BASE_PATH}`)
