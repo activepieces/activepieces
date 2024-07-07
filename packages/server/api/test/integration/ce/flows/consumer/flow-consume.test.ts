@@ -13,8 +13,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { flowJobExecutor } from 'server-worker'
+import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
-import { generateEngineToken } from '../../../../../src/app/helper/engine-helper'
 import { setupServer } from '../../../../../src/app/server'
 import {
     createMockFlow,
@@ -131,7 +131,7 @@ describe('flow execution', () => {
         })
         await databaseConnection().getRepository('flow_run').save([mockFlowRun])
 
-        const engineToken = await generateEngineToken({
+        const engineToken = await accessTokenManager.generateEngineToken({
             projectId: mockProject.id,
         })
         await flowJobExecutor.executeFlow({

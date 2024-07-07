@@ -34,7 +34,7 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
     app.post('/', installPieceParams, async (req, reply) => {
         const platformId = req.principal.platform.id
         if (flagService.isCloudPlatform(platformId)) {
-            await assertOnlyProjectScopeAllowedOnCloud(req.body.scope)
+            assertOnlyProjectScopeAllowedOnCloud(req.body.scope)
             await assertProjectAdminCanInstallPieceOnCloud(req.principal)
         }
         else {
@@ -71,9 +71,9 @@ const installPieceParams = {
     },
 }
 
-async function assertOnlyProjectScopeAllowedOnCloud(
+function assertOnlyProjectScopeAllowedOnCloud(
     scope: PieceScope,
-): Promise<void> {
+): void {
     if (scope !== PieceScope.PROJECT) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
