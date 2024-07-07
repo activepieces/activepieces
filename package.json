@@ -88,6 +88,7 @@
     "async-mutex": "0.4.0",
     "aws-sdk": "2.1642.0",
     "axios": "1.6.7",
+    "axios-retry": "4.4.1",
     "bcrypt": "5.1.1",
     "buffer": "6.0.3",
     "bullmq": "5.8.3",
