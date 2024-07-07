@@ -12,7 +12,7 @@ export const redisConsumer: ConsumerManager = {
     async poll(jobType, { token }) {
         let lock
         try {
-            lock = await memoryLock.acquire(`poll-${jobType}`, 5000)
+            lock = await memoryLock.acquire(`poll-${jobType}`, 15000)
             const worker = await ensureWorkerExists(jobType)
             assertNotNullOrUndefined(worker, 'Queue not found')
             // The worker.getNextJob() method holds the connection until a job is available, but it can only be called once at a time.

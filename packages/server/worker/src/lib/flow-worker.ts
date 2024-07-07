@@ -20,9 +20,6 @@ export const flowWorker = {
         }, 15000)
     },
     async start(): Promise<void> {
-        if (WORKER_CONCURRENCY === 0) {
-            return
-        }
         for (const queueName of Object.values(QueueName)) {
             for (let i = 0; i < WORKER_CONCURRENCY; i++) {
                 rejectedPromiseHandler(run(queueName))
