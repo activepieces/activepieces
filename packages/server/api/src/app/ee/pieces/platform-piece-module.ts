@@ -34,12 +34,12 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
     app.post('/', installPieceParams, async (req, reply) => {
         const platformId = req.principal.platform.id
         if (flagService.isCloudPlatform(platformId)) {
-            assertOnlyProjectScopeAllowedOnCloud(req.body.scope)
+            assertOneOfTheseScope(req.body.scope, [PieceScope.PROJECT])
             await assertProjectAdminCanInstallPieceOnCloud(req.principal)
         }
         else {
+            assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
             await platformMustBeOwnedByCurrentUser.call(app, req, reply)
-            assertProjectScopeNotAllowedForNonCloud(req.body.scope)
         }
         await pieceService.installPiece(
             platformId,
@@ -71,10 +71,11 @@ const installPieceParams = {
     },
 }
 
-function assertOnlyProjectScopeAllowedOnCloud(
+function assertOneOfTheseScope(
     scope: PieceScope,
+    allowedScopes: PieceScope[],
 ): void {
-    if (scope !== PieceScope.PROJECT) {
+    if (!allowedScopes.includes(scope)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {
@@ -97,15 +98,3 @@ async function assertProjectAdminCanInstallPieceOnCloud(
     }
 }
 
-function assertProjectScopeNotAllowedForNonCloud(
-    scope: PieceScope,
-): void {
-    if (scope === PieceScope.PROJECT) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENGINE_OPERATION_FAILURE,
-            params: {
-                message: 'Project scope is not allowed for user platform',
-            },
-        })
-    }
-}
