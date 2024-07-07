@@ -39,7 +39,7 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
         }
         else {
             await platformMustBeOwnedByCurrentUser.call(app, req, reply)
-            assertProjectScopeOnlyAllowedForUser(req.body.scope, req.principal)
+            assertProjectScopeNotAllowedForNonCloud(req.body.scope)
         }
         await pieceService.installPiece(
             platformId,
@@ -97,15 +97,14 @@ async function assertProjectAdminCanInstallPieceOnCloud(
     }
 }
 
-function assertProjectScopeOnlyAllowedForUser(
+function assertProjectScopeNotAllowedForNonCloud(
     scope: PieceScope,
-    principal: Principal,
 ): void {
-    if (scope === PieceScope.PROJECT && principal.type !== PrincipalType.USER) {
+    if (scope === PieceScope.PROJECT) {
         throw new ActivepiecesError({
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
             params: {
-                message: 'Project scope is only allowed for user token',
+                message: 'Project scope is not allowed for user platform',
             },
         })
     }
