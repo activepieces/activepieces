@@ -6,15 +6,19 @@ import {
     PieceScope,
     Principal,
     PrincipalType,
+    ProjectMemberRole,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     FastifyPluginCallbackTypebox,
-    Type } from '@fastify/type-provider-typebox'
+    Type,
+} from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { flagService } from '../../flags/flag.service'
 import { pieceService } from '../../pieces/piece-service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { getPrincipalRoleOrThrow } from '../authentication/rbac/rbac-middleware'
 
 export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
@@ -29,8 +33,14 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
 
     app.post('/', installPieceParams, async (req, reply) => {
         const platformId = req.principal.platform.id
-        await platformMustBeOwnedByCurrentUser.call(app, req, reply)
-        assertProjectScopeOnlyAllowedForUser(req.body.scope, req.principal)
+        if (flagService.isCloudPlatform(platformId)) {
+            await assertOnlyProjectScopeAllowedOnCloud(req.body.scope)
+            await assertProjectAdminCanInstallPieceOnCloud(req.principal)
+        }
+        else {
+            await platformMustBeOwnedByCurrentUser.call(app, req, reply)
+            assertProjectScopeOnlyAllowedForUser(req.body.scope, req.principal)
+        }
         await pieceService.installPiece(
             platformId,
             req.principal.projectId,
@@ -59,6 +69,32 @@ const installPieceParams = {
             [StatusCodes.CREATED]: Type.Object({}),
         },
     },
+}
+
+async function assertOnlyProjectScopeAllowedOnCloud(
+    scope: PieceScope,
+): Promise<void> {
+    if (scope !== PieceScope.PROJECT) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'Only project scope is allowed for cloud platform',
+            },
+        })
+    }
+}
+async function assertProjectAdminCanInstallPieceOnCloud(
+    principal: Principal,
+): Promise<void> {
+    const role = await getPrincipalRoleOrThrow(principal)
+    if (role !== ProjectMemberRole.ADMIN) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'Only platform admin can install a piece',
+            },
+        })
+    }
 }
 
 function assertProjectScopeOnlyAllowedForUser(
