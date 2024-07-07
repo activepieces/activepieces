@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises'
-import { fileExists, logger, PackageInfo, packageManager } from '@activepieces/server-shared'
+import { logger, PackageInfo, packageManager } from '@activepieces/server-shared'
 import { SourceCode } from '@activepieces/shared'
 
 const TS_CONFIG_CONTENT = `
