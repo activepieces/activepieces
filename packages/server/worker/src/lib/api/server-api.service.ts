@@ -2,7 +2,8 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, networkUtls, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
-import axios, { isAxiosError } from 'axios'
+import axios, { AxiosInstance, isAxiosError } from 'axios'
+import axiosRetry from 'axios-retry'
 import { StatusCodes } from 'http-status-codes'
 import { heartbeat } from '../utils/heartbeat'
 
@@ -12,12 +13,9 @@ const removeTrailingSlash = (url: string): string => {
 const apiUrl = removeTrailingSlash(networkUtls.getInternalApiUrl())
 
 export const workerApiService = (workerToken: string) => {
-    const client = axios.create({
-        baseURL: apiUrl,
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${workerToken}`,
-        },
+    const client = applyRetryPolicy({
+        baseUrl: apiUrl,
+        apiToken: workerToken,
     })
     return {
         async heartbeat(): Promise<void> {
@@ -61,13 +59,12 @@ export const workerApiService = (workerToken: string) => {
 }
 
 export const engineApiService = (engineToken: string) => {
-    const client = axios.create({
-        baseURL: apiUrl,
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${engineToken}`,
-        },
+
+    const client = applyRetryPolicy({
+        baseUrl: apiUrl,
+        apiToken: engineToken,
     })
+
     return {
         async getFile(fileId: string): Promise<Buffer> {
             const response = await client.get(`/v1/engine/files/${fileId}`, {
@@ -124,4 +121,26 @@ export const engineApiService = (engineToken: string) => {
             }
         },
     }
+}
+
+function applyRetryPolicy({ baseUrl, apiToken }: { baseUrl: string, apiToken: string }): AxiosInstance {
+    const client = axios.create({
+        baseURL: baseUrl,
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiToken}`,
+        },
+    })
+    axiosRetry(client, {
+        retries: 3, // Number of retries
+        retryDelay: (retryCount: number) => {
+            return retryCount * 1000 // Exponential back-off delay between retries
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        retryCondition: (error: any) => {
+            // Retry on specific conditions
+            return error?.response?.status && error?.response?.status === 502
+        },
+    })
+    return client
 }
