@@ -4,9 +4,8 @@ import {
 	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { gristAuth } from '../..';
-import { GristTableColumnsResponse, GristTableResponse, GristWorkspaceResponse } from './types';
+import { GristAPIClient } from './helpers';
 
 export const commonProps = {
 	workspace_id: Property.Dropdown({
@@ -24,17 +23,12 @@ export const commonProps = {
 
 			const authValue = auth as PiecePropValueSchema<typeof gristAuth>;
 
-			const response = await httpClient.sendRequest<GristWorkspaceResponse[]>({
-				method: HttpMethod.GET,
-				url: `https://${authValue.domain}/api/orgs/current/workspaces`,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: authValue.apiKey,
-				},
-			});
+			const client = new GristAPIClient({ domainUrl: authValue.domain, apiKey: authValue.apiKey });
+
+			const response = await client.listWorkspaces('current');
 
 			const options: DropdownOption<number>[] = [];
-			for (const workspace of response.body) {
+			for (const workspace of response) {
 				options.push({ label: workspace.name, value: workspace.id });
 			}
 
@@ -59,17 +53,12 @@ export const commonProps = {
 
 			const authValue = auth as PiecePropValueSchema<typeof gristAuth>;
 
-			const response = await httpClient.sendRequest<GristWorkspaceResponse>({
-				method: HttpMethod.GET,
-				url: `https://${authValue.domain}/api/workspaces/${workspace_id}`,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: authValue.apiKey,
-				},
-			});
+			const client = new GristAPIClient({ domainUrl: authValue.domain, apiKey: authValue.apiKey });
+
+			const response = await client.getWorkspace(workspace_id as unknown as number);
 
 			const options: DropdownOption<string>[] = [];
-			for (const document of response.body.docs) {
+			for (const document of response.docs) {
 				options.push({ label: document.name, value: document.id });
 			}
 
@@ -94,17 +83,12 @@ export const commonProps = {
 
 			const authValue = auth as PiecePropValueSchema<typeof gristAuth>;
 
-			const response = await httpClient.sendRequest<{ tables: GristTableResponse[] }>({
-				method: HttpMethod.GET,
-				url: `https://${authValue.domain}/api/docs/${document_id}/tables`,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: authValue.apiKey,
-				},
-			});
+			const client = new GristAPIClient({ domainUrl: authValue.domain, apiKey: authValue.apiKey });
+
+			const response = await client.listDocumentTables(document_id as unknown as string);
 
 			const options: DropdownOption<string>[] = [];
-			for (const table of response.body.tables) {
+			for (const table of response.tables) {
 				options.push({ label: table.id, value: table.id });
 			}
 
@@ -127,95 +111,110 @@ export const commonProps = {
 
 			const authValue = auth as PiecePropValueSchema<typeof gristAuth>;
 
-			const response = await httpClient.sendRequest<{ columns: GristTableColumnsResponse[] }>({
-				method: HttpMethod.GET,
-				url: `https://${authValue.domain}/api/docs/${document_id}/tables/${table_id}/columns`,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: authValue.apiKey,
-				},
-			});
+			const client = new GristAPIClient({ domainUrl: authValue.domain, apiKey: authValue.apiKey });
 
-			for (const column of response.body.columns) {
-				switch (column.fields.type) {
-					case 'Any':
-						fields[column.id] = Property.ShortText({
-							displayName: column.fields.label || column.id,
-							required: false,
-						});
-						break;
-					case 'Bool':
-						fields[column.id] = Property.Checkbox({
-							displayName: column.fields.label || column.id,
-							required: false,
-						});
-						break;
-					case 'Choice':
-					case 'ChoiceList':
-						let options = [];
-						try {
-							const optionsObject = JSON.parse(column.fields.widgetOptions);
-							options = optionsObject['choices'] as any[];
-						} catch (error) {
-							options = [];
-						}
+			const response = await client.listTableColumns(
+				document_id as unknown as string,
+				table_id as unknown as string,
+			);
 
-						const dropdownConfig = {
-							displayName: column.fields.label || column.id,
-							required: false,
-							options: {
-								disabled: false,
-								options: options.map((choice) => {
-									return {
-										label: choice,
-										value: choice,
-									};
-								}),
-							},
-						};
+			for (const column of response.columns) {
+				if (!column.fields.isFormula) {
+					switch (column.fields.type) {
+						case 'Any':
+							fields[column.id] = Property.ShortText({
+								displayName: column.fields.label || column.id,
+								required: false,
+							});
+							break;
+						case 'Attachments':
+							fields[column.id] = Property.Array({
+								displayName: column.fields.label || column.id,
+								description: `Use the **Upload Attachments to Document** action and provide the attachment ID from the response.`,
+								required: false,
+							});
+							break;
+						case 'Bool':
+							fields[column.id] = Property.Checkbox({
+								displayName: column.fields.label || column.id,
+								required: false,
+							});
+							break;
+						case 'Choice':
+						case 'ChoiceList':
+							let options = [];
+							try {
+								const optionsObject = JSON.parse(column.fields.widgetOptions);
+								options = optionsObject['choices'] as any[];
+							} catch (error) {
+								options = [];
+							}
 
-						fields[column.id] =
-							column.fields.type === 'Choice'
-								? Property.StaticDropdown(dropdownConfig)
-								: Property.StaticMultiSelectDropdown(dropdownConfig);
-						break;
-					case 'Date':
-						fields[column.id] = Property.DateTime({
-							displayName: column.fields.label || column.id,
-							required: false,
-						});
-						break;
-					case 'Int':
-					case 'Numerics':
-						fields[column.id] = Property.Number({
-							displayName: column.fields.label || column.id,
-							required: false,
-						});
-						break;
-					case 'Text':
-						fields[column.id] = Property.LongText({
-							displayName: column.fields.label || column.id,
-							required: false,
-						});
-						break;
-					default:
-						if (column.fields.type.startsWith('DateTime')) {
+							const dropdownConfig = {
+								displayName: column.fields.label || column.id,
+								required: false,
+								options: {
+									disabled: false,
+									options: options.map((choice) => {
+										return {
+											label: choice,
+											value: choice,
+										};
+									}),
+								},
+							};
+
+							fields[column.id] =
+								column.fields.type === 'Choice'
+									? Property.StaticDropdown(dropdownConfig)
+									: Property.StaticMultiSelectDropdown(dropdownConfig);
+							break;
+						case 'Date':
 							fields[column.id] = Property.DateTime({
 								displayName: column.fields.label || column.id,
 								required: false,
 							});
-						} else if (column.fields.type.startsWith('RefList')) {
-							fields[column.id] = Property.Array({
-								displayName: column.fields.label || column.id,
-								required: false,
-							});
-						} else if (column.fields.type.startsWith('Ref')) {
+							break;
+						case 'Int':
+						case 'Numeric':
 							fields[column.id] = Property.Number({
 								displayName: column.fields.label || column.id,
 								required: false,
 							});
-						}
-						break;
+							break;
+						case 'Text':
+							fields[column.id] = Property.LongText({
+								displayName: column.fields.label || column.id,
+								required: false,
+							});
+							break;
+						default:
+							if (column.fields.type.startsWith('DateTime')) {
+								fields[column.id] = Property.DateTime({
+									displayName: column.fields.label || column.id,
+									required: false,
+								});
+							} else if (column.fields.type.startsWith('RefList')) {
+								const refTable = column.fields.type.split(':')[1];
+								fields[column.id] = Property.Array({
+									displayName: column.fields.label || column.id,
+									description: refTable
+										? `Please provide the row ID from the reference table ${refTable}.`
+										: '',
+									required: false,
+								});
+							} else if (column.fields.type.startsWith('Ref')) {
+								const refTable = column.fields.type.split(':')[1];
+								fields[column.id] = Property.Number({
+									displayName: column.fields.label || column.id,
+									description: refTable
+										? `Please provide the row ID from the reference table ${refTable}.`
+										: '',
+									required: false,
+								});
+							}
+							break;
+					}
 				}
 			}
 

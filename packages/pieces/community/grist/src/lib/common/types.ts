@@ -1,3 +1,8 @@
+export type GristAPIClientOptions = {
+	domainUrl: string;
+	apiKey: string;
+};
+
 export type GristOrganizationResponse = {
 	name: string;
 	id: string;
@@ -30,7 +35,7 @@ export type GristTableColumnsResponse = {
 		type:
 			| 'Any'
 			| 'Text'
-			| 'Numerics'
+			| 'Numeric'
 			| 'Int'
 			| 'Bool'
 			| 'Date'
@@ -42,5 +47,27 @@ export type GristTableColumnsResponse = {
 			| 'Attachments';
 		label: string;
 		widgetOptions: string;
+		isFormula: boolean;
 	};
+};
+
+export type GristTableRecordResponse = {
+	id: number;
+	fields: Record<string, any>;
+};
+
+export type GristCreateRecordsRequest = {
+	records: Array<Omit<GristTableRecordResponse, 'id'>>;
+};
+
+export type GristUpdateRecordsRequest = {
+	records: Array<GristTableRecordResponse>;
+};
+
+export type GristCreateRecordsResponse = {
+	records: Array<{ id: number }>;
+};
+
+export type GristListRecordsResponse = {
+	records: Array<GristTableRecordResponse>;
 };
