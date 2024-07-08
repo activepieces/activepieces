@@ -70,13 +70,17 @@ export const gristSearchRecordAction = createAction({
 			apiKey: context.auth.apiKey,
 		});
 
-		const encodedQuery = qs.stringify({
-			filter: { [columnName]: [columnValue] },
-		});
+		const encodedQuery = encodeURIComponent(
+			JSON.stringify({
+				[columnName]: [columnValue],
+			}),
+		);
+
+		console.log(encodedQuery);
 
 		return await client.makeRequest(
 			HttpMethod.GET,
-			`/docs/${documentId}/tables/${tableId}/records?${encodedQuery}`,
+			`/docs/${documentId}/tables/${tableId}/records?filter=${encodedQuery}`,
 		);
 	},
 });

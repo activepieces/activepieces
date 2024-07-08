@@ -12,6 +12,7 @@ import { gristNewRecordTrigger } from './lib/triggers/new-record.trigger';
 import { gristUpdatedRecordTrigger } from './lib/triggers/updated-record.trigger';
 import { gristSearchRecordAction } from './lib/actions/search-record.action';
 import { GristAPIClient } from './lib/common/helpers';
+import { PieceCategory } from '@activepieces/shared';
 
 export const gristAuth = PieceAuth.CustomAuth({
 	required: true,
@@ -54,6 +55,8 @@ export const grist = createPiece({
 	auth: gristAuth,
 	minimumSupportedRelease: '0.20.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/grist.png',
+	description: 'open source spreadsheet',
+	categories: [PieceCategory.PRODUCTIVITY],
 	authors: ['kishanprmr'],
 	actions: [
 		gristCreateRecordAction,
