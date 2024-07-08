@@ -10,6 +10,7 @@ import { gristUploadAttachmentsToDocumnetAction } from './lib/actions/upload-att
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { gristNewRecordTrigger } from './lib/triggers/new-record.trigger';
 import { gristUpdatedRecordTrigger } from './lib/triggers/updated-record.trigger';
+import { gristSearchRecordAction } from './lib/actions/search-record.action';
 
 export const gristAuth = PieceAuth.CustomAuth({
 	required: true,
@@ -37,6 +38,7 @@ export const grist = createPiece({
 	authors: ['kishanprmr'],
 	actions: [
 		gristCreateRecordAction,
+		gristSearchRecordAction,
 		gristUpdateRecordAction,
 		gristUploadAttachmentsToDocumnetAction,
 		createCustomApiCallAction({
