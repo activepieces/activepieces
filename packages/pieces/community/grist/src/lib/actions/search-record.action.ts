@@ -44,7 +44,7 @@ export const gristSearchRecordAction = createAction({
 
 				const options: DropdownOption<string>[] = [];
 				for (const column of response.columns) {
-					options.push({ label: column.id, value: column.fields.label });
+					options.push({ value: column.id, label: column.fields.label });
 				}
 				return {
 					disabled: false,

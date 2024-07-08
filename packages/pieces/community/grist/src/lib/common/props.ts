@@ -244,7 +244,7 @@ export const commonProps = {
 			const options: DropdownOption<string>[] = [];
 			for (const column of response.columns) {
 				if (column.fields.type === 'Bool') {
-					options.push({ label: column.id, value: column.fields.label });
+					options.push({ value: column.id, label: column.fields.label });
 				}
 			}
 			return {

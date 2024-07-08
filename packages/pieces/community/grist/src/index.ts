@@ -11,12 +11,13 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { gristNewRecordTrigger } from './lib/triggers/new-record.trigger';
 import { gristUpdatedRecordTrigger } from './lib/triggers/updated-record.trigger';
 import { gristSearchRecordAction } from './lib/actions/search-record.action';
+import { GristAPIClient } from './lib/common/helpers';
 
 export const gristAuth = PieceAuth.CustomAuth({
 	required: true,
 	description: `
-	1.Log in to your Grist account.avigate to the account menu at the top right, and select **Profile Settings** to manage or create your API Key.
-	2.In the Domain URL field, enter the domain URL of your Grist instance.For example,if you have team site it will be "https://team.getgist.com".`,
+	Log in to your Grist account.avigate to the account menu at the top right, and select **Profile Settings** to manage or create your API Key.
+	In the **Domain URL** field, enter the domain URL of your Grist instance.For example,if you have team site it will be "https://team.getgist.com".`,
 	props: {
 		apiKey: PieceAuth.SecretText({
 			displayName: 'API Key',
@@ -27,6 +28,24 @@ export const gristAuth = PieceAuth.CustomAuth({
 			required: true,
 			defaultValue: 'https://docs.getgrist.com',
 		}),
+	},
+	validate: async ({ auth }) => {
+		try {
+			const authValue = auth as PiecePropValueSchema<typeof gristAuth>;
+
+			const client = new GristAPIClient({ domainUrl: authValue.domain, apiKey: authValue.apiKey });
+
+			await client.listWorkspaces('current');
+
+			return {
+				valid: true,
+			};
+		} catch (error) {
+			return {
+				valid: false,
+				error: 'Please provide valid API key and domain URL.',
+			};
+		}
 	},
 });
 
