@@ -178,8 +178,8 @@ export const emailService = {
 
         const issuesWithFormattedDate = issues.data.map((issue) => ({ 
             ...issue, 
-            created: dayjs(issue.created).format('MMM d, h:mm a'),
-            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM d, h:mm a'), 
+            created: dayjs(issue.created).format('MMM D, h:mm a'),
+            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'), 
         }))
 
         await emailSender.send({
