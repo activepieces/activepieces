@@ -34,18 +34,28 @@
       btnSize="small"
       i18n
     >
-      Add npm package
+      Add NPM Package
     </ap-button>
     }
 
     <ap-button
-      [loading]="testLoading"
+      [disabled]="disableTestCodeBtn$ | async | defaultFalse"
       btnStyle="flat"
       class="ap-ml-1"
       btnSize="small"
       (buttonClicked)="testCode()"
       i18n
-      >Test code
+      >
+      <div class="ap-flex ap-gap-2">
+        @if(disableTestCodeBtn$ | async | defaultFalse)
+        {
+          <div
+          class="spinner-border  ap-w-[16px] ap-h-[16px]"
+          role="status"
+        ></div>
+        }
+        {{testBtnText$ | async}}
+      </div>
     </ap-button>
     <ap-icon-button
       (click)="hide()"
@@ -194,11 +204,15 @@
                   class="ap-h-full"
                 ></ngx-codemirror>
               </form>
-              <div class="test-code-loading-container" *ngIf="testLoading">
-                <div>
-                  <ap-loading-icon [whiteLoader]="true"> </ap-loading-icon>
+              @if(testing$ | async)
+              {
+                <div class="test-code-loading-container" >
+                  <div>
+                    <ap-loading-icon [whiteLoader]="true"> </ap-loading-icon>
+                  </div>
                 </div>
-              </div>
+              }
+              
             </div>
           </div>
         </div>
