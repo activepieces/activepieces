@@ -89,3 +89,5 @@ export type GristCreateWebhookRequest = {
 export type GristCreateWebhookResponse = {
 	webhooks: Array<{ id: number }>;
 };
+
+export type GristWebhookPayload = Record<string, any>;

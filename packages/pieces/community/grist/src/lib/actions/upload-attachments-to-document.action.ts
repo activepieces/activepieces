@@ -42,7 +42,7 @@ export const gristUploadAttachmentsToDocumnetAction = createAction({
 
 		const response = await httpClient.sendRequest<Array<number>>({
 			method: HttpMethod.POST,
-			url: 'https://' + context.auth.domain + '/api' + `/docs/${documentId}/attachments`,
+			url: context.auth.domain + '/api' + `/docs/${documentId}/attachments`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: context.auth.apiKey,

@@ -221,4 +221,36 @@ export const commonProps = {
 			return fields;
 		},
 	}),
+	readiness_column: Property.Dropdown({
+		displayName: 'Readiness Column',
+		description: `A toggle (boolean) column which is True when the record is ready. The trigger will only be activated when that record becomes ready.Please follow [guideline](https://support.getgrist.com/integrators/#readiness-column) to create readiness column in table.`,
+		refreshers: ['document_id', 'table_id'],
+		required: false,
+		options: async ({ auth, document_id, table_id }) => {
+			if (!auth || !document_id || !table_id) {
+				return {
+					disabled: true,
+					placeholder: 'Please connect account and select document.',
+					options: [],
+				};
+			}
+
+			const authValue = auth as PiecePropValueSchema<typeof gristAuth>;
+
+			const client = new GristAPIClient({ domainUrl: authValue.domain, apiKey: authValue.apiKey });
+
+			const response = await client.listTableColumns(document_id as string, table_id as string);
+
+			const options: DropdownOption<string>[] = [];
+			for (const column of response.columns) {
+				if (column.fields.type === 'Bool') {
+					options.push({ label: column.id, value: column.fields.label });
+				}
+			}
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	}),
 };

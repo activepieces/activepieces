@@ -49,7 +49,7 @@ export class GristAPIClient {
 		}
 		const request: HttpRequest = {
 			method: method,
-			url: 'https://' + baseUrl + '/api' + resourceUri,
+			url: baseUrl + '/api' + resourceUri,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: this.#apiKey,

@@ -4,11 +4,11 @@ import { commonProps } from '../common/props';
 import { GristAPIClient } from '../common/helpers';
 import { GristWebhookPayload } from '../common/types';
 
-export const gristNewRecordTrigger = createTrigger({
+export const gristUpdatedRecordTrigger = createTrigger({
 	auth: gristAuth,
-	name: 'grist-new-record',
-	displayName: 'New Record',
-	description: 'Triggers when a new record is added to the table.',
+	name: 'grist-updated-record',
+	displayName: 'Updated Record',
+	description: 'Triggers when a record is updated in the table.',
 	props: {
 		workspace_id: commonProps.workspace_id,
 		document_id: commonProps.document_id,
@@ -33,7 +33,7 @@ export const gristNewRecordTrigger = createTrigger({
 					fields: {
 						url: context.webhookUrl,
 						enabled: true,
-						eventTypes: ['add'],
+						eventTypes: ['update'],
 						tableId,
 						isReadyColumn: readinessColumn,
 					},
@@ -41,11 +41,11 @@ export const gristNewRecordTrigger = createTrigger({
 			],
 		});
 
-		await context.store.put<number>('grist-new-record', response.webhooks[0].id);
+		await context.store.put<number>('grist-updated-record', response.webhooks[0].id);
 	},
 	async onDisable(context) {
 		const documentId = context.propsValue.document_id;
-		const webhookId = await context.store.get<number>('grist-new-record');
+		const webhookId = await context.store.get<number>('grist-updated-record');
 
 		if (webhookId != null) {
 			const client = new GristAPIClient({
