@@ -1,8 +1,7 @@
 import { mkdir } from 'fs/promises'
 import path from 'path'
-import { fileExists, logger, memoryLock, networkUtls, packageManager, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
+import { fileExists, logger, memoryLock, networkUtls, packageManager, SharedSystemProp, system, webhookSecretsUtils, WorkerSystemProps } from '@activepieces/server-shared'
 import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, isNil, PiecePackage, TriggerHookType } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { pieceManager } from '../../piece-manager'
 import { codeBuilder } from '../../utils/code-builder'
 import { engineInstaller } from '../../utils/engine-installer'
@@ -11,11 +10,11 @@ import { CodeArtifact, EngineHelperResponse, EngineHelperResult, EngineRunner, e
 import { pieceEngineUtil } from '../flow-enginer-util'
 import { EngineWorker } from './worker'
 
-const memoryLimit = Math.floor((Number(system.getOrThrow(SystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
+const memoryLimit = Math.floor((Number(system.getOrThrow(SharedSystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
 const sandboxPath = path.resolve('cache')
 const enginePath = path.join(sandboxPath, 'main.js')
 // TODO seperate this to a config file from flow worker concurrency as execute step is different operation
-const workerConcurrency = Math.max(5, system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10)
+const workerConcurrency = Math.max(5, system.getNumber(WorkerSystemProps.FLOW_WORKER_CONCURRENCY) ?? 10)
 let engineWorkers: EngineWorker
 
 export const threadEngineRunner: EngineRunner = {
@@ -29,7 +28,8 @@ export const threadEngineRunner: EngineRunner = {
         const input: ExecuteFlowOperation = {
             ...operation,
             engineToken,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
         }
 
         return execute(input, EngineOperationType.EXECUTE_FLOW)
@@ -55,7 +55,8 @@ export const threadEngineRunner: EngineRunner = {
             appWebhookUrl: await webhookUtils.getAppWebhookUrl({
                 appName: triggerPiece.pieceName,
             }),
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             webhookSecret: await webhookSecretsUtils.getWebhookSecret(lockedVersion),
             engineToken,
         }
@@ -77,7 +78,8 @@ export const threadEngineRunner: EngineRunner = {
         await prepareSandbox([lockedPiece], [])
         const input: ExecuteValidateAuthOperation = {
             ...operation,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
         return execute(input, EngineOperationType.EXECUTE_VALIDATE_AUTH)
@@ -116,7 +118,8 @@ export const threadEngineRunner: EngineRunner = {
             flowVersion: lockedFlowVersion,
             stepName: operation.stepName,
             projectId: operation.projectId,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
 
@@ -137,7 +140,8 @@ export const threadEngineRunner: EngineRunner = {
 
         const input: ExecutePropsOptions = {
             ...operation,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
         return execute(input, EngineOperationType.EXECUTE_PROPERTY)
@@ -202,16 +206,14 @@ async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[])
             path: sandboxPath,
         })
 
-        const installationTimestamp = dayjs().valueOf()
+        logger.info({
+            pieces,
+            sandboxPath,
+        }, 'Installing pieces in sandbox')
         await pieceManager.install({
             projectPath: sandboxPath,
             pieces,
         })
-        logger.info({
-            timeTook: dayjs().valueOf() - installationTimestamp,
-            pieces,
-            sandboxPath,
-        }, 'Installing pieces in sandbox')
 
         logger.info({
             path: sandboxPath,
@@ -240,13 +242,13 @@ async function prepareCode(artifact: CodeArtifact, sandboxPath: string): Promise
 
 
 function getEnvironmentVariables(): Record<string, string | undefined> {
-    const allowedEnvVariables = system.getList(SystemProp.SANDBOX_PROPAGATED_ENV_VARS)
+    const allowedEnvVariables = system.getList(SharedSystemProp.SANDBOX_PROPAGATED_ENV_VARS)
     const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
     return {
         ...propagatedEnvVars,
         NODE_OPTIONS: '--enable-source-maps',
-        AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
-        AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
+        AP_CODE_SANDBOX_TYPE: system.get(SharedSystemProp.CODE_SANDBOX_TYPE),
+        AP_PIECES_SOURCE: system.getOrThrow(SharedSystemProp.PIECES_SOURCE),
         AP_BASE_CODE_DIRECTORY: `${sandboxPath}/codes`,
     }
 }

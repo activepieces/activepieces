@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises'
-import { fileExists, logger, PackageInfo, packageManager } from '@activepieces/server-shared'
+import { logger, PackageInfo, packageManager } from '@activepieces/server-shared'
 import { SourceCode } from '@activepieces/shared'
 
 const TS_CONFIG_CONTENT = `
@@ -81,10 +81,6 @@ export const codeBuilder = {
 }
 
 const createBuildDirectory = async (path: string): Promise<void> => {
-    const fsExists = await fileExists(path)
-    if (fsExists) {
-        await fs.rm(path, { recursive: true })
-    }
     await fs.mkdir(path, { recursive: true })
 }
 
@@ -119,8 +115,8 @@ const compileCode = async ({
     path,
     code,
 }: CompileCodeParams): Promise<void> => {
-    await fs.writeFile(`${path}/tsconfig.json`, TS_CONFIG_CONTENT, 'utf8')
-    await fs.writeFile(`${path}/index.ts`, code, 'utf8')
+    await fs.writeFile(`${path}/tsconfig.json`, TS_CONFIG_CONTENT, { encoding: 'utf8', flag: 'w' })
+    await fs.writeFile(`${path}/index.ts`, code, { encoding: 'utf8', flag: 'w' })
 
     await packageManager.exec({
         path,

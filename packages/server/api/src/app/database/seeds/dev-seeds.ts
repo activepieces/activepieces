@@ -1,4 +1,4 @@
-import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { authenticationService } from '../../authentication/authentication-service'
 import { Provider } from '../../authentication/authentication-service/hooks/authentication-service-hooks'
@@ -8,18 +8,18 @@ import { databaseConnection } from '../database-connection'
 const DEV_DATA_SEEDED_FLAG = 'DEV_DATA_SEEDED'
 
 const currentEnvIsNotDev = (): boolean => {
-    const env = system.get(SystemProp.ENVIRONMENT)
+    const env = system.get(SharedSystemProp.ENVIRONMENT)
     return env !== ApEnvironment.DEVELOPMENT
 }
 
 const devDataAlreadySeeded = async (): Promise<boolean> => {
-    const flagRepo = databaseConnection.getRepository(FlagEntity)
+    const flagRepo = databaseConnection().getRepository(FlagEntity)
     const devSeedsFlag = await flagRepo.findOneBy({ id: DEV_DATA_SEEDED_FLAG })
     return devSeedsFlag?.value === true
 }
 
 const setDevDataSeededFlag = async (): Promise<void> => {
-    const flagRepo = databaseConnection.getRepository(FlagEntity)
+    const flagRepo = databaseConnection().getRepository(FlagEntity)
 
     await flagRepo.save({
         id: DEV_DATA_SEEDED_FLAG,

@@ -3,10 +3,11 @@ import { variableService } from '../../services/variable-service'
 import { FlowExecutorContext } from './flow-execution-context'
 
 export const testExecutionContext = {
-    async stateFromFlowVersion({ flowVersion, excludedStepName, projectId, engineToken }: {
+    async stateFromFlowVersion({ flowVersion, excludedStepName, projectId, engineToken, apiUrl }: {
         flowVersion: FlowVersion
         excludedStepName?: string
         projectId: string
+        apiUrl: string
         engineToken: string
     }): Promise<FlowExecutorContext> {
         const flowSteps = flowHelper.getAllSteps(flowVersion.trigger)
@@ -27,6 +28,7 @@ export const testExecutionContext = {
                     break
                 case ActionType.LOOP_ON_ITEMS: {
                     const { resolvedInput } = await variableService({
+                        apiUrl,
                         projectId,
                         engineToken,
                     }).resolve<{ items: unknown[] }>({

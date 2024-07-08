@@ -82,6 +82,12 @@ export async function findPieceDirectoryInSource(pieceName: string): Promise<str
 }
 
 export async function findAllPieces(): Promise<PieceMetadata[]> {
+    const paths = await findAllDistPaths()
+    const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
+    return pieces.filter((p): p is PieceMetadata => p !== null).sort(byDisplayNameIgnoreCase)
+}
+
+async function findAllDistPaths(): Promise<string[]> {
     const baseDir = resolve(cwd(), 'dist', 'packages')
     const standardPiecesPath = resolve(baseDir, 'pieces')
     const enterprisePiecesPath = resolve(baseDir, 'ee', 'pieces')
@@ -89,8 +95,7 @@ export async function findAllPieces(): Promise<PieceMetadata[]> {
         ...await traverseFolder(standardPiecesPath),
         ...await traverseFolder(enterprisePiecesPath)
     ]
-    const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
-    return pieces.filter((p): p is PieceMetadata => p !== null).sort(byDisplayNameIgnoreCase)
+    return paths
 }
 
 async function traverseFolder(folderPath: string): Promise<string[]> {

@@ -23,10 +23,11 @@ export class VariableService {
 
     private engineToken: string
     private projectId: string
-
-    constructor(data: { engineToken: string, projectId: string }) {
+    private apiUrl: string
+    constructor(data: { engineToken: string, projectId: string, apiUrl: string }) {
         this.engineToken = data.engineToken
         this.projectId = data.projectId
+        this.apiUrl = data.apiUrl
     }
 
     private async resolveInput(
@@ -75,7 +76,7 @@ export class VariableService {
         // Replace connection name with something that doesn't contain - or _, otherwise evalInScope would break
         const newPath = this.cleanPath(path, connectionName)
 
-        const connection = await createConnectionService({ engineToken: this.engineToken, projectId: this.projectId }).obtain(connectionName)
+        const connection = await createConnectionService({ engineToken: this.engineToken, projectId: this.projectId, apiUrl: this.apiUrl }).obtain(connectionName)
         if (newPath.length === 0) {
             return connection
         }
@@ -233,6 +234,7 @@ export class VariableService {
             // TODO remove the hard coding part
             if (property.type === PropertyType.FILE && isApFilePath(value)) {
                 processedInput[key] = await handleAPFile({
+                    apiUrl: this.apiUrl,
                     path: value.trim(),
                     engineToken: this.engineToken,
                 })
@@ -266,4 +268,4 @@ export class VariableService {
 
 }
 
-export const variableService = ({ projectId, engineToken }: { projectId: string, engineToken: string }) => new VariableService({ projectId, engineToken })
+export const variableService = ({ projectId, engineToken, apiUrl }: { projectId: string, engineToken: string, apiUrl: string }) => new VariableService({ projectId, engineToken, apiUrl })

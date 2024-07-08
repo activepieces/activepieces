@@ -10,10 +10,9 @@ import { ApId, ScheduleOptions } from '@activepieces/shared'
 
 export type QueueManager = {
     init(): Promise<void>
-    add<JT extends JobType>(params: AddParams<JT>): Promise<void>
-    removeRepeatingJob(params: RemoveParams): Promise<void>
+    add<JT extends JobType>( params: AddParams<JT>): Promise<void>
+    removeRepeatingJob( params: RemoveParams): Promise<void>
 }
-
 
 type RemoveParams = {
     id: ApId

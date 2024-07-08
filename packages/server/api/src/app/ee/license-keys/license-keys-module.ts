@@ -1,4 +1,4 @@
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { systemJobsSchedule } from '../../helper/system-jobs'
@@ -30,6 +30,6 @@ async function licenseKeyJobHandler(): Promise<void> {
     }
     await licenseKeysService.verifyKeyAndApplyLimits({
         platformId: platform.id,
-        license: system.get<string>(SystemProp.LICENSE_KEY),
+        license: system.get<string>(AppSystemProp.LICENSE_KEY),
     })
 }

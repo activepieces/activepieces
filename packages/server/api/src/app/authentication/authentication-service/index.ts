@@ -1,4 +1,4 @@
-import { cryptoUtils, logger, system, SystemProp } from '@activepieces/server-shared'
+import { cryptoUtils, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -235,7 +235,7 @@ async function saveNewsLetterSubscriber(user: User): Promise<void> {
     (!isNil(user.platformId) &&
       !flagService.isCloudPlatform(user.platformId)) ||
     !user.newsLetter
-    const environment = system.get(SystemProp.ENVIRONMENT)
+    const environment = system.get(SharedSystemProp.ENVIRONMENT)
     if (
         isPlatformUserOrNotSubscribed ||
     environment !== ApEnvironment.PRODUCTION

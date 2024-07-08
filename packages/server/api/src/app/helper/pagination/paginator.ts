@@ -1,4 +1,4 @@
-import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, DatabaseType, system } from '@activepieces/server-shared'
 import {
     Brackets,
     EntitySchema,
@@ -130,7 +130,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
         where: WhereExpressionBuilder,
         cursors: CursorParam,
     ): void {
-        const dbType = system.get(SystemProp.DB_TYPE)
+        const dbType = system.get(AppSystemProp.DB_TYPE)
         const operator = this.getOperator()
         let queryString: string
 

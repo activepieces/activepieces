@@ -1,4 +1,3 @@
-import { EncryptedObject } from '@activepieces/server-shared'
 import {
     AppConnection,
     AppConnectionStatus,
@@ -10,6 +9,7 @@ import {
     BaseColumnSchemaPart,
     JSONB_COLUMN_TYPE,
 } from '../database/database-common'
+import { EncryptedObject } from '../helper/encryption'
 
 export type AppConnectionSchema = Omit<AppConnection, 'value'> & {
     project: Project

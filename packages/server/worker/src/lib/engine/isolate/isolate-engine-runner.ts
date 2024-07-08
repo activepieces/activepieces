@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises'
-import { encryptUtils, logger, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
+import { hashUtils, logger, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
 import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
@@ -14,7 +14,8 @@ export const isolateEngineRunner: EngineRunner = {
         const input: ExecuteFlowOperation = {
             ...operation,
             engineToken,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
         }
         const sandbox = await prepareFlowSandbox(engineToken, operation.runEnvironment, operation.flowVersion)
         return execute(EngineOperationType.EXECUTE_FLOW, sandbox, input)
@@ -61,7 +62,8 @@ export const isolateEngineRunner: EngineRunner = {
             appWebhookUrl: await webhookUtils.getAppWebhookUrl({
                 appName: triggerPiece.pieceName,
             }),
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             webhookSecret: await webhookSecretsUtils.getWebhookSecret(lockedVersion),
             engineToken,
         }
@@ -79,7 +81,8 @@ export const isolateEngineRunner: EngineRunner = {
 
         const input: ExecutePropsOptions = {
             ...operation,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
 
@@ -96,7 +99,8 @@ export const isolateEngineRunner: EngineRunner = {
         })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
         return execute(EngineOperationType.EXECUTE_VALIDATE_AUTH, sandbox, input)
@@ -123,7 +127,8 @@ export const isolateEngineRunner: EngineRunner = {
             flowVersion: lockedFlowVersion,
             stepName: operation.stepName,
             projectId: operation.projectId,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
 
@@ -197,7 +202,7 @@ async function getSandboxForAction(
                 type: SandBoxCacheType.CODE,
                 flowId,
                 name: action.name,
-                sourceCodeHash: encryptUtils.hashObject(action.settings.sourceCode),
+                sourceCodeHash: hashUtils.hashObject(action.settings.sourceCode),
                 codeSteps: [
                     {
                         name: action.name,

@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { commonProperties } from './database-connection'
@@ -52,7 +52,7 @@ import { AddUserInvitationSqlite1717943564437 } from './migration/sqlite/1717943
 import { AddWorkerMachineSqlite1720100928449 } from './migration/sqlite/1720100928449-AddWorkerMachineSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
-    const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
+    const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
     return path.resolve(path.join(apConfigDirectoryPath, 'database.sqlite'))
 }
@@ -62,7 +62,7 @@ const getSqliteDatabaseInMemory = (): string => {
 }
 
 const getSqliteDatabase = (): string => {
-    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
         return getSqliteDatabaseInMemory()
@@ -127,7 +127,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
 }
 
 const getMigrationConfig = (): MigrationConfig => {
-    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
         return {}

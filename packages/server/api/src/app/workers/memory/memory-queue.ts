@@ -71,7 +71,7 @@ type FlowWithRenewWebhook = {
 }
 
 async function addDelayedRun(): Promise<void> {
-    const flowRuns = await flowRunRepo.findBy({
+    const flowRuns = await flowRunRepo().findBy({
         status: FlowRunStatus.PAUSED,
     })
     flowRuns.forEach((flowRun) => {
