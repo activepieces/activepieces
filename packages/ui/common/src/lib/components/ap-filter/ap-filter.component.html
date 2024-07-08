@@ -1,0 +1,42 @@
+<div class="ap-w-full ap-flex ap-flex-row ap-items-center ap-gap-2">
+    @for (filter of filters; track filter) {
+    @if (this.selectedFilters.includes(filter.name)) {
+    <mat-form-field class="!ap-min-w-[15.625rem] ap-items-center" appearance="outline">
+        <mat-label>{{ filter.label }}</mat-label>
+        @switch (filter.type) {
+        @case ("text") {
+        <input matInput type="text" class="ap-p-2 ap-rounded-lg ap-border-solid ap-border-dividers ap-border"
+            [formControl]="filter.formControl" />
+        }
+        @case ("select") {
+        <mat-select [formControl]="filter.formControl">
+            @if(filter.searchControl) {
+            <ap-dropdown-search-control [searchControl]="filter.searchControl"></ap-dropdown-search-control>
+            }
+            @if(filter.allValues | async; as allValues ){
+            <mat-option i18n selectAll [allValues]="filter.allValues">
+                All
+            </mat-option>
+            }
+            @if(filter.options) {
+            @for(option of filter.options | async; track option) {
+            <mat-option [value]="option[filter.optionValueKey!]">
+                {{ option[filter.optionLabelKey!] }}
+            </mat-option>
+            }
+            }
+        </mat-select>
+        }
+        }
+    </mat-form-field>
+    }
+    }
+    <div class="ap-flex ap-items-center ap-gap-2 ap-mb-4">
+        <ap-button btnColor="basic" btnSize="large" [matMenuTriggerFor]="newFlowMenu">+ Add Filter</ap-button>
+        <mat-menu #newFlowMenu="matMenu" xPosition="before">
+            <button mat-menu-item *ngFor="let filter of availableFilters" (click)="onAddFilter(filter)">
+                {{ filter }}
+            </button>
+        </mat-menu>
+    </div>
+</div>
