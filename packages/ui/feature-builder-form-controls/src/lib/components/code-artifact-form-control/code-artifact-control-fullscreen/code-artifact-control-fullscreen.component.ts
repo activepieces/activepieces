@@ -113,13 +113,13 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     this.showGenerateCode$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COPILOT
     );
-    this.allowNpmPackages$ = this.flagService.isFlagEnabled(ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP);
+    this.allowNpmPackages$ = this.flagService
+    .isFlagEnabled(ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP);
     const testCodeBtnState$ = combineLatest({
       isSaving: this.store.select(BuilderSelectors.selectIsSaving),
       isTesting: this.testing$.asObservable()
     });
     this.disableTestCodeBtn$= testCodeBtnState$.pipe(map(({ isSaving, isTesting }) => isSaving || isTesting));
-
     this.testBtnText$ = testCodeBtnState$.pipe(map(({ isSaving, isTesting }) => {
       if(isTesting)
         {
@@ -229,7 +229,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
 
   getConsoleResult(codeTestExecutionResult: StepRunResponse) {
     if (codeTestExecutionResult.standardError) {
-      return `${codeTestExecutionResult.standardOutput} \n---------error-------\n ${codeTestExecutionResult.standardError}`;
+      return `${codeTestExecutionResult.standardOutput}\n---------error-------\n${this.tryParsingError(codeTestExecutionResult.standardError)}`;
     }
     return codeTestExecutionResult.standardOutput;
   }
@@ -240,5 +240,20 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
     this.snackbar.open($localize`Copied to clipboard`);
+  }
+  tryParsingError(errorText:string)
+  {
+    try{
+      const errorObj = JSON.parse(errorText);
+      const { message,stack } = errorObj;
+      return `${message}\n\nStack:\n ${stack}
+      `;
+    }
+    catch(ex)
+    {
+      console.error(ex);
+      return errorText;
+    }
+    
   }
 }
