@@ -4,7 +4,7 @@ import { CodeArtifact } from '../../../engine-runner'
 import { sandboxCachePool } from '../files/sandbox-cache-pool'
 import { IsolateSandbox } from '../isolate-sandbox'
 import { sandboxManager } from '../sandbox-manager'
-import { SandBoxCacheType, TypedProvisionCacheInfo } from './sandbox-cache-key'
+import { TypedProvisionCacheInfo } from './sandbox-cache-key'
 
 export const sandboxProvisioner = {
     async provision({
@@ -59,11 +59,10 @@ export const sandboxProvisioner = {
     },
 }
 
-type ProvisionParams<T extends SandBoxCacheType = SandBoxCacheType> =
-  TypedProvisionCacheInfo<T> & {
-      pieces?: PiecePackage[]
-      codeSteps?: CodeArtifact[]
-  }
+type ProvisionParams = TypedProvisionCacheInfo & {
+    pieces?: PiecePackage[]
+    codeSteps?: CodeArtifact[]
+}
 
 type ReleaseParams = {
     sandbox: IsolateSandbox

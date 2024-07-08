@@ -1,7 +1,7 @@
 import { logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment, isNil } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
-import { extractProvisionCacheKey, ProvisionCacheInfo, SandBoxCacheType } from '../provisioner/sandbox-cache-key'
+import { extractProvisionCacheKey, SandBoxCacheType, TypedProvisionCacheInfo } from '../provisioner/sandbox-cache-key'
 import { CachedSandbox } from './cached-sandbox'
 
 const CACHED_SANDBOX_LIMIT = 1000
@@ -10,7 +10,7 @@ const cachedSandboxes = new Map<string, CachedSandbox>()
 const lock: Mutex = new Mutex()
 
 const sandboxKeyCachePool = {
-    async findOrCreate(cacheInfo: ProvisionCacheInfo): Promise<CachedSandbox> {
+    async findOrCreate(cacheInfo: TypedProvisionCacheInfo): Promise<CachedSandbox> {
         logger.debug(cacheInfo, '[SandboxCachePool#get]')
 
         const key = extractProvisionCacheKey(cacheInfo)
@@ -39,7 +39,7 @@ const sandboxKeyCachePool = {
 }
 
 const sandboxNoCachePool = {
-    async findOrCreate(_cacheInfo: ProvisionCacheInfo): Promise<CachedSandbox> {
+    async findOrCreate(_cacheInfo: TypedProvisionCacheInfo): Promise<CachedSandbox> {
         return sandboxKeyCachePool.findOrCreate({
             type: SandBoxCacheType.NONE,
         })
