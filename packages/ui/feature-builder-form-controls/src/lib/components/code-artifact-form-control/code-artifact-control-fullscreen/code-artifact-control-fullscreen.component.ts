@@ -72,13 +72,13 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   consoleResultEditoroptions = {
     theme: 'lucario',
     lineWrapping: true,
-    readOnly: 'nocursor',
+    readOnly: true,
     mode: 'shell',
   };
   outputResultEditorOptions = {
     theme: 'lucario',
     lineWrapping: true,
-    readOnly: 'nocursor',
+    readOnly: true,
     mode: 'javascript',
   };
   testLoading = false;
