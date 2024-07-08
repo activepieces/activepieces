@@ -87,6 +87,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   >;
   generateCodeEnabled$: Observable<boolean>;
   showGenerateCode$: Observable<boolean>;
+  allowNpmPackages$: Observable<boolean>;
   constructor(
     private formBuilder: UntypedFormBuilder,
     private codeService: CodeService,
@@ -112,6 +113,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     this.showGenerateCode$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COPILOT
     );
+    this.allowNpmPackages$ = this.flagService.isFlagEnabled(ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP);
   }
 
   focusEditor(editor: { focus: () => void }) {
