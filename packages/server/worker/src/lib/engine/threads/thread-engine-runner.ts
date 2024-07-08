@@ -2,7 +2,6 @@ import { mkdir } from 'fs/promises'
 import path from 'path'
 import { fileExists, logger, memoryLock, networkUtls, packageManager, SharedSystemProp, system, webhookSecretsUtils, WorkerSystemProps } from '@activepieces/server-shared'
 import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, isNil, PiecePackage, TriggerHookType } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { pieceManager } from '../../piece-manager'
 import { codeBuilder } from '../../utils/code-builder'
 import { engineInstaller } from '../../utils/engine-installer'
@@ -207,16 +206,14 @@ async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[])
             path: sandboxPath,
         })
 
-        const installationTimestamp = dayjs().valueOf()
+        logger.info({
+            pieces,
+            sandboxPath,
+        }, 'Installing pieces in sandbox')
         await pieceManager.install({
             projectPath: sandboxPath,
             pieces,
         })
-        logger.info({
-            timeTook: dayjs().valueOf() - installationTimestamp,
-            pieces,
-            sandboxPath,
-        }, 'Installing pieces in sandbox')
 
         logger.info({
             path: sandboxPath,
