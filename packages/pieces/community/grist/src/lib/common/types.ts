@@ -71,3 +71,21 @@ export type GristCreateRecordsResponse = {
 export type GristListRecordsResponse = {
 	records: Array<GristTableRecordResponse>;
 };
+
+export type GristCreateWebhookRequest = {
+	webhooks: Array<{
+		fields: {
+			name?: string;
+			memo?: string;
+			url: string;
+			enabled: boolean;
+			eventTypes: Array<string>;
+			isReadyColumn?: string;
+			tableId: string;
+		};
+	}>;
+};
+
+export type GristCreateWebhookResponse = {
+	webhooks: Array<{ id: number }>;
+};

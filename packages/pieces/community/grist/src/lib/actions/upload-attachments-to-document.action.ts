@@ -51,10 +51,13 @@ export const gristUploadAttachmentsToDocumnetAction = createAction({
 			body: formData,
 		});
 
-		const attachmentMetadata = await client.listDocumentAttachments(documentId, {
-			filter: `{ "id": [${response.body}] }`,
-		});
+		const attachmentId = response.body[0];
 
-		return attachmentMetadata.records[0];
+		const attachmentMetadata = await client.getDocumentAttachmentMetadata(documentId, attachmentId);
+
+		return {
+			id: attachmentId,
+			fields: attachmentMetadata,
+		};
 	},
 });

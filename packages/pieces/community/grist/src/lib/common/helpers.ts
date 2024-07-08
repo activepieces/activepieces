@@ -3,6 +3,8 @@ import {
 	GristAPIClientOptions,
 	GristCreateRecordsRequest,
 	GristCreateRecordsResponse,
+	GristCreateWebhookRequest,
+	GristCreateWebhookResponse,
 	GristListRecordsResponse,
 	GristTableColumnsResponse,
 	GristTableResponse,
@@ -108,6 +110,15 @@ export class GristAPIClient {
 		);
 	}
 
+	async listRecordsFromTable(docId: string, tableId: string, query: Query) {
+		return await this.makeRequest<GristListRecordsResponse>(
+			HttpMethod.GET,
+			`/docs/${docId}/tables/${tableId}/records`,
+			undefined,
+			query,
+		);
+	}
+
 	async listDocumentAttachments(docId: string, query: Query) {
 		return await this.makeRequest<GristListRecordsResponse>(
 			HttpMethod.GET,
@@ -115,6 +126,27 @@ export class GristAPIClient {
 			{},
 			query,
 		);
+	}
+
+	async getDocumentAttachmentMetadata(docId: string, attachmetId: number) {
+		return await this.makeRequest<GristListRecordsResponse>(
+			HttpMethod.GET,
+			`/docs/${docId}/attachments/${attachmetId}`,
+		);
+	}
+
+	async createDocumentWebhook(docId: string, request: GristCreateWebhookRequest) {
+		return await this.makeRequest<GristCreateWebhookResponse>(
+			HttpMethod.POST,
+			`/docs/${docId}/webhooks`,
+			undefined,
+			{},
+			request,
+		);
+	}
+
+	async deleteDocumentWebhook(docId: string, webhookId: number) {
+		return await this.makeRequest(HttpMethod.DELETE, `/docs/${docId}/webhooks/${webhookId}`);
 	}
 }
 
