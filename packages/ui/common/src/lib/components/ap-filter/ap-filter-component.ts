@@ -28,7 +28,7 @@ import { SelectAllDirective } from '../../directives/select-all.directive';
   ],
 })
 export class ApFilterComponent implements OnInit {
-  @Input() filters: FilterConfig[];
+  @Input() filters: FilterConfig<any, any>[];
   @Input() selectedFilters: string[];
   @Output() selectedFiltersChange = new EventEmitter<string[]>();
 

@@ -1,14 +1,14 @@
 import { FormControl } from '@angular/forms';
 import { Observable } from 'rxjs';
 
-export interface FilterConfig {
+export interface FilterConfig<T, D> {
   type: 'text' | 'select';
   name: string;
   label: string;
   formControl: FormControl;
   searchControl?: FormControl;
-  options?: Observable<any[]>; // TODO add type
-  allValues?: any; // TODO add type
+  options?: Observable<T[]>;
+  allValues?: Observable<D[] | undefined>;
   optionLabelKey?: string;
   optionValueKey?: string;
 }

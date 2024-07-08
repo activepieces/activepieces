@@ -79,7 +79,10 @@ export class ConnectionsTableComponent extends TableCore implements OnInit {
   });
   statusFilterControl: FormControl<string | null> = new FormControl(null);
   selectedFilters: string[] = [];
-  filters: FilterConfig[];
+  filters: FilterConfig<
+    PieceMetadataModelSummary | { label: string; value: AppConnectionStatus },
+    string
+  >[];
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,

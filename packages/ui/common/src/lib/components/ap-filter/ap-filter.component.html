@@ -14,7 +14,7 @@
             <ap-dropdown-search-control [searchControl]="filter.searchControl"></ap-dropdown-search-control>
             }
             @if(filter.allValues | async; as allValues ){
-            <mat-option i18n selectAll [allValues]="filter.allValues">
+            <mat-option i18n selectAll [allValues]="allValues">
                 All
             </mat-option>
             }
