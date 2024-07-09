@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { fileExists, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
+import { PackageInfo, fileExists, memoryLock, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
     PackageType,
@@ -16,22 +16,24 @@ export class RegistryPieceManager extends PieceManager {
     }: InstallParams): Promise<void> {
         await this.savePackageArchivesToDiskIfNotCached(pieces)
 
-        const enrichedDependencies = await Promise.all(
-            pieces.map(async (piece) => {
-                const pkg = this.pieceToDependency(piece)
-                const fExists = await fileExists(join(projectPath, 'node_modules', pkg.alias))
-                return { pkg, fExists }
-            }),
-        )
-        const dependencies = enrichedDependencies.filter(({ fExists }) => !fExists).map(({ pkg }) => pkg)
-
-        if (dependencies.length === 0) {
+        const dependenciesToInstall = await this.filterExistingPieces(projectPath, pieces)
+        if (dependenciesToInstall.length === 0) {
             return
         }
-        await packageManager.add({
-            path: projectPath,
-            dependencies,
-        })
+
+        const pnpmAddLock = await memoryLock.acquire('pnpm-add-lock')
+        try {
+            const dependencies = await this.filterExistingPieces(projectPath, pieces)
+            if (dependencies.length === 0) {
+                return
+            }
+            await packageManager.add({
+                path: projectPath,
+                dependencies,
+            })
+        } finally {
+            await pnpmAddLock.release()
+        }
     }
 
     private async savePackageArchivesToDiskIfNotCached(
@@ -80,8 +82,19 @@ export class RegistryPieceManager extends PieceManager {
         })
 
         await threadSafeMkdir(dirname(archivePath))
-        
+
         await writeFile(archivePath, piece.archive as Buffer)
+    }
+
+    private async filterExistingPieces(projectPath: string, pieces: PiecePackage[]): Promise<PackageInfo[]> {
+        const enrichedDependencies = await Promise.all(
+            pieces.map(async (piece) => {
+                const pkg = this.pieceToDependency(piece)
+                const fExists = await fileExists(join(projectPath, 'node_modules', pkg.alias))
+                return { pkg, fExists }
+            }),
+        )
+        return enrichedDependencies.filter(({ fExists }) => !fExists).map(({ pkg }) => pkg)
     }
 }
 
