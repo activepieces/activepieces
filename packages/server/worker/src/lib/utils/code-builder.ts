@@ -132,12 +132,11 @@ const handleCompilationError = async ({
         INVALID_ARTIFACT_TEMPLATE_PATH,
         'utf8',
     )
-
-    const errorMessage = `Compilation Error:\n${JSON.stringify(error) ?? 'error building code'}`
+    const errorMessage = `Compilation Error: ${JSON.stringify(error['stdout']) ?? JSON.stringify(error) ?? 'error compiling code'}`
 
     const invalidArtifactContent = invalidArtifactTemplate.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
-        JSON.stringify(errorMessage),
+        errorMessage,
     )
 
     await fs.writeFile(`${codePath}/index.js`, invalidArtifactContent, 'utf8')
