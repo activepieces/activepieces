@@ -16,6 +16,7 @@ type AssignCacheParams = {
     globalCachePath: string
     globalCodesPath: string
     flowVersionId?: string
+    customPiecesPath: string | undefined
 }
 
 const getIsolateExecutableName = (): string => {
@@ -31,7 +32,8 @@ export class IsolateSandbox {
 
     protected static readonly nodeExecutablePath = process.execPath
     private static readonly isolateExecutableName = getIsolateExecutableName()
-    private static readonly sandboxglobalCachePath = '/root'
+    private static readonly sandboxGlobalCachePath = '/root'
+    private static readonly sandboxCustomPiecesCachePath = '/node_modules'
     private static readonly sandboxCodesCachePath = '/codes'
 
     public readonly boxId: number
@@ -40,6 +42,7 @@ export class IsolateSandbox {
     private _globalCachePath?: string
     private _globalCodesPath?: string
     private _flowVersionId?: string
+    private _customPiecesPath?: string
 
     public constructor(params: SandboxCtorParams) {
         this.boxId = params.boxId
@@ -82,7 +85,7 @@ export class IsolateSandbox {
                 '--run',
                 ...propagatedEnvVars,
                 IsolateSandbox.nodeExecutablePath,
-                `${IsolateSandbox.sandboxglobalCachePath}/main.js`,
+                `${IsolateSandbox.sandboxGlobalCachePath}/main.js`,
                 operationType,
             ].join(' ')
 
@@ -131,6 +134,7 @@ export class IsolateSandbox {
         globalCachePath,
         globalCodesPath,
         flowVersionId,
+        customPiecesPath,
     }: AssignCacheParams): Promise<void> {
         logger.debug(
             { boxId: this.boxId, cacheKey, globalCachePath, globalCodesPath, flowVersionId },
@@ -139,6 +143,7 @@ export class IsolateSandbox {
         this._cacheKey = cacheKey
         this._globalCachePath = globalCachePath
         this._globalCodesPath = globalCodesPath
+        this._customPiecesPath = customPiecesPath
         this._flowVersionId = flowVersionId
     }
 
@@ -212,8 +217,11 @@ export class IsolateSandbox {
         const dirsToBind = [
             '--dir=/usr/bin/',
             `--dir=/etc/=${etcDir}`,
-            `--dir=${IsolateSandbox.sandboxglobalCachePath}=${path.resolve(globalCachePath)}`,
+            `--dir=${IsolateSandbox.sandboxGlobalCachePath}=${path.resolve(globalCachePath)}`,
         ]
+        if (this._customPiecesPath) {
+            dirsToBind.push(`--dir=${IsolateSandbox.sandboxCustomPiecesCachePath}=${path.resolve(this._customPiecesPath, 'node_modules')}`)
+        }
         if (this._flowVersionId) {
             dirsToBind.push(`--dir=${path.join(IsolateSandbox.sandboxCodesCachePath, this._flowVersionId)}=${path.resolve(globalCodesCachePath, this._flowVersionId)}`)
         }

@@ -74,22 +74,16 @@ export const packageManager = {
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {
-        const lock = await memoryLock.acquire(`pnpm-init-${path}`)
-        try {
-            const fExists = await fileExists(fsPath.join(path, 'package.json'))
-            if (fExists) {
-                return {
-                    stdout: 'N/A',
-                    stderr: 'N/A',
-                }
+        const fExists = await fileExists(fsPath.join(path, 'package.json'))
+        if (fExists) {
+            return {
+                stdout: 'N/A',
+                stderr: 'N/A',
             }
-            // It must be awaited so it only releases the lock after the command is done
-            const result = await runCommand(path, 'init')
-            return result
         }
-        finally {
-            await lock.release()
-        }
+        // It must be awaited so it only releases the lock after the command is done
+        const result = await runCommand(path, 'init')
+        return result
     },
 
     async exec({ path, command }: ExecParams): Promise<PackageManagerOutput> {

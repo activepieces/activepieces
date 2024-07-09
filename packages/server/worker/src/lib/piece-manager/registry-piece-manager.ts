@@ -1,6 +1,6 @@
-import { mkdir, writeFile } from 'node:fs/promises'
+import { writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { fileExists, packageManager } from '@activepieces/server-shared'
+import { fileExists, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
     PackageType,
@@ -79,7 +79,8 @@ export class RegistryPieceManager extends PieceManager {
             archivePath: PACKAGE_ARCHIVE_PATH,
         })
 
-        await mkdir(dirname(archivePath), { recursive: true })
+        await threadSafeMkdir(dirname(archivePath))
+        
         await writeFile(archivePath, piece.archive as Buffer)
     }
 }
