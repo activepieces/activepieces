@@ -14,7 +14,6 @@ export const PACKAGE_ARCHIVE_PATH = resolve(
 
 export abstract class PieceManager {
     async install({ projectPath, pieces }: InstallParams): Promise<void> {
-        const lock = await memoryLock.acquire(`pnpm-install-${projectPath}`)
         try {
             if (isEmpty(pieces)) {
                 return
@@ -42,9 +41,6 @@ export abstract class PieceManager {
             })
 
             throw enrichedError
-        }
-        finally {
-            await lock.release()
         }
     }
 

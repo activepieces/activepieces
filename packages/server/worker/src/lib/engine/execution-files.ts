@@ -38,7 +38,7 @@ export const executionFiles = {
         const officialPieces = pieces.filter(f => f.pieceType === PieceType.OFFICIAL)
         if (officialPieces.length > 0) {
             logger.info({
-                pieces,
+                pieces: officialPieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
                 globalCachePath,
             }, 'Installing pieces in sandbox')
             await pieceManager.install({
@@ -51,7 +51,7 @@ export const executionFiles = {
         if (customPieces.length > 0) {
             await threadSafeMkdir(customPiecesPath)
             logger.info({
-                customPieces,
+                customPieces: customPieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
                 customPiecesPath,
             }, 'Installing custom pieces in sandbox')
             await pieceManager.install({
