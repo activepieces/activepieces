@@ -9,8 +9,8 @@
       <app-dictionary-form-control [formControl]="form.controls.input" [stepMetaDataForMentions]="(stepMetaDataForMentions$ | async )|| []"></app-dictionary-form-control>
     </div>
     <div>
-      <div class="ap-mb-2 ap-flex ap-justify-between ap-items-center">
-        Code
+      <div class="ap-mb-2 ap-flex ap-justify-end ap-items-center">
+        
         <ng-container *ngIf="showGenerateCode$ | async as showCode">
           <ap-button btnStyle="stroked" btnSize="medium" (buttonClicked)="openCodeWriterDialog()"
             [disabled]="(generateCodeEnabled$ | async) === false"
