@@ -1,5 +1,14 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
+import {
+  createCustomApiCallAction,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
+import {
+  createPiece,
+  PieceAuth,
+  PiecePropValueSchema,
+  Property,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { triggers } from './lib/triggers';
 
@@ -21,7 +30,7 @@ const markdownPropertyDescription = `
 export type FormBricksAuthType = {
   appUrl: string;
   apiKey: string;
-}
+};
 
 export const formBricksAuth = PieceAuth.CustomAuth({
   required: true,
@@ -37,13 +46,28 @@ export const formBricksAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-  validate: async () => {
-    return {
-      valid: true
+  validate: async ({ auth }) => {
+    try {
+      const authValue = auth as PiecePropValueSchema<typeof formBricksAuth>;
+
+      await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `${authValue.appUrl}/api/v1/management/me`,
+        headers: {
+          'x-api-key': authValue.apiKey,
+        },
+      });
+      return {
+        valid: true,
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        error: 'Please provide correct APP URL and API key.',
+      };
     }
   },
 });
-
 
 export const formbricks = createPiece({
   displayName: 'Formbricks',
@@ -52,13 +76,13 @@ export const formbricks = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/formbricks.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
-  authors: ["kanarelo", "kishanprmr", "MoShizzle", "abuaboud"],
+  authors: ['kanarelo', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     createCustomApiCallAction({
       auth: formBricksAuth,
       authMapping: async (auth) => {
         return {
-          'x-Api-Key': (auth as FormBricksAuthType).apiKey,
+          'x-api-key': (auth as FormBricksAuthType).apiKey,
         };
       },
       baseUrl: (auth) => `${(auth as FormBricksAuthType).appUrl}/api/v1`,
