@@ -1,4 +1,5 @@
 import {
+  PiecePropValueSchema,
   Property,
   TriggerStrategy,
   createTrigger,
@@ -8,7 +9,7 @@ import {
   HttpRequest,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { FormBricksAuthType, formBricksAuth } from '../..';
+import { formBricksAuth } from '../..';
 
 export const formBricksRegisterTrigger = ({
   name,
@@ -44,11 +45,13 @@ export const formBricksRegisterTrigger = ({
             };
           }
 
+          const authValue = auth as PiecePropValueSchema<typeof formBricksAuth>;
+
           const response = await httpClient.sendRequest<{ data: Survey[] }>({
             method: HttpMethod.GET,
-            url: `${(auth as FormBricksAuthType).appUrl}/api/v1/management/surveys`,
+            url: `${authValue.appUrl}/api/v1/management/surveys`,
             headers: {
-              'x-Api-Key': auth as unknown as string,
+              'x-api-key': authValue.apiKey,
             },
           });
 
@@ -84,7 +87,7 @@ export const formBricksRegisterTrigger = ({
           surveyIds: context.propsValue.survey_id ?? [],
         },
         headers: {
-          'x-Api-Key': context.auth as unknown as string,
+          'x-api-key': context.auth.apiKey as string,
         },
       });
       await context.store.put<WebhookInformation>(
@@ -96,12 +99,12 @@ export const formBricksRegisterTrigger = ({
       const webhook = await context.store.get<WebhookInformation>(
         `formbricks_${name}_trigger`
       );
-      if (webhook != null) {
+      if (webhook?.data.id != null) {
         const request: HttpRequest = {
           method: HttpMethod.DELETE,
-          url: `${context.auth.appUrl}/api/v1/webhooks/${webhook.webhookId}`,
+          url: `${context.auth.appUrl}/api/v1/webhooks/${webhook.data.id}`,
           headers: {
-            'x-Api-Key': context.auth as unknown as string,
+            'x-api-key': context.auth.apiKey as string,
           },
         };
         await httpClient.sendRequest(request);
@@ -112,30 +115,21 @@ export const formBricksRegisterTrigger = ({
     },
   });
 
-interface WebhookInformation {
-  webhookId: string;
-  event: string;
-  data: {
-    id: string;
-    createdAt: string;
-    updatedAt: string;
-    surveyId: string;
-    finished: boolean;
-    data: Record<string, string>;
-    meta: Record<string, unknown>;
-    personAttributes: Record<string, string>;
-    person: {
-      id: string;
-      attributes: Record<string, string>;
-      createdAt: string;
-      updatedAt: string;
-    };
-    notes: [];
-    tags: [];
-  };
-}
-
 interface Survey {
   id: string;
   name: string;
+}
+
+interface WebhookInformation {
+  data: {
+    id: string;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
+    url: string;
+    source: string;
+    environmentId: string;
+    triggers: Array<string>;
+    surveyIds: Array<string>;
+  };
 }
