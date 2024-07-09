@@ -56,6 +56,8 @@ export class ApFilterComponent implements OnInit {
     this.selectedFilters = this.filters
       .map(({ queryParam }) =>
         this.activatedRoute.snapshot.queryParamMap.get(queryParam)
+          ? queryParam
+          : null
       )
       .filter((query): query is string => query !== null);
   }
