@@ -1,4 +1,8 @@
-import { Property, Validators, createAction } from '@activepieces/pieces-framework';
+import {
+  Property,
+  Validators,
+  createAction,
+} from '@activepieces/pieces-framework';
 
 export const split = createAction({
   description: 'Split a text by a delimiter',

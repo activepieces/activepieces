@@ -257,6 +257,9 @@
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
       ],
+      "@activepieces/piece-grist": [
+        "packages/pieces/community/grist/src/index.ts"
+      ],
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
       ],
