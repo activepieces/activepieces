@@ -42,6 +42,7 @@ export const externalTokenExtractor = {
                 externalFirstName: payload.firstName,
                 externalLastName: payload.lastName,
                 role: payload?.role ?? ProjectMemberRole.EDITOR,
+                tasks: payload?.tasks,
                 pieces: {
                     filterType: payload?.pieces?.filterType ?? PiecesFilterType.NONE,
                     tags: payload?.pieces?.tags ?? [],
@@ -118,7 +119,7 @@ export type ExternalPrincipal = {
         filterType: PiecesFilterType
         tags: string[]
     }
-    tasks: number
+    tasks?: number
 }
 
 type GetSigningKeyParams = {

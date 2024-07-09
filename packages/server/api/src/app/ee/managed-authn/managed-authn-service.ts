@@ -8,8 +8,8 @@ import {
     PlatformRole,
     PrincipalType,
     Project,
-    User,
     spreadIfDefined,
+    User,
 } from '@activepieces/shared'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { platformService } from '../../platform/platform.service'
@@ -65,7 +65,7 @@ const updateProjectLimits = async (
     projectId: string,
     piecesTags: string[],
     piecesFilterType: PiecesFilterType,
-    tasks: number
+    tasks: number | undefined,
 ): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,

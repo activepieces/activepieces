@@ -17,6 +17,10 @@ export const fileExists = async (path: string): Promise<boolean> => {
 }
 
 export async function threadSafeMkdir(path: string): Promise<void> {
+    const fExists = await fileExists(path)
+    if (fExists) {
+        return
+    }
     const lock = await memoryLock.acquire(`mkdir-${path}`)
     try {
         await mkdir(path, { recursive: true })
