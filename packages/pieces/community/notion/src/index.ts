@@ -6,13 +6,14 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { appendToPage } from './lib/action/append-to-page';
-import { createDatabaseItem } from './lib/action/create-database-item';
-import { createPage } from './lib/action/create-page';
-import { updateDatabaseItem } from './lib/action/update-database-item';
+import { appendToPage } from './lib/actions/append-to-page';
+import { createDatabaseItem } from './lib/actions/create-database-item';
+import { createPage } from './lib/actions/create-page';
+import { updateDatabaseItem } from './lib/actions/update-database-item';
 import { newDatabaseItem } from './lib/triggers/new-database-item';
 import { updatedDatabaseItem } from './lib/triggers/updated-database-item';
-import { findDatabaseItem } from './lib/action/find-item';
+import { findDatabaseItem } from './lib/actions/find-item';
+import { getPageOrBlockChildren } from './lib/actions/get-page-or-block-children';
 
 export const notionAuth = PieceAuth.OAuth2({
   authUrl: 'https://api.notion.com/v1/oauth/authorize',
@@ -37,6 +38,7 @@ export const notion = createPiece({
     'MoShizzle',
     'khaledmashaly',
     'abuaboud',
+    'AdamSelene',
   ],
   auth: notionAuth,
   actions: [
@@ -45,6 +47,7 @@ export const notion = createPiece({
     findDatabaseItem,
     createPage,
     appendToPage,
+    getPageOrBlockChildren,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.notion.com/v1',
       auth: notionAuth,
