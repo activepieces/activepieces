@@ -130,6 +130,7 @@ export class ConnectionsTableComponent extends TableCore implements OnInit {
         name: 'By Name',
         label: 'Filter by Name',
         formControl: this.connectionNameFilterControl,
+        queryParam: CONNECTION_NAME_QUERY_PARAM,
       },
       {
         type: 'select',
@@ -137,22 +138,25 @@ export class ConnectionsTableComponent extends TableCore implements OnInit {
         label: 'Filter by Piece',
         formControl: this.pieceNameFilterControl,
         searchControl: this.searchControl,
-        options: this.pieces$,
-        allValues: this.allPieces.asObservable(),
+        options$: this.pieces$,
+        allValues$: this.allPieces.asObservable(),
         optionLabelKey: 'displayName',
         optionValueKey: 'name',
+        queryParam: PIECE_NAME_QUERY_PARAM,
       },
       {
         type: 'select',
         name: 'By Status',
         label: 'Filter by Status',
         formControl: this.statusFilterControl,
-        options: of([
+        options$: of([
           { label: 'Active', value: AppConnectionStatus.ACTIVE },
           { label: 'Inactive', value: AppConnectionStatus.ERROR },
         ]),
+        allValues$: of([AppConnectionStatus.ACTIVE, AppConnectionStatus.ERROR]),
         optionLabelKey: 'label',
         optionValueKey: 'value',
+        queryParam: CONNECTION_STATUS_QUERY_PARAM,
       },
     ];
   }
@@ -190,10 +194,6 @@ export class ConnectionsTableComponent extends TableCore implements OnInit {
       this.connectionService,
       this.refreshTableForReruns$.asObservable().pipe(startWith(true))
     );
-  }
-
-  onSelectedFiltersChange(newSelectedFilters: string[]) {
-    this.selectedFilters = newSelectedFilters;
   }
 
   deleteConnection(connection: AppConnection) {

@@ -5,8 +5,7 @@
         (buttonClicked)="openNewConnectionDialog()" btnSize="medium" btnColor="primary" i18n>+ New
         Connection</ap-button>
     </ap-page-title>
-    <ap-filter [filters]="filters" [selectedFilters]="selectedFilters"
-      (selectedFiltersChange)="onSelectedFiltersChange($event)"></ap-filter>
+    <ap-filter [filters]="filters"></ap-filter>
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Connections" matSort i18n-aria-label>
         <ng-container matColumnDef="app">

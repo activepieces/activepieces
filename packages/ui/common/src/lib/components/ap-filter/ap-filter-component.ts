@@ -1,10 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
   Input,
   OnInit,
-  Output,
 } from '@angular/core';
 import { FilterConfig } from '../../models/filter-config.interface';
 import { UiCommonModule } from '../../ui-common.module';
@@ -13,6 +11,7 @@ import { DropdownSearchControlComponent } from '../dropdown-search-control/dropd
 import { Observable, of } from 'rxjs';
 import { MatSelect } from '@angular/material/select';
 import { SelectAllDirective } from '../../directives/select-all.directive';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'ap-filter',
@@ -29,33 +28,41 @@ import { SelectAllDirective } from '../../directives/select-all.directive';
 })
 export class ApFilterComponent implements OnInit {
   @Input() filters: FilterConfig<any, any>[];
-  @Input() selectedFilters: string[];
-  @Output() selectedFiltersChange = new EventEmitter<string[]>();
 
-  availableFilters: string[] = [];
+  availableFilters: {
+    queryParam: string;
+    name: string;
+  }[] = [];
+  selectedFilters: string[] = [];
+
+  constructor(private activatedRoute: ActivatedRoute) {}
 
   ngOnInit() {
-    this.availableFilters = this.filters.map((filter) => filter.name);
+    this.availableFilters = this.filters.map(({ queryParam, name }) => ({
+      queryParam,
+      name,
+    }));
     this.filters = this.filters.map((filter) => ({
       ...filter,
       allValues:
-        filter.allValues instanceof Observable
-          ? filter.allValues
-          : of(filter.allValues),
+        filter.allValues$ instanceof Observable
+          ? filter.allValues$
+          : of(filter.allValues$),
       options:
-        filter.options instanceof Observable
-          ? filter.options
-          : of(filter.options || []),
+        filter.options$ instanceof Observable
+          ? filter.options$
+          : of(filter.options$ || []),
     }));
+    this.selectedFilters = this.filters
+      .map(({ queryParam }) =>
+        this.activatedRoute.snapshot.queryParamMap.get(queryParam)
+      )
+      .filter((query): query is string => query !== null);
   }
 
   onAddFilter(filter: string) {
-    let newSelectedFilters: string[];
-    if (this.selectedFilters.includes(filter)) {
-      newSelectedFilters = this.selectedFilters.filter((f) => filter !== f);
-    } else {
-      newSelectedFilters = [...this.selectedFilters, filter];
-    }
-    this.selectedFiltersChange.emit(newSelectedFilters);
+    this.selectedFilters = this.selectedFilters.includes(filter)
+      ? this.selectedFilters.filter((f) => f !== filter)
+      : [...this.selectedFilters, filter];
   }
 }

@@ -5,10 +5,11 @@ export interface FilterConfig<T, D> {
   type: 'text' | 'select';
   name: string;
   label: string;
+  queryParam: string;
   formControl: FormControl;
   searchControl?: FormControl;
-  options?: Observable<T[]>;
-  allValues?: Observable<D[] | undefined>;
+  options$?: Observable<T[]>;
+  allValues$?: Observable<D[] | undefined>;
   optionLabelKey?: string;
   optionValueKey?: string;
 }
