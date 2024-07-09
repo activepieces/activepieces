@@ -66,7 +66,7 @@
   </div>
 
   <div class="modal-body ap-flex-grow" >
-    <div class="ap-flex code-height-auto code-container" >
+    <div class="ap-flex code-height-auto code-container ap-bg-header" >
       @if(allowNpmPackages$ | async) {
       <div class="ap-p-2">
         <div class="ap-p-2">
@@ -80,15 +80,15 @@
               "
               (click)="selectFile(SelectedFileInFullscreenCodeEditor.CONTENT)"
             >
-              <div>
+              <div class="ap-flex ap-gap-2 ap-items-center">
                 <svg-icon
-                  class="code-file-icon"
-                  [svgStyle]="{ width: '16px', height: '16px' }"
-                  src="/assets/img/custom/files/js.svg"
+                  [svgStyle]="{ width: '20px', height: '20px' }"
+                  src="/assets/img/custom/files/ts.svg"
                 >
                 </svg-icon>
+                <div >index.ts</div>
               </div>
-              <div class="ap-ml-2">index.ts</div>
+        
             </div>
            
             <div
@@ -98,15 +98,15 @@
               "
               (click)="selectFile(SelectedFileInFullscreenCodeEditor.PACKAGE)"
             >
-              <div>
+              <div class="ap-flex ap-gap-2 ap-items-center">
                 <svg-icon
-                  class="code-file-icon"
-                  [svgStyle]="{ width: '16px', height: '16px' }"
+                  [svgStyle]="{ width: '20px', height: '20px' }"
                   src="/assets/img/custom/files/package.svg"
                 >
                 </svg-icon>
+                <div >package.json</div>
               </div>
-              <div class="ap-ml-2">package.json</div>
+        
             </div>
 
           </div>
@@ -144,7 +144,7 @@
       <div class="ap-min-w-[10px] ap-h-full ap-bg-header   ap-cursor-col-resize ap-flex ap-items-center ap-justify-center ap-group" appResize [leftElement]="editorContainer" [rightElement]="outputContainer" [containerElement]="mainContainer">
         <div class="knob group-hover:ap-bg-black group-active:ap-bg-black"></div>
       </div>
-      <div class="flex-item" #outputContainer>
+      <div class="flex-item ap-bg-white" #outputContainer>
         <div class="console-size code-height-auto ap-h-full">
           <div class="ap-flex ap-flex-col ap-h-full">
             <mat-tab-group
