@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises'
-import { logger, PackageInfo, packageManager } from '@activepieces/server-shared'
-import { SourceCode } from '@activepieces/shared'
-
+import path from 'node:path'
+import { fileExists, logger, memoryLock, PackageInfo, packageManager } from '@activepieces/server-shared'
+import { FlowVersionState } from '@activepieces/shared'
+import { CodeArtifact } from '../engine/engine-runner'
 const TS_CONFIG_CONTENT = `
 {
     "extends": "@tsconfig/node18/tsconfig.json",
@@ -29,32 +30,30 @@ const INVALID_ARTIFACT_TEMPLATE_PATH =
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
 export const codeBuilder = {
-    buildPath({
-        sourceCodeId,
-        flowVersionId,
-        buildPath,
-    }: BuildPathParams): string {
-        return `${buildPath}/codes/${flowVersionId}/${sourceCodeId}`
+    getCodesFolder({ codesFolderPath, flowVersionId }: { codesFolderPath: string, flowVersionId: string }): string {
+        return path.join(codesFolderPath, flowVersionId)
     },
     async processCodeStep({
-        sourceCode,
-        sourceCodeId,
-        flowVersionId,
-        buildPath,
+        artifact,
+        codesFolderPath,
     }: ProcessCodeStepParams): Promise<void> {
-        const codePath = codeBuilder.buildPath({
-            sourceCodeId,
-            flowVersionId,
-            buildPath,
-        })
+        const { sourceCode, flowVersionId, name } = artifact
+        const flowVersionPath = codeBuilder.getCodesFolder({ codesFolderPath, flowVersionId })
+        const codePath = path.join(flowVersionPath, name)
         logger.debug({
-            name: 'CodeBuilder#processCodeStep',
+            message: 'CodeBuilder#processCodeStep',
             sourceCode,
-            sourceCodeId,
+            name,
             codePath,
         })
 
+        const lock = await memoryLock.acquire(`code-builder-${flowVersionId}-${name}`)
         try {
+            const indexPath = path.join(codePath, 'index.js')
+            const fExists = await fileExists(indexPath)
+            if (fExists && artifact.flowVersionState === FlowVersionState.LOCKED) {
+                return
+            }
             const { code, packageJson } = sourceCode
 
             await createBuildDirectory(codePath)
@@ -76,6 +75,9 @@ export const codeBuilder = {
                 codePath,
                 error: error as Record<string, string | undefined>,
             })
+        }
+        finally {
+            await lock.release()
         }
     },
 }
@@ -143,17 +145,10 @@ const handleCompilationError = async ({
     await fs.writeFile(`${codePath}/index.js`, invalidArtifactContent, 'utf8')
 }
 
-type BuildPathParams = {
-    sourceCodeId: string
-    flowVersionId: string
-    buildPath: string
-}
 
 type ProcessCodeStepParams = {
-    sourceCode: SourceCode
-    sourceCodeId: string
-    flowVersionId: string
-    buildPath: string
+    artifact: CodeArtifact
+    codesFolderPath: string
 }
 
 type InstallDependenciesParams = {

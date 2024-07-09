@@ -1,10 +1,14 @@
+import path from 'path'
 import { enrichErrorContext, logger } from '@activepieces/server-shared'
 import { PiecePackage } from '@activepieces/shared'
 import { CodeArtifact } from '../../../engine-runner'
-import { sandboxCachePool } from '../files/sandbox-cache-pool'
+import { executionFiles } from '../../../execution-files'
 import { IsolateSandbox } from '../isolate-sandbox'
 import { sandboxManager } from '../sandbox-manager'
-import { TypedProvisionCacheInfo } from './sandbox-cache-key'
+import { extractProvisionCacheKey, TypedProvisionCacheInfo } from './sandbox-cache-key'
+
+const globalCachePath = path.resolve('cache', 'ns')
+const globalCodesPath = path.resolve('cache', 'codes')
 
 export const sandboxProvisioner = {
     async provision({
@@ -13,18 +17,22 @@ export const sandboxProvisioner = {
         ...cacheInfo
     }: ProvisionParams): Promise<IsolateSandbox> {
         try {
-            const cachedSandbox = await sandboxCachePool.findOrCreate(cacheInfo)
 
-            await cachedSandbox.prepare({
+            const cacheKey = extractProvisionCacheKey(cacheInfo)
+            await executionFiles.provision({
                 pieces,
                 codeSteps,
+                globalCachePath,
+                globalCodesPath,
             })
 
-            const sandbox = await sandboxManager.allocate(cachedSandbox.key)
-
+            const sandbox = await sandboxManager.allocate(cacheKey)
+            const flowVersionId = codeSteps.length > 0 ? codeSteps[0].flowVersionId : undefined
             await sandbox.assignCache({
-                cacheKey: cachedSandbox.key,
-                cachePath: cachedSandbox.path(),
+                cacheKey,
+                globalCachePath,
+                globalCodesPath,
+                flowVersionId,
             })
 
             return sandbox
@@ -50,12 +58,6 @@ export const sandboxProvisioner = {
         )
 
         await sandboxManager.release(sandbox.boxId)
-
-        if (sandbox.cacheKey) {
-            await sandboxCachePool.release({
-                key: sandbox.cacheKey,
-            })
-        }
     },
 }
 
