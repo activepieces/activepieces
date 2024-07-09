@@ -205,12 +205,17 @@ export class AuthenticationService {
     return this.http
       .post<{
         token: string;
+        projectRole: ProjectMemberRole | null;
       }>(`${environment.apiUrl}/users/projects/${projectId}/token`, {
         projectId,
       })
       .pipe(
-        tap(({ token }) => {
+        tap(({ token, projectRole }) => {
           this.saveToken(token);
+          this.updateUser({
+            ...this.currentUser,
+            projectRole,
+          });
           if (redirectHome) {
             this.router.navigate(['/flows']);
           }
