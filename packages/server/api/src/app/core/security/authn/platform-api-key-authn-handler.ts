@@ -142,7 +142,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
         if (isNil(tableName)) {
             return undefined
         }
-        const entity = await databaseConnection.getRepository(tableName).findOneBy({
+        const entity = await databaseConnection().getRepository(tableName).findOneBy({
             id,
         })
         return entity?.projectId

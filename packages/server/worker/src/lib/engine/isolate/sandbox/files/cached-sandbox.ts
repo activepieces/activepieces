@@ -1,6 +1,6 @@
 import { mkdir, rm } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { enrichErrorContext, logger, packageManager, system, SystemProp } from '@activepieces/server-shared'
+import { enrichErrorContext, logger, packageManager, SharedSystemProp, system } from '@activepieces/server-shared'
 import { PiecePackage, SourceCode } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
@@ -10,7 +10,7 @@ import { engineInstaller } from '../../../../utils/engine-installer'
 import { CachedSandboxState } from './cached-sandbox-state'
 
 export class CachedSandbox {
-    private static readonly CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? resolve('dist', 'cache')
+    private static readonly CACHE_PATH = system.get(SharedSystemProp.CACHE_PATH) ?? resolve('dist', 'cache')
 
     private readonly lock = new Mutex()
     private _state = CachedSandboxState.CREATED

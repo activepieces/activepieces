@@ -1,21 +1,27 @@
 
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, system, SystemProp, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest } from '@activepieces/shared'
-import axios, { isAxiosError } from 'axios'
+import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, logger, networkUtls, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import axios, { AxiosInstance, isAxiosError } from 'axios'
+import axiosRetry from 'axios-retry'
 import { StatusCodes } from 'http-status-codes'
+import { heartbeat } from '../utils/heartbeat'
 
-const SERVER_URL = 'http://127.0.0.1:3000'
+const removeTrailingSlash = (url: string): string => {
+    return url.endsWith('/') ? url.slice(0, -1) : url
+}
+const apiUrl = removeTrailingSlash(networkUtls.getInternalApiUrl())
 
 export const workerApiService = (workerToken: string) => {
-    const client = axios.create({
-        baseURL: SERVER_URL,
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${workerToken}`,
-        },
+    const client = applyRetryPolicy({
+        baseUrl: apiUrl,
+        apiToken: workerToken,
     })
     return {
+        async heartbeat(): Promise<void> {
+            const request: WorkerMachineHealthcheckRequest = await heartbeat.getSystemInfo()
+            await client.post('/v1/worker-machines/heartbeat', request)
+        },
         async poll(queueName: QueueName): Promise<ApQueueJob | null> {
             try {
                 const request: PollJobRequest = {
@@ -53,13 +59,12 @@ export const workerApiService = (workerToken: string) => {
 }
 
 export const engineApiService = (engineToken: string) => {
-    const client = axios.create({
-        baseURL: SERVER_URL,
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${engineToken}`,
-        },
+
+    const client = applyRetryPolicy({
+        baseUrl: apiUrl,
+        apiToken: engineToken,
     })
+
     return {
         async getFile(fileId: string): Promise<Buffer> {
             const response = await client.get(`/v1/engine/files/${fileId}`, {
@@ -86,10 +91,6 @@ export const engineApiService = (engineToken: string) => {
             })).data
         },
         async checkTaskLimit(): Promise<void> {
-            const edition = system.getOrThrow(SystemProp.EDITION)
-            if (edition === ApEdition.COMMUNITY) {
-                return
-            }
             try {
                 await client.get('/v1/engine/check-task-limit')
             }
@@ -120,4 +121,26 @@ export const engineApiService = (engineToken: string) => {
             }
         },
     }
+}
+
+function applyRetryPolicy({ baseUrl, apiToken }: { baseUrl: string, apiToken: string }): AxiosInstance {
+    const client = axios.create({
+        baseURL: baseUrl,
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiToken}`,
+        },
+    })
+    axiosRetry(client, {
+        retries: 3, // Number of retries
+        retryDelay: (retryCount: number) => {
+            return retryCount * 1000 // Exponential back-off delay between retries
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        retryCondition: (error: any) => {
+            // Retry on specific conditions
+            return error?.response?.status && error?.response?.status === 502
+        },
+    })
+    return client
 }

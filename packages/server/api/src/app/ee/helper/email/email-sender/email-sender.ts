@@ -1,4 +1,4 @@
-import { system, SystemProp } from '@activepieces/server-shared'
+import { SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { logEmailSender } from './log-email-sender'
 import { smtpEmailSender } from './smtp-email-sender'
@@ -8,7 +8,7 @@ export type EmailSender = {
 }
 
 const getEmailSenderInstance = (): EmailSender => {
-    const env = system.get(SystemProp.ENVIRONMENT)
+    const env = system.get(SharedSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.PRODUCTION) {
         return smtpEmailSender
@@ -49,12 +49,20 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     createdAt: string
 }>
 
+type IssuesReminderTemplateData = BaseEmailTemplateData<'issues-reminder', {
+    issuesUrl: string
+    issues: string
+    issuesCount: string
+    projectName: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
   | QuotaEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
+  | IssuesReminderTemplateData
 
 type SendArgs = {
     emails: string[]

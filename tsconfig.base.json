@@ -134,6 +134,9 @@
       "@activepieces/piece-data-mapper": [
         "packages/pieces/community/data-mapper/src/index.ts"
       ],
+      "@activepieces/piece-data-summarizer": [
+        "packages/pieces/community/data-summarizer/src/index.ts"
+      ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/community/date-helper/src/index.ts"
       ],
@@ -203,6 +206,9 @@
       "@activepieces/piece-gcloud-pubsub": [
         "packages/pieces/community/gcloud-pubsub/src/index.ts"
       ],
+      "@activepieces/piece-gelato": [
+        "packages/pieces/community/gelato/src/index.ts"
+      ],
       "@activepieces/piece-generatebanners": [
         "packages/pieces/community/generatebanners/src/index.ts"
       ],
@@ -250,6 +256,9 @@
       ],
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
+      ],
+      "@activepieces/piece-grist": [
+        "packages/pieces/community/grist/src/index.ts"
       ],
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
@@ -434,6 +443,9 @@
       ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
+      ],
+      "@activepieces/piece-rabbitmq": [
+        "packages/pieces/community/rabbitmq/src/index.ts"
       ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"

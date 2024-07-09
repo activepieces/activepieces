@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { commonProperties } from './database-connection'
@@ -49,10 +49,10 @@ import { AddIssueEntitySqlite1714900626443 } from './migration/sqlite/1714900626
 import { AddAlertsEntitySqlite1717239613259 } from './migration/sqlite/1717239613259-AddAlertsEntitySqlite'
 import { AddPremiumPiecesColumnSqlite1717443603235 } from './migration/sqlite/1717443603235-AddPremiumPiecesColumnSqlite'
 import { AddUserInvitationSqlite1717943564437 } from './migration/sqlite/1717943564437-AddUserInvitationSqlite'
-
+import { AddWorkerMachineSqlite1720100928449 } from './migration/sqlite/1720100928449-AddWorkerMachineSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
-    const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
+    const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
     return path.resolve(path.join(apConfigDirectoryPath, 'database.sqlite'))
 }
@@ -62,7 +62,7 @@ const getSqliteDatabaseInMemory = (): string => {
 }
 
 const getSqliteDatabase = (): string => {
-    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
         return getSqliteDatabaseInMemory()
@@ -117,6 +117,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddAlertsEntitySqlite1717239613259,
         AddUserInvitationSqlite1717943564437,
         AddPremiumPiecesColumnSqlite1717443603235,
+        AddWorkerMachineSqlite1720100928449,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
@@ -126,7 +127,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
 }
 
 const getMigrationConfig = (): MigrationConfig => {
-    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
         return {}

@@ -13,10 +13,9 @@ import {
 } from '@activepieces/shared'
 import { EngineHelperResponse, EngineHelperTriggerResult, engineRunner, webhookUtils } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
-import { flowQueue } from '../../../flow-worker/queue'
-import {
-    generateEngineToken,
-} from '../../../helper/engine-helper'
+
+import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
+import { flowQueue } from '../../../workers/queue'
 import { triggerUtils } from './trigger-utils'
 
 export const disablePieceTrigger = async (
@@ -39,7 +38,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
     }
 
     try {
-        const engineToken = await generateEngineToken({
+        const engineToken = await accessTokenManager.generateEngineToken({
             projectId,
         })
         const result = await engineRunner.executeTrigger(engineToken, {

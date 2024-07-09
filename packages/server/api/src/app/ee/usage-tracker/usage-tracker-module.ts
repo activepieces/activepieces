@@ -1,48 +1,47 @@
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import { Platform } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import { Between, Equal } from 'typeorm'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { flagService } from '../../flags/flag.service'
 import { systemJobsSchedule } from '../../helper/system-jobs'
+import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
 import { UserEntity } from '../../user/user-entity'
 
-const userRepo = databaseConnection.getRepository(UserEntity)
-const projectRepo = databaseConnection.getRepository(ProjectEntity)
-const platformRepo = databaseConnection.getRepository(PlatformEntity)
+const userRepo = repoFactory(UserEntity)
+const projectRepo = repoFactory(ProjectEntity)
+const platformRepo = repoFactory(PlatformEntity)
 
 export const usageTrackerModule: FastifyPluginAsyncTypebox = async () => {
+    systemJobHandlers.registerJobHandler(SystemJobName.USAGE_REPORT, sendUsageReport)
     await systemJobsSchedule.upsertJob({
         job: {
-            name: 'usage-report',
+            name: SystemJobName.USAGE_REPORT,
             data: {},
         },
         schedule: {
             type: 'repeated',
             cron: '*/59 23 * * *',
         },
-        async handler(job) {
-            const startOfDay = dayjs(job.timestamp).startOf('day').toISOString()
-            const endOfDay = dayjs(job.timestamp).endOf('day').toISOString()
-            const platforms = await platformRepo.find()
-            const reports = []
-            for (const platform of platforms) {
-                if (flagService.isCloudPlatform(platform.id)) {
-                    continue
-                }
-                const report = await constructUsageReport(platform, startOfDay, endOfDay)
-                reports.push(report)
-            }
-            await sendUsageReport(reports)
-
-        },
     })
 }
 
-async function sendUsageReport(reports: UsageReport[]): Promise<void> {
+async function sendUsageReport(job: SystemJobData<SystemJobName.USAGE_REPORT>): Promise<void> {
+    const startOfDay = dayjs(job.timestamp).startOf('day').toISOString()
+    const endOfDay = dayjs(job.timestamp).endOf('day').toISOString()
+    const platforms = await platformRepo().find()
+    const reports = []
+    for (const platform of platforms) {
+        if (flagService.isCloudPlatform(platform.id)) {
+            continue
+        }
+        const report = await constructUsageReport(platform, startOfDay, endOfDay)
+        reports.push(report)
+    }
     await fetch('https://cloud.activepieces.com/api/v1/webhooks/ophE6T5QJBe7O3QT0sjvn', {
         method: 'POST',
         headers: {
@@ -53,14 +52,14 @@ async function sendUsageReport(reports: UsageReport[]): Promise<void> {
 }
 
 async function constructUsageReport(platform: Platform, startDate: string, endDate: string): Promise<UsageReport> {
-    const licenseKey = system.getOrThrow(SystemProp.LICENSE_KEY)
+    const licenseKey = system.getOrThrow(AppSystemProp.LICENSE_KEY)
     const version = await flagService.getCurrentRelease()
     const addedProjects = await getAddedProjects(platform.id, startDate, endDate)
     const addedUsers = await getAddedUsers(platform.id, startDate, endDate)
-    const activeProjects = await projectRepo.countBy({
+    const activeProjects = await projectRepo().countBy({
         platformId: Equal(platform.id),
     })
-    const activeUsers = await userRepo.countBy({
+    const activeUsers = await userRepo().countBy({
         platformId: Equal(platform.id),
     })
     return {
@@ -83,7 +82,7 @@ async function constructUsageReport(platform: Platform, startDate: string, endDa
 }
 
 async function getAddedUsers(platformId: string, startDate: string, endDate: string): Promise<UsageReport['details']['projects']> {
-    const users = await userRepo.findBy({
+    const users = await userRepo().findBy({
         platformId: Equal(platformId),
         created: Between(startDate, endDate),
     })
@@ -95,7 +94,7 @@ async function getAddedUsers(platformId: string, startDate: string, endDate: str
 }
 
 async function getAddedProjects(platformId: string, startDate: string, endDate: string): Promise<UsageReport['details']['projects']> {
-    const projects = await projectRepo.findBy({
+    const projects = await projectRepo().findBy({
         created: Between(startDate, endDate),
         platformId: Equal(platformId),
     })
@@ -105,7 +104,6 @@ async function getAddedProjects(platformId: string, startDate: string, endDate: 
         timestamp: project.created,
     }))
 }
-
 
 type UsageReport = {
     timestamp: string

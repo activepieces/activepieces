@@ -1,15 +1,15 @@
 import pino, { Level, Logger } from 'pino'
 import 'pino-loki'
 import { system } from './system/system'
-import { SystemProp } from './system/system-prop'
+import { SharedSystemProp } from './system/system-prop'
 
-const lokiUrl = system.get(SystemProp.LOKI_URL)
-const lokiUsername = system.get(SystemProp.LOKI_USERNAME)
-const lokiPassword = system.get(SystemProp.LOKI_PASSWORD)
+const lokiUrl = system.get(SharedSystemProp.LOKI_URL)
+const lokiUsername = system.get(SharedSystemProp.LOKI_USERNAME)
+const lokiPassword = system.get(SharedSystemProp.LOKI_PASSWORD)
 
 const initLogger = (): Logger => {
-    const level = system.get<Level>(SystemProp.LOG_LEVEL) ?? 'info'
-    const pretty = system.getBoolean(SystemProp.LOG_PRETTY) ?? false
+    const level = system.get<Level>(SharedSystemProp.LOG_LEVEL) ?? 'info'
+    const pretty = system.getBoolean(SharedSystemProp.LOG_PRETTY) ?? false
 
     if (pretty) {
         return pino({

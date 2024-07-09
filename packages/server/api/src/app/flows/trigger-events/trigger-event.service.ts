@@ -17,8 +17,8 @@ import {
 import dayjs from 'dayjs'
 import { engineRunner, webhookUtils } from 'server-worker'
 import { LessThan } from 'typeorm'
-import { databaseConnection } from '../../database/database-connection'
-import {  generateEngineToken } from '../../helper/engine-helper'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
@@ -26,7 +26,7 @@ import { flowService } from '../flow/flow.service'
 import { stepFileService } from '../step-file/step-file.service'
 import { TriggerEventEntity } from './trigger-event.entity'
 
-export const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
+export const triggerEventRepo = repoFactory(TriggerEventEntity)
 
 export const triggerEventService = {
     async saveEvent({
@@ -45,7 +45,7 @@ export const triggerEventService = {
 
         const sourceName = getSourceName(flow.version.trigger)
 
-        return triggerEventRepo.save({
+        return triggerEventRepo().save({
             id: apId(),
             projectId,
             flowId: flow.id,
@@ -70,7 +70,7 @@ export const triggerEventService = {
                     flowId: flow.id,
                     stepName: trigger.name,
                 })
-                const engineToken = await generateEngineToken({
+                const engineToken = await accessTokenManager.generateEngineToken({
                     projectId,
                 })
                 const { result: testResult } = await engineRunner.executeTrigger(engineToken, {
@@ -82,7 +82,7 @@ export const triggerEventService = {
                     }),
                     projectId,
                 })
-                await triggerEventRepo.delete({
+                await triggerEventRepo().delete({
                     projectId,
                     flowId: flow.id,
                 })
@@ -133,7 +133,7 @@ export const triggerEventService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const query = triggerEventRepo.createQueryBuilder('trigger_event').where({
+        const query = triggerEventRepo().createQueryBuilder('trigger_event').where({
             projectId,
             flowId,
             sourceName,
@@ -143,7 +143,7 @@ export const triggerEventService = {
     },
     async deleteEventsOlderThanFourteenDay(): Promise<void> {
         const fourteenDayAgo = dayjs().subtract(14, 'day').toDate()
-        await triggerEventRepo.delete({
+        await triggerEventRepo().delete({
             created: LessThan(fourteenDayAgo.toISOString()),
         })
     },

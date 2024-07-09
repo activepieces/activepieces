@@ -1,4 +1,4 @@
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Static, Type } from '@sinclair/typebox'
@@ -10,9 +10,9 @@ export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(appsumoController, { prefix: '/v1/appsumo' })
 }
 
-const exchangeCredentialUsername = system.get(SystemProp.APPSUMO_TOKEN)
-const exchangeCredentialPassword = system.get(SystemProp.APPSUMO_TOKEN)
-const token = system.get(SystemProp.APPSUMO_TOKEN)
+const exchangeCredentialUsername = system.get(AppSystemProp.APPSUMO_TOKEN)
+const exchangeCredentialPassword = system.get(AppSystemProp.APPSUMO_TOKEN)
+const token = system.get(AppSystemProp.APPSUMO_TOKEN)
 
 const ActionRequest = Type.Object({
     action: Type.String(),

@@ -4,9 +4,9 @@ import {
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
 import {
+    AppSystemProp,
     JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType,
     system,
-    SystemProp,
 } from '@activepieces/server-shared'
 import {
     ApEdition,
@@ -26,15 +26,13 @@ import {
     webhookUtils,
 } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
+import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
 import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
-import { flowQueue } from '../../../flow-worker/queue'
-import {
-    generateEngineToken,
-} from '../../../helper/engine-helper'
+import { flowQueue } from '../../../workers/queue'
 import { triggerUtils } from './trigger-utils'
 
 const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
-    system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5,
+    system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5,
 )
 
 function constructEveryXMinuteCron(minute: number): string {
@@ -44,7 +42,7 @@ function constructEveryXMinuteCron(minute: number): string {
             return `*/${minute} * * * *`
         case ApEdition.COMMUNITY:
         case ApEdition.ENTERPRISE:
-            return `*/${system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5
+            return `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5
             } * * * *`
     }
 }
@@ -69,7 +67,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         simulate,
     })
 
-    const engineToken = await generateEngineToken({
+    const engineToken = await accessTokenManager.generateEngineToken({
         projectId,
     })
 

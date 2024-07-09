@@ -1,24 +1,25 @@
-import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, system, SystemProp, WebhookJobData } from '@activepieces/server-shared'
+import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, system, WebhookJobData, WorkerSystemProps } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { engineApiService, workerApiService } from './api/server-api.service'
 import { flowJobExecutor } from './executors/flow-job-executor'
 import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { webhookExecutor } from './executors/webhook-job-executor'
 
-const WORKER_CONCURRENCY = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
+const WORKER_CONCURRENCY = system.getNumber(WorkerSystemProps.FLOW_WORKER_CONCURRENCY) ?? 10
 
 let closed = true
 let workerToken: string
+let heartbeatInterval: NodeJS.Timeout
 
 export const flowWorker = {
     async init(generatedToken: string): Promise<void> {
         closed = false
         workerToken = generatedToken
+        heartbeatInterval = setInterval(() => {
+            rejectedPromiseHandler(workerApiService(workerToken).heartbeat())
+        }, 15000)
     },
     async start(): Promise<void> {
-        if (WORKER_CONCURRENCY === 0) {
-            return
-        }
         for (const queueName of Object.values(QueueName)) {
             for (let i = 0; i < WORKER_CONCURRENCY; i++) {
                 rejectedPromiseHandler(run(queueName))
@@ -27,6 +28,7 @@ export const flowWorker = {
     },
     async close(): Promise<void> {
         closed = true
+        clearTimeout(heartbeatInterval)
     },
 }
 

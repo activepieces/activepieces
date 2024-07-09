@@ -14,7 +14,6 @@ import {
     ProjectMember,
     SigningKey,
 } from '@activepieces/ee-shared'
-import { encryptUtils } from '@activepieces/server-shared'
 import {
     apId,
     assertNotNullOrUndefined,
@@ -53,6 +52,7 @@ import dayjs from 'dayjs'
 import { databaseConnection } from '../../../src/app/database/database-connection'
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
+import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import { PieceTagSchema } from '../../../src/app/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/tags/tag-entity'
@@ -383,7 +383,6 @@ export const createAuditEvent = (auditEvent: Partial<ApplicationEvent>) => {
         created: auditEvent.created ?? faker.date.recent().toISOString(),
         updated: auditEvent.updated ?? faker.date.recent().toISOString(),
         ip: auditEvent.ip ?? faker.internet.ip(),
-        projectDisplayName: auditEvent.projectDisplayName ?? faker.lorem.word(),
         platformId: auditEvent.platformId,
         userId: auditEvent.userId,
         userEmail: auditEvent.userEmail ?? faker.internet.email(),
@@ -488,7 +487,7 @@ export const mockBasicSetup = async (params?: MockBasicSetupParams): Promise<Moc
         ...params?.user,
         platformRole: PlatformRole.ADMIN,
     })
-    await databaseConnection.getRepository('user').save(mockOwner)
+    await databaseConnection().getRepository('user').save(mockOwner)
 
     const mockPlatform = createMockPlatform({
         ...params?.platform,
@@ -497,17 +496,17 @@ export const mockBasicSetup = async (params?: MockBasicSetupParams): Promise<Moc
         apiKeysEnabled: true,
         customDomainsEnabled: true,
     })
-    await databaseConnection.getRepository('platform').save(mockPlatform)
+    await databaseConnection().getRepository('platform').save(mockPlatform)
 
     mockOwner.platformId = mockPlatform.id
-    await databaseConnection.getRepository('user').save(mockOwner)
+    await databaseConnection().getRepository('user').save(mockOwner)
 
     const mockProject = createMockProject({
         ...params?.project,
         ownerId: mockOwner.id,
         platformId: mockPlatform.id,
     })
-    await databaseConnection.getRepository('project').save(mockProject)
+    await databaseConnection().getRepository('project').save(mockProject)
 
     return {
         mockOwner,
