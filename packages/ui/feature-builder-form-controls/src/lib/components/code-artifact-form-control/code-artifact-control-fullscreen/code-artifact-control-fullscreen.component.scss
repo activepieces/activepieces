@@ -35,3 +35,14 @@
   left: 50%;
   top: 50%;
 }
+.flex-item { 
+  flex:1 5 50%;
+}
+.knob {
+  background-color: $border;
+  width: $knob-width;
+  height: $knob-height;
+  border-radius: 50px;
+}
+
+.monaco-editor { position: absolute !important; }

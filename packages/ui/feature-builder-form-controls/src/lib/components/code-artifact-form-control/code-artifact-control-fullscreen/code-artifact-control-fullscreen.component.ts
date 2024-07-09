@@ -1,16 +1,21 @@
-import {
-  Component,
-  EventEmitter,
-  Inject,
-  OnInit,
-} from '@angular/core';
+import { Component, EventEmitter, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, UntypedFormBuilder } from '@angular/forms';
 import {
   MatDialog,
   MatDialogRef,
   MAT_DIALOG_DATA,
 } from '@angular/material/dialog';
-import { BehaviorSubject, combineLatest, forkJoin, map, Observable, of, switchMap, take, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  combineLatest,
+  forkJoin,
+  map,
+  Observable,
+  of,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import { CodeArtifactForm } from '../code-artifact-form-control.component';
 import { SelectedFileInFullscreenCodeEditor } from '../selected-file-in-fullscreen-code-editor.enum';
 import { AddNpmPackageModalComponent } from './add-npm-package-modal/add-npm-package-modal.component';
@@ -69,13 +74,11 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   testResultForm: FormGroup;
   selectedTab = SelectedTabInFullscreenCodeEditor.OUTPUT;
   consoleResultEditoroptions = {
-    theme: 'lucario',
     lineWrapping: true,
     readOnly: true,
     mode: 'shell',
   };
   outputResultEditorOptions = {
-    theme: 'lucario',
     lineWrapping: true,
     readOnly: true,
     mode: 'javascript',
@@ -113,24 +116,27 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     this.showGenerateCode$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COPILOT
     );
-    this.allowNpmPackages$ = this.flagService
-    .isFlagEnabled(ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP);
+    this.allowNpmPackages$ = this.flagService.isFlagEnabled(
+      ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP
+    );
     const testCodeBtnState$ = combineLatest({
       isSaving: this.store.select(BuilderSelectors.selectIsSaving),
-      isTesting: this.testing$.asObservable()
+      isTesting: this.testing$.asObservable(),
     });
-    this.disableTestCodeBtn$= testCodeBtnState$.pipe(map(({ isSaving, isTesting }) => isSaving || isTesting));
-    this.testBtnText$ = testCodeBtnState$.pipe(map(({ isSaving, isTesting }) => {
-      if(isTesting)
-        {
+    this.disableTestCodeBtn$ = testCodeBtnState$.pipe(
+      map(({ isSaving, isTesting }) => isSaving || isTesting)
+    );
+    this.testBtnText$ = testCodeBtnState$.pipe(
+      map(({ isSaving, isTesting }) => {
+        if (isTesting) {
           return $localize`Testing...`;
         }
-      if(isSaving) 
-      {
-        return $localize`Saving...`;
-      }
-      return $localize`Test Code`;
-    }))
+        if (isSaving) {
+          return $localize`Saving...`;
+        }
+        return $localize`Test Code`;
+      })
+    );
   }
 
   focusEditor(editor: { focus: () => void }) {
@@ -193,7 +199,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   }
   testCode() {
     this.testResultForm.setValue({ outputResult: '', consoleResult: '' });
-    this.testing$.next(true)
+    this.testing$.next(true);
     const testCodeParams$ = forkJoin({
       step: this.store.select(BuilderSelectors.selectCurrentStep).pipe(take(1)),
       flowVersionId: this.store
@@ -222,14 +228,18 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
             : 'No output returned, check logs in case of errors',
           consoleResult: consoleResult,
         });
-        this.testing$.next(false) 
+        this.testing$.next(false);
       })
     );
   }
 
   getConsoleResult(codeTestExecutionResult: StepRunResponse) {
     if (codeTestExecutionResult.standardError) {
-      return `${codeTestExecutionResult.standardOutput}\n---------error-------\n${this.tryParsingError(codeTestExecutionResult.standardError)}`;
+      return `${
+        codeTestExecutionResult.standardOutput
+      }\n---------error-------\n${this.tryParsingError(
+        codeTestExecutionResult.standardError
+      )}`;
     }
     return codeTestExecutionResult.standardOutput;
   }
@@ -241,19 +251,15 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     navigator.clipboard.writeText(text);
     this.snackbar.open($localize`Copied to clipboard`);
   }
-  tryParsingError(errorText:string)
-  {
-    try{
+  tryParsingError(errorText: string) {
+    try {
       const errorObj = JSON.parse(errorText);
-      const { message,stack } = errorObj;
+      const { message, stack } = errorObj;
       return `${message}\n\nStack:\n ${stack}
       `;
-    }
-    catch(ex)
-    {
+    } catch (ex) {
       console.error(ex);
       return errorText;
     }
-    
   }
 }
