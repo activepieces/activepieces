@@ -69,7 +69,13 @@ export class FlowsTableComponent extends TableCore implements OnInit {
   filtersChanged$: Observable<void>;
   flowNameFilterControl: FormControl<string | null> = new FormControl(null);
   flowStatusFilterControl: FormControl<string | null> = new FormControl(null);
-  filters: FilterConfig<unknown, unknown>[];
+  filters: FilterConfig<
+    {
+      label: string;
+      value: string;
+    },
+    string
+  >[];
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
