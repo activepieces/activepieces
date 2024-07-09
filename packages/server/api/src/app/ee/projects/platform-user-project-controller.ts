@@ -13,6 +13,7 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { platformService } from '../../platform/platform.service'
+import { projectMemberService } from '../project-members/project-member.service'
 import { platformProjectService } from './platform-project-service'
 
 export const usersProjectController: FastifyPluginCallbackTypebox = (
@@ -60,6 +61,7 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
                 })
             }
             const platform = await platformService.getOneOrThrow(project.platformId)
+            const projectRole = await projectMemberService.getRole({ userId: request.principal.id, projectId: request.principal.projectId })
             return {
                 token: await accessTokenManager.generateToken({
                     id: request.principal.id,
@@ -69,6 +71,7 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
                         id: platform.id,
                     },
                 }),
+                projectRole,
             }
         },
     )
