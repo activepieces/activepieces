@@ -4,12 +4,19 @@ import { engineApiService, workerApiService } from './api/server-api.service'
 import { flowJobExecutor } from './executors/flow-job-executor'
 import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { webhookExecutor } from './executors/webhook-job-executor'
+import { Semaphore } from 'async-mutex'
 
 const WORKER_CONCURRENCY = system.getNumber(WorkerSystemProps.FLOW_WORKER_CONCURRENCY) ?? 10
 
 let closed = true
 let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
+
+const pollLocks = {
+    [QueueName.ONE_TIME]: new Semaphore(10),
+    [QueueName.SCHEDULED]: new Semaphore(10),
+    [QueueName.WEBHOOK]: new Semaphore(10),
+}
 
 export const flowWorker = {
     async init(generatedToken: string): Promise<void> {
@@ -36,7 +43,7 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
     while (!closed) {
         let engineToken: string | undefined
         try {
-            const job = await workerApiService(workerToken).poll(queueName)
+            const job = await poll(workerToken, queueName)
             if (isNil(job)) {
                 continue
             }
@@ -48,8 +55,7 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
                 status: JobStatus.COMPLETED,
                 queueName,
             })
-        }
-        catch (e) {
+        } catch (e) {
             exceptionHandler.handle(e)
             if (engineToken) {
                 rejectedPromiseHandler(
@@ -64,6 +70,15 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
     }
 }
 
+async function poll(workerToken: string, queueName: QueueName) {
+    try {
+        await pollLocks[queueName].acquire(1)
+        const job = await workerApiService(workerToken).poll(queueName)
+        return job
+    } finally {
+        pollLocks[queueName].release(1)
+    }
+}
 
 async function consumeJob(queueName: QueueName, jobData: JobData, engineToken: string): Promise<void> {
     switch (queueName) {
