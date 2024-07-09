@@ -63,6 +63,7 @@ export const threadEngineRunner: EngineRunner = {
             codeSteps: [],
             globalCachePath: sandboxPath,
             globalCodesPath: codesPath,
+            customPiecesPath: sandboxPath,
         })
         return execute(input, EngineOperationType.EXECUTE_TRIGGER_HOOK)
     },
@@ -74,6 +75,7 @@ export const threadEngineRunner: EngineRunner = {
             codeSteps: [],
             globalCachePath: sandboxPath,
             globalCodesPath: codesPath,
+            customPiecesPath: sandboxPath,
         })
         return execute(operation, EngineOperationType.EXTRACT_PIECE_METADATA)
     },
@@ -87,6 +89,7 @@ export const threadEngineRunner: EngineRunner = {
             codeSteps: [],
             globalCachePath: sandboxPath,
             globalCodesPath: codesPath,
+            customPiecesPath: sandboxPath,
         })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
@@ -112,6 +115,7 @@ export const threadEngineRunner: EngineRunner = {
                     codeSteps: [],
                     globalCachePath: sandboxPath,
                     globalCodesPath: codesPath,
+                    customPiecesPath: sandboxPath,
                 })
                 break
             }
@@ -122,6 +126,7 @@ export const threadEngineRunner: EngineRunner = {
                     codeSteps: codes,
                     globalCachePath: sandboxPath,
                     globalCodesPath: codesPath,
+                    customPiecesPath: sandboxPath,
                 })
                 break
             }
@@ -163,6 +168,7 @@ export const threadEngineRunner: EngineRunner = {
             codeSteps: [],
             globalCachePath: sandboxPath,
             globalCodesPath: codesPath,
+            customPiecesPath: sandboxPath,
         })
 
         const input: ExecutePropsOptions = {
@@ -186,6 +192,7 @@ async function prepareFlowSandbox(engineToken: string, flowVersion: FlowVersion)
         codeSteps,
         globalCachePath: sandboxPath,
         globalCodesPath: codesPath,
+        customPiecesPath: sandboxPath,
     })
 }
 

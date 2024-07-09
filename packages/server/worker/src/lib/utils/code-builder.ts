@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { fileExists, logger, memoryLock, PackageInfo, packageManager } from '@activepieces/server-shared'
+import { fileExists, logger, memoryLock, PackageInfo, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
 import { FlowVersionState } from '@activepieces/shared'
 import { CodeArtifact } from '../engine/engine-runner'
 const TS_CONFIG_CONTENT = `
@@ -56,7 +56,7 @@ export const codeBuilder = {
             }
             const { code, packageJson } = sourceCode
 
-            await createBuildDirectory(codePath)
+            await threadSafeMkdir(codePath)
 
             await installDependencies({
                 path: codePath,
@@ -80,10 +80,6 @@ export const codeBuilder = {
             await lock.release()
         }
     },
-}
-
-const createBuildDirectory = async (path: string): Promise<void> => {
-    await fs.mkdir(path, { recursive: true })
 }
 
 const installDependencies = async ({

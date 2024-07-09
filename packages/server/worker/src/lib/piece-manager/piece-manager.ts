@@ -1,5 +1,5 @@
 import { resolve } from 'node:path'
-import { enrichErrorContext, PackageInfo, SharedSystemProp, system } from '@activepieces/server-shared'
+import { enrichErrorContext, memoryLock, PackageInfo, packageManager, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     getPackageAliasForPiece,
     getPackageArchivePathForPiece,
@@ -14,10 +14,15 @@ export const PACKAGE_ARCHIVE_PATH = resolve(
 
 export abstract class PieceManager {
     async install({ projectPath, pieces }: InstallParams): Promise<void> {
+        const lock = await memoryLock.acquire(`pnpm-install-${projectPath}`)
         try {
             if (isEmpty(pieces)) {
                 return
             }
+
+            await packageManager.init({
+                path: projectPath,
+            })
 
             const uniquePieces = this.removeDuplicatedPieces(pieces)
 
@@ -37,6 +42,9 @@ export abstract class PieceManager {
             })
 
             throw enrichedError
+        }
+        finally {
+            await lock.release()
         }
     }
 
@@ -59,11 +67,11 @@ export abstract class PieceManager {
         return pieces.filter(
             (piece, index, self) =>
                 index ===
-        self.findIndex(
-            (p) =>
-                p.pieceName === piece.pieceName &&
-            p.pieceVersion === piece.pieceVersion,
-        ),
+                self.findIndex(
+                    (p) =>
+                        p.pieceName === piece.pieceName &&
+                        p.pieceVersion === piece.pieceVersion,
+                ),
         )
     }
 }

@@ -15,20 +15,19 @@ export const engineInstaller = {
         const lock = await memoryLock.acquire(`engineInstaller#${path}`)
         try {
             logger.debug({ path }, '[engineInstaller#install]')
-            await copyEngineFile({ path, fileName: 'main.js' })
-            await copyEngineFile({ path, fileName: 'main.js.map' })
+            const engineFileExists = await fileExists(`${path}/main.js`)
+            if (!engineFileExists || isDev) {
+                await copyFile(engineExecutablePath, `${path}/main.js`)
+            }
+            const engineMapFileExists = await fileExists(`${path}/main.js.map`)
+            if (!engineMapFileExists || isDev) {
+                await copyFile(`${engineExecutablePath}.map`, `${path}/main.js.map`)
+            }
         }
         finally {
             await lock.release()
         }
     },
-}
-
-async function copyEngineFile({ path, fileName }: { path: string, fileName: string }): Promise<void> {
-    const engineFileExists = await fileExists(`${path}/${fileName}`)
-    if (!engineFileExists || isDev) {
-        await copyFile(engineExecutablePath, `${path}/${fileName}`)
-    }
 }
 
 type InstallParams = {

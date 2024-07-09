@@ -1,10 +1,10 @@
-import { mkdir } from 'fs/promises'
-import { logger, packageManager } from '@activepieces/server-shared'
-import { PiecePackage } from '@activepieces/shared'
+import { logger, threadSafeMkdir } from '@activepieces/server-shared'
+import { PiecePackage, PieceType } from '@activepieces/shared'
 import { pieceManager } from '../piece-manager'
 import { codeBuilder } from '../utils/code-builder'
 import { engineInstaller } from '../utils/engine-installer'
 import { CodeArtifact } from './engine-runner'
+
 
 export const executionFiles = {
     async provision({
@@ -12,10 +12,11 @@ export const executionFiles = {
         globalCachePath,
         codeSteps,
         globalCodesPath,
+        customPiecesPath,
     }: ProvisionParams): Promise<void> {
         const startTime = performance.now()
-        await mkdir(globalCachePath, { recursive: true })
 
+        await threadSafeMkdir(globalCachePath)
         logger.info({
             path: globalCachePath,
         }, 'Installing code in sandbox')
@@ -28,32 +29,41 @@ export const executionFiles = {
         await Promise.all(buildJobs)
 
         logger.info({
-            globalCachePath,
-        }, 'Running flow in sandbox')
-        await packageManager.init({
-            path: globalCachePath,
-        })
-
-        logger.info({
             path: globalCachePath,
         }, 'Installing engine in sandbox')
         await engineInstaller.install({
             path: globalCachePath,
         })
 
-        logger.info({
-            pieces,
-            globalCachePath,
-        }, 'Installing pieces in sandbox')
-        await pieceManager.install({
-            projectPath: globalCachePath,
-            pieces,
-        })
+        const officialPieces = pieces.filter(f => f.pieceType === PieceType.OFFICIAL)
+        if (officialPieces.length > 0) {
+            logger.info({
+                pieces,
+                globalCachePath,
+            }, 'Installing pieces in sandbox')
+            await pieceManager.install({
+                projectPath: globalCachePath,
+                pieces: officialPieces,
+            })
+        }
+
+        const customPieces = pieces.filter(f => f.pieceType === PieceType.CUSTOM)
+        if (customPieces.length > 0) {
+            await threadSafeMkdir(customPiecesPath)
+            logger.info({
+                customPieces,
+                customPiecesPath,
+            }, 'Installing custom pieces in sandbox')
+            await pieceManager.install({
+                projectPath: customPiecesPath,
+                pieces: customPieces,
+            })
+        }
 
         logger.info({
             timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
-        }, 'Sandbox Installation complete')
-        
+        }, 'Sandbox installation complete')
+
     },
 }
 
@@ -62,4 +72,5 @@ type ProvisionParams = {
     codeSteps: CodeArtifact[]
     globalCachePath: string
     globalCodesPath: string
+    customPiecesPath: string
 }
