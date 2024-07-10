@@ -129,12 +129,7 @@ async function handleInternalError(jobData: OneTimeJobData, engineToken: string,
         workerHandlerId: jobData.synchronousHandlerId,
         runId: jobData.runId,
     })
-    throwErrorToRetry(e as Error)
-}
-
-function throwErrorToRetry(error: Error): void {
-    exceptionHandler.handle(error)
-    throw error
+    exceptionHandler.handle(e)
 }
 
 
