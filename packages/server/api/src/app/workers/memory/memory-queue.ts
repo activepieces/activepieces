@@ -16,8 +16,8 @@ export const memoryQueues = {
 }
 
 export const memoryQueue: QueueManager = {
-    async removeRepeatingJob({ id }) {
-        await memoryQueues[QueueName.SCHEDULED].remove(id)
+    async removeRepeatingJob({ flowVersionId }) {
+        await memoryQueues[QueueName.SCHEDULED].remove(flowVersionId)
     },
     async init(): Promise<void> {
         await renewWebhooks()

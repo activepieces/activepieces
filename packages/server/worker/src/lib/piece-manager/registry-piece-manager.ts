@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { PackageInfo, fileExists, memoryLock, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
+import { fileExists, memoryLock, PackageInfo, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
     PackageType,
@@ -20,20 +20,17 @@ export class RegistryPieceManager extends PieceManager {
         if (dependenciesToInstall.length === 0) {
             return
         }
-
-        const pnpmAddLock = await memoryLock.acquire(`pnpm-add-lock-${projectPath}`)
-        try {
-            const dependencies = await this.filterExistingPieces(projectPath, pieces)
-            if (dependencies.length === 0) {
-                return
+        const installPromises = pieces.map(async (piece) => {
+            const pnpmAddLock = await memoryLock.acquire(`pnpm-add-${projectPath}-${piece.pieceName}-${piece.pieceVersion}`)
+            try {
+                const dependencies = await this.filterExistingPieces(projectPath, [piece])
+                await packageManager.add({ path: projectPath, dependencies })
             }
-            await packageManager.add({
-                path: projectPath,
-                dependencies,
-            })
-        } finally {
-            await pnpmAddLock.release()
-        }
+            finally {
+                await pnpmAddLock.release()
+            }
+        })
+        await Promise.all(installPromises)
     }
 
     private async savePackageArchivesToDiskIfNotCached(
