@@ -1,5 +1,5 @@
 import { resolve } from 'node:path'
-import { enrichErrorContext, memoryLock, PackageInfo, packageManager, SharedSystemProp, system } from '@activepieces/server-shared'
+import { enrichErrorContext, PackageInfo, packageManager, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     getPackageAliasForPiece,
     getPackageArchivePathForPiece,

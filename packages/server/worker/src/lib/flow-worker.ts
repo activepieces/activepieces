@@ -1,10 +1,10 @@
 import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, system, WebhookJobData, WorkerSystemProps } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
+import { Semaphore } from 'async-mutex'
 import { engineApiService, workerApiService } from './api/server-api.service'
 import { flowJobExecutor } from './executors/flow-job-executor'
 import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { webhookExecutor } from './executors/webhook-job-executor'
-import { Semaphore } from 'async-mutex'
 
 const WORKER_CONCURRENCY = system.getNumber(WorkerSystemProps.FLOW_WORKER_CONCURRENCY) ?? 10
 
@@ -55,7 +55,8 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
                 status: JobStatus.COMPLETED,
                 queueName,
             })
-        } catch (e) {
+        }
+        catch (e) {
             exceptionHandler.handle(e)
             if (engineToken) {
                 rejectedPromiseHandler(
@@ -75,7 +76,8 @@ async function poll(workerToken: string, queueName: QueueName) {
         await pollLocks[queueName].acquire(1)
         const job = await workerApiService(workerToken).poll(queueName)
         return job
-    } finally {
+    }
+    finally {
         pollLocks[queueName].release(1)
     }
 }
