@@ -43,6 +43,7 @@
     "@bull-board/api": "5.9.1",
     "@bull-board/fastify": "5.9.1",
     "@ctrl/ngx-codemirror": "5.1.1",
+    "@datastructures-js/queue": "4.2.3",
     "@fastify/basic-auth": "5.0.0",
     "@fastify/cors": "8.3.0",
     "@fastify/formbody": "7.4.0",

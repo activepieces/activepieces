@@ -1,6 +1,7 @@
 import { isNil, isObject, StepOutput } from '@activepieces/shared'
 import sizeof from 'object-sizeof'
 import PriorityQueue from 'priority-queue-typescript'
+import { Queue } from '@datastructures-js/queue';
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 const MAX_SIZE_FOR_ALL_ENTRIES = 1024 * 1024
@@ -27,73 +28,64 @@ function removeLeavesInTopologicalOrder(json: Record<string, unknown>): Record<s
 
     while (!leaves.empty() && jsonExceedMaxSize(totalJsonSize)) {
         const curNode = leaves.poll()
-        if (curNode) {
+        if (curNode && curNode.parent.index !== -1 && curNode.depth > 1) {
             totalJsonSize += SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - curNode.size
-            nodes[curNode.dfsOrder.index].truncate = true
-            const parentIndex = curNode.dfsOrder.parentIndex
-            if (!isNil(parentIndex)) {
-                nodes[parentIndex].numberOfChildren--
-                if (nodes[parentIndex].numberOfChildren == 0) {
-                    leaves.add(nodes[parentIndex])
-                }
+
+            const parent = curNode.parent
+            
+            parent.value[curNode.key] = TRUNCATION_TEXT_PLACEHOLDER
+            
+            nodes[parent.index].numberOfChildren--
+            if (nodes[parent.index].numberOfChildren == 0) {
+                leaves.add(nodes[parent.index])
             }
         }
     }
-    return truncateTrimmedNodes(json, nodes) as Record<string, StepOutput>
+    return json as Record<string, StepOutput>
 }
 
-function truncateTrimmedNodes(curNode: unknown, nodes: Node[], currentDfsOrder: { index: number } = { index: -1 }) {
-    currentDfsOrder.index++
-    const truncated = nodes[currentDfsOrder.index].truncate
-    let newValue
-    if (isObject(curNode)) {
-        newValue = {}
-        Object.keys(curNode).forEach((key) => {
-            curNode[key] = truncateTrimmedNodes(curNode[key], nodes, currentDfsOrder)
-        })
-        newValue = curNode
-    }
-    else if (Array.isArray(curNode)) {
-        newValue = []
-        curNode.forEach((value, _index) => {
-            newValue.push(truncateTrimmedNodes(value, nodes, currentDfsOrder))
-        })
-    }
-    else {
-        newValue = curNode
-    }
-    if (truncated) {
-        return TRUNCATION_TEXT_PLACEHOLDER
-    }
-    return newValue
-}
+function traverseJsonAndConvertToNodes(root: unknown) {
 
-function traverseJsonAndConvertToNodes(curNode: unknown, parentIndex: number | null = null, currentDfsOrder: { index: number } = { index: -1 }) {
-    currentDfsOrder.index++
-    const children = findChildren(curNode)
-    const nodes = [{
-        size: sizeof(curNode),
-        dfsOrder: {
-            index: currentDfsOrder.index,
-            parentIndex,
-        },
-        numberOfChildren: children.length,
-        truncate: false,
-    }]
-    const newParentIndex = currentDfsOrder.index
-    children.forEach((childValue) => {
-        nodes[0].size += SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - sizeof(childValue)
-        nodes.push(...traverseJsonAndConvertToNodes(childValue, newParentIndex, currentDfsOrder))
-    })
+    const nodesQueue = new Queue<BfsNode>()
+    nodesQueue.enqueue({ key: '', value: root, parent: { index: -1, value: {} }, depth: 0 })
+
+    const nodes: Node[] = []
+
+    while (!nodesQueue.isEmpty()) {
+        const curNode = nodesQueue.dequeue()
+        const children = findChildren(curNode.value)
+
+        nodes.push({
+            index: nodes.length,
+            size: children.length === 0 ? sizeof(curNode.value) : children.length * SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER,
+            key: curNode.key,
+            parent: {
+                index: curNode.parent.index,
+                value: curNode.parent.value as Record<Key, unknown>
+            },
+            numberOfChildren: children.length,
+            depth: curNode.depth
+        })
+
+        children.forEach((child) => {
+            const key = child[0], value = child[1]
+            nodesQueue.enqueue({ value, key, parent: { index: nodes.length - 1, value: curNode.value }, depth: curNode.depth + 1})
+        })
+    }
+
     return nodes
 }
 
-function findChildren(curNode: unknown): unknown[] {
+function findChildren(curNode: unknown): [Key, unknown][] {
     if (isObject(curNode)) {
-        return Object.values(curNode)
+        return Object.entries(curNode)
     }
     if (Array.isArray(curNode)) {
-        return curNode
+        const children: [Key, unknown][] = []
+        for (let i = 0; i < curNode.length; i++) {
+            children.push([i, curNode[i]])
+        }
+        return children
     }
     return []
 }
@@ -103,11 +95,25 @@ const jsonExceedMaxSize = (jsonSize: number): boolean => {
 }
 
 type Node = {
+    index: number
     size: number
-    dfsOrder: {
+    key: Key
+    parent: {
         index: number
-        parentIndex: number | null
+        value: Record<Key, unknown>
     }
     numberOfChildren: number
-    truncate: boolean
+    depth: number
 }
+
+type BfsNode = {
+    value: unknown
+    key: Key
+    parent: {
+        index: number
+        value: unknown
+    }
+    depth: number
+}
+
+type Key = string | number | symbol
