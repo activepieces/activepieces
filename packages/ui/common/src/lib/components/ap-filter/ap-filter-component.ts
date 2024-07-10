@@ -4,6 +4,8 @@ import {
   Input,
   OnInit,
 } from '@angular/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { FilterConfig } from '../../models/filter-config.interface';
 import { UiCommonModule } from '../../ui-common.module';
 import { CommonModule } from '@angular/common';
@@ -24,13 +26,15 @@ import { ActivatedRoute } from '@angular/router';
     DropdownSearchControlComponent,
     SelectAllDirective,
     MatSelect,
+    MatDatepickerModule,
+    MatNativeDateModule,
   ],
 })
 export class ApFilterComponent implements OnInit {
   @Input() filters: FilterConfig<any, any>[];
 
   availableFilters: {
-    queryParam: string;
+    queryParam: string | string[];
     name: string;
   }[] = [];
   selectedFilters: string[] = [];
@@ -54,11 +58,19 @@ export class ApFilterComponent implements OnInit {
           : of(filter.options$ || []),
     }));
     this.selectedFilters = this.filters
-      .map(({ queryParam }) =>
-        this.activatedRoute.snapshot.queryParamMap.get(queryParam)
-          ? queryParam
-          : null
-      )
+      .map(({ queryParam, name }) => {
+        if (typeof queryParam === 'string') {
+          return this.activatedRoute.snapshot.queryParamMap.get(queryParam)
+            ? name
+            : null;
+        } else {
+          return queryParam.every((param) =>
+            this.activatedRoute.snapshot.queryParamMap.get(param)
+          )
+            ? name
+            : null;
+        }
+      })
       .filter((query): query is string => query !== null);
   }
 
