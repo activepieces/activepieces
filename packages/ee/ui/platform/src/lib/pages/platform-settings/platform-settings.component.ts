@@ -7,12 +7,8 @@ import {
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, map, of, tap } from 'rxjs';
-import { ApEdition, Platform, PlatformRole } from '@activepieces/shared';
-import {
-  AuthenticationService,
-  FlagService,
-  PLATFORM_RESOLVER_KEY,
-} from '@activepieces/ui/common';
+import { ApEdition, Platform } from '@activepieces/shared';
+import { FlagService, PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
 import {
   APPEARANCE_DISABLED_RESOLVER_KEY,
   AUDIT_LOG_DISABLED_RESOLVER_KEY,
@@ -49,8 +45,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private flagService: FlagService,
-    private authenticationService: AuthenticationService
+    private flagService: FlagService
   ) {
     this.auditLogFeatureLocked =
       this.route.snapshot.data[AUDIT_LOG_DISABLED_RESOLVER_KEY];
