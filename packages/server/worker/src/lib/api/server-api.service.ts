@@ -73,7 +73,7 @@ export const engineApiService = (engineToken: string) => {
             await client.post('/v1/engine/update-run', request)
         },
         async removeStaleFlow(request: RemoveStableJobEngineRequest): Promise<void> {
-            await client.post('/v1/engine/remove-stable-job', request)
+            await client.post('/v1/engine/remove-stale-job', request)
         },
         async getPiece(name: string, options: GetPieceRequestQuery): Promise<PieceMetadataModel> {
             return client.get<PieceMetadataModel>(`/v1/pieces/${encodeURIComponent(name)}`, {

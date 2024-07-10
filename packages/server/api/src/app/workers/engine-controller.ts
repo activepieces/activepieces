@@ -129,7 +129,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         }
     })
 
-    app.post('/remove-stable-job', RemoveFlowRequest, async (request) => {
+    app.post('/remove-stale-job', RemoveFlowRequest, async (request) => {
         const { flowVersionId, flowId } = request.body
         const flow = isNil(flowId) ? null : await flowService.getOnePopulated({
             projectId: request.principal.projectId,
@@ -138,7 +138,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         })
         if (isNil(flow)) {
             await flowQueue.removeRepeatingJob({
-                id: flowVersionId,
+                flowVersionId,
             })
             return
         }

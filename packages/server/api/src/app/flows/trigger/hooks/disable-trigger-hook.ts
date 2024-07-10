@@ -80,14 +80,14 @@ async function sideeffect(
             const renewConfiguration = pieceTrigger.renewConfiguration
             if (renewConfiguration?.strategy === WebhookRenewStrategy.CRON) {
                 await flowQueue.removeRepeatingJob({
-                    id: flowVersion.id,
+                    flowVersionId: flowVersion.id,
                 })
             }
             break
         }
         case TriggerStrategy.POLLING:
             await flowQueue.removeRepeatingJob({
-                id: flowVersion.id,
+                flowVersionId: flowVersion.id,
             })
             break
     }
