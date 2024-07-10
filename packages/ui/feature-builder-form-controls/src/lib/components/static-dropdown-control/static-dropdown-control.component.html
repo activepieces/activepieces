@@ -1,3 +1,17 @@
+<div class="ap-relative">
+
+@if(
+  !passedFormControl.disabled
+){
+  <div class="ap-right-[30px] ap-absolute ap-z-50 ap-top-[2px] ap-bg-white ap-h-[40px] ap-flex ap-gap-[2px]" > 
+    @if(!property.required && matSelect.triggerValue)
+    {
+      <ap-icon-button (click)="unsetValue(); matSelect.open();" i18n-tooltipText tooltipText="Unset"
+      iconFilename="close.svg" [width]="20" [height]="20" [height]="16"></ap-icon-button>
+    }
+    </div>
+}
+
 <mat-form-field
   subscriptSizing="dynamic"
   class="ap-w-full"
@@ -79,3 +93,4 @@
     <mat-option class="!ap-hidden"></mat-option>
   </mat-select>
 </mat-form-field>
+</div>
