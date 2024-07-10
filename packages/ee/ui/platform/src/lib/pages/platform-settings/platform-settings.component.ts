@@ -6,8 +6,8 @@ import {
 } from '@angular/core';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
-import { Platform } from '@activepieces/shared';
+import { Observable, map, of, tap } from 'rxjs';
+import { ApEdition, Platform } from '@activepieces/shared';
 import { FlagService, PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
 import {
   APPEARANCE_DISABLED_RESOLVER_KEY,
@@ -25,7 +25,8 @@ export class PlatformSettingsComponent implements AfterViewInit {
   @ViewChild('tabs') tabGroup?: MatTabGroup;
   title = $localize`Settings`;
   fragmentChanged$: Observable<string | null>;
-  readonly tabIndexFragmentMap = [
+  showWorkersTab$ = of(false);
+  tabIndexFragmentMap = [
     { fragmentName: 'Updates' },
     { fragmentName: 'SigningKeys' },
     { fragmentName: 'MailServer' },
@@ -41,7 +42,6 @@ export class PlatformSettingsComponent implements AfterViewInit {
   auditLogFeatureLocked = false;
   platform?: Platform;
   isVersionMatch$: Observable<boolean>;
-
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -81,6 +81,18 @@ export class PlatformSettingsComponent implements AfterViewInit {
       })
     );
     this.isVersionMatch$ = this.flagService.isVersionMatch();
+    this.showWorkersTab$ = this.flagService.getEdition().pipe(
+      map((ed) => {
+        return ed !== ApEdition.CLOUD;
+      }),
+      tap((showWorkersTab) => {
+        if (!showWorkersTab) {
+          this.tabIndexFragmentMap = this.tabIndexFragmentMap.filter(
+            (i) => i.fragmentName !== 'Workers'
+          );
+        }
+      })
+    );
   }
   ngAfterViewInit(): void {
     const fragment = this.route.snapshot.fragment;
