@@ -88,11 +88,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
     this.isVersionMatch$ = this.flagService.isVersionMatch();
     this.showWorkersTab$ = this.flagService.getEdition().pipe(
       map((ed) => {
-        return (
-          ed !== ApEdition.CLOUD ||
-          this.authenticationService.currentUser.platformRole ===
-            PlatformRole.ADMIN
-        );
+        return ed !== ApEdition.CLOUD;
       }),
       tap((showWorkersTab) => {
         if (!showWorkersTab) {
