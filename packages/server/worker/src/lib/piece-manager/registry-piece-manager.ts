@@ -21,7 +21,7 @@ export class RegistryPieceManager extends PieceManager {
             return
         }
 
-        const pnpmAddLock = await memoryLock.acquire('pnpm-add-lock')
+        const pnpmAddLock = await memoryLock.acquire(`pnpm-add-lock-${projectPath}`)
         try {
             const dependencies = await this.filterExistingPieces(projectPath, pieces)
             if (dependencies.length === 0) {
