@@ -143,6 +143,23 @@ export class RequestWriterDialogComponent implements OnInit {
     return beautifiedResponse;
   }
 
+  hasNesting(obj: Record<string, any>): boolean {
+    if (typeof obj !== 'object' || obj === null) {
+      return false;
+    }
+    if (Array.isArray(obj)) {
+      return obj.some(this.hasNesting);
+    }
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        if (typeof obj[key] === 'object' && obj[key] !== null) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   parseResponseAndMatchItToHttpPieceProperties(
     response: Record<string, unknown>
   ) {
@@ -166,9 +183,9 @@ export class RequestWriterDialogComponent implements OnInit {
     if (response['body']) {
       correctedResponse = {
         ...correctedResponse,
-        body_type: 'form_data',
+        body_type: 'json',
         body: {
-          data: response['body'],
+          data: this.codeService.beautifyJson(response['body']),
         },
       };
     } else {
