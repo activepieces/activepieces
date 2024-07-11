@@ -19,7 +19,6 @@ import { MatSelect } from '@angular/material/select';
 import { SelectAllDirective } from '../../directives/select-all.directive';
 import { ActivatedRoute } from '@angular/router';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { NavigationService } from '../../service';
 
 @Component({
   selector: 'ap-filter',
@@ -51,8 +50,7 @@ export class ApFilterComponent implements OnInit {
   constructor(
     private activatedRoute: ActivatedRoute,
     private viewContainerRef: ViewContainerRef,
-    private cd: ChangeDetectorRef,
-    private navigationService: NavigationService
+    private cd: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -105,30 +103,14 @@ export class ApFilterComponent implements OnInit {
       ? this.selectedFilters.filter((f) => f !== filter)
       : [...this.selectedFilters, filter];
     this.isFilterSelected[filter] = !isFilterSelected;
-    this.cd.markForCheck();
-
-    const updatedQueryParams = { ...this.activatedRoute.snapshot.queryParams };
 
     const filterConfig = this.filters.find((f) => f.name === filter);
     if (filterConfig) {
-      const { queryParam } = filterConfig;
-
-      if (!isFilterSelected) {
-        if (typeof queryParam === 'string') {
-          delete updatedQueryParams[queryParam];
-        } else {
-          queryParam.forEach((param) => delete updatedQueryParams[param]);
-        }
-      }
-
-      this.navigationService.navigate({
-        route: [],
-        openInNewWindow: false,
-        extras: {
-          queryParams: updatedQueryParams,
-          queryParamsHandling: 'merge',
-        },
-      });
+      filterConfig.formControl?.setValue(
+        isFilterSelected ? undefined : filterConfig.formControl?.value
+      );
     }
+
+    this.cd.markForCheck();
   }
 }
