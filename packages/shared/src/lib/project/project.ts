@@ -19,6 +19,7 @@ export enum PiecesFilterType {
 export enum NotificationStatus {
     NEVER = 'NEVER',
     ALWAYS = 'ALWAYS',
+    NEW_ISSUE = 'NEW_ISSUE',
 }
 
 export const ProjectUsage = Type.Object({

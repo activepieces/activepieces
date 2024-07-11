@@ -1,5 +1,5 @@
 import { ListIssuesParams, UpdateIssueRequestBody } from '@activepieces/ee-shared'
-import { ApId, PrincipalType } from '@activepieces/shared'
+import { ApId, Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { issuesService } from './issues-service'
 
@@ -32,6 +32,7 @@ const ListIssuesRequest = {
         allowedPrincipals: [
             PrincipalType.USER,
         ],
+        permission: Permission.READ_ISSUES,
     },
     schema: {
         querystring: ListIssuesParams,
@@ -44,7 +45,10 @@ const CountIssuesRequest = {
         allowedPrincipals: [
             PrincipalType.USER,
         ],
+        permission:
+            Permission.READ_ISSUES,
     },
+    
 }
 
 const UpdateIssueRequest = {
@@ -52,6 +56,9 @@ const UpdateIssueRequest = {
         allowedPrincipals: [
             PrincipalType.USER,
         ],
+        permission:
+            Permission.WRITE_ISSUES,
+     
     },
 
     schema: {

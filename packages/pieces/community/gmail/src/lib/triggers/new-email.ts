@@ -85,10 +85,15 @@ async function parseStream(stream: any) {
 
 async function convertAttachment(attachments: Attachment[], files: FilesService) {
 	const promises = attachments.map(async (attachment) => {
-		return files.write({
+		return {
 			fileName: attachment.filename ?? `attachment-${Date.now()}`,
-			data: attachment.content,
-		});
+			mimeType: attachment.contentType,
+			size: attachment.size,
+			data: await files.write({
+				fileName: attachment.filename ?? `attachment-${Date.now()}`,
+				data: attachment.content,
+			}),
+		};
 	});
 	return Promise.all(promises);
 }

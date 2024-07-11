@@ -8,7 +8,7 @@
       </div>
       @if(isVersionMatch$ | async){
       <svg-icon [applyClass]="true" class="ap-fill-danger ap-ml-1 ap-top-[6px] ap-right-[-6px] ap-absolute"
-        [svgStyle]="{ width: '8px', height: '8px' }" [matTooltip]="newUpdateMessage"
+        [svgStyle]="{ width: '8px', height: '8px' }" matTooltip="New update available" i18n-matTooltip
         src="assets/img/custom/notification_important.svg">
       </svg-icon>
       }
@@ -17,22 +17,25 @@
       <app-updates></app-updates>
     </ng-template>
   </mat-tab>
-  <mat-tab [label]="signingKeysTabTitle" *ngIf="!removeSigningKey">
+  <mat-tab label="Signing Keys" i18n-label *ngIf="!removeSigningKey">
     <app-signing-keys-table></app-signing-keys-table>
   </mat-tab>
-  <mat-tab [label]="accountManagementEmailTabTitle" *ngIf="!removeMailServer">
+  <mat-tab label="Mail Server" i18n-label *ngIf="!removeMailServer">
     <app-smtp-settings [platform]="platform"></app-smtp-settings></mat-tab>
-  <mat-tab [label]="customDomainTabTitle" *ngIf="!removeCustomDomain">
+  <mat-tab label="Custom Domains" i18n-label *ngIf="!removeCustomDomain">
     <app-custom-domain-table></app-custom-domain-table>
   </mat-tab>
-  <mat-tab [label]="apiKeysTabTitle">
+  <mat-tab label="API Keys" i18n-label>
     <app-api-keys-table></app-api-keys-table>
   </mat-tab>
-  <mat-tab label="Single Sign On" bodyClass="!ap-overflow-visible">
+  <mat-tab label="Single Sign On" bodyClass="!ap-overflow-visible" i18n-label>
     <app-sso-settings></app-sso-settings>
   </mat-tab>
-  <mat-tab label="Audit Logs" bodyClass="!ap-overflow-visible">
+  <mat-tab label="Audit Logs" bodyClass="!ap-overflow-visible" i18n-label>
     <app-audit-event-table [featureLocked]="auditLogFeatureLocked"></app-audit-event-table>
+  </mat-tab>
+  <mat-tab label="Worker Machines" bodyClass="!ap-overflow-visible" i18n-label>
+    <app-worker-machines-table></app-worker-machines-table>
   </mat-tab>
 </mat-tab-group>
 <ng-container *ngIf="fragmentChanged$ | async"></ng-container>

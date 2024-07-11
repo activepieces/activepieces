@@ -162,8 +162,6 @@ export class IsolateSandbox {
         const currentDir = cwd()
         const fullCmd = `${currentDir}/packages/server/api/src/assets/${this.isolateExecutableName} ${cmd}`
 
-        logger.info(`sandbox, command: ${fullCmd}`)
-
         return new Promise((resolve, reject) => {
             exec(fullCmd, (error, stdout: string | PromiseLike<string>, stderr) => {
                 if (error) {
