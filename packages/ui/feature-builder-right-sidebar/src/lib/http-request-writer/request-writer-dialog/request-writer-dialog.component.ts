@@ -105,7 +105,7 @@ export class RequestWriterDialogComponent implements OnInit {
     }
   }
 
-  useGeneratedCode() {
+  useGeneratedHttpRequest() {
     if (this.generatedRequest$.value) {
       this.dialogRef.close(
         this.parseResponseAndMatchItToHttpPieceProperties(
