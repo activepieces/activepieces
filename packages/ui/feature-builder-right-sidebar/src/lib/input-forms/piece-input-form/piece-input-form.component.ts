@@ -61,8 +61,8 @@ import { InputFormCore } from '../input-form-core';
   template: `
     @if (deps$ | async; as deps) { @if (deps.currentStep?.type ===
     ActionType.PIECE && deps.currentStep?.settings.pieceName ===
-    "@activepieces/piece-http" && deps.currentStep?.displayName === "Send HTTP
-    request") {
+    "@activepieces/piece-http" && deps.currentStep?.settings.actionName ===
+    "send_request") {
     <app-http-request-writer
       (httpRequestGenerated)="httpRequestGenerated($event)"
     ></app-http-request-writer>
