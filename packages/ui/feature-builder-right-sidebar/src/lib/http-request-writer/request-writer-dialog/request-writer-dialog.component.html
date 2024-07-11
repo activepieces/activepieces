@@ -116,45 +116,7 @@
             >Prompt is required
           </mat-error>
         </mat-form-field>
-
-        <!-- <mat-form-field
-          class="ap-w-full"
-          appearance="outline"
-          subscriptSizing="dynamic"
-          *ngIf="
-            (generatedRequest$ | async) === undefined ||
-            (generatedRequest$ | async) === null
-          "
-        >
-          <mat-label i18n> Docs Reference </mat-label>
-          <input
-            *ngIf="
-              (generatedRequest$ | async) === undefined ||
-              (generatedRequest$ | async) === null
-            "
-            class="!ap-resize-none"
-            cdkFocusInitial
-            (keydown.enter)="$event.preventDefault(); $event.stopPropagation()"
-            (keyup.enter)="prompt()"
-            [formControl]="promptForm.controls.reference"
-            matInput
-            type="text"
-            rows="4"
-          />
-        </mat-form-field> -->
       </div>
-      <!-- <div *ngIf="generatedRequest$ | async">
-        <ap-button
-          btnColor="primary"
-          btnStyle="stroked"
-          btnSize="large"
-          [disabled]="!promptForm.controls.prompt.value"
-          [loading]="loading$ | async | defaultFalse"
-          [darkLoadingSpinner]="true"
-          i18n
-          >Ask</ap-button
-        >
-      </div> -->
     </div>
   </form>
 </ng-template>
