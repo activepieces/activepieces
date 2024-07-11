@@ -8,6 +8,7 @@ import {
     PlatformRole,
     PrincipalType,
     Project,
+    spreadIfDefined,
     User,
 } from '@activepieces/shared'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -33,7 +34,7 @@ export const managedAuthnService = {
             externalProjectId: externalPrincipal.externalProjectId,
         })
 
-        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType)
+        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks)
 
         const projectMember = await projectMemberService.upsert({
             projectId: project.id,
@@ -64,6 +65,7 @@ const updateProjectLimits = async (
     projectId: string,
     piecesTags: string[],
     piecesFilterType: PiecesFilterType,
+    tasks: number | undefined,
 ): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,
@@ -73,6 +75,7 @@ const updateProjectLimits = async (
     })
     await projectLimitsService.upsert({
         ...DEFAULT_PLATFORM_LIMIT,
+        ...spreadIfDefined('tasks', tasks),
         pieces,
         piecesFilterType,
     }, projectId)

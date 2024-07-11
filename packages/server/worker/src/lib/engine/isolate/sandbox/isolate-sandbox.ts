@@ -13,7 +13,10 @@ type SandboxCtorParams = {
 
 type AssignCacheParams = {
     cacheKey: string
-    cachePath: string
+    globalCachePath: string
+    globalCodesPath: string
+    flowVersionId?: string
+    customPiecesPath: string | undefined
 }
 
 const getIsolateExecutableName = (): string => {
@@ -29,12 +32,17 @@ export class IsolateSandbox {
 
     protected static readonly nodeExecutablePath = process.execPath
     private static readonly isolateExecutableName = getIsolateExecutableName()
-    private static readonly cacheBindPath = '/root'
+    private static readonly sandboxGlobalCachePath = '/root'
+    private static readonly sandboxCustomPiecesCachePath = '/node_modules'
+    private static readonly sandboxCodesCachePath = '/codes'
 
     public readonly boxId: number
     public inUse = false
-    protected _cacheKey?: string
-    protected _cachePath?: string
+    private _cacheKey?: string
+    private _globalCachePath?: string
+    private _globalCodesPath?: string
+    private _flowVersionId?: string
+    private _customPiecesPath?: string
 
     public constructor(params: SandboxCtorParams) {
         this.boxId = params.boxId
@@ -64,7 +72,7 @@ export class IsolateSandbox {
 
             const timeout = getEngineTimeout(operationType)
             const dirsToBindArgs = this.getDirsToBindArgs()
-            const propagatedEnvVars = Object.entries(this.getEnvironmentVariables()).map(([ key, value ]) => `--env=${key}='${value}'`)
+            const propagatedEnvVars = Object.entries(this.getEnvironmentVariables()).map(([key, value]) => `--env=${key}='${value}'`)
             const fullCommand = [
                 ...dirsToBindArgs,
                 '--share-net',
@@ -77,7 +85,7 @@ export class IsolateSandbox {
                 '--run',
                 ...propagatedEnvVars,
                 IsolateSandbox.nodeExecutablePath,
-                `${IsolateSandbox.cacheBindPath}/main.js`,
+                `${IsolateSandbox.sandboxGlobalCachePath}/main.js`,
                 operationType,
             ].join(' ')
 
@@ -123,14 +131,20 @@ export class IsolateSandbox {
 
     public async assignCache({
         cacheKey,
-        cachePath,
+        globalCachePath,
+        globalCodesPath,
+        flowVersionId,
+        customPiecesPath,
     }: AssignCacheParams): Promise<void> {
         logger.debug(
-            { boxId: this.boxId, cacheKey, cachePath },
+            { boxId: this.boxId, cacheKey, globalCachePath, globalCodesPath, flowVersionId },
             '[IsolateSandbox#assignCache]',
         )
         this._cacheKey = cacheKey
-        this._cachePath = cachePath
+        this._globalCachePath = globalCachePath
+        this._globalCodesPath = globalCodesPath
+        this._customPiecesPath = customPiecesPath
+        this._flowVersionId = flowVersionId
     }
 
     protected async parseMetaFile(): Promise<Record<string, unknown>> {
@@ -161,7 +175,7 @@ export class IsolateSandbox {
     private static runIsolate(cmd: string): Promise<string> {
         const currentDir = cwd()
         const fullCmd = `${currentDir}/packages/server/api/src/assets/${this.isolateExecutableName} ${cmd}`
-
+        logger.debug({ fullCmd }, '[IsolateSandbox#runIsolate] fullCmd')
         return new Promise((resolve, reject) => {
             exec(fullCmd, (error, stdout: string | PromiseLike<string>, stderr) => {
                 if (error) {
@@ -186,7 +200,7 @@ export class IsolateSandbox {
             NODE_OPTIONS: '--enable-source-maps',
             AP_CODE_SANDBOX_TYPE: system.getOrThrow(SharedSystemProp.CODE_SANDBOX_TYPE),
             AP_PIECES_SOURCE: system.getOrThrow(SharedSystemProp.PIECES_SOURCE),
-            AP_BASE_CODE_DIRECTORY: `${IsolateSandbox.cacheBindPath}/codes`,
+            AP_BASE_CODE_DIRECTORY: IsolateSandbox.sandboxCodesCachePath,
         }
     }
 
@@ -195,14 +209,22 @@ export class IsolateSandbox {
    */
     private getDirsToBindArgs(): string[] {
         const etcDir = path.resolve('./packages/server/api/src/assets/etc/')
-        const cachePath = this._cachePath
-        assertNotNullOrUndefined(cachePath, 'cachePath')
+        const globalCachePath = this._globalCachePath
+        const globalCodesCachePath = this._globalCodesPath
+        assertNotNullOrUndefined(globalCodesCachePath, 'globalCodesCachePath')
+        assertNotNullOrUndefined(globalCachePath, 'globalCachePath')
 
         const dirsToBind = [
             '--dir=/usr/bin/',
             `--dir=/etc/=${etcDir}`,
-            `--dir=${IsolateSandbox.cacheBindPath}=${path.resolve(cachePath)}`,
+            `--dir=${IsolateSandbox.sandboxGlobalCachePath}=${path.resolve(globalCachePath)}`,
         ]
+        if (this._customPiecesPath) {
+            dirsToBind.push(`--dir=${IsolateSandbox.sandboxCustomPiecesCachePath}=${path.resolve(this._customPiecesPath, 'node_modules')}`)
+        }
+        if (this._flowVersionId) {
+            dirsToBind.push(`--dir=${path.join(IsolateSandbox.sandboxCodesCachePath, this._flowVersionId)}=${path.resolve(globalCodesCachePath, this._flowVersionId)}`)
+        }
 
         const piecesSource = system.getOrThrow<PiecesSource>(SharedSystemProp.PIECES_SOURCE)
 

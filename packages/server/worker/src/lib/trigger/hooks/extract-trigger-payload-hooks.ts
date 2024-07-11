@@ -17,6 +17,7 @@ export async function extractPayloads(
 ): Promise<unknown[]> {
     const { payload, flowVersion, projectId, simulate } = params
     try {
+        const { pieceName, pieceVersion } = flowVersion.trigger.settings
         const { result } = await engineRunner.executeTrigger(engineToken, {
             hookType: TriggerHookType.RUN,
             flowVersion,
@@ -33,8 +34,8 @@ export async function extractPayloads(
         else {
             logger.error({
                 result,
-                pieceName: params.flowVersion.trigger.settings.pieceName,
-                pieceVersion: params.flowVersion.trigger.settings.pieceVersion,
+                pieceName,
+                pieceVersion,
                 flowId: flowVersion.flowId,
             }, 'Failed to execute trigger')
             return []

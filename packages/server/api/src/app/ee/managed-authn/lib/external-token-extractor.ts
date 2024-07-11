@@ -42,6 +42,7 @@ export const externalTokenExtractor = {
                 externalFirstName: payload.firstName,
                 externalLastName: payload.lastName,
                 role: payload?.role ?? ProjectMemberRole.EDITOR,
+                tasks: payload?.tasks,
                 pieces: {
                     filterType: payload?.pieces?.filterType ?? PiecesFilterType.NONE,
                     tags: payload?.pieces?.tags ?? [],
@@ -91,6 +92,7 @@ function externalTokenPayload() {
     })
     const v2 = Type.Composite([v1,
         Type.Object({
+            tasks: Type.Optional(Type.Number()),
             role: Type.Optional(Type.Enum(ProjectMemberRole)),
             pieces: Type.Optional(Type.Object({
                 filterType: Type.Enum(PiecesFilterType),
@@ -117,6 +119,7 @@ export type ExternalPrincipal = {
         filterType: PiecesFilterType
         tags: string[]
     }
+    tasks?: number
 }
 
 type GetSigningKeyParams = {
