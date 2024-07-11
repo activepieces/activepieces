@@ -1,4 +1,4 @@
-import { AppSystemProp, CopilotInstanceTypes, logger, system } from '@activepieces/server-shared'
+import { AppSystemProp, CopilotInstanceTypes, system } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
 import OpenAI from 'openai'
 import { ChatCompletionTool } from 'openai/resources'
@@ -52,10 +52,6 @@ export const requestWriterService = {
         assertNotNullOrUndefined(
             result.choices[0].message.tool_calls,
             'OpenAICodeResponse',
-        )
-        logger.debug(
-            { response: result.choices[0].message.tool_calls[0] },
-            '[CopilotService#generateHttpRequest] Response received...',
         )
         return result.choices[0].message.tool_calls[0].function.arguments
     },
