@@ -145,23 +145,6 @@ export class RequestWriterDialogComponent implements OnInit {
     return beautifiedResponse;
   }
 
-  hasNesting(obj: Record<string, any>): boolean {
-    if (typeof obj !== 'object' || obj === null) {
-      return false;
-    }
-    if (Array.isArray(obj)) {
-      return obj.some(this.hasNesting);
-    }
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        if (typeof obj[key] === 'object' && obj[key] !== null) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   parseResponseAndMatchItToHttpPieceProperties(
     response: Record<string, unknown>
   ) {

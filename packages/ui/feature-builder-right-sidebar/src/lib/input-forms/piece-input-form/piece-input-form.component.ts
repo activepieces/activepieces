@@ -66,7 +66,6 @@ import { InputFormCore } from '../input-form-core';
       (httpRequestGenerated)="httpRequestGenerated($event)"
     ></app-http-request-writer>
     }
-
     <app-action-or-trigger-dropdown
       [items]="deps.triggersOrActions"
       [passedFormControl]="triggersOrActionsControl"
@@ -157,6 +156,7 @@ export class PieceInputFormComponent extends InputFormCore {
     private fb: UntypedFormBuilder
   ) {
     super(store, pieceService);
+    console.log(this.deps$);
     this.isFormReadOnly$ = this.store
       .select(BuilderSelectors.selectReadOnly)
       .pipe(

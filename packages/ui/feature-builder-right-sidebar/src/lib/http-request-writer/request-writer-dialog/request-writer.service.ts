@@ -1,6 +1,6 @@
 import {
-  GenerateRequestBodyRequest,
-  GenerateRequestBodyResponse,
+  GenerateHttpRequestBodyRequest,
+  GenerateHttpRequestBodyResponse,
   WebsocketClientEvent,
   WebsocketServerEvent,
 } from '@activepieces/shared';
@@ -15,14 +15,14 @@ export class RequestWriterService {
   constructor(private websocketService: WebSocketService) {}
 
   fetchApiDetails(
-    request: GenerateRequestBodyRequest
-  ): Observable<GenerateRequestBodyResponse> {
+    request: GenerateHttpRequestBodyRequest
+  ): Observable<GenerateHttpRequestBodyResponse> {
     this.websocketService.socket.emit(
       WebsocketServerEvent.GENERATE_HTTP_REQUEST,
       request
     );
     return this.websocketService.socket
-      .fromEvent<GenerateRequestBodyResponse>(
+      .fromEvent<GenerateHttpRequestBodyResponse>(
         WebsocketClientEvent.GENERATE_HTTP_REQUEST_FINISHED
       )
       .pipe(take(1));

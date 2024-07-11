@@ -4,7 +4,7 @@
   <div class="ap-max-w-[40.625rem]">
     <mat-stepper linear #stepper>
       <mat-step
-        [completed]="(generatedHttpRequest$$ | async) !== undefined"
+        [completed]="(generatedHttpRequest$ | async) !== undefined"
         [editable]="false"
       >
         <ng-template matStepLabel>Describe Your Request</ng-template>
@@ -25,8 +25,8 @@
     </ap-button>
     <ap-button
       *ngIf="
-        (generatedHttpRequest$$ | async) === undefined ||
-        (generatedHttpRequest$$ | async) === null
+        (generatedHttpRequest$ | async) === undefined ||
+        (generatedHttpRequest$ | async) === null
       "
       cdkFocusInitial
       btnSize="default"
@@ -39,8 +39,8 @@
     </ap-button>
     <ap-button
       *ngIf="
-        (generatedHttpRequest$$ | async) !== undefined &&
-        (generatedHttpRequest$$ | async) !== null
+        (generatedHttpRequest$ | async) !== undefined &&
+        (generatedHttpRequest$ | async) !== null
       "
       cdkFocusInitial
       btnSize="default"
