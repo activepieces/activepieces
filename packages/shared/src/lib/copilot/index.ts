@@ -1,10 +1,10 @@
 import { Static, Type } from '@sinclair/typebox'
 
-export const CopilotGenerateRequest = Type.Object({
+export const GenerateCodeRequest = Type.Object({
     prompt: Type.String(),
 })
 
-export type CopilotGenerateRequest = Static<typeof CopilotGenerateRequest>
+export type GenerateCodeRequest = Static<typeof GenerateCodeRequest>
 
 export const GenerateCodeResponse = Type.Object({
     result: Type.String(),
@@ -13,14 +13,14 @@ export const GenerateCodeResponse = Type.Object({
 export type GenerateCodeResponse = Static<typeof GenerateCodeResponse>
 
 
-export const GenerateRequestBodyRequest = Type.Object({
+export const GenerateHttpRequestBodyRequest = Type.Object({
     prompt: Type.String(),
 })
 
-export type GenerateRequestBodyRequest = Static<typeof GenerateRequestBodyRequest>
+export type GenerateHttpRequestBodyRequest = Static<typeof GenerateHttpRequestBodyRequest>
 
-export const GenerateRequestBodyResponse = Type.Object({
+export const GenerateHttpRequestBodyResponse = Type.Object({
     result: Type.String(),
 })
 
-export type GenerateRequestBodyResponse = Static<typeof GenerateRequestBodyResponse>
+export type GenerateHttpRequestBodyResponse = Static<typeof GenerateHttpRequestBodyResponse>

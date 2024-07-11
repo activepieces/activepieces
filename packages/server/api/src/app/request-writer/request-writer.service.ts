@@ -36,8 +36,8 @@ function getOpenAI(): OpenAI {
 }
 
 export const requestWriterService = {
-    async generateCode({ prompt }: RequestWriteParams): Promise<string> {
-        logger.debug({ prompt }, '[CopilotService#generateCode] Prompting...')
+    async generateHttpRequest({ prompt }: RequestWriteParams): Promise<string> {
+        logger.debug({ prompt }, '[CopilotService#generateHttpRequest] Prompting...')
         const result = await getOpenAI().chat.completions.create({
             model: 'gpt-4o',
             messages: [{ role: 'user', content: prompt }],
@@ -56,7 +56,7 @@ export const requestWriterService = {
         )
         logger.debug(
             { response: result.choices[0].message.tool_calls[0] },
-            '[CopilotService#generateCode] Response received...',
+            '[CopilotService#generateHttpRequest] Response received...',
         )
         return result.choices[0].message.tool_calls[0].function.arguments
     },
