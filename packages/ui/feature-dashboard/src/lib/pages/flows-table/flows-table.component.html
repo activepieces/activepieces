@@ -14,10 +14,10 @@
           class="ap-rounded ap-border ap-overflow-x-auto ap-border-solid ap-border-dividers ap-p-4 sm:ap-p-[30px] ap-pb-16 sm:ap-pb-20 ap-flex ap-flex-col">
           <app-flows-table-title>
               @if(apFilters.filtersButtonPortal){
-                <ng-template [cdkPortalOutlet]="apFilters.filtersButtonPortal"> </ng-template>
+                <ng-template filtersButton [cdkPortalOutlet]="apFilters.filtersButtonPortal"> </ng-template>
               }
           </app-flows-table-title>
-          <ap-filter #apFilters [filters]="filters"></ap-filter>
+          <ap-filter  #apFilters [filters]="filters"></ap-filter>
           <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Flows" i18n-aria-label>
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef i18n>Name</th>
