@@ -1,6 +1,9 @@
 <div class="ap-w-full ">
   <div class="ap-h-full">
-    <ap-filter [filters]="filters"></ap-filter>
+    <div class="ap-flex ap-items-center ap-gap-1 !ap-font-semibold ap-mb-2">
+        <ng-template [cdkPortalOutlet]="apFilters.filtersButtonPortal"> </ng-template>
+    </div>
+    <ap-filter filterButtonType="button" #apFilters [filters]="filters"></ap-filter>
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="Runs">
         <ng-container matColumnDef="flowName">
