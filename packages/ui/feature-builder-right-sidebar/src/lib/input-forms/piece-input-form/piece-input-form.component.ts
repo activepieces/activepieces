@@ -61,7 +61,8 @@ import { InputFormCore } from '../input-form-core';
   template: `
     @if (deps$ | async; as deps) { @if (deps.currentStep?.type ===
     ActionType.PIECE && deps.currentStep?.settings.pieceName ===
-    "@activepieces/piece-http") {
+    "@activepieces/piece-http" && deps.currentStep?.displayName === "Send HTTP
+    request") {
     <app-http-request-writer
       (httpRequestGenerated)="httpRequestGenerated($event)"
     ></app-http-request-writer>
@@ -156,7 +157,7 @@ export class PieceInputFormComponent extends InputFormCore {
     private fb: UntypedFormBuilder
   ) {
     super(store, pieceService);
-    console.log(this.deps$);
+    console.log(this.deps$, 'deps');
     this.isFormReadOnly$ = this.store
       .select(BuilderSelectors.selectReadOnly)
       .pipe(
@@ -191,6 +192,7 @@ export class PieceInputFormComponent extends InputFormCore {
     }).pipe(
       tap((res) => {
         if (res.currentStep?.type === ActionType.PIECE) {
+          console.log(res, 'Res');
           this.actionErrorHandlingFormControl.setValue(
             res.currentStep.settings.errorHandlingOptions || {}
           );
