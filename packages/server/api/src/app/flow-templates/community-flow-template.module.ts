@@ -1,4 +1,4 @@
-import { system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     isNil,
@@ -25,7 +25,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            const templateSource = system.get(SystemProp.TEMPLATES_SOURCE_URL)
+            const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
             if (isNil(templateSource)) {
                 return paginationHelper.createPage([], null)
             }

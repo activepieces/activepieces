@@ -1,30 +1,44 @@
+import path from 'path'
 import { enrichErrorContext, logger } from '@activepieces/server-shared'
-import { PiecePackage } from '@activepieces/shared'
+import { PiecePackage, PieceType } from '@activepieces/shared'
 import { CodeArtifact } from '../../../engine-runner'
-import { sandboxCachePool } from '../files/sandbox-cache-pool'
+import { executionFiles } from '../../../execution-files'
 import { IsolateSandbox } from '../isolate-sandbox'
 import { sandboxManager } from '../sandbox-manager'
-import { SandBoxCacheType, TypedProvisionCacheInfo } from './sandbox-cache-key'
+import { extractProvisionCacheKey, TypedProvisionCacheInfo } from './sandbox-cache-key'
+
+const globalCachePath = path.resolve('cache', 'ns')
+const globalCodesPath = path.resolve('cache', 'codes')
 
 export const sandboxProvisioner = {
     async provision({
+        projectId,
         pieces = [],
         codeSteps = [],
         ...cacheInfo
     }: ProvisionParams): Promise<IsolateSandbox> {
         try {
-            const cachedSandbox = await sandboxCachePool.findOrCreate(cacheInfo)
 
-            await cachedSandbox.prepare({
+            const cacheKey = extractProvisionCacheKey(cacheInfo)
+
+            const customPiecesPath = path.resolve('cache', 'custom', projectId)
+            await executionFiles.provision({
                 pieces,
                 codeSteps,
+                globalCachePath,
+                globalCodesPath,
+                customPiecesPath,
             })
 
-            const sandbox = await sandboxManager.allocate(cachedSandbox.key)
-
+            const hasAnyCustomPieces = pieces.some(f => f.pieceType === PieceType.CUSTOM)
+            const sandbox = await sandboxManager.allocate(cacheKey)
+            const flowVersionId = codeSteps.length > 0 ? codeSteps[0].flowVersionId : undefined
             await sandbox.assignCache({
-                cacheKey: cachedSandbox.key,
-                cachePath: cachedSandbox.path(),
+                cacheKey,
+                globalCachePath,
+                globalCodesPath,
+                flowVersionId,
+                customPiecesPath: hasAnyCustomPieces ? customPiecesPath : undefined,
             })
 
             return sandbox
@@ -50,20 +64,14 @@ export const sandboxProvisioner = {
         )
 
         await sandboxManager.release(sandbox.boxId)
-
-        if (sandbox.cacheKey) {
-            await sandboxCachePool.release({
-                key: sandbox.cacheKey,
-            })
-        }
     },
 }
 
-type ProvisionParams<T extends SandBoxCacheType = SandBoxCacheType> =
-  TypedProvisionCacheInfo<T> & {
-      pieces?: PiecePackage[]
-      codeSteps?: CodeArtifact[]
-  }
+type ProvisionParams = TypedProvisionCacheInfo & {
+    pieces?: PiecePackage[]
+    codeSteps?: CodeArtifact[]
+    projectId: string
+}
 
 type ReleaseParams = {
     sandbox: IsolateSandbox

@@ -31,7 +31,7 @@ export const repoFactory = <T extends ObjectLiteral>(
     const newInstance: RepoGetter<T> = (entityManager?: EntityManager) => {
         return (
             entityManager?.getRepository(entity) ??
-      databaseConnection.getRepository(entity)
+      databaseConnection().getRepository(entity)
         )
     }
 

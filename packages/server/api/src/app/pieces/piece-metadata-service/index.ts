@@ -1,5 +1,5 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { PiecesSource, system, SystemProp } from '@activepieces/server-shared'
+import { PiecesSource, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     PackageType,
@@ -15,7 +15,7 @@ import { FilePieceMetadataService } from './file-piece-metadata-service'
 import { PieceMetadataService } from './piece-metadata-service'
 
 const initPieceMetadataService = (): PieceMetadataService => {
-    const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
+    const source = system.getOrThrow<PiecesSource>(SharedSystemProp.PIECES_SOURCE)
     switch (source) {
         case PiecesSource.DB:
         case PiecesSource.CLOUD_AND_DB:

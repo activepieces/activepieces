@@ -1,11 +1,11 @@
 import { DeleteWebhookSimulationRequest, JobData, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendWebhookUpdateRequest, SubmitPayloadsRequest, WebhookJobData } from '@activepieces/server-shared'
 import { apId, ExecutionType, PrincipalType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { dedupeService } from '../flows/trigger/dedupe'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
-import { generateEngineToken } from '../helper/engine-helper'
 import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
 import { flowConsumer } from './consumer'
 import { webhookResponseWatcher } from './helper/webhook-response-watcher'
@@ -21,12 +21,16 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             querystring: PollJobRequest,
         },
     }, async (request) => {
+        
+        const token = apId()
         const { queueName } = request.query
-        const job = await flowConsumer.poll(queueName)
+        const job = await flowConsumer.poll(queueName, {
+            token,
+        })
         if (!job) {
             return null
         }
-        return enrichEngineToken(queueName, job)
+        return enrichEngineToken(token, queueName, job)
     })
 
     app.post('/delete-webhook-simulation', {
@@ -128,9 +132,10 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
-async function enrichEngineToken(queueName: QueueName, job: { id: string, data: JobData }) {
-    const engineToken = await generateEngineToken({
+async function enrichEngineToken(token: string, queueName: QueueName, job: { id: string, data: JobData }) {
+    const engineToken = await accessTokenManager.generateEngineToken({
         jobId: job.id,
+        queueToken: token,
         projectId: await getProjectId(queueName, job.data),
     })
     return {

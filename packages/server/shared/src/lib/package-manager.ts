@@ -5,6 +5,7 @@ import { enrichErrorContext } from './exception-handler'
 import { exec } from './exec'
 import { fileExists } from './file-system'
 import { logger } from './logger'
+import { memoryLock } from './memory-lock'
 
 type PackageManagerOutput = {
     stdout: string
@@ -73,14 +74,22 @@ export const packageManager = {
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {
-        const fExists = await fileExists(fsPath.join(path, 'package.json'))
-        if (fExists) {
-            return {
-                stdout: 'N/A',
-                stderr: 'N/A',
+        const lock = await memoryLock.acquire(`pnpm-init-${path}`)
+        try {
+            const fExists = await fileExists(fsPath.join(path, 'package.json'))
+            if (fExists) {
+                return {
+                    stdout: 'N/A',
+                    stderr: 'N/A',
+                }
             }
+            // It must be awaited so it only releases the lock after the command is done
+            const result = await runCommand(path, 'init')
+            return result
         }
-        return runCommand(path, 'init')
+        finally {
+            await lock.release()
+        }
     },
 
     async exec({ path, command }: ExecParams): Promise<PackageManagerOutput> {

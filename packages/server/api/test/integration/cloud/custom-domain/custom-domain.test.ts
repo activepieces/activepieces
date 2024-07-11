@@ -3,8 +3,8 @@ import { apId, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockCustomDomain,
@@ -14,12 +14,12 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    await databaseConnection().initialize()
+    app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -104,7 +104,7 @@ describe('Custom Domain API', () => {
                     domain: faker.internet.domainName(),
                 }),
             ]
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('custom_domain')
                 .save(mockCustomDomains1)
 
@@ -114,7 +114,7 @@ describe('Custom Domain API', () => {
                     domain: faker.internet.domainName(),
                 }),
             ]
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('custom_domain')
                 .save(mockCustomDomains2)
 
@@ -155,7 +155,7 @@ describe('Custom Domain API', () => {
                 platformId: mockPlatformOne.id,
                 domain: faker.internet.domainName(),
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('custom_domain')
                 .save(customDomain)
 
@@ -185,7 +185,7 @@ describe('Custom Domain API', () => {
                 platformId: mockPlatformOne.id,
                 domain: faker.internet.domainName(),
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('custom_domain')
                 .save(customDomain)
 

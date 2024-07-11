@@ -1,4 +1,4 @@
-import { system, SystemProp } from '@activepieces/server-shared'
+import { SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment, ProjectUsage } from '@activepieces/shared'
 import { getRedisConnection } from '../../database/redis-connection'
 import { projectMemberService } from '../../ee/project-members/project-member.service'
@@ -39,7 +39,7 @@ async function increaseTasks(projectId: string, incrementBy: number): Promise<nu
 }
 
 async function incrementOrCreateRedisRecord(projectId: string, startBillingPeriod: string, incrementBy: number): Promise<number> {
-    const environment = system.get(SystemProp.ENVIRONMENT)
+    const environment = system.get(SharedSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return 0
     }
@@ -48,7 +48,7 @@ async function incrementOrCreateRedisRecord(projectId: string, startBillingPerio
 }
 
 async function getTasksUsage(projectId: string, startBillingPeriod: string): Promise<number> {
-    const environment = system.get(SystemProp.ENVIRONMENT)
+    const environment = system.get(SharedSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return 0
     }

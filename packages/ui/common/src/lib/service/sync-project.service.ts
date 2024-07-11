@@ -7,7 +7,7 @@ import {
   ProjectSyncPlan,
   PullGitRepoRequest,
 } from '@activepieces/ee-shared';
-import { SeekPage, assertNotNullOrUndefined } from '@activepieces/shared';
+import { SeekPage } from '@activepieces/shared';
 import { Observable, tap, map, shareReplay, switchMap, of } from 'rxjs';
 import { PushGitRepoRequest } from '@activepieces/ee-shared';
 import { PlatformService } from './platform.service';
@@ -44,13 +44,10 @@ export class SyncProjectService {
 
   get(): Observable<GitRepo | undefined> {
     const projectId = this.authenticationService.getProjectId();
-    const platformId = this.authenticationService.getPlatformId();
-    assertNotNullOrUndefined(projectId, 'projectId');
-    assertNotNullOrUndefined(platformId, 'platformId');
     if (!this.cache$.has(projectId)) {
       this.cache$.set(
         projectId,
-        this.platformService.getPlatform(platformId).pipe(
+        this.platformService.getCurrentUserPlatform().pipe(
           switchMap((platform) => {
             if (!platform.gitSyncEnabled) {
               return of(undefined);

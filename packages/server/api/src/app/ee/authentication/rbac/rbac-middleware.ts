@@ -87,7 +87,7 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
     return req.routeConfig.permission === undefined
 }
 
-const getPrincipalRoleOrThrow = async (principal: Principal): Promise<ProjectMemberRole> => {
+export const getPrincipalRoleOrThrow = async (principal: Principal): Promise<ProjectMemberRole> => {
     const { id: userId, projectId } = principal
 
     const role = await projectMemberService.getRole({

@@ -1,21 +1,18 @@
-import { mkdir } from 'fs/promises'
 import path from 'path'
-import { fileExists, logger, memoryLock, networkUtls, packageManager, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
-import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, isNil, PiecePackage, TriggerHookType } from '@activepieces/shared'
-import dayjs from 'dayjs'
-import { pieceManager } from '../../piece-manager'
-import { codeBuilder } from '../../utils/code-builder'
-import { engineInstaller } from '../../utils/engine-installer'
+import { logger, networkUtls, SharedSystemProp, system, webhookSecretsUtils, WorkerSystemProps } from '@activepieces/server-shared'
+import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, isNil, TriggerHookType } from '@activepieces/shared'
 import { webhookUtils } from '../../utils/webhook-utils'
-import { CodeArtifact, EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
+import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
+import { executionFiles } from '../execution-files'
 import { pieceEngineUtil } from '../flow-enginer-util'
 import { EngineWorker } from './worker'
 
-const memoryLimit = Math.floor((Number(system.getOrThrow(SystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
+const memoryLimit = Math.floor((Number(system.getOrThrow(SharedSystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
 const sandboxPath = path.resolve('cache')
+const codesPath = path.resolve('cache', 'codes')
 const enginePath = path.join(sandboxPath, 'main.js')
 // TODO seperate this to a config file from flow worker concurrency as execute step is different operation
-const workerConcurrency = Math.max(5, system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10)
+const workerConcurrency = Math.max(5, system.getNumber(WorkerSystemProps.FLOW_WORKER_CONCURRENCY) ?? 10)
 let engineWorkers: EngineWorker
 
 export const threadEngineRunner: EngineRunner = {
@@ -29,7 +26,8 @@ export const threadEngineRunner: EngineRunner = {
         const input: ExecuteFlowOperation = {
             ...operation,
             engineToken,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
         }
 
         return execute(input, EngineOperationType.EXECUTE_FLOW)
@@ -55,18 +53,30 @@ export const threadEngineRunner: EngineRunner = {
             appWebhookUrl: await webhookUtils.getAppWebhookUrl({
                 appName: triggerPiece.pieceName,
             }),
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             webhookSecret: await webhookSecretsUtils.getWebhookSecret(lockedVersion),
             engineToken,
         }
-        await prepareSandbox([triggerPiece], [])
+        await executionFiles.provision({
+            pieces: [triggerPiece],
+            codeSteps: [],
+            globalCachePath: sandboxPath,
+            globalCodesPath: codesPath,
+            customPiecesPath: sandboxPath,
+        })
         return execute(input, EngineOperationType.EXECUTE_TRIGGER_HOOK)
     },
     async extractPieceMetadata(operation) {
         logger.debug({ operation }, '[threadEngineRunner#extractPieceMetadata]')
 
-        await prepareSandbox([operation], [])
-
+        await executionFiles.provision({
+            pieces: [operation],
+            codeSteps: [],
+            globalCachePath: sandboxPath,
+            globalCodesPath: codesPath,
+            customPiecesPath: sandboxPath,
+        })
         return execute(operation, EngineOperationType.EXTRACT_PIECE_METADATA)
     },
     async executeValidateAuth(engineToken, operation) {
@@ -74,10 +84,17 @@ export const threadEngineRunner: EngineRunner = {
 
         const { piece } = operation
         const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, piece)
-        await prepareSandbox([lockedPiece], [])
+        await executionFiles.provision({
+            pieces: [lockedPiece],
+            codeSteps: [],
+            globalCachePath: sandboxPath,
+            globalCodesPath: codesPath,
+            customPiecesPath: sandboxPath,
+        })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
         return execute(input, EngineOperationType.EXECUTE_VALIDATE_AUTH)
@@ -93,12 +110,24 @@ export const threadEngineRunner: EngineRunner = {
         switch (step.type) {
             case ActionType.PIECE: {
                 const lockedPiece = await pieceEngineUtil.getExactPieceForStep(engineToken, step)
-                await prepareSandbox([lockedPiece], [])
+                await executionFiles.provision({
+                    pieces: [lockedPiece],
+                    codeSteps: [],
+                    globalCachePath: sandboxPath,
+                    globalCodesPath: codesPath,
+                    customPiecesPath: sandboxPath,
+                })
                 break
             }
             case ActionType.CODE: {
                 const codes = pieceEngineUtil.getCodeSteps(operation.flowVersion).filter((code) => code.name === operation.stepName)
-                await prepareSandbox([], codes)
+                await executionFiles.provision({
+                    pieces: [],
+                    codeSteps: codes,
+                    globalCachePath: sandboxPath,
+                    globalCodesPath: codesPath,
+                    customPiecesPath: sandboxPath,
+                })
                 break
             }
             case ActionType.BRANCH:
@@ -116,7 +145,8 @@ export const threadEngineRunner: EngineRunner = {
             flowVersion: lockedFlowVersion,
             stepName: operation.stepName,
             projectId: operation.projectId,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
 
@@ -133,11 +163,18 @@ export const threadEngineRunner: EngineRunner = {
         const { piece } = operation
 
         const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, piece)
-        await prepareSandbox([lockedPiece], [])
+        await executionFiles.provision({
+            pieces: [lockedPiece],
+            codeSteps: [],
+            globalCachePath: sandboxPath,
+            globalCodesPath: codesPath,
+            customPiecesPath: sandboxPath,
+        })
 
         const input: ExecutePropsOptions = {
             ...operation,
-            serverUrl: await networkUtls.getApiUrl(),
+            publicUrl: await networkUtls.getPublicUrl(),
+            internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
         }
         return execute(input, EngineOperationType.EXECUTE_PROPERTY)
@@ -149,8 +186,14 @@ async function prepareFlowSandbox(engineToken: string, flowVersion: FlowVersion)
         flowVersion,
         engineToken,
     })
-    const codes = pieceEngineUtil.getCodeSteps(flowVersion)
-    await prepareSandbox(pieces, codes)
+    const codeSteps = pieceEngineUtil.getCodeSteps(flowVersion)
+    await executionFiles.provision({
+        pieces,
+        codeSteps,
+        globalCachePath: sandboxPath,
+        globalCodesPath: codesPath,
+        customPiecesPath: sandboxPath,
+    })
 }
 
 async function execute<Result extends EngineHelperResult>(operation: EngineOperation, operationType: EngineOperationType): Promise<EngineHelperResponse<Result>> {
@@ -176,77 +219,19 @@ async function execute<Result extends EngineHelperResult>(operation: EngineOpera
     })
 }
 
-async function prepareSandbox(pieces: PiecePackage[], codeSteps: CodeArtifact[]): Promise<void> {
-    const lock = await memoryLock.acquire(sandboxPath)
-    try {
 
-        await mkdir(sandboxPath, { recursive: true })
-        const buildJobs = codeSteps.map(async (archive) => {
-            const indexPath = path.join(codeBuilder.buildPath({
-                buildPath: sandboxPath,
-                sourceCodeId: archive.name,
-                flowVersionId: archive.flowVersionId,
-            }), 'index.js')
-            const fExists = await fileExists(indexPath)
-            if (fExists && archive.flowVersionState === FlowVersionState.LOCKED) {
-                return new Promise<void>((resolve) => resolve())
-            }
-            return prepareCode(archive, sandboxPath)
-        })
-        await Promise.all(buildJobs)
-
-        logger.info({
-            sandboxPath,
-        }, 'Running flow in sandbox')
-        await packageManager.init({
-            path: sandboxPath,
-        })
-
-        const installationTimestamp = dayjs().valueOf()
-        await pieceManager.install({
-            projectPath: sandboxPath,
-            pieces,
-        })
-        logger.info({
-            timeTook: dayjs().valueOf() - installationTimestamp,
-            pieces,
-            sandboxPath,
-        }, 'Installing pieces in sandbox')
-
-        logger.info({
-            path: sandboxPath,
-        }, 'Installing engine in sandbox')
-        await engineInstaller.install({
-            path: sandboxPath,
-        })
-    }
-    finally {
-        await lock.release()
-    }
-
-}
-
-async function prepareCode(artifact: CodeArtifact, sandboxPath: string): Promise<void> {
-    await codeBuilder.processCodeStep({
-        sourceCodeId: artifact.name,
-        sourceCode: artifact.sourceCode,
-        flowVersionId: artifact.flowVersionId,
-        buildPath: sandboxPath,
-    })
-
-}
 
 
 
 
 function getEnvironmentVariables(): Record<string, string | undefined> {
-    const allowedEnvVariables = system.getList(SystemProp.SANDBOX_PROPAGATED_ENV_VARS)
+    const allowedEnvVariables = system.getList(SharedSystemProp.SANDBOX_PROPAGATED_ENV_VARS)
     const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
     return {
         ...propagatedEnvVars,
         NODE_OPTIONS: '--enable-source-maps',
-        AP_CODE_SANDBOX_TYPE: system.get(SystemProp.CODE_SANDBOX_TYPE),
-        AP_PIECES_SOURCE: system.getOrThrow(SystemProp.PIECES_SOURCE),
+        AP_CODE_SANDBOX_TYPE: system.get(SharedSystemProp.CODE_SANDBOX_TYPE),
+        AP_PIECES_SOURCE: system.getOrThrow(SharedSystemProp.PIECES_SOURCE),
         AP_BASE_CODE_DIRECTORY: `${sandboxPath}/codes`,
     }
 }

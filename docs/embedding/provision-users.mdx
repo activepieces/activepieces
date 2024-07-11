@@ -66,7 +66,8 @@ To achieve this, the backend will generate a signed token that contains all the 
     | email             | Email address of the user                        |
     | role              | Role of the user in the Activepieces project (e.g., **EDITOR**, **VIEWER**)           |
     | exp               | Expiry timestamp for the token (Unix timestamp)  |
-    | pieces            | Customize project pieces, check the section below  |
+    | pieces            | Customize the project pieces, check the section below  |
+    | tasks             | Customize the task limit, check the section below  |
 
     You can use any JWT library to generate the token. Here is an example using the jsonwebtoken library in Node.js:
 

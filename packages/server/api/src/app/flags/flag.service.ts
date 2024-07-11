@@ -1,27 +1,27 @@
-import { flowTimeoutSandbox, system, SystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
-import { ApEdition, ApFlagId, Flag, isNil } from '@activepieces/shared'
+import { AppSystemProp, flowTimeoutSandbox, SharedSystemProp, system, webhookSecretsUtils } from '@activepieces/server-shared'
+import { ApEdition, ApFlagId, CodeSandboxType, Flag, isNil } from '@activepieces/shared'
 import axios from 'axios'
 import { webhookUtils } from 'server-worker'
-import { databaseConnection } from '../database/database-connection'
+import { repoFactory } from '../core/db/repo-factory'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
 
-const flagRepo = databaseConnection.getRepository(FlagEntity)
+const flagRepo = repoFactory(FlagEntity)
 
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {
-        return flagRepo.save({
+        return flagRepo().save({
             id: flag.id,
             value: flag.value,
         })
     },
     async getOne(flagId: ApFlagId): Promise<Flag | null> {
-        return flagRepo.findOneBy({
+        return flagRepo().findOneBy({
             id: flagId,
         })
     },
     async getAll(): Promise<Flag[]> {
-        const flags = await flagRepo.find({})
+        const flags = await flagRepo().find({})
         const now = new Date().toISOString()
         const created = now
         const updated = now
@@ -30,7 +30,7 @@ export const flagService = {
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
-                value: system.get(SystemProp.ENVIRONMENT),
+                value: system.get(SharedSystemProp.ENVIRONMENT),
                 created,
                 updated,
             },
@@ -42,7 +42,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.PIECES_SYNC_MODE,
-                value: system.get(SystemProp.PIECES_SYNC_MODE),
+                value: system.get(AppSystemProp.PIECES_SYNC_MODE),
                 created,
                 updated,
             },
@@ -66,7 +66,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
-                value: system.getBoolean(SystemProp.CLOUD_AUTH_ENABLED) ?? true,
+                value: system.getBoolean(AppSystemProp.CLOUD_AUTH_ENABLED) ?? true,
                 created,
                 updated,
             },
@@ -78,7 +78,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.COPILOT_ENABLED,
-                value: !isNil(system.get(SystemProp.OPENAI_API_KEY)),
+                value: !isNil(system.get(AppSystemProp.OPENAI_API_KEY)),
                 created,
                 updated,
             },
@@ -176,7 +176,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.TELEMETRY_ENABLED,
-                value: system.getBoolean(SystemProp.TELEMETRY_ENABLED) ?? true,
+                value: system.getBoolean(AppSystemProp.TELEMETRY_ENABLED) ?? true,
                 created,
                 updated,
             },
@@ -188,7 +188,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.FRONTEND_URL,
-                value: system.get(SystemProp.FRONTEND_URL),
+                value: system.get(SharedSystemProp.FRONTEND_URL),
                 created,
                 updated,
             },
@@ -216,6 +216,12 @@ export const flagService = {
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
+                value: system.get(SharedSystemProp.CODE_SANDBOX_TYPE) === CodeSandboxType.NO_OP,
+                created,
+                updated,
+            },
             
         )
 
@@ -230,7 +236,7 @@ export const flagService = {
         if (isCustomerPlatform) {
             return `https://${hostname}/redirect`
         }
-        const frontendUrl = system.get(SystemProp.FRONTEND_URL)
+        const frontendUrl = system.get(SharedSystemProp.FRONTEND_URL)
         const trimmedFrontendUrl = frontendUrl?.endsWith('/')
             ? frontendUrl.slice(0, -1)
             : frontendUrl
@@ -252,7 +258,7 @@ export const flagService = {
         }
     },
     isCloudPlatform(platformId: string | null): boolean {
-        const cloudPlatformId = system.get(SystemProp.CLOUD_PLATFORM_ID)
+        const cloudPlatformId = system.get(AppSystemProp.CLOUD_PLATFORM_ID)
         if (!cloudPlatformId || !platformId) {
             return false
         }

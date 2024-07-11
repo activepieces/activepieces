@@ -16,8 +16,8 @@ export const memoryQueues = {
 }
 
 export const memoryQueue: QueueManager = {
-    async removeRepeatingJob({ id }) {
-        await memoryQueues[QueueName.SCHEDULED].remove(id)
+    async removeRepeatingJob({ flowVersionId }) {
+        await memoryQueues[QueueName.SCHEDULED].remove(flowVersionId)
     },
     async init(): Promise<void> {
         await renewWebhooks()
@@ -71,7 +71,7 @@ type FlowWithRenewWebhook = {
 }
 
 async function addDelayedRun(): Promise<void> {
-    const flowRuns = await flowRunRepo.findBy({
+    const flowRuns = await flowRunRepo().findBy({
         status: FlowRunStatus.PAUSED,
     })
     flowRuns.forEach((flowRun) => {

@@ -257,6 +257,9 @@
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
       ],
+      "@activepieces/piece-grist": [
+        "packages/pieces/community/grist/src/index.ts"
+      ],
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
       ],
@@ -440,6 +443,9 @@
       ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
+      ],
+      "@activepieces/piece-rabbitmq": [
+        "packages/pieces/community/rabbitmq/src/index.ts"
       ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
