@@ -33,7 +33,7 @@ export class RequestWriterDialogComponent implements OnInit {
   method$: any;
   url$: any;
   body$: any;
-  generatedRequest$: BehaviorSubject<Record<string, unknown> | null> =
+  generatedHttpRequest$: BehaviorSubject<Record<string, unknown> | null> =
     new BehaviorSubject<Record<string, unknown> | null>(null);
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   promptOperation$?: Observable<void>;
@@ -58,15 +58,17 @@ export class RequestWriterDialogComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.method$ = this.generatedRequest$.pipe(
+    this.method$ = this.generatedHttpRequest$.pipe(
       map((request) => request?.['method'] || '')
     );
 
-    this.url$ = this.generatedRequest$.pipe(
+    this.url$ = this.generatedHttpRequest$.pipe(
       map((request) => request?.['url'] || '')
     );
 
-    this.body$ = this.generatedRequest$.pipe(map((req) => req?.['body'] || ''));
+    this.body$ = this.generatedHttpRequest$.pipe(
+      map((req) => req?.['body'] || '')
+    );
   }
 
   prompt() {
@@ -82,7 +84,7 @@ export class RequestWriterDialogComponent implements OnInit {
           tap((response) => {
             this.promptForm.enable();
             try {
-              this.generatedRequest$.next(
+              this.generatedHttpRequest$.next(
                 this.beautifyResponsePresentation(response.result)
               );
               if (this.stepper.selected) {
@@ -106,10 +108,10 @@ export class RequestWriterDialogComponent implements OnInit {
   }
 
   useGeneratedHttpRequest() {
-    if (this.generatedRequest$.value) {
+    if (this.generatedHttpRequest$.value) {
       this.dialogRef.close(
         this.parseResponseAndMatchItToHttpPieceProperties(
-          this.generatedRequest$.value
+          this.generatedHttpRequest$.value
         )
       );
     }
