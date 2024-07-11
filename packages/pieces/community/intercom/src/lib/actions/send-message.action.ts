@@ -1,22 +1,12 @@
 import {
-  DynamicPropsValue,
-  OAuth2PropertyValue,
-  Property,
   createAction,
+  DynamicPropsValue,
+  Property,
 } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  getAccessTokenOrThrow,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { intercomCommon } from '../common';
+import { commonProps, intercomClient } from '../common';
 import { intercomAuth } from '../..';
+import { MessageType, RecipientType, Role } from 'intercom-client';
 
-enum MessageType {
-  EMAIL = 'email',
-  IN_APP = 'in_app',
-}
 export const sendMessage = createAction({
   auth: intercomAuth,
   description: 'Send a message to a contact (only allowed by admins)',
@@ -28,7 +18,7 @@ export const sendMessage = createAction({
       options: {
         options: [
           { value: MessageType.EMAIL, label: 'Email' },
-          { value: MessageType.IN_APP, label: 'In App Chat' },
+          { value: MessageType.INAPP, label: 'In App Chat' },
         ],
       },
       required: true,
@@ -67,88 +57,8 @@ export const sendMessage = createAction({
         return fields;
       },
     }),
-    from: Property.Dropdown({
-      displayName: 'From (Admin)',
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            options: [],
-            disabled: true,
-            placeholder: 'Please connect your account first',
-          };
-        }
-        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-        const request = httpClient.sendRequest<{
-          admins: { id: string; email: string; name: string }[];
-        }>({
-          method: HttpMethod.GET,
-          url: `https://api.intercom.io/admins`,
-          headers: intercomCommon.intercomHeaders,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: accessToken,
-          },
-        });
-        const response = (await request).body;
-
-        return {
-          options: response.admins.map((c) => {
-            const res = { value: c.id, label: '' };
-            if (c.name) {
-              res.label = c.name;
-            } else if (c.email) {
-              res.label = c.email;
-            } else {
-              res.label = c.id;
-            }
-            return res;
-          }),
-        };
-      },
-      refreshers: [],
-      required: true,
-    }),
-    to: Property.Dropdown({
-      displayName: 'To',
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            options: [],
-            disabled: true,
-            placeholder: 'Please connect your account first',
-          };
-        }
-        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-        const request = httpClient.sendRequest<{
-          data: { id: string; email: string; name: string }[];
-        }>({
-          method: HttpMethod.GET,
-          url: `https://api.intercom.io/contacts`,
-          headers: intercomCommon.intercomHeaders,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: accessToken,
-          },
-        });
-        const response = (await request).body;
-
-        return {
-          options: response.data.map((c) => {
-            const res = { value: c.id, label: '' };
-            if (c.name) {
-              res.label = c.name;
-            } else if (c.email) {
-              res.label = c.email;
-            } else {
-              res.label = c.id;
-            }
-            return res;
-          }),
-        };
-      },
-      refreshers: [],
-      required: true,
-    }),
+    from: commonProps.admins({ displayName: 'From (Admin)', required: true }),
+    to: commonProps.contacts({ displayName: 'To', required: true }),
     body: Property.ShortText({
       displayName: 'Message Body',
       required: true,
@@ -162,36 +72,21 @@ export const sendMessage = createAction({
     }),
   },
   run: async (context) => {
-    const accessToken = context.auth.access_token;
-    const user = await intercomCommon.getContact({
-      userId: context.propsValue.to,
-      token: accessToken,
-    });
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.intercom.io/messages',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: accessToken,
+    const client = intercomClient(context.auth);
+    const user = await client.contacts.find({ id: context.propsValue.to });
+
+    return await client.messages.create({
+      messageType: context.propsValue.message_type,
+      from: { id: context.propsValue.from, type: RecipientType.ADMIN },
+      to: {
+        id: context.propsValue.to,
+        type: user.role === Role.USER ? RecipientType.USER : RecipientType.LEAD,
       },
-      headers: intercomCommon.intercomHeaders,
-      body: {
-        message_type: context.propsValue.message_type,
-        from: {
-          id: context.propsValue.from,
-          role: 'admin',
-        },
-        to: {
-          id: context.propsValue.to,
-          role: user.role,
-        },
-        body: context.propsValue.body,
-        template: context.propsValue.email_required_fields['template'],
-        subject: context.propsValue.email_required_fields['subject'],
-        create_conversation_without_contact_reply:
-          context.propsValue.create_conversation_without_contact_reply,
-      },
+      template: context.propsValue.email_required_fields['template'],
+      subject: context.propsValue.email_required_fields['subject'],
+      createConversationWithoutContactReply:
+        context.propsValue.create_conversation_without_contact_reply,
+      body: context.propsValue.body,
     });
-    return response.body;
   },
 });
