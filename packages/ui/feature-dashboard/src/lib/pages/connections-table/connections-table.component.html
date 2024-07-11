@@ -1,11 +1,18 @@
 <div class="ap-w-full ap-px-[30px] ap-pt-[50px]">
   <div class="ap-h-full">
     <ap-page-title [title]="title">
+    
+        <ng-content extraSection>
+          @if(apFilters.filtersButtonPortal){
+            <ng-template [cdkPortalOutlet]="apFilters.filtersButtonPortal"> </ng-template>
+          }
+        </ng-content>
+      
       <ap-button actionButton [disabled]="isReadOnly" [tooltipText]="isReadOnly? unpermittedTooltip: ''"
         (buttonClicked)="openNewConnectionDialog()" btnSize="medium" btnColor="primary" i18n>+ New
         Connection</ap-button>
     </ap-page-title>
-    <ap-filter [filters]="filters"></ap-filter>
+    <ap-filter #apFilters [filters]="filters"></ap-filter>
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Connections" matSort i18n-aria-label>
         <ng-container matColumnDef="app">
