@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-retune",
-  "version": "0.0.7",
+  "version": "0.0.6",
   "dependencies": {
     "@activepieces/shared": "0.10.113",
     "@activepieces/pieces-common": "0.2.15",
