@@ -1,8 +1,12 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   Input,
   OnInit,
+  TemplateRef,
+  ViewChild,
+  ViewContainerRef,
 } from '@angular/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -14,6 +18,7 @@ import { Observable, of } from 'rxjs';
 import { MatSelect } from '@angular/material/select';
 import { SelectAllDirective } from '../../directives/select-all.directive';
 import { ActivatedRoute } from '@angular/router';
+import { TemplatePortal } from '@angular/cdk/portal';
 
 @Component({
   selector: 'ap-filter',
@@ -31,6 +36,8 @@ import { ActivatedRoute } from '@angular/router';
   ],
 })
 export class ApFilterComponent implements OnInit {
+  @ViewChild('filtersListButton', { static: true })
+  filtersListButton: TemplateRef<unknown>;
   @Input() filters: FilterConfig<any, any>[];
 
   availableFilters: {
@@ -38,10 +45,23 @@ export class ApFilterComponent implements OnInit {
     name: string;
   }[] = [];
   selectedFilters: string[] = [];
-
-  constructor(private activatedRoute: ActivatedRoute) {}
+  isFilterSelected: Record<string, boolean> = {};
+  filtersButtonPortal?: TemplatePortal;
+  constructor(
+    private activatedRoute: ActivatedRoute,
+    private viewContainerRef: ViewContainerRef,
+    private cd: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
+    if (this.filtersListButton) {
+      this.filtersButtonPortal = new TemplatePortal(
+        this.filtersListButton,
+        this.viewContainerRef
+      );
+    } else {
+      console.error('filters list button is not detected');
+    }
     this.availableFilters = this.filters.map(({ queryParam, name }) => ({
       queryParam,
       name,
@@ -72,11 +92,17 @@ export class ApFilterComponent implements OnInit {
         }
       })
       .filter((query): query is string => query !== null);
+    this.selectedFilters.forEach((filter) => {
+      this.isFilterSelected[filter] = true;
+    });
   }
 
   onAddFilter(filter: string) {
-    this.selectedFilters = this.selectedFilters.includes(filter)
+    const isFilterSelected = this.selectedFilters.includes(filter);
+    this.selectedFilters = isFilterSelected
       ? this.selectedFilters.filter((f) => f !== filter)
       : [...this.selectedFilters, filter];
+    this.isFilterSelected[filter] = !isFilterSelected;
+    this.cd.markForCheck();
   }
 }
