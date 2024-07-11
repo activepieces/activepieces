@@ -51,12 +51,28 @@
 
 
 <ng-template #filtersListButton>
+    @if(filterButtonType === 'button')
+    {
+        <ap-button [matMenuTriggerFor]="newFlowMenu" btnSize="medium" btnColor="basic">
+            <div class="ap-flex ap-items-center ap-gap-2">
+                <svg-icon  src="assets/img/custom/filter.svg"
+                [applyClass]="true" class="ap-h-[20px] ap-w-[20px] ap-fill-black"></svg-icon>
+                  Filters    
+            </div>
+           
+           </ap-button>
+    }
+    @if(filterButtonType === 'icon')
+    {
         <ap-icon-button  [matMenuTriggerFor]="newFlowMenu" i18n-tooltipText tooltipText="Filters"         
         extraClasses="ap-fill-black"  iconFilename="filter.svg" [width]="20" [height]="20" ></ap-icon-button>
+    }
+
+     
         <mat-menu #newFlowMenu="matMenu" xPosition="after">
             @for(filter of availableFilters; track filter)
             {
-                <button mat-menu-item   (click)="onAddFilter(filter.name)">
+                <button mat-menu-item (click)="onAddFilter(filter.name)">
                     <div class="ap-flex ap-items-center ap-justify-between">
                         {{ filter.name }} 
                         @if(isFilterSelected[filter.name])

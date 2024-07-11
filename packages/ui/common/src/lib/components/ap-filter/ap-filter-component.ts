@@ -39,7 +39,7 @@ export class ApFilterComponent implements OnInit {
   @ViewChild('filtersListButton', { static: true })
   filtersListButton: TemplateRef<unknown>;
   @Input() filters: FilterConfig<any, any>[];
-
+  @Input() filterButtonType: 'icon' | 'button' = 'icon';
   availableFilters: {
     queryParam: string | string[];
     name: string;
