@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import { hashUtils, logger, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
-import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { Action, ActionType, apId, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { pieceEngineUtil } from '../flow-enginer-util'
@@ -17,7 +17,7 @@ export const isolateEngineRunner: EngineRunner = {
             publicUrl: await networkUtls.getPublicUrl(),
             internalApiUrl: networkUtls.getInternalApiUrl(),
         }
-        const sandbox = await prepareFlowSandbox(engineToken, operation.runEnvironment, operation.flowVersion)
+        const sandbox = await prepareFlowSandbox(engineToken, operation.runEnvironment, operation.flowVersion, operation.projectId)
         return execute(EngineOperationType.EXECUTE_FLOW, sandbox, input)
     },
     async extractPieceMetadata(
@@ -28,6 +28,7 @@ export const isolateEngineRunner: EngineRunner = {
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.NONE,
             pieces: [operation],
+            projectId: apId(),
         })
 
         return execute(
@@ -52,6 +53,7 @@ export const isolateEngineRunner: EngineRunner = {
             pieceName: triggerPiece.pieceName,
             pieceVersion: triggerPiece.pieceVersion,
             pieces: [triggerPiece],
+            projectId: operation.projectId,
         })
         const input: ExecuteTriggerOperation<TriggerHookType> = {
             projectId: operation.projectId,
@@ -77,6 +79,7 @@ export const isolateEngineRunner: EngineRunner = {
             pieceName: lockedPiece.pieceName,
             pieceVersion: lockedPiece.pieceVersion,
             pieces: [lockedPiece],
+            projectId: operation.projectId,
         })
 
         const input: ExecutePropsOptions = {
@@ -96,6 +99,7 @@ export const isolateEngineRunner: EngineRunner = {
             pieceName: lockedPiece.pieceName,
             pieceVersion: lockedPiece.pieceVersion,
             pieces: [lockedPiece],
+            projectId: operation.projectId,
         })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
@@ -122,6 +126,7 @@ export const isolateEngineRunner: EngineRunner = {
             lockedFlowVersion.state,
             lockedFlowVersion.flowId,
             step,
+            operation.projectId,
         )
         const input: ExecuteStepOperation = {
             flowVersion: lockedFlowVersion,
@@ -157,7 +162,7 @@ const execute = async <Result extends EngineHelperResult>(
     }
 }
 
-async function prepareFlowSandbox(engineToken: string, runEnvironment: RunEnvironment, flowVersion: FlowVersion): Promise<IsolateSandbox> {
+async function prepareFlowSandbox(engineToken: string, runEnvironment: RunEnvironment, flowVersion: FlowVersion, projectId: string): Promise<IsolateSandbox> {
     const pieces = await pieceEngineUtil.extractFlowPieces({
         flowVersion,
         engineToken,
@@ -170,12 +175,14 @@ async function prepareFlowSandbox(engineToken: string, runEnvironment: RunEnviro
                 flowVersionId: flowVersion.id,
                 pieces,
                 codeSteps,
+                projectId,
             })
         case RunEnvironment.TESTING:
             return sandboxProvisioner.provision({
                 type: SandBoxCacheType.NONE,
                 pieces,
                 codeSteps,
+                projectId,
             })
     }
 }
@@ -186,6 +193,7 @@ async function getSandboxForAction(
     flowVersionState: FlowVersionState,
     flowId: string,
     action: Action,
+    projectId: string,
 ): Promise<IsolateSandbox> {
     switch (action.type) {
         case ActionType.PIECE: {
@@ -195,6 +203,7 @@ async function getSandboxForAction(
                 pieceName,
                 pieceVersion,
                 pieces: [await pieceEngineUtil.getExactPieceForStep(engineToken, action)],
+                projectId,
             })
         }
         case ActionType.CODE: {
@@ -211,12 +220,14 @@ async function getSandboxForAction(
                         sourceCode: action.settings.sourceCode,
                     },
                 ],
+                projectId,
             })
         }
         case ActionType.BRANCH:
         case ActionType.LOOP_ON_ITEMS:
             return sandboxProvisioner.provision({
                 type: SandBoxCacheType.NONE,
+                projectId,
             })
     }
 }

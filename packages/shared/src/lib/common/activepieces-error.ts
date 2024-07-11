@@ -211,7 +211,7 @@ ErrorCode.CONFIG_NOT_FOUND,
 export type JobRemovalFailureErrorParams = BaseErrorParams<
 ErrorCode.JOB_REMOVAL_FAILURE,
 {
-    jobId: ApId
+    flowVersionId: ApId
 }
 >
 

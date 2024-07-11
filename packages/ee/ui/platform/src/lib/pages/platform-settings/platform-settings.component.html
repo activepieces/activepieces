@@ -34,8 +34,11 @@
   <mat-tab label="Audit Logs" bodyClass="!ap-overflow-visible" i18n-label>
     <app-audit-event-table [featureLocked]="auditLogFeatureLocked"></app-audit-event-table>
   </mat-tab>
-  <mat-tab label="Worker Machines" bodyClass="!ap-overflow-visible" i18n-label>
-    <app-worker-machines-table></app-worker-machines-table>
-  </mat-tab>
+  @if(showWorkersTab$ | async)
+  {
+    <mat-tab label="Worker Machines" bodyClass="!ap-overflow-visible" i18n-label>
+      <app-worker-machines-table></app-worker-machines-table>
+    </mat-tab>
+  }
 </mat-tab-group>
 <ng-container *ngIf="fragmentChanged$ | async"></ng-container>

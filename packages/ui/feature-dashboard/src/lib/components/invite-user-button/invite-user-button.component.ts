@@ -49,7 +49,7 @@ export class InviteUserButtonComponent {
   ) {}
   openInviteAdminDialog() {
     this.loading = true;
-    this.openDialog$ = this.platformService.currentPlatformNotNull().pipe(
+    this.openDialog$ = this.platformService.getCurrentUserPlatform().pipe(
       take(1),
       tap((platform) => {
         this.loading = false;

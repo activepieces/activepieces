@@ -102,5 +102,8 @@ export enum SharedSystemProp  {
 
 export enum WorkerSystemProps {
     FLOW_WORKER_CONCURRENCY = 'FLOW_WORKER_CONCURRENCY',
+    
+    // TODO: This is currently undocumented and used for testing purposes. Please document or remove as necessary.
+    POLLING_CONCURRENCY = 'POLLING_CONCURRENCY',
     WORKER_TOKEN = 'WORKER_TOKEN',
 }
