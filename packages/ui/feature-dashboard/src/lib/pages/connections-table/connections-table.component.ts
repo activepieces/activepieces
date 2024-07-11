@@ -16,6 +16,7 @@ import {
   distinctUntilChanged,
   BehaviorSubject,
   debounceTime,
+  of,
 } from 'rxjs';
 import {
   AppConnection,
@@ -33,6 +34,8 @@ import {
   AppConnectionsService,
   TableCore,
   unpermittedTooltip,
+  CONNECTION_STATUS_QUERY_PARAM,
+  FilterConfig,
 } from '@activepieces/ui/common';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { NewConnectionDialogComponent } from '../../components/dialogs/new-connection-dialog/new-connection-dialog.component';
@@ -74,6 +77,12 @@ export class ConnectionsTableComponent extends TableCore implements OnInit {
   searchControl: FormControl<string> = new FormControl<string>('', {
     nonNullable: true,
   });
+  statusFilterControl: FormControl<string | null> = new FormControl(null);
+  selectedFilters: string[] = [];
+  filters: FilterConfig<
+    PieceMetadataModelSummary | { label: string; value: AppConnectionStatus },
+    string
+  >[];
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
@@ -91,6 +100,11 @@ export class ConnectionsTableComponent extends TableCore implements OnInit {
     );
     this.pieceNameFilterControl.setValue(
       this.activatedRoute.snapshot.queryParamMap.get(PIECE_NAME_QUERY_PARAM)
+    );
+    this.statusFilterControl.setValue(
+      this.activatedRoute.snapshot.queryParamMap.get(
+        CONNECTION_STATUS_QUERY_PARAM
+      )
     );
     const allPieces$ = this.pieceMetadataService.listPieces({
       includeHidden: true,
@@ -110,6 +124,41 @@ export class ConnectionsTableComponent extends TableCore implements OnInit {
         );
       })
     );
+    this.filters = [
+      {
+        type: 'text',
+        name: 'By Name',
+        label: 'Filter by Name',
+        formControl: this.connectionNameFilterControl,
+        queryParam: CONNECTION_NAME_QUERY_PARAM,
+      },
+      {
+        type: 'select',
+        name: 'By Piece',
+        label: 'Filter by Piece',
+        formControl: this.pieceNameFilterControl,
+        searchControl: this.searchControl,
+        options$: this.pieces$,
+        allValues$: this.allPieces.asObservable(),
+        optionLabelKey: 'displayName',
+        optionValueKey: 'name',
+        queryParam: PIECE_NAME_QUERY_PARAM,
+      },
+      {
+        type: 'select',
+        name: 'By Status',
+        label: 'Filter by Status',
+        formControl: this.statusFilterControl,
+        options$: of([
+          { label: 'Active', value: AppConnectionStatus.ACTIVE },
+          { label: 'Inactive', value: AppConnectionStatus.ERROR },
+        ]),
+        allValues$: of([AppConnectionStatus.ACTIVE, AppConnectionStatus.ERROR]),
+        optionLabelKey: 'label',
+        optionValueKey: 'value',
+        queryParam: CONNECTION_STATUS_QUERY_PARAM,
+      },
+    ];
   }
 
   ngOnInit(): void {
@@ -120,6 +169,9 @@ export class ConnectionsTableComponent extends TableCore implements OnInit {
       pieceName: this.pieceNameFilterControl.valueChanges.pipe(
         startWith(this.pieceNameFilterControl.value)
       ),
+      connectionStatus: this.statusFilterControl.valueChanges.pipe(
+        startWith(this.statusFilterControl.value)
+      ),
     }).pipe(
       distinctUntilChanged(),
       tap((result) => {
@@ -127,6 +179,7 @@ export class ConnectionsTableComponent extends TableCore implements OnInit {
           queryParams: {
             name: result.connectionName,
             pieceName: result.pieceName,
+            connectionStatus: result.connectionStatus,
           },
           queryParamsHandling: 'merge',
         });

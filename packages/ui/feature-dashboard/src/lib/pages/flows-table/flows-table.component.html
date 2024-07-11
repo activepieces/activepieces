@@ -1,4 +1,5 @@
-<div class="ap-h-[calc(100% - 6.5625rem)]  ap-px-4 sm:ap-px-7.5 ap-relative ap-overflow-y-auto sm:ap-overflow-y-clip ap-overflow-x-clip sm:ap-overflow-x-auto"
+<div
+  class="ap-h-[calc(100% - 6.5625rem)]  ap-px-4 sm:ap-px-7.5 ap-relative ap-overflow-y-auto sm:ap-overflow-y-clip ap-overflow-x-clip sm:ap-overflow-x-auto"
   [class.ap-hidden]="(areThereFlows$|async)===false">
   <div class="ap-flex ap-h-full ap-flex-col sm:ap-flex-row ap-w-full ap-gap-x-[30px]">
     <div class="ap-w-full sm:ap-min-w-[274px] sm:ap-max-w-[274px] sm:ap-[274px]"
@@ -11,7 +12,12 @@
       <div class="ap-h-full ap-mb-[40px]">
         <div
           class="ap-rounded ap-border ap-overflow-x-auto ap-border-solid ap-border-dividers ap-p-4 sm:ap-p-[30px] ap-pb-16 sm:ap-pb-20 ap-flex ap-flex-col">
-          <app-flows-table-title></app-flows-table-title>
+          <app-flows-table-title>
+              @if(apFilters.filtersButtonPortal){
+                <ng-template filtersButton [cdkPortalOutlet]="apFilters.filtersButtonPortal"> </ng-template>
+              }
+          </app-flows-table-title>
+          <ap-filter  #apFilters [filters]="filters"></ap-filter>
           <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Flows" i18n-aria-label>
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef i18n>Name</th>
@@ -35,29 +41,29 @@
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef i18n>Status</th>
               <td mat-cell *matCellDef="let flow">
-                <div class="ap-px-1 ap-flex ap-items-center ap-gap-1" >
-                    
+                <div class="ap-px-1 ap-flex ap-items-center ap-gap-1">
+
                   @if(isStatusReadOnly) {
-                    @if(flow.instanceToggleControl.disabled)
-                    {
-                     <ng-container i18n>Not Published</ng-container>
-                    }
-                    @else{
-                     @if(flow.instanceToggleControl.value)
-                     {
-                       <ng-container i18n>On</ng-container>
-                     }
-                     @else{
-                       <ng-container i18n>Off</ng-container>
-                     }
-                    }
-                   }
+                  @if(flow.instanceToggleControl.disabled)
+                  {
+                  <ng-container i18n>Not Published</ng-container>
+                  }
+                  @else{
+                  @if(flow.instanceToggleControl.value)
+                  {
+                  <ng-container i18n>On</ng-container>
+                  }
+                  @else{
+                  <ng-container i18n>Off</ng-container>
+                  }
+                  }
+                  }
                   @else {
-                    <mat-slide-toggle color="primary" [class.ap-cursor-not-allowed]="flow.instanceToggleControl.disabled"
+                  <mat-slide-toggle color="primary" [class.ap-cursor-not-allowed]="flow.instanceToggleControl.disabled"
                     (click)="$event.stopImmediatePropagation(); toggleFlowStatus(flow,flow.instanceToggleControl)"
                     [formControl]="flow.instanceToggleControl"
                     [matTooltip]="flow.instanceToggleControl.value | flowStatus: flow.instanceToggleControl.disabled"></mat-slide-toggle>
-             
+
                   }
                   <div class="ap-min-h-[30px]  ap-flex ap-items-center ap-justify-center">
                     <svg-icon [src]="flow | triggerIcon"
@@ -68,7 +74,7 @@
                     <div *ngIf="flowsUpdateStatusRequest$[flow.id]" class="spinner-border dark-spinner" role="status">
                     </div>
                   </div>
-             
+
                 </div>
               </td>
             </ng-container>
@@ -82,16 +88,13 @@
 
               </th>
               <td mat-cell *matCellDef="let flow" class="!ap-text-center">
-                <button mat-icon-button (click)="$event.stopImmediatePropagation()" [matMenuTriggerFor]="actionsList.menuElement">
+                <button mat-icon-button (click)="$event.stopImmediatePropagation()"
+                  [matMenuTriggerFor]="actionsList.menuElement">
                   <mat-icon>more_vert</mat-icon>
                 </button>
-                  <ap-flow-actions-list #actionsList
-                   [flow]="flow" 
-                  [inBuilder]="true" 
-                  (renameFlow)="renameFlow(flow)"
-                   (flowDuplicated)="refreshTable()" 
-                   (flowDeleted)="refreshTable()"
-                  (flowMoved)="refreshTable()" ></ap-flow-actions-list>
+                <ap-flow-actions-list #actionsList [flow]="flow" [inBuilder]="true" (renameFlow)="renameFlow(flow)"
+                  (flowDuplicated)="refreshTable()" (flowDeleted)="refreshTable()"
+                  (flowMoved)="refreshTable()"></ap-flow-actions-list>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -153,5 +156,5 @@
   </div>
   }
 </ng-template>
-
+<ng-container *ngIf="filtersChanged$ | async"></ng-container>
 @if(renameFlow$ | async) {}

@@ -6,24 +6,25 @@ import {
 } from '@angular/core';
 import {
   FlowRunStatus,
-  FlowId,
   FlowRetryStrategy,
   FlowRun,
   ProjectId,
   SeekPage,
   spreadIfDefined,
   Permission,
+  FlowVersion,
 } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
 import {
+  BehaviorSubject,
   combineLatest,
+  debounceTime,
   distinctUntilChanged,
   map,
   Observable,
-  shareReplay,
+  of,
   startWith,
   Subject,
-  switchMap,
   tap,
 } from 'rxjs';
 import { RunsTableDataSource } from './runs-table.datasource';
@@ -44,29 +45,20 @@ import {
   CURSOR_QUERY_PARAM,
   executionsPageFragments,
   EmbeddingService,
-  SelectAllDirective,
   TableCore,
+  FilterConfig,
 } from '@activepieces/ui/common';
 import { FormControl, FormGroup } from '@angular/forms';
 import { RunsService } from '../../services/runs.service';
-import { DropdownOption } from '@activepieces/pieces-framework';
 import { CommonModule } from '@angular/common';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import dayjs from 'dayjs';
+import { ApFilterComponent } from '@activepieces/ui/common';
 const allOptionValue = 'all';
 @Component({
   templateUrl: './runs-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [
-    CommonModule,
-    UiCommonModule,
-    ApDatePipe,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    SelectAllDirective,
-  ],
+  imports: [CommonModule, UiCommonModule, ApDatePipe, ApFilterComponent],
   selector: 'app-runs-table',
 })
 export class RunsTableComponent extends TableCore implements OnInit {
@@ -82,7 +74,8 @@ export class RunsTableComponent extends TableCore implements OnInit {
   statusFilterControl: FormControl<FlowRunStatus[]> = new FormControl([], {
     nonNullable: true,
   });
-  flowFilterControl = new FormControl<string>(allOptionValue, {
+  flowFilterControl = new FormControl<string>('');
+  flowFilterSearchControl = new FormControl<string>('', {
     nonNullable: true,
   });
   dateFormGroup = new FormGroup({
@@ -90,7 +83,10 @@ export class RunsTableComponent extends TableCore implements OnInit {
     end: new FormControl(),
   });
   selectedFlowName$: Observable<string | undefined>;
-  flows$: Observable<DropdownOption<FlowId>[]>;
+  allFlows: BehaviorSubject<string[] | undefined> = new BehaviorSubject<
+    string[] | undefined
+  >(undefined);
+  flows$: Observable<FlowVersion[]>;
   currentProject: ProjectId;
   filtersChanged$: Observable<void>;
   readonly ExecutionOutputStatus = FlowRunStatus;
@@ -99,6 +95,10 @@ export class RunsTableComponent extends TableCore implements OnInit {
   setInitialFilters$?: Observable<void>;
   allStatuses = Object.values(FlowRunStatus);
   hasPermissionToRetryFlow = this.hasPermission(Permission.RETRY_RUN);
+  filters: FilterConfig<
+    FlowVersion | { label: string; value: FlowRunStatus },
+    string
+  >[];
   constructor(
     private activatedRoute: ActivatedRoute,
     private projectService: ProjectService,
@@ -112,14 +112,14 @@ export class RunsTableComponent extends TableCore implements OnInit {
     super({
       tableColumns: ['flowName', 'status', 'started', 'duration', 'action'],
     });
+    this.currentProject = this.authenticationService.getProjectId();
     this.flowFilterControl.setValue(
-      this.activatedRoute.snapshot.queryParamMap.get(FLOW_QUERY_PARAM) ||
-        this.allOptionValue
+      this.activatedRoute.snapshot.queryParamMap.get(FLOW_QUERY_PARAM)
     );
     const statusQueryParam =
-      this.activatedRoute.snapshot.queryParamMap.get(STATUS_QUERY_PARAM);
+      this.activatedRoute.snapshot.queryParamMap.getAll(STATUS_QUERY_PARAM);
     this.statusFilterControl.setValue(
-      statusQueryParam ? ([statusQueryParam] as FlowRunStatus[]) : []
+      statusQueryParam.length ? (statusQueryParam as FlowRunStatus[]) : []
     );
     const startDate = this.activatedRoute.snapshot.queryParamMap.get(
       DATE_RANGE_START_QUERY_PARAM
@@ -131,41 +131,74 @@ export class RunsTableComponent extends TableCore implements OnInit {
       start: startDate ? new Date(startDate) : null,
       end: endDate ? new Date(endDate) : null,
     });
-  }
-
-  ngOnInit(): void {
-    this.currentProject = this.authenticationService.getProjectId();
-    this.flows$ = this.flowsService
-      .list({
-        projectId: this.currentProject,
-        cursor: undefined,
-        limit: 1000,
-      })
-      .pipe(
-        map((res) => {
-          return res.data.map((flow) => {
-            return {
-              label: flow.version.displayName,
-              value: flow.id,
-            };
-          });
-        }),
-        shareReplay(1)
-      );
-
-    this.selectedFlowName$ = this.flowFilterControl.valueChanges.pipe(
-      startWith(this.flowFilterControl.value),
-      switchMap((flowId) => {
-        return this.flows$.pipe(
-          map((flows) => {
-            return (
-              flows.find((flow) => flow.value === flowId)?.label ||
-              $localize`All`
-            );
-          })
+    const allFlows$ = this.flowsService.list({
+      projectId: this.currentProject,
+      cursor: undefined,
+      limit: 1000,
+    });
+    this.flows$ = combineLatest([
+      allFlows$,
+      this.flowFilterSearchControl.valueChanges.pipe(
+        startWith(''),
+        debounceTime(100),
+        distinctUntilChanged()
+      ),
+    ]).pipe(
+      map(([flows, search]) => {
+        this.allFlows.next(flows.data.map((flow) => flow.version.displayName));
+        const flowVersions = flows.data.map((flow) => flow.version);
+        return flowVersions.filter((flowVersion) =>
+          flowVersion.displayName.toLowerCase().includes(search.toLowerCase())
         );
       })
     );
+    this.filters = [
+      {
+        type: 'select',
+        name: 'By Status',
+        label: 'Filter by Status',
+        formControl: this.statusFilterControl,
+        queryParam: STATUS_QUERY_PARAM,
+        allValues$: of(this.allStatuses),
+        options$: of([
+          { label: 'Running', value: this.ExecutionOutputStatus.RUNNING },
+          { label: 'Failed', value: this.ExecutionOutputStatus.FAILED },
+          { label: 'Timeout', value: this.ExecutionOutputStatus.TIMEOUT },
+          { label: 'Stopped', value: this.ExecutionOutputStatus.STOPPED },
+          { label: 'Succeeded', value: this.ExecutionOutputStatus.SUCCEEDED },
+          { label: 'Paused', value: this.ExecutionOutputStatus.PAUSED },
+          {
+            label: 'Internal Error',
+            value: this.ExecutionOutputStatus.INTERNAL_ERROR,
+          },
+        ]),
+        optionLabelKey: 'label',
+        optionValueKey: 'value',
+        isMultipleSelect: true,
+      },
+      {
+        type: 'select',
+        name: 'By Flow',
+        label: 'Filter by Flow',
+        formControl: this.flowFilterControl,
+        searchControl: this.flowFilterSearchControl,
+        queryParam: FLOW_QUERY_PARAM,
+        allValues$: this.allFlows.asObservable(),
+        options$: this.flows$,
+        optionLabelKey: 'displayName',
+        optionValueKey: 'flowId',
+      },
+      {
+        type: 'date',
+        name: 'By Date',
+        label: 'Filter by Date',
+        dateFormGroup: this.dateFormGroup,
+        queryParam: [DATE_RANGE_START_QUERY_PARAM, DATE_RANGE_END_QUERY_PARAM],
+      },
+    ];
+  }
+
+  ngOnInit(): void {
     this.filtersChanged$ = combineLatest({
       flowId: this.flowFilterControl.valueChanges.pipe(
         startWith(this.flowFilterControl.value)
