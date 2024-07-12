@@ -9,6 +9,8 @@ import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
 import { gmailAuth } from '../../';
+import { google } from 'googleapis';
+import { OAuth2Client } from 'googleapis-common';
 
 export const gmailSendEmailAction = createAction({
   auth: gmailAuth,
@@ -78,20 +80,36 @@ export const gmailSendEmailAction = createAction({
       description: 'In case you want to change the name of the attachment',
       required: false,
     }),
+    in_reply_to: Property.ShortText({
+      displayName: 'In reply to',
+      description: 'Reply to this Message-ID',
+      required: false,
+    }),
+    draft: Property.Checkbox({
+      displayName: 'Create draft',
+      description: 'Create draft without sending the actual email',
+      required: true,
+      defaultValue: false,
+    }),
   },
-  async run(configValue) {
-    const subjectBase64 = Buffer.from(
-      configValue.propsValue['subject']
-    ).toString('base64');
-    const attachment = configValue.propsValue['attachment'];
-    const replyTo = configValue.propsValue['reply_to']?.filter(
+  async run(context) {
+    const authClient = new OAuth2Client();
+    authClient.setCredentials(context.auth);
+
+    const gmail = google.gmail({ version: 'v1', auth: authClient });
+
+    const subjectBase64 = Buffer.from(context.propsValue['subject']).toString(
+      'base64'
+    );
+    const attachment = context.propsValue['attachment'];
+    const replyTo = context.propsValue['reply_to']?.filter(
       (email) => email !== ''
     );
-    const receiver = configValue.propsValue['receiver']?.filter(
+    const receiver = context.propsValue['receiver']?.filter(
       (email) => email !== ''
     );
-    const cc = configValue.propsValue['cc']?.filter((email) => email !== '');
-    const bcc = configValue.propsValue['bcc']?.filter((email) => email !== '');
+    const cc = context.propsValue['cc']?.filter((email) => email !== '');
+    const bcc = context.propsValue['bcc']?.filter((email) => email !== '');
     const mailOptions: Mail.Options = {
       to: receiver.join(', '), // Join all email addresses with a comma
       cc: cc ? cc.join(', ') : undefined,
@@ -99,18 +117,39 @@ export const gmailSendEmailAction = createAction({
       subject: `=?UTF-8?B?${subjectBase64}?=`,
       replyTo: replyTo ? replyTo.join(', ') : '',
       text:
-        configValue.propsValue.body_type === 'plain_text'
-          ? configValue.propsValue['body']
+        context.propsValue.body_type === 'plain_text'
+          ? context.propsValue['body']
           : undefined,
       html:
-        configValue.propsValue.body_type === 'html'
-          ? configValue.propsValue['body'].replace(/\n/g, '<br>')
+        context.propsValue.body_type === 'html'
+          ? context.propsValue['body'].replace(/\n/g, '<br>')
           : undefined,
       attachments: [],
     };
-    const gmailResponse = await getEmail(configValue.auth.access_token);
-    if (gmailResponse?.body?.email && configValue.propsValue['sender_name']) {
-      mailOptions.from = `${configValue.propsValue['sender_name']} <${gmailResponse.body.email}>`;
+    let threadId = undefined;
+    if (context.propsValue.in_reply_to) {
+      mailOptions.headers = [
+        {
+          key: 'References',
+          value: context.propsValue.in_reply_to,
+        },
+        {
+          key: 'In-Reply-To',
+          value: context.propsValue.in_reply_to,
+        },
+      ];
+      const messages = await gmail.users.messages.list({
+        userId: 'me',
+        q: `Rfc822msgid:${context.propsValue.in_reply_to}`,
+      });
+      threadId = messages.data.messages?.[0].threadId;
+    }
+
+    const senderEmail = (
+      await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get()
+    ).data.email;
+    if (senderEmail && context.propsValue['sender_name']) {
+      mailOptions.from = `${context.propsValue['sender_name']} <${senderEmail}>`;
     }
 
     if (attachment) {
@@ -119,7 +158,7 @@ export const gmailSendEmailAction = createAction({
       );
       const attachmentOption: Attachment[] = [
         {
-          filename: configValue.propsValue.attachment_name ?? attachment.filename ,
+          filename: context.propsValue.attachment_name ?? attachment.filename,
           content: attachment?.base64,
           contentType: lookupResult ? lookupResult : undefined,
           encoding: 'base64',
@@ -132,50 +171,24 @@ export const gmailSendEmailAction = createAction({
     mail.keepBcc = true;
     const mailBody = await mail.build();
 
-    const requestBody: SendEmailRequestBody = {
-      raw: Buffer.from(mailBody)
-        .toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_'),
-    };
+    const encodedPayload = Buffer.from(mailBody)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
 
-    const request: HttpRequest<Record<string, unknown>> = {
-      method: HttpMethod.POST,
-      url: `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`,
-      body: requestBody,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: configValue.auth.access_token,
-      },
-      queryParams: {},
-    };
-
-    return await httpClient.sendRequest(request);
+    if (context.propsValue.draft) {
+      return await gmail.users.drafts.create({
+        userId: 'me',
+        requestBody: { message: { threadId, raw: encodedPayload } },
+      });
+    } else {
+      return await gmail.users.messages.send({
+        userId: 'me',
+        requestBody: {
+          threadId,
+          raw: encodedPayload,
+        },
+      });
+    }
   },
 });
-
-function getEmail(idtoken: string | null) {
-  // Older connections doesn't have idtoken
-  if (!idtoken) {
-    return;
-  }
-  // Get Email from 'email' scope of Google OAuth2
-  const request: HttpRequest<Record<string, unknown>> = {
-    method: HttpMethod.GET,
-    url: `https://www.googleapis.com/oauth2/v3/userinfo`,
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: idtoken,
-    },
-    queryParams: {},
-  };
-  return httpClient.sendRequest<{
-    email: string;
-  }>(request);
-}
-type SendEmailRequestBody = {
-  /**
-   * This is a base64 encoding of the email
-   */
-  raw: string;
-};
