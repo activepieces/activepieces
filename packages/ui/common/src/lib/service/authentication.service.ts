@@ -7,6 +7,7 @@ import {
   AuthenticationResponse,
   ClaimTokenRequest,
   FederatedAuthnLoginResponse,
+  Permission,
   PlatformRole,
   Principal,
   ProjectId,
@@ -21,12 +22,24 @@ import {
   CreateOtpRequestBody,
   ResetPasswordRequestBody,
   VerifyEmailRequestBody,
+  rolePermissions,
 } from '@activepieces/ee-shared';
 import { FlagService } from './flag.service';
 import { TelemetryService } from './telemetry.service';
 
 type UserWithoutPassword = Omit<User, 'password'>;
-
+export const currentUser: () => AuthenticationResponse = () => {
+  return JSON.parse(
+    localStorage.getItem(environment.userPropertyNameInLocalStorage) || '{}'
+  );
+};
+export const doesUserHavePermission = (permission: Permission) => {
+  const role = currentUser()?.projectRole;
+  if (!role) {
+    return true;
+  }
+  return rolePermissions[role].includes(permission);
+};
 @Injectable({
   providedIn: 'root',
 })
@@ -46,9 +59,7 @@ export class AuthenticationService {
   ) {}
 
   get currentUser(): AuthenticationResponse {
-    return JSON.parse(
-      localStorage.getItem(environment.userPropertyNameInLocalStorage) || '{}'
-    );
+    return currentUser();
   }
 
   getRole(): ProjectMemberRole | undefined {
@@ -194,12 +205,17 @@ export class AuthenticationService {
     return this.http
       .post<{
         token: string;
+        projectRole: ProjectMemberRole | null;
       }>(`${environment.apiUrl}/users/projects/${projectId}/token`, {
         projectId,
       })
       .pipe(
-        tap(({ token }) => {
+        tap(({ token, projectRole }) => {
           this.saveToken(token);
+          this.updateUser({
+            ...this.currentUser,
+            projectRole,
+          });
           if (redirectHome) {
             this.router.navigate(['/flows']);
           }

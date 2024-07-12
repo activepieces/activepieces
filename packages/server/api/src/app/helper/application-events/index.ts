@@ -1,61 +1,26 @@
+import { AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FlowUpdatedEvent, FolderEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
+import { Static, Type } from '@sinclair/typebox'
 import { FastifyRequest } from 'fastify'
-import { ApplicationEventName, SigningKey } from '@activepieces/ee-shared'
-import { AppConnection, FlowOperationRequest, Folder, PopulatedFlow } from '@activepieces/shared'
 
-export type CreateAuditEventParam =
-  | {
-      action:
-      | ApplicationEventName.UPDATED_FOLDER
-      | ApplicationEventName.DELETED_FOLDER
-      | ApplicationEventName.CREATED_FOLDER
-      folder: Folder
-      userId: string
-  }
-  | {
-      action:
-      | ApplicationEventName.UPSERTED_CONNECTION
-      | ApplicationEventName.DELETED_CONNECTION
-      connection: AppConnection
-      userId: string
-  }
-  | {
-      action:
-      | ApplicationEventName.CREATED_FLOW
-      | ApplicationEventName.DELETED_FLOW
-      flow: PopulatedFlow
-      userId: string
-  }
-  | {
-      action:
-      | ApplicationEventName.SIGNED_IN
-      | ApplicationEventName.RESET_PASSWORD
-      | ApplicationEventName.VERIFIED_EMAIL
-      userId: string
-  }
-  | {
-      action:
-      | ApplicationEventName.SIGNED_UP_USING_EMAIL
-      | ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH
-      | ApplicationEventName.SIGNED_UP_USING_SSO
-      userId: string
-      createdUser: {
-          id: string
-          email: string
-      }
-  }
-  | {
-      action: ApplicationEventName.UPDATED_FLOW
-      flow: PopulatedFlow
-      request: FlowOperationRequest
-      userId: string
-  } | {
-      action: ApplicationEventName.CREATED_SIGNING_KEY
-      userId: string
-      signingKey: SigningKey
-  }
+export const AuditEventParam = Type.Pick(Type.Union([
+    ConnectionEvent,
+    FlowCreatedEvent,
+    FlowDeletedEvent,
+    FlowUpdatedEvent,
+    AuthenticationEvent,
+    FolderEvent,
+    SignUpEvent,
+    SigningKeyEvent,
+    FlowRunEvent,
+]), ['data', 'action'])
+export type AuditEventParam = Static<typeof AuditEventParam>
+
 
 let hooks: ApplicationEventHooks = {
-    async send(_request, _params) {
+    async sendUserEvent(_request, _params) {
+        return
+    },
+    async sendWorkerEvent(_params) {
         return
     },
 }
@@ -71,5 +36,7 @@ export const eventsHooks = {
 }
 
 export type ApplicationEventHooks = {
-    send(request: FastifyRequest, params: CreateAuditEventParam): void
+    sendUserEvent(request: FastifyRequest, params: AuditEventParam): void
+    sendWorkerEvent(projectId: string, params: AuditEventParam): void
 }
+

@@ -1,10 +1,3 @@
-import { faker } from '@faker-js/faker'
-import { FastifyInstance } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { generateMockToken } from '../../../helpers/auth'
-import { createMockPlatform, createMockUser, mockBasicSetup } from '../../../helpers/mocks'
 import {
     apId,
     FilteredPieceBehavior,
@@ -14,16 +7,23 @@ import {
     PrincipalType,
     UpdatePlatformRequestBody,
 } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { setupServer } from '../../../..//src/app/server'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../helpers/auth'
+import { createMockPlatform, createMockUser, mockBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    await databaseConnection().initialize()
+    app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -111,10 +111,10 @@ describe('Platform API', () => {
         it('fails if user is not owner', async () => {
             // arrange
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -170,7 +170,7 @@ describe('Platform API', () => {
             const mockPlatformId = apId()
 
             const mockOwnerUser = createMockUser({ platformId: mockPlatformId })
-            await databaseConnection.getRepository('user').save(mockOwnerUser)
+            await databaseConnection().getRepository('user').save(mockOwnerUser)
 
             const providers = {
                 google: {
@@ -188,9 +188,9 @@ describe('Platform API', () => {
 
             }
             const mockPlatform = createMockPlatform({ ownerId: mockOwnerUser.id, smtpPassword: faker.internet.password(), federatedAuthProviders: providers, flowIssuesEnabled: false, alertsEnabled: false, premiumPieces: [] })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
-            await databaseConnection.getRepository('user').update(mockOwnerUser.id, {
+            await databaseConnection().getRepository('user').update(mockOwnerUser.id, {
                 platformId: mockPlatform.id,
                 platformRole: PlatformRole.ADMIN,
             })

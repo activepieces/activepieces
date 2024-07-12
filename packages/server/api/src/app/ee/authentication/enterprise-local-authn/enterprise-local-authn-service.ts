@@ -1,11 +1,11 @@
-import { userService } from '../../../user/user-service'
-import { otpService } from '../../otp/otp-service'
 import {
     OtpType,
     ResetPasswordRequestBody,
     VerifyEmailRequestBody,
 } from '@activepieces/ee-shared'
 import { ActivepiecesError, ErrorCode, UserId } from '@activepieces/shared'
+import { userService } from '../../../user/user-service'
+import { otpService } from '../../otp/otp-service'
 
 export const enterpriseLocalAuthnService = {
     async verifyEmail({ userId, otp }: VerifyEmailRequestBody): Promise<void> {

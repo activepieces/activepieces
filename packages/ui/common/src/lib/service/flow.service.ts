@@ -120,6 +120,12 @@ export class FlowService {
     if (request.folderId) {
       queryParams['folderId'] = request.folderId;
     }
+    if (request.name) {
+      queryParams['name'] = request.name;
+    }
+    if (request.status) {
+      queryParams['status'] = request.status;
+    }
     return this.http.get<SeekPage<PopulatedFlow>>(
       environment.apiUrl + '/flows',
       {

@@ -1,5 +1,5 @@
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { ApEdition, assertEqual, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from '@activepieces/shared'
+import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -26,16 +26,18 @@ export const triggerHelper = {
         }
 
         const { resolvedInput } = await variableService({
+            apiUrl: constants.internalApiUrl,
             projectId: params.projectId,
-            workerToken: params.workerToken,
+            engineToken: params.engineToken,
         }).resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: input,
             executionState: FlowExecutorContext.empty(),
         })
 
         const { processedInput, errors } = await variableService({
+            apiUrl: constants.internalApiUrl,
             projectId: params.projectId,
-            workerToken: params.workerToken,
+            engineToken: params.engineToken,
         }).applyProcessorsAndValidators(resolvedInput, trigger.props, piece.auth)
 
         if (Object.keys(errors).length > 0) {
@@ -47,9 +49,10 @@ export const triggerHelper = {
         let scheduleOptions: ScheduleOptions | undefined = undefined
         const context = {
             store: createContextStore({
+                apiUrl: constants.internalApiUrl,
                 prefix,
                 flowId: params.flowVersion.flowId,
-                workerToken: params.workerToken,
+                engineToken: params.engineToken,
             }),
             app: {
                 createListeners({ events, identifierKey, identifierValue }: Listener): void {
@@ -114,7 +117,8 @@ export const triggerHelper = {
                         output: await trigger.test({
                             ...context,
                             files: createFilesService({
-                                workerToken: params.workerToken!,
+                                apiUrl: constants.internalApiUrl,
+                                engineToken: params.engineToken!,
                                 stepName: triggerName,
                                 flowId: params.flowVersion.flowId,
                                 type: 'db',
@@ -133,14 +137,6 @@ export const triggerHelper = {
                 }
             case TriggerHookType.RUN: {
                 if (trigger.type === TriggerStrategy.APP_WEBHOOK) {
-                    if (params.edition === ApEdition.COMMUNITY) {
-                        return {
-                            success: false,
-                            message: 'App webhooks are not supported in community edition',
-                            output: [],
-                        }
-                    }
-
                     if (!params.appWebhookUrl) {
                         throw new Error(`App webhook url is not available for piece name ${pieceName}`)
                     }
@@ -176,7 +172,8 @@ export const triggerHelper = {
                 const items = await trigger.run({
                     ...context,
                     files: createFilesService({
-                        workerToken: params.workerToken!,
+                        apiUrl: constants.internalApiUrl,
+                        engineToken: params.engineToken!,
                         flowId: params.flowVersion.flowId,
                         stepName: triggerName,
                         type: 'memory',

@@ -1,3 +1,6 @@
+import { OtpType } from '@activepieces/ee-shared'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { isNil } from '@activepieces/shared'
 import { flagService } from '../../../../../app/flags/flag.service'
 import { AuthenticationServiceHooks } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { projectService } from '../../../../project/project-service'
@@ -7,9 +10,6 @@ import { appsumoService } from '../../../billing/appsumo/appsumo.service'
 import { otpService } from '../../../otp/otp-service'
 import { referralService } from '../../../referrals/referral.service'
 import { authenticationHelper } from './authentication-helper'
-import { OtpType } from '@activepieces/ee-shared'
-import { exceptionHandler, logger } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
 
 export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async preSignIn({ email, platformId, provider }) {

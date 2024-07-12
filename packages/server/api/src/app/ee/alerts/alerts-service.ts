@@ -1,17 +1,40 @@
+import { Alert, AlertChannel, Issue, ListAlertsParams } from '@activepieces/ee-shared'
+import { ActivepiecesError, ApId, apId, ErrorCode, SeekPage } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
+import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
 import { AlertEntity } from './alerts-entity'
-import { Alert, AlertChannel, ListAlertsParams } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApId, apId, ErrorCode, SeekPage } from '@activepieces/shared'
+import { alertsHandler } from './alerts-handler'
 
-const repo = databaseConnection.getRepository(AlertEntity)
+const repo = repoFactory(AlertEntity)
 
 export const alertsService = {
+    async sendAlertOnRunFinish({ issue, flowRunId }: { issue: Issue, flowRunId: string }): Promise<void> {
+        const project = await projectService.getOneOrThrow(issue.projectId)
+        const platform = await platformService.getOneOrThrow(project.platformId)
+        if (platform.embeddingEnabled) {
+            return
+        }
+
+        const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(issue.flowId)
+
+        await alertsHandler[project.notifyStatus]({
+            flowRunId,
+            projectId: issue.projectId,
+            platformId: platform.id,
+            flowId: issue.flowId,
+            flowName: flowVersion.displayName,
+            issueCount: issue.count,
+            createdAt: dayjs(issue.created).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
+        })
+    },
     async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
         const alertId = apId()
-        const existingAlert = await repo.findOneBy({
+        const existingAlert = await repo().findOneBy({
             projectId,
             receiver,
         })
@@ -25,7 +48,7 @@ export const alertsService = {
             })
         }
 
-        await repo.createQueryBuilder()
+        await repo().createQueryBuilder()
             .insert()
             .into(AlertEntity)
             .values({
@@ -49,7 +72,7 @@ export const alertsService = {
             },
         })
 
-        const query = repo.createQueryBuilder(AlertEntity.options.name).where({
+        const query = repo().createQueryBuilder(AlertEntity.options.name).where({
             projectId,
         })
 
@@ -58,7 +81,7 @@ export const alertsService = {
         return paginationHelper.createPage<Alert>(data, newCursor)
     },
     async delete({ alertId }: { alertId: ApId }): Promise<void> {
-        await repo.delete({
+        await repo().delete({
             id: alertId,
         })
     },

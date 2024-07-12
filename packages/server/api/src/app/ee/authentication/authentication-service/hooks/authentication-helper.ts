@@ -1,12 +1,3 @@
-import { Provider } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
-import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
-import { flagService } from '../../../../flags/flag.service'
-import { platformService } from '../../../../platform/platform.service'
-import { projectService } from '../../../../project/project-service'
-import { userService } from '../../../../user/user-service'
-import { userInvitationsService } from '../../../../user-invitations/user-invitation.service'
-import { projectMemberService } from '../../../project-members/project-member.service'
-import { platformProjectService } from '../../../projects/platform-project-service'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
@@ -17,6 +8,15 @@ import {
     ProjectMemberRole,
     User,
 } from '@activepieces/shared'
+import { Provider } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
+import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
+import { flagService } from '../../../../flags/flag.service'
+import { platformService } from '../../../../platform/platform.service'
+import { projectService } from '../../../../project/project-service'
+import { userService } from '../../../../user/user-service'
+import { userInvitationsService } from '../../../../user-invitations/user-invitation.service'
+import { projectMemberService } from '../../../project-members/project-member.service'
+import { platformProjectService } from '../../../projects/platform-project-service'
 
 async function getProjectForUserOrThrow(user: User): Promise<Project> {
     const invitedProject = await getProjectMemberOrThrow(user)

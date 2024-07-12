@@ -1,11 +1,3 @@
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
-import { pieceTagService } from '../../tags/pieces/piece-tag.service'
-import { userService } from '../../user/user-service'
-import { projectMemberService } from '../project-members/project-member.service'
-import { projectLimitsService } from '../project-plan/project-plan.service'
-import { externalTokenExtractor } from './lib/external-token-extractor'
 import {
     DEFAULT_PLATFORM_LIMIT,
 } from '@activepieces/ee-shared'
@@ -16,8 +8,17 @@ import {
     PlatformRole,
     PrincipalType,
     Project,
+    spreadIfDefined,
     User,
 } from '@activepieces/shared'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
+import { pieceTagService } from '../../tags/pieces/piece-tag.service'
+import { userService } from '../../user/user-service'
+import { projectMemberService } from '../project-members/project-member.service'
+import { projectLimitsService } from '../project-plan/project-plan.service'
+import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = {
     async externalToken({
@@ -33,7 +34,7 @@ export const managedAuthnService = {
             externalProjectId: externalPrincipal.externalProjectId,
         })
 
-        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType)
+        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks)
 
         const projectMember = await projectMemberService.upsert({
             projectId: project.id,
@@ -64,6 +65,7 @@ const updateProjectLimits = async (
     projectId: string,
     piecesTags: string[],
     piecesFilterType: PiecesFilterType,
+    tasks: number | undefined,
 ): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,
@@ -73,6 +75,7 @@ const updateProjectLimits = async (
     })
     await projectLimitsService.upsert({
         ...DEFAULT_PLATFORM_LIMIT,
+        ...spreadIfDefined('tasks', tasks),
         pieces,
         piecesFilterType,
     }, projectId)

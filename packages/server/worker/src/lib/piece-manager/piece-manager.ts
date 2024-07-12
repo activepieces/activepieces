@@ -1,5 +1,5 @@
 import { resolve } from 'node:path'
-import { enrichErrorContext, PackageInfo, system, SystemProp } from '@activepieces/server-shared'
+import { enrichErrorContext, PackageInfo, packageManager, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     getPackageAliasForPiece,
     getPackageArchivePathForPiece,
@@ -9,7 +9,7 @@ import {
 } from '@activepieces/shared'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(
-    system.getOrThrow(SystemProp.PACKAGE_ARCHIVE_PATH),
+    system.getOrThrow(SharedSystemProp.PACKAGE_ARCHIVE_PATH),
 )
 
 export abstract class PieceManager {
@@ -18,6 +18,10 @@ export abstract class PieceManager {
             if (isEmpty(pieces)) {
                 return
             }
+
+            await packageManager.init({
+                path: projectPath,
+            })
 
             const uniquePieces = this.removeDuplicatedPieces(pieces)
 
@@ -59,11 +63,11 @@ export abstract class PieceManager {
         return pieces.filter(
             (piece, index, self) =>
                 index ===
-        self.findIndex(
-            (p) =>
-                p.pieceName === piece.pieceName &&
-            p.pieceVersion === piece.pieceVersion,
-        ),
+                self.findIndex(
+                    (p) =>
+                        p.pieceName === piece.pieceName &&
+                        p.pieceVersion === piece.pieceVersion,
+                ),
         )
     }
 }

@@ -29,6 +29,7 @@ export const linearCreateIssue = createAction({
     const issue: LinearDocument.IssueCreateInput = {
       teamId: propsValue.team_id!,
       title: propsValue.title,
+      description: propsValue.description,
       assigneeId: propsValue.assignee_id,
       stateId: propsValue.state_id,
       priority: propsValue.priority_id,

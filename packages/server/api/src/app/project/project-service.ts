@@ -1,7 +1,3 @@
-import { IsNull } from 'typeorm'
-import { repoFactory } from '../core/db/repo-factory'
-import { ProjectEntity } from './project-entity'
-import { projectHooks } from './project-hooks'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, apId,
     ApId,
@@ -16,6 +12,10 @@ import { ActivepiecesError, apId,
     User,
     UserId,
 } from '@activepieces/shared'
+import { IsNull } from 'typeorm'
+import { repoFactory } from '../core/db/repo-factory'
+import { ProjectEntity } from './project-entity'
+import { projectHooks } from './project-hooks'
 
 const repo = repoFactory(ProjectEntity)
 

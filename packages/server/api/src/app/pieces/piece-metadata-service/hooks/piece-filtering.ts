@@ -1,8 +1,8 @@
+import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
+import { isNil, PieceCategory, PlatformId, SuggestionType } from '@activepieces/shared'
 import Fuse from 'fuse.js'
 import { platformService } from '../../../platform/platform.service'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
-import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
-import { isNil, PieceCategory, PlatformId, SuggestionType } from '@activepieces/shared'
 
 
 const pieceFilterKeys = [{
@@ -27,7 +27,6 @@ export const filterPiecesBasedUser = async ({
     suggestionType?: SuggestionType
     platformId?: PlatformId
 }): Promise<PieceMetadataSchema[]> => {
-
     return filterPiecesBasedOnFeatures(platformId, filterBasedOnCategories({
         categories,
         pieces: filterBasedOnSearchQuery({ searchQuery, pieces, suggestionType }),
@@ -97,11 +96,13 @@ const filterBasedOnSearchQuery = ({
         'triggers.displayName',
         'triggers.description',
     ]
+
     const fuse = new Fuse(putActionsAndTriggersInAnArray, {
         isCaseSensitive: false,
         shouldSort: true,
         keys: pieceWithTriggersAndActionsFilterKeys,
         threshold: 0.2,
+        distance: 250,
     })
 
     return fuse

@@ -1,6 +1,6 @@
+import { Platform, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { gitHubAuthnProvider } from './github-authn-provider'
 import { googleAuthnProvider } from './google-authn-provider'
-import { Platform, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 
 export type AuthnProvider = {
     getLoginUrl: (hostname: string, platform: Platform) => Promise<string>

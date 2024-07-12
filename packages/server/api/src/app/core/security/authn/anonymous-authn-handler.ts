@@ -1,11 +1,11 @@
-import { FastifyRequest } from 'fastify'
-import { BaseSecurityHandler } from '../security-handler'
 import {
     apId,
     isNil,
     Principal,
     PrincipalType,
 } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
+import { BaseSecurityHandler } from '../security-handler'
 
 export class AnonymousAuthnHandler extends BaseSecurityHandler {
     protected canHandle(_request: FastifyRequest): Promise<boolean> {

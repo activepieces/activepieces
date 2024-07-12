@@ -1,17 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  getAccessTokenOrThrow,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { intercomCommon } from '../common';
+import { intercomClient } from '../common';
 import { intercomAuth } from '../..';
 
 enum ContactRole {
   USER = 'user',
   LEAD = 'lead',
 }
+
 export const createContact = createAction({
   auth: intercomAuth,
   description: 'Create a contact (ie. user or lead)',
@@ -56,26 +51,26 @@ export const createContact = createAction({
     }),
   },
   run: async (context) => {
-    const authentication = getAccessTokenOrThrow(context.auth);
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://api.intercom.io/contacts`,
-      headers: intercomCommon.intercomHeaders,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: authentication as string,
-      },
-      body: {
-        role: context.propsValue.role,
-        external_id: context.propsValue.external_id,
+    const client = intercomClient(context.auth);
+    if (context.propsValue.role === ContactRole.USER) {
+      return await client.contacts.createUser({
+        externalId: context.propsValue.external_id,
         email: context.propsValue.email,
-        name: context.propsValue.name,
         phone: context.propsValue.phone,
+        name: context.propsValue.name,
         avatar: context.propsValue.avatar,
-        custom_attributes: context.propsValue.custom_attributes,
-        signed_up_at: new Date(),
-      },
-    });
-    return response.body;
+        signedUpAt: Date.now(),
+        customAttributes: context.propsValue.custom_attributes,
+      });
+    } else {
+      return await client.contacts.createLead({
+        customAttributes: context.propsValue.custom_attributes,
+        avatar: context.propsValue.avatar,
+        signedUpAt: Date.now(),
+        phone: context.propsValue.phone,
+        name: context.propsValue.name,
+        email: context.propsValue.email,
+      });
+    }
   },
 });

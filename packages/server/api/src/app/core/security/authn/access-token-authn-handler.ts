@@ -1,7 +1,7 @@
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
 import { BaseSecurityHandler } from '../security-handler'
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
 
 export class AccessTokenAuthnHandler extends BaseSecurityHandler {
     private static readonly HEADER_NAME = 'authorization'

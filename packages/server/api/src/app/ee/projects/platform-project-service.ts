@@ -1,25 +1,10 @@
-import { EntityManager, Equal, In, IsNull } from 'typeorm'
-import { repoFactory } from '../../core/db/repo-factory'
-import { transaction } from '../../core/db/transaction'
-import { flagService } from '../../flags/flag.service'
-import { flowService } from '../../flows/flow/flow.service'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { getEdition } from '../../helper/secret-helper'
-import { ProjectEntity } from '../../project/project-entity'
-import { projectService } from '../../project/project-service'
-import { projectUsageService } from '../../project/usage/project-usage-service'
-import { userService } from '../../user/user-service'
-import { projectBillingService } from '../billing/project-billing/project-billing.service'
-import { ProjectMemberEntity } from '../project-members/project-member.entity'
-import { projectLimitsService } from '../project-plan/project-plan.service'
-import { platformProjectSideEffects } from './platform-project-side-effects'
 import {
     ApSubscriptionStatus,
     DEFAULT_FREE_PLAN_LIMIT,
     MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
+import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -37,6 +22,21 @@ import {
     SeekPage,
     spreadIfDefined,
 } from '@activepieces/shared'
+import { EntityManager, Equal, In, IsNull } from 'typeorm'
+import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
+import { flagService } from '../../flags/flag.service'
+import { flowService } from '../../flows/flow/flow.service'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { ProjectEntity } from '../../project/project-entity'
+import { projectService } from '../../project/project-service'
+import { projectUsageService } from '../../project/usage/project-usage-service'
+import { userService } from '../../user/user-service'
+import { projectBillingService } from '../billing/project-billing/project-billing.service'
+import { ProjectMemberEntity } from '../project-members/project-member.entity'
+import { projectLimitsService } from '../project-plan/project-plan.service'
+import { platformProjectSideEffects } from './platform-project-side-effects'
 
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
@@ -145,7 +145,7 @@ function getTasksLimit(isCustomerPlatform: boolean, limit: number | undefined) {
 }
 
 async function isSubscribedInStripe(projectId: ProjectId): Promise<boolean> {
-    const isCloud = getEdition() === ApEdition.CLOUD
+    const isCloud = system.getEdition() === ApEdition.CLOUD
     if (!isCloud) {
         return false
     }

@@ -2,10 +2,17 @@
   @if(
     !passedFormControl.disabled
   ){
-    <div class="ap-right-[30px] ap-absolute ap-z-50 ap-top-[2px] ap-bg-white ap-h-[40px]">
+    <div class="ap-right-[30px] ap-absolute ap-z-50 ap-top-[2px] ap-bg-white ap-h-[40px] ap-flex ap-gap-[2px]" >
+    
       <ap-icon-button (click)="refreshOptions(); matSelect.open();" i18n-tooltipText tooltipText="Refresh Options"
       iconFilename="refresh.svg" [width]="20" [height]="20" [height]="16"></ap-icon-button>
-    </div>
+      @if(!property.required && matSelect.triggerValue)
+      {
+        <ap-icon-button (click)="unsetValue(); matSelect.open();" i18n-tooltipText tooltipText="Unset"
+        iconFilename="close.svg" [width]="20" [height]="20" [height]="16"></ap-icon-button>
+      }
+      </div>
+    
   }
 
 

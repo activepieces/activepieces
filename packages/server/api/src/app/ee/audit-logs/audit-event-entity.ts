@@ -1,7 +1,7 @@
-import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 import { ApplicationEvent } from '@activepieces/ee-shared'
 import { Platform } from '@activepieces/shared'
+import { EntitySchema } from 'typeorm'
+import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 
 type AuditEventSchema = ApplicationEvent & {
     platform: Platform
@@ -24,10 +24,6 @@ export const AuditEventEntity = new EntitySchema<AuditEventSchema>({
         userEmail: {
             type: String,
         },
-        projectDisplayName: {
-            type: String,
-            nullable: true,
-        },
         data: {
             type: JSONB_COLUMN_TYPE,
         },
@@ -37,6 +33,7 @@ export const AuditEventEntity = new EntitySchema<AuditEventSchema>({
         },
         userId: {
             type: String,
+            nullable: true,
         },
     },
     indices: [

@@ -1,10 +1,10 @@
+import { system } from '@activepieces/server-shared'
+import { ApEdition } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
-import { getEdition } from '../../helper/secret-helper'
 import { projectUsageService } from '../../project/usage/project-usage-service'
 import { emailService } from '../helper/email/email-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
-import { ApEdition } from '@activepieces/shared'
 
 export const platformRunHooks: FlowRunHooks = {
     async onFinish({
@@ -14,7 +14,7 @@ export const platformRunHooks: FlowRunHooks = {
         projectId: string
         tasks: number
     }): Promise<void> {
-        const edition = getEdition()
+        const edition = system.getEdition()
         if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             const consumedTasks = await projectUsageService.increaseTasks(
                 projectId,

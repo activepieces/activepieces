@@ -1,0 +1,55 @@
+<mat-menu xPosition="before" #menuElement>
+  <button mat-menu-item (click)="renameFlow.emit()" [disabled]="!hasWritePermission" >
+    <div class="ap-flex ap-gap-3 ap-items-center">
+      <svg-icon [src]="flowActionsUiInfo.rename.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
+        [applyClass]="true"></svg-icon>
+      <span i18n>{{flowActionsUiInfo.rename.text}}</span>
+    </div>
+  </button>
+  <button mat-menu-item (click)="moveFlow(flow)" [disabled]="!hasWritePermission" >
+    <div class="ap-flex ap-gap-3 ap-items-center">
+      <svg-icon [src]="flowActionsUiInfo.move.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
+        [applyClass]="true"></svg-icon>
+      <span i18n>{{flowActionsUiInfo.move.text}}</span>
+    </div>
+  </button>
+  <button mat-menu-item (click)="duplicate(flow)" [disabled]="!hasWritePermission" >
+    <div class="ap-flex ap-gap-3 ap-items-center">
+      <svg-icon [src]="flowActionsUiInfo.duplicate.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
+        [applyClass]="true"></svg-icon>
+      <span i18n>{{flowActionsUiInfo.duplicate.text}}</span>
+    </div>
+  </button>
+  @if(showImportAction)
+  {
+    <button mat-menu-item (click)="import(flow)" [disabled]="!hasWritePermission" >
+      <div class="ap-flex ap-gap-3 ap-items-center">
+        <svg-icon [src]="flowActionsUiInfo.import.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
+          [applyClass]="true"></svg-icon>
+        <span i18n>{{flowActionsUiInfo.import.text}}</span>
+      </div>
+    </button>
+  }
+  <button mat-menu-item (click)="export(flow)">
+    <div class="ap-flex ap-gap-3 ap-items-center">
+      <svg-icon [src]="flowActionsUiInfo.export.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
+        [applyClass]="true"></svg-icon>
+      <span i18n>{{flowActionsUiInfo.export.text}}</span>
+    </div>
+  </button>
+  <ap-share-flow-template-dialog [flow]="flow"></ap-share-flow-template-dialog>
+  <app-push-flow-to-git-button [flow]="flow"></app-push-flow-to-git-button>
+
+  <button (click)="deleteFlow(flow)" mat-menu-item [disabled]="!hasWritePermission" >
+    <div class="ap-flex ap-gap-3 ap-items-center">
+      <svg-icon [src]="flowActionsUiInfo.delete.icon"
+        [class]="'ap-fill-danger '+flowActionsUiInfo.iconSizeTailWind" [applyClass]="true"></svg-icon>
+      <span class="ap-text-danger">{{flowActionsUiInfo.delete.text}}</span>
+    </div>
+  </button>
+</mat-menu>
+
+  @if(downloadTemplate$ | async) {}
+  @if(moveFlowDialogClosed$ | async) {}
+  @if(duplicateFlow$ | async) {}
+  @if(deleteFlowDialogClosed$ | async) {}

@@ -1,11 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../../index';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { WebClient } from '@slack/web-api';
 
 export const uploadFile = createAction({
   auth: slackAuth,
@@ -29,30 +24,10 @@ export const uploadFile = createAction({
   async run(context) {
     const token = context.auth.access_token;
     const { file, title, filename } = context.propsValue;
-    const formData = new FormData();
-    formData.append('file', new Blob([file.data]));
-    if (title !== undefined) {
-      formData.append('title', title);
-    }
-    if (filename !== undefined) {
-      formData.append('filename', filename);
-    }
-    const request: HttpRequest = {
-      url: `https://slack.com/api/files.upload`,
-      method: HttpMethod.POST,
-      body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token,
-      },
-    };
-    const response = await httpClient.sendRequest(request);
-    if (!response.body.ok) {
-      throw new Error(response.body.error)
-    }
-    return response.body;
+    const client = new WebClient(token);
+    return await client.files.uploadV2({
+      file_uploads: [{ file: file.data, filename: filename || file.filename }],
+      title: title,
+    });
   },
 });

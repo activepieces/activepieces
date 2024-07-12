@@ -1,7 +1,7 @@
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { alertsService } from './alerts-service'
 import { CreateAlertParams, ListAlertsParams } from '@activepieces/ee-shared'
 import { ApId, PrincipalType } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { alertsService } from './alerts-service'
 
 export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListAlertsRequest, async (req) => {

@@ -82,6 +82,8 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
             limit: queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
             cursor: queryParams[CURSOR_QUERY_PARAM],
             folderId: queryParams[FOLDER_QUERY_PARAM] || undefined,
+            name: queryParams['name'],
+            status: queryParams['status'],
           }),
           this.folderService.list(),
         ]);

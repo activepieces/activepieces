@@ -6,11 +6,13 @@ import {
   AuthenticationService,
   PROJECT_ROLE_DISABLED_RESOLVER_KEY,
   ProjectService,
+  TableCore,
   UserInvitationService,
+  unpermittedTooltip,
 } from '@activepieces/ui/common';
 import { RolesDisplayNames } from '../utils';
 import { ActivatedRoute } from '@angular/router';
-import { ProjectMemberRole } from '@activepieces/shared';
+import { Permission, ProjectMemberRole } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 export enum TeamMemberStatus {
@@ -31,7 +33,7 @@ export type UserInvitedOrMember = {
   styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProjectMembersTableComponent implements OnInit {
+export class ProjectMembersTableComponent extends TableCore implements OnInit {
   dataSource!: ProjectMembersTableDataSource;
   dialogClosed$: Observable<void> | undefined;
   deleteInvitation$: Observable<void> | undefined;
@@ -40,12 +42,14 @@ export class ProjectMembersTableComponent implements OnInit {
   inviteLoading = false;
   isFeatureLocked = false;
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
-  displayedColumns = ['email', 'role', 'status', 'created', 'action'];
+  isReadOnly = !this.hasPermission(Permission.WRITE_INVITATION);
+  readonly deleteInvitationTooltip = this.isReadOnly
+    ? unpermittedTooltip
+    : $localize`Delete Invitation`;
   title = $localize`Project Members`;
   RolesDisplayNames = RolesDisplayNames;
   upgradeNoteTitle = $localize`Bring Your Team`;
   upgradeNote = $localize`Invite your teammates to a project, assigning the appropriate roles and permissions for building and debugging flows.`;
-
   constructor(
     private projectService: ProjectService,
     private projectMemberService: ProjectMemberService,
@@ -53,7 +57,11 @@ export class ProjectMembersTableComponent implements OnInit {
     private authenticationService: AuthenticationService,
     private matsnackBar: MatSnackBar,
     private activatedRoute: ActivatedRoute
-  ) {}
+  ) {
+    super({
+      tableColumns: ['email', 'role', 'status', 'created', 'action'],
+    });
+  }
   ngOnInit(): void {
     this.isFeatureLocked = this.activatedRoute.snapshot.data[
       PROJECT_ROLE_DISABLED_RESOLVER_KEY
@@ -100,9 +108,5 @@ export class ProjectMembersTableComponent implements OnInit {
           );
         break;
     }
-  }
-
-  get projectMemberRole() {
-    return ProjectMemberRole;
   }
 }

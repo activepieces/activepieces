@@ -4,11 +4,10 @@ import { MAT_DIALOG_DATA, MatDialogRef, MatDialogContent, MatDialogActions, MatD
 import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PopulatedFlow } from '@activepieces/shared';
-import { SyncProjectService } from '../../../services/sync-project.service';
 import { AsyncPipe } from '@angular/common';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
-import { UiCommonModule } from '@activepieces/ui/common';
+import { SyncProjectService, UiCommonModule } from '@activepieces/ui/common';
 import { GitPushOperationType } from '@activepieces/ee-shared';
 
 export type PushToGitDialogData = {

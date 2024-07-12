@@ -56,7 +56,7 @@ export const flowActionsUiInfo = {
   },
   iconSizeTailWind: 'ap-w-[20px] ap-h-[20px]',
 };
-
+export const unpermittedTooltip = $localize`Permission needed`;
 export const flowDeleteNoteWithGit = $localize`This will permanently delete the flow, all its data and any background runs.
 You can't undo this action including git branch.`;
 export const flowDeleteNote = $localize`This will permanently delete the flow, all its data and any background runs.`;

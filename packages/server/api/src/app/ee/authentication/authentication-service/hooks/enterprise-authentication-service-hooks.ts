@@ -1,3 +1,4 @@
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import { AuthenticationServiceHooks } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { platformService } from '../../../../platform/platform.service'
 import { projectService } from '../../../../project/project-service'
@@ -5,7 +6,6 @@ import { userService } from '../../../../user/user-service'
 import { userInvitationsService } from '../../../../user-invitations/user-invitation.service'
 import { licenseKeysService } from '../../../license-keys/license-keys-service'
 import { authenticationHelper } from './authentication-helper'
-import { system, SystemProp } from '@activepieces/server-shared'
 
 const DEFAULT_PLATFORM_NAME = 'Activepieces'
 
@@ -57,7 +57,7 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
 
         await licenseKeysService.verifyKeyAndApplyLimits({
             platformId: platform.id,
-            license: system.get<string>(SystemProp.LICENSE_KEY),
+            license: system.get<string>(AppSystemProp.LICENSE_KEY),
         })
 
         await userInvitationsService.provisionUserInvitation({

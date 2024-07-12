@@ -1,13 +1,12 @@
-import { databaseConnection } from '../database/database-connection'
-import { getServerUrl } from '../helper/network-utils'
+import { logger } from '@activepieces/server-shared'
+import { apId, FlowId, ProjectId } from '@activepieces/shared'
+import { repoFactory } from '../core/db/repo-factory'
 import {
     AppEventRouting,
     AppEventRoutingEntity,
 } from './app-event-routing.entity'
-import { logger } from '@activepieces/server-shared'
-import { apId, FlowId, ProjectId } from '@activepieces/shared'
 
-const appEventRoutingRepo = databaseConnection.getRepository(
+const appEventRoutingRepo = repoFactory(
     AppEventRoutingEntity,
 )
 
@@ -21,7 +20,7 @@ export const appEventRoutingService = {
         event: string
         identifierValue: string
     }): Promise<AppEventRouting[]> {
-        return appEventRoutingRepo.findBy({ appName, event, identifierValue })
+        return appEventRoutingRepo().findBy({ appName, event, identifierValue })
     },
     async createListeners({
         appName,
@@ -41,7 +40,7 @@ export const appEventRoutingService = {
         )
         const upsertCommands: Promise<unknown>[] = []
         events.forEach((event) => {
-            const upsert = appEventRoutingRepo.upsert(
+            const upsert = appEventRoutingRepo().upsert(
                 {
                     id: apId(),
                     appName,
@@ -63,17 +62,9 @@ export const appEventRoutingService = {
         projectId: ProjectId
         flowId: FlowId
     }): Promise<void> {
-        await appEventRoutingRepo.delete({
+        await appEventRoutingRepo().delete({
             projectId,
             flowId,
         })
-    },
-    async getAppWebhookUrl({
-        appName,
-    }: {
-        appName: string
-    }): Promise<string | undefined> {
-        const frontendUrl = await getServerUrl()
-        return `${frontendUrl}v1/app-events/${appName}`
     },
 }

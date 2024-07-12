@@ -1,8 +1,8 @@
+import { EndpointScope, PrincipalType, Project, UpdateProjectRequestInCommunity } from '@activepieces/shared'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { projectService } from './project-service'
-import { EndpointScope, PrincipalType, Project, UpdateProjectRequestInCommunity } from '@activepieces/shared'
 
 export const userProjectController: FastifyPluginCallbackTypebox = (
     fastify,

@@ -1,3 +1,9 @@
+import { PieceMetadataModel } from '@activepieces/pieces-framework'
+import {
+    ApId,
+    BaseModel,
+    Project,
+} from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -7,12 +13,6 @@ import {
     isPostgres,
     JSON_COLUMN_TYPE,
 } from '../database/database-common'
-import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import {
-    ApId,
-    BaseModel,
-    Project,
-} from '@activepieces/shared'
 
 
 type PieceMetadataSchemaWithRelations = PieceMetadataSchema & {

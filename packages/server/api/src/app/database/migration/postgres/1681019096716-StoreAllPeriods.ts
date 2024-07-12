@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class StoreAllPeriods1681019096716 implements MigrationInterface {
     name = 'StoreAllPeriods1681019096716'

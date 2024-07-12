@@ -1,8 +1,8 @@
 
-import { userService } from '../../../user/user-service'
-import { createSamlClient, IdpLoginResponse, SamlAttributes } from './saml-client'
 import { cryptoUtils } from '@activepieces/server-shared'
 import { isNil, PlatformRole, SAMLAuthnProviderConfig, User } from '@activepieces/shared'
+import { userService } from '../../../user/user-service'
+import { createSamlClient, IdpLoginResponse, SamlAttributes } from './saml-client'
 
 export const authnSsoSamlService = {
     async login(platformId: string, samlProvider: SAMLAuthnProviderConfig): Promise<LoginResponse> {

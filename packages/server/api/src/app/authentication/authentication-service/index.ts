@@ -1,11 +1,4 @@
-import { QueryFailedError } from 'typeorm'
-import { flagService } from '../../flags/flag.service'
-import { telemetry } from '../../helper/telemetry.utils'
-import { userService } from '../../user/user-service'
-import { passwordHasher } from '../lib/password-hasher'
-import { authenticationServiceHooks as hooks } from './hooks'
-import { Provider } from './hooks/authentication-service-hooks'
-import { cryptoUtils, logger, system, SystemProp } from '@activepieces/server-shared'
+import { cryptoUtils, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -20,6 +13,13 @@ import {
     UserId,
     UserStatus,
 } from '@activepieces/shared'
+import { QueryFailedError } from 'typeorm'
+import { flagService } from '../../flags/flag.service'
+import { telemetry } from '../../helper/telemetry.utils'
+import { userService } from '../../user/user-service'
+import { passwordHasher } from '../lib/password-hasher'
+import { authenticationServiceHooks as hooks } from './hooks'
+import { Provider } from './hooks/authentication-service-hooks'
 
 export const authenticationService = {
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
@@ -235,7 +235,7 @@ async function saveNewsLetterSubscriber(user: User): Promise<void> {
     (!isNil(user.platformId) &&
       !flagService.isCloudPlatform(user.platformId)) ||
     !user.newsLetter
-    const environment = system.get(SystemProp.ENVIRONMENT)
+    const environment = system.get(SharedSystemProp.ENVIRONMENT)
     if (
         isPlatformUserOrNotSubscribed ||
     environment !== ApEnvironment.PRODUCTION

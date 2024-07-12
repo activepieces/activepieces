@@ -1,12 +1,3 @@
-import { databaseConnection } from '../../database/database-connection'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { telemetry } from '../../helper/telemetry.utils'
-import { projectService } from '../../project/project-service'
-import { userService } from '../../user/user-service'
-import { projectBillingService } from '../billing/project-billing/project-billing.service'
-import { projectLimitsService } from '../project-plan/project-plan.service'
-import { ReferralEntity } from './referral.entity'
 import { DEFAULT_FREE_PLAN_LIMIT, Referral } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
 import {
@@ -17,8 +8,17 @@ import {
     TelemetryEventName,
     UserId,
 } from '@activepieces/shared'
+import { repoFactory } from '../../core/db/repo-factory'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { telemetry } from '../../helper/telemetry.utils'
+import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
+import { projectBillingService } from '../billing/project-billing/project-billing.service'
+import { projectLimitsService } from '../project-plan/project-plan.service'
+import { ReferralEntity } from './referral.entity'
 
-const referralRepo = databaseConnection.getRepository(ReferralEntity)
+const referralRepo = repoFactory(ReferralEntity)
 
 export const referralService = {
     async add({ referringUserId, referredUserId, referredUserEmail }: AddParams): Promise<void> {
@@ -37,7 +37,7 @@ export const referralService = {
             referredUserEmail,
         }
 
-        await referralRepo.save(newReferral)
+        await referralRepo().save(newReferral)
 
         telemetry
             .trackUser(referringUserId, {
@@ -69,14 +69,14 @@ export const referralService = {
             },
         })
         const { data, cursor } = await paginator.paginate(
-            referralRepo.createQueryBuilder().where({ referringUserId }),
+            referralRepo().createQueryBuilder().where({ referringUserId }),
         )
         return paginationHelper.createPage<Referral>(data, cursor)
     },
 }
 
 async function addExtraTasks(userId: string): Promise<void> {
-    const referralsCount = await referralRepo.countBy({
+    const referralsCount = await referralRepo().countBy({
         referringUserId: userId,
     })
     if (referralsCount > 5) {

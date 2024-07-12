@@ -127,10 +127,10 @@ export class FlagService {
     );
   }
 
-  getSandboxTimeout(): Observable<number> {
+  getFlowRunTimeout(): Observable<number> {
     return this.getAllFlags().pipe(
       map((flags) => {
-        return Number(flags[ApFlagId.SANDBOX_RUN_TIME_SECONDS]);
+        return Number(flags[ApFlagId.FLOW_RUN_TIME_SECONDS]);
       })
     );
   }

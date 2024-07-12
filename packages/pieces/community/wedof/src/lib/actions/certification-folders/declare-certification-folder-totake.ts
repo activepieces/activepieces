@@ -8,12 +8,13 @@ export const declareCertificationFolderToTake = createAction({
   auth: wedofAuth,
   name: 'declareCertificationFolderToTake',
   displayName: "Passer un dossier de certification à l'état : Prêt à passer",
-  description: "Change l'état d'un dossier de certification vers: Prêt à passer",
+  description:
+    "Change l'état d'un dossier de certification vers : Prêt à passer",
   props: {
-    Id: Property.ShortText({
+    externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',
       description:
-        'Sélectionner la propriété {Id} du dossier de certification',
+        'Sélectionner la propriété {externalId} du dossier de certification',
       required: true,
     }),
     enrollmentDate: Property.DateTime({
@@ -37,23 +38,21 @@ export const declareCertificationFolderToTake = createAction({
       required: false,
     }),
     comment: Property.LongText({
-      displayName: "Commentaire",
+      displayName: 'Commentaire',
       required: false,
     }),
-
-
   },
   async run(context) {
     const message = {
       enrollmentDate: context.propsValue.enrollmentDate
-      ? dayjs(context.propsValue.enrollmentDate).format('YYYY-MM-DD')
-      : null,
+        ? dayjs(context.propsValue.enrollmentDate).format('YYYY-MM-DD')
+        : null,
       examinationDate: context.propsValue.examinationDate
-      ? dayjs(context.propsValue.examinationDate).format('YYYY-MM-DD')
-      : null,
+        ? dayjs(context.propsValue.examinationDate).format('YYYY-MM-DD')
+        : null,
       examinationEndDate: context.propsValue.examinationEndDate
-      ? dayjs(context.propsValue.examinationEndDate).format('YYYY-MM-DD')
-      : null,
+        ? dayjs(context.propsValue.examinationEndDate).format('YYYY-MM-DD')
+        : null,
       examinationType: context.propsValue.examinationType,
       examinationPlace: context.propsValue.examinationPlace,
       comment: context.propsValue.comment,
@@ -64,7 +63,7 @@ export const declareCertificationFolderToTake = createAction({
         url:
           wedofCommon.baseUrl +
           '/certificationFolders/' +
-          context.propsValue.Id +
+          context.propsValue.externalId +
           '/take',
         body: message,
         headers: {

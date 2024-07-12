@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { slackSendMessage } from '../common/utils';
 import { slackAuth } from '../..';
 import {
@@ -16,7 +16,7 @@ export const requestSendApprovalMessageAction = createAction({
     'Send approval message to a channel and then wait until the message is approved or disapproved',
   props: {
     info: slackInfo,
-    channel: slackChannel,
+    channel: slackChannel(true),
     text,
     username,
     profilePicture,
