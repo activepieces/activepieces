@@ -12,7 +12,6 @@ module.exports = {
     ),
     ...createGlobPatternsForDependencies(__dirname),
   ],
-  prefix: "ap-",
   theme: {
     container: {
       center: true,

@@ -1,12 +1,20 @@
 
 
 import { RouterProvider } from 'react-router-dom';
-import { router } from './core/router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { router } from './router';
+
+const queryClient = new QueryClient();
 
 export function App() {
   return (
     <>
-      <RouterProvider router={router} />
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <RouterProvider router={router} />
+        </TooltipProvider>
+      </QueryClientProvider>
     </>
   );
 }

@@ -12,6 +12,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@activepieces/shared": [
+        "../../packages/shared/src"
       ]
     }
   },
