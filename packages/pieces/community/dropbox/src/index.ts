@@ -50,7 +50,7 @@ export const dropbox = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.dropboxapi.com/2',
       auth: dropboxAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

@@ -1,8 +1,8 @@
+import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { flagService } from './flag.service'
 import { flagHooks } from './flags.hooks'
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 
 export const flagModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flagController, { prefix: '/v1/flags' })

@@ -1,8 +1,13 @@
 <form [formGroup]="codeArtifactForm">
   <div class="code-font-sm code-size-200 code-block">
     <div class="ap-py-2 ap-px-4 ap-flex ap-bg-header ap-items-center  ap-text-body ap-rounded">
-      <div class="ap-flex-grow">
-        index.ts
+      <div class="ap-flex-grow ap-items-center ap-flex ap-gap-2">
+        <svg-icon
+        [svgStyle]="{ width: '20px', height: '20px' }"
+        src="/assets/img/custom/files/ts.svg"
+      >
+      </svg-icon>
+      Code
       </div>
       <div class="ap-flex ap-items-center">
         <svg-icon src="/assets/img/custom/maximize.svg" #tooltip="matTooltip" matTooltip="Fullscreen"

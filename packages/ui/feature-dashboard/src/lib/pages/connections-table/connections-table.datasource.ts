@@ -63,6 +63,7 @@ export class ConnectionsTableDataSource extends DataSource<any> {
           cursor: res.queryParams[CURSOR_QUERY_PARAM],
           name: res.queryParams['name'],
           pieceName: res.queryParams['pieceName'],
+          status: res.queryParams['connectionStatus'],
         });
       }),
       catchError((err) => {

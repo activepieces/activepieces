@@ -17,7 +17,7 @@ export const clearout = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.clearout.io/v2', // Replace with the actual base URL
       auth: clearoutAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `${(auth as { apiKey: string }).apiKey}`,
       }),
     }),

@@ -1,14 +1,3 @@
-import { EntityManager, IsNull } from 'typeorm'
-import { transaction } from '../../core/db/transaction'
-import { acquireLock } from '../../helper/lock'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { telemetry } from '../../helper/telemetry.utils'
-import { flowVersionService } from '../flow-version/flow-version.service'
-import { flowFolderService } from '../folder/folder.service'
-import { flowSideEffects } from './flow-service-side-effects'
-import { FlowEntity } from './flow.entity'
-import { flowRepo } from './flow.repo'
 import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -31,6 +20,17 @@ import {
     ProjectId,
     SeekPage, TelemetryEventName, UserId,
 } from '@activepieces/shared'
+import { EntityManager, IsNull } from 'typeorm'
+import { transaction } from '../../core/db/transaction'
+import { acquireLock } from '../../helper/lock'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { telemetry } from '../../helper/telemetry.utils'
+import { flowVersionService } from '../flow-version/flow-version.service'
+import { flowFolderService } from '../folder/folder.service'
+import { flowSideEffects } from './flow-service-side-effects'
+import { FlowEntity } from './flow.entity'
+import { flowRepo } from './flow.repo'
 
 export const flowService = {
     async create({ projectId, request }: CreateParams): Promise<PopulatedFlow> {
@@ -82,6 +82,7 @@ export const flowService = {
         limit,
         folderId,
         status,
+        name,
     }: ListParams): Promise<SeekPage<PopulatedFlow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
@@ -123,7 +124,13 @@ export const flowService = {
 
         const populatedFlows = await Promise.all(populatedFlowPromises)
 
-        return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
+        let filteredPopulatedFlows = populatedFlows
+        
+        if (name) {
+            filteredPopulatedFlows = populatedFlows.filter((flow) => flow.version.displayName.match(new RegExp(`^.*${name}.*`, 'i')))
+        }
+
+        return paginationHelper.createPage(filteredPopulatedFlows, paginationResult.cursor)
     },
 
     async getOneById(id: string): Promise<Flow | null> {
@@ -148,7 +155,8 @@ export const flowService = {
         id,
         projectId,
         versionId,
-        removeSecrets = false,
+        removeConnectionsName = false,
+        removeSampleData = false,
         entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow | null> {
         const flow = await flowRepo(entityManager).findOneBy({
@@ -163,7 +171,8 @@ export const flowService = {
         const flowVersion = await flowVersionService.getFlowVersionOrThrow({
             flowId: id,
             versionId,
-            removeSecrets,
+            removeConnectionsName,
+            removeSampleData,
             entityManager,
         })
 
@@ -177,14 +186,16 @@ export const flowService = {
         id,
         projectId,
         versionId,
-        removeSecrets = false,
+        removeConnectionsName = false,
+        removeSampleData = false,
         entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow> {
         const flow = await this.getOnePopulated({
             id,
             projectId,
             versionId,
-            removeSecrets,
+            removeConnectionsName,
+            removeSampleData,
             entityManager,
         })
         assertFlowIsNotNull(flow)
@@ -382,7 +393,8 @@ export const flowService = {
             id: flowId,
             projectId,
             versionId,
-            removeSecrets: true,
+            removeConnectionsName: true,
+            removeSampleData: true,
         })
 
         return {
@@ -464,6 +476,7 @@ type ListParams = {
     limit: number
     folderId: string | undefined
     status: FlowStatus | undefined
+    name: string | undefined
 }
 
 type GetOneParams = {
@@ -474,7 +487,8 @@ type GetOneParams = {
 
 type GetOnePopulatedParams = GetOneParams & {
     versionId?: FlowVersionId
-    removeSecrets?: boolean
+    removeConnectionsName?: boolean
+    removeSampleData?: boolean
 }
 
 type GetTemplateParams = {

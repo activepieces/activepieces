@@ -13,7 +13,7 @@ export const addRectionToMessageAction = createAction({
 
   props: {
     info: slackInfo,
-    channel: slackChannel,
+    channel: slackChannel(true),
     ts: Property.ShortText({
       displayName: 'Message Timestamp',
       description:

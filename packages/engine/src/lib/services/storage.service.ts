@@ -2,18 +2,17 @@ import { URL } from 'node:url'
 import { Store, StoreScope } from '@activepieces/pieces-framework'
 import { DeleteStoreEntryRequest, FlowId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
-import { EngineConstants } from '../handler/context/engine-constants'
 import { FetchError, StorageError } from '../helper/execution-errors'
 
-export const createStorageService = ({ workerToken }: CreateStorageServiceParams): StorageService => {
+export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServiceParams): StorageService => {
     return {
         async get(key: string): Promise<StoreEntry | null> {
-            const url = buildUrl(key)
+            const url = buildUrl(apiUrl, key)
 
             try {
                 const response = await fetch(url, {
                     headers: {
-                        Authorization: `Bearer ${workerToken}`,
+                        Authorization: `Bearer ${engineToken}`,
                     },
                 })
 
@@ -35,14 +34,14 @@ export const createStorageService = ({ workerToken }: CreateStorageServiceParams
         },
 
         async put(request: PutStoreEntryRequest): Promise<StoreEntry | null> {
-            const url = buildUrl()
+            const url = buildUrl(apiUrl)
 
             try {
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${workerToken}`,
+                        Authorization: `Bearer ${engineToken}`,
                     },
                     body: JSON.stringify(request),
                 })
@@ -65,13 +64,13 @@ export const createStorageService = ({ workerToken }: CreateStorageServiceParams
         },
 
         async delete(request: DeleteStoreEntryRequest): Promise<null> {
-            const url = buildUrl(request.key)
+            const url = buildUrl(apiUrl, request.key)
 
             try {
                 const response = await fetch(url, {
                     method: 'DELETE',
                     headers: {
-                        Authorization: `Bearer ${workerToken}`,
+                        Authorization: `Bearer ${engineToken}`,
                     },
                 })
 
@@ -94,11 +93,11 @@ export const createStorageService = ({ workerToken }: CreateStorageServiceParams
     }
 }
 
-export function createContextStore({ prefix, flowId, workerToken }: { prefix: string, flowId: FlowId, workerToken: string }): Store {
+export function createContextStore({ apiUrl, prefix, flowId, engineToken }: { apiUrl: string, prefix: string, flowId: FlowId, engineToken: string }): Store {
     return {
         async put<T>(key: string, value: T, scope = StoreScope.FLOW): Promise<T> {
             const modifiedKey = createKey(prefix, scope, flowId, key)
-            await createStorageService({ workerToken }).put({
+            await createStorageService({ apiUrl, engineToken }).put({
                 key: modifiedKey,
                 value,
             })
@@ -106,13 +105,13 @@ export function createContextStore({ prefix, flowId, workerToken }: { prefix: st
         },
         async delete(key: string, scope = StoreScope.FLOW): Promise<void> {
             const modifiedKey = createKey(prefix, scope, flowId, key)
-            await createStorageService({ workerToken }).delete({
+            await createStorageService({ apiUrl, engineToken }).delete({
                 key: modifiedKey,
             })
         },
         async get<T>(key: string, scope = StoreScope.FLOW): Promise<T | null> {
             const modifiedKey = createKey(prefix, scope, flowId, key)
-            const storeEntry = await createStorageService({ workerToken }).get(modifiedKey)
+            const storeEntry = await createStorageService({ apiUrl, engineToken }).get(modifiedKey)
             if (storeEntry === null) {
                 return null
             }
@@ -130,8 +129,8 @@ function createKey(prefix: string, scope: StoreScope, flowId: FlowId, key: strin
     }
 }
 
-const buildUrl = (key?: string): URL => {
-    const url = new URL(`${EngineConstants.API_URL}v1/store-entries`)
+const buildUrl = (apiUrl: string, key?: string): URL => {
+    const url = new URL(`${apiUrl}v1/store-entries`)
 
     if (key) {
         url.searchParams.set('key', key)
@@ -154,7 +153,8 @@ const handleFetchError = ({ url, cause }: HandleFetchErrorParams): never => {
 }
 
 type CreateStorageServiceParams = {
-    workerToken: string
+    engineToken: string
+    apiUrl: string
 }
 
 type StorageService = {

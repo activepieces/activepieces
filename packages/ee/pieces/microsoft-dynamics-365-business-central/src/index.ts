@@ -52,7 +52,7 @@ export const microsoftDynamics365BusinessCentral = createPiece({
         return `https://api.businesscentral.dynamics.com/v2.0/${(auth as OAuth2PropertyValue).props?.['environment']
           }/api/v2.0`;
       },
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer  ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

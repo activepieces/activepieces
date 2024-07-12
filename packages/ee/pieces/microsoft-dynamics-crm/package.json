@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-dynamics-crm",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "license": {
     "type": "COMMERCIAL",
     "url": "https://raw.githubusercontent.com/activepieces/activepieces/main/packages/ee/LICENSE"

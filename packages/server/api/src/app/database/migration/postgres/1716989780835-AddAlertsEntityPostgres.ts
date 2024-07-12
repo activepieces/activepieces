@@ -1,6 +1,6 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
 import { apId } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddAlertsEntityPostgres1716989780835 implements MigrationInterface {
     name = 'AddAlertsEntityPostgres1716989780835'

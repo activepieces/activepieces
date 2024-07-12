@@ -1,9 +1,15 @@
+import {
+    apId,
+    PackageType,
+    PlatformRole,
+    PrincipalType,
+    ProjectMemberRole,
+} from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { engineHelper } from '../../../../src/app/helper/engine-helper'
 import { pieceMetadataService } from '../../../../src/app/pieces/piece-metadata-service'
+import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockPieceMetadata,
@@ -12,24 +18,17 @@ import {
     createMockProjectMember,
     createMockUser,
 } from '../../../helpers/mocks'
-import {
-    apId,
-    EngineResponseStatus,
-    PackageType,
-    PlatformRole,
-    PrincipalType,
-    ProjectMemberRole,
-} from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    
+    await databaseConnection().initialize()
+    app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -43,16 +42,16 @@ describe('AppConnection API', () => {
             const mockPlatformId = apId()
             const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
             const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection.getRepository('user').save([mockOwner, mockUser])
+            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockProject = createMockProject({
                 ownerId: mockOwner.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('project').save([mockProject])
+            await databaseConnection().getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
@@ -60,26 +59,17 @@ describe('AppConnection API', () => {
                 projectId: mockProject.id,
                 role: testRole,
             })
-            await databaseConnection.getRepository('project_member').save([mockProjectMember])
+            await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
             const mockPieceMetadata = createMockPieceMetadata({
                 projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadata])
+            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
             pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
-
-            engineHelper.executeValidateAuth = jest.fn().mockResolvedValue({
-                status: EngineResponseStatus.OK,
-                result: {
-                    valid: true,
-                },
-                standardError: '',
-                standardOutput: '',
-            })
-
+            
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
@@ -119,16 +109,16 @@ describe('AppConnection API', () => {
             const mockPlatformId = apId()
             const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
             const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection.getRepository('user').save([mockOwner, mockUser])
+            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockProject = createMockProject({
                 ownerId: mockOwner.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('project').save([mockProject])
+            await databaseConnection().getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
@@ -136,24 +126,16 @@ describe('AppConnection API', () => {
                 projectId: mockProject.id,
                 role: ProjectMemberRole.VIEWER,
             })
-            await databaseConnection.getRepository('project_member').save([mockProjectMember])
+            await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
             const mockPieceMetadata = createMockPieceMetadata({
                 projectId: mockProject.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadata])
+            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
             pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
-            engineHelper.executeValidateAuth = jest.fn().mockResolvedValue({
-                status: EngineResponseStatus.OK,
-                result: {
-                    valid: true,
-                },
-                standardError: '',
-                standardOutput: '',
-            })
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
@@ -205,16 +187,16 @@ describe('AppConnection API', () => {
             const mockPlatformId = apId()
             const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
             const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection.getRepository('user').save([mockOwner, mockUser])
+            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockProject = createMockProject({
                 ownerId: mockOwner.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('project').save([mockProject])
+            await databaseConnection().getRepository('project').save([mockProject])
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
@@ -222,7 +204,7 @@ describe('AppConnection API', () => {
                 projectId: mockProject.id,
                 role: testRole,
             })
-            await databaseConnection.getRepository('project_member').save([mockProjectMember])
+            await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,

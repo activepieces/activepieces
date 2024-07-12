@@ -2,10 +2,17 @@
   @if(
     !passedFormControl.disabled
   ){
-    <div class="ap-right-[30px] ap-absolute ap-z-50 ap-top-[2px] ap-bg-white ap-h-[40px]">
+    <div class="ap-right-[30px] ap-absolute ap-z-50 ap-top-[2px] ap-bg-white ap-h-[40px] ap-flex ap-gap-[2px]" >
+    
       <ap-icon-button (click)="refreshOptions(); matSelect.open();" i18n-tooltipText tooltipText="Refresh Options"
       iconFilename="refresh.svg" [width]="20" [height]="20" [height]="16"></ap-icon-button>
-    </div>
+      @if(!property.required && matSelect.triggerValue)
+      {
+        <ap-icon-button (click)="unsetValue(); matSelect.open();" i18n-tooltipText tooltipText="Unset"
+        iconFilename="close.svg" [width]="20" [height]="20" [height]="16"></ap-icon-button>
+      }
+      </div>
+    
   }
 
 
@@ -37,22 +44,33 @@
             {{ selectedOptions | dropdownLabelsJoiner }}
           }
         }
+        @else {
+          {{loadingText}}
+        }
       }
       @else(){
         @if(selectedItemsCache$ | async; as cache)
         {
+
           @if(cache.length > 0)
-          {
+          { 
+
             @if (
               cache | dropdownSelectedValues: passedFormControl | async;
               as selectedOptions
             ) {
               {{ selectedOptions | dropdownLabelsJoiner }}
             }
+            @else {
+              {{loadingText}}
+            }
           }
           @else() {
             {{loadingText}}
           }
+        }
+        @else() {
+          {{loadingText}}
         }
       }
     </mat-select-trigger>
@@ -61,6 +79,8 @@
       #dropdownSearch
       [searchControl]="searchControl"
     ></ap-dropdown-search-control>
+ 
+   
     @if (loading$ | async) {
       <mat-option class="ap-opacity-100" [disabled]="true">
         <div class="ap-flex ap-items-center ap-justify-center">
@@ -68,9 +88,9 @@
         </div>
       </mat-option>
      
-        <mat-option class="!ap-hidden" [value]="passedFormControl.value"> 
-          Loading...
-        </mat-option>
+      <mat-option class="!ap-hidden" [value]="passedFormControl.value"> 
+        Loading...
+      </mat-option>
     } @else {
       @if (options$ | async; as state) {
         @if (
@@ -144,7 +164,7 @@
 
     @if(selectedItemsCache$ | async; as cache)
     { 
-      @for( c of cache; track c)
+      @for( c of cache; track c.value)
       {
         <mat-option [value]="c.value" class="!ap-hidden"> {{c.label}} </mat-option>
       }

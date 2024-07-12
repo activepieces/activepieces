@@ -20,7 +20,7 @@
             </form>
         </div>
         <div
-            class="ap-p-4  ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-border-outline">
+            class="ap-p-4  ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-mt-4 ap-border-outline">
             <ap-button btnStyle="flat" btnColor="primary" i18n (buttonClicked)="save()"
                 [disabled]="(canSave$ | async) === false" [tooltipText]="(canSave$ | async) ? '' : permissionMessage"
                 [loading]="loading$ | async | defaultFalse">Save</ap-button>

@@ -12,8 +12,8 @@ export * from './lib/components/dictionary-form-control/dictionary-form-control.
 export * from './lib/components/interpolating-text-form-control/fixed-selection-mention';
 export * from './lib/components/interpolating-text-form-control/builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.component';
 export * from './lib/components/action-error-handling-form-control/action-error-handling-form-control.component';
-export * from './lib/components/new-piece-properties-form/piece-properties-form.component';
+export * from './lib/components/piece-properties-form/piece-properties-form.component';
 export * from './lib/components/action-or-trigger-dropdown/action-or-trigger-dropdown.component';
 import '@angular/localize/init';
 export * from './lib/components/dynamic-property-control/dynamic-property-control.component';
-export * from './lib/components/new-piece-properties-form/properties-controls-helper';
+export * from './lib/components/piece-properties-form/properties-controls-helper';

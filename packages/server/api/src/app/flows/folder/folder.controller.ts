@@ -1,3 +1,9 @@
+import { ApplicationEventName } from '@activepieces/ee-shared'
+import {
+    CreateOrRenameFolderRequest,
+    FolderId,
+    ListFolderRequest,
+} from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyRequest } from 'fastify'
@@ -5,12 +11,6 @@ import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { eventsHooks } from '../../helper/application-events'
 import { flowFolderService as folderService } from './folder.service'
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import {
-    CreateOrRenameFolderRequest,
-    FolderId,
-    ListFolderRequest,
-} from '@activepieces/shared'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -34,10 +34,11 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 projectId: request.principal.projectId,
                 request: request.body,
             })
-            eventsHooks.get().send(request, {
-                action: ApplicationEventName.CREATED_FOLDER,
-                folder: createdFolder,
-                userId: request.principal.id,
+            eventsHooks.get().sendUserEvent(request, {
+                action: ApplicationEventName.FOLDER_CREATED,
+                data: {
+                    folder: createdFolder,
+                },
             })
             return createdFolder
         },
@@ -58,10 +59,11 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 request: request.body,
             })
 
-            eventsHooks.get().send(request, {
-                action: ApplicationEventName.UPDATED_FOLDER,
-                folder: updatedFlow,
-                userId: request.principal.id,
+            eventsHooks.get().sendUserEvent(request, {
+                action: ApplicationEventName.FOLDER_UPDATED,
+                data: {
+                    folder: updatedFlow,
+                },
             })
 
             return updatedFlow
@@ -114,10 +116,11 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 projectId: request.principal.projectId,
                 folderId: request.params.folderId,
             })
-            eventsHooks.get().send(request, {
-                action: ApplicationEventName.DELETED_FOLDER,
-                folder,
-                userId: request.principal.id,
+            eventsHooks.get().sendUserEvent(request, {
+                action: ApplicationEventName.FOLDER_DELETED,
+                data: {
+                    folder,
+                },
             })
             await folderService.delete({
                 projectId: request.principal.projectId,

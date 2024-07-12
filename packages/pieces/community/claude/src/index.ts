@@ -30,7 +30,7 @@ export const claude = createPiece({
     createCustomApiCallAction({
       auth: claudeAuth,
       baseUrl: () => baseUrl,
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         return {
           'x-api-key': `${auth}`,
         };

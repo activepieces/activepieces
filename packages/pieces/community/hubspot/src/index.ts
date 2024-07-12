@@ -55,7 +55,7 @@ export const hubspot = createPiece({
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.hubapi.com',
 			auth: hubspotAuth,
-			authMapping: (auth) => ({
+			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
 			}),
 		}),

@@ -1,14 +1,14 @@
-import { databaseConnection } from '../../../database/database-connection'
+import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
+import { isNil } from '@activepieces/shared'
+import { repoFactory } from '../../../core/db/repo-factory'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { projectLimitsService } from '../../project-plan/project-plan.service'
 import { projectBillingService } from '../project-billing/project-billing.service'
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
-import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
 
-const appsumoRepo = databaseConnection.getRepository(AppSumoEntity)
+const appsumoRepo = repoFactory(AppSumoEntity)
 
 type FlowPlanLimits = {
     nickname: string
@@ -68,22 +68,22 @@ export const appsumoService = {
         return appSumoPlans[plan_id]
     },
     async getByEmail(email: string): Promise<AppSumoPlan | null> {
-        return appsumoRepo.findOneBy({
+        return appsumoRepo().findOneBy({
             activation_email: email,
         })
     },
     async getById(uuid: string): Promise<AppSumoPlan | null> {
-        return appsumoRepo.findOneBy({
+        return appsumoRepo().findOneBy({
             uuid,
         })
     },
     async  delete({ email }: { email: string }): Promise<void> {
-        await appsumoRepo.delete({
+        await appsumoRepo().delete({
             activation_email: email,
         })
     },
     async upsert(plan: AppSumoPlan): Promise<void> {
-        await appsumoRepo.upsert(plan, ['uuid'])
+        await appsumoRepo().upsert(plan, ['uuid'])
     },
     async handleRequest(request: {
         plan_id: string
@@ -96,7 +96,7 @@ export const appsumoService = {
         const activation_email = appSumoLicense?.activation_email ?? rawEmail
         const appSumoPlan = appsumoService.getPlanInformation(plan_id)
         const user = await userService.getByPlatformAndEmail({
-            platformId: system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID),
+            platformId: system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID),
             email: activation_email,
         })
         if (!isNil(user)) {

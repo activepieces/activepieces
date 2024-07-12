@@ -58,7 +58,7 @@ export const apitable = createPiece({
         return (auth as { apiTableUrl: string }).apiTableUrl;
       },
       auth: APITableAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as { token: string }).token}`,
       }),
     }),

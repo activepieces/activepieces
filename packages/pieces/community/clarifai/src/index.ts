@@ -70,7 +70,7 @@ export const clarifai = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.clarifai.com/v2', // Replace with the actual base URL
       auth: clarifaiAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Key ${auth}`,
       }),
     }),

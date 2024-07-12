@@ -1,5 +1,4 @@
 import dayjs, { OpUnitType } from 'dayjs';
-import { isEmpty, isInteger, isNil, isString } from 'lodash';
 import { ErrorMessages } from './errors';
 import {
   TypedValidatorFn,
@@ -8,6 +7,7 @@ import {
 } from './types';
 import { formatErrorMessage } from './utils';
 import { ApFile } from '../property';
+import { isEmpty, isNil, isString } from '@activepieces/shared';
 
 class Validators {
   static pattern(
@@ -258,7 +258,7 @@ class Validators {
   static integer: TypedValidatorFn<ValidationInputType.NUMBER> = {
     type: ValidationInputType.NUMBER,
     fn: (property, processedValue, userInput) => {
-      if (!isInteger(processedValue)) {
+      if (!Number.isInteger(processedValue)) {
         return formatErrorMessage(ErrorMessages.WHOLE_NUMBER, { userInput });
       }
       return null;

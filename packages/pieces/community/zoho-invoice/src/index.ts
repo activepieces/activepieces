@@ -61,7 +61,7 @@ export const zohoInvoice = createPiece({
       baseUrl: (auth) =>
         common.baseUrl((auth as OAuth2PropertyValue).props!['region']),
       auth: zohoAuth,
-      authMapping: (auth) =>
+      authMapping: async (auth) =>
         common.authHeaders((auth as OAuth2PropertyValue).access_token),
     }),
   ],

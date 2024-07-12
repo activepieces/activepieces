@@ -1,15 +1,3 @@
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import dayjs from 'dayjs'
-import { StatusCodes } from 'http-status-codes'
-import { isNil } from 'lodash'
-import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { assertUserHasPermissionToFlow } from '../../ee/authentication/rbac/rbac-middleware'
-import { eventsHooks } from '../../helper/application-events'
-import { projectService } from '../../project/project-service'
-import { flowService } from './flow.service'
 import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
@@ -20,6 +8,7 @@ import {
     FlowOperationRequest,
     FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
+    isNil,
     ListFlowsRequest,
     Permission,
     PopulatedFlow,
@@ -28,6 +17,17 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
+import {
+    FastifyPluginAsyncTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import dayjs from 'dayjs'
+import { StatusCodes } from 'http-status-codes'
+import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { assertUserHasPermissionToFlow } from '../../ee/authentication/rbac/rbac-middleware'
+import { eventsHooks } from '../../helper/application-events'
+import { projectService } from '../../project/project-service'
+import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -40,10 +40,11 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             request: request.body,
         })
 
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.CREATED_FLOW,
-            flow: newFlow,
-            userId: request.principal.id,
+        eventsHooks.get().sendUserEvent(request, {
+            action: ApplicationEventName.FLOW_CREATED,
+            data: {
+                flow: newFlow,
+            },
         })
 
         return reply.status(StatusCodes.CREATED).send(newFlow)
@@ -58,11 +59,12 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
         })
         await assertThatFlowIsNotBeingUsed(flow, userId)
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.UPDATED_FLOW,
-            request: request.body,
-            flow,
-            userId: request.principal.id,
+        eventsHooks.get().sendUserEvent(request, {
+            action: ApplicationEventName.FLOW_UPDATED,
+            data: {
+                request: request.body,
+                flowVersion: flow.version,
+            },
         })
 
         const updatedFlow = await flowService.update({
@@ -81,6 +83,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             status: request.query.status,
+            name: request.query.name,
         })
     })
 
@@ -112,11 +115,12 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-        const userId = await extractUserIdFromPrincipal(request.principal)
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.DELETED_FLOW,
-            flow,
-            userId,
+        eventsHooks.get().sendUserEvent(request, {
+            action: ApplicationEventName.FLOW_DELETED,
+            data: {
+                flow,
+                flowVersion: flow.version,
+            },
         })
         await flowService.delete({
             id: request.params.id,

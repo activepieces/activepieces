@@ -1,7 +1,7 @@
+import { AdminAddPlatformRequestBody, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { adminPlatformService } from './admin-platform.service'
-import { AdminAddPlatformRequestBody, PrincipalType } from '@activepieces/shared'
 
 export const adminPlatformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(adminPlatformController, { prefix: '/v1/admin/platforms' })

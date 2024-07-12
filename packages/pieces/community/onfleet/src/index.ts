@@ -112,7 +112,7 @@ export const onfleet = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://onfleet.com/api/v2',
       auth: onfleetAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

@@ -10,8 +10,8 @@ import {
 export const sendEmail = createAction({
   auth: mailerooAuth,
   name: 'sendEmail',
-  displayName: 'Send an Email',
-  description: 'send email',
+  displayName: 'Send Email',
+  description: 'Sends an email.',
   props: {
     ...createCommonProps(),
     content_type: Property.Dropdown<'text' | 'html'>({
@@ -46,7 +46,7 @@ export const sendEmail = createAction({
       formData.append('html', content);
     }
 
-    const res = await sendFormData('send', formData, context.auth);
+    const res = await sendFormData('send', formData, context.auth.apiKey);
 
     return res.body;
   },

@@ -1,6 +1,6 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
-import { ApEdition } from '@activepieces/shared'
 
 export class AddBranchTypeToGit1711073772867 implements MigrationInterface {
     name = 'AddBranchTypeToGit1711073772867'

@@ -98,7 +98,7 @@ export const leadConnector = createPiece({
     createCustomApiCallAction({
       baseUrl: () => baseUrl,
       auth: leadConnectorAuth,
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
           ...leadConnectorHeaders,

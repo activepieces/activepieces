@@ -8,8 +8,8 @@
       <mat-form-field class="ap-w-full">
         <mat-label i18n>Platform Role</mat-label>
         <mat-select i18n-placeholder [formControl]="formGroup.controls.platformRole">
-          <mat-option [value]="platformRole.MEMBER">MEMBER</mat-option>
-          <mat-option [value]="platformRole.ADMIN">ADMIN</mat-option>
+          <mat-option [value]="platformRole.MEMBER" i18n>Member</mat-option>
+          <mat-option [value]="platformRole.ADMIN" i18n>Admin</mat-option>
         </mat-select>
         <mat-error *ngIf="formGroup.controls.platformRole.hasError('required')" i18n>Platform role is required
         </mat-error>

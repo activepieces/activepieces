@@ -1,31 +1,30 @@
-import dayjs from 'dayjs'
-import Stripe from 'stripe'
-import { getEdition } from '../../../helper/secret-helper'
-import { projectService } from '../../../project/project-service'
-import { projectUsageService } from '../../../project/usage/project-usage-service'
-import { projectBillingService } from './project-billing.service'
 import { getTasksPriceId } from '@activepieces/ee-shared'
-import { exceptionHandler, system, SystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, system } from '@activepieces/server-shared'
 import {
     ApEdition,
     assertNotNullOrUndefined,
     ProjectId,
     UserMeta,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import Stripe from 'stripe'
+import { projectService } from '../../../project/project-service'
+import { projectUsageService } from '../../../project/usage/project-usage-service'
+import { projectBillingService } from './project-billing.service'
 
 export const stripeWebhookSecret = system.get(
-    SystemProp.STRIPE_WEBHOOK_SECRET,
+    AppSystemProp.STRIPE_WEBHOOK_SECRET,
 )!
 
-export const TASKS_PAYG_PRICE_ID = getTasksPriceId(system.get(SystemProp.STRIPE_SECRET_KEY) ?? '')
+export const TASKS_PAYG_PRICE_ID = getTasksPriceId(system.get(AppSystemProp.STRIPE_SECRET_KEY) ?? '')
 
 
 function getStripe(): Stripe | undefined {
-    const edition = getEdition()
+    const edition = system.getEdition()
     if (edition !== ApEdition.CLOUD) {
         return undefined
     }
-    const stripeSecret = system.getOrThrow(SystemProp.STRIPE_SECRET_KEY)
+    const stripeSecret = system.getOrThrow(AppSystemProp.STRIPE_SECRET_KEY)
     return new Stripe(stripeSecret, {
         apiVersion: '2023-10-16',
     })
@@ -35,7 +34,7 @@ async function getOrCreateCustomer(
     user: UserMeta,
     projectId: ProjectId,
 ): Promise<string | undefined> {
-    const edition = getEdition()
+    const edition = system.getEdition()
     const stripe = getStripe()
     if (edition !== ApEdition.CLOUD) {
         return undefined

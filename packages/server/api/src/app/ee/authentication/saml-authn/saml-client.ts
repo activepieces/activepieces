@@ -1,10 +1,10 @@
 
+import { ActivepiecesError, ErrorCode, isNil, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import * as validator from '@authenio/samlify-node-xmllint'
 import { Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import * as saml from 'samlify'
 import { customDomainService } from '../../custom-domains/custom-domain.service'
-import { ActivepiecesError, ErrorCode, isNil, SAMLAuthnProviderConfig } from '@activepieces/shared'
 
 
 const samlResponseValidator = TypeCompiler.Compile(

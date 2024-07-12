@@ -1,10 +1,5 @@
-import { fileService } from '../../file/file.service'
-import { PieceMetadataSchema } from '../piece-metadata-entity'
-import { FastDbPieceMetadataService } from './db-piece-metadata-service'
-import { FilePieceMetadataService } from './file-piece-metadata-service'
-import { PieceMetadataService } from './piece-metadata-service'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { PiecesSource, system, SystemProp } from '@activepieces/server-shared'
+import { PiecesSource, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     PackageType,
@@ -13,12 +8,14 @@ import {
     PublicPiecePackage,
     SuggestionType,
 } from '@activepieces/shared'
-
-const pieceSource = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
-
+import { fileService } from '../../file/file.service'
+import { PieceMetadataSchema } from '../piece-metadata-entity'
+import { FastDbPieceMetadataService } from './db-piece-metadata-service'
+import { FilePieceMetadataService } from './file-piece-metadata-service'
+import { PieceMetadataService } from './piece-metadata-service'
 
 const initPieceMetadataService = (): PieceMetadataService => {
-    const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
+    const source = system.getOrThrow<PiecesSource>(SharedSystemProp.PIECES_SOURCE)
     switch (source) {
         case PiecesSource.DB:
         case PiecesSource.CLOUD_AND_DB:
@@ -54,27 +51,9 @@ export const getPiecePackage = async (
             }
         }
         case PackageType.REGISTRY: {
-            const directoryPath = await getDirectoryPath(projectId, pkg)
-            return {
-                ...pkg,
-                directoryPath,
-            }
+            return pkg
         }
     }
-}
-
-
-async function getDirectoryPath(projectId: string,
-    pkg: Omit<PublicPiecePackage, 'directoryPath'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>): Promise<string | undefined> {
-    if (pieceSource !== PiecesSource.FILE) {
-        return undefined
-    }
-    const pieceMetadata = await pieceMetadataService.getOrThrow({
-        name: pkg.pieceName,
-        version: pkg.pieceVersion,
-        projectId,
-    })
-    return pieceMetadata.directoryPath
 }
 
 export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | PieceMetadataModel>(

@@ -1,13 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { randomBytes } from 'node:crypto';
-import { kebabCase } from 'lodash';
-
 import {
   httpClient,
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { stableDiffusionAuth, StableDiffusionAuthType } from '../../index';
+import { kebabCase } from '@activepieces/shared';
 
 export const textToImage = createAction({
   name: 'textToImage',

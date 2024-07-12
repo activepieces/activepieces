@@ -61,6 +61,7 @@ export class FlowItemContentComponent implements OnInit {
   readonly MAX_FLOW_ITEM_NAME_WIDTH = MAX_FLOW_ITEM_NAME_WIDTH;
   //in case it is not reached, we return undefined
   @ViewChild('stepDragTemplate') stepDragTemplate: TemplateRef<any>;
+  isReadOnly$: Observable<boolean>;
   stepStatus$?: Observable<StepOutputStatus | undefined>;
   hover = false;
   flowItemChanged$: Subject<boolean> = new BehaviorSubject(true);
@@ -97,7 +98,9 @@ export class FlowItemContentComponent implements OnInit {
     private cd: ChangeDetectorRef,
     private flowRendererService: FlowRendererService,
     private pieceService: PieceMetadataService
-  ) {}
+  ) {
+    this.isReadOnly$ = this.store.select(BuilderSelectors.selectReadOnly);
+  }
 
   ngOnInit(): void {
     this.isDragging$ = this.flowRendererService.isDragginStep$;

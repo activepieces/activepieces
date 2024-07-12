@@ -1,7 +1,7 @@
+import { AlertChannel } from '@activepieces/ee-shared'
 import { ProjectHooks } from '../../project/project-hooks'
 import { userService } from '../../user/user-service'
 import { alertsService } from '../alerts/alerts-service'
-import { AlertChannel } from '@activepieces/ee-shared'
 
 export const projectEnterpriseHooks: ProjectHooks = {
     async postCreate(project) {

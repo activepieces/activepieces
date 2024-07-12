@@ -10,12 +10,6 @@ export const createActivitie = createAction({
   displayName: "Créer une activité",
   description: "Permet de créer une activité d'un dossier (Dossier de formation / Dossier de certification)",
   props: {
-    Id: Property.ShortText({
-      displayName: 'N° du dossier',
-      description:
-        'Sélectionner la propriété {Id} du dossier',
-      required: true,
-    }),
     entityClass: Property.StaticDropdown({
       displayName: "Choisir le type de dossier",
       description: "Permet de n'obtenir que les dossiers dans le type considéré - par défaut tous les types sont retournés",
@@ -23,16 +17,22 @@ export const createActivitie = createAction({
       options: {
         options: [
           {
-            value: "CertificationFolder",
+            value: "certificationFolders",
             label: 'Dossier de certification',
           },
           {
-            value: "RegistrationFolder",
+            value: "registrationFolders",
             label: 'Dossier de formation',
           },
         ],
         disabled: false,
       },
+    }),
+    externalId: Property.ShortText({
+      displayName: 'N° du dossier',
+      description:
+        'Sélectionner la propriété {externalId} du dossier',
+      required: true,
     }),
     title: Property.ShortText({
         displayName: "Titre de l'activité",
@@ -87,7 +87,7 @@ export const createActivitie = createAction({
             wedofCommon.baseUrl +
             '/activities/' +
             context.propsValue.entityClass +
-            '/'+ context.propsValue.Id,
+            '/'+ context.propsValue.externalId,
           body: message,
           headers: {
             'Content-Type': 'application/json',

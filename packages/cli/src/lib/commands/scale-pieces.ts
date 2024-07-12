@@ -74,7 +74,7 @@ const convertOpenAPIToPiece = async (openAPISpec) => {
             return '${baseURL}';
           },
           auth: ${authDisplayName},
-          authMapping: (auth) => {
+          authMapping: async (auth) => {
             return {
               Authorization: \`Bearer \${(auth as OAuth2PropertyValue).access_token}\`,
             };

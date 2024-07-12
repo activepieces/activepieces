@@ -173,7 +173,8 @@ export class RunsComponent
         FlowRunStatus.INTERNAL_ERROR,
         FlowRunStatus.QUOTA_EXCEEDED,
       ],
-      issue.flowId
+      issue.flowId,
+      issue.created
     );
   }
 

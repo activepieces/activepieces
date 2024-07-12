@@ -52,7 +52,7 @@ export const mastodon = createPiece({
       baseUrl: (auth) =>
         (auth as { base_url: string }).base_url.replace(/\/$/, '') + '/api/v1',
       auth: mastodonAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${
           (auth as { access_token: string }).access_token
         }`,

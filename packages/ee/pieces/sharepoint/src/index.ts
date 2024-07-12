@@ -44,7 +44,7 @@ export const microsoftSharePoint = createPiece({
     createCustomApiCallAction({
       auth: microsoftSharePointAuth,
       baseUrl: () => 'https://graph.microsoft.com/v1.0/sites',
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

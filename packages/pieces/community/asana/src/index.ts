@@ -28,7 +28,7 @@ export const asana = createPiece({
     createCustomApiCallAction({
       baseUrl: () => `https://app.asana.com/api/1.0`,
       auth: asanaAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

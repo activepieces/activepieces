@@ -1,6 +1,6 @@
+import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { projectService } from './project-service'
-import { PrincipalType } from '@activepieces/shared'
 
 export const projectWorkerController: FastifyPluginAsyncTypebox = async (
     app,
@@ -13,6 +13,6 @@ export const projectWorkerController: FastifyPluginAsyncTypebox = async (
 
 const GetWorkerProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.ENGINE],
     },
 }

@@ -23,7 +23,7 @@ export const sendinblue = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.sendinblue.com/v3',
       auth: sendinblueAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'api-key': auth as string,
       }),
     }),

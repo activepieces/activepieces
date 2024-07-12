@@ -11,10 +11,19 @@
         </div>
         <mat-form-field class="ap-w-full">
             <mat-label i18n>File</mat-label>
-            <ap-file-upload [required]="true" #flowInput [formControl]="fileControl"></ap-file-upload>
+            <ap-file-upload [required]="true"  #flowInput [formControl]="fileControl"></ap-file-upload>
             <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
                 (buttonClicked)="flowInput.fileInput.nativeElement.click()"></ap-icon-button>
-            <mat-error *ngIf="fileControl.invalid" i18n>Flow template is required</mat-error>
+                @if(fileControl.invalid) {
+                    <mat-error >
+                        @if(fileControl.hasError('required')) {
+                            <ng-container i18n>File is required</ng-container>
+                        }
+                        @else {
+                            <ng-container i18n>Invalid template file</ng-container>
+                        }
+                    </mat-error>
+                }
         </mat-form-field>
 
     </div>
@@ -30,3 +39,5 @@
         </ap-button>
     </div>
 </mat-dialog-actions>
+
+@if(removeInvalidJsonOnValueChanged$ | async) {}

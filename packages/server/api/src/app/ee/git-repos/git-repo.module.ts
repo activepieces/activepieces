@@ -1,4 +1,13 @@
 import {
+    ConfigureRepoRequest,
+    GitRepoWithoutSensitiveData,
+    ProjectSyncPlan,
+    PullGitRepoFromProjectRequest,
+    PullGitRepoRequest,
+    PushGitRepoRequest,
+} from '@activepieces/ee-shared'
+import { Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import {
     FastifyPluginCallbackTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
@@ -8,15 +17,6 @@ import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/author
 import { platformService } from '../../platform/platform.service'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { gitRepoService } from './git-repo.service'
-import {
-    ConfigureRepoRequest,
-    GitRepoWithoutSensitiveData,
-    ProjectSyncPlan,
-    PullGitRepoFromProjectRequest,
-    PullGitRepoRequest,
-    PushGitRepoRequest,
-} from '@activepieces/ee-shared'
-import { Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)

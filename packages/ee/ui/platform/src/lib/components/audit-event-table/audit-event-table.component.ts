@@ -9,7 +9,7 @@ import { Observable, Subject } from 'rxjs';
 import { startWith } from 'rxjs';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
 import { AuditEventDataSource } from './audit-event-table.datasource';
-import { AuditEventService } from '../../service/audit-event-service';
+import { AuditEventService } from '../../service/audit-event.service';
 import {
   ApplicationEvent,
   ApplicationEventName,
@@ -61,37 +61,41 @@ export class AuditEventTableComponent implements OnInit {
 
   convertToIcon(event: ApplicationEvent) {
     switch (event.action) {
-      case ApplicationEventName.CREATED_FLOW:
-      case ApplicationEventName.DELETED_FLOW:
-      case ApplicationEventName.CREATED_FOLDER:
-      case ApplicationEventName.UPDATED_FLOW:
+      case ApplicationEventName.FLOW_RUN_FINISHED:
+      case ApplicationEventName.FLOW_RUN_STARTED:
+        return {
+          icon: 'assets/img/custom/dashboard/runs.svg',
+          tooltip: 'Flow Run',
+        };
+      case ApplicationEventName.FLOW_CREATED:
+      case ApplicationEventName.FLOW_DELETED:
+      case ApplicationEventName.FLOW_UPDATED:
         return {
           icon: 'assets/img/custom/dashboard/flows.svg',
           tooltip: 'Flow',
         };
-      case ApplicationEventName.UPDATED_FOLDER:
-      case ApplicationEventName.DELETED_FOLDER:
+      case ApplicationEventName.FOLDER_CREATED:
+      case ApplicationEventName.FOLDER_DELETED:
+      case ApplicationEventName.FOLDER_UPDATED:
         return {
           icon: 'assets/img/custom/folder.svg',
           tooltip: 'Folder',
         };
-      case ApplicationEventName.UPSERTED_CONNECTION:
-      case ApplicationEventName.DELETED_CONNECTION:
+      case ApplicationEventName.CONNECTION_DELETED:
+      case ApplicationEventName.CONNECTION_UPSERTED:
         return {
           icon: 'assets/img/custom/dashboard/connections.svg',
           tooltip: 'Connection',
         };
-      case ApplicationEventName.SIGNED_UP_USING_EMAIL:
-      case ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH:
-      case ApplicationEventName.SIGNED_UP_USING_SSO:
-      case ApplicationEventName.SIGNED_IN:
-      case ApplicationEventName.RESET_PASSWORD:
-      case ApplicationEventName.VERIFIED_EMAIL:
+      case ApplicationEventName.USER_SIGNED_UP:
+      case ApplicationEventName.USER_SIGNED_IN:
+      case ApplicationEventName.USER_PASSWORD_RESET:
+      case ApplicationEventName.USER_EMAIL_VERIFIED:
         return {
           icon: 'assets/img/custom/dashboard/users.svg',
           tooltip: 'User',
         };
-      case ApplicationEventName.CREATED_SIGNING_KEY:
+      case ApplicationEventName.SIGNING_KEY_CREATED:
         return {
           icon: 'assets/img/custom/signing-key.svg',
           tooltip: 'Signing Key',

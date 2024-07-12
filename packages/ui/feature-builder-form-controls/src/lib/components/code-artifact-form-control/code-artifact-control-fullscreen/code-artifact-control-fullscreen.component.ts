@@ -1,17 +1,21 @@
-import {
-  ChangeDetectorRef,
-  Component,
-  EventEmitter,
-  Inject,
-  OnInit,
-} from '@angular/core';
+import { Component, EventEmitter, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, UntypedFormBuilder } from '@angular/forms';
 import {
   MatDialog,
   MatDialogRef,
   MAT_DIALOG_DATA,
 } from '@angular/material/dialog';
-import { forkJoin, Observable, switchMap, take, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  combineLatest,
+  forkJoin,
+  map,
+  Observable,
+  of,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import { CodeArtifactForm } from '../code-artifact-form-control.component';
 import { SelectedFileInFullscreenCodeEditor } from '../selected-file-in-fullscreen-code-editor.enum';
 import { AddNpmPackageModalComponent } from './add-npm-package-modal/add-npm-package-modal.component';
@@ -70,23 +74,24 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   testResultForm: FormGroup;
   selectedTab = SelectedTabInFullscreenCodeEditor.OUTPUT;
   consoleResultEditoroptions = {
-    theme: 'lucario',
     lineWrapping: true,
-    readOnly: 'nocursor',
+    readOnly: true,
     mode: 'shell',
   };
   outputResultEditorOptions = {
-    theme: 'lucario',
     lineWrapping: true,
-    readOnly: 'nocursor',
+    readOnly: true,
     mode: 'javascript',
   };
-  testLoading = false;
+  testing$ = new BehaviorSubject<boolean>(false);
+  testBtnText$ = of('');
+  disableTestCodeBtn$: Observable<boolean>;
   addPackageDialogClosed$: Observable<
     { [key: PackageName]: PackageVersion } | undefined
   >;
   generateCodeEnabled$: Observable<boolean>;
   showGenerateCode$: Observable<boolean>;
+  allowNpmPackages$: Observable<boolean>;
   constructor(
     private formBuilder: UntypedFormBuilder,
     private codeService: CodeService,
@@ -96,7 +101,6 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     private dialogService: MatDialog,
     private testStepService: TestStepService,
     private store: Store,
-    private cd: ChangeDetectorRef,
     private snackbar: MatSnackBar,
     private flagService: FlagService
   ) {
@@ -111,6 +115,27 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     );
     this.showGenerateCode$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COPILOT
+    );
+    this.allowNpmPackages$ = this.flagService.isFlagEnabled(
+      ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP
+    );
+    const testCodeBtnState$ = combineLatest({
+      isSaving: this.store.select(BuilderSelectors.selectIsSaving),
+      isTesting: this.testing$.asObservable(),
+    });
+    this.disableTestCodeBtn$ = testCodeBtnState$.pipe(
+      map(({ isSaving, isTesting }) => isSaving || isTesting)
+    );
+    this.testBtnText$ = testCodeBtnState$.pipe(
+      map(({ isSaving, isTesting }) => {
+        if (isTesting) {
+          return $localize`Testing...`;
+        }
+        if (isSaving) {
+          return $localize`Saving...`;
+        }
+        return $localize`Test Code`;
+      })
     );
   }
 
@@ -174,7 +199,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   }
   testCode() {
     this.testResultForm.setValue({ outputResult: '', consoleResult: '' });
-    this.testLoading = true;
+    this.testing$.next(true);
     const testCodeParams$ = forkJoin({
       step: this.store.select(BuilderSelectors.selectCurrentStep).pipe(take(1)),
       flowVersionId: this.store
@@ -203,15 +228,18 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
             : 'No output returned, check logs in case of errors',
           consoleResult: consoleResult,
         });
-        this.testLoading = false;
-        this.cd.markForCheck();
+        this.testing$.next(false);
       })
     );
   }
 
   getConsoleResult(codeTestExecutionResult: StepRunResponse) {
     if (codeTestExecutionResult.standardError) {
-      return `${codeTestExecutionResult.standardOutput} \n---------error-------\n ${codeTestExecutionResult.standardError}`;
+      return `${
+        codeTestExecutionResult.standardOutput
+      }\n---------error-------\n${this.tryParsingError(
+        codeTestExecutionResult.standardError
+      )}`;
     }
     return codeTestExecutionResult.standardOutput;
   }
@@ -222,5 +250,16 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
     this.snackbar.open($localize`Copied to clipboard`);
+  }
+  tryParsingError(errorText: string) {
+    try {
+      const errorObj = JSON.parse(errorText);
+      const { message, stack } = errorObj;
+      return `${message}\n\nStack:\n ${stack}
+      `;
+    } catch (ex) {
+      console.error(ex);
+      return errorText;
+    }
   }
 }

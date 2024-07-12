@@ -5,6 +5,7 @@ export const ListAppConnectionsRequestQuery = Type.Object({
     projectId: Type.String(),
     pieceName: Type.Optional(Type.String({})),
     name: Type.Optional(Type.String({})),
+    status: Type.Optional(Type.String({})),
     limit: Type.Optional(Type.Number({})),
 })
 export type ListAppConnectionsRequestQuery = Static<

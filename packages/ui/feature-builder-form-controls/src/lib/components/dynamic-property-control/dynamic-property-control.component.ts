@@ -48,7 +48,6 @@ export class DynamicPropertyControlComponent
   implements OnInit
 {
   @Input({ required: true }) passedFormControl: UntypedFormGroup;
-  @Input({ required: true }) stepName: string;
   @Input({ required: true }) webhookPrefix: string;
   @Input({ required: true }) formPieceTriggerPrefix: string;
   @Input({ required: true }) propertiesMap: PiecePropertyMap;

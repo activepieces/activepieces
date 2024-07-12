@@ -9,7 +9,7 @@
     <span class="ap-typography-subtitle-2">Track failed runs grouped by flow name, and mark them as resolved
       when fixed.</span>
   </div>
-  <ap-markdown [data]=" betaNote"> </ap-markdown>
+  <ap-markdown class="ap-mb-2" [data]=" betaNote"> </ap-markdown>
   <div class="ap-min-h-[70%]">
     <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="issues">
       <ng-container matColumnDef="name">
@@ -33,8 +33,8 @@
       <ng-container matColumnDef="action">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let issue">
-          <div class="ap-flex ap-items-center">
-            <ap-button btnSize="small" btnStyle="flat" (click)="$event.stopPropagation(); resolve(issue)">
+          <div class="ap-flex ap-items-center" [class.ap-cursor-default]="!hasPermissionToResolveIssues" >
+            <ap-button [disabled]="!hasPermissionToResolveIssues" [tooltipText]="resolveIssueButtonTooltip"  btnSize="small" btnStyle="flat" (click)="$event.stopPropagation();" (buttonClicked)="resolve(issue)">
               <div class="ap-flex ap-gap-1 ap-items-center ap-justify-center" i18n>
                 <svg-icon src="assets/img/custom/check.svg" [applyClass]="true"
                   class="ap-fill-white ap-w-[15px] ap-h-[15px]"></svg-icon> Mark as Resolved

@@ -30,7 +30,7 @@ export const cartloom = createPiece({
       baseUrl: (auth) =>
         `https://${(auth as { domain: string }).domain}.cartloom.com/api`, // Replace with the actual base URL
       auth: cartloomAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'X-API-KEY': (auth as { apiKey: string }).apiKey,
       }),
     }),

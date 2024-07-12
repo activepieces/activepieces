@@ -45,7 +45,7 @@ export const tidycal = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://tidycal.com/api',
       auth: tidyCalAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),
