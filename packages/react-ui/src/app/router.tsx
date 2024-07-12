@@ -3,12 +3,14 @@ import FlowsTable from "../app/routes/flows";
 import { SignInForm } from "../app/routes/sign-in";
 import { authenticationSession } from "../features/authentication/lib/authentication-session";
 import FlowRunsTable from "./routes/runs";
-import AppConnectionsTable from "./routes/connections";
 import AlertsPage from "./routes/settings/alerts";
 import { Sidebar } from "@/components/layout/sidebar";
 import ProjectSettingsLayout from "@/components/layout/settings-layout";
 import AppearancePage from "./routes/settings/appearance";
 import PiecesPage from "./routes/settings/pieces";
+import AppConnectionsPage from "./routes/connections";
+import TeamPage from "./routes/settings/team";
+import IssuesPage from "./routes/issues";
 
 const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
     if (!authenticationSession.isLoggedIn()) {
@@ -39,11 +41,21 @@ export const router = createBrowserRouter([
         ),
     },
     {
+        path: "/issues",
+        element: (
+            <AllowOnlyLoggedIn>
+                <Sidebar>
+                    <IssuesPage />
+                </Sidebar>
+            </AllowOnlyLoggedIn>
+        ),
+    },  
+    {
         path: "/connections",
         element: (
             <AllowOnlyLoggedIn>
                 <Sidebar>
-                    <AppConnectionsTable />
+                    <AppConnectionsPage />
                 </Sidebar>
             </AllowOnlyLoggedIn>
         ),
@@ -91,6 +103,18 @@ export const router = createBrowserRouter([
                 <Sidebar>
                     <ProjectSettingsLayout>
                         <PiecesPage></PiecesPage>
+                    </ProjectSettingsLayout>
+                </Sidebar>
+            </AllowOnlyLoggedIn>
+        ),
+    }, 
+    {
+        path: "/settings/team",
+        element: (
+            <AllowOnlyLoggedIn>
+                <Sidebar>
+                    <ProjectSettingsLayout>
+                        <TeamPage></TeamPage>
                     </ProjectSettingsLayout>
                 </Sidebar>
             </AllowOnlyLoggedIn>

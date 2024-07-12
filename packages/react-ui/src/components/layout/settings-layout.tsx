@@ -1,35 +1,35 @@
 import { Separator } from "@radix-ui/react-dropdown-menu"
 import { MiniSidebarNavItem } from "./mini-sidebar"
+import { SunMoon, Users, Puzzle, Bell } from "lucide-react";
+
+const iconSize = 20;
 
 const sidebarNavItems = [
   {
-    title: "General",
-    href: "/settings/general",
-  },
-  {
     title: "Appearance",
     href: "/settings/appearance",
+    icon: <SunMoon size={iconSize} />,
+  },
+  {
+    title: "Team",
+    href: "/settings/team",
+    icon: <Users size={iconSize} />,
   },
   {
     title: "Pieces",
     href: "/settings/pieces",
-  },
-  {
-    title: "Git Sync",
-    href: "/settings/git-sync",
+    icon: <Puzzle size={iconSize} />,
   },
   {
     title: "Alerts",
     href: "/settings/alerts",
+    icon: <Bell size={iconSize} />,
   },
-]
+];
 
 interface SettingsLayoutProps {
   children: React.ReactNode
 }
-
-
-
 
 export default function ProjectSettingsLayout({ children }: SettingsLayoutProps) {
   return (
@@ -46,7 +46,7 @@ export default function ProjectSettingsLayout({ children }: SettingsLayoutProps)
           <aside className="-mx-4 lg:w-1/5">
             <MiniSidebarNavItem items={sidebarNavItems} />
           </aside>
-          <div className="flex-1 lg:max-w-2xl">{children}</div>
+          <div className="flex-1 w-full">{children}</div>
         </div>
       </div>
     </>

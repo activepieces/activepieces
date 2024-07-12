@@ -12,7 +12,6 @@ const AppearanceFormValues = Type.Object({
     errorMessage: "Please select a theme.",
   }),
 })
-
 type AppearanceFormValues = Static<typeof AppearanceFormValues>
 
 export default function SettingsAppearancePage() {

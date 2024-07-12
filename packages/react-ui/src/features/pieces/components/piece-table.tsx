@@ -44,22 +44,11 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
         cell: ({ row }) => {
             return (
                 <div className="flex items-end justify-end">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => {
-                                row.original.delete();
-                            }}>
-                                <TextWithIcon icon={<Trash />} text="Delete" className="w-3 h-3" />
-
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => {
+                        row.original.delete();
+                    }}>
+                        <Trash className="h-4 w-4" />
+                    </Button>
                 </div>
             )
         },

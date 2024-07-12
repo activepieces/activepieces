@@ -28,5 +28,6 @@ export const api = {
         return isAxiosError(error);
     },
     get: <TResponse>(url: string, query?: unknown) => request<TResponse>(url, { params: query }),
+    delete: <TResponse>(url: string) => request<TResponse>(url, { method: 'DELETE' }),
     post: <TResponse, TBody = unknown>(url: string, body?: TBody) => request<TResponse>(url, { method: 'POST', data: body, headers: { 'Content-Type': 'application/json' } }),
 }

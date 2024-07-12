@@ -1,11 +1,12 @@
 import { authenticationSession } from "@/features/authentication/lib/authentication-session";
 import { alertsApi } from "../lib/alerts-api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash, Plus } from "lucide-react";
+import { Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
-import { Alert } from "@activepieces/ee-shared";
-
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Alert, AlertChannel } from "@activepieces/ee-shared";
+import { INTERNAL_ERROR_TOAST, useToast } from "@/components/ui/use-toast";
+import { AddAlertEmailDialog } from "./add-alert-email-dialog";
 const fetchData = async () => {
     const page = await alertsApi.list({
         projectId: authenticationSession.getProjectId(),
@@ -15,9 +16,54 @@ const fetchData = async () => {
 };
 
 export default function AlertsEmailsCard() {
-    const { data, isLoading, isSuccess, isError } = useQuery<Alert[], Error, Alert[]>({
-        queryKey: ['alerts-email-card'],
+
+    const queryClient = useQueryClient();
+    const { toast } = useToast();
+    const { data, isLoading, isError, isSuccess } = useQuery<Alert[], Error, Alert[]>({
+        queryKey: ['alerts-email-list'],
         queryFn: fetchData,
+    });
+
+    const deleteMutation = useMutation<void, Error, Alert>({
+        mutationFn: (alert) => alertsApi.delete(alert.id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ['alerts-email-list'],
+                exact: true,
+            });
+            toast({
+                title: "Success",
+                description: 'Your changes have been saved.',
+                duration: 3000,
+            })
+        },
+        onError: (error) => {
+            toast(INTERNAL_ERROR_TOAST)
+            console.log(error);
+        },
+    });
+
+    const addMutation = useMutation<Alert, Error, { email: string }>({
+        mutationFn: async (params) => alertsApi.create({
+            receiver: params.email,
+            projectId: authenticationSession.getProjectId(),
+            channel: AlertChannel.EMAIL,
+        }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ['alerts-email-list'],
+                exact: true,
+            });
+            toast({
+                title: "Success",
+                description: 'Your changes have been saved.',
+                duration: 3000,
+            })
+        },
+        onError: (error) => {
+            toast(INTERNAL_ERROR_TOAST)
+            console.log(error);
+        },
     });
     return (
         <Card className="w-full">
@@ -29,6 +75,7 @@ export default function AlertsEmailsCard() {
                 <div className="min-h-[35px]">
                     {isLoading && <div>Loading...</div>}
                     {isError && <div>Error, please try again.</div>}
+                    {isSuccess && data.length === 0 && <div className="text-center">No emails added yet.</div>}
                     {Array.isArray(data) && data.map((alert: Alert) => (
                         <div className="flex items-center justify-between space-x-4" key={alert.id}>
                             <div className="flex items-center space-x-4">
@@ -36,16 +83,13 @@ export default function AlertsEmailsCard() {
                                     <p className="text-sm font-medium leading-none">{alert.receiver}</p>
                                 </div>
                             </div>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
+                            <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => deleteMutation.mutate(alert)}>
                                 <Trash className="h-4 w-4 bg-destructive-500" />
                             </Button>
                         </div>
                     ))}
                 </div>
-                <Button variant="outline" className="flex items-center space-x-2 mt-4">
-                    <Plus className="h-4 w-4" />
-                    <span>Add email</span>
-                </Button>
+                <AddAlertEmailDialog onSubmit={(data) => addMutation.mutate(data)} />
             </CardContent>
         </Card>
     );

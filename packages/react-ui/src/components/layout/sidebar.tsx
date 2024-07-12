@@ -1,13 +1,10 @@
 import {
+    Bug,
     Link2,
-    Package2,
-    Play,
+    Logs,
     Settings,
-    Users,
     Zap,
 } from "lucide-react"
-
-
 import {
     Tooltip,
     TooltipContent,
@@ -16,7 +13,6 @@ import {
 import { Link, useLocation } from "react-router-dom"
 import { theme } from "@/lib/theme"
 import { UserSettingsDropdown } from "./user-settings-dropdown"
-import { ModeToggle } from "../mode-toggle"
 
 type Link = {
     icon: React.ReactNode
@@ -68,17 +64,18 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                         label="Flows"
                         icon={Zap}
                     />
+                       <CustomTooltipLink
+                        to="/runs"
+                        label="Runs"
+                        icon={Logs}
+                    />
+                    <CustomTooltipLink to="/issues" label="Issues" icon={Bug} />
                     <CustomTooltipLink
                         to="/connections"
                         label="Link"
                         icon={Link2}
                     />
-                    <CustomTooltipLink
-                        to="/runs"
-                        label="Runs"
-                        icon={Play}
-                    />
-                    <CustomTooltipLink to="/team" label="Team" icon={Users} />
+
                     <CustomTooltipLink
                         to="/settings"
                         label="Settings"
