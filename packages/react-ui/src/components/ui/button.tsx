@@ -5,25 +5,25 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "ap-inline-flex ap-items-center ap-justify-center ap-whitespace-nowrap ap-rounded-md ap-text-sm ap-font-medium ap-ring-offset-background ap-transition-colors focus-visible:ap-outline-none focus-visible:ap-ring-2 focus-visible:ap-ring-ring focus-visible:ap-ring-offset-2 disabled:ap-pointer-events-none disabled:ap-opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "ap-bg-primary ap-text-primary-foreground hover:ap-bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
-          "ap-bg-destructive ap-text-destructive-foreground hover:ap-bg-destructive/90",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "ap-border ap-border-input ap-bg-background hover:ap-bg-accent hover:ap-text-accent-foreground",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "ap-bg-secondary ap-text-secondary-foreground hover:ap-bg-secondary/80",
-        ghost: "hover:ap-bg-accent hover:ap-text-accent-foreground",
-        link: "ap-text-primary ap-underline-offset-4 hover:ap-underline",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "ap-h-10 ap-px-4 ap-py-2",
-        sm: "ap-h-9 ap-rounded-md ap-px-3",
-        lg: "ap-h-11 ap-rounded-md ap-px-8",
-        icon: "ap-h-10 ap-w-10",
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
       },
     },
     defaultVariants: {
@@ -49,7 +49,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         {...props}
       >
-        {loading ? <span className="ap-animate-spin ap-text-white"></span> : children}
+        {loading ? <span className="animate-spin text-white"></span> : children}
       </Comp>
     )
   }

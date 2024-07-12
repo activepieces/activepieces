@@ -21,6 +21,8 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@activepieces/shared": path.resolve(__dirname, "../../packages/shared/src"),
+      "@activepieces/ee-shared": path.resolve(__dirname, "../../packages/ee/shared/src"),
+      "@activepieces/pieces-framework": path.resolve(__dirname, "../../packages/pieces/community/framework/src"),
     },
   },
   plugins: [react(), nxViteTsPaths()],

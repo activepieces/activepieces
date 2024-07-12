@@ -1,51 +1,41 @@
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { ColumnDef } from "@tanstack/react-table";
-import { formatUtils } from "@/lib/utils";
-import { authenticationSession } from "@/features/authentication/lib/authentication-session";
 import { DataTable, RowDataWithActions } from "@/components/ui/data-table";
-import { AppConnection } from "@activepieces/shared";
-import AppConnectionStatusComponent from "@/features/connections/components/flow-status-toggle";
 import { Button } from "@/components/ui/button";
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenu, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Trash } from "lucide-react"
 import { TextWithIcon } from "@/components/ui/text-with-icon";
-import { appConnectionsApi } from "@/features/connections/lib/app-connections-api";
 import { PieceIcon } from "@/features/pieces/components/piece-icon";
+import { piecesApi } from "../lib/pieces-api";
+import { PieceMetadataModelSummary } from "@activepieces/pieces-framework";
 
-const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
+const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
     {
-        accessorKey: "pieceName",
+        accessorKey: "name",
         header: ({ column }) => <DataTableColumnHeader column={column} title="App" />,
         cell: ({ row }) => {
-            return <div className="text-left"><PieceIcon pieceName={row.original.pieceName} /></div>
+            return <div className="text-left"><PieceIcon pieceName={row.original.name} /></div>
         },
     },
     {
-        accessorKey: "name",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
+        accessorKey: "displayName",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Display Name" />,
+        cell: ({ row }) => {
+            return <div className="text-left">{row.original.displayName}</div>
+        },
+    },
+    {
+        accessorKey: 'packageName',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Package Name" />,
         cell: ({ row }) => {
             return <div className="text-left">{row.original.name}</div>
         },
     },
     {
-        accessorKey: 'status',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+        accessorKey: 'version',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Version" />,
         cell: ({ row }) => {
-            return <div className="text-left"><AppConnectionStatusComponent status={row.original.status} /></div>
-        },
-    },
-    {
-        accessorKey: 'created',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
-        cell: ({ row }) => {
-            return <div className="text-left">{formatUtils.formatDate(new Date(row.original.created))}</div>
-        },
-    },
-    {
-        accessorKey: 'updated',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Updated" />,
-        cell: ({ row }) => {
-            return <div className="text-left">{formatUtils.formatDate(new Date(row.original.updated))}</div>
+            return <div className="text-left">{row.original.version}</div>
         },
     },
     {
@@ -75,19 +65,22 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
         },
     }
 ]
-const fetchData = async (pagination: { cursor?: string, limit: number }) => {
-    return appConnectionsApi.list({
-        projectId: authenticationSession.getProjectId(),
-        cursor: pagination.cursor,
-        limit: pagination.limit,
+const fetchData = async () => {
+    const pieces = await piecesApi.list({
+        includeHidden: true,
     })
+    return {
+        data: pieces,
+        next: null,
+        previous: null,
+    }
 }
 
-export default function AppConnectionsTable() {
+export default function PiecesTable() {
     return (
-        <div className="container mx-auto py-10 flex-col">
+        <div className="mx-auto w-full py-10 flex-col">
             <div className="flex mb-4">
-                <h1 className="text-3xl font-bold">Connections </h1>
+                <h1 className="text-3xl font-bold">Pieces </h1>
                 <div className="ml-auto">
                 </div>
             </div>

@@ -3,6 +3,7 @@ import {
     Package2,
     Play,
     Settings,
+    Users,
     Zap,
 } from "lucide-react"
 
@@ -15,6 +16,7 @@ import {
 import { Link, useLocation } from "react-router-dom"
 import { theme } from "@/lib/theme"
 import { UserSettingsDropdown } from "./user-settings-dropdown"
+import { ModeToggle } from "../mode-toggle"
 
 type Link = {
     icon: React.ReactNode
@@ -29,17 +31,17 @@ const CustomTooltipLink = ({ to, label, icon: Icon, extraClasses }: {
     extraClasses?: string
 }) => {
     const location = useLocation();
-    const isActive = location.pathname === to;
+    const isActive = location.pathname.startsWith(to);
 
     return (
         <Tooltip>
             <TooltipTrigger asChild>
                 <Link
                     to={to}
-                    className={`ap-flex ap-h-9 ap-w-9 ap-items-center ap-justify-center ap-rounded-lg ap-text-muted-foreground ap-transition-colors hover:ap-text-foreground md:ap-h-8 md:ap-w-8 ${isActive ? 'ap-bg-accent' : ''} ${extraClasses || ''}`}
+                    className={`flex p-1 flex-col gap-4 items-center justify-center rounded-lg  transition-colors hover:text-primary md:h-8 md:w-8 ${isActive ? 'bg-accent text-primary' : ''} ${extraClasses || ''}`}
                 >
-                    <Icon className="ap-h-5 ap-w-5" />
-                    <span className="ap-sr-only">{label}</span>
+                    <Icon className="h-6 w-6" />
+                    <span className="sr-only">{label}</span>
                 </Link>
             </TooltipTrigger>
             <TooltipContent side="right">{label}</TooltipContent>
@@ -49,11 +51,11 @@ const CustomTooltipLink = ({ to, label, icon: Icon, extraClasses }: {
 
 export function Sidebar({ children }: { children: React.ReactNode }) {
     return (
-        <div className="ap-flex ap-min-h-screen ap-w-full ap-bg-muted/40">
-            <aside className="ap-w-14 ap-flex ap-flex-col ap-border-r ap-bg-background">
-                <nav className="ap-flex ap-flex-col ap-items-center ap-gap-4 ap-px-2 sm:ap-py-5">
+        <div className="flex min-h-screen w-full bg-muted/40">
+            <aside className="w-18 flex flex-col border-r bg-background">
+                <nav className="flex flex-col gap-5 items-center  px-2 sm:py-5">
 
-                    <div className="ap-h-[48px] ap-p-2 ap-items-center ap-justify-center">
+                    <div className="h-[48px] p-2 items-center justify-center">
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <img src={theme.logoIconUrl} alt="logo" />
@@ -76,6 +78,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                         label="Runs"
                         icon={Play}
                     />
+                    <CustomTooltipLink to="/team" label="Team" icon={Users} />
                     <CustomTooltipLink
                         to="/settings"
                         label="Settings"
@@ -83,11 +86,11 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                     />
                 </nav>
             </aside>
-            <div className="ap-flex-1 ap-p-4">
-                <div className="ap-flex ap-flex-col ap-gap-2">
-                    <div className="ap-flex">
-                        <h1 className="ap-text-2xl ap-font-bold">Project Switcher</h1>
-                        <div className="ap-ml-auto">
+            <div className="flex-1 p-4">
+                <div className="flex flex-col g2">
+                    <div className="flex">
+                        <h1 className="text-2xl font-bold">Project Switcher</h1>
+                        <div className="ml-auto">
                             <UserSettingsDropdown />
                         </div>
                     </div>

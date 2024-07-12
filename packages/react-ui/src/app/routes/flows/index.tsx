@@ -16,7 +16,7 @@ const columns: ColumnDef<PopulatedFlow>[] = [
         header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
         cell: ({ row }) => {
             const status = row.original.version.displayName
-            return <div className="ap-text-left">{status}</div>
+            return <div className="text-left">{status}</div>
         },
     },
     {
@@ -33,7 +33,7 @@ const columns: ColumnDef<PopulatedFlow>[] = [
         header: ({ column }) => <DataTableColumnHeader column={column} title="Created" />,
         cell: ({ row }) => {
             const created = row.original.created
-            return <div className="ap-text-left ap-font-medium">{formatUtils.formatDate(new Date(created))}</div>
+            return <div className="text-left font-medium">{formatUtils.formatDate(new Date(created))}</div>
         },
     },
     {
@@ -59,10 +59,10 @@ async function fetchData(pagination: { cursor?: string, limit: number }) {
 export default function FlowsTable() {
 
     return (
-        <div className="ap-container ap-mx-auto ap-py-10 ap-flex-col">
-            <div className="ap-flex ap-mb-4">
-                <h1 className="ap-text-3xl ap-font-bold">Flows</h1>
-                <div className="ap-ml-auto">
+        <div className="container mx-auto py-10 flex-col">
+            <div className="flex mb-4">
+                <h1 className="text-3xl font-bold">Flows</h1>
+                <div className="ml-auto">
                     <Link to='/builder'>
                         <Button variant="default" >New flow</Button>
                     </Link>

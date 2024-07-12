@@ -2,9 +2,9 @@
 
 export function TextWithIcon({ icon, text, className }: { icon: React.ReactNode, text: string, className?: string }) {
     return (
-        <div className={`ap-flex ap-items-center ${className}`}>
+        <div className={`flex items-center ${className}`}>
             {icon}
-            <span className="ap-ml-2">{text}</span>
+            <span className="ml-2">{text}</span>
         </div>
     )
 }

@@ -11,7 +11,7 @@ export function PieceIconList({ flow }: { flow: PopulatedFlow }) {
     }).filter((pieceName): pieceName is string => pieceName !== null).slice(0, 3);
 
     return <>
-        <div className="ap-flex">
+        <div className="flex">
             {steps.map((pieceName, index) => <PieceIcon pieceName={pieceName} key={index} />)}
         </div>
     </>

@@ -1,12 +1,12 @@
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { DropdownMenu, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuContent } from "./ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuItem } from "../ui/dropdown-menu";
 
 export function UserSettingsDropdown() {
     return (
         <>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Avatar className="ap-cursor-pointer">
+                    <Avatar className="cursor-pointer">
                         <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
                         <AvatarFallback>M</AvatarFallback>
                     </Avatar>

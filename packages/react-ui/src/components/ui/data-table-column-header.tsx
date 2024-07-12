@@ -13,9 +13,9 @@ export function DataTableColumnHeader<TData, TValue>({
   }: DataTableColumnHeaderProps<TData, TValue>) {
     return (
       <div
-        className={`ap-flex ap-items-center ap-justify-between ap-space-x-2 ap-py-4 ${className}`}
+        className={`flex items-center justify-between space-x-2 py-4 ${className}`}
       >
-        <div className="ap-text-sm ap-text-black ap-font-semibold">{title}</div>
+        <div className="text-sm text-black dark:text-white font-semibold">{title}</div>
       </div>
     )
 }

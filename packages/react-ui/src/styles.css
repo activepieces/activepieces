@@ -56,11 +56,11 @@
 
 @layer base {
     * {
-        @apply ap-border-border;
+        @apply border-border;
     }
 
     body {
-        @apply ap-bg-background ap-text-foreground;
+        @apply bg-background text-foreground;
         font-feature-settings: "rlig" 1, "calt" 1;
     }
 

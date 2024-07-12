@@ -55,16 +55,16 @@ export function SignInForm() {
 
   return (
     <>
-      <Card className="ap-mx-auto ap-max-w-sm ap-mt-[200px]">
+      <Card className="mx-auto max-w-sm mt-[200px]">
         <CardHeader>
-          <CardTitle className="ap-text-2xl">Sign In</CardTitle>
+          <CardTitle className="text-2xl">Sign In</CardTitle>
           <CardDescription>
             Enter your email below to sign in to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="ap-grid ap-gap-4">
-            <div className="ap-grid ap-gap-2">
+          <form onSubmit={handleSubmit(onSubmit)} className="grid g4">
+            <div className="grid g2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -72,12 +72,12 @@ export function SignInForm() {
                 placeholder="gilfoyle@piedpiper.com"
                 {...register("email", { required: "Email is required" })}
               />
-              {errors.email && <span className="ap-text-red-500">{errors.email.message}</span>}
+              {errors.email && <span className="text-red-500">{errors.email.message}</span>}
             </div>
-            <div className="ap-grid ap-gap-2">
-              <div className="ap-flex ap-items-center">
+            <div className="grid g2">
+              <div className="flex items-center">
                 <Label htmlFor="password">Password</Label>
-                <Link to='/forget-password' className="ap-ml-auto ap-inline-block ap-text-sm ap-underline">
+                <Link to='/forget-password' className="ml-auto inline-block text-sm underline">
                   Forgot your password?
                 </Link>
               </div>
@@ -86,19 +86,19 @@ export function SignInForm() {
                 type="password"
                 {...register("password", { required: "Password is required" })}
               />
-              {errors.password && <span className="ap-text-red-500">{errors.password.message}</span>}
-              {errorMessage && <span className="ap-text-red-500">{errorMessage}</span>}
+              {errors.password && <span className="text-red-500">{errors.password.message}</span>}
+              {errorMessage && <span className="text-red-500">{errorMessage}</span>}
             </div>
-            <Button type="submit" className="ap-w-full" loading={mutation.isPending}>
+            <Button type="submit" className="w-full" loading={mutation.isPending}>
               Sign in
             </Button>
-            <Button variant="outline" className="ap-w-full">
+            <Button variant="outline" className="w-full">
               Sign in with Google
             </Button>
           </form>
-          <div className="ap-mt-4 ap-text-center ap-text-sm">
+          <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
-            <Link to="/signup" className="ap-underline">
+            <Link to="/signup" className="underline">
               Sign up
             </Link>
           </div>

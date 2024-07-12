@@ -67,7 +67,7 @@ export function DataTable<TData, TValue>({
 
     return (
         <div>
-            <div className="ap-rounded-md ap-border">
+            <div className="rounded-md border">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -90,7 +90,7 @@ export function DataTable<TData, TValue>({
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="ap-h-24 ap-text-center">
+                                <TableCell colSpan={columns.length} className="h-24 text-center">
                                     Loading...
                                 </TableCell>
                             </TableRow>
@@ -98,7 +98,7 @@ export function DataTable<TData, TValue>({
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}
-                                    data-state={row.getIsSelected() && "ap-selected"}
+                                    data-state={row.getIsSelected() && "selected"}
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
@@ -109,7 +109,7 @@ export function DataTable<TData, TValue>({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="ap-h-24 ap-text-center">
+                                <TableCell colSpan={columns.length} className="h-24 text-center">
                                     No results.
                                 </TableCell>
                             </TableRow>
@@ -117,7 +117,7 @@ export function DataTable<TData, TValue>({
                     </TableBody>
                 </Table>
             </div>
-            <div className="ap-flex ap-ap-items-center ap-justify-end ap-space-x-2 ap-py-4">
+            <div className="flex items-center justify-end space-x-2 py-4">
                 <Button
                     variant="outline"
                     size="sm"

@@ -22,7 +22,7 @@ export default function FlowStatusToggle({ flow }: { flow: PopulatedFlow }) {
     };
 
     return (
-        <div className="ap-flex items-center ap-space-x-2">
+        <div className="flex items-center space-x-2">
             <Tooltip>
                 <TooltipTrigger asChild>
                     <div>

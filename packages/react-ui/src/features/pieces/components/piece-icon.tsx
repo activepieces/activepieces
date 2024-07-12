@@ -1,9 +1,22 @@
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { piecesHooks } from "../lib/pieces-hook";
 
 
-export function PieceIcon({ pieceName }: { pieceName: String }) {
+export function PieceIcon({ pieceName }: { pieceName: string }) {
+
+    const { data, isSuccess } = piecesHooks.usePiece({ name: pieceName, version: undefined });
+
     return <>
-        <div className="ap-p-2 ap-rounded-full ap-border ap-border-solid ap-border-dividers ap-flex ap-items-center ap-justify-center ap-bg-white ap-w-[36px] ap-h-[36px]">
-            <img src={`https://cdn.activepieces.com/pieces/webhook.svg`} className="ap-object-contain" />
-        </div>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="p-2 rounded-full border border-solid border-dividers flex items-center justify-center bg-white w-[36px] h-[36px]">
+                    {isSuccess && data ? <img src={data?.logoUrl} className="object-contain" /> : null}
+                </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+                {isSuccess && data ? data?.displayName : null}
+            </TooltipContent>
+        </Tooltip>
+
     </>
 }
