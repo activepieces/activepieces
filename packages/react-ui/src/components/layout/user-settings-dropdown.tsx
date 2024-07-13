@@ -1,5 +1,8 @@
+import { authenticationSession } from "@/features/authentication/lib/authentication-session";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuItem } from "../ui/dropdown-menu";
+import { LogOut } from "lucide-react";
+import { TextWithIcon } from "../ui/text-with-icon";
 
 export function UserSettingsDropdown() {
     return (
@@ -11,10 +14,12 @@ export function UserSettingsDropdown() {
                         <AvatarFallback>M</AvatarFallback>
                     </Avatar>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="w-[200px]">
                     <DropdownMenuLabel>Settings</DropdownMenuLabel>
-                    <DropdownMenuItem>API Keys</DropdownMenuItem>
-                    <DropdownMenuItem>Sign Out</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => authenticationSession.LogOut()}>
+                        <TextWithIcon icon={<LogOut size={18} className="text-destructive"/> } text={<span className="text-destructive">Logout</span>} className="cursor-pointer"/>
+
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
 

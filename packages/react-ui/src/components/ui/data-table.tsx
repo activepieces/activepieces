@@ -19,11 +19,13 @@ export type RowDataWithActions<TData> = TData & {
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
     fetchData: (pagination: { cursor?: string, limit: number }) => Promise<SeekPage<TData>>;
+    onRowClick?: (row: RowDataWithActions<TData>) => void;
 }
 
 export function DataTable<TData, TValue>({
     columns,
     fetchData,
+    onRowClick,
 }: DataTableProps<TData, TValue>) {
 
     const [searchParams, setSearchParams] = useSearchParams();
@@ -97,7 +99,9 @@ export function DataTable<TData, TValue>({
                         ) : table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
+                                    onClick={() => onRowClick?.(row.original)}
                                     key={row.id}
+                                    className={onRowClick ? "cursor-pointer" : ""}
                                     data-state={row.getIsSelected() && "selected"}
                                 >
                                     {row.getVisibleCells().map((cell) => (

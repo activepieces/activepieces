@@ -5,6 +5,7 @@ import {
     PrincipalType,
     ProjectWithLimits,
     SeekPage,
+    SwitchProjectResponse,
 } from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,
@@ -62,7 +63,7 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
             }
             const platform = await platformService.getOneOrThrow(project.platformId)
             const projectRole = await projectMemberService.getRole({ userId: request.principal.id, projectId: request.principal.projectId })
-            return {
+            const response: SwitchProjectResponse = {
                 token: await accessTokenManager.generateToken({
                     id: request.principal.id,
                     type: request.principal.type,
@@ -73,6 +74,7 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
                 }),
                 projectRole,
             }
+            return response
         },
     )
 

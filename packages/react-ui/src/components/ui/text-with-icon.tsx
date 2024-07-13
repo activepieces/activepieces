@@ -1,6 +1,6 @@
 
 
-export function TextWithIcon({ icon, text, className }: { icon: React.ReactNode, text: string, className?: string }) {
+export function TextWithIcon({ icon, text, className }: { icon: React.ReactNode, text: React.ReactNode, className?: string }) {
     return (
         <div className={`flex items-center ${className}`}>
             {icon}

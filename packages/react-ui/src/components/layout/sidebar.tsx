@@ -13,6 +13,7 @@ import {
 import { Link, useLocation } from "react-router-dom"
 import { theme } from "@/lib/theme"
 import { UserSettingsDropdown } from "./user-settings-dropdown"
+import { ProjectSwitcher } from "@/features/projects/components/project-switcher"
 
 type Link = {
     icon: React.ReactNode
@@ -86,7 +87,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
             <div className="flex-1 p-4">
                 <div className="flex flex-col g2">
                     <div className="flex">
-                        <h1 className="text-2xl font-bold">Project Switcher</h1>
+                        <ProjectSwitcher/>
                         <div className="ml-auto">
                             <UserSettingsDropdown />
                         </div>

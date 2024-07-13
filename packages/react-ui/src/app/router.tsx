@@ -11,6 +11,7 @@ import PiecesPage from "./routes/settings/pieces";
 import AppConnectionsPage from "./routes/connections";
 import TeamPage from "./routes/settings/team";
 import IssuesPage from "./routes/issues";
+import { FlowBuilderPage } from "./routes/flows/id";
 
 const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
     if (!authenticationSession.isLoggedIn()) {
@@ -27,6 +28,14 @@ export const router = createBrowserRouter([
                 <Sidebar>
                     <FlowsTable />
                 </Sidebar>
+            </AllowOnlyLoggedIn>
+        ),
+    },
+    {
+        path: "/flows/:flowId",
+        element: (
+            <AllowOnlyLoggedIn>
+                <FlowBuilderPage />
             </AllowOnlyLoggedIn>
         ),
     },
@@ -49,7 +58,7 @@ export const router = createBrowserRouter([
                 </Sidebar>
             </AllowOnlyLoggedIn>
         ),
-    },  
+    },
     {
         path: "/connections",
         element: (
@@ -107,7 +116,7 @@ export const router = createBrowserRouter([
                 </Sidebar>
             </AllowOnlyLoggedIn>
         ),
-    }, 
+    },
     {
         path: "/settings/team",
         element: (

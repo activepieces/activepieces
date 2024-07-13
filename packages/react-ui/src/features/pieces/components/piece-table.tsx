@@ -2,9 +2,7 @@ import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable, RowDataWithActions } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenu, DropdownMenuContent } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Trash } from "lucide-react"
-import { TextWithIcon } from "@/components/ui/text-with-icon";
+import { Trash } from "lucide-react"
 import { PieceIcon } from "@/features/pieces/components/piece-icon";
 import { piecesApi } from "../lib/pieces-api";
 import { PieceMetadataModelSummary } from "@activepieces/pieces-framework";

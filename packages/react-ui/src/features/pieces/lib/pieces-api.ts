@@ -7,7 +7,6 @@ export const piecesApi = {
         return api.get<PieceMetadataModelSummary[]>('/v1/pieces', request);
     },
     get(request: GetPieceRequestParams & GetPieceRequestQuery): Promise<PieceMetadataModelSummary> {
-        console.log(request);
         return api.get<PieceMetadataModelSummary>(`/v1/pieces/${request.name}`, {
             version: request.version ?? undefined
         });

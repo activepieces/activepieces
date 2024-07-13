@@ -93,6 +93,7 @@
     "@types/js-yaml": "4.0.9",
     "@types/pg-format": "1.0.5",
     "@types/showdown": "2.0.6",
+    "@xyflow/react": "12.0.1",
     "airtable": "0.11.6",
     "ajv": "8.12.0",
     "amqplib": "0.10.4",

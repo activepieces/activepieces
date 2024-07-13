@@ -14,13 +14,13 @@ import { INTERNAL_ERROR_TOAST, useToast } from "@/components/ui/use-toast";
 const AlertFrequencyCard = React.memo(() => {
 
   const queryClient = useQueryClient();
-  const { data } = projectHooks.useProject();
+  const { data, setCurrentProject } = projectHooks.useCurrentProject();
   const { toast } = useToast();
 
   const mutation = useMutation<ProjectWithLimits, Error, UpdateProjectPlatformRequest>({
     mutationFn: (request) => projectApi.update(authenticationSession.getProjectId(), request),
     onSuccess: (data) => {
-      projectHooks.setCurrentProject(queryClient, data);
+      setCurrentProject(queryClient, data);
       toast({
         title: "Success",
         description: 'Your changes have been saved.',

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
-import { Link } from "react-router-dom"
-import { DataTable } from "@/components/ui/data-table"
+import { Link, useNavigate } from "react-router-dom"
+import { DataTable, RowDataWithActions } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
 import { PopulatedFlow } from "@activepieces/shared"
 import { PieceIconList } from "@/features/pieces/components/piece-icon-list"
@@ -10,7 +10,7 @@ import { flowsApi } from "@/features/flows/lib/flows-api"
 import { authenticationSession } from "@/features/authentication/lib/authentication-session"
 import { formatUtils } from "@/lib/utils"
 
-const columns: ColumnDef<PopulatedFlow>[] = [
+const columns: ColumnDef<RowDataWithActions<PopulatedFlow>>[] = [
     {
         accessorKey: "name",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
@@ -58,6 +58,8 @@ async function fetchData(pagination: { cursor?: string, limit: number }) {
 
 export default function FlowsTable() {
 
+    const navigate = useNavigate();
+
     return (
         <div className="container mx-auto py-10 flex-col">
             <div className="flex mb-4">
@@ -68,7 +70,7 @@ export default function FlowsTable() {
                     </Link>
                 </div>
             </div>
-            <DataTable columns={columns} fetchData={fetchData} />
+            <DataTable columns={columns} fetchData={fetchData} onRowClick={(row) => navigate(`/flows/${row.id}`)} />
         </div>
     )
 }

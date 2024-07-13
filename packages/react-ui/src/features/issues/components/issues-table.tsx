@@ -4,7 +4,7 @@ import { authenticationSession } from "@/features/authentication/lib/authenticat
 import { Issue } from "@activepieces/ee-shared"
 import { ColumnDef } from "@tanstack/react-table"
 import { issuesApi } from "../api/issues-api"
-
+import { Button } from "@/components/ui/button"
 
 const columns: ColumnDef<RowDataWithActions<Issue>>[] = [
     {
@@ -35,6 +35,19 @@ const columns: ColumnDef<RowDataWithActions<Issue>>[] = [
             return <div className="text-left">{row.original.lastOccurrence}</div>
         },
     },
+    {
+        accessorKey: "actions",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
+        cell: ({  }) => {
+            return (
+                <div className="flex items-end justify-end">
+                    <Button size={"sm"}>
+                        Mark as Resolved
+                    </Button>
+                </div>
+            )
+        },
+    }
 ]
 
 const fetchData = async (pagination: { cursor?: string, limit: number }) => {

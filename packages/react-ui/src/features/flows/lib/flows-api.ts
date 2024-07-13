@@ -1,4 +1,3 @@
-import { authenticationSession } from "@/features/authentication/lib/authentication-session";
 import { api } from "@/lib/api";
 import { FlowOperationRequest, ListFlowsRequest, PopulatedFlow, SeekPage } from "@activepieces/shared";
 
@@ -9,5 +8,8 @@ export const flowsApi = {
     },
     list(request: ListFlowsRequest): Promise<SeekPage<PopulatedFlow>> {
         return api.get<SeekPage<PopulatedFlow>>('/v1/flows', request);
+    },
+    get(flowId: string): Promise<PopulatedFlow> {
+        return api.get<PopulatedFlow>(`/v1/flows/${flowId}`);   
     }
 }
