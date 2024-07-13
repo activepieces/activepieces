@@ -87,7 +87,7 @@ export class AppConnectionsService {
   list(
     params: Omit<ListAppConnectionsRequestQuery, 'projectId'>
   ): Observable<SeekPage<AppConnectionWithoutSensitiveData>> {
-    const queryParams: { [key: string]: string | number } = {};
+    const queryParams: { [key: string]: string | number | string[] } = {};
     if (params.cursor) {
       queryParams[CURSOR_QUERY_PARAM] = params.cursor;
     }
