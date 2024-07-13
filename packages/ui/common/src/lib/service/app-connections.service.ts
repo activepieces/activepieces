@@ -100,6 +100,9 @@ export class AppConnectionsService {
     if (params.pieceName) {
       queryParams['pieceName'] = params.pieceName;
     }
+    if (params.status) {
+      queryParams['status'] = params.status;
+    }
     queryParams['projectId'] = this.authenticationService.getProjectId()!;
     return this.http.get<SeekPage<AppConnectionWithoutSensitiveData>>(
       environment.apiUrl + '/app-connections',

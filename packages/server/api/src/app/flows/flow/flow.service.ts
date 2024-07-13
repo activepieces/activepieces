@@ -82,6 +82,7 @@ export const flowService = {
         limit,
         folderId,
         status,
+        name,
     }: ListParams): Promise<SeekPage<PopulatedFlow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
@@ -123,7 +124,13 @@ export const flowService = {
 
         const populatedFlows = await Promise.all(populatedFlowPromises)
 
-        return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
+        let filteredPopulatedFlows = populatedFlows
+        
+        if (name) {
+            filteredPopulatedFlows = populatedFlows.filter((flow) => flow.version.displayName.match(new RegExp(`^.*${name}.*`, 'i')))
+        }
+
+        return paginationHelper.createPage(filteredPopulatedFlows, paginationResult.cursor)
     },
 
     async getOneById(id: string): Promise<Flow | null> {
@@ -469,6 +476,7 @@ type ListParams = {
     limit: number
     folderId: string | undefined
     status: FlowStatus | undefined
+    name: string | undefined
 }
 
 type GetOneParams = {

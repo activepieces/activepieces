@@ -130,6 +130,7 @@
     "https-proxy-agent": "7.0.4",
     "imap": "0.8.17",
     "imapflow": "1.0.152",
+    "intercom-client": "5.0.0",
     "ioredis": "5.4.1",
     "is-base64": "1.1.0",
     "isolated-vm": "5.0.1",

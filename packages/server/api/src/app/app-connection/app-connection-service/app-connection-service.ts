@@ -148,6 +148,7 @@ export const appConnectionService = {
         pieceName,
         cursorRequest,
         name,
+        status,
         limit,
     }: ListParams): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -170,6 +171,9 @@ export const appConnectionService = {
         }
         if (!isNil(name)) {
             querySelector.name = ILike(`%${name}%`)
+        }
+        if (!isNil(status)) {
+            querySelector.status = Equal(status)
         }
         const queryBuilder = repo()
             .createQueryBuilder('app_connection')
@@ -470,6 +474,7 @@ type ListParams = {
     pieceName: string | undefined
     cursorRequest: Cursor | null
     name: string | undefined
+    status: string | undefined
     limit: number
 }
 

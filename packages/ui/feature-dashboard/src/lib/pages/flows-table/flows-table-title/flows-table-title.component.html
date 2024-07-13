@@ -1,30 +1,43 @@
-<div class="ap-flex sm:ap-mb-[25px] ap-min-w-[415px]">
-    <ng-container *ngIf="showAllFlows$|async;else folderTemplate">
-        <div class="ap-flex-grow ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
-                src="assets/img/custom/all-flows.svg" class="ap-h-[15px] ap-w-[15px] ap-fill-bleached-gray"
-                [applyClass]="true"></svg-icon>
-
-                <span i18n *ngIf="(hideFoldersList$ | async) === false || (hideFoldersList$ | async) === undefined">
-                  All flows
+<div class="ap-flex sm:ap-mb-[25px] ap-min-w-[415px] ap-items-center">
+    <div class="ap-flex ap-items-center ap-flex-grow">
+        <ng-container *ngIf="showAllFlows$|async;else folderTemplate">
+        
+            <div class="ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
+                    src="assets/img/custom/all-flows.svg" class="ap-h-[15px] ap-w-[15px] ap-fill-bleached-gray"
+                    [applyClass]="true"></svg-icon>
+    
+                    <span i18n *ngIf="(hideFoldersList$ | async) === false || (hideFoldersList$ | async) === undefined">
+                      All flows
+                    </span>
+                <span i18n *ngIf="hideFoldersList$ | async">
+                   Flows
                 </span>
-            <span i18n *ngIf="hideFoldersList$ | async">
-               Flows
-            </span>
-        </div>
-
-    </ng-container>
+             
+         
+    
+            </div>
+    
+        </ng-container>
+        <ng-content select="[filtersButton]"></ng-content>
+    </div>
+   
     <ng-template #folderTemplate>
 
         <ng-container *ngIf="currentFolder$| async as folder; else uncategorizedTemplate">
-            <div class="ap-flex-grow ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
+            <div class="ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
                     src="assets/img/custom/folder.svg" class="ap-h-[15px] ap-w-[15px] ap-fill-bleached-gray"
-                    [applyClass]="true"></svg-icon>{{folder.displayName}}</div>
+                    [applyClass]="true"></svg-icon>
+                    {{folder.displayName}}       
+ 
+    </div>
         </ng-container>
         <ng-template #uncategorizedTemplate>
-            <div class="ap-flex-grow ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
+            <div class=" ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
                     src="assets/img/custom/uncategorized-folder.svg"
                     class="ap-h-[15px] ap-w-[15px] ap-fill-bleached-gray" [applyClass]="true"></svg-icon>
                 <span i18n>Uncategorized</span>
+  
+
             </div>
         </ng-template>
     </ng-template>
@@ -60,7 +73,6 @@
                 </button>
             </mat-menu>
         </div>
-  
 
 </div>
 
