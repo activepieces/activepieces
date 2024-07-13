@@ -1,7 +1,7 @@
 import { authenticationSession } from "@/features/authentication/lib/authentication-session";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuItem } from "../ui/dropdown-menu";
-import { LogOut } from "lucide-react";
+import { CircleUser, LogOut } from "lucide-react";
 import { TextWithIcon } from "../ui/text-with-icon";
 
 export function UserSettingsDropdown() {
@@ -10,8 +10,9 @@ export function UserSettingsDropdown() {
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Avatar className="cursor-pointer">
-                        <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                        <AvatarFallback>M</AvatarFallback>
+                        <AvatarFallback>
+                            <CircleUser/>
+                        </AvatarFallback>
                     </Avatar>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-[200px]">

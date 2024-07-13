@@ -2,8 +2,10 @@ import {
     Bug,
     Link2,
     Logs,
+    Plus,
     Settings,
     Zap,
+    Shield,
 } from "lucide-react"
 import {
     Tooltip,
@@ -14,18 +16,21 @@ import { Link, useLocation } from "react-router-dom"
 import { theme } from "@/lib/theme"
 import { UserSettingsDropdown } from "./user-settings-dropdown"
 import { ProjectSwitcher } from "@/features/projects/components/project-switcher"
+import { Button } from "../ui/button"
 
 type Link = {
     icon: React.ReactNode
     label: string
     to: string,
+    notifcation?: boolean
 }
 
-const CustomTooltipLink = ({ to, label, icon: Icon, extraClasses }: {
+const CustomTooltipLink = ({ to, label, Icon, extraClasses, notifcation }: {
     to: string,
     label: string,
-    icon: React.ElementType,
-    extraClasses?: string
+    Icon: React.ElementType,
+    extraClasses?: string,
+    notifcation?: boolean
 }) => {
     const location = useLocation();
     const isActive = location.pathname.startsWith(to);
@@ -35,10 +40,12 @@ const CustomTooltipLink = ({ to, label, icon: Icon, extraClasses }: {
             <TooltipTrigger asChild>
                 <Link
                     to={to}
-                    className={`flex p-1 flex-col gap-4 items-center justify-center rounded-lg  transition-colors hover:text-primary md:h-8 md:w-8 ${isActive ? 'bg-accent text-primary' : ''} ${extraClasses || ''}`}
+                    className={`flex relative p-1 flex-col gap-4 items-center justify-center rounded-lg  transition-colors hover:text-primary md:h-8 md:w-8 ${isActive ? 'bg-accent text-primary' : ''} ${extraClasses || ''}`}
                 >
                     <Icon className="h-6 w-6" />
                     <span className="sr-only">{label}</span>
+                    {notifcation && <span className="absolute top-[-3px] right-[-3px] h-2 w-2 bg-destructive rounded-full"></span>}
+
                 </Link>
             </TooltipTrigger>
             <TooltipContent side="right">{label}</TooltipContent>
@@ -63,32 +70,41 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                     <CustomTooltipLink
                         to="/flows"
                         label="Flows"
-                        icon={Zap}
+                        Icon={Zap}
                     />
-                       <CustomTooltipLink
+                    <CustomTooltipLink
                         to="/runs"
                         label="Runs"
-                        icon={Logs}
+                        Icon={Logs}
                     />
-                    <CustomTooltipLink to="/issues" label="Issues" icon={Bug} />
+                    <CustomTooltipLink to="/issues" label="Issues" Icon={Bug} notifcation={true} />
                     <CustomTooltipLink
                         to="/connections"
                         label="Link"
-                        icon={Link2}
+                        Icon={Link2}
                     />
 
                     <CustomTooltipLink
                         to="/settings"
                         label="Settings"
-                        icon={Settings}
+                        Icon={Settings}
                     />
                 </nav>
             </aside>
             <div className="flex-1 p-4">
                 <div className="flex flex-col g2">
-                    <div className="flex">
-                        <ProjectSwitcher/>
-                        <div className="ml-auto">
+                    <div className="flex ">
+                        <ProjectSwitcher />
+                        <div className="flex-grow"></div>
+                        <div className="flex gap-4 justify-center items-center">
+                            <Button variant={"outline"} size="sm" className="flex items-center gap-2 justify-center">
+                                <Plus className="h-4 w-4" />
+                                <span>Invite User</span>
+                            </Button>
+                            <Button variant={"outline"} size="sm" className="flex items-center gap-2 justify-center">
+                                <Shield className="h-4 w-4" />
+                                <span>Platform Admin</span>
+                            </Button>
                             <UserSettingsDropdown />
                         </div>
                     </div>

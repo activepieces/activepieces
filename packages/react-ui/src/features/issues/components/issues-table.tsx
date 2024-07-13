@@ -5,6 +5,7 @@ import { Issue } from "@activepieces/ee-shared"
 import { ColumnDef } from "@tanstack/react-table"
 import { issuesApi } from "../api/issues-api"
 import { Button } from "@/components/ui/button"
+import { formatUtils } from "@/lib/utils"
 
 const columns: ColumnDef<RowDataWithActions<Issue>>[] = [
     {
@@ -25,23 +26,23 @@ const columns: ColumnDef<RowDataWithActions<Issue>>[] = [
         accessorKey: "created",
         header: ({ column }) => <DataTableColumnHeader column={column} title="First Seen" />,
         cell: ({ row }) => {
-            return <div className="text-left">{row.original.created}</div>
+            return <div className="text-left">{formatUtils.formatDate(new Date(row.original.created))}</div>
         },
     },
     {
         accessorKey: "lastOccurrence",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Last Seen" />,
         cell: ({ row }) => {
-            return <div className="text-left">{row.original.lastOccurrence}</div>
+            return <div className="text-left">{formatUtils.formatDate(new Date(row.original.lastOccurrence))}</div>
         },
     },
     {
         accessorKey: "actions",
         header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
-        cell: ({  }) => {
+        cell: ({ row }) => {
             return (
                 <div className="flex items-end justify-end">
-                    <Button size={"sm"}>
+                    <Button size={"sm"} onClick={() => row.original.delete()}>
                         Mark as Resolved
                     </Button>
                 </div>

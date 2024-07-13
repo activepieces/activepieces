@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ConfirmationDeleteDialog } from "@/components/delete-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Separator } from "@/components/ui/seperator";
+
 const fetchData = async () => {
     const apiResult = await projectMembersApi.list({
         projectId: authenticationSession.getProjectId(),
@@ -30,8 +32,8 @@ export default function TeamCardList() {
                 <CardTitle>Project Members</CardTitle>
                 <CardDescription>Invite your team members to collaborate.</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-6">
-                <div className="min-h-[35px]">
+            <CardContent className="grid gap-6 ">
+                <div className="min-h-[35px] flex flex-col gap-4">
                     {isLoading && <div>Loading...</div>}
                     {data && data.length === 0 && <div className="text-center">No members are added to this project.</div>}
                     {isError && <div>Error, please try again.</div>}
@@ -106,6 +108,9 @@ export default function TeamCardList() {
                             </div>
                         </div>
                     ))}
+                    <Separator />
+                    <div className="text-2xl font-bold tracking-tight">Pending Invitations</div>
+                    
                 </div>
                 <Button variant="outline" className="flex items-center space-x-2 mt-4">
                     <Plus className="h-4 w-4" />
