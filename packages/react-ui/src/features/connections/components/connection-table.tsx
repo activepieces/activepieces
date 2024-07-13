@@ -2,14 +2,15 @@ import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 import { ColumnDef } from "@tanstack/react-table";
 import { formatUtils } from "@/lib/utils";
 import { authenticationSession } from "@/features/authentication/lib/authentication-session";
-import { DataTable, RowDataWithActions } from "@/components/ui/data-table";
-import { AppConnection } from "@activepieces/shared";
+import { DataTable, DataTableFilter, RowDataWithActions } from "@/components/ui/data-table";
+import { AppConnection, AppConnectionStatus, ListAppConnectionsRequestQuery } from "@activepieces/shared";
 import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react"
+import { CheckIcon, Trash } from "lucide-react"
 import { appConnectionsApi } from "@/features/connections/lib/app-connections-api";
 import { PieceIcon } from "@/features/pieces/components/piece-icon";
-import AppConnectionStatusComponent from "./connection-status-toggle";
 import { ConfirmationDeleteDialog } from "@/components/delete-dialog";
+import { StatusIconWithText } from "@/components/ui/status-icon-with-text";
+import { appConnectionUtils } from "../lib/app-connections-utils";
 
 const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
     {
@@ -30,7 +31,9 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
         accessorKey: 'status',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
         cell: ({ row }) => {
-            return <div className="text-left"><AppConnectionStatusComponent status={row.original.status} /></div>
+            const status = row.original.status;
+            const { varient, icon: Icon } = appConnectionUtils.getStatusIcon(status);
+            return <div className="text-left"><StatusIconWithText icon={Icon} text={formatUtils.convertEnumToHumanReadable(status)} variant={varient} /></div>
         },
     },
     {
@@ -68,13 +71,29 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
         },
     }
 ]
-const fetchData = async (pagination: { cursor?: string, limit: number }) => {
+
+const filters: DataTableFilter[] = [
+    {
+        type: 'select',
+        title: 'Status',
+        accessorKey: 'status',
+        options: Object.values(AppConnectionStatus).map(status => {
+            return {
+                label: formatUtils.convertEnumToHumanReadable(status),
+                value: status
+            }
+        }),
+        icon: CheckIcon
+    }
+]
+const fetchData = async (queryParams: URLSearchParams) => {
     return appConnectionsApi.list({
         projectId: authenticationSession.getProjectId(),
-        cursor: pagination.cursor,
-        limit: pagination.limit,
+        cursor: queryParams.get('cursor') ?? undefined,
+        limit: parseInt(queryParams.get('limit') ?? '10'),
     })
 }
+
 
 function AppConnectionsTable() {
     return (
@@ -84,7 +103,7 @@ function AppConnectionsTable() {
                 <div className="ml-auto">
                 </div>
             </div>
-            <DataTable columns={columns} fetchData={fetchData} />
+            <DataTable columns={columns} fetchData={fetchData} filters={filters} />
         </div>
     )
 }

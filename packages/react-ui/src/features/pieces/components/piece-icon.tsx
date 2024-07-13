@@ -9,7 +9,7 @@ export function PieceIcon({ pieceName }: { pieceName: string }) {
     return <>
         <Tooltip>
             <TooltipTrigger asChild>
-                <div className="p-2 rounded-full border border-solid border-dividers flex items-center justify-center bg-white w-[36px] h-[36px]">
+                <div className="p-2 bg-accent rounded-full border border-solid border-dividers flex items-center justify-center w-[36px] h-[36px]">
                     {isSuccess && data ? <img src={data?.logoUrl} className="object-contain" /> : null}
                 </div>
             </TooltipTrigger>

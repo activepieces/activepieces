@@ -11,21 +11,36 @@ import {
 import { Button } from "./button";
 import { SeekPage } from "@activepieces/shared";
 import { useSearchParams } from "react-router-dom";
+import { DataTableToolbar } from "./data-table-toolbar";
+import { DataTableFacetedFilter } from "./data-table-options-filter";
 
 export type RowDataWithActions<TData> = TData & {
     delete: () => void;
 };
 
+export type DataTableFilter = {
+    type: 'select',
+    title: string
+    accessorKey: string
+    icon: React.ComponentType<{ className?: string }>
+    options: {
+        label: string
+        value: string
+        icon?: React.ComponentType<{ className?: string }>
+    }[]
+}
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
-    fetchData: (pagination: { cursor?: string, limit: number }) => Promise<SeekPage<TData>>;
+    fetchData: (queryParams: URLSearchParams) => Promise<SeekPage<TData>>;
     onRowClick?: (row: RowDataWithActions<TData>) => void;
+    filters?: DataTableFilter[];
 }
 
 export function DataTable<TData, TValue>({
     columns,
     fetchData,
     onRowClick,
+    filters,
 }: DataTableProps<TData, TValue>) {
 
     const [searchParams, setSearchParams] = useSearchParams();
@@ -45,12 +60,30 @@ export function DataTable<TData, TValue>({
     });
 
     useEffect(() => {
-        if (currentCursor) {
-            setSearchParams({ cursor: currentCursor });
-        }
+        console.log("ONCE");
+        filters?.forEach(filter => {
+            const column = table.getColumn(filter.accessorKey);
+            const values = searchParams.getAll(filter.accessorKey)
+            if (column && values) {
+                column.setFilterValue(values);
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        setSearchParams(prev => {
+            const newParams = new URLSearchParams(prev);
+            if (currentCursor) {
+                newParams.set('cursor', currentCursor);
+            }
+            return newParams;
+        });
+    }, [currentCursor]);
+
+    useEffect(() => {
         setLoading(true);
         setTableData([]);
-        fetchData({ cursor: currentCursor, limit: 10 }).then(response => {
+        fetchData(searchParams).then(response => {
             const newData = response.data.map(row => ({
                 ...row, delete: () => {
                     setDeletedRows(deletedRows.concat(row));
@@ -61,7 +94,7 @@ export function DataTable<TData, TValue>({
             setPreviousPageCursor(response.previous ?? undefined);
             setLoading(false);
         });
-    }, [currentCursor]);
+    }, [searchParams]);
 
     useEffect(() => {
         setTableData(tableData.filter(row => !deletedRows.some(deletedRow => JSON.stringify(deletedRow) === JSON.stringify(row))));
@@ -69,6 +102,14 @@ export function DataTable<TData, TValue>({
 
     return (
         <div>
+            {filters && filters.map(filter => (
+                <DataTableToolbar>
+                    <DataTableFacetedFilter key={filter.accessorKey}
+                        column={table.getColumn(filter.accessorKey)}
+                        title={filter.title}
+                        options={filter.options} />
+                </DataTableToolbar>
+            ))}
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>

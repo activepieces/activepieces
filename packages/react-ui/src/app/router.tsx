@@ -1,8 +1,6 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
-import FlowsTable from "../app/routes/flows";
 import { SignInForm } from "../app/routes/sign-in";
 import { authenticationSession } from "../features/authentication/lib/authentication-session";
-import FlowRunsTable from "./routes/runs";
 import AlertsPage from "./routes/settings/alerts";
 import { Sidebar } from "@/components/layout/sidebar";
 import ProjectSettingsLayout from "@/components/layout/settings-layout";
@@ -12,6 +10,8 @@ import AppConnectionsPage from "./routes/connections";
 import TeamPage from "./routes/settings/team";
 import IssuesPage from "./routes/issues";
 import { FlowBuilderPage } from "./routes/flows/id";
+import FlowsRunPage from "./routes/runs";
+import { FlowsPage } from "../app/routes/flows";
 
 const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
     if (!authenticationSession.isLoggedIn()) {
@@ -26,7 +26,7 @@ export const router = createBrowserRouter([
         element: (
             <AllowOnlyLoggedIn>
                 <Sidebar>
-                    <FlowsTable />
+                    <FlowsPage />
                 </Sidebar>
             </AllowOnlyLoggedIn>
         ),
@@ -44,7 +44,7 @@ export const router = createBrowserRouter([
         element: (
             <AllowOnlyLoggedIn>
                 <Sidebar>
-                    <FlowRunsTable />
+                    <FlowsRunPage />
                 </Sidebar>
             </AllowOnlyLoggedIn>
         ),

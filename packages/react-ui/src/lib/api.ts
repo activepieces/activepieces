@@ -2,7 +2,7 @@
 
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse, isAxiosError } from 'axios';
 import { authenticationSession } from '@/features/authentication/lib/authentication-session';
-
+import qs from 'qs';
 const apiUrl = 'https://cloud.activepieces.com/api';
 
 const disallowedRoutes = ['/v1/authentication/sign-in', '/v1/authentication/sign-up'];
@@ -27,7 +27,14 @@ export const api = {
     isError(error: unknown): error is HttpError {
         return isAxiosError(error);
     },
-    get: <TResponse>(url: string, query?: unknown) => request<TResponse>(url, { params: query }),
+    get: <TResponse>(url: string, query?: unknown) => request<TResponse>(url, {
+        params: query,
+        paramsSerializer: params => {
+            return qs.stringify(params, {
+                arrayFormat: 'repeat',
+            })
+        }
+    }),
     delete: <TResponse>(url: string) => request<TResponse>(url, { method: 'DELETE' }),
     post: <TResponse, TBody = unknown>(url: string, body?: TBody) => request<TResponse>(url, { method: 'POST', data: body, headers: { 'Content-Type': 'application/json' } }),
 }

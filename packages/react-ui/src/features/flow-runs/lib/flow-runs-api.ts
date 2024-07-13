@@ -1,6 +1,5 @@
 import { api } from "@/lib/api";
-import { ListFlowRunsRequestQuery } from "@activepieces/server-shared";
-import { FlowRun, SeekPage } from "../../../../../shared/src";
+import { FlowRun, SeekPage, ListFlowRunsRequestQuery } from "@activepieces/shared";
 
 export const flowRunsApi = {
     list(request: ListFlowRunsRequestQuery): Promise<SeekPage<FlowRun>> {

@@ -15,4 +15,4 @@ export const ListFlowRunsRequestQuery = Type.Object({
     projectId: Type.Optional(ApId),
 })
 
-export type ListFlowRunsRequestQuery = Static<typeof ListFlowRunsRequestQuery> & { cursor: Cursor }
+export type ListFlowRunsRequestQuery = Static<typeof ListFlowRunsRequestQuery>

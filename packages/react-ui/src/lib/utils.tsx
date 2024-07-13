@@ -21,6 +21,10 @@ if (!globalFormatsAdded) {
 
 
 export const formatUtils = {
+  convertEnumToHumanReadable(str: string) {
+    const words = str.split('_');
+    return words.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLocaleLowerCase()).join(' ');
+  },
   formatDate(date: Date) {
     return Intl.DateTimeFormat('en-US', {
       month: 'short',
