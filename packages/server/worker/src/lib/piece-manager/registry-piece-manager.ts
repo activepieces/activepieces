@@ -20,17 +20,17 @@ export class RegistryPieceManager extends PieceManager {
         if (dependenciesToInstall.length === 0) {
             return
         }
-        const installPromises = pieces.map(async (piece) => {
-            const pnpmAddLock = await memoryLock.acquire(`pnpm-add-${projectPath}-${piece.pieceName}-${piece.pieceVersion}`)
-            try {
-                const dependencies = await this.filterExistingPieces(projectPath, [piece])
-                await packageManager.add({ path: projectPath, dependencies })
+        const pnpmAddLock = await memoryLock.acquire(`pnpm-add-${projectPath}`)
+        try {
+            const dependencies = await this.filterExistingPieces(projectPath, pieces)
+            if (dependencies.length === 0) {
+                return
             }
-            finally {
-                await pnpmAddLock.release()
-            }
-        })
-        await Promise.all(installPromises)
+            await packageManager.add({ path: projectPath, dependencies })
+        }
+        finally {
+            await pnpmAddLock.release()
+        }
     }
 
     private async savePackageArchivesToDiskIfNotCached(

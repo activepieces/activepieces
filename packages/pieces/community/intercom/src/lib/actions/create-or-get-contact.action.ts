@@ -1,18 +1,15 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
-  getAccessTokenOrThrow,
-  httpClient,
-  HttpMethod,
   HttpResponse,
 } from '@activepieces/pieces-common';
-import { intercomCommon } from '../common';
+import { intercomClient } from '../common';
 import { intercomAuth } from '../..';
 
 enum ContactRole {
   USER = 'user',
   LEAD = 'lead',
 }
+
 export const getOrCreateContact = createAction({
   auth: intercomAuth,
   description: "Get or create a contact (ie. user or lead) if it isn't found",
@@ -57,44 +54,39 @@ export const getOrCreateContact = createAction({
     }),
   },
   run: async (context) => {
-    const authentication = getAccessTokenOrThrow(context.auth);
+    const client = intercomClient(context.auth);
     try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `https://api.intercom.io/contacts`,
-        headers: intercomCommon.intercomHeaders,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: authentication as string,
-        },
-        body: {
-          role: context.propsValue.role,
-          external_id: context.propsValue.external_id,
+      if (context.propsValue.role === ContactRole.USER) {
+        return await client.contacts.createUser({
+          externalId: context.propsValue.external_id,
           email: context.propsValue.email,
-          name: context.propsValue.name,
           phone: context.propsValue.phone,
+          name: context.propsValue.name,
           avatar: context.propsValue.avatar,
-          custom_attributes: context.propsValue.custom_attributes,
-          signed_up_at: new Date(),
-        },
-      });
-      return response.body;
-    } catch (ex: any) {
-      //check if it is failed because the user exists
-      const response: HttpResponse = JSON.parse(ex.message).response;
-      if (response && response.body) {
-        const errors = response.body['errors'];
-        if (Array.isArray(errors) && errors[0]) {
+          signedUpAt: Date.now(),
+          customAttributes: context.propsValue.custom_attributes,
+        });
+      } else {
+        return await client.contacts.createLead({
+          customAttributes: context.propsValue.custom_attributes,
+          avatar: context.propsValue.avatar,
+          signedUpAt: Date.now(),
+          phone: context.propsValue.phone,
+          name: context.propsValue.name,
+          email: context.propsValue.email,
+        });
+      }
+    } catch (err: any) {
+      if (err && err.body) {
+        const errors = err.body['errors'];
+        if (Array.isArray(errors) && errors[0] && errors[0].code === 'conflict') {
           const idFromErrorMessage = errors[0].message?.split('id=')[1];
           if (idFromErrorMessage) {
-            return intercomCommon.getContact({
-              userId: idFromErrorMessage,
-              token: authentication,
-            });
+            return await client.contacts.find({ id: idFromErrorMessage });
           }
         }
       }
-      throw ex;
+      throw err;
     }
   },
 });
