@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, AlertChannel } from "@activepieces/ee-shared";
+import { Alert } from "@activepieces/ee-shared";
 import { INTERNAL_ERROR_TOAST, useToast } from "@/components/ui/use-toast";
 import { AddAlertEmailDialog } from "./add-alert-email-dialog";
 const fetchData = async () => {

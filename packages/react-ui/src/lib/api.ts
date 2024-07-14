@@ -5,7 +5,7 @@ import { authenticationSession } from '@/features/authentication/lib/authenticat
 import qs from 'qs';
 const apiUrl = 'https://cloud.activepieces.com/api';
 
-const disallowedRoutes = ['/v1/authentication/sign-in', '/v1/authentication/sign-up'];
+const disallowedRoutes = ['/v1/authentication/sign-in', '/v1/authentication/sign-up', '/v1/flags', '/v1/authn/federated/login'];
 
 function request<TResponse>(
     url: string,

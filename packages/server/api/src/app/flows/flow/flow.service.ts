@@ -20,7 +20,7 @@ import {
     ProjectId,
     SeekPage, TelemetryEventName, UserId,
 } from '@activepieces/shared'
-import { EntityManager, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { acquireLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -103,7 +103,7 @@ export const flowService = {
         }
 
         if (status !== undefined) {
-            queryWhere.status = status
+            queryWhere.status = In(status)
         }
 
         const paginationResult = await paginator.paginate(
@@ -475,7 +475,7 @@ type ListParams = {
     cursorRequest: Cursor | null
     limit: number
     folderId: string | undefined
-    status: FlowStatus | undefined
+    status: FlowStatus[] | undefined
     name: string | undefined
 }
 

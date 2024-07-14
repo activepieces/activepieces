@@ -41,6 +41,11 @@ const AddAlertEmailDialog = React.memo(({ onAdd }: AddAlertEmailDialogProps) => 
 
     const [open, setOpen] = useState(false);
 
+    const form = useForm<FormSchema>({
+        resolver: typeboxResolver(FormSchema),
+        defaultValues: {},
+    })
+
     const { mutate, isPending } = useMutation<Alert, Error, { email: string }>({
         mutationFn: async (params) => alertsApi.create({
             receiver: params.email,
@@ -60,12 +65,9 @@ const AddAlertEmailDialog = React.memo(({ onAdd }: AddAlertEmailDialogProps) => 
             if (api.isError(error)) {
                 switch (error.response?.status) {
                     case HttpStatusCode.Conflict: {
-                        toast({
-                            title: "Error",
-                            description: 'This email is already being added.',
-                            duration: 3000,
-                            variant: 'destructive',
-                        })
+                        form.setError("root.serverError", {
+                            message: "The email is already added.",
+                        });
                         break;
                     }
                     default: {
@@ -79,10 +81,6 @@ const AddAlertEmailDialog = React.memo(({ onAdd }: AddAlertEmailDialogProps) => 
         },
     });
 
-    const form = useForm<FormSchema>({
-        resolver: typeboxResolver(FormSchema),
-        defaultValues: {},
-    })
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -109,6 +107,7 @@ const AddAlertEmailDialog = React.memo(({ onAdd }: AddAlertEmailDialogProps) => 
                                     <FormMessage />
                                 </FormItem>
                             )} />
+                            {form?.formState?.errors?.root?.serverError && <FormMessage>{form.formState.errors.root.serverError.message}</FormMessage>}
                             <DialogFooter>
                                 <Button type="submit" loading={isPending}>Add Email</Button>
                             </DialogFooter>
