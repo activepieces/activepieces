@@ -12,7 +12,7 @@ export function PieceIconList({ flow }: { flow: PopulatedFlow }) {
 
     return <>
         <div className="flex">
-            {steps.map((pieceName, index) => <PieceIcon pieceName={pieceName} key={index} />)}
+            {steps.map((pieceName, index) => <PieceIcon circle={true} size={"md"} border={true} pieceName={pieceName} key={index} />)}
         </div>
     </>
 }

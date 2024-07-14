@@ -3,16 +3,16 @@ import { ColumnDef } from "@tanstack/react-table";
 import { DataTable, RowDataWithActions } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react"
-import { PieceIcon } from "@/features/pieces/components/piece-icon";
 import { piecesApi } from "../lib/pieces-api";
 import { PieceMetadataModelSummary } from "@activepieces/pieces-framework";
+import { PieceIcon } from "./piece-icon";
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
     {
         accessorKey: "name",
         header: ({ column }) => <DataTableColumnHeader column={column} title="App" />,
         cell: ({ row }) => {
-            return <div className="text-left"><PieceIcon pieceName={row.original.name} /></div>
+            return <div className="text-left"><PieceIcon circle={true} size={"md"} border={true} pieceName={row.original.name} /></div>
         },
     },
     {

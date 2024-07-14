@@ -9,12 +9,23 @@ type UsePieceProps = {
     version?: string
 }
 
+type UsePiecesProps = {
+    searchQuery?: string
+}
 
 export const piecesHooks = {
     usePiece: ({ name, version }: UsePieceProps) => {
         return useQuery<PieceMetadataModelSummary, Error>({
             queryKey: ['piece', name, version],
             queryFn: () => piecesApi.get({ name, version }),
+            staleTime: Infinity,
         });
+    },
+    usePieces: ({ searchQuery }: UsePiecesProps) => {
+        return useQuery<PieceMetadataModelSummary[], Error>({
+            queryKey: ['pieces', searchQuery],
+            queryFn: () => piecesApi.list({ searchQuery }),
+            staleTime: searchQuery ? Infinity : 0,
+        }); 
     }
 }

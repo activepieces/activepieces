@@ -16,7 +16,8 @@ export const flagsHooks = {
                     return (value === 'true') as T | null;
                 }
                 return value as T | null;
-            }
+            },
+            staleTime: Infinity,
         });
     }
 };

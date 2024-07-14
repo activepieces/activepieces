@@ -3,21 +3,21 @@ import { ColumnDef } from "@tanstack/react-table";
 import { formatUtils } from "@/lib/utils";
 import { authenticationSession } from "@/features/authentication/lib/authentication-session";
 import { DataTable, DataTableFilter, RowDataWithActions } from "@/components/ui/data-table";
-import { AppConnection, AppConnectionStatus, ListAppConnectionsRequestQuery } from "@activepieces/shared";
+import { AppConnection, AppConnectionStatus } from "@activepieces/shared";
 import { Button } from "@/components/ui/button";
 import { CheckIcon, Trash } from "lucide-react"
 import { appConnectionsApi } from "@/features/connections/lib/app-connections-api";
-import { PieceIcon } from "@/features/pieces/components/piece-icon";
 import { ConfirmationDeleteDialog } from "@/components/delete-dialog";
 import { StatusIconWithText } from "@/components/ui/status-icon-with-text";
 import { appConnectionUtils } from "../lib/app-connections-utils";
+import { PieceIcon } from "@/features/pieces/components/piece-icon";
 
 const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
     {
         accessorKey: "pieceName",
         header: ({ column }) => <DataTableColumnHeader column={column} title="App" />,
         cell: ({ row }) => {
-            return <div className="text-left"><PieceIcon pieceName={row.original.pieceName} /></div>
+            return <div className="text-left"><PieceIcon circle={true} size={"md"} border={true} pieceName={row.original.pieceName} /></div>
         },
     },
     {

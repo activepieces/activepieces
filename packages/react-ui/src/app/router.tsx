@@ -24,6 +24,10 @@ const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
 
 export const router = createBrowserRouter([
     {
+        path: "/",
+        element: <Navigate to="/flows" />,
+    },
+    {
         path: "/flows",
         element: (
             <AllowOnlyLoggedIn>

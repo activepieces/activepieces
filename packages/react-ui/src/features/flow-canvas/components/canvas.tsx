@@ -29,7 +29,7 @@ const FlowCanvas = ({ flow}: FlowCanvasProps) => {
     );
 
     return (
-        <div className='flex-grow w-full'>
+        <div className='flex-grow w-full h-full'>
             <ReactFlow
                 nodeTypes={nodeTypes}
                 nodes={nodes}

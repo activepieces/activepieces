@@ -5,6 +5,8 @@ import { PopulatedFlow } from "@activepieces/shared";
 import { useQuery } from "@tanstack/react-query";
 import { flowsApi } from "@/features/flows/lib/flows-api";
 import { useEffect } from "react";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable-panel";
+import { PieceSelectorList } from "@/features/pieces/components/piece-selector-list";
 
 const FlowBuilderPage = () => {
     const { flowId } = useParams();
@@ -23,9 +25,20 @@ const FlowBuilderPage = () => {
     return (
         <div className="w-screen h-screen flex flex-col">
             <BuilderNavBar />
-            {isLoading && <div>Loading...</div>}
-            {isError && <div>Error, please try again.</div>}
-            {isSuccess && flow && <FlowCanvas flow={flow} />}
+            <ResizablePanelGroup direction="horizontal">
+                <ResizablePanel defaultSize={75}>
+                    <>
+                        {isLoading && <div>Loading...</div>}
+                        {isError && <div>Error, please try again.</div>}
+                        {isSuccess && flow && <FlowCanvas flow={flow} />}</>
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel defaultSize={25}>
+                    <PieceSelectorList />
+
+                </ResizablePanel>
+            </ResizablePanelGroup>
+
         </div>
     )
 }

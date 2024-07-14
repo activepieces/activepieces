@@ -8,7 +8,7 @@ const ApStepNode = React.memo(({ data }: { data: Action | Trigger }) => {
     const { data: piece } = piecesHooks.usePiece({ name: data.settings.pieceName, version: data.settings.pieceVersion });
 
     return (
-        <div className="h-[70px] border-solid border-[#c2c9d1] border bg-white border-[1px] w-[260px] rounded px-2 ">
+        <div className="h-[70px] border-solid border bg-background border-[1px] w-[260px] rounded px-2 ">
             <div className='flex gap-4 items-center justify-between h-full g4'>
                 <div className='justify-center items-center'>
                     <img
@@ -21,7 +21,7 @@ const ApStepNode = React.memo(({ data }: { data: Action | Trigger }) => {
                     <div className="text-xs">
                         {data.displayName}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                         Send a message to a webhook
                     </div>
                 </div>

@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { ProjectWithLimits } from "@activepieces/shared"
 import { projectHooks } from "../lib/project-hooks"
 import { useQueryClient } from "@tanstack/react-query"
 
@@ -18,9 +17,8 @@ function ProjectSwitcher() {
 
     const queryClient = useQueryClient();
     const { data: projects } = projectHooks.useProjects();
-    const [open, setOpen] = React.useState(false)
+    const [ open, setOpen] = React.useState(false)
     const { data: currentProject, setCurrentProject } = projectHooks.useCurrentProject();
-
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
