@@ -2,6 +2,7 @@ import { authenticationSession } from "@/features/authentication/lib/authenticat
 import { ProjectWithLimits } from "../../../../../shared/src";
 import { projectApi } from "./project-api";
 import { useQuery, QueryClient } from "@tanstack/react-query";
+import { UpdateProjectPlatformRequest } from "../../../../../ee/shared/src";
 
 export const projectHooks = {
     useCurrentProject: () => {
@@ -11,6 +12,8 @@ export const projectHooks = {
         });
         return {
             ...query,
+            project: query.data,
+            updateProject,
             setCurrentProject,
         }
     },
@@ -26,6 +29,13 @@ export const projectHooks = {
             },
         });
     },
+}
+
+const updateProject = async (queryClient: QueryClient, request: UpdateProjectPlatformRequest) => {
+    queryClient.setQueryData(['current-project'], {
+        ...queryClient.getQueryData(['current-project'])!,
+        ...request,
+    });
 }
 
 const setCurrentProject = async (queryClient: QueryClient, project: ProjectWithLimits) => {

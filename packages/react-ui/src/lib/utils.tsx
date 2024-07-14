@@ -1,23 +1,11 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { DefaultErrorFunction, SetErrorFunction } from "@sinclair/typebox/errors";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 const EMAIL_REGEX: string = "^[a-zA-Z0-9_.+]+(?<!^[0-9]*)@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$";
-
-let typesFormatsAdded: boolean = false;
-
-if (!typesFormatsAdded) {
-  SetErrorFunction((error) => {
-    return error?.schema?.errorMessage ?? DefaultErrorFunction(error);
-   });
-   typesFormatsAdded = true;
-  
-}
-
 
 export const formatUtils = {
   EMAIL_REGEX,

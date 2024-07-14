@@ -9,9 +9,22 @@ export default defineConfig({
   cacheDir: '../../node_modules/.vite/packages/react-ui',
 
   server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        secure: false,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        headers: {
+          'Host': 'localhost:4200',
+        },
+        ws: true,
+      },
+    },
     port: 4200,
     host: 'localhost',
   },
+  
 
   preview: {
     port: 4300,

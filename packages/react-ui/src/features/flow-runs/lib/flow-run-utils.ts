@@ -8,7 +8,7 @@ export const flowRunUtils = {
         switch (status) {
             case FlowRunStatus.RUNNING:
                 return {
-                    varient: 'success',
+                    varient: 'default',
                     icon: StopwatchIcon
                 }
             case FlowRunStatus.SUCCEEDED:

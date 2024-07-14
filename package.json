@@ -4,11 +4,11 @@
   "rcVersion": "0.30.0-rc.0",
   "scripts": {
     "prepare": "husky install",
-    "serve:frontend": "nx serve ui-core",
+    "serve:frontend": "nx serve react-ui",
     "serve:backend": "nx serve server-api",
     "serve:engine": "nx serve engine",
     "serve:pieces": "turbowatch tools/scripts/pieces/turbowatch.ts",
-    "dev": "cross-env-shell FORCE_COLOR=true concurrently -n \"GUI,API,ENG,PCS\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\" \"npm:serve:pieces\"",
+    "dev": "cross-env-shell FORCE_COLOR=true concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "dev:backend": "cross-env-shell FORCE_COLOR=true concurrently -n \"API,ENG\" -c \"bgGreen.bold,bgRed.bold\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "dev:frontend": "cross-env-shell FORCE_COLOR=true concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "start": "npm i && npm run dev",
