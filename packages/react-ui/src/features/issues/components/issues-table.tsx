@@ -65,7 +65,7 @@ const fetchData = async (queryParams: URLSearchParams) => {
         limit?: number
     } = {
         cursor: queryParams.get('cursor') ?? undefined,
-        limit: queryParams.get('limit') ? Number(queryParams.get('limit')) : 10
+        limit: parseInt(queryParams.get('limit') ?? '10'),
     }
 
     return issuesApi.list({

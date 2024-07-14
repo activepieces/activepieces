@@ -6,12 +6,13 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { router } from './router';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
+import { NotificationProvider } from '@/contexts/notifications';
 
 const queryClient = new QueryClient();
 
 export function App() {
   return (
-    <>
+    <NotificationProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -20,7 +21,7 @@ export function App() {
           </ThemeProvider>
         </TooltipProvider>
       </QueryClientProvider>
-    </>
+    </NotificationProvider>
   );
 }
 

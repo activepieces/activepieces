@@ -17,6 +17,7 @@ import { theme } from "@/lib/theme"
 import { UserSettingsDropdown } from "./user-settings-dropdown"
 import { ProjectSwitcher } from "@/features/projects/components/project-switcher"
 import { Button } from "../ui/button"
+import { useIssuesNotification } from "@/features/issues/hooks/useIssueNotification"
 
 type Link = {
     icon: React.ReactNode
@@ -54,6 +55,8 @@ const CustomTooltipLink = ({ to, label, Icon, extraClasses, notifcation }: {
 };
 
 export function Sidebar({ children }: { children: React.ReactNode }) {
+    const showIssuesNotification = useIssuesNotification()
+
     return (
         <div className="flex min-h-screen w-full bg-muted/40">
             <aside className="w-18 flex flex-col border-r bg-background">
@@ -77,7 +80,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                         label="Runs"
                         Icon={Logs}
                     />
-                    <CustomTooltipLink to="/issues" label="Issues" Icon={Bug} notifcation={true} />
+                    <CustomTooltipLink to="/issues" label="Issues" Icon={Bug} notifcation={showIssuesNotification} />
                     <CustomTooltipLink
                         to="/connections"
                         label="Link"

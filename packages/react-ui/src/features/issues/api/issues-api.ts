@@ -13,5 +13,8 @@ export const issuesApi = {
         }
 
         return api.post<void>(`/v1/issues/${issueId}`,  body);
+    },
+    count() {
+        return api.get<number>('/v1/issues/count')
     }
 }
