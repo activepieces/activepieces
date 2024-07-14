@@ -67,6 +67,6 @@ export * from './lib/invitations'
 export * from './lib/workers'
 
 // Look at https://github.com/sinclairzx81/typebox/issues/350
-import { TypeSystem } from '@sinclair/typebox/system'
+import { TypeSystemPolicy } from '@sinclair/typebox/system'
 export * from './lib/flow-run/execution/flow-execution'
-TypeSystem.ExactOptionalPropertyTypes = false
+TypeSystemPolicy.ExactOptionalPropertyTypes = false
