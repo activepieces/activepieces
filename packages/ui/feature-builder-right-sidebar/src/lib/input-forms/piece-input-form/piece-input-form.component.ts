@@ -1,5 +1,19 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  ActionBase,
+  PieceMetadataModel,
+  PiecePropertyMap,
+  PropertyType,
+  TriggerBase,
+} from '@activepieces/pieces-framework';
+import {
+  AUTHENTICATION_PROPERTY_NAME,
+  ActionErrorHandlingOptions,
+  ActionType,
+  PopulatedFlow,
+  TriggerType,
+  isNil,
+  spreadIfDefined,
+} from '@activepieces/shared';
 import {
   AppConnectionsService,
   FlagService,
@@ -8,14 +22,17 @@ import {
   extractAuthenticationProperty,
 } from '@activepieces/ui/common';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
-import { Store } from '@ngrx/store';
-import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import {
   BuilderSelectors,
   FlowsActions,
   Step,
   StepMetaDataForMentions,
 } from '@activepieces/ui/feature-builder-store';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
+import { Store } from '@ngrx/store';
 import {
   Observable,
   combineLatest,
@@ -28,33 +45,28 @@ import {
   take,
   tap,
 } from 'rxjs';
-import {
-  AUTHENTICATION_PROPERTY_NAME,
-  ActionErrorHandlingOptions,
-  ActionType,
-  PopulatedFlow,
-  TriggerType,
-  isNil,
-  spreadIfDefined,
-} from '@activepieces/shared';
-import {
-  ActionBase,
-  PieceMetadataModel,
-  PiecePropertyMap,
-  PropertyType,
-  TriggerBase,
-} from '@activepieces/pieces-framework';
-import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
+import { HttpRequestWriterComponent } from '../../http-request-writer/http-request-writer.component';
 import { InputFormCore } from '../input-form-core';
 
 @Component({
   selector: 'app-piece-input-form',
   standalone: true,
-  imports: [CommonModule, UiCommonModule, UiFeatureBuilderFormControlsModule],
+  imports: [
+    CommonModule,
+    UiCommonModule,
+    UiFeatureBuilderFormControlsModule,
+    HttpRequestWriterComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if (deps$ | async; as deps) {
-
+    @if (deps$ | async; as deps) { @if(deps.currentStep?.type ===
+    ActionType.PIECE && deps.currentStep?.settings.pieceName ===
+    "@activepieces/piece-http" && deps.currentStep?.settings.actionName ===
+    "send_request") {
+    <app-http-request-writer
+      (httpRequestGenerated)="httpRequestGenerated($event)"
+    ></app-http-request-writer>
+    }
     <app-action-or-trigger-dropdown
       [items]="deps.triggersOrActions"
       [passedFormControl]="triggersOrActionsControl"
@@ -113,6 +125,7 @@ import { InputFormCore } from '../input-form-core';
       <ap-loading-icon> </ap-loading-icon>
     </div>
     } @if (renameStepBasedOnSelectedTriggerOrAction$ | async) {}
+    @if(modifyBodyData$ | async){}
   `,
 })
 export class PieceInputFormComponent extends InputFormCore {
@@ -134,6 +147,7 @@ export class PieceInputFormComponent extends InputFormCore {
   form = this.fb.group({});
   isFormReadOnly$: Observable<boolean>;
   readonly ActionType = ActionType;
+  modifyBodyData$?: Observable<unknown>;
   constructor(
     store: Store,
     pieceService: PieceMetadataService,
@@ -143,6 +157,7 @@ export class PieceInputFormComponent extends InputFormCore {
     private fb: UntypedFormBuilder
   ) {
     super(store, pieceService);
+    console.log(this.deps$, 'deps');
     this.isFormReadOnly$ = this.store
       .select(BuilderSelectors.selectReadOnly)
       .pipe(
@@ -473,5 +488,28 @@ export class PieceInputFormComponent extends InputFormCore {
     } catch (e) {
       return value;
     }
+  }
+
+  httpRequestGenerated(request: Record<string, any>): void {
+    let correctedRequest: Record<string, string | object> = {
+      ...request,
+    };
+    if (request['body']) {
+      this.modifyBodyData$ = this.form.controls['body'].valueChanges.pipe(
+        take(1),
+        tap(() => {
+          setTimeout(() => {
+            this.form.controls['body'].setValue(request['body']);
+          });
+        })
+      );
+    } else {
+      correctedRequest = {
+        ...correctedRequest,
+        body_type: 'none',
+      };
+    }
+    this.form.reset(correctedRequest, { emitEvent: false });
+    this.form.patchValue(correctedRequest);
   }
 }

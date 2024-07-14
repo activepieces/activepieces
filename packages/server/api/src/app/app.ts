@@ -82,6 +82,7 @@ import { platformModule } from './platform/platform.module'
 import { platformService } from './platform/platform.service'
 import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
+import { requestWriterModule } from './request-writer/request-writer.module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tagsModule } from './tags/tags-module'
 import { platformUserModule } from './user/platform/platform-user-module'
@@ -206,7 +207,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(stepFileModule)
     await app.register(userModule)
     await app.register(authenticationModule)
-    await app.register(copilotModule)
+    await app.register(copilotModule),
+    await app.register(requestWriterModule),
     await app.register(platformModule)
     await app.register(formModule)
     await app.register(tagsModule)
