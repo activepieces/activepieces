@@ -120,7 +120,7 @@ export class AlertsTableComponent implements OnInit {
       .pipe(
         tap((isAdmin) => {
           if (!isAdmin) {
-            this.notificationControl.disable();
+            this.notificationControl.disable({ emitEvent: false });
           }
         })
       );
