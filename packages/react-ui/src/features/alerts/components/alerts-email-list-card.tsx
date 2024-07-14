@@ -27,7 +27,7 @@ const fetchData = async () => {
 export default function AlertsEmailsCard() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { data, isLoading, isError, isSuccess } = useQuery<
+  const { data, isLoading, isError, isSuccess, refetch } = useQuery<
     Alert[],
     Error,
     Alert[]
@@ -55,12 +55,6 @@ export default function AlertsEmailsCard() {
     },
   });
 
-  const clearCache = () => {
-    queryClient.invalidateQueries({
-      queryKey: ['alerts-email-list'],
-      exact: true,
-    });
-  };
 
   return (
     <Card className="w-full">
@@ -95,12 +89,12 @@ export default function AlertsEmailsCard() {
                   className="size-8 p-0"
                   onClick={() => deleteMutation.mutate(alert)}
                 >
-                  <Trash className="bg-destructive-500 size-4" />
+                  <Trash className="bg-destructive size-4" />
                 </Button>
               </div>
             ))}
         </div>
-        <AddAlertEmailDialog onAdd={clearCache} />
+        <AddAlertEmailDialog onAdd={() => refetch()} />
       </CardContent>
     </Card>
   );

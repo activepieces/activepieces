@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import React from 'react';
 
 type AlertOptionsProps = {
@@ -13,14 +14,17 @@ const AlertOption = React.memo(
     return (
       <div
         onClick={onClick}
-        className={`-mx-2 flex  cursor-pointer items-center space-x-4 rounded-md p-2 transition-all ${
-          isActive ? 'bg-accent text-accent-foreground' : ''
+        className={`-mx-2 flex cursor-pointer items-center space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground ${
+          isActive ? 'bg-secondary text-secondary-foreground' : ''
         }`}
       >
         {icon}
-        <div className="space-y-1">
+        <div className="space-y-1 flex-grow">
           <p className="text-sm font-medium leading-none">{title}</p>
           <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        <div>
+          {isActive && <Check className="mr-2 size-4 text-muted-foreground" />}
         </div>
       </div>
     );
