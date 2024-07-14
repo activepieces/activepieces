@@ -1,18 +1,25 @@
 import { DataTable, RowDataWithActions } from "@/components/ui/data-table"
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 import { authenticationSession } from "@/features/authentication/lib/authentication-session"
-import { Issue } from "@activepieces/ee-shared"
+import { PopulatedIssue } from "@activepieces/ee-shared"
 import { ColumnDef } from "@tanstack/react-table"
 import { issuesApi } from "../api/issues-api"
 import { Button } from "@/components/ui/button"
 import { formatUtils } from "@/lib/utils"
+import { Check } from "lucide-react"
 
-const columns: ColumnDef<RowDataWithActions<Issue>>[] = [
+// TODO implement permissions here when done 
+const handleMarkAsResolved = async (issueId: string, deleteRow: () => void) => {
+    await issuesApi.resolve(issueId);
+    deleteRow();
+}
+
+const columns: ColumnDef<RowDataWithActions<PopulatedIssue>>[] = [
     {
         accessorKey: "flowName",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="FlowName" />,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Flow Name" />,
         cell: ({ row }) => {
-            return <div className="text-left">{row.original.flowId}</div>
+            return <div className="text-left">{row.original.flowDisplayName}</div>
         },
     },
     {
@@ -42,8 +49,9 @@ const columns: ColumnDef<RowDataWithActions<Issue>>[] = [
         cell: ({ row }) => {
             return (
                 <div className="flex items-end justify-end">
-                    <Button size={"sm"} onClick={() => row.original.delete()}>
-                        Mark as Resolved
+                    <Button className="gap-2" size={"sm"} onClick={() => handleMarkAsResolved(row.original.id, row.original.delete)}>
+                    <Check className="h-4 w-4" />
+                    Mark as Resolved
                     </Button>
                 </div>
             )
@@ -51,7 +59,15 @@ const columns: ColumnDef<RowDataWithActions<Issue>>[] = [
     }
 ]
 
-const fetchData = async (pagination: { cursor?: string, limit: number }) => {
+const fetchData = async (queryParams: URLSearchParams) => {
+    const pagination: {
+        cursor?: string
+        limit?: number
+    } = {
+        cursor: queryParams.get('cursor') ?? undefined,
+        limit: queryParams.get('limit') ? Number(queryParams.get('limit')) : 10
+    }
+
     return issuesApi.list({
         projectId: authenticationSession.getProjectId(),
         cursor: pagination.cursor,

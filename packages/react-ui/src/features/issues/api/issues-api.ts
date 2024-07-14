@@ -1,10 +1,17 @@
 import { api } from "@/lib/api";
-import { Issue, ListIssuesParams } from "@activepieces/ee-shared";
+import { IssueStatus, ListIssuesParams, PopulatedIssue, UpdateIssueRequestBody } from "@activepieces/ee-shared";
 import { SeekPage } from "@activepieces/shared";
 
 
 export const issuesApi = {
-    list(request: ListIssuesParams): Promise<SeekPage<Issue>> {
-        return api.get<SeekPage<Issue>>('/v1/issues', request);
+    list(request: ListIssuesParams): Promise<SeekPage<PopulatedIssue>> {
+        return api.get<SeekPage<PopulatedIssue>>('/v1/issues', request);
     },
+    resolve(issueId: string) {
+        const body: UpdateIssueRequestBody = {
+            status: IssueStatus.RESOLEVED
+        }
+
+        return api.post<void>(`/v1/issues/${issueId}`,  body);
+    }
 }
