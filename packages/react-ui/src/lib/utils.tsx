@@ -1,26 +1,26 @@
-import { Type } from "@sinclair/typebox";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { FormatRegistry } from '@sinclair/typebox'
+import { DefaultErrorFunction, SetErrorFunction } from "@sinclair/typebox/errors";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export enum ValidationFormats {
-  EMAIL = 'email',
-}
+const EMAIL_REGEX: string = "^[a-zA-Z0-9_.+]+(?<!^[0-9]*)@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$";
 
-let globalFormatsAdded: boolean = false;
+let typesFormatsAdded: boolean = false;
 
-if (!globalFormatsAdded) {
-  const EMAIL_REGEX: string = "^[a-zA-Z0-9_.+]+(?<!^[0-9]*)@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$";
-  FormatRegistry.Set(ValidationFormats.EMAIL, (value) => EMAIL_REGEX.match(value) !== null);
-  globalFormatsAdded = true;
+if (!typesFormatsAdded) {
+  SetErrorFunction((error) => {
+    return error?.schema?.errorMessage ?? DefaultErrorFunction(error);
+   });
+   typesFormatsAdded = true;
+  
 }
 
 
 export const formatUtils = {
+  EMAIL_REGEX,
   convertEnumToHumanReadable(str: string) {
     const words = str.split('_');
     return words.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLocaleLowerCase()).join(' ');

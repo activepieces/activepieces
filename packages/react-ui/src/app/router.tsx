@@ -1,5 +1,4 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
-import { SignInForm } from "../app/routes/sign-in";
 import { authenticationSession } from "../features/authentication/lib/authentication-session";
 import AlertsPage from "./routes/settings/alerts";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -12,6 +11,8 @@ import IssuesPage from "./routes/issues";
 import { FlowBuilderPage } from "./routes/flows/id";
 import FlowsRunPage from "./routes/runs";
 import { FlowsPage } from "../app/routes/flows";
+import NotFoundPage from "./routes/404-page";
+import { SignInPage } from "./routes/sign-in";
 
 const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
     if (!authenticationSession.isLoggedIn()) {
@@ -78,7 +79,7 @@ export const router = createBrowserRouter([
     {
         path: "/sign-in",
         element: (
-            <SignInForm />
+            <SignInPage />
         ),
     },
     {
@@ -128,5 +129,13 @@ export const router = createBrowserRouter([
                 </Sidebar>
             </AllowOnlyLoggedIn>
         ),
+    },
+    {
+        path: "/*",
+        element: <Navigate to="/404" replace />,
+    },
+    {
+        path: "/404",
+        element: <NotFoundPage />,
     }
 ]);

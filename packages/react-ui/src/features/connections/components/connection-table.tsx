@@ -91,6 +91,7 @@ const fetchData = async (queryParams: URLSearchParams) => {
         projectId: authenticationSession.getProjectId(),
         cursor: queryParams.get('cursor') ?? undefined,
         limit: parseInt(queryParams.get('limit') ?? '10'),
+        status: queryParams.getAll('status') as AppConnectionStatus[],
     })
 }
 

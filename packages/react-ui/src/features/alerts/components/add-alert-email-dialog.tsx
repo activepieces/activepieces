@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
-    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
@@ -12,23 +11,73 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus } from "lucide-react"
-import React from "react"
+import React, { useState } from "react"
 import { Static, Type } from "@sinclair/typebox"
 import { typeboxResolver } from "@hookform/resolvers/typebox"
-import { SubmitHandler, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { FormField, FormItem, Form, FormMessage } from "@/components/ui/form"
+import { formatUtils } from "@/lib/utils"
+import { authenticationSession } from "@/features/authentication/lib/authentication-session"
+import { alertsApi } from "../lib/alerts-api"
+import { useMutation } from "@tanstack/react-query"
+import { Alert, AlertChannel } from "@activepieces/ee-shared"
+import { INTERNAL_ERROR_TOAST, toast } from "@/components/ui/use-toast"
+import { api } from "@/lib/api"
+import { HttpStatusCode } from "axios"
 
 const FormSchema = Type.Object({
-    email: Type.String({})
+    email: Type.String({
+        errorMessage: "Please enter a valid email address",
+        pattern: formatUtils.EMAIL_REGEX
+    })
 });
 
 type FormSchema = Static<typeof FormSchema>
 
 type AddAlertEmailDialogProps = {
-    onSubmit: SubmitHandler<FormSchema>
+    onAdd: (alert: Alert) => void
 }
+const AddAlertEmailDialog = React.memo(({ onAdd }: AddAlertEmailDialogProps) => {
 
-const AddAlertEmailDialog = React.memo(({ onSubmit }: AddAlertEmailDialogProps) => {
+    const [open, setOpen] = useState(false);
+
+    const { mutate, isPending } = useMutation<Alert, Error, { email: string }>({
+        mutationFn: async (params) => alertsApi.create({
+            receiver: params.email,
+            projectId: authenticationSession.getProjectId(),
+            channel: AlertChannel.EMAIL,
+        }),
+        onSuccess: (data) => {
+            onAdd(data)
+            toast({
+                title: "Success",
+                description: 'Your changes have been saved.',
+                duration: 3000,
+            })
+            setOpen(false);
+        },
+        onError: (error) => {
+            if (api.isError(error)) {
+                switch (error.response?.status) {
+                    case HttpStatusCode.Conflict: {
+                        toast({
+                            title: "Error",
+                            description: 'This email is already being added.',
+                            duration: 3000,
+                            variant: 'destructive',
+                        })
+                        break;
+                    }
+                    default: {
+                        console.log(error);
+                        toast(INTERNAL_ERROR_TOAST)
+                        break;
+                    }
+                }
+            }
+            setOpen(true);
+        },
+    });
 
     const form = useForm<FormSchema>({
         resolver: typeboxResolver(FormSchema),
@@ -36,7 +85,7 @@ const AddAlertEmailDialog = React.memo(({ onSubmit }: AddAlertEmailDialogProps) 
     })
 
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="outline" className="flex items-center space-x-2 mt-4">
                     <Plus className="h-4 w-4" />
@@ -50,19 +99,18 @@ const AddAlertEmailDialog = React.memo(({ onSubmit }: AddAlertEmailDialogProps) 
                         Enter the email address to receive alerts.
                     </DialogDescription>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-">
+                        <form onSubmit={form.handleSubmit((data) => mutate(data), () => {
+                            setOpen(true);
+                        })} className="grid gap-">
                             <FormField control={form.control} name="email" render={({ field }) => (
                                 <FormItem className="grid gap-3">
                                     <Label htmlFor="email">Email</Label>
-                                    <Input {...field} id="email" type="email" placeholder="gilfoyle@piedpiper.com" />
+                                    <Input {...field} id="email" type="text" placeholder="gilfoyle@piedpiper.com" />
                                     <FormMessage />
                                 </FormItem>
                             )} />
-
                             <DialogFooter>
-                                <DialogClose asChild>
-                                    <Button type="submit">Add Email</Button>
-                                </DialogClose>
+                                <Button type="submit" loading={isPending}>Add Email</Button>
                             </DialogFooter>
                         </form>
                     </Form>

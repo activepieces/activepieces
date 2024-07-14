@@ -42,29 +42,14 @@ export default function AlertsEmailsCard() {
             console.log(error);
         },
     });
+    
+    const clearCache = () => {
+        queryClient.invalidateQueries({
+            queryKey: ['alerts-email-list'],
+            exact: true,
+        });
+    }
 
-    const addMutation = useMutation<Alert, Error, { email: string }>({
-        mutationFn: async (params) => alertsApi.create({
-            receiver: params.email,
-            projectId: authenticationSession.getProjectId(),
-            channel: AlertChannel.EMAIL,
-        }),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ['alerts-email-list'],
-                exact: true,
-            });
-            toast({
-                title: "Success",
-                description: 'Your changes have been saved.',
-                duration: 3000,
-            })
-        },
-        onError: (error) => {
-            toast(INTERNAL_ERROR_TOAST)
-            console.log(error);
-        },
-    });
     return (
         <Card className="w-full">
             <CardHeader>
@@ -89,7 +74,7 @@ export default function AlertsEmailsCard() {
                         </div>
                     ))}
                 </div>
-                <AddAlertEmailDialog onSubmit={(data) => addMutation.mutate(data)} />
+                <AddAlertEmailDialog onAdd={clearCache} />
             </CardContent>
         </Card>
     );
