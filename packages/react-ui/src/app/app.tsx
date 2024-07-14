@@ -7,7 +7,6 @@ import { router } from './router';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { DefaultErrorFunction, SetErrorFunction } from "@sinclair/typebox/errors";
-import { NotificationProvider } from '@/contexts/notifications';
 
 const queryClient = new QueryClient();
 let typesFormatsAdded = false;
@@ -21,7 +20,6 @@ if (!typesFormatsAdded) {
 
 export function App() {
   return (
-    <NotificationProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -30,7 +28,6 @@ export function App() {
           </ThemeProvider>
         </TooltipProvider>
       </QueryClientProvider>
-    </NotificationProvider>
   );
 }
 

@@ -17,7 +17,7 @@ import { theme } from "@/lib/theme"
 import { UserSettingsDropdown } from "./user-settings-dropdown"
 import { ProjectSwitcher } from "@/features/projects/components/project-switcher"
 import { Button } from "../ui/button"
-import { useIssuesNotification } from "@/features/issues/hooks/useIssueNotification"
+import { issueHooks } from "@/features/issues/hooks/issue-hooks"
 
 type Link = {
     icon: React.ReactNode
@@ -55,7 +55,7 @@ const CustomTooltipLink = ({ to, label, Icon, extraClasses, notifcation }: {
 };
 
 export function Sidebar({ children }: { children: React.ReactNode }) {
-    const showIssuesNotification = useIssuesNotification()
+    const { data: showIssuesNotification } = issueHooks.useIssuesNotification()
 
     return (
         <div className="flex min-h-screen w-full bg-muted/40">

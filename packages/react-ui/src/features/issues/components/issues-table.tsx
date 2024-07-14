@@ -7,57 +7,8 @@ import { issuesApi } from "../api/issues-api"
 import { Button } from "@/components/ui/button"
 import { formatUtils } from "@/lib/utils"
 import { Check } from "lucide-react"
-
-// TODO implement permissions here when done 
-const handleMarkAsResolved = async (issueId: string, deleteRow: () => void) => {
-    await issuesApi.resolve(issueId);
-    deleteRow();
-}
-
-const columns: ColumnDef<RowDataWithActions<PopulatedIssue>>[] = [
-    {
-        accessorKey: "flowName",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Flow Name" />,
-        cell: ({ row }) => {
-            return <div className="text-left">{row.original.flowDisplayName}</div>
-        },
-    },
-    {
-        accessorKey: "count",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Count" />,
-        cell: ({ row }) => {
-            return <div className="text-left">{row.original.count}</div>
-        },
-    },
-    {
-        accessorKey: "created",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="First Seen" />,
-        cell: ({ row }) => {
-            return <div className="text-left">{formatUtils.formatDate(new Date(row.original.created))}</div>
-        },
-    },
-    {
-        accessorKey: "lastOccurrence",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Last Seen" />,
-        cell: ({ row }) => {
-            return <div className="text-left">{formatUtils.formatDate(new Date(row.original.lastOccurrence))}</div>
-        },
-    },
-    {
-        accessorKey: "actions",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
-        cell: ({ row }) => {
-            return (
-                <div className="flex items-end justify-end">
-                    <Button className="gap-2" size={"sm"} onClick={() => handleMarkAsResolved(row.original.id, row.original.delete)}>
-                    <Check className="h-4 w-4" />
-                    Mark as Resolved
-                    </Button>
-                </div>
-            )
-        },
-    }
-]
+import { toast } from "@/components/ui/use-toast"
+import { issueHooks } from "../hooks/issue-hooks"
 
 const fetchData = async (queryParams: URLSearchParams) => {
     const pagination: {
@@ -76,6 +27,65 @@ const fetchData = async (queryParams: URLSearchParams) => {
 }
 
 export default function IssuesTable() {
+    const { refetch } = issueHooks.useIssuesNotification()
+
+    // TODO implement permissions here when done 
+    const handleMarkAsResolved = async (flowDisplayName: string, issueId: string, deleteRow: () => void) => {
+        deleteRow();
+        await issuesApi.resolve(issueId);
+        refetch();
+        toast({
+            title: "Success",
+            description: `Issues in ${flowDisplayName} is marked as resolved.`,
+            duration: 3000,
+        })
+    }
+
+    const columns: ColumnDef<RowDataWithActions<PopulatedIssue>>[] = [
+        {
+            accessorKey: "flowName",
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Flow Name" />,
+            cell: ({ row }) => {
+                return <div className="text-left">{row.original.flowDisplayName}</div>
+            },
+        },
+        {
+            accessorKey: "count",
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Count" />,
+            cell: ({ row }) => {
+                return <div className="text-left">{row.original.count}</div>
+            },
+        },
+        {
+            accessorKey: "created",
+            header: ({ column }) => <DataTableColumnHeader column={column} title="First Seen" />,
+            cell: ({ row }) => {
+                return <div className="text-left">{formatUtils.formatDate(new Date(row.original.created))}</div>
+            },
+        },
+        {
+            accessorKey: "lastOccurrence",
+            header: ({ column }) => <DataTableColumnHeader column={column} title="Last Seen" />,
+            cell: ({ row }) => {
+                return <div className="text-left">{formatUtils.formatDate(new Date(row.original.lastOccurrence))}</div>
+            },
+        },
+        {
+            accessorKey: "actions",
+            header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
+            cell: ({ row }) => {
+                return (
+                    <div className="flex items-end justify-end">
+                        <Button className="gap-2" size={"sm"} onClick={() => handleMarkAsResolved(row.original.flowDisplayName, row.original.id, row.original.delete)}>
+                            <Check className="h-4 w-4" />
+                            Mark as Resolved
+                        </Button>
+                    </div>
+                )
+            },
+        }
+    ]
+
     return (
         <div className="container mx-auto py-10 flex-col">
             <div className="flex mb-4">
