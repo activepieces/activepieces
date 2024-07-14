@@ -59,7 +59,7 @@ import { InputFormCore } from '../input-form-core';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if (deps$ | async; as deps) { @if (deps.currentStep?.type ===
+    @if (deps$ | async; as deps) { @if(deps.currentStep?.type ===
     ActionType.PIECE && deps.currentStep?.settings.pieceName ===
     "@activepieces/piece-http" && deps.currentStep?.settings.actionName ===
     "send_request") {
@@ -192,7 +192,6 @@ export class PieceInputFormComponent extends InputFormCore {
     }).pipe(
       tap((res) => {
         if (res.currentStep?.type === ActionType.PIECE) {
-          console.log(res, 'Res');
           this.actionErrorHandlingFormControl.setValue(
             res.currentStep.settings.errorHandlingOptions || {}
           );
