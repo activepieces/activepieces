@@ -79,7 +79,10 @@ export default function IssuesTable() {
     return (
         <div className="container mx-auto py-10 flex-col">
             <div className="flex mb-4">
-                <h1 className="text-3xl font-bold">Issues </h1>
+                <div className="flex flex-col">
+                    <h1 className="text-3xl font-bold">Issues </h1>
+                    <span className="text-md text-muted-foreground">Track failed runs grouped by flow name, and mark them as resolved when fixed.</span>
+                </div>
                 <div className="ml-auto">
                 </div>
             </div>
