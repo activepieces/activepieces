@@ -9,7 +9,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { DefaultErrorFunction, SetErrorFunction } from "@sinclair/typebox/errors";
 
 const queryClient = new QueryClient();
-let typesFormatsAdded: boolean = false;
+let typesFormatsAdded = false;
 
 if (!typesFormatsAdded) {
   SetErrorFunction((error) => {
@@ -20,7 +20,6 @@ if (!typesFormatsAdded) {
 
 export function App() {
   return (
-    <>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -29,7 +28,6 @@ export function App() {
           </ThemeProvider>
         </TooltipProvider>
       </QueryClientProvider>
-    </>
   );
 }
 

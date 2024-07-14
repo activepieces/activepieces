@@ -60,7 +60,6 @@ export function DataTable<TData, TValue>({
     });
 
     useEffect(() => {
-        console.log("ONCE");
         filters?.forEach(filter => {
             const column = table.getColumn(filter.accessorKey);
             const values = searchParams.getAll(filter.accessorKey)
