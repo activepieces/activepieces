@@ -13,6 +13,7 @@ import FlowsRunPage from "./routes/runs";
 import { FlowsPage } from "../app/routes/flows";
 import NotFoundPage from "./routes/404-page";
 import { SignInPage } from "./routes/sign-in";
+import { ResetPasswordPage } from "./routes/reset-password";
 
 const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
     if (!authenticationSession.isLoggedIn()) {
@@ -74,6 +75,12 @@ export const router = createBrowserRouter([
         path: "/settings",
         element: (
             <Navigate to="/settings/alerts" />
+        ),
+    },
+    {
+        path: "/reset-password",
+        element: (
+            <ResetPasswordPage />
         ),
     },
     {
