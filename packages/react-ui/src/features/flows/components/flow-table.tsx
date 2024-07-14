@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button"
 import { Link, useNavigate } from "react-router-dom"
-import { DataTable, RowDataWithActions } from "@/components/ui/data-table"
+import { DataTable, DataTableFilter, RowDataWithActions } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
-import { PopulatedFlow } from "@activepieces/shared"
+import { FlowStatus, PopulatedFlow } from "@activepieces/shared"
 import { PieceIconList } from "@/features/pieces/components/piece-icon-list"
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 import FlowStatusToggle from "@/features/flows/components/flow-status-toggle"
@@ -10,6 +10,7 @@ import { flowsApi } from "@/features/flows/lib/flows-api"
 import { authenticationSession } from "@/features/authentication/lib/authentication-session"
 import { formatUtils } from "@/lib/utils"
 import { FolderBadge } from "@/features/folders/component/folder-badge"
+import { CheckIcon } from "lucide-react"
 
 const columns: ColumnDef<RowDataWithActions<PopulatedFlow>>[] = [
     {
@@ -57,11 +58,27 @@ const columns: ColumnDef<RowDataWithActions<PopulatedFlow>>[] = [
 
 ]
 
-async function fetchData(pagination: { cursor?: string, limit: number }) {
+const filters: DataTableFilter[] = [
+    {
+        type: 'select',
+        title: 'Status',
+        accessorKey: 'status',
+        options: Object.values(FlowStatus).map(status => {
+            return {
+                label: formatUtils.convertEnumToHumanReadable(status),
+                value: status
+            }
+        }),
+        icon: CheckIcon
+    }
+]
+
+async function fetchData(queryParams: URLSearchParams) {
     return flowsApi.list({
         projectId: authenticationSession.getProjectId(),
-        cursor: pagination.cursor,
-        limit: pagination.limit,
+        cursor: queryParams.get('cursor') ?? undefined,
+        limit: parseInt(queryParams.get('limit') ?? '10'),
+        status: (queryParams.getAll('status') ?? []) as FlowStatus[],
     })
 }
 
@@ -79,7 +96,7 @@ const FlowsTable = () => {
                     </Link>
                 </div>
             </div>
-            <DataTable columns={columns} fetchData={fetchData} onRowClick={(row) => navigate(`/flows/${row.id}`)} />
+            <DataTable columns={columns} fetchData={fetchData} filters={filters} onRowClick={(row) => navigate(`/flows/${row.id}`)} />
         </div>
     )
 }

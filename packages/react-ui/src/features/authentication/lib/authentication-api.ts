@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import { AuthenticationResponse, FederatedAuthnLoginResponse, SignInRequest, ThirdPartyAuthnProviderEnum } from "@activepieces/shared";
+import { ResetPasswordRequestBody } from "@activepieces/ee-shared";
 
 export const authenticationApi = {
     signIn(request: SignInRequest) {
@@ -9,5 +10,8 @@ export const authenticationApi = {
         return api.get<FederatedAuthnLoginResponse>(`/v1/authn/federated/login`, {
             providerName
         });
+    },
+    resetPassword(request: ResetPasswordRequestBody) {
+        return api.post<void>('/v1/authentication/reset-password', request);
     }
 }
