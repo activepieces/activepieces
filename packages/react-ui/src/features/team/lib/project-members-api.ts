@@ -7,7 +7,6 @@ import { SeekPage } from '@activepieces/shared';
 
 export const projectMembersApi = {
   list(request: ListProjectMembersRequestQuery) {
-    console.log(request);
     return api.get<SeekPage<ProjectMemberWithUser>>(
       '/v1/project-members',
       request

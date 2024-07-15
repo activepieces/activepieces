@@ -8,7 +8,7 @@ import {
   NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { PopulatedFlow } from '@activepieces/shared';
 
@@ -22,8 +22,10 @@ type FlowCanvasProps = {
 };
 
 const FlowCanvas = ({ flow }: FlowCanvasProps) => {
-  const graph = flowCanvasUtils.convertFlowVersionToGraph(flow.version);
-  console.log(graph);
+  const graph =  useMemo(() => {
+    return flowCanvasUtils.convertFlowVersionToGraph(flow.version);
+  }, [flow.version])
+
   const nodeTypes = useMemo(() => ({ stepNode: ApStepNode }), []);
   const edgeTypes = useMemo(() => ({ apEdge: ApEdgeWithButton }), []);
 
@@ -40,6 +42,8 @@ const FlowCanvas = ({ flow }: FlowCanvasProps) => {
       setEdges((eds) => applyEdgeChanges(changes, eds)),
     []
   );
+
+
 
   return (
     <div className="size-full grow">
