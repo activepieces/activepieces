@@ -3,6 +3,15 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/razorpay/src",
   "projectType": "library",
+  "release": {
+    "version": {
+      "generatorOptions": {
+        "packageRoot": "dist/{projectRoot}",
+        "currentVersionResolver": "git-tag"
+      }
+    }
+  },
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -21,11 +30,10 @@
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
-    "publish": {
-      "command": "node tools/scripts/publish.mjs pieces-razorpay {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
     },
     "lint": {
       "executor": "@nx/eslint:lint",

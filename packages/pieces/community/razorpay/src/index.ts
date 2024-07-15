@@ -1,7 +1,7 @@
-import { createCustomApiCallAction } from "@activepieces/pieces-common";
-import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { generateRazorpayAuthHeader, RazorpayCredentials, razorpayURL } from "./lib/common/utils";
-    
+    import { createCustomApiCallAction } from "@activepieces/pieces-common";
+    import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
+    import { generateRazorpayAuthHeader, RazorpayCredentials, razorpayURL } from "./lib/common/utils";
+    import { createPaymentlink } from "./lib/actions/create-payment-link";
 
     export const razorpayAuth = PieceAuth.CustomAuth({
       description: `
@@ -25,20 +25,20 @@ import { generateRazorpayAuthHeader, RazorpayCredentials, razorpayURL } from "./
           }),
       }
   })
-  
-
+    
     export const razorpay = createPiece({
       displayName: "Razorpay",
       auth: razorpayAuth,
       minimumSupportedRelease: '0.20.0',
       logoUrl: "https://cdn.activepieces.com/pieces/razorpay.png",
-      authors: [],
+      authors: ['drona2938'],
       actions: [
         createCustomApiCallAction({
           baseUrl: () => razorpayURL.apiURL,
           auth: razorpayAuth,
           authMapping: (auth) => generateRazorpayAuthHeader(auth as RazorpayCredentials),
         }),
+        createPaymentlink
       ],
       triggers: [],
     });
