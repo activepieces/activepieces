@@ -87,7 +87,7 @@ const DeleteProjectMemberRequest = {
         tags: ['project-members'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+            [StatusCodes.NO_CONTENT]: Type.Never(),
         },
         params: Type.Object({
             id: Type.String(),

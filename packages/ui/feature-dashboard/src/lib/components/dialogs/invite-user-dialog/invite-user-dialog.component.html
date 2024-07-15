@@ -95,18 +95,18 @@
       Close
     </ap-button>
     }@else {
+      <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic"
+      [disabled]="(loading$ | async) || false" i18n>
+      Cancel
+    </ap-button>
     <ap-button btnSize="default" type="submit" (click)="submit()" [loading]="(loading$ | async) || false"
       btnColor="primary" i18n>
       Invite
     </ap-button>
-    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic"
-      [disabled]="(loading$ | async) || false" i18n>
-      Cancel
-    </ap-button>
+    
     }
   </div>
 </mat-dialog-actions>
-
 }
 }
 

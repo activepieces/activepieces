@@ -1,22 +1,60 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { piecesHooks } from "../lib/pieces-hook";
+import { VariantProps, cva } from 'class-variance-authority';
+import React from 'react';
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
-export function PieceIcon({ pieceName }: { pieceName: string }) {
+import { piecesHooks } from '../lib/pieces-hook';
 
-    const { data, isSuccess } = piecesHooks.usePiece({ name: pieceName, version: undefined });
+const pieceIconVariants = cva(
+  'flex items-center justify-center bg-accent p-2',
+  {
+    variants: {
+      circle: {
+        true: 'rounded-full',
+      },
+      size: {
+        md: 'size-[36px]',
+      },
+      border: {
+        true: 'border-dividers border border-solid',
+        false: '',
+      },
+    },
+    defaultVariants: {},
+  }
+);
 
-    return <>
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <div className="p-2 bg-accent rounded-full border border-solid border-dividers flex items-center justify-center w-[36px] h-[36px]">
-                    {isSuccess && data ? <img src={data?.logoUrl} className="object-contain" /> : null}
-                </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-                {isSuccess && data ? data?.displayName : null}
-            </TooltipContent>
-        </Tooltip>
-
-    </>
+interface PieceIconCircleProps extends VariantProps<typeof pieceIconVariants> {
+  pieceName: string;
 }
+
+const PieceIcon = React.memo(
+  ({ pieceName, border, size, circle }: PieceIconCircleProps) => {
+    const { data, isSuccess } = piecesHooks.usePiece({
+      name: pieceName,
+      version: undefined,
+    });
+
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={pieceIconVariants({ border, size, circle })}>
+            {isSuccess && data ? (
+              <img src={data?.logoUrl} className="object-contain" />
+            ) : null}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {isSuccess && data ? data?.displayName : null}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+);
+
+PieceIcon.displayName = 'PieceIcon';
+export { PieceIcon };

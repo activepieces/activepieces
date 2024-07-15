@@ -1,12 +1,8 @@
-import { SignInForm } from "@/features/authentication/components/sign-in-form"
+import { SignInForm } from '@/features/authentication/components/sign-in-form';
 
 const SignInPage: React.FC = () => {
-  return (
-    <>
-      <SignInForm />
-    </>
-  )
-}
-SignInPage.displayName = "SignInPage"
+  return <SignInForm />;
+};
+SignInPage.displayName = 'SignInPage';
 
-export { SignInPage }
+export { SignInPage };

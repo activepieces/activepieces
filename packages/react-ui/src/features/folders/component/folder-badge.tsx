@@ -1,15 +1,14 @@
-import { Badge } from "@/components/ui/badge"
-
+import { Badge } from '@/components/ui/badge';
 
 type FolderBadgeProps = {
-    folderId: string
-}
+  folderId: string;
+};
 
-const FolderBadge = ({folderId}: FolderBadgeProps) => {
-    return (
-        <Badge variant={'outline'}>
-            <span>Work</span>
-        </Badge>
-    )
-}
-export { FolderBadge }
+const FolderBadge = ({ folderId }: FolderBadgeProps) => {
+  return (
+    <Badge variant={'outline'}>
+      <span>Work</span>
+    </Badge>
+  );
+};
+export { FolderBadge };
