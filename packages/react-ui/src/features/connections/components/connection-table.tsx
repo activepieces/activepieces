@@ -3,7 +3,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { formatUtils } from "@/lib/utils";
 import { authenticationSession } from "@/features/authentication/lib/authentication-session";
 import { DataTable, DataTableFilter, RowDataWithActions } from "@/components/ui/data-table";
-import { AppConnection, AppConnectionStatus, ListAppConnectionsRequestQuery } from "@activepieces/shared";
+import { AppConnection, AppConnectionStatus } from "@activepieces/shared";
 import { Button } from "@/components/ui/button";
 import { CheckIcon, Trash } from "lucide-react"
 import { appConnectionsApi } from "@/features/connections/lib/app-connections-api";
@@ -59,8 +59,12 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
                     <ConfirmationDeleteDialog
                         title={`Delete ${row.original.name} connection`}
                         message="Are you sure you want to delete this connection? all steps using it will fail."
-                        onClose={() => { }}
-                        onConfirm={() => { }}>
+                        onClose={() => {
+                            //ignore
+                        }}
+                        onConfirm={() => {
+                            //ignore
+                        }}  >
                         <Button variant="ghost" className="h-8 w-8 p-0">
                             <Trash className="h-4 w-4" />
                         </Button>
