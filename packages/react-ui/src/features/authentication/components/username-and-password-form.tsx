@@ -1,4 +1,8 @@
-import { AuthenticationResponse, SignInRequest } from '@activepieces/shared';
+import {
+  AuthenticationResponse,
+  SignInRequest,
+  SignUpRequest,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -17,6 +21,12 @@ import { Label } from '@/components/ui/label';
 import { HttpError, api } from '@/lib/api';
 
 const SignInFormsSchema = Type.Object({
+  firstName: Type.String({
+    errorMessage: 'First name is required',
+  }),
+  lastName: Type.String({
+    errorMessage: 'Last name is required',
+  }),
   email: Type.String({
     errorMessage: 'Email is required',
   }),
@@ -27,7 +37,9 @@ const SignInFormsSchema = Type.Object({
 
 type SignInFormsSchema = Static<typeof SignInFormsSchema>;
 
-const UsernameAndPasswordForm: React.FC = React.memo(() => {
+const UsernameAndPasswordForm: React.FC<{
+  isSignUp: boolean;
+}> = React.memo(({ isSignUp }) => {
   const form = useForm<SignInFormsSchema>({
     resolver: typeboxResolver(SignInFormsSchema),
   });
@@ -39,7 +51,7 @@ const UsernameAndPasswordForm: React.FC = React.memo(() => {
     HttpError,
     SignInRequest
   >({
-    mutationFn: authenticationApi.signIn,
+    mutationFn: isSignUp ? authenticationApi.signUp : authenticationApi.signIn,
     onSuccess: (data) => {
       authenticationSession.saveResponse(data);
       navigate('/flows');
@@ -65,7 +77,7 @@ const UsernameAndPasswordForm: React.FC = React.memo(() => {
     },
   });
 
-  const onSubmit: SubmitHandler<SignInRequest> = (data) => {
+  const onSubmit: SubmitHandler<SignInRequest | SignUpRequest> = (data) => {
     form.setError('root.serverError', {
       message: undefined,
     });
@@ -75,7 +87,47 @@ const UsernameAndPasswordForm: React.FC = React.memo(() => {
   return (
     <>
       <Form {...form}>
-        <form className="mt-4 grid space-y-4">
+        <form className="grid space-y-4">
+          <div
+            className={`flex flex-row gap-2 ${isSignUp ? 'mt-4 ' : 'hidden'}`}
+          >
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem className="grid space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    {...field}
+                    required
+                    id="firstName"
+                    type="text"
+                    placeholder="John"
+                    className="rounded-sm"
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem className="grid space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    {...field}
+                    required
+                    id="lastName"
+                    type="text"
+                    placeholder="Doe"
+                    className="rounded-sm"
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           <FormField
             control={form.control}
             name="email"
@@ -139,7 +191,7 @@ const UsernameAndPasswordForm: React.FC = React.memo(() => {
       <div className="mt-4 text-center text-sm">
         Don&apos;t have an account?{' '}
         <Link
-          to="/signup"
+          to="/sign-up"
           className="text-muted-foreground hover:text-primary text-sm transition-all duration-200"
         >
           Sign up

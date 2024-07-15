@@ -21,7 +21,7 @@ const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
 };
 
-const ThirdPartyLogin = React.memo(() => {
+const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -81,7 +81,7 @@ const ThirdPartyLogin = React.memo(() => {
           }
         >
           <ThirdPartyIcon icon={GoogleIcon} />
-          Sign in with Google
+          Sign {isSignUp ? 'up' : 'in'} with Google
         </Button>
       )}
       {thirdPartyAuthProviders?.github && (
@@ -93,7 +93,7 @@ const ThirdPartyLogin = React.memo(() => {
           }
         >
           <ThirdPartyIcon icon={Github} />
-          Sign in with Github
+          Sign {isSignUp ? 'up' : 'in'} with Github
         </Button>
       )}
     </div>
