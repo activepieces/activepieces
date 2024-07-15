@@ -1,3 +1,4 @@
+import { AuthenticationResponse, SignInRequest } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -6,15 +7,14 @@ import React from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { authenticationApi } from '../lib/authentication-api';
+import { authenticationSession } from '../lib/authentication-session';
+
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { HttpError, api } from '@/lib/api';
-import { AuthenticationResponse, SignInRequest } from '@activepieces/shared';
-
-import { authenticationApi } from '../lib/authentication-api';
-import { authenticationSession } from '../lib/authentication-session';
 
 const SignInFormsSchema = Type.Object({
   email: Type.String({
@@ -34,7 +34,7 @@ const UsernameAndPasswordForm: React.FC = React.memo(() => {
 
   const navigate = useNavigate();
 
-  const mutation = useMutation<
+  const { mutate, isPending } = useMutation<
     AuthenticationResponse,
     HttpError,
     SignInRequest
@@ -69,24 +69,26 @@ const UsernameAndPasswordForm: React.FC = React.memo(() => {
     form.setError('root.serverError', {
       message: undefined,
     });
-    mutation.mutate(data);
+    mutate(data);
   };
 
   return (
     <>
       <Form {...form}>
-        <form className="grid gap-4">
+        <form className="mt-4 grid space-y-4">
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
-              <FormItem className="grid gap-3">
+              <FormItem className="grid space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   {...field}
+                  required
                   id="email"
                   type="text"
-                  placeholder="gilfoyle@piedpiper.com"
+                  placeholder="email@activepieces.com"
+                  className="rounded-sm"
                 />
                 <FormMessage />
               </FormItem>
@@ -96,21 +98,23 @@ const UsernameAndPasswordForm: React.FC = React.memo(() => {
             control={form.control}
             name="password"
             render={({ field }) => (
-              <FormItem className="grid gap-3">
-                <div className="flex items-center">
+              <FormItem className="grid space-y-2">
+                <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
                   <Link
                     to="/forget-password"
-                    className="ml-auto inline-block text-sm underline"
+                    className="text-muted-foreground hover:text-primary text-sm transition-all duration-200"
                   >
                     Forgot your password?
                   </Link>
                 </div>
                 <Input
                   {...field}
+                  required
                   id="password"
                   type="password"
                   placeholder="********"
+                  className="rounded-sm"
                 />
                 <FormMessage />
               </FormItem>
@@ -123,7 +127,8 @@ const UsernameAndPasswordForm: React.FC = React.memo(() => {
           )}
           <Button
             variant="outline"
-            className="w-full"
+            className="bg-primary text-primary-foreground w-full rounded-sm"
+            loading={isPending}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
           >
             Sign in
@@ -133,7 +138,10 @@ const UsernameAndPasswordForm: React.FC = React.memo(() => {
 
       <div className="mt-4 text-center text-sm">
         Don&apos;t have an account?{' '}
-        <Link to="/signup" className="underline">
+        <Link
+          to="/signup"
+          className="text-muted-foreground hover:text-primary text-sm transition-all duration-200"
+        >
           Sign up
         </Link>
       </div>
