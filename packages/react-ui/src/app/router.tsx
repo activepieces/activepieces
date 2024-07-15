@@ -132,7 +132,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/*",
-        element: <Navigate to="/404" replace />,
+        element: <Navigate to="/flows" replace />,
     },
     {
         path: "/404",
