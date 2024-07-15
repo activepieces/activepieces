@@ -1,5 +1,5 @@
 import { ListProjectMembersRequestQuery, ProjectMemberWithUser } from "@activepieces/ee-shared";
-import { SeekPage } from "../../../../../shared/src";
+import { SeekPage } from '@activepieces/shared';
 import { api } from "@/lib/api";
 
 
