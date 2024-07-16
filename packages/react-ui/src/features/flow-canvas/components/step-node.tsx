@@ -12,7 +12,7 @@ const ApStepNode = React.memo(({ data }: { data: Action | Trigger }) => {
 
   return (
     <div className="h-[70px] w-[260px] rounded border border-solid bg-background px-2 ">
-      <div className="g4 flex h-full items-center justify-between gap-4">
+      <div className="flex h-full items-center justify-between gap-4">
         <div className="items-center justify-center">
           <img src={piece?.logoUrl} width="46" height="46" />
         </div>

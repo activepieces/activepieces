@@ -23,7 +23,6 @@ type FlowCanvasProps = {
 
 const FlowCanvas = ({ flow }: FlowCanvasProps) => {
   const graph = flowCanvasUtils.convertFlowVersionToGraph(flow.version);
-  console.log(graph);
   const nodeTypes = useMemo(() => ({ stepNode: ApStepNode }), []);
   const edgeTypes = useMemo(() => ({ apEdge: ApEdgeWithButton }), []);
 

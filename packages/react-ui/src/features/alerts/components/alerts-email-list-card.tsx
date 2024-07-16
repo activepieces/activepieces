@@ -55,7 +55,6 @@ export default function AlertsEmailsCard() {
     },
   });
 
-
   return (
     <Card className="w-full">
       <CardHeader>
@@ -89,7 +88,7 @@ export default function AlertsEmailsCard() {
                   className="size-8 p-0"
                   onClick={() => deleteMutation.mutate(alert)}
                 >
-                  <Trash className="bg-destructive size-4" />
+                  <Trash className="size-4 bg-destructive" />
                 </Button>
               </div>
             ))}

@@ -20,7 +20,7 @@ const pieceIconVariants = cva(
         md: 'size-[36px]',
       },
       border: {
-        true: 'border-dividers border border-solid',
+        true: 'border border-solid',
         false: '',
       },
     },

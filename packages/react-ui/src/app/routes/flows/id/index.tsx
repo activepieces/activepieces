@@ -10,7 +10,8 @@ import {
 import { BuilderNavBar } from '@/features/flow-canvas/components/builder-nav-bar';
 import { FlowCanvas } from '@/features/flow-canvas/components/canvas';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { PieceSelectorList } from '@/features/pieces/components/piece-selector-list';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { AutoFormComponent } from '@/features/properties-form/components/auto-form';
 import { PopulatedFlow } from '@activepieces/shared';
 
 const FlowBuilderPage = () => {
@@ -25,6 +26,11 @@ const FlowBuilderPage = () => {
     queryKey: ['flow', flowId],
     queryFn: () => flowsApi.get(flowId!),
     enabled: !!flowId,
+  });
+
+  const { data: piece } = piecesHooks.usePiece({
+    name: '@activepieces/piece-date-helper',
+    version: '0.0.7',
   });
 
   useEffect(() => {
@@ -46,7 +52,12 @@ const FlowBuilderPage = () => {
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel defaultSize={25}>
-          <PieceSelectorList />
+          {piece && (
+            <AutoFormComponent
+              props={piece.actions['get_current_date'].props}
+              auth={undefined}
+            />
+          )}
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>

@@ -16,7 +16,7 @@ const PieceCardInfo: React.FC<PieceCardInfoProps> = ({ piece }) => {
           className="size-[48px] object-contain"
         />
       </div>
-      <div className="flex h-full grow flex-col gap-1 text-start justify-center">
+      <div className="flex h-full grow flex-col justify-center gap-1 text-start">
         <div className="text-base ">{piece.displayName}</div>
         <div className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
           {piece.description}

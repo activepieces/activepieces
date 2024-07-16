@@ -10,7 +10,7 @@ import {
 
 export const BuilderNavBar = () => {
   return (
-    <div className="items-left flex h-[70px] w-full border-b p-4">
+    <div className="items-start flex h-[70px] w-full border-b p-4">
       <div className="flex h-full  items-center justify-center gap-2">
         <Tooltip>
           <TooltipTrigger asChild>
