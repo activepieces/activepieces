@@ -168,7 +168,7 @@ const UsernameAndPasswordForm: React.FC<{
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
                   <Link
-                    to="/forget-password"
+                    to="/reset-password"
                     className="text-muted-foreground hover:text-primary text-sm transition-all duration-200"
                   >
                     Forgot your password?
