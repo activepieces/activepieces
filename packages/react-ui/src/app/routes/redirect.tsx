@@ -12,7 +12,7 @@ const RedirectPage: React.FC = React.memo(() => {
         {
           code: code,
         },
-        '*'
+        '*',
       );
     }
   }, [location.search]);

@@ -1,8 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 
-import { buttonVariants } from '../../components/ui/button';
-
 import { cn } from '@/lib/utils';
+
+import { buttonVariants } from '../../components/ui/button';
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
   items: {
@@ -23,7 +23,7 @@ export function ProjectSettingsSidebarItem({
     <nav
       className={cn(
         'flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1',
-        className
+        className,
       )}
       {...props}
     >
@@ -36,7 +36,7 @@ export function ProjectSettingsSidebarItem({
             location.pathname === item.href
               ? 'bg-muted hover:bg-muted'
               : 'hover:bg-transparent hover:underline',
-            'justify-start'
+            'justify-start',
           )}
         >
           <div className="flex items-center justify-center gap-2">

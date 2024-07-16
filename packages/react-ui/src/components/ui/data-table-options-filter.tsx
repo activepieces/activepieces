@@ -44,7 +44,7 @@ export function DataTableFacetedFilter<TData, TValue>({
       newParams.delete(column?.id as string);
       if (filterValues) {
         filterValues.forEach((value) =>
-          newParams.append(column?.id as string, value)
+          newParams.append(column?.id as string, value),
         );
       }
       return newParams;
@@ -119,7 +119,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                         'mr-2 flex h-4 w-4 items-center justify-center rounded border border-primary',
                         isSelected
                           ? 'bg-primary text-primary-foreground'
-                          : 'opacity-50 [&_svg]:invisible'
+                          : 'opacity-50 [&_svg]:invisible',
                       )}
                     >
                       <CheckIcon className={cn('h-4 w-4')} />

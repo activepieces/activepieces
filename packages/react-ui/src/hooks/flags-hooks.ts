@@ -1,9 +1,10 @@
-import { ApFlagId } from '@activepieces/shared';
 import {
   QueryClient,
   usePrefetchQuery,
   useSuspenseQuery,
 } from '@tanstack/react-query';
+
+import { ApFlagId } from '@activepieces/shared';
 
 import { flagsApi, FlagsMap } from '../lib/flags-api';
 
@@ -41,7 +42,7 @@ export const flagsHooks = {
 };
 
 async function cacheFlagsIfNotCached(
-  queryClient: QueryClient
+  queryClient: QueryClient,
 ): Promise<FlagsMap> {
   const cachedFlags = queryClient.getQueryData<FlagsMap>(['flags']);
   if (cachedFlags) {

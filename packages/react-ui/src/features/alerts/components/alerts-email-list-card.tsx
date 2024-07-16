@@ -55,7 +55,6 @@ export default function AlertsEmailsCard() {
     },
   });
 
-
   return (
     <Card className="w-full">
       <CardHeader>

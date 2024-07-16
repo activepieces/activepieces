@@ -18,7 +18,7 @@ const disallowedRoutes = [
 
 function request<TResponse>(
   url: string,
-  config: AxiosRequestConfig = {}
+  config: AxiosRequestConfig = {},
 ): Promise<TResponse> {
   return axios({
     url: `${apiUrl}${url}`,

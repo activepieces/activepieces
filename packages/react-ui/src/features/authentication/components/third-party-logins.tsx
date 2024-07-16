@@ -1,38 +1,38 @@
+import { useQueryClient } from '@tanstack/react-query';
+import React from 'react';
+
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
 import {
   ApFlagId,
   ThirdPartyAuthnProviderEnum,
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
-import React from 'react';
 
 import { flagsHooks } from '../../../hooks/flags-hooks';
 import { authenticationApi } from '../../../lib/authentication-api';
 import { oauth2Utils } from '../lib/oauth2-utils';
-
-import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
 
 const ThirdPartyLogin = React.memo(() => {
   const queryClient = useQueryClient();
   const { data: thirdPartyAuthProviders } =
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
       ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
-      queryClient
+      queryClient,
     );
   const { data: thirdPartyRedirectUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-    queryClient
+    queryClient,
   );
 
   const handleProviderClick = async (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-    providerName: ThirdPartyAuthnProviderEnum
+    providerName: ThirdPartyAuthnProviderEnum,
   ) => {
     event.preventDefault();
     event.stopPropagation();
     const { loginUrl } = await authenticationApi.getFederatedAuthLoginUrl(
-      providerName
+      providerName,
     );
     if (!loginUrl || !thirdPartyRedirectUrl) {
       toast({

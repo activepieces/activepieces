@@ -28,7 +28,7 @@ const AlertOption = React.memo(
         </div>
       </div>
     );
-  }
+  },
 );
 
 AlertOption.displayName = 'AlertOption';

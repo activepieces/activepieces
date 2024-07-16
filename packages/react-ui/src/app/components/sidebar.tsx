@@ -1,11 +1,6 @@
 import { Bug, Link2, Logs, Settings, Zap, Shield } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { Button } from '../../components/ui/button';
-import { UserAvatar } from '../../components/ui/user-avatar';
-
-import { InviteUserDialog } from './invite-user-dialog';
-
 import {
   Tooltip,
   TooltipContent,
@@ -14,6 +9,11 @@ import {
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { theme } from '@/lib/theme';
+
+import { Button } from '../../components/ui/button';
+import { UserAvatar } from '../../components/ui/user-avatar';
+
+import { InviteUserDialog } from './invite-user-dialog';
 
 type Link = {
   icon: React.ReactNode;

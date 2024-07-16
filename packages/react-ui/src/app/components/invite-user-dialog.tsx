@@ -1,3 +1,11 @@
+import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { TooltipContent } from '@radix-ui/react-tooltip';
+import { Static, Type } from '@sinclair/typebox';
+import { useMutation } from '@tanstack/react-query';
+import { CopyIcon, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+
 import {
   ApFlagId,
   InvitationType,
@@ -6,13 +14,6 @@ import {
   SendUserInvitationRequest,
   UserInvitationWithLink,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { TooltipContent } from '@radix-ui/react-tooltip';
-import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
-import { CopyIcon, Plus } from 'lucide-react';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
 
 import { Button } from '../../components/ui/button';
 import {
@@ -82,7 +83,7 @@ export function InviteUserDialog() {
   const { data: project } = projectHooks.useCurrentProject();
   const isCloudPlatform = flagsApi.isFlagEnabled(
     flags,
-    ApFlagId.IS_CLOUD_PLATFORM
+    ApFlagId.IS_CLOUD_PLATFORM,
   );
   const currentUser = authenticationSession.getCurrentUser();
   const invitationRoles = Object.values(ProjectMemberRole)
@@ -202,7 +203,7 @@ export function InviteUserDialog() {
                 },
                 () => {
                   console.log(form.formState.errors);
-                }
+                },
               )}
               className="flex flex-col gap-4"
             >

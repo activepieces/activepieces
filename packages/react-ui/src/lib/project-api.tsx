@@ -1,3 +1,5 @@
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import {
   ListProjectRequestForUserQueryParams,
@@ -5,9 +7,6 @@ import {
   SeekPage,
   SwitchProjectResponse,
 } from '@activepieces/shared';
-
-import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 
 export const projectCacheKey = 'project';
 export const projectApi = {
@@ -28,7 +27,7 @@ export const projectApi = {
       `/v1/users/projects/${projectId}/token`,
       {
         projectId,
-      }
+      },
     );
   },
 };
