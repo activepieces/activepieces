@@ -15,4 +15,7 @@ export const userInvitiationApi = {
   list: (request: ListUserInvitationsRequest) => {
     return api.get<SeekPage<UserInvitation>>('/v1/user-invitations', request);
   },
+  delete(id: string): Promise<void> {
+    return api.delete<void>(`/v1/user-invitations/${id}`);
+  },
 };

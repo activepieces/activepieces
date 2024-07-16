@@ -1,6 +1,7 @@
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import { PopoverContent } from '@radix-ui/react-popover';
+import { useQueryClient } from '@tanstack/react-query';
 import { ChevronDownIcon, Trash } from 'lucide-react';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
@@ -15,12 +16,15 @@ import {
   CommandList,
 } from '../../../components/ui/command';
 import { Popover, PopoverTrigger } from '../../../components/ui/popover';
+import { projectMembersHooks } from '../../../hooks/project-members-hooks';
+import { projectMembersApi } from '../lib/project-members-api';
 
 export function ProjectMemberCard({
   member,
 }: {
   member: ProjectMemberWithUser;
 }) {
+  const queryClient = useQueryClient();
   return (
     <div
       className="flex items-center justify-between space-x-4"
@@ -82,10 +86,14 @@ export function ProjectMemberCard({
           </PopoverContent>
         </Popover>
         <ConfirmationDeleteDialog
-          onClose={() => {}}
-          onConfirm={() => {}}
           title={`Remove ${member.user.firstName} ${member.user.lastName}`}
           message="Are you sure you want to remove this member?"
+          mutationFn={() =>
+            projectMembersApi.delete(member.id).then(() => {
+              projectMembersHooks.invalidate(queryClient);
+            })
+          }
+          entityName={`${member.user.firstName} ${member.user.lastName}`}
         >
           <Button variant="ghost" className="size-8 p-0">
             <Trash className="bg-destructive-500 size-4" />

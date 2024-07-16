@@ -17,6 +17,7 @@ export const userInvitationsHooks = {
           .then((res) => res.data);
       },
       queryKey: [userInvitationsQueryKey],
+      staleTime: Infinity,
     });
   },
   invalidate: (queryClient: QueryClient) => {

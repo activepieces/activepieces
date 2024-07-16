@@ -1,10 +1,9 @@
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-import { useQuery } from '@tanstack/react-query';
 import { LoaderIcon } from 'lucide-react';
 
 import { InviteUserDialog } from '../../../app/components/invite-user-dialog';
+import { projectMembersHooks } from '../../../hooks/project-members-hooks';
 import { userInvitationsHooks } from '../../../hooks/user-invitations-hooks';
-import { projectMembersApi } from '../lib/project-members-api';
 
 import { InvitationCard } from './invitation-card';
 import { ProjectMemberCard } from './project-member-card';
@@ -17,25 +16,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/seperator';
-import { authenticationSession } from '@/lib/authentication-session';
 
 export default function ProjectMembersList() {
-  const { data: projectMembers, isPending: projectMembersIsPending } = useQuery(
-    {
-      queryKey: ['project-members'],
-      queryFn: () => {
-        return projectMembersApi
-          .list({
-            projectId: authenticationSession.getProjectId(),
-            cursor: undefined,
-            limit: 100,
-          })
-          .then((res) => {
-            return res.data;
-          });
-      },
-    }
-  );
+  const { data: projectMembers, isPending: projectMembersIsPending } =
+    projectMembersHooks.useProjectMembers();
   const { data: invitations, isPending: invitationsIsPending } =
     userInvitationsHooks.useInvitations();
 
