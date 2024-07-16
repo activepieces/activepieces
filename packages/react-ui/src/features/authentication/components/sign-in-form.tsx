@@ -22,7 +22,9 @@ const SignInForm: React.FC = React.memo(() => {
       </CardHeader>
       <CardContent>
         <ThirdPartyLogin />
-        <UsernameAndPasswordForm />
+        <div className="mt-4">
+          <UsernameAndPasswordForm />
+        </div>
       </CardContent>
     </Card>
   );

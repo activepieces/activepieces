@@ -76,7 +76,7 @@ function addEdge(nodeOne: ApNode, nodeTwo: ApNode): ApEdge {
 
 function offsetGraph(
   graph: ApGraph,
-  offset: { x: number; y: number }
+  offset: { x: number; y: number },
 ): ApGraph {
   return {
     nodes: graph.nodes.map((node) => ({

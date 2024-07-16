@@ -7,7 +7,7 @@ import {
 
 export const appConnectionsApi = {
   list(
-    request: ListAppConnectionsRequestQuery
+    request: ListAppConnectionsRequestQuery,
   ): Promise<SeekPage<AppConnection>> {
     return api.get<SeekPage<AppConnection>>('/v1/app-connections', request);
   },

@@ -15,7 +15,7 @@ async function openWithLoginUrl(loginUrl: string, redirectUrl: string) {
   };
 }
 async function openOAuth2Popup(
-  params: OAuth2PopupParams
+  params: OAuth2PopupParams,
 ): Promise<OAuth2PopupResponse> {
   closeOAuth2Popup();
   const pckeChallenge = nanoid();
@@ -73,7 +73,7 @@ function constructUrl(params: OAuth2PopupParams, pckeChallenge: string) {
 function getCode(
   redirectUrl: string,
   pkce: boolean | undefined,
-  pckeChallenge: string | undefined
+  pckeChallenge: string | undefined,
 ): Promise<string> {
   return new Promise<string>((resolve) => {
     window.addEventListener('message', function handler(event) {

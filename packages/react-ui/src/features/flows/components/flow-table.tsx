@@ -9,11 +9,11 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { authenticationSession } from '@/features/authentication/lib/authentication-session';
 import FlowStatusToggle from '@/features/flows/components/flow-status-toggle';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FolderBadge } from '@/features/folders/component/folder-badge';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
+import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 

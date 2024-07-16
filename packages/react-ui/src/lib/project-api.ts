@@ -1,5 +1,5 @@
-import { authenticationSession } from '@/features/authentication/lib/authentication-session';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import {
   ListProjectRequestForUserQueryParams,
@@ -8,6 +8,7 @@ import {
   SwitchProjectResponse,
 } from '@activepieces/shared';
 
+export const projectCacheKey = 'project';
 export const projectApi = {
   current: async () => {
     return projectApi.get(authenticationSession.getProjectId());
@@ -26,7 +27,7 @@ export const projectApi = {
       `/v1/users/projects/${projectId}/token`,
       {
         projectId,
-      }
+      },
     );
   },
 };

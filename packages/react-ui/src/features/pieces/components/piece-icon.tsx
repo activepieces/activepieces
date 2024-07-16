@@ -25,7 +25,7 @@ const pieceIconVariants = cva(
       },
     },
     defaultVariants: {},
-  }
+  },
 );
 
 interface PieceIconCircleProps extends VariantProps<typeof pieceIconVariants> {
@@ -53,7 +53,7 @@ const PieceIcon = React.memo(
         </TooltipContent>
       </Tooltip>
     );
-  }
+  },
 );
 
 PieceIcon.displayName = 'PieceIcon';

@@ -33,12 +33,12 @@ const FlowCanvas = ({ flow }: FlowCanvasProps) => {
   const onNodesChange = useCallback(
     (changes: NodeChange<ApNode>[]) =>
       setNodes((nds) => applyNodeChanges(changes, nds)),
-    []
+    [],
   );
   const onEdgesChange = useCallback(
     (changes: EdgeChange<ApEdge>[]) =>
       setEdges((eds) => applyEdgeChanges(changes, eds)),
-    []
+    [],
   );
 
   return (

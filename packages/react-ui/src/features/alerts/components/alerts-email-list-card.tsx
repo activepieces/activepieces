@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { authenticationSession } from '@/features/authentication/lib/authentication-session';
+import { authenticationSession } from '@/lib/authentication-session';
 import { Alert } from '@activepieces/ee-shared';
 
 import { alertsApi } from '../lib/alerts-api';
@@ -54,7 +54,6 @@ export default function AlertsEmailsCard() {
       console.log(error);
     },
   });
-
 
   return (
     <Card className="w-full">

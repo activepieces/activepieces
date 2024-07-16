@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-import { projectHooks } from '../lib/project-hooks';
+import { projectHooks } from '../../../hooks/project-hooks';
 
 function ProjectSwitcher() {
   const queryClient = useQueryClient();
@@ -65,7 +65,7 @@ function ProjectSwitcher() {
                         'ml-auto h-4 w-4',
                         currentProject?.id === project.id
                           ? 'opacity-100'
-                          : 'opacity-0'
+                          : 'opacity-0',
                       )}
                     />
                   </CommandItem>
