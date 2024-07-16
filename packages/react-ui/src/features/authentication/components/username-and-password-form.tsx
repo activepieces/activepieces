@@ -37,8 +37,8 @@ const AuthFormSchema = Type.Object({
   password: Type.String({
     errorMessage: 'Password is required',
   }),
-  trackEvents: Type.Boolean(),
-  newsLetter: Type.Boolean(),
+  trackEvents: Type.Optional(Type.Boolean()),
+  newsLetter: Type.Optional(Type.Boolean()),
 });
 
 type AuthFormSchema = Static<typeof AuthFormSchema>;
