@@ -2,11 +2,10 @@ import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type, Static } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { MailCheck } from 'lucide-react';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
-
-import MailSent from '../../../assets/img/custom/auth/mail_sent.png';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -74,12 +73,15 @@ const ResetPasswordForm = () => {
         </CardTitle>
         <CardDescription>
           {isSent ? (
-            <div className="gap-2 w-full flex flex-col items-center justify-center">
-              <img src={MailSent} alt="Mail Sent" className="p-4 self-center" />
-              <span className="text-center">
-                We sent you a link to <strong>{form.getValues().email}</strong>.
-                Check your email to reset your password.
-              </span>
+            <div className="gap-2 w-full flex flex-col">
+              <div className="gap-4 w-full flex flex-row items-center justify-center">
+                <MailCheck className="w-16 h-16" />
+                <span className="text-left w-fit">
+                  We sent you a link to
+                  <strong>{form.getValues().email}</strong>. Check your email to
+                  reset your password.
+                </span>
+              </div>
               <div className="flex flex-row gap-1">
                 Didnt recieve an email?
                 <span

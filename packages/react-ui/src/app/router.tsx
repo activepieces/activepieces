@@ -5,6 +5,7 @@ import { authenticationSession } from '../lib/authentication-session';
 
 import { DashboardContainer } from './components/dashboard-container';
 import NotFoundPage from './routes/404-page';
+import { ChangePasswordPage } from './routes/change-password';
 import AppConnectionsPage from './routes/connections';
 import { FlowBuilderPage } from './routes/flows/id';
 import { ResetPasswordPage } from './routes/forget-password';
@@ -80,8 +81,12 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/reset-password',
+    path: '/forget-password',
     element: <ResetPasswordPage />,
+  },
+  {
+    path: '/reset-password',
+    element: <ChangePasswordPage />,
   },
   {
     path: '/sign-in',
