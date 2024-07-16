@@ -90,6 +90,7 @@
     "@supabase/supabase-js": "2.33.1",
     "@tanstack/react-query": "5.51.1",
     "@tanstack/react-table": "8.19.2",
+    "@tryfabric/martian": "1.2.4",
     "@types/amqplib": "0.10.5",
     "@types/imapflow": "1.0.18",
     "@types/js-yaml": "4.0.9",
@@ -381,5 +382,10 @@
   },
   "nx": {
     "includedScripts": []
+  },
+  "overrides": {
+    "@tryfabric/martian": {
+      "@notionhq/client": "$@notionhq/client"
+    }
   }
 }
