@@ -1,11 +1,3 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { TooltipContent } from '@radix-ui/react-tooltip';
-import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
-import { CopyIcon, Plus } from 'lucide-react';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-
 import {
   ApFlagId,
   InvitationType,
@@ -14,6 +6,13 @@ import {
   SendUserInvitationRequest,
   UserInvitationWithLink,
 } from '@activepieces/shared';
+import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { TooltipContent } from '@radix-ui/react-tooltip';
+import { Static, Type } from '@sinclair/typebox';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { CopyIcon, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 import { Button } from '../../components/ui/button';
 import {
@@ -44,14 +43,15 @@ import {
 } from '../../components/ui/select';
 import { Tooltip, TooltipTrigger } from '../../components/ui/tooltip';
 import { toast } from '../../components/ui/use-toast';
-import { userInvitiationApi } from '../../features/team/lib/user-invitiation-api';
 import { flagsHooks } from '../../hooks/flags-hooks';
 import { platformHooks } from '../../hooks/platform-hooks';
 import { projectHooks } from '../../hooks/project-hooks';
+import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
 import { HttpError } from '../../lib/api';
 import { authenticationSession } from '../../lib/authentication-session';
 import { flagsApi } from '../../lib/flags-api';
 import { RolesDisplayNames } from '../../lib/platforms-api';
+import { userInvitiationApi } from '../../lib/user-invitiation-api';
 import { formatUtils } from '../../lib/utils';
 
 const FormSchema = Type.Object({
@@ -76,6 +76,7 @@ const FormSchema = Type.Object({
 type FormSchema = Static<typeof FormSchema>;
 
 export function InviteUserDialog() {
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
   const { data: platform } = platformHooks.useCurrentPlatform();
@@ -83,7 +84,7 @@ export function InviteUserDialog() {
   const { data: project } = projectHooks.useCurrentProject();
   const isCloudPlatform = flagsApi.isFlagEnabled(
     flags,
-    ApFlagId.IS_CLOUD_PLATFORM,
+    ApFlagId.IS_CLOUD_PLATFORM
   );
   const currentUser = authenticationSession.getCurrentUser();
   const invitationRoles = Object.values(ProjectMemberRole)
@@ -124,6 +125,7 @@ export function InviteUserDialog() {
           title: 'Invitation sent successfully',
         });
       }
+      userInvitationsHooks.invalidate(queryClient);
       //TODO: navigate to platform admin users
     },
     onError: (error) => {
@@ -161,8 +163,7 @@ export function InviteUserDialog() {
       <DialogTrigger asChild>
         <Button
           variant={'outline'}
-          size="sm"
-          className="flex items-center justify-center gap-2"
+          className="flex items-center justify-center gap-2 w-full"
         >
           <Plus className="size-4" />
           <span>Invite User</span>
@@ -203,7 +204,7 @@ export function InviteUserDialog() {
                 },
                 () => {
                   console.log(form.formState.errors);
-                },
+                }
               )}
               className="flex flex-col gap-4"
             >
@@ -337,17 +338,20 @@ export function InviteUserDialog() {
                 }}
                 className=" rounded-l-md rounded-r-none focus-visible:!ring-0 focus-visible:!ring-offset-0"
               />
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     type="button"
+                    variant={'outline'}
                     className=" rounded-l-none rounded-r-md"
                     onClick={copyInvitationLink}
                   >
                     <CopyIcon height={15} width={15}></CopyIcon>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Copy</TooltipContent>
+
+                <TooltipContent side="bottom">Copy</TooltipContent>
               </Tooltip>
             </div>
           </>
