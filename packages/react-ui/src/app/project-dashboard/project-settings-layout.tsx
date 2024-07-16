@@ -1,7 +1,7 @@
 import { Separator } from '@radix-ui/react-dropdown-menu';
 import { SunMoon, Users, Puzzle, Bell } from 'lucide-react';
 
-import { MiniSidebarNavItem } from './mini-sidebar';
+import { ProjectSettingsSidebarItem } from './project-settings-sidebar-item';
 
 const iconSize = 20;
 
@@ -46,7 +46,7 @@ export default function ProjectSettingsLayout({
       <Separator className="my-6" />
       <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
         <aside className="-mx-4 lg:w-1/5">
-          <MiniSidebarNavItem items={sidebarNavItems} />
+          <ProjectSettingsSidebarItem items={sidebarNavItems} />
         </aside>
         <div className="w-full flex-1">{children}</div>
       </div>

@@ -54,10 +54,10 @@ export function DataTable<TData, TValue>({
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
-    startingCursor
+    startingCursor,
   );
   const [nextPageCursor, setNextPageCursor] = useState<string | undefined>(
-    undefined
+    undefined,
   );
   const [previousPageCursor, setPreviousPageCursor] = useState<
     string | undefined
@@ -115,9 +115,9 @@ export function DataTable<TData, TValue>({
       tableData.filter(
         (row) =>
           !deletedRows.some(
-            (deletedRow) => JSON.stringify(deletedRow) === JSON.stringify(row)
-          )
-      )
+            (deletedRow) => JSON.stringify(deletedRow) === JSON.stringify(row),
+          ),
+      ),
     );
   }, [deletedRows]);
 
@@ -146,7 +146,7 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -176,7 +176,7 @@ export function DataTable<TData, TValue>({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

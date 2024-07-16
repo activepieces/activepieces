@@ -1,14 +1,26 @@
-import { useQuery, QueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  QueryClient,
+  usePrefetchQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 
-import { authenticationSession } from '@/features/authentication/lib/authentication-session';
+import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 
-import { projectApi } from './project-api';
+import { projectApi } from '../lib/project-api';
 
 export const projectHooks = {
+  prefetchProject: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    usePrefetchQuery<ProjectWithLimits, Error>({
+      queryKey: ['current-project'],
+      queryFn: projectApi.current,
+    });
+  },
   useCurrentProject: () => {
-    const query = useQuery<ProjectWithLimits, Error>({
+    const query = useSuspenseQuery<ProjectWithLimits, Error>({
       queryKey: ['current-project'],
       queryFn: projectApi.current,
     });
@@ -35,7 +47,7 @@ export const projectHooks = {
 
 const updateProject = async (
   queryClient: QueryClient,
-  request: UpdateProjectPlatformRequest
+  request: UpdateProjectPlatformRequest,
 ) => {
   queryClient.setQueryData(['current-project'], {
     ...queryClient.getQueryData(['current-project'])!,
@@ -45,7 +57,7 @@ const updateProject = async (
 
 const setCurrentProject = async (
   queryClient: QueryClient,
-  project: ProjectWithLimits
+  project: ProjectWithLimits,
 ) => {
   const projectChanged = authenticationSession.getProjectId() !== project.id;
   if (projectChanged) {

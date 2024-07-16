@@ -35,15 +35,15 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       '@activepieces/shared': path.resolve(
         __dirname,
-        '../../packages/shared/src'
+        '../../packages/shared/src',
       ),
       '@activepieces/ee-shared': path.resolve(
         __dirname,
-        '../../packages/ee/shared/src'
+        '../../packages/ee/shared/src',
       ),
       '@activepieces/pieces-framework': path.resolve(
         __dirname,
-        '../../packages/pieces/community/framework/src'
+        '../../packages/pieces/community/framework/src',
       ),
     },
   },
