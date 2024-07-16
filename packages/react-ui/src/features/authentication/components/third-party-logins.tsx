@@ -14,7 +14,7 @@ import { flagsHooks } from '../../../hooks/flags-hooks';
 import Github from '../../../assets/img/custom/auth/github.svg';
 import GoogleIcon from '../../../assets/img/custom/auth/google-icon.svg';
 import { authenticationApi } from '../../../lib/authentication-api';
-import { authenticationSession } from '../lib/authentication-session';
+import { authenticationSession } from '../../../lib/authentication-session'; 
 import { oauth2Utils } from '../lib/oauth2-utils';
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {

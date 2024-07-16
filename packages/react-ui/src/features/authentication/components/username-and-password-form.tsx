@@ -11,8 +11,8 @@ import React from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { authenticationApi } from '../lib/authentication-api';
-import { authenticationSession } from '../lib/authentication-session';
+import { authenticationApi } from '../../../lib/authentication-api';
+import { authenticationSession } from '../../../lib/authentication-session'; 
 
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';

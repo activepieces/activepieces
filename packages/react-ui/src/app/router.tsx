@@ -19,9 +19,6 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 
-import ProjectSettingsLayout from '@/components/layout/settings-layout';
-import { Sidebar } from '@/components/layout/sidebar';
-
 const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
   if (!authenticationSession.isLoggedIn()) {
     return <Navigate to="/sign-in" replace />;
