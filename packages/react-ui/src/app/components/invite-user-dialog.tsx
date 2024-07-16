@@ -1,5 +1,4 @@
 import {
-  ApFlagId,
   InvitationType,
   PlatformRole,
   ProjectMemberRole,
@@ -7,7 +6,6 @@ import {
   UserInvitationWithLink,
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { TooltipContent } from '@radix-ui/react-tooltip';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CopyIcon, Plus } from 'lucide-react';
@@ -41,18 +39,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/select';
-import { Tooltip, TooltipTrigger } from '../../components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '../../components/ui/tooltip';
 import { toast } from '../../components/ui/use-toast';
-import { flagsHooks } from '../../hooks/flags-hooks';
+import { userInvitiationApi } from '../../features/team/lib/user-invitiation-api';
 import { platformHooks } from '../../hooks/platform-hooks';
 import { projectHooks } from '../../hooks/project-hooks';
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
 import { HttpError } from '../../lib/api';
 import { authenticationSession } from '../../lib/authentication-session';
-import { flagsApi } from '../../lib/flags-api';
-import { RolesDisplayNames } from '../../lib/platforms-api';
-import { userInvitiationApi } from '../../lib/user-invitiation-api';
 import { formatUtils } from '../../lib/utils';
+
+import { PlatformRoleSelect } from '@/features/team/component/platform-role-select';
+import { ProjectRoleSelect } from '@/features/team/component/project-role-select';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -80,43 +82,27 @@ export function InviteUserDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
   const { data: platform } = platformHooks.useCurrentPlatform();
-  const { data: flags } = flagsHooks.useFlags();
+
   const { data: project } = projectHooks.useCurrentProject();
-  const isCloudPlatform = flagsApi.isFlagEnabled(
-    flags,
-    ApFlagId.IS_CLOUD_PLATFORM
-  );
   const currentUser = authenticationSession.getCurrentUser();
-  const invitationRoles = Object.values(ProjectMemberRole)
-    .filter((f) => {
-      if (f === ProjectMemberRole.ADMIN) {
-        return true;
-      }
-      const showNonAdmin =
-        !isCloudPlatform || project?.plan.teamMembers !== 100;
-      return showNonAdmin;
-    })
-    .map((role) => {
-      return {
-        value: role,
-        name: RolesDisplayNames[role],
-      };
-    })
-    .map((r) => {
-      return (
-        <SelectItem key={r.value} value={r.value}>
-          {r.name}
-        </SelectItem>
-      );
-    });
+
   const { mutate, isPending } = useMutation<
     UserInvitationWithLink,
     HttpError,
     SendUserInvitationRequest
   >({
-    mutationFn: userInvitiationApi.invite,
+    mutationFn: (data) => {
+      const request: SendUserInvitationRequest = {
+        email: data.email,
+        type: data.type,
+        platformRole: data.platformRole,
+        projectId: data.type === InvitationType.PLATFORM ? null : project.id,
+        projectRole:
+          data.type === InvitationType.PLATFORM ? undefined : data.projectRole,
+      };
+      return userInvitiationApi.invite(request);
+    },
     onSuccess: (res) => {
-      console.log(res);
       if (res.link) {
         setInvitationLink(res.link);
       } else {
@@ -144,12 +130,14 @@ export function InviteUserDialog() {
       projectRole: ProjectMemberRole.ADMIN,
     },
   });
+
   const copyInvitationLink = () => {
     navigator.clipboard.writeText(invitationLink);
     toast({
       title: 'Invitation link copied successfully',
     });
   };
+
   return (
     <Dialog
       open={isOpen}
@@ -187,25 +175,7 @@ export function InviteUserDialog() {
         {!invitationLink ? (
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit(
-                (data) => {
-                  const request: SendUserInvitationRequest = {
-                    email: data.email,
-                    type: data.type,
-                    platformRole: data.platformRole,
-                    projectId:
-                      data.type === InvitationType.PLATFORM ? null : project.id,
-                    projectRole:
-                      data.type === InvitationType.PLATFORM
-                        ? undefined
-                        : data.projectRole,
-                  };
-                  mutate(request);
-                },
-                () => {
-                  console.log(form.formState.errors);
-                }
-              )}
+              onSubmit={form.handleSubmit((data) => mutate(data))}
               className="flex flex-col gap-4"
             >
               <FormField
@@ -254,58 +224,10 @@ export function InviteUserDialog() {
                 )}
               ></FormField>
               {form.getValues().type === InvitationType.PLATFORM && (
-                <FormField
-                  control={form.control}
-                  name="platformRole"
-                  render={({ field }) => (
-                    <FormItem className="grid gap-3">
-                      <Label>Platform Role</Label>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a platform role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Platform Role</SelectLabel>
-                            <SelectItem value={PlatformRole.ADMIN}>
-                              Admin
-                            </SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                ></FormField>
+                <PlatformRoleSelect form={form} />
               )}
               {form.getValues().type === InvitationType.PROJECT && (
-                <FormField
-                  control={form.control}
-                  name="projectRole"
-                  render={({ field }) => (
-                    <FormItem className="grid gap-3">
-                      <Label>Project Role</Label>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a project role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Project Role</SelectLabel>
-                            {invitationRoles}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                ></FormField>
+                <ProjectRoleSelect form={form} />
               )}
 
               {form?.formState?.errors?.root?.serverError && (

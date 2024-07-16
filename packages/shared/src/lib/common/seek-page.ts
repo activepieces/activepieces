@@ -14,9 +14,3 @@ export const SeekPage = (t: TSchema): TSchema => Type.Object({
     next: Nullable(Type.String({ description: 'Cursor to the next page' })),
     previous: Nullable(Type.String({ description: 'Cursor to the previous page' })),
 })
-
-export const EMPTY_PAGE: SeekPage<any> = {
-    data: [],
-    next: null,
-    previous: null,
-}

@@ -31,8 +31,8 @@ export const flagsHooks = {
         if (typeof value === 'number' && typeof (0 as T) === 'number') {
           return Number(value) as T | null;
         }
-        if (typeof (0 as T) === 'boolean' && typeof value === 'string') {
-          return (value === 'true') as T | null;
+        if (typeof (0 as T) === 'boolean') {
+          return (value === 'true' || value === true) as T | null;
         }
         return value as T | null;
       },
