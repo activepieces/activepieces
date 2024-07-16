@@ -18,7 +18,6 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   projectHooks.prefetchProject();
   flagsHooks.prefetchFlags();
   platformHooks.prefetchPlatform();
-  //TODO: Add loading for prefetching
   return (
     <Suspense
       fallback={
