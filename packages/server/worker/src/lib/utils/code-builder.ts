@@ -1,9 +1,12 @@
-import fs from 'node:fs/promises'
+import fs, { rmdir } from 'node:fs/promises'
 import path from 'node:path'
 import { fileExists, logger, memoryLock, PackageInfo, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
 import { FlowVersionState } from '@activepieces/shared'
 import { CodeArtifact } from '../engine/engine-runner'
+import { cacheHandler, CacheState } from '../utils/cache-handler'
+
 const TS_CONFIG_CONTENT = `
+
 {
     "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
@@ -49,14 +52,22 @@ export const codeBuilder = {
 
         const lock = await memoryLock.acquire(`code-builder-${flowVersionId}-${name}`)
         try {
-            const indexPath = path.join(codePath, 'index.js')
-            const fExists = await fileExists(indexPath)
-            if (fExists && artifact.flowVersionState === FlowVersionState.LOCKED) {
+            const cache = cacheHandler(codePath) 
+            const fState = await cache.cacheCheckState(codePath)
+            if (fState === CacheState.READY && artifact.flowVersionState === FlowVersionState.LOCKED) {
                 return
             }
             const { code, packageJson } = sourceCode
 
+            const codeNeedCleanUp = fState === CacheState.PENDING && await fileExists(codePath)            
+            if (codeNeedCleanUp) {
+                await rmdir(codePath, { recursive: true })
+            }
+
             await threadSafeMkdir(codePath)
+
+            
+            await cache.setCache(codePath, CacheState.PENDING)
 
             await installDependencies({
                 path: codePath,
@@ -67,6 +78,8 @@ export const codeBuilder = {
                 path: codePath,
                 code,
             })
+
+            await cache.setCache(codePath, CacheState.READY)
         }
         catch (error: unknown) {
             logger.error({ name: 'CodeBuilder#processCodeStep', codePath, error })
