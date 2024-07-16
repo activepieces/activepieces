@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash } from 'lucide-react';
-
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,6 +15,7 @@ import { Alert } from '@activepieces/ee-shared';
 import { alertsApi } from '../lib/alerts-api';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
+import { LoadingSpinner } from '@/components/ui/spinner';
 const fetchData = async () => {
   const page = await alertsApi.list({
     projectId: authenticationSession.getProjectId(),
@@ -65,7 +65,9 @@ export default function AlertsEmailsCard() {
       </CardHeader>
       <CardContent className="grid gap-6">
         <div className="min-h-[35px]">
-          {isLoading && <div>Loading...</div>}
+          {isLoading && <div className='flex items-center justify-center'>
+            <LoadingSpinner />
+          </div>}
           {isError && <div>Error, please try again.</div>}
           {isSuccess && data.length === 0 && (
             <div className="text-center">No emails added yet.</div>
@@ -88,7 +90,7 @@ export default function AlertsEmailsCard() {
                   className="size-8 p-0"
                   onClick={() => deleteMutation.mutate(alert)}
                 >
-                  <Trash className="bg-destructive size-4" />
+                  <Trash className="size-4 bg-destructive" />
                 </Button>
               </div>
             ))}
