@@ -1,3 +1,6 @@
+import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
+
 import { Button } from './ui/button';
 import {
   Dialog,
@@ -8,23 +11,34 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog';
+import { toast } from './ui/use-toast';
 
 type ConfirmationDeleteDialogProps = {
-  onClose: () => void;
-  onConfirm: () => void;
   title: string;
   message: string;
   children: React.ReactNode;
+  entityName: string;
+  mutationFn: () => Promise<void>;
 };
 export function ConfirmationDeleteDialog({
-  onClose,
-  onConfirm,
   children,
   message,
   title,
+  mutationFn,
+  entityName,
 }: ConfirmationDeleteDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const { isPending, mutate } = useMutation({
+    mutationFn,
+    onSuccess: () => {
+      toast({
+        title: `Removed ${entityName}`,
+      });
+      setIsOpen(false);
+    },
+  });
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -32,11 +46,22 @@ export function ConfirmationDeleteDialog({
           <DialogDescription>{message}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant={'outline'} onClick={onClose}>
+          <Button
+            variant={'outline'}
+            onClick={() => {
+              setIsOpen(false);
+            }}
+          >
             Close
           </Button>
-          <Button variant={'destructive'} onClick={onConfirm}>
-            Yes, delete
+          <Button
+            loading={isPending}
+            variant={'destructive'}
+            onClick={() => {
+              mutate();
+            }}
+          >
+            Remove
           </Button>
         </DialogFooter>
       </DialogContent>
