@@ -34,7 +34,7 @@ export const DictionaryInput = ({ values, onChange }: DictionaryInputProps) => {
   const onChangeValue = (
     index: number,
     value: string | undefined,
-    key: string | undefined
+    key: string | undefined,
   ) => {
     const newValues = [...formValue];
     if (value !== undefined) {

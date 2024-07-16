@@ -14,7 +14,7 @@ export const piecesApi = {
     return api.get<PieceMetadataModelSummary[]>('/v1/pieces', request);
   },
   get(
-    request: GetPieceRequestParams & GetPieceRequestQuery
+    request: GetPieceRequestParams & GetPieceRequestQuery,
   ): Promise<PieceMetadataModel> {
     return api.get<PieceMetadataModel>(`/v1/pieces/${request.name}`, {
       version: request.version ?? undefined,

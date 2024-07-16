@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+
 import {
   Action,
   ActionType,
@@ -78,11 +79,13 @@ function buildChildrenGraph(
     childrenGraphs.reduce((acc, current) => boundingBox(current).height, 0) +
     2 * VERTICAL_OFFSET;
 
-  const commonPartGraph = offsetGraph(isNil(nextAction) ? graphWithSingleBigButton() : traverseFlow(nextAction), {
-    x: 0,
-    y: maximumHeight
-  })
-
+  const commonPartGraph = offsetGraph(
+    isNil(nextAction) ? graphWithSingleBigButton() : traverseFlow(nextAction),
+    {
+      x: 0,
+      y: maximumHeight,
+    },
+  );
 
   let deltaLeftX =
     -(

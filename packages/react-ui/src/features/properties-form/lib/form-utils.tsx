@@ -18,7 +18,7 @@ export const formUtils = {
     const entries = Object.entries(props);
     const nonNullableUnknownPropType = Type.Not(
       Type.Union([Type.Null(), Type.Undefined()]),
-      Type.Unknown()
+      Type.Unknown(),
     );
     const propsSchema: Record<string, TSchema> = {};
     for (const [name, property] of entries) {
@@ -30,7 +30,7 @@ export const formUtils = {
               Type.Undefined(),
               Type.Never(),
               Type.Unknown(),
-            ])
+            ]),
           );
           break;
         case PropertyType.DATE_TIME:
@@ -103,7 +103,7 @@ export const formUtils = {
 
       if (!property.required) {
         propsSchema[name] = Type.Optional(
-          Type.Union([Type.Null(), Type.Undefined(), propsSchema[name]])
+          Type.Union([Type.Null(), Type.Undefined(), propsSchema[name]]),
         );
       }
     }

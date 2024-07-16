@@ -7,10 +7,13 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/seperator';
 import { BuilderNavBar } from '@/features/flow-canvas/components/builder-nav-bar';
 import { FlowCanvas } from '@/features/flow-canvas/components/canvas';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { ActionErrorHandlingFormControl } from '@/features/properties-form/components/action-error-handling';
 import { AutoFormComponent } from '@/features/properties-form/components/auto-form';
 import { PopulatedFlow } from '@activepieces/shared';
 
@@ -29,8 +32,8 @@ const FlowBuilderPage = () => {
   });
 
   const { data: piece } = piecesHooks.usePiece({
-    name: '@activepieces/piece-date-helper',
-    version: '0.0.7',
+    name: '@activepieces/piece-discord',
+    version: '0.3.12',
   });
 
   useEffect(() => {
@@ -42,7 +45,7 @@ const FlowBuilderPage = () => {
   return (
     <div className="flex h-screen w-screen flex-col">
       <BuilderNavBar />
-      <ResizablePanelGroup direction="horizontal">
+      <ResizablePanelGroup direction="horizontal" className="flex-grow">
         <ResizablePanel defaultSize={75}>
           <>
             {isLoading && <div>Loading...</div>}
@@ -53,10 +56,22 @@ const FlowBuilderPage = () => {
         <ResizableHandle />
         <ResizablePanel defaultSize={25}>
           {piece && (
-            <AutoFormComponent
-              props={piece.actions['get_current_date'].props}
-              auth={undefined}
-            />
+            <div className="h-full flex flex-col">
+              <ScrollArea className="flex-grow">
+                <div className="p-4">
+                  <AutoFormComponent
+                    props={piece.actions['send_message_webhook'].props}
+                    auth={undefined}
+                  />
+                  <Separator className="my-6" />
+                  <ActionErrorHandlingFormControl
+                    action={piece.actions['send_message_webhook']}
+                    onContinueOnFailureChange={() => {}}
+                    onRetryOnFailureChange={() => {}}
+                  />
+                </div>
+              </ScrollArea>
+            </div>
           )}
         </ResizablePanel>
       </ResizablePanelGroup>

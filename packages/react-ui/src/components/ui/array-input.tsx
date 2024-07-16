@@ -15,7 +15,7 @@ const FormSchema = Type.Object({
   items: Type.Array(
     Type.Object({
       content: Type.String(),
-    })
+    }),
   ),
 });
 type FormSchema = Static<typeof FormSchema>;

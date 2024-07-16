@@ -1,8 +1,11 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static } from '@sinclair/typebox';
 import { SquareFunction } from 'lucide-react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { ApMarkdown } from '@/components/custom/markdown';
+import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrayInput } from '@/components/ui/array-input';
 import { Button } from '@/components/ui/button';
@@ -27,6 +30,8 @@ import {
 
 import { formUtils } from '../lib/form-utils';
 
+import { ReadMoreDescription } from './read-more-description';
+
 type AutoFormProps = {
   props: PiecePropertyMap;
   auth: PieceAuthProperty | undefined;
@@ -41,7 +46,7 @@ const AutoFormComponent = ({ props, auth }: AutoFormProps) => {
 
   return (
     <Form {...form}>
-      <form className="flex flex-col gap-8 p-4">
+      <form className="flex flex-col gap-3">
         {Object.entries(FormSchema.properties).map(([key]) => {
           return (
             <FormField
@@ -65,7 +70,7 @@ const AutoFormComponent = ({ props, auth }: AutoFormProps) => {
 const selectRightComponent = (
   field: any,
   key: string,
-  property: PieceProperty
+  property: PieceProperty,
 ) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -83,7 +88,9 @@ const selectRightComponent = (
               <SquareFunction />
             </Button>
           </FormLabel>
-          <FormDescription>{property.description}</FormDescription>
+          {property.description && (
+            <ReadMoreDescription text={property.description} />
+          )}
           <ArrayInput items={[]} onChange={(items) => {}}></ArrayInput>
         </>
       );
@@ -108,13 +115,17 @@ const selectRightComponent = (
               <SquareFunction />
             </Button>
           </FormLabel>
-          <FormDescription>{property.description}</FormDescription>
+          {property.description && (
+            <ReadMoreDescription text={property.description} />
+          )}
         </>
       );
     case PropertyType.MARKDOWN:
       return (
         <Alert>
-          <AlertDescription>{property.description}</AlertDescription>
+          <AlertDescription>
+            <ApMarkdown markdown={property.description} />
+          </AlertDescription>
         </Alert>
       );
     case PropertyType.OBJECT:
@@ -132,11 +143,38 @@ const selectRightComponent = (
               <SquareFunction />
             </Button>
           </FormLabel>
-          <FormDescription>{property.description}</FormDescription>
+          {property.description && (
+            <ReadMoreDescription text={property.description} />
+          )}
           <DictionaryInput values={[]} onChange={() => {}}></DictionaryInput>
         </>
       );
     case PropertyType.STATIC_DROPDOWN:
+      return (
+        <>
+          <FormLabel htmlFor={key} className="flex items-center">
+            <span>{property.displayName}</span>
+            <span className="grow"></span>
+            <Button
+              variant={'ghost'}
+              size={'sm'}
+              className="inline-flex"
+              onClick={(e) => e.preventDefault()}
+            >
+              <SquareFunction />
+            </Button>
+          </FormLabel>
+          <SearchableSelect
+            options={property.options.options}
+            onChange={field.onChange}
+            value={field.value}
+            placeholder={property.options.placeholder ?? 'Select a option'}
+          ></SearchableSelect>
+          {property.description && (
+            <ReadMoreDescription text={property.description} />
+          )}
+        </>
+      );
     case PropertyType.DATE_TIME:
     case PropertyType.SHORT_TEXT:
     case PropertyType.LONG_TEXT:
@@ -161,8 +199,8 @@ const selectRightComponent = (
               <SquareFunction />
             </Button>
           </FormLabel>
-          <FormDescription>{property.description}</FormDescription>
           <Input {...field} id={key} type="text" />
+          <FormDescription>{property.description}</FormDescription>
         </>
       );
     case PropertyType.BASIC_AUTH:
