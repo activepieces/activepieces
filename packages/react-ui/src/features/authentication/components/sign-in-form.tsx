@@ -1,5 +1,8 @@
 import React from 'react';
 
+import { ThirdPartyLogin } from './third-party-logins';
+import { UsernameAndPasswordForm } from './username-and-password-form';
+
 import {
   Card,
   CardContent,
@@ -7,9 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-
-import { ThirdPartyLogin } from './third-party-logins';
-import { UsernameAndPasswordForm } from './username-and-password-form';
 
 const SignInForm: React.FC = React.memo(() => {
   return (
@@ -22,7 +22,9 @@ const SignInForm: React.FC = React.memo(() => {
       </CardHeader>
       <CardContent>
         <ThirdPartyLogin />
-        <UsernameAndPasswordForm />
+        <div className="mt-4">
+          <UsernameAndPasswordForm />
+        </div>
       </CardContent>
     </Card>
   );

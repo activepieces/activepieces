@@ -3,7 +3,7 @@ import {
   UserInvitationWithLink,
 } from '@activepieces/shared';
 
-import { api } from './api';
+import { api } from '../../../lib/api';
 
 export const userInvitiationApi = {
   invite: (request: SendUserInvitationRequest) => {

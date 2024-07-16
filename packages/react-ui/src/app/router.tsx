@@ -3,6 +3,7 @@ import { Navigate, createBrowserRouter } from 'react-router-dom';
 import { FlowsPage } from '../app/routes/flows';
 import { authenticationSession } from '../lib/authentication-session';
 
+import { DashboardContainer } from './components/dashboard-container';
 import NotFoundPage from './routes/404-page';
 import AppConnectionsPage from './routes/connections';
 import { FlowBuilderPage } from './routes/flows/id';
@@ -15,8 +16,7 @@ import PiecesPage from './routes/settings/pieces';
 import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 
-import ProjectSettingsLayout from '@/components/layout/settings-layout';
-import { Sidebar } from '@/components/layout/sidebar';
+import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
 
 const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
   if (!authenticationSession.isLoggedIn()) {
@@ -33,11 +33,9 @@ export const router = createBrowserRouter([
   {
     path: '/flows',
     element: (
-      <AllowOnlyLoggedIn>
-        <Sidebar>
-          <FlowsPage />
-        </Sidebar>
-      </AllowOnlyLoggedIn>
+      <DashboardContainer>
+        <FlowsPage />
+      </DashboardContainer>
     ),
   },
   {
@@ -51,36 +49,34 @@ export const router = createBrowserRouter([
   {
     path: '/runs',
     element: (
-      <AllowOnlyLoggedIn>
-        <Sidebar>
-          <FlowsRunPage />
-        </Sidebar>
-      </AllowOnlyLoggedIn>
+      <DashboardContainer>
+        <FlowsRunPage />
+      </DashboardContainer>
     ),
   },
   {
     path: '/issues',
     element: (
-      <AllowOnlyLoggedIn>
-        <Sidebar>
-          <IssuesPage />
-        </Sidebar>
-      </AllowOnlyLoggedIn>
+      <DashboardContainer>
+        <IssuesPage />
+      </DashboardContainer>
     ),
   },
   {
     path: '/connections',
     element: (
-      <AllowOnlyLoggedIn>
-        <Sidebar>
-          <AppConnectionsPage />
-        </Sidebar>
-      </AllowOnlyLoggedIn>
+      <DashboardContainer>
+        <AppConnectionsPage />
+      </DashboardContainer>
     ),
   },
   {
     path: '/settings',
-    element: <Navigate to="/settings/alerts" />,
+    element: (
+      <DashboardContainer>
+        <Navigate to="/settings/alerts" />
+      </DashboardContainer>
+    ),
   },
   {
     path: '/reset-password',
@@ -93,54 +89,50 @@ export const router = createBrowserRouter([
   {
     path: '/settings/alerts',
     element: (
-      <AllowOnlyLoggedIn>
-        <Sidebar>
-          <ProjectSettingsLayout>
-            <AlertsPage></AlertsPage>
-          </ProjectSettingsLayout>
-        </Sidebar>
-      </AllowOnlyLoggedIn>
+      <DashboardContainer>
+        <ProjectSettingsLayout>
+          <AlertsPage></AlertsPage>
+        </ProjectSettingsLayout>
+      </DashboardContainer>
     ),
   },
   {
     path: '/settings/appearance',
     element: (
-      <AllowOnlyLoggedIn>
-        <Sidebar>
-          <ProjectSettingsLayout>
-            <AppearancePage></AppearancePage>
-          </ProjectSettingsLayout>
-        </Sidebar>
-      </AllowOnlyLoggedIn>
+      <DashboardContainer>
+        <ProjectSettingsLayout>
+          <AppearancePage></AppearancePage>
+        </ProjectSettingsLayout>
+      </DashboardContainer>
     ),
   },
   {
     path: '/settings/pieces',
     element: (
-      <AllowOnlyLoggedIn>
-        <Sidebar>
-          <ProjectSettingsLayout>
-            <PiecesPage></PiecesPage>
-          </ProjectSettingsLayout>
-        </Sidebar>
-      </AllowOnlyLoggedIn>
+      <DashboardContainer>
+        <ProjectSettingsLayout>
+          <PiecesPage></PiecesPage>
+        </ProjectSettingsLayout>
+      </DashboardContainer>
     ),
   },
   {
     path: '/settings/team',
     element: (
-      <AllowOnlyLoggedIn>
-        <Sidebar>
-          <ProjectSettingsLayout>
-            <TeamPage></TeamPage>
-          </ProjectSettingsLayout>
-        </Sidebar>
-      </AllowOnlyLoggedIn>
+      <DashboardContainer>
+        <ProjectSettingsLayout>
+          <TeamPage></TeamPage>
+        </ProjectSettingsLayout>
+      </DashboardContainer>
     ),
   },
   {
     path: '/*',
-    element: <Navigate to="/flows" replace />,
+    element: (
+      <DashboardContainer>
+        <Navigate to="/flows" replace />
+      </DashboardContainer>
+    ),
   },
   {
     path: '/404',

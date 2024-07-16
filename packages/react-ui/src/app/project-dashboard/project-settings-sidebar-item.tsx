@@ -1,8 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 
-import { cn } from '@/lib/utils';
+import { buttonVariants } from '../../components/ui/button';
 
-import { buttonVariants } from '../ui/button';
+import { cn } from '@/lib/utils';
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
   items: {
@@ -12,7 +12,7 @@ interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
   }[];
 }
 
-export function MiniSidebarNavItem({
+export function ProjectSettingsSidebarItem({
   className,
   items,
   ...props

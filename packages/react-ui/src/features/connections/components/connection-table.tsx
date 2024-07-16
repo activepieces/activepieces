@@ -2,6 +2,8 @@ import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon, Trash } from 'lucide-react';
 
+import { appConnectionUtils } from '../lib/app-connections-utils';
+
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {

@@ -1,14 +1,26 @@
-import { useQuery, QueryClient } from '@tanstack/react-query';
-
-import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
+import {
+  useQuery,
+  QueryClient,
+  usePrefetchQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 
-import { projectApi } from './project-api';
+import { projectApi } from '../lib/project-api';
+
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const projectHooks = {
+  prefetchProject: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    usePrefetchQuery<ProjectWithLimits, Error>({
+      queryKey: ['current-project'],
+      queryFn: projectApi.current,
+    });
+  },
   useCurrentProject: () => {
-    const query = useQuery<ProjectWithLimits, Error>({
+    const query = useSuspenseQuery<ProjectWithLimits, Error>({
       queryKey: ['current-project'],
       queryFn: projectApi.current,
     });

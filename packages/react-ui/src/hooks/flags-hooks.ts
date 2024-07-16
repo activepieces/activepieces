@@ -1,11 +1,28 @@
 import { ApFlagId } from '@activepieces/shared';
-import { QueryClient, useQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  usePrefetchQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 
-import { flagsApi } from '../lib/flags-api';
+import { flagsApi, FlagsMap } from '../lib/flags-api';
 
 export const flagsHooks = {
+  prefetchFlags: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    usePrefetchQuery<FlagsMap, Error>({
+      queryKey: ['flags'],
+      queryFn: flagsApi.getAll,
+    });
+  },
+  useFlags: () => {
+    return useSuspenseQuery<FlagsMap, Error>({
+      queryKey: ['flags'],
+      queryFn: flagsApi.getAll,
+    });
+  },
   useFlag: <T>(flagId: ApFlagId, queryClient: QueryClient) => {
-    return useQuery<T | null, Error>({
+    return useSuspenseQuery<T | null, Error>({
       queryKey: ['flag', flagId],
       queryFn: async () => {
         const flags = await cacheFlagsIfNotCached(queryClient);
@@ -25,10 +42,8 @@ export const flagsHooks = {
 
 async function cacheFlagsIfNotCached(
   queryClient: QueryClient
-): Promise<Record<ApFlagId, unknown>> {
-  const cachedFlags = queryClient.getQueryData<Record<ApFlagId, unknown>>([
-    'flags',
-  ]);
+): Promise<FlagsMap> {
+  const cachedFlags = queryClient.getQueryData<FlagsMap>(['flags']);
   if (cachedFlags) {
     return cachedFlags;
   }

@@ -9,31 +9,12 @@ import {
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { TooltipContent } from '@radix-ui/react-tooltip';
 import { Static, Type } from '@sinclair/typebox';
-import {
-  useMutation,
-  usePrefetchQuery,
-  useSuspenseQuery,
-} from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { CopyIcon, Plus } from 'lucide-react';
-import { Suspense, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import {
-  platformApi,
-  platformCacheKey,
-  RolesDisplayNames,
-} from '../../features/authentication/lib/platforms-api';
-import {
-  projectApi,
-  projectCacheKey,
-} from '../../features/projects/lib/project-api';
-import { HttpError } from '../../lib/api';
-import { authenticationSession } from '../../lib/authentication-session';
-import { flagsApi, flagsCacheKey } from '../../lib/flags-api';
-import { userInvitiationApi } from '../../lib/user-invitiation-api';
-import { formatUtils } from '../../lib/utils';
-
-import { Button } from './button';
+import { Button } from '../../components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -42,10 +23,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from './dialog';
-import { FormField, FormItem, Form, FormMessage } from './form';
-import { Input } from './input';
-import { Label } from './label';
+} from '../../components/ui/dialog';
+import {
+  FormField,
+  FormItem,
+  Form,
+  FormMessage,
+} from '../../components/ui/form';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
 import {
   Select,
   SelectContent,
@@ -54,35 +40,18 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from './select';
-import { Tooltip, TooltipTrigger } from './tooltip';
-import { toast } from './use-toast';
-
-export function InviteUserDialogWithPrefetch() {
-  usePrefetchQuery({
-    queryKey: [platformCacheKey],
-    queryFn: () => {
-      return platformApi.getCurrentPlatform();
-    },
-  });
-  usePrefetchQuery({
-    queryKey: [flagsCacheKey],
-    queryFn: () => {
-      return flagsApi.getAll();
-    },
-  });
-  usePrefetchQuery({
-    queryKey: [projectCacheKey],
-    queryFn: () => {
-      return projectApi.current();
-    },
-  });
-  return (
-    <Suspense>
-      <InviteUserDialog />
-    </Suspense>
-  );
-}
+} from '../../components/ui/select';
+import { Tooltip, TooltipTrigger } from '../../components/ui/tooltip';
+import { toast } from '../../components/ui/use-toast';
+import { userInvitiationApi } from '../../features/team/lib/user-invitiation-api';
+import { flagsHooks } from '../../hooks/flags-hooks';
+import { platformHooks } from '../../hooks/platform-hooks';
+import { projectHooks } from '../../hooks/project-hooks';
+import { HttpError } from '../../lib/api';
+import { authenticationSession } from '../../lib/authentication-session';
+import { flagsApi } from '../../lib/flags-api';
+import { RolesDisplayNames } from '../../lib/platforms-api';
+import { formatUtils } from '../../lib/utils';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -105,29 +74,12 @@ const FormSchema = Type.Object({
 
 type FormSchema = Static<typeof FormSchema>;
 
-function InviteUserDialog() {
+export function InviteUserDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
-  const { data: platform } = useSuspenseQuery({
-    queryKey: [platformCacheKey],
-    queryFn: (...args) => {
-      return platformApi.getCurrentPlatform();
-    },
-  });
-
-  const { data: flags } = useSuspenseQuery({
-    queryKey: [flagsCacheKey],
-    queryFn: (...args) => {
-      return flagsApi.getAll();
-    },
-  });
-  const { data: project } = useSuspenseQuery({
-    queryKey: [projectCacheKey],
-    queryFn: () => {
-      return projectApi.current();
-    },
-  });
-
+  const { data: platform } = platformHooks.useCurrentPlatform();
+  const { data: flags } = flagsHooks.useFlags();
+  const { data: project } = projectHooks.useCurrentProject();
   const isCloudPlatform = flagsApi.isFlagEnabled(
     flags,
     ApFlagId.IS_CLOUD_PLATFORM

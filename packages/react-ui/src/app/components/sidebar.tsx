@@ -1,10 +1,10 @@
-import { Bug, Link2, Logs, Plus, Settings, Zap, Shield } from 'lucide-react';
+import { Bug, Link2, Logs, Settings, Zap, Shield } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { Button } from '../ui/button';
-import { InviteUserDialogWithPrefetch } from '../ui/invite-user-dialog';
+import { Button } from '../../components/ui/button';
+import { UserAvatar } from '../../components/ui/user-avatar';
 
-import { UserSettingsDropdown } from './user-settings-dropdown';
+import { InviteUserDialog } from './invite-user-dialog';
 
 import {
   Tooltip,
@@ -93,7 +93,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
             <ProjectSwitcher />
             <div className="grow"></div>
             <div className="flex items-center justify-center gap-4">
-              <InviteUserDialogWithPrefetch />
+              <InviteUserDialog></InviteUserDialog>
               <Button
                 variant={'outline'}
                 size="sm"
@@ -102,7 +102,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                 <Shield className="size-4" />
                 <span>Platform Admin</span>
               </Button>
-              <UserSettingsDropdown />
+              <UserAvatar />
             </div>
           </div>
           {children}

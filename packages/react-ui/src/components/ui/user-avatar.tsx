@@ -1,18 +1,18 @@
 import { CircleUser, LogOut } from 'lucide-react';
 
-import { authenticationSession } from '@/lib/authentication-session';
-
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Avatar, AvatarFallback } from './avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuItem,
-} from '../ui/dropdown-menu';
-import { TextWithIcon } from '../ui/text-with-icon';
+} from './dropdown-menu';
+import { TextWithIcon } from './text-with-icon';
 
-export function UserSettingsDropdown() {
+import { authenticationSession } from '@/lib/authentication-session';
+
+export function UserAvatar() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
