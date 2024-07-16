@@ -11,9 +11,9 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { authenticationSession } from '@/features/authentication/lib/authentication-session';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 
 const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [

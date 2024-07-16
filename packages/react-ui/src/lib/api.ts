@@ -6,7 +6,7 @@ import axios, {
 } from 'axios';
 import qs from 'qs';
 
-import { authenticationSession } from '@/features/authentication/lib/authentication-session';
+import { authenticationSession } from '@/lib/authentication-session';
 const apiUrl = 'https://cloud.activepieces.com/api';
 
 const disallowedRoutes = [

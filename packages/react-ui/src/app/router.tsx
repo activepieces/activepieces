@@ -1,7 +1,7 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 
 import { FlowsPage } from '../app/routes/flows';
-import { authenticationSession } from '../features/authentication/lib/authentication-session';
+import { authenticationSession } from '../lib/authentication-session';
 
 import NotFoundPage from './routes/404-page';
 import AppConnectionsPage from './routes/connections';

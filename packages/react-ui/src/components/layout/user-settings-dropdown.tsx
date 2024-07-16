@@ -1,6 +1,6 @@
 import { CircleUser, LogOut } from 'lucide-react';
 
-import { authenticationSession } from '@/features/authentication/lib/authentication-session';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import {

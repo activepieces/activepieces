@@ -18,11 +18,6 @@ import { CopyIcon, Plus } from 'lucide-react';
 import { Suspense, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { authenticationSession } from '../../features/authentication/lib/authentication-session';
-import {
-  flagsApi,
-  flagsCacheKey,
-} from '../../features/authentication/lib/flags-api';
 import {
   platformApi,
   platformCacheKey,
@@ -33,6 +28,8 @@ import {
   projectCacheKey,
 } from '../../features/projects/lib/project-api';
 import { HttpError } from '../../lib/api';
+import { authenticationSession } from '../../lib/authentication-session';
+import { flagsApi, flagsCacheKey } from '../../lib/flags-api';
 import { userInvitiationApi } from '../../lib/user-invitiation-api';
 import { formatUtils } from '../../lib/utils';
 
@@ -71,7 +68,7 @@ export function InviteUserDialogWithPrefetch() {
   usePrefetchQuery({
     queryKey: [flagsCacheKey],
     queryFn: () => {
-      return flagsApi.getFlags();
+      return flagsApi.getAll();
     },
   });
   usePrefetchQuery({
@@ -121,7 +118,7 @@ function InviteUserDialog() {
   const { data: flags } = useSuspenseQuery({
     queryKey: [flagsCacheKey],
     queryFn: (...args) => {
-      return flagsApi.getFlags();
+      return flagsApi.getAll();
     },
   });
   const { data: project } = useSuspenseQuery({

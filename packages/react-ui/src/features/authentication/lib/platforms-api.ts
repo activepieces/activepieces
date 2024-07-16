@@ -1,6 +1,6 @@
 import { Platform, ProjectMemberRole } from "@activepieces/shared";
 import { api } from "../../../lib/api";
-import { authenticationSession } from "./authentication-session";
+import { authenticationSession } from "../../../lib/authentication-session";
 
 export const platformCacheKey = 'platform';
 

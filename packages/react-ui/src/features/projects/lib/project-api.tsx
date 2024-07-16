@@ -6,8 +6,8 @@ import {
   SwitchProjectResponse,
 } from '@activepieces/shared';
 
-import { authenticationSession } from '@/features/authentication/lib/authentication-session';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const projectCacheKey = 'project';
 export const projectApi = {

@@ -25,7 +25,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/seperator';
-import { authenticationSession } from '@/features/authentication/lib/authentication-session';
+import { authenticationSession } from '@/lib/authentication-session';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
 import { projectMembersApi } from '../lib/project-members-api';

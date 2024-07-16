@@ -7,7 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 
 import { flagsHooks } from '../../../hooks/flags-hooks';
-import { authenticationApi } from '../lib/authentication-api';
+import { authenticationApi } from '../../../lib/authentication-api';
 import { oauth2Utils } from '../lib/oauth2-utils';
 
 import { Button } from '@/components/ui/button';
