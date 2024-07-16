@@ -1,8 +1,5 @@
 import React from 'react';
 
-import { ThirdPartyLogin } from './third-party-logins';
-import { UsernameAndPasswordForm } from './username-and-password-form';
-
 import {
   Card,
   CardContent,
@@ -10,6 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+
+import { ThirdPartyLogin } from './third-party-logins';
+import { UsernameAndPasswordForm } from './username-and-password-form';
 
 type AuthFormTemplateProps = {
   title: string;

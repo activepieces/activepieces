@@ -1,3 +1,4 @@
+import { api } from '@/lib/api';
 import {
   CreateOtpRequestBody,
   ResetPasswordRequestBody,
@@ -10,8 +11,6 @@ import {
   SignUpRequest,
   ThirdPartyAuthnProviderEnum,
 } from '@activepieces/shared';
-
-import { api } from '@/lib/api';
 
 export const authenticationApi = {
   signIn(request: SignInRequest) {
