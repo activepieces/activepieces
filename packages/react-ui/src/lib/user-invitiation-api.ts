@@ -8,7 +8,7 @@ import {
 
 import { api } from './api';
 
-export const userInvitiationApi = {
+export const userInvitationApi = {
   invite: (request: SendUserInvitationRequest) => {
     return api.post<UserInvitationWithLink>('/v1/user-invitations', request);
   },

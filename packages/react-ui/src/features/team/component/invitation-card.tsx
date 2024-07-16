@@ -7,7 +7,7 @@ import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
 import { Avatar, AvatarImage } from '../../../components/ui/avatar';
 import { Button } from '../../../components/ui/button';
 import { userInvitationsHooks } from '../../../hooks/user-invitations-hooks';
-import { userInvitiationApi } from '../../../lib/user-invitiation-api';
+import { userInvitationApi } from '../../../lib/user-invitiation-api';
 
 export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
   const queryClient = useQueryClient();
@@ -28,7 +28,7 @@ export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
       <div className="flex gap-2">
         <ConfirmationDeleteDialog
           mutationFn={() =>
-            userInvitiationApi.delete(invitation.id).then((data) => {
+            userInvitationApi.delete(invitation.id).then((data) => {
               userInvitationsHooks.invalidate(queryClient);
               return data;
             })

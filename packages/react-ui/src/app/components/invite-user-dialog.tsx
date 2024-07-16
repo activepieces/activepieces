@@ -45,12 +45,12 @@ import {
   TooltipTrigger,
 } from '../../components/ui/tooltip';
 import { toast } from '../../components/ui/use-toast';
-import { userInvitiationApi } from '../../features/team/lib/user-invitiation-api';
 import { platformHooks } from '../../hooks/platform-hooks';
 import { projectHooks } from '../../hooks/project-hooks';
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
 import { HttpError } from '../../lib/api';
 import { authenticationSession } from '../../lib/authentication-session';
+import { userInvitationApi } from '../../lib/user-Invitation-api';
 import { formatUtils } from '../../lib/utils';
 
 import { PlatformRoleSelect } from '@/features/team/component/platform-role-select';
@@ -100,7 +100,7 @@ export function InviteUserDialog() {
         projectRole:
           data.type === InvitationType.PLATFORM ? undefined : data.projectRole,
       };
-      return userInvitiationApi.invite(request);
+      return userInvitationApi.invite(request);
     },
     onSuccess: (res) => {
       if (res.link) {
