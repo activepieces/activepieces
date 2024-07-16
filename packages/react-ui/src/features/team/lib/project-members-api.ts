@@ -10,7 +10,7 @@ export const projectMembersApi = {
     console.log(request);
     return api.get<SeekPage<ProjectMemberWithUser>>(
       '/v1/project-members',
-      request
+      request,
     );
   },
 };

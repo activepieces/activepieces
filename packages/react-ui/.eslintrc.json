@@ -21,9 +21,18 @@
           "typescript": {},
           "alias": {
             "map": [
-              ["@", "./src"]
+              [
+                "@",
+                "./src"
+              ]
             ],
-            "extensions": [".ts", ".tsx", ".js", ".jsx", ".json"]
+            "extensions": [
+              ".ts",
+              ".tsx",
+              ".js",
+              ".jsx",
+              ".json"
+            ]
           }
         }
       },
@@ -44,10 +53,36 @@
         "plugin:prettier/recommended",
         "plugin:testing-library/react",
         "plugin:jest-dom/recommended",
-        "plugin:tailwindcss/recommended",
         "plugin:vitest/legacy-recommended"
       ],
       "rules": {
+        "import/no-restricted-paths": [
+          "error",
+          {
+            "zones": [
+              // Previous restrictions...
+              // enforce unidirectional codebase:
+              // e.g. src/app can import from src/features but not the other way around
+              {
+                "target": "./src/features",
+                "from": "./src/app"
+              },
+              {
+                "target": [
+                  "./src/components",
+                  "./src/hooks",
+                  "./src/lib",
+                  "./src/types",
+                  "./src/utils"
+                ],
+                "from": [
+                  "./src/features",
+                  "./src/app"
+                ]
+              }
+            ]
+          }
+        ],
         "import/no-cycle": "off",
         "linebreak-style": [
           "error",

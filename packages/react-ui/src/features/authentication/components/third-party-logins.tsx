@@ -1,21 +1,21 @@
+import { useQueryClient } from '@tanstack/react-query';
+import React from 'react';
+
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
 import {
   ApFlagId,
   ThirdPartyAuthnProviderEnum,
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { flagsHooks } from '../../../hooks/flags-hooks';
 import Github from '../../../assets/img/custom/auth/github.svg';
 import GoogleIcon from '../../../assets/img/custom/auth/google-icon.svg';
-import { authenticationApi } from '../lib/authentication-api';
+import { authenticationApi } from '../../../lib/authentication-api';
 import { authenticationSession } from '../lib/authentication-session';
 import { oauth2Utils } from '../lib/oauth2-utils';
-
-import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
-import { flagsHooks } from '@/features/flags/lib/flags-hooks';
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
@@ -28,21 +28,21 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   const { data: thirdPartyAuthProviders } =
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
       ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
-      queryClient
+      queryClient,
     );
   const { data: thirdPartyRedirectUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-    queryClient
+    queryClient,
   );
 
   const handleProviderClick = async (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-    providerName: ThirdPartyAuthnProviderEnum
+    providerName: ThirdPartyAuthnProviderEnum,
   ) => {
     event.preventDefault();
     event.stopPropagation();
     const { loginUrl } = await authenticationApi.getFederatedAuthLoginUrl(
-      providerName
+      providerName,
     );
 
     if (!loginUrl || !thirdPartyRedirectUrl) {

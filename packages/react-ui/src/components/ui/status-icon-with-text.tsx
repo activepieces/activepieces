@@ -14,7 +14,7 @@ const statusCodeVariants = cva(
     defaultVariants: {
       variant: 'default',
     },
-  }
+  },
 );
 interface StatusIconWithTextProps
   extends VariantProps<typeof statusCodeVariants> {
@@ -30,7 +30,7 @@ const StatusIconWithText = React.memo(
         <span>{text}</span>
       </span>
     );
-  }
+  },
 );
 
 StatusIconWithText.displayName = 'StatusIconWithText';

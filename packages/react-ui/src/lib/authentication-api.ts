@@ -14,7 +14,7 @@ export const authenticationApi = {
   signIn(request: SignInRequest) {
     return api.post<AuthenticationResponse>(
       '/v1/authentication/sign-in',
-      request
+      request,
     );
   },
   signUp(request: SignUpRequest) {
