@@ -2,7 +2,7 @@ import { QueryClient, useQuery } from '@tanstack/react-query';
 
 import { ApFlagId } from '@activepieces/shared';
 
-import { flagsApi } from './flags-api';
+import { flagsApi } from '../lib/flags-api';
 
 export const flagsHooks = {
   useFlag: <T>(flagId: ApFlagId, queryClient: QueryClient) => {

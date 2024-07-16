@@ -1,17 +1,17 @@
-import { useQueryClient } from '@tanstack/react-query';
-import React from 'react';
-
-import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
-import { flagsHooks } from '@/features/flags/lib/flags-hooks';
 import {
   ApFlagId,
   ThirdPartyAuthnProviderEnum,
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
+import React from 'react';
 
+import { flagsHooks } from '../../../hooks/flags-hooks';
 import { authenticationApi } from '../lib/authentication-api';
 import { oauth2Utils } from '../lib/oauth2-utils';
+
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
 
 const ThirdPartyLogin = React.memo(() => {
   const queryClient = useQueryClient();
