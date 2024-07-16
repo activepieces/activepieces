@@ -9,7 +9,6 @@ export const issueHooks = {
     return useQuery<boolean, Error>({
       queryKey: ['issues-notification', authenticationSession.getProjectId()],
       queryFn: async () => {
-        console.log('useIssuesNotification');
         const count = await issuesApi.count();
         return count > 0;
       },

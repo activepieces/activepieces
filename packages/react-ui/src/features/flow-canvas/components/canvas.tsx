@@ -11,7 +11,7 @@ import '@xyflow/react/dist/style.css';
 import { useCallback, useMemo, useState } from 'react';
 
 import { PopulatedFlow } from '@activepieces/shared';
-
+import { ApBigButton } from './big-button'
 import { ApEdge, ApNode, flowCanvasUtils } from '../lib/flow-canvas-utils';
 
 import { ApEdgeWithButton } from './edge-with-button';
@@ -22,9 +22,11 @@ type FlowCanvasProps = {
 };
 
 const FlowCanvas = ({ flow }: FlowCanvasProps) => {
-  const graph = flowCanvasUtils.convertFlowVersionToGraph(flow.version);
-  console.log(graph);
-  const nodeTypes = useMemo(() => ({ stepNode: ApStepNode }), []);
+  const graph = useMemo(() => {
+    return flowCanvasUtils.convertFlowVersionToGraph(flow.version);
+  }, [flow.version])
+
+  const nodeTypes = useMemo(() => ({ stepNode: ApStepNode, bigButtonNode: ApBigButton }), []);
   const edgeTypes = useMemo(() => ({ apEdge: ApEdgeWithButton }), []);
 
   const [nodes, setNodes] = useState(graph.nodes);
@@ -40,6 +42,8 @@ const FlowCanvas = ({ flow }: FlowCanvasProps) => {
       setEdges((eds) => applyEdgeChanges(changes, eds)),
     [],
   );
+
+
 
   return (
     <div className="size-full grow">
