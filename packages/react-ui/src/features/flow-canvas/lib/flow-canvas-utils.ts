@@ -82,7 +82,7 @@ function buildChildrenGraph(
     x: 0,
     y: maximumHeight
   })
-  );
+
 
   let deltaLeftX =
     -(
