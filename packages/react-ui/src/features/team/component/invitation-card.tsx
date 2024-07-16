@@ -7,7 +7,7 @@ import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
 import { Avatar, AvatarImage } from '../../../components/ui/avatar';
 import { Button } from '../../../components/ui/button';
 import { userInvitationsHooks } from '../../../hooks/user-invitations-hooks';
-import { userInvitationApi } from '../../../lib/user-invitiation-api';
+import { userInvitationApi } from '../../../lib/user-invitation';
 
 export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
   const queryClient = useQueryClient();
