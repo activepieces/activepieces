@@ -13,4 +13,7 @@ export const projectMembersApi = {
       request
     );
   },
+  delete(id: string): Promise<void> {
+    return api.delete<void>(`/v1/project-members/${id}`);
+  },
 };
