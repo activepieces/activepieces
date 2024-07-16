@@ -616,7 +616,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
             case PropertyType.OAUTH2:
                 // Only accepts connections variable.
                 propsSchema[name] = Type.Union([
-                    Type.RegEx(RegExp('{{1}{connections.(.*?)}{1}}')),
+                    Type.RegExp(RegExp('{{1}{connections.(.*?)}{1}}')),
                     Type.String(),
                 ])
                 break
