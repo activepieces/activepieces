@@ -170,11 +170,11 @@ const getResponse = async (
         startDate == null
           ? undefined
           : {
-            timestamp: 'last_edited_time',
-            last_edited_time: {
-              on_or_after: startDate,
+              timestamp: 'last_edited_time',
+              last_edited_time: {
+                on_or_after: startDate,
+              },
             },
-          },
       sorts: [
         {
           timestamp: 'last_edited_time',

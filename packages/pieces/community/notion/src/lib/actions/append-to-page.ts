@@ -7,6 +7,8 @@ import { Client } from '@notionhq/client';
 
 import { notionAuth } from '../..';
 import { notionCommon } from '../common';
+import { markdownToBlocks } from '@tryfabric/martian';
+
 export const appendToPage = createAction({
   auth: notionAuth,
   name: 'append_to_page',
@@ -16,7 +18,8 @@ export const appendToPage = createAction({
     pageId: notionCommon.page,
     content: Property.LongText({
       displayName: 'Content',
-      description: 'The content you want to append.',
+      description:
+        'The content you want to append. You can use markdown formatting.',
       required: true,
     }),
   },
@@ -28,26 +31,9 @@ export const appendToPage = createAction({
       notionVersion: '2022-02-22',
     });
 
-    const block = await notion.blocks.children.append({
+    return await notion.blocks.children.append({
       block_id: pageId as string,
-      children: [
-        {
-          object: 'block',
-          type: 'paragraph',
-          paragraph: {
-            rich_text: [
-              {
-                type: 'text',
-                text: {
-                  content: content,
-                },
-              },
-            ],
-          },
-        },
-      ],
+      children: markdownToBlocks(content),
     });
-
-    return block.results[0];
   },
 });
