@@ -20,7 +20,7 @@ export const authenticationApi = {
   signUp(request: SignUpRequest) {
     return api.post<AuthenticationResponse>(
       '/v1/authentication/sign-up',
-      request
+      request,
     );
   },
   getFederatedAuthLoginUrl(providerName: ThirdPartyAuthnProviderEnum) {
@@ -31,7 +31,7 @@ export const authenticationApi = {
   claimThirdPartyRequest(request: ClaimTokenRequest) {
     return api.post<AuthenticationResponse>(
       '/v1/authn/federated/claim',
-      request
+      request,
     );
   },
   resetPassword(request: ResetPasswordRequestBody) {

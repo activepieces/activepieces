@@ -49,7 +49,7 @@ const AuthFormTemplate: React.FC<{
   const isSignUp = form === 'signup' ? true : false;
 
   return (
-    <Card className="w-1/4 rounded-sm drop-shadow-xl">
+    <Card className="w-[28rem] rounded-sm drop-shadow-xl">
       <CardHeader>
         <CardTitle className="text-2xl">{data[form].title}</CardTitle>
         <CardDescription>{data[form].description}</CardDescription>

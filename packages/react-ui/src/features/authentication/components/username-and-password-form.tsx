@@ -12,7 +12,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { authenticationApi } from '../../../lib/authentication-api';
-import { authenticationSession } from '../../../lib/authentication-session'; 
+import { authenticationSession } from '../../../lib/authentication-session';
 
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
@@ -20,28 +20,42 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { HttpError, api } from '@/lib/api';
 
-const SignInFormsSchema = Type.Object({
-  firstName: Type.String({
-    errorMessage: 'First name is required',
-  }),
-  lastName: Type.String({
-    errorMessage: 'Last name is required',
-  }),
+const AuthFormSchema = Type.Object({
+  firstName: Type.Optional(
+    Type.String({
+      errorMessage: 'First name is required',
+    }),
+  ),
+  lastName: Type.Optional(
+    Type.String({
+      errorMessage: 'Last name is required',
+    }),
+  ),
   email: Type.String({
     errorMessage: 'Email is required',
   }),
   password: Type.String({
     errorMessage: 'Password is required',
   }),
+  trackEvents: Type.Boolean(),
+  newsLetter: Type.Boolean(),
 });
 
-type SignInFormsSchema = Static<typeof SignInFormsSchema>;
+type AuthFormSchema = Static<typeof AuthFormSchema>;
 
 const UsernameAndPasswordForm: React.FC<{
   isSignUp: boolean;
 }> = React.memo(({ isSignUp }) => {
-  const form = useForm<SignInFormsSchema>({
-    resolver: typeboxResolver(SignInFormsSchema),
+  const defaultValues = isSignUp
+    ? {
+        trackEvents: true,
+        newsLetter: false,
+      }
+    : {};
+
+  const form = useForm<AuthFormSchema>({
+    defaultValues,
+    resolver: typeboxResolver(AuthFormSchema),
   });
 
   const navigate = useNavigate();
@@ -88,46 +102,46 @@ const UsernameAndPasswordForm: React.FC<{
     <>
       <Form {...form}>
         <form className="grid space-y-4">
-          <div
-            className={`flex flex-row gap-2 ${isSignUp ? 'mt-4 ' : 'hidden'}`}
-          >
-            <FormField
-              control={form.control}
-              name="firstName"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    {...field}
-                    required
-                    id="firstName"
-                    type="text"
-                    placeholder="John"
-                    className="rounded-sm"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    {...field}
-                    required
-                    id="lastName"
-                    type="text"
-                    placeholder="Doe"
-                    className="rounded-sm"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          {isSignUp && (
+            <div className={'flex flex-row gap-2'}>
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem className="w-full grid space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      {...field}
+                      required
+                      id="firstName"
+                      type="text"
+                      placeholder="John"
+                      className="rounded-sm"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem className="w-full grid space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      {...field}
+                      required
+                      id="lastName"
+                      type="text"
+                      placeholder="Doe"
+                      className="rounded-sm"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
           <FormField
             control={form.control}
             name="email"
@@ -178,23 +192,21 @@ const UsernameAndPasswordForm: React.FC<{
             </FormMessage>
           )}
           <Button
-            variant="outline"
-            className="bg-primary text-primary-foreground w-full rounded-sm"
             loading={isPending}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
           >
-            Sign in
+            {isSignUp ? 'Sign up' : 'Sign in'}
           </Button>
         </form>
       </Form>
 
       <div className="mt-4 text-center text-sm">
-        {isSignUp ? "Have an account?" : "Don't have an account?"}
+        {isSignUp ? 'Have an account?' : "Don't have an account?"}
         <Link
-          to={isSignUp ? "/sign-in" : "/sign-up"}
+          to={isSignUp ? '/sign-in' : '/sign-up'}
           className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
         >
-          {isSignUp ? "Sign in" : "Sign up"}
+          {isSignUp ? 'Sign in' : 'Sign up'}
         </Link>
       </div>
     </>
