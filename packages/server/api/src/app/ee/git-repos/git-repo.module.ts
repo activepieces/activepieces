@@ -109,7 +109,7 @@ const DeleteRepoRequestSchema = {
             id: Type.String(),
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+            [StatusCodes.NO_CONTENT]: Type.Never(),
         },
     },
 }
@@ -146,7 +146,7 @@ const PushRepoRequestSchema = {
             id: Type.String(),
         }),
         response: {
-            [StatusCodes.OK]: Type.Void(),
+            [StatusCodes.OK]: Type.Never(),
         },
     },
 }

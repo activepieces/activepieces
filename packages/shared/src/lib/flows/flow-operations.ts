@@ -1,10 +1,10 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../common'
 import {
-    Action, BranchActionSchema, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema,
+    BranchActionSchema, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema,
 } from './actions/action'
 import { FlowStatus } from './flow'
-import { EmptyTrigger, PieceTrigger } from './triggers/trigger'
+import { EmptyTrigger, PieceTrigger, Trigger } from './triggers/trigger'
 
 
 export enum FlowOperationType {
@@ -30,8 +30,6 @@ export enum StepLocationRelativeToParent {
     INSIDE_LOOP = 'INSIDE_LOOP',
 }
 
-const optionalNextAction = Type.Object({ nextAction: Type.Optional(Action) })
-
 export const UseAsDraftRequest = Type.Object({
     versionId: Type.String(),
 })
@@ -43,7 +41,7 @@ export type LockFlowRequest = Static<typeof LockFlowRequest>
 
 export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
-    trigger: Type.Union([Type.Composite([PieceTrigger, optionalNextAction]), Type.Composite([EmptyTrigger, optionalNextAction])]),
+    trigger: Trigger,
 })
 
 export type ImportFlowRequest = Static<typeof ImportFlowRequest>

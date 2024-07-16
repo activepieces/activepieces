@@ -112,7 +112,7 @@ export class FlowService {
   }
 
   list(request: ListFlowsRequest): Observable<SeekPage<PopulatedFlow>> {
-    const queryParams: { [key: string]: string | number } = {
+    const queryParams: { [key: string]: string | number | string[] } = {
       limit: request.limit ?? 10,
       cursor: request.cursor || '',
     };

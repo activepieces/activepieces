@@ -1,124 +1,149 @@
-import { Button } from "@/components/ui/button"
+import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { Static, Type } from '@sinclair/typebox';
+import { useMutation } from '@tanstack/react-query';
+import { HttpStatusCode } from 'axios';
+import { Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+
+import { Button } from '@/components/ui/button';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Plus } from "lucide-react"
-import React, { useState } from "react"
-import { Static, Type } from "@sinclair/typebox"
-import { typeboxResolver } from "@hookform/resolvers/typebox"
-import { useForm } from "react-hook-form"
-import { FormField, FormItem, Form, FormMessage } from "@/components/ui/form"
-import { formatUtils } from "@/lib/utils"
-import { authenticationSession } from "@/features/authentication/lib/authentication-session"
-import { alertsApi } from "../lib/alerts-api"
-import { useMutation } from "@tanstack/react-query"
-import { Alert, AlertChannel } from "@activepieces/ee-shared"
-import { INTERNAL_ERROR_TOAST, toast } from "@/components/ui/use-toast"
-import { api } from "@/lib/api"
-import { HttpStatusCode } from "axios"
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { authenticationSession } from '@/features/authentication/lib/authentication-session';
+import { api } from '@/lib/api';
+import { formatUtils } from '@/lib/utils';
+import { Alert, AlertChannel } from '@activepieces/ee-shared';
+
+import { alertsApi } from '../lib/alerts-api';
 
 const FormSchema = Type.Object({
-    email: Type.String({
-        errorMessage: "Please enter a valid email address",
-        pattern: formatUtils.EMAIL_REGEX
-    })
+  email: Type.String({
+    errorMessage: 'Please enter a valid email address',
+    pattern: formatUtils.EMAIL_REGEX,
+  }),
 });
 
-type FormSchema = Static<typeof FormSchema>
+type FormSchema = Static<typeof FormSchema>;
 
 type AddAlertEmailDialogProps = {
-    onAdd: (alert: Alert) => void
-}
-const AddAlertEmailDialog = React.memo(({ onAdd }: AddAlertEmailDialogProps) => {
-
+  onAdd: (alert: Alert) => void;
+};
+const AddAlertEmailDialog = React.memo(
+  ({ onAdd }: AddAlertEmailDialogProps) => {
     const [open, setOpen] = useState(false);
 
-    const { mutate, isPending } = useMutation<Alert, Error, { email: string }>({
-        mutationFn: async (params) => alertsApi.create({
-            receiver: params.email,
-            projectId: authenticationSession.getProjectId(),
-            channel: AlertChannel.EMAIL,
-        }),
-        onSuccess: (data) => {
-            onAdd(data)
-            toast({
-                title: "Success",
-                description: 'Your changes have been saved.',
-                duration: 3000,
-            })
-            setOpen(false);
-        },
-        onError: (error) => {
-            if (api.isError(error)) {
-                switch (error.response?.status) {
-                    case HttpStatusCode.Conflict: {
-                        toast({
-                            title: "Error",
-                            description: 'This email is already being added.',
-                            duration: 3000,
-                            variant: 'destructive',
-                        })
-                        break;
-                    }
-                    default: {
-                        console.log(error);
-                        toast(INTERNAL_ERROR_TOAST)
-                        break;
-                    }
-                }
-            }
-            setOpen(true);
-        },
+    const form = useForm<FormSchema>({
+      resolver: typeboxResolver(FormSchema),
+      defaultValues: {},
     });
 
-    const form = useForm<FormSchema>({
-        resolver: typeboxResolver(FormSchema),
-        defaultValues: {},
-    })
+    const { mutate, isPending } = useMutation<Alert, Error, { email: string }>({
+      mutationFn: async (params) =>
+        alertsApi.create({
+          receiver: params.email,
+          projectId: authenticationSession.getProjectId(),
+          channel: AlertChannel.EMAIL,
+        }),
+      onSuccess: (data) => {
+        onAdd(data);
+        toast({
+          title: 'Success',
+          description: 'Your changes have been saved.',
+          duration: 3000,
+        });
+        setOpen(false);
+      },
+      onError: (error) => {
+        if (api.isError(error)) {
+          switch (error.response?.status) {
+            case HttpStatusCode.Conflict: {
+              form.setError('root.serverError', {
+                message: 'The email is already added.',
+              });
+              break;
+            }
+            default: {
+              console.log(error);
+              toast(INTERNAL_ERROR_TOAST);
+              break;
+            }
+          }
+        }
+        setOpen(true);
+      },
+    });
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center space-x-2 mt-4">
-                    <Plus className="h-4 w-4" />
-                    <span>Add email</span>
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Add Alert Email</DialogTitle>
-                    <DialogDescription>
-                        Enter the email address to receive alerts.
-                    </DialogDescription>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit((data) => mutate(data), () => {
-                            setOpen(true);
-                        })} className="grid gap-">
-                            <FormField control={form.control} name="email" render={({ field }) => (
-                                <FormItem className="grid gap-3">
-                                    <Label htmlFor="email">Email</Label>
-                                    <Input {...field} id="email" type="text" placeholder="gilfoyle@piedpiper.com" />
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                            <DialogFooter>
-                                <Button type="submit" loading={isPending}>Add Email</Button>
-                            </DialogFooter>
-                        </form>
-                    </Form>
-                </DialogHeader>
-            </DialogContent>
-
-        </Dialog>
-    )
-})
-
-export { AddAlertEmailDialog }
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            className="mt-4 flex items-center space-x-2"
+          >
+            <Plus className="size-4" />
+            <span>Add email</span>
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add Alert Email</DialogTitle>
+            <DialogDescription>
+              Enter the email address to receive alerts.
+            </DialogDescription>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(
+                  (data) => mutate(data),
+                  () => {
+                    setOpen(true);
+                  }
+                )}
+                className="gap- grid"
+              >
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-3">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        {...field}
+                        id="email"
+                        type="text"
+                        placeholder="gilfoyle@piedpiper.com"
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {form?.formState?.errors?.root?.serverError && (
+                  <FormMessage>
+                    {form.formState.errors.root.serverError.message}
+                  </FormMessage>
+                )}
+                <DialogFooter>
+                  <Button type="submit" loading={isPending}>
+                    Add Email
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+);
+AddAlertEmailDialog.displayName = 'AddAlertEmailDialog';
+export { AddAlertEmailDialog };
