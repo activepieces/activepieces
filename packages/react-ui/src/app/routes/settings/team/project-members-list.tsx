@@ -1,13 +1,6 @@
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { LoaderIcon } from 'lucide-react';
 
-import { InviteUserDialog } from '../../../app/components/invite-user-dialog';
-import { projectMembersHooks } from '../../../hooks/project-members-hooks';
-import { userInvitationsHooks } from '../../../hooks/user-invitations-hooks';
-
-import { InvitationCard } from './invitation-card';
-import { ProjectMemberCard } from './project-member-card';
-
+import { InviteUserDialog } from '@/app/components/invite-user-dialog';
 import {
   Card,
   CardContent,
@@ -16,6 +9,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/seperator';
+import { InvitationCard } from '@/features/team/component/invitation-card';
+import { ProjectMemberCard } from '@/features/team/component/project-member-card';
+import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
+import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
 export default function ProjectMembersList() {
   const { data: projectMembers, isPending: projectMembersIsPending } =

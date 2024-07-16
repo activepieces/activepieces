@@ -1,7 +1,7 @@
-import { InvitationType, UserInvitation } from '@activepieces/shared';
 import { QueryClient, useQuery } from '@tanstack/react-query';
 
-import { userInvitationApi } from '../lib/user-Invitation-api';
+import { userInvitationApi } from '@/lib/user-invitation';
+import { InvitationType, UserInvitation } from '@activepieces/shared';
 
 const userInvitationsQueryKey = 'user-invitations';
 export const userInvitationsHooks = {

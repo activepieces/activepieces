@@ -1,8 +1,3 @@
-import {
-  AuthenticationResponse,
-  SignInRequest,
-  SignUpRequest,
-} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -11,14 +6,19 @@ import React from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { authenticationApi } from '../../../lib/authentication-api';
-import { authenticationSession } from '../../../lib/authentication-session';
-
 import { Button } from '@/components/ui/button';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { HttpError, api } from '@/lib/api';
+import {
+  AuthenticationResponse,
+  SignInRequest,
+  SignUpRequest,
+} from '@activepieces/shared';
+
+import { authenticationApi } from '../../../lib/authentication-api';
+import { authenticationSession } from '../../../lib/authentication-session';
 
 const AuthFormSchema = Type.Object({
   firstName: Type.Optional(

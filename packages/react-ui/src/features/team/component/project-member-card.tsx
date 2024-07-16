@@ -1,8 +1,9 @@
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import { PopoverContent } from '@radix-ui/react-popover';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronDownIcon, Trash } from 'lucide-react';
+
+import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
 import { Avatar, AvatarImage } from '../../../components/ui/avatar';
@@ -16,8 +17,8 @@ import {
   CommandList,
 } from '../../../components/ui/command';
 import { Popover, PopoverTrigger } from '../../../components/ui/popover';
-import { projectMembersHooks } from '../../../hooks/project-members-hooks';
 import { projectMembersApi } from '../lib/project-members-api';
+import { projectMembersHooks } from '../lib/project-members-hooks';
 
 export function ProjectMemberCard({
   member,

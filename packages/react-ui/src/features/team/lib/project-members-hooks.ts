@@ -1,8 +1,10 @@
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { QueryClient, useQuery } from '@tanstack/react-query';
 
-import { projectMembersApi } from '../features/team/lib/project-members-api';
-import { authenticationSession } from '../lib/authentication-session';
+import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+
+import { authenticationSession } from '../../../lib/authentication-session';
+
+import { projectMembersApi } from './project-members-api';
 
 const projectMembersQueryKey = 'project-members';
 export const projectMembersHooks = {
