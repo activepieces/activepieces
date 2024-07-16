@@ -16,7 +16,7 @@ import {
   UserInvitationWithLink,
 } from '@activepieces/shared';
 
-import { Button } from '../../components/ui/button';
+import { Button } from '../../../../components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -25,15 +25,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../../components/ui/dialog';
+} from '../../../../components/ui/dialog';
 import {
   FormField,
   FormItem,
   Form,
   FormMessage,
-} from '../../components/ui/form';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
+} from '../../../../components/ui/form';
+import { Input } from '../../../../components/ui/input';
+import { Label } from '../../../../components/ui/label';
 import {
   Select,
   SelectContent,
@@ -42,19 +42,19 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '../../components/ui/select';
+} from '../../../../components/ui/select';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '../../components/ui/tooltip';
-import { toast } from '../../components/ui/use-toast';
-import { platformHooks } from '../../hooks/platform-hooks';
-import { projectHooks } from '../../hooks/project-hooks';
-import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
-import { HttpError } from '../../lib/api';
-import { authenticationSession } from '../../lib/authentication-session';
-import { formatUtils } from '../../lib/utils';
+} from '../../../../components/ui/tooltip';
+import { toast } from '../../../../components/ui/use-toast';
+import { platformHooks } from '../../../../hooks/platform-hooks';
+import { projectHooks } from '../../../../hooks/project-hooks';
+import { userInvitationsHooks } from '../../../../hooks/user-invitations-hooks';
+import { HttpError } from '../../../../lib/api';
+import { authenticationSession } from '../../../../lib/authentication-session';
+import { formatUtils } from '../../../../lib/utils';
 
 const FormSchema = Type.Object({
   email: Type.String({

@@ -38,23 +38,20 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = ({
         targetPosition={targetPosition}
         style={style}
       />
-      {/* <foreignObject
-                width={18}
-                height={18}
-                x={targetX - 9}
-                y={targetY - 25}
-                onClick={(event) => onEdgeClick(event, id)}
-                className="edgebutton-foreignobject"
-                requiredExtensions="http://www.w3.org/1999/xhtml"
-            >
-                <div className='bg-[#a6b1bf]'>
-                    <button
-                        className="edgebutton"
-                        >
-                        
-                    </button>
-                </div>
-            </foreignObject> */}
+      {
+        <foreignObject
+          width={18}
+          height={18}
+          x={targetX - 9}
+          y={targetY - 25}
+          className="edgebutton-foreignobject"
+          requiredExtensions="http://www.w3.org/1999/xhtml"
+        >
+          <div className="bg-[#a6b1bf]">
+            <button className="edgebutton"></button>
+          </div>
+        </foreignObject>
+      }
     </>
   );
 };
