@@ -1,20 +1,30 @@
-import { useQueryClient } from '@tanstack/react-query';
-import React from 'react';
-
-import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
 import {
   ApFlagId,
   ThirdPartyAuthnProviderEnum,
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
+import Github from '../../../assets/img/custom/auth/github.svg';
+import GoogleIcon from '../../../assets/img/custom/auth/google-icon.svg';
 import { flagsHooks } from '../../../hooks/flags-hooks';
 import { authenticationApi } from '../../../lib/authentication-api';
+import { authenticationSession } from '../../../lib/authentication-session';
 import { oauth2Utils } from '../lib/oauth2-utils';
 
-const ThirdPartyLogin = React.memo(() => {
+import { Button } from '@/components/ui/button';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+
+const ThirdPartyIcon = ({ icon }: { icon: string }) => {
+  return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
+};
+
+const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
   const { data: thirdPartyAuthProviders } =
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
       ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
@@ -34,15 +44,28 @@ const ThirdPartyLogin = React.memo(() => {
     const { loginUrl } = await authenticationApi.getFederatedAuthLoginUrl(
       providerName,
     );
+
     if (!loginUrl || !thirdPartyRedirectUrl) {
-      toast({
-        title: 'Error',
-        description: 'Something went wrong, please try again later.',
-        duration: 3000,
-      });
+      toast(INTERNAL_ERROR_TOAST);
       return;
     }
-    await oauth2Utils.openWithLoginUrl(loginUrl, thirdPartyRedirectUrl);
+
+    try {
+      const { code } = await oauth2Utils.openWithLoginUrl(
+        loginUrl,
+        thirdPartyRedirectUrl,
+      );
+
+      const data = await authenticationApi.claimThirdPartyRequest({
+        providerName,
+        code,
+      });
+
+      authenticationSession.saveResponse(data);
+      navigate('/flows');
+    } catch (e) {
+      toast(INTERNAL_ERROR_TOAST);
+    }
   };
 
   return (
@@ -50,23 +73,25 @@ const ThirdPartyLogin = React.memo(() => {
       {thirdPartyAuthProviders?.google && (
         <Button
           variant="outline"
-          className="w-full"
+          className="w-full rounded-sm"
           onClick={(e) =>
             handleProviderClick(e, ThirdPartyAuthnProviderEnum.GOOGLE)
           }
         >
-          Sign in with Google
+          <ThirdPartyIcon icon={GoogleIcon} />
+          Sign {isSignUp ? 'up' : 'in'} with Google
         </Button>
       )}
       {thirdPartyAuthProviders?.github && (
         <Button
           variant="outline"
-          className="w-full"
+          className="w-full rounded-sm"
           onClick={(e) =>
             handleProviderClick(e, ThirdPartyAuthnProviderEnum.GITHUB)
           }
         >
-          Sign in with Github
+          <ThirdPartyIcon icon={Github} />
+          Sign {isSignUp ? 'up' : 'in'} with Github
         </Button>
       )}
     </div>
