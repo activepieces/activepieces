@@ -102,7 +102,7 @@ const AddAlertEmailDialog = React.memo(
               Enter the email address to receive alerts.
             </DialogDescription>
             <Form {...form}>
-              <form 
+              <form
                 onSubmit={form.handleSubmit(
                   (data) => mutate(data),
                   () => {
