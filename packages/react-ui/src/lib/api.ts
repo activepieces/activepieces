@@ -14,6 +14,9 @@ const disallowedRoutes = [
   '/v1/authentication/sign-up',
   '/v1/flags',
   '/v1/authn/federated/login',
+  '/v1/authn/federated/claim',
+  '/v1/otp',
+  '/v1/authn/local/reset-password',
 ];
 
 function request<TResponse>(

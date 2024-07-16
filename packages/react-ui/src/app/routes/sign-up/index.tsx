@@ -4,12 +4,7 @@ import { theme } from '@/lib/theme';
 const SignUpPage: React.FC = () => {
   return (
     <div className="flex h-screen flex-col items-center justify-center gap-2">
-      <img
-        src={theme.fullLogoUrl}
-        alt="activepieces-logo"
-        width={205}
-        height={205}
-      />
+      <img src={theme.fullLogoUrl} alt="logo" width={205} height={205} />
       <AuthFormTemplate form="signup" />
     </div>
   );
