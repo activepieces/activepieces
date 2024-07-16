@@ -6,7 +6,13 @@ import {
   ExecutionType,
   PauseType,
 } from '@activepieces/shared';
-import { profilePicture, slackChannel, slackInfo, text, username } from '../common/props';
+import {
+  profilePicture,
+  slackChannel,
+  slackInfo,
+  text,
+  username,
+} from '../common/props';
 
 export const requestSendApprovalMessageAction = createAction({
   auth: slackAuth,
@@ -42,7 +48,7 @@ export const requestSendApprovalMessageAction = createAction({
         queryParams: { action: 'disapprove' },
       });
 
-      return await slackSendMessage({
+      await slackSendMessage({
         token,
         text: `${context.propsValue.text}\n\nApprove: ${approvalLink}\n\nDisapprove: ${disapprovalLink}`,
         username,
@@ -82,6 +88,10 @@ export const requestSendApprovalMessageAction = createAction({
         ],
         conversationId: channel,
       });
+
+      return {
+        approved: false, // default approval is false
+      };
     } else {
       return {
         approved: context.resumePayload.queryParams['action'] === 'approve',
