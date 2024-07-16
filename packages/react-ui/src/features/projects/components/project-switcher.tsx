@@ -4,8 +4,6 @@ import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
 
-import { projectHooks } from '../../../hooks/project-hooks';
-
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -21,6 +19,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+
+import { projectHooks } from '../../../hooks/project-hooks';
 
 function ProjectSwitcher() {
   const queryClient = useQueryClient();
@@ -65,7 +65,7 @@ function ProjectSwitcher() {
                         'ml-auto h-4 w-4',
                         currentProject?.id === project.id
                           ? 'opacity-100'
-                          : 'opacity-0'
+                          : 'opacity-0',
                       )}
                     />
                   </CommandItem>

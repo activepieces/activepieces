@@ -10,9 +10,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
-import { projectHooks } from '@/hooks/project-hooks';
 import { NotificationStatus, ProjectWithLimits } from '@activepieces/shared';
 
 import { AlertOption } from './alert-option';

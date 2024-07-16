@@ -20,8 +20,8 @@ import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { authenticationSession } from '@/lib/authentication-session';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { Alert, AlertChannel } from '@activepieces/ee-shared';
 
@@ -107,7 +107,7 @@ const AddAlertEmailDialog = React.memo(
                   (data) => mutate(data),
                   () => {
                     setOpen(true);
-                  }
+                  },
                 )}
                 className="gap- grid"
               >
@@ -143,7 +143,7 @@ const AddAlertEmailDialog = React.memo(
         </DialogContent>
       </Dialog>
     );
-  }
+  },
 );
 AddAlertEmailDialog.displayName = 'AddAlertEmailDialog';
 export { AddAlertEmailDialog };

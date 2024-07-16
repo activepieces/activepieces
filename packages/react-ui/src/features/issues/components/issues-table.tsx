@@ -35,7 +35,7 @@ export default function IssuesTable() {
   const handleMarkAsResolved = async (
     flowDisplayName: string,
     issueId: string,
-    deleteRow: () => void
+    deleteRow: () => void,
   ) => {
     deleteRow();
     await issuesApi.resolve(issueId);
@@ -107,7 +107,7 @@ export default function IssuesTable() {
                 handleMarkAsResolved(
                   row.original.flowDisplayName,
                   row.original.id,
-                  row.original.delete
+                  row.original.delete,
                 )
               }
             >
