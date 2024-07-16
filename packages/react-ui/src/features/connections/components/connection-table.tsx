@@ -1,5 +1,9 @@
-import { ColumnDef } from '@tanstack/react-table';
+import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
+import { ColumnDef, Row } from '@tanstack/react-table';
 import { CheckIcon, Trash } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+
+import { appConnectionUtils } from '../lib/app-connections-utils';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -14,10 +18,34 @@ import { appConnectionsApi } from '@/features/connections/lib/app-connections-ap
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
-
-import { appConnectionUtils } from '../lib/app-connections-utils';
-
+const DeleteConnectionColumn = ({
+  row,
+}: {
+  row: RowDataWithActions<AppConnection>;
+}) => {
+  const [, setSearchParams] = useSearchParams();
+  return (
+    <div className="flex items-end justify-end">
+      <ConfirmationDeleteDialog
+        title={`Delete ${row.name} connection`}
+        message="Are you sure you want to delete this connection? all steps using it will fail."
+        mutationFn={() =>
+          appConnectionsApi.delete(row.id).then((data) => {
+            const newQueryParameters: URLSearchParams = new URLSearchParams();
+            newQueryParameters.set('current', new Date().toISOString());
+            setSearchParams(newQueryParameters);
+            return data;
+          })
+        }
+        entityName={row.name}
+      >
+        <Button variant="ghost" className="size-8 p-0">
+          <Trash className="size-4" />
+        </Button>
+      </ConfirmationDeleteDialog>
+    </div>
+  );
+};
 const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
   {
     accessorKey: 'pieceName',
@@ -95,20 +123,7 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
     accessorKey: 'actions',
     header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
     cell: ({ row }) => {
-      return (
-        <div className="flex items-end justify-end">
-          <ConfirmationDeleteDialog
-            title={`Delete ${row.original.name} connection`}
-            message="Are you sure you want to delete this connection? all steps using it will fail."
-            onClose={() => {}}
-            onConfirm={() => {}}
-          >
-            <Button variant="ghost" className="size-8 p-0">
-              <Trash className="size-4" />
-            </Button>
-          </ConfirmationDeleteDialog>
-        </div>
-      );
+      return <DeleteConnectionColumn row={row.original} />;
     },
   },
 ];

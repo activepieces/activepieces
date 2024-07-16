@@ -1,3 +1,4 @@
+import { PlatformRole } from '@activepieces/shared';
 import { UseFormReturn } from 'react-hook-form';
 
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -11,12 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlatformRole } from '@activepieces/shared';
 
 type PlatformRoleSelectProps = {
   form: UseFormReturn<any>;
 };
-const PlatformRoleSelect = ({ form }: PlatformRoleSelectProps) => {
+export const PlatformRoleSelect = ({ form }: PlatformRoleSelectProps) => {
   return (
     <FormField
       control={form.control}
@@ -41,5 +41,3 @@ const PlatformRoleSelect = ({ form }: PlatformRoleSelectProps) => {
     ></FormField>
   );
 };
-
-export { PlatformRoleSelect };
