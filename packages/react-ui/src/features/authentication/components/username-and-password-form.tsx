@@ -189,12 +189,12 @@ const UsernameAndPasswordForm: React.FC<{
       </Form>
 
       <div className="mt-4 text-center text-sm">
-        Don&apos;t have an account?{' '}
+        {isSignUp ? "Have an account?" : "Don't have an account?"}
         <Link
-          to="/sign-up"
-          className="text-muted-foreground hover:text-primary text-sm transition-all duration-200"
+          to={isSignUp ? "/sign-in" : "/sign-up"}
+          className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
         >
-          Sign up
+          {isSignUp ? "Sign in" : "Sign up"}
         </Link>
       </div>
     </>
