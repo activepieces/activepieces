@@ -17,6 +17,7 @@ import AppearancePage from './routes/settings/appearance';
 import PiecesPage from './routes/settings/pieces';
 import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
+import { SignUpPage } from './routes/sign-up';
 
 const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
   if (!authenticationSession.isLoggedIn()) {
@@ -85,6 +86,10 @@ export const router = createBrowserRouter([
   {
     path: '/sign-in',
     element: <SignInPage />,
+  },
+  {
+    path: '/sign-up',
+    element: <SignUpPage />,
   },
   {
     path: '/settings/alerts',

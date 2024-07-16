@@ -11,4 +11,7 @@ export const appConnectionsApi = {
   ): Promise<SeekPage<AppConnection>> {
     return api.get<SeekPage<AppConnection>>('/v1/app-connections', request);
   },
+  delete(id: string): Promise<void> {
+    return api.delete<void>(`/v1/app-connections/${id}`);
+  },
 };

@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid';
 import {
   Action,
   ActionType,
@@ -7,6 +8,11 @@ import {
 } from '@activepieces/shared';
 
 const VERTICAL_OFFSET = 150;
+const HORIZONTAL_SPACE_BETWEEN_NODES = 30;
+const NODE_SIZE = {
+  width: 260,
+  height: 70,
+};
 
 export const flowCanvasUtils = {
   convertFlowVersionToGraph(version: FlowVersion): ApGraph {
@@ -26,42 +32,85 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
     edges: [],
   };
   switch (step.type) {
+    case ActionType.LOOP_ON_ITEMS: {
+      const { firstLoopAction, nextAction } = step;
+      const childrenGraphs = [null, firstLoopAction].map((g) => {
+        return isNil(g) ? graphWithSingleBigButton() : traverseFlow(g);
+      });
+      return buildChildrenGraph(childrenGraphs, nextAction, graph);
+    }
     case ActionType.BRANCH: {
-      const { onSuccessAction, onFailureAction } = step;
-      const childGraph = offsetGraph(traverseFlow(onSuccessAction), {
-        x: -150,
-        y: VERTICAL_OFFSET,
-      });
-      if (childGraph.nodes.length > 0) {
-        graph.edges.push(addEdge(stepToNode(step), childGraph.nodes[0]));
-      }
-      const childGraphFailure = offsetGraph(traverseFlow(onFailureAction), {
-        x: 150,
-        y: VERTICAL_OFFSET,
-      });
-      if (childGraphFailure.nodes.length > 0) {
-        graph.edges.push(addEdge(stepToNode(step), childGraphFailure.nodes[0]));
-      }
-      graph.edges.push(...childGraph.edges);
-      graph.nodes.push(...childGraph.nodes);
+      const { nextAction, onSuccessAction, onFailureAction } = step;
 
-      graph.edges.push(...childGraphFailure.edges);
-      graph.nodes.push(...childGraphFailure.nodes);
-      break;
+      const childrenGraphs = [onSuccessAction, onFailureAction].map((g) => {
+        return isNil(g) ? graphWithSingleBigButton() : traverseFlow(g);
+      });
+
+      return buildChildrenGraph(childrenGraphs, nextAction, graph);
     }
     default: {
-      break;
+      const { nextAction } = step;
+      if (isNil(nextAction)) {
+        return graph;
+      }
+      const childGraph = offsetGraph(traverseFlow(nextAction), {
+        x: 0,
+        y: VERTICAL_OFFSET,
+      });
+      graph.edges.push(addEdge(stepToNode(step), childGraph.nodes[0]));
+      return mergeGraph(graph, childGraph);
     }
   }
-  const { nextAction } = step;
-  const childGraph = offsetGraph(traverseFlow(nextAction), {
+}
+
+function buildChildrenGraph(
+  childrenGraphs: ApGraph[],
+  nextAction: Action | Trigger | undefined,
+  graph: ApGraph,
+): ApGraph {
+  const totalWidth =
+    (childrenGraphs.length - 1) * HORIZONTAL_SPACE_BETWEEN_NODES +
+    childrenGraphs.reduce(
+      (acc, current) => boundingBox(current).width + acc,
+      0,
+    );
+  const maximumHeight =
+    childrenGraphs.reduce((acc, current) => boundingBox(current).height, 0) +
+    2 * VERTICAL_OFFSET;
+
+  const commonPartGraph = offsetGraph(isNil(nextAction) ? graphWithSingleBigButton() : traverseFlow(nextAction), {
     x: 0,
-    y: VERTICAL_OFFSET,
-  });
-  if (childGraph.nodes.length > 0) {
-    graph.edges.push(addEdge(stepToNode(step), childGraph.nodes[0]));
+    y: maximumHeight
+  })
+
+
+  let deltaLeftX =
+    -(
+      totalWidth -
+      boundingBox(childrenGraphs[0]).widthLeft -
+      boundingBox(childrenGraphs[childrenGraphs.length - 1]).widthRight
+    ) /
+      2 -
+    boundingBox(childrenGraphs[0]).widthLeft;
+
+  for (let idx = 0; idx < childrenGraphs.length; ++idx) {
+    const cbx = boundingBox(childrenGraphs[idx]);
+    graph.edges.push(addEdge(graph.nodes[0], childrenGraphs[idx].nodes[0]));
+    const childGraph = offsetGraph(childrenGraphs[idx], {
+      x: deltaLeftX + cbx.widthLeft,
+      y: VERTICAL_OFFSET,
+    });
+    graph = mergeGraph(graph, childGraph);
+    graph.edges.push(
+      addEdge(
+        childGraph.nodes[childGraph.nodes.length - 1],
+        commonPartGraph.nodes[0],
+      ),
+    );
+    deltaLeftX += cbx.width + HORIZONTAL_SPACE_BETWEEN_NODES;
   }
-  return mergeGraph(graph, childGraph);
+  graph = mergeGraph(graph, commonPartGraph);
+  return graph;
 }
 
 function addEdge(nodeOne: ApNode, nodeTwo: ApNode): ApEdge {
@@ -70,8 +119,24 @@ function addEdge(nodeOne: ApNode, nodeTwo: ApNode): ApEdge {
     source: nodeOne.id,
     target: nodeTwo.id,
     type: 'apEdge',
-    label: nodeTwo.data.displayName,
+    label: nodeTwo.id,
   };
+}
+
+function boundingBox(graph: ApGraph): ApBoundingBox {
+  const minX = Math.min(...graph.nodes.map((node) => node.position.x));
+  const minY = Math.min(...graph.nodes.map((node) => node.position.y));
+  const maxX = Math.max(
+    ...graph.nodes.map((node) => node.position.x + NODE_SIZE.width),
+  );
+  const maxY = Math.max(
+    ...graph.nodes.map((node) => node.position.y + NODE_SIZE.height),
+  );
+  const width = maxX - minX;
+  const height = maxY - minY;
+  const widthLeft = -minX + NODE_SIZE.width / 2;
+  const widthRight = maxX - NODE_SIZE.width / 2;
+  return { width, height, widthLeft, widthRight };
 }
 
 function offsetGraph(
@@ -90,6 +155,19 @@ function offsetGraph(
   };
 }
 
+function graphWithSingleBigButton(): ApGraph {
+  return {
+    nodes: [
+      {
+        id: nanoid(),
+        position: { x: 0, y: 0 },
+        type: 'bigButton',
+        data: {},
+      },
+    ],
+    edges: [],
+  };
+}
 function stepToNode(step: Action | Trigger): ApNode {
   return {
     id: step.name,
@@ -108,11 +186,18 @@ function mergeGraph(graph1: ApGraph, graph2: ApGraph): ApGraph {
 
 type Step = Action | Trigger;
 
+type ApBoundingBox = {
+  width: number;
+  height: number;
+  widthLeft: number;
+  widthRight: number;
+};
+
 export type ApNode = {
   id: string;
   position: { x: number; y: number };
   type: string;
-  data: Step;
+  data: Step | {};
 };
 
 export type ApEdge = {

@@ -14,6 +14,7 @@ import { PopulatedFlow } from '@activepieces/shared';
 
 import { ApEdge, ApNode, flowCanvasUtils } from '../lib/flow-canvas-utils';
 
+import { ApBigButton } from './big-button';
 import { ApEdgeWithButton } from './edge-with-button';
 import { ApStepNode } from './step-node';
 
@@ -22,8 +23,14 @@ type FlowCanvasProps = {
 };
 
 const FlowCanvas = ({ flow }: FlowCanvasProps) => {
-  const graph = flowCanvasUtils.convertFlowVersionToGraph(flow.version);
-  const nodeTypes = useMemo(() => ({ stepNode: ApStepNode }), []);
+  const graph = useMemo(() => {
+    return flowCanvasUtils.convertFlowVersionToGraph(flow.version);
+  }, [flow.version]);
+
+  const nodeTypes = useMemo(
+    () => ({ stepNode: ApStepNode, bigButtonNode: ApBigButton }),
+    [],
+  );
   const edgeTypes = useMemo(() => ({ apEdge: ApEdgeWithButton }), []);
 
   const [nodes, setNodes] = useState(graph.nodes);

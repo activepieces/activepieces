@@ -28,7 +28,7 @@ export const piecesHooks = {
     return useQuery<PieceMetadataModelSummary[], Error>({
       queryKey: ['pieces', searchQuery],
       queryFn: () => piecesApi.list({ searchQuery }),
-      staleTime: searchQuery ? Infinity : 0,
+      staleTime: searchQuery ? 0 : Infinity,
     });
   },
 };

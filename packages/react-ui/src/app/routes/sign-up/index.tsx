@@ -1,7 +1,7 @@
 import { AuthFormTemplate } from '@/features/authentication/components/auth-form-template';
 import { theme } from '@/lib/theme';
 
-const SignInPage: React.FC = () => {
+const SignUpPage: React.FC = () => {
   return (
     <div className="flex h-screen flex-col items-center justify-center gap-2">
       <img
@@ -10,10 +10,11 @@ const SignInPage: React.FC = () => {
         width={205}
         height={205}
       />
-      <AuthFormTemplate form="signin" />
+      <AuthFormTemplate form="signup" />
     </div>
   );
 };
-SignInPage.displayName = 'SignInPage';
 
-export { SignInPage };
+SignUpPage.displayName = 'SignUpPage';
+
+export { SignUpPage };

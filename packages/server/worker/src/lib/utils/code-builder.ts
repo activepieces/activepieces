@@ -29,6 +29,11 @@ const INVALID_ARTIFACT_TEMPLATE_PATH =
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
+
+const codesPath = cacheHandler('/cache/codes');
+
+const codesPath = cacheHandler(codesFolderPath);
+
 export const codeBuilder = {
     getCodesFolder({ codesFolderPath, flowVersionId }: { codesFolderPath: string, flowVersionId: string }): string {
         return path.join(codesFolderPath, flowVersionId)
@@ -37,6 +42,11 @@ export const codeBuilder = {
         artifact,
         codesFolderPath,
     }: ProcessCodeStepParams): Promise<void> {
+
+
+        const uniqueKey = artifact.flowVersionId + artifact.name;
+        codesPath.set(uniqueKey, CacheState.PENDING);
+
         const { sourceCode, flowVersionId, name } = artifact
         const flowVersionPath = codeBuilder.getCodesFolder({ codesFolderPath, flowVersionId })
         const codePath = path.join(flowVersionPath, name)
@@ -48,6 +58,7 @@ export const codeBuilder = {
         })
 
         const lock = await memoryLock.acquire(`code-builder-${flowVersionId}-${name}`)
+        
         try {
             const indexPath = path.join(codePath, 'index.js')
             const fExists = await fileExists(indexPath)
@@ -67,6 +78,8 @@ export const codeBuilder = {
                 path: codePath,
                 code,
             })
+            codesPath.set(uniqueKey, CacheState.READY);
+
         }
         catch (error: unknown) {
             logger.error({ name: 'CodeBuilder#processCodeStep', codePath, error })

@@ -16,7 +16,7 @@ import { PlatformRole } from '@activepieces/shared';
 type PlatformRoleSelectProps = {
   form: UseFormReturn<any>;
 };
-const PlatformRoleSelect = ({ form }: PlatformRoleSelectProps) => {
+export const PlatformRoleSelect = ({ form }: PlatformRoleSelectProps) => {
   return (
     <FormField
       control={form.control}
@@ -41,5 +41,3 @@ const PlatformRoleSelect = ({ form }: PlatformRoleSelectProps) => {
     ></FormField>
   );
 };
-
-export { PlatformRoleSelect };

@@ -25,7 +25,7 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <ThemeProvider storageKey="vite-ui-theme">
           <RouterProvider router={router} />
           <Toaster />
         </ThemeProvider>
