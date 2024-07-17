@@ -6,6 +6,7 @@ import { flagsHooks } from '../../hooks/flags-hooks';
 import { platformHooks } from '../../hooks/platform-hooks';
 import { projectHooks } from '../../hooks/project-hooks';
 import { authenticationSession } from '../../lib/authentication-session';
+import { LoadingSpinner } from '@/components/ui/spinner';
 
 export const AllowOnlyLoggedInUserOnlyGuard = ({
   children,
@@ -22,9 +23,7 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
     <Suspense
       fallback={
         <div className="bg-background flex h-screen w-screen items-center justify-center ">
-          <div className="animate-spin">
-            <LoaderIcon height={50} width={50}></LoaderIcon>
-          </div>
+          <LoadingSpinner size={50}></LoadingSpinner>
         </div>
       }
     >

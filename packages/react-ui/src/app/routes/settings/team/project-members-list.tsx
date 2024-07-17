@@ -13,6 +13,7 @@ import { InvitationCard } from '@/features/team/component/invitation-card';
 import { ProjectMemberCard } from '@/features/team/component/project-member-card';
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import { userInvitationsHooks } from '@/hooks/user-invitations-hooks';
 
 export default function ProjectMembersList() {
   const { data: projectMembers, isPending: projectMembersIsPending } =
