@@ -1,5 +1,9 @@
 import React from 'react';
 
+import { SignInForm } from './sign-in-form';
+import { SignUpForm } from './sign-up-form';
+import { ThirdPartyLogin } from './third-party-logins';
+
 import {
   Card,
   CardContent,
@@ -7,9 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-
-import { ThirdPartyLogin } from './third-party-logins';
-import { UsernameAndPasswordForm } from './username-and-password-form';
 
 type AuthFormTemplateProps = {
   title: string;
@@ -57,7 +58,7 @@ const AuthFormTemplate: React.FC<{
       <CardContent>
         <ThirdPartyLogin isSignUp={isSignUp} />
         <Separator />
-        <UsernameAndPasswordForm isSignUp={isSignUp} />
+        {isSignUp ? <SignUpForm /> : <SignInForm />}
       </CardContent>
     </Card>
   );
