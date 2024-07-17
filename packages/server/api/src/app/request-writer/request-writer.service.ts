@@ -20,7 +20,7 @@ type RequestWriteParams = {
 async function fetchURLs(query: string): Promise<string[]> {
     const options = {
         headers: {
-            'x-rapidapi-key': system.get(AppSystemProp.FETCH_URL_RAPID_API_KEY),
+            'x-rapidapi-key': system.getOrThrow(AppSystemProp.FETCH_URL_RAPID_API_KEY),
             'x-rapidapi-host': 'google-api31.p.rapidapi.com',
             'Content-Type': 'application/json',
         },
@@ -65,7 +65,7 @@ async function cleanHtml(html: string): Promise<string> {
 async function HtmlToMd(html: string): Promise<string>  {
     const options = {
         headers: {
-            'x-rapidapi-key': system.get(AppSystemProp.HTML_TO_RAPID_API_KEY),
+            'x-rapidapi-key': system.getOrThrow(AppSystemProp.HTML_TO_RAPID_API_KEY),
             'x-rapidapi-host': 'html-to-gemtext-or-markdown.p.rapidapi.com',
             'Content-Type': 'application/json',
         },
