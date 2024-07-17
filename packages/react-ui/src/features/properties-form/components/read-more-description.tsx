@@ -2,20 +2,17 @@ import { useState } from 'react';
 
 interface ReadMoreProps {
   text: string;
-  amountOfWords?: number;
+  amountOfCharacters?: number;
 }
 
 export const ReadMoreDescription = ({
   text,
-  amountOfWords = 10,
+  amountOfCharacters = 80,
 }: ReadMoreProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const splittedText = text.split(' ');
-  const itCanOverflow = splittedText.length > amountOfWords;
-  const beginText = itCanOverflow
-    ? splittedText.slice(0, amountOfWords - 1).join(' ')
-    : text;
-  const endText = splittedText.slice(amountOfWords - 1).join(' ');
+  const itCanOverflow = text.length > amountOfCharacters;
+  const beginText = itCanOverflow ? text.slice(0, amountOfCharacters) : text;
+  const endText = text.slice(amountOfCharacters);
 
   const handleKeyboard = (e: { code: string }) => {
     if (e.code === 'Space' || e.code === 'Enter') {
@@ -24,19 +21,19 @@ export const ReadMoreDescription = ({
   };
 
   return (
-    <p className="text-muted-foreground text-xs whitespace-pre-wrap	">
+    <p className="text-muted-foreground text-xs whitespace-pre-wrap">
       {beginText}
       {itCanOverflow && (
         <>
           {!isExpanded && <span>... </span>}
           <span
-            className={`${!isExpanded && 'hidden'} whitespace-pre-wrap	`}
+            className={`${!isExpanded && 'hidden'} whitespace-pre-wrap`}
             aria-hidden={!isExpanded}
           >
             {endText}
           </span>
           <span
-            className="text-primary ml-2"
+            className="text-primary ml-2 cursor-pointer"
             role="button"
             tabIndex={0}
             aria-expanded={isExpanded}

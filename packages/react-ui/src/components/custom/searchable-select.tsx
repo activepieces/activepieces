@@ -74,6 +74,7 @@ export const SearchableSelect = React.memo(
         <SelectContent className="w-full">
           <div
             className="flex items-center border-b px-3 w-full"
+            /* eslint-disable-next-line react/no-unknown-property */
             cmdk-input-wrapper=""
           >
             <Search className="mr-2 size-4 shrink-0 opacity-50" />
@@ -90,11 +91,7 @@ export const SearchableSelect = React.memo(
           {filterOptionsIndices.map((index) => {
             const option = options[index];
             return (
-              <SelectItem
-                key={option.value}
-                value={String(index)}
-                className="w-full"
-              >
+              <SelectItem key={index} value={String(index)} className="w-full">
                 {option.label}
               </SelectItem>
             );
@@ -104,3 +101,5 @@ export const SearchableSelect = React.memo(
     );
   },
 );
+
+SearchableSelect.displayName = 'SearchableSelect';

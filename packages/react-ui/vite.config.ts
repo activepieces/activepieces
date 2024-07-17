@@ -61,5 +61,16 @@ export default defineConfig({
     commonjsOptions: {
       transformMixedEsModules: true,
     },
+    rollupOptions: {
+      onLog(level, log, handler) {
+        if (
+          log.cause &&
+          log.message.includes(`Can't resolve original location of error.`)
+        ) {
+          return;
+        }
+        handler(level, log);
+      },
+    },
   },
 });

@@ -1,14 +1,30 @@
 import React from 'react';
 
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { cn } from '@/lib/utils';
+import {
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+} from '@activepieces/pieces-framework';
 
 type PieceCardInfoProps = {
-  piece: PieceMetadataModelSummary;
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
+  interactive?: boolean;
 };
 
-const PieceCardInfo: React.FC<PieceCardInfoProps> = ({ piece }) => {
+const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
+  piece,
+  interactive,
+}) => {
   return (
-    <div className="flex h-[110px] cursor-pointer items-center justify-center gap-4 rounded border border-solid p-4 hover:bg-accent hover:text-accent-foreground">
+    <div
+      className={cn(
+        'flex h-[110px] items-center justify-center gap-4 rounded border border-solid p-4',
+        {
+          'cursor-pointer hover:bg-accent hover:text-accent-foreground':
+            interactive,
+        },
+      )}
+    >
       <div className="flex h-full min-w-[48px] items-center justify-center">
         <img
           src={piece.logoUrl}

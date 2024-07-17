@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -8,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
 import { Alert } from '@activepieces/ee-shared';
@@ -15,7 +17,6 @@ import { Alert } from '@activepieces/ee-shared';
 import { alertsApi } from '../lib/alerts-api';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
-import { LoadingSpinner } from '@/components/ui/spinner';
 const fetchData = async () => {
   const page = await alertsApi.list({
     projectId: authenticationSession.getProjectId(),
@@ -65,9 +66,11 @@ export default function AlertsEmailsCard() {
       </CardHeader>
       <CardContent className="grid gap-6">
         <div className="min-h-[35px]">
-          {isLoading && <div className='flex items-center justify-center'>
-            <LoadingSpinner />
-          </div>}
+          {isLoading && (
+            <div className="flex items-center justify-center">
+              <LoadingSpinner />
+            </div>
+          )}
           {isError && <div>Error, please try again.</div>}
           {isSuccess && data.length === 0 && (
             <div className="text-center">No emails added yet.</div>

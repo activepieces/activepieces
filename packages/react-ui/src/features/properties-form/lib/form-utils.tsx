@@ -2,19 +2,12 @@ import { TSchema, Type } from '@sinclair/typebox';
 
 import {
   CONNECTION_REGEX,
-  PieceAuthProperty,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
 
 export const formUtils = {
-  buildSchema: (params: SchemaProps) => {
-    const props: PiecePropertyMap = {
-      ...params.props,
-    };
-    if (params.auth) {
-      props.auth = params.auth;
-    }
+  buildSchema: (props: PiecePropertyMap) => {
     const entries = Object.entries(props);
     const nonNullableUnknownPropType = Type.Not(
       Type.Union([Type.Null(), Type.Undefined()]),
@@ -110,9 +103,4 @@ export const formUtils = {
 
     return Type.Object(propsSchema);
   },
-};
-
-type SchemaProps = {
-  props: PiecePropertyMap;
-  auth: PieceAuthProperty | undefined;
 };

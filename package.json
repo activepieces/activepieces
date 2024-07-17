@@ -83,6 +83,7 @@
     "@radix-ui/react-switch": "1.1.0",
     "@radix-ui/react-tabs": "1.1.0",
     "@radix-ui/react-toast": "1.2.1",
+    "@radix-ui/react-toggle": "1.1.0",
     "@radix-ui/react-tooltip": "1.1.2",
     "@segment/analytics-next": "1.67.0",
     "@segment/analytics-node": "2.1.0",

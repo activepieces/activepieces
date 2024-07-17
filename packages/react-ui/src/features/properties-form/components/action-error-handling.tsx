@@ -1,4 +1,3 @@
-import { Label } from '@radix-ui/react-dropdown-menu';
 import { Static, Type } from '@sinclair/typebox';
 import React from 'react';
 import { useForm } from 'react-hook-form';
@@ -11,7 +10,7 @@ import {
   FormControl,
 } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
-import { ActionBase } from '@activepieces/pieces-framework';
+import { ErrorHandlingOptionsParam } from '@activepieces/pieces-framework';
 
 import { ReadMoreDescription } from './read-more-description';
 
@@ -23,25 +22,21 @@ const formSchema = Type.Object({
 type FormSchema = Static<typeof formSchema>;
 
 type ActionErrorHandlingFormControlProps = {
-  action: ActionBase;
+  errorHandlingOptions: ErrorHandlingOptionsParam;
   onContinueOnFailureChange: (value: boolean) => void;
   onRetryOnFailureChange: (value: boolean) => void;
 };
 
 const ActionErrorHandlingFormControl = React.memo(
   ({
-    action,
+    errorHandlingOptions,
     onContinueOnFailureChange,
     onRetryOnFailureChange,
   }: ActionErrorHandlingFormControlProps) => {
-    if (!action.errorHandlingOptions) {
-      return null;
-    }
     const errorHandlingOptionsForm = useForm<FormSchema>({
       defaultValues: {
-        continueOnFailure:
-          action.errorHandlingOptions.continueOnFailure.defaultValue,
-        retryOnFailure: action.errorHandlingOptions.retryOnFailure.defaultValue,
+        continueOnFailure: errorHandlingOptions.continueOnFailure.defaultValue,
+        retryOnFailure: errorHandlingOptions.retryOnFailure.defaultValue,
       },
     });
     const continueOnFailureHandler = (value: boolean) => {
@@ -57,7 +52,7 @@ const ActionErrorHandlingFormControl = React.memo(
     return (
       <Form {...errorHandlingOptionsForm}>
         <div className="grid gap-4">
-          {action.errorHandlingOptions.continueOnFailure.hide !== false && (
+          {errorHandlingOptions.continueOnFailure.hide !== false && (
             <FormField
               name="continueOnFailure"
               control={errorHandlingOptionsForm.control}
@@ -71,20 +66,17 @@ const ActionErrorHandlingFormControl = React.memo(
                       <Switch
                         id="continueOnFailure"
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={continueOnFailureHandler}
                       />
                     </FormControl>
                     <span className="ml-3 flex-grow">Continue on Failure</span>
                   </FormLabel>
-                  <ReadMoreDescription
-                    amountOfWords={40}
-                    text="Enable this option to skip this step and continue the flow normally if it fails."
-                  />
+                  <ReadMoreDescription text="Enable this option to skip this step and continue the flow normally if it fails." />
                 </FormItem>
               )}
             />
           )}
-          {action.errorHandlingOptions.retryOnFailure.hide !== false && (
+          {errorHandlingOptions.retryOnFailure.hide !== false && (
             <FormField
               name="retryOnFailure"
               control={errorHandlingOptionsForm.control}

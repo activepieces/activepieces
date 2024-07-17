@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
+import { AutoPropertiesFormComponet } from '@/app/routes/flows/id/auto-properties-form';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -12,10 +13,10 @@ import { Separator } from '@/components/ui/seperator';
 import { BuilderNavBar } from '@/features/flow-canvas/components/builder-nav-bar';
 import { FlowCanvas } from '@/features/flow-canvas/components/canvas';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PieceCardInfo } from '@/features/pieces/components/piece-card-info';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { ActionErrorHandlingFormControl } from '@/features/properties-form/components/action-error-handling';
-import { AutoFormComponent } from '@/features/properties-form/components/auto-form';
-import { PopulatedFlow } from '@activepieces/shared';
+import { PopulatedFlow, spreadIfDefined } from '@activepieces/shared';
 
 const FlowBuilderPage = () => {
   const { flowId } = useParams();
@@ -32,8 +33,8 @@ const FlowBuilderPage = () => {
   });
 
   const { data: piece } = piecesHooks.usePiece({
-    name: '@activepieces/piece-discord',
-    version: '0.3.12',
+    name: '@activepieces/piece-amazon-s3',
+    version: '0.3.4',
   });
 
   useEffect(() => {
@@ -56,20 +57,26 @@ const FlowBuilderPage = () => {
         <ResizableHandle />
         <ResizablePanel defaultSize={25}>
           {piece && (
-            <div className="h-full flex flex-col">
+            <div className="h-full flex flex-col p-4 gap-8">
+              <PieceCardInfo piece={piece} interactive={false} />
               <ScrollArea className="flex-grow">
-                <div className="p-4">
-                  <AutoFormComponent
-                    props={piece.actions['send_message_webhook'].props}
-                    auth={undefined}
-                  />
-                  <Separator className="my-6" />
+                <AutoPropertiesFormComponet
+                  props={{
+                    ...spreadIfDefined('auth', piece.auth),
+                    ...piece.actions['read-file'].props,
+                  }}
+                  allowDynamicValues={true}
+                />
+                <Separator className="my-6" />
+                {piece.actions['read-file'].errorHandlingOptions && (
                   <ActionErrorHandlingFormControl
-                    action={piece.actions['send_message_webhook']}
+                    errorHandlingOptions={
+                      piece.actions['read-file'].errorHandlingOptions
+                    }
                     onContinueOnFailureChange={() => {}}
                     onRetryOnFailureChange={() => {}}
                   />
-                </div>
+                )}
               </ScrollArea>
             </div>
           )}
