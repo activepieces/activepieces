@@ -15,7 +15,7 @@ export type QueueManager = {
 }
 
 type RemoveParams = {
-    id: ApId
+    flowVersionId: ApId
 }
 
 type BaseAddParams<JT extends JobType, JD extends JobData> = {

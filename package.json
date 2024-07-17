@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.29.1",
-  "rcVersion": "0.30.0-rc.0",
+  "rcVersion": "0.30.0-rc.1",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -69,10 +69,11 @@
     "@segment/analytics-node": "2.1.0",
     "@sendgrid/mail": "8.0.0",
     "@sentry/node": "7.64.0",
-    "@sinclair/typebox": "0.26.8",
+    "@sinclair/typebox": "0.31.28",
     "@slack/web-api": "7.0.4",
     "@socket.io/redis-adapter": "8.2.1",
     "@supabase/supabase-js": "2.33.1",
+    "@tryfabric/martian": "1.2.4",
     "@types/amqplib": "0.10.5",
     "@types/imapflow": "1.0.18",
     "@types/js-yaml": "4.0.9",
@@ -129,6 +130,7 @@
     "https-proxy-agent": "7.0.4",
     "imap": "0.8.17",
     "imapflow": "1.0.152",
+    "intercom-client": "5.0.0",
     "ioredis": "5.4.1",
     "is-base64": "1.1.0",
     "isolated-vm": "5.0.1",
@@ -328,5 +330,10 @@
   },
   "nx": {
     "includedScripts": []
+  },
+  "overrides": {
+    "@tryfabric/martian": {
+      "@notionhq/client": "$@notionhq/client"
+    }
   }
 }

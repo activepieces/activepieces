@@ -20,7 +20,7 @@ import {
     ProjectId,
     SeekPage, TelemetryEventName, UserId,
 } from '@activepieces/shared'
-import { EntityManager, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { acquireLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -82,6 +82,7 @@ export const flowService = {
         limit,
         folderId,
         status,
+        name,
     }: ListParams): Promise<SeekPage<PopulatedFlow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
@@ -102,7 +103,7 @@ export const flowService = {
         }
 
         if (status !== undefined) {
-            queryWhere.status = status
+            queryWhere.status = In(status)
         }
 
         const paginationResult = await paginator.paginate(
@@ -123,7 +124,13 @@ export const flowService = {
 
         const populatedFlows = await Promise.all(populatedFlowPromises)
 
-        return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
+        let filteredPopulatedFlows = populatedFlows
+        
+        if (name) {
+            filteredPopulatedFlows = populatedFlows.filter((flow) => flow.version.displayName.match(new RegExp(`^.*${name}.*`, 'i')))
+        }
+
+        return paginationHelper.createPage(filteredPopulatedFlows, paginationResult.cursor)
     },
 
     async getOneById(id: string): Promise<Flow | null> {
@@ -468,7 +475,8 @@ type ListParams = {
     cursorRequest: Cursor | null
     limit: number
     folderId: string | undefined
-    status: FlowStatus | undefined
+    status: FlowStatus[] | undefined
+    name: string | undefined
 }
 
 type GetOneParams = {

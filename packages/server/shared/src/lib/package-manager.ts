@@ -86,7 +86,8 @@ export const packageManager = {
             // It must be awaited so it only releases the lock after the command is done
             const result = await runCommand(path, 'init')
             return result
-        } finally {
+        }
+        finally {
             await lock.release()
         }
     },

@@ -87,10 +87,10 @@ async function ensureWorkerExists( queueName: QueueName): Promise<Worker> {
 function getLockDurationInMs(queueName: QueueName): number {
     switch (queueName) {
         case QueueName.WEBHOOK:
-            return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(30, 'seconds').asMilliseconds()
+            return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
         case QueueName.ONE_TIME:
-            return dayjs.duration(flowTimeoutSandbox, 'seconds').add(30, 'seconds').asMilliseconds()
+            return dayjs.duration(flowTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
         case QueueName.SCHEDULED:
-            return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(30, 'seconds').asMilliseconds()
+            return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
     }
 }

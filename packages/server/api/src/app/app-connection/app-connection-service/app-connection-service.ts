@@ -22,7 +22,7 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { engineRunner } from 'server-worker'
-import { Equal, FindOperator, ILike } from 'typeorm'
+import { Equal, FindOperator, ILike, In } from 'typeorm'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
@@ -148,6 +148,7 @@ export const appConnectionService = {
         pieceName,
         cursorRequest,
         name,
+        status,
         limit,
     }: ListParams): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -170,6 +171,9 @@ export const appConnectionService = {
         }
         if (!isNil(name)) {
             querySelector.name = ILike(`%${name}%`)
+        }
+        if (!isNil(status)) {
+            querySelector.status = In(status)
         }
         const queryBuilder = repo()
             .createQueryBuilder('app_connection')
@@ -470,6 +474,7 @@ type ListParams = {
     pieceName: string | undefined
     cursorRequest: Cursor | null
     name: string | undefined
+    status: AppConnectionStatus[] | undefined
     limit: number
 }
 

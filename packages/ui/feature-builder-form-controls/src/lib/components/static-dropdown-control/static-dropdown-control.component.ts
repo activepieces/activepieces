@@ -42,4 +42,7 @@ export class StaticDropdownControlComponent {
       deepEqual(opt, formControlValue, { strict: true })
     );
   }
+  unsetValue() {
+    this.passedFormControl.setValue(undefined);
+  }
 }

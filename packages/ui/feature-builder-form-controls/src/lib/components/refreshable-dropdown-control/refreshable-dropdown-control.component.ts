@@ -82,4 +82,7 @@ export class RefreshableDropdownControlComponent
     this.refresh$.next(undefined);
     this.searchControl.setValue('');
   }
+  unsetValue() {
+    this.passedFormControl.setValue(undefined);
+  }
 }

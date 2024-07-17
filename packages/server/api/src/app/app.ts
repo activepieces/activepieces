@@ -1,4 +1,4 @@
-import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FlowUpdatedEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
+import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AppSystemProp, initializeSentry, logger, QueueMode, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, isNil, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
@@ -115,7 +115,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                 schemas: {
                     [ApplicationEventName.FLOW_CREATED]: FlowCreatedEvent,
                     [ApplicationEventName.FLOW_DELETED]: FlowDeletedEvent,
-                    [ApplicationEventName.FLOW_UPDATED]: FlowUpdatedEvent,
                     [ApplicationEventName.CONNECTION_UPSERTED]: ConnectionEvent,
                     [ApplicationEventName.CONNECTION_DELETED]: ConnectionEvent,
                     [ApplicationEventName.FOLDER_CREATED]: FolderEvent,

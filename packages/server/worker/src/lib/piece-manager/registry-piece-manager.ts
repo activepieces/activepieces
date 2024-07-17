@@ -1,12 +1,13 @@
 import { writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
-import { PackageInfo, fileExists, memoryLock, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
+import { dirname } from 'node:path'
+import { fileExists, memoryLock, PackageInfo, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
 import {
     getPackageArchivePathForPiece,
     PackageType,
     PiecePackage,
     PrivatePiecePackage,
 } from '@activepieces/shared'
+import { cacheHandler, CacheState } from '../utils/cache-handler'
 import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
 
 export class RegistryPieceManager extends PieceManager {
@@ -20,18 +21,22 @@ export class RegistryPieceManager extends PieceManager {
         if (dependenciesToInstall.length === 0) {
             return
         }
+        const pnpmAddLock = await memoryLock.acquire(`pnpm-add-${projectPath}`)
 
-        const pnpmAddLock = await memoryLock.acquire(`pnpm-add-lock-${projectPath}`)
+        const cache = cacheHandler(projectPath)
+
         try {
             const dependencies = await this.filterExistingPieces(projectPath, pieces)
             if (dependencies.length === 0) {
                 return
             }
-            await packageManager.add({
-                path: projectPath,
-                dependencies,
-            })
-        } finally {
+            await packageManager.add({ path: projectPath, dependencies })
+
+            await Promise.all(
+                dependencies.map(pkg => cache.setCache(pkg.alias, CacheState.READY)),
+            )
+        }
+        finally {
             await pnpmAddLock.release()
         }
     }
@@ -87,11 +92,12 @@ export class RegistryPieceManager extends PieceManager {
     }
 
     private async filterExistingPieces(projectPath: string, pieces: PiecePackage[]): Promise<PackageInfo[]> {
+        const cache = cacheHandler(projectPath)
         const enrichedDependencies = await Promise.all(
             pieces.map(async (piece) => {
                 const pkg = this.pieceToDependency(piece)
-                const fExists = await fileExists(join(projectPath, 'node_modules', pkg.alias))
-                return { pkg, fExists }
+                const fState = await cache.cacheCheckState(pkg.alias)
+                return { pkg, fExists: fState === CacheState.READY }
             }),
         )
         return enrichedDependencies.filter(({ fExists }) => !fExists).map(({ pkg }) => pkg)

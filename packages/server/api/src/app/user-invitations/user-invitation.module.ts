@@ -153,7 +153,7 @@ const DeleteInvitationRequestParams = {
             id: Type.String(),
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+            [StatusCodes.NO_CONTENT]: Type.Never(),
         },
     },
 }

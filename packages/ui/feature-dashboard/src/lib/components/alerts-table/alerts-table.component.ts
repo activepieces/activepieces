@@ -1,7 +1,6 @@
 import {
   NotificationStatus,
   Platform,
-  ProjectId,
   ProjectMemberRole,
 } from '@activepieces/shared';
 import {
@@ -58,7 +57,6 @@ export class AlertsTableComponent implements OnInit {
   displayedColumns: string[] = ['receiver', 'action'];
   showUpgrade = true;
   dataSource: AlertsDataSource;
-  currentProject$: ProjectId;
   refresh$ = new BehaviorSubject<boolean>(true);
   addAlertDialogClosed$?: Observable<unknown>;
   isAdmin$: Observable<boolean>;
@@ -70,7 +68,6 @@ export class AlertsTableComponent implements OnInit {
     }
   );
   updateNotificationsValue$: Observable<unknown>;
-  currentProject: ProjectId;
   projectTasks$: Observable<number>;
   selectTriggerDisplayName$: Observable<string | undefined>;
   optionItems: {
@@ -103,7 +100,6 @@ export class AlertsTableComponent implements OnInit {
     private projectMemberService: ProjectMemberService,
     private projectService: ProjectService
   ) {
-    this.currentProject$ = this.authService.getProjectId();
     this.showUpgrade = !(
       this.route.snapshot.data[PLATFORM_RESOLVER_KEY] as Platform
     ).alertsEnabled;
@@ -119,7 +115,15 @@ export class AlertsTableComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.isAdmin$ = this.projectMemberService.isRole(ProjectMemberRole.ADMIN);
+    this.isAdmin$ = this.projectMemberService
+      .isRole(ProjectMemberRole.ADMIN)
+      .pipe(
+        tap((isAdmin) => {
+          if (!isAdmin) {
+            this.notificationControl.disable({ emitEvent: false });
+          }
+        })
+      );
     this.updateNotificationsValue$ = this.projectService.currentProject$.pipe(
       take(1),
       tap((project) => {
@@ -135,7 +139,7 @@ export class AlertsTableComponent implements OnInit {
             this.updatingAlertsFrequency$.next(true);
           }),
           switchMap((value) => {
-            return this.projectService.update(this.currentProject, {
+            return this.projectService.update(this.authService.getProjectId(), {
               notifyStatus: value,
             });
           }),

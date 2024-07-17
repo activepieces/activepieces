@@ -4,6 +4,7 @@
             <div class="ap-font-semibold ">
                 {{ title }}
             </div>
+            <ng-content select="[extraSection]"></ng-content>
             <div *ngIf="isBeta" class="ap-typography-caption ap-text-primary ap-mt-1" i18n>BETA</div>
         </div>
         <ng-content select="[underTitle]"></ng-content>

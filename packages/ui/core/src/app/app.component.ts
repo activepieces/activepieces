@@ -270,9 +270,8 @@ export class AppComponent implements OnInit {
       //TODO: once we start having /en routes this logic should be altered to checking (if the localeFromBrowserUrl is undefined, switch to what is in localstorage)
       this.redirect$ = this.authenticationService.currentUserSubject.pipe(
         switchMap((usr) => {
-          const platformId = this.authenticationService.getPlatformId();
-          if (usr && platformId && Object.keys(usr).length > 0) {
-            return this.platformService.getPlatform(platformId).pipe(
+          if (usr && Object.keys(usr).length > 0) {
+            return this.platformService.getCurrentUserPlatform().pipe(
               tap((platform) => {
                 this.redirectToUserLocale(platform.defaultLocale);
               })

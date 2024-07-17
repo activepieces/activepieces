@@ -14,7 +14,6 @@ import { UiFeatureBuilderStoreModule } from '@activepieces/ui/feature-builder-st
 import { UiFeatureBuilderCanvasModule } from '@activepieces/ui/feature-builder-canvas';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { UiFeatureBuilderRightSidebarModule } from '@activepieces/ui/feature-builder-right-sidebar';
-import { PortalModule } from '@angular/cdk/portal';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
 import { TimeagoModule } from 'ngx-timeago';
 import { UiFeatureFoldersStoreModule } from '@activepieces/ui/feature-folders-store';
@@ -36,7 +35,6 @@ import { UiCanvasUtilsModule } from '@activepieces/ui-canvas-utils';
     UiFeatureBuilderFormControlsModule,
     UiFeatureBuilderRightSidebarModule,
     UiFeatureFoldersStoreModule,
-    PortalModule,
     UiFeatureTemplatesModule,
     UiCanvasUtilsModule
   ],
