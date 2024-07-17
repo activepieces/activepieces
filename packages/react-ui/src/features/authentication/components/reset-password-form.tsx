@@ -1,3 +1,4 @@
+import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type, Static } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -20,7 +21,6 @@ import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
-import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -77,13 +77,13 @@ const ResetPasswordForm = () => {
               <div className="gap-4 w-full flex flex-row items-center justify-center">
                 <MailCheck className="w-16 h-16" />
                 <span className="text-left w-fit">
-                  We sent you a link to
+                  We sent you a link to{' '}
                   <strong>{form.getValues().email}</strong>. Check your email to
                   reset your password.
                 </span>
               </div>
               <div className="flex flex-row gap-1">
-                Didnt receive an email?
+                Didn&apos;t recieve an email?
                 <span
                   className="cursor-pointer text-primary underline"
                   onClick={handleResendClick}

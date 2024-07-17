@@ -35,7 +35,7 @@ const data: {
 
 const Separator = () => {
   return (
-    <div className="mt-4 flex w-full flex-row items-center">
+    <div className="my-4 flex w-full flex-row items-center">
       <div className="w-1/2 border" />
       <span className="mx-2 text-sm">OR</span>
       <div className="w-1/2 border" />
@@ -50,7 +50,7 @@ const AuthFormTemplate: React.FC<{
 
   return (
     <Card className="w-[28rem] rounded-sm drop-shadow-xl">
-      <CardHeader>
+      <CardHeader className="text-center">
         <CardTitle className="text-2xl">{data[form].title}</CardTitle>
         <CardDescription>{data[form].description}</CardDescription>
       </CardHeader>
