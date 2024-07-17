@@ -38,23 +38,23 @@ export const sendFile = createAction({
         required: false,
     }),
     typeId: Property.DynamicProperties({
-      displayName: 'Merge Fields',
-      refreshers: ['entityClass', 'Id'],
+      displayName: 'Type du fichier',
+      refreshers: ['entityClass', 'externalId'],
       required: true,
-      props: async ({ auth, entityClass, Id }) => {
+      props: async ({ auth, entityClass, externalId }) => {
         const fields: DynamicPropsValue = {};
         if (!entityClass) {
           console.error('entityClass is undefined');
           return {};
         }
-        if (!Id) {
-          console.error('Id is undefined');
+       if (!externalId) {
+          console.error('externalId is undefined');
           return {};
         }
         try {
           const res = await httpClient.sendRequest({
             method: HttpMethod.GET,
-            url: `${wedofCommon.baseUrl}/${entityClass}/${Id}/files`,
+            url: `${wedofCommon.baseUrl}/${entityClass}/${externalId}/files`,
             headers: {
               'Content-Type': 'application/json',
               'X-Api-Key': auth as unknown as string,
@@ -82,7 +82,24 @@ export const sendFile = createAction({
         return fields;
       },
     }),
-    
+    typeFile: Property.StaticDropdown({
+      displayName: "Choisir le type de dossier",
+      description: "Permet de n'obtenir que les dossiers dans le type considéré - par défaut tous les types sont retournés",
+      required: true,
+      options: {
+        options: [
+          {
+            value: "1",
+            label: 'Attacher un document',
+          },
+          {
+            value: "2",
+            label: "Ajouter à partir d'un lien",
+          },
+        ],
+        disabled: false,
+      },
+    }),
     file: Property.File({
         displayName: "Fichier a envoyer",
         required: true,
