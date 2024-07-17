@@ -7,7 +7,7 @@ export const requestWriterModule: FastifyPluginAsyncTypebox = async () => {
     websocketService.addListener(WebsocketServerEvent.GENERATE_HTTP_REQUEST, (socket) => {
         return async (data: GenerateHttpRequestBodyRequest) => {
             const { prompt } = data
-            const result = await requestWriterService.generateHttpRequest({ prompt })
+            const result = await requestWriterService.createRequest({ prompt })
             const response: GenerateHttpRequestBodyResponse = {
                 result,
             }

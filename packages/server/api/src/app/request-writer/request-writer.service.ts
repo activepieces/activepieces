@@ -115,6 +115,28 @@ export const requestWriterService = {
     `,
 
     async generateSearchQuery({ prompt }: RequestWriteParams): Promise<string> {
+        const openAI = getOpenAI()
+        const extractedSearchQuery = await openAI.chat.completions.create({
+            model: 'gpt-4-turbo',
+            messages: [{ role: 'system', content: this.customGPTPrompt }, { role: 'user', content: prompt }],
+            temperature: 0.2,
+        })
+        assertNotNullOrUndefined(
+            extractedSearchQuery.choices[0].message.content,
+            'OpenAICodeResponse',
+        )
+        const searchQuery = extractedSearchQuery.choices[0].message.content.trim() as string
+        return searchQuery
+    },
+
+    async fetchAndProcessURLs(searchQuery: string): Promise<string[]> {
+        const urls = await fetchURLs(searchQuery)
+        const htmlResults = await Promise.all(urls.map((url) => axios.get(url)))
+        const markdownResults = await Promise.all(htmlResults.map((res) => HtmlToMd(res.data)))
+        return markdownResults
+    },
+  
+    async generateSearchQuery_old({ prompt }: RequestWriteParams): Promise<string> {
         const extractedSerchQuery = await getOpenAI().chat.completions.create({
             model: 'gpt-4-turbo',
             messages: [{ role: 'system', content: prompt + ' \n ' + this.customGPTPrompt }],
@@ -163,23 +185,48 @@ export const requestWriterService = {
     },
 
     async generateHttpRequest({ prompt }: RequestWriteParams): Promise<string> {
-        const result = await getOpenAI().chat.completions.create({
+        const openAI = getOpenAI()
+        const completion = await openAI.chat.completions.create({
             model: 'gpt-4-turbo',
             messages: [{ role: 'user', content: prompt }],
-            tools: this.createCodeTools(),
-            tool_choice: {
-                type: 'function',
-                function: {
-                    name: 'http_request',
-                },
-            },
             temperature: 0.2,
         })
+
         assertNotNullOrUndefined(
-            result.choices[0].message.tool_calls,
+            completion?.choices[0]?.message?.content,
             'OpenAICodeResponse',
         )
-        return result.choices[0].message.tool_calls[0].function.arguments
+
+        const extractedJsonRequest = completion.choices[0].message.content.trim() as string
+        return extractedJsonRequest
+    },
+
+    async createRequest({ prompt }: RequestWriteParams): Promise<string> {
+        const searchQuery = await this.generateSearchQuery({ prompt })
+        const markdownResults = await this.fetchAndProcessURLs(searchQuery)
+
+        const apiReferencePrompt = `Based on the service and action, find the appropriate API documentation and provide the HTTP request details. 
+      Use the following markdown extracted from the API references:
+      ${markdownResults.join('\n')}
+      Use this structure to return the HTTP request details:
+      {
+          "method": "HTTP_METHOD",
+          "url": "API_ENDPOINT",
+          "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer YOUR_API_KEY",
+              ...other_requried_headers
+          },
+          "body": { ... },
+          "queryParams": { ... }
+      }
+
+          Return only the JSON object without any text in the conversation response, no intro, no markdown.
+          `
+
+        const httpRequestDetails = await this.generateHttpRequest({ prompt: apiReferencePrompt })
+        logger.info(httpRequestDetails)
+        return httpRequestDetails
     },
 
     createCodeTools(): ChatCompletionTool[] {

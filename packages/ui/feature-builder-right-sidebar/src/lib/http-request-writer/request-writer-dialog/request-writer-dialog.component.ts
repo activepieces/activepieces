@@ -84,9 +84,10 @@ export class RequestWriterDialogComponent implements OnInit {
           tap((response) => {
             this.promptForm.enable();
             try {
-              this.generatedHttpRequest$.next(
-                this.beautifyResponsePresentation(response.result)
-              );
+              // this.generatedHttpRequest$.next(
+              //   this.beautifyResponsePresentation(response.result)
+              // );
+              this.generatedHttpRequest$.next(JSON.parse(response.result));
               if (this.stepper.selected) {
                 this.stepper.selected.completed = true;
                 this.stepper.next();
