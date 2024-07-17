@@ -5,8 +5,8 @@ import { PackageType, PieceCategory, PieceType } from '../piece'
 export const EXACT_VERSION_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/
 export const VERSION_PATTERN = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/
 
-export const ExactVersionType = Type.RegEx(EXACT_VERSION_PATTERN)
-export const VersionType = Type.RegEx(VERSION_PATTERN)
+export const ExactVersionType = Type.RegExp(EXACT_VERSION_PATTERN)
+export const VersionType = Type.RegExp(VERSION_PATTERN)
 
 export enum SuggestionType {
     ACTION = 'ACTION',
