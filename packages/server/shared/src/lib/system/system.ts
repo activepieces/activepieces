@@ -62,7 +62,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [WorkerSystemProps.FLOW_WORKER_CONCURRENCY]: '10',
     [WorkerSystemProps.POLLING_CONCURRENCY]: '5',
     [WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY]: '10',
-    [WorkerSystemProps.SCHEDULED_POLLING_COUNT]: '5',
     [SharedSystemProp.LOG_LEVEL]: 'info',
     [SharedSystemProp.LOG_PRETTY]: 'false',
     [SharedSystemProp.PACKAGE_ARCHIVE_PATH]: 'dist/archives',
