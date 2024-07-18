@@ -4,7 +4,7 @@ import { engineApiService, workerApiService } from './api/server-api.service'
 import { flowJobExecutor } from './executors/flow-job-executor'
 import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { webhookExecutor } from './executors/webhook-job-executor'
-import { pollJob } from './job-polling'
+import { jobPoller } from './job-polling'
 
 const FLOW_WORKER_CONCURRENCY = system.getNumberOrThrow(WorkerSystemProps.FLOW_WORKER_CONCURRENCY)
 const SCHEDULED_WORKER_CONCURRENCY = system.getNumberOrThrow(WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY)
@@ -39,7 +39,7 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
     while (!closed) {
         let engineToken: string | undefined
         try {
-            const job = await pollJob(workerToken, queueName)
+            const job = await jobPoller.poll(workerToken, queueName)
             if (isNil(job)) {
                 continue
             }
