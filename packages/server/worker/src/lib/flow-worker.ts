@@ -8,6 +8,7 @@ import { webhookExecutor } from './executors/webhook-job-executor'
 
 const WORKER_CONCURRENCY = system.getNumberOrThrow(WorkerSystemProps.FLOW_WORKER_CONCURRENCY)
 const POLLING_CONCURRENCY = system.getNumberOrThrow(WorkerSystemProps.POLLING_CONCURRENCY)
+const SCHEDULED_WORKER_CONCURRENCY = system.getNumberOrThrow(WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY)
 
 let closed = true
 let workerToken: string
@@ -29,7 +30,8 @@ export const flowWorker = {
     },
     async start(): Promise<void> {
         for (const queueName of Object.values(QueueName)) {
-            for (let i = 0; i < WORKER_CONCURRENCY; i++) {
+            const times = queueName === QueueName.SCHEDULED ? SCHEDULED_WORKER_CONCURRENCY : WORKER_CONCURRENCY 
+            for (let i = 0; i < times; i++) {
                 rejectedPromiseHandler(run(queueName))
             }
         }

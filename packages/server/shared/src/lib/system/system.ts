@@ -61,6 +61,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SharedSystemProp.EXECUTION_MODE]: 'UNSANDBOXED',
     [WorkerSystemProps.FLOW_WORKER_CONCURRENCY]: '10',
     [WorkerSystemProps.POLLING_CONCURRENCY]: '5',
+    [WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY]: '5',
     [SharedSystemProp.LOG_LEVEL]: 'info',
     [SharedSystemProp.LOG_PRETTY]: 'false',
     [SharedSystemProp.PACKAGE_ARCHIVE_PATH]: 'dist/archives',
