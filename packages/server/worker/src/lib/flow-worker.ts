@@ -9,6 +9,7 @@ import { webhookExecutor } from './executors/webhook-job-executor'
 const WORKER_CONCURRENCY = system.getNumberOrThrow(WorkerSystemProps.FLOW_WORKER_CONCURRENCY)
 const POLLING_CONCURRENCY = system.getNumberOrThrow(WorkerSystemProps.POLLING_CONCURRENCY)
 const SCHEDULED_WORKER_CONCURRENCY = system.getNumberOrThrow(WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY)
+const SCHEDULED_POLLING_COUNT = system.getNumberOrThrow(WorkerSystemProps.SCHEDULED_POLLING_COUNT)
 
 let closed = true
 let workerToken: string
@@ -31,8 +32,9 @@ export const flowWorker = {
     async start(): Promise<void> {
         for (const queueName of Object.values(QueueName)) {
             const times = queueName === QueueName.SCHEDULED ? SCHEDULED_WORKER_CONCURRENCY : WORKER_CONCURRENCY 
+            const pollingCount = queueName === QueueName.SCHEDULED ? SCHEDULED_POLLING_COUNT : 1
             for (let i = 0; i < times; i++) {
-                rejectedPromiseHandler(run(queueName))
+                rejectedPromiseHandler(run(queueName, pollingCount))
             }
         }
     },
@@ -46,10 +48,6 @@ async function run<T extends QueueName>(queueName: T, _pollingCount = 1): Promis
     while (!closed) {
         let engineToken: string | undefined
         try {
-            // If we are polling scheduled jobs, we want to poll more than one job at a time
-            if (queueName === QueueName.SCHEDULED && _pollingCount === 1) {
-                _pollingCount = 5
-            } 
             const jobs = await poll(workerToken, queueName, _pollingCount)
 
             if (jobs.length === 0) {
