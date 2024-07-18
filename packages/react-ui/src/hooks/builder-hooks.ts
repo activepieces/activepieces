@@ -40,7 +40,8 @@ export type BuilderState = {
   leftSidebar: LeftSideBarType;
   rightSidebar: RightSideBarType;
   operations: FlowOperationRequest[];
-  setRun: (run: FlowRun | null) => void;
+  ExitRun: () => void;
+  setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
   setReadOnly: (readonly: boolean) => void;
@@ -63,9 +64,16 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     run: initialState.run,
     operations: [],
     rightSidebar: RightSideBarType.NONE,
+    ExitRun: () =>
+      set({
+        run: null,
+        leftSidebar: LeftSideBarType.NONE,
+        rightSidebar: RightSideBarType.NONE,
+      }),
     setRightSidebar: (rightSidebar: RightSideBarType) => set({ rightSidebar }),
     setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
-    setRun: async (run: FlowRun | null) => set({ run }),
+    setRun: async (run: FlowRun | null, flowVersion: FlowVersion) =>
+      set({ run, flowVersion }),
     setReadOnly: (readonly: boolean) => set({ readonly }),
-    setVersion: (flowVersion: FlowVersion) => set({ flowVersion }),
+    setVersion: (flowVersion: FlowVersion) => set({ flowVersion, run: null }),
   }));

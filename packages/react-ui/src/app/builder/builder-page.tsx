@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/resizable-panel';
 import { BuilderNavBar } from '@/features/flow-canvas/components/builder-nav-bar';
 import { FlowCanvas } from '@/features/flow-canvas/components/canvas';
+import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import {
   LeftSideBarType,
   RightSideBarType,
@@ -19,12 +20,12 @@ import { FlowRunDetails } from './run-details/flow-run-details-list';
 import { FlowRecentRunsList } from './run-list/flow-runs-list';
 
 const BuilderPage = () => {
-  const { flowVersion, leftSidebar, rightSidebar } = useBuilderStateContext(
-    (state) => state,
-  );
+  const { flowVersion, leftSidebar, rightSidebar, run, ExitRun } =
+    useBuilderStateContext((state) => state);
 
   return (
     <div className="flex h-screen w-screen flex-col">
+      {run && <RunDetailsBar run={run} onExitRun={ExitRun} />}
       <BuilderNavBar />
       <ResizablePanelGroup direction="horizontal">
         {leftSidebar !== LeftSideBarType.NONE && (
