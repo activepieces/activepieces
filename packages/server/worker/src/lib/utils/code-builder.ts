@@ -3,7 +3,7 @@ import path from 'node:path'
 import { fileExists, logger, memoryLock, PackageInfo, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
 import { FlowVersionState } from '@activepieces/shared'
 import { CodeArtifact } from '../engine/engine-runner'
-import { cacheHandler, CacheState } from '../utils/cache-handler'
+import { cacheHandler, CacheState } from './cache-handler'
 
 const TS_CONFIG_CONTENT = `
 

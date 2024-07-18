@@ -23,7 +23,7 @@ const FlowVersionsList = () => {
         limit: 100,
         cursor: undefined,
       }),
-    staleTime: 0,
+    staleTime: Infinity,
   });
 
   return (

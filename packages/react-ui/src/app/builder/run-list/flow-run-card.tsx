@@ -10,6 +10,7 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { LeftSideBarType, useBuilderStateContext } from '@/hooks/builder-hooks';
 import { formatUtils } from '@/lib/utils';
 import { FlowRun } from '@activepieces/shared';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 
 type FlowRunCardProps = {
   run: FlowRun;
@@ -22,11 +23,11 @@ const FlowRunCard = React.memo((params: FlowRunCardProps) => {
   const { mutate, isPending } = useMutation<FlowRun, Error, string>({
     mutationFn: (flowRunId) => flowRunsApi.getPopulated(flowRunId),
     onSuccess: (run) => {
-      // TODO handling loading
       setRun(run);
       setLeftSidebar(LeftSideBarType.RUN_DETAILS);
     },
     onError: (error) => {
+      toast(INTERNAL_ERROR_TOAST);
       console.error(error);
     },
   });
