@@ -17,6 +17,9 @@ export const flowsApi = {
   list(request: ListFlowsRequest): Promise<SeekPage<PopulatedFlow>> {
     return api.get<SeekPage<PopulatedFlow>>('/v1/flows', request);
   },
+  update(flowId: string, request: FlowOperationRequest) {
+    return api.post<PopulatedFlow>(`/v1/flows/${flowId}`, request);
+  },
   get(
     flowId: string,
     request?: GetFlowQueryParamsRequest,

@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from 'clsx';
+import dayjs from 'dayjs';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
@@ -20,13 +21,31 @@ export const formatUtils = {
       .join(' ');
   },
   formatDate(date: Date) {
-    return Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
+    const now = dayjs();
+    const inputDate = dayjs(date);
+
+    const isToday = inputDate.isSame(now, 'day');
+    const isYesterday = inputDate.isSame(now.subtract(1, 'day'), 'day');
+
+    const timeFormat = new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
       minute: 'numeric',
       hour12: true,
-    }).format(date);
+    });
+
+    if (isToday) {
+      return `Today at ${timeFormat.format(date)}`;
+    } else if (isYesterday) {
+      return `Yesterday at ${timeFormat.format(date)}`;
+    } else {
+      return Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+      }).format(date);
+    }
   },
   formatDuration(durationMs: number | undefined, short?: boolean): string {
     if (durationMs === undefined) {

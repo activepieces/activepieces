@@ -1,5 +1,4 @@
-import { usePrefetchQuery, useQuery } from '@tanstack/react-query';
-import { Suspense, useState, useTransition } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder/builder-page';
@@ -10,28 +9,14 @@ import { PopulatedFlow } from '@activepieces/shared';
 
 const FlowBuilderPage = () => {
   const { flowId } = useParams();
-  const [isPending, startTransition] = useTransition();
-  const [shouldFetch, setShouldFetch] = useState(false);
-
-  usePrefetchQuery<PopulatedFlow, Error>({
-    queryKey: ['flow', flowId],
-    queryFn: () => flowsApi.get(flowId!),
-  });
 
   const { data: flow, isLoading } = useQuery<PopulatedFlow, Error>({
     queryKey: ['flow', flowId],
     queryFn: () => flowsApi.get(flowId!),
-    enabled: shouldFetch,
+    staleTime: 0,
   });
 
-  if (!shouldFetch) {
-    startTransition(() => {
-      setShouldFetch(true);
-    });
-    return null;
-  }
-
-  if (isLoading || isPending) {
+  if (isLoading) {
     return (
       <div className="bg-background flex h-screen w-screen items-center justify-center ">
         <LoadingSpinner size={50}></LoadingSpinner>
@@ -40,16 +25,14 @@ const FlowBuilderPage = () => {
   }
 
   return (
-    <Suspense>
-      <BuilderStateProvider
-        flow={flow!}
-        flowVersion={flow!.version}
-        readonly={false}
-        run={null}
-      >
-        <BuilderPage />
-      </BuilderStateProvider>
-    </Suspense>
+    <BuilderStateProvider
+      flow={flow!}
+      flowVersion={flow!.version}
+      readonly={false}
+      run={null}
+    >
+      <BuilderPage />
+    </BuilderStateProvider>
   );
 };
 

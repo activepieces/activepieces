@@ -39,7 +39,7 @@ export const BuilderNavBar = () => {
               <History />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">History</TooltipContent>
+          <TooltipContent side="bottom">Version History</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>

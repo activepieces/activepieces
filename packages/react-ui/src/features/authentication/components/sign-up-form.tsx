@@ -1,8 +1,3 @@
-import {
-  ApFlagId,
-  AuthenticationResponse,
-  SignUpRequest,
-} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -18,6 +13,11 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import {
+  ApFlagId,
+  AuthenticationResponse,
+  SignUpRequest,
+} from '@activepieces/shared';
 
 const SignUpSchema = Type.Object({
   firstName: Type.String({
