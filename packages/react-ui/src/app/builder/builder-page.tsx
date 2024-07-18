@@ -34,7 +34,7 @@ const BuilderPage = () => {
               defaultSize={25}
               order={1}
               minSize={25}
-              maxSize={40}
+              maxSize={47}
             >
               {leftSidebar === LeftSideBarType.RUNS && <FlowRecentRunsList />}
               {leftSidebar === LeftSideBarType.RUN_DETAILS && (
@@ -42,7 +42,7 @@ const BuilderPage = () => {
               )}
               {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
             </ResizablePanel>
-            <ResizableHandle />
+            <ResizableHandle withHandle={true} />
           </>
         )}
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
@@ -52,12 +52,12 @@ const BuilderPage = () => {
         </ResizablePanel>
         {rightSidebar !== RightSideBarType.NONE && (
           <>
-            <ResizableHandle />
+            <ResizableHandle withHandle={true} />
 
             <ResizablePanel
               id="right-sidebar"
               defaultSize={25}
-              maxSize={40}
+              maxSize={47}
               minSize={25}
               order={3}
             >

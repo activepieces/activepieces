@@ -11,7 +11,7 @@ import {
   useBuilderStateContext,
 } from '@/hooks/builder-hooks';
 
-const PieceSelectorList = () => {
+const PiecesListSelector = () => {
   const [searchQuery, setSearchQuery] = useDebounce<string>('', 300);
   const { data: pieces, isLoading } = piecesHooks.usePieces({
     searchQuery,
@@ -56,4 +56,4 @@ const PieceSelectorList = () => {
   );
 };
 
-export { PieceSelectorList };
+export { PiecesListSelector as PieceSelectorList };
