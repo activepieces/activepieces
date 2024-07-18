@@ -108,7 +108,7 @@ const FlowsTable = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="container mx-auto  flex-col">
+    <div className="flex-col w-full">
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">Flows</h1>
         <div className="ml-auto">

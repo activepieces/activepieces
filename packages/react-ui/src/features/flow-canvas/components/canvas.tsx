@@ -8,9 +8,9 @@ import {
   NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { PopulatedFlow } from '@activepieces/shared';
+import { FlowVersion } from '@activepieces/shared';
 
 import { ApEdge, ApNode, flowCanvasUtils } from '../lib/flow-canvas-utils';
 
@@ -19,16 +19,16 @@ import { ApEdgeWithButton } from './edge-with-button';
 import { ApStepNode } from './step-node';
 
 type FlowCanvasProps = {
-  flow: PopulatedFlow;
+  flowVersion: FlowVersion;
 };
 
-const FlowCanvas = ({ flow }: FlowCanvasProps) => {
+const FlowCanvas = ({ flowVersion }: FlowCanvasProps) => {
   const graph = useMemo(() => {
-    return flowCanvasUtils.convertFlowVersionToGraph(flow.version);
-  }, [flow.version]);
+    return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
+  }, [flowVersion]);
 
   const nodeTypes = useMemo(
-    () => ({ stepNode: ApStepNode, bigButtonNode: ApBigButton }),
+    () => ({ stepNode: ApStepNode, bigButton: ApBigButton }),
     [],
   );
   const edgeTypes = useMemo(() => ({ apEdge: ApEdgeWithButton }), []);
@@ -36,6 +36,10 @@ const FlowCanvas = ({ flow }: FlowCanvasProps) => {
   const [nodes, setNodes] = useState(graph.nodes);
   const [edges, setEdges] = useState(graph.edges);
 
+  useEffect(() => {
+    setNodes(graph.nodes);
+    setEdges(graph.edges);
+  }, [graph]);
   const onNodesChange = useCallback(
     (changes: NodeChange<ApNode>[]) =>
       setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -56,10 +60,21 @@ const FlowCanvas = ({ flow }: FlowCanvasProps) => {
         onNodesChange={onNodesChange}
         edges={edges}
         onEdgesChange={onEdgesChange}
-        fitView
+        maxZoom={1.5}
+        minZoom={0.5}
+        fitView={true}
+        nodesConnectable={false}
+        elementsSelectable={true}
+        nodesDraggable={false}
+        fitViewOptions={{
+          includeHiddenNodes: false,
+          minZoom: 0.5,
+          maxZoom: 1.2,
+          duration: 0,
+        }}
       >
         <Background />
-        <Controls />
+        <Controls showInteractive={false} orientation="horizontal" />
       </ReactFlow>
     </div>
   );

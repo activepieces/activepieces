@@ -34,7 +34,11 @@ export function ProjectMemberCard({
       <div className="flex items-center space-x-4">
         <Avatar className="hidden size-9 sm:flex">
           <AvatarImage src="/avatars/05.png" alt="Avatar" />
-          <AvatarFallback className='justify-center items-center flex'><span className="p-2">{member.user.email.charAt(0).toLocaleUpperCase()}</span></AvatarFallback>
+          <AvatarFallback className="justify-center items-center flex">
+            <span className="p-2">
+              {member.user.email.charAt(0).toLocaleUpperCase()}
+            </span>
+          </AvatarFallback>
         </Avatar>
         <div>
           <p className="text-sm font-medium leading-none">

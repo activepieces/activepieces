@@ -5,16 +5,18 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { Action, Trigger } from '@activepieces/shared';
 
 const ApStepNode = React.memo(({ data }: { data: Action | Trigger }) => {
-  const { data: piece } = piecesHooks.usePiece({
-    name: data.settings.pieceName,
-    version: data.settings.pieceVersion,
+  const { data: pieceMetadata } = piecesHooks.usePieceMetadata({
+    step: data,
   });
 
   return (
-    <div className="h-[70px] w-[260px] rounded border border-solid bg-background px-2 ">
+    <div
+      className="h-[70px] w-[260px] rounded border border-solid bg-background px-2 hover:bg-accent hover:text-accent-foreground"
+      onClick={() => console.log('clicked')}
+    >
       <div className="g4 flex h-full items-center justify-between gap-4">
         <div className="items-center justify-center">
-          <img src={piece?.logoUrl} width="46" height="46" />
+          <img src={pieceMetadata?.logoUrl} width="46" height="46" />
         </div>
         <div className="grow">
           <div className="text-xs">{data.displayName}</div>

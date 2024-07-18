@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+
 import {
   Action,
   ActionType,
@@ -75,14 +76,19 @@ function buildChildrenGraph(
       0,
     );
   const maximumHeight =
-    childrenGraphs.reduce((acc, current) => boundingBox(current).height, 0) +
+    childrenGraphs.reduce(
+      (acc, current) => Math.max(acc, boundingBox(current).height),
+      0,
+    ) +
     2 * VERTICAL_OFFSET;
 
-  const commonPartGraph = offsetGraph(isNil(nextAction) ? graphWithSingleBigButton() : traverseFlow(nextAction), {
-    x: 0,
-    y: maximumHeight
-  })
-
+  const commonPartGraph = offsetGraph(
+    isNil(nextAction) ? graphWithSingleBigButton() : traverseFlow(nextAction),
+    {
+      x: 0,
+      y: maximumHeight,
+    },
+  );
 
   let deltaLeftX =
     -(
@@ -162,7 +168,7 @@ function graphWithSingleBigButton(): ApGraph {
         id: nanoid(),
         position: { x: 0, y: 0 },
         type: 'bigButton',
-        data: {},
+        data: undefined,
       },
     ],
     edges: [],
@@ -197,7 +203,7 @@ export type ApNode = {
   id: string;
   position: { x: number; y: number };
   type: string;
-  data: Step | {};
+  data: Step | undefined;
 };
 
 export type ApEdge = {
