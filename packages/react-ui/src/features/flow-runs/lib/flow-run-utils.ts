@@ -1,57 +1,56 @@
-import {
-  CheckCircledIcon,
-  CrossCircledIcon,
-  StopwatchIcon,
-} from '@radix-ui/react-icons';
-import { PauseCircleIcon } from 'lucide-react';
+import { CircleCheck, CircleX, PauseCircleIcon, Timer } from 'lucide-react';
 
 import { FlowRunStatus } from '@activepieces/shared';
 
 export const flowRunUtils = {
   getStatusIcon(status: FlowRunStatus): {
     varient: 'default' | 'success' | 'error';
-    icon: React.ComponentType;
+    Icon:
+      | typeof Timer
+      | typeof CircleCheck
+      | typeof PauseCircleIcon
+      | typeof CircleX;
   } {
     switch (status) {
       case FlowRunStatus.RUNNING:
         return {
           varient: 'default',
-          icon: StopwatchIcon,
+          Icon: Timer,
         };
       case FlowRunStatus.SUCCEEDED:
         return {
           varient: 'success',
-          icon: CheckCircledIcon,
+          Icon: CircleCheck,
         };
       case FlowRunStatus.STOPPED:
         return {
           varient: 'success',
-          icon: CheckCircledIcon,
+          Icon: CircleCheck,
         };
       case FlowRunStatus.FAILED:
         return {
           varient: 'error',
-          icon: CrossCircledIcon,
+          Icon: CircleX,
         };
       case FlowRunStatus.PAUSED:
         return {
           varient: 'default',
-          icon: PauseCircleIcon,
+          Icon: PauseCircleIcon,
         };
       case FlowRunStatus.QUOTA_EXCEEDED:
         return {
           varient: 'error',
-          icon: CrossCircledIcon,
+          Icon: CircleX,
         };
       case FlowRunStatus.INTERNAL_ERROR:
         return {
           varient: 'error',
-          icon: CrossCircledIcon,
+          Icon: CircleX,
         };
       case FlowRunStatus.TIMEOUT:
         return {
           varient: 'error',
-          icon: CrossCircledIcon,
+          Icon: CircleX,
         };
     }
   },

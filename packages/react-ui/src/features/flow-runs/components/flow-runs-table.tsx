@@ -32,7 +32,7 @@ const columns: ColumnDef<RowDataWithActions<FlowRun>>[] = [
     ),
     cell: ({ row }) => {
       const status = row.original.status;
-      const { varient, icon: Icon } = flowRunUtils.getStatusIcon(status);
+      const { varient, Icon } = flowRunUtils.getStatusIcon(status);
       return (
         <div className="text-left">
           <StatusIconWithText
@@ -83,7 +83,7 @@ const filters: DataTableFilter[] = [
         return {
           label: formatUtils.convertEnumToHumanReadable(status),
           value: status,
-          icon: flowRunUtils.getStatusIcon(status).icon,
+          icon: flowRunUtils.getStatusIcon(status).Icon,
         };
       }),
     icon: CheckIcon,
