@@ -7,8 +7,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { LeftSideBarType, useBuilderStateContext } from '@/hooks/builder-hooks';
 
 export const BuilderNavBar = () => {
+  const { setLeftSidebar } = useBuilderStateContext((state) => state);
+
   return (
     <div className="items-left flex h-[70px] w-full border-b p-4">
       <div className="flex h-full  items-center justify-center gap-2">
@@ -29,7 +32,10 @@ export const BuilderNavBar = () => {
       <div className="flex items-center justify-center gap-2">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost">
+            <Button
+              variant="ghost"
+              onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
+            >
               <History />
             </Button>
           </TooltipTrigger>
@@ -37,7 +43,10 @@ export const BuilderNavBar = () => {
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost">
+            <Button
+              variant="ghost"
+              onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
+            >
               <Logs />
             </Button>
           </TooltipTrigger>

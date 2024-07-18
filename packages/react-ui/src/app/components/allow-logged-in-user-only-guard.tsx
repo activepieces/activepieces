@@ -1,12 +1,12 @@
-import { LoaderIcon } from 'lucide-react';
 import { Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
+
+import { LoadingSpinner } from '@/components/ui/spinner';
 
 import { flagsHooks } from '../../hooks/flags-hooks';
 import { platformHooks } from '../../hooks/platform-hooks';
 import { projectHooks } from '../../hooks/project-hooks';
 import { authenticationSession } from '../../lib/authentication-session';
-import { LoadingSpinner } from '@/components/ui/spinner';
 
 export const AllowOnlyLoggedInUserOnlyGuard = ({
   children,

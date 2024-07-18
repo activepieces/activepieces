@@ -33,7 +33,10 @@ export const formatUtils = {
       return '-';
     }
     if (durationMs < 1000) {
-      return short ? `${durationMs} ms` : `${durationMs} milliseconds`;
+      const durationMsFormatted = Math.floor(durationMs);
+      return short
+        ? `${durationMsFormatted} ms`
+        : `${durationMsFormatted} milliseconds`;
     }
     const seconds = Math.floor(durationMs / 1000);
     const minutes = Math.floor(seconds / 60);
