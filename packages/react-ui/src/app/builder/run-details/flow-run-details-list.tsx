@@ -1,6 +1,7 @@
-import { Timer } from 'lucide-react';
+import { ChevronLeft, Timer } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { CardList } from '@/components/ui/card-list';
 import {
   ResizableHandle,
@@ -44,7 +45,16 @@ const FlowRunDetails = React.memo(() => {
   return (
     <ResizablePanelGroup direction="vertical">
       <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
-        Run Details
+        <div className="flex gap-2 justify-center items-center">
+          <Button
+            variant="ghost"
+            size={'sm'}
+            onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
+          >
+            <ChevronLeft size={16} />
+          </Button>
+          <span>Run Details</span>
+        </div>
       </SidebarHeader>
       <ResizablePanel>
         <CardList className="p-0">

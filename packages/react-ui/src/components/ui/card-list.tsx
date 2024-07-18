@@ -1,3 +1,4 @@
+import { cva, type VariantProps } from 'class-variance-authority';
 import { PackageOpen } from 'lucide-react';
 import React from 'react';
 
@@ -20,17 +21,30 @@ const CardList = React.forwardRef<HTMLDivElement, CardListProps>(
 CardList.displayName = 'CardList';
 export { CardList };
 
-type CardListItemProps = React.HTMLAttributes<HTMLDivElement> & {
-  children: React.ReactNode;
-};
+const cardItemListVariants = cva('flex items-center gap-4 w-full p-4 ', {
+  variants: {
+    interactive: {
+      true: 'cursor-pointer hover:bg-accent hover:text-accent-foreground',
+      false: 'cursor-default',
+    },
+  },
+  defaultVariants: {
+    interactive: true,
+  },
+});
+
+type CardListItemProps = React.HTMLAttributes<HTMLDivElement> &
+  VariantProps<typeof cardItemListVariants> & {
+    children: React.ReactNode;
+  };
 
 const CardListItem = React.forwardRef<HTMLDivElement, CardListItemProps>(
-  ({ children, onClick, ...props }, ref) => {
+  ({ children, onClick, interactive, ...props }, ref) => {
     return (
       <div
         onClick={onClick}
         ref={ref}
-        className="flex items-center gap-4 w-full py-4 px-5 cursor-pointer hover:bg-accent hover:text-accent-foreground"
+        className={cardItemListVariants({ interactive })}
         {...props}
       >
         {children}

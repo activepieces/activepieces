@@ -1,4 +1,5 @@
 const { createGlobPatternsForDependencies } = require('@nx/react/tailwind');
+const { warn } = require('console');
 const { join } = require('path');
 const { fontFamily } = require("tailwindcss/defaultTheme")
 
@@ -22,6 +23,10 @@ module.exports = {
     },
     extend: {
       colors: {
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
