@@ -40,18 +40,28 @@ export const flowWorker = {
     },
 }
 
-async function run<T extends QueueName>(queueName: T): Promise<void> {
+async function run<T extends QueueName>(queueName: T, _pollingCount = 1): Promise<void> {
     while (!closed) {
         let engineToken: string | undefined
         try {
-            const job = await poll(workerToken, queueName)
-            if (isNil(job)) {
+            // If we are polling scheduled jobs, we want to poll more than one job at a time
+            if (queueName === QueueName.SCHEDULED && _pollingCount === 1) {
+                _pollingCount = 5
+            } 
+            const jobs = await poll(workerToken, queueName, _pollingCount)
+
+            if (jobs.length === 0) {
                 continue
             }
-            const { data, engineToken: jobEngineToken } = job
-            engineToken = jobEngineToken
-            await consumeJob(queueName, data, engineToken)
-            await markJobAsCompleted(queueName, engineToken)
+
+            const promises = jobs.map(async (job) => {
+                const { data, engineToken: jobEngineToken } = job
+                engineToken = jobEngineToken
+                await consumeJob(queueName, data, engineToken)
+                await markJobAsCompleted(queueName, engineToken)
+            })
+            
+            await Promise.all(promises)
         }
         catch (e) {
             exceptionHandler.handle(e)
@@ -68,11 +78,18 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
     }
 }
 
-async function poll(workerToken: string, queueName: QueueName) {
+async function poll(workerToken: string, queueName: QueueName, _pollingCount = 1) {
     try {
         await pollLocks[queueName].acquire(1)
-        const job = await workerApiService(workerToken).poll(queueName)
-        return job
+        const jobs = []
+        for (let i = 0; i < _pollingCount; i++) {
+            const job = await workerApiService(workerToken).poll(queueName)
+            if (isNil(job)) {
+                break
+            }
+            jobs.push(job)
+        }
+        return jobs
     }
     finally {
         pollLocks[queueName].release(1)
