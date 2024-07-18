@@ -2,7 +2,6 @@ import { StopwatchIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { ChevronRightIcon } from 'lucide-react';
 import React from 'react';
-
 import { Button } from '@/components/ui/button';
 import { CardListItem } from '@/components/ui/card-list';
 import { LoadingSpinner } from '@/components/ui/spinner';
