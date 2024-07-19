@@ -18,7 +18,7 @@ type UsePiecesProps = {
   searchQuery?: string;
 };
 
-type StepMetadata = {
+export type StepMetadata = {
   displayName: string;
   logoUrl: string;
 };

@@ -8,40 +8,32 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { LeftSideBarType, useBuilderStateContext } from '@/hooks/builder-hooks';
 import {
-  Action,
-  FlowVersion,
-  StepOutput,
-  Trigger,
-  assertNotNullOrUndefined,
-  flowHelper,
-} from '@activepieces/shared';
+  LeftSideBarType,
+  StepPathWithName,
+  stepPathToKeyString,
+  useBuilderStateContext,
+} from '@/hooks/builder-hooks';
 
 import { SidebarHeader } from '../sidebar-header';
 
 import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
 import { FlowStepInputOutput } from './flow-step-input-output';
 
-type StepDetails = {
-  step: Action | Trigger;
-  stepOutput: StepOutput;
-};
-
 const FlowRunDetails = React.memo(() => {
-  const { setLeftSidebar, run, flowVersion } = useBuilderStateContext(
-    (state) => state,
-  );
-  const [stepDetails, setStepDetails] = useState<StepDetails[]>([]);
+  const { setLeftSidebar, run } = useBuilderStateContext((state) => state);
+
+  const [stepPaths, setStepPaths] = useState<StepPathWithName[]>([]);
 
   useEffect(() => {
-    const stepDetails = run?.steps
-      ? Object.keys(run.steps).map((stepName: string) =>
-          getStepDetails(run.steps[stepName], stepName, flowVersion),
-        )
+    const paths: StepPathWithName[] = run?.steps
+      ? Object.keys(run.steps).map((stepName: string) => ({
+          stepName,
+          path: [],
+        }))
       : [];
-    setStepDetails(stepDetails);
-  }, [run, flowVersion]);
+    setStepPaths(paths);
+  }, [run]);
 
   return (
     <ResizablePanelGroup direction="vertical">
@@ -59,14 +51,12 @@ const FlowRunDetails = React.memo(() => {
       </SidebarHeader>
       <ResizablePanel>
         <CardList className="p-0">
-          {run &&
-            run.steps &&
-            stepDetails.map(({ step, stepOutput }: StepDetails) => (
+          {stepPaths &&
+            stepPaths.map((path) => (
               <FlowStepDetailsCardItem
-                stepOutput={stepOutput}
-                step={step}
-                key={step.name}
-              />
+                path={path}
+                key={stepPathToKeyString(path)}
+              ></FlowStepDetailsCardItem>
             ))}
         </CardList>
       </ResizablePanel>
@@ -80,13 +70,3 @@ const FlowRunDetails = React.memo(() => {
 
 FlowRunDetails.displayName = 'FlowRunDetails';
 export { FlowRunDetails };
-
-function getStepDetails(
-  stepOutput: StepOutput,
-  key: string,
-  version: FlowVersion,
-) {
-  const step = flowHelper.getStep(version, key);
-  assertNotNullOrUndefined(step, 'step');
-  return { step, stepOutput };
-}

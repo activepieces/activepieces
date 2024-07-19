@@ -5,7 +5,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { BuilderNavBar } from '@/features/flow-canvas/components/builder-nav-bar';
 import { FlowCanvas } from '@/features/flow-canvas/components/canvas';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import {
@@ -14,6 +13,7 @@ import {
   useBuilderStateContext,
 } from '@/hooks/builder-hooks';
 
+import { BuilderNavBar } from './builder-nav-bar';
 import { FlowVersionsList } from './flow-versions/flow-versions-list';
 import { PieceSelectorList } from './piece-selector/piece-selector-list';
 import { FlowRunDetails } from './run-details/flow-run-details-list';

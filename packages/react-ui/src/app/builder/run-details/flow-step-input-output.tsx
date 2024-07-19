@@ -9,7 +9,7 @@ import {
 } from '@/hooks/builder-hooks';
 import { formatUtils } from '@/lib/utils';
 
-import { StepStatusIcon } from './step-status-icon';
+import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
 
 const FlowStepInputOutput = React.memo(() => {
   const stepDetails = useBuilderStateContext((state) => {
