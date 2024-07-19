@@ -62,8 +62,8 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
 
   return (
-    <div className="bg-muted/40 flex min-h-screen w-full">
-      <aside className="w-18 bg-background flex flex-col border-r">
+    <div className="flex min-h-screen w-full bg-muted/40">
+      <aside className="flex flex-col border-r bg-background">
         <nav className="flex flex-col items-center gap-5  px-2 sm:py-5">
           <div className="h-[48px] items-center justify-center p-2">
             <Tooltip>
@@ -87,7 +87,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
         </nav>
       </aside>
       <div className="flex-1 p-4">
-        <div className="g2 flex flex-col">
+        <div className="flex flex-col">
           <div className="flex ">
             <ProjectSwitcher />
             <div className="grow"></div>

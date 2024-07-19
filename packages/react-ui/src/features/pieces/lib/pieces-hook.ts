@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import {
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+} from '@activepieces/pieces-framework';
 import { Action, ActionType, Trigger, TriggerType } from '@activepieces/shared';
 
 import { piecesApi } from './pieces-api';
@@ -24,7 +27,7 @@ export type StepMetadata = {
 };
 export const piecesHooks = {
   usePiece: ({ name, version }: UsePieceProps) => {
-    return useQuery<PieceMetadataModelSummary, Error>({
+    return useQuery<PieceMetadataModel, Error>({
       queryKey: ['piece', name, version],
       queryFn: () => piecesApi.get({ name, version }),
       staleTime: Infinity,
