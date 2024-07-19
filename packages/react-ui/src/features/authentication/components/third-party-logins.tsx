@@ -1,21 +1,22 @@
-import { useQueryClient } from '@tanstack/react-query';
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-
-import { Button } from '@/components/ui/button';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {
   ApFlagId,
   ThirdPartyAuthnProviderEnum,
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import Github from '../../../assets/img/custom/auth/github.svg';
 import GoogleIcon from '../../../assets/img/custom/auth/google-icon.svg';
+import SamlIcon from '../../../assets/img/custom/auth/saml.svg';
 import { flagsHooks } from '../../../hooks/flags-hooks';
 import { authenticationApi } from '../../../lib/authentication-api';
 import { authenticationSession } from '../../../lib/authentication-session';
 import { oauth2Utils } from '../lib/oauth2-utils';
+
+import { Button } from '@/components/ui/button';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
@@ -68,6 +69,9 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
     }
   };
 
+  const signInWithSaml = () =>
+    (window.location.href = '/api/v1/authn/saml/login');
+
   return (
     <div className="flex flex-col gap-4">
       {thirdPartyAuthProviders?.google && (
@@ -92,6 +96,16 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
         >
           <ThirdPartyIcon icon={Github} />
           Sign {isSignUp ? 'up' : 'in'} with Github
+        </Button>
+      )}
+      {thirdPartyAuthProviders?.saml && (
+        <Button
+          variant="outline"
+          className="w-full rounded-sm"
+          onClick={signInWithSaml}
+        >
+          <ThirdPartyIcon icon={SamlIcon} />
+          Sign {isSignUp ? 'up' : 'in'} with SAML
         </Button>
       )}
     </div>
