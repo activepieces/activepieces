@@ -1,4 +1,4 @@
-import { ChevronLeft, Timer } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,8 @@ import {
 
 import { SidebarHeader } from '../sidebar-header';
 
-import { FlowStepDetailsCard } from './flow-step-details-card';
+import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
+import { FlowStepInputOutput } from './flow-step-input-output';
 
 type StepDetails = {
   step: Action | Trigger;
@@ -61,7 +62,7 @@ const FlowRunDetails = React.memo(() => {
           {run &&
             run.steps &&
             stepDetails.map(({ step, stepOutput }: StepDetails) => (
-              <FlowStepDetailsCard
+              <FlowStepDetailsCardItem
                 stepOutput={stepOutput}
                 step={step}
                 key={step.name}
@@ -69,13 +70,9 @@ const FlowRunDetails = React.memo(() => {
             ))}
         </CardList>
       </ResizablePanel>
-      <ResizableHandle />
-      <ResizablePanel defaultValue={25} className="p-4 flex flex-col gap-2">
-        <div>Send Message Webhook</div>
-        <div className="flex items-center gap-2 justify-start">
-          <Timer></Timer>
-          <span>Duration: 590 milliseconds</span>
-        </div>
+      <ResizableHandle withHandle={true} />
+      <ResizablePanel defaultValue={25}>
+        <FlowStepInputOutput></FlowStepInputOutput>
       </ResizablePanel>
     </ResizablePanelGroup>
   );

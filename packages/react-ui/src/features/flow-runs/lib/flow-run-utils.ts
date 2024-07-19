@@ -1,8 +1,40 @@
 import { CircleCheck, CircleX, PauseCircleIcon, Timer } from 'lucide-react';
 
-import { FlowRunStatus } from '@activepieces/shared';
+import { FlowRunStatus, StepOutputStatus } from '@activepieces/shared';
 
 export const flowRunUtils = {
+  getStatusIconForStep(stepOutput: StepOutputStatus): {
+    varient: 'default' | 'success' | 'error';
+    Icon:
+      | typeof Timer
+      | typeof CircleCheck
+      | typeof PauseCircleIcon
+      | typeof CircleX;
+  } {
+    switch (stepOutput) {
+      case StepOutputStatus.RUNNING:
+        return {
+          varient: 'default',
+          Icon: Timer,
+        };
+      case StepOutputStatus.PAUSED:
+        return {
+          varient: 'default',
+          Icon: PauseCircleIcon,
+        };
+      case StepOutputStatus.STOPPED:
+      case StepOutputStatus.SUCCEEDED:
+        return {
+          varient: 'success',
+          Icon: CircleCheck,
+        };
+      case StepOutputStatus.FAILED:
+        return {
+          varient: 'error',
+          Icon: CircleX,
+        };
+    }
+  },
   getStatusIcon(status: FlowRunStatus): {
     varient: 'default' | 'success' | 'error';
     Icon:

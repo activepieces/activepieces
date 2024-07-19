@@ -93,9 +93,9 @@ const ButtonWithTooltip = ({ children, tooltip }: ButtonWithTooltipProps) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <div className="size-10 flex justify-center items-center">
           {children}
-        </Button>
+        </div>
       </TooltipTrigger>
       <TooltipContent>{tooltip}</TooltipContent>
     </Tooltip>
@@ -163,6 +163,7 @@ const FlowVersionDetailsCard = React.memo(
       mutateVersionAsDraft(flowVersion);
       setDropdownMenuOpen(false);
     };
+
     return (
       <CardListItem interactive={false}>
         {flowVersion.updatedByUser && (
@@ -193,17 +194,13 @@ const FlowVersionDetailsCard = React.memo(
 
           {flowVersion.state === FlowVersionState.DRAFT && (
             <ButtonWithTooltip tooltip="Draft">
-              <Button variant="ghost" size="icon">
-                <span className="bg-warning size-1.5 rounded-full"></span>
-              </Button>
+              <span className="bg-warning size-1.5 rounded-full"></span>
             </ButtonWithTooltip>
           )}
 
           {published && (
             <ButtonWithTooltip tooltip="Published">
-              <Button variant="ghost" size="icon">
-                <span className="bg-success size-1.5 rounded-full"></span>
-              </Button>
+              <span className="bg-success size-1.5 rounded-full"></span>
             </ButtonWithTooltip>
           )}
 

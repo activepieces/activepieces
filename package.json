@@ -213,6 +213,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-hook-form": "7.52.1",
+    "react-json-view": "1.21.3",
     "react-resizable-panels": "2.0.20",
     "react-router-dom": "6.11.2",
     "redlock": "5.0.0-beta.2",
