@@ -12,6 +12,8 @@ import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { generatePasswordValidation } from '../lib/password-validation-utils';
+
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -41,31 +43,12 @@ const SignUpSchema = Type.Object({
 
 type SignUpSchema = Static<typeof SignUpSchema>;
 
-const MIN_LENGTH = 8;
-const MAX_LENGTH = 64;
-const SPECIAL_CHARACTER_REGEX = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/;
-const LOWERCASE_REGEX = /[a-z]/;
-const UPPERCASE_REGEX = /[A-Z]/;
-const NUMBER_REGEX = /[0-9]/;
-
 const PasswordValidator = ({ password }: { password: string }) => {
-  const validationRules = [
-    {
-      label: '8-64 Characters',
-      condition: password.length >= MIN_LENGTH && password.length <= MAX_LENGTH,
-    },
-    {
-      label: 'Special Character',
-      condition: SPECIAL_CHARACTER_REGEX.test(password),
-    },
-    { label: 'Lowercase', condition: LOWERCASE_REGEX.test(password) },
-    { label: 'Uppercase', condition: UPPERCASE_REGEX.test(password) },
-    { label: 'Number', condition: NUMBER_REGEX.test(password) },
-  ];
+  const { rules } = generatePasswordValidation(password);
 
   return (
     <div className="absolute border-2 bg-white p-2 rounded-md -right-48 bottom-24 flex flex-col">
-      {validationRules.map((rule, index) => {
+      {rules.map((rule, index) => {
         return (
           <div key={index} className="flex flex-row gap-2">
             {rule.condition ? (
@@ -147,6 +130,7 @@ const SignUpForm: React.FC = () => {
     mutate(data);
   };
 
+  const { formValidationObject } = generatePasswordValidation('');
   const [isPasswordFocused, setPasswordFocused] = useState(false);
 
   return (
@@ -217,32 +201,7 @@ const SignUpForm: React.FC = () => {
                 <Label htmlFor="password">Password</Label>
                 <Input
                   {...field}
-                  {...form.register('password', {
-                    minLength: {
-                      value: MIN_LENGTH,
-                      message: 'Password must be at least 8 characters long',
-                    },
-                    maxLength: {
-                      value: MAX_LENGTH,
-                      message: "Password can't be more than 64 characters long",
-                    },
-                    pattern: {
-                      value: SPECIAL_CHARACTER_REGEX,
-                      message:
-                        'Password must contain at least one special character',
-                    },
-                    validate: {
-                      hasLowercaseCharacter: (value) =>
-                        LOWERCASE_REGEX.test(value) ||
-                        'Password must contain at least one lowercase letter',
-                      hasUppercaseCharacter: (value) =>
-                        UPPERCASE_REGEX.test(value) ||
-                        'Password must contain at least one uppercase letter',
-                      hasNumber: (value) =>
-                        NUMBER_REGEX.test(value) ||
-                        'Password must contain at least one number',
-                    },
-                  })}
+                  {...form.register('password', formValidationObject)}
                   required
                   id="password"
                   type="password"
