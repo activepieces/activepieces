@@ -38,7 +38,7 @@ import { getAccounts } from "./lib/actions/get-accounts";
       auth: actualBudgetAuth,
       minimumSupportedRelease: '0.20.0',
       logoUrl: "https://cdn.activepieces.com/pieces/actualbudget.png",
-      authors: [],
+      authors: ["hugh-codes"],
       actions: [getBudget, importTransaction, importTransactions, getCategories, getAccounts],
       triggers: [],
     });

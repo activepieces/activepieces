@@ -12,7 +12,7 @@ export const importTransaction = createAction({
   auth: actualBudgetAuth,
   name: 'import_transaction',
   displayName: 'Import Transaction',
-  description: 'Add a transactions.',
+  description: 'Add a transaction',
   props: {
     account_id: Property.ShortText({
       displayName: 'Account ID',
@@ -85,11 +85,8 @@ export const importTransaction = createAction({
     };
 
     await initializeAndDownloadBudget(api, auth)
-
     const res = await api.importTransactions(account_id,[transaction]);
-
     await api.shutdown();
-
     return res;
   },
 });
