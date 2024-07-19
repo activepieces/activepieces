@@ -13,7 +13,7 @@ import {
 import { Separator } from '@/components/ui/seperator';
 import { CustomAuthProperty } from '@activepieces/pieces-framework';
 
-import { AutoPropertiesFormComponet } from '../flows/id/auto-properties-form';
+import { AutoPropertiesFormComponent } from '../flows/id/auto-properties-form';
 
 type ConnectionDialogProps = {
   auth: CustomAuthProperty<any> | undefined;
@@ -32,11 +32,11 @@ const ConnectionDialog = React.memo(
           </DialogHeader>
           <ApMarkdown markdown={auth?.description}></ApMarkdown>
           {auth?.description && <Separator className="my-6" />}
-          <AutoPropertiesFormComponet
+          <AutoPropertiesFormComponent
             props={auth?.props}
             allowDynamicValues={false}
             renderSecretText={true}
-          ></AutoPropertiesFormComponet>
+          ></AutoPropertiesFormComponent>
           <DialogFooter>
             <Button onClick={() => setOpen(false)} className="w-full">
               Create

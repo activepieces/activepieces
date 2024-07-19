@@ -19,7 +19,7 @@ const AlertOption = React.memo(
         }`}
       >
         {icon}
-        <div className="grow space-y-1">
+        <div className="flex-grow space-y-1">
           <p className="text-sm font-medium leading-none">{title}</p>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>

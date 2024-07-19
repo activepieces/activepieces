@@ -32,7 +32,7 @@ type AutoFormProps = {
   renderSecretText?: boolean;
 };
 
-const AutoPropertiesFormComponet = React.memo(
+const AutoPropertiesFormComponent = React.memo(
   ({ props, allowDynamicValues, renderSecretText }: AutoFormProps) => {
     const FormSchema = formUtils.buildSchema(props);
     const form = useForm<Static<typeof FormSchema>>({
@@ -181,5 +181,5 @@ const selectRightComponent = (
       );
   }
 };
-AutoPropertiesFormComponet.displayName = 'AutoFormComponent';
-export { AutoPropertiesFormComponet };
+AutoPropertiesFormComponent.displayName = 'AutoFormComponent';
+export { AutoPropertiesFormComponent };
