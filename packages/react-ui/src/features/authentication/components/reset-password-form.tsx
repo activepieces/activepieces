@@ -77,13 +77,13 @@ const ResetPasswordForm = () => {
               <div className="gap-4 w-full flex flex-row items-center justify-center">
                 <MailCheck className="w-16 h-16" />
                 <span className="text-left w-fit">
-                  We sent you a link to
+                  We sent you a link to{' '}
                   <strong>{form.getValues().email}</strong>. Check your email to
                   reset your password.
                 </span>
               </div>
               <div className="flex flex-row gap-1">
-                Didnt receive an email?
+                Didn&apos;t recieve an email?
                 <span
                   className="cursor-pointer text-primary underline"
                   onClick={handleResendClick}

@@ -12,6 +12,7 @@ import {
 
 import Github from '../../../assets/img/custom/auth/github.svg';
 import GoogleIcon from '../../../assets/img/custom/auth/google-icon.svg';
+import SamlIcon from '../../../assets/img/custom/auth/saml.svg';
 import { flagsHooks } from '../../../hooks/flags-hooks';
 import { authenticationApi } from '../../../lib/authentication-api';
 import { authenticationSession } from '../../../lib/authentication-session';
@@ -68,6 +69,9 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
     }
   };
 
+  const signInWithSaml = () =>
+    (window.location.href = '/api/v1/authn/saml/login');
+
   return (
     <div className="flex flex-col gap-4">
       {thirdPartyAuthProviders?.google && (
@@ -92,6 +96,16 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
         >
           <ThirdPartyIcon icon={Github} />
           Sign {isSignUp ? 'up' : 'in'} with Github
+        </Button>
+      )}
+      {thirdPartyAuthProviders?.saml && (
+        <Button
+          variant="outline"
+          className="w-full rounded-sm"
+          onClick={signInWithSaml}
+        >
+          <ThirdPartyIcon icon={SamlIcon} />
+          Sign {isSignUp ? 'up' : 'in'} with SAML
         </Button>
       )}
     </div>

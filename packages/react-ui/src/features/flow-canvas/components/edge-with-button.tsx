@@ -1,4 +1,10 @@
 import { Position, SmoothStepEdge } from '@xyflow/react';
+import { Plus } from 'lucide-react';
+
+import {
+  RightSideBarType,
+  useBuilderStateContext,
+} from '@/hooks/builder-hooks';
 
 interface ApEdgeWithButtonProps {
   id: string;
@@ -26,6 +32,8 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = ({
     stroke: '#c1c8d0',
   },
 }) => {
+  const { setRightSidebar } = useBuilderStateContext((state) => state);
+
   return (
     <>
       <SmoothStepEdge
@@ -44,11 +52,14 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = ({
           height={18}
           x={targetX - 9}
           y={targetY - 25}
+          onClick={() => console.log('clicked')}
           className="edgebutton-foreignobject"
-          requiredExtensions="http://www.w3.org/1999/xhtml"
         >
-          <div className="bg-[#a6b1bf]">
-            <button className="edgebutton"></button>
+          <div
+            className="bg-[#a6b1bf] w-4 h-4 flex items-center justify-center"
+            onClick={() => setRightSidebar(RightSideBarType.PIECE_SELECTOR)}
+          >
+            <Plus className="w-3 h-3 text-white" />
           </div>
         </foreignObject>
       }

@@ -2,60 +2,32 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
-import React from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
-import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { HttpError, api } from '@/lib/api';
-import {
-  AuthenticationResponse,
-  SignInRequest,
-  SignUpRequest,
-} from '@activepieces/shared';
+import { authenticationApi } from '@/lib/authentication-api';
+import { authenticationSession } from '@/lib/authentication-session';
+import { AuthenticationResponse, SignInRequest } from '@activepieces/shared';
 
-import { authenticationApi } from '../../../lib/authentication-api';
-import { authenticationSession } from '../../../lib/authentication-session';
-
-const AuthFormSchema = Type.Object({
-  firstName: Type.Optional(
-    Type.String({
-      errorMessage: 'First name is required',
-    }),
-  ),
-  lastName: Type.Optional(
-    Type.String({
-      errorMessage: 'Last name is required',
-    }),
-  ),
+const SignInSchema = Type.Object({
   email: Type.String({
     errorMessage: 'Email is required',
   }),
   password: Type.String({
     errorMessage: 'Password is required',
   }),
-  trackEvents: Type.Optional(Type.Boolean()),
-  newsLetter: Type.Optional(Type.Boolean()),
 });
 
-type AuthFormSchema = Static<typeof AuthFormSchema>;
+type SignInSchema = Static<typeof SignInSchema>;
 
-const UsernameAndPasswordForm: React.FC<{
-  isSignUp: boolean;
-}> = React.memo(({ isSignUp }) => {
-  const defaultValues = isSignUp
-    ? {
-        trackEvents: true,
-        newsLetter: false,
-      }
-    : {};
-
-  const form = useForm<AuthFormSchema>({
-    defaultValues,
-    resolver: typeboxResolver(AuthFormSchema),
+const SignInForm: React.FC = () => {
+  const form = useForm<SignInSchema>({
+    resolver: typeboxResolver(SignInSchema),
   });
 
   const navigate = useNavigate();
@@ -65,7 +37,7 @@ const UsernameAndPasswordForm: React.FC<{
     HttpError,
     SignInRequest
   >({
-    mutationFn: isSignUp ? authenticationApi.signUp : authenticationApi.signIn,
+    mutationFn: authenticationApi.signIn,
     onSuccess: (data) => {
       authenticationSession.saveResponse(data);
       navigate('/flows');
@@ -91,7 +63,7 @@ const UsernameAndPasswordForm: React.FC<{
     },
   });
 
-  const onSubmit: SubmitHandler<SignInRequest | SignUpRequest> = (data) => {
+  const onSubmit: SubmitHandler<SignInRequest> = (data) => {
     form.setError('root.serverError', {
       message: undefined,
     });
@@ -102,46 +74,6 @@ const UsernameAndPasswordForm: React.FC<{
     <>
       <Form {...form}>
         <form className="grid space-y-4">
-          {isSignUp && (
-            <div className={'flex flex-row gap-2'}>
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem className="w-full grid space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      {...field}
-                      required
-                      id="firstName"
-                      type="text"
-                      placeholder="John"
-                      className="rounded-sm"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem className="w-full grid space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      {...field}
-                      required
-                      id="lastName"
-                      type="text"
-                      placeholder="Doe"
-                      className="rounded-sm"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          )}
           <FormField
             control={form.control}
             name="email"
@@ -169,7 +101,7 @@ const UsernameAndPasswordForm: React.FC<{
                   <Label htmlFor="password">Password</Label>
                   <Link
                     to="/forget-password"
-                    className="text-muted-foreground hover:text-primary text-sm transition-all duration-200"
+                    className="text-muted-foreground text-sm hover:text-primary transition-all duration-200"
                   >
                     Forgot your password?
                   </Link>
@@ -195,24 +127,24 @@ const UsernameAndPasswordForm: React.FC<{
             loading={isPending}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
           >
-            {isSignUp ? 'Sign up' : 'Sign in'}
+            Sign in
           </Button>
         </form>
       </Form>
 
       <div className="mt-4 text-center text-sm">
-        {isSignUp ? 'Have an account?' : "Don't have an account?"}
+        Don&apos;t have an account?
         <Link
-          to={isSignUp ? '/sign-in' : '/sign-up'}
+          to="/sign-up"
           className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
         >
-          {isSignUp ? 'Sign in' : 'Sign up'}
+          Sign up
         </Link>
       </div>
     </>
   );
-});
+};
 
-UsernameAndPasswordForm.displayName = 'UsernameAndPasswordForm';
+SignInForm.displayName = 'SignIn';
 
-export { UsernameAndPasswordForm };
+export { SignInForm };

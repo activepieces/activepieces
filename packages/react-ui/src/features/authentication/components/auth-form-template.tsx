@@ -8,8 +8,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
+import { SignInForm } from './sign-in-form';
+import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
-import { UsernameAndPasswordForm } from './username-and-password-form';
 
 type AuthFormTemplateProps = {
   title: string;
@@ -35,7 +36,7 @@ const data: {
 
 const Separator = () => {
   return (
-    <div className="mt-4 flex w-full flex-row items-center">
+    <div className="my-4 flex w-full flex-row items-center">
       <div className="w-1/2 border" />
       <span className="mx-2 text-sm">OR</span>
       <div className="w-1/2 border" />
@@ -50,14 +51,14 @@ const AuthFormTemplate: React.FC<{
 
   return (
     <Card className="w-[28rem] rounded-sm drop-shadow-xl">
-      <CardHeader>
+      <CardHeader className="text-center">
         <CardTitle className="text-2xl">{data[form].title}</CardTitle>
         <CardDescription>{data[form].description}</CardDescription>
       </CardHeader>
       <CardContent>
         <ThirdPartyLogin isSignUp={isSignUp} />
         <Separator />
-        <UsernameAndPasswordForm isSignUp={isSignUp} />
+        {isSignUp ? <SignUpForm /> : <SignInForm />}
       </CardContent>
     </Card>
   );

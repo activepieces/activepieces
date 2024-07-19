@@ -1,6 +1,10 @@
 import { api } from '@/lib/api';
 import {
   FlowOperationRequest,
+  FlowVersion,
+  FlowVersionMetadata,
+  GetFlowQueryParamsRequest,
+  ListFlowVersionRequest,
   ListFlowsRequest,
   PopulatedFlow,
   SeekPage,
@@ -13,7 +17,22 @@ export const flowsApi = {
   list(request: ListFlowsRequest): Promise<SeekPage<PopulatedFlow>> {
     return api.get<SeekPage<PopulatedFlow>>('/v1/flows', request);
   },
-  get(flowId: string): Promise<PopulatedFlow> {
-    return api.get<PopulatedFlow>(`/v1/flows/${flowId}`);
+  update(flowId: string, request: FlowOperationRequest) {
+    return api.post<PopulatedFlow>(`/v1/flows/${flowId}`, request);
+  },
+  get(
+    flowId: string,
+    request?: GetFlowQueryParamsRequest,
+  ): Promise<PopulatedFlow> {
+    return api.get<PopulatedFlow>(`/v1/flows/${flowId}`, request);
+  },
+  listVersions(
+    flowId: string,
+    request: ListFlowVersionRequest,
+  ): Promise<SeekPage<FlowVersionMetadata>> {
+    return api.get<SeekPage<FlowVersion>>(
+      `/v1/flows/${flowId}/versions`,
+      request,
+    );
   },
 };

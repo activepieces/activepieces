@@ -76,7 +76,10 @@ function buildChildrenGraph(
       0,
     );
   const maximumHeight =
-    childrenGraphs.reduce((acc, current) => boundingBox(current).height, 0) +
+    childrenGraphs.reduce(
+      (acc, current) => Math.max(acc, boundingBox(current).height),
+      0,
+    ) +
     2 * VERTICAL_OFFSET;
 
   const commonPartGraph = offsetGraph(
