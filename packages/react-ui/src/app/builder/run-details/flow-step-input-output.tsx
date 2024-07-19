@@ -1,0 +1,57 @@
+import { Timer } from 'lucide-react';
+import React from 'react';
+
+import { JsonViewer } from '@/components/json-viewer';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  getStepOutputFromExecutionPath,
+  useBuilderStateContext,
+} from '@/hooks/builder-hooks';
+import { formatUtils } from '@/lib/utils';
+
+import { StepStatusIcon } from './step-status-icon';
+
+const FlowStepInputOutput = React.memo(() => {
+  const stepDetails = useBuilderStateContext((state) => {
+    const { selectedStep, run } = state;
+    if (!selectedStep || !run) {
+      return undefined;
+    }
+    return getStepOutputFromExecutionPath({
+      path: selectedStep,
+      executionState: run,
+    });
+  });
+
+  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
+
+  return (
+    <ScrollArea className="h-full p-4 ">
+      {!stepDetails && <div>No step selected</div>}
+      {stepDetails && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 justify-start mb-4">
+            <StepStatusIcon
+              status={stepDetails.status}
+              size="5"
+            ></StepStatusIcon>
+            <div>{flowVersion.displayName}</div>
+          </div>
+          <div className="flex items-center gap-1 justify-start">
+            <Timer className="w-5 h-5" />
+            <span>
+              Duration:{' '}
+              {formatUtils.formatDuration(stepDetails.duration ?? 0, false)}
+            </span>
+          </div>
+          <JsonViewer title="Input" json={stepDetails.input} />
+          <div className="mt-4"></div>
+          <JsonViewer title="Output" json={stepDetails.output} />
+        </div>
+      )}
+    </ScrollArea>
+  );
+});
+
+FlowStepInputOutput.displayName = 'FlowStepInputOutput';
+export { FlowStepInputOutput };

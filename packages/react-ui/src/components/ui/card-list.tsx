@@ -2,6 +2,8 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { PackageOpen } from 'lucide-react';
 import React from 'react';
 
+import { cn } from '@/lib/utils';
+
 import { Skeleton } from './skeleton';
 
 type CardListProps = React.HTMLAttributes<HTMLDivElement> & {
@@ -39,12 +41,12 @@ type CardListItemProps = React.HTMLAttributes<HTMLDivElement> &
   };
 
 const CardListItem = React.forwardRef<HTMLDivElement, CardListItemProps>(
-  ({ children, onClick, interactive, ...props }, ref) => {
+  ({ children, onClick, className, interactive, ...props }, ref) => {
     return (
       <div
         onClick={onClick}
         ref={ref}
-        className={cardItemListVariants({ interactive })}
+        className={cn(cardItemListVariants({ interactive }), className)}
         {...props}
       >
         {children}
