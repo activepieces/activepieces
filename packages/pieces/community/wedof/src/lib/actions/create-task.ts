@@ -16,14 +16,9 @@ export const createTask = createAction({
       required: true,
       options: {
         options: [
-          {
-            value: "certificationFolders",
-            label: 'Dossier de certification',
-          },
-          {
-            value: "registrationFolders",
-            label: 'Dossier de formation',
-          },
+          {label: "Dossier de certification", value: "CertificationFolder"},
+          {label: "Dossier de formation", value: "RegistrationFolder"},
+          {label: "Proposition commerciale", value: "Proposal"}
         ],
         disabled: false,
       },
