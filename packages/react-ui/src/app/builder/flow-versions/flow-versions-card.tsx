@@ -31,6 +31,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { LeftSideBarType, useBuilderStateContext } from '@/hooks/builder-hooks';
 import { formatUtils } from '@/lib/utils';
@@ -83,24 +84,7 @@ const UseAsDraftDropdownMenuOption = ({
     </Dialog>
   );
 };
-
-type ButtonWithTooltipProps = {
-  children: React.ReactNode;
-  tooltip: string;
-};
-
-const ButtonWithTooltip = ({ children, tooltip }: ButtonWithTooltipProps) => {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="size-10 flex justify-center items-center">
-          {children}
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>{tooltip}</TooltipContent>
-    </Tooltip>
-  );
-};
+UseAsDraftDropdownMenuOption.displayName = 'UseAsDraftDropdownMenuOption';
 
 type FlowVersionDetailsCardProps = {
   flowVersion: FlowVersionMetadata;
@@ -187,21 +171,26 @@ const FlowVersionDetailsCard = React.memo(
         <div className="flex-grow"></div>
         <div className="flex font-medium gap-2 justy-center items-center">
           {selected && (
-            <ButtonWithTooltip tooltip="Viewing">
-              <EyeIcon className="w-5 h-5 "></EyeIcon>
-            </ButtonWithTooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="size-10 flex justify-center items-center">
+                  <EyeIcon className="w-5 h-5 "></EyeIcon>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Viewing</TooltipContent>
+            </Tooltip>
           )}
 
           {flowVersion.state === FlowVersionState.DRAFT && (
-            <ButtonWithTooltip tooltip="Draft">
-              <span className="bg-warning size-1.5 rounded-full"></span>
-            </ButtonWithTooltip>
+            <FlowVersionStateDot
+              state={flowVersion.state}
+            ></FlowVersionStateDot>
           )}
 
           {published && (
-            <ButtonWithTooltip tooltip="Published">
-              <span className="bg-success size-1.5 rounded-full"></span>
-            </ButtonWithTooltip>
+            <FlowVersionStateDot
+              state={flowVersion.state}
+            ></FlowVersionStateDot>
           )}
 
           <DropdownMenu

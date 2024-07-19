@@ -22,7 +22,7 @@ export function useBuilderStateContext<T>(
   return useStore(store, selector);
 }
 
-export type StepExecutionPath = {
+export type StepPathWithName = {
   path: [string, number][];
   stepName: string;
 };
@@ -48,9 +48,9 @@ export type BuilderState = {
   leftSidebar: LeftSideBarType;
   rightSidebar: RightSideBarType;
   operations: FlowOperationRequest[];
-  selectedStep: StepExecutionPath | null;
+  selectedStep: StepPathWithName | null;
   ExitRun: () => void;
-  selectStep(path: StepExecutionPath): void;
+  selectStep(path: StepPathWithName): void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
@@ -81,7 +81,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         leftSidebar: LeftSideBarType.NONE,
         rightSidebar: RightSideBarType.NONE,
       }),
-    selectStep: (path: StepExecutionPath) => set({ selectedStep: path }),
+    selectStep: (path: StepPathWithName) => set({ selectedStep: path }),
     setRightSidebar: (rightSidebar: RightSideBarType) => set({ rightSidebar }),
     setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
     setRun: async (run: FlowRun | null, flowVersion: FlowVersion) =>
@@ -94,11 +94,28 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     setVersion: (flowVersion: FlowVersion) => set({ flowVersion, run: null }),
   }));
 
+export const stepPathToKeyString = (path: StepPathWithName): string => {
+  return path.path.map((p) => p.join('-')).join('/') + '/' + path.stepName;
+};
+
+export const equalStepPath = (
+  path1: StepPathWithName,
+  path2: StepPathWithName,
+): boolean => {
+  return (
+    path1.path.length === path2.path.length &&
+    path1.path.every(
+      (p, idx) => p[0] === path2.path[idx][0] && p[1] === path2.path[idx][1],
+    ) &&
+    path1.stepName === path2.stepName
+  );
+};
+
 export function getStepOutputFromExecutionPath({
   path,
   executionState,
 }: {
-  path: StepExecutionPath;
+  path: StepPathWithName;
   executionState: ExecutionState;
 }): StepOutput | undefined {
   const stateAtPath = getStateAtPath({
@@ -112,7 +129,7 @@ function getStateAtPath({
   currentPath,
   steps,
 }: {
-  currentPath: StepExecutionPath;
+  currentPath: StepPathWithName;
   steps: Record<string, StepOutput>;
 }): Record<string, StepOutput> {
   let targetMap = steps;

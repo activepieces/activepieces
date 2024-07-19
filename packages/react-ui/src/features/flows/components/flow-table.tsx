@@ -75,7 +75,11 @@ const columns: ColumnDef<RowDataWithActions<PopulatedFlow>>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => {
-      return <FlowStatusToggle flow={row.original} />;
+      return (
+        <div className="flex items-center space-x-2">
+          <FlowStatusToggle flow={row.original} />
+        </div>
+      );
     },
   },
 ];
