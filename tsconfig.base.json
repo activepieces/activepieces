@@ -541,6 +541,9 @@
       "@activepieces/piece-surveymonkey": [
         "packages/pieces/community/surveymonkey/src/index.ts"
       ],
+      "@activepieces/piece-synced": [
+        "packages/pieces/community/synced/src/index.ts"
+      ],
       "@activepieces/piece-tags": [
         "packages/pieces/community/tags/src/index.ts"
       ],

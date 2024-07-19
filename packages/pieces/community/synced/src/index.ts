@@ -1,0 +1,37 @@
+
+import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { newInvoice } from "./lib/triggers/new-invoice";
+import { PieceCategory } from "@activepieces/shared";
+import { createInvoice } from "./lib/actions/create-invoice";
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+export const syncedAuth = PieceAuth.SecretText({
+  displayName: 'Secret JIGA Key',
+  required: true,
+  description: 'JIGA key acquired from your Stripe dashboard',
+});
+
+export const synced = createPiece({
+  displayName: "Synced",
+  //auth: PieceAuth.None(),
+  // 'https://syncedtestingapi.azurewebsites.net/api/',
+  minimumSupportedRelease: '0.20.0',
+  logoUrl: "https://synced.azurewebsites.net/assets/img/sidebar/synced-black-logo.png",
+  authors: ["lldiegon","doskyft","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  categories: [PieceCategory.COMMERCE, PieceCategory.PAYMENT_PROCESSING],
+  auth: syncedAuth,
+  actions: [
+    createInvoice,
+    
+    createCustomApiCallAction({
+      baseUrl: () =>'https://syncedtestingapi.azurewebsites.net/api/',
+      auth: syncedAuth,
+      authMapping: async (auth) => ({
+        Authorization: `x-api-key ${auth}`,
+      }),
+    }),
+  ],
+  triggers: [
+    newInvoice
+  ],
+});
+    
