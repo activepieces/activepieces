@@ -57,9 +57,9 @@ const PasswordValidator = ({ password }: { password: string }) => {
         return (
           <div key={index} className="flex flex-row gap-2">
             {rule.condition ? (
-              <Check className="text-green-500" />
+              <Check className="text-success" />
             ) : (
-              <X className="text-gray-500" />
+              <X className="text-destructive" />
             )}
             <span>{rule.label}</span>
           </div>
