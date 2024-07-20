@@ -1,8 +1,8 @@
 import { Handle, Position } from '@xyflow/react';
 import React from 'react';
-
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { Action, Trigger } from '@activepieces/shared';
+import { useBuilderStateContext } from '@/hooks/builder-hooks';
 
 const ApStepNode = React.memo(({ data }: { data: Action | Trigger }) => {
   const selectStep = useBuilderStateContext((state) => state.selectStep);
