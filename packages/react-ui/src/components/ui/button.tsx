@@ -37,7 +37,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-  VariantProps<typeof buttonVariants> {
+    VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   loading?: boolean;
   keyboardShortcut?: string;
@@ -69,14 +69,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       return () => {
         document.removeEventListener('keydown', handleKeyDown);
       };
-    },[keyboardShortcut]);
+    }, [keyboardShortcut]);
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === keyboardShortcut?.toLocaleLowerCase() && (event.metaKey || event.ctrlKey)) {
+      if (
+        event.key === keyboardShortcut?.toLocaleLowerCase() &&
+        (event.metaKey || event.ctrlKey)
+      ) {
         event.preventDefault();
         event.stopPropagation();
         if (onKeyboardShortcut) {
-          onKeyboardShortcut()
+          onKeyboardShortcut();
         }
       }
     };
@@ -87,12 +90,18 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         {...props}
       >
-        {loading ? <LoadingSpinner /> : <>
-          <div className='flex justify-center items-center gap-2'>
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <div className="flex justify-center items-center gap-2">
             {children}
-            {keyboardShortcut && <span className="flex-grow text-xs tracking-widest text-muted-foreground">⌘{keyboardShortcut.toString().toLocaleUpperCase()}</span>}
+            {keyboardShortcut && (
+              <span className="flex-grow text-xs tracking-widest text-muted-foreground">
+                ⌘{keyboardShortcut.toString().toLocaleUpperCase()}
+              </span>
+            )}
           </div>
-        </>}
+        )}
       </Comp>
     );
   },

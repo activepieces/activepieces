@@ -3,10 +3,8 @@ import React from 'react';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { Action, Trigger } from '@activepieces/shared';
-import { useBuilderStateContext } from '@/hooks/builder-hooks';
 
 const ApStepNode = React.memo(({ data }: { data: Action | Trigger }) => {
-
   const selectStep = useBuilderStateContext((state) => state.selectStep);
   const { data: pieceMetadata } = piecesHooks.usePieceMetadata({
     step: data,
@@ -14,7 +12,7 @@ const ApStepNode = React.memo(({ data }: { data: Action | Trigger }) => {
 
   const handleClick = () => {
     // TODO handle nestted steps
-    console.log("select step from builder")
+    console.log('select step from builder');
     selectStep({ path: [], stepName: data.name });
   };
 

@@ -44,6 +44,7 @@
     "@bull-board/api": "5.9.1",
     "@bull-board/fastify": "5.9.1",
     "@codemirror/lang-javascript": "6.2.2",
+    "@codemirror/lang-json": "6.0.1",
     "@ctrl/ngx-codemirror": "5.1.1",
     "@dnd-kit/core": "6.1.0",
     "@dnd-kit/modifiers": "7.0.0",

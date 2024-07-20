@@ -5,12 +5,12 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from 'react-router-dom';
 
+import { SocketProvider } from '@/components/socket-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 import { router } from './router';
-import { SocketProvider } from '@/components/socket-provider';
 
 const queryClient = new QueryClient();
 let typesFormatsAdded = false;
@@ -23,8 +23,6 @@ if (!typesFormatsAdded) {
 }
 
 export function App() {
-
-
   return (
     <SocketProvider>
       <QueryClientProvider client={queryClient}>

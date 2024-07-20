@@ -1,10 +1,15 @@
+import { nanoid } from 'nanoid';
+import { Socket } from 'socket.io-client';
+
 import { api } from '@/lib/api';
 import {
   CreateStepRunRequestBody,
   FlowOperationRequest,
+  FlowTemplate,
   FlowVersion,
   FlowVersionMetadata,
   GetFlowQueryParamsRequest,
+  GetFlowTemplateRequestQuery,
   ListFlowVersionRequest,
   ListFlowsRequest,
   PopulatedFlow,
@@ -13,8 +18,6 @@ import {
   WebsocketClientEvent,
   WebsocketServerEvent,
 } from '@activepieces/shared';
-import { nanoid } from 'nanoid';
-import { Socket } from 'socket.io-client';
 
 export const flowsApi = {
   applyOperation(flowId: string, operation: FlowOperationRequest) {
@@ -26,7 +29,12 @@ export const flowsApi = {
   update(flowId: string, request: FlowOperationRequest) {
     return api.post<PopulatedFlow>(`/v1/flows/${flowId}`, request);
   },
-  testStep(socket: Socket, request:  Omit<CreateStepRunRequestBody, 'id'>) {
+  getTemplate(flowId: string, request: GetFlowTemplateRequestQuery) {
+    return api.get<FlowTemplate>(`/v1/flows/${flowId}/template`, {
+      params: request,
+    });
+  },
+  testStep(socket: Socket, request: Omit<CreateStepRunRequestBody, 'id'>) {
     const id = nanoid();
     socket.emit(WebsocketServerEvent.TEST_STEP_RUN, {
       ...request,
