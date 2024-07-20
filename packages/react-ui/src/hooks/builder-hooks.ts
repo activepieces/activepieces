@@ -9,6 +9,7 @@ import {
   FlowRun,
   FlowVersion,
   StepOutput,
+  flowHelper,
 } from '@activepieces/shared';
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
@@ -40,6 +41,12 @@ export enum RightSideBarType {
   PIECE_SETTINGS = 'piece-settings',
 }
 
+export enum PublishButtonStatus {
+  SAVING = 'saving',
+  PUBLISHING = 'publishing',
+  READY_TO_PUBLISH = 'ready-to-publish',
+}
+
 export type BuilderState = {
   flow: Flow;
   flowVersion: FlowVersion;
@@ -47,13 +54,14 @@ export type BuilderState = {
   run: FlowRun | null;
   leftSidebar: LeftSideBarType;
   rightSidebar: RightSideBarType;
-  operations: FlowOperationRequest[];
   selectedStep: StepPathWithName | null;
+  publishButtonStatus: PublishButtonStatus;
   ExitRun: () => void;
   selectStep(path: StepPathWithName): void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
+  applyOperation: (operation: FlowOperationRequest) => void;
   setReadOnly: (readonly: boolean) => void;
   setVersion: (flowVersion: FlowVersion) => void;
 };
@@ -72,23 +80,49 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     leftSidebar: LeftSideBarType.NONE,
     readonly: initialState.readonly,
     run: initialState.run,
-    operations: [],
+    publishButtonStatus: PublishButtonStatus.READY_TO_PUBLISH,
     selectedStep: null,
     rightSidebar: RightSideBarType.NONE,
     ExitRun: () =>
       set({
         run: null,
+        readonly: false,
         leftSidebar: LeftSideBarType.NONE,
         rightSidebar: RightSideBarType.NONE,
       }),
-    selectStep: (path: StepPathWithName) => set({ selectedStep: path }),
+    selectStep: (path: StepPathWithName) =>
+      set({
+        selectedStep: path,
+        rightSidebar: RightSideBarType.PIECE_SETTINGS,
+      }),
     setRightSidebar: (rightSidebar: RightSideBarType) => set({ rightSidebar }),
     setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
-    setRun: async (run: FlowRun | null, flowVersion: FlowVersion) =>
+    setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
       set({
         run,
         flowVersion,
         selectedStep: null,
+        readonly: true,
+      }),
+    applyOperation: (operation: FlowOperationRequest) =>
+      set((state) => {
+        const newFlowVersion = flowHelper.apply(state.flowVersion, operation);
+        // TODO QUEUE them
+        /* const updateServer = () => {
+           set({ publishButtonStatus: PublishButtonStatus.SAVING });
+           flowsApi
+             .update(state.flow.id, operation)
+             .then(() => {
+               set({
+                 publishButtonStatus: PublishButtonStatus.READY_TO_PUBLISH,
+               });
+             })
+             .catch((error) => {
+               console.error(error);
+             });
+         };
+         updateServer();*/
+        return { flowVersion: newFlowVersion };
       }),
     setReadOnly: (readonly: boolean) => set({ readonly }),
     setVersion: (flowVersion: FlowVersion) => set({ flowVersion, run: null }),

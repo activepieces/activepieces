@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     ErrorMessages,
-    formatErrorMessage,
     InputPropertyMap,
     PieceAuthProperty,
     PropertyType,
+    formatErrorMessage,
 } from '@activepieces/pieces-framework'
 import {
     AUTHENTICATION_PROPERTY_NAME,
@@ -167,9 +167,9 @@ export class VariableService {
         unresolvedInput: unknown
         executionState: FlowExecutorContext
     }): Promise<{
-            resolvedInput: T
-            censoredInput: unknown
-        }> {
+        resolvedInput: T
+        censoredInput: unknown
+    }> {
         const { unresolvedInput, executionState } = params
 
         if (isNil(unresolvedInput)) {

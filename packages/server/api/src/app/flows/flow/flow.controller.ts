@@ -8,6 +8,7 @@ import {
     FlowOperationRequest,
     FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
+    GetFlowTemplateRequestQuery,
     isNil,
     ListFlowsRequest,
     Permission,
@@ -219,6 +220,7 @@ const GetFlowTemplateRequestOptions = {
         params: Type.Object({
             id: ApId,
         }),
+        querystring: GetFlowTemplateRequestQuery,
         response: {
             [StatusCodes.OK]: FlowTemplateWithoutProjectInformation,
         },

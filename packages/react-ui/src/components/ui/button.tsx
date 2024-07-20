@@ -40,6 +40,8 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   loading?: boolean;
+  keyboardShortcut?: string;
+  onKeyboardShortcut?: () => void;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -50,19 +52,56 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       size,
       asChild = false,
       loading = false,
+      keyboardShortcut,
+      onKeyboardShortcut,
       children,
       ...props
     },
     ref,
   ) => {
     const Comp = asChild ? Slot : 'button';
+
+    React.useEffect(() => {
+      if (keyboardShortcut) {
+        document.addEventListener('keydown', handleKeyDown);
+      }
+
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [keyboardShortcut]);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key === keyboardShortcut?.toLocaleLowerCase() &&
+        (event.metaKey || event.ctrlKey)
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (onKeyboardShortcut) {
+          onKeyboardShortcut();
+        }
+      }
+    };
+
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }), {})}
         ref={ref}
         {...props}
       >
-        {loading ? <LoadingSpinner /> : children}
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <div className="flex justify-center items-center gap-2">
+            {children}
+            {keyboardShortcut && (
+              <span className="flex-grow text-xs tracking-widest text-muted-foreground">
+                ⌘{keyboardShortcut.toString().toLocaleUpperCase()}
+              </span>
+            )}
+          </div>
+        )}
       </Comp>
     );
   },

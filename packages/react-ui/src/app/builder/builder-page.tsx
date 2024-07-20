@@ -18,9 +18,10 @@ import { FlowVersionsList } from './flow-versions/flow-versions-list';
 import { PieceSelectorList } from './piece-selector/piece-selector-list';
 import { FlowRunDetails } from './run-details/flow-run-details-list';
 import { FlowRecentRunsList } from './run-list/flow-runs-list';
+import { StepSettings } from './step-settings/step-settings-container';
 
 const BuilderPage = () => {
-  const { flowVersion, leftSidebar, rightSidebar, run, ExitRun } =
+  const { flowVersion, leftSidebar, rightSidebar, run, ExitRun, selectedStep } =
     useBuilderStateContext((state) => state);
 
   return (
@@ -58,7 +59,7 @@ const BuilderPage = () => {
             <ResizablePanel
               id="right-sidebar"
               defaultSize={25}
-              maxSize={47}
+              maxSize={60}
               minSize={25}
               order={3}
             >
@@ -66,7 +67,7 @@ const BuilderPage = () => {
                 <PieceSelectorList />
               )}
               {rightSidebar === RightSideBarType.PIECE_SETTINGS && (
-                <div>Piece Settings</div>
+                <StepSettings key={flowVersion.id + selectedStep?.stepName} />
               )}
             </ResizablePanel>
           </>

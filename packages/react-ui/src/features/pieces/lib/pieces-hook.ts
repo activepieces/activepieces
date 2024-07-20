@@ -24,6 +24,7 @@ type UsePiecesProps = {
 export type StepMetadata = {
   displayName: string;
   logoUrl: string;
+  description: string;
 };
 export const piecesHooks = {
   usePiece: ({ name, version }: UsePieceProps) => {
@@ -45,21 +46,25 @@ export const piecesHooks = {
             return {
               displayName: 'Branch',
               logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
+              description: 'Branch',
             };
           case ActionType.CODE:
             return {
               displayName: 'Code',
               logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
+              description: 'Powerful nodejs & typescript code with npm',
             };
           case ActionType.LOOP_ON_ITEMS:
             return {
               displayName: 'Loop on Items',
               logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
+              description: 'Iterate over a list of items',
             };
           case TriggerType.EMPTY:
             return {
               displayName: 'Empty Trigger',
               logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
+              description: 'Empty Trigger',
             };
           case ActionType.PIECE:
           case TriggerType.PIECE: {
@@ -71,6 +76,7 @@ export const piecesHooks = {
             return {
               displayName: piece.displayName,
               logoUrl: piece.logoUrl,
+              description: piece.description,
             };
           }
         }

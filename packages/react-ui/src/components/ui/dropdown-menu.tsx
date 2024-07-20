@@ -168,15 +168,47 @@ const DropdownMenuSeparator = React.forwardRef<
 ));
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
 
+type DropdownMenuShortcutProps = React.HTMLAttributes<HTMLSpanElement> & {
+  keyboardShortcut: string;
+  onKeyboardShortcut: () => void;
+};
+
 const DropdownMenuShortcut = ({
   className,
+  keyboardShortcut,
+  onKeyboardShortcut,
   ...props
-}: React.HTMLAttributes<HTMLSpanElement>) => {
+}: DropdownMenuShortcutProps) => {
+  React.useEffect(() => {
+    if (keyboardShortcut) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [keyboardShortcut]);
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (
+      event.key === keyboardShortcut?.toLocaleLowerCase() &&
+      (event.metaKey || event.ctrlKey)
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (onKeyboardShortcut) {
+        onKeyboardShortcut();
+      }
+    }
+  };
+
   return (
     <span
       className={cn('ml-auto text-xs tracking-widest opacity-60', className)}
       {...props}
-    />
+    >
+      ⌘{keyboardShortcut.toString().toLocaleUpperCase()}
+    </span>
   );
 };
 DropdownMenuShortcut.displayName = 'DropdownMenuShortcut';

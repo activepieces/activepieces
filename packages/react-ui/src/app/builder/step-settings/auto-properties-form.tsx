@@ -3,6 +3,7 @@ import { Static } from '@sinclair/typebox';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 
+import { ConnectionSelect } from '@/app/routes/connections/connection-select';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { ArrayInput } from '@/components/ui/array-input';
@@ -16,15 +17,14 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { AutoFormFieldWrapper } from '@/features/properties-form/components/auto-form-field-wrapper';
+import { formUtils } from '@/features/properties-form/lib/form-utils';
 import {
+  CustomAuthProperty,
   PieceProperty,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-
-import { AutoFormFieldWrapper } from '../../../../features/properties-form/components/auto-form-field-wrapper';
-import { formUtils } from '../../../../features/properties-form/lib/form-utils';
-import { ConnectionSelect } from '../../connections/connection-select';
 
 type AutoFormProps = {
   props: PiecePropertyMap;
