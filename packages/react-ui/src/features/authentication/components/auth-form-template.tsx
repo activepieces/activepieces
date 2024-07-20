@@ -47,7 +47,7 @@ const Separator = () => {
 const AuthFormTemplate: React.FC<{
   form: 'signin' | 'signup';
 }> = React.memo(({ form }) => {
-  const isSignUp = form === 'signup' ? true : false;
+  const isSignUp = form === 'signup';
 
   return (
     <Card className="w-[28rem] rounded-sm drop-shadow-xl">
