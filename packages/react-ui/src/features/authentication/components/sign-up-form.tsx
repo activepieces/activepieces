@@ -88,6 +88,7 @@ const SignUpForm: React.FC = () => {
   const defaultValues = {
     trackEvents: true,
     newsLetter: false,
+    password: '',
   };
 
   const form = useForm<SignUpSchema>({
@@ -225,9 +226,7 @@ const SignUpForm: React.FC = () => {
                     />
                   </PopoverTrigger>
                   <PopoverContent className="absolute border-2 bg-white p-2 rounded-md left-56 ml-2 -bottom-16 flex flex-col">
-                    <PasswordValidator
-                      password={form.getValues().password ?? ''}
-                    />
+                    <PasswordValidator password={form.getValues().password} />
                   </PopoverContent>
                 </Popover>
                 <FormMessage />
