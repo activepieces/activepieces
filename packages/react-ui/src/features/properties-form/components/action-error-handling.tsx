@@ -21,18 +21,18 @@ const formSchema = Type.Object({
 
 type FormSchema = Static<typeof formSchema>;
 
-type ActionErrorHandlingFormControlProps = {
+type ActionErrorHandlingFormProps = {
   errorHandlingOptions: ErrorHandlingOptionsParam;
   onContinueOnFailureChange: (value: boolean) => void;
   onRetryOnFailureChange: (value: boolean) => void;
 };
 
-const ActionErrorHandlingFormControl = React.memo(
+const ActionErrorHandlingForm = React.memo(
   ({
     errorHandlingOptions,
     onContinueOnFailureChange,
     onRetryOnFailureChange,
-  }: ActionErrorHandlingFormControlProps) => {
+  }: ActionErrorHandlingFormProps) => {
     const errorHandlingOptionsForm = useForm<FormSchema>({
       defaultValues: {
         continueOnFailure: errorHandlingOptions.continueOnFailure.defaultValue,
@@ -52,7 +52,7 @@ const ActionErrorHandlingFormControl = React.memo(
     return (
       <Form {...errorHandlingOptionsForm}>
         <div className="grid gap-4">
-          {errorHandlingOptions.continueOnFailure.hide !== false && (
+          {errorHandlingOptions.continueOnFailure.hide !== true && (
             <FormField
               name="continueOnFailure"
               control={errorHandlingOptionsForm.control}
@@ -76,7 +76,7 @@ const ActionErrorHandlingFormControl = React.memo(
               )}
             />
           )}
-          {errorHandlingOptions.retryOnFailure.hide !== false && (
+          {errorHandlingOptions.retryOnFailure.hide !== true && (
             <FormField
               name="retryOnFailure"
               control={errorHandlingOptionsForm.control}
@@ -106,5 +106,5 @@ const ActionErrorHandlingFormControl = React.memo(
   },
 );
 
-ActionErrorHandlingFormControl.displayName = 'ActionErrorHandlingFormControl';
-export { ActionErrorHandlingFormControl };
+ActionErrorHandlingForm.displayName = 'ActionErrorHandlingForm';
+export { ActionErrorHandlingForm };

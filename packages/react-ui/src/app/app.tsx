@@ -10,6 +10,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 import { router } from './router';
+import { SocketProvider } from '@/components/socket-provider';
 
 const queryClient = new QueryClient();
 let typesFormatsAdded = false;
@@ -22,15 +23,19 @@ if (!typesFormatsAdded) {
 }
 
 export function App() {
+
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <ThemeProvider storageKey="vite-ui-theme">
-          <RouterProvider router={router} />
-          <Toaster />
-        </ThemeProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <SocketProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ThemeProvider storageKey="vite-ui-theme">
+            <RouterProvider router={router} />
+            <Toaster />
+          </ThemeProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </SocketProvider>
   );
 }
 

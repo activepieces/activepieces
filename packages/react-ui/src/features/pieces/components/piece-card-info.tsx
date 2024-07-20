@@ -1,13 +1,10 @@
 import React from 'react';
 
 import { cn } from '@/lib/utils';
-import {
-  PieceMetadataModel,
-  PieceMetadataModelSummary,
-} from '@activepieces/pieces-framework';
+import { StepMetadata } from '../lib/pieces-hook';
 
 type PieceCardInfoProps = {
-  piece: PieceMetadataModelSummary | PieceMetadataModel;
+  piece: StepMetadata;
   interactive?: boolean;
 };
 

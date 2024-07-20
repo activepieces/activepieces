@@ -3,16 +3,25 @@ import React from 'react';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { Action, Trigger } from '@activepieces/shared';
+import { useBuilderStateContext } from '@/hooks/builder-hooks';
 
 const ApStepNode = React.memo(({ data }: { data: Action | Trigger }) => {
+
+  const selectStep = useBuilderStateContext((state) => state.selectStep);
   const { data: pieceMetadata } = piecesHooks.usePieceMetadata({
     step: data,
   });
 
+  const handleClick = () => {
+    // TODO handle nestted steps
+    console.log("select step from builder")
+    selectStep({ path: [], stepName: data.name });
+  };
+
   return (
     <div
       className="h-[70px] w-[260px] rounded border border-solid bg-background px-2 hover:bg-accent hover:text-accent-foreground"
-      onClick={() => console.log('clicked')}
+      onClick={() => handleClick()}
     >
       <div className="g4 flex h-full items-center justify-between gap-4">
         <div className="items-center justify-center">

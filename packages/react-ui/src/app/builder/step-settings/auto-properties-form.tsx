@@ -17,14 +17,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import {
+  CustomAuthProperty,
   PieceProperty,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-
-import { AutoFormFieldWrapper } from '../../../../features/properties-form/components/auto-form-field-wrapper';
-import { formUtils } from '../../../../features/properties-form/lib/form-utils';
-import { ConnectionSelect } from '../../connections/connection-select';
+import { AutoFormFieldWrapper } from '@/features/properties-form/components/auto-form-field-wrapper';
+import { ConnectionSelect } from '@/app/routes/connections/connection-select';
+import { formUtils } from '@/features/properties-form/lib/form-utils';
 
 type AutoFormProps = {
   props: PiecePropertyMap;
