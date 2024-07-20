@@ -8,7 +8,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { Check, X } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -18,6 +18,11 @@ import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
@@ -47,7 +52,7 @@ const PasswordValidator = ({ password }: { password: string }) => {
   const { rules } = generatePasswordValidation(password);
 
   return (
-    <div className="absolute border-2 bg-white p-2 rounded-md -right-48 bottom-24 flex flex-col">
+    <>
       {rules.map((rule, index) => {
         return (
           <div key={index} className="flex flex-row gap-2">
@@ -60,7 +65,7 @@ const PasswordValidator = ({ password }: { password: string }) => {
           </div>
         );
       })}
-    </div>
+    </>
   );
 };
 
@@ -130,8 +135,9 @@ const SignUpForm: React.FC = () => {
     mutate(data);
   };
 
-  const { formValidationObject } = generatePasswordValidation('');
   const [isPasswordFocused, setPasswordFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { formValidationObject } = generatePasswordValidation('');
 
   return (
     <>
@@ -197,22 +203,31 @@ const SignUpForm: React.FC = () => {
             control={form.control}
             name="password"
             render={({ field }) => (
-              <FormItem className="grid space-y-2">
+              <FormItem
+                className="grid space-y-2"
+                onClick={() => inputRef?.current?.focus()}
+                onFocus={() => setPasswordFocused(true)}
+              >
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  {...field}
-                  {...form.register('password', formValidationObject)}
-                  required
-                  id="password"
-                  type="password"
-                  placeholder="********"
-                  className="rounded-sm"
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
-                />
-                {isPasswordFocused && (
-                  <PasswordValidator password={form.getValues().password} />
-                )}
+                <Popover open={isPasswordFocused}>
+                  <PopoverTrigger asChild>
+                    <Input
+                      {...field}
+                      {...form.register('password', formValidationObject)}
+                      required
+                      id="password"
+                      type="password"
+                      placeholder="********"
+                      className="rounded-sm"
+                      ref={inputRef}
+                      onBlur={() => setPasswordFocused(false)}
+                      onChange={(e) => field.onChange(e)}
+                    />
+                  </PopoverTrigger>
+                  <PopoverContent className="absolute border-2 bg-white p-2 rounded-md left-56 ml-2 -bottom-16 flex flex-col">
+                    <PasswordValidator password={form.getValues().password} />
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
