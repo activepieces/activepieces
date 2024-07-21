@@ -1,22 +1,11 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { CopyIcon, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { PlatformRoleSelect } from '@/features/team/component/platform-role-select';
-import { ProjectRoleSelect } from '@/features/team/component/project-role-select';
-import { userInvitationApi } from '@/lib/user-invitation';
-import {
-  InvitationType,
-  PlatformRole,
-  ProjectMemberRole,
-  SendUserInvitationRequest,
-  UserInvitationWithLink,
-} from '@activepieces/shared';
-
-import { Button } from '../../components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -25,15 +14,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../../components/ui/dialog';
-import {
-  FormField,
-  FormItem,
-  Form,
-  FormMessage,
-} from '../../components/ui/form';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
+} from '@/components/ui/dialog';
+import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -42,19 +26,28 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '../../components/ui/select';
+} from '@/components/ui/select';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '../../components/ui/tooltip';
-import { toast } from '../../components/ui/use-toast';
-import { platformHooks } from '../../hooks/platform-hooks';
-import { projectHooks } from '../../hooks/project-hooks';
-import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
-import { HttpError } from '../../lib/api';
-import { authenticationSession } from '../../lib/authentication-session';
-import { formatUtils } from '../../lib/utils';
+} from '@/components/ui/tooltip';
+import { toast } from '@/components/ui/use-toast';
+import { PlatformRoleSelect } from '@/features/team/component/platform-role-select';
+import { ProjectRoleSelect } from '@/features/team/component/project-role-select';
+import { userInvitationApi } from '@/features/team/lib/user-invitation';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
+import { HttpError } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/utils';
+import {
+  InvitationType,
+  PlatformRole,
+  ProjectMemberRole,
+  SendUserInvitationRequest,
+  UserInvitationWithLink,
+} from '@activepieces/shared';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -78,7 +71,6 @@ const FormSchema = Type.Object({
 type FormSchema = Static<typeof FormSchema>;
 
 export function InviteUserDialog() {
-  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
   const { data: platform } = platformHooks.useCurrentPlatform();
@@ -111,7 +103,6 @@ export function InviteUserDialog() {
           title: 'Invitation sent successfully',
         });
       }
-      userInvitationsHooks.invalidate(queryClient);
       //TODO: navigate to platform admin users
     },
     onError: (error) => {

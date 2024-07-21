@@ -1,6 +1,8 @@
 import { createContext, useContext } from 'react';
 import { create, useStore } from 'zustand';
 
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PromiseQueue } from '@/lib/promise-queue';
 import {
   ActionType,
   ExecutionState,
@@ -11,6 +13,8 @@ import {
   StepOutput,
   flowHelper,
 } from '@activepieces/shared';
+
+const flowUpdatesQueue = new PromiseQueue();
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
@@ -42,9 +46,8 @@ export enum RightSideBarType {
 }
 
 export enum PublishButtonStatus {
-  SAVING = 'saving',
-  PUBLISHING = 'publishing',
-  READY_TO_PUBLISH = 'ready-to-publish',
+  LOADING = 'loading',
+  READY = 'ready',
 }
 
 export type BuilderState = {
@@ -61,7 +64,10 @@ export type BuilderState = {
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
-  applyOperation: (operation: FlowOperationRequest) => void;
+  applyOperation: (
+    operation: FlowOperationRequest,
+    onError: () => void,
+  ) => void;
   setReadOnly: (readonly: boolean) => void;
   setVersion: (flowVersion: FlowVersion) => void;
 };
@@ -80,7 +86,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     leftSidebar: LeftSideBarType.NONE,
     readonly: initialState.readonly,
     run: initialState.run,
-    publishButtonStatus: PublishButtonStatus.READY_TO_PUBLISH,
+    publishButtonStatus: PublishButtonStatus.READY,
     selectedStep: null,
     rightSidebar: RightSideBarType.NONE,
     ExitRun: () =>
@@ -104,24 +110,27 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         selectedStep: null,
         readonly: true,
       }),
-    applyOperation: (operation: FlowOperationRequest) =>
+    applyOperation: (operation: FlowOperationRequest, onError: () => void) =>
       set((state) => {
         const newFlowVersion = flowHelper.apply(state.flowVersion, operation);
-        // TODO QUEUE them
-        /* const updateServer = () => {
-           set({ publishButtonStatus: PublishButtonStatus.SAVING });
-           flowsApi
-             .update(state.flow.id, operation)
-             .then(() => {
-               set({
-                 publishButtonStatus: PublishButtonStatus.READY_TO_PUBLISH,
-               });
-             })
-             .catch((error) => {
-               console.error(error);
-             });
-         };
-         updateServer();*/
+        const updateRequest = async () => {
+          set({ publishButtonStatus: PublishButtonStatus.LOADING });
+          try {
+            await flowsApi.update(state.flow.id, operation);
+            set({
+              publishButtonStatus:
+                flowUpdatesQueue.size() === 0
+                  ? PublishButtonStatus.READY
+                  : PublishButtonStatus.LOADING,
+            });
+          } catch (error) {
+            console.error(error);
+            flowUpdatesQueue.halt();
+            onError();
+          }
+        };
+        flowUpdatesQueue.add(updateRequest);
+
         return { flowVersion: newFlowVersion };
       }),
     setReadOnly: (readonly: boolean) => set({ readonly }),

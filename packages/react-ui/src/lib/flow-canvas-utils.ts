@@ -168,7 +168,7 @@ function graphWithSingleBigButton(): ApGraph {
         id: nanoid(),
         position: { x: 0, y: 0 },
         type: 'bigButton',
-        data: undefined,
+        data: {},
       },
     ],
     edges: [],
@@ -203,7 +203,7 @@ export type ApNode = {
   id: string;
   position: { x: number; y: number };
   type: string;
-  data: Step | undefined;
+  data: Step | Record<string, unknown>;
 };
 
 export type ApEdge = {

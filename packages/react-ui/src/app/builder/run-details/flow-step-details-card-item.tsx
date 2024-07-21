@@ -1,6 +1,12 @@
 import { ChevronRight } from 'lucide-react';
 import React from 'react';
 
+import {
+  StepPathWithName,
+  getStepOutputFromExecutionPath,
+  stepPathToKeyString,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import { CardListItem } from '@/components/ui/card-list';
 import {
@@ -10,12 +16,6 @@ import {
 } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import {
-  StepPathWithName,
-  getStepOutputFromExecutionPath,
-  stepPathToKeyString,
-  useBuilderStateContext,
-} from '@/hooks/builder-hooks';
 import { cn, formatUtils } from '@/lib/utils';
 import {
   ActionType,
@@ -51,28 +51,24 @@ function findChildrenPaths(
 
 const FlowStepDetailsCardItem = React.memo(
   ({ path }: FlowStepDetailsCardProps) => {
-    const selectStep = useBuilderStateContext((state) => state.selectStep);
-    const isStepSelected = useBuilderStateContext(
-      (state) => state.selectedStep?.stepName === path.stepName,
-    );
-    const isInPath = useBuilderStateContext((state) => {
-      const { selectedStep } = state;
-      if (!selectedStep) return false;
-      const step = flowHelper.getStep(state.flowVersion, path.stepName)!;
-      return (
-        selectedStep.path.some((p) => p[0] === path.stepName) ||
-        selectedStep.stepName === step.name
-      );
-    });
-    const step = useBuilderStateContext(
-      (state) => flowHelper.getStep(state.flowVersion, path.stepName)!,
-    );
-    const stepOutput = useBuilderStateContext((state) => {
-      return getStepOutputFromExecutionPath({
-        path,
-        executionState: state.run ?? { steps: {} },
+    const [selectStep, isStepSelected, isInPath, step, stepOutput] =
+      useBuilderStateContext((state) => {
+        const step = flowHelper.getStep(state.flowVersion, path.stepName)!;
+        const isStepSelected = state.selectedStep?.stepName === path.stepName;
+
+        const { selectedStep } = state;
+        const isInPath =
+          selectedStep &&
+          (selectedStep.path.some((p) => p[0] === path.stepName) ||
+            selectedStep.stepName === step.name);
+
+        const stepOutput = getStepOutputFromExecutionPath({
+          path,
+          executionState: state.run ?? { steps: {} },
+        })!;
+
+        return [state.selectStep, isStepSelected, isInPath, step, stepOutput];
       });
-    })!;
     const { data: pieceMetadata } = piecesHooks.usePieceMetadata({
       step,
     });

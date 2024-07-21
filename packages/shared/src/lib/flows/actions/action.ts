@@ -126,40 +126,46 @@ export const textConditions = [
     BranchOperator.TEXT_DOES_NOT_END_WITH,
 ]
 
+const BranchTextConditionValid = (addMinLength: boolean) => Type.Object({
+    firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
+    secondValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
+    caseSensitive: Type.Optional(Type.Boolean()),
+    operator: Type.Optional(Type.Union([
+        Type.Literal(BranchOperator.TEXT_CONTAINS),
+        Type.Literal(BranchOperator.TEXT_DOES_NOT_CONTAIN),
+        Type.Literal(BranchOperator.TEXT_EXACTLY_MATCHES),
+        Type.Literal(BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH),
+        Type.Literal(BranchOperator.TEXT_STARTS_WITH),
+        Type.Literal(BranchOperator.TEXT_DOES_NOT_START_WITH),
+        Type.Literal(BranchOperator.TEXT_ENDS_WITH),
+        Type.Literal(BranchOperator.TEXT_DOES_NOT_END_WITH),
+    ])),
+})
+
+const BranchNumberConditionValid = (addMinLength: boolean) => Type.Object({
+    firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
+    secondValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
+    operator: Type.Optional(Type.Union([
+        Type.Literal(BranchOperator.NUMBER_IS_GREATER_THAN),
+        Type.Literal(BranchOperator.NUMBER_IS_LESS_THAN),
+        Type.Literal(BranchOperator.NUMBER_IS_EQUAL_TO),
+    ])),
+})
+
+const BranchSingleValueConditionValid = (addMinLength: boolean) => Type.Object({
+    firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
+    operator: Type.Optional(Type.Union([
+        Type.Literal(BranchOperator.EXISTS),
+        Type.Literal(BranchOperator.DOES_NOT_EXIST),
+        Type.Literal(BranchOperator.BOOLEAN_IS_TRUE),
+        Type.Literal(BranchOperator.BOOLEAN_IS_FALSE),
+    ])),
+})
+
 const BranchConditionValid = (addMinLength: boolean) => Type.Union([
-    Type.Object({
-        firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-        secondValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-        caseSensitive: Type.Optional(Type.Boolean()),
-        operator: Type.Optional(Type.Union([
-            Type.Literal( BranchOperator.TEXT_CONTAINS),
-            Type.Literal( BranchOperator.TEXT_DOES_NOT_CONTAIN),
-            Type.Literal( BranchOperator.TEXT_EXACTLY_MATCHES),
-            Type.Literal( BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH),
-            Type.Literal( BranchOperator.TEXT_STARTS_WITH),
-            Type.Literal( BranchOperator.TEXT_DOES_NOT_START_WITH),
-            Type.Literal( BranchOperator.TEXT_ENDS_WITH),
-            Type.Literal( BranchOperator.TEXT_DOES_NOT_END_WITH),
-        ])),
-    }),
-    Type.Object({
-        firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-        secondValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-        operator: Type.Optional(Type.Union([
-            Type.Literal( BranchOperator.NUMBER_IS_GREATER_THAN),
-            Type.Literal( BranchOperator.NUMBER_IS_LESS_THAN),
-            Type.Literal( BranchOperator.NUMBER_IS_EQUAL_TO),
-        ])),
-    }),
-    Type.Object({
-        firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-        operator: Type.Optional(Type.Union([
-            Type.Literal( BranchOperator.EXISTS),
-            Type.Literal( BranchOperator.DOES_NOT_EXIST),
-            Type.Literal( BranchOperator.BOOLEAN_IS_TRUE),
-            Type.Literal( BranchOperator.BOOLEAN_IS_FALSE),
-        ])),
-    }),
+    BranchTextConditionValid(addMinLength),
+    BranchNumberConditionValid(addMinLength),
+    BranchSingleValueConditionValid(addMinLength),
 ])
 
 export const BranchActionSettingsWithValidation = Type.Object({
@@ -169,6 +175,15 @@ export const BranchActionSettingsWithValidation = Type.Object({
 
 export const BranchCondition = BranchConditionValid(false)
 export type BranchCondition = Static<typeof BranchCondition>
+
+export const BranchTextCondition = BranchTextConditionValid(false)
+export type BranchTextCondition = Static<typeof BranchTextCondition>
+
+export const BranchNumberCondition = BranchNumberConditionValid(false)
+export type BranchNumberCondition = Static<typeof BranchNumberCondition>
+
+export const BranchSingleValueCondition = BranchSingleValueConditionValid(false)
+export type BranchSingleValueCondition = Static<typeof BranchSingleValueCondition>
 
 export const BranchActionSettings = Type.Object({
     conditions: Type.Array(Type.Array(BranchConditionValid(false))),
@@ -222,8 +237,8 @@ export type CodeAction = Static<typeof CodeActionSchema> & { nextAction?: Action
 
 
 export type StepSettings =
-  | CodeActionSettings
-  | PieceActionSettings
-  | PieceTriggerSettings
-  | BranchActionSettings
-  | LoopOnItemsActionSettings
+    | CodeActionSettings
+    | PieceActionSettings
+    | PieceTriggerSettings
+    | BranchActionSettings
+    | LoopOnItemsActionSettings

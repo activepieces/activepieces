@@ -1,17 +1,17 @@
 import { ReactFlowProvider } from '@xyflow/react';
 
 import {
+  LeftSideBarType,
+  RightSideBarType,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
+import { FlowCanvas } from '@/app/builder/flow-canvas/canvas';
+import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { FlowCanvas } from '@/features/flow-canvas/components/canvas';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
-import {
-  LeftSideBarType,
-  RightSideBarType,
-  useBuilderStateContext,
-} from '@/hooks/builder-hooks';
 
 import { BuilderNavBar } from './builder-nav-bar';
 import { FlowVersionsList } from './flow-versions/flow-versions-list';
@@ -21,8 +21,15 @@ import { FlowRecentRunsList } from './run-list/flow-runs-list';
 import { StepSettings } from './step-settings/step-settings-container';
 
 const BuilderPage = () => {
-  const { flowVersion, leftSidebar, rightSidebar, run, ExitRun, selectedStep } =
-    useBuilderStateContext((state) => state);
+  const [flowVersion, leftSidebar, rightSidebar, run, ExitRun, selectedStep] =
+    useBuilderStateContext((state) => [
+      state.flowVersion,
+      state.leftSidebar,
+      state.rightSidebar,
+      state.run,
+      state.ExitRun,
+      state.selectedStep,
+    ]);
 
   return (
     <div className="flex h-screen w-screen flex-col">

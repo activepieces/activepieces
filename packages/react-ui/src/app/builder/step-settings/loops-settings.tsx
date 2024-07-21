@@ -1,10 +1,11 @@
 import React from 'react';
 
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
-import { useBuilderStateContext } from '@/hooks/builder-hooks';
 import { FlowOperationType, LoopOnItemsAction } from '@activepieces/shared';
 
 type LoopsSettingsProps = {
@@ -22,16 +23,20 @@ const LoopsSettings = React.memo(({ selectedStep }: LoopsSettingsProps) => {
   const applyOperation = useBuilderStateContext(
     (state) => state.applyOperation,
   );
+  const { toast } = useToast();
 
   function handleItemsChange(items: string) {
     const newAction = flowVersionUtils.buildActionWithNewLoopItems(
       selectedStep,
       items,
     );
-    applyOperation({
-      type: FlowOperationType.UPDATE_ACTION,
-      request: newAction,
-    });
+    applyOperation(
+      {
+        type: FlowOperationType.UPDATE_ACTION,
+        request: newAction,
+      },
+      () => toast(UNSAVED_CHANGES_TOAST),
+    );
   }
 
   return (

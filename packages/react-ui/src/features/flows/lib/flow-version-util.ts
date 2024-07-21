@@ -40,9 +40,11 @@ function buildActionWithSampleData(
 function buildActionWithNewCode(
   selectedStep: CodeAction,
   code: string,
+  input: Record<string, string>,
 ): CodeAction {
   const clonedAction: CodeAction = JSON.parse(JSON.stringify(selectedStep));
   clonedAction.settings.sourceCode.code = code;
+  clonedAction.settings.input = input;
   return clonedAction;
 }
 

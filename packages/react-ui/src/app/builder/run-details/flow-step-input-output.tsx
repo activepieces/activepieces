@@ -1,12 +1,12 @@
 import { Timer } from 'lucide-react';
 import React from 'react';
 
-import { JsonViewer } from '@/components/json-viewer';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   getStepOutputFromExecutionPath,
   useBuilderStateContext,
-} from '@/hooks/builder-hooks';
+} from '@/app/builder/builder-hooks';
+import { JsonViewer } from '@/components/json-viewer';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatUtils } from '@/lib/utils';
 
 import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';

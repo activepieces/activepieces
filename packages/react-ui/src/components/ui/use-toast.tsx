@@ -16,6 +16,15 @@ export const INTERNAL_ERROR_TOAST: ToasterToast = {
   duration: 3000,
 };
 
+export const UNSAVED_CHANGES_TOAST: ToasterToast = {
+  id: 'unsaved-changes',
+  title: 'Unsaved Changes',
+  description:
+    'Something went wrong and there are unsaved changes, please refresh and contact support if the problem persists.',
+  variant: 'destructive',
+  duration: Infinity,
+};
+
 type ToasterUserProps = {
   id: string;
   title?: React.ReactNode;

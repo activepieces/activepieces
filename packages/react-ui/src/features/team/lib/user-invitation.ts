@@ -6,7 +6,7 @@ import {
   UserInvitationWithLink,
 } from '@activepieces/shared';
 
-import { api } from './api';
+import { api } from '../../../lib/api';
 
 export const userInvitationApi = {
   invite: (request: SendUserInvitationRequest) => {

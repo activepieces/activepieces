@@ -4,7 +4,7 @@ import { Plus } from 'lucide-react';
 import {
   RightSideBarType,
   useBuilderStateContext,
-} from '@/hooks/builder-hooks';
+} from '@/app/builder/builder-hooks';
 
 interface ApEdgeWithButtonProps {
   id: string;
@@ -32,8 +32,9 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = ({
     stroke: '#c1c8d0',
   },
 }) => {
-  const { setRightSidebar } = useBuilderStateContext((state) => state);
-
+  const setRightSidebar = useBuilderStateContext(
+    (state) => state.setRightSidebar,
+  );
   return (
     <>
       <SmoothStepEdge

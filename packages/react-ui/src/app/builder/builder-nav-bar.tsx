@@ -1,6 +1,7 @@
 import { History, Home, Logs } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { FlowStateToolbar } from '@/app/builder/flow-state-toolbar';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,15 +10,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { LeftSideBarType, useBuilderStateContext } from '@/hooks/builder-hooks';
 
 import { FlowActionsMenu } from './flow-actions-menu';
 
 export const BuilderNavBar = () => {
-  const setLeftSidebar = useBuilderStateContext(
-    (state) => state.setLeftSidebar,
-  );
-  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
+  const [flowVersion, setLeftSidebar] = useBuilderStateContext((state) => [
+    state.flowVersion,
+    state.setLeftSidebar,
+  ]);
 
   return (
     <div className="items-left flex h-[70px] w-full p-4 bg-accent">

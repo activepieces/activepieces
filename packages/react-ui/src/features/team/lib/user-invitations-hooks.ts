@@ -1,9 +1,11 @@
-import { QueryClient, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
-import { userInvitationApi } from '@/lib/user-invitation';
 import { InvitationType, UserInvitation } from '@activepieces/shared';
 
+import { userInvitationApi } from './user-invitation';
+
 const userInvitationsQueryKey = 'user-invitations';
+
 export const userInvitationsHooks = {
   useInvitations: () => {
     return useQuery<UserInvitation[]>({
@@ -17,12 +19,7 @@ export const userInvitationsHooks = {
           .then((res) => res.data);
       },
       queryKey: [userInvitationsQueryKey],
-      staleTime: Infinity,
-    });
-  },
-  invalidate: (queryClient: QueryClient) => {
-    queryClient.invalidateQueries({
-      queryKey: [userInvitationsQueryKey],
+      staleTime: 0,
     });
   },
 };

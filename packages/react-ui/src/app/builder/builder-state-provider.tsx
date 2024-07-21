@@ -5,7 +5,7 @@ import {
   BuilderStateContext,
   BuilderStore,
   createBuilderStore,
-} from '@/hooks/builder-hooks';
+} from '@/app/builder/builder-hooks';
 
 type BuilderStateProviderProps = React.PropsWithChildren<BuilderInitialState>;
 

@@ -1,6 +1,12 @@
 import { ChevronLeft } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import {
+  LeftSideBarType,
+  StepPathWithName,
+  stepPathToKeyString,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import { CardList } from '@/components/ui/card-list';
 import {
@@ -8,12 +14,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import {
-  LeftSideBarType,
-  StepPathWithName,
-  stepPathToKeyString,
-  useBuilderStateContext,
-} from '@/hooks/builder-hooks';
 
 import { SidebarHeader } from '../sidebar-header';
 
@@ -21,7 +21,10 @@ import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
 import { FlowStepInputOutput } from './flow-step-input-output';
 
 const FlowRunDetails = React.memo(() => {
-  const { setLeftSidebar, run } = useBuilderStateContext((state) => state);
+  const [setLeftSidebar, run] = useBuilderStateContext((state) => [
+    state.setLeftSidebar,
+    state.run,
+  ]);
 
   const [stepPaths, setStepPaths] = useState<StepPathWithName[]>([]);
 

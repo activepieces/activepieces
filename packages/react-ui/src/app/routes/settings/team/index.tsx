@@ -1,4 +1,4 @@
-import ProjectMembersList from './project-members-list';
+import ProjectMembersList from '@/features/team/component/project-members-list';
 
 export default function TeamPage() {
   return (

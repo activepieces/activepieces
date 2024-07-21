@@ -1,5 +1,5 @@
 import { Plus, TrashIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from './button';
 import { Input } from './input';
@@ -11,24 +11,22 @@ type DictionaryInputItem = {
 };
 
 type DictionaryInputProps = {
-  values: DictionaryInputItem[];
-  onChange: (values: DictionaryInputItem[]) => void;
+  values: Record<string, string>;
+  onChange: (values: Record<string, string>) => void;
 };
 
 export const DictionaryInput = ({ values, onChange }: DictionaryInputProps) => {
-  const [formValue, setFormValue] = useState<DictionaryInputItem[]>(values);
-
-  useEffect(() => {
-    onChange(formValue);
-  }, [formValue]);
+  const [formValue, setFormValue] = useState<DictionaryInputItem[]>(
+    Object.keys(values).map((key) => ({ key, value: values[key] })),
+  );
 
   const remove = (index: number) => {
     const newValues = formValue.filter((_, i) => i !== index);
-    setFormValue(newValues);
+    updateValue(newValues);
   };
 
   const add = () => {
-    setFormValue([...formValue, { key: '', value: '' }]);
+    updateValue([...formValue, { key: '', value: '' }]);
   };
 
   const onChangeValue = (
@@ -43,7 +41,17 @@ export const DictionaryInput = ({ values, onChange }: DictionaryInputProps) => {
     if (key !== undefined) {
       newValues[index].key = key;
     }
-    setFormValue(newValues);
+    updateValue(newValues);
+  };
+
+  const updateValue = (items: DictionaryInputItem[]) => {
+    setFormValue(items);
+    onChange(
+      items.reduce(
+        (acc, current) => ({ ...acc, [current.key]: current.value }),
+        {},
+      ),
+    );
   };
 
   return (

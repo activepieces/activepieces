@@ -12,7 +12,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { FlowVersion } from '@activepieces/shared';
 
-import { ApEdge, ApNode, flowCanvasUtils } from '../lib/flow-canvas-utils';
+import {
+  ApEdge,
+  ApNode,
+  flowCanvasUtils,
+} from '../../../lib/flow-canvas-utils';
 
 import { ApBigButton } from './big-button';
 import { ApEdgeWithButton } from './edge-with-button';

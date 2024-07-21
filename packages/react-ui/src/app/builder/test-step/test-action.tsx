@@ -2,17 +2,21 @@ import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useState } from 'react';
 
-import { JsonViewer } from '@/components/json-viewer';
-import { useSocket } from '@/components/socket-provider';
-import { Button } from '@/components/ui/button';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
-import { flowsApi } from '@/features/flows/lib/flows-api';
 import {
   PublishButtonStatus,
   useBuilderStateContext,
-} from '@/hooks/builder-hooks';
+} from '@/app/builder/builder-hooks';
+import { JsonViewer } from '@/components/json-viewer';
+import { useSocket } from '@/components/socket-provider';
+import { Button } from '@/components/ui/button';
+import {
+  INTERNAL_ERROR_TOAST,
+  UNSAVED_CHANGES_TOAST,
+  useToast,
+} from '@/components/ui/use-toast';
+import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
+import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
+import { flowsApi } from '@/features/flows/lib/flows-api';
 import { formatUtils } from '@/lib/utils';
 import {
   Action,
@@ -28,23 +32,23 @@ type TestActionComponentProps = {
 
 const TestActionComponent = React.memo(
   ({ selectedStep }: TestActionComponentProps) => {
+    const { toast } = useToast();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
-    const flowVersionId = useBuilderStateContext(
-      (state) => state.flowVersion.id,
+    const [flowVersionId, applyOperation, isSaving] = useBuilderStateContext(
+      (state) => [
+        state.flowVersion.id,
+        state.applyOperation,
+        state.publishButtonStatus === PublishButtonStatus.LOADING,
+      ],
     );
-    const applyOperation = useBuilderStateContext(
-      (state) => state.applyOperation,
-    );
+
     const [lastTestDate, setLastTestDate] = useState(
       selectedStep.settings.inputUiInfo?.lastTestDate,
     );
     const { currentSelectedData } = selectedStep.settings.inputUiInfo ?? {};
     const sampleDataExists = !isNil(currentSelectedData);
-    const isSaving = useBuilderStateContext(
-      (state) => state.publishButtonStatus === PublishButtonStatus.SAVING,
-    );
 
     const socket = useSocket();
     const { mutate, isPending } = useMutation<StepRunResponse, Error, void>({
@@ -61,10 +65,13 @@ const TestActionComponent = React.memo(
             selectedStep,
             stepResponse.output,
           );
-          applyOperation({
-            type: FlowOperationType.UPDATE_ACTION,
-            request: newAction,
-          });
+          applyOperation(
+            {
+              type: FlowOperationType.UPDATE_ACTION,
+              request: newAction,
+            },
+            () => toast(UNSAVED_CHANGES_TOAST),
+          );
         } else {
           setErrorMessage(
             flowVersionUtils.formatErrorMessage(

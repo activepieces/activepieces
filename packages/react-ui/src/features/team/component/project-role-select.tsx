@@ -14,11 +14,17 @@ import {
 } from '@/components/ui/select';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { RolesDisplayNames } from '@/lib/platforms-api';
 import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
 
 type ProjectRoleSelectProps = {
   form: UseFormReturn<any>;
+};
+
+const RolesDisplayNames: { [k: string]: string } = {
+  [ProjectMemberRole.ADMIN]: `Admin`,
+  [ProjectMemberRole.EDITOR]: `Editor`,
+  [ProjectMemberRole.OPERATOR]: `Operator`,
+  [ProjectMemberRole.VIEWER]: `Viewer`,
 };
 
 const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {

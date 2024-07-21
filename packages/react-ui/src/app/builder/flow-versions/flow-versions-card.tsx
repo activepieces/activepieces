@@ -3,6 +3,10 @@ import { useMutation } from '@tanstack/react-query';
 import { Eye, EyeIcon, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 
+import {
+  LeftSideBarType,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
 import { AvatarLetter } from '@/components/ui/avatar-letter';
 import { Button } from '@/components/ui/button';
 import { CardListItem } from '@/components/ui/card-list';
@@ -33,7 +37,6 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { LeftSideBarType, useBuilderStateContext } from '@/hooks/builder-hooks';
 import { formatUtils } from '@/lib/utils';
 import {
   FlowOperationType,
@@ -99,8 +102,9 @@ const FlowVersionDetailsCard = React.memo(
     selected,
     published,
   }: FlowVersionDetailsCardProps) => {
-    const { setVersion: setBuilderVersion, setLeftSidebar } =
-      useBuilderStateContext((state) => state);
+    const [setBuilderVersion, setLeftSidebar] = useBuilderStateContext(
+      (state) => [state.setVersion, state.setLeftSidebar],
+    );
     const [dropdownMenuOpen, setDropdownMenuOpen] = useState(false);
     const { mutate, isPending } = useMutation<
       FlowVersion,

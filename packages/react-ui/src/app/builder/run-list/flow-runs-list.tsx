@@ -2,13 +2,16 @@ import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 
 import {
+  LeftSideBarType,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
+import {
   CardList,
   CardListEmpty,
   CardListItemSkeleton,
 } from '@/components/ui/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { LeftSideBarType, useBuilderStateContext } from '@/hooks/builder-hooks';
 import { FlowRun, SeekPage } from '@activepieces/shared';
 
 import { SidebarHeader } from '../sidebar-header';
@@ -21,8 +24,10 @@ type FlowRunsListProps = {
 
 const FlowRecentRunsList = React.memo(
   ({ recentRuns = 20 }: FlowRunsListProps) => {
-    const { flow, setLeftSidebar } = useBuilderStateContext((state) => state);
-
+    const [flow, setLeftSidebar] = useBuilderStateContext((state) => [
+      state.flow,
+      state.setLeftSidebar,
+    ]);
     const {
       data: flowPage,
       isLoading,

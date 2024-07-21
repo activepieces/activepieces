@@ -3,6 +3,10 @@ import { useMutation } from '@tanstack/react-query';
 import { ChevronRightIcon } from 'lucide-react';
 import React from 'react';
 
+import {
+  LeftSideBarType,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import { CardListItem } from '@/components/ui/card-list';
 import { LoadingSpinner } from '@/components/ui/spinner';
@@ -10,7 +14,6 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { LeftSideBarType, useBuilderStateContext } from '@/hooks/builder-hooks';
 import { cn, formatUtils } from '@/lib/utils';
 import { FlowRun, PopulatedFlow } from '@activepieces/shared';
 
@@ -21,8 +24,10 @@ type FlowRunCardProps = {
 const FlowRunCard = React.memo((params: FlowRunCardProps) => {
   const { run } = params;
   const { Icon, varient } = flowRunUtils.getStatusIcon(run.status);
-  const { setLeftSidebar, setRun } = useBuilderStateContext((state) => state);
-
+  const [setLeftSidebar, setRun] = useBuilderStateContext((state) => [
+    state.setLeftSidebar,
+    state.setRun,
+  ]);
   const { mutate, isPending } = useMutation<
     {
       run: FlowRun;

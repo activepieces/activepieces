@@ -1,19 +1,20 @@
 import React from 'react';
 
 import {
+  RightSideBarType,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
+import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
 import { PieceCardInfo } from '@/features/pieces/components/piece-card-info';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { ActionErrorHandlingForm } from '@/features/properties-form/components/action-error-handling';
-import {
-  RightSideBarType,
-  useBuilderStateContext,
-} from '@/hooks/builder-hooks';
 import {
   Action,
   ActionType,
@@ -25,6 +26,7 @@ import {
 import { SidebarHeader } from '../sidebar-header';
 import { TestActionComponent } from '../test-step/test-action';
 
+import { BranchSettings } from './branch-settings';
 import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
 
@@ -36,6 +38,9 @@ const StepSettingsContainer = React.memo(() => {
   const { setRightSidebar, applyOperation, readonly } = useBuilderStateContext(
     (state) => state,
   );
+
+  const { toast } = useToast();
+
   const selectedStep = useBuilderStateContext((state) => {
     const { selectedStep } = state;
     if (!selectedStep) {
@@ -63,10 +68,13 @@ const StepSettingsContainer = React.memo(() => {
         retryOnFailure,
       },
     );
-    applyOperation({
-      type: FlowOperationType.UPDATE_ACTION,
-      request: newAction,
-    });
+    applyOperation(
+      {
+        type: FlowOperationType.UPDATE_ACTION,
+        request: newAction,
+      },
+      () => toast(UNSAVED_CHANGES_TOAST),
+    );
   };
 
   // TODO check scrolling code editior
@@ -85,6 +93,9 @@ const StepSettingsContainer = React.memo(() => {
               )}
               {selectedStep.type === ActionType.CODE && (
                 <CodeSettings selectedStep={selectedStep} />
+              )}
+              {selectedStep.type === ActionType.BRANCH && (
+                <BranchSettings selectedStep={selectedStep}></BranchSettings>
               )}
               {STEPS_WITH_ERROR_HANDLING.includes(selectedStep.type) && (
                 <ActionErrorHandlingForm

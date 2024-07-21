@@ -9,6 +9,7 @@ import {
   Trash,
 } from 'lucide-react';
 
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +20,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { useBuilderStateContext } from '@/hooks/builder-hooks';
 import { FlowTemplate } from '@activepieces/shared';
 
 const FlowActionsMenu = () => {

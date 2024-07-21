@@ -19,7 +19,7 @@ type SelectOption<T> = {
 type SearchableSelectProps<T> = {
   options: SelectOption<T>[];
   onChange: (value: T) => void;
-  value: T;
+  value: T | undefined;
   placeholder: string;
   disabled?: boolean;
 };
@@ -44,27 +44,47 @@ export const SearchableSelect = React.memo(
       if (searchTerm.length === 0) {
         setFilteredOptions(options.map((_, index) => index));
       } else {
-        const filteredOptions = options.filter((option) => {
-          return option.label.toLowerCase().includes(searchTerm.toLowerCase());
-        });
-        setFilteredOptions(filteredOptions.map((_, index) => index));
+        const filteredOptions = options
+          .map((option, index) => {
+            return {
+              label: option.label,
+              value: option.value,
+              index: index,
+            };
+          })
+          .filter((option) => {
+            return option.label
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase());
+          });
+        setFilteredOptions(filteredOptions.map((op) => op.index));
       }
     }, [searchTerm, options]);
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchTerm(e.target.value);
+      e.preventDefault();
     };
 
     const onSelect = (index: string) => {
-      const optionIndex = parseInt(index);
+      const optionIndex =
+        Number.isInteger(parseInt(index)) && !Number.isNaN(parseInt(index))
+          ? parseInt(index)
+          : -1;
+      setSelectedIndex(optionIndex);
+      setSearchTerm('');
+
+      if (optionIndex === -1) {
+        return;
+      }
       const option = options[optionIndex];
       onChange(option.value);
-      setSelectedIndex(optionIndex);
     };
 
     return (
       <Select
         disabled={disabled}
+        autoComplete={undefined}
         value={selectedIndex == -1 ? undefined : String(selectedIndex)}
         onValueChange={onSelect}
       >

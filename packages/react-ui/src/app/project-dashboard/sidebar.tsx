@@ -12,7 +12,7 @@ import { theme } from '@/lib/theme';
 
 import { Button } from '../../components/ui/button';
 import { UserAvatar } from '../../components/ui/user-avatar';
-import { InviteUserDialog } from '../routes/settings/team/invite-user-dialog';
+import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
 
 type Link = {
   icon: React.ReactNode;

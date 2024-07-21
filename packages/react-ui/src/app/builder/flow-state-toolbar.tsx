@@ -1,21 +1,20 @@
 import React from 'react';
 
-import { Button } from '@/components/ui/button';
-import FlowStatusToggle from '@/features/flows/components/flow-status-toggle';
-import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import {
   PublishButtonStatus,
   useBuilderStateContext,
-} from '@/hooks/builder-hooks';
+} from '@/app/builder/builder-hooks';
+import { Button } from '@/components/ui/button';
+import FlowStatusToggle from '@/features/flows/components/flow-status-toggle';
+import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { FlowVersionState } from '@activepieces/shared';
 
 const FlowStateToolbar = React.memo(() => {
-  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
-  const flow = useBuilderStateContext((state) => state.flow);
-  const isSaving = useBuilderStateContext(
-    (state) => state.publishButtonStatus === PublishButtonStatus.SAVING,
-  );
-
+  const [flowVersion, flow, isSaving] = useBuilderStateContext((state) => [
+    state.flowVersion,
+    state.flow,
+    state.publishButtonStatus === PublishButtonStatus.LOADING,
+  ]);
   return (
     <>
       {flow.publishedVersionId && (

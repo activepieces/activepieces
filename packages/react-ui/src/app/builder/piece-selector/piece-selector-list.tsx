@@ -1,22 +1,24 @@
 import { useDebounce } from 'use-debounce';
 
+import {
+  RightSideBarType,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
 import { SidebarHeader } from '@/app/builder/sidebar-header';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { PieceCardInfo } from '@/features/pieces/components/piece-card-info';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import {
-  RightSideBarType,
-  useBuilderStateContext,
-} from '@/hooks/builder-hooks';
 
 const PiecesListSelector = () => {
   const [searchQuery, setSearchQuery] = useDebounce<string>('', 300);
   const { data: pieces, isLoading } = piecesHooks.usePieces({
     searchQuery,
   });
-  const { setRightSidebar } = useBuilderStateContext((state) => state);
+  const setRightSidebar = useBuilderStateContext(
+    (state) => state.setRightSidebar,
+  );
 
   return (
     <>
