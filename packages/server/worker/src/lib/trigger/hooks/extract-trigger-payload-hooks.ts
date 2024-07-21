@@ -35,8 +35,8 @@ export async function extractPayloads(
             // return []
         }
         if (!isNil(result) && result.success && Array.isArray(result.output)) {
-            const engineConroller = engineApiService(engineToken)
-            await engineConroller.updateFailureCount({
+            const engineController = engineApiService(engineToken)
+            await engineController.updateFailureCount({
                 flowId: flowVersion.flowId,
                 projectId,
                 failureCount: 0,
@@ -82,9 +82,9 @@ export async function extractPayloads(
 }
 
 async function handleFailureFlow(flowVersion: FlowVersion, projectId: ProjectId, engineToken: string): Promise<boolean> {
-    const engineConroller = engineApiService(engineToken)
+    const engineController = engineApiService(engineToken)
 
-    const failureCount = await engineConroller.getFailureCount({
+    const failureCount = await engineController.getFailureCount({
         flowId: flowVersion.flowId,
         projectId,
     })
@@ -93,7 +93,7 @@ async function handleFailureFlow(flowVersion: FlowVersion, projectId: ProjectId,
         return true
     }
 
-    await engineConroller.updateFailureCount({
+    await engineController.updateFailureCount({
         flowId: flowVersion.flowId,
         projectId,
         failureCount: failureCount + 1,
