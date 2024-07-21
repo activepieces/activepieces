@@ -57,6 +57,16 @@ const StepSettingsContainer = React.memo(() => {
     step: selectedStep,
   });
 
+  const updateAction = (newAction: Action) => {
+    applyOperation(
+      {
+        type: FlowOperationType.UPDATE_ACTION,
+        request: newAction,
+      },
+      () => toast(UNSAVED_CHANGES_TOAST),
+    );
+  };
+
   const handleOnErrorChanges = (
     continueOnFailure: boolean | undefined,
     retryOnFailure: boolean | undefined,
@@ -68,13 +78,7 @@ const StepSettingsContainer = React.memo(() => {
         retryOnFailure,
       },
     );
-    applyOperation(
-      {
-        type: FlowOperationType.UPDATE_ACTION,
-        request: newAction,
-      },
-      () => toast(UNSAVED_CHANGES_TOAST),
-    );
+    updateAction(newAction);
   };
 
   // TODO check scrolling code editior
@@ -89,10 +93,17 @@ const StepSettingsContainer = React.memo(() => {
             <div className="flex flex-col gap-4">
               <PieceCardInfo piece={pieceMetadata!} />
               {selectedStep.type === ActionType.LOOP_ON_ITEMS && (
-                <LoopsSettings selectedStep={selectedStep}></LoopsSettings>
+                <LoopsSettings
+                  selectedStep={selectedStep}
+                  onUpdateAction={updateAction}
+                ></LoopsSettings>
               )}
               {selectedStep.type === ActionType.CODE && (
-                <CodeSettings selectedStep={selectedStep} />
+                <CodeSettings
+                  selectedStep={selectedStep}
+                  onUpdateAction={updateAction}
+                  readonly={readonly}
+                ></CodeSettings>
               )}
               {selectedStep.type === ActionType.BRANCH && (
                 <BranchSettings selectedStep={selectedStep}></BranchSettings>
