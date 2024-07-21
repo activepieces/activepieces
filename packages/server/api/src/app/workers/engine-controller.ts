@@ -1,4 +1,4 @@
-import { GetRunForWorkerRequest, JobStatus, logger, QueueName, SharedSystemProp, system, UpdateJobRequest } from '@activepieces/server-shared'
+import { GetFailureCountRequest, GetRunForWorkerRequest, JobStatus, logger, QueueName, SharedSystemProp, system, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, ExecutionState, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -50,6 +50,31 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         const { queueName, status, message } = request.body
         await flowConsumer.update({ jobId: id, queueName, status, message: message ?? 'NO_MESSAGE_AVAILABLE', token: enginePrincipal.queueToken })
         return {}
+    })
+
+    app.post('/update-failure-count', UpdateFaliureCount, async (request) => {
+        const { flowId, projectId, failureCount } = request.body
+        await flowService.updateFaliureCount({
+            flowId,
+            projectId,
+            failureCount,
+        })
+    })
+
+    app.post('/failure-count', {
+        config: {
+            allowedPrincipals: [PrincipalType.ENGINE],
+        },
+        schema: {
+            body: GetFailureCountRequest,
+        },
+    }, async (request) => {
+        const { flowId, projectId } = request.body
+        const count = await flowService.getFailureCount({
+            flowId,
+            projectId,
+        })
+        return count
     })
 
     app.post('/update-run', UpdateStepProgress, async (request) => {
@@ -325,6 +350,19 @@ const UpdateStepProgress = {
     },
     schema: {
         body: UpdateRunProgressRequest,
+    },
+}
+
+const UpdateFaliureCount = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        body: Type.Object({
+            flowId: Type.String(),
+            projectId: Type.String(),
+            failureCount: Type.Number(),
+        }),
     },
 }
 

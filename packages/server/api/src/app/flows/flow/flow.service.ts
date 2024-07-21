@@ -315,6 +315,32 @@ export const flowService = {
         })
     },
 
+    async updateFaliureCount({
+        flowId,
+        projectId,
+        failureCount,
+        entityManager,
+    }: UpdateFaliureCountParams): Promise<PopulatedFlow> {
+        const flowToUpdate = await this.getOneOrThrow({
+            id: flowId,
+            projectId,
+            entityManager,
+        })
+
+        if (flowToUpdate.schedule) {
+            flowToUpdate.schedule.failureCount = failureCount
+        }
+
+        await flowRepo(entityManager).save(flowToUpdate)
+
+        return this.getOnePopulatedOrThrow({
+            id: flowId,
+            projectId,
+            entityManager,
+        })
+    },
+
+
     async updatedPublishedVersionId({
         id,
         userId,
@@ -408,6 +434,25 @@ export const flowService = {
             blogUrl: '',
         }
     },
+
+    async getFailureCount({
+        flowId,
+        projectId,
+        entityManager,
+    }: GetFaliureCountParams): Promise<number> {
+        const flowToUpdate = await this.getOneOrThrow({
+            id: flowId,
+            projectId,
+            entityManager,
+        })
+        if (flowToUpdate.schedule === null || flowToUpdate.schedule === undefined) {
+            return 0
+        }
+        else {
+            return flowToUpdate.schedule.failureCount ?? 0
+        }
+    },
+
 
     async count({ projectId, folderId }: CountParams): Promise<number> {
         if (folderId === undefined) {
@@ -514,6 +559,19 @@ type UpdateStatusParams = {
     id: FlowId
     projectId: ProjectId
     newStatus: FlowStatus
+    entityManager?: EntityManager
+}
+
+type UpdateFaliureCountParams = {
+    flowId: FlowId
+    projectId: ProjectId
+    failureCount: number
+    entityManager?: EntityManager
+}
+
+type GetFaliureCountParams = {
+    flowId: FlowId
+    projectId: ProjectId
     entityManager?: EntityManager
 }
 

@@ -35,11 +35,27 @@ export const UpdateJobRequest = Type.Object({
 })
 export type UpdateJobRequest = Static<typeof UpdateJobRequest>
 
+export const UpdateFailureCountRequest = Type.Object({
+    flowId: Type.String(),
+    projectId: Type.String(),
+    failureCount: Type.Number(),
+})
+
+export type UpdateFailureCountRequest = Static<typeof UpdateFailureCountRequest>
+
 export const ApQueueJob = Type.Object({
     id: Type.String(),
     data: JobData,
     engineToken: Type.String(),
 })
+
+export type GetFailureCountRequest = Static<typeof GetFailureCountRequest>
+
+export const GetFailureCountRequest = Type.Object({
+    flowId: Type.String(),
+    projectId: Type.String(),
+})
+
 
 export type ApQueueJob = Static<typeof ApQueueJob>
 
