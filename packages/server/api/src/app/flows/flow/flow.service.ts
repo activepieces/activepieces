@@ -315,12 +315,12 @@ export const flowService = {
         })
     },
 
-    async updateFaliureCount({
+    async updateFailureCount({
         flowId,
         projectId,
         failureCount,
         entityManager,
-    }: UpdateFaliureCountParams): Promise<PopulatedFlow> {
+    }: UpdateFailureCountParams): Promise<PopulatedFlow> {
         const flowToUpdate = await this.getOneOrThrow({
             id: flowId,
             projectId,
@@ -439,7 +439,7 @@ export const flowService = {
         flowId,
         projectId,
         entityManager,
-    }: GetFaliureCountParams): Promise<number> {
+    }: GetFailureCountParams): Promise<number> {
         const flowToUpdate = await this.getOneOrThrow({
             id: flowId,
             projectId,
@@ -562,14 +562,14 @@ type UpdateStatusParams = {
     entityManager?: EntityManager
 }
 
-type UpdateFaliureCountParams = {
+type UpdateFailureCountParams = {
     flowId: FlowId
     projectId: ProjectId
     failureCount: number
     entityManager?: EntityManager
 }
 
-type GetFaliureCountParams = {
+type GetFailureCountParams = {
     flowId: FlowId
     projectId: ProjectId
     entityManager?: EntityManager

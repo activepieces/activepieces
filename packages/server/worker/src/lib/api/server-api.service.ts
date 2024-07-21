@@ -66,10 +66,10 @@ export const engineApiService = (engineToken: string) => {
         async updateJobStatus(request: UpdateJobRequest): Promise<void> {
             await client.post('/v1/engine/update-job', request)
         },
-        async updateFaliureCount(request: UpdateFailureCountRequest): Promise<void> {
+        async updateFailureCount(request: UpdateFailureCountRequest): Promise<void> {
             await client.post('/v1/engine/update-failure-count', request)
         },
-        async getFaliureCount(request: GetFailureCountRequest): Promise<number> {
+        async getFailureCount(request: GetFailureCountRequest): Promise<number> {
             return client.post<number>('/v1/engine/failure-count', {
                 flowId: request.flowId,
                 projectId: request.projectId,

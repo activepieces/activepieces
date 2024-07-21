@@ -29,14 +29,14 @@ export async function extractPayloads(
             }),
             projectId,
         })
-        const isDisabled = await handleFaliureFlow(flowVersion, projectId, engineToken)
+        const isDisabled = await handleFailureFlow(flowVersion, projectId, engineToken)
         if (isDisabled) {
             // TODO disable the trigger
             // return []
         }
         if (!isNil(result) && result.success && Array.isArray(result.output)) {
             const engineConroller = engineApiService(engineToken)
-            await engineConroller.updateFaliureCount({
+            await engineConroller.updateFailureCount({
                 flowId: flowVersion.flowId,
                 projectId,
                 failureCount: 0,
@@ -51,7 +51,7 @@ export async function extractPayloads(
                 flowId: flowVersion.flowId,
             }, 'Failed to execute trigger')
             
-            const isDisabled = await handleFaliureFlow(flowVersion, projectId, engineToken)
+            const isDisabled = await handleFailureFlow(flowVersion, projectId, engineToken)
             if (isDisabled) {
                 // TODO disable the trigger
             }
@@ -69,7 +69,7 @@ export async function extractPayloads(
                 flowId: flowVersion.flowId,
             }, 'Failed to execute trigger due to timeout')
 
-            const isDisabled = await handleFaliureFlow(flowVersion, projectId, engineToken)
+            const isDisabled = await handleFailureFlow(flowVersion, projectId, engineToken)
             if (isDisabled) {
                 // Disable the trigger
             }
@@ -81,10 +81,10 @@ export async function extractPayloads(
     }
 }
 
-async function handleFaliureFlow(flowVersion: FlowVersion, projectId: ProjectId, engineToken: string): Promise<boolean> {
+async function handleFailureFlow(flowVersion: FlowVersion, projectId: ProjectId, engineToken: string): Promise<boolean> {
     const engineConroller = engineApiService(engineToken)
 
-    const failureCount = await engineConroller.getFaliureCount({
+    const failureCount = await engineConroller.getFailureCount({
         flowId: flowVersion.flowId,
         projectId,
     })
@@ -93,7 +93,7 @@ async function handleFaliureFlow(flowVersion: FlowVersion, projectId: ProjectId,
         return true
     }
 
-    await engineConroller.updateFaliureCount({
+    await engineConroller.updateFailureCount({
         flowId: flowVersion.flowId,
         projectId,
         failureCount: failureCount + 1,

@@ -52,9 +52,9 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         return {}
     })
 
-    app.post('/update-failure-count', UpdateFaliureCount, async (request) => {
+    app.post('/update-failure-count', UpdateFailureCount, async (request) => {
         const { flowId, projectId, failureCount } = request.body
-        await flowService.updateFaliureCount({
+        await flowService.updateFailureCount({
             flowId,
             projectId,
             failureCount,
@@ -353,7 +353,7 @@ const UpdateStepProgress = {
     },
 }
 
-const UpdateFaliureCount = {
+const UpdateFailureCount = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE],
     },
