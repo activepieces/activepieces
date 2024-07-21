@@ -1,7 +1,10 @@
 import { History, Home, Logs } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import {
+  LeftSideBarType,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
 import { FlowStateToolbar } from '@/app/builder/flow-state-toolbar';
 import { Button } from '@/components/ui/button';
 import {

@@ -4,6 +4,7 @@ import path from 'path';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import checker from 'vite-plugin-checker';
 
 export default defineConfig({
   root: __dirname,
@@ -47,12 +48,13 @@ export default defineConfig({
       ),
     },
   },
-  plugins: [react(), nxViteTsPaths()],
-
-  // Uncomment this if you are using workers.
-  // worker: {
-  //  plugins: [ nxViteTsPaths() ],
-  // },
+  plugins: [
+    react(),
+    nxViteTsPaths(),
+    checker({
+      typescript: true,
+    }),
+  ],
 
   build: {
     outDir: '../../dist/packages/react-ui',

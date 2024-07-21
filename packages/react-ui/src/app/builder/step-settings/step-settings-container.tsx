@@ -89,8 +89,8 @@ const StepSettingsContainer = React.memo(() => {
       </SidebarHeader>
       <ResizablePanelGroup direction="vertical">
         <ResizablePanel defaultSize={75}>
-          <ScrollArea className="h-full p-4 ">
-            <div className="flex flex-col gap-4">
+          <ScrollArea className="h-full ">
+            <div className="flex flex-col gap-4 p-4">
               <PieceCardInfo piece={pieceMetadata!} />
               {selectedStep.type === ActionType.LOOP_ON_ITEMS && (
                 <LoopsSettings

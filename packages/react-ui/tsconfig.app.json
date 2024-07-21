@@ -8,6 +8,7 @@
       "@nx/react/typings/image.d.ts",
       "vite/client"
     ],
+    "noEmit": true,
     "baseUrl": ".",
     "paths": {
       "@/*": [
