@@ -1,4 +1,4 @@
-import { GetFailureCountRequest, GetRunForWorkerRequest, JobStatus, logger, QueueName, SharedSystemProp, system, UpdateJobRequest } from '@activepieces/server-shared'
+import { GetRunForWorkerRequest, JobStatus, logger, QueueName, SharedSystemProp, system, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, ExecutionState, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -53,28 +53,12 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-failure-count', UpdateFailureCount, async (request) => {
-        const { flowId, projectId, failureCount } = request.body
+        const { flowId, projectId, success } = request.body
         await flowService.updateFailureCount({
             flowId,
             projectId,
-            failureCount,
+            success,
         })
-    })
-
-    app.post('/failure-count', {
-        config: {
-            allowedPrincipals: [PrincipalType.ENGINE],
-        },
-        schema: {
-            body: GetFailureCountRequest,
-        },
-    }, async (request) => {
-        const { flowId, projectId } = request.body
-        const count = await flowService.getFailureCount({
-            flowId,
-            projectId,
-        })
-        return count
     })
 
     app.post('/update-run', UpdateStepProgress, async (request) => {
@@ -358,11 +342,7 @@ const UpdateFailureCount = {
         allowedPrincipals: [PrincipalType.ENGINE],
     },
     schema: {
-        body: Type.Object({
-            flowId: Type.String(),
-            projectId: Type.String(),
-            failureCount: Type.Number(),
-        }),
+        body: UpdateFailureCountRequest,
     },
 }
 

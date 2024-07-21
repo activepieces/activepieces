@@ -318,25 +318,22 @@ export const flowService = {
     async updateFailureCount({
         flowId,
         projectId,
-        failureCount,
-        entityManager,
-    }: UpdateFailureCountParams): Promise<PopulatedFlow> {
+        success,
+    }: UpdateFailureCountParams): Promise<void> {
         const flowToUpdate = await this.getOneOrThrow({
             id: flowId,
             projectId,
-            entityManager,
         })
-
-        if (flowToUpdate.schedule) {
-            flowToUpdate.schedule.failureCount = failureCount
+        const { schedule } = flowToUpdate
+        if (isNil(schedule)) {
+            return
         }
-
-        await flowRepo(entityManager).save(flowToUpdate)
-
-        return this.getOnePopulatedOrThrow({
-            id: flowId,
-            projectId,
-            entityManager,
+        const newFailureCount = success ? 0 : (schedule.failureCount ?? 0) + 1
+        await flowRepo().update(flowId, {
+            schedule: {
+                ...flowToUpdate.schedule,
+                failureCount: newFailureCount,
+            },
         })
     },
 
@@ -434,25 +431,6 @@ export const flowService = {
             blogUrl: '',
         }
     },
-
-    async getFailureCount({
-        flowId,
-        projectId,
-        entityManager,
-    }: GetFailureCountParams): Promise<number> {
-        const flowToUpdate = await this.getOneOrThrow({
-            id: flowId,
-            projectId,
-            entityManager,
-        })
-        if (flowToUpdate.schedule === null || flowToUpdate.schedule === undefined) {
-            return 0
-        }
-        else {
-            return flowToUpdate.schedule.failureCount ?? 0
-        }
-    },
-
 
     async count({ projectId, folderId }: CountParams): Promise<number> {
         if (folderId === undefined) {
@@ -565,14 +543,7 @@ type UpdateStatusParams = {
 type UpdateFailureCountParams = {
     flowId: FlowId
     projectId: ProjectId
-    failureCount: number
-    entityManager?: EntityManager
-}
-
-type GetFailureCountParams = {
-    flowId: FlowId
-    projectId: ProjectId
-    entityManager?: EntityManager
+    success: boolean
 }
 
 type UpdatePublishedVersionIdParams = {

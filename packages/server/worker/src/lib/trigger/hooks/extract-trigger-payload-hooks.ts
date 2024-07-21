@@ -1,4 +1,4 @@
-import { logger } from '@activepieces/server-shared'
+import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -29,18 +29,8 @@ export async function extractPayloads(
             }),
             projectId,
         })
-        const isDisabled = await handleFailureFlow(flowVersion, projectId, engineToken)
-        if (isDisabled) {
-            // TODO disable the trigger
-            // return []
-        }
         if (!isNil(result) && result.success && Array.isArray(result.output)) {
-            const engineController = engineApiService(engineToken)
-            await engineController.updateFailureCount({
-                flowId: flowVersion.flowId,
-                projectId,
-                failureCount: 0,
-            })
+            handleFailureFlow(flowVersion, projectId, engineToken, true)
             return result.output as unknown[]
         }
         else {
@@ -50,11 +40,7 @@ export async function extractPayloads(
                 pieceVersion,
                 flowId: flowVersion.flowId,
             }, 'Failed to execute trigger')
-            
-            const isDisabled = await handleFailureFlow(flowVersion, projectId, engineToken)
-            if (isDisabled) {
-                // TODO disable the trigger
-            }
+            handleFailureFlow(flowVersion, projectId, engineToken, false)
             
             return []
         }
@@ -64,42 +50,27 @@ export async function extractPayloads(
         if (isTimeoutError) {
             logger.error({
                 name: 'extractPayloads',
-                pieceName: params.flowVersion.trigger.settings.pieceName,
-                pieceVersion: params.flowVersion.trigger.settings.pieceVersion,
+                pieceName: flowVersion.trigger.settings.pieceName,
+                pieceVersion: flowVersion.trigger.settings.pieceVersion,
                 flowId: flowVersion.flowId,
             }, 'Failed to execute trigger due to timeout')
-
-            const isDisabled = await handleFailureFlow(flowVersion, projectId, engineToken)
-            if (isDisabled) {
-                // Disable the trigger
-            }
-
-            // TODO add error handling which is notify the user and disable the trigger
+            handleFailureFlow(flowVersion, projectId, engineToken, false)
             return []
         }
         throw e
     }
 }
 
-async function handleFailureFlow(flowVersion: FlowVersion, projectId: ProjectId, engineToken: string): Promise<boolean> {
+
+function handleFailureFlow(flowVersion: FlowVersion, projectId: ProjectId, engineToken: string, success: boolean): void {
     const engineController = engineApiService(engineToken)
 
-    const failureCount = await engineController.getFailureCount({
+    rejectedPromiseHandler(engineController.updateFailureCount({
         flowId: flowVersion.flowId,
         projectId,
-    })
+        success,
+    }))
 
-    if (failureCount >= 10) {
-        return true
-    }
-
-    await engineController.updateFailureCount({
-        flowId: flowVersion.flowId,
-        projectId,
-        failureCount: failureCount + 1,
-    })
-
-    return false
 }
 
 type ExecuteTrigger = {
