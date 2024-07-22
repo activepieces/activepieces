@@ -5,7 +5,7 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from 'react-router-dom';
 
-import { TextInputWithMentions } from '../features/flow-canvas/components/text-input-with-mentions/text-input-with-mentions';
+import { TextInputWithMentions } from '../features/flow-canvas/components/text-input-with-mentions';
 
 import { router } from './router';
 

@@ -1,13 +1,15 @@
 import Document from '@tiptap/extension-document';
-import Mention from '@tiptap/extension-mention';
+import Mention, { MentionNodeAttrs } from '@tiptap/extension-mention';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
-import { fromTextToTipTapJsonContent, fromTiptapJsonContentToText, MentionNodeAttrs } from '../../lib/flow-canvas-utils';
 import History from '@tiptap/extension-history'
-
+import HardBreak from '@tiptap/extension-hard-break'
+import { ApMentionNodeAttrs, fromTextToTipTapJsonContent, fromTiptapJsonContentToText, TipTapNodeTypes } from '../lib/text-input-utils';
 const example = {
-  "value": "{{trigger}} {{step_1}} {{step_2}} {{step_3}} {{step_4}} {{step_4['formName']['myName']}} hello I am human, \nhello \nhello \n{{trigger['channelName']}}",
+  "value": `{{trigger}} {{step_1}} {{step_2}} {{step_3}} {{step_4}} {{step_4['formName']['myName']}} hello I am human, 
+hello 
+hello{{trigger['channelName']}}`,
   "metadata": [
     {
       "label": "New Video In Channel",
@@ -410,6 +412,7 @@ const example = {
 const extensions = [
   Document,
   History,
+  HardBreak,
   Paragraph.configure({
     HTMLAttributes: {
       class: 'text-base leading-[30px]',
@@ -420,26 +423,40 @@ const extensions = [
     suggestion:{
       char:''
     },
+    deleteTriggerWithBackspace: true,
     renderHTML({ node }) {
       // Creating the main div element
       const mentionAttrs:MentionNodeAttrs = node.attrs as unknown as MentionNodeAttrs;
       const mentionElement = document.createElement('span');
-      mentionElement.className = 'inline-flex bg-[#fafafa] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px]';
-      
-      if(mentionAttrs.label.logoUrl){
+      const apMentionNodeAttrs: ApMentionNodeAttrs = JSON.parse(mentionAttrs.label || '{}');
+      mentionElement.className = 'inline-flex bg-[#fafafa] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px] text-base text-accent-foreground leading-[18px]';
+      if(mentionAttrs.label)
+      {
+        mentionElement.dataset.label=mentionAttrs.label;
+      }
+      if(mentionAttrs.id)
+      {
+        mentionElement.dataset.id = mentionAttrs.id;
+      }
+      if(apMentionNodeAttrs.displayText)
+      {
+      mentionElement.dataset.displayText=apMentionNodeAttrs.displayText;
+      }
+      mentionElement.dataset.type=TipTapNodeTypes.mention;
+      mentionElement.contentEditable = 'false';
+
+      if(apMentionNodeAttrs.logoUrl){
          // Creating the image element
         const imgElement = document.createElement('img');
-        imgElement.src = mentionAttrs.label.logoUrl;
+        imgElement.src = apMentionNodeAttrs.logoUrl;
         imgElement.className = 'object-fit w-4 h-4';
         // Adding the image element to the main div
         mentionElement.appendChild(imgElement);
       }
       
       // Creating the second child div element
-      const mentiontextDiv = document.createElement('div');
-      mentiontextDiv.className = 'text-base text-accent-foreground leading-[18px]';
-      mentiontextDiv.textContent = mentionAttrs.label.displayText;
-      mentionElement.setAttribute('serverValue', mentionAttrs.label.serverValue);
+      const mentiontextDiv = document.createTextNode(apMentionNodeAttrs.displayText);
+      mentionElement.setAttribute('serverValue', apMentionNodeAttrs.serverValue);
       
       // Adding the text div to the main div
       mentionElement.appendChild(mentiontextDiv);
@@ -449,7 +466,7 @@ const extensions = [
 ];
 
 export const TextInputWithMentions = ({ className,originalValue,onChange }: { className: string, originalValue:string,onChange:(value:string)=>void }) => {
-  const content = [fromTextToTipTapJsonContent(originalValue,[])];
+  const content = [fromTextToTipTapJsonContent(example.value,example.metadata as any)];
   const editor = useEditor({
     extensions,
     content: {
@@ -463,7 +480,14 @@ export const TextInputWithMentions = ({ className,originalValue,onChange }: { cl
     },
     onUpdate: ({ editor }) => {
      const content = editor.getJSON();
-     onChange(fromTiptapJsonContentToText(content));
+     const textResult = fromTiptapJsonContentToText(content);
+     if(onChange){
+       onChange(textResult);
+     }
+     else
+     {
+      console.log({textResult});
+     }
     }
   });
 
