@@ -13,6 +13,7 @@ import {
 
 import { BranchSingleCondition } from './branch-condition-group';
 import { BranchSingleConditionToolbar } from './branch-condition-toolbar';
+import { HorizontalSeperatorWithText } from '@/components/ui/seperator';
 
 type BranchSettingsProps = {
   selectedStep: BranchAction;
@@ -60,12 +61,18 @@ const BranchSettings = ({
     const newConditionsGroup: ValidBranchCondition[] = JSON.parse(
       JSON.stringify(fields[groupIndex].andGroup),
     );
-    if (groupIndex > 0 && newConditionsGroup.length === 1) {
+
+    const isSingleGroup = fields.length === 1;
+    const isSingleConditionInGroup = newConditionsGroup.length === 1;
+
+    if (isSingleGroup && isSingleConditionInGroup) {
+      update(groupIndex, {
+        andGroup: [emptyCondition],
+      });
+    } else if (isSingleConditionInGroup) {
       remove(groupIndex);
     } else {
-      if (newConditionsGroup.length > 1) {
-        newConditionsGroup.splice(conditionIndex, 1);
-      }
+      newConditionsGroup.splice(conditionIndex, 1);
       update(groupIndex, {
         andGroup: newConditionsGroup,
       });
@@ -112,14 +119,16 @@ const BranchSettings = ({
   return (
     <Form {...form}>
       <div className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
-        <div className="text-md">Conditions</div>
+        <div className="text-md">Continue If</div>
         {fields.map((fieldGroup, groupIndex) => {
           return (
             <div className="flex flex-col gap-4" key={`group-${groupIndex}`}>
+              {groupIndex > 0 && <HorizontalSeperatorWithText className="my-2">
+                OR
+              </HorizontalSeperatorWithText>}
               {fieldGroup.andGroup.length === 0 && (
                 <BranchSingleConditionToolbar
                   key={`toolbar-${groupIndex}`}
-                  showDelete={false}
                   onAnd={() => handleAnd(groupIndex)}
                   onOr={() => handleOr()}
                   showOr={groupIndex === fields.length - 1}
@@ -130,25 +139,27 @@ const BranchSettings = ({
                 <React.Fragment
                   key={`condition-${groupIndex}-${conditionIndex}-${condition.operator}`}
                 >
+                  {conditionIndex > 0 && <div>
+                    And If
+                  </div>}
                   <BranchSingleCondition
+                    deleteClick={() => handleDelete(groupIndex, conditionIndex)}
+                    showDelete={fields.length !== 1 || fieldGroup.andGroup.length !== 1}
                     onChange={(condition) =>
                       handleChange(condition, groupIndex, conditionIndex)
                     }
                     condition={condition}
                   ></BranchSingleCondition>
-                  <BranchSingleConditionToolbar
-                    showDelete={groupIndex !== 0 || conditionIndex !== 0}
-                    deleteClick={() => handleDelete(groupIndex, conditionIndex)}
-                    onAnd={() => handleAnd(groupIndex)}
-                    onOr={() => handleOr()}
-                    showOr={
-                      groupIndex === fields.length - 1 &&
-                      conditionIndex === fieldGroup.andGroup.length - 1
-                    }
-                    showAnd={conditionIndex === fieldGroup.andGroup.length - 1}
-                  ></BranchSingleConditionToolbar>
                 </React.Fragment>
               ))}
+              <BranchSingleConditionToolbar
+                onAnd={() => handleAnd(groupIndex)}
+                onOr={() => handleOr()}
+                showOr={
+                  groupIndex === fields.length - 1
+                }
+                showAnd={true}
+              ></BranchSingleConditionToolbar>
             </div>
           );
         })}
