@@ -45,11 +45,6 @@ export enum RightSideBarType {
   PIECE_SETTINGS = 'piece-settings',
 }
 
-export enum PublishButtonStatus {
-  LOADING = 'loading',
-  READY = 'ready',
-}
-
 export type BuilderState = {
   flow: Flow;
   flowVersion: FlowVersion;
@@ -58,7 +53,7 @@ export type BuilderState = {
   leftSidebar: LeftSideBarType;
   rightSidebar: RightSideBarType;
   selectedStep: StepPathWithName | null;
-  publishButtonStatus: PublishButtonStatus;
+  saving: boolean;
   ExitRun: () => void;
   selectStep(path: StepPathWithName): void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
@@ -68,6 +63,7 @@ export type BuilderState = {
     operation: FlowOperationRequest,
     onError: () => void,
   ) => void;
+  startSaving: () => void;
   setReadOnly: (readonly: boolean) => void;
   setVersion: (flowVersion: FlowVersion) => void;
 };
@@ -86,7 +82,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     leftSidebar: LeftSideBarType.NONE,
     readonly: initialState.readonly,
     run: initialState.run,
-    publishButtonStatus: PublishButtonStatus.READY,
+    saving: false,
     selectedStep: null,
     rightSidebar: RightSideBarType.NONE,
     ExitRun: () =>
@@ -110,18 +106,16 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         selectedStep: null,
         readonly: true,
       }),
+    startSaving: () => set({ saving: true }),
     applyOperation: (operation: FlowOperationRequest, onError: () => void) =>
       set((state) => {
         const newFlowVersion = flowHelper.apply(state.flowVersion, operation);
         const updateRequest = async () => {
-          set({ publishButtonStatus: PublishButtonStatus.LOADING });
+          set({ saving: true });
           try {
             await flowsApi.update(state.flow.id, operation);
             set({
-              publishButtonStatus:
-                flowUpdatesQueue.size() === 0
-                  ? PublishButtonStatus.READY
-                  : PublishButtonStatus.LOADING,
+              saving: flowUpdatesQueue.size() === 0 ? false : true,
             });
           } catch (error) {
             console.error(error);

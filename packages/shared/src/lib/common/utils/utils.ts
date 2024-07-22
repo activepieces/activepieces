@@ -6,6 +6,21 @@ export function isNil<T>(value: T | null | undefined): value is null | undefined
     return value === null || value === undefined
 }
 
+export function debounce(func: (...args: any[]) => void, wait: number): (...args: any[]) => void {
+    let timeout: NodeJS.Timeout;
+
+    return function (...args: any[]) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+
 export function kebabCase(str: string): string {
     return str
         .replace(/([a-z])([A-Z])/g, '$1-$2') // Handle camelCase by adding hyphen between lowercase and uppercase letters

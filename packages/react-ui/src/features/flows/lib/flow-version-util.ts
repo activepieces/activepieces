@@ -4,6 +4,8 @@ import {
   Action,
   ActionErrorHandlingOptions,
   ActionType,
+  BranchAction,
+  BranchCondition,
   CodeAction,
   LoopOnItemsAction,
   Trigger,
@@ -37,6 +39,20 @@ function buildActionWithSampleData(
   return clonedAction;
 }
 
+function buildActionWithBranchCondition(
+  selectedStep: BranchAction,
+  conditions: BranchCondition[][],
+  valid: boolean,
+): BranchAction {
+  const clonedAction: BranchAction = JSON.parse(JSON.stringify(selectedStep));
+  clonedAction.settings = {
+    ...clonedAction.settings,
+    conditions,
+  };
+  clonedAction.valid = valid;
+  return clonedAction;
+}
+
 function buildActionWithNewCode(
   selectedStep: CodeAction,
   code: string,
@@ -51,11 +67,13 @@ function buildActionWithNewCode(
 function buildActionWithNewLoopItems(
   selectedStep: LoopOnItemsAction,
   items: string,
+  valid: boolean,
 ): LoopOnItemsAction {
   const clonedAction: LoopOnItemsAction = JSON.parse(
     JSON.stringify(selectedStep),
   );
   clonedAction.settings.items = items;
+  clonedAction.valid = valid;
   return clonedAction;
 }
 
@@ -118,4 +136,5 @@ export const flowVersionUtils = {
   buildActionWithNewCode,
   formatErrorMessage,
   buildActionWithNewLoopItems,
+  buildActionWithBranchCondition,
 };

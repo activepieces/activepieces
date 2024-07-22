@@ -1,9 +1,6 @@
 import React from 'react';
 
-import {
-  PublishButtonStatus,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import FlowStatusToggle from '@/features/flows/components/flow-status-toggle';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
@@ -13,7 +10,7 @@ const FlowStateToolbar = React.memo(() => {
   const [flowVersion, flow, isSaving] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.flow,
-    state.publishButtonStatus === PublishButtonStatus.LOADING,
+    state.saving,
   ]);
   return (
     <>
