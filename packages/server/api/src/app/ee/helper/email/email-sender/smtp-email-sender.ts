@@ -101,6 +101,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'reset-password': 'Reset your password',
         'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
         'issues-reminder': `You have unresolved issues for ${vars.projectName}`,
+        'exceed-failure-threshold': `[ACTION REQUIRED] ${vars.flowName} has exceeded the failure threshold`,
     }
 
     return templateToSubject[templateName]

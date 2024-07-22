@@ -1,4 +1,4 @@
-import { logger } from '@activepieces/server-shared'
+import { logger, system, WorkerSystemProps } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -22,6 +22,7 @@ import {
 } from '@activepieces/shared'
 import { EntityManager, In, IsNull } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
+import { emailService } from '../../ee/helper/email/email-service'
 import { acquireLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -31,6 +32,10 @@ import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
+
+
+const FAILURE_COUNT_THRESHOLD = system.getNumberOrThrow(WorkerSystemProps.FAILURE_COUNT_THRESHOLD)
+
 
 export const flowService = {
     async create({ projectId, request }: CreateParams): Promise<PopulatedFlow> {
@@ -329,6 +334,25 @@ export const flowService = {
             return
         }
         const newFailureCount = success ? 0 : (schedule.failureCount ?? 0) + 1
+        
+        const flowVersion = await flowService.getOnePopulatedOrThrow({
+            id: flowId,
+            projectId,
+        })
+        
+
+        if (newFailureCount >= FAILURE_COUNT_THRESHOLD) {
+            await this.updateStatus({
+                id: flowId,
+                projectId,
+                newStatus: FlowStatus.DISABLED,
+            })
+            
+            await emailService.sendExceedFailureThresholdAlert(projectId, flowVersion.version.displayName)
+            
+            return
+        }
+
         await flowRepo().update(flowId, {
             schedule: {
                 ...flowToUpdate.schedule,
