@@ -33,6 +33,7 @@ export class RequestWriterDialogComponent implements OnInit {
   method$: any;
   url$: any;
   body$: any;
+  error$: any;
   generatedHttpRequest$: BehaviorSubject<Record<string, unknown> | null> =
     new BehaviorSubject<Record<string, unknown> | null>(null);
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
@@ -69,6 +70,10 @@ export class RequestWriterDialogComponent implements OnInit {
     this.body$ = this.generatedHttpRequest$.pipe(
       map((req) => req?.['body'] || '')
     );
+
+    this.error$ = this.generatedHttpRequest$.pipe(
+      map((req) => Boolean(req?.['error']) || false)
+    );
   }
 
   prompt() {
@@ -100,6 +105,7 @@ export class RequestWriterDialogComponent implements OnInit {
             } catch (e) {
               console.error('Copilot response not valid JSON.');
               console.error((e as Error).message);
+              this.error$ = true;
             }
             this.loading$.next(false);
           }),

@@ -12,7 +12,12 @@
       </mat-step>
       <mat-step>
         <ng-template matStepLabel>Review Output</ng-template>
-        <ng-container *ngTemplateOutlet="editTemplate"></ng-container>
+        <ng-container *ngIf="(error$ | async) === false" class="ap-p-0">
+          <ng-container *ngTemplateOutlet="editTemplate"></ng-container>
+        </ng-container>
+        <ng-container *ngIf="(error$ | async) === true">
+          <ng-container *ngTemplateOutlet="errorResult"></ng-container>
+        </ng-container>
       </mat-step>
     </mat-stepper>
   </div>
@@ -40,7 +45,8 @@
     <ap-button
       *ngIf="
         (generatedHttpRequest$ | async) !== undefined &&
-        (generatedHttpRequest$ | async) !== null
+        (generatedHttpRequest$ | async) !== null &&
+        (error$ | async) !== true
       "
       cdkFocusInitial
       btnSize="default"
@@ -59,6 +65,12 @@
     Let AI generate an HTTP request for this step.
   </div>
   <ng-container [ngTemplateOutlet]="promptFormTemplate"></ng-container>
+</ng-template>
+
+<ng-template #errorResult>
+  <div class="ap-typography-body-1 ap-text-danger">
+    An error occurred while generating the request.
+  </div>
 </ng-template>
 
 <ng-template #editTemplate>
