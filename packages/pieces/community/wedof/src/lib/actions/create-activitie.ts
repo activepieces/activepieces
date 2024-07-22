@@ -63,7 +63,7 @@ export const createActivitie = createAction({
     const message = {
         title: context.propsValue.title ?? null,
         eventEndTime: context.propsValue.eventEndTime
-        ? dayjs(context.propsValue.eventEndTime).format('YYYY-MM-DD')
+        ? dayjs(context.propsValue.eventEndTime).format('YYYY-MM-DD HH:mm:ss')
         : null,
         type: context.propsValue.type,
         qualiopiIndicators: context.propsValue.qualiopiIndicators,
@@ -71,7 +71,7 @@ export const createActivitie = createAction({
         userEmail: context.propsValue.userEmail ?? null,
         link: context.propsValue.link ?? null,
         eventTime: context.propsValue.eventTime
-        ? dayjs(context.propsValue.eventTime).format('YYYY-MM-DD')
+        ? dayjs(context.propsValue.eventTime).format('YYYY-MM-DD HH:mm:ss')
         : null,
         origin: "manual",
       };
