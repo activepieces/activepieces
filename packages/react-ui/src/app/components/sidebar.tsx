@@ -38,22 +38,17 @@ const CustomTooltipLink = ({
   const isActive = location.pathname.startsWith(to);
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link
-          to={to}
-        >
-          <div className={`relative flex flex-col items-center justify-center gap-1`}>
-            <Icon className={`size-10 p-2 hover:text-primary rounded-lg transition-colors ${isActive ? 'bg-accent text-primary' : ''} ${extraClasses || ''}`} />
-            <span className="text-[10px]">{label}</span>
-            {notifcation && (
-              <span className="bg-destructive absolute right-[-3px] top-[-3px] size-2 rounded-full"></span>
-            )}
-          </div>
-        </Link>
-      </TooltipTrigger>
-      <TooltipContent side="right">{label}</TooltipContent>
-    </Tooltip>
+    <Link
+      to={to}
+    >
+      <div className={`relative flex flex-col items-center justify-center gap-1`}>
+        <Icon className={`size-10 p-2 hover:text-primary rounded-lg transition-colors ${isActive ? 'bg-accent text-primary' : ''} ${extraClasses || ''}`} />
+        <span className="text-[10px]">{label}</span>
+        {notifcation && (
+          <span className="bg-destructive absolute right-[-3px] top-[-3px] size-2 rounded-full"></span>
+        )}
+      </div>
+    </Link>
   );
 };
 
