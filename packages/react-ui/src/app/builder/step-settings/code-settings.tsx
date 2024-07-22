@@ -28,7 +28,7 @@ type CodeSettingsProps = {
 const FormSchema = Type.Object({
   code: Type.String({
     minLength: 1,
-    errorMessage: 'Code is required',
+    errorMessage: 'You need to write a code snippet',
   }),
   input: Type.Record(Type.String(), Type.String()),
 });
