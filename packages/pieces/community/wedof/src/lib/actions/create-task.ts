@@ -57,9 +57,7 @@ export const createTask = createAction({
   async run(context) {
     const message = {
         title: context.propsValue.title ?? null,
-        dueDate: context.propsValue.dueDate
-        ? dayjs(context.propsValue.dueDate).format('YYYY-MM-DDTHH:mm:ss')
-        : null,
+        dueDate: context.propsValue.dueDate ?? null,
         eventEndTime: null,
         type: context.propsValue.type,
         qualiopiIndicators: context.propsValue.qualiopiIndicators,
