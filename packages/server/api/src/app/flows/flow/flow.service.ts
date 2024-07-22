@@ -315,6 +315,29 @@ export const flowService = {
         })
     },
 
+    async updateFailureCount({
+        flowId,
+        projectId,
+        success,
+    }: UpdateFailureCountParams): Promise<void> {
+        const flowToUpdate = await this.getOneOrThrow({
+            id: flowId,
+            projectId,
+        })
+        const { schedule } = flowToUpdate
+        if (isNil(schedule)) {
+            return
+        }
+        const newFailureCount = success ? 0 : (schedule.failureCount ?? 0) + 1
+        await flowRepo().update(flowId, {
+            schedule: {
+                ...flowToUpdate.schedule,
+                failureCount: newFailureCount,
+            },
+        })
+    },
+
+
     async updatedPublishedVersionId({
         id,
         userId,
@@ -515,6 +538,12 @@ type UpdateStatusParams = {
     projectId: ProjectId
     newStatus: FlowStatus
     entityManager?: EntityManager
+}
+
+type UpdateFailureCountParams = {
+    flowId: FlowId
+    projectId: ProjectId
+    success: boolean
 }
 
 type UpdatePublishedVersionIdParams = {

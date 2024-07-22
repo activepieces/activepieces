@@ -185,6 +185,7 @@ export type ExecuteValidateAuthResponse =
 export type ScheduleOptions = {
     cronExpression: string
     timezone: string
+    failureCount: number
 }
 
 export type EngineResponse<T> = {
