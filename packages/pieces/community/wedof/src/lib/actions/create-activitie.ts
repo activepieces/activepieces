@@ -62,17 +62,13 @@ export const createActivitie = createAction({
   async run(context) {
     const message = {
         title: context.propsValue.title ?? null,
-        eventEndTime: context.propsValue.eventEndTime
-        ? dayjs(context.propsValue.eventEndTime).format('YYYY-MM-DDTHH:mm:ss')
-        : null,
+        eventEndTime: context.propsValue.eventEndTime ?? null,
         type: context.propsValue.type,
         qualiopiIndicators: context.propsValue.qualiopiIndicators,
         description: context.propsValue.description ?? null,
         userEmail: context.propsValue.userEmail ?? null,
         link: context.propsValue.link ?? null,
-        eventTime: context.propsValue.eventTime
-        ? dayjs(context.propsValue.eventTime).format('YYYY-MM-DDTHH:mm:ss')
-        : null,
+        eventTime: context.propsValue.eventTime ?? null,
         origin: "manual",
       };
       return (
