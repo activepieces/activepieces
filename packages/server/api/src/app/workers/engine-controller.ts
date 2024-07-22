@@ -1,4 +1,4 @@
-import { GetRunForWorkerRequest, JobStatus, logger, QueueName, SharedSystemProp, system, UpdateJobRequest } from '@activepieces/server-shared'
+import { GetRunForWorkerRequest, JobStatus, logger, QueueName, SharedSystemProp, system, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, ExecutionState, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -50,6 +50,15 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         const { queueName, status, message } = request.body
         await flowConsumer.update({ jobId: id, queueName, status, message: message ?? 'NO_MESSAGE_AVAILABLE', token: enginePrincipal.queueToken })
         return {}
+    })
+
+    app.post('/update-failure-count', UpdateFailureCount, async (request) => {
+        const { flowId, projectId, success } = request.body
+        await flowService.updateFailureCount({
+            flowId,
+            projectId,
+            success,
+        })
     })
 
     app.post('/update-run', UpdateStepProgress, async (request) => {
@@ -325,6 +334,15 @@ const UpdateStepProgress = {
     },
     schema: {
         body: UpdateRunProgressRequest,
+    },
+}
+
+const UpdateFailureCount = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        body: UpdateFailureCountRequest,
     },
 }
 
