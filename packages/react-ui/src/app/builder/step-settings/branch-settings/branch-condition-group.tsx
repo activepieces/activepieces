@@ -164,7 +164,7 @@ const BranchSingleCondition = ({
           />)}
           <div>
             {showDelete &&
-              <Button variant={"outline"} size={'sm'} onClick={deleteClick}>
+              <Button variant={"basic"} size={'sm'} onClick={deleteClick}>
                 <Trash className='w-4 h-4'></Trash> Remove
               </Button>
             }

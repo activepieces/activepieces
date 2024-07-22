@@ -18,7 +18,7 @@ type Link = {
   icon: React.ReactNode;
   label: string;
   to: string;
-  notifcation?: boolean;
+  notification?: boolean;
 };
 
 const CustomTooltipLink = ({
@@ -26,13 +26,13 @@ const CustomTooltipLink = ({
   label,
   Icon,
   extraClasses,
-  notifcation,
+  notification,
 }: {
   to: string;
   label: string;
   Icon: React.ElementType;
   extraClasses?: string;
-  notifcation?: boolean;
+  notification?: boolean;
 }) => {
   const location = useLocation();
   const isActive = location.pathname.startsWith(to);
@@ -44,7 +44,7 @@ const CustomTooltipLink = ({
       <div className={`relative flex flex-col items-center justify-center gap-1`}>
         <Icon className={`size-10 p-2 hover:text-primary rounded-lg transition-colors ${isActive ? 'bg-accent text-primary' : ''} ${extraClasses || ''}`} />
         <span className="text-[10px]">{label}</span>
-        {notifcation && (
+        {notification && (
           <span className="bg-destructive absolute right-[-3px] top-[-3px] size-2 rounded-full"></span>
         )}
       </div>
@@ -57,7 +57,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen w-full ">
-      <aside className="flex flex-col border-r bg-muted/40">
+      <aside className="flex flex-col border-r bg-muted/50">
         <nav className="flex flex-col items-center gap-5 px-1.5 sm:py-5">
           <div className="h-[48px] items-center justify-center p-2">
             <Tooltip>
@@ -73,7 +73,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
             to="/issues"
             label="Issues"
             Icon={Bug}
-            notifcation={showIssuesNotification}
+            notification={showIssuesNotification}
           />
           <CustomTooltipLink to="/connections" label="Connnections" Icon={Link2} />
           <CustomTooltipLink to="/settings" label="Settings" Icon={Settings} />
@@ -97,7 +97,9 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
               <UserAvatar />
             </div>
           </div>
+          <div className="container mx-auto flex py-10">
           {children}
+          </div>
         </div>
       </div>
     </div>

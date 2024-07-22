@@ -12,13 +12,13 @@ const BranchSingleConditionToolbar = (
   return (
     <div className="flex gap-2 text-center justify-start">
       {props.showAnd && (
-        <Button variant="secondary" size="sm" onClick={props.onAnd}>
+        <Button variant="basic" size="sm" onClick={props.onAnd}>
           + And
         </Button>
       )}
 
       {props.showOr && (
-        <Button variant="secondary" size="sm" onClick={props.onOr}>
+        <Button variant="basic" size="sm" onClick={props.onOr}>
           + Or
         </Button>
       )}

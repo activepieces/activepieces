@@ -102,7 +102,7 @@ const fetchData = async (params: URLSearchParams) => {
 
 export default function FlowRunsTable() {
   return (
-    <div className="container mx-auto flex-col py-10">
+    <div className="flex-col w-full">
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">Flow Runs</h1>
         <div className="ml-auto"></div>

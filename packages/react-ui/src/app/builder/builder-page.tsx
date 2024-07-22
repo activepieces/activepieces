@@ -65,9 +65,9 @@ const BuilderPage = () => {
 
             <ResizablePanel
               id="right-sidebar"
-              defaultSize={25}
+              defaultSize={35}
               maxSize={60}
-              minSize={25}
+              minSize={30}
               order={3}
             >
               {rightSidebar === RightSideBarType.PIECE_SELECTOR && (
