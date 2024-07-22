@@ -45,12 +45,12 @@ export const createActivitie = createAction({
     }),
     eventTime: Property.DateTime({
       displayName: "Date de début",
-      description: 'Date au format YYYY-MM-DD.',
+      description: 'Date au format YYYY-MM-DDTHH:mm:ss.',
       required: true,
     }),
     eventEndTime: Property.DateTime({
      displayName: "Date d'échéance",
-     description: 'Date au format YYYY-MM-DD.',
+     description: 'Date au format YYYY-MM-DDTHH:mm:ss.',
      required: false,
     }),
     link: Property.ShortText({
@@ -63,7 +63,7 @@ export const createActivitie = createAction({
     const message = {
         title: context.propsValue.title ?? null,
         eventEndTime: context.propsValue.eventEndTime
-        ? dayjs(context.propsValue.eventEndTime).format('YYYY-MM-DD HH:mm:ss')
+        ? dayjs(context.propsValue.eventEndTime).format('YYYY-MM-DDTHH:mm:ss')
         : null,
         type: context.propsValue.type,
         qualiopiIndicators: context.propsValue.qualiopiIndicators,
@@ -71,7 +71,7 @@ export const createActivitie = createAction({
         userEmail: context.propsValue.userEmail ?? null,
         link: context.propsValue.link ?? null,
         eventTime: context.propsValue.eventTime
-        ? dayjs(context.propsValue.eventTime).format('YYYY-MM-DD HH:mm:ss')
+        ? dayjs(context.propsValue.eventTime).format('YYYY-MM-DDTHH:mm:ss')
         : null,
         origin: "manual",
       };
