@@ -343,3 +343,24 @@ export function fromTextToTipTapJsonContent(
     throw err;
   }
 }
+export const fromTiptapJsonContentToText = (content:JSONContent) => {
+  let res = '';
+  let firstParagraph = true;
+
+  content.content?.forEach((node)=>{
+    if(node.type === 'text' && node.text){
+      res = res.concat(node.text);
+    }
+    if(node.type === 'mention' && node.attrs){
+      res = res.concat(`${node.attrs.label.serverValue}`);
+    }
+    if(node.type === 'paragraph') {
+      if(!firstParagraph){
+        res = res.concat('\n');
+      }
+      firstParagraph = false;
+      res = res.concat(fromTiptapJsonContentToText(node));
+    }
+  })
+  return res;
+}

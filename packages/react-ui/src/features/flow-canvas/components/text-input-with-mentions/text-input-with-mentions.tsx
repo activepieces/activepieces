@@ -3,8 +3,8 @@ import Mention from '@tiptap/extension-mention';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
-import { fromTextToTipTapJsonContent, MentionNodeAttrs } from '../../lib/flow-canvas-utils';
-
+import { fromTextToTipTapJsonContent, fromTiptapJsonContentToText, MentionNodeAttrs } from '../../lib/flow-canvas-utils';
+import History from '@tiptap/extension-history'
 
 const example = {
   "value": "{{trigger}} {{step_1}} {{step_2}} {{step_3}} {{step_4}} {{step_4['formName']['myName']}} hello I am human, \nhello \nhello \n{{trigger['channelName']}}",
@@ -409,6 +409,7 @@ const example = {
 // define your extension array
 const extensions = [
   Document,
+  History,
   Paragraph.configure({
     HTMLAttributes: {
       class: 'text-base leading-[30px]',
@@ -423,7 +424,7 @@ const extensions = [
       // Creating the main div element
       const mentionAttrs:MentionNodeAttrs = node.attrs as unknown as MentionNodeAttrs;
       const mentionElement = document.createElement('span');
-      mentionElement.className = 'bg-[#fafafa] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px]';
+      mentionElement.className = 'inline-flex bg-[#fafafa] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px]';
       
       if(mentionAttrs.label.logoUrl){
          // Creating the image element
@@ -447,8 +448,8 @@ const extensions = [
   }),
 ];
 
-export const TextInputWithMentions = ({ className,originalValue }: { className: string, originalValue:string }) => {
-  const content = [fromTextToTipTapJsonContent(originalValue??'',[])];
+export const TextInputWithMentions = ({ className,originalValue,onChange }: { className: string, originalValue:string,onChange:(value:string)=>void }) => {
+  const content = [fromTextToTipTapJsonContent(originalValue,[])];
   const editor = useEditor({
     extensions,
     content: {
@@ -461,7 +462,8 @@ export const TextInputWithMentions = ({ className,originalValue }: { className: 
       },
     },
     onUpdate: ({ editor }) => {
-      console.log(editor.getJSON());
+     const content = editor.getJSON();
+     onChange(fromTiptapJsonContentToText(content));
     }
   });
 
