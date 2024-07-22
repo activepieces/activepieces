@@ -35,7 +35,7 @@ export const createTask = createAction({
     }),
     dueDate: Property.DateTime({
         displayName: "Date d'échéance",
-        description: 'Date au format YYYY-MM-DDTHH:mm:ss.',
+        description: 'Date au format YYYY-MM-DDTHH:mm:ssZ.',
         required: false,
     }),
     type:wedofCommon.tasks,
@@ -57,7 +57,9 @@ export const createTask = createAction({
   async run(context) {
     const message = {
         title: context.propsValue.title ?? null,
-        dueDate: context.propsValue.dueDate ?? null,
+        dueDate: context.propsValue.dueDate
+        ? dayjs(context.propsValue.dueDate).format('YYYY-MM-DDTHH:mm:ssZ')
+        : null,
         eventEndTime: null,
         type: context.propsValue.type,
         qualiopiIndicators: context.propsValue.qualiopiIndicators,
