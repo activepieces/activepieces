@@ -214,6 +214,14 @@ export type ApGraph = {
   edges: ApEdge[];
 };
 
+
+export type MentionNodeAttrs = {
+  label: {
+    logoUrl?: string;
+    displayText: string;
+    serverValue: string;
+  }
+}
 const keysWithinPath = (path: string) => {
   const result: string[] = [];
   let insideBrackets = false;
@@ -311,15 +319,16 @@ export function fromTextToTipTapJsonContent(
           ].join(' ');
           const indexInDfsTraversal = stepMetaData?.step.indexInDfsTraversal;
           const prefix = indexInDfsTraversal ? `${indexInDfsTraversal}. ` : '';
+          const attrs: MentionNodeAttrs = {
+            label: {
+              displayText: prefix + mentionText,
+              serverValue: item,
+              logoUrl: stepMetaData?.logoUrl,
+            },
+          }
           const insertMention: JSONContent = {
             type: 'mention',
-            attrs: {
-              label: {
-                displayText: prefix + mentionText,
-                serverValue: item,
-                logoUrl: stepMetaData?.logoUrl,
-              },
-            }
+            attrs: attrs
           };
           return insertMention;
         } else {

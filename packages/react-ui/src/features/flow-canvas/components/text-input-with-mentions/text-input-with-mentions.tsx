@@ -3,7 +3,7 @@ import Mention from '@tiptap/extension-mention';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
-import { fromTextToTipTapJsonContent } from '../../lib/flow-canvas-utils';
+import { fromTextToTipTapJsonContent, MentionNodeAttrs } from '../../lib/flow-canvas-utils';
 
 
 const example = {
@@ -421,24 +421,24 @@ const extensions = [
     },
     renderHTML({ node }) {
       // Creating the main div element
+      const mentionAttrs:MentionNodeAttrs = node.attrs as unknown as MentionNodeAttrs;
       const mentionElement = document.createElement('span');
-      mentionElement.className = 'bg-[#fafafa] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px]  ';
-     
+      mentionElement.className = 'bg-[#fafafa] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px]';
       
-      if(node.attrs.label.logoUrl){
+      if(mentionAttrs.label.logoUrl){
          // Creating the image element
         const imgElement = document.createElement('img');
-        imgElement.src = node.attrs.label.logoUrl;
+        imgElement.src = mentionAttrs.label.logoUrl;
         imgElement.className = 'object-fit w-4 h-4';
-      // Adding the image element to the main div
-      mentionElement.appendChild(imgElement);
+        // Adding the image element to the main div
+        mentionElement.appendChild(imgElement);
       }
       
       // Creating the second child div element
       const mentiontextDiv = document.createElement('div');
       mentiontextDiv.className = 'text-base text-accent-foreground leading-[18px]';
-      mentiontextDiv.textContent = node.attrs.label.displayText;
-      mentionElement.setAttribute('serverValue', node.attrs.label.serverValue);
+      mentiontextDiv.textContent = mentionAttrs.label.displayText;
+      mentionElement.setAttribute('serverValue', mentionAttrs.label.serverValue);
       
       // Adding the text div to the main div
       mentionElement.appendChild(mentiontextDiv);
@@ -453,13 +453,16 @@ export const TextInputWithMentions = ({ className,originalValue }: { className: 
     extensions,
     content: {
       type: 'doc',
-      content:content,
+      content,
     },
     editorProps: {
       attributes: {
         class: className,
       },
     },
+    onUpdate: ({ editor }) => {
+      console.log(editor.getJSON());
+    }
   });
 
   return (
