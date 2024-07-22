@@ -2,10 +2,9 @@ import { Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 
-import { flagsHooks } from '../../hooks/flags-hooks';
-import { platformHooks } from '../../hooks/platform-hooks';
-import { projectHooks } from '../../hooks/project-hooks';
 import { authenticationSession } from '../../lib/authentication-session';
 
 export const AllowOnlyLoggedInUserOnlyGuard = ({
@@ -17,7 +16,6 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
     return <Navigate to="/sign-in" replace />;
   }
   projectHooks.prefetchProject();
-  flagsHooks.prefetchFlags();
   platformHooks.prefetchPlatform();
   return (
     <Suspense
