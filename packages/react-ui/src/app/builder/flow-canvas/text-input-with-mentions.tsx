@@ -6,6 +6,8 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import History from '@tiptap/extension-history'
 import HardBreak from '@tiptap/extension-hard-break'
 import { fromTextToTipTapJsonContent, fromTiptapJsonContentToText, generateMentionHtmlElement } from '../../../lib/text-input-utils';
+import { Button } from '@/components/ui/button';
+import { useCallback } from 'react';
 
 
 const extensions = [
@@ -34,6 +36,10 @@ const defaultClassName = ' w-full rounded-md border border-input bg-background p
 export const TextInputWithMentions = ({ className, originalValue, onChange }: { className?: string, originalValue?: string, onChange?: (value: string) => void }) => {
   //TODO: get previous steps metadata from the flow
   const content = [fromTextToTipTapJsonContent(originalValue??'', [])];
+  const insertMention = useCallback((mentionText:string) => {
+    const jsonContent = fromTextToTipTapJsonContent(mentionText, []);
+    editor?.chain().focus().insertContent(jsonContent.content).run()
+  },[]);
   const editor = useEditor({
     extensions,
     content: {
@@ -60,7 +66,7 @@ export const TextInputWithMentions = ({ className, originalValue, onChange }: { 
   return (
     <>
       <EditorContent editor={editor} />
-      {JSON.stringify(editor?.getJSON(), null, 2)}
+    
     </>
   );
 };
