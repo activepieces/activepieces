@@ -29,3 +29,20 @@ const Separator = React.forwardRef<
 Separator.displayName = SeparatorPrimitive.Root.displayName;
 
 export { Separator };
+
+type HorizontalSeperatorWithTextProps = React.HTMLAttributes<HTMLDivElement> & {
+  children: React.ReactNode;
+};
+const HorizontalSeperatorWithText = React.forwardRef<
+  HTMLDivElement,
+  HorizontalSeperatorWithTextProps
+>(({ className, ...props }, ref) => (
+  <div className="flex w-full flex-row items-center">
+    <div className="w-1/2 border" />
+    <span className="mx-2 text-sm">{props.children}</span>
+    <div className="w-1/2 border" />
+  </div>
+));
+
+HorizontalSeperatorWithText.displayName = 'HorizontalSeperatorWithText';
+export { HorizontalSeperatorWithText };

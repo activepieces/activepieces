@@ -146,8 +146,6 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
                 case BranchOperator.DOES_NOT_EXIST:
                     andGroup = andGroup && (castedCondition.firstValue === undefined || castedCondition.firstValue === null || castedCondition.firstValue === '')
                     break
-                default:
-                    throw new Error(`Unknown operator ${castedCondition.operator}`)
             }
         }
         orOperator = orOperator || andGroup

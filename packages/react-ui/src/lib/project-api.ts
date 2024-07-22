@@ -8,7 +8,6 @@ import {
   SwitchProjectResponse,
 } from '@activepieces/shared';
 
-export const projectCacheKey = 'project';
 export const projectApi = {
   current: async () => {
     return projectApi.get(authenticationSession.getProjectId());

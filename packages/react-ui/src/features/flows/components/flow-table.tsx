@@ -75,7 +75,11 @@ const columns: ColumnDef<RowDataWithActions<PopulatedFlow>>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => {
-      return <FlowStatusToggle flow={row.original} />;
+      return (
+        <div className="flex items-center space-x-2">
+          <FlowStatusToggle flow={row.original} />
+        </div>
+      );
     },
   },
 ];
@@ -108,7 +112,7 @@ const FlowsTable = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="container mx-auto  flex-col">
+    <div className="flex-col w-full">
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">Flows</h1>
         <div className="ml-auto">

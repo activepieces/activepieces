@@ -8,8 +8,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
+import { SignInForm } from './sign-in-form';
+import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
-import { UsernameAndPasswordForm } from './username-and-password-form';
 
 type AuthFormTemplateProps = {
   title: string;
@@ -46,7 +47,7 @@ const Separator = () => {
 const AuthFormTemplate: React.FC<{
   form: 'signin' | 'signup';
 }> = React.memo(({ form }) => {
-  const isSignUp = form === 'signup' ? true : false;
+  const isSignUp = form === 'signup';
 
   return (
     <Card className="w-[28rem] rounded-sm drop-shadow-xl">
@@ -57,7 +58,7 @@ const AuthFormTemplate: React.FC<{
       <CardContent>
         <ThirdPartyLogin isSignUp={isSignUp} />
         <Separator />
-        <UsernameAndPasswordForm isSignUp={isSignUp} />
+        {isSignUp ? <SignUpForm /> : <SignInForm />}
       </CardContent>
     </Card>
   );

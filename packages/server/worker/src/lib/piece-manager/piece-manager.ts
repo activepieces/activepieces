@@ -47,10 +47,7 @@ export abstract class PieceManager {
     protected abstract installDependencies(params: InstallParams): Promise<void>
 
     protected pieceToDependency(piece: PiecePackage): PackageInfo {
-        const packageAlias = getPackageAliasForPiece({
-            pieceName: piece.pieceName,
-            pieceVersion: piece.pieceVersion,
-        })
+        const packageAlias = getPackageAliasForPiece(piece)
 
         const packageSpec = getPackageSpecForPiece(PACKAGE_ARCHIVE_PATH, piece)
         return {
