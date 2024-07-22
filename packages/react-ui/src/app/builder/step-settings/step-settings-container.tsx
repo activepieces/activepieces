@@ -20,13 +20,14 @@ import {
   ActionType,
   FlowOperationType,
   TriggerType,
+  debounce,
   flowHelper,
 } from '@activepieces/shared';
 
 import { SidebarHeader } from '../sidebar-header';
 import { TestActionComponent } from '../test-step/test-action';
 
-import { BranchSettings } from './branch-settings';
+import { BranchSettings } from './branch-settings/branch-settings';
 import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
 
@@ -35,9 +36,21 @@ const STEPS_WITH_ERROR_HANDLING: (ActionType | TriggerType)[] = [
 ];
 
 const StepSettingsContainer = React.memo(() => {
-  const { setRightSidebar, applyOperation, readonly } = useBuilderStateContext(
-    (state) => state,
-  );
+  const [
+    setRightSidebar,
+    applyOperation,
+    readonly,
+    flowVersion,
+    isSaving,
+    startSaving,
+  ] = useBuilderStateContext((state) => [
+    state.setRightSidebar,
+    state.applyOperation,
+    state.readonly,
+    state.flowVersion,
+    state.saving,
+    state.startSaving,
+  ]);
 
   const { toast } = useToast();
 
@@ -67,6 +80,13 @@ const StepSettingsContainer = React.memo(() => {
     );
   };
 
+  const debouncedAction = debounce(updateAction, 200);
+
+  const debouncedActionWithSaving = (newAction: Action) => {
+    startSaving();
+    debouncedAction(newAction);
+  };
+
   const handleOnErrorChanges = (
     continueOnFailure: boolean | undefined,
     retryOnFailure: boolean | undefined,
@@ -90,23 +110,26 @@ const StepSettingsContainer = React.memo(() => {
       <ResizablePanelGroup direction="vertical">
         <ResizablePanel defaultSize={75}>
           <ScrollArea className="h-full ">
-            <div className="flex flex-col gap-4 p-4">
+            <div className="flex flex-col gap-4 px-4">
               <PieceCardInfo piece={pieceMetadata!} />
               {selectedStep.type === ActionType.LOOP_ON_ITEMS && (
                 <LoopsSettings
                   selectedStep={selectedStep}
-                  onUpdateAction={updateAction}
+                  onUpdateAction={debouncedActionWithSaving}
                 ></LoopsSettings>
               )}
               {selectedStep.type === ActionType.CODE && (
                 <CodeSettings
                   selectedStep={selectedStep}
-                  onUpdateAction={updateAction}
+                  onUpdateAction={debouncedActionWithSaving}
                   readonly={readonly}
                 ></CodeSettings>
               )}
               {selectedStep.type === ActionType.BRANCH && (
-                <BranchSettings selectedStep={selectedStep}></BranchSettings>
+                <BranchSettings
+                  selectedStep={selectedStep}
+                  onActionUpdate={debouncedActionWithSaving}
+                ></BranchSettings>
               )}
               {STEPS_WITH_ERROR_HANDLING.includes(selectedStep.type) && (
                 <ActionErrorHandlingForm
@@ -143,6 +166,9 @@ const StepSettingsContainer = React.memo(() => {
                 <div className="p-4 flex flex-col gap-4 h-full">
                   {flowHelper.isAction(selectedStep.type) && (
                     <TestActionComponent
+                      flowVersionId={flowVersion.id}
+                      onActionUpdate={updateAction}
+                      isSaving={isSaving}
                       selectedStep={selectedStep as Action}
                     ></TestActionComponent>
                   )}

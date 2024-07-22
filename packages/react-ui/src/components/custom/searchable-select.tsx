@@ -34,11 +34,10 @@ export const SearchableSelect = React.memo(
   }: SearchableSelectProps<T>) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterOptionsIndices, setFilteredOptions] = useState<number[]>([]);
-    const [selectedIndex, setSelectedIndex] = useState(-1);
 
-    useEffect(() => {
-      setSelectedIndex(options.findIndex((option) => option.value === value));
-    }, [value, options]);
+    const [selectedIndex, setSelectedIndex] = useState(
+      options.findIndex((option) => option.value === value) ?? -1,
+    );
 
     useEffect(() => {
       if (searchTerm.length === 0) {
@@ -85,7 +84,7 @@ export const SearchableSelect = React.memo(
       <Select
         disabled={disabled}
         autoComplete={undefined}
-        value={selectedIndex == -1 ? undefined : String(selectedIndex)}
+        value={selectedIndex === -1 ? undefined : String(selectedIndex)}
         onValueChange={onSelect}
       >
         <SelectTrigger>

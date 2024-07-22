@@ -11,7 +11,7 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { PieceCardInfo } from '@/features/pieces/components/piece-card-info';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 
-const PiecesListSelector = () => {
+const PiecesCardList = () => {
   const [searchQuery, setSearchQuery] = useDebounce<string>('', 300);
   const { data: pieces, isLoading } = piecesHooks.usePieces({
     searchQuery,
@@ -58,4 +58,4 @@ const PiecesListSelector = () => {
   );
 };
 
-export { PiecesListSelector as PieceSelectorList };
+export { PiecesCardList };

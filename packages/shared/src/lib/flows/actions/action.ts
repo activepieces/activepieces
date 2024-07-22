@@ -126,53 +126,65 @@ export const textConditions = [
     BranchOperator.TEXT_DOES_NOT_END_WITH,
 ]
 
+const BranchOperatorTextLiterals = [
+    Type.Literal(BranchOperator.TEXT_CONTAINS),
+    Type.Literal(BranchOperator.TEXT_DOES_NOT_CONTAIN),
+    Type.Literal(BranchOperator.TEXT_EXACTLY_MATCHES),
+    Type.Literal(BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH),
+    Type.Literal(BranchOperator.TEXT_STARTS_WITH),
+    Type.Literal(BranchOperator.TEXT_DOES_NOT_START_WITH),
+    Type.Literal(BranchOperator.TEXT_ENDS_WITH),
+    Type.Literal(BranchOperator.TEXT_DOES_NOT_END_WITH),
+];
+
+const BranchOperatorNumberLiterals = [
+    Type.Literal(BranchOperator.NUMBER_IS_GREATER_THAN),
+    Type.Literal(BranchOperator.NUMBER_IS_LESS_THAN),
+    Type.Literal(BranchOperator.NUMBER_IS_EQUAL_TO),
+];
+
+const BranchOperatorSingleValueLiterals = [
+    Type.Literal(BranchOperator.EXISTS),
+    Type.Literal(BranchOperator.DOES_NOT_EXIST),
+    Type.Literal(BranchOperator.BOOLEAN_IS_TRUE),
+    Type.Literal(BranchOperator.BOOLEAN_IS_FALSE),
+];
+
 const BranchTextConditionValid = (addMinLength: boolean) => Type.Object({
-    firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-    secondValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
+    firstValue: Type.String(addMinLength ? { minLength: 1, } : {}),
+    secondValue: Type.String(addMinLength ? { minLength: 1 } : {}),
     caseSensitive: Type.Optional(Type.Boolean()),
-    operator: Type.Optional(Type.Union([
-        Type.Literal(BranchOperator.TEXT_CONTAINS),
-        Type.Literal(BranchOperator.TEXT_DOES_NOT_CONTAIN),
-        Type.Literal(BranchOperator.TEXT_EXACTLY_MATCHES),
-        Type.Literal(BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH),
-        Type.Literal(BranchOperator.TEXT_STARTS_WITH),
-        Type.Literal(BranchOperator.TEXT_DOES_NOT_START_WITH),
-        Type.Literal(BranchOperator.TEXT_ENDS_WITH),
-        Type.Literal(BranchOperator.TEXT_DOES_NOT_END_WITH),
-    ])),
-})
+    operator: addMinLength ? Type.Union(BranchOperatorTextLiterals) : Type.Optional(Type.Union(BranchOperatorTextLiterals)),
+});
 
 const BranchNumberConditionValid = (addMinLength: boolean) => Type.Object({
-    firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-    secondValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-    operator: Type.Optional(Type.Union([
-        Type.Literal(BranchOperator.NUMBER_IS_GREATER_THAN),
-        Type.Literal(BranchOperator.NUMBER_IS_LESS_THAN),
-        Type.Literal(BranchOperator.NUMBER_IS_EQUAL_TO),
-    ])),
-})
+    firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+    secondValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+    operator: addMinLength ? Type.Union(BranchOperatorNumberLiterals) : Type.Optional(Type.Union(BranchOperatorNumberLiterals)),
+});
 
 const BranchSingleValueConditionValid = (addMinLength: boolean) => Type.Object({
-    firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-    operator: Type.Optional(Type.Union([
-        Type.Literal(BranchOperator.EXISTS),
-        Type.Literal(BranchOperator.DOES_NOT_EXIST),
-        Type.Literal(BranchOperator.BOOLEAN_IS_TRUE),
-        Type.Literal(BranchOperator.BOOLEAN_IS_FALSE),
-    ])),
-})
+    firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+    operator: addMinLength ? Type.Union(BranchOperatorSingleValueLiterals) : Type.Optional(Type.Union(BranchOperatorSingleValueLiterals)),
+});
 
 const BranchConditionValid = (addMinLength: boolean) => Type.Union([
     BranchTextConditionValid(addMinLength),
     BranchNumberConditionValid(addMinLength),
     BranchSingleValueConditionValid(addMinLength),
-])
+], {
+    errorMessage: 'The condition settings is incomplete',
+})
 
 export const BranchActionSettingsWithValidation = Type.Object({
     conditions: Type.Array(Type.Array(BranchConditionValid(true))),
     inputUiInfo: SampleDataSettingsObject,
 })
 
+export const ValidBranchCondition = BranchConditionValid(true)
+export type ValidBranchCondition = Static<typeof ValidBranchCondition>
+
+// TODO remove this and use ValidBranchCondition everywhere
 export const BranchCondition = BranchConditionValid(false)
 export type BranchCondition = Static<typeof BranchCondition>
 

@@ -1,5 +1,4 @@
 const { createGlobPatternsForDependencies } = require('@nx/react/tailwind');
-const { warn } = require('console');
 const { join } = require('path');
 const { fontFamily } = require("tailwindcss/defaultTheme")
 
