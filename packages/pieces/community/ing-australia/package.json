@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-ing-australia",
+  "version": "0.0.1",
+  "dependencies": {
+    "ing-au-login": "2.0.7",
+    "puppeteer": "22.13.1",
+    "moment": "2.30.1",
+    "axios": "1.7.2",
+    "qs": "6.12.3"
+  }
+}

@@ -9,7 +9,16 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         python3 \
         g++ \
         build-essential \
-        git && \
+        git \
+        libnss3 \
+        libatk1.0-0 \
+        libatk-bridge2.0-0 \
+        libcups2 \
+        libgbm1 \
+        libasound2 \
+        libpangocairo-1.0-0 \
+        libxss1 \
+        libgtk-3-0 && \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
 
