@@ -206,7 +206,7 @@ export const emailService = {
             emails,
             platformId: project.platformId,
             templateData: {
-                name: 'exceed-failure-threshold',
+                name: 'trigger-failure',
                 vars: {
                     flowName,
                     projectName: project.displayName,

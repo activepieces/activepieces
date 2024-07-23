@@ -1,4 +1,4 @@
-import { logger, rejectedPromiseHandler, system, WorkerSystemProps } from '@activepieces/server-shared'
+import { AppSystemProp, logger, rejectedPromiseHandler, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -34,7 +34,7 @@ import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
 
 
-const FAILURE_COUNT_THRESHOLD = system.getNumberOrThrow(WorkerSystemProps.FAILURE_COUNT_THRESHOLD)
+const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
 
 
 export const flowService = {
@@ -325,37 +325,31 @@ export const flowService = {
         projectId,
         success,
     }: UpdateFailureCountParams): Promise<void> {
-        const flowToUpdate = await this.getOneOrThrow({
+        const flow = await flowService.getOnePopulatedOrThrow({
             id: flowId,
             projectId,
         })
-        const { schedule } = flowToUpdate
+        const { schedule } = flow
         if (isNil(schedule)) {
             return
         }
         const newFailureCount = success ? 0 : (schedule.failureCount ?? 0) + 1
         
-        const flowVersion = await flowService.getOnePopulatedOrThrow({
-            id: flowId,
-            projectId,
-        })
-        
-
-        if (newFailureCount >= FAILURE_COUNT_THRESHOLD) {
+        if (newFailureCount >= TRIGGER_FAILURES_THRESHOLD) {
             await this.updateStatus({
                 id: flowId,
                 projectId,
                 newStatus: FlowStatus.DISABLED,
             })
             
-            await emailService.sendExceedFailureThresholdAlert(projectId, flowVersion.version.displayName)
+            await emailService.sendExceedFailureThresholdAlert(projectId, flow.version.displayName)
             rejectedPromiseHandler(telemetry.trackProject(projectId, {
                 name: TelemetryEventName.TRIGGER_FAILURES_EXCEEDED,
                 payload: {
                     projectId,
                     flowId,
-                    pieceName: flowVersion.version.trigger.settings.pieceName,
-                    pieceVersion: flowVersion.version.trigger.settings.pieceVersion,
+                    pieceName: flow.version.trigger.settings.pieceName,
+                    pieceVersion: flow.version.trigger.settings.pieceVersion,
                 },
             },
             ),
@@ -364,7 +358,7 @@ export const flowService = {
 
         await flowRepo().update(flowId, {
             schedule: {
-                ...flowToUpdate.schedule,
+                ...flow.schedule,
                 failureCount: newFailureCount,
             },
         })

@@ -10,7 +10,7 @@ export type EmailSender = {
 const getEmailSenderInstance = (): EmailSender => {
     const env = system.get(SharedSystemProp.ENVIRONMENT)
 
-    if (env === ApEnvironment.DEVELOPMENT) {
+    if (env === ApEnvironment.PRODUCTION) {
         return smtpEmailSender
     }
 
@@ -56,7 +56,7 @@ type IssuesReminderTemplateData = BaseEmailTemplateData<'issues-reminder', {
     projectName: string
 }>
 
-type ExceedFailureThresholdTemplateData = BaseEmailTemplateData<'exceed-failure-threshold', {
+type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
     flowName: string
     projectName: string
 }>
@@ -68,7 +68,7 @@ export type EmailTemplateData =
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
   | IssuesReminderTemplateData
-  | ExceedFailureThresholdTemplateData
+  | TriggerFailureThresholdTemplateData
 
 type SendArgs = {
     emails: string[]
