@@ -2,7 +2,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static } from '@sinclair/typebox';
 import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { ControllerRenderProps, useForm } from 'react-hook-form';
 
 import { ConnectionSelect } from '@/app/routes/connections/connection-select';
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -26,6 +26,8 @@ import {
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
+
+import { TextInputWithMentions } from '../../data-to-insert/text-input-with-mentions';
 
 type AutoFormProps = {
   props: PiecePropertyMap;
@@ -83,7 +85,7 @@ const AutoPropertiesFormComponent = React.memo(
 );
 
 const selectRightComponent = (
-  field: any,
+  field: ControllerRenderProps<Record<string, any>, string>,
   key: string,
   property: PieceProperty,
   allowDynamicValues: boolean,
@@ -121,7 +123,7 @@ const selectRightComponent = (
           key={key}
           allowDynamicValues={allowDynamicValues}
         >
-          <DictionaryInput values={[]} onChange={() => {}}></DictionaryInput>
+          <DictionaryInput values={{}} onChange={() => {}}></DictionaryInput>
         </AutoFormFieldWrapper>
       );
     case PropertyType.CHECKBOX:
@@ -173,6 +175,11 @@ const selectRightComponent = (
           key={key}
           allowDynamicValues={allowDynamicValues}
         >
+          <TextInputWithMentions
+            onChange={field.onChange}
+            key={key}
+            originalValue={field.value}
+          ></TextInputWithMentions>
           <Input {...field} id={key} type="text" />
         </AutoFormFieldWrapper>
       );

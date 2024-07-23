@@ -1,7 +1,5 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 
-import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
-
 import { FlowsPage } from '../app/routes/flows';
 import { authenticationSession } from '../lib/authentication-session';
 
@@ -12,6 +10,7 @@ import AppConnectionsPage from './routes/connections';
 import { FlowBuilderPage } from './routes/flows/id';
 import { ResetPasswordPage } from './routes/forget-password';
 import IssuesPage from './routes/issues';
+import PlansPage from './routes/plans';
 import FlowsRunPage from './routes/runs';
 import AlertsPage from './routes/settings/alerts';
 import AppearancePage from './routes/settings/appearance';
@@ -19,6 +18,8 @@ import PiecesPage from './routes/settings/pieces';
 import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
+
+import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
 
 const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
   if (!authenticationSession.isLoggedIn()) {
@@ -69,6 +70,14 @@ export const router = createBrowserRouter([
     element: (
       <DashboardContainer>
         <AppConnectionsPage />
+      </DashboardContainer>
+    ),
+  },
+  {
+    path: '/plans',
+    element: (
+      <DashboardContainer>
+        <PlansPage />
       </DashboardContainer>
     ),
   },

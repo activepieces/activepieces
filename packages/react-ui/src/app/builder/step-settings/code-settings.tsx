@@ -1,7 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import React from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useEffect } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { DictionaryInput } from '@/components/ui/dictionary-input';
@@ -9,7 +9,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
 import { CodeEditior } from '@/features/properties-form/components/code-editior';
-import { CodeAction, CodeActionSettings, debounce } from '@activepieces/shared';
+import { CodeAction, CodeActionSettings } from '@activepieces/shared';
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below.
@@ -45,7 +45,15 @@ const CodeSettings = React.memo(
       },
       resolver: typeboxResolver(FormSchema),
     });
-    const debouncedUpdate = debounce(onUpdateAction, 500);
+
+    const watchedForm = useWatch({ control: form.control });
+
+    useEffect(() => {
+      if (!form.formState.isDirty) {
+        return;
+      }
+      updateFormChange();
+    }, [watchedForm]);
 
     async function updateFormChange() {
       await form.trigger();
@@ -55,7 +63,7 @@ const CodeSettings = React.memo(
         code,
         input,
       );
-      debouncedUpdate(newAction);
+      onUpdateAction(newAction);
     }
 
     return (
@@ -73,10 +81,7 @@ const CodeSettings = React.memo(
                 <ApMarkdown markdown={markdown} />
                 <DictionaryInput
                   values={field.value}
-                  onChange={(inputs) => {
-                    field.onChange(inputs);
-                    updateFormChange();
-                  }}
+                  onChange={field.onChange}
                 ></DictionaryInput>
                 <FormMessage />
               </FormItem>
@@ -89,10 +94,7 @@ const CodeSettings = React.memo(
               <FormItem>
                 <CodeEditior
                   code={field.value}
-                  onChange={(code) => {
-                    field.onChange(code);
-                    updateFormChange();
-                  }}
+                  onChange={field.onChange}
                   readonly={readonly}
                   language="typescript"
                 ></CodeEditior>

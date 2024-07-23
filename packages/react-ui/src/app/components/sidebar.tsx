@@ -1,6 +1,11 @@
-import { Bug, Link2, Logs, Settings, Zap, Shield, Workflow } from 'lucide-react';
+import { Bug, Link2, Logs, Settings, Shield, Workflow } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { Button } from '../../components/ui/button';
+import { UserAvatar } from '../../components/ui/user-avatar';
+import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
+
+import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import {
   Tooltip,
   TooltipContent,
@@ -8,11 +13,11 @@ import {
 } from '@/components/ui/tooltip';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
+import { projectHooks } from '@/hooks/project-hooks';
 import { theme } from '@/lib/theme';
-
-import { Button } from '../../components/ui/button';
-import { UserAvatar } from '../../components/ui/user-avatar';
-import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
+import { ApFlagId } from '@activepieces/shared';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { useQueryClient } from '@tanstack/react-query';
 
 type Link = {
   icon: React.ReactNode;
@@ -35,14 +40,19 @@ const CustomTooltipLink = ({
   notification?: boolean;
 }) => {
   const location = useLocation();
+
   const isActive = location.pathname.startsWith(to);
 
   return (
-    <Link
-      to={to}
-    >
-      <div className={`relative flex flex-col items-center justify-center gap-1`}>
-        <Icon className={`size-10 p-2 hover:text-primary rounded-lg transition-colors ${isActive ? 'bg-accent text-primary' : ''} ${extraClasses || ''}`} />
+    <Link to={to}>
+      <div
+        className={`relative flex flex-col items-center justify-center gap-1`}
+      >
+        <Icon
+          className={`size-10 p-2 hover:text-primary rounded-lg transition-colors ${
+            isActive ? 'bg-accent text-primary' : ''
+          } ${extraClasses || ''}`}
+        />
         <span className="text-[10px]">{label}</span>
         {notification && (
           <span className="bg-destructive absolute right-[-3px] top-[-3px] size-2 rounded-full"></span>
@@ -54,6 +64,12 @@ const CustomTooltipLink = ({
 
 export function Sidebar({ children }: { children: React.ReactNode }) {
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
+  const { data: project } = projectHooks.useCurrentProject();
+  const queryClient = useQueryClient();
+  const billingEnabled = flagsHooks.useFlag<boolean>(
+    ApFlagId.BILLING_ENABLED,
+    queryClient,
+  );
 
   return (
     <div className="flex min-h-screen w-full ">
@@ -75,7 +91,11 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
             Icon={Bug}
             notification={showIssuesNotification}
           />
-          <CustomTooltipLink to="/connections" label="Connnections" Icon={Link2} />
+          <CustomTooltipLink
+            to="/connections"
+            label="Connnections"
+            Icon={Link2}
+          />
           <CustomTooltipLink to="/settings" label="Settings" Icon={Settings} />
         </nav>
       </aside>
@@ -94,12 +114,33 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                 <Shield className="size-4" />
                 <span>Platform Admin</span>
               </Button>
+              {billingEnabled && (
+                <Link to={'/plans'}>
+                  <Button
+                    variant={'outline'}
+                    size="sm"
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <ProgressCircularComponent
+                      size="small"
+                      data={{
+                        plan: project.plan.tasks,
+                        usage: project.usage.tasks,
+                      }}
+                    />
+                    <span>
+                      <strong>
+                        {project.usage.tasks}/{project.plan.tasks}
+                      </strong>{' '}
+                      Tasks Per Month
+                    </span>
+                  </Button>
+                </Link>
+              )}
               <UserAvatar />
             </div>
           </div>
-          <div className="container mx-auto flex py-10">
-          {children}
-          </div>
+          <div className="container mx-auto flex py-10">{children}</div>
         </div>
       </div>
     </div>

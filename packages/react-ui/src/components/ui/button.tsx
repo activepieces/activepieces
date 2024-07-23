@@ -38,7 +38,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   loading?: boolean;
   keyboardShortcut?: string;
@@ -94,14 +94,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {loading ? (
           <LoadingSpinner />
         ) : (
-          <div className="flex justify-center items-center gap-2">
-            {children}
+          <>
             {keyboardShortcut && (
-              <span className="flex-grow text-xs tracking-widest text-muted-foreground">
-                ⌘{keyboardShortcut.toString().toLocaleUpperCase()}
-              </span>
+              <div className="flex justify-center items-center gap-2">
+                {children}
+                <span className="flex-grow text-xs tracking-widest text-muted-foreground">
+                    ⌘{keyboardShortcut.toString().toLocaleUpperCase()}
+                  </span>
+              </div>
             )}
-          </div>
+            {!keyboardShortcut && children}
+          </>
         )}
       </Comp>
     );
