@@ -1,7 +1,10 @@
+import { LoopOnItemsAction, debounce } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+
+import { TextInputWithMentions } from '../flow-canvas/text-input-with-mentions';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { FormField, FormItem, FormMessage, Form } from '@/components/ui/form';
@@ -9,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
 import { LoopOnItemsAction } from '@activepieces/shared';
+
 
 type LoopsSettingsProps = {
   selectedStep: LoopOnItemsAction;
@@ -53,7 +57,7 @@ const LoopsSettings = React.memo(
 
     return (
       <Form {...form}>
-        <form onChange={updateFormChange} onSubmit={(e) => e.preventDefault()}>
+        <form onSubmit={(e) => e.preventDefault()}>
           <FormField
             control={form.control}
             name="items"
@@ -61,11 +65,14 @@ const LoopsSettings = React.memo(
               <FormItem>
                 <Label htmlFor="email">Items</Label>
                 <ApMarkdown markdown={markdown} />
-                <Input
-                  type="text"
+                <TextInputWithMentions
+                  onChange={(e) => {
+                    field.onChange(e);
+                    updateFormChange();
+                  }}
+                  originalValue={field.value}
                   placeholder="Select an array of items"
-                  {...field}
-                ></Input>
+                ></TextInputWithMentions>
                 <FormMessage />
               </FormItem>
             )}

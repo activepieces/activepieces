@@ -1,11 +1,20 @@
+import {
+  BranchOperator,
+  ValidBranchCondition,
+  textConditions,
+  singleValueConditions,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
+import { Trash } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
+import { TextInputWithMentions } from '../../flow-canvas/text-input-with-mentions';
+
 import { SearchableSelect } from '@/components/custom/searchable-select';
+import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -18,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Trash } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Value } from '@sinclair/typebox/value';
+
 
 const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_CONTAINS]: '(Text) Contains',
@@ -95,11 +105,11 @@ const BranchSingleCondition = ({
             control={form.control}
             render={({ field }) => (
               <FormItem>
-                <Input
-                  type="text"
+                <TextInputWithMentions
                   placeholder="First value"
-                  {...field}
-                />
+                  onChange={field.onChange}
+                  originalValue={field.value}
+                ></TextInputWithMentions>
                 <FormMessage />
               </FormItem>
             )}
@@ -125,11 +135,11 @@ const BranchSingleCondition = ({
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <Input
-                    type="text"
+                  <TextInputWithMentions
                     placeholder="Second value"
                     {...field}
-                  />
+                    originalValue={field.value}
+                  ></TextInputWithMentions>
                   <FormMessage />
                 </FormItem>
               )}
@@ -157,15 +167,13 @@ const BranchSingleCondition = ({
           />)}
           <div className='flex-grow'></div>
           <div>
-            {showDelete &&
-              <Button variant={"basic"} size={'sm'} onClick={deleteClick}>
-                <Trash className='w-4 h-4'></Trash> Remove
+            {showDelete && (
+              <Button variant={'basic'} size={'sm'} onClick={deleteClick}>
+                <Trash className="w-4 h-4"></Trash> Remove
               </Button>
-            }
+            )}
           </div>
         </div>
-
-
       </form>
     </Form>
   );
