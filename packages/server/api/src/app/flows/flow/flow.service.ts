@@ -1,4 +1,4 @@
-import { logger, system, WorkerSystemProps } from '@activepieces/server-shared'
+import { logger, rejectedPromiseHandler, system, WorkerSystemProps } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -349,8 +349,17 @@ export const flowService = {
             })
             
             await emailService.sendExceedFailureThresholdAlert(projectId, flowVersion.version.displayName)
-            
-            return
+            rejectedPromiseHandler(telemetry.trackProject(projectId, {
+                name: TelemetryEventName.TRIGGER_FAILURES_EXCEEDED,
+                payload: {
+                    projectId,
+                    flowId,
+                    pieceName: flowVersion.version.trigger.settings.pieceName,
+                    pieceVersion: flowVersion.version.trigger.settings.pieceVersion,
+                },
+            },
+            ),
+            )
         }
 
         await flowRepo().update(flowId, {
