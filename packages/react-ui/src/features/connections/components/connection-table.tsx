@@ -20,8 +20,8 @@ import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
 
 import { appConnectionUtils } from '../lib/app-connections-utils';
 
+import { NewConnectionTypeDialog } from './new-connection-type-dialog';
 
-import { ConnectionTypeDialog } from './connection-type-dialog';
 const DeleteConnectionColumn = ({
   row,
 }: {
@@ -169,10 +169,10 @@ function AppConnectionsTable() {
           >
             New Connection
           </Button>
-          <ConnectionTypeDialog
+          <NewConnectionTypeDialog
             open={openNewConnectionDialog}
             setOpen={setOpenNewConnectionDialog}
-          ></ConnectionTypeDialog>
+          ></NewConnectionTypeDialog>
         </div>
       </div>
       <DataTable columns={columns} fetchData={fetchData} filters={filters} />

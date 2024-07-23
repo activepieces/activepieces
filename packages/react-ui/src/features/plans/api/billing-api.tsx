@@ -1,6 +1,5 @@
-import { ProjectBillingResponse } from '@activepieces/ee-shared';
-
 import { api } from '@/lib/api';
+import { ProjectBillingResponse } from '@activepieces/ee-shared';
 
 export const billingApi = {
   getSubscription() {

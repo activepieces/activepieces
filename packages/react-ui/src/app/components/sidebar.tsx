@@ -1,9 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Bug, Link2, Logs, Settings, Shield, Workflow } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-
-import { Button } from '../../components/ui/button';
-import { UserAvatar } from '../../components/ui/user-avatar';
-import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
 
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import {
@@ -13,11 +10,14 @@ import {
 } from '@/components/ui/tooltip';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { theme } from '@/lib/theme';
 import { ApFlagId } from '@activepieces/shared';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { useQueryClient } from '@tanstack/react-query';
+
+import { Button } from '../../components/ui/button';
+import { UserAvatar } from '../../components/ui/user-avatar';
+import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
 
 type Link = {
   icon: React.ReactNode;

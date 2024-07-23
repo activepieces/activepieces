@@ -4,7 +4,6 @@ import { Static } from '@sinclair/typebox';
 import React, { useEffect } from 'react';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
 
-import { ConnectionSelect } from '@/app/routes/connections/connection-select';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { ArrayInput } from '@/components/ui/array-input';
@@ -18,6 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { ConnectionSelect } from '@/features/connections/components/connection-select';
 import { AutoFormFieldWrapper } from '@/features/properties-form/components/auto-form-field-wrapper';
 import { formUtils } from '@/features/properties-form/lib/form-utils';
 import {
@@ -38,7 +38,13 @@ type AutoFormProps = {
 };
 
 const AutoPropertiesFormComponent = React.memo(
-  ({ props, allowDynamicValues, renderSecretText, renderSecretTextDescription, onChange }: AutoFormProps) => {
+  ({
+    props,
+    allowDynamicValues,
+    renderSecretText,
+    renderSecretTextDescription,
+    onChange,
+  }: AutoFormProps) => {
     const FormSchema = formUtils.buildSchema(props);
     const form = useForm<Static<typeof FormSchema>>({
       resolver: typeboxResolver(FormSchema),
@@ -46,7 +52,7 @@ const AutoPropertiesFormComponent = React.memo(
     });
 
     const watch = form.watch();
-    
+
     useEffect(() => {
       if (onChange) {
         onChange(watch);

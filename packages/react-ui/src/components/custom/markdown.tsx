@@ -17,7 +17,7 @@ export const ApMarkdown = ({ markdown }: MarkdownProps) => {
         <ReactMarkdown
           components={{
             code(props) {
-              return <code {...props} className='text-wrap' />
+              return <code {...props} className="text-wrap" />;
             },
             h1: ({ node, ...props }) => (
               <h1
