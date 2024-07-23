@@ -7,8 +7,14 @@ import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
 import { Avatar, AvatarImage } from '../../../components/ui/avatar';
 import { Button } from '../../../components/ui/button';
 import { userInvitationApi } from '../lib/user-invitation';
+import { userInvitationsHooks } from '../lib/user-invitations-hooks';
 
 export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
+  const { refetch } = userInvitationsHooks.useInvitations();
+  async function deleteInvitation() {
+    await userInvitationApi.delete(invitation.id);
+    refetch();
+  }
   return (
     <div
       className="flex items-center justify-between space-x-4"
@@ -29,7 +35,7 @@ export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
       </div>
       <div className="flex gap-2">
         <ConfirmationDeleteDialog
-          mutationFn={() => userInvitationApi.delete(invitation.id)}
+          mutationFn={() => deleteInvitation()}
           entityName={invitation.email}
           title={`Remove ${invitation.email}`}
           message="Are you sure you want to remove this invitation?"

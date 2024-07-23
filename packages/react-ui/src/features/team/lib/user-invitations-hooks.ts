@@ -8,7 +8,7 @@ const userInvitationsQueryKey = 'user-invitations';
 
 export const userInvitationsHooks = {
   useInvitations: () => {
-    return useQuery<UserInvitation[]>({
+    const query = useQuery<UserInvitation[]>({
       queryFn: () => {
         return userInvitationApi
           .list({
@@ -21,5 +21,10 @@ export const userInvitationsHooks = {
       queryKey: [userInvitationsQueryKey],
       staleTime: 0,
     });
+    return {
+      invitations: query.data,
+      isLoading: query.isLoading,
+      refetch: query.refetch,
+    };
   },
 };
