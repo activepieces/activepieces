@@ -1,7 +1,7 @@
 // TODO revisit for clean up
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static } from '@sinclair/typebox';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { ConnectionSelect } from '@/app/routes/connections/connection-select';
@@ -31,15 +31,25 @@ type AutoFormProps = {
   props: PiecePropertyMap;
   allowDynamicValues: boolean;
   renderSecretText?: boolean;
+  onChange?: (value: unknown) => void;
+  renderSecretTextDescription?: boolean;
 };
 
 const AutoPropertiesFormComponent = React.memo(
-  ({ props, allowDynamicValues, renderSecretText }: AutoFormProps) => {
+  ({ props, allowDynamicValues, renderSecretText, renderSecretTextDescription, onChange }: AutoFormProps) => {
     const FormSchema = formUtils.buildSchema(props);
     const form = useForm<Static<typeof FormSchema>>({
       resolver: typeboxResolver(FormSchema),
       defaultValues: {},
     });
+
+    const watch = form.watch();
+    
+    useEffect(() => {
+      if (onChange) {
+        onChange(watch);
+      }
+    }, [watch]);
 
     return (
       <Form {...form}>
@@ -58,6 +68,7 @@ const AutoPropertiesFormComponent = React.memo(
                       props[key],
                       allowDynamicValues,
                       renderSecretText,
+                      renderSecretTextDescription,
                     )}
                     <FormMessage />
                   </FormItem>
@@ -77,11 +88,13 @@ const selectRightComponent = (
   property: PieceProperty,
   allowDynamicValues: boolean,
   renderSecretText?: boolean,
+  renderSecretTextDescription?: boolean,
 ) => {
   if (renderSecretText && property.type === PropertyType.SECRET_TEXT) {
     return (
       <AutoFormFieldWrapper
         property={property}
+        hideDescription={!renderSecretTextDescription}
         key={key}
         allowDynamicValues={allowDynamicValues}
       >

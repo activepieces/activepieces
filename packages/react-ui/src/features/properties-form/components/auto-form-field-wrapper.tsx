@@ -27,7 +27,6 @@ const AutoFormFieldWrapper = ({
     <>
       <FormLabel htmlFor={key} className="flex items-center">
         {placeBeforeLabelText && children}
-
         <span>{property.displayName}</span>
         <span className="grow"></span>
         {allowDynamicValues && (

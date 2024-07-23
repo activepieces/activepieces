@@ -66,7 +66,9 @@ export const UpsertSecretTextRequest = Type.Object({
     type: Type.Literal(AppConnectionType.SECRET_TEXT),
     value: Type.Object({
         type: Type.Literal(AppConnectionType.SECRET_TEXT),
-        secret_text: Type.String({}),
+        secret_text: Type.String({
+            minLength: 1,
+        }),
     }),
 }, {
     title: 'Secret Text',
