@@ -12,8 +12,8 @@ import {
 } from '@activepieces/shared';
 
 import { BranchSingleCondition } from './branch-condition-group';
-import { BranchSingleConditionToolbar } from './branch-condition-toolbar';
-import { HorizontalSeperatorWithText } from '@/components/ui/seperator';
+import { BranchConditionToolbar } from './branch-condition-toolbar';
+import { HorizontalSeparatorWithText } from '@/components/ui/seperator';
 
 type BranchSettingsProps = {
   selectedStep: BranchAction;
@@ -105,8 +105,6 @@ const BranchSettings = ({
   const triggerChange = async () => {
     await form.trigger();
     const conditions = form.getValues().orGroups.map((group) => group.andGroup);
-    console.log(form.formState.isValid);
-    console.log({ conditions });
     onActionUpdate(
       flowVersionUtils.buildActionWithBranchCondition(
         selectedStep,
@@ -123,17 +121,17 @@ const BranchSettings = ({
         {fields.map((fieldGroup, groupIndex) => {
           return (
             <div className="flex flex-col gap-4" key={`group-${groupIndex}`}>
-              {groupIndex > 0 && <HorizontalSeperatorWithText className="my-2">
+              {groupIndex > 0 && <HorizontalSeparatorWithText className="my-2">
                 OR
-              </HorizontalSeperatorWithText>}
+              </HorizontalSeparatorWithText>}
               {fieldGroup.andGroup.length === 0 && (
-                <BranchSingleConditionToolbar
+                <BranchConditionToolbar
                   key={`toolbar-${groupIndex}`}
                   onAnd={() => handleAnd(groupIndex)}
                   onOr={() => handleOr()}
                   showOr={groupIndex === fields.length - 1}
                   showAnd={true}
-                ></BranchSingleConditionToolbar>
+                ></BranchConditionToolbar>
               )}
               {fieldGroup.andGroup.map((condition, conditionIndex) => (
                 <React.Fragment
@@ -152,14 +150,14 @@ const BranchSettings = ({
                   ></BranchSingleCondition>
                 </React.Fragment>
               ))}
-              <BranchSingleConditionToolbar
+              <BranchConditionToolbar
                 onAnd={() => handleAnd(groupIndex)}
                 onOr={() => handleOr()}
                 showOr={
                   groupIndex === fields.length - 1
                 }
                 showAnd={true}
-              ></BranchSingleConditionToolbar>
+              ></BranchConditionToolbar>
             </div>
           );
         })}

@@ -8,7 +8,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { Trash } from 'lucide-react';
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { TextInputWithMentions } from '../../flow-canvas/text-input-with-mentions';
 
@@ -17,6 +17,17 @@ import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import {
+  BranchOperator,
+  ValidBranchCondition,
+  singleValueConditions,
+  textConditions,
+} from '@activepieces/shared';
+import { Button } from '@/components/ui/button';
+import { Trash } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Value } from '@sinclair/typebox/value';
+
 
 const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_CONTAINS]: '(Text) Contains',
@@ -66,24 +77,29 @@ const BranchSingleCondition = ({
       condition: condition,
     },
   });
-  useEffect(() => {
-    form.trigger();
-  }, [form]);
 
   const isTextCondition =
     condition.operator && textConditions.includes(condition?.operator);
   const isSingleValueCondition =
     condition.operator && singleValueConditions.includes(condition?.operator);
 
-  const triggerChange = async () => {
-    await form.trigger();
-    onChange(form.getValues().condition);
-  };
+  const watchedForm = useWatch({ control: form.control });
+
+  useEffect(() => {
+    if (!form.formState.isDirty) {
+      return;
+    }
+    const formValue = Value.Cast(formSchema, form.getValues());
+    onChange(formValue.condition);
+  }, [watchedForm]);
 
   return (
     <Form {...form}>
       <form>
-        <div className="grid grid-cols-3 gap-2">
+        <div className={cn("grid gap-2", {
+          'grid-cols-2': isSingleValueCondition,
+          'grid-cols-3': !isSingleValueCondition
+        })}>
           <FormField
             name="condition.firstValue"
             control={form.control}
@@ -91,13 +107,9 @@ const BranchSingleCondition = ({
               <FormItem>
                 <TextInputWithMentions
                   placeholder="First value"
-                  onChange={(e) => {
-                    field.onChange(e);
-                    triggerChange();
-                  }}
+                  onChange={field.onChange}
                   originalValue={field.value}
                 ></TextInputWithMentions>
-
                 <FormMessage />
               </FormItem>
             )}
@@ -111,10 +123,7 @@ const BranchSingleCondition = ({
                   value={field.value}
                   options={operationOptions}
                   placeholder={''}
-                  onChange={(e) => {
-                    field.onChange(e);
-                    triggerChange();
-                  }}
+                  onChange={(e) => field.onChange(e)}
                 />
                 <FormMessage />
               </FormItem>
@@ -128,10 +137,7 @@ const BranchSingleCondition = ({
                 <FormItem>
                   <TextInputWithMentions
                     placeholder="Second value"
-                    onChange={(e) => {
-                      field.onChange(e);
-                      triggerChange();
-                    }}
+                    {...field}
                     originalValue={field.value}
                   ></TextInputWithMentions>
                   <FormMessage />
@@ -141,29 +147,25 @@ const BranchSingleCondition = ({
           )}
         </div>
 
-        <div className="flex justify-between items-center gap-2 mt-2">
-          {isTextCondition && (
-            <FormField
-              name="condition.caseSensitive"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center gap-2 p-1">
-                    <Switch
-                      id="case-sensitive"
-                      checked={field.value}
-                      onCheckedChange={(e) => {
-                        field.onChange(e);
-                        triggerChange();
-                      }}
-                    />
-                    <Label htmlFor="case-sensitive">Case sensitive</Label>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+        <div className='flex justify-start items-center gap-2 mt-2'>
+          {isTextCondition && (<FormField
+            name="condition.caseSensitive"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center gap-2 p-1">
+                  <Switch
+                    id="case-sensitive"
+                    checked={field.value}
+                    onCheckedChange={(e) => field.onChange(e)}
+                  />
+                  <Label htmlFor="case-sensitive">Case sensitive</Label>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />)}
+          <div className='flex-grow'></div>
           <div>
             {showDelete && (
               <Button variant={'basic'} size={'sm'} onClick={deleteClick}>

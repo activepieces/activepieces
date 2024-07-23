@@ -11,6 +11,8 @@ import { FormField, FormItem, FormMessage, Form } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
+import { LoopOnItemsAction } from '@activepieces/shared';
+
 
 type LoopsSettingsProps = {
   selectedStep: LoopOnItemsAction;
@@ -35,7 +37,7 @@ type FormSchema = Static<typeof FormSchema>;
 const LoopsSettings = React.memo(
   ({ selectedStep, onUpdateAction }: LoopsSettingsProps) => {
     const loopOnItemsSettings = selectedStep.settings;
-    const debouncedUpdate = debounce(onUpdateAction, 500);
+
     const form = useForm<FormSchema>({
       defaultValues: {
         items: loopOnItemsSettings.items,
@@ -50,8 +52,7 @@ const LoopsSettings = React.memo(
         form.getValues().items,
         form.formState.isValid,
       );
-      console.log(newAction);
-      debouncedUpdate(newAction);
+      onUpdateAction(newAction);
     };
 
     return (
