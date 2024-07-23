@@ -36,7 +36,6 @@ const LoopsSettings = React.memo(
   ({ selectedStep, onUpdateAction }: LoopsSettingsProps) => {
     const loopOnItemsSettings = selectedStep.settings;
     const debouncedUpdate = debounce(onUpdateAction, 500);
-
     const form = useForm<FormSchema>({
       defaultValues: {
         items: loopOnItemsSettings.items,
@@ -51,12 +50,13 @@ const LoopsSettings = React.memo(
         form.getValues().items,
         form.formState.isValid,
       );
+      console.log(newAction);
       debouncedUpdate(newAction);
     };
 
     return (
       <Form {...form}>
-        <form onChange={updateFormChange} onSubmit={(e) => e.preventDefault()}>
+        <form onSubmit={(e) => e.preventDefault()}>
           <FormField
             control={form.control}
             name="items"
@@ -65,7 +65,10 @@ const LoopsSettings = React.memo(
                 <Label htmlFor="email">Items</Label>
                 <ApMarkdown markdown={markdown} />
                 <TextInputWithMentions
-                  onChange={(e) => field.onChange(e)}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    updateFormChange();
+                  }}
                   originalValue={field.value}
                   placeholder="Select an array of items"
                 ></TextInputWithMentions>
