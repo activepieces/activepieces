@@ -23,7 +23,7 @@ export const BuilderNavBar = () => {
   ]);
 
   return (
-    <div className="items-left flex h-[70px] w-full p-4 bg-accent">
+    <div className="items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
       <div className="flex h-full items-center justify-center gap-2">
         <Tooltip>
           <TooltipTrigger asChild>

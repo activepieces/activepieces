@@ -18,6 +18,8 @@ import { formatUtils } from '@/lib/utils';
 import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
 
 import { appConnectionUtils } from '../lib/app-connections-utils';
+import { useState } from 'react';
+import { ConnectionTypeDialog } from './connection-type-dialog';
 const DeleteConnectionColumn = ({
   row,
 }: {
@@ -152,11 +154,17 @@ const fetchData = async (queryParams: URLSearchParams) => {
 };
 
 function AppConnectionsTable() {
+
+  const [openNewConnectionDialog, setOpenNewConnectionDialog] = useState(false);
+
   return (
-    <div className="container mx-auto flex-col py-10">
+    <div className="flex-col w-full">
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">Connections </h1>
-        <div className="ml-auto"></div>
+        <div className="ml-auto">
+          <Button variant="default" onClick={() => setOpenNewConnectionDialog(true)}>New Connection</Button>
+          <ConnectionTypeDialog open={openNewConnectionDialog} setOpen={setOpenNewConnectionDialog}></ConnectionTypeDialog>
+        </div>
       </div>
       <DataTable columns={columns} fetchData={fetchData} filters={filters} />
     </div>
