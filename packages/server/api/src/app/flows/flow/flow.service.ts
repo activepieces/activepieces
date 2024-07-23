@@ -329,8 +329,11 @@ export const flowService = {
             id: flowId,
             projectId,
         })
+        
         const { schedule } = flow
-        if (isNil(schedule)) {
+        const skipUpdateFlowCount = isNil(schedule) || flow.status === FlowStatus.DISABLED 
+
+        if ( skipUpdateFlowCount ) {
             return
         }
         const newFailureCount = success ? 0 : (schedule.failureCount ?? 0) + 1
