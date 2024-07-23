@@ -1,7 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -16,6 +16,8 @@ import {
 } from '@activepieces/shared';
 import { Button } from '@/components/ui/button';
 import { Trash } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Value } from '@sinclair/typebox/value';
 
 const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_CONTAINS]: '(Text) Contains',
@@ -65,24 +67,29 @@ const BranchSingleCondition = ({
       condition: condition,
     },
   });
-  useEffect(() => {
-    form.trigger();
-  }, [form]);
 
   const isTextCondition =
     condition.operator && textConditions.includes(condition?.operator);
   const isSingleValueCondition =
     condition.operator && singleValueConditions.includes(condition?.operator);
 
-  const triggerChange = async () => {
-    await form.trigger();
-    onChange(form.getValues().condition);
-  };
+  const watchedForm = useWatch({ control: form.control });
+
+  useEffect(() => {
+    if (!form.formState.isDirty) {
+      return;
+    }
+    const formValue = Value.Cast(formSchema, form.getValues());
+    onChange(formValue.condition);
+  }, [watchedForm]);
 
   return (
     <Form {...form}>
       <form>
-        <div className="grid grid-cols-3 gap-2">
+        <div className={cn("grid gap-2", {
+          'grid-cols-2': isSingleValueCondition,
+          'grid-cols-3': !isSingleValueCondition
+        })}>
           <FormField
             name="condition.firstValue"
             control={form.control}
@@ -92,10 +99,6 @@ const BranchSingleCondition = ({
                   type="text"
                   placeholder="First value"
                   {...field}
-                  onChange={(e) => {
-                    field.onChange(e);
-                    triggerChange();
-                  }}
                 />
                 <FormMessage />
               </FormItem>
@@ -110,10 +113,7 @@ const BranchSingleCondition = ({
                   value={field.value}
                   options={operationOptions}
                   placeholder={''}
-                  onChange={(e) => {
-                    field.onChange(e);
-                    triggerChange();
-                  }}
+                  onChange={(e) => field.onChange(e)}
                 />
                 <FormMessage />
               </FormItem>
@@ -129,10 +129,6 @@ const BranchSingleCondition = ({
                     type="text"
                     placeholder="Second value"
                     {...field}
-                    onChange={(e) => {
-                      field.onChange(e);
-                      triggerChange();
-                    }}
                   />
                   <FormMessage />
                 </FormItem>
@@ -141,7 +137,7 @@ const BranchSingleCondition = ({
           )}
         </div>
 
-        <div className='flex justify-between items-center gap-2 mt-2'>
+        <div className='flex justify-start items-center gap-2 mt-2'>
           {isTextCondition && (<FormField
             name="condition.caseSensitive"
             control={form.control}
@@ -151,10 +147,7 @@ const BranchSingleCondition = ({
                   <Switch
                     id="case-sensitive"
                     checked={field.value}
-                    onCheckedChange={(e) => {
-                      field.onChange(e);
-                      triggerChange();
-                    }}
+                    onCheckedChange={(e) => field.onChange(e)}
                   />
                   <Label htmlFor="case-sensitive">Case sensitive</Label>
                 </div>
@@ -162,6 +155,7 @@ const BranchSingleCondition = ({
               </FormItem>
             )}
           />)}
+          <div className='flex-grow'></div>
           <div>
             {showDelete &&
               <Button variant={"basic"} size={'sm'} onClick={deleteClick}>
