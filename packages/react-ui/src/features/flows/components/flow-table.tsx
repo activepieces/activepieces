@@ -1,3 +1,4 @@
+import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -15,7 +16,6 @@ import { FolderBadge } from '@/features/folders/component/folder-badge';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 
 const columns: ColumnDef<RowDataWithActions<PopulatedFlow>>[] = [
   {
@@ -76,7 +76,10 @@ const columns: ColumnDef<RowDataWithActions<PopulatedFlow>>[] = [
     ),
     cell: ({ row }) => {
       return (
-        <div className="flex items-center space-x-2">
+        <div
+          className="flex items-center space-x-2"
+          onClick={(e) => e.stopPropagation()}
+        >
           <FlowStatusToggle flow={row.original} />
         </div>
       );
