@@ -1,8 +1,16 @@
 // TODO revisit for clean up
+import {
+  CustomAuthProperty,
+  PieceProperty,
+  PiecePropertyMap,
+  PropertyType,
+} from '@activepieces/pieces-framework';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static } from '@sinclair/typebox';
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { ControllerRenderProps, useForm } from 'react-hook-form';
+
+import { TextInputWithMentions } from '../../flow-canvas/text-input-with-mentions';
 
 import { ConnectionSelect } from '@/app/routes/connections/connection-select';
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -20,12 +28,6 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { AutoFormFieldWrapper } from '@/features/properties-form/components/auto-form-field-wrapper';
 import { formUtils } from '@/features/properties-form/lib/form-utils';
-import {
-  CustomAuthProperty,
-  PieceProperty,
-  PiecePropertyMap,
-  PropertyType,
-} from '@activepieces/pieces-framework';
 
 type AutoFormProps = {
   props: PiecePropertyMap;
@@ -72,7 +74,7 @@ const AutoPropertiesFormComponent = React.memo(
 );
 
 const selectRightComponent = (
-  field: any,
+  field: ControllerRenderProps<Record<string, any>, string>,
   key: string,
   property: PieceProperty,
   allowDynamicValues: boolean,
@@ -160,6 +162,11 @@ const selectRightComponent = (
           key={key}
           allowDynamicValues={allowDynamicValues}
         >
+          <TextInputWithMentions
+            onChange={field.onChange}
+            key={key}
+            originalValue={field.value}
+          ></TextInputWithMentions>
           <Input {...field} id={key} type="text" />
         </AutoFormFieldWrapper>
       );
