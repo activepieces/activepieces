@@ -1,6 +1,11 @@
 import { Bug, Link2, Logs, Settings, Shield, Workflow } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { Button } from '../../components/ui/button';
+import { UserAvatar } from '../../components/ui/user-avatar';
+import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
+
+import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import {
   Tooltip,
   TooltipContent,
@@ -8,11 +13,11 @@ import {
 } from '@/components/ui/tooltip';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
+import { projectHooks } from '@/hooks/project-hooks';
 import { theme } from '@/lib/theme';
-
-import { Button } from '../../components/ui/button';
-import { UserAvatar } from '../../components/ui/user-avatar';
-import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
+import { ApFlagId } from '@activepieces/shared';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { useQueryClient } from '@tanstack/react-query';
 
 type Link = {
   icon: React.ReactNode;
@@ -35,6 +40,7 @@ const CustomTooltipLink = ({
   notification?: boolean;
 }) => {
   const location = useLocation();
+
   const isActive = location.pathname.startsWith(to);
 
   return (
@@ -58,6 +64,12 @@ const CustomTooltipLink = ({
 
 export function Sidebar({ children }: { children: React.ReactNode }) {
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
+  const { data: project } = projectHooks.useCurrentProject();
+  const queryClient = useQueryClient();
+  const billingEnabled = flagsHooks.useFlag<boolean>(
+    ApFlagId.BILLING_ENABLED,
+    queryClient,
+  );
 
   return (
     <div className="flex min-h-screen w-full ">
@@ -102,6 +114,29 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                 <Shield className="size-4" />
                 <span>Platform Admin</span>
               </Button>
+              {billingEnabled && (
+                <Link to={'/plans'}>
+                  <Button
+                    variant={'outline'}
+                    size="sm"
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <ProgressCircularComponent
+                      size="small"
+                      data={{
+                        plan: project.plan.tasks,
+                        usage: project.usage.tasks,
+                      }}
+                    />
+                    <span>
+                      <strong>
+                        {project.usage.tasks}/{project.plan.tasks}
+                      </strong>{' '}
+                      Tasks Per Month
+                    </span>
+                  </Button>
+                </Link>
+              )}
               <UserAvatar />
             </div>
           </div>
