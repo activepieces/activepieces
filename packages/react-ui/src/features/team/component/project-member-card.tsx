@@ -1,6 +1,5 @@
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import { PopoverContent } from '@radix-ui/react-popover';
-import { useQueryClient } from '@tanstack/react-query';
 import { ChevronDownIcon, Trash } from 'lucide-react';
 
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
@@ -25,7 +24,13 @@ export function ProjectMemberCard({
 }: {
   member: ProjectMemberWithUser;
 }) {
-  const queryClient = useQueryClient();
+  const { refetch } = projectMembersHooks.useProjectMembers();
+
+  async function deleteMember() {
+    await projectMembersApi.delete(member.id);
+    refetch();
+  }
+
   return (
     <div
       className="flex items-center justify-between space-x-4"
@@ -93,11 +98,7 @@ export function ProjectMemberCard({
         <ConfirmationDeleteDialog
           title={`Remove ${member.user.firstName} ${member.user.lastName}`}
           message="Are you sure you want to remove this member?"
-          mutationFn={() =>
-            projectMembersApi.delete(member.id).then(() => {
-              projectMembersHooks.invalidate(queryClient);
-            })
-          }
+          mutationFn={() => deleteMember()}
           entityName={`${member.user.firstName} ${member.user.lastName}`}
         >
           <Button variant="ghost" className="size-8 p-0">
