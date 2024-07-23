@@ -105,8 +105,6 @@
       }
 
       .resolution {
-        margin-left: 55px;
-        margin-right: 35px;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
@@ -114,6 +112,9 @@
 
       .resolution p {
         line-height: 1.5;
+      }
+      .footer{
+      	margin-top: 10px;
       }
     </style>
   </head>
@@ -136,18 +137,18 @@
         >Due to trigger not able to poll changes,
         <strong>{{flowName}}</strong> is stopped.</span
       >
-    </div>
-
-    <div class="resolution">
-      <h4>To resolve:</h4>
-      <p>
+      <br></br>
+          <h5>To resolve:</h5>
+          <p>
         Navigate to <strong>{{flowName}}</strong> in
         <strong>{{projectName}}</strong> and test it's trigger and make sure it
         works and publish it again.
       </p>
+
     </div>
 
-    <span
+
+    <span class="footer"
       >Activepieces, Inc. 398 11th Street, 2nd floor, San Francisco, CA
       94103</span
     >
