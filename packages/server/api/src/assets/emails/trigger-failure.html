@@ -80,20 +80,12 @@
         margin-bottom: 18px;
       }
 
-      span {
-        padding-bottom: 30px;
-        font-size: 14px;
-        line-height: 24px;
-        color: #000001;
-        text-align: center;
-      }
-
       .header {
         margin-top: 32px;
       }
 
       .header span {
-        padding-bottom: 16px;
+        display: block;
         color: #000001;
         font-family: 'Graphik', '-apple-system', 'BlinkMacSystemFont',
           'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
@@ -102,19 +94,11 @@
         line-height: 30px;
         text-align: left;
         min-width: auto !important;
+        margin-bottom: 10px;
       }
 
-      .resolution {
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-      }
-
-      .resolution p {
-        line-height: 1.5;
-      }
-      .footer{
-      	margin-top: 10px;
+      .footer {
+        margin-top: 10px;
       }
     </style>
   </head>
@@ -133,20 +117,18 @@
           style="-ms-interpolation-mode: bicubic"
       /></a>
       <h3>{{flowName}} has been disabled</h3>
+
       <span
         >Due to trigger not able to poll changes,
         <strong>{{flowName}}</strong> is stopped.</span
       >
-      <br></br>
-          <h5>To resolve:</h5>
-          <p>
-        Navigate to <strong>{{flowName}}</strong> in
+
+      <span
+        >To resolve: Navigate to <strong>{{flowName}}</strong> in
         <strong>{{projectName}}</strong> and test it's trigger and make sure it
         works and publish it again.
-      </p>
-
+      </span>
     </div>
-
 
     <span class="footer"
       >Activepieces, Inc. 398 11th Street, 2nd floor, San Francisco, CA
