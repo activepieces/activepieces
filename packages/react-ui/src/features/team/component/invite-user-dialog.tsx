@@ -49,6 +49,8 @@ import {
   UserInvitationWithLink,
 } from '@activepieces/shared';
 
+import { userInvitationsHooks } from '../lib/user-invitations-hooks';
+
 const FormSchema = Type.Object({
   email: Type.String({
     errorMessage: 'Please enter a valid email address',
@@ -74,7 +76,7 @@ export function InviteUserDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
   const { data: platform } = platformHooks.useCurrentPlatform();
-
+  const { refetch } = userInvitationsHooks.useInvitations();
   const { data: project } = projectHooks.useCurrentProject();
   const currentUser = authenticationSession.getCurrentUser();
 
@@ -103,6 +105,7 @@ export function InviteUserDialog() {
           title: 'Invitation sent successfully',
         });
       }
+      refetch();
       //TODO: navigate to platform admin users
     },
     onError: (error) => {

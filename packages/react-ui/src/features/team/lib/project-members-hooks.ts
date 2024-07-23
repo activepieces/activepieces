@@ -1,4 +1,4 @@
-import { QueryClient, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
@@ -6,11 +6,10 @@ import { authenticationSession } from '../../../lib/authentication-session';
 
 import { projectMembersApi } from './project-members-api';
 
-const projectMembersQueryKey = 'project-members';
 export const projectMembersHooks = {
   useProjectMembers: () => {
-    return useQuery<ProjectMemberWithUser[]>({
-      queryKey: [projectMembersQueryKey],
+    const query = useQuery<ProjectMemberWithUser[]>({
+      queryKey: ['project-members'],
       queryFn: () => {
         return projectMembersApi
           .list({
@@ -24,10 +23,10 @@ export const projectMembersHooks = {
       },
       staleTime: Infinity,
     });
-  },
-  invalidate: (queryClient: QueryClient) => {
-    queryClient.invalidateQueries({
-      queryKey: [projectMembersQueryKey],
-    });
+    return {
+      projectMembers: query.data,
+      isLoading: query.isLoading,
+      refetch: query.refetch,
+    };
   },
 };

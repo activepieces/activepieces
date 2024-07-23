@@ -17,9 +17,9 @@ import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { InviteUserDialog } from './invite-user-dialog';
 
 export default function ProjectMembersList() {
-  const { data: projectMembers, isPending: projectMembersIsPending } =
+  const { projectMembers, isLoading: projectMembersIsPending } =
     projectMembersHooks.useProjectMembers();
-  const { data: invitations, isPending: invitationsIsPending } =
+  const { invitations, isLoading: invitationsIsPending } =
     userInvitationsHooks.useInvitations();
 
   return (
@@ -64,7 +64,6 @@ export default function ProjectMembersList() {
           {invitations && invitations.length === 0 && (
             <div className="text-center">No pending invitation.</div>
           )}
-
           {Array.isArray(invitations) &&
             invitations.map((invitation) => (
               <InvitationCard

@@ -49,8 +49,9 @@ const CustomTooltipLink = ({
         className={`relative flex flex-col items-center justify-center gap-1`}
       >
         <Icon
-          className={`size-10 p-2 hover:text-primary rounded-lg transition-colors ${isActive ? 'bg-accent text-primary' : ''
-            } ${extraClasses || ''}`}
+          className={`size-10 p-2 hover:text-primary rounded-lg transition-colors ${
+            isActive ? 'bg-accent text-primary' : ''
+          } ${extraClasses || ''}`}
         />
         <span className="text-[10px]">{label}</span>
         {notification && (

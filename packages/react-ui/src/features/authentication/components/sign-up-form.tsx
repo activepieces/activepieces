@@ -225,7 +225,7 @@ const SignUpForm: React.FC = () => {
                       onChange={(e) => field.onChange(e)}
                     />
                   </PopoverTrigger>
-                  <PopoverContent className="absolute border-2 bg-white p-2 rounded-md left-56 ml-2 -bottom-16 flex flex-col">
+                  <PopoverContent className="absolute border-2 bg-white p-2 rounded-md right-60 -bottom-16 flex flex-col">
                     <PasswordValidator password={form.getValues().password} />
                   </PopoverContent>
                 </Popover>
