@@ -4,6 +4,7 @@ import React from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 
 import { Form } from '@/components/ui/form';
+import { HorizontalSeparatorWithText } from '@/components/ui/seperator';
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
 import {
   BranchAction,
@@ -13,7 +14,6 @@ import {
 
 import { BranchSingleCondition } from './branch-condition-group';
 import { BranchConditionToolbar } from './branch-condition-toolbar';
-import { HorizontalSeparatorWithText } from '@/components/ui/seperator';
 
 type BranchSettingsProps = {
   selectedStep: BranchAction;
@@ -121,9 +121,11 @@ const BranchSettings = ({
         {fields.map((fieldGroup, groupIndex) => {
           return (
             <div className="flex flex-col gap-4" key={`group-${groupIndex}`}>
-              {groupIndex > 0 && <HorizontalSeparatorWithText className="my-2">
-                OR
-              </HorizontalSeparatorWithText>}
+              {groupIndex > 0 && (
+                <HorizontalSeparatorWithText className="my-2">
+                  OR
+                </HorizontalSeparatorWithText>
+              )}
               {fieldGroup.andGroup.length === 0 && (
                 <BranchConditionToolbar
                   key={`toolbar-${groupIndex}`}
@@ -137,12 +139,12 @@ const BranchSettings = ({
                 <React.Fragment
                   key={`condition-${groupIndex}-${conditionIndex}-${condition.operator}`}
                 >
-                  {conditionIndex > 0 && <div>
-                    And If
-                  </div>}
+                  {conditionIndex > 0 && <div>And If</div>}
                   <BranchSingleCondition
                     deleteClick={() => handleDelete(groupIndex, conditionIndex)}
-                    showDelete={fields.length !== 1 || fieldGroup.andGroup.length !== 1}
+                    showDelete={
+                      fields.length !== 1 || fieldGroup.andGroup.length !== 1
+                    }
                     onChange={(condition) =>
                       handleChange(condition, groupIndex, conditionIndex)
                     }
@@ -153,9 +155,7 @@ const BranchSettings = ({
               <BranchConditionToolbar
                 onAnd={() => handleAnd(groupIndex)}
                 onOr={() => handleOr()}
-                showOr={
-                  groupIndex === fields.length - 1
-                }
+                showOr={groupIndex === fields.length - 1}
                 showAnd={true}
               ></BranchConditionToolbar>
             </div>

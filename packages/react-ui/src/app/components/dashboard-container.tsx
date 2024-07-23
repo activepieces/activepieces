@@ -8,10 +8,7 @@ export function DashboardContainer({
 }) {
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
-      <Sidebar>
-        {children}
-      </Sidebar>
+      <Sidebar>{children}</Sidebar>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }
-1

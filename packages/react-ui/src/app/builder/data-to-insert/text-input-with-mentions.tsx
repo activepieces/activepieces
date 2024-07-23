@@ -8,12 +8,8 @@ import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { useCallback } from 'react';
 
-import {
-  fromTextToTipTapJsonContent,
-  fromTiptapJsonContentToText,
-  generateMentionHtmlElement,
-} from '../../../lib/text-input-utils';
 import './tip-tap.css';
+import { textMentionUtils } from '@/lib/text-input-utils';
 
 const extensions = (placeholder?: string) => {
   return [
@@ -35,31 +31,37 @@ const extensions = (placeholder?: string) => {
       renderHTML({ node }) {
         const mentionAttrs: MentionNodeAttrs =
           node.attrs as unknown as MentionNodeAttrs;
-        return generateMentionHtmlElement(mentionAttrs);
+        return textMentionUtils.generateMentionHtmlElement(mentionAttrs);
       },
     }),
   ];
 };
 
-const defaultClassName =
-  ' w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';
+type TextInputWithMentionsProps = {
+  className?: string;
+  originalValue?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+};
 export const TextInputWithMentions = ({
   className,
   originalValue,
   onChange,
   placeholder,
-}: {
-  className?: string;
-  originalValue?: string;
-  onChange?: (value: string) => void;
-  placeholder?: string;
-}) => {
+}: TextInputWithMentionsProps) => {
   //TODO: get previous steps metadata from the flow
-  const content = [fromTextToTipTapJsonContent(originalValue ?? '', [])];
-  const insertMention = useCallback((mentionText: string) => {
-    const jsonContent = fromTextToTipTapJsonContent(mentionText, []);
+  const content = [
+    textMentionUtils.convertTextToTipTapJsonContent(originalValue ?? '', []),
+  ];
+
+  useCallback((mentionText: string) => {
+    const jsonContent = textMentionUtils.convertTextToTipTapJsonContent(
+      mentionText,
+      [],
+    );
     editor?.chain().focus().insertContent(jsonContent.content).run();
   }, []);
+
   const editor = useEditor({
     extensions: extensions(placeholder),
     content: {
@@ -68,17 +70,15 @@ export const TextInputWithMentions = ({
     },
     editorProps: {
       attributes: {
-        class: className ?? defaultClassName,
+        class:
+          className ??
+          'w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
       },
     },
     onUpdate: ({ editor }) => {
       const content = editor.getJSON();
-      const textResult = fromTiptapJsonContentToText(content);
-      if (onChange) {
-        onChange(textResult);
-      } else {
-        console.log({ textResult });
-      }
+      const textResult = textMentionUtils.convertTiptapJsonToText(content);
+      onChange(textResult);
     },
   });
 

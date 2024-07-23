@@ -52,9 +52,8 @@ const CodeSettings = React.memo(
       if (!form.formState.isDirty) {
         return;
       }
-      updateFormChange()
+      updateFormChange();
     }, [watchedForm]);
-
 
     async function updateFormChange() {
       await form.trigger();
