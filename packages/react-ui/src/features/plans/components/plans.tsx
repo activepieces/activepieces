@@ -5,13 +5,9 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import React, { useEffect } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-
 import { billingApi } from '../api/billing-api';
-import { planNameFormatter } from '../utils';
-
 import { PlanData } from './plan-data';
 import { TasksProgress } from './tasks-progress';
-
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -21,6 +17,7 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { HttpError } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
+import { planNameFormatter } from '../utils/plan-name-formatter';
 
 const TasksSchema = Type.Object({
   tasks: Type.Number(),

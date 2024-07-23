@@ -15,6 +15,9 @@ import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { projectHooks } from '@/hooks/project-hooks';
 import { theme } from '@/lib/theme';
+import { ApFlagId } from '@activepieces/shared';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { useQueryClient } from '@tanstack/react-query';
 
 type Link = {
   icon: React.ReactNode;
@@ -37,6 +40,7 @@ const CustomTooltipLink = ({
   notification?: boolean;
 }) => {
   const location = useLocation();
+
   const isActive = location.pathname.startsWith(to);
 
   return (
@@ -45,9 +49,8 @@ const CustomTooltipLink = ({
         className={`relative flex flex-col items-center justify-center gap-1`}
       >
         <Icon
-          className={`size-10 p-2 hover:text-primary rounded-lg transition-colors ${
-            isActive ? 'bg-accent text-primary' : ''
-          } ${extraClasses || ''}`}
+          className={`size-10 p-2 hover:text-primary rounded-lg transition-colors ${isActive ? 'bg-accent text-primary' : ''
+            } ${extraClasses || ''}`}
         />
         <span className="text-[10px]">{label}</span>
         {notification && (
@@ -61,6 +64,11 @@ const CustomTooltipLink = ({
 export function Sidebar({ children }: { children: React.ReactNode }) {
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
   const { data: project } = projectHooks.useCurrentProject();
+  const queryClient = useQueryClient();
+  const billingEnabled = flagsHooks.useFlag<boolean>(
+    ApFlagId.BILLING_ENABLED,
+    queryClient,
+  );
 
   return (
     <div className="flex min-h-screen w-full ">
@@ -105,27 +113,29 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                 <Shield className="size-4" />
                 <span>Platform Admin</span>
               </Button>
-              <Link to={'/plans'}>
-                <Button
-                  variant={'outline'}
-                  size="sm"
-                  className="flex items-center justify-center gap-2"
-                >
-                  <ProgressCircularComponent
-                    size="small"
-                    data={{
-                      plan: project.plan.tasks,
-                      usage: project.usage.tasks,
-                    }}
-                  />
-                  <span>
-                    <strong>
-                      {project.usage.tasks}/{project.plan.tasks}
-                    </strong>{' '}
-                    Tasks Per Month
-                  </span>
-                </Button>
-              </Link>
+              {billingEnabled && (
+                <Link to={'/plans'}>
+                  <Button
+                    variant={'outline'}
+                    size="sm"
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <ProgressCircularComponent
+                      size="small"
+                      data={{
+                        plan: project.plan.tasks,
+                        usage: project.usage.tasks,
+                      }}
+                    />
+                    <span>
+                      <strong>
+                        {project.usage.tasks}/{project.plan.tasks}
+                      </strong>{' '}
+                      Tasks Per Month
+                    </span>
+                  </Button>
+                </Link>
+              )}
               <UserAvatar />
             </div>
           </div>
