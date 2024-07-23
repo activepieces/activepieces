@@ -1,0 +1,24 @@
+
+*[data-pd-ripple="true"]{
+    overflow: hidden;
+    position: relative;
+}
+@keyframes ripple {
+    100% {
+        opacity: 0;
+        transform: scale(2.5);
+    }
+}
+span.p-ink-active{
+    animation: ripple 0.5s linear !important;
+}
+
+.p-tree .p-treenode-children{
+    padding: 0 0 0 1rem !important;
+}
+
+.p-treenode-content {
+    display:flex;
+    gap:0.0px;
+    align-items: center;
+}

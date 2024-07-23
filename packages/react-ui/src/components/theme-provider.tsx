@@ -1,3 +1,4 @@
+import { Ripple } from 'primereact/ripple';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'dark' | 'light' | 'system';
@@ -19,11 +20,15 @@ const initialState: ThemeProviderState = {
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
-
+const extractSystemTheme = () => {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
+};
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
-  storageKey = 'vite-ui-theme',
+  storageKey = 'ap-ui-theme',
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
@@ -36,12 +41,7 @@ export function ThemeProvider({
     root.classList.remove('light', 'dark');
 
     if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light';
-
-      root.classList.add(systemTheme);
+      root.classList.add(extractSystemTheme());
       return;
     }
 
@@ -70,4 +70,29 @@ export const useTheme = () => {
     throw new Error('useTheme must be used within a ThemeProvider');
 
   return context;
+};
+
+export const useRipple = () => {
+  const context = useContext(ThemeProviderContext);
+
+  if (context === undefined)
+    throw new Error('useTheme must be used within a ThemeProvider');
+  const theme =
+    context.theme === 'system' ? extractSystemTheme() : context.theme;
+  if (theme === 'dark') {
+    return (
+      <Ripple
+        pt={{
+          root: { style: { background: 'rgba(233, 233, 233, 0.3)' } },
+        }}
+      />
+    );
+  }
+  return (
+    <Ripple
+      pt={{
+        root: { style: { background: 'rgba(67, 67, 67, 0.3)' } },
+      }}
+    />
+  );
 };
