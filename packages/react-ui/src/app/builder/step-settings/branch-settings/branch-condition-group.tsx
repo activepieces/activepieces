@@ -1,21 +1,22 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-
-import { SearchableSelect } from '@/components/custom/searchable-select';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import {
   BranchOperator,
   ValidBranchCondition,
-  singleValueConditions,
   textConditions,
+  singleValueConditions,
 } from '@activepieces/shared';
-import { Button } from '@/components/ui/button';
+import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { Static, Type } from '@sinclair/typebox';
 import { Trash } from 'lucide-react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+
+import { TextInputWithMentions } from '../../flow-canvas/text-input-with-mentions';
+
+import { SearchableSelect } from '@/components/custom/searchable-select';
+import { Button } from '@/components/ui/button';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_CONTAINS]: '(Text) Contains',
@@ -88,15 +89,15 @@ const BranchSingleCondition = ({
             control={form.control}
             render={({ field }) => (
               <FormItem>
-                <Input
-                  type="text"
+                <TextInputWithMentions
                   placeholder="First value"
-                  {...field}
                   onChange={(e) => {
                     field.onChange(e);
                     triggerChange();
                   }}
-                />
+                  originalValue={field.value}
+                ></TextInputWithMentions>
+
                 <FormMessage />
               </FormItem>
             )}
@@ -125,15 +126,14 @@ const BranchSingleCondition = ({
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <Input
-                    type="text"
+                  <TextInputWithMentions
                     placeholder="Second value"
-                    {...field}
                     onChange={(e) => {
                       field.onChange(e);
                       triggerChange();
                     }}
-                  />
+                    originalValue={field.value}
+                  ></TextInputWithMentions>
                   <FormMessage />
                 </FormItem>
               )}
@@ -141,37 +141,37 @@ const BranchSingleCondition = ({
           )}
         </div>
 
-        <div className='flex justify-between items-center gap-2 mt-2'>
-          {isTextCondition && (<FormField
-            name="condition.caseSensitive"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center gap-2 p-1">
-                  <Switch
-                    id="case-sensitive"
-                    checked={field.value}
-                    onCheckedChange={(e) => {
-                      field.onChange(e);
-                      triggerChange();
-                    }}
-                  />
-                  <Label htmlFor="case-sensitive">Case sensitive</Label>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />)}
+        <div className="flex justify-between items-center gap-2 mt-2">
+          {isTextCondition && (
+            <FormField
+              name="condition.caseSensitive"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center gap-2 p-1">
+                    <Switch
+                      id="case-sensitive"
+                      checked={field.value}
+                      onCheckedChange={(e) => {
+                        field.onChange(e);
+                        triggerChange();
+                      }}
+                    />
+                    <Label htmlFor="case-sensitive">Case sensitive</Label>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           <div>
-            {showDelete &&
-              <Button variant={"basic"} size={'sm'} onClick={deleteClick}>
-                <Trash className='w-4 h-4'></Trash> Remove
+            {showDelete && (
+              <Button variant={'basic'} size={'sm'} onClick={deleteClick}>
+                <Trash className="w-4 h-4"></Trash> Remove
               </Button>
-            }
+            )}
           </div>
         </div>
-
-
       </form>
     </Form>
   );
