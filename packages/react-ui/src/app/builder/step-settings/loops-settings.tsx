@@ -5,10 +5,11 @@ import { useForm } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { FormField, FormItem, FormMessage, Form } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
-import { LoopOnItemsAction, debounce } from '@activepieces/shared';
+import { LoopOnItemsAction } from '@activepieces/shared';
+
+import { TextInputWithMentions } from '../data-to-insert/text-input-with-mentions';
 
 type LoopsSettingsProps = {
   selectedStep: LoopOnItemsAction;
@@ -33,7 +34,6 @@ type FormSchema = Static<typeof FormSchema>;
 const LoopsSettings = React.memo(
   ({ selectedStep, onUpdateAction }: LoopsSettingsProps) => {
     const loopOnItemsSettings = selectedStep.settings;
-    const debouncedUpdate = debounce(onUpdateAction, 500);
 
     const form = useForm<FormSchema>({
       defaultValues: {
@@ -49,12 +49,12 @@ const LoopsSettings = React.memo(
         form.getValues().items,
         form.formState.isValid,
       );
-      debouncedUpdate(newAction);
+      onUpdateAction(newAction);
     };
 
     return (
       <Form {...form}>
-        <form onChange={updateFormChange} onSubmit={(e) => e.preventDefault()}>
+        <form onSubmit={(e) => e.preventDefault()}>
           <FormField
             control={form.control}
             name="items"
@@ -62,11 +62,14 @@ const LoopsSettings = React.memo(
               <FormItem>
                 <Label htmlFor="email">Items</Label>
                 <ApMarkdown markdown={markdown} />
-                <Input
-                  type="text"
+                <TextInputWithMentions
+                  onChange={(e) => {
+                    field.onChange(e);
+                    updateFormChange();
+                  }}
+                  originalValue={field.value}
                   placeholder="Select an array of items"
-                  {...field}
-                ></Input>
+                ></TextInputWithMentions>
                 <FormMessage />
               </FormItem>
             )}

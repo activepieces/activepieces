@@ -1,5 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon, Trash } from 'lucide-react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -18,7 +19,7 @@ import { formatUtils } from '@/lib/utils';
 import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
 
 import { appConnectionUtils } from '../lib/app-connections-utils';
-import { useState } from 'react';
+
 import { ConnectionTypeDialog } from './connection-type-dialog';
 const DeleteConnectionColumn = ({
   row,
@@ -154,7 +155,6 @@ const fetchData = async (queryParams: URLSearchParams) => {
 };
 
 function AppConnectionsTable() {
-
   const [openNewConnectionDialog, setOpenNewConnectionDialog] = useState(false);
 
   return (
@@ -162,8 +162,16 @@ function AppConnectionsTable() {
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">Connections </h1>
         <div className="ml-auto">
-          <Button variant="default" onClick={() => setOpenNewConnectionDialog(true)}>New Connection</Button>
-          <ConnectionTypeDialog open={openNewConnectionDialog} setOpen={setOpenNewConnectionDialog}></ConnectionTypeDialog>
+          <Button
+            variant="default"
+            onClick={() => setOpenNewConnectionDialog(true)}
+          >
+            New Connection
+          </Button>
+          <ConnectionTypeDialog
+            open={openNewConnectionDialog}
+            setOpen={setOpenNewConnectionDialog}
+          ></ConnectionTypeDialog>
         </div>
       </div>
       <DataTable columns={columns} fetchData={fetchData} filters={filters} />

@@ -1,4 +1,4 @@
-import { Bug, Link2, Logs, Settings, Zap, Shield, Workflow } from 'lucide-react';
+import { Bug, Link2, Logs, Settings, Shield, Workflow } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 import {
@@ -38,11 +38,15 @@ const CustomTooltipLink = ({
   const isActive = location.pathname.startsWith(to);
 
   return (
-    <Link
-      to={to}
-    >
-      <div className={`relative flex flex-col items-center justify-center gap-1`}>
-        <Icon className={`size-10 p-2 hover:text-primary rounded-lg transition-colors ${isActive ? 'bg-accent text-primary' : ''} ${extraClasses || ''}`} />
+    <Link to={to}>
+      <div
+        className={`relative flex flex-col items-center justify-center gap-1`}
+      >
+        <Icon
+          className={`size-10 p-2 hover:text-primary rounded-lg transition-colors ${
+            isActive ? 'bg-accent text-primary' : ''
+          } ${extraClasses || ''}`}
+        />
         <span className="text-[10px]">{label}</span>
         {notification && (
           <span className="bg-destructive absolute right-[-3px] top-[-3px] size-2 rounded-full"></span>
@@ -75,7 +79,11 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
             Icon={Bug}
             notification={showIssuesNotification}
           />
-          <CustomTooltipLink to="/connections" label="Connnections" Icon={Link2} />
+          <CustomTooltipLink
+            to="/connections"
+            label="Connnections"
+            Icon={Link2}
+          />
           <CustomTooltipLink to="/settings" label="Settings" Icon={Settings} />
         </nav>
       </aside>
@@ -97,9 +105,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
               <UserAvatar />
             </div>
           </div>
-          <div className="container mx-auto flex py-10">
-          {children}
-          </div>
+          <div className="container mx-auto flex py-10">{children}</div>
         </div>
       </div>
     </div>
