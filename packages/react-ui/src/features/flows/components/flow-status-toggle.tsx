@@ -1,13 +1,10 @@
-import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
-import { useState } from 'react';
-
-import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   FlowOperationType,
   FlowStatus,
   isNil,
   PopulatedFlow,
 } from '@activepieces/shared';
+import { useState } from 'react';
 
 import { Switch } from '../../../components/ui/switch';
 import {
@@ -17,6 +14,8 @@ import {
 } from '../../../components/ui/tooltip';
 import { flowsApi } from '../lib/flows-api';
 import { flowsUtils } from '../lib/flows-utils';
+
+import { LoadingSpinner } from '@/components/ui/spinner';
 
 export default function FlowStatusToggle({ flow }: { flow: PopulatedFlow }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -37,16 +36,6 @@ export default function FlowStatusToggle({ flow }: { flow: PopulatedFlow }) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const renderIcon = (flow: PopulatedFlow) => {
-    const view = flowsUtils.flowStatusIconRenderer(flow);
-    const icons = {
-      'timer-reset': <TimerReset className="h-4 w-4 text-[#000000]" />,
-      zap: <Zap className="h-4 w-4 text-[#000000] fill-[#000000]" />,
-      warn: <TriangleAlert className="h-4 w-4 text-destructive" />,
-    };
-    return icons[view] || null;
   };
 
   return (
@@ -76,7 +65,7 @@ export default function FlowStatusToggle({ flow }: { flow: PopulatedFlow }) {
           <Tooltip>
             <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
               <div className="p-2 rounded-full hover:bg-muted">
-                {renderIcon(flow)}
+                {flowsUtils.flowStatusIconRenderer(flow)}
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">

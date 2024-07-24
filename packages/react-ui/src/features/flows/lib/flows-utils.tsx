@@ -1,4 +1,6 @@
 import { FlowTemplate, PopulatedFlow, TriggerType } from '@activepieces/shared';
+import cronstrue from 'cronstrue/i18n';
+import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 
 const downloadFile = (
   obj: any,
@@ -30,7 +32,9 @@ export const flowsUtils = {
       case TriggerType.PIECE: {
         const cronExpression = flow.schedule?.cronExpression;
         return cronExpression
-          ? `Running every ${cronExpression}`
+          ? `Run ${cronstrue
+              .toString(cronExpression, { locale: 'en' })
+              .toLocaleLowerCase()}`
           : 'Real time flow';
       }
       case TriggerType.EMPTY:
@@ -47,9 +51,9 @@ export const flowsUtils = {
       case TriggerType.PIECE: {
         const cronExpression = flow.schedule?.cronExpression;
         if (cronExpression) {
-          return 'timer-reset';
+          return <TimerReset className="h-4 w-4 text-background" />;
         } else {
-          return 'zap';
+          return <Zap className="h-4 w-4 text-background fill-background" />;
         }
       }
       case TriggerType.EMPTY: {
@@ -57,7 +61,7 @@ export const flowsUtils = {
           "Flow can't be published with empty trigger " +
             flow.version.displayName,
         );
-        return 'warn';
+        return <TriangleAlert className="h-4 w-4 text-destructive" />;
       }
     }
   },
