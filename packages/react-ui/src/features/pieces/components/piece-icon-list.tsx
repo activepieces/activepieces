@@ -20,7 +20,7 @@ export function PieceIconList({ flow }: { flow: PopulatedFlow }) {
     .slice(0, 3);
 
   return (
-    <div className="flex">
+    <div className="flex gap-2">
       {steps.map((pieceName, index) => (
         <PieceIcon
           circle={true}
