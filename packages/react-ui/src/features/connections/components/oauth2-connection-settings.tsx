@@ -63,9 +63,9 @@ const OAuth2ConnectionSettings = ({
 
   const queryClient = useQueryClient();
   const { data: platform } = platformHooks.useCurrentPlatform();
-  const [ readyToConect, setReadyToConect] = useState(false);
-  const [ refresh, setRefresh] = useState(0);
-  const [ currentOAuth2Type, setOAuth2Type] = useState<AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.OAUTH2 | AppConnectionType.PLATFORM_OAUTH2 | undefined>(undefined);
+  const [readyToConect, setReadyToConect] = useState(false);
+  const [refresh, setRefresh] = useState(0);
+  const [currentOAuth2Type, setOAuth2Type] = useState<AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.OAUTH2 | AppConnectionType.PLATFORM_OAUTH2 | undefined>(undefined);
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL, queryClient);
   const { data: pieceToClientIdMap } = oauth2AppsHooks.usePieceToClientIdMap(platform.cloudAuthEnabled);
   const { data: ownAuthEnabled } = flagsHooks.useFlag<ApEdition>(ApFlagId.OWN_AUTH2_ENABLED, queryClient);
@@ -257,7 +257,7 @@ const OAuth2ConnectionSettings = ({
             updateRequest();
           }}>Disconnect</Button>}
         </div>
-        {ownAuthEnabled && <div>
+        {ownAuthEnabled && currentOAuth2Type !== AppConnectionType.OAUTH2 && <div>
           <Button size="sm" variant={"link"} className='text-xs' onClick={() => setOAuth2Type(AppConnectionType.OAUTH2)}>I would like to use my own App Credentials</Button>
         </div>}
         {currentOAuth2Type === AppConnectionType.OAUTH2 && <div>

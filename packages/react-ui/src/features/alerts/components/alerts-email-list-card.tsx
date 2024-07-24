@@ -93,7 +93,7 @@ export default function AlertsEmailsCard() {
                   className="size-8 p-0"
                   onClick={() => deleteMutation.mutate(alert)}
                 >
-                  <Trash className="size-4 bg-destructive" />
+                  <Trash className="size-4 text-destructive" />
                 </Button>
               </div>
             ))}

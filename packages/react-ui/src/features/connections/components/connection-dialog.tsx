@@ -17,6 +17,7 @@ import { appConnectionsApi } from '@/features/connections/lib/app-connections-ap
 import { api } from '@/lib/api';
 import {
   BasicAuthProperty,
+  CustomAuthProperty,
   OAuth2Property,
   OAuth2Props,
   PieceMetadataModelSummary,
@@ -33,6 +34,7 @@ import {
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
+import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
 
 type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary;
@@ -114,6 +116,17 @@ const ConnectionDialog = React.memo(
               authProperty={piece.auth as OAuth2Property<OAuth2Props>}
               connectionName={connectionName}
               piece={piece}
+              onChange={(req, valid) => {
+                setRequest(req);
+                setDisabledButton(!valid);
+              }}
+            />
+          )}
+          {auth?.type === PropertyType.CUSTOM_AUTH && (
+            <CustomAuthConnectionSettings
+              authProperty={piece.auth as CustomAuthProperty<any>}
+              connectionName={connectionName}
+              pieceName={piece.name}
               onChange={(req, valid) => {
                 setRequest(req);
                 setDisabledButton(!valid);

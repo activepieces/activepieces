@@ -27,13 +27,11 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 
-import { TextInputWithMentions } from '../../data-to-insert/text-input-with-mentions';
-
 type AutoFormProps = {
   props: PiecePropertyMap;
   allowDynamicValues: boolean;
   renderSecretText?: boolean;
-  onChange?: (value: unknown) => void;
+  onChange?: (value: Record<string, unknown>, valid: boolean) => void;
   renderSecretTextDescription?: boolean;
 };
 
@@ -51,13 +49,15 @@ const AutoPropertiesFormComponent = React.memo(
       defaultValues: {},
     });
 
-    const watch = form.watch();
+    console.log("RENDER");
+/*    const watch = form.watch();
 
     useEffect(() => {
+      console.log("NEW CHANGES");
       if (onChange) {
-        onChange(watch);
+        onChange(watch, form.formState.isValid);
       }
-    }, [watch]);
+    }, [watch]);*/
 
     return (
       <Form {...form}>
@@ -181,11 +181,6 @@ const selectRightComponent = (
           key={key}
           allowDynamicValues={allowDynamicValues}
         >
-          <TextInputWithMentions
-            onChange={field.onChange}
-            key={key}
-            originalValue={field.value}
-          ></TextInputWithMentions>
           <Input {...field} id={key} type="text" />
         </AutoFormFieldWrapper>
       );
