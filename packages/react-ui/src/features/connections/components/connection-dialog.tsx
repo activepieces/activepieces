@@ -16,6 +16,9 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { api } from '@/lib/api';
 import {
+  BasicAuthProperty,
+  OAuth2Property,
+  OAuth2Props,
   PieceMetadataModelSummary,
   PropertyType,
   SecretTextProperty,
@@ -28,6 +31,8 @@ import {
 } from '@activepieces/shared';
 
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
+import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
+import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
 
 type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary;
@@ -60,8 +65,10 @@ const ConnectionDialog = React.memo(
         if (api.isError(response)) {
           const apError = response.response?.data as ApErrorParams;
           console.log(apError);
-          if (apError.code === ErrorCode.INVALID_APP_CONNECTION) {
-            setErrorMessage(`Connection failed: ${apError.params.error}`);
+          if (apError.code === ErrorCode.INVALID_CLOUD_CLAIM) {
+            setErrorMessage('Could not claim the authorization code, make sure you have correct settings and try again.');
+          } else if (apError.code === ErrorCode.INVALID_APP_CONNECTION) {
+            setErrorMessage(`Connection failed with error: ${apError.params.error}`);
           }
         } else {
           toast(INTERNAL_ERROR_TOAST);
@@ -91,6 +98,28 @@ const ConnectionDialog = React.memo(
               }}
             />
           )}
+          {auth?.type === PropertyType.BASIC_AUTH && (
+            <BasicAuthConnectionSettings
+              authProperty={piece.auth as BasicAuthProperty}
+              connectionName={connectionName}
+              pieceName={piece.name}
+              onChange={(req, valid) => {
+                setRequest(req);
+                setDisabledButton(!valid);
+              }}
+            />
+          )}
+          {auth?.type === PropertyType.OAUTH2 && (
+            <OAuth2ConnectionSettings
+              authProperty={piece.auth as OAuth2Property<OAuth2Props>}
+              connectionName={connectionName}
+              piece={piece}
+              onChange={(req, valid) => {
+                setRequest(req);
+                setDisabledButton(!valid);
+              }}
+            />
+          )}
           <DialogFooter>
             <Button
               onClick={() => mutate()}
@@ -102,7 +131,7 @@ const ConnectionDialog = React.memo(
             </Button>
           </DialogFooter>
           {errorMessage && (
-            <div className="text-center text-destructive text-sm mt-4">
+            <div className="text-left text-sm text-destructive text-sm mt-4">
               {errorMessage}
             </div>
           )}

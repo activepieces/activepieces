@@ -16,7 +16,7 @@ import SamlIcon from '../../../assets/img/custom/auth/saml.svg';
 import { flagsHooks } from '../../../hooks/flags-hooks';
 import { authenticationApi } from '../../../lib/authentication-api';
 import { authenticationSession } from '../../../lib/authentication-session';
-import { oauth2Utils } from '../lib/oauth2-utils';
+import { oauth2Utils } from '../../../lib/oauth2-utils';
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;

@@ -19,12 +19,16 @@ const disallowedRoutes = [
   '/v1/authn/local/reset-password',
 ];
 
+const startWithProtocol = (url: string) => {
+  return url.startsWith('http') || url.startsWith('https')
+};
+
 function request<TResponse>(
   url: string,
   config: AxiosRequestConfig = {},
 ): Promise<TResponse> {
   return axios({
-    url: `${apiUrl}${url}`,
+    url: startWithProtocol(url) ? url : `${apiUrl}${url}`,
     ...config,
     headers: {
       ...config.headers,

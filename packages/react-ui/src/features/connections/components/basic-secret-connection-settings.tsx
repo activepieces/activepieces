@@ -3,22 +3,22 @@ import { Static, Type } from '@sinclair/typebox';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Form, FormDescription, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { appConnectionUtils } from '@/features/connections/lib/app-connections-utils';
 import { authenticationSession } from '@/lib/authentication-session';
-import { SecretTextProperty } from '@activepieces/pieces-framework';
+import { BasicAuthProperty } from '@activepieces/pieces-framework';
 import {
   AppConnectionType,
-  UpsertSecretTextRequest,
+  UpsertBasicAuthRequest,
 } from '@activepieces/shared';
 
-type SecretTextConnectionSettingsProps = {
-  onChange: (request: UpsertSecretTextRequest | null, valid: boolean) => void;
+type BasicAuthConnectionSettingsProps = {
+  onChange: (request: UpsertBasicAuthRequest | null, valid: boolean) => void;
   connectionName?: string;
   pieceName: string;
-  authProperty: SecretTextProperty<boolean>;
+  authProperty: BasicAuthProperty;
 };
 
 const formSchema = Type.Object({
@@ -26,7 +26,11 @@ const formSchema = Type.Object({
     errorMessage: 'This field is required',
     minLength: 1,
   }),
-  secret_text: Type.String({
+  username: Type.String({
+    errorMessage: 'This field is required',
+    minLength: 1,
+  }),
+  password: Type.String({
     errorMessage: 'This field is required',
     minLength: 1,
   }),
@@ -34,36 +38,38 @@ const formSchema = Type.Object({
 
 type FormSchema = Static<typeof formSchema>;
 
-const SecretTextConnectionSettings = React.memo(
+const BasicAuthConnectionSettings = React.memo(
   ({
     onChange,
     connectionName,
     pieceName,
     authProperty,
-  }: SecretTextConnectionSettingsProps) => {
+  }: BasicAuthConnectionSettingsProps) => {
     const suggestedConnectionName =
       connectionName ?? appConnectionUtils.findName(pieceName);
 
     const form = useForm<FormSchema>({
       defaultValues: {
         connectionName: suggestedConnectionName,
-        secret_text: '',
+        username: '',
+        password: '',
       },
       resolver: typeboxResolver(formSchema),
     });
 
     async function handleChange() {
       await form.trigger();
-      const { secret_text, connectionName } = form.getValues();
+      const { username, password, connectionName } = form.getValues();
       onChange(
         {
           name: connectionName,
           pieceName,
           projectId: authenticationSession.getProjectId(),
-          type: AppConnectionType.SECRET_TEXT,
+          type: AppConnectionType.BASIC_AUTH,
           value: {
-            type: AppConnectionType.SECRET_TEXT,
-            secret_text: secret_text,
+            type: AppConnectionType.BASIC_AUTH,
+            username: username,
+            password: password,
           },
         },
         form.formState.isValid,
@@ -96,11 +102,30 @@ const SecretTextConnectionSettings = React.memo(
             )}
           ></FormField>
           <FormField
-            name="secret_text"
+            name="username"
             control={form.control}
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <Label htmlFor="secret_text">{authProperty.displayName}</Label>
+                <Label htmlFor="username">{authProperty.username.displayName}</Label>
+                <Input
+                  {...field}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    handleChange();
+                  }}
+                  type="text"
+                />
+                <FormDescription>{authProperty.username.description}</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          ></FormField>
+          <FormField
+            name="password"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <Label htmlFor="password">{authProperty.password.displayName}</Label>
                 <Input
                   {...field}
                   onChange={(e) => {
@@ -109,6 +134,7 @@ const SecretTextConnectionSettings = React.memo(
                   }}
                   type="password"
                 />
+                <FormDescription>{authProperty.password.description}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -119,5 +145,5 @@ const SecretTextConnectionSettings = React.memo(
   },
 );
 
-SecretTextConnectionSettings.displayName = 'SecretTextConnectionSettings';
-export { SecretTextConnectionSettings };
+BasicAuthConnectionSettings.displayName = 'BasicAuthConnectionSettings';
+export { BasicAuthConnectionSettings };
