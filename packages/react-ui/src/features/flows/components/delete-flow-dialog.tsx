@@ -1,9 +1,10 @@
+import { FlowVersion } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { DialogDescription } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import React from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import { flowsApi } from '../lib/flows-api';
 
@@ -25,14 +26,14 @@ type DeleteFlowSchema = Static<typeof DeleteFlowSchema>;
 
 type DeleteFlowDialogProps = {
   flowId: string;
-  flowName: string;
+  flowVersion: FlowVersion;
   setIsDeleteDialogOpen: (isOpen: boolean) => void;
   onDelete: () => void;
 };
 
 const DeleteFlowDialog: React.FC<DeleteFlowDialogProps> = ({
   flowId,
-  flowName,
+  flowVersion,
   setIsDeleteDialogOpen,
   onDelete,
 }) => {
@@ -41,9 +42,7 @@ const DeleteFlowDialog: React.FC<DeleteFlowDialogProps> = ({
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async () => {
-      await flowsApi.delete(flowId);
-    },
+    mutationFn: () => flowsApi.delete(flowId),
     onSuccess: () => {
       setIsDeleteDialogOpen(false);
       onDelete();
@@ -56,16 +55,10 @@ const DeleteFlowDialog: React.FC<DeleteFlowDialogProps> = ({
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const onDeleteFlowSubmit: SubmitHandler<{
-    delete: string;
-  }> = (data) => {
-    mutate(data);
-  };
-
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Delete Flow {flowName}</DialogTitle>
+        <DialogTitle>Delete Flow {flowVersion.displayName}</DialogTitle>
         <DialogDescription>
           <span>
             This will permanently delete the flow, all its data and any
@@ -98,7 +91,7 @@ const DeleteFlowDialog: React.FC<DeleteFlowDialogProps> = ({
           )}
           <Button
             loading={isPending}
-            onClick={(e) => deleteFlowForm.handleSubmit(onDeleteFlowSubmit)(e)}
+            onClick={() => mutate()}
             className="bg-destructive hover:bg-destructive/90"
           >
             Confirm

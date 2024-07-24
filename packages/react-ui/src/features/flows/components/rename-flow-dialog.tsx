@@ -40,16 +40,13 @@ const RenameFlowDialog: React.FC<{
       displayName: string;
     }
   >({
-    mutationFn: async () => {
-      const result = await flowsApi.update(flowId, {
+    mutationFn: () =>
+      flowsApi.update(flowId, {
         type: FlowOperationType.CHANGE_NAME,
         request: {
           displayName: renameFlowForm.getValues().displayName,
         },
-      });
-
-      return result;
-    },
+      }),
     onSuccess: () => {
       setIsRenameDialogOpen(false);
       onRename();

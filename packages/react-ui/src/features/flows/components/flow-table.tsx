@@ -1,6 +1,7 @@
 import {
   FlowOperationType,
   FlowStatus,
+  FlowVersion,
   PopulatedFlow,
 } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
@@ -11,10 +12,8 @@ import {
   Download,
   EllipsisVertical,
   Pencil,
-  TimerReset,
+  Share2,
   Trash2,
-  TriangleAlert,
-  Zap,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +23,7 @@ import { flowsUtils } from '../lib/flows-utils';
 
 import { DeleteFlowDialog } from './delete-flow-dialog';
 import { RenameFlowDialog } from './rename-flow-dialog';
+import { ShareTemplateDialog } from './share-template-dialog';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -39,11 +39,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import FlowStatusToggle from '@/features/flows/components/flow-status-toggle';
 import { flowsApi } from '@/features/flows/lib/flows-api';
@@ -70,13 +65,16 @@ const filters: DataTableFilter[] = [
 const FlowsTable = () => {
   const navigate = useNavigate();
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedFlow, setSelectedFlow] = useState<{
     flowId: string;
     flowName: string;
+    flowVersion?: FlowVersion;
   }>({
     flowId: '',
     flowName: '',
+    flowVersion: undefined,
   });
 
   const { refetch } = flowsHooks.useFlowsListing();
@@ -138,11 +136,16 @@ const FlowsTable = () => {
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const selectedFlowSetter = (flowId: string, flowName: string) => {
+  const selectedFlowSetter = (
+    flowId: string,
+    flowName: string,
+    flowVersion: FlowVersion,
+  ) => {
     setSelectedFlow((prev) => ({
       ...prev,
       flowId,
       flowName,
+      flowVersion,
     }));
   };
 
@@ -232,6 +235,7 @@ const FlowsTable = () => {
                     selectedFlowSetter(
                       row.original.id,
                       row.original.version.displayName,
+                      row.original.version,
                     );
                     setIsRenameDialogOpen(true);
                   }}
@@ -260,6 +264,22 @@ const FlowsTable = () => {
                     selectedFlowSetter(
                       row.original.id,
                       row.original.version.displayName,
+                      row.original.version,
+                    );
+                    setIsShareDialogOpen(true);
+                  }}
+                >
+                  <div className="flex flex-row gap-2 items-center">
+                    <Share2 className="h-4 w-4" />
+                    <span>Share</span>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    selectedFlowSetter(
+                      row.original.id,
+                      row.original.version.displayName,
+                      row.original.version,
                     );
                     setIsDeleteDialogOpen(true);
                   }}
@@ -292,9 +312,10 @@ const FlowsTable = () => {
         </div>
       </div>
       <Dialog
-        open={isRenameDialogOpen || isDeleteDialogOpen}
+        open={isRenameDialogOpen || isShareDialogOpen || isDeleteDialogOpen}
         onOpenChange={(isOpen) => {
           setIsRenameDialogOpen(isOpen);
+          setIsShareDialogOpen(isOpen);
           setIsDeleteDialogOpen(isOpen);
         }}
       >
@@ -305,10 +326,17 @@ const FlowsTable = () => {
             onRename={() => refetch()}
           />
         )}
-        {isDeleteDialogOpen && (
+        {isShareDialogOpen && selectedFlow.flowVersion && (
+          <ShareTemplateDialog
+            flowId={selectedFlow.flowId}
+            flowVersion={selectedFlow.flowVersion}
+            setIsShareDialogOpen={setIsShareDialogOpen}
+          />
+        )}
+        {isDeleteDialogOpen && selectedFlow.flowVersion && (
           <DeleteFlowDialog
             flowId={selectedFlow.flowId}
-            flowName={selectedFlow.flowName}
+            flowVersion={selectedFlow.flowVersion}
             setIsDeleteDialogOpen={setIsDeleteDialogOpen}
             onDelete={() => refetch()}
           />
