@@ -17,6 +17,8 @@ import {
 import { flowsApi } from '../lib/flows-api';
 import { flowsUtils } from '../lib/flows-utils';
 
+import { LoadingSpinner } from '@/components/ui/spinner';
+
 export default function FlowStatusToggle({ flow }: { flow: PopulatedFlow }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isChecked, setIsChecked] = useState(
@@ -68,17 +70,21 @@ export default function FlowStatusToggle({ flow }: { flow: PopulatedFlow }) {
             : 'Flow is off'}
         </TooltipContent>
       </Tooltip>
-      {isChecked && (
-        <Tooltip>
-          <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <div className="p-2 rounded-full hover:bg-muted">
-              {renderIcon(flow)}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {flowsUtils.flowStatusToolTipRenderer(flow)}
-          </TooltipContent>
-        </Tooltip>
+      {isLoading ? (
+        <LoadingSpinner />
+      ) : (
+        isChecked && (
+          <Tooltip>
+            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <div className="p-2 rounded-full hover:bg-muted">
+                {renderIcon(flow)}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {flowsUtils.flowStatusToolTipRenderer(flow)}
+            </TooltipContent>
+          </Tooltip>
+        )
       )}
     </>
   );
