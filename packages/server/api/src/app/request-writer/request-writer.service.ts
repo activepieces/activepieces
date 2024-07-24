@@ -112,7 +112,7 @@ export const requestWriterService = {
     async generateSearchQuery({ prompt }: RequestWriteParams): Promise<string> {
         const openAI = getOpenAI()
         const extractedSearchQuery = await openAI.chat.completions.create({
-            model: 'gpt-4o',
+            model: 'gpt-4o-mini',
             messages: [{ role: 'system', content: this.customGPTPrompt }, { role: 'user', content: prompt }],
             temperature: 0.2,
         })
@@ -137,6 +137,7 @@ export const requestWriterService = {
             model: 'gpt-4-turbo',
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.2,
+            response_format: { type: 'json_object' },
         })
 
         assertNotNullOrUndefined(
