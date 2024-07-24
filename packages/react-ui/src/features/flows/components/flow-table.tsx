@@ -141,8 +141,8 @@ const FlowsTable = () => {
   const renderIcon = (flow: PopulatedFlow) => {
     const view = flowsUtils.flowStatusIconRenderer(flow);
     const icons = {
-      'timer-reset': <TimerReset className="h-4 w-4 text-primary" />,
-      zap: <Zap className="h-4 w-4 text-primary fill-primary" />,
+      'timer-reset': <TimerReset className="h-4 w-4 text-[#000000]" />,
+      zap: <Zap className="h-4 w-4 text-[#000000] fill-[#000000]" />,
       warn: <TriangleAlert className="h-4 w-4 text-destructive" />,
     };
     return icons[view] || null;
