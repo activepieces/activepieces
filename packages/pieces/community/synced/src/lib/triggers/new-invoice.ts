@@ -48,7 +48,7 @@ export const newInvoice = createTrigger({
       async run(context) {
 
         const payloadBody = context.payload.body as PayloadBody;
-        return [payloadBody.data.object];
+        return [payloadBody];
       },
 })
 
@@ -57,7 +57,7 @@ type PayloadBody = {
       object: unknown;
     };
   };
-  
+
   interface WebhookInformation {
     webhookId: string;
   }
