@@ -315,9 +315,10 @@ const FlowsTable = () => {
       </div>
       <Dialog
         open={isRenameDialogOpen || isDeleteDialogOpen}
-        onOpenChange={
-          isRenameDialogOpen ? setIsRenameDialogOpen : setIsDeleteDialogOpen
-        }
+        onOpenChange={(isOpen) => {
+          setIsRenameDialogOpen(isOpen);
+          setIsDeleteDialogOpen(isOpen);
+        }}
       >
         {isRenameDialogOpen && (
           <RenameFlowDialog
