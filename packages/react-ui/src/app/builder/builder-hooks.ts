@@ -72,6 +72,8 @@ export type BuilderState = {
   startSaving: () => void;
   setReadOnly: (readonly: boolean) => void;
   setVersion: (flowVersion: FlowVersion) => void;
+  insertMention: (propertyPath: string) => void;
+  setInsertMentionHandler: (handler: (propertyPath: string) => void) => void;
 };
 
 export type BuilderInitialState = Pick<
@@ -135,6 +137,14 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       }),
     setReadOnly: (readonly: boolean) => set({ readonly }),
     setVersion: (flowVersion: FlowVersion) => set({ flowVersion, run: null }),
+    insertMention: (propertyPath: string) => {
+      console.warn('insertMention is not assigned yet');
+    },
+    setInsertMentionHandler: (
+      insertMention: (propertyPath: string) => void,
+    ) => {
+      set({ insertMention });
+    },
   }));
 
 export const stepPathToKeyString = (path: StepPathWithName): string => {

@@ -2,47 +2,24 @@ import { Action, Trigger } from '@activepieces/shared';
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
 
-type Step = Action | Trigger;
-const keysWithinPath = (path: string) => {
-  const result: string[] = [];
-  let insideBrackets = false;
-  let word = '';
-  let insideDot = true;
-  for (let i = 0; i < path.length; i++) {
-    if (path[i] === '.' && !insideDot && !insideBrackets) {
-      insideDot = true;
-      continue;
-    }
-    if (path[i] === '.' && insideDot) {
-      result.push(word);
-      word = '';
-    } else if (insideDot && path[i] !== '[') {
-      word += path[i];
-    } else if (path[i] === '[') {
-      if (word) {
-        result.push(word);
-      }
-      word = '';
-      insideBrackets = true;
-      insideDot = false;
-    } else if (path[i] === ']') {
-      result.push(word);
-      word = '';
-      insideBrackets = false;
-    } else {
-      word += path[i];
-    }
-  }
-  if (insideDot) {
-    result.push(word);
-  }
+import { StepMetadata } from '../features/pieces/lib/pieces-hook';
 
-  return result.map((w) => {
-    if (w.startsWith(`"`) || w.startsWith(`'`)) {
-      return w.slice(1, w.length - 1);
-    }
-    return w;
-  });
+type Step = Action | Trigger;
+const removeQuotes = (text: string) => {
+  if (
+    (text.startsWith('"') && text.endsWith('"')) ||
+    (text.startsWith("'") && text.endsWith("'"))
+  ) {
+    return text.slice(1, -1);
+  }
+  return text;
+};
+
+export const keysWithinPath = (path: string) => {
+  return path
+    .split(/\.|\[|\]/)
+    .filter((key) => key && key !== '')
+    .map((key) => removeQuotes(key));
 };
 export type ApMentionNodeAttrs = {
   logoUrl?: string;
@@ -50,17 +27,6 @@ export type ApMentionNodeAttrs = {
   serverValue: string;
 };
 export const customCodeMentionDisplayName = 'Custom Code';
-function replaceStepNameWithDisplayName(
-  stepName: string,
-  allStepsMetaData: (MentionListItem & { step: Step })[],
-) {
-  const stepDisplayName = allStepsMetaData.find((s) => s.step.name === stepName)
-    ?.step.displayName;
-  if (stepDisplayName) {
-    return stepDisplayName;
-  }
-  return customCodeMentionDisplayName;
-}
 export interface MentionListItem {
   label: string;
   value: string;
@@ -82,29 +48,38 @@ const isMentionNodeText = (item: string) => {
     item[item.length - 2] === '}'
   );
 };
-const parseMentionNodeFromText = (
-  item: string,
-  allStepsMetaData: (MentionListItem & { step: StepWithIndex })[],
-) => {
-  const itemPathWithoutInterpolationDenotation = item.slice(2, item.length - 2);
+const parseMentionNodeFromText = ({
+  path,
+  stepDisplayName,
+  stepLogoUrl,
+  stepDfsIndex,
+}: {
+  path: string;
+  stepDisplayName: string;
+  stepLogoUrl: string;
+  stepDfsIndex: number;
+}) => {
+  const itemPathWithoutInterpolationDenotation = path.slice(2, path.length - 2);
   const keys = keysWithinPath(itemPathWithoutInterpolationDenotation);
-  const stepName = keys[0];
-  const stepMetaData = allStepsMetaData.find((s) => s.step.name === stepName);
-
-  //Mention text is the whole path joined with spaces
-  const mentionText = [
-    replaceStepNameWithDisplayName(stepName, allStepsMetaData),
-    ...keys.slice(1),
-  ].join(' ');
-  const indexInDfsTraversal = stepMetaData?.step.indexInDfsTraversal;
-  const prefix = indexInDfsTraversal ? `${indexInDfsTraversal}. ` : '';
+  if (keys.length === 0) {
+    const attrs: MentionNodeAttrs = {
+      id: path,
+      label: customCodeMentionDisplayName,
+    };
+    const insertMention: JSONContent = {
+      type: TipTapNodeTypes.mention,
+      attrs: attrs,
+    };
+    return insertMention;
+  }
+  const mentionText = [stepDisplayName, ...keys.slice(1)].join(' ');
   const apMentionNodeAttrs: ApMentionNodeAttrs = {
-    logoUrl: stepMetaData?.logoUrl,
-    displayText: prefix + mentionText,
-    serverValue: item,
+    logoUrl: stepLogoUrl,
+    displayText: `${stepDfsIndex}. ${mentionText}`,
+    serverValue: path,
   };
   const attrs: MentionNodeAttrs = {
-    id: item,
+    id: path,
     label: JSON.stringify(apMentionNodeAttrs),
   };
   const insertMention: JSONContent = {
@@ -128,19 +103,31 @@ const parseTextAndHardBreakNodes = (item: string) => {
   return resultArray;
 };
 
-export function fromTextToTipTapJsonContent(
-  text: string,
-  allStepsMetaData: (MentionListItem & { step: StepWithIndex })[],
-): {
+export function fromTextToTipTapJsonContent({
+  propertyPath,
+  stepMetadataFinder,
+}: {
+  propertyPath: string;
+  stepMetadataFinder: (
+    path: string,
+  ) => (StepMetadata & { dfsIndex: number }) | undefined;
+}): {
   type: TipTapNodeTypes.paragraph;
   content: JSONContent[];
 } {
   try {
     const regex = /(\{\{.*?\}\})/;
-    const matched = text.split(regex).filter((el) => el);
+    const matched = propertyPath.split(regex).filter((el) => el);
+
     const ops: JSONContent[] = matched.map((item) => {
       if (isMentionNodeText(item)) {
-        return parseMentionNodeFromText(item, allStepsMetaData);
+        const metadata = stepMetadataFinder(item);
+        return parseMentionNodeFromText({
+          path: item,
+          stepDisplayName: metadata?.displayName ?? '',
+          stepLogoUrl: metadata?.logoUrl ?? '',
+          stepDfsIndex: metadata?.dfsIndex ?? 0,
+        });
       } else if (item.includes('\n')) {
         return parseTextAndHardBreakNodes(item);
       }
@@ -148,7 +135,7 @@ export function fromTextToTipTapJsonContent(
     });
     return { type: TipTapNodeTypes.paragraph, content: ops.flat(1) };
   } catch (err) {
-    console.error(text);
+    console.error(propertyPath);
     console.error(err);
     throw err;
   }

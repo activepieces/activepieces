@@ -9,7 +9,6 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-
 import { FlowVersion } from '@activepieces/shared';
 
 import {
@@ -19,6 +18,7 @@ import {
 } from '../../../lib/flow-canvas-utils';
 
 import { ApBigButton } from './big-button';
+import { DataToInsertList } from './data-to-insert-list';
 import { ApEdgeWithButton } from './edge-with-button';
 import { ApStepNode } from './step-node';
 
@@ -57,6 +57,7 @@ const FlowCanvas = ({ flowVersion }: FlowCanvasProps) => {
 
   return (
     <div className="size-full grow">
+      <DataToInsertList> </DataToInsertList>
       <ReactFlow
         nodeTypes={nodeTypes}
         nodes={nodes}

@@ -1,6 +1,8 @@
 import { Plus, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 
+import { TextInputWithMentions } from '../../app/builder/flow-canvas/text-input-with-mentions';
+
 import { Button } from './button';
 import { Input } from './input';
 import { TextWithIcon } from './text-with-icon';
@@ -59,18 +61,21 @@ export const DictionaryInput = ({ values, onChange }: DictionaryInputProps) => {
       {formValue.map(({ key, value }, index) => (
         <div
           key={'dictionary-input-' + index}
-          className="flex items-center gap-3"
+          className="flex items-center gap-3 items-center"
         >
           <Input
-            className="h-8"
             value={key}
+            className="basis-[50%] h-full max-w-[50%]"
             onChange={(e) => onChangeValue(index, undefined, e.target.value)}
           />
-          <Input
-            className="h-8"
-            value={value}
-            onChange={(e) => onChangeValue(index, e.target.value, undefined)}
-          ></Input>
+          <div className="basis-[50%] max-w-[50%]">
+            <TextInputWithMentions
+              originalValue={value}
+              extraClasses=""
+              onChange={(e) => onChangeValue(index, e, undefined)}
+            ></TextInputWithMentions>
+          </div>
+
           <Button
             type="button"
             variant="outline"

@@ -73,6 +73,8 @@ const nodeTemplate = ({
   expandNode,
   setExpandedKeys,
   expandedKeys,
+  selectStep,
+  insertMention,
 }: {
   ripple: ReturnType<typeof useRipple>;
   expandNode: (
@@ -81,16 +83,14 @@ const nodeTemplate = ({
   ) => void;
   setExpandedKeys: React.Dispatch<React.SetStateAction<TreeExpandedKeysType>>;
   expandedKeys: TreeExpandedKeysType;
+  selectStep: (path: StepPathWithName) => void;
+  insertMention: (propertyPath: string) => void;
 }) => {
   const node = (node: TreeNode, options: TreeNodeTemplateOptions) => {
     const actualNode = node as MentionTreeNode;
 
     const testStepSectionElement = actualNode.data.isTestStepNode
-      ? testStepSection(
-          actualNode.data.propertyPath,
-          // eslint-disable-next-line react-hooks/rules-of-hooks
-          useBuilderStateContext((state) => state.selectStep),
-        )
+      ? testStepSection(actualNode.data.propertyPath, selectStep)
       : null;
     if (testStepSectionElement) return testStepSectionElement;
 
@@ -139,6 +139,7 @@ const nodeTemplate = ({
                   className="z-50 hover:opacity-100 opacity-0 group-hover:opacity-100"
                   variant="basic"
                   size="sm"
+                  onClick={() => insertMention(actualNode.data.propertyPath)}
                 >
                   Insert
                 </Button>
@@ -166,7 +167,8 @@ export function DataToInsertList({ children }: { children?: React.ReactNode }) {
       _expandedKeys[node.key] = true;
     }
   };
-
+  const selectStep = useBuilderStateContext((state) => state.selectStep);
+  const insertMention = useBuilderStateContext((state) => state.insertMention);
   return (
     <PrimeReactProvider value={{ ripple: true }}>
       <Tree
@@ -178,6 +180,8 @@ export function DataToInsertList({ children }: { children?: React.ReactNode }) {
           expandNode,
           setExpandedKeys,
           expandedKeys,
+          selectStep,
+          insertMention,
         })}
         onToggle={(e) => setExpandedKeys(e.value)}
         className="w-full"
