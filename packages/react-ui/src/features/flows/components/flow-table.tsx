@@ -138,16 +138,6 @@ const FlowsTable = () => {
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const renderIcon = (flow: PopulatedFlow) => {
-    const view = flowsUtils.flowStatusIconRenderer(flow);
-    const icons = {
-      'timer-reset': <TimerReset className="h-4 w-4 text-[#000000]" />,
-      zap: <Zap className="h-4 w-4 text-[#000000] fill-[#000000]" />,
-      warn: <TriangleAlert className="h-4 w-4 text-destructive" />,
-    };
-    return icons[view] || null;
-  };
-
   const selectedFlowSetter = (flowId: string, flowName: string) => {
     setSelectedFlow((prev) => ({
       ...prev,
@@ -220,18 +210,6 @@ const FlowsTable = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <FlowStatusToggle flow={row.original} />
-            {row.original.status === FlowStatus.ENABLED && (
-              <Tooltip>
-                <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-                  <div className="p-2 rounded-full hover:bg-muted">
-                    {renderIcon(row.original)}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {flowsUtils.flowStatusToolTipRenderer(row.original)}
-                </TooltipContent>
-              </Tooltip>
-            )}
           </div>
         );
       },
