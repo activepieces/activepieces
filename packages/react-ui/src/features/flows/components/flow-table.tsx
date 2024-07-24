@@ -1,16 +1,22 @@
+import {
+  FlowOperationType,
+  FlowStatus,
+  FlowVersion,
+  PopulatedFlow,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import {
-  CheckIcon,
-  Copy,
-  Download,
-  EllipsisVertical,
-  Pencil,
-  Share2,
-  Trash2,
-} from 'lucide-react';
+import { CheckIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import { flowsHooks } from '../lib/flows-hooks';
+import { flowsUtils } from '../lib/flows-utils';
+
+import { DeleteFlowDialog } from './delete-flow-dialog';
+import FlowActionMenu from './flow-actions-menu';
+import { RenameFlowDialog } from './rename-flow-dialog';
+import { ShareTemplateDialog } from './share-template-dialog';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,12 +26,6 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { Dialog } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import FlowStatusToggle from '@/features/flows/components/flow-status-toggle';
 import { flowsApi } from '@/features/flows/lib/flows-api';
@@ -33,19 +33,6 @@ import { FolderBadge } from '@/features/folders/component/folder-badge';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import {
-  FlowOperationType,
-  FlowStatus,
-  FlowVersion,
-  PopulatedFlow,
-} from '@activepieces/shared';
-
-import { flowsHooks } from '../lib/flows-hooks';
-import { flowsUtils } from '../lib/flows-utils';
-
-import { DeleteFlowDialog } from './delete-flow-dialog';
-import { RenameFlowDialog } from './rename-flow-dialog';
-import { ShareTemplateDialog } from './share-template-dialog';
 
 const filters: DataTableFilter[] = [
   {
@@ -223,74 +210,38 @@ const FlowsTable = () => {
         <DataTableColumnHeader column={column} title="" />
       ),
       cell: ({ row }) => {
+        const flow = row.original;
         return (
           <div onClick={(e) => e.stopPropagation()}>
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger className="p-2 rounded-full hover:bg-muted">
-                <EllipsisVertical className="h-6 w-6" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onClick={() => {
-                    selectedFlowSetter(
-                      row.original.id,
-                      row.original.version.displayName,
-                      row.original.version,
-                    );
-                    setIsRenameDialogOpen(true);
-                  }}
-                >
-                  <div className="flex flex-row gap-2 items-center">
-                    <Pencil className="h-4 w-4" />
-                    <span>Rename</span>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => duplicateFlow(row.original.id)}
-                >
-                  <div className="flex flex-row gap-2 items-center">
-                    <Copy className="h-4 w-4" />
-                    <span>Duplicate</span>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportFlow(row.original.id)}>
-                  <div className="flex flex-row gap-2 items-center">
-                    <Download className="h-4 w-4" />
-                    <span>Export</span>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    selectedFlowSetter(
-                      row.original.id,
-                      row.original.version.displayName,
-                      row.original.version,
-                    );
-                    setIsShareDialogOpen(true);
-                  }}
-                >
-                  <div className="flex flex-row gap-2 items-center">
-                    <Share2 className="h-4 w-4" />
-                    <span>Share</span>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    selectedFlowSetter(
-                      row.original.id,
-                      row.original.version.displayName,
-                      row.original.version,
-                    );
-                    setIsDeleteDialogOpen(true);
-                  }}
-                >
-                  <div className="flex flex-row gap-2 items-center">
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                    <span className="text-destructive">Delete</span>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <FlowActionMenu
+              flow={flow}
+              onRename={() => {
+                selectedFlowSetter(
+                  flow.id,
+                  flow.version.displayName,
+                  flow.version,
+                );
+                setIsRenameDialogOpen(true);
+              }}
+              onDuplicate={duplicateFlow}
+              onExport={exportFlow}
+              onShare={() => {
+                selectedFlowSetter(
+                  flow.id,
+                  flow.version.displayName,
+                  flow.version,
+                );
+                setIsShareDialogOpen(true);
+              }}
+              onDelete={() => {
+                selectedFlowSetter(
+                  flow.id,
+                  flow.version.displayName,
+                  flow.version,
+                );
+                setIsDeleteDialogOpen(true);
+              }}
+            />
           </div>
         );
       },
