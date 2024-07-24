@@ -1,6 +1,8 @@
+import { FlowOperationType } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import React from 'react';
-import { SubmitHandler } from 'react-hook-form';
+
+import { templatesApi } from '../lib/templates-api';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -8,10 +10,6 @@ import { Separator } from '@/components/ui/seperator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
-import { FlowOperationType } from '@activepieces/shared';
-
-import { templatesApi } from '../lib/templates-api';
 
 const ShareTemplate: React.FC<{ templateId: string }> = ({ templateId }) => {
   const { data } = useQuery({
@@ -43,6 +41,8 @@ const ShareTemplate: React.FC<{ templateId: string }> = ({ templateId }) => {
     },
   });
 
+  console.log(data);
+
   return (
     <Card className="w-1/4">
       {data && (
@@ -53,17 +53,30 @@ const ShareTemplate: React.FC<{ templateId: string }> = ({ templateId }) => {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-2">
-              <div className="flex gap-2 items-center justify-between mb-4">
-                <span>Steps in this flow</span>
-                {data.pieces.map((pieceName, index) => (
-                  <PieceIcon
-                    circle={true}
-                    size={'md'}
-                    border={true}
-                    pieceName={pieceName}
-                    key={index}
-                  />
-                ))}
+              <div className="flex flex-col gap-2 items-center justify-between mb-4">
+                <div className="flex flex-row w-full justify-between items-center">
+                  <span>Steps in this flow</span>
+                  <div className="flex flex-row justify-between items-center gap-2">
+                    {data.pieces.map((pieceName: string, index: number) => (
+                      <PieceIcon
+                        circle={true}
+                        size={'md'}
+                        border={true}
+                        pieceName={pieceName}
+                        key={index}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {data.description && (
+                  <>
+                    <Separator className="my-2" />
+                    <div className="flex flex-col w-full justify-start items-start">
+                      <span className="font-semibold">Description</span>
+                      <span>{data.description}</span>
+                    </div>
+                  </>
+                )}
               </div>
               <div className="ml-auto">
                 <Button
