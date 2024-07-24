@@ -15,6 +15,10 @@ import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { projectHooks } from '@/hooks/project-hooks';
 import { theme } from '@/lib/theme';
+import { Button } from '../../components/ui/button';
+import { UserAvatar } from '../../components/ui/user-avatar';
+import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
+import { RequestTrial } from './request-trial';
 import { ApFlagId } from '@activepieces/shared';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useQueryClient } from '@tanstack/react-query';
@@ -114,6 +118,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                 <Shield className="size-4" />
                 <span>Platform Admin</span>
               </Button>
+              <RequestTrial></RequestTrial>
               {billingEnabled && (
                 <Link to={'/plans'}>
                   <Button
