@@ -1,8 +1,3 @@
-import { createContext, useContext } from 'react';
-import { create, useStore } from 'zustand';
-
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { PromiseQueue } from '@/lib/promise-queue';
 import {
   ActionType,
   ExecutionState,
@@ -13,6 +8,17 @@ import {
   StepOutput,
   flowHelper,
 } from '@activepieces/shared';
+import { createContext, useContext } from 'react';
+import { create, useStore } from 'zustand';
+
+import {
+  MentionTreeNode,
+  traverseStepOutputAndReturnMentionTree,
+} from './mentions-utils';
+import { StepOutputStructureUtil } from './step-output-utils';
+
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PromiseQueue } from '@/lib/promise-queue';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -135,19 +141,6 @@ export const stepPathToKeyString = (path: StepPathWithName): string => {
   return path.path.map((p) => p.join('-')).join('/') + '/' + path.stepName;
 };
 
-export const equalStepPath = (
-  path1: StepPathWithName,
-  path2: StepPathWithName,
-): boolean => {
-  return (
-    path1.path.length === path2.path.length &&
-    path1.path.every(
-      (p, idx) => p[0] === path2.path[idx][0] && p[1] === path2.path[idx][1],
-    ) &&
-    path1.stepName === path2.stepName
-  );
-};
-
 export function getStepOutputFromExecutionPath({
   path,
   executionState,
@@ -181,3 +174,59 @@ function getStateAtPath({
   });
   return targetMap;
 }
+
+const getAllStepsMentions = (state: BuilderState) => {
+  const { selectedStep, flowVersion } = state;
+  if (!selectedStep || !flowVersion || !flowVersion.trigger) {
+    return [];
+  }
+  const step = flowHelper.getStep(flowVersion, selectedStep.stepName);
+  if (!step) {
+    return [];
+  }
+  const path = StepOutputStructureUtil.findPathToStep(
+    step,
+    flowVersion?.trigger,
+  );
+
+  return path.map((s) => {
+    const stepMentionNode: MentionTreeNode =
+      traverseStepOutputAndReturnMentionTree(
+        s.settings.inputUiInfo?.currentSelectedData,
+        s.name,
+        s.displayName,
+      );
+    const stepNeedsTesting =
+      s.settings.inputUiInfo?.currentSelectedData === undefined;
+    return {
+      ...stepMentionNode,
+      children: stepNeedsTesting
+        ? [
+            {
+              data: {
+                displayName: 'Testing Step',
+                propertyPath: s.name,
+                isTestStepNode: true,
+              },
+            },
+          ]
+        : stepMentionNode.children,
+    };
+  });
+};
+
+const getStep = (stepName: string) => {
+  return (state: BuilderState) => {
+    const { flowVersion } = state;
+    if (!flowVersion) {
+      return undefined;
+    }
+    return flowHelper.getStep(flowVersion, stepName);
+  };
+};
+
+export const builderSelectors = {
+  getAllStepsMentions,
+  getStepOutputFromExecutionPath,
+  getStep,
+};

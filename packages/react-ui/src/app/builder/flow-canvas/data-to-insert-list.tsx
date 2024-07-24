@@ -6,24 +6,102 @@ import {
   TreeNodeTemplateOptions,
 } from 'primereact/tree';
 import { TreeNode } from 'primereact/treenode';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
-import { NodeService } from './node-service';
+import { Button } from '../../../components/ui/button';
+import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
+import {
+  builderSelectors,
+  StepPathWithName,
+  useBuilderStateContext,
+} from '../builder-hooks';
+import { isStepName, MentionTreeNode } from '../mentions-utils';
 
 import './data-to-insert-list.css';
+
 import { useRipple } from '@/components/theme-provider';
 
-export default function DataToInsertList() {
-  const ripple = useRipple();
-  const [nodes, setNodes] = useState<TreeNode[]>([]);
-  const [expandedKeys, setExpandedKeys] = useState<TreeExpandedKeysType>({
-    '0': true,
-    '0-0': true,
-  });
-  const nodeTemplate = (node: TreeNode, options: TreeNodeTemplateOptions) => {
+const testStepSection = (
+  stepName: string,
+  selectStep: (path: StepPathWithName) => void,
+) => {
+  const isTrigger = stepName === 'trigger';
+  const text = isTrigger
+    ? ` This trigger needs to have data loaded from your account, to use as sample data`
+    : `This step needs to be tested in order to view its data`;
+
+  const btn = (
+    <Button
+      onClick={() => {
+        selectStep({ path: [], stepName });
+      }}
+      variant="default"
+      size="default"
+    >
+      {' '}
+      {isTrigger ? 'Go to Trigger' : 'Go to Step'}{' '}
+    </Button>
+  );
+  return (
+    <div className="flex flex-col gap-3 flex-grow items-center justify-center p-2">
+      <div>{text}</div>
+      <div>{btn}</div>
+    </div>
+  );
+};
+const stepIcon = ({ stepName }: { stepName: string }) => {
+  const iconSize = 24;
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const step = useBuilderStateContext(builderSelectors.getStep(stepName));
+  if (step) {
+    const { data } = piecesHooks.usePieceMetadata({ step });
+    if (data) {
+      return (
+        <img
+          src={data.logoUrl}
+          className="object-contain"
+          width={iconSize}
+          height={iconSize}
+        ></img>
+      );
+    }
+  }
+  return <></>;
+};
+const nodeTemplate = ({
+  ripple,
+  expandNode,
+  setExpandedKeys,
+  expandedKeys,
+}: {
+  ripple: ReturnType<typeof useRipple>;
+  expandNode: (
+    node: MentionTreeNode,
+    _expandedKeys: TreeExpandedKeysType,
+  ) => void;
+  setExpandedKeys: React.Dispatch<React.SetStateAction<TreeExpandedKeysType>>;
+  expandedKeys: TreeExpandedKeysType;
+}) => {
+  const node = (node: TreeNode, options: TreeNodeTemplateOptions) => {
+    const actualNode = node as MentionTreeNode;
+
+    const testStepSectionElement = actualNode.data.isTestStepNode
+      ? testStepSection(
+          actualNode.data.propertyPath,
+          // eslint-disable-next-line react-hooks/rules-of-hooks
+          useBuilderStateContext((state) => state.selectStep),
+        )
+      : null;
+    if (testStepSectionElement) return testStepSectionElement;
+
+    const isStep =
+      isStepName(actualNode.data.propertyPath) && !actualNode.data.isSlice;
     const expanded = options.expanded;
     const nodeHasChildren = node.children && node.children.length > 0;
     const toggleIconSize = 15;
+    const stepIconElement = isStep
+      ? stepIcon({ stepName: actualNode.data.propertyPath })
+      : undefined;
     const togglerIcon = expanded ? (
       <ChevronUp height={toggleIconSize} width={toggleIconSize}></ChevronUp>
     ) : (
@@ -33,42 +111,74 @@ export default function DataToInsertList() {
       if (expanded && node.key) {
         delete expandedKeys[node.key];
       } else {
-        expandNode(node, expandedKeys);
+        expandNode(actualNode, expandedKeys);
       }
       setExpandedKeys({ ...expandedKeys });
     };
     return (
       <div
-        className="p-ripple hover:bg-accent flex-grow flex cursor-pointer"
+        className="p-ripple hover:bg-accent hover:bg-opacity-75 flex-grow flex cursor-pointer group"
         onClick={toggleNode}
       >
         <div className="flex min-h-[48px] px-5  select-none flex-grow  items-center gap-2">
-          <div className="flex-grow item-label ap-px-4">{node.label}</div>
+          <div className="flex-grow ap-px-4 flex items-center  gap-3 ">
+            {stepIconElement}
+            {actualNode.data.displayName}
+            {!actualNode.children && !!actualNode.data.value && (
+              <>
+                <div>:</div>
+                <div className="text-primary truncate ">
+                  {`${actualNode.data.value}`}
+                </div>
+              </>
+            )}
+            {!actualNode.data.isSlice && (
+              <>
+                <div className="flex-grow"></div>
+                <Button
+                  className="z-50 hover:opacity-100 opacity-0 group-hover:opacity-100"
+                  variant="basic"
+                  size="sm"
+                >
+                  Insert
+                </Button>
+              </>
+            )}
+          </div>
           {nodeHasChildren && togglerIcon}
         </div>
         {ripple}
       </div>
     );
   };
-  const togglerTemplate = () => <></>;
+  return node;
+};
 
-  const expandNode = (node: TreeNode, _expandedKeys: TreeExpandedKeysType) => {
+export function DataToInsertList({ children }: { children?: React.ReactNode }) {
+  const ripple = useRipple();
+  const nodes = useBuilderStateContext(builderSelectors.getAllStepsMentions);
+  const [expandedKeys, setExpandedKeys] = useState<TreeExpandedKeysType>({});
+  const expandNode = (
+    node: MentionTreeNode,
+    _expandedKeys: TreeExpandedKeysType,
+  ) => {
     if (node.children && node.children.length && node.key) {
       _expandedKeys[node.key] = true;
     }
   };
-
-  useEffect(() => {
-    NodeService.getTreeNodes().then((data) => setNodes(data));
-  }, []);
 
   return (
     <PrimeReactProvider value={{ ripple: true }}>
       <Tree
         value={nodes}
         expandedKeys={expandedKeys}
-        togglerTemplate={togglerTemplate}
-        nodeTemplate={nodeTemplate}
+        togglerTemplate={() => <></>}
+        nodeTemplate={nodeTemplate({
+          ripple,
+          expandNode,
+          setExpandedKeys,
+          expandedKeys,
+        })}
         onToggle={(e) => setExpandedKeys(e.value)}
         className="w-full"
       />
