@@ -1,12 +1,13 @@
+import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
+import { useState } from 'react';
+
+import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   FlowOperationType,
   FlowStatus,
-  Flow,
   isNil,
   PopulatedFlow,
 } from '@activepieces/shared';
-import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
-import { useState } from 'react';
 
 import { Switch } from '../../../components/ui/switch';
 import {
@@ -16,8 +17,6 @@ import {
 } from '../../../components/ui/tooltip';
 import { flowsApi } from '../lib/flows-api';
 import { flowsUtils } from '../lib/flows-utils';
-
-import { LoadingSpinner } from '@/components/ui/spinner';
 
 export default function FlowStatusToggle({ flow }: { flow: PopulatedFlow }) {
   const [isLoading, setIsLoading] = useState(false);

@@ -1,9 +1,3 @@
-import {
-  FlowOperationType,
-  FlowStatus,
-  FlowVersion,
-  PopulatedFlow,
-} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import {
@@ -17,13 +11,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-import { flowsHooks } from '../lib/flows-hooks';
-import { flowsUtils } from '../lib/flows-utils';
-
-import { DeleteFlowDialog } from './delete-flow-dialog';
-import { RenameFlowDialog } from './rename-flow-dialog';
-import { ShareTemplateDialog } from './share-template-dialog';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -46,6 +33,19 @@ import { FolderBadge } from '@/features/folders/component/folder-badge';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
+import {
+  FlowOperationType,
+  FlowStatus,
+  FlowVersion,
+  PopulatedFlow,
+} from '@activepieces/shared';
+
+import { flowsHooks } from '../lib/flows-hooks';
+import { flowsUtils } from '../lib/flows-utils';
+
+import { DeleteFlowDialog } from './delete-flow-dialog';
+import { RenameFlowDialog } from './rename-flow-dialog';
+import { ShareTemplateDialog } from './share-template-dialog';
 
 const filters: DataTableFilter[] = [
   {
@@ -77,7 +77,7 @@ const FlowsTable = () => {
     flowVersion: undefined,
   });
 
-  const { refetch } = flowsHooks.useFlowsListing();
+  const { refetch } = flowsHooks.useFlows();
 
   async function fetchData(queryParams: URLSearchParams) {
     return flowsApi.list({

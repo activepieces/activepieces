@@ -1,10 +1,6 @@
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
-import { FlowOperationType, TemplateType } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { SubmitHandler } from 'react-hook-form';
-
-import { templatesApi } from '../lib/templates-api';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -12,6 +8,10 @@ import { Separator } from '@/components/ui/seperator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
+import { FlowOperationType } from '@activepieces/shared';
+
+import { templatesApi } from '../lib/templates-api';
 
 const ShareTemplate: React.FC<{ templateId: string }> = ({ templateId }) => {
   const { data } = useQuery({
@@ -43,10 +43,6 @@ const ShareTemplate: React.FC<{ templateId: string }> = ({ templateId }) => {
     },
   });
 
-  const onSubmit: SubmitHandler<CreateFlowTemplateRequest> = () => {
-    mutate();
-  };
-
   return (
     <Card className="w-1/4">
       {data && (
@@ -77,7 +73,7 @@ const ShareTemplate: React.FC<{ templateId: string }> = ({ templateId }) => {
                 >
                   Cancel
                 </Button>
-                <Button loading={isPending} onClick={() => onSubmit()}>
+                <Button loading={isPending} onClick={() => mutate()}>
                   Confirm
                 </Button>
               </div>
