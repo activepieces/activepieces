@@ -1,5 +1,6 @@
 'use client';
 
+import { SeekPage } from '@activepieces/shared';
 import {
   ColumnDef,
   flexRender,
@@ -9,6 +10,10 @@ import {
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { Button } from './button';
+import { DataTableFacetedFilter } from './data-table-options-filter';
+import { DataTableToolbar } from './data-table-toolbar';
+
 import {
   Table,
   TableBody,
@@ -17,11 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { SeekPage } from '@activepieces/shared';
-
-import { Button } from './button';
-import { DataTableFacetedFilter } from './data-table-options-filter';
-import { DataTableToolbar } from './data-table-toolbar';
 
 export type RowDataWithActions<TData> = TData & {
   delete: () => void;
@@ -66,6 +66,27 @@ export function DataTable<TData, TValue>({
   const [deletedRows = [], setDeletedRows] = useState<TData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const fetchDataAndUpdateState = async (params: URLSearchParams) => {
+    setLoading(true);
+    setTableData([]);
+    try {
+      const response = await fetchData(params);
+      const newData = response.data.map((row) => ({
+        ...row,
+        delete: () => {
+          setDeletedRows([...deletedRows, row]);
+        },
+      }));
+      setTableData(newData);
+      setNextPageCursor(response.next ?? undefined);
+      setPreviousPageCursor(response.previous ?? undefined);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const table = useReactTable({
     data: tableData,
     columns,
@@ -94,21 +115,8 @@ export function DataTable<TData, TValue>({
   }, [currentCursor]);
 
   useEffect(() => {
-    setLoading(true);
-    setTableData([]);
-    fetchData(searchParams).then((response) => {
-      const newData = response.data.map((row) => ({
-        ...row,
-        delete: () => {
-          setDeletedRows(deletedRows.concat(row));
-        },
-      }));
-      setTableData(newData);
-      setNextPageCursor(response.next ?? undefined);
-      setPreviousPageCursor(response.previous ?? undefined);
-      setLoading(false);
-    });
-  }, [searchParams]);
+    fetchDataAndUpdateState(searchParams);
+  }, [searchParams, fetchData]);
 
   useEffect(() => {
     setTableData(
