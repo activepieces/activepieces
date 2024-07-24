@@ -121,7 +121,7 @@ export default function IssuesTable() {
   ];
 
   return (
-    <div className="container mx-auto flex-col py-10">
+    <div className="flex-col w-full">
       <div className="mb-4 flex">
         <div className="flex flex-col">
           <h1 className="text-3xl font-bold">Issues </h1>

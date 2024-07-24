@@ -13,7 +13,7 @@ import {
 import { Separator } from '@/components/ui/seperator';
 import { CustomAuthProperty } from '@activepieces/pieces-framework';
 
-import { AutoPropertiesFormComponent } from '../../builder/step-settings/auto-properties-form';
+import { AutoPropertiesFormComponent } from '../../builder/step-settings/piece-settings/auto-properties-form';
 
 type ConnectionDialogProps = {
   auth: CustomAuthProperty<any> | undefined;

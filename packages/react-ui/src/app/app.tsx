@@ -10,6 +10,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
+import { InitialDataGuard } from './components/intial-data-guard';
 import { router } from './router';
 
 const queryClient = new QueryClient();
@@ -26,12 +27,14 @@ export function App() {
   return (
     <SocketProvider>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ThemeProvider storageKey="vite-ui-theme">
-            <RouterProvider router={router} />
-            <Toaster />
-          </ThemeProvider>
-        </TooltipProvider>
+        <InitialDataGuard>
+          <TooltipProvider>
+            <ThemeProvider storageKey="vite-ui-theme">
+              <RouterProvider router={router} />
+              <Toaster />
+            </ThemeProvider>
+          </TooltipProvider>
+        </InitialDataGuard>
       </QueryClientProvider>
     </SocketProvider>
   );

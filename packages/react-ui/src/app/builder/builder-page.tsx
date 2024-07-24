@@ -15,7 +15,7 @@ import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 
 import { BuilderNavBar } from './builder-nav-bar';
 import { FlowVersionsList } from './flow-versions/flow-versions-list';
-import { PieceSelectorList } from './piece-selector/piece-selector-list';
+import { PiecesCardList } from './pieces-list/pieces-card-list';
 import { FlowRunDetails } from './run-details/flow-run-details-list';
 import { FlowRecentRunsList } from './run-list/flow-runs-list';
 import { StepSettings } from './step-settings/step-settings-container';
@@ -65,13 +65,13 @@ const BuilderPage = () => {
 
             <ResizablePanel
               id="right-sidebar"
-              defaultSize={25}
+              defaultSize={35}
               maxSize={60}
-              minSize={25}
+              minSize={30}
               order={3}
             >
               {rightSidebar === RightSideBarType.PIECE_SELECTOR && (
-                <PieceSelectorList />
+                <PiecesCardList />
               )}
               {rightSidebar === RightSideBarType.PIECE_SETTINGS && (
                 <StepSettings key={flowVersion.id + selectedStep?.stepName} />

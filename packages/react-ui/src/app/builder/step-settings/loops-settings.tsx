@@ -1,10 +1,15 @@
+import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { Static, Type } from '@sinclair/typebox';
 import React from 'react';
+import { useForm } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
-import { Input } from '@/components/ui/input';
+import { FormField, FormItem, FormMessage, Form } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
 import { LoopOnItemsAction } from '@activepieces/shared';
+
+import { TextInputWithMentions } from '../data-to-insert/text-input-with-mentions';
 
 type LoopsSettingsProps = {
   selectedStep: LoopOnItemsAction;
@@ -17,28 +22,60 @@ Select the items to iterate over from the previous step by clicking on the **Ite
 The loop will iterate over each item in the list and execute the next step for every item.
 `;
 
+const FormSchema = Type.Object({
+  items: Type.String({
+    minLength: 1,
+    errorMessage: 'Please select items to iterate over',
+  }),
+});
+
+type FormSchema = Static<typeof FormSchema>;
+
 const LoopsSettings = React.memo(
   ({ selectedStep, onUpdateAction }: LoopsSettingsProps) => {
     const loopOnItemsSettings = selectedStep.settings;
 
+    const form = useForm<FormSchema>({
+      defaultValues: {
+        items: loopOnItemsSettings.items,
+      },
+      resolver: typeboxResolver(FormSchema),
+    });
+
+    const updateFormChange = async () => {
+      await form.trigger();
+      const newAction = flowVersionUtils.buildActionWithNewLoopItems(
+        selectedStep,
+        form.getValues().items,
+        form.formState.isValid,
+      );
+      onUpdateAction(newAction);
+    };
+
     return (
-      <div className="grid gap-3">
-        <Label htmlFor="email">Items</Label>
-        <ApMarkdown markdown={markdown} />
-        <Input
-          type="text"
-          placeholder="Select an array of items"
-          onChange={(e) =>
-            onUpdateAction(
-              flowVersionUtils.buildActionWithNewLoopItems(
-                selectedStep,
-                e.target.value,
-              ),
-            )
-          }
-          value={loopOnItemsSettings.items}
-        ></Input>
-      </div>
+      <Form {...form}>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <FormField
+            control={form.control}
+            name="items"
+            render={({ field }) => (
+              <FormItem>
+                <Label htmlFor="email">Items</Label>
+                <ApMarkdown markdown={markdown} />
+                <TextInputWithMentions
+                  onChange={(e) => {
+                    field.onChange(e);
+                    updateFormChange();
+                  }}
+                  originalValue={field.value}
+                  placeholder="Select an array of items"
+                ></TextInputWithMentions>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </form>
+      </Form>
     );
   },
 );
