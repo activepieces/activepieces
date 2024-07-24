@@ -1,4 +1,4 @@
-import { launch } from 'puppeteer';
+import { connect } from 'puppeteer';
 import { login } from 'ing-au-login';
 
 import axios from 'axios';
@@ -9,9 +9,8 @@ import moment from 'moment';
 export async function retrieveAuthToken(context: any) {
     // Log into the ING web portal, using the browser.
     let authToken = "";
-    const browser = await launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    const browser = await connect({
+      browserWSEndpoint: 'ws://' + context.auth.browserless_url
     });
     const page = await browser.newPage();
     try {
