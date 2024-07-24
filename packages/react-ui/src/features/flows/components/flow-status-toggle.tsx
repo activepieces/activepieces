@@ -1,6 +1,10 @@
+import {
+  FlowOperationType,
+  FlowStatus,
+  Flow,
+  isNil,
+} from '@activepieces/shared';
 import { useState } from 'react';
-
-import { FlowOperationType, FlowStatus, Flow } from '@activepieces/shared';
 
 import { Switch } from '../../../components/ui/switch';
 import {
@@ -34,12 +38,16 @@ export default function FlowStatusToggle({ flow }: { flow: Flow }) {
           <Switch
             defaultChecked={flow.status === FlowStatus.ENABLED}
             onCheckedChange={onCheckedChange}
-            disabled={isLoading}
+            disabled={isLoading || isNil(flow.publishedVersionId)}
           />
         </div>
       </TooltipTrigger>
       <TooltipContent side="bottom">
-        {flow.status === FlowStatus.ENABLED ? 'Flow is on' : 'Flow is off'}
+        {isNil(flow.publishedVersionId)
+          ? 'Please publish flow first'
+          : flow.status === FlowStatus.ENABLED
+          ? 'Flow is on'
+          : 'Flow is off'}
       </TooltipContent>
     </Tooltip>
   );

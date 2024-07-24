@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { authenticationSession } from '@/lib/authentication-session';
-
 import { issuesApi } from '../api/issues-api';
+
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const issueHooks = {
   useIssuesNotification: () => {
