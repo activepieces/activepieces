@@ -41,7 +41,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
 }) => {
   const { mutate: duplicateFlow } = useMutation({
     mutationFn: async () => {
-      const flow = await flowsApi.get(flow.id);
       const createdFlow = await flowsApi.create({
         displayName: flow.version.displayName,
         projectId: authenticationSession.getProjectId(),
