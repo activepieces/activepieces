@@ -6,9 +6,7 @@ type BranchConditionToolbarProps = {
   showOr: boolean;
   showAnd: boolean;
 };
-const BranchConditionToolbar = (
-  props: BranchConditionToolbarProps,
-) => {
+const BranchConditionToolbar = (props: BranchConditionToolbarProps) => {
   return (
     <div className="flex gap-2 text-center justify-start">
       {props.showAnd && (

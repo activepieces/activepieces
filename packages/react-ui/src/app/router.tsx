@@ -12,6 +12,7 @@ import AppConnectionsPage from './routes/connections';
 import { FlowBuilderPage } from './routes/flows/id';
 import { ResetPasswordPage } from './routes/forget-password';
 import IssuesPage from './routes/issues';
+import PlansPage from './routes/plans';
 import FlowsRunPage from './routes/runs';
 import AlertsPage from './routes/settings/alerts';
 import AppearancePage from './routes/settings/appearance';
@@ -69,6 +70,14 @@ export const router = createBrowserRouter([
     element: (
       <DashboardContainer>
         <AppConnectionsPage />
+      </DashboardContainer>
+    ),
+  },
+  {
+    path: '/plans',
+    element: (
+      <DashboardContainer>
+        <PlansPage />
       </DashboardContainer>
     ),
   },

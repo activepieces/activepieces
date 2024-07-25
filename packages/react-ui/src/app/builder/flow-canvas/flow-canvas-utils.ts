@@ -8,14 +8,39 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-const VERTICAL_OFFSET = 150;
-const HORIZONTAL_SPACE_BETWEEN_NODES = 30;
-const NODE_SIZE = {
-  width: 260,
-  height: 70,
+const VERTICAL_OFFSET = 160;
+const HORIZONTAL_SPACE_BETWEEN_NODES = 20;
+export enum ApNodeType {
+  LOOP_PLACEHOLDER = 'loopPlaceholder',
+  PLACEHOLDER = 'placeholder',
+  BIG_BUTTON = 'bigButton',
+  STEP_NODE = 'stepNode',
+}
+
+export const AP_NODE_SIZE: Record<
+  ApNodeType,
+  { height: number; width: number }
+> = {
+  [ApNodeType.BIG_BUTTON]: {
+    height: 70,
+    width: 260,
+  },
+  [ApNodeType.STEP_NODE]: {
+    height: 70,
+    width: 260,
+  },
+  [ApNodeType.PLACEHOLDER]: {
+    height: 5,
+    width: 260,
+  },
+  [ApNodeType.LOOP_PLACEHOLDER]: {
+    height: 70,
+    width: 260,
+  },
 };
 
 export const flowCanvasUtils = {
+  isPlaceHolder,
   convertFlowVersionToGraph(version: FlowVersion): ApGraph {
     return traverseFlow(version.trigger);
   },
@@ -28,23 +53,25 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
       edges: [],
     };
   }
-  const graph: ApGraph = {
-    nodes: [stepToNode(step)],
-    edges: [],
-  };
+  const graph: ApGraph = buildGraph(ApNodeType.STEP_NODE, step);
   switch (step.type) {
     case ActionType.LOOP_ON_ITEMS: {
       const { firstLoopAction, nextAction } = step;
-      const childrenGraphs = [null, firstLoopAction].map((g) => {
-        return isNil(g) ? graphWithSingleBigButton() : traverseFlow(g);
-      });
+      const firstLoopGraph = isNil(firstLoopAction)
+        ? buildGraph(ApNodeType.BIG_BUTTON)
+        : traverseFlow(firstLoopAction);
+      const childrenGraphs = [
+        buildGraph(ApNodeType.LOOP_PLACEHOLDER),
+        firstLoopGraph,
+      ];
+
       return buildChildrenGraph(childrenGraphs, nextAction, graph);
     }
     case ActionType.BRANCH: {
       const { nextAction, onSuccessAction, onFailureAction } = step;
 
       const childrenGraphs = [onSuccessAction, onFailureAction].map((g) => {
-        return isNil(g) ? graphWithSingleBigButton() : traverseFlow(g);
+        return isNil(g) ? buildGraph(ApNodeType.BIG_BUTTON) : traverseFlow(g);
       });
 
       return buildChildrenGraph(childrenGraphs, nextAction, graph);
@@ -58,7 +85,7 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
         x: 0,
         y: VERTICAL_OFFSET,
       });
-      graph.edges.push(addEdge(stepToNode(step), childGraph.nodes[0]));
+      graph.edges.push(addEdge(graph.nodes[0], childGraph.nodes[0]));
       return mergeGraph(graph, childGraph);
     }
   }
@@ -83,7 +110,9 @@ function buildChildrenGraph(
     2 * VERTICAL_OFFSET;
 
   const commonPartGraph = offsetGraph(
-    isNil(nextAction) ? graphWithSingleBigButton() : traverseFlow(nextAction),
+    isNil(nextAction)
+      ? buildGraph(ApNodeType.PLACEHOLDER)
+      : traverseFlow(nextAction),
     {
       x: 0,
       y: maximumHeight,
@@ -124,24 +153,39 @@ function addEdge(nodeOne: ApNode, nodeTwo: ApNode): ApEdge {
     id: `${nodeOne.id}-${nodeTwo.id}`,
     source: nodeOne.id,
     target: nodeTwo.id,
-    type: 'apEdge',
+    focusable: false,
+    selectable: false,
+    type:
+      nodeTwo.type === ApNodeType.LOOP_PLACEHOLDER ? 'apReturnEdge' : 'apEdge',
     label: nodeTwo.id,
+    data: {
+      addButton: nodeTwo.type === ApNodeType.STEP_NODE,
+      targetType: nodeTwo.type,
+    },
   };
+}
+
+function isPlaceHolder(type: ApNodeType): boolean {
+  return [ApNodeType.PLACEHOLDER, ApNodeType.LOOP_PLACEHOLDER].includes(type);
 }
 
 function boundingBox(graph: ApGraph): ApBoundingBox {
   const minX = Math.min(...graph.nodes.map((node) => node.position.x));
   const minY = Math.min(...graph.nodes.map((node) => node.position.y));
   const maxX = Math.max(
-    ...graph.nodes.map((node) => node.position.x + NODE_SIZE.width),
+    ...graph.nodes.map(
+      (node) => node.position.x + AP_NODE_SIZE[node.type].width,
+    ),
   );
   const maxY = Math.max(
-    ...graph.nodes.map((node) => node.position.y + NODE_SIZE.height),
+    ...graph.nodes.map(
+      (node) => node.position.y + AP_NODE_SIZE[node.type].height,
+    ),
   );
   const width = maxX - minX;
   const height = maxY - minY;
-  const widthLeft = -minX + NODE_SIZE.width / 2;
-  const widthRight = maxX - NODE_SIZE.width / 2;
+  const widthLeft = -minX + AP_NODE_SIZE[graph.nodes[0].type].width / 2;
+  const widthRight = maxX - AP_NODE_SIZE[graph.nodes[0].type].width / 2;
   return { width, height, widthLeft, widthRight };
 }
 
@@ -161,25 +205,19 @@ function offsetGraph(
   };
 }
 
-function graphWithSingleBigButton(): ApGraph {
+function buildGraph(type: ApNodeType, step?: Step): ApGraph {
   return {
     nodes: [
       {
-        id: nanoid(),
+        id: step?.name ?? nanoid(),
         position: { x: 0, y: 0 },
-        type: 'bigButton',
-        data: {},
+        type,
+        data: {
+          step,
+        },
       },
     ],
     edges: [],
-  };
-}
-function stepToNode(step: Action | Trigger): ApNode {
-  return {
-    id: step.name,
-    position: { x: 0, y: 0 },
-    type: 'stepNode',
-    data: step,
   };
 }
 
@@ -202,8 +240,10 @@ type ApBoundingBox = {
 export type ApNode = {
   id: string;
   position: { x: number; y: number };
-  type: string;
-  data: Step | Record<string, unknown>;
+  type: ApNodeType;
+  data: {
+    step?: Step;
+  };
 };
 
 export type ApEdge = {
@@ -211,7 +251,13 @@ export type ApEdge = {
   source: string;
   target: string;
   type: string;
+  focusable: false;
+  selectable: false;
   label: string;
+  data: {
+    addButton: boolean;
+    targetType: ApNodeType;
+  };
 };
 
 export type ApGraph = {

@@ -8,6 +8,7 @@ import {
   Share,
   Trash,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import {
@@ -19,11 +20,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FlowTemplate } from '@activepieces/shared';
 
 const FlowActionsMenu = () => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const { mutate: exportFlow } = useMutation<FlowTemplate, Error, void>({
     mutationFn: async () =>
@@ -48,7 +51,7 @@ const FlowActionsMenu = () => {
   });
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenuTrigger>
         <ChevronDown size={16}></ChevronDown>
       </DropdownMenuTrigger>
@@ -64,10 +67,18 @@ const FlowActionsMenu = () => {
           <span>Duplicate</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <Import className="mr-2 h-4 w-4" />
-          <span>Import</span>
-        </DropdownMenuItem>
+        <ImportFlowDialog>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              console.log('import clicked');
+              setMenuOpen(false);
+              e.preventDefault();
+            }}
+          >
+            <Import className="mr-2 h-4 w-4" />
+            <span>Import</span>
+          </DropdownMenuItem>
+        </ImportFlowDialog>
         <DropdownMenuItem onSelect={() => exportFlow()}>
           <Download className="mr-2 h-4 w-4" />
           <span>Export</span>

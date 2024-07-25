@@ -4,7 +4,6 @@ import { JSONContent } from '@tiptap/react';
 
 import { StepMetadata } from '../features/pieces/lib/pieces-hook';
 
-type Step = Action | Trigger;
 const removeQuotes = (text: string) => {
   if (
     (text.startsWith('"') && text.endsWith('"')) ||
@@ -21,33 +20,21 @@ export const keysWithinPath = (path: string) => {
     .filter((key) => key && key !== '')
     .map((key) => removeQuotes(key));
 };
-export type ApMentionNodeAttrs = {
+
+type ApMentionNodeAttrs = {
   logoUrl?: string;
   displayText: string;
   serverValue: string;
 };
-export const customCodeMentionDisplayName = 'Custom Code';
-export interface MentionListItem {
-  label: string;
-  value: string;
-  logoUrl?: string;
-}
-export type StepWithIndex = Step & { indexInDfsTraversal: number };
-export enum TipTapNodeTypes {
+
+const customCodeMentionDisplayName = 'Custom Code';
+enum TipTapNodeTypes {
   paragraph = 'paragraph',
   text = 'text',
   hardBreak = 'hardBreak',
   mention = 'mention',
 }
-const isMentionNodeText = (item: string) => {
-  return (
-    item.length > 5 &&
-    item[0] === '{' &&
-    item[1] === '{' &&
-    item[item.length - 1] === '}' &&
-    item[item.length - 2] === '}'
-  );
-};
+const isMentionNodeText = (item: string) => /^\{\{.*\}\}$/.test(item);
 const parseMentionNodeFromText = ({
   path,
   stepDisplayName,
@@ -88,6 +75,7 @@ const parseMentionNodeFromText = ({
   };
   return insertMention;
 };
+
 const parseTextAndHardBreakNodes = (item: string) => {
   const endlineRegex = new RegExp(`(\n)`);
   const hardBreak: JSONContent = {
@@ -103,7 +91,7 @@ const parseTextAndHardBreakNodes = (item: string) => {
   return resultArray;
 };
 
-export function fromTextToTipTapJsonContent({
+export function convertTextToTipTapJsonContent({
   propertyPath,
   stepMetadataFinder,
 }: {
@@ -115,76 +103,60 @@ export function fromTextToTipTapJsonContent({
   type: TipTapNodeTypes.paragraph;
   content: JSONContent[];
 } {
-  try {
-    const regex = /(\{\{.*?\}\})/;
-    const matched = propertyPath.split(regex).filter((el) => el);
-
-    const ops: JSONContent[] = matched.map((item) => {
-      if (isMentionNodeText(item)) {
-        const metadata = stepMetadataFinder(item);
-        return parseMentionNodeFromText({
+  const matched = propertyPath.split(/(\{\{.*?\}\})/).filter((el) => el);
+  const metadata = stepMetadataFinder(propertyPath);
+  const contentNodes: JSONContent[] = matched.map((item) =>
+    isMentionNodeText(item)
+      ? parseMentionNodeFromText({
           path: item,
           stepDisplayName: metadata?.displayName ?? '',
           stepLogoUrl: metadata?.logoUrl ?? '',
           stepDfsIndex: metadata?.dfsIndex ?? 0,
-        });
-      } else if (item.includes('\n')) {
-        return parseTextAndHardBreakNodes(item);
-      }
-      return { type: TipTapNodeTypes.text, text: item };
-    });
-    return { type: TipTapNodeTypes.paragraph, content: ops.flat(1) };
-  } catch (err) {
-    console.error(propertyPath);
-    console.error(err);
-    throw err;
-  }
+        })
+      : item.includes('\n')
+      ? parseTextAndHardBreakNodes(item)
+      : { type: TipTapNodeTypes.text, text: item },
+  );
+  return { type: TipTapNodeTypes.paragraph, content: contentNodes.flat(1) };
 }
 
-export const fromTiptapJsonContentToText = (content: JSONContent) => {
-  let res = '';
-  let firstParagraph = true;
+const convertTiptapJsonToText = (content: JSONContent) => {
+  let result = '';
+  let isFirstParagraph = true;
 
   content.content?.forEach((node) => {
-    const nodeType = node.type as TipTapNodeTypes;
-    switch (nodeType) {
-      case TipTapNodeTypes.hardBreak: {
-        res = res.concat('\n');
+    switch (node.type) {
+      case TipTapNodeTypes.hardBreak:
+        result += '\n';
         break;
-      }
-      case TipTapNodeTypes.text: {
+      case TipTapNodeTypes.text:
         if (node.text) {
-          res = res.concat(node.text);
+          result += node.text;
         } else {
           tiptapWarning('node.text is undefined', node);
         }
         break;
-      }
-      case TipTapNodeTypes.mention: {
+
+      case TipTapNodeTypes.mention:
         if (node.attrs?.label) {
-          const apMentionNodeAttrs: ApMentionNodeAttrs = JSON.parse(
-            node.attrs.label || '{}',
-          );
-          res = res.concat(`${apMentionNodeAttrs.serverValue}`);
+          const mentionAttrs: ApMentionNodeAttrs = JSON.parse(node.attrs.label);
+          result += mentionAttrs.serverValue;
         } else {
           tiptapWarning('node.attrs.label is undefined', node);
         }
         break;
-      }
-      case TipTapNodeTypes.paragraph: {
-        if (!firstParagraph) {
-          res = res.concat('\n');
-        }
-        firstParagraph = false;
-        res = res.concat(fromTiptapJsonContentToText(node));
+
+      case TipTapNodeTypes.paragraph:
+        if (!isFirstParagraph) result += '\n';
+        isFirstParagraph = false;
+        result += convertTiptapJsonToText(node);
         break;
-      }
     }
   });
-  return res;
+  return result;
 };
 
-export const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
+const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   const mentionElement = document.createElement('span');
   const apMentionNodeAttrs: ApMentionNodeAttrs = JSON.parse(
     mentionAttrs.label || '{}',
@@ -231,4 +203,10 @@ export const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
 
 const tiptapWarning = (message: string, el: unknown) => {
   console.warn(`${message} el=${JSON.stringify(el, null, 2)}`);
+};
+
+export const textMentionUtils = {
+  convertTextToTipTapJsonContent,
+  convertTiptapJsonToText,
+  generateMentionHtmlElement,
 };

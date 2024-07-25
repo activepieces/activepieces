@@ -9,15 +9,11 @@ import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
-import {
-  fromTextToTipTapJsonContent,
-  fromTiptapJsonContentToText,
-  generateMentionHtmlElement,
-  keysWithinPath,
-} from '../../../lib/text-input-utils';
 import './tip-tap.css';
 import { useBuilderStateContext } from '../builder-hooks';
 import { StepOutputStructureUtil } from '../step-output-utils';
+
+import { textMentionUtils } from '@/lib/text-input-utils';
 
 const extensions = (placeholder?: string) => {
   return [
@@ -39,7 +35,7 @@ const extensions = (placeholder?: string) => {
       renderHTML({ node }) {
         const mentionAttrs: MentionNodeAttrs =
           node.attrs as unknown as MentionNodeAttrs;
-        return generateMentionHtmlElement(mentionAttrs);
+        return textMentionUtils.generateMentionHtmlElement(mentionAttrs);
       },
     }),
   ];
@@ -47,19 +43,20 @@ const extensions = (placeholder?: string) => {
 
 const defaultClassName =
   ' w-full  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';
+type TextInputWithMentionsProps = {
+  className?: string;
+  originalValue?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  extraClasses?: string;
+};
 export const TextInputWithMentions = ({
   className,
   originalValue,
   onChange,
   placeholder,
   extraClasses,
-}: {
-  className?: string;
-  originalValue?: string;
-  onChange?: (value: string) => void;
-  placeholder?: string;
-  extraClasses?: string;
-}) => {
+}: TextInputWithMentionsProps) => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
   const steps = flowHelper
     .getAllSteps(flowVersion.trigger)
@@ -101,7 +98,9 @@ export const TextInputWithMentions = ({
       2,
       path.length - 2,
     );
-    const stepName = keysWithinPath(itemPathWithoutInterpolationDenotation)[0];
+    const stepName = textMentionUtils.keysWithinPath(
+      itemPathWithoutInterpolationDenotation,
+    )[0];
     const step = flowHelper.getStep(flowVersion, stepName);
     if (step) {
       const dfsIndex = StepOutputStructureUtil.findStepIndex(
@@ -122,14 +121,14 @@ export const TextInputWithMentions = ({
   };
 
   const insertMention = (propertyPath: string) => {
-    const jsonContent = fromTextToTipTapJsonContent({
+    const jsonContent = textMentionUtils.convertTextToTipTapJsonContent({
       propertyPath: `{{${propertyPath}}}`,
       stepMetadataFinder: getStepMetadataFromPath,
     });
     editor?.chain().focus().insertContent(jsonContent.content).run();
   };
   const content = [
-    fromTextToTipTapJsonContent({
+    textMentionUtils.convertTextToTipTapJsonContent({
       propertyPath: originalValue ?? '',
       stepMetadataFinder: getStepMetadataFromPath,
     }),
@@ -147,7 +146,7 @@ export const TextInputWithMentions = ({
     },
     onUpdate: ({ editor }) => {
       const content = editor.getJSON();
-      const textResult = fromTiptapJsonContentToText(content);
+      const textResult = textMentionUtils.convertTiptapJsonToText(content);
       if (onChange) {
         onChange(textResult);
       }
