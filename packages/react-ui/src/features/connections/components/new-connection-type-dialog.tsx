@@ -15,7 +15,7 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 
-import { ConnectionDialog } from './connection-dialog';
+import { CreateOrEditConnectionDialog } from './create-edit-connection-dialog';
 
 type NewConnectionTypeDialogProps = {
   open: boolean;
@@ -47,11 +47,11 @@ const NewConnectionTypeDialog = React.memo(
     return (
       <>
         {selectedPiece && (
-          <ConnectionDialog
+          <CreateOrEditConnectionDialog
             piece={selectedPiece}
             open={connectionDialogOpen}
             setOpen={setConnectionDialogOpen}
-          ></ConnectionDialog>
+          ></CreateOrEditConnectionDialog>
         )}
         <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
           <DialogContent className="min-w-[700px] max-w-[700px] h-[680px] max-h-[680px] flex flex-col">

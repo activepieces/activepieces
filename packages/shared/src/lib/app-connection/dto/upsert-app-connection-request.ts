@@ -99,8 +99,12 @@ export const UpsertBasicAuthRequest = Type.Object({
     ...commonAuthProps,
     type: Type.Literal(AppConnectionType.BASIC_AUTH),
     value: Type.Object({
-        username: Type.String({}),
-        password: Type.String({}),
+        username: Type.String({
+            minLength: 1,
+        }),
+        password: Type.String({
+            minLength: 1,
+        }),
         type: Type.Literal(AppConnectionType.BASIC_AUTH),
     }),
 }, {
