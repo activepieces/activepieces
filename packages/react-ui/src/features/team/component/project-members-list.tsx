@@ -1,7 +1,4 @@
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { LoaderIcon } from 'lucide-react';
-
-import { InviteUserDialog } from './invite-user-dialog';
 
 import {
   Card,
@@ -15,6 +12,9 @@ import { InvitationCard } from '@/features/team/component/invitation-card';
 import { ProjectMemberCard } from '@/features/team/component/project-member-card';
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { userInvitationsHooks } from '@/features/team/lib/user-invitations-hooks';
+import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+
+import { InviteUserDialog } from './invite-user-dialog';
 
 export default function ProjectMembersList() {
   const { projectMembers, isLoading: projectMembersIsPending } =

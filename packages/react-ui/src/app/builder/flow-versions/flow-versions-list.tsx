@@ -1,9 +1,4 @@
-import { FlowVersionMetadata, SeekPage } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
-
-import { SidebarHeader } from '../sidebar-header';
-
-import { FlowVersionDetailsCard } from './flow-versions-card';
 
 import {
   LeftSideBarType,
@@ -12,6 +7,11 @@ import {
 import { CardList, CardListItemSkeleton } from '@/components/ui/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { FlowVersionMetadata, SeekPage } from '@activepieces/shared';
+
+import { SidebarHeader } from '../sidebar-header';
+
+import { FlowVersionDetailsCard } from './flow-versions-card';
 
 const FlowVersionsList = () => {
   const [flow, setLeftSidebar, selectedFlowVersion] = useBuilderStateContext(

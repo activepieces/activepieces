@@ -1,4 +1,3 @@
-import { StepOutputStatus } from '@activepieces/shared';
 import React from 'react';
 
 import {
@@ -8,6 +7,7 @@ import {
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { cn } from '@/lib/utils';
+import { StepOutputStatus } from '@activepieces/shared';
 
 type StepStatusIconProps = {
   status: StepOutputStatus;

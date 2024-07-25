@@ -1,7 +1,6 @@
+import { api } from '@/lib/api';
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 import { FlowTemplate } from '@activepieces/shared';
-
-import { api } from '@/lib/api';
 
 export const templatesApi = {
   getTemplate(templateId: string) {

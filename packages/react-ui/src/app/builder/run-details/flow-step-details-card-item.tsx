@@ -1,13 +1,5 @@
-import {
-  ActionType,
-  LoopStepOutput,
-  StepOutput,
-  flowHelper,
-} from '@activepieces/shared';
 import { ChevronRight } from 'lucide-react';
 import React from 'react';
-
-import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
 
 import {
   StepPathWithName,
@@ -25,6 +17,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn, formatUtils } from '@/lib/utils';
+import {
+  ActionType,
+  LoopStepOutput,
+  StepOutput,
+  flowHelper,
+} from '@activepieces/shared';
+
+import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
 
 type FlowStepDetailsCardProps = {
   path: StepPathWithName;

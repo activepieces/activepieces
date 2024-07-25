@@ -1,19 +1,19 @@
-import {
-  BranchAction,
-  BranchOperator,
-  ValidBranchCondition,
-} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import React from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 
-import { BranchSingleCondition } from './branch-condition-group';
-import { BranchConditionToolbar } from './branch-condition-toolbar';
-
 import { Form } from '@/components/ui/form';
 import { HorizontalSeparatorWithText } from '@/components/ui/seperator';
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
+import {
+  BranchAction,
+  BranchOperator,
+  ValidBranchCondition,
+} from '@activepieces/shared';
+
+import { BranchSingleCondition } from './branch-condition-group';
+import { BranchConditionToolbar } from './branch-condition-toolbar';
 
 type BranchSettingsProps = {
   selectedStep: BranchAction;

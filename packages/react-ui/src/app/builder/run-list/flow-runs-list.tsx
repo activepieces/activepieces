@@ -1,10 +1,5 @@
-import { FlowRun, SeekPage } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import React from 'react';
-
-import { SidebarHeader } from '../sidebar-header';
-
-import { FlowRunCard } from './flow-run-card';
 
 import {
   LeftSideBarType,
@@ -17,6 +12,11 @@ import {
 } from '@/components/ui/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
+import { FlowRun, SeekPage } from '@activepieces/shared';
+
+import { SidebarHeader } from '../sidebar-header';
+
+import { FlowRunCard } from './flow-run-card';
 
 type FlowRunsListProps = {
   recentRuns?: number;

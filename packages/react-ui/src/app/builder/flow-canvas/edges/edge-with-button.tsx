@@ -2,15 +2,15 @@ import { BaseEdge } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 
 import {
+  RightSideBarType,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
+
+import {
   AP_NODE_SIZE,
   ApNodeType,
   flowCanvasUtils,
 } from '../flow-canvas-utils';
-
-import {
-  RightSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
 
 interface ApEdgeWithButtonProps {
   id: string;

@@ -1,4 +1,3 @@
-import { FlowTemplate, FlowVersion, TemplateType } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { DialogDescription, DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
@@ -19,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { templatesApi } from '@/features/templates/lib/templates-api';
+import { FlowTemplate, FlowVersion, TemplateType } from '@activepieces/shared';
 
 const ShareTemplateSchema = Type.Object({
   description: Type.String(),

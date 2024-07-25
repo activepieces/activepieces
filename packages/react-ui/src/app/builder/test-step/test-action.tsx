@@ -1,9 +1,3 @@
-import {
-  Action,
-  StepOutputStatus,
-  StepRunResponse,
-  isNil,
-} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useState } from 'react';
@@ -22,6 +16,12 @@ import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { formatUtils } from '@/lib/utils';
+import {
+  Action,
+  StepOutputStatus,
+  StepRunResponse,
+  isNil,
+} from '@activepieces/shared';
 
 type TestActionComponentProps = {
   selectedStep: Action;

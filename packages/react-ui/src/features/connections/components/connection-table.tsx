@@ -1,12 +1,7 @@
-import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-
-import { appConnectionUtils } from '../lib/app-connections-utils';
-
-import { ConnectionTypeDialog } from './connection-type-dialog';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -21,6 +16,11 @@ import { appConnectionsApi } from '@/features/connections/lib/app-connections-ap
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
+import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
+
+import { appConnectionUtils } from '../lib/app-connections-utils';
+
+import { ConnectionTypeDialog } from './connection-type-dialog';
 
 const DeleteConnectionColumn = ({
   row,

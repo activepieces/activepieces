@@ -2,9 +2,9 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { PackageOpen } from 'lucide-react';
 import React from 'react';
 
-import { Skeleton } from './skeleton';
-
 import { cn } from '@/lib/utils';
+
+import { Skeleton } from './skeleton';
 
 type CardListProps = React.HTMLAttributes<HTMLDivElement> & {
   children: React.ReactNode;

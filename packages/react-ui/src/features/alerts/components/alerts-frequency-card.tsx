@@ -1,9 +1,6 @@
-import { NotificationStatus, ProjectWithLimits } from '@activepieces/shared';
 import { BellIcon, EyeNoneIcon, EyeOpenIcon } from '@radix-ui/react-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React from 'react';
-
-import { AlertOption } from './alert-option';
 
 import {
   Card,
@@ -16,6 +13,9 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
+import { NotificationStatus, ProjectWithLimits } from '@activepieces/shared';
+
+import { AlertOption } from './alert-option';
 
 const AlertFrequencyCard = React.memo(() => {
   const queryClient = useQueryClient();

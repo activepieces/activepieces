@@ -1,3 +1,4 @@
+import { api } from '@/lib/api';
 import {
   ConfigureRepoRequest,
   GitRepo,
@@ -5,8 +6,6 @@ import {
   PullGitRepoRequest,
   PushGitRepoRequest,
 } from '@activepieces/ee-shared';
-
-import { api } from '@/lib/api';
 
 export const syncProjectApi = {
   get() {

@@ -1,11 +1,11 @@
 import { Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 
-import { authenticationSession } from '../../lib/authentication-session';
-
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+
+import { authenticationSession } from '../../lib/authentication-session';
 
 export const AllowOnlyLoggedInUserOnlyGuard = ({
   children,

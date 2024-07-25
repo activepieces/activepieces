@@ -1,4 +1,3 @@
-import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -38,6 +37,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { requestTrialApi } from '@/lib/request-trial-api';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 const logos = [
   'https://www.activepieces.com/logos/alan.svg',

@@ -1,9 +1,10 @@
-import { ApFlagId } from '@activepieces/shared';
 import {
   QueryClient,
   usePrefetchQuery,
   useSuspenseQuery,
 } from '@tanstack/react-query';
+
+import { ApFlagId } from '@activepieces/shared';
 
 import { flagsApi, FlagsMap } from '../lib/flags-api';
 

@@ -1,10 +1,10 @@
-import { FlowVersionState } from '@activepieces/shared';
 import React from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import FlowStatusToggle from '@/features/flows/components/flow-status-toggle';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
+import { FlowVersionState } from '@activepieces/shared';
 
 const FlowStateToolbar = React.memo(() => {
   const [flowVersion, flow, isSaving] = useBuilderStateContext((state) => [

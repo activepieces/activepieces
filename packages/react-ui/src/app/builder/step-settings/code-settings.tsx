@@ -1,4 +1,3 @@
-import { CodeAction, CodeActionSettings } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import React, { useEffect } from 'react';
@@ -10,6 +9,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
 import { CodeEditior } from '@/features/properties-form/components/code-editior';
+import { CodeAction, CodeActionSettings } from '@activepieces/shared';
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below.

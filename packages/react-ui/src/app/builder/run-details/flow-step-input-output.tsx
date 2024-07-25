@@ -1,8 +1,6 @@
 import { Timer } from 'lucide-react';
 import React from 'react';
 
-import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
-
 import {
   getStepOutputFromExecutionPath,
   useBuilderStateContext,
@@ -10,6 +8,8 @@ import {
 import { JsonViewer } from '@/components/json-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatUtils } from '@/lib/utils';
+
+import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
 
 const FlowStepInputOutput = React.memo(() => {
   const stepDetails = useBuilderStateContext((state) => {

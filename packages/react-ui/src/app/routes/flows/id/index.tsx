@@ -1,4 +1,3 @@
-import { PopulatedFlow } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 
@@ -6,6 +5,7 @@ import { BuilderPage } from '@/app/builder/builder-page';
 import { BuilderStateProvider } from '@/app/builder/builder-state-provider';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PopulatedFlow } from '@activepieces/shared';
 
 const FlowBuilderPage = () => {
   const { flowId } = useParams();

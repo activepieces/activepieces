@@ -1,4 +1,3 @@
-import { FlowRun, PopulatedFlow } from '@activepieces/shared';
 import { StopwatchIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { ChevronRightIcon } from 'lucide-react';
@@ -16,6 +15,7 @@ import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { cn, formatUtils } from '@/lib/utils';
+import { FlowRun, PopulatedFlow } from '@activepieces/shared';
 
 type FlowRunCardProps = {
   run: FlowRun;

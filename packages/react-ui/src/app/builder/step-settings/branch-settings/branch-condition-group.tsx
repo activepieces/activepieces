@@ -1,9 +1,3 @@
-import {
-  BranchOperator,
-  ValidBranchCondition,
-  textConditions,
-  singleValueConditions,
-} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { Value } from '@sinclair/typebox/value';
@@ -11,14 +5,20 @@ import { Trash } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
-import { TextInputWithMentions } from '../../data-to-insert/text-input-with-mentions';
-
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import {
+  BranchOperator,
+  ValidBranchCondition,
+  textConditions,
+  singleValueConditions,
+} from '@activepieces/shared';
+
+import { TextInputWithMentions } from '../../data-to-insert/text-input-with-mentions';
 
 const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_CONTAINS]: '(Text) Contains',

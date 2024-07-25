@@ -1,9 +1,10 @@
+import { TSchema, Type } from '@sinclair/typebox';
+
 import {
   CONNECTION_REGEX,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { TSchema, Type } from '@sinclair/typebox';
 
 export const formUtils = {
   buildSchema: (props: PiecePropertyMap) => {

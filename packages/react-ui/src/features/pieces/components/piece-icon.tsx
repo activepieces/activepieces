@@ -1,13 +1,13 @@
 import { VariantProps, cva } from 'class-variance-authority';
 import React from 'react';
 
-import { piecesHooks } from '../lib/pieces-hook';
-
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+
+import { piecesHooks } from '../lib/pieces-hook';
 
 const pieceIconVariants = cva(
   'flex items-center justify-center bg-accent p-2',

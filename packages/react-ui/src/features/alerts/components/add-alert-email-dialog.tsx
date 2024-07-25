@@ -1,4 +1,3 @@
-import { Alert, AlertChannel } from '@activepieces/ee-shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -6,8 +5,6 @@ import { HttpStatusCode } from 'axios';
 import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-
-import { alertsApi } from '../lib/alerts-api';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +23,9 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
+import { Alert, AlertChannel } from '@activepieces/ee-shared';
+
+import { alertsApi } from '../lib/alerts-api';
 
 const FormSchema = Type.Object({
   email: Type.String({

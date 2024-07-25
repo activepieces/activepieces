@@ -1,4 +1,3 @@
-import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { UseFormReturn } from 'react-hook-form';
 
@@ -15,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
 
 type ProjectRoleSelectProps = {
   form: UseFormReturn<any>;

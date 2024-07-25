@@ -1,8 +1,6 @@
 import { History, Home, Logs } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { FlowActionsMenu } from './flow-actions-menu';
-
 import {
   LeftSideBarType,
   useBuilderStateContext,
@@ -15,6 +13,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
+
+import { FlowActionsMenu } from './flow-actions-menu';
 
 export const BuilderNavBar = () => {
   const [flowVersion, setLeftSidebar] = useBuilderStateContext((state) => [
