@@ -9,6 +9,7 @@ export type ApJob<T> = {
     cronExpression?: string
     cronTimezone?: string
     nextFireAtEpochSeconds?: number
+    failureCount?: number
 }
 
 export class ApMemoryQueue<T> {
