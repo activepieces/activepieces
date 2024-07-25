@@ -26,7 +26,6 @@ interface FlowActionMenuProps {
   flow: PopulatedFlow;
   onRename: (flow: PopulatedFlow) => void;
   onDuplicate: () => void;
-  onExport: () => void;
   onShare: (flow: PopulatedFlow) => void;
   onDelete: (flow: PopulatedFlow) => void;
 }
