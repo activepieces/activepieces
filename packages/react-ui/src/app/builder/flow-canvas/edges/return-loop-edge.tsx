@@ -21,7 +21,9 @@ const ReturnLoopedgeButton: React.FC<ReturnLoopedgeButtonProps> = (props) => {
   v${-60 - offset + ARC_UP_LENGTH} ${ARC_UP_RIGHT} 
   h${props.sourceX - props.targetX - 30}
   ${ARROW}`;
-  return <BaseEdge path={edgePath} interactionWidth={0} />;
+  return (
+    <BaseEdge path={edgePath} interactionWidth={0} style={{ strokeWidth: 1.5 }} />
+  );
 };
 
 export { ReturnLoopedgeButton };
