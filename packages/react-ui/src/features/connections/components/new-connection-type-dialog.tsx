@@ -1,3 +1,4 @@
+import { DialogTrigger } from '@radix-ui/react-dialog';
 import React, { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,6 @@ import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 
 import { CreateOrEditConnectionDialog } from './create-edit-connection-dialog';
-import { DialogTrigger } from '@radix-ui/react-dialog';
 
 type NewConnectionTypeDialogProps = {
   onConnectionCreated: () => void;
@@ -62,7 +62,10 @@ const NewConnectionTypeDialog = React.memo(
             setOpen={setConnectionDialogOpen}
           ></CreateOrEditConnectionDialog>
         )}
-        <Dialog open={dialogTypesOpen} onOpenChange={(open) => setDialogTypesOpen(open)}>
+        <Dialog
+          open={dialogTypesOpen}
+          onOpenChange={(open) => setDialogTypesOpen(open)}
+        >
           <DialogTrigger asChild>{children}</DialogTrigger>
           <DialogContent className="min-w-[700px] max-w-[700px] h-[680px] max-h-[680px] flex flex-col">
             <DialogHeader>
@@ -79,8 +82,8 @@ const NewConnectionTypeDialog = React.memo(
               <div className="grid grid-cols-4 gap-4">
                 {(isLoading ||
                   (filteredPieces && filteredPieces.length === 0)) && (
-                    <div className="text-center">No pieces found</div>
-                  )}
+                  <div className="text-center">No pieces found</div>
+                )}
                 {!isLoading &&
                   filteredPieces &&
                   filteredPieces.map((piece, index) => (

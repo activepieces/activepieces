@@ -102,7 +102,7 @@ const selectRightComponent = (
           key={key}
           allowDynamicValues={allowDynamicValues}
         >
-          <ArrayInput items={[]} onChange={(items) => { }}></ArrayInput>
+          <ArrayInput items={[]} onChange={(items) => {}}></ArrayInput>
         </AutoFormFieldWrapper>
       );
     case PropertyType.OBJECT:
@@ -112,7 +112,7 @@ const selectRightComponent = (
           key={key}
           allowDynamicValues={allowDynamicValues}
         >
-          <DictionaryInput values={{}} onChange={() => { }}></DictionaryInput>
+          <DictionaryInput values={{}} onChange={() => {}}></DictionaryInput>
         </AutoFormFieldWrapper>
       );
     case PropertyType.CHECKBOX:

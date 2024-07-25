@@ -71,9 +71,7 @@ function constructUrl(params: OAuth2PopupParams, pckeChallenge: string) {
   return url.toString();
 }
 
-function getCode(
-  redirectUrl: string
-): Promise<string> {
+function getCode(redirectUrl: string): Promise<string> {
   return new Promise<string>((resolve) => {
     window.addEventListener('message', function handler(event) {
       if (

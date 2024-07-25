@@ -4,7 +4,9 @@ import { ListAppConnectionsRequestQuery, SeekPage } from '@activepieces/shared';
 
 export const oauthAppsApi = {
   listCloudOAuthApps(): Promise<Record<string, { clientId: string }>> {
-    return api.get<Record<string, { clientId: string }>>('https://secrets.activepieces.com/apps');
+    return api.get<Record<string, { clientId: string }>>(
+      'https://secrets.activepieces.com/apps',
+    );
   },
   listOAuthAppsCredentials(request: ListAppConnectionsRequestQuery) {
     return api.get<SeekPage<OAuthApp>>('/v1/oauth-apps', request);

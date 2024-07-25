@@ -1,5 +1,9 @@
+import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { ScrollArea } from '@radix-ui/react-scroll-area';
+import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -11,10 +15,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/seperator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { formUtils } from '@/features/properties-form/lib/form-utils';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 import {
   BasicAuthProperty,
   CustomAuthProperty,
@@ -32,19 +40,12 @@ import {
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
 
-import { SecretTextConnectionSettings } from './secret-text-connection-settings';
-import { useForm } from 'react-hook-form';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { appConnectionUtils } from '../lib/app-connections-utils';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { authenticationSession } from '@/lib/authentication-session';
-import { Static, Type } from '@sinclair/typebox';
+
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
-import { ScrollArea } from '@radix-ui/react-scroll-area';
-import { formUtils } from '@/features/properties-form/lib/form-utils';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
-import { Input } from '@/components/ui/input';
+import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
 type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary;
@@ -58,18 +59,23 @@ const CreateOrEditConnectionDialog = React.memo(
   ({ piece, open, setOpen, onConnectionCreated }: ConnectionDialogProps) => {
     const { auth } = piece;
 
+    const overrideSchema =
+      piece.auth?.type === PropertyType.CUSTOM_AUTH
+        ? Type.Object({
+            request: Type.Object({
+              value: formUtils.buildSchema(
+                (piece.auth as CustomAuthProperty<any>).props,
+              ),
+            }),
+          })
+        : Type.Object({});
 
-    const overrideSchema = piece.auth?.type === PropertyType.CUSTOM_AUTH
-      ? Type.Object({
-        request: Type.Object({
-          value: formUtils.buildSchema((piece.auth as CustomAuthProperty<any>).props)
-        })
-      })
-      : Type.Object({});
-
-    const formSchema = Type.Composite([Type.Object({
-      request: UpsertAppConnectionRequestBody,
-    }), overrideSchema])
+    const formSchema = Type.Composite([
+      Type.Object({
+        request: UpsertAppConnectionRequestBody,
+      }),
+      overrideSchema,
+    ]);
 
     const form = useForm<Static<typeof formSchema>>({
       defaultValues: {
@@ -100,9 +106,13 @@ const CreateOrEditConnectionDialog = React.memo(
           const apError = response.response?.data as ApErrorParams;
           console.log(apError);
           if (apError.code === ErrorCode.INVALID_CLOUD_CLAIM) {
-            setErrorMessage('Could not claim the authorization code, make sure you have correct settings and try again.');
+            setErrorMessage(
+              'Could not claim the authorization code, make sure you have correct settings and try again.',
+            );
           } else if (apError.code === ErrorCode.INVALID_APP_CONNECTION) {
-            setErrorMessage(`Connection failed with error: ${apError.params.error}`);
+            setErrorMessage(
+              `Connection failed with error: ${apError.params.error}`,
+            );
           }
         } else {
           toast(INTERNAL_ERROR_TOAST);
@@ -112,7 +122,11 @@ const CreateOrEditConnectionDialog = React.memo(
     });
 
     return (
-      <Dialog open={open} onOpenChange={(open) => setOpen(open)} key={piece.name}>
+      <Dialog
+        open={open}
+        onOpenChange={(open) => setOpen(open)}
+        key={piece.name}
+      >
         <DialogContent
           onInteractOutside={(e) => e.preventDefault()}
           className="max-h-[70vh] max-w-[60vw] overflow-y-auto"
@@ -147,10 +161,14 @@ const CreateOrEditConnectionDialog = React.memo(
                   />
                 )}
                 {auth?.type === PropertyType.BASIC_AUTH && (
-                  <BasicAuthConnectionSettings authProperty={piece.auth as BasicAuthProperty} />
+                  <BasicAuthConnectionSettings
+                    authProperty={piece.auth as BasicAuthProperty}
+                  />
                 )}
                 {auth?.type === PropertyType.CUSTOM_AUTH && (
-                  <CustomAuthConnectionSettings authProperty={piece.auth as CustomAuthProperty<any>} />
+                  <CustomAuthConnectionSettings
+                    authProperty={piece.auth as CustomAuthProperty<any>}
+                  />
                 )}
                 {auth?.type === PropertyType.OAUTH2 && (
                   <OAuth2ConnectionSettings
@@ -186,9 +204,9 @@ const CreateOrEditConnectionDialog = React.memo(
 CreateOrEditConnectionDialog.displayName = 'CreateOrEditConnectionDialog';
 export { CreateOrEditConnectionDialog };
 
-
-
-function createDefaultValues(piece: PieceMetadataModelSummary): Partial<UpsertAppConnectionRequestBody> {
+function createDefaultValues(
+  piece: PieceMetadataModelSummary,
+): Partial<UpsertAppConnectionRequestBody> {
   const suggestedConnectionName = appConnectionUtils.findName(piece.name);
   switch (piece.auth?.type) {
     case PropertyType.SECRET_TEXT:
@@ -242,5 +260,4 @@ function createDefaultValues(piece: PieceMetadataModelSummary): Partial<UpsertAp
     default:
       throw new Error(`Unsupported property type: ${piece.auth}`);
   }
-
 }

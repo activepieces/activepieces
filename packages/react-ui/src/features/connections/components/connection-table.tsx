@@ -17,7 +17,9 @@ import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
+
 import { appConnectionUtils } from '../lib/app-connections-utils';
+
 import { NewConnectionTypeDialog } from './new-connection-type-dialog';
 
 const DeleteConnectionColumn = ({
@@ -154,7 +156,6 @@ const fetchData = async (queryParams: URLSearchParams) => {
 };
 
 function AppConnectionsTable() {
-
   const [refresh, setRefresh] = useState(0);
 
   return (
@@ -162,19 +163,19 @@ function AppConnectionsTable() {
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">Connections </h1>
         <div className="ml-auto">
-
           <NewConnectionTypeDialog
             onConnectionCreated={() => setRefresh(refresh + 1)}
           >
-            <Button
-              variant="default"
-            >
-              New Connection
-            </Button>
+            <Button variant="default">New Connection</Button>
           </NewConnectionTypeDialog>
         </div>
       </div>
-      <DataTable columns={columns} fetchData={fetchData} refresh={refresh} filters={filters} />
+      <DataTable
+        columns={columns}
+        fetchData={fetchData}
+        refresh={refresh}
+        filters={filters}
+      />
     </div>
   );
 }
