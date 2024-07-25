@@ -1,9 +1,12 @@
+import { FlowVersion } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { DialogDescription } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+
+import { flowsApi } from '../lib/flows-api';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -14,9 +17,6 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { FlowVersion } from '@activepieces/shared';
-
-import { flowsApi } from '../lib/flows-api';
 
 const DeleteFlowSchema = Type.Object({
   delete: Type.String(),
@@ -55,6 +55,10 @@ const DeleteFlowDialog: React.FC<DeleteFlowDialogProps> = ({
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
+  const onDeleteFlowSubmit = () => {
+    mutate();
+  };
+
   return (
     <DialogContent>
       <DialogHeader>
@@ -91,7 +95,7 @@ const DeleteFlowDialog: React.FC<DeleteFlowDialogProps> = ({
           )}
           <Button
             loading={isPending}
-            onClick={() => mutate()}
+            onClick={(e) => deleteFlowForm.handleSubmit(onDeleteFlowSubmit)(e)}
             className="bg-destructive hover:bg-destructive/90"
           >
             Confirm

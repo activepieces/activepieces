@@ -1,4 +1,5 @@
-import { PopulatedFlow } from '@activepieces/shared';
+import { FlowOperationType, PopulatedFlow } from '@activepieces/shared';
+import { useMutation } from '@tanstack/react-query';
 import {
   Copy,
   Download,
@@ -9,18 +10,23 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import { flowsApi } from '../lib/flows-api';
+import { flowsUtils } from '../lib/flows-utils';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { authenticationSession } from '@/lib/authentication-session';
 
 interface FlowActionMenuProps {
   flow: PopulatedFlow;
   onRename: (flow: PopulatedFlow) => void;
-  onDuplicate: (flowId: string) => void;
-  onExport: (flowId: string) => void;
+  onDuplicate: () => void;
+  onExport: () => void;
   onShare: (flow: PopulatedFlow) => void;
   onDelete: (flow: PopulatedFlow) => void;
 }
@@ -33,6 +39,34 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onShare,
   onDelete,
 }) => {
+  const { mutate: duplicateFlow } = useMutation({
+    mutationFn: async () => {
+      const flow = await flowsApi.get(flow.id);
+      const createdFlow = await flowsApi.create({
+        displayName: flow.version.displayName,
+        projectId: authenticationSession.getProjectId(),
+      });
+      const updatedFlow = await flowsApi.update(createdFlow.id, {
+        type: FlowOperationType.IMPORT_FLOW,
+        request: {
+          displayName: createdFlow.version.displayName,
+          trigger: createdFlow.version.trigger,
+        },
+      });
+      return updatedFlow;
+    },
+    onSuccess: (data) => {
+      window.open(`/flows/${data.id}`, '_blank', 'rel=noopener noreferrer');
+      onDuplicate();
+    },
+    onError: () => toast(INTERNAL_ERROR_TOAST),
+  });
+
+  const exportFlow = async () => {
+    const template = await flowsApi.getTemplate(flow.id, {});
+    flowsUtils.downloadFlow(template);
+  };
+
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger className="p-2 rounded-full hover:bg-muted">
@@ -45,13 +79,13 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             <span>Rename</span>
           </div>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onDuplicate(flow.id)}>
+        <DropdownMenuItem onClick={() => duplicateFlow()}>
           <div className="flex flex-row gap-2 items-center">
             <Copy className="h-4 w-4" />
             <span>Duplicate</span>
           </div>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onExport(flow.id)}>
+        <DropdownMenuItem onClick={() => exportFlow()}>
           <div className="flex flex-row gap-2 items-center">
             <Download className="h-4 w-4" />
             <span>Export</span>

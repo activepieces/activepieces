@@ -1,9 +1,4 @@
-import {
-  FlowOperationType,
-  FlowStatus,
-  FlowVersion,
-  PopulatedFlow,
-} from '@activepieces/shared';
+import { FlowStatus, FlowVersion, PopulatedFlow } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon } from 'lucide-react';
@@ -11,7 +6,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { flowsHooks } from '../lib/flows-hooks';
-import { flowsUtils } from '../lib/flows-utils';
 
 import { DeleteFlowDialog } from './delete-flow-dialog';
 import FlowActionMenu from './flow-actions-menu';
@@ -74,35 +68,6 @@ const FlowsTable = () => {
       status: (queryParams.getAll('status') ?? []) as FlowStatus[],
     });
   }
-
-  const { mutate: duplicateFlow } = useMutation({
-    mutationFn: async (flowId: string) => {
-      const flow = await flowsApi.get(flowId);
-      const createdFlow = await flowsApi.create({
-        displayName: flow.version.displayName,
-        projectId: authenticationSession.getProjectId(),
-      });
-      const updatedFlow = await flowsApi.update(createdFlow.id, {
-        type: FlowOperationType.IMPORT_FLOW,
-        request: {
-          displayName: createdFlow.version.displayName,
-          trigger: createdFlow.version.trigger,
-        },
-      });
-      return updatedFlow;
-    },
-    onSuccess: (data) => {
-      window.open(`/flows/${data.id}`, '_blank', 'rel=noopener noreferrer');
-      refetch();
-    },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
-  });
-
-  const exportFlow = async (flowId: string) => {
-    const flow = await flowsApi.get(flowId);
-    const template = await flowsApi.getTemplate(flow.id, {});
-    flowsUtils.downloadFlow(template);
-  };
 
   const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
     PopulatedFlow,
@@ -223,8 +188,8 @@ const FlowsTable = () => {
                 );
                 setIsRenameDialogOpen(true);
               }}
-              onDuplicate={duplicateFlow}
-              onExport={exportFlow}
+              onDuplicate={() => refetch()}
+              onExport={() => refetch()}
               onShare={() => {
                 selectedFlowSetter(
                   flow.id,
