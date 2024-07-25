@@ -5,6 +5,7 @@ import {
   flowHelper,
 } from '@activepieces/shared';
 
+import { ExtraPiecesCircle } from './extra-pieces-circle';
 import { PieceIcon } from './piece-icon';
 
 export function PieceIconList({ flow }: { flow: PopulatedFlow }) {
@@ -16,12 +17,15 @@ export function PieceIconList({ flow }: { flow: PopulatedFlow }) {
       }
       return null;
     })
-    .filter((pieceName): pieceName is string => pieceName !== null)
-    .slice(0, 3);
+    .filter((pieceName): pieceName is string => pieceName !== null);
+
+  const visibleSteps = steps.slice(0, 2);
+  const extraStepsCount = steps.length - visibleSteps.length;
+  const extraSteps = steps.slice(2);
 
   return (
     <div className="flex gap-2">
-      {steps.map((pieceName, index) => (
+      {visibleSteps.map((pieceName, index) => (
         <PieceIcon
           circle={true}
           size={'md'}
@@ -30,6 +34,12 @@ export function PieceIconList({ flow }: { flow: PopulatedFlow }) {
           key={index}
         />
       ))}
+      {extraStepsCount > 0 && (
+        <ExtraPiecesCircle
+          extraStepsCount={extraStepsCount}
+          pieces={extraSteps}
+        />
+      )}
     </div>
   );
 }
