@@ -112,13 +112,19 @@ export class FlowService {
   }
 
   list(request: ListFlowsRequest): Observable<SeekPage<PopulatedFlow>> {
-    const queryParams: { [key: string]: string | number } = {
+    const queryParams: { [key: string]: string | number | string[] } = {
       limit: request.limit ?? 10,
       cursor: request.cursor || '',
     };
     queryParams['projectId'] = request.projectId;
     if (request.folderId) {
       queryParams['folderId'] = request.folderId;
+    }
+    if (request.name) {
+      queryParams['name'] = request.name;
+    }
+    if (request.status) {
+      queryParams['status'] = request.status;
     }
     return this.http.get<SeekPage<PopulatedFlow>>(
       environment.apiUrl + '/flows',

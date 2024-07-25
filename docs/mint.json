@@ -150,7 +150,8 @@
         "flows/building-flows",
         "flows/passing-data",
         "flows/publishing-flows",
-        "flows/debugging-runs"
+        "flows/debugging-runs",
+        "flows/versioning"
       ]
     },
     {

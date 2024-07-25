@@ -1,4 +1,4 @@
-import { GetRunForWorkerRequest, logger, SharedSystemProp, system, UpdateJobRequest } from '@activepieces/server-shared'
+import { GetRunForWorkerRequest, JobStatus, logger, QueueName, SharedSystemProp, system, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, ExecutionState, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -52,6 +52,15 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         return {}
     })
 
+    app.post('/update-failure-count', UpdateFailureCount, async (request) => {
+        const { flowId, projectId, success } = request.body
+        await flowService.updateFailureCount({
+            flowId,
+            projectId,
+            success,
+        })
+    })
+
     app.post('/update-run', UpdateStepProgress, async (request) => {
         const { runId, workerHandlerId, runDetails, progressUpdateType, httpRequestId } = request.body
         if (progressUpdateType === ProgressUpdateType.WEBHOOK_RESPONSE && workerHandlerId && httpRequestId) {
@@ -94,6 +103,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 newStatus: FlowStatus.DISABLED,
             })
         }
+
+        await markJobAsCompleted(populatedRun.status, populatedRun.id, request.principal as unknown as EnginePrincipal)
         return {}
     })
 
@@ -127,7 +138,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         }
     })
 
-    app.post('/remove-stable-job', RemoveFlowRequest, async (request) => {
+    app.post('/remove-stale-job', RemoveFlowRequest, async (request) => {
         const { flowVersionId, flowId } = request.body
         const flow = isNil(flowId) ? null : await flowService.getOnePopulated({
             projectId: request.principal.projectId,
@@ -136,7 +147,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         })
         if (isNil(flow)) {
             await flowQueue.removeRepeatingJob({
-                id: flowVersionId,
+                flowVersionId,
             })
             return
         }
@@ -162,6 +173,23 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
+
+async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePrincipal: EnginePrincipal): Promise<void> {
+    switch (status) {
+        case FlowRunStatus.FAILED:
+        case FlowRunStatus.TIMEOUT:
+        case FlowRunStatus.PAUSED:
+        case FlowRunStatus.QUOTA_EXCEEDED:
+        case FlowRunStatus.STOPPED:
+        case FlowRunStatus.SUCCEEDED:
+            await flowConsumer.update({ jobId, queueName: QueueName.ONE_TIME, status: JobStatus.COMPLETED, token: enginePrincipal.queueToken!, message: 'Flow succeeded' })
+            break
+        case FlowRunStatus.RUNNING:
+            break
+        case FlowRunStatus.INTERNAL_ERROR:
+            await flowConsumer.update({ jobId, queueName: QueueName.ONE_TIME, status: JobStatus.FAILED, token: enginePrincipal.queueToken!, message: 'Flow failed with internal error reported by engine' })
+    }
+}
 
 async function getFlow(projectId: string, request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow> {
     const { type } = request
@@ -306,6 +334,15 @@ const UpdateStepProgress = {
     },
     schema: {
         body: UpdateRunProgressRequest,
+    },
+}
+
+const UpdateFailureCount = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        body: UpdateFailureCountRequest,
     },
 }
 

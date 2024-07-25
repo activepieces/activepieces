@@ -1,4 +1,4 @@
-import { logger } from '@activepieces/server-shared'
+import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -8,6 +8,7 @@ import {
     TriggerHookType,
     TriggerPayload,
 } from '@activepieces/shared'
+import { engineApiService } from '../../api/server-api.service'
 import { engineRunner } from '../../engine'
 import { webhookUtils } from '../../utils/webhook-utils'
 
@@ -17,6 +18,7 @@ export async function extractPayloads(
 ): Promise<unknown[]> {
     const { payload, flowVersion, projectId, simulate } = params
     try {
+        const { pieceName, pieceVersion } = flowVersion.trigger.settings
         const { result } = await engineRunner.executeTrigger(engineToken, {
             hookType: TriggerHookType.RUN,
             flowVersion,
@@ -28,15 +30,18 @@ export async function extractPayloads(
             projectId,
         })
         if (!isNil(result) && result.success && Array.isArray(result.output)) {
+            handleFailureFlow(flowVersion, projectId, engineToken, true)
             return result.output as unknown[]
         }
         else {
             logger.error({
                 result,
-                pieceName: params.flowVersion.trigger.settings.pieceName,
-                pieceVersion: params.flowVersion.trigger.settings.pieceVersion,
+                pieceName,
+                pieceVersion,
                 flowId: flowVersion.flowId,
             }, 'Failed to execute trigger')
+            handleFailureFlow(flowVersion, projectId, engineToken, false)
+            
             return []
         }
     }
@@ -45,15 +50,27 @@ export async function extractPayloads(
         if (isTimeoutError) {
             logger.error({
                 name: 'extractPayloads',
-                pieceName: params.flowVersion.trigger.settings.pieceName,
-                pieceVersion: params.flowVersion.trigger.settings.pieceVersion,
+                pieceName: flowVersion.trigger.settings.pieceName,
+                pieceVersion: flowVersion.trigger.settings.pieceVersion,
                 flowId: flowVersion.flowId,
             }, 'Failed to execute trigger due to timeout')
-            // TODO add error handling which is notify the user and disable the trigger
+            handleFailureFlow(flowVersion, projectId, engineToken, false)
             return []
         }
         throw e
     }
+}
+
+
+function handleFailureFlow(flowVersion: FlowVersion, projectId: ProjectId, engineToken: string, success: boolean): void {
+    const engineController = engineApiService(engineToken)
+
+    rejectedPromiseHandler(engineController.updateFailureCount({
+        flowId: flowVersion.flowId,
+        projectId,
+        success,
+    }))
+
 }
 
 type ExecuteTrigger = {

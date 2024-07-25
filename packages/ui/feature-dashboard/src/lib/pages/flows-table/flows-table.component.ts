@@ -1,8 +1,11 @@
 import { Component, Inject, LOCALE_ID, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
+  combineLatest,
+  distinctUntilChanged,
   map,
   Observable,
+  of,
   shareReplay,
   startWith,
   Subject,
@@ -24,6 +27,9 @@ import {
   ApPaginatorComponent,
   AuthenticationService,
   EmbeddingService,
+  FLOW_NAME_QUERY_PARAM,
+  FLOW_STATUS_QUERY_PARAM,
+  FilterConfig,
   FlagService,
   FoldersService,
   NavigationService,
@@ -60,7 +66,18 @@ export class FlowsTableComponent extends TableCore implements OnInit {
   showRewards$: Observable<boolean>;
   isStatusReadOnly = !this.hasPermission(Permission.UPDATE_FLOW_STATUS);
   renameFlow$?: Observable<unknown>;
+  filtersChanged$: Observable<void>;
+  flowNameFilterControl: FormControl<string | null> = new FormControl(null);
+  flowStatusFilterControl: FormControl<string | null> = new FormControl(null);
+  filters: FilterConfig<
+    {
+      label: string;
+      value: string;
+    },
+    string
+  >[];
   constructor(
+    private router: Router,
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
     private flowService: FlowService,
@@ -86,6 +103,35 @@ export class FlowsTableComponent extends TableCore implements OnInit {
     this.showAllFlows$ = this.listenToShowAllFolders();
     this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
     this.showRewards$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_REWARDS);
+    this.flowNameFilterControl.setValue(
+      this.activatedRoute.snapshot.queryParamMap.get(FLOW_NAME_QUERY_PARAM)
+    );
+    this.flowStatusFilterControl.setValue(
+      this.activatedRoute.snapshot.queryParamMap.get(FLOW_STATUS_QUERY_PARAM)
+    );
+    this.filters = [
+      {
+        type: 'text',
+        name: 'By Name',
+        label: 'Filter By Name',
+        formControl: this.flowNameFilterControl,
+        queryParam: FLOW_NAME_QUERY_PARAM,
+      },
+      {
+        type: 'select',
+        name: 'By Status',
+        label: 'Filter By Status',
+        formControl: this.flowStatusFilterControl,
+        queryParam: FLOW_STATUS_QUERY_PARAM,
+        options$: of([
+          { label: 'Enabled', value: FlowStatus.ENABLED },
+          { label: 'Disabled', value: FlowStatus.DISABLED },
+        ]),
+        allValues$: of([FlowStatus.ENABLED, FlowStatus.DISABLED]),
+        optionLabelKey: 'label',
+        optionValueKey: 'value',
+      },
+    ];
   }
 
   private listenToShowAllFolders() {
@@ -116,6 +162,27 @@ export class FlowsTableComponent extends TableCore implements OnInit {
   }
 
   ngOnInit(): void {
+    this.filtersChanged$ = combineLatest({
+      flowName: this.flowNameFilterControl.valueChanges.pipe(
+        startWith(this.flowNameFilterControl.value)
+      ),
+      flowStatus: this.flowStatusFilterControl.valueChanges.pipe(
+        startWith(this.flowStatusFilterControl.value)
+      ),
+    }).pipe(
+      distinctUntilChanged(),
+      tap((result) => {
+        this.router.navigate(['flows'], {
+          queryParams: {
+            name: result.flowName,
+            status: result.flowStatus,
+          },
+          queryParamsHandling: 'merge',
+        });
+      }),
+      map(() => undefined)
+    );
+
     this.dataSource = new FlowsTableDataSource(
       this.activatedRoute.queryParams,
       this.foldersService,

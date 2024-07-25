@@ -1,4 +1,4 @@
-import { logger } from '@activepieces/server-shared'
+import { AppSystemProp, logger, rejectedPromiseHandler, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -20,8 +20,9 @@ import {
     ProjectId,
     SeekPage, TelemetryEventName, UserId,
 } from '@activepieces/shared'
-import { EntityManager, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
+import { emailService } from '../../ee/helper/email/email-service'
 import { acquireLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -31,6 +32,10 @@ import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
+
+
+const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
+
 
 export const flowService = {
     async create({ projectId, request }: CreateParams): Promise<PopulatedFlow> {
@@ -82,6 +87,7 @@ export const flowService = {
         limit,
         folderId,
         status,
+        name,
     }: ListParams): Promise<SeekPage<PopulatedFlow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
@@ -102,7 +108,7 @@ export const flowService = {
         }
 
         if (status !== undefined) {
-            queryWhere.status = status
+            queryWhere.status = In(status)
         }
 
         const paginationResult = await paginator.paginate(
@@ -123,7 +129,13 @@ export const flowService = {
 
         const populatedFlows = await Promise.all(populatedFlowPromises)
 
-        return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
+        let filteredPopulatedFlows = populatedFlows
+        
+        if (name) {
+            filteredPopulatedFlows = populatedFlows.filter((flow) => flow.version.displayName.match(new RegExp(`^.*${name}.*`, 'i')))
+        }
+
+        return paginationHelper.createPage(filteredPopulatedFlows, paginationResult.cursor)
     },
 
     async getOneById(id: string): Promise<Flow | null> {
@@ -308,6 +320,54 @@ export const flowService = {
         })
     },
 
+    async updateFailureCount({
+        flowId,
+        projectId,
+        success,
+    }: UpdateFailureCountParams): Promise<void> {
+        const flow = await flowService.getOnePopulatedOrThrow({
+            id: flowId,
+            projectId,
+        })
+        
+        const { schedule } = flow
+        const skipUpdateFlowCount = isNil(schedule) || flow.status === FlowStatus.DISABLED 
+
+        if ( skipUpdateFlowCount ) {
+            return
+        }
+        const newFailureCount = success ? 0 : (schedule.failureCount ?? 0) + 1
+        
+        if (newFailureCount >= TRIGGER_FAILURES_THRESHOLD) {
+            await this.updateStatus({
+                id: flowId,
+                projectId,
+                newStatus: FlowStatus.DISABLED,
+            })
+            
+            await emailService.sendExceedFailureThresholdAlert(projectId, flow.version.displayName)
+            rejectedPromiseHandler(telemetry.trackProject(projectId, {
+                name: TelemetryEventName.TRIGGER_FAILURES_EXCEEDED,
+                payload: {
+                    projectId,
+                    flowId,
+                    pieceName: flow.version.trigger.settings.pieceName,
+                    pieceVersion: flow.version.trigger.settings.pieceVersion,
+                },
+            },
+            ),
+            )
+        }
+
+        await flowRepo().update(flowId, {
+            schedule: {
+                ...flow.schedule,
+                failureCount: newFailureCount,
+            },
+        })
+    },
+
+
     async updatedPublishedVersionId({
         id,
         userId,
@@ -468,7 +528,8 @@ type ListParams = {
     cursorRequest: Cursor | null
     limit: number
     folderId: string | undefined
-    status: FlowStatus | undefined
+    status: FlowStatus[] | undefined
+    name: string | undefined
 }
 
 type GetOneParams = {
@@ -507,6 +568,12 @@ type UpdateStatusParams = {
     projectId: ProjectId
     newStatus: FlowStatus
     entityManager?: EntityManager
+}
+
+type UpdateFailureCountParams = {
+    flowId: FlowId
+    projectId: ProjectId
+    success: boolean
 }
 
 type UpdatePublishedVersionIdParams = {

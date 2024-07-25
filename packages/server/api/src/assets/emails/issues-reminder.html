@@ -116,6 +116,26 @@
             text-align: left;
             min-width: auto !important;
         }
+
+        .button {
+            mso-padding-alt: 16px 20px;
+            color: #ffffff;
+            font-family: 'Graphik',
+                '-apple-system',
+                'BlinkMacSystemFont',
+                'Segoe UI', 'Roboto',
+                'Oxygen', 'Ubuntu',
+                'Cantarell', 'Fira Sans',
+                'Droid Sans',
+                'Helvetica', sans-serif !important;
+            font-size: 14px;
+            line-height: 18px;
+            text-align: center;
+            font-weight: 500;
+            margin-bottom: 18px;
+            width: 10% !important;
+            background: #6e41e2;
+        }
     </style>
 </head>
 
@@ -153,6 +173,17 @@
             {{/renderIssues}}
         </tbody>
     </table>
+    <div class="text-button black-button button">
+        <a href="{{issuesUrl}}" target="_blank" class="link-button button-inner" style="
+                                                              text-decoration: none;
+                                                              padding: 16px 20px;
+                                                              display: block;
+                                                              color: #ffffff;
+                                                            ">
+            <span class="link-button" style="color: #ffffff">
+                View Issues
+            </span></a>
+    </div>
 
     <span>Activepieces, Inc. 398 11th Street,
         2nd floor, San Francisco, CA 94103</span>

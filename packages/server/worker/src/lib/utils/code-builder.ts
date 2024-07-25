@@ -1,8 +1,12 @@
-import fs from 'node:fs/promises'
-import { logger, PackageInfo, packageManager } from '@activepieces/server-shared'
-import { SourceCode } from '@activepieces/shared'
+import fs, { rmdir } from 'node:fs/promises'
+import path from 'node:path'
+import { fileExists, logger, memoryLock, PackageInfo, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
+import { FlowVersionState } from '@activepieces/shared'
+import { CodeArtifact } from '../engine/engine-runner'
+import { cacheHandler, CacheState } from '../utils/cache-handler'
 
 const TS_CONFIG_CONTENT = `
+
 {
     "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
@@ -29,35 +33,41 @@ const INVALID_ARTIFACT_TEMPLATE_PATH =
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
 export const codeBuilder = {
-    buildPath({
-        sourceCodeId,
-        flowVersionId,
-        buildPath,
-    }: BuildPathParams): string {
-        return `${buildPath}/codes/${flowVersionId}/${sourceCodeId}`
+    getCodesFolder({ codesFolderPath, flowVersionId }: { codesFolderPath: string, flowVersionId: string }): string {
+        return path.join(codesFolderPath, flowVersionId)
     },
     async processCodeStep({
-        sourceCode,
-        sourceCodeId,
-        flowVersionId,
-        buildPath,
+        artifact,
+        codesFolderPath,
     }: ProcessCodeStepParams): Promise<void> {
-        const codePath = codeBuilder.buildPath({
-            sourceCodeId,
-            flowVersionId,
-            buildPath,
-        })
+        const { sourceCode, flowVersionId, name } = artifact
+        const flowVersionPath = codeBuilder.getCodesFolder({ codesFolderPath, flowVersionId })
+        const codePath = path.join(flowVersionPath, name)
         logger.debug({
-            name: 'CodeBuilder#processCodeStep',
+            message: 'CodeBuilder#processCodeStep',
             sourceCode,
-            sourceCodeId,
+            name,
             codePath,
         })
 
+        const lock = await memoryLock.acquire(`code-builder-${flowVersionId}-${name}`)
         try {
+            const cache = cacheHandler(codePath) 
+            const fState = await cache.cacheCheckState(codePath)
+            if (fState === CacheState.READY && artifact.flowVersionState === FlowVersionState.LOCKED) {
+                return
+            }
             const { code, packageJson } = sourceCode
 
-            await createBuildDirectory(codePath)
+            const codeNeedCleanUp = fState === CacheState.PENDING && await fileExists(codePath)            
+            if (codeNeedCleanUp) {
+                await rmdir(codePath, { recursive: true })
+            }
+
+            await threadSafeMkdir(codePath)
+
+            
+            await cache.setCache(codePath, CacheState.PENDING)
 
             await installDependencies({
                 path: codePath,
@@ -68,6 +78,8 @@ export const codeBuilder = {
                 path: codePath,
                 code,
             })
+
+            await cache.setCache(codePath, CacheState.READY)
         }
         catch (error: unknown) {
             logger.error({ name: 'CodeBuilder#processCodeStep', codePath, error })
@@ -77,11 +89,10 @@ export const codeBuilder = {
                 error: error as Record<string, string | undefined>,
             })
         }
+        finally {
+            await lock.release()
+        }
     },
-}
-
-const createBuildDirectory = async (path: string): Promise<void> => {
-    await fs.mkdir(path, { recursive: true })
 }
 
 const installDependencies = async ({
@@ -132,28 +143,20 @@ const handleCompilationError = async ({
         INVALID_ARTIFACT_TEMPLATE_PATH,
         'utf8',
     )
-
-    const errorMessage = `Compilation Error:\n${JSON.stringify(error) ?? 'error building code'}`
+    const errorMessage = `Compilation Error: ${JSON.stringify(error['stdout']) ?? JSON.stringify(error) ?? 'error compiling code'}`
 
     const invalidArtifactContent = invalidArtifactTemplate.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
-        JSON.stringify(errorMessage),
+        errorMessage,
     )
 
     await fs.writeFile(`${codePath}/index.js`, invalidArtifactContent, 'utf8')
 }
 
-type BuildPathParams = {
-    sourceCodeId: string
-    flowVersionId: string
-    buildPath: string
-}
 
 type ProcessCodeStepParams = {
-    sourceCode: SourceCode
-    sourceCodeId: string
-    flowVersionId: string
-    buildPath: string
+    artifact: CodeArtifact
+    codesFolderPath: string
 }
 
 type InstallDependenciesParams = {

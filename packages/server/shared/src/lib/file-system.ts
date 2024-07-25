@@ -1,4 +1,5 @@
-import { access } from 'node:fs/promises'
+import { access, mkdir } from 'node:fs/promises'
+import { memoryLock } from './memory-lock'
 
 export const fileExists = async (path: string): Promise<boolean> => {
     try {
@@ -12,5 +13,19 @@ export const fileExists = async (path: string): Promise<boolean> => {
         }
 
         throw e
+    }
+}
+
+export async function threadSafeMkdir(path: string): Promise<void> {
+    const fExists = await fileExists(path)
+    if (fExists) {
+        return
+    }
+    const lock = await memoryLock.acquire(`mkdir-${path}`)
+    try {
+        await mkdir(path, { recursive: true })
+    }
+    finally {
+        await lock.release()
     }
 }

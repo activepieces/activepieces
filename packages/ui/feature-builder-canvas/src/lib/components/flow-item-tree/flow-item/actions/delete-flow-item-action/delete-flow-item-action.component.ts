@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Step } from '@activepieces/ui/feature-builder-store';
-import { DeleteStepDialogComponent } from './delete-step-dialog/delete-step-dialog.component';
+import {
+  DeleteStepDialogComponent,
+  DeleteStepDialogData,
+} from './delete-step-dialog/delete-step-dialog.component';
 import { ACTION_BUTTON_ICON_DIMENSION } from '../common';
 
 @Component({
@@ -19,6 +22,12 @@ export class DeleteFlowItemActionComponent {
     if (stepName == undefined) {
       return;
     }
-    this.dialogService.open(DeleteStepDialogComponent, { data: stepName });
+    const data: DeleteStepDialogData = {
+      stepName,
+      type: this.flowItem.type,
+    };
+    this.dialogService.open(DeleteStepDialogComponent, {
+      data,
+    });
   }
 }

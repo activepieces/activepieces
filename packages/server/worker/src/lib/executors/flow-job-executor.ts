@@ -12,7 +12,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, e
                 flowVersion,
                 flowRunId: jobData.runId,
                 projectId: jobData.projectId,
-                serverHandlerId: jobData.synchronousHandlerId,
+                serverHandlerId: jobData.synchronousHandlerId ?? null,
                 triggerPayload: jobData.payload,
                 executionType: ExecutionType.BEGIN,
                 runEnvironment: jobData.environment,
@@ -27,7 +27,7 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, e
                 flowVersion,
                 flowRunId: jobData.runId,
                 projectId: jobData.projectId,
-                serverHandlerId: jobData.synchronousHandlerId,
+                serverHandlerId: jobData.synchronousHandlerId ?? null,
                 tasks: flowRun.tasks ?? 0,
                 executionType: ExecutionType.RESUME,
                 steps: flowRun.steps,
@@ -129,12 +129,7 @@ async function handleInternalError(jobData: OneTimeJobData, engineToken: string,
         workerHandlerId: jobData.synchronousHandlerId,
         runId: jobData.runId,
     })
-    throwErrorToRetry(e as Error)
-}
-
-function throwErrorToRetry(error: Error): void {
-    exceptionHandler.handle(error)
-    throw error
+    exceptionHandler.handle(e)
 }
 
 

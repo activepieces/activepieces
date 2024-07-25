@@ -56,10 +56,13 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
     [AppSystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
     [AppSystemProp.AZURE_OPENAI_API_VERSION]: '2023-06-01-preview',
+    [AppSystemProp.TRIGGER_FAILURES_THRESHOLD]: '576',
     [SharedSystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
     [SharedSystemProp.ENVIRONMENT]: 'prod',
     [SharedSystemProp.EXECUTION_MODE]: 'UNSANDBOXED',
     [WorkerSystemProps.FLOW_WORKER_CONCURRENCY]: '10',
+    [WorkerSystemProps.POLLING_POOL_SIZE]: '5',
+    [WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY]: '10',
     [SharedSystemProp.LOG_LEVEL]: 'info',
     [SharedSystemProp.LOG_PRETTY]: 'false',
     [SharedSystemProp.PACKAGE_ARCHIVE_PATH]: 'dist/archives',
@@ -82,6 +85,23 @@ export const system = {
         return getEnvVar(prop) as T | undefined
     },
 
+    getNumberOrThrow(prop: SystemProp): number {
+        const value = system.getNumber(prop)
+
+        if (isNil(value)) {
+            throw new ActivepiecesError(
+                {
+                    code: ErrorCode.SYSTEM_PROP_NOT_DEFINED,
+                    params: {
+                        prop,
+                    },
+                },
+                `System property AP_${prop} is not defined, please check the documentation`,
+            )
+        }
+        return value
+
+    },
     getNumber(prop: SystemProp): number | null {
         const stringNumber = getEnvVar(prop)
 

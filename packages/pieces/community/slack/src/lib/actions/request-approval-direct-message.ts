@@ -36,12 +36,12 @@ export const requestApprovalDirectMessageAction = createAction({
       assertNotNullOrUndefined(userId, 'userId');
       const approvalLink = context.generateResumeUrl({
         queryParams: { action: 'approve' },
-      })
+      });
       const disapprovalLink = context.generateResumeUrl({
         queryParams: { action: 'disapprove' },
-      })
+      });
 
-      return await slackSendMessage({
+      await slackSendMessage({
         token,
         text: `${context.propsValue.text}\n\nApprove: ${approvalLink}\n\nDisapprove: ${disapprovalLink}`,
         username,
@@ -81,8 +81,10 @@ export const requestApprovalDirectMessageAction = createAction({
         ],
         conversationId: userId,
       });
+      return {
+        approved: false, // default approval is false
+      };
     } else {
-
       return {
         approved: context.resumePayload.queryParams['action'] === 'approve',
       };

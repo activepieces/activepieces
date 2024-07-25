@@ -54,12 +54,13 @@ export const discord = createPiece({
     discordDeleteGuildRole,
     discordBanGuildMember,
     createCustomApiCallAction({
+      auth:discordAuth,
       baseUrl: () => {
         return 'https://discord.com/api/v9';
       },
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bot ${auth}`,
         };
       },
     }),
