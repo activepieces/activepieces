@@ -21,7 +21,7 @@ import './data-to-insert-list.css';
 
 import { useRipple } from '@/components/theme-provider';
 
-const testStepSection = (
+const TestStepSection = (
   stepName: string,
   selectStep: (path: StepPathWithName) => void,
 ) => {
@@ -43,13 +43,13 @@ const testStepSection = (
     </Button>
   );
   return (
-    <div className="flex flex-col gap-3 flex-grow items-center justify-center p-2">
+    <div className="flex flex-col gap-3 select-none  flex-grow items-center justify-center p-2">
       <div>{text}</div>
       <div>{btn}</div>
     </div>
   );
 };
-const stepIcon = ({ stepName }: { stepName: string }) => {
+const StepIcon = ({ stepName }: { stepName: string }) => {
   const iconSize = 24;
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const step = useBuilderStateContext(builderSelectors.getStep(stepName));
@@ -68,7 +68,7 @@ const stepIcon = ({ stepName }: { stepName: string }) => {
   }
   return <></>;
 };
-const nodeTemplate = ({
+const NodeTemplate = ({
   ripple,
   expandNode,
   setExpandedKeys,
@@ -88,9 +88,8 @@ const nodeTemplate = ({
 }) => {
   const node = (node: TreeNode, options: TreeNodeTemplateOptions) => {
     const actualNode = node as MentionTreeNode;
-
     const testStepSectionElement = actualNode.data.isTestStepNode
-      ? testStepSection(actualNode.data.propertyPath, selectStep)
+      ? TestStepSection(actualNode.data.propertyPath, selectStep)
       : null;
     if (testStepSectionElement) return testStepSectionElement;
 
@@ -100,8 +99,11 @@ const nodeTemplate = ({
     const nodeHasChildren = node.children && node.children.length > 0;
     const toggleIconSize = 15;
     const stepIconElement = isStep
-      ? stepIcon({ stepName: actualNode.data.propertyPath })
+      ? StepIcon({ stepName: actualNode.data.propertyPath })
       : undefined;
+    const showInsertButton =
+      !actualNode.data.isSlice &&
+      !(actualNode.children && actualNode.children[0].data.isTestStepNode);
     const togglerIcon = expanded ? (
       <ChevronUp height={toggleIconSize} width={toggleIconSize}></ChevronUp>
     ) : (
@@ -117,7 +119,7 @@ const nodeTemplate = ({
     };
     return (
       <div
-        className="p-ripple hover:bg-accent hover:bg-opacity-75 flex-grow flex cursor-pointer group"
+        className="p-ripple select-none hover:bg-accent hover:bg-opacity-75 flex-grow flex cursor-pointer group"
         onClick={toggleNode}
       >
         <div className="flex min-h-[48px] px-5  select-none flex-grow  items-center gap-2">
@@ -132,14 +134,17 @@ const nodeTemplate = ({
                 </div>
               </>
             )}
-            {!actualNode.data.isSlice && (
+            {showInsertButton && (
               <>
                 <div className="flex-grow"></div>
                 <Button
                   className="z-50 hover:opacity-100 opacity-0 group-hover:opacity-100"
                   variant="basic"
                   size="sm"
-                  onClick={() => insertMention(actualNode.data.propertyPath)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    insertMention(actualNode.data.propertyPath);
+                  }}
                 >
                   Insert
                 </Button>
@@ -155,7 +160,7 @@ const nodeTemplate = ({
   return node;
 };
 
-export function DataToInsertList({ children }: { children?: React.ReactNode }) {
+export function DataToInsertList() {
   const ripple = useRipple();
   const nodes = useBuilderStateContext(builderSelectors.getAllStepsMentions);
   const [expandedKeys, setExpandedKeys] = useState<TreeExpandedKeysType>({});
@@ -175,7 +180,7 @@ export function DataToInsertList({ children }: { children?: React.ReactNode }) {
         value={nodes}
         expandedKeys={expandedKeys}
         togglerTemplate={() => <></>}
-        nodeTemplate={nodeTemplate({
+        nodeTemplate={NodeTemplate({
           ripple,
           expandNode,
           setExpandedKeys,

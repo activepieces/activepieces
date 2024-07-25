@@ -190,7 +190,7 @@ export const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
     mentionAttrs.label || '{}',
   );
   mentionElement.className =
-    'inline-flex bg-[#fafafa] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px]  text-accent-foreground ';
+    'inline-flex bg-[#fafafa]  my-1 mx-[2px] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px]  text-accent-foreground ';
 
   if (mentionAttrs.label) {
     mentionElement.dataset.label = mentionAttrs.label;

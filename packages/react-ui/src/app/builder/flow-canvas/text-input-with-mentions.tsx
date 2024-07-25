@@ -1,4 +1,4 @@
-import { flowHelper } from '@activepieces/shared';
+import { Action, ActionType, flowHelper, Trigger, TriggerType } from '@activepieces/shared';
 import Document from '@tiptap/extension-document';
 import HardBreak from '@tiptap/extension-hard-break';
 import History from '@tiptap/extension-history';
@@ -46,7 +46,7 @@ const extensions = (placeholder?: string) => {
 };
 
 const defaultClassName =
-  ' w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';
+  ' w-full  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';
 export const TextInputWithMentions = ({
   className,
   originalValue,
@@ -61,6 +61,17 @@ export const TextInputWithMentions = ({
   extraClasses?: string;
 }) => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
+  const steps = flowHelper.getAllSteps(flowVersion.trigger).map(step=> ({step}));
+  const result = piecesHooks.usePiecesMetadata(steps).filter(res => res.data !== undefined).map(res => res.data).map(res =>{
+    const stepNamesThatUseThisMetadata = steps.filter(({step}) =>{
+      if(step.type === ActionType.PIECE || step.type === TriggerType.PIECE){
+        return step.settings.pieceName === res.pieceName && step.settings.pieceVersion === res.pieceVersion;
+      }
+     return (step.type === ActionType.CODE || step.type === ActionType.BRANCH || step.type === TriggerType.EMPTY || step.type=== ActionType.LOOP_ON_ITEMS) && step.type === res.type;
+    }).map(({step}) => step.name);
+    return {...res, stepNamesThatUseThisMetadata}
+  });
+
   const setInsertMentionHandler = useBuilderStateContext(
     (state) => state.setInsertMentionHandler,
   );
@@ -77,8 +88,7 @@ export const TextInputWithMentions = ({
         flowVersion.trigger,
         stepName,
       );
-      const { data } = piecesHooks.usePieceMetadata({ step });
-
+     const data = result.find(res => res.stepNamesThatUseThisMetadata.includes(stepName));
       if (data) {
         return {
           ...data,
@@ -118,8 +128,6 @@ export const TextInputWithMentions = ({
       const textResult = fromTiptapJsonContentToText(content);
       if (onChange) {
         onChange(textResult);
-      } else {
-        console.log({ textResult });
       }
     },
     onFocus: () => {
