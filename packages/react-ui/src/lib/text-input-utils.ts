@@ -1,4 +1,3 @@
-import { Action, Trigger } from '@activepieces/shared';
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
 
@@ -14,7 +13,7 @@ const removeQuotes = (text: string) => {
   return text;
 };
 
-export const keysWithinPath = (path: string) => {
+const keysWithinPath = (path: string) => {
   return path
     .split(/\.|\[|\]/)
     .filter((key) => key && key !== '')
@@ -209,4 +208,5 @@ export const textMentionUtils = {
   convertTextToTipTapJsonContent,
   convertTiptapJsonToText,
   generateMentionHtmlElement,
+  keysWithinPath,
 };
