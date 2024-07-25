@@ -56,6 +56,11 @@ type IssuesReminderTemplateData = BaseEmailTemplateData<'issues-reminder', {
     projectName: string
 }>
 
+type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
+    flowName: string
+    projectName: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
   | QuotaEmailTemplateData
@@ -63,6 +68,7 @@ export type EmailTemplateData =
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
   | IssuesReminderTemplateData
+  | TriggerFailureThresholdTemplateData
 
 type SendArgs = {
     emails: string[]
