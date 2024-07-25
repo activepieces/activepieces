@@ -189,7 +189,6 @@ const FlowsTable = () => {
                 setIsRenameDialogOpen(true);
               }}
               onDuplicate={() => refetch()}
-              onExport={() => refetch()}
               onShare={() => {
                 selectedFlowSetter(
                   flow.id,

@@ -35,7 +35,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   flow,
   onRename,
   onDuplicate,
-  onExport,
   onShare,
   onDelete,
 }) => {
