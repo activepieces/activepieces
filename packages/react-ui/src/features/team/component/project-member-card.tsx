@@ -1,8 +1,7 @@
+import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import { PopoverContent } from '@radix-ui/react-popover';
 import { ChevronDownIcon, Trash } from 'lucide-react';
-
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
 import { Avatar, AvatarImage } from '../../../components/ui/avatar';

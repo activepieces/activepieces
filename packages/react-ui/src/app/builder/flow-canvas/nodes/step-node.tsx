@@ -1,7 +1,10 @@
+import { FlowOperationType, flowHelper } from '@activepieces/shared';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
 import { CopyPlus, Replace, Trash } from 'lucide-react';
 import React, { useState } from 'react';
+
+import { ApNode } from '../flow-canvas-utils';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
@@ -9,9 +12,6 @@ import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
-import { FlowOperationType, flowHelper } from '@activepieces/shared';
-
-import { ApNode } from '../flow-canvas-utils';
 
 const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { toast } = useToast();
@@ -70,10 +70,13 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       onMouseLeave={() => setToolbarOpen(false)}
     >
       <div
-        className={cn('absolute left-0 right-0 top-0 mx-auto h-[3px] bg-primary opacity-0 rounded-tl-md rounded-tr-md', {
-          'opacity-100': toolbarOpen || isSelected,
-          'opacity-0': !toolbarOpen && !isSelected,
-        })}
+        className={cn(
+          'absolute left-0 right-0 top-0 mx-auto h-[3px] bg-primary opacity-0 rounded-tl-md rounded-tr-md',
+          {
+            'opacity-100': toolbarOpen || isSelected,
+            'opacity-0': !toolbarOpen && !isSelected,
+          },
+        )}
         style={{ width: 'calc(100% - 2px)' }}
       ></div>
       <div className="px-2 h-full w-full box-border">

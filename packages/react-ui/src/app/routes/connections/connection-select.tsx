@@ -1,5 +1,8 @@
+import { CustomAuthProperty } from '@activepieces/pieces-framework';
 import { Plus } from 'lucide-react';
 import React from 'react';
+
+import { ConnectionDialog } from './connection-dialog';
 
 import {
   Select,
@@ -8,9 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CustomAuthProperty } from '@activepieces/pieces-framework';
-
-import { ConnectionDialog } from './connection-dialog';
 
 type ConnectionSelectProps = {
   auth: CustomAuthProperty<any> | undefined;

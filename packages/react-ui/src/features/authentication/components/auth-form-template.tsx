@@ -1,5 +1,9 @@
 import React from 'react';
 
+import { SignInForm } from './sign-in-form';
+import { SignUpForm } from './sign-up-form';
+import { ThirdPartyLogin } from './third-party-logins';
+
 import {
   Card,
   CardContent,
@@ -7,10 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-
-import { SignInForm } from './sign-in-form';
-import { SignUpForm } from './sign-up-form';
-import { ThirdPartyLogin } from './third-party-logins';
 
 type AuthFormTemplateProps = {
   title: string;

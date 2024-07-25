@@ -1,5 +1,6 @@
-import { projectApi } from '@/lib/project-api';
 import { AuthenticationResponse } from '@activepieces/shared';
+
+import { projectApi } from '@/lib/project-api';
 
 const currentUserKey = 'currentUser';
 const tokenKey = 'token';

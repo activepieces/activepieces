@@ -1,5 +1,4 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
-import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
 
 import { FlowsPage } from '../app/routes/flows';
 import { authenticationSession } from '../lib/authentication-session';
@@ -20,6 +19,8 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+
+import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
 
 const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
   if (!authenticationSession.isLoggedIn()) {

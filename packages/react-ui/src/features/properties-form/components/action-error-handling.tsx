@@ -1,6 +1,9 @@
+import { ErrorHandlingOptionsParam } from '@activepieces/pieces-framework';
 import { Static, Type } from '@sinclair/typebox';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+
+import { ReadMoreDescription } from './read-more-description';
 
 import {
   Form,
@@ -10,9 +13,6 @@ import {
   FormControl,
 } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
-import { ErrorHandlingOptionsParam } from '@activepieces/pieces-framework';
-
-import { ReadMoreDescription } from './read-more-description';
 
 const formSchema = Type.Object({
   continueOnFailure: Type.Boolean(),

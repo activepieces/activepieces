@@ -1,5 +1,3 @@
-import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import {
   ListProjectRequestForUserQueryParams,
@@ -7,6 +5,9 @@ import {
   SeekPage,
   SwitchProjectResponse,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const projectApi = {
   current: async () => {

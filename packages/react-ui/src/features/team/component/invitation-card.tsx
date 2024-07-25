@@ -1,7 +1,6 @@
+import { UserInvitation } from '@activepieces/shared';
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import { Trash } from 'lucide-react';
-
-import { UserInvitation } from '@activepieces/shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
 import { Avatar, AvatarImage } from '../../../components/ui/avatar';

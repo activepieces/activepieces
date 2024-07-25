@@ -1,6 +1,5 @@
-import { CircleCheck, CircleX, PauseCircleIcon, Timer } from 'lucide-react';
-
 import { FlowRunStatus, StepOutputStatus } from '@activepieces/shared';
+import { CircleCheck, CircleX, PauseCircleIcon, Timer } from 'lucide-react';
 
 export const flowRunUtils = {
   getStatusIconForStep(stepOutput: StepOutputStatus): {

@@ -1,3 +1,4 @@
+import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type, Static } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -20,7 +21,6 @@ import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
-import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
 
 const FormSchema = Type.Object({
   email: Type.String({

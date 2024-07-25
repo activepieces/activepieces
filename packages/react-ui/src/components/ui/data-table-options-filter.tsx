@@ -3,8 +3,6 @@ import { Column } from '@tanstack/react-table';
 import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { cn } from '@/lib/utils';
-
 import { Badge } from './badge';
 import { Button } from './button';
 import {
@@ -18,6 +16,8 @@ import {
 } from './command';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { Separator } from './seperator';
+
+import { cn } from '@/lib/utils';
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;

@@ -1,9 +1,10 @@
-import { api } from '@/lib/api';
 import {
   AppConnection,
   ListAppConnectionsRequestQuery,
   SeekPage,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const appConnectionsApi = {
   list(

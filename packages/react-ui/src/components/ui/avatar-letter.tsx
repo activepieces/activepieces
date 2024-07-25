@@ -1,10 +1,10 @@
 import { type VariantProps, cva } from 'class-variance-authority';
 
-import { cn } from '@/lib/utils';
-
 import { Avatar, AvatarFallback } from './avatar';
 import { Button } from './button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
+
+import { cn } from '@/lib/utils';
 
 const avatarLetterVariants = cva('l', {
   variants: {

@@ -1,7 +1,5 @@
 import { CircleUser, LogOut } from 'lucide-react';
 
-import { authenticationSession } from '@/lib/authentication-session';
-
 import { Avatar, AvatarFallback } from './avatar';
 import {
   DropdownMenu,
@@ -11,6 +9,8 @@ import {
   DropdownMenuItem,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
+
+import { authenticationSession } from '@/lib/authentication-session';
 
 export function UserAvatar() {
   return (

@@ -9,7 +9,6 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-
 import { FlowVersion } from '@activepieces/shared';
 
 import { ApEdgeWithButton } from './edges/edge-with-button';

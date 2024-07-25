@@ -1,10 +1,10 @@
+import { PieceProperty } from '@activepieces/pieces-framework';
 import { SquareFunction } from 'lucide-react';
+
+import { ReadMoreDescription } from './read-more-description';
 
 import { FormLabel } from '@/components/ui/form';
 import { Toggle } from '@/components/ui/toggle';
-import { PieceProperty } from '@activepieces/pieces-framework';
-
-import { ReadMoreDescription } from './read-more-description';
 
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;

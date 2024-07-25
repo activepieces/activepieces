@@ -1,7 +1,6 @@
+import { Action, Trigger } from '@activepieces/shared';
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
-
-import { Action, Trigger } from '@activepieces/shared';
 
 type Step = Action | Trigger;
 

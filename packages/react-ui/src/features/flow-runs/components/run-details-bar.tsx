@@ -1,9 +1,9 @@
+import { FlowRun } from '@activepieces/shared';
 import React from 'react';
 
-import { Button } from '@/components/ui/button';
-import { FlowRun } from '@activepieces/shared';
-
 import { flowRunUtils } from '../lib/flow-run-utils';
+
+import { Button } from '@/components/ui/button';
 
 type RunDetailsBarProps = {
   run: FlowRun;

@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   IssueStatus,
   ListIssuesParams,
@@ -6,6 +5,8 @@ import {
   UpdateIssueRequestBody,
 } from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const issuesApi = {
   list(request: ListIssuesParams): Promise<SeekPage<PopulatedIssue>> {

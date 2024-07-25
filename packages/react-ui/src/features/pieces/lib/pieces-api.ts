@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -8,6 +7,8 @@ import {
   GetPieceRequestQuery,
   ListPiecesRequestQuery,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const piecesApi = {
   list(request: ListPiecesRequestQuery): Promise<PieceMetadataModelSummary[]> {

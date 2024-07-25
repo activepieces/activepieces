@@ -1,6 +1,5 @@
-import { CheckCircledIcon, CrossCircledIcon } from '@radix-ui/react-icons';
-
 import { AppConnectionStatus } from '@activepieces/shared';
+import { CheckCircledIcon, CrossCircledIcon } from '@radix-ui/react-icons';
 
 export const appConnectionUtils = {
   getStatusIcon(status: AppConnectionStatus): {

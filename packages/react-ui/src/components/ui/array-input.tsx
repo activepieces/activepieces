@@ -4,12 +4,12 @@ import { Static, Type } from '@sinclair/typebox';
 import { Plus, TrashIcon } from 'lucide-react';
 import { useFieldArray, useForm } from 'react-hook-form';
 
-import { Input } from '@/components/ui/input';
-
 import { Button } from './button';
 import { Form, FormControl, FormField, FormItem } from './form';
 import { Sortable, SortableDragHandle, SortableItem } from './sortable';
 import { TextWithIcon } from './text-with-icon';
+
+import { Input } from '@/components/ui/input';
 
 const FormSchema = Type.Object({
   items: Type.Array(

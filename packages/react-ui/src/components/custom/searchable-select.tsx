@@ -1,8 +1,6 @@
 import { Search } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import { cn } from '@/lib/utils';
-
 import {
   Select,
   SelectContent,
@@ -10,6 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
+
+import { cn } from '@/lib/utils';
 
 type SelectOption<T> = {
   value: T;

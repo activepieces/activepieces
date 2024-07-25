@@ -1,3 +1,4 @@
+import { AuthenticationResponse, SignInRequest } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -12,7 +13,6 @@ import { Label } from '@/components/ui/label';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { AuthenticationResponse, SignInRequest } from '@activepieces/shared';
 
 const SignInSchema = Type.Object({
   email: Type.String({
