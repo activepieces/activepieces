@@ -120,7 +120,13 @@ const NodeTemplate = ({
     return (
       <div
         className="p-ripple select-none hover:bg-accent hover:bg-opacity-75 flex-grow flex cursor-pointer group"
-        onClick={toggleNode}
+        onClick={() => {
+          if (nodeHasChildren) {
+            toggleNode();
+          } else {
+            insertMention(actualNode.data.propertyPath);
+          }
+        }}
       >
         <div className="flex min-h-[48px] px-5  select-none flex-grow  items-center gap-2">
           <div className="flex-grow ap-px-4 flex items-center  gap-3 ">
