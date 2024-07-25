@@ -114,7 +114,7 @@
     "@types/showdown": "2.0.6",
     "@uiw/codemirror-theme-github": "4.23.0",
     "@uiw/react-codemirror": "4.23.0",
-    "@xyflow/react": "12.0.1",
+    "@xyflow/react": "12.0.3",
     "airtable": "0.11.6",
     "ajv": "8.12.0",
     "amqplib": "0.10.4",
