@@ -46,7 +46,7 @@ export const DelayedJobData = Type.Object({
     runId: Type.String(),
     httpRequestId: Type.Optional(Type.String()),
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-    progressUpdateType: Type.Enum(ProgressUpdateType),
+    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
     jobType: Type.Literal(RepeatableJobType.DELAYED_FLOW),
 
 })
