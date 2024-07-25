@@ -1,13 +1,14 @@
 import { FlowTemplate, FlowVersion, TemplateType } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { DialogDescription } from '@radix-ui/react-dialog';
+import { DialogDescription, DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
-import React from 'react';
+import React, { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
+  Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -28,10 +29,11 @@ const ShareTemplateSchema = Type.Object({
 type ShareTemplateSchema = Static<typeof ShareTemplateSchema>;
 
 const ShareTemplateDialog: React.FC<{
+  children: React.ReactNode;
   flowId: string;
   flowVersion: FlowVersion;
-  setIsShareDialogOpen: (isOpen: boolean) => void;
-}> = ({ flowId, flowVersion, setIsShareDialogOpen }) => {
+}> = ({ children, flowId, flowVersion }) => {
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const shareTemplateForm = useForm<ShareTemplateSchema>({
     resolver: typeboxResolver(ShareTemplateSchema),
   });
@@ -73,51 +75,57 @@ const ShareTemplateDialog: React.FC<{
   };
 
   return (
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Share Template</DialogTitle>
-        <DialogDescription className="flex flex-col gap-2">
-          <span>
-            Generate or update a template link for the current flow to easily
-            share it with others.
-          </span>
-          <span>
-            The template will not have any credentials in connection fields,
-            keeping sensitive information secure.
-          </span>
-        </DialogDescription>
-      </DialogHeader>
-      <Form {...shareTemplateForm}>
-        <form
-          className="grid space-y-4"
-          onSubmit={shareTemplateForm.handleSubmit(onShareTemplateSubmit)}
-        >
-          <FormField
-            control={shareTemplateForm.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem className="grid space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Input
-                  {...field}
-                  required
-                  id="description"
-                  placeholder="A short description of the template"
-                  className="rounded-sm"
-                />
-                <FormMessage />
-              </FormItem>
+    <Dialog
+      open={isShareDialogOpen}
+      onOpenChange={(open) => setIsShareDialogOpen(open)}
+    >
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Share Template</DialogTitle>
+          <DialogDescription className="flex flex-col gap-2">
+            <span>
+              Generate or update a template link for the current flow to easily
+              share it with others.
+            </span>
+            <span>
+              The template will not have any credentials in connection fields,
+              keeping sensitive information secure.
+            </span>
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...shareTemplateForm}>
+          <form
+            className="grid space-y-4"
+            onSubmit={shareTemplateForm.handleSubmit(onShareTemplateSubmit)}
+          >
+            <FormField
+              control={shareTemplateForm.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem className="grid space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Input
+                    {...field}
+                    required
+                    id="description"
+                    placeholder="A short description of the template"
+                    className="rounded-sm"
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {shareTemplateForm?.formState?.errors?.root?.serverError && (
+              <FormMessage>
+                {shareTemplateForm.formState.errors.root.serverError.message}
+              </FormMessage>
             )}
-          />
-          {shareTemplateForm?.formState?.errors?.root?.serverError && (
-            <FormMessage>
-              {shareTemplateForm.formState.errors.root.serverError.message}
-            </FormMessage>
-          )}
-          <Button loading={isPending}>Confirm</Button>
-        </form>
-      </Form>
-    </DialogContent>
+            <Button loading={isPending}>Confirm</Button>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 };
 

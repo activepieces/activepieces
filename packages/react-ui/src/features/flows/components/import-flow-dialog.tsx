@@ -5,6 +5,7 @@ import {
 } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { flowsApi } from '../lib/flows-api';
 
@@ -23,6 +24,7 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
 
 const ImportFlowDialog = ({ children }: { children: React.ReactNode }) => {
+  const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -45,7 +47,7 @@ const ImportFlowDialog = ({ children }: { children: React.ReactNode }) => {
       });
     },
     onSuccess: (flow) => {
-      window.location.href = `/flows/${flow.id}`;
+      navigate(`/flows/${flow.id}`);
     },
     onError: () => {
       toast(INTERNAL_ERROR_TOAST);

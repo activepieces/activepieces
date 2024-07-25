@@ -13,6 +13,9 @@ import React from 'react';
 import { flowsApi } from '../lib/flows-api';
 import { flowsUtils } from '../lib/flows-utils';
 
+import { RenameFlowDialog } from './rename-flow-dialog';
+import { ShareTemplateDialog } from './share-template-dialog';
+
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
   DropdownMenu,
@@ -20,14 +23,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
 
 interface FlowActionMenuProps {
   flow: PopulatedFlow;
-  onRename: (flow: PopulatedFlow) => void;
+  onRename: () => void;
   onDuplicate: () => void;
-  onShare: (flow: PopulatedFlow) => void;
   onDelete: () => void;
 }
 
@@ -35,7 +38,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   flow,
   onRename,
   onDuplicate,
-  onShare,
   onDelete,
 }) => {
   const { mutate: duplicateFlow } = useMutation({
@@ -60,10 +62,17 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const exportFlow = async () => {
-    const template = await flowsApi.getTemplate(flow.id, {});
-    flowsUtils.downloadFlow(template);
-  };
+  const { mutate: exportFlow, isPending: isExportPending } = useMutation({
+    mutationFn: () => flowsUtils.downloadFlow(flow),
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Flow has been downloaded.',
+        duration: 3000,
+      });
+    },
+    onError: () => toast(INTERNAL_ERROR_TOAST),
+  });
 
   return (
     <DropdownMenu modal={false}>
@@ -71,12 +80,14 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         <EllipsisVertical className="h-6 w-6" />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem onClick={() => onRename(flow)}>
-          <div className="flex flex-row gap-2 items-center">
-            <Pencil className="h-4 w-4" />
-            <span>Rename</span>
-          </div>
-        </DropdownMenuItem>
+        <RenameFlowDialog flowId={flow.id} onRename={onRename}>
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <div className="flex flex-row gap-2 items-center">
+              <Pencil className="h-4 w-4" />
+              <span>Rename</span>
+            </div>
+          </DropdownMenuItem>
+        </RenameFlowDialog>
         <DropdownMenuItem onClick={() => duplicateFlow()}>
           <div className="flex flex-row gap-2 items-center">
             <Copy className="h-4 w-4" />
@@ -85,16 +96,22 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => exportFlow()}>
           <div className="flex flex-row gap-2 items-center">
-            <Download className="h-4 w-4" />
-            <span>Export</span>
+            {isExportPending ? (
+              <LoadingSpinner />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            <span>{isExportPending ? 'Exporting' : 'Export'}</span>
           </div>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onShare(flow)}>
-          <div className="flex flex-row gap-2 items-center">
-            <Share2 className="h-4 w-4" />
-            <span>Share</span>
-          </div>
-        </DropdownMenuItem>
+        <ShareTemplateDialog flowId={flow.id} flowVersion={flow.version}>
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <div className="flex flex-row gap-2 items-center">
+              <Share2 className="h-4 w-4" />
+              <span>Share</span>
+            </div>
+          </DropdownMenuItem>
+        </ShareTemplateDialog>
         <ConfirmationDeleteDialog
           title={`Delete flow ${flow.version.displayName}`}
           message="Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs."

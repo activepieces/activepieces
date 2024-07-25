@@ -1,6 +1,7 @@
 import { FlowOperationType } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { templatesApi } from '../lib/templates-api';
 
@@ -12,6 +13,7 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 
 const ShareTemplate: React.FC<{ templateId: string }> = ({ templateId }) => {
+  const navigate = useNavigate();
   const { data } = useQuery({
     queryKey: ['template', templateId],
     queryFn: () => templatesApi.getTemplate(templateId),
@@ -34,7 +36,7 @@ const ShareTemplate: React.FC<{ templateId: string }> = ({ templateId }) => {
       return updatedFlow;
     },
     onSuccess: (data) => {
-      window.location.href = `/flows/${data.id}`;
+      navigate(`/flows/${data.id}`);
     },
     onError: () => {
       toast(INTERNAL_ERROR_TOAST);
@@ -82,7 +84,7 @@ const ShareTemplate: React.FC<{ templateId: string }> = ({ templateId }) => {
                 <Button
                   variant={'secondary'}
                   className="mr-2"
-                  onClick={() => (window.location.href = '/flows')}
+                  onClick={() => navigate('/flows')}
                 >
                   Cancel
                 </Button>

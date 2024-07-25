@@ -1,6 +1,8 @@
-import { FlowTemplate, PopulatedFlow, TriggerType } from '@activepieces/shared';
+import { PopulatedFlow, TriggerType } from '@activepieces/shared';
 import cronstrue from 'cronstrue/i18n';
 import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
+
+import { flowsApi } from './flows-api';
 
 const downloadFile = (
   obj: any,
@@ -20,8 +22,9 @@ const downloadFile = (
   URL.revokeObjectURL(url);
 };
 
-const downloadFlow = (flow: FlowTemplate) => {
-  downloadFile(JSON.stringify(flow, null, 2), flow.name, 'json');
+const downloadFlow = async (flow: PopulatedFlow) => {
+  const template = await flowsApi.getTemplate(flow.id, {});
+  downloadFile(JSON.stringify(template, null, 2), template.name, 'json');
 };
 
 export const flowsUtils = {

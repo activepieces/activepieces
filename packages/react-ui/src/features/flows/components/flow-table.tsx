@@ -1,16 +1,12 @@
-import { FlowStatus, FlowVersion, PopulatedFlow } from '@activepieces/shared';
+import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon, Import } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { flowsHooks } from '../lib/flows-hooks';
-
 import FlowActionMenu from './flow-actions-menu';
 import { ImportFlowDialog } from './import-flow-dialog';
-import { RenameFlowDialog } from './rename-flow-dialog';
-import { ShareTemplateDialog } from './share-template-dialog';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +15,6 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { Dialog } from '@/components/ui/dialog';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import FlowStatusToggle from '@/features/flows/components/flow-status-toggle';
 import { flowsApi } from '@/features/flows/lib/flows-api';
@@ -45,21 +40,7 @@ const filters: DataTableFilter[] = [
 
 const FlowsTable = () => {
   const navigate = useNavigate();
-  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [refresh, setRefresh] = useState(0);
-  const [selectedFlow, setSelectedFlow] = useState<{
-    flowId: string;
-    flowName: string;
-    flowVersion?: FlowVersion;
-  }>({
-    flowId: '',
-    flowName: '',
-    flowVersion: undefined,
-  });
-
-  const { refetch } = flowsHooks.useFlows();
 
   async function fetchData(queryParams: URLSearchParams) {
     return flowsApi.list({
@@ -83,24 +64,10 @@ const FlowsTable = () => {
       return flow;
     },
     onSuccess: (flow) => {
-      window.open(`/flows/${flow.id}`, '_blank', 'noopener');
-      refetch();
+      navigate(`/flows/${flow.id}`);
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
-
-  const selectedFlowSetter = (
-    flowId: string,
-    flowName: string,
-    flowVersion: FlowVersion,
-  ) => {
-    setSelectedFlow((prev) => ({
-      ...prev,
-      flowId,
-      flowName,
-      flowVersion,
-    }));
-  };
 
   const columns: ColumnDef<RowDataWithActions<PopulatedFlow>>[] = [
     {
@@ -181,23 +148,8 @@ const FlowsTable = () => {
           <div onClick={(e) => e.stopPropagation()}>
             <FlowActionMenu
               flow={flow}
-              onRename={() => {
-                selectedFlowSetter(
-                  flow.id,
-                  flow.version.displayName,
-                  flow.version,
-                );
-                setIsRenameDialogOpen(true);
-              }}
+              onRename={() => setRefresh(refresh + 1)}
               onDuplicate={() => setRefresh(refresh + 1)}
-              onShare={() => {
-                selectedFlowSetter(
-                  flow.id,
-                  flow.version.displayName,
-                  flow.version,
-                );
-                setIsShareDialogOpen(true);
-              }}
               onDelete={() => setRefresh(refresh + 1)}
             />
           </div>
@@ -226,33 +178,6 @@ const FlowsTable = () => {
           </Button>
         </div>
       </div>
-      <Dialog
-        open={isRenameDialogOpen || isShareDialogOpen || isImportDialogOpen}
-        onOpenChange={(isOpen) => {
-          setIsRenameDialogOpen(isOpen);
-          setIsShareDialogOpen(isOpen);
-          setIsImportDialogOpen(isOpen);
-        }}
-      >
-        {isRenameDialogOpen && (
-          <RenameFlowDialog
-            flowId={selectedFlow.flowId}
-            setIsRenameDialogOpen={setIsRenameDialogOpen}
-            onRename={() => {
-              refetch();
-              setRefresh(refresh + 1);
-            }}
-          />
-        )}
-        {isShareDialogOpen && selectedFlow.flowVersion && (
-          <ShareTemplateDialog
-            flowId={selectedFlow.flowId}
-            flowVersion={selectedFlow.flowVersion}
-            setIsShareDialogOpen={setIsShareDialogOpen}
-          />
-        )}
-        {/* {isImportDialogOpen && <ImportFlowDialog>} */}
-      </Dialog>
       <DataTable
         columns={columns}
         fetchData={fetchData}

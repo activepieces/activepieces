@@ -15,18 +15,18 @@ export function ExtraPiecesCircle({
   extraStepsCount: number;
   pieces: string[];
 }) {
-  const { data } = piecesHooks.useMultiplePieces({ names: pieces });
+  const extraPieces = piecesHooks.useMultiplePieces({ names: pieces });
 
   const extraStepsPieces = useMemo(() => {
-    if (!data) return [];
+    if (!extraPieces) return [];
     const pieceNames = new Set<string>();
-    data.forEach((piece) => {
-      if (piece.displayName) {
-        pieceNames.add(piece.displayName);
+    extraPieces.forEach((piece) => {
+      if (piece.data?.displayName) {
+        pieceNames.add(piece.data?.displayName);
       }
     });
     return Array.from(pieceNames);
-  }, [data]);
+  }, [extraPieces]);
 
   return (
     <Tooltip>

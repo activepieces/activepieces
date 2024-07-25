@@ -3,7 +3,7 @@ import {
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
 import { Action, ActionType, Trigger, TriggerType } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 
 import { piecesApi } from './pieces-api';
 
@@ -38,14 +38,11 @@ export const piecesHooks = {
     });
   },
   useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
-    return useQuery<PieceMetadataModel[], Error>({
-      queryKey: ['pieces', names],
-      queryFn: async () => {
-        return Promise.all(
-          names.map((name) => piecesApi.get({ name, version: undefined })),
-        );
-      },
-      staleTime: Infinity,
+    return useQueries({
+      queries: names.map((name) => ({
+        queryKey: ['piece', name, undefined],
+        queryFn: () => piecesApi.get({ name, version: undefined }),
+      })),
     });
   },
   usePieceMetadata: ({ step }: UsePieceMetadata) => {

@@ -1,12 +1,14 @@
 import { FlowOperationType, PopulatedFlow } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
-import React from 'react';
+import React, { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
+  Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -24,10 +26,11 @@ const RenameFlowSchema = Type.Object({
 type RenameFlowSchema = Static<typeof RenameFlowSchema>;
 
 const RenameFlowDialog: React.FC<{
+  children: React.ReactNode;
   flowId: string;
-  setIsRenameDialogOpen: (isOpen: boolean) => void;
   onRename: () => void;
-}> = ({ flowId, setIsRenameDialogOpen, onRename }) => {
+}> = ({ children, flowId, onRename }) => {
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const renameFlowForm = useForm<RenameFlowSchema>({
     resolver: typeboxResolver(RenameFlowSchema),
   });
@@ -69,41 +72,47 @@ const RenameFlowDialog: React.FC<{
   };
 
   return (
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Rename Flow</DialogTitle>
-      </DialogHeader>
-      <Form {...renameFlowForm}>
-        <form
-          className="grid space-y-4"
-          onSubmit={renameFlowForm.handleSubmit(onRenameFlowSubmit)}
-        >
-          <FormField
-            control={renameFlowForm.control}
-            name="displayName"
-            render={({ field }) => (
-              <FormItem className="grid space-y-2">
-                <Label htmlFor="displayName">Name</Label>
-                <Input
-                  {...field}
-                  required
-                  id="displayName"
-                  placeholder="New Flow Name"
-                  className="rounded-sm"
-                />
-                <FormMessage />
-              </FormItem>
+    <Dialog
+      open={isRenameDialogOpen}
+      onOpenChange={(open) => setIsRenameDialogOpen(open)}
+    >
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Rename Flow</DialogTitle>
+        </DialogHeader>
+        <Form {...renameFlowForm}>
+          <form
+            className="grid space-y-4"
+            onSubmit={renameFlowForm.handleSubmit(onRenameFlowSubmit)}
+          >
+            <FormField
+              control={renameFlowForm.control}
+              name="displayName"
+              render={({ field }) => (
+                <FormItem className="grid space-y-2">
+                  <Label htmlFor="displayName">Name</Label>
+                  <Input
+                    {...field}
+                    required
+                    id="displayName"
+                    placeholder="New Flow Name"
+                    className="rounded-sm"
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {renameFlowForm?.formState?.errors?.root?.serverError && (
+              <FormMessage>
+                {renameFlowForm.formState.errors.root.serverError.message}
+              </FormMessage>
             )}
-          />
-          {renameFlowForm?.formState?.errors?.root?.serverError && (
-            <FormMessage>
-              {renameFlowForm.formState.errors.root.serverError.message}
-            </FormMessage>
-          )}
-          <Button loading={isPending}>Confirm</Button>
-        </form>
-      </Form>
-    </DialogContent>
+            <Button loading={isPending}>Confirm</Button>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 };
 
