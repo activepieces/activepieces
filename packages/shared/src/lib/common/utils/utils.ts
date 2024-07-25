@@ -6,18 +6,18 @@ export function isNil<T>(value: T | null | undefined): value is null | undefined
     return value === null || value === undefined
 }
 
-export function debounce(func: (...args: any[]) => void, wait: number): (...args: any[]) => void {
-    let timeout: NodeJS.Timeout;
+export function debounce<T>(func: (...args: T[]) => void, wait: number): (...args: T[]) => void {
+    let timeout: NodeJS.Timeout
 
-    return function (...args: any[]) {
+    return function (...args: T[]) {
         const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
+            clearTimeout(timeout)
+            func(...args)
+        }
 
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
+        clearTimeout(timeout)
+        timeout = setTimeout(later, wait)
+    }
 }
 
 

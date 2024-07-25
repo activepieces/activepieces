@@ -1,4 +1,3 @@
-import { FlowTemplate } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import {
   ChevronDown,
@@ -12,7 +11,6 @@ import {
 import { useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +22,7 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { FlowTemplate } from '@activepieces/shared';
 
 const FlowActionsMenu = () => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);

@@ -10,9 +10,7 @@ const ApBigButton = React.memo(() => {
       <div className="h-[70px] w-[260px] border border-solid border-none flex items-center justify-center ">
         <div className="w-[50px] h-[50px] bg-accent rounded">
           <Button variant="ghost" className="w-full h-full">
-            <div className="flex items-center justify-center">
-              <Plus className="w-6 h-6 text-accent-foreground" />
-            </div>
+            <Plus className="w-6 h-6 text-accent-foreground" />
           </Button>
         </div>
       </div>

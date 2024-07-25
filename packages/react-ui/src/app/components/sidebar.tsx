@@ -18,6 +18,7 @@ import { ApFlagId } from '@activepieces/shared';
 import { Button } from '../../components/ui/button';
 import { UserAvatar } from '../../components/ui/user-avatar';
 import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
+import { RequestTrial } from './request-trial';
 
 type Link = {
   icon: React.ReactNode;
@@ -114,6 +115,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                 <Shield className="size-4" />
                 <span>Platform Admin</span>
               </Button>
+              <RequestTrial></RequestTrial>
               {billingEnabled && (
                 <Link to={'/plans'}>
                   <Button

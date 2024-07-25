@@ -17,6 +17,7 @@ import { Alert } from '@activepieces/ee-shared';
 import { alertsApi } from '../lib/alerts-api';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
+
 const fetchData = async () => {
   const page = await alertsApi.list({
     projectId: authenticationSession.getProjectId(),

@@ -20,6 +20,7 @@ import PiecesPage from './routes/settings/pieces';
 import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
+import { ShareTemplatePage } from './routes/templates/share-template';
 
 const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
   if (!authenticationSession.isLoggedIn()) {
@@ -46,6 +47,14 @@ export const router = createBrowserRouter([
     element: (
       <AllowOnlyLoggedIn>
         <FlowBuilderPage />
+      </AllowOnlyLoggedIn>
+    ),
+  },
+  {
+    path: '/templates/:templateId',
+    element: (
+      <AllowOnlyLoggedIn>
+        <ShareTemplatePage />
       </AllowOnlyLoggedIn>
     ),
   },

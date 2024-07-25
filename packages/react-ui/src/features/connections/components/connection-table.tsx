@@ -17,9 +17,7 @@ import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
-
 import { appConnectionUtils } from '../lib/app-connections-utils';
-
 import { NewConnectionTypeDialog } from './new-connection-type-dialog';
 
 const DeleteConnectionColumn = ({
