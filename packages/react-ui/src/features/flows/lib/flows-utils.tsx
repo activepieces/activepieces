@@ -51,9 +51,9 @@ export const flowsUtils = {
       case TriggerType.PIECE: {
         const cronExpression = flow.schedule?.cronExpression;
         if (cronExpression) {
-          return <TimerReset className="h-4 w-4 text-background" />;
+          return <TimerReset className="h-4 w-4 text-foreground" />;
         } else {
-          return <Zap className="h-4 w-4 text-background fill-background" />;
+          return <Zap className="h-4 w-4 text-foreground fill-foreground" />;
         }
       }
       case TriggerType.EMPTY: {
