@@ -50,11 +50,12 @@ type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary;
   connectionName?: string;
   open: boolean;
+  onConnectionCreated: () => void;
   setOpen: (open: boolean) => void;
 };
 
 const CreateOrEditConnectionDialog = React.memo(
-  ({ piece, open, setOpen }: ConnectionDialogProps) => {
+  ({ piece, open, setOpen, onConnectionCreated }: ConnectionDialogProps) => {
     const { auth } = piece;
 
 
@@ -77,7 +78,6 @@ const CreateOrEditConnectionDialog = React.memo(
       resolver: typeboxResolver(formSchema),
     });
 
-    const formWatch = form.watch();
     const [errorMessage, setErrorMessage] = useState('');
 
     const { mutate, isPending } = useMutation<
@@ -92,6 +92,7 @@ const CreateOrEditConnectionDialog = React.memo(
       },
       onSuccess: () => {
         setOpen(false);
+        onConnectionCreated();
         setErrorMessage('');
       },
       onError: (response) => {
@@ -114,7 +115,7 @@ const CreateOrEditConnectionDialog = React.memo(
       <Dialog open={open} onOpenChange={(open) => setOpen(open)} key={piece.name}>
         <DialogContent
           onInteractOutside={(e) => e.preventDefault()}
-          className="max-h-[70vh] min-w-[60vw] overflow-y-auto"
+          className="max-h-[70vh] max-w-[60vw] overflow-y-auto"
         >
           <DialogHeader>
             <DialogTitle>Create {piece.displayName} Connection</DialogTitle>

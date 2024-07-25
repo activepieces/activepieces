@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,14 +16,16 @@ import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 
 import { CreateOrEditConnectionDialog } from './create-edit-connection-dialog';
+import { DialogTrigger } from '@radix-ui/react-dialog';
 
 type NewConnectionTypeDialogProps = {
-  open: boolean;
-  setOpen: (open: boolean) => void;
+  onConnectionCreated: () => void;
+  children: React.ReactNode;
 };
 
 const NewConnectionTypeDialog = React.memo(
-  ({ open, setOpen }: NewConnectionTypeDialogProps) => {
+  ({ onConnectionCreated, children }: NewConnectionTypeDialogProps) => {
+    const [dialogTypesOpen, setDialogTypesOpen] = useState(false);
     const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
     const [selectedPiece, setSelectedPiece] = useState<
       PieceMetadataModelSummary | undefined
@@ -39,10 +41,16 @@ const NewConnectionTypeDialog = React.memo(
     });
 
     const clickPiece = (name: string) => {
-      setOpen(false);
+      setDialogTypesOpen(false);
       setSelectedPiece(pieces?.find((piece) => piece.name === name));
       setConnectionDialogOpen(true);
     };
+
+    useEffect(() => {
+      if (!dialogTypesOpen) {
+        setSearchTerm('');
+      }
+    }, [dialogTypesOpen]);
 
     return (
       <>
@@ -50,10 +58,12 @@ const NewConnectionTypeDialog = React.memo(
           <CreateOrEditConnectionDialog
             piece={selectedPiece}
             open={connectionDialogOpen}
+            onConnectionCreated={onConnectionCreated}
             setOpen={setConnectionDialogOpen}
           ></CreateOrEditConnectionDialog>
         )}
-        <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
+        <Dialog open={dialogTypesOpen} onOpenChange={(open) => setDialogTypesOpen(open)}>
+          <DialogTrigger asChild>{children}</DialogTrigger>
           <DialogContent className="min-w-[700px] max-w-[700px] h-[680px] max-h-[680px] flex flex-col">
             <DialogHeader>
               <DialogTitle>New Connection</DialogTitle>
@@ -69,8 +79,8 @@ const NewConnectionTypeDialog = React.memo(
               <div className="grid grid-cols-4 gap-4">
                 {(isLoading ||
                   (filteredPieces && filteredPieces.length === 0)) && (
-                  <div className="text-center">No pieces found</div>
-                )}
+                    <div className="text-center">No pieces found</div>
+                  )}
                 {!isLoading &&
                   filteredPieces &&
                   filteredPieces.map((piece, index) => (
