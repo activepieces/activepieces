@@ -103,9 +103,10 @@ export function convertTextToTipTapJsonContent({
   content: JSONContent[];
 } {
   const matched = propertyPath.split(/(\{\{.*?\}\})/).filter((el) => el);
-  const metadata = stepMetadataFinder(propertyPath);
-  const contentNodes: JSONContent[] = matched.map((item) =>
-    isMentionNodeText(item)
+
+  const contentNodes: JSONContent[] = matched.map((item) => {
+    const metadata = stepMetadataFinder(item);
+    return isMentionNodeText(item)
       ? parseMentionNodeFromText({
           path: item,
           stepDisplayName: metadata?.displayName ?? '',
@@ -114,8 +115,8 @@ export function convertTextToTipTapJsonContent({
         })
       : item.includes('\n')
       ? parseTextAndHardBreakNodes(item)
-      : { type: TipTapNodeTypes.text, text: item },
-  );
+      : { type: TipTapNodeTypes.text, text: item };
+  });
   return { type: TipTapNodeTypes.paragraph, content: contentNodes.flat(1) };
 }
 

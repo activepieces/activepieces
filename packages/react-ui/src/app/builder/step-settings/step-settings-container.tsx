@@ -15,10 +15,7 @@ import { BranchSettings } from './branch-settings/branch-settings';
 import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
 
-import {
-  RightSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -37,15 +34,13 @@ const STEPS_WITH_ERROR_HANDLING: (ActionType | TriggerType)[] = [
 
 const StepSettingsContainer = React.memo(() => {
   const [
-    setRightSidebar,
     applyOperation,
     readonly,
     flowVersion,
     isSaving,
     startSaving,
-    selectStep
+    selectStep,
   ] = useBuilderStateContext((state) => [
-    state.setRightSidebar,
     state.applyOperation,
     state.readonly,
     state.flowVersion,
@@ -106,9 +101,11 @@ const StepSettingsContainer = React.memo(() => {
   // TODO check scrolling code editior
   return (
     <>
-      <SidebarHeader onClose={() => {
-        selectStep(null)
-      }}>
+      <SidebarHeader
+        onClose={() => {
+          selectStep(null);
+        }}
+      >
         {selectedStep.displayName}
       </SidebarHeader>
       <ResizablePanelGroup direction="vertical">
