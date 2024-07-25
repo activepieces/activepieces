@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { flowsHooks } from '../lib/flows-hooks';
 
-import { DeleteFlowDialog } from './delete-flow-dialog';
 import FlowActionMenu from './flow-actions-menu';
 import { RenameFlowDialog } from './rename-flow-dialog';
 import { ShareTemplateDialog } from './share-template-dialog';
@@ -47,7 +46,6 @@ const FlowsTable = () => {
   const navigate = useNavigate();
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedFlow, setSelectedFlow] = useState<{
     flowId: string;
     flowName: string;
@@ -197,14 +195,7 @@ const FlowsTable = () => {
                 );
                 setIsShareDialogOpen(true);
               }}
-              onDelete={() => {
-                selectedFlowSetter(
-                  flow.id,
-                  flow.version.displayName,
-                  flow.version,
-                );
-                setIsDeleteDialogOpen(true);
-              }}
+              onDelete={() => refetch()}
             />
           </div>
         );
@@ -227,11 +218,10 @@ const FlowsTable = () => {
         </div>
       </div>
       <Dialog
-        open={isRenameDialogOpen || isShareDialogOpen || isDeleteDialogOpen}
+        open={isRenameDialogOpen || isShareDialogOpen}
         onOpenChange={(isOpen) => {
           setIsRenameDialogOpen(isOpen);
           setIsShareDialogOpen(isOpen);
-          setIsDeleteDialogOpen(isOpen);
         }}
       >
         {isRenameDialogOpen && (
@@ -246,14 +236,6 @@ const FlowsTable = () => {
             flowId={selectedFlow.flowId}
             flowVersion={selectedFlow.flowVersion}
             setIsShareDialogOpen={setIsShareDialogOpen}
-          />
-        )}
-        {isDeleteDialogOpen && selectedFlow.flowVersion && (
-          <DeleteFlowDialog
-            flowId={selectedFlow.flowId}
-            flowVersion={selectedFlow.flowVersion}
-            setIsDeleteDialogOpen={setIsDeleteDialogOpen}
-            onDelete={() => refetch()}
           />
         )}
       </Dialog>

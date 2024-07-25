@@ -13,6 +13,7 @@ import React from 'react';
 import { flowsApi } from '../lib/flows-api';
 import { flowsUtils } from '../lib/flows-utils';
 
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +28,7 @@ interface FlowActionMenuProps {
   onRename: (flow: PopulatedFlow) => void;
   onDuplicate: () => void;
   onShare: (flow: PopulatedFlow) => void;
-  onDelete: (flow: PopulatedFlow) => void;
+  onDelete: () => void;
 }
 
 const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
@@ -94,12 +95,22 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             <span>Share</span>
           </div>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onDelete(flow)}>
-          <div className="flex flex-row gap-2 items-center">
-            <Trash2 className="h-4 w-4 text-destructive" />
-            <span className="text-destructive">Delete</span>
-          </div>
-        </DropdownMenuItem>
+        <ConfirmationDeleteDialog
+          title={`Delete flow ${flow.version.displayName}`}
+          message="Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs."
+          mutationFn={async () => {
+            await flowsApi.delete(flow.id);
+            onDelete();
+          }}
+          entityName={'flow'}
+        >
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <div className="flex flex-row gap-2 items-center">
+              <Trash2 className="h-4 w-4 text-destructive" />
+              <span className="text-destructive">Delete</span>
+            </div>
+          </DropdownMenuItem>
+        </ConfirmationDeleteDialog>
       </DropdownMenuContent>
     </DropdownMenu>
   );
