@@ -67,7 +67,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     onSuccess: () => {
       toast({
         title: 'Success',
-        description: 'Flow has been downloaded.',
+        description: 'Flow has been exported.',
         duration: 3000,
       });
     },
