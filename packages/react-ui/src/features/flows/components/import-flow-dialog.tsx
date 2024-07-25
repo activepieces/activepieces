@@ -28,7 +28,7 @@ const ImportFlowDialog = ({ children }: { children: React.ReactNode }) => {
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { mutate: createFlow } = useMutation<
+  const { mutate: createFlow, isPending } = useMutation<
     PopulatedFlow,
     Error,
     FlowTemplate
@@ -80,7 +80,6 @@ const ImportFlowDialog = ({ children }: { children: React.ReactNode }) => {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Import Flow</DialogTitle>
-          <DialogDescription>Import a flow as a .json file</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Input
@@ -89,7 +88,9 @@ const ImportFlowDialog = ({ children }: { children: React.ReactNode }) => {
             ref={fileInputRef}
             onChange={handleFileChange}
           />
-          <Button onClick={handleSubmit}>Import</Button>
+          <Button onClick={handleSubmit} loading={isPending}>
+            Import
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -40,7 +40,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onDuplicate,
   onDelete,
 }) => {
-  const { mutate: duplicateFlow } = useMutation({
+  const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
       const createdFlow = await flowsApi.create({
         displayName: flow.version.displayName,
@@ -90,8 +90,12 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         </RenameFlowDialog>
         <DropdownMenuItem onClick={() => duplicateFlow()}>
           <div className="flex flex-row gap-2 items-center">
-            <Copy className="h-4 w-4" />
-            <span>Duplicate</span>
+            {isExportPending ? (
+              <LoadingSpinner />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+            <span>{isDuplicatePending ? 'Duplicating' : 'Duplicate'}</span>
           </div>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => exportFlow()}>
