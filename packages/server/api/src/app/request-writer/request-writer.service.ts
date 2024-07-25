@@ -10,12 +10,12 @@ const MAX_TOKENS = 128000
 const CHARACTERS_PER_TOKEN = 3
 const MAX_CHARACTERS = MAX_TOKENS * CHARACTERS_PER_TOKEN
 
-function exceedsTokenLimit(text: string): boolean {
-    return text.length > MAX_CHARACTERS
-}
-
 type RequestWriteParams = {
     prompt: string
+}
+
+function exceedsTokenLimit(text: string): boolean {
+    return text.length > MAX_CHARACTERS
 }
 
 function getOpenAI(): OpenAI {
@@ -126,7 +126,7 @@ export const requestWriterService = {
 
     async fetchAndProcessURLs(searchQuery: string): Promise<string[]> {
         const urls = await fetchURLs(searchQuery)
-        const htmlResults = await Promise.all(urls.map((url) => axios.get(url)))
+        const htmlResults = await Promise.all(urls.map((url) => axios.get(url, { headers: { Accept: '*/*' } })))
         const markdownResults = await Promise.all(htmlResults.map((res) => HtmlToMd(res.data)))
         return markdownResults
     },
