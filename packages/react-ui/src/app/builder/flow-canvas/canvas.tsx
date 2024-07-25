@@ -12,15 +12,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { FlowVersion } from '@activepieces/shared';
 
-import {
-  ApEdge,
-  ApNode,
-  flowCanvasUtils,
-} from '../../../lib/flow-canvas-utils';
-
-import { ApBigButton } from './big-button';
-import { ApEdgeWithButton } from './edge-with-button';
-import { ApStepNode } from './step-node';
+import { ApEdgeWithButton } from './edges/edge-with-button';
+import { ReturnLoopedgeButton } from './edges/return-loop-edge';
+import { ApEdge, ApNode, flowCanvasUtils } from './flow-canvas-utils';
+import { ApBigButton } from './nodes/big-button';
+import { LoopStepPlaceHolder } from './nodes/loop-step-placeholder';
+import { StepPlaceHolder } from './nodes/step-holder-placeholder';
+import { ApStepNode } from './nodes/step-node';
 
 type FlowCanvasProps = {
   flowVersion: FlowVersion;
@@ -32,10 +30,18 @@ const FlowCanvas = ({ flowVersion }: FlowCanvasProps) => {
   }, [flowVersion]);
 
   const nodeTypes = useMemo(
-    () => ({ stepNode: ApStepNode, bigButton: ApBigButton }),
+    () => ({
+      stepNode: ApStepNode,
+      placeholder: StepPlaceHolder,
+      bigButton: ApBigButton,
+      loopPlaceholder: LoopStepPlaceHolder,
+    }),
     [],
   );
-  const edgeTypes = useMemo(() => ({ apEdge: ApEdgeWithButton }), []);
+  const edgeTypes = useMemo(
+    () => ({ apEdge: ApEdgeWithButton, apReturnEdge: ReturnLoopedgeButton }),
+    [],
+  );
 
   const [nodes, setNodes] = useState(graph.nodes);
   const [edges, setEdges] = useState(graph.edges);

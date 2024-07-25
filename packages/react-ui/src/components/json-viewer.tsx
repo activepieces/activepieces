@@ -49,6 +49,9 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
       </div>
       <ScrollArea className="w-full h-full">
         <div className="px-2 py-3 max-h-[300px]">
+          {typeof json !== 'string' && typeof json !== 'object' && (
+            <pre className="text-sm">{JSON.stringify(json)}</pre>
+          )}
           {typeof json === 'string' && <pre className="text-sm">{json}</pre>}
           {typeof json === 'object' && (
             <ReactJson
