@@ -1,16 +1,11 @@
 import { BaseEdge } from '@xyflow/react';
 import { Plus } from 'lucide-react';
-
-import {
-  RightSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
-
 import {
   AP_NODE_SIZE,
   ApNodeType,
   flowCanvasUtils,
 } from '../flow-canvas-utils';
+import { useDroppable } from '@dnd-kit/core';
 
 interface ApEdgeWithButtonProps {
   id: string;
@@ -48,9 +43,8 @@ function getEdgePath({
         x: (targetX + sourceX) / 2 - BUTTON_SIZE.width / 2,
         y: (targetYWithPlaceHolder + sourceY) / 2 - BUTTON_SIZE.height / 2,
       },
-      edgePath: `M ${sourceX} ${sourceY} v ${
-        targetYWithPlaceHolder - sourceY
-      } ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
+      edgePath: `M ${sourceX} ${sourceY} v ${targetYWithPlaceHolder - sourceY
+        } ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
     };
   }
   const FIRST_LINE_LENGTH = 55;
@@ -66,23 +60,21 @@ function getEdgePath({
       y: targetYWithPlaceHolder - FIRST_LINE_LENGTH / 2 - 10,
     },
     edgePath: `M${sourceX} ${sourceY} 
-    v${targetYWithPlaceHolder - sourceY - FIRST_LINE_LENGTH - ARC_LENGTH} ${
-      SIGN < 0 ? ARC_LEFT_DOWN : ARC_RIGHT_DOWN
-    }
-    h${targetX - sourceX - 2 * SIGN * ARC_LENGTH} ${
-      SIGN < 0 ? ARC_LEFT : ARC_RIGHT
-    }
+    v${targetYWithPlaceHolder - sourceY - FIRST_LINE_LENGTH - ARC_LENGTH} ${SIGN < 0 ? ARC_LEFT_DOWN : ARC_RIGHT_DOWN
+      }
+    h${targetX - sourceX - 2 * SIGN * ARC_LENGTH} ${SIGN < 0 ? ARC_LEFT : ARC_RIGHT
+      }
     v${FIRST_LINE_LENGTH - ARC_LENGTH}
     ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
   };
 }
 
 const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
-  const setRightSidebar = useBuilderStateContext(
-    (state) => state.setRightSidebar,
-  );
 
   const { edgePath, buttonPosition } = getEdgePath(props);
+  const { setNodeRef } = useDroppable({
+    id: props.id,
+  });
 
   return (
     <>
@@ -92,7 +84,7 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
         style={{ strokeWidth: 1.5 }}
       />
       {props.data?.addButton && buttonPosition && (
-        <foreignObject
+          <foreignObject
           width={18}
           height={18}
           x={buttonPosition.x}
@@ -102,7 +94,10 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
         >
           <div
             className="bg-[#a6b1bf] w-4 h-4 flex items-center justify-center"
-            onClick={() => setRightSidebar(RightSideBarType.PIECE_SELECTOR)}
+            ref={setNodeRef}
+            onClick={() => {
+              console.log('clicked');
+            }}
           >
             <Plus className="w-3 h-3 text-white" />
           </div>

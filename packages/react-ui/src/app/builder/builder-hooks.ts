@@ -53,8 +53,11 @@ export type BuilderState = {
   leftSidebar: LeftSideBarType;
   rightSidebar: RightSideBarType;
   selectedStep: StepPathWithName | null;
+  activeDraggingStep: string | null;
+  allowPanning: boolean;
   saving: boolean;
   ExitRun: () => void;
+  ExitStepSettings: () => void;
   selectStep(path: StepPathWithName): void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
@@ -64,7 +67,9 @@ export type BuilderState = {
     onError: () => void,
   ) => void;
   startSaving: () => void;
+  setAllowPanning: (allowPanning: boolean) => void;
   setReadOnly: (readonly: boolean) => void;
+  setActiveDraggingStep: (stepName: string | null) => void;
   setVersion: (flowVersion: FlowVersion) => void;
 };
 
@@ -84,13 +89,28 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     run: initialState.run,
     saving: false,
     selectedStep: null,
+    activeDraggingStep: null,
+    allowPanning: true,
     rightSidebar: RightSideBarType.NONE,
+    setAllowPanning: (allowPanning: boolean) =>
+      set({
+        allowPanning,
+      }),
+    setActiveDraggingStep: (stepName: string | null) =>
+      set({
+        activeDraggingStep: stepName,
+      }),
     ExitRun: () =>
       set({
         run: null,
         readonly: false,
         leftSidebar: LeftSideBarType.NONE,
         rightSidebar: RightSideBarType.NONE,
+      }),
+    ExitStepSettings: () =>
+      set({
+        rightSidebar: RightSideBarType.NONE,
+        selectedStep: null,
       }),
     selectStep: (path: StepPathWithName) =>
       set({

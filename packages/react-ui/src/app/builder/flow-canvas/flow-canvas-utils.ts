@@ -154,7 +154,6 @@ function addEdge(nodeOne: ApNode, nodeTwo: ApNode): ApEdge {
     source: nodeOne.id,
     target: nodeTwo.id,
     focusable: false,
-    selectable: false,
     type:
       nodeTwo.type === ApNodeType.LOOP_PLACEHOLDER ? 'apReturnEdge' : 'apEdge',
     label: nodeTwo.id,
@@ -252,7 +251,6 @@ export type ApEdge = {
   target: string;
   type: string;
   focusable: false;
-  selectable: false;
   label: string;
   data: {
     addButton: boolean;
