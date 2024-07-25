@@ -1,5 +1,10 @@
+import { Alert } from '@activepieces/ee-shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash } from 'lucide-react';
+
+import { alertsApi } from '../lib/alerts-api';
+
+import { AddAlertEmailDialog } from './add-alert-email-dialog';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -12,11 +17,7 @@ import {
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Alert } from '@activepieces/ee-shared';
 
-import { alertsApi } from '../lib/alerts-api';
-
-import { AddAlertEmailDialog } from './add-alert-email-dialog';
 const fetchData = async () => {
   const page = await alertsApi.list({
     projectId: authenticationSession.getProjectId(),
@@ -93,7 +94,7 @@ export default function AlertsEmailsCard() {
                   className="size-8 p-0"
                   onClick={() => deleteMutation.mutate(alert)}
                 >
-                  <Trash className="size-4 bg-destructive" />
+                  <Trash className="size-4 text-destructive" />
                 </Button>
               </div>
             ))}
