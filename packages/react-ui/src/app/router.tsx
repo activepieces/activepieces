@@ -1,5 +1,4 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
-
 import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
 
 import { FlowsPage } from '../app/routes/flows';
