@@ -21,6 +21,7 @@ import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
 import { appConnectionUtils } from '../lib/app-connections-utils';
 
 import { ConnectionTypeDialog } from './connection-type-dialog';
+
 const DeleteConnectionColumn = ({
   row,
 }: {
