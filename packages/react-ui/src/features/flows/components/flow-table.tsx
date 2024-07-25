@@ -46,6 +46,7 @@ const FlowsTable = () => {
   const navigate = useNavigate();
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [refresh, setRefresh] = useState(0);
   const [selectedFlow, setSelectedFlow] = useState<{
     flowId: string;
     flowName: string;
@@ -186,7 +187,7 @@ const FlowsTable = () => {
                 );
                 setIsRenameDialogOpen(true);
               }}
-              onDuplicate={() => refetch()}
+              onDuplicate={() => setRefresh(refresh + 1)}
               onShare={() => {
                 selectedFlowSetter(
                   flow.id,
@@ -195,7 +196,7 @@ const FlowsTable = () => {
                 );
                 setIsShareDialogOpen(true);
               }}
-              onDelete={() => refetch()}
+              onDelete={() => setRefresh(refresh + 1)}
             />
           </div>
         );
@@ -228,7 +229,10 @@ const FlowsTable = () => {
           <RenameFlowDialog
             flowId={selectedFlow.flowId}
             setIsRenameDialogOpen={setIsRenameDialogOpen}
-            onRename={() => refetch()}
+            onRename={() => {
+              refetch();
+              setRefresh(refresh + 1);
+            }}
           />
         )}
         {isShareDialogOpen && selectedFlow.flowVersion && (
@@ -243,6 +247,7 @@ const FlowsTable = () => {
         columns={columns}
         fetchData={fetchData}
         filters={filters}
+        refresh={refresh}
         onRowClick={(row) => navigate(`/flows/${row.id}`)}
       />
     </div>

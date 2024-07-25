@@ -44,6 +44,7 @@ interface DataTableProps<TData, TValue> {
   fetchData: (queryParams: URLSearchParams) => Promise<SeekPage<TData>>;
   onRowClick?: (row: RowDataWithActions<TData>) => void;
   filters?: DataTableFilter[];
+  refresh?: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -51,6 +52,7 @@ export function DataTable<TData, TValue>({
   fetchData,
   onRowClick,
   filters,
+  refresh,
 }: DataTableProps<TData, TValue>) {
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;
@@ -117,7 +119,7 @@ export function DataTable<TData, TValue>({
 
   useEffect(() => {
     fetchDataAndUpdateState(searchParams);
-  }, [searchParams, fetchData]);
+  }, [searchParams, refresh]);
 
   useEffect(() => {
     setTableData(
