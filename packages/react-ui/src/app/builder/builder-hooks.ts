@@ -61,7 +61,7 @@ export type BuilderState = {
   selectedStep: StepPathWithName | null;
   saving: boolean;
   ExitRun: () => void;
-  selectStep(path: StepPathWithName): void;
+  selectStep(path: StepPathWithName | null): void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
@@ -100,10 +100,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         leftSidebar: LeftSideBarType.NONE,
         rightSidebar: RightSideBarType.NONE,
       }),
-    selectStep: (path: StepPathWithName) =>
+    selectStep: (path: StepPathWithName | null) =>
       set({
         selectedStep: path,
-        rightSidebar: RightSideBarType.PIECE_SETTINGS,
+        rightSidebar: path ? RightSideBarType.PIECE_SETTINGS : RightSideBarType.NONE,
       }),
     setRightSidebar: (rightSidebar: RightSideBarType) => set({ rightSidebar }),
     setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),

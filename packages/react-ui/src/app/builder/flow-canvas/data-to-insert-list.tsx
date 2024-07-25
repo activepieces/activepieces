@@ -20,6 +20,7 @@ import { isStepName, MentionTreeNode } from '../mentions-utils';
 import './data-to-insert-list.css';
 
 import { useRipple } from '@/components/theme-provider';
+import { ScrollArea } from '../../../components/ui/scroll-area';
 
 const TestStepSection = (
   stepName: string,
@@ -27,8 +28,8 @@ const TestStepSection = (
 ) => {
   const isTrigger = stepName === 'trigger';
   const text = isTrigger
-    ? ` This trigger needs to have data loaded from your account, to use as sample data`
-    : `This step needs to be tested in order to view its data`;
+    ? `This trigger needs to have data loaded from your account, to use as sample data.`
+    : `This step needs to be tested in order to view its data.`;
 
   const btn = (
     <Button
@@ -38,12 +39,11 @@ const TestStepSection = (
       variant="default"
       size="default"
     >
-      {' '}
       {isTrigger ? 'Go to Trigger' : 'Go to Step'}{' '}
     </Button>
   );
   return (
-    <div className="flex flex-col gap-3 select-none  flex-grow items-center justify-center p-2">
+    <div className="flex flex-col gap-3 select-none text-center px-12 py-2 flex-grow items-center justify-center ">
       <div>{text}</div>
       <div>{btn}</div>
     </div>
@@ -166,7 +166,7 @@ const NodeTemplate = ({
   return node;
 };
 
-export function DataToInsertList() {
+export function DataToInsertList({children}: {children: React.ReactNode}) {
   const ripple = useRipple();
   const nodes = useBuilderStateContext(builderSelectors.getAllStepsMentions);
   const [expandedKeys, setExpandedKeys] = useState<TreeExpandedKeysType>({});
@@ -180,8 +180,17 @@ export function DataToInsertList() {
   };
   const selectStep = useBuilderStateContext((state) => state.selectStep);
   const insertMention = useBuilderStateContext((state) => state.insertMention);
+  if(nodes.length === 0){
+    return <></>
+  }
   return (
-    <PrimeReactProvider value={{ ripple: true }}>
+    
+    <div className="w-[500px] max-w[500px] border border-solid border-outline overflow-x-hidden bg-white shadow-lg rounded-md">
+      <div className='text-lg font-semibold px-5 py-2'>
+        Data to Insert
+      </div>
+      <ScrollArea  className='h-[450px] max-h-[450px] '>
+      <PrimeReactProvider value={{ ripple: true }}>
       <Tree
         value={nodes}
         expandedKeys={expandedKeys}
@@ -198,5 +207,10 @@ export function DataToInsertList() {
         className="w-full"
       />
     </PrimeReactProvider>
+      </ScrollArea>
+      
+      </div>
+
+  
   );
 }

@@ -56,8 +56,7 @@ const FlowCanvas = ({ flowVersion }: FlowCanvasProps) => {
   );
 
   return (
-    <div className="size-full grow">
-      <DataToInsertList> </DataToInsertList>
+    <div className="size-full grow relative">
       <ReactFlow
         nodeTypes={nodeTypes}
         nodes={nodes}
@@ -81,6 +80,9 @@ const FlowCanvas = ({ flowVersion }: FlowCanvasProps) => {
         <Background />
         <Controls showInteractive={false} orientation="horizontal" />
       </ReactFlow>
+      <div className="absolute bottom-[20px] right-[20px] z-50 ">
+      <DataToInsertList> </DataToInsertList>
+      </div>
     </div>
   );
 };
