@@ -86,7 +86,11 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
 
   return (
     <>
-      <BaseEdge interactionWidth={0} path={edgePath} />
+      <BaseEdge
+        interactionWidth={0}
+        path={edgePath}
+        style={{ strokeWidth: 1.5 }}
+      />
       {props.data?.addButton && buttonPosition && (
         <foreignObject
           width={18}

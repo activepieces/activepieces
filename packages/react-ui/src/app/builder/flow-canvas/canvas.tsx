@@ -72,6 +72,7 @@ const FlowCanvas = ({ flowVersion }: FlowCanvasProps) => {
         onEdgesChange={onEdgesChange}
         maxZoom={1.5}
         minZoom={0.5}
+        zoomOnDoubleClick={false}
         fitView={true}
         nodesConnectable={false}
         elementsSelectable={true}
