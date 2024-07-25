@@ -1,13 +1,14 @@
 import { FlowStatus, FlowVersion, PopulatedFlow } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import { CheckIcon } from 'lucide-react';
+import { CheckIcon, Import } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { flowsHooks } from '../lib/flows-hooks';
 
 import FlowActionMenu from './flow-actions-menu';
+import { ImportFlowDialog } from './import-flow-dialog';
 import { RenameFlowDialog } from './rename-flow-dialog';
 import { ShareTemplateDialog } from './share-template-dialog';
 
@@ -46,6 +47,7 @@ const FlowsTable = () => {
   const navigate = useNavigate();
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const [selectedFlow, setSelectedFlow] = useState<{
     flowId: string;
@@ -208,7 +210,13 @@ const FlowsTable = () => {
     <div className="flex-col w-full">
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">Flows</h1>
-        <div className="ml-auto">
+        <div className="ml-auto flex flex-row gap-2">
+          <ImportFlowDialog>
+            <Button variant="outline">
+              <Import className="w-4 h-4 mr-2" />
+              Import Flow
+            </Button>
+          </ImportFlowDialog>
           <Button
             variant="default"
             onClick={() => createFlow()}
@@ -219,10 +227,11 @@ const FlowsTable = () => {
         </div>
       </div>
       <Dialog
-        open={isRenameDialogOpen || isShareDialogOpen}
+        open={isRenameDialogOpen || isShareDialogOpen || isImportDialogOpen}
         onOpenChange={(isOpen) => {
           setIsRenameDialogOpen(isOpen);
           setIsShareDialogOpen(isOpen);
+          setIsImportDialogOpen(isOpen);
         }}
       >
         {isRenameDialogOpen && (
@@ -242,6 +251,7 @@ const FlowsTable = () => {
             setIsShareDialogOpen={setIsShareDialogOpen}
           />
         )}
+        {/* {isImportDialogOpen && <ImportFlowDialog>} */}
       </Dialog>
       <DataTable
         columns={columns}
