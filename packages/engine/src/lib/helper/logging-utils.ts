@@ -1,7 +1,7 @@
 import { isObject, StepOutput } from '@activepieces/shared'
+import { Queue } from '@datastructures-js/queue'
 import sizeof from 'object-sizeof'
 import PriorityQueue from 'priority-queue-typescript'
-import { Queue } from '@datastructures-js/queue';
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 const MAX_SIZE_FOR_ALL_ENTRIES = 1024 * 1024
@@ -30,8 +30,8 @@ function removeLeavesInTopologicalOrder(json: Record<string, unknown>): Record<s
     while (!leaves.empty() && jsonExceedMaxSize(totalJsonSize)) {
         const curNode = leaves.poll()
 
-        const isDepthGreaterThanOne = curNode && curNode.depth > 1;
-        const isTruncatable = curNode && (!nonTruncatableKeys.includes(curNode.key) || curNode.depth > 2);
+        const isDepthGreaterThanOne = curNode && curNode.depth > 1
+        const isTruncatable = curNode && (!nonTruncatableKeys.includes(curNode.key) || curNode.depth > 2)
 
         if (isDepthGreaterThanOne && isTruncatable) {
             totalJsonSize += SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - curNode.size
@@ -66,15 +66,15 @@ function traverseJsonAndConvertToNodes(root: unknown) {
             key: curNode.key,
             parent: {
                 index: curNode.parent.index,
-                value: curNode.parent.value as Record<Key, unknown>
+                value: curNode.parent.value as Record<Key, unknown>,
             },
             numberOfChildren: children.length,
-            depth: curNode.depth
+            depth: curNode.depth,
         })
 
         children.forEach((child) => {
             const key = child[0], value = child[1]
-            nodesQueue.enqueue({ value, key, parent: { index: nodes.length - 1, value: curNode.value }, depth: curNode.depth + 1})
+            nodesQueue.enqueue({ value, key, parent: { index: nodes.length - 1, value: curNode.value }, depth: curNode.depth + 1 })
         })
     }
 
