@@ -1,4 +1,11 @@
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  ExpandIcon,
+  MinimizeIcon,
+  MinusIcon,
+  PanelRightDashedIcon,
+} from 'lucide-react';
 import { PrimeReactProvider } from 'primereact/api';
 import {
   Tree,
@@ -9,6 +16,7 @@ import { TreeNode } from 'primereact/treenode';
 import { useState } from 'react';
 
 import { Button } from '../../../components/ui/button';
+import { ScrollArea } from '../../../components/ui/scroll-area';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import {
   builderSelectors,
@@ -20,7 +28,6 @@ import { isStepName, MentionTreeNode } from '../mentions-utils';
 import './data-to-insert-list.css';
 
 import { useRipple } from '@/components/theme-provider';
-import { ScrollArea } from '../../../components/ui/scroll-area';
 
 const TestStepSection = (
   stepName: string,
@@ -165,8 +172,58 @@ const NodeTemplate = ({
   };
   return node;
 };
+enum ListSizeState {
+  EXPANDED,
+  COLLAPSED,
+  DOCKED,
+}
 
-export function DataToInsertList({children}: {children: React.ReactNode}) {
+const ListSizes = ({
+  state,
+  setListSizeState,
+}: {
+  state: ListSizeState;
+  setListSizeState: (state: ListSizeState) => void;
+}) => {
+  const handleClick = (newState: ListSizeState) => {
+    setListSizeState(newState);
+  };
+  const buttonClassName = (btnState: ListSizeState) =>
+    state === btnState ? 'text-outline' : 'text-outline opacity-50';
+  return (
+    <>
+      <Button
+        size="icon"
+        className={buttonClassName(ListSizeState.EXPANDED)}
+        onClick={() => handleClick(ListSizeState.EXPANDED)}
+        variant="basic"
+      >
+        <ExpandIcon></ExpandIcon>
+      </Button>
+      <Button
+        size="icon"
+        className={buttonClassName(ListSizeState.DOCKED)}
+        onClick={() => handleClick(ListSizeState.DOCKED)}
+        variant="basic"
+      >
+        <PanelRightDashedIcon></PanelRightDashedIcon>
+      </Button>
+      <Button
+        size="icon"
+        className={buttonClassName(ListSizeState.COLLAPSED)}
+        onClick={() => handleClick(ListSizeState.COLLAPSED)}
+        variant="basic"
+      >
+        <MinusIcon></MinusIcon>
+      </Button>
+    </>
+  );
+};
+
+export function DataToInsertList({ children }: { children: React.ReactNode }) {
+  const [listSizeState, setListSizeState] = useState<ListSizeState>(
+    ListSizeState.DOCKED,
+  );
   const ripple = useRipple();
   const nodes = useBuilderStateContext(builderSelectors.getAllStepsMentions);
   const [expandedKeys, setExpandedKeys] = useState<TreeExpandedKeysType>({});
@@ -180,37 +237,49 @@ export function DataToInsertList({children}: {children: React.ReactNode}) {
   };
   const selectStep = useBuilderStateContext((state) => state.selectStep);
   const insertMention = useBuilderStateContext((state) => state.insertMention);
-  if(nodes.length === 0){
-    return <></>
-  }
-  return (
-    
-    <div className="w-[500px] max-w[500px] border border-solid border-outline overflow-x-hidden bg-white shadow-lg rounded-md">
-      <div className='text-lg font-semibold px-5 py-2'>
-        Data to Insert
-      </div>
-      <ScrollArea  className='h-[450px] max-h-[450px] '>
-      <PrimeReactProvider value={{ ripple: true }}>
-      <Tree
-        value={nodes}
-        expandedKeys={expandedKeys}
-        togglerTemplate={() => <></>}
-        nodeTemplate={NodeTemplate({
-          ripple,
-          expandNode,
-          setExpandedKeys,
-          expandedKeys,
-          selectStep,
-          insertMention,
-        })}
-        onToggle={(e) => setExpandedKeys(e.value)}
-        className="w-full"
-      />
-    </PrimeReactProvider>
-      </ScrollArea>
-      
-      </div>
+  const containerDefaultClassName = `absolute bottom-[20px]  right-[20px] z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-white shadow-lg rounded-md`;
+  const containerSizeClassName =
+    listSizeState === ListSizeState.EXPANDED
+      ? `h-[calc(100%-40px)] max-h-[calc(100%-40px)] w-[calc(100%-40px)] max-w-[calc(100%-40px)]`
+      : ` w-[500px] max-w-[500px]`;
+  const containerVisibilityClassName =
+    nodes.length === 0 ? 'opacity-0  pointer-events-none' : 'opacity-100';
+  const scrollAreaClassName =
+    listSizeState === ListSizeState.EXPANDED
+      ? `h-[calc(100%-100px)] max-h-[calc(100%-100px)]`
+      : listSizeState === ListSizeState.DOCKED
+      ? `h-[450px] max-h-[450px] `
+      : `h-[0px]`;
+  const containerClassName = `${containerDefaultClassName} ${containerSizeClassName} ${containerVisibilityClassName}`;
 
-  
+  return (
+    <div className={containerClassName}>
+      <div className="text-lg items-center font-semibold px-5 py-2 flex gap-2">
+        Data Selector <div className="flex-grow"></div>{' '}
+        <ListSizes
+          state={listSizeState}
+          setListSizeState={setListSizeState}
+        ></ListSizes>
+      </div>
+      <ScrollArea className={`${scrollAreaClassName} transition-all`}>
+        <PrimeReactProvider value={{ ripple: true }}>
+          <Tree
+            value={nodes}
+            expandedKeys={expandedKeys}
+            togglerTemplate={() => <></>}
+            nodeTemplate={NodeTemplate({
+              ripple,
+              expandNode,
+              setExpandedKeys,
+              expandedKeys,
+              selectStep,
+              insertMention,
+            })}
+            onToggle={(e) => setExpandedKeys(e.value)}
+            className="w-full"
+          />
+        </PrimeReactProvider>
+      </ScrollArea>
+    </div>
   );
 }
