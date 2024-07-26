@@ -30,7 +30,7 @@ import { api } from '@/lib/api';
 const formSchema = Type.Object({
   packageName: Type.String({
     minLength: 1,
-    errorMessage: 'The package name is requirede',
+    errorMessage: 'The package name is required',
   }),
 });
 
