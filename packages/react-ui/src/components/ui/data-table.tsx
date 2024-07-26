@@ -22,6 +22,7 @@ import { SeekPage } from '@activepieces/shared';
 import { Button } from './button';
 import { DataTableFacetedFilter } from './data-table-options-filter';
 import { DataTableToolbar } from './data-table-toolbar';
+import { DataTableSkeleton } from './data-table-skeleton'
 
 export type RowDataWithActions<TData> = TData & {
   delete: () => void;
@@ -161,7 +162,7 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  Loading...
+                  <DataTableSkeleton />
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows?.length ? (
