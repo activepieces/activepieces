@@ -13,9 +13,9 @@ import { create, useStore } from 'zustand';
 
 import {
   MentionTreeNode,
-  traverseStepOutputAndReturnMentionTree,
-} from './mentions-utils';
-import { StepOutputStructureUtil } from './step-output-utils';
+  dataToInsertListUtils,
+} from '../../lib/data-to-insert-list-utils';
+import { StepOutputStructureUtil } from '../../lib/step-output-utils';
 
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
@@ -201,15 +201,16 @@ const getAllStepsMentions = (state: BuilderState) => {
 
   return path.map((s) => {
     const stepMentionNode: MentionTreeNode =
-      traverseStepOutputAndReturnMentionTree(
+     dataToInsertListUtils.traverseStepOutputAndReturnMentionTree(
         s.settings.inputUiInfo?.currentSelectedData,
         s.name,
-        s.displayName,
+       `${s.indexInDfsTraversal}. ${s.displayName}`,
       );
     const stepNeedsTesting =
       s.settings.inputUiInfo?.currentSelectedData === undefined;
     return {
       ...stepMentionNode,
+    
       children: stepNeedsTesting
         ? [
             {
@@ -218,6 +219,7 @@ const getAllStepsMentions = (state: BuilderState) => {
                 propertyPath: s.name,
                 isTestStepNode: true,
               },
+              key: s.name,
             },
           ]
         : stepMentionNode.children,

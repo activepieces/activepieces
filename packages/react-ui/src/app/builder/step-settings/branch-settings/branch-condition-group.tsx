@@ -11,7 +11,7 @@ import { Trash } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
-import { TextInputWithMentions } from '../../data-to-insert/text-input-with-mentions';
+import { TextInputWithMentions } from '../../text-input-with-mentions/text-input-with-mentions';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';

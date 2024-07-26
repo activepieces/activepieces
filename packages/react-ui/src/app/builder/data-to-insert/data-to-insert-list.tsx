@@ -23,7 +23,7 @@ import {
   StepPathWithName,
   useBuilderStateContext,
 } from '../builder-hooks';
-import { isStepName, MentionTreeNode } from '../mentions-utils';
+import {  MentionTreeNode,dataToInsertListUtils } from '../../../lib/data-to-insert-list-utils';
 
 import './data-to-insert-list.css';
 
@@ -101,7 +101,7 @@ const NodeTemplate = ({
     if (testStepSectionElement) return testStepSectionElement;
 
     const isStep =
-      isStepName(actualNode.data.propertyPath) && !actualNode.data.isSlice;
+    dataToInsertListUtils.isStepName(actualNode.data.propertyPath) && !actualNode.data.isSlice;
     const expanded = options.expanded;
     const nodeHasChildren = node.children && node.children.length > 0;
     const toggleIconSize = 15;
@@ -110,7 +110,7 @@ const NodeTemplate = ({
       : undefined;
     const showInsertButton =
       !actualNode.data.isSlice &&
-      !(actualNode.children && actualNode.children[0].data.isTestStepNode);
+      !(actualNode.children && actualNode.children.length > 0 && actualNode.children[0].data.isTestStepNode);
     const togglerIcon = expanded ? (
       <ChevronUp height={toggleIconSize} width={toggleIconSize}></ChevronUp>
     ) : (

@@ -12,7 +12,7 @@ const removeQuotes = (text: string) => {
   }
   return text;
 };
-
+/**i.e: path-> step_1['prop1'] => result: ['step_1','prop1'] */
 const keysWithinPath = (path: string) => {
   return path
     .split(/\.|\[|\]/)
@@ -80,18 +80,17 @@ const parseTextAndHardBreakNodes = (item: string) => {
   const hardBreak: JSONContent = {
     type: TipTapNodeTypes.hardBreak,
   };
-  const resultArray: JSONContent[] = item
+  return item
     .split(endlineRegex)
     .filter((item) => !!item)
     .map((text) => {
       if (text !== '\n') return { type: TipTapNodeTypes.text, text };
       return hardBreak;
     });
-  return resultArray;
 };
 
-export function convertTextToTipTapJsonContent({
-  propertyPath,
+function convertTextToTipTapJsonContent({
+  propertyPath: userTextInput,
   stepMetadataFinder,
 }: {
   propertyPath: string;
@@ -102,58 +101,57 @@ export function convertTextToTipTapJsonContent({
   type: TipTapNodeTypes.paragraph;
   content: JSONContent[];
 } {
-  const matched = propertyPath.split(/(\{\{.*?\}\})/).filter((el) => el);
-
-  const contentNodes: JSONContent[] = matched.map((item) => {
-    const metadata = stepMetadataFinder(item);
-    return isMentionNodeText(item)
+  const inputSplitToNodesContent = userTextInput.split(/(\{\{.*?\}\})/).filter((el) => el);
+  const contentNodes: JSONContent[] = inputSplitToNodesContent.map((nc) => {
+    const metadata = stepMetadataFinder(nc);
+    return isMentionNodeText(nc)
       ? parseMentionNodeFromText({
-          path: item,
+          path: nc,
           stepDisplayName: metadata?.displayName ?? '',
           stepLogoUrl: metadata?.logoUrl ?? '',
           stepDfsIndex: metadata?.dfsIndex ?? 0,
         })
-      : item.includes('\n')
-      ? parseTextAndHardBreakNodes(item)
-      : { type: TipTapNodeTypes.text, text: item };
+      : nc.includes('\n')
+      ? parseTextAndHardBreakNodes(nc)
+      : { type: TipTapNodeTypes.text, text: nc };
   });
   return { type: TipTapNodeTypes.paragraph, content: contentNodes.flat(1) };
 }
 
-const convertTiptapJsonToText = (content: JSONContent) => {
-  let result = '';
+const convertTiptapJsonToText: (content:JSONContent)=>string = ({content}: JSONContent) => {
   let isFirstParagraph = true;
-
-  content.content?.forEach((node) => {
-    switch (node.type) {
+  const nodes = content?? []
+  return (nodes).map((n) => {
+    switch (n.type) {
       case TipTapNodeTypes.hardBreak:
-        result += '\n';
-        break;
+       return '\n';
+     
       case TipTapNodeTypes.text:
-        if (node.text) {
-          result += node.text;
+        if (n.text) {
+          return n.text;
         } else {
-          tiptapWarning('node.text is undefined', node);
+          tiptapWarning('node.text is undefined', n);
+          return '';
         }
-        break;
 
       case TipTapNodeTypes.mention:
-        if (node.attrs?.label) {
-          const mentionAttrs: ApMentionNodeAttrs = JSON.parse(node.attrs.label);
-          result += mentionAttrs.serverValue;
+        if (n.attrs?.label) {
+          const mentionAttrs: ApMentionNodeAttrs = JSON.parse(n.attrs.label);
+          return  mentionAttrs.serverValue;
         } else {
-          tiptapWarning('node.attrs.label is undefined', node);
+          tiptapWarning('node.attrs.label is undefined', n);
+          return '';
         }
-        break;
 
       case TipTapNodeTypes.paragraph:
-        if (!isFirstParagraph) result += '\n';
+        if (!isFirstParagraph) return '\n';
         isFirstParagraph = false;
-        result += convertTiptapJsonToText(node);
-        break;
+       return  convertTiptapJsonToText(n);
+     default:
+        tiptapWarning('unknown node type', n);
+        return '';
     }
-  });
-  return result;
+  }).join('');
 };
 
 const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {

@@ -27,7 +27,7 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 
-import { TextInputWithMentions } from '../../data-to-insert/text-input-with-mentions';
+import { TextInputWithMentions } from '../../text-input-with-mentions/text-input-with-mentions';
 
 type AutoFormProps = {
   props: PiecePropertyMap;

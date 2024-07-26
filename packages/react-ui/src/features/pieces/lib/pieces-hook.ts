@@ -24,6 +24,9 @@ export type StepMetadata = {
   displayName: string;
   logoUrl: string;
   description: string;
+  pieceName:string;
+  pieceVersion:string;
+  type:ActionType | TriggerType;
 };
 export const piecesHooks = {
   usePiece: ({ name, version }: UsePieceProps) => {
@@ -34,19 +37,10 @@ export const piecesHooks = {
     });
   },
   usePieceMetadata: ({ step }: UsePieceMetadata) => {
-    const { type } = step;
-    const pieceName = step.settings?.pieceName;
-    const pieceVersion = step.settings?.pieceVersion;
-    return useQuery<StepMetadata, Error>(pieceMetadataQueryBuilder({type, pieceName, pieceVersion}));
+    return useQuery<StepMetadata, Error>(pieceMetadataQueryBuilder({step}));
   },
   usePiecesMetadata: (props: UsePieceMetadata[]) => {
-    const steps = props.map(({ step }) => step);
-    const queries = steps.map((step) => {
-      const pieceName = step.settings?.pieceName;
-      const pieceVersion = step.settings?.pieceVersion;
-      const type = step.type;
-      return pieceMetadataQueryBuilder({type, pieceName, pieceVersion});
-    });
+    const queries = props.map(({ step }) => pieceMetadataQueryBuilder({step}));
     return useQueries({
       queries,
     });
@@ -60,7 +54,11 @@ export const piecesHooks = {
   },
 };
 
-function pieceMetadataQueryBuilder({type, pieceName, pieceVersion}: { type: ActionType | TriggerType, pieceName: string, pieceVersion: string }) {
+function pieceMetadataQueryBuilder({step}:{step: Action | Trigger}) {
+  const isPieceStep = step.type === ActionType.PIECE || step.type === TriggerType.PIECE 
+  const pieceName = isPieceStep? step.settings.pieceName : `${step.type}`;
+  const pieceVersion = isPieceStep? step.settings.pieceVersion : ``;
+  const type = step.type;
   return {
     queryKey: ['piece', type, pieceName, pieceVersion],
     queryFn: async () => {
@@ -75,48 +73,55 @@ function pieceMetadataQueryBuilder({type, pieceName, pieceVersion}: { type: Acti
     staleTime: Infinity,
   }
 }
+
 async function getStepMetadata(
   type: ActionType | TriggerType,
   pieceName: string,
   pieceVersion: string,
-) {
-  switch (type) {
-    case ActionType.BRANCH:
-      return {
-        displayName: 'Branch',
-        logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
-        description: 'Branch',
-      };
-    case ActionType.CODE:
-      return {
-        displayName: 'Code',
-        logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
-        description: 'Powerful nodejs & typescript code with npm',
-      };
-    case ActionType.LOOP_ON_ITEMS:
-      return {
-        displayName: 'Loop on Items',
-        logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
-        description: 'Iterate over a list of items',
-      };
-    case TriggerType.EMPTY:
-      return {
-        displayName: 'Empty Trigger',
-        logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
-        description: 'Empty Trigger',
-      };
-    case ActionType.PIECE:
-    case TriggerType.PIECE: {
-      // TODO optmize the query and use cached version
-      const piece = await piecesApi.get({
-        name: pieceName,
-        version: pieceVersion,
-      });
-      return {
-        displayName: piece.displayName,
-        logoUrl: piece.logoUrl,
-        description: piece.description,
-      };
+): Promise<StepMetadata> {
+  const metadataExtractor = async()=>{
+    switch (type) {
+      case ActionType.BRANCH:
+        return {
+          displayName: 'Branch',
+          logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
+          description: 'Branch',
+        };
+      case ActionType.CODE:
+        return {
+          displayName: 'Code',
+          logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
+          description: 'Powerful nodejs & typescript code with npm',
+        };
+      case ActionType.LOOP_ON_ITEMS:
+        return {
+          displayName: 'Loop on Items',
+          logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
+          description: 'Iterate over a list of items',
+        };
+      case TriggerType.EMPTY:
+        return {
+          displayName: 'Empty Trigger',
+          logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
+          description: 'Empty Trigger',
+        };
+      case ActionType.PIECE:
+      case TriggerType.PIECE: {
+        // TODO optmize the query and use cached version
+        const piece = await piecesApi.get({
+          name: pieceName,
+          version: pieceVersion,
+        });
+        return {
+          displayName: piece.displayName,
+          logoUrl: piece.logoUrl,
+          description: piece.description,
+        };
+      }
     }
   }
+  return {...(await metadataExtractor()), pieceName, pieceVersion, type};
+
+  
 }
+

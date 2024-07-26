@@ -1,7 +1,7 @@
 import { Plus, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 
-import { TextInputWithMentions } from '../../app/builder/data-to-insert/text-input-with-mentions';
+import { TextInputWithMentions } from '../../app/builder/text-input-with-mentions/text-input-with-mentions';
 
 import { Button } from './button';
 import { Input } from './input';

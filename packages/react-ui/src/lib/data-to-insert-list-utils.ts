@@ -13,7 +13,7 @@ export interface MentionTreeNode extends TreeNode {
   children?: MentionTreeNode[];
 }
 /**Traverses an object to find its child properties and their paths, stepOutput has to be an object on first invocation */
-export function traverseStepOutputAndReturnMentionTree(
+function traverseStepOutputAndReturnMentionTree(
   stepOutput: unknown,
   path: string,
   displayName: string,
@@ -125,7 +125,7 @@ const handlingArrayStepOutput = (
   };
 };
 
-export function formatStepOutput(stepOutput: unknown) {
+function formatStepOutput(stepOutput: unknown) {
   if (stepOutput === null) {
     return 'null';
   }
@@ -136,11 +136,15 @@ export function formatStepOutput(stepOutput: unknown) {
 
   return stepOutput;
 }
-
-export const FIRST_LEVEL_PADDING_IN_MENTIONS_LIST = 53;
-export const CHEVRON_SPACE_IN_MENTIONS_LIST = 25;
-export const MAX_ARRAY_LENGTH_BEFORE_SLICING = 100;
-export const isStepName = (name: string) => {
+const MAX_ARRAY_LENGTH_BEFORE_SLICING = 100;
+const isStepName = (name: string) => {
   const regex = /^(trigger|step_\d+)$/;
   return regex.test(name);
+};
+
+export const dataToInsertListUtils = {
+  isStepName,
+  formatStepOutput,
+  traverseStepOutputAndReturnMentionTree,
+  handlingArrayStepOutput,
 };
