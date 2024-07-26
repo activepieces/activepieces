@@ -103,7 +103,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     selectStep: (path: StepPathWithName | null) =>
       set({
         selectedStep: path,
-        rightSidebar: path ? RightSideBarType.PIECE_SETTINGS : RightSideBarType.NONE,
+        rightSidebar: path
+          ? RightSideBarType.PIECE_SETTINGS
+          : RightSideBarType.NONE,
       }),
     setRightSidebar: (rightSidebar: RightSideBarType) => set({ rightSidebar }),
     setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
@@ -194,23 +196,23 @@ const getAllStepsMentions = (state: BuilderState) => {
   if (!step) {
     return [];
   }
-  const path = StepOutputStructureUtil.findPathToStep(
-    step,
-    flowVersion?.trigger,
-  );
+  const path = flowHelper.findPathToStep({
+    stepToFind: step,
+    trigger: flowVersion?.trigger,
+  });
 
   return path.map((s) => {
     const stepMentionNode: MentionTreeNode =
-     dataToInsertListUtils.traverseStepOutputAndReturnMentionTree(
+      dataToInsertListUtils.traverseStepOutputAndReturnMentionTree(
         s.settings.inputUiInfo?.currentSelectedData,
         s.name,
-       `${s.indexInDfsTraversal}. ${s.displayName}`,
+        `${s.dfsIndex}. ${s.displayName}`,
       );
     const stepNeedsTesting =
       s.settings.inputUiInfo?.currentSelectedData === undefined;
     return {
       ...stepMentionNode,
-    
+
       children: stepNeedsTesting
         ? [
             {

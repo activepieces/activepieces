@@ -11,7 +11,6 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import { piecesHooks, StepMetadata } from '../../../features/pieces/lib/pieces-hook';
 import './tip-tap.css';
 import { useBuilderStateContext } from '../builder-hooks';
-import { StepOutputStructureUtil } from '../../../lib/step-output-utils';
 
 import { textMentionUtils } from '@/lib/text-input-utils';
 
@@ -105,10 +104,7 @@ export const TextInputWithMentions = ({
     )[0];
     const step = flowHelper.getStep(flowVersion, stepName);
     if (step) {
-      const dfsIndex = StepOutputStructureUtil.findStepIndex(
-        flowVersion.trigger,
-        stepName,
-      );
+      const dfsIndex = flowHelper.getAllSteps(flowVersion.trigger).findIndex((f) => stepName === f.name) + 1;
       const data = piecesMetadata.find((res) =>
         res.stepNamesThatUseThisMetadata.includes(stepName),
       );
