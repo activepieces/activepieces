@@ -14,6 +14,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { flowQueue } from '../workers/queue'
 import { appEventRoutingService } from './app-event-routing.service'
+import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 
 const appWebhooks: Record<string, Piece> = {
     slack,
@@ -100,7 +101,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                             flowId: listener.flowId,
                             simulate: false,
                         },
-                        priority: 'medium',
+                        priority: DEFAULT_PRIORITY,
                     })
                 })))
             }
