@@ -28,7 +28,7 @@ type RenameFlowSchema = Static<typeof RenameFlowSchema>;
 const RenameFlowDialog: React.FC<{
   children: React.ReactNode;
   flowId: string;
-  onRename: () => void;
+  onRename: (newName: string) => void;
 }> = ({ children, flowId, onRename }) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const renameFlowForm = useForm<RenameFlowSchema>({
@@ -52,7 +52,7 @@ const RenameFlowDialog: React.FC<{
       }),
     onSuccess: () => {
       setIsRenameDialogOpen(false);
-      onRename();
+      onRename(renameFlowForm.getValues().displayName);
       toast({
         title: 'Success',
         description: 'Flow has been renamed.',

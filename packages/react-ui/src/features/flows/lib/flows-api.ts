@@ -22,7 +22,7 @@ import {
 
 export const flowsApi = {
   applyOperation(flowId: string, operation: FlowOperationRequest) {
-    return api.post<void>(`/v1/flows/${flowId}`, operation);
+    return api.post<PopulatedFlow>(`/v1/flows/${flowId}`, operation);
   },
   list(request: ListFlowsRequest): Promise<SeekPage<PopulatedFlow>> {
     return api.get<SeekPage<PopulatedFlow>>('/v1/flows', request);
