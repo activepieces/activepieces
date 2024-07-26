@@ -2,7 +2,7 @@ import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/serv
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Job, Queue } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
-import { AddParams, QueueManager } from '../queue/queue-manager'
+import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = 8 * 60 * 1000
@@ -101,7 +101,7 @@ async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOO
     const { id, data, priority } = params
     await queue.add(id, data, {
         jobId: id,
-        priority: priority === 'high' ? 1 : undefined,
+        priority: JOB_PRIORITY[priority],
     })
 }
 

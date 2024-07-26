@@ -56,6 +56,12 @@ export const projectService = {
         return this.getOneOrThrow(projectId)
     },
 
+    async getPlatformId(projectId: ProjectId): Promise<string> {
+        const result =  await repo().createQueryBuilder('project').select('platformId').where({
+            id: projectId,
+        }).getOneOrFail()
+        return result.platformId
+    },
     async getOneOrThrow(projectId: ProjectId): Promise<Project> {
         const project = await this.getOne(projectId)
 
