@@ -1,7 +1,7 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function DataTableSkeleton({
-  skeletonRowCount = 5,
+  skeletonRowCount = 10,
 }: {
   skeletonRowCount?: number;
 }) {
