@@ -135,7 +135,7 @@ export const requestWriterService = {
         const openAI = getOpenAI()
         const completion = await openAI.chat.completions.create({
             model: 'gpt-4-turbo',
-            messages: [{ role: 'user', content: prompt }],
+            messages: [{ role: 'system', content: prompt }],
             temperature: 0.2,
             response_format: { type: 'json_object' },
         })
@@ -157,7 +157,7 @@ export const requestWriterService = {
         Use the following markdown extracted from the API references:
         ${markdownResults.join('\n')}
 
-        Use this structure to return the HTTP request details:
+        Use this structure to return the HTTP request details from the previous markdown:
         {
             "method": "HTTP_METHOD",
             "url": "API_ENDPOINT",
@@ -174,13 +174,14 @@ export const requestWriterService = {
         `
 
         if (exceedsTokenLimit(apiReferencePrompt)) {
-            logger.info(`The provided text exceeds the maximum limit of ${MAX_CHARACTERS} characters for 128k tokens.`)
             return JSON.stringify({ 'error': 'true',
                 'body': '{"message":"The needed result exceeds the maximum limit of tokens of 128k"}',
             })
         }
+
         const httpRequestDetails = await this.generateHttpRequest({ prompt: apiReferencePrompt })
-        logger.info(httpRequestDetails)
+
+
         return httpRequestDetails
     },
 
