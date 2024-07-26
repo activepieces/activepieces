@@ -22,7 +22,11 @@ const ReturnLoopedgeButton: React.FC<ReturnLoopedgeButtonProps> = (props) => {
   h${props.sourceX - props.targetX - 30}
   ${ARROW}`;
   return (
-    <BaseEdge path={edgePath} interactionWidth={0} style={{ strokeWidth: 1.5 }} />
+    <BaseEdge
+      path={edgePath}
+      interactionWidth={0}
+      style={{ strokeWidth: 1.5 }}
+    />
   );
 };
 

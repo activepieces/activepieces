@@ -1,5 +1,6 @@
 'use client';
 
+import { SeekPage } from '@activepieces/shared';
 import {
   ColumnDef,
   flexRender,
@@ -9,6 +10,12 @@ import {
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { Button } from './button';
+import { DataTableFacetedFilter } from './data-table-options-filter';
+import { DataTableSkeleton } from './data-table-skeleton';
+import { DataTableToolbar } from './data-table-toolbar';
+import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
+
 import {
   Table,
   TableBody,
@@ -17,12 +24,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { SeekPage } from '@activepieces/shared';
-
-import { Button } from './button';
-import { DataTableFacetedFilter } from './data-table-options-filter';
-import { DataTableToolbar } from './data-table-toolbar';
-import { DataTableSkeleton } from './data-table-skeleton'
 
 export type RowDataWithActions<TData> = TData & {
   delete: () => void;
@@ -44,6 +45,7 @@ interface DataTableProps<TData, TValue> {
   fetchData: (queryParams: URLSearchParams) => Promise<SeekPage<TData>>;
   onRowClick?: (row: RowDataWithActions<TData>) => void;
   filters?: DataTableFilter[];
+  refresh?: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -51,6 +53,7 @@ export function DataTable<TData, TValue>({
   fetchData,
   onRowClick,
   filters,
+  refresh,
 }: DataTableProps<TData, TValue>) {
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;
@@ -66,6 +69,27 @@ export function DataTable<TData, TValue>({
   const [tableData, setTableData] = useState<RowDataWithActions<TData>[]>([]);
   const [deletedRows = [], setDeletedRows] = useState<TData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const fetchDataAndUpdateState = async (params: URLSearchParams) => {
+    setLoading(true);
+    setTableData([]);
+    try {
+      const response = await fetchData(params);
+      const newData = response.data.map((row) => ({
+        ...row,
+        delete: () => {
+          setDeletedRows([...deletedRows, row]);
+        },
+      }));
+      setTableData(newData);
+      setNextPageCursor(response.next ?? undefined);
+      setPreviousPageCursor(response.previous ?? undefined);
+    } catch (error) {
+      toast(INTERNAL_ERROR_TOAST);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const table = useReactTable({
     data: tableData,
@@ -95,21 +119,8 @@ export function DataTable<TData, TValue>({
   }, [currentCursor]);
 
   useEffect(() => {
-    setLoading(true);
-    setTableData([]);
-    fetchData(searchParams).then((response) => {
-      const newData = response.data.map((row) => ({
-        ...row,
-        delete: () => {
-          setDeletedRows(deletedRows.concat(row));
-        },
-      }));
-      setTableData(newData);
-      setNextPageCursor(response.next ?? undefined);
-      setPreviousPageCursor(response.previous ?? undefined);
-      setLoading(false);
-    });
-  }, [searchParams]);
+    fetchDataAndUpdateState(searchParams);
+  }, [searchParams, refresh]);
 
   useEffect(() => {
     setTableData(
