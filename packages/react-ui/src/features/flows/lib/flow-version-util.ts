@@ -8,6 +8,7 @@ import {
   BranchCondition,
   CodeAction,
   LoopOnItemsAction,
+  SourceCode,
   Trigger,
 } from '@activepieces/shared';
 
@@ -55,11 +56,11 @@ function buildActionWithBranchCondition(
 
 function buildActionWithNewCode(
   selectedStep: CodeAction,
-  code: string,
+  sourceCode: SourceCode,
   input: Record<string, string>,
 ): CodeAction {
   const clonedAction: CodeAction = JSON.parse(JSON.stringify(selectedStep));
-  clonedAction.settings.sourceCode.code = code;
+  clonedAction.settings.sourceCode = sourceCode;
   clonedAction.settings.input = input;
   return clonedAction;
 }
