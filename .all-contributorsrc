@@ -1181,6 +1181,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "alexandrudanpop",
+      "name": "Alexandru-Dan Pop",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15979292?v=4",
+      "profile": "https://alexandrudanpop.dev/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
