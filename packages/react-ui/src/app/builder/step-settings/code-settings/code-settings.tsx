@@ -9,7 +9,8 @@ import { DictionaryInput } from '@/components/ui/dictionary-input';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
-import { CodeEditior } from '@/features/properties-form/components/code-editior';
+
+import { CodeEditior } from './code-editior';
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below.
@@ -26,9 +27,15 @@ type CodeSettingsProps = {
 };
 
 const FormSchema = Type.Object({
-  code: Type.String({
-    minLength: 1,
-    errorMessage: 'You need to write a code snippet',
+  sourceCode: Type.Object({
+    code: Type.String({
+      minLength: 1,
+      errorMessage: 'You need to write a code snippet',
+    }),
+    packageJson: Type.String({
+      minLength: 0,
+      errorMessage: 'You need to write a package.json snippet',
+    }),
   }),
   input: Type.Record(Type.String(), Type.String()),
 });
@@ -40,7 +47,7 @@ const CodeSettings = React.memo(
     const codeSettings = selectedStep.settings as CodeActionSettings;
     const form = useForm<FormSchema>({
       defaultValues: {
-        code: codeSettings.sourceCode.code,
+        sourceCode: codeSettings.sourceCode,
         input: codeSettings.input,
       },
       resolver: typeboxResolver(FormSchema),
@@ -57,10 +64,10 @@ const CodeSettings = React.memo(
 
     async function updateFormChange() {
       await form.trigger();
-      const { code, input } = form.getValues();
+      const { sourceCode, input } = form.getValues();
       const newAction = flowVersionUtils.buildActionWithNewCode(
         selectedStep,
-        code,
+        sourceCode,
         input,
       );
       onUpdateAction(newAction);
@@ -89,14 +96,13 @@ const CodeSettings = React.memo(
           />
           <FormField
             control={form.control}
-            name="code"
+            name="sourceCode"
             render={({ field }) => (
               <FormItem>
                 <CodeEditior
-                  code={field.value}
+                  sourceCode={field.value}
                   onChange={field.onChange}
                   readonly={readonly}
-                  language="typescript"
                 ></CodeEditior>
                 <FormMessage />
               </FormItem>

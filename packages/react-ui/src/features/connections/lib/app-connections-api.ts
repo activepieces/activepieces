@@ -3,6 +3,7 @@ import {
   AppConnection,
   ListAppConnectionsRequestQuery,
   SeekPage,
+  UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
 
 export const appConnectionsApi = {
@@ -10,6 +11,9 @@ export const appConnectionsApi = {
     request: ListAppConnectionsRequestQuery,
   ): Promise<SeekPage<AppConnection>> {
     return api.get<SeekPage<AppConnection>>('/v1/app-connections', request);
+  },
+  upsert(request: UpsertAppConnectionRequestBody): Promise<AppConnection> {
+    return api.post<AppConnection>('/v1/app-connections', request);
   },
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/app-connections/${id}`);

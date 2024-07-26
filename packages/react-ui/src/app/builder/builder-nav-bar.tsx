@@ -1,11 +1,10 @@
-import { History, Home, Logs } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ChevronDown, History, Home, Logs } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { FlowStateToolbar } from '@/app/builder/flow-state-toolbar';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -13,14 +12,25 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import FlowActionMenu from '@/features/flows/components/flow-actions-menu';
+import { FlowVersionState } from '@activepieces/shared';
 
-import { FlowActionsMenu } from './flow-actions-menu';
+import { BuilderPublishButton } from './builder-publish-button';
 
 export const BuilderNavBar = () => {
-  const [flowVersion, setLeftSidebar] = useBuilderStateContext((state) => [
-    state.flowVersion,
-    state.setLeftSidebar,
-  ]);
+  const navigate = useNavigate();
+
+  const [flow, flowVersion, setLeftSidebar, renameFlowClientSide] =
+    useBuilderStateContext((state) => [
+      state.flow,
+      state.flowVersion,
+      state.setLeftSidebar,
+      state.renameFlowClientSide,
+    ]);
+
+  const isLatestVersion =
+    flowVersion.state === FlowVersionState.DRAFT ||
+    flowVersion.id === flow.publishedVersionId;
 
   return (
     <div className="items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
@@ -36,7 +46,18 @@ export const BuilderNavBar = () => {
           <TooltipContent side="bottom">Home</TooltipContent>
         </Tooltip>
         <span>{flowVersion.displayName}</span>
-        <FlowActionsMenu></FlowActionsMenu>
+        <FlowActionMenu
+          flow={flow}
+          flowVersion={flowVersion}
+          readonly={isLatestVersion}
+          onDelete={() => {
+            navigate('/flows');
+          }}
+          onRename={(newName) => renameFlowClientSide(newName)}
+          onDuplicate={() => {}}
+        >
+          <ChevronDown className="h-4 w-4" />
+        </FlowActionMenu>
       </div>
       <div className="grow"></div>
       <div className="flex items-center justify-center gap-4">
@@ -63,7 +84,7 @@ export const BuilderNavBar = () => {
           <TooltipContent side="bottom">Run Logs</TooltipContent>
         </Tooltip>
 
-        <FlowStateToolbar></FlowStateToolbar>
+        <BuilderPublishButton></BuilderPublishButton>
         <UserAvatar></UserAvatar>
       </div>
     </div>

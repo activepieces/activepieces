@@ -12,7 +12,7 @@ import { SidebarHeader } from '../sidebar-header';
 import { TestActionComponent } from '../test-step/test-action';
 
 import { BranchSettings } from './branch-settings/branch-settings';
-import { CodeSettings } from './code-settings';
+import { CodeSettings } from './code-settings/code-settings';
 import { LoopsSettings } from './loops-settings';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';

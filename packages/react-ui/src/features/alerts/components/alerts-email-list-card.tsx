@@ -17,6 +17,7 @@ import { Alert } from '@activepieces/ee-shared';
 import { alertsApi } from '../lib/alerts-api';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
+
 const fetchData = async () => {
   const page = await alertsApi.list({
     projectId: authenticationSession.getProjectId(),
@@ -93,7 +94,7 @@ export default function AlertsEmailsCard() {
                   className="size-8 p-0"
                   onClick={() => deleteMutation.mutate(alert)}
                 >
-                  <Trash className="size-4 bg-destructive" />
+                  <Trash className="size-4 text-destructive" />
                 </Button>
               </div>
             ))}
