@@ -1,7 +1,7 @@
 import cronstrue from 'cronstrue/i18n';
 import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 
-import { PopulatedFlow, TriggerType } from '@activepieces/shared';
+import { Flow, FlowVersion, TriggerType } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
 
@@ -23,15 +23,15 @@ const downloadFile = (
   URL.revokeObjectURL(url);
 };
 
-const downloadFlow = async (flow: PopulatedFlow) => {
-  const template = await flowsApi.getTemplate(flow.id, {});
+const downloadFlow = async (flowId: string) => {
+  const template = await flowsApi.getTemplate(flowId, {});
   downloadFile(JSON.stringify(template, null, 2), template.name, 'json');
 };
 
 export const flowsUtils = {
   downloadFlow,
-  flowStatusToolTipRenderer: (flow: PopulatedFlow) => {
-    const trigger = flow.version.trigger;
+  flowStatusToolTipRenderer: (flow: Flow, version: FlowVersion) => {
+    const trigger = version.trigger;
     switch (trigger.type) {
       case TriggerType.PIECE: {
         const cronExpression = flow.schedule?.cronExpression;
@@ -43,14 +43,13 @@ export const flowsUtils = {
       }
       case TriggerType.EMPTY:
         console.error(
-          "Flow can't be published with empty trigger " +
-            flow.version.displayName,
+          "Flow can't be published with empty trigger " + version.displayName,
         );
         return 'Please contact support as your published flow has a problem';
     }
   },
-  flowStatusIconRenderer: (flow: PopulatedFlow) => {
-    const trigger = flow.version.trigger;
+  flowStatusIconRenderer: (flow: Flow, version: FlowVersion) => {
+    const trigger = version.trigger;
     switch (trigger.type) {
       case TriggerType.PIECE: {
         const cronExpression = flow.schedule?.cronExpression;
@@ -62,8 +61,7 @@ export const flowsUtils = {
       }
       case TriggerType.EMPTY: {
         console.error(
-          "Flow can't be published with empty trigger " +
-            flow.version.displayName,
+          "Flow can't be published with empty trigger " + version.displayName,
         );
         return <TriangleAlert className="h-4 w-4 text-destructive" />;
       }

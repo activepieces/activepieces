@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import { CheckIcon, Import } from 'lucide-react';
+import { CheckIcon, EllipsisVertical, Import } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import FlowStatusToggle from '@/features/flows/components/flow-status-toggle';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FolderBadge } from '@/features/folders/component/folder-badge';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
@@ -21,6 +20,7 @@ import { formatUtils } from '@/lib/utils';
 import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from './flow-actions-menu';
+import { FlowStatusToggle } from './flow-status-toggle';
 import { ImportFlowDialog } from './import-flow-dialog';
 
 const filters: DataTableFilter[] = [
@@ -132,7 +132,10 @@ const FlowsTable = () => {
             className="flex items-center space-x-2"
             onClick={(e) => e.stopPropagation()}
           >
-            <FlowStatusToggle flow={row.original} />
+            <FlowStatusToggle
+              flow={row.original}
+              flowVersion={row.original.version}
+            ></FlowStatusToggle>
           </div>
         );
       },
@@ -148,10 +151,14 @@ const FlowsTable = () => {
           <div onClick={(e) => e.stopPropagation()}>
             <FlowActionMenu
               flow={flow}
+              readonly={false}
+              flowVersion={flow.version}
               onRename={() => setRefresh(refresh + 1)}
               onDuplicate={() => setRefresh(refresh + 1)}
               onDelete={() => setRefresh(refresh + 1)}
-            />
+            >
+              <EllipsisVertical className="h-6 w-6" />
+            </FlowActionMenu>
           </div>
         );
       },

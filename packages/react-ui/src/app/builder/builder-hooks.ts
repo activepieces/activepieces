@@ -55,6 +55,7 @@ export type BuilderState = {
   selectedStep: StepPathWithName | null;
   saving: boolean;
   ExitRun: () => void;
+  renameFlowClientSide: (newName: string) => void;
   selectStep(path: StepPathWithName): void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
@@ -65,6 +66,7 @@ export type BuilderState = {
   ) => void;
   startSaving: () => void;
   setReadOnly: (readonly: boolean) => void;
+  setFlow: (flow: Flow) => void;
   setVersion: (flowVersion: FlowVersion) => void;
 };
 
@@ -85,6 +87,17 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     saving: false,
     selectedStep: null,
     rightSidebar: RightSideBarType.NONE,
+    renameFlowClientSide: (newName: string) => {
+      set((state) => {
+        return {
+          flowVersion: {
+            ...state.flowVersion,
+            displayName: newName,
+          },
+        };
+      });
+    },
+    setFlow: (flow: Flow) => set({ flow }),
     ExitRun: () =>
       set({
         run: null,
@@ -113,9 +126,19 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         const updateRequest = async () => {
           set({ saving: true });
           try {
-            await flowsApi.update(state.flow.id, operation);
-            set({
-              saving: flowUpdatesQueue.size() === 0 ? false : true,
+            const updatedFlowVersion = await flowsApi.update(
+              state.flow.id,
+              operation,
+            );
+            set((state) => {
+              return {
+                flowVersion: {
+                  ...state.flowVersion,
+                  id: updatedFlowVersion.version.id,
+                  state: updatedFlowVersion.version.state,
+                },
+                saving: flowUpdatesQueue.size() !== 0,
+              };
             });
           } catch (error) {
             console.error(error);
@@ -124,7 +147,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           }
         };
         flowUpdatesQueue.add(updateRequest);
-
         return { flowVersion: newFlowVersion };
       }),
     setReadOnly: (readonly: boolean) => set({ readonly }),
