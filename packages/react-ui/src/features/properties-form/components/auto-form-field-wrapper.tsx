@@ -16,7 +16,7 @@ type AutoFormFieldWrapperProps = {
 };
 
 const AutoFormFieldWrapper = ({
-  placeBeforeLabelText,
+  placeBeforeLabelText = false,
   children,
   hideDescription,
   allowDynamicValues,
@@ -27,7 +27,6 @@ const AutoFormFieldWrapper = ({
     <>
       <FormLabel htmlFor={key} className="flex items-center">
         {placeBeforeLabelText && children}
-
         <span>{property.displayName}</span>
         <span className="grow"></span>
         {allowDynamicValues && (
@@ -36,10 +35,10 @@ const AutoFormFieldWrapper = ({
           </Toggle>
         )}
       </FormLabel>
+      {!placeBeforeLabelText && children}
       {property.description && !hideDescription && (
         <ReadMoreDescription text={property.description} />
       )}
-      {!placeBeforeLabelText && children}
     </>
   );
 };

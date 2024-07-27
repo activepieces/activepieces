@@ -3,6 +3,7 @@ import { Socket } from 'socket.io-client';
 
 import { api } from '@/lib/api';
 import {
+  CreateFlowRequest,
   CreateStepRunRequestBody,
   FlowOperationRequest,
   FlowTemplate,
@@ -21,10 +22,13 @@ import {
 
 export const flowsApi = {
   applyOperation(flowId: string, operation: FlowOperationRequest) {
-    return api.post<void>(`/v1/flows/${flowId}`, operation);
+    return api.post<PopulatedFlow>(`/v1/flows/${flowId}`, operation);
   },
   list(request: ListFlowsRequest): Promise<SeekPage<PopulatedFlow>> {
     return api.get<SeekPage<PopulatedFlow>>('/v1/flows', request);
+  },
+  create(request: CreateFlowRequest) {
+    return api.post<PopulatedFlow>('/v1/flows', request);
   },
   update(flowId: string, request: FlowOperationRequest) {
     return api.post<PopulatedFlow>(`/v1/flows/${flowId}`, request);
@@ -65,5 +69,8 @@ export const flowsApi = {
       `/v1/flows/${flowId}/versions`,
       request,
     );
+  },
+  delete(flowId: string) {
+    return api.delete<void>(`/v1/flows/${flowId}`);
   },
 };

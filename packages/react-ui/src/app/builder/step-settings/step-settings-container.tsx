@@ -28,7 +28,7 @@ import { SidebarHeader } from '../sidebar-header';
 import { TestActionComponent } from '../test-step/test-action';
 
 import { BranchSettings } from './branch-settings/branch-settings';
-import { CodeSettings } from './code-settings';
+import { CodeSettings } from './code-settings/code-settings';
 import { LoopsSettings } from './loops-settings';
 
 const STEPS_WITH_ERROR_HANDLING: (ActionType | TriggerType)[] = [

@@ -10,10 +10,11 @@ export const oauth2Utils = {
 async function openWithLoginUrl(loginUrl: string, redirectUrl: string) {
   currentPopup = openWindow(loginUrl);
   return {
-    code: await getCode(redirectUrl, undefined, undefined),
+    code: await getCode(redirectUrl),
     codeChallenge: undefined,
   };
 }
+
 async function openOAuth2Popup(
   params: OAuth2PopupParams,
 ): Promise<OAuth2PopupResponse> {
@@ -22,8 +23,8 @@ async function openOAuth2Popup(
   const url = constructUrl(params, pckeChallenge);
   currentPopup = openWindow(url);
   return {
-    code: await getCode(params.redirectUrl, params.pkce, pckeChallenge),
-    codeChallenge: pckeChallenge,
+    code: await getCode(params.redirectUrl),
+    codeChallenge: params.pkce ? pckeChallenge : undefined,
   };
 }
 
@@ -70,11 +71,7 @@ function constructUrl(params: OAuth2PopupParams, pckeChallenge: string) {
   return url.toString();
 }
 
-function getCode(
-  redirectUrl: string,
-  pkce: boolean | undefined,
-  pckeChallenge: string | undefined,
-): Promise<string> {
+function getCode(redirectUrl: string): Promise<string> {
   return new Promise<string>((resolve) => {
     window.addEventListener('message', function handler(event) {
       if (
@@ -101,5 +98,5 @@ type OAuth2PopupParams = {
 
 type OAuth2PopupResponse = {
   code: string;
-  codeChallenge: string;
+  codeChallenge: string | undefined;
 };

@@ -135,38 +135,38 @@ const BranchOperatorTextLiterals = [
     Type.Literal(BranchOperator.TEXT_DOES_NOT_START_WITH),
     Type.Literal(BranchOperator.TEXT_ENDS_WITH),
     Type.Literal(BranchOperator.TEXT_DOES_NOT_END_WITH),
-];
+]
 
 const BranchOperatorNumberLiterals = [
     Type.Literal(BranchOperator.NUMBER_IS_GREATER_THAN),
     Type.Literal(BranchOperator.NUMBER_IS_LESS_THAN),
     Type.Literal(BranchOperator.NUMBER_IS_EQUAL_TO),
-];
+]
 
 const BranchOperatorSingleValueLiterals = [
     Type.Literal(BranchOperator.EXISTS),
     Type.Literal(BranchOperator.DOES_NOT_EXIST),
     Type.Literal(BranchOperator.BOOLEAN_IS_TRUE),
     Type.Literal(BranchOperator.BOOLEAN_IS_FALSE),
-];
+]
 
 const BranchTextConditionValid = (addMinLength: boolean) => Type.Object({
-    firstValue: Type.String(addMinLength ? { minLength: 1, } : {}),
+    firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
     secondValue: Type.String(addMinLength ? { minLength: 1 } : {}),
     caseSensitive: Type.Optional(Type.Boolean()),
     operator: Type.Optional(Type.Union(BranchOperatorTextLiterals)),
-});
+})
 
 const BranchNumberConditionValid = (addMinLength: boolean) => Type.Object({
     firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
     secondValue: Type.String(addMinLength ? { minLength: 1 } : {}),
     operator: Type.Optional(Type.Union(BranchOperatorNumberLiterals)),
-});
+})
 
 const BranchSingleValueConditionValid = (addMinLength: boolean) => Type.Object({
     firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
     operator: Type.Optional(Type.Union(BranchOperatorSingleValueLiterals)),
-});
+})
 
 const BranchConditionValid = (addMinLength: boolean) => Type.Union([
     BranchTextConditionValid(addMinLength),

@@ -14,7 +14,6 @@ import { FlowOperationType, flowHelper } from '@activepieces/shared';
 import { ApNode } from '../flow-canvas-utils';
 
 import { useDraggable } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
 
 const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { toast } = useToast();
@@ -72,6 +71,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
           'rounded bg-background border border-solid box-border': !isDragging,
         },
       )}
+      onClick={() => handleClick()}
       onMouseEnter={() => {
         setToolbarOpen(true)
         setAllowPanning(false)
@@ -84,102 +84,127 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-
     >
-      {!isDragging && <>
-        <div
-          className={cn('absolute left-0 right-0 top-0 mx-auto h-[3px] bg-primary opacity-0 rounded-tl-md rounded-tr-md', {
+      <div
+        className={cn(
+          'absolute left-0 right-0 top-0 mx-auto h-[3px] bg-primary opacity-0 rounded-tl-md rounded-tr-md',
+          {
             'opacity-100': toolbarOpen || isSelected,
             'opacity-0': !toolbarOpen && !isSelected,
-          })}
-          style={{ width: 'calc(100% - 2px)' }}
-        ></div>
-        <div className="px-2 h-full w-full box-border" onClick={() => handleClick()} >
-          <div className="flex h-full items-center justify-between gap-4 w-full">
-            <div className="flex items-center justify-center min-w-[46px] h-full">
-              <img src={pieceMetadata?.logoUrl} width="46" height="46" />
-            </div>
-            <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
-              <div className="text-sm text-ellipsis overflow-hidden whitespace-nowrap w-full">
-                {data.step!.displayName}
-              </div>
-              <div className="text-xs text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
-                {pieceMetadata?.displayName}
-              </div>
-            </div>
+          },
+        )}
+        style={{ width: 'calc(100% - 2px)' }}
+      ></div>
+      <div className="px-2 h-full w-full box-border">
+        <div className="flex h-full items-center justify-between gap-4 w-full">
+          <div className="flex items-center justify-center min-w-[46px] h-full">
+            <img src={pieceMetadata?.logoUrl} width="46" height="46" />
           </div>
-
-          <div
-            className={cn(
-              'w-[40px] h-[70px] absolute left-[-40px] top-[0px] transition-opacity duration-300',
-              {
-                'opacity-0': !toolbarOpen,
-                'opacity-100': toolbarOpen,
-              },
-            )}
-          >
-            <div className="flex flex-col gap-2 items-center justify-center mr-4 h-full">
-              {isTrigger && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="rounded-full"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                    >
-                      <Replace className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="left">Replace Trigger</TooltipContent>
-                </Tooltip>
-              )}
-              {isAction && (
-                <>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="rounded-full"
-                        onClick={(e) => {
-                          deleteStep();
-                          e.stopPropagation();
-                        }}
-                      >
-                        <Trash className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="left">Delete step</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="rounded-full"
-                        onClick={(e) => {
-                          duplicateStep();
-                          e.stopPropagation();
-                        }}
-                      >
-                        <CopyPlus className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="left">Duplicate step</TooltipContent>
-                  </Tooltip>
-                </>
-              )}
+          <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
+            <div className="text-sm text-ellipsis overflow-hidden whitespace-nowrap w-full">
+              {data.step!.displayName}
+            </div>
+            <div className="text-xs text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
+              {pieceMetadata?.displayName}
             </div>
           </div>
         </div>
-      </>}
+
+        {!isDragging && <>
+          <div
+            className={cn('absolute left-0 right-0 top-0 mx-auto h-[3px] bg-primary opacity-0 rounded-tl-md rounded-tr-md', {
+              'opacity-100': toolbarOpen || isSelected,
+              'opacity-0': !toolbarOpen && !isSelected,
+            })}
+            style={{ width: 'calc(100% - 2px)' }}
+          ></div>
+          <div className="px-2 h-full w-full box-border" onClick={() => handleClick()} >
+            <div className="flex h-full items-center justify-between gap-4 w-full">
+              <div className="flex items-center justify-center min-w-[46px] h-full">
+                <img src={pieceMetadata?.logoUrl} width="46" height="46" />
+              </div>
+              <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
+                <div className="text-sm text-ellipsis overflow-hidden whitespace-nowrap w-full">
+                  {data.step!.displayName}
+                </div>
+                <div className="text-xs text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
+                  {pieceMetadata?.displayName}
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={cn(
+                'w-[40px] h-[70px] absolute left-[-40px] top-[0px] transition-opacity duration-300',
+                {
+                  'opacity-0': !toolbarOpen,
+                  'opacity-100': toolbarOpen,
+                },
+              )}
+            >
+              <div className="flex flex-col gap-2 items-center justify-center mr-4 h-full">
+                {isTrigger && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="rounded-full"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Replace className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">Replace Trigger</TooltipContent>
+                  </Tooltip>
+                )}
+                {isAction && (
+                  <>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="rounded-full"
+                          onClick={(e) => {
+                            deleteStep();
+                            e.stopPropagation();
+                          }}
+                        >
+                          <Trash className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">Delete step</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="rounded-full"
+                          onClick={(e) => {
+                            duplicateStep();
+                            e.stopPropagation();
+                          }}
+                        >
+                          <CopyPlus className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">Duplicate step</TooltipContent>
+                    </Tooltip>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </>}
 
 
-      <Handle type="source" style={{ opacity: 0 }} position={Position.Bottom} />
-      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+        <Handle type="source" style={{ opacity: 0 }} position={Position.Bottom} />
+        <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      </div>
     </div>
   );
 });
