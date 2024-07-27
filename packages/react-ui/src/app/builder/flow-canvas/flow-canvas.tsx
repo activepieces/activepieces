@@ -21,7 +21,7 @@ import { FlowDragLayer } from './flow-drag-layer';
 
 const FlowCanvas = React.memo(() => {
 
-  const [allowPanning, flowVersion] = useBuilderStateContext((state) => [state.allowPanning, state.flowVersion]);
+  const [allowCanvasPanning, flowVersion] = useBuilderStateContext((state) => [state.allowCanvasPanning, state.flowVersion]);
 
   const graph = useMemo(() => {
     return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
@@ -73,7 +73,7 @@ const FlowCanvas = React.memo(() => {
           onEdgesChange={onEdgesChange}
           maxZoom={1.5}
           minZoom={0.5}
-          panOnDrag={allowPanning}
+          panOnDrag={allowCanvasPanning}
           zoomOnDoubleClick={false}
           panOnScroll={true}
           fitView={true}

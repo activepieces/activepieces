@@ -17,7 +17,7 @@ import { useDraggable } from '@dnd-kit/core';
 
 const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { toast } = useToast();
-  const [selectStep, setAllowPanning, isSelected, isDragging] = useBuilderStateContext((state) => [state.selectStep, state.setAllowPanning, state.selectedStep?.stepName === data.step?.name, state.activeDraggingStep === data.step?.name]);
+  const [selectStep, setAllowCanvasPanning, isSelected, isDragging] = useBuilderStateContext((state) => [state.selectStep, state.setAllowCanvasPanning, state.selectedStep?.stepName === data.step?.name, state.activeDraggingStep === data.step?.name]);
   const deleteStep = useBuilderStateContext((state) => () => {
     state.applyOperation(
       {
@@ -74,11 +74,11 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       onClick={() => handleClick()}
       onMouseEnter={() => {
         setToolbarOpen(true)
-        setAllowPanning(false)
+        setAllowCanvasPanning(false)
       }}
       onMouseLeave={() => {
         setToolbarOpen(false)
-        setAllowPanning(true)
+        setAllowCanvasPanning(true)
       }}
       key={data.step!.name}
       ref={setNodeRef}
