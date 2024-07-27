@@ -3,7 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { syncedAuth } from '../..';
 
 export const createInvoice = createAction({
-  
+
   name: 'createInvoice',
   displayName: 'Create Invoice',
   description: 'Create an Invoice in synced',
@@ -29,11 +29,7 @@ export const createInvoice = createAction({
       description: 'Create Invoice SupplierName',
       required: true,
     }),
-    OrganisationId: Property.ShortText({
-      displayName: 'Create Invoice OrganisationId',
-      description: 'Create Invoice OrganisationId',
-      required: true,
-    }),
+
     SubTotal: Property.ShortText({
       displayName: 'Create Invoice SubTotal',
       description: 'Create Invoice SubTotal',
@@ -75,7 +71,7 @@ export const createInvoice = createAction({
       required: true,
     }),
     Message: Property.Object({
-      displayName: 'Create Invoice Message', 
+      displayName: 'Create Invoice Message',
       required: true,
       defaultValue: {
         Message: '',
@@ -86,7 +82,7 @@ export const createInvoice = createAction({
       displayName: 'Create Invoice IsDuplicate',
       description: 'Create Invoice IsDuplicate',
       required: false,
-    }),   
+    }),
     InvoiceLines: Property.Array({
       displayName: 'Create Invoice InvoiceLines',
       required: false,
@@ -235,48 +231,47 @@ export const createInvoice = createAction({
     const InvoiceLines = context.propsValue.InvoiceLines as InvoiceLinesInput[];
     const MessageLines = context.propsValue.Message as MessageInput;
 
-       // Message        : MessageLines,  
+       // Message        : MessageLines,
 
        //   baseUrl: 'https://syncedtestingapi.azurewebsites.net',
 
 
     const mbody:any={
-        Id              : context.propsValue.Id,  
-        InvoiceNumber   : context.propsValue.InvoiceNumber,  
-        SupplierId     : context.propsValue.SupplierId,  
-        SupplierName   : context.propsValue.SupplierName,  
-        OrganisationId : context.propsValue.OrganisationId,  
-        SubTotal       : context.propsValue.SubTotal,  
-        TotalTax       : context.propsValue.TotalTax,  
-        Date           : context.propsValue.Date,  
-        DueDate        : context.propsValue.DueDate,  
-        AmountDue      : context.propsValue.AmountDue,  
-        Type           : context.propsValue.Type,  
-        Currency       : context.propsValue.Currency,  
-        PdfUrl         : context.propsValue.PdfUrl,  
-        Message        : MessageLines, 
-        IsDuplicate    : context.propsValue.IsDuplicate,  
-        InvoiceLines   : InvoiceLines,  
-        PaymentStatus  : context.propsValue.PaymentStatus,  
-        Pairs          : context.propsValue.Pairs,  
-        AccountNumber  : context.propsValue.AccountNumber,  
-        BsbNumber      : context.propsValue.BsbNumber,  
-        ReferenceId    : context.propsValue.ReferenceId,  
-        HasAttachments : context.propsValue.HasAttachments,  
-        ContactStatus  : context.propsValue.ContactStatus,  
-        AccountName    : context.propsValue.AccountName,  
-        AmountCredited : context.propsValue.AmountCredited,  
-        AmountPaid   : context.propsValue.AmountPaid,  
-        Archived    : context.propsValue.Archived,  
-        Description : context.propsValue.Description,  
-        PaidBy  : context.propsValue.PaidBy,  
-        ExpenseReportId : context.propsValue.ExpenseReportId,  
-        ExpenseReportName : context.propsValue.ExpenseReportName,  
-        PaymentAccountNumber: context.propsValue.PaymentAccountNumber,  
-        PaymentDate : context.propsValue.PaymentDate,  
-        EmailId : context.propsValue.EmailId,  
-        AttachmentId : context.propsValue.AttachmentId,  
-        HexColorClass : context.propsValue.HexColorClass                           
+        Id              : context.propsValue.Id,
+        InvoiceNumber   : context.propsValue.InvoiceNumber,
+        SupplierId     : context.propsValue.SupplierId,
+        SupplierName   : context.propsValue.SupplierName,
+        SubTotal       : context.propsValue.SubTotal,
+        TotalTax       : context.propsValue.TotalTax,
+        Date           : context.propsValue.Date,
+        DueDate        : context.propsValue.DueDate,
+        AmountDue      : context.propsValue.AmountDue,
+        Type           : context.propsValue.Type,
+        Currency       : context.propsValue.Currency,
+        PdfUrl         : context.propsValue.PdfUrl,
+        Message        : MessageLines,
+        IsDuplicate    : context.propsValue.IsDuplicate,
+        InvoiceLines   : InvoiceLines,
+        PaymentStatus  : context.propsValue.PaymentStatus,
+        Pairs          : context.propsValue.Pairs,
+        AccountNumber  : context.propsValue.AccountNumber,
+        BsbNumber      : context.propsValue.BsbNumber,
+        ReferenceId    : context.propsValue.ReferenceId,
+        HasAttachments : context.propsValue.HasAttachments,
+        ContactStatus  : context.propsValue.ContactStatus,
+        AccountName    : context.propsValue.AccountName,
+        AmountCredited : context.propsValue.AmountCredited,
+        AmountPaid   : context.propsValue.AmountPaid,
+        Archived    : context.propsValue.Archived,
+        Description : context.propsValue.Description,
+        PaidBy  : context.propsValue.PaidBy,
+        ExpenseReportId : context.propsValue.ExpenseReportId,
+        ExpenseReportName : context.propsValue.ExpenseReportName,
+        PaymentAccountNumber: context.propsValue.PaymentAccountNumber,
+        PaymentDate : context.propsValue.PaymentDate,
+        EmailId : context.propsValue.EmailId,
+        AttachmentId : context.propsValue.AttachmentId,
+        HexColorClass : context.propsValue.HexColorClass
       };
  console.log("response data print",mbody)
     const response = await httpClient.sendRequest({

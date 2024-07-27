@@ -9,11 +9,7 @@ export const newInvoice = createTrigger({
     displayName: 'New Invoice',
     description: 'Trigger fire when new invoice Upload',
     props: {
-      organization_id: Property.ShortText({
-      displayName: 'Organization ID',
-      description: 'Organization ID',
-      required: true,
-    })
+
     },
     sampleData: {},
     type: TriggerStrategy.WEBHOOK,
@@ -21,7 +17,7 @@ export const newInvoice = createTrigger({
     async onEnable(context) {
         const webhook = await syncedCommon.subscribeWebhook(
           context.webhookUrl!,
-          context.propsValue.organization_id,
+
           context.auth,
           'New Invoice',
         );
@@ -42,7 +38,7 @@ export const newInvoice = createTrigger({
           '_new_invoice_trigger'
         );
         if (response !== null && response !== undefined) {
-          await syncedCommon.unsubscribeWebhook(context.propsValue.organization_id,response.webhookId, context.auth);
+          await syncedCommon.unsubscribeWebhook(response.webhookId, context.auth);
         }
       },
       async run(context) {
