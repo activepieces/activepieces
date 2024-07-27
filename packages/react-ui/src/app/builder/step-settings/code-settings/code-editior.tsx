@@ -29,12 +29,11 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
   const [language, setLanguage] = useState<'typescript' | 'json'>('typescript');
 
-  const editable = activeTab === 'code' ? !readonly : false;
 
   const extensions = [
     styleTheme,
-    EditorState.readOnly.of(editable),
-    EditorView.editable.of(editable),
+    EditorState.readOnly.of(readonly),
+    EditorView.editable.of(!readonly),
     language === 'json' ? json() : javascript({ jsx: false, typescript: true }),
   ];
 
@@ -87,7 +86,7 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
             variant="outline"
             className="flex gap-2"
             size={'sm'}
-            onClick={() => {}}
+            onClick={() => { }}
           >
             <Package className="w-3 h-3" />
             Add
@@ -116,7 +115,7 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
           );
         }}
         theme={githubLight}
-        readOnly={editable}
+        readOnly={readonly}
         extensions={extensions}
       />
     </div>
