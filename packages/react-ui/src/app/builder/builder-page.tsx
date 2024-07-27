@@ -19,6 +19,7 @@ import { PiecesCardList } from './pieces-list/pieces-card-list';
 import { FlowRunDetails } from './run-details/flow-run-details-list';
 import { FlowRecentRunsList } from './run-list/flow-runs-list';
 import { StepSettings } from './step-settings/step-settings-container';
+import { DataSelectorContainer } from './data-selector/data-selector-container';
 
 const BuilderPage = () => {
   const [flowVersion, leftSidebar, rightSidebar, run, ExitRun, selectedStep] =
@@ -56,7 +57,9 @@ const BuilderPage = () => {
         )}
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <ReactFlowProvider>
-            <FlowCanvas/>
+            <FlowCanvas />
+            <DataSelectorContainer></DataSelectorContainer>
+
           </ReactFlowProvider>
         </ResizablePanel>
         {rightSidebar !== RightSideBarType.NONE && (
