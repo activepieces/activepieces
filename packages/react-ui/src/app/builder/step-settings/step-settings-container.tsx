@@ -37,14 +37,14 @@ const STEPS_WITH_ERROR_HANDLING: (ActionType | TriggerType)[] = [
 
 const StepSettingsContainer = React.memo(() => {
   const [
-    setRightSidebar,
+    ExitStepSettings,
     applyOperation,
     readonly,
     flowVersion,
     isSaving,
     startSaving,
   ] = useBuilderStateContext((state) => [
-    state.setRightSidebar,
+    state.ExitStepSettings,
     state.applyOperation,
     state.readonly,
     state.flowVersion,
@@ -104,7 +104,7 @@ const StepSettingsContainer = React.memo(() => {
   // TODO check scrolling code editior
   return (
     <>
-      <SidebarHeader onClose={() => setRightSidebar(RightSideBarType.NONE)}>
+      <SidebarHeader onClose={() => ExitStepSettings()}>
         {selectedStep.displayName}
       </SidebarHeader>
       <ResizablePanelGroup direction="vertical">

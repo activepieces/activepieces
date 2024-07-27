@@ -5,7 +5,7 @@ import {
   RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { FlowCanvas } from '@/app/builder/flow-canvas/canvas';
+import { FlowCanvas } from '@/app/builder/flow-canvas/flow-canvas';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -56,7 +56,7 @@ const BuilderPage = () => {
         )}
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <ReactFlowProvider>
-            <FlowCanvas flowVersion={flowVersion} />
+            <FlowCanvas/>
           </ReactFlowProvider>
         </ResizablePanel>
         {rightSidebar !== RightSideBarType.NONE && (
