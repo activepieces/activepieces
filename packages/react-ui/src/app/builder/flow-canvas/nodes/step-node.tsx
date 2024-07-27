@@ -50,7 +50,6 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const [toolbarOpen, setToolbarOpen] = useState(false);
 
   const handleClick = () => {
-    console.log('select step from builder');
     selectStep({ path: [], stepName: data.step!.name });
   };
 
@@ -85,18 +84,8 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       {...attributes}
       {...listeners}
     >
-      <div
-        className={cn(
-          'absolute left-0 right-0 top-0 mx-auto h-[3px] bg-primary opacity-0 rounded-tl-md rounded-tr-md',
-          {
-            'opacity-100': toolbarOpen || isSelected,
-            'opacity-0': !toolbarOpen && !isSelected,
-          },
-        )}
-        style={{ width: 'calc(100% - 2px)' }}
-      ></div>
-      <div className="px-2 h-full w-full box-border">
 
+      <div className="px-2 h-full w-full box-border">
         {!isDragging && <>
           <div
             className={cn('absolute left-0 right-0 top-0 mx-auto h-[3px] bg-primary opacity-0 rounded-tl-md rounded-tr-md', {
