@@ -947,28 +947,32 @@ const findPathToTargettedStep: (req: {
                 return [...pathFromNextAction]
         }
     }
-    const pathFromTrueBranch = findPathToTargettedStep({
-        target,
-        source: (source as BranchAction).onSuccessAction,
-    })
-    if (pathFromTrueBranch) {
-        return [...pathFromTrueBranch]
+    if (source.type === ActionType.BRANCH) {
+        const pathFromTrueBranch =  findPathToTargettedStep({
+            target,
+            source: source.onSuccessAction,
+        })
+        if (pathFromTrueBranch) {
+            return [...pathFromTrueBranch]
+        }
+        const pathFromFalseBranch = findPathToTargettedStep({
+            target,
+            source: source.onFailureAction,
+        })
+        if (pathFromFalseBranch) {
+            return [...pathFromFalseBranch]
+        }
     }
-    const pathFromFalseBranch = findPathToTargettedStep({
-        target,
-        source: (source as BranchAction).onFailureAction,
-    })
-    if (pathFromFalseBranch) {
-        return [...pathFromFalseBranch]
+    if (source.type === ActionType.LOOP_ON_ITEMS) {
+        const pathFromLoop = findPathToTargettedStep({
+            target,
+            source: source.firstLoopAction,
+        })
+        if (pathFromLoop) {
+            return [source, ...pathFromLoop]
+        }
     }
-    const pathFromLoop = findPathToTargettedStep({
-        target,
-        source: (source as LoopOnItemsAction).firstLoopAction,
-    })
-    if (pathFromLoop) {
-        return [source, ...pathFromLoop]
-    }
-  
+     
     return undefined
 }
 

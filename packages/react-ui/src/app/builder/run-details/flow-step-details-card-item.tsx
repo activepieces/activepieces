@@ -69,7 +69,7 @@ const FlowStepDetailsCardItem = React.memo(
 
         return [state.selectStep, isStepSelected, isInPath, step, stepOutput];
       });
-    const { data: pieceMetadata } = piecesHooks.usePieceMetadata({
+    const { data: pieceMetadata } = piecesHooks.useStepMetadata({
       step,
     });
     const [isOpen, setIsOpen] = React.useState(false);

@@ -63,7 +63,7 @@ const StepSettingsContainer = React.memo(() => {
     return <></>;
   }
 
-  const { data: pieceMetadata } = piecesHooks.usePieceMetadata({
+  const { data: pieceMetadata } = piecesHooks.useStepMetadata({
     step: selectedStep,
   });
 

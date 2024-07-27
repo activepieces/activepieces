@@ -1,4 +1,10 @@
-import { Action, ActionType, flowHelper, Trigger, TriggerType } from '@activepieces/shared';
+import {
+  Action,
+  ActionType,
+  flowHelper,
+  Trigger,
+  TriggerType,
+} from '@activepieces/shared';
 import Document from '@tiptap/extension-document';
 import HardBreak from '@tiptap/extension-hard-break';
 import History from '@tiptap/extension-history';
@@ -8,7 +14,10 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 
-import { piecesHooks, StepMetadata } from '../../../features/pieces/lib/pieces-hook';
+import {
+  piecesHooks,
+  StepMetadata,
+} from '../../../features/pieces/lib/pieces-hook';
 import './tip-tap.css';
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -40,29 +49,29 @@ const extensions = (placeholder?: string) => {
   ];
 };
 
-const linkMetadataWithStepsThatUseThem = (metadata: StepMetadata,steps: (Action| Trigger)[]) => {
+const linkMetadataWithStepsThatUseThem = (
+  metadata: StepMetadata,
+  steps: (Action | Trigger)[],
+) => {
   const stepNamesThatUseThisMetadata = steps
-  .filter((step ) => {
-    if (
-      step.type === ActionType.PIECE ||
-      step.type === TriggerType.PIECE
-    ) {
+    .filter((step) => {
+      if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {
+        return (
+          step.settings.pieceName === metadata.pieceName &&
+          step.settings.pieceVersion === metadata.pieceVersion
+        );
+      }
       return (
-        step.settings.pieceName === metadata.pieceName &&
-        step.settings.pieceVersion === metadata.pieceVersion
+        (step.type === ActionType.CODE ||
+          step.type === ActionType.BRANCH ||
+          step.type === TriggerType.EMPTY ||
+          step.type === ActionType.LOOP_ON_ITEMS) &&
+        step.type === metadata.type
       );
-    }
-    return (
-      (step.type === ActionType.CODE ||
-        step.type === ActionType.BRANCH ||
-        step.type === TriggerType.EMPTY ||
-        step.type === ActionType.LOOP_ON_ITEMS) &&
-      step.type === metadata.type
-    );
-  })
-  .map((step ) => step.name);
+    })
+    .map((step) => step.name);
   return { ...metadata, stepNamesThatUseThisMetadata };
-}
+};
 const defaultClassName =
   ' w-full  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';
 type TextInputWithMentionsProps = {
@@ -80,14 +89,13 @@ export const TextInputWithMentions = ({
   extraClasses,
 }: TextInputWithMentionsProps) => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
-  const steps = flowHelper
-    .getAllSteps(flowVersion.trigger)
+  const steps = flowHelper.getAllSteps(flowVersion.trigger);
   const piecesMetadata = piecesHooks
-    .usePiecesMetadata(steps.map((step) => ({ step })))
+    .useStepsMetadata(steps.map((step) => ({ step })))
     .filter((res) => res.data !== undefined)
     .map((res) => res.data)
     .map((res) => {
-     return linkMetadataWithStepsThatUseThem(res,steps)
+      return linkMetadataWithStepsThatUseThem(res, steps);
     });
 
   const setInsertMentionHandler = useBuilderStateContext(
@@ -104,7 +112,10 @@ export const TextInputWithMentions = ({
     )[0];
     const step = flowHelper.getStep(flowVersion, stepName);
     if (step) {
-      const dfsIndex = flowHelper.getAllSteps(flowVersion.trigger).findIndex((f) => stepName === f.name) + 1;
+      const dfsIndex = flowHelper.findStepDfsIndex(
+        flowVersion.trigger,
+        step.name,
+      );
       const data = piecesMetadata.find((res) =>
         res.stepNamesThatUseThisMetadata.includes(stepName),
       );

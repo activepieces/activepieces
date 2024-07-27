@@ -1,10 +1,9 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
-
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
 import { Action, ActionType, Trigger, TriggerType } from '@activepieces/shared';
+import { useQueries, useQuery } from '@tanstack/react-query';
 
 import { piecesApi } from './pieces-api';
 
@@ -17,7 +16,7 @@ type UseMultiplePiecesProps = {
   names: string[];
 };
 
-type UsePieceMetadata = {
+type UseStepMetadata = {
   step: Action | Trigger;
 };
 
@@ -29,9 +28,9 @@ export type StepMetadata = {
   displayName: string;
   logoUrl: string;
   description: string;
-  pieceName:string;
-  pieceVersion:string;
-  type:ActionType | TriggerType;
+  pieceName: string;
+  pieceVersion: string;
+  type: ActionType | TriggerType;
 };
 export const piecesHooks = {
   usePiece: ({ name, version }: UsePieceProps) => {
@@ -49,11 +48,11 @@ export const piecesHooks = {
       })),
     });
   },
-  usePieceMetadata: ({ step }: UsePieceMetadata) => {
-    return useQuery<StepMetadata, Error>(pieceMetadataQueryBuilder({step}));
+  useStepMetadata: ({ step }: UseStepMetadata) => {
+    return useQuery<StepMetadata, Error>(stepMetadataQueryBuilder({ step }));
   },
-  usePiecesMetadata: (props: UsePieceMetadata[]) => {
-    const queries = props.map(({ step }) => pieceMetadataQueryBuilder({step}));
+  useStepsMetadata: (props: UseStepMetadata[]) => {
+    const queries = props.map(({ step }) => stepMetadataQueryBuilder({ step }));
     return useQueries({
       queries,
     });
@@ -67,24 +66,25 @@ export const piecesHooks = {
   },
 };
 
-function pieceMetadataQueryBuilder({step}:{step: Action | Trigger}) {
-  const isPieceStep = step.type === ActionType.PIECE || step.type === TriggerType.PIECE 
-  const pieceName = isPieceStep? step.settings.pieceName : `${step.type}`;
-  const pieceVersion = isPieceStep? step.settings.pieceVersion : ``;
+function stepMetadataQueryBuilder({ step }: { step: Action | Trigger }) {
+  const isPieceStep =
+    step.type === ActionType.PIECE || step.type === TriggerType.PIECE;
+  const pieceName = isPieceStep ? step.settings.pieceName : `${step.type}`;
+  const pieceVersion = isPieceStep ? step.settings.pieceVersion : ``;
   const type = step.type;
   return {
     queryKey: ['piece', type, pieceName, pieceVersion],
     queryFn: async () => {
-    const metadata = await getStepMetadata(type, pieceName, pieceVersion);
-    return {
-      ...metadata,
-      type,
-      pieceName,
-      pieceVersion
-    }
+      const metadata = await getStepMetadata(type, pieceName, pieceVersion);
+      return {
+        ...metadata,
+        type,
+        pieceName,
+        pieceVersion,
+      };
     },
     staleTime: Infinity,
-  }
+  };
 }
 
 async function getStepMetadata(
@@ -92,7 +92,7 @@ async function getStepMetadata(
   pieceName: string,
   pieceVersion: string,
 ): Promise<StepMetadata> {
-  const metadataExtractor = async()=>{
+  const metadataExtractor = async () => {
     switch (type) {
       case ActionType.BRANCH:
         return {
@@ -132,9 +132,6 @@ async function getStepMetadata(
         };
       }
     }
-  }
-  return {...(await metadataExtractor()), pieceName, pieceVersion, type};
-
-  
+  };
+  return { ...(await metadataExtractor()), pieceName, pieceVersion, type };
 }
-
