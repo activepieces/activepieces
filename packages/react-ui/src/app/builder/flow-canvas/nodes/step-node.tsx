@@ -58,14 +58,10 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const isTrigger = flowHelper.isTrigger(data.step!.type);
   const isAction = flowHelper.isAction(data.step!.type);
 
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef } = useDraggable({
     id: data.step!.name,
     disabled: isTrigger
   });
-
-  const style = {
-    transform: CSS.Translate.toString(transform),
-  };
 
   return (
     <div
@@ -84,10 +80,8 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         setToolbarOpen(false)
         setAllowPanning(true)
       }}
-
+      key={data.step!.name}
       ref={setNodeRef}
-      style={style}
-
       {...attributes}
       {...listeners}
 

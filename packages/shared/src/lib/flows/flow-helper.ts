@@ -231,7 +231,7 @@ function transferFlow<T extends Step>(
     ) as Trigger
     return clonedFlow
 }
-function getAllSteps(trigger: Trigger): (Action | Trigger)[] {
+function getAllSteps(trigger: Trigger | Action): (Action | Trigger)[] {
     return traverseInternal(trigger)
 }
 
@@ -298,19 +298,12 @@ function getStep(
     )
 }
 
-const getAllSubFlowSteps = ({
-    subFlowStartStep,
-}: GetAllSubFlowSteps): Step[] => {
-    return traverseInternal(subFlowStartStep)
-}
 
 const getStepFromSubFlow = ({
     subFlowStartStep,
     stepName,
 }: GetStepFromSubFlow): Step | undefined => {
-    const subFlowSteps = getAllSubFlowSteps({
-        subFlowStartStep,
-    })
+    const subFlowSteps = getAllSteps(subFlowStartStep,)
 
     return subFlowSteps.find((step) => step.name === stepName)
 }
@@ -768,6 +761,20 @@ function isLegacyApp({ pieceName, pieceVersion }: { pieceName: string, pieceVers
     return false
 }
 
+function isPartOfInnerFlow({
+    parentStep,
+    childName,
+}: {
+    parentStep: Action | Trigger
+    childName: string
+}): boolean {
+    const steps = getAllSteps({
+        ...parentStep,
+        nextAction: undefined,
+    })
+    return steps.some((step) => step.name === childName)
+}
+
 function duplicateStep(stepName: string, flowVersionWithArtifacts: FlowVersion): FlowVersion {
     const clonedStep = JSON.parse(JSON.stringify(flowHelper.getStep(flowVersionWithArtifacts, stepName)))
     clonedStep.nextAction = undefined
@@ -892,6 +899,7 @@ function getDirectParentStep(child: Step, parent: Trigger | Step | undefined): S
     return getDirectParentStep(child, parent.nextAction)
 }
 
+// TODO remove this function after deprecation angular
 function isStepLastChildOfParent(child: Step, trigger: Trigger): boolean {
 
     const parent = getDirectParentStep(child, trigger)
@@ -979,10 +987,10 @@ export const flowHelper = {
     isAction,
     isTrigger,
     getAllSteps,
+    isPartOfInnerFlow,
     isStepLastChildOfParent,
     getUsedPieces,
     getImportOperations,
-    getAllSubFlowSteps,
     normalize,
     getStepFromSubFlow,
     isChildOf,

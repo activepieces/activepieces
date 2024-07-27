@@ -2,10 +2,16 @@ import { BaseEdge } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 import {
   AP_NODE_SIZE,
+  ApEdge,
   ApNodeType,
   flowCanvasUtils,
 } from '../flow-canvas-utils';
-import { useDroppable } from '@dnd-kit/core';
+import { useDndMonitor, useDroppable } from '@dnd-kit/core';
+import { useBuilderStateContext } from '../../builder-hooks';
+import { DragMoveEvent } from '@dnd-kit/core';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
+import { flowHelper, isNil } from '@activepieces/shared';
 
 interface ApEdgeWithButtonProps {
   id: string;
@@ -13,10 +19,7 @@ interface ApEdgeWithButtonProps {
   sourceY: number;
   targetX: number;
   targetY: number;
-  data: {
-    addButton: boolean;
-    targetType: ApNodeType;
-  };
+  data: ApEdge['data'];
 }
 
 const BUTTON_SIZE = {
@@ -71,9 +74,28 @@ function getEdgePath({
 
 const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
 
+  const [showButtonShadow, setShowButtonShadow] = useState(false);
+  const [activeDraggingStep, flowVersion] = useBuilderStateContext((state) => [state.activeDraggingStep, state.flowVersion]);
   const { edgePath, buttonPosition } = getEdgePath(props);
   const { setNodeRef } = useDroppable({
     id: props.id,
+    data: props.data,
+  });
+  const draggedStep = isNil(activeDraggingStep) ? undefined : flowHelper.getStep(flowVersion, activeDraggingStep);
+  const parentStep = props.data?.parentStep;
+  const isPartOfInnerFlow = isNil(parentStep) || isNil(draggedStep) ? false : flowHelper.isPartOfInnerFlow({
+    parentStep: draggedStep,
+    childName: parentStep,
+  });
+  const isDropzone = !isPartOfInnerFlow && !isNil(activeDraggingStep);
+
+  useDndMonitor({
+    onDragMove(event: DragMoveEvent) {
+      if (isPartOfInnerFlow) {
+        return;
+      }
+      setShowButtonShadow(event.collisions?.[0]?.id === props.id);
+    },
   });
 
   return (
@@ -83,18 +105,32 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
         path={edgePath}
         style={{ strokeWidth: 1.5 }}
       />
-      {props.data?.addButton && buttonPosition && (
-          <foreignObject
+      {isDropzone && props.data?.addButton && buttonPosition && <foreignObject
+        width={18}
+        height={18}
+        x={buttonPosition.x}
+        y={buttonPosition.y}
+        className={cn('bg-primary w-[17px] h-[17px] rounded-[3px] box-content opacity-90', {
+          // TODO fix colors and add box shadow
+          'bg-destructive': showButtonShadow,
+        })}
+      >
+        <div className='w-4 h-4'
+          ref={setNodeRef}>
+        </div>
+      </foreignObject>
+
+      }
+      {!isDropzone && props.data?.addButton && buttonPosition && (
+        <foreignObject
           width={18}
           height={18}
           x={buttonPosition.x}
           y={buttonPosition.y}
           onClick={() => console.log('clicked')}
-          className="edgebutton-foreignobject"
         >
           <div
             className="bg-[#a6b1bf] w-4 h-4 flex items-center justify-center"
-            ref={setNodeRef}
             onClick={() => {
               console.log('clicked');
             }}
