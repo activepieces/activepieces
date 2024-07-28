@@ -22,12 +22,12 @@ export function PieceIconList({
     .map((data) => data.data)
     .filter((data) => !!data);
 
-  const flowPiecesMetadata = [
+  const uniqueMetadata = [
     ...new Map(stepsMetadata.map((item) => [item['pieceName'], item])).values(),
   ];
 
-  const visibleMetadata = flowPiecesMetadata.slice(0, maxNumberOfIconsToShow);
-  const extraPieces = flowPiecesMetadata.length - visibleMetadata.length;
+  const visibleMetadata = uniqueMetadata.slice(0, maxNumberOfIconsToShow);
+  const extraPieces = uniqueMetadata.length - visibleMetadata.length;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -44,22 +44,20 @@ export function PieceIconList({
             />
           ))}
           {extraPieces > 0 && (
-            <div className="flex items-center justify-center bg-accent p-2 rounded-full border border-solid size-[36px]">
+            <div className="flex items-center justify-center bg-white text-black  p-2 rounded-full border border-solid size-[36px]">
               +{extraPieces}
             </div>
           )}
         </div>
       </TooltipTrigger>
       <TooltipContent side="bottom">
-        {flowPiecesMetadata.length > 1 &&
-          flowPiecesMetadata
+        {uniqueMetadata.length > 1 &&
+          uniqueMetadata
             .map((m) => m?.displayName || '')
             .slice(0, -1)
             .join(', ') +
-            ` and ${
-              flowPiecesMetadata[flowPiecesMetadata.length - 1].displayName
-            }`}
-        {flowPiecesMetadata.length === 1 && flowPiecesMetadata[0].displayName}
+            ` and ${uniqueMetadata[uniqueMetadata.length - 1].displayName}`}
+        {uniqueMetadata.length === 1 && uniqueMetadata[0].displayName}
       </TooltipContent>
     </Tooltip>
   );
