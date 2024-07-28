@@ -1,8 +1,10 @@
 import { PlusCircledIcon } from '@radix-ui/react-icons';
+import { useEffect, useState } from 'react';
+import { useDebounce } from 'use-debounce';
 
 import { Badge } from './badge';
 import { Button } from './button';
-import { DebouncedInput } from './debounced-input';
+import { Input } from './input';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { Separator } from './seperator';
 
@@ -17,6 +19,13 @@ const DataTableInputPopover = ({
   filterValue,
   handleFilterChange,
 }: DataTableInputPopoverProps) => {
+  const [searchQuery, setSearchQuery] = useState(filterValue);
+  const [debouncedQuery] = useDebounce(searchQuery, 300);
+
+  useEffect(() => {
+    handleFilterChange(debouncedQuery);
+  }, [debouncedQuery, handleFilterChange]);
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -37,10 +46,11 @@ const DataTableInputPopover = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">
-        <DebouncedInput
+        <Input
+          type="text"
           placeholder="Name"
-          value={filterValue}
-          onChange={handleFilterChange}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
       </PopoverContent>
     </Popover>
