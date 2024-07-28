@@ -15,7 +15,7 @@ import { StepPathWithName } from '../builder-hooks';
 
 import { TestStepSection } from './test-step-section';
 
-const ToggleIcon = (expanded: boolean) => {
+const ToggleIcon = ({ expanded }: { expanded: boolean }) => {
   const toggleIconSize = 15;
   return expanded ? (
     <ChevronUp height={toggleIconSize} width={toggleIconSize}></ChevronUp>
@@ -47,15 +47,14 @@ export const DataSelectorNodeTemplate: (
     if (actualNode.data.isTestStepNode) {
       return TestStepSection(actualNode.data.propertyPath, selectStep);
     }
-    const step =
-      dataToInsertListUtils.isStepName(actualNode.data.propertyPath) &&
-      !actualNode.data.isSlice
-        ? flowHelper.getStep(flowVersion, actualNode.data.propertyPath)
-        : undefined;
+    const step = !actualNode.data.isSlice
+      ? flowHelper.getStep(flowVersion, actualNode.data.propertyPath)
+      : undefined;
 
     const stepMetadata = step
       ? piecesHooks.useStepMetadata({ step })
       : undefined;
+
     const showInsertButton =
       !actualNode.data.isSlice &&
       !(
@@ -121,7 +120,9 @@ export const DataSelectorNodeTemplate: (
               </>
             )}
           </div>
-          {node.children && node.children.length > 0 && ToggleIcon(expanded)}
+          {node.children && node.children.length > 0 && (
+            <ToggleIcon expanded={expanded}></ToggleIcon>
+          )}
         </div>
         {ripple}
       </div>

@@ -224,16 +224,19 @@ const getAllStepsMentions = (state: BuilderState) => {
 
   return path.map((s) => {
     const stepMentionNode: MentionTreeNode =
-      dataToInsertListUtils.traverseStepOutputAndReturnMentionTree(
-        s.settings.inputUiInfo?.currentSelectedData,
-        s.name,
-        `${s.dfsIndex}. ${s.displayName}`,
-      );
+      dataToInsertListUtils.traverseStepOutputAndReturnMentionTree({
+        stepOutput: s.settings.inputUiInfo?.currentSelectedData,
+        propertyPath: s.name,
+        displayName: s.displayName,
+      });
     const stepNeedsTesting =
       s.settings.inputUiInfo?.currentSelectedData === undefined;
     return {
       ...stepMentionNode,
-
+      data: {
+        ...stepMentionNode.data,
+        displayName: `${s.dfsIndex}. ${s.displayName}`,
+      },
       children: stepNeedsTesting
         ? [
             {

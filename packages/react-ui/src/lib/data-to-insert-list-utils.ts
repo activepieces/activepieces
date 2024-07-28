@@ -13,19 +13,23 @@ export interface MentionTreeNode extends TreeNode {
   children?: MentionTreeNode[];
 }
 /**Traverses an object to find its child properties and their paths, stepOutput has to be an object on first invocation */
-function traverseStepOutputAndReturnMentionTree(
-  stepOutput: unknown,
-  path: string,
-  displayName: string,
-): MentionTreeNode {
+function traverseStepOutputAndReturnMentionTree({
+  stepOutput,
+  propertyPath,
+  displayName,
+}: {
+  stepOutput: unknown;
+  propertyPath: string;
+  displayName: string;
+}): MentionTreeNode {
   if (stepOutput && typeof stepOutput === 'object') {
     if (Array.isArray(stepOutput)) {
-      return handlingArrayStepOutput(stepOutput, path, displayName);
+      return handlingArrayStepOutput(stepOutput, propertyPath, displayName);
     }
     return {
-      key: path,
+      key: propertyPath,
       data: {
-        propertyPath: path,
+        propertyPath: propertyPath,
         displayName: displayName,
         isSlice: false,
         value: Object.keys(stepOutput).length === 0 ? 'Empty List' : undefined,
@@ -39,21 +43,21 @@ function traverseStepOutputAndReturnMentionTree(
           .replaceAll(/\r/g, '\\r')
           .replaceAll(/\t/g, '\\t')
           .replaceAll(/’/g, '\\’');
-        const newPath = `${path}['${escapedKey}']`;
-        const newKey = k;
-        return traverseStepOutputAndReturnMentionTree(
-          (stepOutput as Record<string, unknown>)[k],
-          newPath,
-          newKey,
-        );
+        const newPath = `${propertyPath}['${escapedKey}']`;
+        const newDisplayName = k;
+        return traverseStepOutputAndReturnMentionTree({
+          stepOutput: (stepOutput as Record<string, unknown>)[k],
+          propertyPath: newPath,
+          displayName: newDisplayName,
+        });
       }),
     };
   } else {
     const value = formatStepOutput(stepOutput);
     return {
-      key: path,
+      key: propertyPath,
       data: {
-        propertyPath: path,
+        propertyPath: propertyPath,
         displayName: displayName,
         value,
         isSlice: false,
@@ -75,11 +79,11 @@ const handlingArrayStepOutput = (
       children: stepOutput.map((v, idx) => {
         const newPath = `${path}[${idx + startingIndex}]`;
         const newDisplayName = `${lastDisplayName} ${idx + startingIndex}`;
-        return traverseStepOutputAndReturnMentionTree(
-          v,
-          newPath,
-          newDisplayName,
-        );
+        return traverseStepOutputAndReturnMentionTree({
+          stepOutput: v,
+          propertyPath: newPath,
+          displayName: newDisplayName,
+        });
       }),
       data: {
         propertyPath: path,
