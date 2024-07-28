@@ -11,7 +11,8 @@ import '@xyflow/react/dist/style.css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlowVersion } from '@activepieces/shared';
 
-import { DataToInsertList } from '../data-to-insert/data-to-insert-list';
+import { DataSelector } from '../data-selector/data-selector';
+
 import { ApEdgeWithButton } from './edges/edge-with-button';
 import { ReturnLoopedgeButton } from './edges/return-loop-edge';
 import { ApEdge, ApNode, flowCanvasUtils } from './flow-canvas-utils';
@@ -88,7 +89,7 @@ const FlowCanvas = ({ flowVersion }: FlowCanvasProps) => {
         <Controls showInteractive={false} orientation="horizontal" />
       </ReactFlow>
 
-      <DataToInsertList> </DataToInsertList>
+      <DataSelector> </DataSelector>
     </div>
   );
 };

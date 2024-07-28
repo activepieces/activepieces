@@ -32,7 +32,7 @@ type NodeTemplateProps = {
   flowVersion: FlowVersion;
   ripple: ReturnType<typeof useRipple>;
 };
-export const NodeTemplate: (
+export const DataSelectorNodeTemplate: (
   req: NodeTemplateProps,
 ) => TreeProps['nodeTemplate'] = ({
   setExpandedKeys,
