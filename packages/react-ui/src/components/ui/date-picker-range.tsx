@@ -17,8 +17,8 @@ import { cn } from '@/lib/utils';
 type DatePickerWithRangeProps = {
   onChange: (date: DateRange) => void;
   className?: string;
-  from?: Date;
-  to?: Date;
+  from?: string;
+  to?: string;
 };
 
 export function DatePickerWithRange({

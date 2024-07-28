@@ -25,7 +25,7 @@ export function DataTableFacetedFilter<TData, TValue>({
   options,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues();
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const handleFilterChange = React.useCallback(
     (filterValue: string | string[] | DateRange | undefined) => {
@@ -101,12 +101,14 @@ export function DataTableFacetedFilter<TData, TValue>({
       );
     }
     case 'date': {
-      const filterValue = column?.getFilterValue() as DateRange | undefined;
+      const from = searchParams.get(`${column?.id}After`);
+      const to = searchParams.get(`${column?.id}Before`);
+
       return (
         <DatePickerWithRange
           onChange={handleFilterChange}
-          from={filterValue?.from}
-          to={filterValue?.to}
+          from={from || undefined}
+          to={to || undefined}
         />
       );
     }
