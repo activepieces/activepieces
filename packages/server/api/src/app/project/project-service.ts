@@ -57,7 +57,7 @@ export const projectService = {
     },
 
     async getPlatformId(projectId: ProjectId): Promise<string> {
-        const result =  await repo().createQueryBuilder('project').select('platformId').where({
+        const result =  await repo().createQueryBuilder('project').select('"platformId"').where({
             id: projectId,
         }).getRawOne()
         const platformId = result?.platformId
