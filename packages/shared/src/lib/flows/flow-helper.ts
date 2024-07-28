@@ -9,6 +9,7 @@ import {
     LoopOnItemsAction,
     SingleActionSchema,
 } from './actions/action'
+import { PopulatedFlow } from './flow'
 import {
     AddActionRequest,
     DeleteActionRequest,
@@ -125,6 +126,17 @@ function traverseInternal(
         step = step.nextAction
     }
     return steps
+}
+
+async function updateFlowSecrets(originalFlow: PopulatedFlow, newFlow: PopulatedFlow): Promise<FlowVersion> {
+    return transferFlow(newFlow.version, (step) => {
+        const oldStep = getStep(originalFlow.version, step.name)
+        if (oldStep?.settings?.input?.auth) {
+            step.settings.input.auth = oldStep.settings.input.auth
+        }
+        return step
+    },
+    )
 }
 
 async function transferStepAsync<T extends Step>(
@@ -993,5 +1005,6 @@ export const flowHelper = {
     duplicateStep,
     findAvailableStepName,
     doesActionHaveChildren,
+    updateFlowSecrets,
 
 }
