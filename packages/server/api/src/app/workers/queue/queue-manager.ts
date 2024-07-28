@@ -4,12 +4,12 @@ import {
     OneTimeJobData,
     RenewWebhookJobData,
     RepeatingJobData,
-    WebhookJobData,
     system,
+    WebhookJobData,
 } from '@activepieces/server-shared'
-import { ApEdition, ApId, ScheduleOptions, isNil } from '@activepieces/shared'
-import { projectService } from '../../project/project-service'
+import { ApEdition, ApId, isNil, ScheduleOptions } from '@activepieces/shared'
 import { flagService } from '../../flags/flag.service'
+import { projectService } from '../../project/project-service'
 
 export const JOB_PRIORITY = {
     high: 2,
@@ -76,10 +76,10 @@ type OneTimeJobAddParams<JT extends JobType.ONE_TIME> = BaseAddParams<JT, OneTim
 export type AddParams<JT extends JobType> = JT extends JobType.ONE_TIME
     ? OneTimeJobAddParams<JT>
     : JT extends JobType.REPEATING
-    ? RepeatingJobAddParams<JT> | RenewWebhookJobAddParams<JT>
-    : JT extends JobType.DELAYED
-    ? DelayedJobAddParams<JT>
-    : JT extends JobType.WEBHOOK
-    ? WebhookJobAddParams<JT>
-    : never
+        ? RepeatingJobAddParams<JT> | RenewWebhookJobAddParams<JT>
+        : JT extends JobType.DELAYED
+            ? DelayedJobAddParams<JT>
+            : JT extends JobType.WEBHOOK
+                ? WebhookJobAddParams<JT>
+                : never
 

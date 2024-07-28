@@ -17,8 +17,8 @@ import { alertsService } from '../../ee/alerts/alerts-service'
 import { issuesService } from '../../ee/issues/issues-service'
 import { eventsHooks } from '../../helper/application-events'
 import { flowQueue } from '../../workers/queue'
-import { flowRunHooks } from './flow-run-hooks'
 import { JOB_PRIORITY } from '../../workers/queue/queue-manager'
+import { flowRunHooks } from './flow-run-hooks'
 
 type StartParams = {
     flowRun: FlowRun
@@ -88,7 +88,7 @@ export const flowRunSideEffects = {
         await flowQueue.add({
             id: flowRun.id,
             type: JobType.ONE_TIME,
-            priority: priority,
+            priority,
             data: {
                 synchronousHandlerId: synchronousHandlerId ?? null,
                 projectId: flowRun.projectId,
