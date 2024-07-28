@@ -11,10 +11,7 @@ import {
 import { createContext, useContext } from 'react';
 import { create, useStore } from 'zustand';
 
-import {
-  MentionTreeNode,
-  dataToInsertListUtils,
-} from '../../lib/data-to-insert-list-utils';
+import { MentionTreeNode, dataSelector } from '../../lib/data-selector-utils';
 
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
@@ -161,7 +158,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     setReadOnly: (readonly: boolean) => set({ readonly }),
     setVersion: (flowVersion: FlowVersion) => set({ flowVersion, run: null }),
     insertMention: (propertyPath: string) => {
-      console.warn('insertMention is not assigned yet');
+      console.warn('insertMention is not assigned yet', propertyPath);
     },
     setInsertMentionHandler: (
       insertMention: (propertyPath: string) => void,
@@ -208,7 +205,9 @@ function getStateAtPath({
   return targetMap;
 }
 
-const getAllStepsMentions = (state: BuilderState) => {
+const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
+  state,
+) => {
   const { selectedStep, flowVersion } = state;
   if (!selectedStep || !flowVersion || !flowVersion.trigger) {
     return [];
@@ -224,7 +223,7 @@ const getAllStepsMentions = (state: BuilderState) => {
 
   return path.map((s) => {
     const stepMentionNode: MentionTreeNode =
-      dataToInsertListUtils.traverseStepOutputAndReturnMentionTree({
+      dataSelector.traverseStepOutputAndReturnMentionTree({
         stepOutput: s.settings.inputUiInfo?.currentSelectedData,
         propertyPath: s.name,
         displayName: s.displayName,
@@ -244,6 +243,7 @@ const getAllStepsMentions = (state: BuilderState) => {
                 displayName: 'Testing Step',
                 propertyPath: s.name,
                 isTestStepNode: true,
+                isSlice: false,
               },
               key: s.name,
             },

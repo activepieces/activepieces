@@ -1,12 +1,9 @@
 import { Button } from '../../../components/ui/button';
-import { StepPathWithName } from '../builder-hooks';
+import { useBuilderStateContext } from '../builder-hooks';
 
-export const TestStepSection = (
-  stepName: string,
-  selectStep: (path: StepPathWithName) => void,
-) => {
+export const TestStepSection = ({ stepName }: { stepName: string }) => {
   const isTrigger = stepName === 'trigger';
-
+  const selectStep = useBuilderStateContext((state) => state.selectStep);
   return (
     <div className="flex flex-col gap-3 select-none text-center px-12 py-2 flex-grow items-center justify-center ">
       <div>

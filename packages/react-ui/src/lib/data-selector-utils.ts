@@ -1,6 +1,5 @@
-import { TreeNode } from 'primereact/treenode';
-
-export interface MentionTreeNode extends TreeNode {
+export type MentionTreeNode = {
+  key: string;
   data: {
     propertyPath: string;
     /**Key for json value */
@@ -11,7 +10,7 @@ export interface MentionTreeNode extends TreeNode {
     isTestStepNode?: boolean;
   };
   children?: MentionTreeNode[];
-}
+};
 /**Traverses an object to find its child properties and their paths, stepOutput has to be an object on first invocation */
 function traverseStepOutputAndReturnMentionTree({
   stepOutput,
@@ -146,7 +145,7 @@ const isStepName = (name: string) => {
   return regex.test(name);
 };
 
-export const dataToInsertListUtils = {
+export const dataSelector = {
   isStepName,
   formatStepOutput,
   traverseStepOutputAndReturnMentionTree,

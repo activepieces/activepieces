@@ -1,30 +1,23 @@
-import { PrimeReactProvider } from 'primereact/api';
-import { Tree, TreeExpandedKeysType } from 'primereact/tree';
 import { useState } from 'react';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { builderSelectors, useBuilderStateContext } from '../builder-hooks';
 
 import './data-selector.css';
-
-import { DataSelectorNodeTemplate } from './data-selector-node';
+import { DataSelectorNode } from './data-selector-node';
 import {
   DataSelectorSizeState,
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
 
-import { useRipple } from '@/components/theme-provider';
 import { cn } from '@/lib/utils';
 
 export function DataSelector() {
   const [DataSelectorSize, setDataSelectorSize] =
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
-  const ripple = useRipple();
-  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
+
   const nodes = useBuilderStateContext(builderSelectors.getAllStepsMentions);
-  const [expandedKeys, setExpandedKeys] = useState<TreeExpandedKeysType>({});
-  const selectStep = useBuilderStateContext((state) => state.selectStep);
-  const insertMention = useBuilderStateContext((state) => state.insertMention);
+
   return (
     <div
       className={cn(
@@ -55,23 +48,14 @@ export function DataSelector() {
           'h-[0px]': DataSelectorSize === DataSelectorSizeState.COLLAPSED,
         })}
       >
-        <PrimeReactProvider value={{ ripple: true }}>
-          <Tree
-            value={nodes}
-            expandedKeys={expandedKeys}
-            togglerTemplate={() => <></>}
-            nodeTemplate={DataSelectorNodeTemplate({
-              ripple,
-              setExpandedKeys,
-              expandedKeys,
-              selectStep,
-              insertMention,
-              flowVersion,
-            })}
-            onToggle={(e) => setExpandedKeys(e.value)}
-            className="w-full"
-          />
-        </PrimeReactProvider>
+        {nodes &&
+          nodes.map((node) => (
+            <DataSelectorNode
+              depth={0}
+              key={node.key}
+              node={node}
+            ></DataSelectorNode>
+          ))}
       </ScrollArea>
     </div>
   );
