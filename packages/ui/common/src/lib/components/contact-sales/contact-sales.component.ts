@@ -3,26 +3,15 @@ import {
   ContactSalesService,
   featuresNames,
 } from '../../service/contact-sales.service';
-import {
-  BehaviorSubject,
-  Observable,
-  catchError,
-  forkJoin,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { BehaviorSubject, Observable, catchError, forkJoin, tap } from 'rxjs';
 import {
   FormBuilder,
   FormControl,
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { ApEdition, ErrorCode } from '@activepieces/shared';
-import {
-  AuthenticationService,
-  FlagService,
-  LicenseKeysService,
-} from '../../service';
+import { ErrorCode } from '@activepieces/shared';
+import { AuthenticationService, LicenseKeysService } from '../../service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -77,7 +66,6 @@ export class ContactSalesComponent {
     public authenticationService: AuthenticationService,
     public contactSalesService: ContactSalesService,
     private fb: FormBuilder,
-    private flagService: FlagService,
     private licenseKeysService: LicenseKeysService,
     private snackbar: MatSnackBar
   ) {
@@ -126,17 +114,10 @@ export class ContactSalesComponent {
       return;
     }
     this.loading$.next(true);
-    this.sendRequest$ = this.flagService.getEdition().pipe(
-      switchMap((edition) => {
-        switch (edition) {
-          case ApEdition.CLOUD:
-            return this.contactSales(true);
-          case ApEdition.ENTERPRISE:
-          case ApEdition.COMMUNITY: {
-            return forkJoin([this.requestKey(), this.contactSales(false)]);
-          }
-        }
-      }),
+    this.sendRequest$ = forkJoin([
+      this.requestKey(),
+      this.contactSales(false),
+    ]).pipe(
       tap(() => {
         this.closeSlideout();
       })
