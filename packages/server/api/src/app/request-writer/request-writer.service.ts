@@ -106,7 +106,7 @@ export const requestWriterService = {
     First I need to extract from the user prompt the following:
     1. Service Name: The service name that the user want to make an api request to, like: slack, taskade, hubspot, thriveCart, stripe 
     2. API Action: The http request itself like: post a message, list all products. 
-    Based on the Service Name and the Action, return a ONLY search query (short, straightforward one) to find the api docs reference on google search, only return the text itself, no quotations, no introduction, always append the word 'api reference' to the query.
+    Based on the Service Name and the Action, return an ONLY search query (short, straightforward one) to find the api docs reference on google search, only return the text itself, no quotations, no introduction, always append the word 'api reference' to the query.
     `,
 
     async generateSearchQuery({ prompt }: RequestWriteParams): Promise<string> {
@@ -134,7 +134,7 @@ export const requestWriterService = {
     async generateHttpRequest({ prompt }: RequestWriteParams): Promise<string> {
         const openAI = getOpenAI()
         const completion = await openAI.chat.completions.create({
-            model: 'gpt-4-turbo',
+            model: 'gpt-4o',
             messages: [{ role: 'system', content: prompt }],
             temperature: 0.2,
             response_format: { type: 'json_object' },
@@ -180,8 +180,6 @@ export const requestWriterService = {
         }
 
         const httpRequestDetails = await this.generateHttpRequest({ prompt: apiReferencePrompt })
-
-
         return httpRequestDetails
     },
 
