@@ -726,6 +726,9 @@ function normalize(flowVersion: FlowVersion): FlowVersion {
         (step) => {
             const clonedStep: Step = JSON.parse(JSON.stringify(step))
             clonedStep.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
+            if (clonedStep?.settings?.input?.auth && [ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
+                clonedStep.settings.input.auth = ''
+            }
             return upgradePiece(clonedStep, clonedStep.name)
         },
     )
