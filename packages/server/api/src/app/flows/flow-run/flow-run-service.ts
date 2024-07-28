@@ -38,11 +38,11 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { telemetry } from '../../helper/telemetry.utils'
 import { webhookResponseWatcher } from '../../workers/helper/webhook-response-watcher'
+import { getJobPriority } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { logSerializer } from './log-serializer'
-import { getJobPriority } from '../../workers/queue/queue-manager'
 
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 

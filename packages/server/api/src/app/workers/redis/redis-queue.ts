@@ -1,4 +1,4 @@
-import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/server-shared'
+import { JobType, logger, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Job, Queue } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
@@ -53,7 +53,8 @@ export const redisQueue: QueueManager = {
         const client = await queue.client
         const repeatJob = await findRepeatableJobKey(flowVersionId)
         if (isNil(repeatJob)) {
-            exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`))
+            // TODO renable this when we are sure this is thread safe, and no two flows will be disabled at the same time.
+            // exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`))
             return
         }
         const result = await queue.removeRepeatable(repeatJob.name, repeatJob.opts)
