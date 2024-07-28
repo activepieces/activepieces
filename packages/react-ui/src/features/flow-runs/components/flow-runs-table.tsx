@@ -1,6 +1,7 @@
 import { FlowRun, FlowRunStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { flowRunUtils } from '../lib/flow-run-utils';
 
@@ -16,63 +17,6 @@ import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 
-const columns: ColumnDef<RowDataWithActions<FlowRun>>[] = [
-  {
-    accessorKey: 'flowId',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Flow" />
-    ),
-    cell: ({ row }) => {
-      return <div className="text-left">{row.original.flowDisplayName}</div>;
-    },
-  },
-  {
-    accessorKey: 'status',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Status" />
-    ),
-    cell: ({ row }) => {
-      const status = row.original.status;
-      const { varient, Icon } = flowRunUtils.getStatusIcon(status);
-      return (
-        <div className="text-left">
-          <StatusIconWithText
-            icon={Icon}
-            text={formatUtils.convertEnumToHumanReadable(status)}
-            variant={varient}
-          />
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'created',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Start Time" />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.startTime))}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'duration',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Duration" />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatDuration(row.original.duration)}
-        </div>
-      );
-    },
-  },
-];
-
 const fetchData = async (params: URLSearchParams) => {
   const status = params.getAll('status') as FlowRunStatus[];
   return flowRunsApi.list({
@@ -87,45 +31,117 @@ const fetchData = async (params: URLSearchParams) => {
 };
 
 export default function FlowRunsTable() {
-  const { data } = flowsHooks.useFlows();
+  const [refresh, setRefresh] = useState(0);
+  const { data, isFetching } = flowsHooks.useFlows();
 
-  const flows = data?.data.map((flow) => flow);
+  const flows = data?.data;
 
-  const filters: DataTableFilter[] = [
-    {
-      type: 'select',
-      title: 'Flow name',
-      accessorKey: 'flowId',
-      options:
-        flows?.map((flow) => ({
-          label: flow.version.displayName,
-          value: flow.id,
-        })) || [],
-      icon: CheckIcon,
-    },
-    {
-      type: 'select',
-      title: 'Status',
-      accessorKey: 'status',
-      options: Object.values(FlowRunStatus)
-        .filter((status) => status !== FlowRunStatus.STOPPED)
-        .map((status) => {
-          return {
-            label: formatUtils.convertEnumToHumanReadable(status),
-            value: status,
-            icon: flowRunUtils.getStatusIcon(status).Icon,
-          };
-        }),
-      icon: CheckIcon,
-    },
-    {
-      type: 'date',
-      title: 'Created',
-      accessorKey: 'created',
-      options: [],
-      icon: CheckIcon,
-    },
-  ];
+  const columns: ColumnDef<RowDataWithActions<FlowRun>>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'flowId',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Flow" />
+        ),
+        cell: ({ row }) => {
+          return (
+            <div className="text-left">{row.original.flowDisplayName}</div>
+          );
+        },
+      },
+      {
+        accessorKey: 'status',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Status" />
+        ),
+        cell: ({ row }) => {
+          const status = row.original.status;
+          const { varient, Icon } = flowRunUtils.getStatusIcon(status);
+          return (
+            <div className="text-left">
+              <StatusIconWithText
+                icon={Icon}
+                text={formatUtils.convertEnumToHumanReadable(status)}
+                variant={varient}
+              />
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'created',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Start Time" />
+        ),
+        cell: ({ row }) => {
+          return (
+            <div className="text-left">
+              {formatUtils.formatDate(new Date(row.original.startTime))}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'duration',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Duration" />
+        ),
+        cell: ({ row }) => {
+          return (
+            <div className="text-left">
+              {formatUtils.formatDuration(row.original.duration)}
+            </div>
+          );
+        },
+      },
+    ],
+    [],
+  );
+
+  const filters: DataTableFilter[] = useMemo(
+    () => [
+      {
+        type: 'select',
+        title: 'Flow name',
+        accessorKey: 'flowId',
+        options:
+          flows?.map((flow) => ({
+            label: flow.version.displayName,
+            value: flow.id,
+          })) || [],
+        icon: CheckIcon,
+      },
+      {
+        type: 'select',
+        title: 'Status',
+        accessorKey: 'status',
+        options: Object.values(FlowRunStatus)
+          .filter((status) => status !== FlowRunStatus.STOPPED)
+          .map((status) => {
+            return {
+              label: formatUtils.convertEnumToHumanReadable(status),
+              value: status,
+              icon: flowRunUtils.getStatusIcon(status).Icon,
+            };
+          }),
+        icon: CheckIcon,
+      },
+      {
+        type: 'date',
+        title: 'Created',
+        accessorKey: 'created',
+        options: [],
+        icon: CheckIcon,
+      },
+    ],
+    [flows],
+  );
+
+  useEffect(() => {
+    if (!isFetching) {
+      setRefresh((prev) => prev + 1);
+    }
+  }, [isFetching]);
 
   return (
     <div className="flex-col w-full">
@@ -133,7 +149,12 @@ export default function FlowRunsTable() {
         <h1 className="text-3xl font-bold">Flow Runs</h1>
         <div className="ml-auto"></div>
       </div>
-      <DataTable columns={columns} fetchData={fetchData} filters={filters} />
+      <DataTable
+        columns={columns}
+        fetchData={fetchData}
+        filters={filters}
+        refresh={refresh}
+      />
     </div>
   );
 }

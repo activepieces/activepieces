@@ -14,7 +14,7 @@ export const flowsHooks = {
           cursor: undefined,
         });
       },
-      staleTime: Infinity,
+      staleTime: 0,
     });
   },
 };
