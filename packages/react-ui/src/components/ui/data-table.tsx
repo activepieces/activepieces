@@ -30,7 +30,7 @@ export type RowDataWithActions<TData> = TData & {
 };
 
 export type DataTableFilter = {
-  type: 'select' | 'input';
+  type: 'select' | 'input' | 'date';
   title: string;
   accessorKey: string;
   icon: React.ComponentType<{ className?: string }>;
