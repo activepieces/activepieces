@@ -1,5 +1,3 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
-
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -43,6 +41,7 @@ export const piecesHooks = {
       queries: names.map((name) => ({
         queryKey: ['piece', name, undefined],
         queryFn: () => piecesApi.get({ name, version: undefined }),
+        staleTime: Infinity,
       })),
     });
   },
