@@ -5,6 +5,7 @@ import React from 'react';
 
 import { useRipple } from '../../../components/theme-provider';
 import { Button } from '../../../components/ui/button';
+import { PieceIcon } from '../../../features/pieces/components/piece-icon';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import {
   dataToInsertListUtils,
@@ -20,24 +21,6 @@ const ToggleIcon = (expanded: boolean) => {
     <ChevronUp height={toggleIconSize} width={toggleIconSize}></ChevronUp>
   ) : (
     <ChevronDown height={toggleIconSize} width={toggleIconSize}></ChevronDown>
-  );
-};
-const StepIcon = ({
-  logoUrl,
-  pieceName,
-}: {
-  logoUrl: string;
-  pieceName: string;
-}) => {
-  const iconSize = 24;
-  return (
-    <img
-      src={logoUrl}
-      className="object-contain "
-      alt={pieceName}
-      width={iconSize}
-      height={iconSize}
-    ></img>
   );
 };
 
@@ -102,11 +85,16 @@ export const NodeTemplate: (
       >
         <div className="flex min-h-[48px] px-5  select-none flex-grow  items-center gap-2">
           <div className="flex-grow ap-px-4 flex items-center  gap-3 ">
-            {stepMetadata?.data &&
-              StepIcon({
-                logoUrl: stepMetadata.data.logoUrl,
-                pieceName: stepMetadata.data.pieceName,
-              })}
+            {stepMetadata?.data && (
+              <PieceIcon
+                displayName={stepMetadata.data.displayName}
+                logoUrl={stepMetadata.data.logoUrl}
+                showTooltip={false}
+                circle={false}
+                border={false}
+                size="sm"
+              ></PieceIcon>
+            )}
             {actualNode.data.displayName}
             {showNodeValue && (
               <>

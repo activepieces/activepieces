@@ -1,14 +1,14 @@
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { ColumnDef } from '@tanstack/react-table';
 import { Trash } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 
 import { piecesApi } from '../lib/pieces-api';
 
 import { PieceIcon } from './piece-icon';
+
+import { Button } from '@/components/ui/button';
+import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
+import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
@@ -23,7 +23,9 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
             circle={true}
             size={'md'}
             border={true}
-            pieceName={row.original.name}
+            displayName={row.original.displayName}
+            logoUrl={row.original.logoUrl}
+            showTooltip={false}
           />
         </div>
       );

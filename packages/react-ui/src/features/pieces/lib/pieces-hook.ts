@@ -12,10 +12,6 @@ type UsePieceProps = {
   version?: string;
 };
 
-type UseMultiplePiecesProps = {
-  names: string[];
-};
-
 type UseStepMetadata = {
   step: Action | Trigger;
 };
@@ -38,14 +34,6 @@ export const piecesHooks = {
       queryKey: ['piece', name, version],
       queryFn: () => piecesApi.get({ name, version }),
       staleTime: Infinity,
-    });
-  },
-  useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
-    return useQueries({
-      queries: names.map((name) => ({
-        queryKey: ['piece', name, undefined],
-        queryFn: () => piecesApi.get({ name, version: undefined }),
-      })),
     });
   },
   useStepMetadata: ({ step }: UseStepMetadata) => {

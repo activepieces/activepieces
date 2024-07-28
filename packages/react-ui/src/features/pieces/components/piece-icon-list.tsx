@@ -1,45 +1,66 @@
-import {
-  ActionType,
-  PopulatedFlow,
-  TriggerType,
-  flowHelper,
-} from '@activepieces/shared';
+import { Trigger, flowHelper } from '@activepieces/shared';
 
-import { ExtraPiecesCircle } from './extra-pieces-circle';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '../../../components/ui/tooltip';
+import { piecesHooks } from '../lib/pieces-hook';
+
 import { PieceIcon } from './piece-icon';
 
-export function PieceIconList({ flow }: { flow: PopulatedFlow }) {
-  const steps = flowHelper
-    .getAllSteps(flow.version.trigger)
-    .map((step) => {
-      if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {
-        return step.settings.pieceName;
-      }
-      return null;
-    })
-    .filter((pieceName): pieceName is string => pieceName !== null);
+export function PieceIconList({
+  maxNumberOfIconsToShow,
+  trigger,
+}: {
+  trigger: Trigger;
+  maxNumberOfIconsToShow: number;
+}) {
+  const steps = flowHelper.getAllSteps(trigger).map((step) => ({ step }));
+  const stepsMetadata = piecesHooks
+    .useStepsMetadata(steps)
+    .map((data) => data.data)
+    .filter((data) => !!data);
 
-  const visibleSteps = steps.slice(0, 2);
-  const extraStepsCount = steps.length - visibleSteps.length;
-  const extraSteps = steps.slice(2);
+  const flowPiecesMetadata = [
+    ...new Map(stepsMetadata.map((item) => [item['pieceName'], item])).values(),
+  ];
 
+  const visibleMetadata = flowPiecesMetadata.slice(0, maxNumberOfIconsToShow);
+  const extraPieces = flowPiecesMetadata.length - visibleMetadata.length;
   return (
-    <div className="flex gap-2">
-      {visibleSteps.map((pieceName, index) => (
-        <PieceIcon
-          circle={true}
-          size={'md'}
-          border={true}
-          pieceName={pieceName}
-          key={index}
-        />
-      ))}
-      {extraStepsCount > 0 && (
-        <ExtraPiecesCircle
-          extraStepsCount={extraStepsCount}
-          pieces={extraSteps}
-        />
-      )}
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex gap-2">
+          {visibleMetadata.map((metadata, index) => (
+            <PieceIcon
+              logoUrl={metadata?.logoUrl || ''}
+              showTooltip={false}
+              circle={true}
+              size={'md'}
+              border={true}
+              displayName={metadata?.displayName || ''}
+              key={index}
+            />
+          ))}
+          {extraPieces > 0 && (
+            <div className="flex items-center justify-center bg-accent p-2 rounded-full border border-solid size-[36px]">
+              +{extraPieces}
+            </div>
+          )}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        {flowPiecesMetadata.length > 1 &&
+          flowPiecesMetadata
+            .map((m) => m?.displayName || '')
+            .slice(0, -1)
+            .join(', ') +
+            ` and ${
+              flowPiecesMetadata[flowPiecesMetadata.length - 1].displayName
+            }`}
+        {flowPiecesMetadata.length === 1 && flowPiecesMetadata[0].displayName}
+      </TooltipContent>
+    </Tooltip>
   );
 }
