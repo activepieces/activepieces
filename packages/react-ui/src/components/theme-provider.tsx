@@ -83,7 +83,7 @@ export const useRipple = () => {
     return (
       <Ripple
         pt={{
-          root: { style: { background: 'rgba(233, 233, 233, 0.3)' } },
+          root: { style: { background: 'rgba(233, 233, 233, 0.2)' } },
         }}
       />
     );
@@ -91,7 +91,7 @@ export const useRipple = () => {
   return (
     <Ripple
       pt={{
-        root: { style: { background: 'rgba(67, 67, 67, 0.3)' } },
+        root: { style: { background: 'rgba(150, 150, 150, 0.2)' } },
       }}
     />
   );
