@@ -3,8 +3,6 @@ import { Column } from '@tanstack/react-table';
 import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { cn } from '@/lib/utils';
-
 import { Badge } from './badge';
 import { Button } from './button';
 import {
@@ -16,10 +14,14 @@ import {
   CommandList,
   CommandSeparator,
 } from './command';
+import { DebouncedInput } from './debounced-input';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { Separator } from './seperator';
 
+import { cn } from '@/lib/utils';
+
 interface DataTableFacetedFilterProps<TData, TValue> {
+  type: string;
   column?: Column<TData, TValue>;
   title?: string;
   options: {
@@ -30,6 +32,7 @@ interface DataTableFacetedFilterProps<TData, TValue> {
 }
 
 export function DataTableFacetedFilter<TData, TValue>({
+  type,
   column,
   title,
   options,
@@ -38,121 +41,169 @@ export function DataTableFacetedFilter<TData, TValue>({
   const [, setSearchParams] = useSearchParams();
   const selectedValues = new Set(column?.getFilterValue() as string[]);
 
-  const handleFilterChange = (filterValues: string[]) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      newParams.delete(column?.id as string);
-      if (filterValues) {
-        filterValues.forEach((value) =>
-          newParams.append(column?.id as string, value),
-        );
-      }
-      return newParams;
-    });
-    column?.setFilterValue(filterValues.length ? filterValues : undefined);
-  };
+  const handleFilterChange = React.useCallback(
+    (filterValue: string | string[]) => {
+      setSearchParams((prev) => {
+        const newParams = new URLSearchParams(prev);
+        newParams.delete(column?.id as string);
 
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
-          <PlusCircledIcon className="mr-2 size-4" />
-          {title}
-          {selectedValues?.size > 0 && (
-            <>
-              <Separator orientation="vertical" className="mx-2 h-4" />
-              <Badge
-                variant="secondary"
-                className="rounded-sm px-1 font-normal lg:hidden"
-              >
-                {selectedValues.size}
-              </Badge>
-              <div className="hidden space-x-1 lg:flex">
-                {selectedValues.size > 2 ? (
+        if (!filterValue) {
+          return newParams;
+        }
+
+        if (Array.isArray(filterValue)) {
+          filterValue.forEach((value) =>
+            newParams.append(column?.id as string, value),
+          );
+        } else {
+          newParams.append(column?.id as string, filterValue);
+        }
+
+        return newParams;
+      });
+      column?.setFilterValue(filterValue.length ? filterValue : undefined);
+    },
+    [column, setSearchParams],
+  );
+
+  switch (type) {
+    case 'input': {
+      const filterValue = (column?.getFilterValue() || '') as string;
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 border-dashed">
+              <PlusCircledIcon className="mr-2 size-4" />
+              {title}
+              {filterValue.length > 0 && (
+                <>
+                  <Separator orientation="vertical" className="mx-2 h-4" />
                   <Badge
                     variant="secondary"
-                    className="rounded-sm px-1 font-normal"
+                    className="rounded-sm px-1 font-normal max-w-40 truncate"
                   >
-                    {selectedValues.size} selected
+                    {filterValue}
                   </Badge>
-                ) : (
-                  options
-                    .filter((option) => selectedValues.has(option.value))
-                    .map((option) => (
+                </>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0" align="start">
+            <DebouncedInput
+              placeholder="Name"
+              value={filterValue}
+              onChange={handleFilterChange}
+            />
+          </PopoverContent>
+        </Popover>
+      );
+    }
+    case 'select':
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 border-dashed">
+              <PlusCircledIcon className="mr-2 size-4" />
+              {title}
+              {selectedValues?.size > 0 && (
+                <>
+                  <Separator orientation="vertical" className="mx-2 h-4" />
+                  <Badge
+                    variant="secondary"
+                    className="rounded-sm px-1 font-normal lg:hidden"
+                  >
+                    {selectedValues.size}
+                  </Badge>
+                  <div className="hidden space-x-1 lg:flex">
+                    {selectedValues.size > 2 ? (
                       <Badge
                         variant="secondary"
-                        key={option.value}
                         className="rounded-sm px-1 font-normal"
                       >
-                        {option.label}
+                        {selectedValues.size} selected
                       </Badge>
-                    ))
-                )}
-              </div>
-            </>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={title} />
-          <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
-            <CommandGroup>
-              {options.map((option) => {
-                const isSelected = selectedValues.has(option.value);
-                return (
-                  <CommandItem
-                    key={option.value}
-                    onSelect={() => {
-                      if (isSelected) {
-                        selectedValues.delete(option.value);
-                      } else {
-                        selectedValues.add(option.value);
-                      }
-                      const filterValues = Array.from(selectedValues);
-                      handleFilterChange(filterValues);
-                    }}
-                  >
-                    <div
-                      className={cn(
-                        'mr-2 flex h-4 w-4 items-center justify-center rounded border border-primary',
-                        isSelected
-                          ? 'bg-primary text-primary-foreground'
-                          : 'opacity-50 [&_svg]:invisible',
-                      )}
-                    >
-                      <CheckIcon className={cn('h-4 w-4')} />
-                    </div>
-                    {option.icon && (
-                      <option.icon className="mr-2 size-4 text-muted-foreground" />
+                    ) : (
+                      options
+                        .filter((option) => selectedValues.has(option.value))
+                        .map((option) => (
+                          <Badge
+                            variant="secondary"
+                            key={option.value}
+                            className="rounded-sm px-1 font-normal"
+                          >
+                            {option.label}
+                          </Badge>
+                        ))
                     )}
-                    <span>{option.label}</span>
-                    {facets?.get(option.value) && (
-                      <span className="ml-auto flex size-4 items-center justify-center font-mono text-xs">
-                        {facets.get(option.value)}
-                      </span>
-                    )}
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-            {selectedValues.size > 0 && (
-              <>
-                <CommandSeparator />
+                  </div>
+                </>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0" align="start">
+            <Command>
+              <CommandInput placeholder={title} />
+              <CommandList>
+                <CommandEmpty>No results found.</CommandEmpty>
                 <CommandGroup>
-                  <CommandItem
-                    onSelect={() => handleFilterChange([])}
-                    className="justify-center text-center"
-                  >
-                    Clear filters
-                  </CommandItem>
+                  {options.map((option) => {
+                    const isSelected = selectedValues.has(option.value);
+                    return (
+                      <CommandItem
+                        key={option.value}
+                        onSelect={() => {
+                          if (isSelected) {
+                            selectedValues.delete(option.value);
+                          } else {
+                            selectedValues.add(option.value);
+                          }
+                          const filterValues = Array.from(selectedValues);
+                          handleFilterChange(filterValues);
+                        }}
+                      >
+                        <div
+                          className={cn(
+                            'mr-2 flex h-4 w-4 items-center justify-center rounded border border-primary',
+                            isSelected
+                              ? 'bg-primary text-primary-foreground'
+                              : 'opacity-50 [&_svg]:invisible',
+                          )}
+                        >
+                          <CheckIcon className={cn('h-4 w-4')} />
+                        </div>
+                        {option.icon && (
+                          <option.icon className="mr-2 size-4 text-muted-foreground" />
+                        )}
+                        <span>{option.label}</span>
+                        {facets?.get(option.value) && (
+                          <span className="ml-auto flex size-4 items-center justify-center font-mono text-xs">
+                            {facets.get(option.value)}
+                          </span>
+                        )}
+                      </CommandItem>
+                    );
+                  })}
                 </CommandGroup>
-              </>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
+                {selectedValues.size > 0 && (
+                  <>
+                    <CommandSeparator />
+                    <CommandGroup>
+                      <CommandItem
+                        onSelect={() => handleFilterChange([])}
+                        className="justify-center text-center"
+                      >
+                        Clear filters
+                      </CommandItem>
+                    </CommandGroup>
+                  </>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      );
+
+    default:
+      return null;
+  }
 }
