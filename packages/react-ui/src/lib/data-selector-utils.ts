@@ -146,9 +146,11 @@ const isStepName = (name: string) => {
   return regex.test(name);
 };
 
+const textWithMentionsClass = 'ap-text-with-mentions';
 export const dataSelectorUtils = {
   isStepName,
   formatStepOutput,
   traverseStepOutputAndReturnMentionTree,
   handlingArrayStepOutput,
+  textWithMentionsClass,
 };

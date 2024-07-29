@@ -22,6 +22,14 @@ type NodeTemplateProps = {
   setExpanded: (expanded: boolean) => void;
   depth: number;
 };
+const handleKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    if (event.target) {
+      (event.target as HTMLDivElement).click();
+    }
+  }
+};
 
 const DataSelectorNodeContent = ({
   node,
@@ -46,16 +54,19 @@ const DataSelectorNodeContent = ({
       node.children[0].data.isTestStepNode
     );
   const showNodeValue = !node.children && !!node.data.value;
+
   return (
     <div
+      tabIndex={0}
+      onKeyDown={handleKeyPress}
       onClick={() => {
         if (node.children && node.children.length > 0) {
           setExpanded(!expanded);
-        } else {
+        } else if (insertMention) {
           insertMention(node.data.propertyPath);
         }
       }}
-      className="w-full p-ripple select-none hover:bg-accent hover:bg-opacity-75 cursor-pointer group"
+      className="w-full p-ripple select-none hover:bg-accent focus:bg-accent focus:bg-opacity-75 hover:bg-opacity-75 cursor-pointer group"
     >
       <div className="flex-grow flex items-center  gap-2 min-h-[48px] pr-3 select-none">
         <div
@@ -89,12 +100,14 @@ const DataSelectorNodeContent = ({
         <div className="ml-auto flex flex-shrink-0 gap-2 items-center">
           {showInsertButton && (
             <Button
-              className="z-50 hover:opacity-100 opacity-0 group-hover:opacity-100"
+              className="z-50 hover:opacity-100 opacity-0 group-hover:opacity-100 focus:opacity-100"
               variant="basic"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                insertMention(node.data.propertyPath);
+                if (insertMention) {
+                  insertMention(node.data.propertyPath);
+                }
               }}
             >
               Insert

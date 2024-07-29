@@ -50,6 +50,8 @@ export enum RightSideBarType {
   PIECE_SETTINGS = 'piece-settings',
 }
 
+type InsertMentionHandler = (propertyPath: string) => void;
+
 export type BuilderState = {
   flow: Flow;
   flowVersion: FlowVersion;
@@ -73,8 +75,8 @@ export type BuilderState = {
   setReadOnly: (readonly: boolean) => void;
   setFlow: (flow: Flow) => void;
   setVersion: (flowVersion: FlowVersion) => void;
-  insertMention: (propertyPath: string) => void;
-  setInsertMentionHandler: (handler: (propertyPath: string) => void) => void;
+  insertMention: InsertMentionHandler | null;
+  setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
 };
 
 export type BuilderInitialState = Pick<
@@ -160,12 +162,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       }),
     setReadOnly: (readonly: boolean) => set({ readonly }),
     setVersion: (flowVersion: FlowVersion) => set({ flowVersion, run: null }),
-    insertMention: (propertyPath: string) => {
-      console.warn('insertMention is not assigned yet', propertyPath);
-    },
-    setInsertMentionHandler: (
-      insertMention: (propertyPath: string) => void,
-    ) => {
+    insertMention: null,
+    setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
       set({ insertMention });
     },
   }));

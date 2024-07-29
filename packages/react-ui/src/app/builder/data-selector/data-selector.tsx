@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { builderSelectors, useBuilderStateContext } from '../builder-hooks';
@@ -12,7 +12,10 @@ import {
 
 import { cn } from '@/lib/utils';
 
-import { MentionTreeNode } from '../../../lib/data-selector-utils';
+import {
+  dataSelectorUtils,
+  MentionTreeNode,
+} from '../../../lib/data-selector-utils';
 import { Input } from '../../../components/ui/input';
 
 import { SearchXIcon } from 'lucide-react';
@@ -36,15 +39,43 @@ function filterBy(arr: MentionTreeNode[], query: string): MentionTreeNode[] {
 }
 
 export function DataSelector() {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [DataSelectorSize, setDataSelectorSize] =
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
   const [searchTerm, setSearchTerm] = useState('');
-  const selectedStep = useBuilderStateContext((state) => state.selectedStep);
   const mentions = useBuilderStateContext(builderSelectors.getAllStepsMentions);
   const nodes = filterBy(mentions, searchTerm);
+  const [showDataSelector, setShowDataSelector] = useState(false);
+
+  const checkFocus = useCallback(() => {
+    if (
+      (containerRef.current &&
+        containerRef.current.contains(document.activeElement)) ||
+      document.activeElement?.classList.contains(
+        dataSelectorUtils.textWithMentionsClass,
+      )
+    ) {
+      setShowDataSelector(true);
+    } else {
+      setShowDataSelector(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Add event listeners for focus changes
+    document.addEventListener('focusin', checkFocus);
+    document.addEventListener('focusout', checkFocus);
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener('focusin', checkFocus);
+      document.removeEventListener('focusout', checkFocus);
+    };
+  }, [checkFocus]);
 
   return (
     <div
+      ref={containerRef}
       className={cn(
         'absolute bottom-[20px]  right-[20px] z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-background shadow-lg rounded-md',
         {
@@ -52,7 +83,7 @@ export function DataSelector() {
             DataSelectorSize === DataSelectorSizeState.EXPANDED,
           'w-[500px] max-w-[500px]':
             DataSelectorSize === DataSelectorSizeState.COLLAPSED,
-          'opacity-0  pointer-events-none': selectedStep === null,
+          'opacity-0  pointer-events-none': !showDataSelector,
         },
       )}
     >
@@ -79,33 +110,35 @@ export function DataSelector() {
             onChange={(e) => setSearchTerm(e.target.value)}
           ></Input>
         </div>
-        <ScrollArea
-          className={cn('transition-all ', {
-            'h-full': DataSelectorSize === DataSelectorSizeState.EXPANDED,
-            'h-[390px] max-h-[390px]  max-w-[450px]  w-[450px]':
-              DataSelectorSize === DataSelectorSizeState.DOCKED,
-            'h-[0px]': DataSelectorSize === DataSelectorSizeState.COLLAPSED,
-          })}
-        >
-          {nodes &&
-            nodes.map((node) => (
-              <DataSelectorNode
-                depth={0}
-                key={node.key}
-                node={node}
-                searchTerm={searchTerm}
-              ></DataSelectorNode>
-            ))}
-          {nodes.length === 0 && (
-            <div className="flex items-center justify-center gap-2 mt-5  flex-col">
-              <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
-              <div className="text-center font-semibold text-md">
-                No matching data
+        <div tabIndex={0}>
+          <ScrollArea
+            className={cn('transition-all ', {
+              'h-full': DataSelectorSize === DataSelectorSizeState.EXPANDED,
+              'h-[390px] max-h-[390px]  max-w-[450px]  w-[450px]':
+                DataSelectorSize === DataSelectorSizeState.DOCKED,
+              'h-[0px]': DataSelectorSize === DataSelectorSizeState.COLLAPSED,
+            })}
+          >
+            {nodes &&
+              nodes.map((node) => (
+                <DataSelectorNode
+                  depth={0}
+                  key={node.key}
+                  node={node}
+                  searchTerm={searchTerm}
+                ></DataSelectorNode>
+              ))}
+            {nodes.length === 0 && (
+              <div className="flex items-center justify-center gap-2 mt-5  flex-col">
+                <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
+                <div className="text-center font-semibold text-md">
+                  No matching data
+                </div>
+                <div className="text-center ">Try adjusting your search</div>
               </div>
-              <div className="text-center ">Try adjusting your search</div>
-            </div>
-          )}
-        </ScrollArea>
+            )}
+          </ScrollArea>
+        </div>
       </div>
     </div>
   );
