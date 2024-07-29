@@ -1,14 +1,15 @@
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { ColumnDef } from '@tanstack/react-table';
 import { Trash } from 'lucide-react';
+
+import { piecesApi } from '../lib/pieces-api';
+
+import { InstallPieceDialog } from './install-piece-dialog';
+import { PieceIcon } from './piece-icon';
 
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-
-import { piecesApi } from '../lib/pieces-api';
-
-import { PieceIcon } from './piece-icon';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
@@ -92,7 +93,9 @@ export default function PiecesTable() {
     <div className="mx-auto w-full flex-col py-10">
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">Pieces </h1>
-        <div className="ml-auto"></div>
+        <div className="ml-auto">
+          <InstallPieceDialog />
+        </div>
       </div>
       <DataTable columns={columns} fetchData={fetchData} />
     </div>
