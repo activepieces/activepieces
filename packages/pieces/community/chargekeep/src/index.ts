@@ -4,7 +4,7 @@ import { addOrUpdateContactExtended } from './lib/actions/add-or-update-contact-
 import { addOrUpdateContact } from './lib/actions/add-or-update-contact';
 import { addOrUpdateSubscription } from './lib/actions/add-or-update-subscription';
 import { createInvoice } from './lib/actions/create-invoice';
-import { getLead } from './lib/triggers/get-lead';
+import { newLead } from './lib/triggers/new-lead';
 import { newPayment } from './lib/triggers/new-payment';
 import { newSubscription } from './lib/triggers/new-subscription';
 
@@ -36,5 +36,5 @@ export const chargekeep = createPiece({
     addOrUpdateSubscription,
     createInvoice,
   ],
-  triggers: [getLead, newPayment, newSubscription],
+  triggers: [newLead, newPayment, newSubscription],
 });

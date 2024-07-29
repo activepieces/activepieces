@@ -2,10 +2,10 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { chargekeepAuth } from '../..';
 import { chargekeepCommon } from '../common/common';
 
-export const getLead = createTrigger({
+export const newLead = createTrigger({
   auth: chargekeepAuth,
-  name: 'get_lead',
-  displayName: 'Get Lead',
+  name: 'new_lead',
+  displayName: 'New Lead',
   description: 'Triggers when a new lead is created',
   props: {},
   type: TriggerStrategy.WEBHOOK,
@@ -204,14 +204,14 @@ export const getLead = createTrigger({
       context.auth
     );
 
-    await context.store?.put<WebhookInformation>('_get_lead_trigger', {
+    await context.store?.put<WebhookInformation>('_new_lead_trigger', {
       webhookId: webhookId,
     });
   },
 
   async onDisable(context) {
     const response = await context.store?.get<WebhookInformation>(
-      '_get_lead_trigger'
+      '_new_lead_trigger'
     );
 
     if (response !== null && response !== undefined) {
