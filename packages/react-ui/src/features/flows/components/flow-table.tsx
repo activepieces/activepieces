@@ -25,6 +25,13 @@ import { formatUtils } from '@/lib/utils';
 
 const filters: DataTableFilter[] = [
   {
+    type: 'input',
+    title: 'Flow name',
+    accessorKey: 'name',
+    options: [],
+    icon: CheckIcon,
+  },
+  {
     type: 'select',
     title: 'Status',
     accessorKey: 'status',
@@ -48,6 +55,7 @@ const FlowsTable = () => {
       cursor: queryParams.get('cursor') ?? undefined,
       limit: parseInt(queryParams.get('limit') ?? '10'),
       status: (queryParams.getAll('status') ?? []) as FlowStatus[],
+      name: queryParams.get('name') ?? undefined,
     });
   }
 

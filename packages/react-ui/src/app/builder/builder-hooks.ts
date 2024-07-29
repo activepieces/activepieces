@@ -60,9 +60,12 @@ export type BuilderState = {
   leftSidebar: LeftSideBarType;
   rightSidebar: RightSideBarType;
   selectedStep: StepPathWithName | null;
+  activeDraggingStep: string | null;
+  allowCanvasPanning: boolean;
   saving: boolean;
-  ExitRun: () => void;
+  exitRun: () => void;
   selectStep(path: StepPathWithName | null): void;
+  exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
@@ -72,7 +75,9 @@ export type BuilderState = {
     onError: () => void,
   ) => void;
   startSaving: () => void;
+  setAllowCanvasPanning: (allowCanvasPanning: boolean) => void;
   setReadOnly: (readonly: boolean) => void;
+  setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: Flow) => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
@@ -95,7 +100,17 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     run: initialState.run,
     saving: false,
     selectedStep: null,
+    activeDraggingStep: null,
+    allowCanvasPanning: true,
     rightSidebar: RightSideBarType.NONE,
+    setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
+      set({
+        allowCanvasPanning,
+      }),
+    setActiveDraggingStep: (stepName: string | null) =>
+      set({
+        activeDraggingStep: stepName,
+      }),
     renameFlowClientSide: (newName: string) => {
       set((state) => {
         return {
@@ -107,14 +122,19 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       });
     },
     setFlow: (flow: Flow) => set({ flow }),
-    ExitRun: () =>
+    exitRun: () =>
       set({
         run: null,
         readonly: false,
         leftSidebar: LeftSideBarType.NONE,
         rightSidebar: RightSideBarType.NONE,
       }),
-    selectStep: (path: StepPathWithName | null) =>
+    exitStepSettings: () =>
+      set({
+        rightSidebar: RightSideBarType.NONE,
+        selectedStep: null,
+      }),
+    selectStep: (path: StepPathWithName) =>
       set({
         selectedStep: path,
         rightSidebar: path

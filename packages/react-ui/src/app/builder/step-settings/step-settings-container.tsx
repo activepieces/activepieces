@@ -39,14 +39,14 @@ const StepSettingsContainer = React.memo(() => {
     flowVersion,
     isSaving,
     startSaving,
-    selectStep,
+    exitStepSettings,
   ] = useBuilderStateContext((state) => [
     state.applyOperation,
     state.readonly,
     state.flowVersion,
     state.saving,
     state.startSaving,
-    state.selectStep,
+    state.exitStepSettings,
   ]);
 
   const { toast } = useToast();
@@ -101,11 +101,7 @@ const StepSettingsContainer = React.memo(() => {
   // TODO check scrolling code editior
   return (
     <>
-      <SidebarHeader
-        onClose={() => {
-          selectStep(null);
-        }}
-      >
+      <SidebarHeader onClose={() => exitStepSettings()}>
         {selectedStep.displayName}
       </SidebarHeader>
       <ResizablePanelGroup direction="vertical">

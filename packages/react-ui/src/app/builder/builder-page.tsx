@@ -1,18 +1,5 @@
 import { ReactFlowProvider } from '@xyflow/react';
 
-import {
-  LeftSideBarType,
-  RightSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
-import { FlowCanvas } from '@/app/builder/flow-canvas/canvas';
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from '@/components/ui/resizable-panel';
-import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
-
 import { BuilderNavBar } from './builder-nav-bar';
 import { FlowVersionsList } from './flow-versions/flow-versions-list';
 import { PiecesCardList } from './pieces-list/pieces-card-list';
@@ -20,20 +7,33 @@ import { FlowRunDetails } from './run-details/flow-run-details-list';
 import { FlowRecentRunsList } from './run-list/flow-runs-list';
 import { StepSettings } from './step-settings/step-settings-container';
 
+import {
+  LeftSideBarType,
+  RightSideBarType,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
+import { FlowCanvas } from '@/app/builder/flow-canvas/flow-canvas';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable-panel';
+import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
+
 const BuilderPage = () => {
-  const [flowVersion, leftSidebar, rightSidebar, run, ExitRun, selectedStep] =
+  const [flowVersion, leftSidebar, rightSidebar, run, exitRun, selectedStep] =
     useBuilderStateContext((state) => [
       state.flowVersion,
       state.leftSidebar,
       state.rightSidebar,
       state.run,
-      state.ExitRun,
+      state.exitRun,
       state.selectedStep,
     ]);
 
   return (
     <div className="flex h-screen w-screen flex-col">
-      {run && <RunDetailsBar run={run} onExitRun={ExitRun} />}
+      {run && <RunDetailsBar run={run} onExitRun={exitRun} />}
       <BuilderNavBar />
       <ResizablePanelGroup direction="horizontal">
         {leftSidebar !== LeftSideBarType.NONE && (
@@ -56,7 +56,7 @@ const BuilderPage = () => {
         )}
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <ReactFlowProvider>
-            <FlowCanvas flowVersion={flowVersion} />
+            <FlowCanvas />
           </ReactFlowProvider>
         </ResizablePanel>
         {rightSidebar !== RightSideBarType.NONE && (

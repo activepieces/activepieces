@@ -1,5 +1,11 @@
+import { PopulatedIssue } from '@activepieces/ee-shared';
+import { FlowRunStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { Check } from 'lucide-react';
+import { createSearchParams, useNavigate } from 'react-router-dom';
+
+import { issuesApi } from '../api/issues-api';
+import { issueHooks } from '../hooks/issue-hooks';
 
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -7,10 +13,6 @@ import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
 import { toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { PopulatedIssue } from '@activepieces/ee-shared';
-
-import { issuesApi } from '../api/issues-api';
-import { issueHooks } from '../hooks/issue-hooks';
 
 const fetchData = async (queryParams: URLSearchParams) => {
   const pagination: {
@@ -29,6 +31,7 @@ const fetchData = async (queryParams: URLSearchParams) => {
 };
 
 export default function IssuesTable() {
+  const navigate = useNavigate();
   const { refetch } = issueHooks.useIssuesNotification();
 
   // TODO implement permissions here when done
@@ -132,7 +135,24 @@ export default function IssuesTable() {
         </div>
         <div className="ml-auto"></div>
       </div>
-      <DataTable columns={columns} fetchData={fetchData} />
+      <DataTable
+        columns={columns}
+        fetchData={fetchData}
+        onRowClick={(row) =>
+          navigate({
+            pathname: '/runs',
+            search: createSearchParams({
+              flowId: row.flowId,
+              createdAfter: row.created,
+              status: [
+                FlowRunStatus.FAILED,
+                FlowRunStatus.INTERNAL_ERROR,
+                FlowRunStatus.TIMEOUT,
+              ],
+            }).toString(),
+          })
+        }
+      />
     </div>
   );
 }

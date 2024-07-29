@@ -49,7 +49,7 @@ export const BuilderNavBar = () => {
         <FlowActionMenu
           flow={flow}
           flowVersion={flowVersion}
-          readonly={isLatestVersion}
+          readonly={!isLatestVersion}
           onDelete={() => {
             navigate('/flows');
           }}
