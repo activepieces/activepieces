@@ -76,7 +76,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger
-        className="rounded-full hover:bg-muted cursor-pointer"
+        className="rounded-full p-2 hover:bg-muted cursor-pointer"
         asChild
       >
         {children}

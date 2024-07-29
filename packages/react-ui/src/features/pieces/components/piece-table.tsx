@@ -1,14 +1,16 @@
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { isNil, PieceType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { Trash } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 
 import { piecesApi } from '../lib/pieces-api';
 
 import { PieceIcon } from './piece-icon';
+
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Button } from '@/components/ui/button';
+import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
+import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
@@ -60,19 +62,29 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
     accessorKey: 'actions',
     header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
     cell: ({ row }) => {
-      return (
-        <div className="flex items-end justify-end">
-          <Button
-            variant="ghost"
-            className="size-8 p-0"
-            onClick={() => {
+      if (
+        row.original.pieceType === PieceType.CUSTOM &&
+        !isNil(row.original.projectId)
+      ) {
+        return (
+          <ConfirmationDeleteDialog
+            title={`Delete ${row.original.name}`}
+            entityName="Piece"
+            message="This will permanently delete this piece, all steps using it will fail."
+            mutationFn={async () => {
               row.original.delete();
+              await piecesApi.delete(row.original.id!);
             }}
           >
-            <Trash className="size-4" />
-          </Button>
-        </div>
-      );
+            <div className="flex items-end justify-end">
+              <Button variant="ghost" className="size-8 p-0">
+                <Trash className="size-4 text-destructive" />
+              </Button>
+            </div>
+          </ConfirmationDeleteDialog>
+        );
+      }
+      return null;
     },
   },
 ];
@@ -89,9 +101,11 @@ const fetchData = async () => {
 
 export default function PiecesTable() {
   return (
-    <div className="mx-auto w-full flex-col py-10">
-      <div className="mb-4 flex">
-        <h1 className="text-3xl font-bold">Pieces </h1>
+    <div className="mx-auto w-full flex-col">
+      <div className="-space-y-2">
+        <h3 className="text-2xl font-semibold leading-none tracking-tight">
+          Pieces
+        </h3>
         <div className="ml-auto"></div>
       </div>
       <DataTable columns={columns} fetchData={fetchData} />

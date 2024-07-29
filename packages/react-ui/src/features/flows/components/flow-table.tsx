@@ -165,7 +165,7 @@ const FlowsTable = () => {
               onDuplicate={() => setRefresh(refresh + 1)}
               onDelete={() => setRefresh(refresh + 1)}
             >
-              <EllipsisVertical className="h-6 w-6" />
+              <EllipsisVertical className="h-10 w-10" />
             </FlowActionMenu>
           </div>
         );
