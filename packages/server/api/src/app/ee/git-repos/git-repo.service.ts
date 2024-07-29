@@ -131,7 +131,7 @@ export const gitRepoService = {
         for (const operation of operations) {
             switch (operation.type) {
                 case ProjectOperationType.UPDATE_FLOW: {
-                    const flowUpdated = await gitSyncHelper.updateFlowInProject(operation.projectFlow.id, operation.gitFile.flow, gitRepo.projectId)
+                    const flowUpdated = await gitSyncHelper.updateFlowInProject(operation.projectFlow, operation.gitFile.flow, gitRepo.projectId)
                     if (flowUpdated.status === FlowStatus.ENABLED) {
                         publishJobs.push(gitSyncHelper.republishFlow(flowUpdated.id, gitRepo.projectId))
                     }
