@@ -8,7 +8,7 @@ import {
   NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlowVersion } from '@activepieces/shared';
 
 import { DataSelector } from '../data-selector/data-selector';
@@ -25,10 +25,37 @@ type FlowCanvasProps = {
   flowVersion: FlowVersion;
 };
 
+function useContainerSize(
+  setSize: (size: { width: number; height: number }) => void,
+  containerRef: React.RefObject<HTMLDivElement>,
+) {
+  useEffect(() => {
+    const handleResize = (entries: ResizeObserverEntry[]) => {
+      if (entries[0]) {
+        const { width, height } = entries[0].contentRect;
+        setSize({ width, height });
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [containerRef, setSize]);
+}
+
 const FlowCanvas = ({ flowVersion }: FlowCanvasProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const graph = useMemo(() => {
     return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
   }, [flowVersion]);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  useContainerSize(setSize, containerRef);
 
   const nodeTypes = useMemo(
     () => ({
@@ -63,7 +90,7 @@ const FlowCanvas = ({ flowVersion }: FlowCanvasProps) => {
   );
 
   return (
-    <div className="size-full grow relative">
+    <div className="size-full grow relative" ref={containerRef}>
       <ReactFlow
         nodeTypes={nodeTypes}
         nodes={nodes}
@@ -89,7 +116,10 @@ const FlowCanvas = ({ flowVersion }: FlowCanvasProps) => {
         <Controls showInteractive={false} orientation="horizontal" />
       </ReactFlow>
 
-      <DataSelector> </DataSelector>
+      <DataSelector
+        parentHeight={size.height}
+        parentWidth={size.width}
+      ></DataSelector>
     </div>
   );
 };

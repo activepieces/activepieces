@@ -39,7 +39,13 @@ function filterBy(arr: MentionTreeNode[], query: string): MentionTreeNode[] {
     : arr;
 }
 
-export function DataSelector() {
+export const DataSelector = ({
+  parentHeight,
+  parentWidth,
+}: {
+  parentWidth: number;
+  parentHeight: number;
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [DataSelectorSize, setDataSelectorSize] =
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
@@ -56,17 +62,13 @@ export function DataSelector() {
       ref={containerRef}
       tabIndex={0}
       className={cn(
-        'absolute bottom-[20px]  right-[20px] z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-background shadow-lg rounded-md',
+        'absolute bottom-[0px]  mr-5 mb-5  right-[0px]  z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-background shadow-lg rounded-md',
         {
-          'h-[calc(100%-40px)] max-w-[500px]  w-[500px] max-h-[calc(100%-40px)] w-[calc(100%-40px)] max-w-[calc(100%-40px)]':
-            DataSelectorSize === DataSelectorSizeState.EXPANDED,
-          'w-[500px] max-w-[500px]':
-            DataSelectorSize === DataSelectorSizeState.COLLAPSED,
           'opacity-0  pointer-events-none': !showDataSelector,
         },
       )}
     >
-      <div className="text-lg items-center font-semibold px-5 py-2 flex gap-2">
+      <div className="text-lg pointer-events-auto items-center font-semibold px-5 py-2 flex gap-2">
         Data Selector <div className="flex-grow"></div>{' '}
         <DataSelectorSizeTogglers
           state={DataSelectorSize}
@@ -74,13 +76,21 @@ export function DataSelector() {
         ></DataSelectorSizeTogglers>
       </div>
       <div
-        className={cn('transition-all overflow-hidden', {
-          'h-[calc(100%-120px)] max-h-[calc(100%-120px)]':
-            DataSelectorSize === DataSelectorSizeState.EXPANDED,
-          'h-[450px] max-h-[450px]  max-w-[450px]  w-[450px]':
-            DataSelectorSize === DataSelectorSizeState.DOCKED,
-          'h-[0px] ': DataSelectorSize === DataSelectorSizeState.COLLAPSED,
-        })}
+        style={{
+          height:
+            DataSelectorSize === DataSelectorSizeState.COLLAPSED
+              ? '0px'
+              : DataSelectorSize === DataSelectorSizeState.DOCKED
+              ? '450px'
+              : `${parentHeight - 100}px`,
+          width:
+            DataSelectorSize === DataSelectorSizeState.COLLAPSED
+              ? '0px'
+              : DataSelectorSize === DataSelectorSizeState.DOCKED
+              ? '450px'
+              : `${parentWidth - 40}px`,
+        }}
+        className="transition-all overflow-hidden"
       >
         <div className="flex items-center gap-2 px-5 py-2">
           <Input
@@ -121,4 +131,5 @@ export function DataSelector() {
       </div>
     </div>
   );
-}
+};
+DataSelector.displayName = 'DataSelector';
