@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { Static, TSchema, Type } from '@sinclair/typebox'
 import { PackageType, PieceType, VersionType } from '../../pieces'
 import { SampleDataSettingsObject } from '../sample-data'
 
@@ -24,23 +24,26 @@ export const EmptyTrigger = Type.Object({
 
 export type EmptyTrigger = Static<typeof EmptyTrigger>
 
-export const PieceTriggerSettings = Type.Object({
+export const ExactPieceTriggerSettings = (input: TSchema) => Type.Object({
     pieceName: Type.String({}),
     pieceVersion: VersionType,
     pieceType: Type.Enum(PieceType),
     packageType: Type.Enum(PackageType),
     triggerName: Type.String({}),
-    input: Type.Record(Type.String({}), Type.Any()),
+    input: input,
     inputUiInfo: SampleDataSettingsObject,
 })
 
+export const PieceTriggerSettings = ExactPieceTriggerSettings(Type.Record(Type.String({}), Type.Any()))
+
 export type PieceTriggerSettings = Static<typeof PieceTriggerSettings>
 
-export const PieceTrigger = Type.Object({
+export const ExactPieceTrigger = (input: TSchema) => Type.Object({
     ...commonProps,
     type: Type.Literal(TriggerType.PIECE),
-    settings: PieceTriggerSettings,
+    settings: ExactPieceTriggerSettings(input),
 })
+export const PieceTrigger = ExactPieceTrigger(Type.Any())
 
 export type PieceTrigger = Static<typeof PieceTrigger>
 

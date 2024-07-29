@@ -2,11 +2,198 @@ import { TSchema, Type } from '@sinclair/typebox';
 
 import {
   CONNECTION_REGEX,
+  PieceMetadata,
+  PieceMetadataModel,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
+import { Action, ActionType, BranchActionSchema, BranchOperator, CodeActionSchema, ExactPieceTrigger, LoopOnItemsActionSchema, PieceActionSchema, Trigger, TriggerType, ValidBranchCondition } from '@activepieces/shared';
 
 export const formUtils = {
+  buildPieceDefaultValue: (
+    selectedStep: Action | Trigger,
+    piece: PieceMetadata | null,
+  ): Action | Trigger => {
+    const { type } = selectedStep;
+    switch (type) {
+      case ActionType.LOOP_ON_ITEMS:
+        return {
+          ...selectedStep,
+          settings: {
+            ...selectedStep.settings,
+            items: selectedStep.settings.items ?? '',
+          },
+        };
+      case ActionType.BRANCH:
+        return {
+          ...selectedStep,
+          settings: {
+            ...selectedStep.settings,
+            conditions: selectedStep.settings.conditions ?? [
+              [
+                {
+                  operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                  firstValue: '',
+                  secondValue: '',
+                  caseSensitive: false,
+                },
+              ],
+            ],
+            inputUiInfo: {},
+          },
+        };
+      case ActionType.CODE:
+        return {
+          ...selectedStep,
+          settings: {
+            ...selectedStep.settings,
+            sourceCode: {
+              code: selectedStep.settings.sourceCode.code ?? `export const code = async (inputs) => {
+  return true;
+};`,
+              packageJson: selectedStep.settings.sourceCode.packageJson ?? '{}',
+            },
+          },
+        };
+      case ActionType.PIECE: {
+        const defaultValues =
+          piece && selectedStep.settings.actionName
+            ? formUtils.defaultValues(
+              piece.actions[selectedStep.settings.actionName].props,
+            )
+            : {};
+        return {
+          ...selectedStep,
+          settings: {
+            ...selectedStep.settings,
+            input: {
+              ...defaultValues,
+              ...(selectedStep.settings.input ?? {}),
+            },
+          },
+        };
+      }
+      case TriggerType.PIECE: {
+        const defaultValues =
+          piece && selectedStep.settings.triggerName
+            ? formUtils.defaultValues(
+              piece.triggers[selectedStep.settings.triggerName].props,
+            )
+            : {};
+        return {
+          ...selectedStep,
+          settings: {
+            ...selectedStep.settings,
+            input: {
+              ...defaultValues,
+              ...(selectedStep.settings.input ?? {}),
+
+            },
+          },
+        };
+      }
+      default:
+        throw new Error('Unsupported type: ' + type);
+    }
+  },
+  buildPieceSchema: (selectedStep: Action | Trigger, piece: PieceMetadataModel | null) => {
+    const { type } = selectedStep;
+    switch (type) {
+      case ActionType.LOOP_ON_ITEMS:
+        return Type.Composite([
+          LoopOnItemsActionSchema,
+          Type.Object({
+            settings: Type.Object({
+              items: Type.String({
+                minLength: 1,
+              }),
+            }),
+          })
+        ]);
+      case ActionType.BRANCH:
+        return Type.Composite([BranchActionSchema, Type.Object({
+          settings: Type.Object({
+            conditions: Type.Array(Type.Array(ValidBranchCondition)),
+          }),
+        })])
+      case ActionType.CODE:
+        return CodeActionSchema;
+      case ActionType.PIECE: {
+        return Type.Composite([PieceActionSchema, Type.Object({
+          settings: Type.Object({
+            actionName: Type.String({
+              minLength: 1,
+            }),
+            input: piece && selectedStep.settings.actionName ? formUtils.buildSchema(piece.actions[selectedStep.settings.actionName].props,) : Type.Object({})
+          }),
+        })])
+      }
+      case TriggerType.PIECE: {
+        const formSchema =
+          piece && selectedStep.settings.triggerName
+            ? formUtils.buildSchema(
+              piece.triggers[selectedStep.settings.triggerName].props,
+            )
+            : Type.Object({});
+        return ExactPieceTrigger(formSchema);
+      }
+      default:
+        throw new Error('Unsupported type: ' + type);
+    }
+  },
+  defaultValues: (props: PiecePropertyMap) => {
+    const defaultValues: Record<string, unknown> = {};
+    const entries = Object.entries(props);
+    for (const [name, property] of entries) {
+      switch (property.type) {
+        case PropertyType.MARKDOWN:
+          defaultValues[name] = property.defaultValue ?? '';
+          break;
+        case PropertyType.DATE_TIME:
+        case PropertyType.SHORT_TEXT:
+        case PropertyType.LONG_TEXT:
+        case PropertyType.FILE:
+          defaultValues[name] = property.defaultValue ?? '';
+          break;
+        case PropertyType.CHECKBOX:
+          defaultValues[name] = property.defaultValue ?? '';
+          break;
+        case PropertyType.NUMBER:
+          defaultValues[name] = property.defaultValue ?? '';
+          break;
+        case PropertyType.STATIC_DROPDOWN:
+          defaultValues[name] = property.defaultValue ?? '';
+          break;
+        case PropertyType.DROPDOWN:
+          defaultValues[name] = property.defaultValue ?? '';
+          break;
+        case PropertyType.BASIC_AUTH:
+        case PropertyType.CUSTOM_AUTH:
+        case PropertyType.SECRET_TEXT:
+        case PropertyType.OAUTH2:
+          defaultValues[name] = property.defaultValue ?? '';
+          break;
+        case PropertyType.ARRAY:
+          defaultValues[name] = property.defaultValue ?? [];
+          break;
+        case PropertyType.OBJECT:
+          defaultValues[name] = property.defaultValue ?? {};
+          break;
+        case PropertyType.JSON:
+          defaultValues[name] = property.defaultValue ?? '';
+          break;
+        case PropertyType.MULTI_SELECT_DROPDOWN:
+          defaultValues[name] = [];
+          break;
+        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+          defaultValues[name] = [];
+          break;
+        case PropertyType.DYNAMIC:
+          defaultValues[name] = {};
+          break;
+      }
+    }
+  },
   buildSchema: (props: PiecePropertyMap) => {
     const entries = Object.entries(props);
     const nonNullableUnknownPropType = Type.Not(
@@ -35,11 +222,18 @@ export const formUtils = {
           });
           break;
         case PropertyType.CHECKBOX:
-          propsSchema[name] = Type.Union([Type.Boolean(), Type.String({})]);
+          propsSchema[name] = Type.Union([
+            Type.Boolean(),
+            Type.String({
+              minLength: property.required ? 1 : undefined,
+            }),
+          ]);
           break;
         case PropertyType.NUMBER:
           // Because it could be a variable
-          propsSchema[name] = Type.String({});
+          propsSchema[name] = Type.String({
+            minLength: property.required ? 1 : undefined,
+          });
           break;
         case PropertyType.STATIC_DROPDOWN:
           propsSchema[name] = nonNullableUnknownPropType;
@@ -53,40 +247,48 @@ export const formUtils = {
         case PropertyType.OAUTH2:
           // Only accepts connections variable.
           propsSchema[name] = Type.Union([
-            Type.RegExp(CONNECTION_REGEX),
-            Type.String(),
+            Type.String({
+              pattern: CONNECTION_REGEX,
+              minLength: property.required ? 1 : undefined,
+            }),
+            Type.String({
+              minLength: property.required ? 1 : undefined,
+            }),
           ]);
           break;
         case PropertyType.ARRAY:
           // Only accepts connections variable.
           propsSchema[name] = Type.Union([
             Type.Array(Type.Unknown({})),
-            Type.String(),
+            Type.String({
+              minLength: property.required ? 1 : undefined,
+            }),
           ]);
           break;
         case PropertyType.OBJECT:
           propsSchema[name] = Type.Union([
             Type.Record(Type.String(), Type.Any()),
-            Type.String(),
+            Type.String({
+              minLength: property.required ? 1 : undefined,
+            }),
           ]);
           break;
         case PropertyType.JSON:
           propsSchema[name] = Type.Union([
             Type.Record(Type.String(), Type.Any()),
             Type.Array(Type.Any()),
-            Type.String(),
+            Type.String({
+              minLength: property.required ? 1 : undefined,
+            }),
           ]);
           break;
         case PropertyType.MULTI_SELECT_DROPDOWN:
-          propsSchema[name] = Type.Union([
-            Type.Array(Type.Any()),
-            Type.String(),
-          ]);
-          break;
         case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
           propsSchema[name] = Type.Union([
             Type.Array(Type.Any()),
-            Type.String(),
+            Type.String({
+              minLength: property.required ? 1 : undefined,
+            }),
           ]);
           break;
         case PropertyType.DYNAMIC:

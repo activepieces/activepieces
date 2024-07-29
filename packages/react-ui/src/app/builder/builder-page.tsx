@@ -18,27 +18,48 @@ import { FlowVersionsList } from './flow-versions/flow-versions-list';
 import { PiecesCardList } from './pieces-list/pieces-card-list';
 import { FlowRunDetails } from './run-details/flow-run-details-list';
 import { FlowRecentRunsList } from './run-list/flow-runs-list';
-import { StepSettings } from './step-settings/step-settings-container';
+import { StepSettingsContainer } from './step-settings/step-settings-container';
+import React, { useEffect, useMemo, useState } from 'react';
+import { flowHelper } from '../../../../shared/src';
 
-const BuilderPage = () => {
-  const [flowVersion, leftSidebar, rightSidebar, run, ExitRun, selectedStep] =
+const BuilderPage = React.memo(() => {
+  const [leftSidebar, rightSidebar, flowVersion, selectedStep] =
     useBuilderStateContext((state) => [
-      state.flowVersion,
       state.leftSidebar,
       state.rightSidebar,
-      state.run,
-      state.ExitRun,
+      state.flowVersion,
       state.selectedStep,
     ]);
 
+  const [containerKey, setContainerKey] = useState<string | undefined>(
+    undefined,
+  );
+
+  const memorizedSelectedStep = useMemo(() => {
+    if (!flowVersion || !selectedStep?.stepName) {
+      return undefined;
+    }
+    return flowHelper.getStep(flowVersion, selectedStep.stepName);
+  }, [flowVersion.id, selectedStep]);
+
+
+  useEffect(() => {
+    if (!selectedStep) {
+      return;
+    }
+    setContainerKey(flowVersion.id + selectedStep.stepName);
+  }, [selectedStep, flowVersion]);
+
+
   return (
     <div className="flex h-screen w-screen flex-col">
-      {run && <RunDetailsBar run={run} onExitRun={ExitRun} />}
+      <RunDetailsBar />
       <BuilderNavBar />
       <ResizablePanelGroup direction="horizontal">
         {leftSidebar !== LeftSideBarType.NONE && (
           <>
             <ResizablePanel
+              key={'left-sidebar'}
               id="left-sidebar"
               defaultSize={25}
               order={1}
@@ -56,7 +77,7 @@ const BuilderPage = () => {
         )}
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <ReactFlowProvider>
-            <FlowCanvas/>
+            <FlowCanvas />
           </ReactFlowProvider>
         </ResizablePanel>
         {rightSidebar !== RightSideBarType.NONE && (
@@ -73,8 +94,8 @@ const BuilderPage = () => {
               {rightSidebar === RightSideBarType.PIECE_SELECTOR && (
                 <PiecesCardList />
               )}
-              {rightSidebar === RightSideBarType.PIECE_SETTINGS && (
-                <StepSettings key={flowVersion.id + selectedStep?.stepName} />
+              {rightSidebar === RightSideBarType.PIECE_SETTINGS && memorizedSelectedStep && (
+                <StepSettingsContainer key={containerKey} selectedStep={memorizedSelectedStep} />
               )}
             </ResizablePanel>
           </>
@@ -82,6 +103,6 @@ const BuilderPage = () => {
       </ResizablePanelGroup>
     </div>
   );
-};
+});
 
 export { BuilderPage };

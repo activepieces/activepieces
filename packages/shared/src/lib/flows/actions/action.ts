@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { Static, TSchema, Type } from '@sinclair/typebox'
 
 import { PackageType, PieceType, VersionType } from '../../pieces'
 import { SampleDataSettingsObject } from '../sample-data'
@@ -48,40 +48,29 @@ export const CodeActionSchema = Type.Object({
     type: Type.Literal(ActionType.CODE),
     settings: CodeActionSettings,
 })
-
-// Piece Action
-export const PieceActionSettings = Type.Object({
+export const PieceActionSettings = Type.Object({    
     packageType: Type.Enum(PackageType),
     pieceType: Type.Enum(PieceType),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
-    actionName: Type.Optional(Type.String({})),
-    input: Type.Record(Type.String({}), Type.Any()),
+    actionName: (Type.String({})),
+    input: Type.Record(Type.String({}), Type.Unknown()),
     inputUiInfo: SampleDataSettingsObject,
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
-
 export type PieceActionSettings = Static<typeof PieceActionSettings>
 
-export const PieceActionSchema = Type.Object({
+export const PieceActionSchema =Type.Object({
     ...commonActionProps,
     type: Type.Literal(ActionType.PIECE),
     settings: PieceActionSettings,
 })
 
 // Loop Items
-export const LoopOnItemsActionSettingsWithValidation = Type.Object({
-    items: Type.String({ minLength: 1 }),
-    inputUiInfo: SampleDataSettingsObject,
-})
-export type LoopOnItemsActionSettingsWithValidation = Static<typeof LoopOnItemsActionSettings>
-
-
 export const LoopOnItemsActionSettings = Type.Object({
     items: Type.String(),
     inputUiInfo: SampleDataSettingsObject,
 })
-
 export type LoopOnItemsActionSettings = Static<typeof LoopOnItemsActionSettings>
 
 export const LoopOnItemsActionSchema = Type.Object({

@@ -14,8 +14,6 @@ const CustomAuthConnectionSettings = React.memo(
         prefixValue="request.value"
         props={authProperty.props}
         allowDynamicValues={false}
-        renderSecretTextDescription={true}
-        renderSecretText={true}
       />
     );
   },

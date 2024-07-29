@@ -1,15 +1,7 @@
-import dayjs from 'dayjs';
-
 import {
-  Action,
-  ActionErrorHandlingOptions,
   ActionType,
   BranchAction,
   BranchCondition,
-  CodeAction,
-  LoopOnItemsAction,
-  SourceCode,
-  Trigger,
 } from '@activepieces/shared';
 
 function formatSampleData(sampleData: unknown, type: ActionType) {
@@ -27,19 +19,6 @@ function formatSampleData(sampleData: unknown, type: ActionType) {
   return sampleData;
 }
 
-function buildActionWithSampleData(
-  selectedStep: Action,
-  sampleData: unknown,
-): Action {
-  const clonedAction: Action = JSON.parse(JSON.stringify(selectedStep));
-  clonedAction.settings.inputUiInfo = {
-    ...selectedStep.settings.inputUiInfo,
-    currentSelectedData: formatSampleData(sampleData, selectedStep.type),
-    lastTestDate: dayjs().toISOString(),
-  };
-  return clonedAction;
-}
-
 function buildActionWithBranchCondition(
   selectedStep: BranchAction,
   conditions: BranchCondition[][],
@@ -52,70 +31,6 @@ function buildActionWithBranchCondition(
   };
   clonedAction.valid = valid;
   return clonedAction;
-}
-
-function buildActionWithNewCode(
-  selectedStep: CodeAction,
-  sourceCode: SourceCode,
-  input: Record<string, string>,
-): CodeAction {
-  const clonedAction: CodeAction = JSON.parse(JSON.stringify(selectedStep));
-  clonedAction.settings.sourceCode = sourceCode;
-  clonedAction.settings.input = input;
-  return clonedAction;
-}
-
-function buildActionWithNewLoopItems(
-  selectedStep: LoopOnItemsAction,
-  items: string,
-  valid: boolean,
-): LoopOnItemsAction {
-  const clonedAction: LoopOnItemsAction = JSON.parse(
-    JSON.stringify(selectedStep),
-  );
-  clonedAction.settings.items = items;
-  clonedAction.valid = valid;
-  return clonedAction;
-}
-
-function buildActionWithErrorOptions<T extends Action | Trigger>(
-  selectedStep: T,
-  {
-    continueOnFailure,
-    retryOnFailure,
-  }: {
-    continueOnFailure: boolean | undefined;
-    retryOnFailure: boolean | undefined;
-  },
-): Action {
-  const clonedAction: T = JSON.parse(JSON.stringify(selectedStep));
-  switch (clonedAction.type) {
-    case ActionType.PIECE:
-    case ActionType.CODE: {
-      const errorHandlingOptions: ActionErrorHandlingOptions = {
-        continueOnFailure: {
-          value:
-            continueOnFailure ??
-            clonedAction.settings.errorHandlingOptions?.continueOnFailure
-              ?.value ??
-            false,
-        },
-        retryOnFailure: {
-          value:
-            retryOnFailure ??
-            clonedAction.settings.errorHandlingOptions?.retryOnFailure?.value ??
-            false,
-        },
-      };
-      clonedAction.settings.errorHandlingOptions = errorHandlingOptions;
-      return clonedAction;
-    }
-    default: {
-      throw new Error(
-        `Action type ${selectedStep.type} should not have error handling options`,
-      );
-    }
-  }
 }
 
 function formatErrorMessage(errorMessage: string): string {
@@ -132,10 +47,7 @@ function formatErrorMessage(errorMessage: string): string {
 }
 
 export const flowVersionUtils = {
-  buildActionWithSampleData,
-  buildActionWithErrorOptions,
-  buildActionWithNewCode,
   formatErrorMessage,
-  buildActionWithNewLoopItems,
+  formatSampleData,
   buildActionWithBranchCondition,
 };

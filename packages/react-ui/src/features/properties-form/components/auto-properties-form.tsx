@@ -1,5 +1,3 @@
-// TODO revisit for clean up
-import { Static } from '@sinclair/typebox';
 import React from 'react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
@@ -7,16 +5,10 @@ import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { ArrayInput } from '@/components/ui/array-input';
 import { DictionaryInput } from '@/components/ui/dictionary-input';
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from '@/components/ui/form';
+import { FormControl, FormField } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { AutoFormFieldWrapper } from '@/features/properties-form/components/auto-form-field-wrapper';
-import { formUtils } from '@/features/properties-form/lib/form-utils';
 import {
   PieceProperty,
   PiecePropertyMap,
@@ -26,49 +18,28 @@ import {
 type AutoFormProps = {
   props: PiecePropertyMap;
   allowDynamicValues: boolean;
-  renderSecretText?: boolean;
-  onChange?: (value: Record<string, unknown>, valid: boolean) => void;
-  renderSecretTextDescription?: boolean;
   prefixValue: string;
 };
 
 const AutoPropertiesFormComponent = React.memo(
-  ({
-    props,
-    allowDynamicValues,
-    renderSecretText,
-    renderSecretTextDescription,
-    onChange,
-    prefixValue,
-  }: AutoFormProps) => {
-    const FormSchema = formUtils.buildSchema(props);
-    const form = useFormContext<Static<typeof FormSchema>>();
+  ({ props, allowDynamicValues, prefixValue }: AutoFormProps) => {
+    const form = useFormContext();
 
     return (
-      <form className="flex flex-col gap-3 p-1">
-        {Object.entries(FormSchema.properties).map(([key]) => {
+      <div className="flex flex-col gap-4 p-1">
+        {Object.entries(props).map(([key]) => {
           return (
             <FormField
+              key={key}
               name={prefixValue + '.' + key}
               control={form.control}
-              key={key}
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  {selectRightComponent(
-                    field,
-                    key,
-                    props[key],
-                    allowDynamicValues,
-                    renderSecretText,
-                    renderSecretTextDescription,
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) =>
+                selectRightComponent(field, key, props[key], allowDynamicValues)
+              }
             />
           );
         })}
-      </form>
+      </div>
     );
   },
 );
@@ -78,28 +49,12 @@ const selectRightComponent = (
   key: string,
   property: PieceProperty,
   allowDynamicValues: boolean,
-  renderSecretText?: boolean,
-  renderSecretTextDescription?: boolean,
 ) => {
-  if (renderSecretText && property.type === PropertyType.SECRET_TEXT) {
-    return (
-      <AutoFormFieldWrapper
-        property={property}
-        hideDescription={!renderSecretTextDescription}
-        key={key}
-        allowDynamicValues={allowDynamicValues}
-      >
-        <Input {...field} id={key} type="password" />
-      </AutoFormFieldWrapper>
-    );
-  }
-
   switch (property.type) {
     case PropertyType.ARRAY:
       return (
         <AutoFormFieldWrapper
           property={property}
-          key={key}
           allowDynamicValues={allowDynamicValues}
         >
           <ArrayInput items={[]} onChange={(items) => {}}></ArrayInput>
@@ -109,7 +64,6 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
-          key={key}
           allowDynamicValues={allowDynamicValues}
         >
           <DictionaryInput values={{}} onChange={() => {}}></DictionaryInput>
@@ -119,7 +73,6 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
-          key={key}
           allowDynamicValues={allowDynamicValues}
         >
           <FormControl>
@@ -137,7 +90,6 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
-          key={key}
           allowDynamicValues={allowDynamicValues}
         >
           <SearchableSelect
@@ -158,29 +110,20 @@ const selectRightComponent = (
     case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
     case PropertyType.DROPDOWN:
     case PropertyType.DYNAMIC:
+    case PropertyType.SECRET_TEXT:
       return (
         <AutoFormFieldWrapper
           property={property}
-          key={key}
           allowDynamicValues={allowDynamicValues}
         >
           <Input {...field} id={key} type="text" />
         </AutoFormFieldWrapper>
       );
-    case PropertyType.BASIC_AUTH:
+
     case PropertyType.CUSTOM_AUTH:
-    case PropertyType.SECRET_TEXT:
+    case PropertyType.BASIC_AUTH:
     case PropertyType.OAUTH2:
-      return (
-        <AutoFormFieldWrapper
-          property={property}
-          key={key}
-          allowDynamicValues={allowDynamicValues}
-          hideDescription={true}
-        >
-          <div>Custom Auth</div>
-        </AutoFormFieldWrapper>
-      );
+      return <></>;
   }
 };
 AutoPropertiesFormComponent.displayName = 'AutoFormComponent';

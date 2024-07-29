@@ -1,6 +1,6 @@
 import { SquareFunction } from 'lucide-react';
 
-import { FormLabel } from '@/components/ui/form';
+import { FormItem, FormLabel } from '@/components/ui/form';
 import { Toggle } from '@/components/ui/toggle';
 import { PieceProperty } from '@activepieces/pieces-framework';
 
@@ -10,7 +10,6 @@ type AutoFormFieldWrapperProps = {
   children: React.ReactNode;
   allowDynamicValues: boolean;
   property: PieceProperty;
-  key: string;
   hideDescription?: boolean;
   placeBeforeLabelText?: boolean;
 };
@@ -20,12 +19,11 @@ const AutoFormFieldWrapper = ({
   children,
   hideDescription,
   allowDynamicValues,
-  key,
   property,
 }: AutoFormFieldWrapperProps) => {
   return (
-    <>
-      <FormLabel htmlFor={key} className="flex items-center">
+    <FormItem className="flex flex-col gap-1">
+      <FormLabel className="flex items-center">
         {placeBeforeLabelText && children}
         <span>{property.displayName}</span>
         <span className="grow"></span>
@@ -39,7 +37,7 @@ const AutoFormFieldWrapper = ({
       {property.description && !hideDescription && (
         <ReadMoreDescription text={property.description} />
       )}
-    </>
+    </FormItem>
   );
 };
 

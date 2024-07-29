@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { JsonViewer } from '@/components/json-viewer';
 import { useSocket } from '@/components/socket-provider';
@@ -24,9 +25,7 @@ import {
 } from '@activepieces/shared';
 
 type TestActionComponentProps = {
-  selectedStep: Action;
   flowVersionId: string;
-  onActionUpdate: (action: Action) => void;
   isSaving: boolean;
 };
 
@@ -52,20 +51,18 @@ const TestButtonTooltip = ({
   );
 };
 const TestActionComponent = React.memo(
-  ({
-    selectedStep,
-    flowVersionId,
-    onActionUpdate,
-    isSaving,
-  }: TestActionComponentProps) => {
+  ({ flowVersionId, isSaving }: TestActionComponentProps) => {
     const { toast } = useToast();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
+    const form = useFormContext<Action>();
+
+    const formValues = form.getValues();
     const [lastTestDate, setLastTestDate] = useState(
-      selectedStep.settings.inputUiInfo?.lastTestDate,
+      formValues.settings.inputUiInfo?.lastTestDate,
     );
-    const { currentSelectedData } = selectedStep.settings.inputUiInfo ?? {};
+    const { currentSelectedData } = formValues.settings.inputUiInfo ?? {};
     const sampleDataExists = !isNil(currentSelectedData);
 
     const socket = useSocket();
@@ -74,17 +71,24 @@ const TestActionComponent = React.memo(
       mutationFn: async () => {
         return flowsApi.testStep(socket, {
           flowVersionId,
-          stepName: selectedStep.name,
+          stepName: formValues.name,
         });
       },
       onSuccess: (stepResponse) => {
         if (stepResponse.success) {
           setErrorMessage(undefined);
-          const newAction = flowVersionUtils.buildActionWithSampleData(
-            selectedStep,
-            stepResponse.output,
+          form.setValue(
+            'settings.inputUiInfo',
+            {
+              ...formValues.settings.inputUiInfo,
+              currentSelectedData: flowVersionUtils.formatSampleData(
+                stepResponse.output,
+                formValues.type,
+              ),
+              lastTestDate: dayjs().toISOString(),
+            },
+            { shouldValidate: true },
           );
-          onActionUpdate(newAction);
         } else {
           setErrorMessage(
             flowVersionUtils.formatErrorMessage(
@@ -105,14 +109,15 @@ const TestActionComponent = React.memo(
         <div className="text-md font-semibold">Generate Sample Data</div>
         {!sampleDataExists && (
           <div className="flex-grow flex justify-center items-center w-full h-full">
-            <TestButtonTooltip disabled={!selectedStep.valid}>
+            <TestButtonTooltip disabled={!form.formState.isValid}>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => mutate()}
                 keyboardShortcut="G"
                 onKeyboardShortcut={mutate}
-                loading={isPending || isSaving}
+                loading={isPending}
+                disabled={isSaving || !form.formState.isValid}
               >
                 Test Step
               </Button>
@@ -147,15 +152,15 @@ const TestActionComponent = React.memo(
                     formatUtils.formatDate(new Date(lastTestDate))}
                 </div>
               </div>
-              <TestButtonTooltip disabled={!selectedStep.valid}>
+              <TestButtonTooltip disabled={!form.formState.isValid}>
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={!selectedStep.valid}
+                  disabled={!form.formState.isValid || isSaving}
                   keyboardShortcut="G"
                   onKeyboardShortcut={mutate}
                   onClick={() => mutate()}
-                  loading={isPending || isSaving}
+                  loading={isPending}
                 >
                   Retest
                 </Button>

@@ -236,6 +236,7 @@
     "react-resizable-panels": "2.0.20",
     "react-router-dom": "6.11.2",
     "react-syntax-highlighter": "15.5.0",
+    "react-use": "17.5.1",
     "recharts": "2.12.7",
     "redlock": "5.0.0-beta.2",
     "rss-parser": "3.13.0",

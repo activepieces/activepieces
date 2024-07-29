@@ -34,7 +34,7 @@ interface PieceIconCircleProps extends VariantProps<typeof pieceIconVariants> {
 
 const PieceIcon = React.memo(
   ({ pieceName, border, size, circle }: PieceIconCircleProps) => {
-    const { data, isSuccess } = piecesHooks.usePiece({
+    const { pieceModel, isSuccess } = piecesHooks.usePiece({
       name: pieceName,
       version: undefined,
     });
@@ -43,13 +43,13 @@ const PieceIcon = React.memo(
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={pieceIconVariants({ border, size, circle })}>
-            {isSuccess && data ? (
-              <img src={data?.logoUrl} className="object-contain" />
+            {isSuccess && pieceModel ? (
+              <img src={pieceModel?.logoUrl} className="object-contain" />
             ) : null}
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          {isSuccess && data ? data?.displayName : null}
+          {isSuccess && pieceModel ? pieceModel?.displayName : null}
         </TooltipContent>
       </Tooltip>
     );

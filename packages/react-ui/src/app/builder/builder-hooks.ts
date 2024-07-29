@@ -56,8 +56,8 @@ export type BuilderState = {
   activeDraggingStep: string | null;
   allowCanvasPanning: boolean;
   saving: boolean;
-  ExitRun: () => void;
-  ExitStepSettings: () => void;
+  exitRun: () => void;
+  exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
   selectStep(path: StepPathWithName): void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
@@ -113,14 +113,14 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       });
     },
     setFlow: (flow: Flow) => set({ flow }),
-    ExitRun: () =>
+    exitRun: () =>
       set({
         run: null,
         readonly: false,
         leftSidebar: LeftSideBarType.NONE,
         rightSidebar: RightSideBarType.NONE,
       }),
-    ExitStepSettings: () =>
+    exitStepSettings: () =>
       set({
         rightSidebar: RightSideBarType.NONE,
         selectedStep: null,
