@@ -24,7 +24,7 @@ const DataTableInputPopover = ({
 
   useEffect(() => {
     handleFilterChange(debouncedQuery);
-  }, [debouncedQuery, handleFilterChange]);
+  }, [debouncedQuery]);
 
   return (
     <Popover>
