@@ -21,12 +21,12 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-medium-js"
+      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js"
 
       - run: npm ci
 
       - uses: nrwl/nx-set-shas@v4
 
-      - run: npx nx affected --target=lint --parallel=3
-      - run: npx nx affected --target=build -c production --parallel=3
-      - run: npx nx run-many --target=test --projects=engine,shared,server-api --parallel=3
+      - run: npx nx affected --target=lint
+      - run: npx nx affected --target=build -c production
+      - run: npx nx run-many --target=test --projects=engine,shared,server-api
