@@ -1,10 +1,9 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
-
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
 import { Action, ActionType, Trigger, TriggerType } from '@activepieces/shared';
+import { useQueries, useQuery } from '@tanstack/react-query';
 
 import { piecesApi } from './pieces-api';
 
@@ -43,6 +42,7 @@ export const piecesHooks = {
       queries: names.map((name) => ({
         queryKey: ['piece', name, undefined],
         queryFn: () => piecesApi.get({ name, version: undefined }),
+        staleTime: Infinity,
       })),
     });
   },

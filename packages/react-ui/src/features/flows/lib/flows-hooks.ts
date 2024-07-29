@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { authenticationSession } from '@/lib/authentication-session';
-
 import { flowsApi } from './flows-api';
+
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const flowsHooks = {
   useFlows: () => {
