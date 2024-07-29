@@ -104,7 +104,7 @@ export const TextInputWithMentions = ({
     (state) => state.setInsertMentionHandler,
   );
 
-  const getStepMetadataFromPath = (path: string) => {
+  const stepMetadataFinder = (path: string) => {
     const itemPathWithoutInterpolationDenotation = path.slice(
       2,
       path.length - 2,
@@ -134,14 +134,14 @@ export const TextInputWithMentions = ({
   const insertMention = (propertyPath: string) => {
     const jsonContent = textMentionUtils.convertTextToTipTapJsonContent({
       propertyPath: `{{${propertyPath}}}`,
-      stepMetadataFinder: getStepMetadataFromPath,
+      stepMetadataFinder,
     });
     editor?.chain().focus().insertContent(jsonContent.content).run();
   };
   const content = [
     textMentionUtils.convertTextToTipTapJsonContent({
       propertyPath: originalValue ?? '',
-      stepMetadataFinder: getStepMetadataFromPath,
+      stepMetadataFinder,
     }),
   ];
   const editor = useEditor({

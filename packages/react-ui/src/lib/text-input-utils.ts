@@ -101,7 +101,9 @@ function convertTextToTipTapJsonContent({
   type: TipTapNodeTypes.paragraph;
   content: JSONContent[];
 } {
-  const inputSplitToNodesContent = userTextInput.split(/(\{\{.*?\}\})/).filter((el) => el);
+  const inputSplitToNodesContent = userTextInput
+    .split(/(\{\{.*?\}\})/)
+    .filter((el) => el);
   const contentNodes: JSONContent[] = inputSplitToNodesContent.map((nc) => {
     const metadata = stepMetadataFinder(nc);
     return isMentionNodeText(nc)
@@ -118,40 +120,44 @@ function convertTextToTipTapJsonContent({
   return { type: TipTapNodeTypes.paragraph, content: contentNodes.flat(1) };
 }
 
-const convertTiptapJsonToText: (content:JSONContent)=>string = ({content}: JSONContent) => {
+const convertTiptapJsonToText: (content: JSONContent) => string = ({
+  content,
+}: JSONContent) => {
   let isFirstParagraph = true;
-  const nodes = content?? []
-  return (nodes).map((n) => {
-    switch (n.type) {
-      case TipTapNodeTypes.hardBreak:
-       return '\n';
-     
-      case TipTapNodeTypes.text:
-        if (n.text) {
-          return n.text;
-        } else {
-          tiptapWarning('node.text is undefined', n);
-          return '';
-        }
+  const nodes = content ?? [];
+  return nodes
+    .map((n) => {
+      switch (n.type) {
+        case TipTapNodeTypes.hardBreak:
+          return '\n';
 
-      case TipTapNodeTypes.mention:
-        if (n.attrs?.label) {
-          const mentionAttrs: ApMentionNodeAttrs = JSON.parse(n.attrs.label);
-          return  mentionAttrs.serverValue;
-        } else {
-          tiptapWarning('node.attrs.label is undefined', n);
-          return '';
-        }
+        case TipTapNodeTypes.text:
+          if (n.text) {
+            return n.text;
+          } else {
+            tiptapWarning('node.text is undefined', n);
+            return '';
+          }
 
-      case TipTapNodeTypes.paragraph:
-        if (!isFirstParagraph) return '\n';
-        isFirstParagraph = false;
-       return  convertTiptapJsonToText(n);
-     default:
-        tiptapWarning('unknown node type', n);
-        return '';
-    }
-  }).join('');
+        case TipTapNodeTypes.mention:
+          if (n.attrs?.label) {
+            const mentionAttrs: ApMentionNodeAttrs = JSON.parse(n.attrs.label);
+            return mentionAttrs.serverValue;
+          } else {
+            tiptapWarning('node.attrs.label is undefined', n);
+            return '';
+          }
+
+        case TipTapNodeTypes.paragraph:
+          if (!isFirstParagraph) return '\n';
+          isFirstParagraph = false;
+          return convertTiptapJsonToText(n);
+        default:
+          tiptapWarning('unknown node type', n);
+          return '';
+      }
+    })
+    .join('');
 };
 
 const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
