@@ -62,7 +62,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-run', UpdateStepProgress, async (request) => {
-        const { runId, workerHandlerId, runDetails, progressUpdateType, httpRequestId } = request.body
+        const { runId, workerHandlerId, runDetails, httpRequestId } = request.body
+        const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
         if (progressUpdateType === ProgressUpdateType.WEBHOOK_RESPONSE && workerHandlerId && httpRequestId) {
             await webhookResponseWatcher.publish(
                 httpRequestId,

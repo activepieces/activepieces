@@ -20,6 +20,7 @@ import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
 import { webhookResponseWatcher } from '../workers/helper/webhook-response-watcher'
 import { flowQueue } from '../workers/queue'
+import { getJobPriority } from '../workers/queue/queue-manager'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -81,18 +82,19 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
     const flow = await getFlowOrThrow(flowId)
     const payload = await convertRequest(request)
     const requestId = apId()
+    const synchronousHandlerId = async ? null : webhookResponseWatcher.getServerId()
     await flowQueue.add({
         id: requestId,
         type: JobType.WEBHOOK,
         data: {
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             requestId,
-            synchronousHandlerId: async ? null : webhookResponseWatcher.getServerId(),
+            synchronousHandlerId,
             payload,
             flowId: flow.id,
             simulate,
         },
-        priority: async ? 'medium' : 'high',
+        priority: await getJobPriority(flow.projectId, synchronousHandlerId),
     })
     if (async) {
         return {
