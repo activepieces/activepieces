@@ -80,6 +80,7 @@ export function DatePickerWithRange({
             numberOfMonths={2}
             min={2}
             weekStartsOn={1}
+            toDate={new Date()}
           />
         </PopoverContent>
       </Popover>
