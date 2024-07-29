@@ -99,35 +99,27 @@ export const DataSelector = ({
             onChange={(e) => setSearchTerm(e.target.value)}
           ></Input>
         </div>
-        <div>
-          <ScrollArea
-            className={cn('transition-all ', {
-              'h-full': DataSelectorSize === DataSelectorSizeState.EXPANDED,
-              'h-[390px] max-h-[390px]  max-w-[450px]  w-[450px]':
-                DataSelectorSize === DataSelectorSizeState.DOCKED,
-              'h-[0px]': DataSelectorSize === DataSelectorSizeState.COLLAPSED,
-            })}
-          >
-            {nodes &&
-              nodes.map((node) => (
-                <DataSelectorNode
-                  depth={0}
-                  key={node.key}
-                  node={node}
-                  searchTerm={searchTerm}
-                ></DataSelectorNode>
-              ))}
-            {nodes.length === 0 && (
-              <div className="flex items-center justify-center gap-2 mt-5  flex-col">
-                <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
-                <div className="text-center font-semibold text-md">
-                  No matching data
-                </div>
-                <div className="text-center ">Try adjusting your search</div>
+
+        <ScrollArea className="transition-all h-[calc(100%-56px)] w-full ">
+          {nodes &&
+            nodes.map((node) => (
+              <DataSelectorNode
+                depth={0}
+                key={node.key}
+                node={node}
+                searchTerm={searchTerm}
+              ></DataSelectorNode>
+            ))}
+          {nodes.length === 0 && (
+            <div className="flex items-center justify-center gap-2 mt-5  flex-col">
+              <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
+              <div className="text-center font-semibold text-md">
+                No matching data
               </div>
-            )}
-          </ScrollArea>
-        </div>
+              <div className="text-center ">Try adjusting your search</div>
+            </div>
+          )}
+        </ScrollArea>
       </div>
     </div>
   );
