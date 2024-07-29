@@ -57,7 +57,7 @@ const DataSelectorNodeContent = ({
       }}
       className="w-full p-ripple select-none hover:bg-accent hover:bg-opacity-75 cursor-pointer group"
     >
-      <div className="flex-grow flex items-center  gap-3 min-h-[48px] px-5  select-none">
+      <div className="flex-grow flex items-center  gap-2 min-h-[48px] pr-3 select-none">
         <div
           style={{
             minWidth: `${depth * 25 + (depth === 0 ? 0 : 25) + 18}px`,

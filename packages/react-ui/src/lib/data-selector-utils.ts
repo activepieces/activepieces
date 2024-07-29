@@ -139,13 +139,14 @@ function formatStepOutput(stepOutput: unknown) {
 
   return stepOutput;
 }
+
 const MAX_ARRAY_LENGTH_BEFORE_SLICING = 100;
 const isStepName = (name: string) => {
   const regex = /^(trigger|step_\d+)$/;
   return regex.test(name);
 };
 
-export const dataSelector = {
+export const dataSelectorUtils = {
   isStepName,
   formatStepOutput,
   traverseStepOutputAndReturnMentionTree,

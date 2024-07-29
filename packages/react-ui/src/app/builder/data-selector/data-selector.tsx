@@ -12,11 +12,36 @@ import {
 
 import { cn } from '@/lib/utils';
 
+import { MentionTreeNode } from '../../../lib/data-selector-utils';
+import { Input } from '../../../components/ui/input';
+
+import { SearchXIcon } from 'lucide-react';
+
+function filterBy(arr: MentionTreeNode[], query: string): MentionTreeNode[] {
+  return query
+    ? arr.reduce((acc, item) => {
+        if (item.children?.length) {
+          const filtered = filterBy(item.children, query);
+          if (filtered.length) return [...acc, { ...item, children: filtered }];
+        }
+
+        const { children, ...itemWithoutChildren } = item;
+        return item.data.displayName
+          ?.toLowerCase()
+          .includes(query.toLowerCase())
+          ? [...acc, itemWithoutChildren]
+          : acc;
+      }, [] as MentionTreeNode[])
+    : arr;
+}
+
 export function DataSelector() {
   const [DataSelectorSize, setDataSelectorSize] =
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
-
-  const nodes = useBuilderStateContext(builderSelectors.getAllStepsMentions);
+  const [searchTerm, setSearchTerm] = useState('');
+  const selectedStep = useBuilderStateContext((state) => state.selectedStep);
+  const mentions = useBuilderStateContext(builderSelectors.getAllStepsMentions);
+  const nodes = filterBy(mentions, searchTerm);
 
   return (
     <div
@@ -27,8 +52,7 @@ export function DataSelector() {
             DataSelectorSize === DataSelectorSizeState.EXPANDED,
           'w-[500px] max-w-[500px]':
             DataSelectorSize === DataSelectorSizeState.COLLAPSED,
-          'opacity-0  pointer-events-none': nodes.length === 0,
-          'opacity-100': nodes.length > 0,
+          'opacity-0  pointer-events-none': selectedStep === null,
         },
       )}
     >
@@ -39,24 +63,50 @@ export function DataSelector() {
           setListSizeState={setDataSelectorSize}
         ></DataSelectorSizeTogglers>
       </div>
-      <ScrollArea
-        className={cn('transition-all', {
-          'h-[calc(100%-100px)] max-h-[calc(100%-100px)]':
+      <div
+        className={cn('transition-all overflow-hidden', {
+          'h-[calc(100%-120px)] max-h-[calc(100%-120px)]':
             DataSelectorSize === DataSelectorSizeState.EXPANDED,
           'h-[450px] max-h-[450px]  max-w-[450px]  w-[450px]':
             DataSelectorSize === DataSelectorSizeState.DOCKED,
-          'h-[0px]': DataSelectorSize === DataSelectorSizeState.COLLAPSED,
+          'h-[0px] ': DataSelectorSize === DataSelectorSizeState.COLLAPSED,
         })}
       >
-        {nodes &&
-          nodes.map((node) => (
-            <DataSelectorNode
-              depth={0}
-              key={node.key}
-              node={node}
-            ></DataSelectorNode>
-          ))}
-      </ScrollArea>
+        <div className="flex items-center gap-2 px-5 py-2">
+          <Input
+            placeholder="Search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          ></Input>
+        </div>
+        <ScrollArea
+          className={cn('transition-all ', {
+            'h-full': DataSelectorSize === DataSelectorSizeState.EXPANDED,
+            'h-[390px] max-h-[390px]  max-w-[450px]  w-[450px]':
+              DataSelectorSize === DataSelectorSizeState.DOCKED,
+            'h-[0px]': DataSelectorSize === DataSelectorSizeState.COLLAPSED,
+          })}
+        >
+          {nodes &&
+            nodes.map((node) => (
+              <DataSelectorNode
+                depth={0}
+                key={node.key}
+                node={node}
+                searchTerm={searchTerm}
+              ></DataSelectorNode>
+            ))}
+          {nodes.length === 0 && (
+            <div className="flex items-center justify-center gap-2 mt-5  flex-col">
+              <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
+              <div className="text-center font-semibold text-md">
+                No matching data
+              </div>
+              <div className="text-center ">Try adjusting your search</div>
+            </div>
+          )}
+        </ScrollArea>
+      </div>
     </div>
   );
 }

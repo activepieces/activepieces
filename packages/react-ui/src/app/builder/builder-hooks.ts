@@ -11,7 +11,10 @@ import {
 import { createContext, useContext } from 'react';
 import { create, useStore } from 'zustand';
 
-import { MentionTreeNode, dataSelector } from '../../lib/data-selector-utils';
+import {
+  MentionTreeNode,
+  dataSelectorUtils,
+} from '../../lib/data-selector-utils';
 
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
@@ -223,7 +226,7 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
 
   return path.map((s) => {
     const stepMentionNode: MentionTreeNode =
-      dataSelector.traverseStepOutputAndReturnMentionTree({
+      dataSelectorUtils.traverseStepOutputAndReturnMentionTree({
         stepOutput: s.settings.inputUiInfo?.currentSelectedData,
         propertyPath: s.name,
         displayName: s.displayName,
@@ -240,7 +243,7 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
         ? [
             {
               data: {
-                displayName: 'Testing Step',
+                displayName: '',
                 propertyPath: s.name,
                 isTestStepNode: true,
                 isSlice: false,

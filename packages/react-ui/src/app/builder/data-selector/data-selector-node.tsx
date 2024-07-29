@@ -1,5 +1,5 @@
 import { CollapsibleContent } from '@radix-ui/react-collapsible';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   Collapsible,
@@ -13,10 +13,22 @@ import { TestStepSection } from './test-step-section';
 type DataSelectoNodeProps = {
   node: MentionTreeNode;
   depth: number;
+  searchTerm: string;
 };
 
-const DataSelectorNode = ({ node, depth }: DataSelectoNodeProps) => {
+const DataSelectorNode = ({
+  node,
+  depth,
+  searchTerm,
+}: DataSelectoNodeProps) => {
   const [expanded, setExpanded] = useState(false);
+  useEffect(() => {
+    if (searchTerm && depth >= 0 && depth <= 1) {
+      setExpanded(true);
+    } else if (!searchTerm) {
+      setExpanded(false);
+    }
+  }, [searchTerm, depth]);
   if (node.data.isTestStepNode) {
     return (
       <TestStepSection stepName={node.data.propertyPath}></TestStepSection>
@@ -41,6 +53,7 @@ const DataSelectorNode = ({ node, depth }: DataSelectoNodeProps) => {
                   depth={depth + 1}
                   node={node}
                   key={node.key}
+                  searchTerm={searchTerm}
                 ></DataSelectorNode>
               ))}
             </div>
