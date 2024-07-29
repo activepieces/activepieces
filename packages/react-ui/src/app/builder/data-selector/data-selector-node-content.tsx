@@ -66,7 +66,7 @@ const DataSelectorNodeContent = ({
           insertMention(node.data.propertyPath);
         }
       }}
-      className="w-full p-ripple select-none hover:bg-accent focus:bg-accent focus:bg-opacity-75 hover:bg-opacity-75 cursor-pointer group"
+      className="w-full p-ripple select-none focus:outline-none hover:bg-accent focus:bg-accent focus:bg-opacity-75 hover:bg-opacity-75 cursor-pointer group"
     >
       <div className="flex-grow flex items-center  gap-2 min-h-[48px] pr-3 select-none">
         <div

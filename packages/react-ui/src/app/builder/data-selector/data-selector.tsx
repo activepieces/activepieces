@@ -1,7 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
-import { builderSelectors, useBuilderStateContext } from '../builder-hooks';
+import {
+  builderSelectors,
+  useBuilderStateContext,
+  useDataSelectorVisibility,
+} from '../builder-hooks';
 
 import './data-selector.css';
 import { DataSelectorNode } from './data-selector-node';
@@ -12,10 +16,7 @@ import {
 
 import { cn } from '@/lib/utils';
 
-import {
-  dataSelectorUtils,
-  MentionTreeNode,
-} from '../../../lib/data-selector-utils';
+import { MentionTreeNode } from '../../../lib/data-selector-utils';
 import { Input } from '../../../components/ui/input';
 
 import { SearchXIcon } from 'lucide-react';
@@ -46,36 +47,14 @@ export function DataSelector() {
   const mentions = useBuilderStateContext(builderSelectors.getAllStepsMentions);
   const nodes = filterBy(mentions, searchTerm);
   const [showDataSelector, setShowDataSelector] = useState(false);
-
-  const checkFocus = useCallback(() => {
-    if (
-      (containerRef.current &&
-        containerRef.current.contains(document.activeElement)) ||
-      document.activeElement?.classList.contains(
-        dataSelectorUtils.textWithMentionsClass,
-      )
-    ) {
-      setShowDataSelector(true);
-    } else {
-      setShowDataSelector(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Add event listeners for focus changes
-    document.addEventListener('focusin', checkFocus);
-    document.addEventListener('focusout', checkFocus);
-
-    // Cleanup function
-    return () => {
-      document.removeEventListener('focusin', checkFocus);
-      document.removeEventListener('focusout', checkFocus);
-    };
-  }, [checkFocus]);
-
+  useDataSelectorVisibility({
+    containerRef,
+    setShowDataSelector,
+  });
   return (
     <div
       ref={containerRef}
+      tabIndex={0}
       className={cn(
         'absolute bottom-[20px]  right-[20px] z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-background shadow-lg rounded-md',
         {
@@ -110,7 +89,7 @@ export function DataSelector() {
             onChange={(e) => setSearchTerm(e.target.value)}
           ></Input>
         </div>
-        <div tabIndex={0}>
+        <div>
           <ScrollArea
             className={cn('transition-all ', {
               'h-full': DataSelectorSize === DataSelectorSizeState.EXPANDED,

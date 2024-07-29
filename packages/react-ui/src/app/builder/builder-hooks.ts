@@ -8,7 +8,7 @@ import {
   StepOutput,
   flowHelper,
 } from '@activepieces/shared';
-import { createContext, useContext } from 'react';
+import { createContext, useCallback, useContext, useEffect } from 'react';
 import { create, useStore } from 'zustand';
 
 import {
@@ -262,6 +262,40 @@ const getStep = (stepName: string) => {
     }
     return flowHelper.getStep(flowVersion, stepName);
   };
+};
+
+export const useDataSelectorVisibility = ({
+  containerRef,
+  setShowDataSelector,
+}: {
+  containerRef: React.RefObject<HTMLDivElement>;
+  setShowDataSelector: (showDataSelector: boolean) => void;
+}) => {
+  const checkFocus = useCallback(() => {
+    if (
+      (containerRef.current &&
+        containerRef.current.contains(document.activeElement)) ||
+      document.activeElement?.classList.contains(
+        dataSelectorUtils.textWithMentionsClass,
+      )
+    ) {
+      setShowDataSelector(true);
+    } else {
+      setShowDataSelector(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Add event listeners for focus changes
+    document.addEventListener('focusin', checkFocus);
+    document.addEventListener('focusout', checkFocus);
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener('focusin', checkFocus);
+      document.removeEventListener('focusout', checkFocus);
+    };
+  }, [checkFocus]);
 };
 
 export const builderSelectors = {
