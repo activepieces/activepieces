@@ -1,14 +1,14 @@
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { ColumnDef } from '@tanstack/react-table';
 import { Trash } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 
 import { piecesApi } from '../lib/pieces-api';
 
 import { PieceIcon } from './piece-icon';
+
+import { Button } from '@/components/ui/button';
+import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
+import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
@@ -89,9 +89,11 @@ const fetchData = async () => {
 
 export default function PiecesTable() {
   return (
-    <div className="mx-auto w-full flex-col py-10">
-      <div className="mb-4 flex">
-        <h1 className="text-3xl font-bold">Pieces </h1>
+    <div className="mx-auto w-full flex-col">
+      <div className="-space-y-2">
+        <h3 className="text-2xl font-semibold leading-none tracking-tight">
+          Pieces
+        </h3>
         <div className="ml-auto"></div>
       </div>
       <DataTable columns={columns} fetchData={fetchData} />
