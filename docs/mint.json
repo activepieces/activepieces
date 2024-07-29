@@ -57,6 +57,11 @@
       "name": "Discord",
       "icon": "discord",
       "url": "https://discord.gg/2jUXBKDdP8"
+    },
+    {
+      "name": "Handbook",
+      "icon": "book",
+      "url": "handbook"
     }
   ],
   "navigation": [
@@ -67,6 +72,24 @@
     {
       "group": "Get Started",
       "pages": ["endpoints/overview"]
+    },
+    {
+      "group": "Handbook",
+      "pages": [
+        "handbook/overview",
+        "handbook/values",
+        {
+          "group": "Engineering",
+          "icon": "code",
+          "pages": [
+            "handbook/engineering/pre-releases",
+            "handbook/engineering/team",
+            "handbook/engineering/how-we-work",
+            "handbook/engineering/stack",
+            "handbook/engineering/hiring"
+          ]
+        }
+      ]
     },
     {
       "group": "Endpoints",
@@ -188,7 +211,6 @@
         "install/architecture/workers",
         "install/architecture/engine",
         "install/architecture/stack"
-        
       ]
     },
     {
@@ -285,28 +307,31 @@
     },
     {
       "group": "Operations",
-      "pages": ["operations/git-sync",  {
-        "group": "Audit Logs",
-        "icon": "book",
-        "pages": [
-          "operations/audit-logs/overview",
-          "operations/audit-logs/flow-created",
-          "operations/audit-logs/flow-updated",
-          "operations/audit-logs/flow-deleted",
-          "operations/audit-logs/connection-upserted",
-          "operations/audit-logs/connection-deleted",
-          "operations/audit-logs/flow-run-started",
-          "operations/audit-logs/flow-run-finished",
-          "operations/audit-logs/folder-created",
-          "operations/audit-logs/folder-updated",
-          "operations/audit-logs/folder-deleted",
-          "operations/audit-logs/user-signed-in",
-          "operations/audit-logs/user-signed-up",
-          "operations/audit-logs/user-email-verified",
-          "operations/audit-logs/user-password-reset",
-          "operations/audit-logs/signing-key-created"
-        ]
-      }]
+      "pages": [
+        "operations/git-sync",
+        {
+          "group": "Audit Logs",
+          "icon": "book",
+          "pages": [
+            "operations/audit-logs/overview",
+            "operations/audit-logs/flow-created",
+            "operations/audit-logs/flow-updated",
+            "operations/audit-logs/flow-deleted",
+            "operations/audit-logs/connection-upserted",
+            "operations/audit-logs/connection-deleted",
+            "operations/audit-logs/flow-run-started",
+            "operations/audit-logs/flow-run-finished",
+            "operations/audit-logs/folder-created",
+            "operations/audit-logs/folder-updated",
+            "operations/audit-logs/folder-deleted",
+            "operations/audit-logs/user-signed-in",
+            "operations/audit-logs/user-signed-up",
+            "operations/audit-logs/user-email-verified",
+            "operations/audit-logs/user-password-reset",
+            "operations/audit-logs/signing-key-created"
+          ]
+        }
+      ]
     },
     {
       "group": "Security",
