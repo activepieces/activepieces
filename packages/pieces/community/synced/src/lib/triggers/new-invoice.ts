@@ -7,7 +7,7 @@ export const newInvoice = createTrigger({
     // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
     name: 'newInvoice',
     displayName: 'New Invoice',
-    description: 'Trigger fire when new invoice Upload',
+    description: 'Trigger fires when new invoice Upload',
     props: {
 
     },

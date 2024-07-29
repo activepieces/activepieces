@@ -5,9 +5,9 @@ import { PieceCategory } from "@activepieces/shared";
 import { createInvoice } from "./lib/actions/create-invoice";
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 export const syncedAuth = PieceAuth.SecretText({
-  displayName: 'Secret JIGA Key',
+  displayName: 'Secret API Key',
   required: true,
-  description: 'JIGA key acquired from your Stripe dashboard',
+  description: 'Secret key acquired from your Synced settings page',
 });
 
 export const synced = createPiece({
