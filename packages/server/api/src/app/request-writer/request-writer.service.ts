@@ -48,7 +48,7 @@ function getOpenAI(): OpenAI {
 async function fetchURLs(query: string): Promise<string[]> {
     const options = {
         headers: {
-            'x-rapidapi-key': system.getOrThrow(AppSystemProp.FETCH_URL_RAPID_API_KEY),
+            'x-rapidapi-key': system.getOrThrow(AppSystemProp.RAPID_API_KEY),
             'x-rapidapi-host': 'google-api31.p.rapidapi.com',
             'Content-Type': 'application/json',
         },

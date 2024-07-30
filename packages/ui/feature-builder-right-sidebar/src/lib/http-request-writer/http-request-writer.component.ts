@@ -37,10 +37,10 @@ export class HttpRequestWriterComponent {
     private flagService: FlagService
   ) {
     this.generateHttpRequestEnabled$ = this.flagService.isFlagEnabled(
-      ApFlagId.COPILOT_ENABLED
+      ApFlagId.CODE_COPILOT_ENABLED
     );
     this.showGeneratedHttpRequest$ = this.flagService.isFlagEnabled(
-      ApFlagId.SHOW_COPILOT
+      ApFlagId.SHOW_COPILOTS
     );
   }
 

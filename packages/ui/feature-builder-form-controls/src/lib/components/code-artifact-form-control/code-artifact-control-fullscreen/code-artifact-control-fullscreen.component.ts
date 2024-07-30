@@ -111,10 +111,10 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     this.codeFilesForm = this.state.codeFilesForm;
     this.readOnly = this.state.readOnly;
     this.generateCodeEnabled$ = this.flagService.isFlagEnabled(
-      ApFlagId.COPILOT_ENABLED
+      ApFlagId.CODE_COPILOT_ENABLED
     );
     this.showGenerateCode$ = this.flagService.isFlagEnabled(
-      ApFlagId.SHOW_COPILOT
+      ApFlagId.SHOW_COPILOTS
     );
     this.allowNpmPackages$ = this.flagService.isFlagEnabled(
       ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP
