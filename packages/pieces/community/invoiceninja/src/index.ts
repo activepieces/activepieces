@@ -12,6 +12,8 @@ import { getReport } from './lib/actions/get-report';
 import { existsTask } from './lib/actions/task-exists';
 import { createInvoice } from './lib/actions/create-invoice';
 import { createClient } from './lib/actions/create-client';
+import { createRecurringInvoice } from './lib/actions/create-recurring';
+import { actionRecurringInvoice } from './lib/actions/action-recurring';
 
 export const invoiceninjaAuth = PieceAuth.CustomAuth({
   props: {
@@ -48,6 +50,8 @@ export const invoiceninja = createPiece({
     getReport,
     createInvoice,
     createClient,
+    createRecurringInvoice,
+    actionRecurringInvoice,
     createCustomApiCallAction({
       baseUrl: (auth) =>
         `${(auth as { base_url: string }).base_url.replace(/\/$/, '')}/api/v1`,

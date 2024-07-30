@@ -1,13 +1,4 @@
 {
   "name": "@activepieces/piece-vtiger",
-  "version": "1.1.10",
-  "dependencies": {
-    "@activepieces/pieces-framework": "*",
-    "@activepieces/pieces-common": "*",
-    "dayjs": "1.11.9",
-    "tslib": "2.6.2",
-    "@activepieces/shared": "*",
-    "crypto-js": "4.2.0",
-    "dayjs": "1.11.9"
-  }
+  "version": "1.1.10"
 }
