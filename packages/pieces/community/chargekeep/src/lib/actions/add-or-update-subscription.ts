@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { chargekeepAuth } from "../..";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-
+import { chargekeepAuth } from '../..';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const addOrUpdateSubscription = createAction({
   name: 'addOrUpdateSubscription',
@@ -20,57 +19,56 @@ export const addOrUpdateSubscription = createAction({
     }),
     contactXref: Property.ShortText({
       displayName: 'External Contact ID',
-      description: "ContactXref have to be specified and correct to look up the correct contact",
+      description:
+        'ContactXref have to be specified and correct to look up the correct contact',
       required: false,
     }),
     productCode: Property.ShortText({
       displayName: 'Product Code',
-      description: 'Product Code (Unique product identifier). ProductCode have to be specified and correct to look up the correct product',
+      description:
+        'Product Code (Unique product identifier). ProductCode have to be specified and correct to look up the correct product',
       required: true,
     }),
-    paymentPeriodType: Property.Dropdown({
+    paymentPeriodType: Property.StaticDropdown({
       displayName: 'Payment Period Type',
-      description: 'The chosen Period Type has to be set for the Product on Sperse side',
+      description:
+        'The chosen Period Type has to be set for the Product on Sperse side',
       required: true,
       defaultValue: 'Monthly',
-      refreshers: [],
-      options: async () => {
-        return {
-          options: [
-            {
-              label: 'Monthly',
-              value: 'Monthly',
-            },
-            {
-              label: 'Annual',
-              value: 'Annual',
-            },
-            {
-              label: 'LifeTime',
-              value: 'LifeTime',
-            },
-          ],
-        };
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Monthly',
+            value: 'Monthly',
+          },
+          {
+            label: 'Annual',
+            value: 'Annual',
+          },
+          {
+            label: 'LifeTime',
+            value: 'LifeTime',
+          },
+        ],
       },
     }),
-    hasRecurringBilling: Property.Dropdown({
+    hasRecurringBilling: Property.StaticDropdown({
       displayName: 'Is it Recurring Billing',
       required: false,
       defaultValue: false,
-      refreshers: [],
-      options: async () => {
-        return {
-          options: [
-            {
-              label: "Yes",
-              value: true,
-            },
-            {
-              label: "No",
-              value: false,
-            },
-          ],
-        };
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Yes',
+            value: true,
+          },
+          {
+            label: 'No',
+            value: false,
+          },
+        ],
       },
     }),
   },
@@ -84,7 +82,7 @@ export const addOrUpdateSubscription = createAction({
           productCode: context.propsValue.productCode,
           paymentPeriodType: context.propsValue.paymentPeriodType,
           hasRecurringBilling: context.propsValue.hasRecurringBilling,
-        }
+        },
       ],
       productId: context.propsValue.productId,
       productCode: context.propsValue.productCode,
@@ -94,13 +92,13 @@ export const addOrUpdateSubscription = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.PUT,
-      url: "https://beta.chargekeep.com/api/services/CRM/OrderSubscription/Update",
+      url: 'https://beta.chargekeep.com/api/services/CRM/OrderSubscription/Update',
       headers: {
         'api-key': context.auth, // Pass API key in headers
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: {
-        ...subscription
+        ...subscription,
       },
     });
 

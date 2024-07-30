@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { chargekeepAuth } from "../..";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { chargekeepAuth } from '../..';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createInvoice = createAction({
   name: 'createInvoice',
@@ -16,35 +16,34 @@ export const createInvoice = createAction({
     }),
     contactXref: Property.ShortText({
       displayName: 'External Contact ID',
-      description: "External Contact Reference (ID) . Will be used for looking a client",
+      description:
+        'External Contact Reference (ID) . Will be used for looking a client',
       required: false,
     }),
-    status: Property.Dropdown({
+    status: Property.StaticDropdown({
       displayName: 'Status',
       required: true,
-      defaultValue: "Draft",
-      refreshers: [],
-      options: async () => {
-        return {
-          options: [
-            {
-              label: 'Draft',
-              value: 'Draft',
-            },
-            {
-              label: 'Final',
-              value: 'Final',
-            },
-            {
-              label: 'Paid',
-              value: 'Paid',
-            },
-            {
-              label: 'Sent',
-              value: 'Sent',
-            },
-          ],
-        };
+      defaultValue: 'Draft',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Draft',
+            value: 'Draft',
+          },
+          {
+            label: 'Final',
+            value: 'Final',
+          },
+          {
+            label: 'Paid',
+            value: 'Paid',
+          },
+          {
+            label: 'Sent',
+            value: 'Sent',
+          },
+        ],
       },
     }),
     invoiceNo: Property.Number({
@@ -62,60 +61,58 @@ export const createInvoice = createAction({
       description: 'should be like this : 2024-06-11T11:11:41Z',
       required: true,
     }),
-    currencyId: Property.Dropdown({
-      displayName: "Currency Id",
+    currencyId: Property.StaticDropdown({
+      displayName: 'Currency Id',
       required: true,
-      defaultValue: "USD",
-      refreshers: [],
-      options: async () => {
-        return {
-          options: [
-            {
-              label: "USD",
-              value: "USD",
-            },
-            {
-              label: "JPY",
-              value: "JPY",
-            },
-            {
-              label: "IND",
-              value: "IND",
-            },
-            {
-              label: "EUR",
-              value: "EUR",
-            },
-            {
-              label: "GBP",
-              value: "GBP",
-            },
-            {
-              label: "AUD",
-              value: "AUD",
-            },
-            {
-              label: "CAD",
-              value: "CAD",
-            },
-            {
-              label: "CHF",
-              value: "CHF",
-            },
-            {
-              label: "CNY",
-              value: "CNY",
-            },
-            {
-              label: "SEK",
-              value: "SEK",
-            },
-            {
-              label: "NZD",
-              value: "NZD",
-            },
-          ],
-        };
+      defaultValue: 'USD',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'USD',
+            value: 'USD',
+          },
+          {
+            label: 'JPY',
+            value: 'JPY',
+          },
+          {
+            label: 'IND',
+            value: 'IND',
+          },
+          {
+            label: 'EUR',
+            value: 'EUR',
+          },
+          {
+            label: 'GBP',
+            value: 'GBP',
+          },
+          {
+            label: 'AUD',
+            value: 'AUD',
+          },
+          {
+            label: 'CAD',
+            value: 'CAD',
+          },
+          {
+            label: 'CHF',
+            value: 'CHF',
+          },
+          {
+            label: 'CNY',
+            value: 'CNY',
+          },
+          {
+            label: 'SEK',
+            value: 'SEK',
+          },
+          {
+            label: 'NZD',
+            value: 'NZD',
+          },
+        ],
       },
     }),
     grandTotal: Property.Number({
@@ -266,64 +263,62 @@ export const createInvoice = createAction({
       defaultValue: 0,
       required: false,
     }),
-    unitId: Property.Dropdown({
+    unitId: Property.StaticDropdown({
       displayName: 'Unit Id',
       required: false,
-      defaultValue: "Unit",
-      refreshers: [],
-      options: async () => {
-        return {
-          options: [
-            {
-              label: 'Unit',
-              value: 'Unit',
-            },
-            {
-              label: 'Day',
-              value: 'Day',
-            },
-            {
-              label: 'Month',
-              value: 'Month',
-            },
-            {
-              label: 'Year',
-              value: 'Year',
-            },
-            {
-              label: 'Hour',
-              value: 'Hour',
-            },
-            {
-              label: 'Kilogram',
-              value: 'Kilogram',
-            },
-            {
-              label: 'Zone',
-              value: 'Zone',
-            },
-            {
-              label: 'Package',
-              value: 'Package',
-            },
-            {
-              label: 'Pound',
-              value: 'Pound',
-            },
-            {
-              label: 'Piece',
-              value: 'Piece',
-            },
-            {
-              label: 'Feet',
-              value: 'Feet',
-            },
-            {
-              label: 'Custom',
-              value: 'Custom',
-            },
-          ],
-        };
+      defaultValue: 'Unit',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Unit',
+            value: 'Unit',
+          },
+          {
+            label: 'Day',
+            value: 'Day',
+          },
+          {
+            label: 'Month',
+            value: 'Month',
+          },
+          {
+            label: 'Year',
+            value: 'Year',
+          },
+          {
+            label: 'Hour',
+            value: 'Hour',
+          },
+          {
+            label: 'Kilogram',
+            value: 'Kilogram',
+          },
+          {
+            label: 'Zone',
+            value: 'Zone',
+          },
+          {
+            label: 'Package',
+            value: 'Package',
+          },
+          {
+            label: 'Pound',
+            value: 'Pound',
+          },
+          {
+            label: 'Piece',
+            value: 'Piece',
+          },
+          {
+            label: 'Feet',
+            value: 'Feet',
+          },
+          {
+            label: 'Custom',
+            value: 'Custom',
+          },
+        ],
       },
     }),
     productCode: Property.ShortText({
@@ -336,7 +331,7 @@ export const createInvoice = createAction({
       required: false,
     }),
     sortOrder: Property.Number({
-      displayName: "Sort Order",
+      displayName: 'Sort Order',
       defaultValue: 0,
       required: false,
     }),
@@ -363,30 +358,29 @@ export const createInvoice = createAction({
       displayName: 'Gateway Transaction Id',
       required: false,
     }),
-    historicalData: Property.Dropdown({
+    historicalData: Property.StaticDropdown({
       displayName: 'Historical Data',
-      description: 'Pass true if this is not actual transaction. Should be False by default',
+      description:
+        'Pass true if this is not actual transaction. Should be False by default',
       required: true,
       defaultValue: false,
-      refreshers: [],
-      options: async () => {
-        return {
-          options: [
-            {
-              label: "true",
-              value: true,
-            },
-            {
-              label: "false",
-              value: false,
-            },
-          ],
-        };
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'true',
+            value: true,
+          },
+          {
+            label: 'false',
+            value: false,
+          },
+        ],
       },
     }),
   },
   async run(context) {
-    // construct 
+    // construct
     const invoice = {
       contactId: context.propsValue.contactId,
       contactXref: context.propsValue.contactXref,
@@ -411,7 +405,7 @@ export const createInvoice = createAction({
         lastName: context.propsValue.bLastName,
         company: context.propsValue.bCompany,
         email: context.propsValue.bEmail,
-        phone: context.propsValue.bPhone
+        phone: context.propsValue.bPhone,
       },
       shippingAddress: {
         countryId: context.propsValue.sCountryId,
@@ -425,7 +419,7 @@ export const createInvoice = createAction({
         lastName: context.propsValue.sLastName,
         company: context.propsValue.sCompany,
         email: context.propsValue.sEmail,
-        phone: context.propsValue.sPhone
+        phone: context.propsValue.sPhone,
       },
       description: context.propsValue.invoiceDescription,
       note: context.propsValue.note,
@@ -438,8 +432,8 @@ export const createInvoice = createAction({
           unitId: context.propsValue.unitId,
           productCode: context.propsValue.productCode,
           description: context.propsValue.itemDescription,
-          sortOrder: context.propsValue.sortOrder
-        }
+          sortOrder: context.propsValue.sortOrder,
+        },
       ],
       transactions: [
         {
@@ -447,28 +441,27 @@ export const createInvoice = createAction({
           description: context.propsValue.transactionDescription,
           amount: context.propsValue.amount,
           gatewayName: context.propsValue.gatewayName,
-          gatewayTransactionId: context.propsValue.gatewayTransactionId
-        }
+          gatewayTransactionId: context.propsValue.gatewayTransactionId,
+        },
       ],
-      historicalData: context.propsValue.historicalData
-    }
+      historicalData: context.propsValue.historicalData,
+    };
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: "https://beta.chargekeep.com/api/services/CRM/Import/ImportInvoice",
+      url: 'https://beta.chargekeep.com/api/services/CRM/Import/ImportInvoice',
       headers: {
         'api-key': context.auth, // Pass API key in headers
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: {
         ...invoice,
       },
     });
-  
+
     return {
       status: res.status,
       body: res.body,
     };
-
   },
 });
