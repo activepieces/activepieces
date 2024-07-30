@@ -156,7 +156,7 @@ export const threadEngineRunner: EngineRunner = {
         logger.debug({
             piece: operation.piece,
             propertyName: operation.propertyName,
-            stepName: operation.stepName,
+            stepName: operation.actionOrTriggerName,
             flowVersion: operation.flowVersion,
         }, '[threadEngineRunner#executeProp]')
 
