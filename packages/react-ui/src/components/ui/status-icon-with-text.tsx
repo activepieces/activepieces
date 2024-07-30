@@ -2,12 +2,12 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import React from 'react';
 
 const statusCodeVariants = cva(
-  'inline-flex gap-1 rounded px-2.5 py-1 text-xs font-medium',
+  'inline-flex gap-1 rounded px-2.5 py-1 text-xs font-semibold',
   {
     variants: {
       variant: {
-        success: 'bg-success text-success-foreground',
-        error: 'bg-destructive text-destructive-foreground',
+        success: 'bg-success-100 text-success-300',
+        error: 'bg-destructive-100 text-destructive-300',
         default: 'bg-accent text-accent-foreground',
       },
     },
@@ -16,6 +16,7 @@ const statusCodeVariants = cva(
     },
   },
 );
+
 interface StatusIconWithTextProps
   extends VariantProps<typeof statusCodeVariants> {
   icon: any;

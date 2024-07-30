@@ -56,7 +56,7 @@ const BuilderPage = () => {
         )}
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <ReactFlowProvider>
-            <FlowCanvas/>
+            <FlowCanvas />
           </ReactFlowProvider>
         </ResizablePanel>
         {rightSidebar !== RightSideBarType.NONE && (

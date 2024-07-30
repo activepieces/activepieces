@@ -1,17 +1,18 @@
+import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
 import { BaseEdge } from '@xyflow/react';
 import { Plus } from 'lucide-react';
+import { useState } from 'react';
+
+import { cn } from '@/lib/utils';
+import { flowHelper, isNil } from '@activepieces/shared';
+
+import { useBuilderStateContext } from '../../builder-hooks';
 import {
   AP_NODE_SIZE,
   ApEdge,
   ApNodeType,
   flowCanvasUtils,
 } from '../flow-canvas-utils';
-import { useDndMonitor, useDroppable } from '@dnd-kit/core';
-import { useBuilderStateContext } from '../../builder-hooks';
-import { DragMoveEvent } from '@dnd-kit/core';
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
-import { flowHelper, isNil } from '@activepieces/shared';
 
 interface ApEdgeWithButtonProps {
   id: string;
@@ -46,8 +47,9 @@ function getEdgePath({
         x: (targetX + sourceX) / 2 - BUTTON_SIZE.width / 2,
         y: (targetYWithPlaceHolder + sourceY) / 2 - BUTTON_SIZE.height / 2,
       },
-      edgePath: `M ${sourceX} ${sourceY} v ${targetYWithPlaceHolder - sourceY
-        } ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
+      edgePath: `M ${sourceX} ${sourceY} v ${
+        targetYWithPlaceHolder - sourceY
+      } ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
     };
   }
   const FIRST_LINE_LENGTH = 55;
@@ -63,30 +65,39 @@ function getEdgePath({
       y: targetYWithPlaceHolder - FIRST_LINE_LENGTH / 2 - 10,
     },
     edgePath: `M${sourceX} ${sourceY} 
-    v${targetYWithPlaceHolder - sourceY - FIRST_LINE_LENGTH - ARC_LENGTH} ${SIGN < 0 ? ARC_LEFT_DOWN : ARC_RIGHT_DOWN
-      }
-    h${targetX - sourceX - 2 * SIGN * ARC_LENGTH} ${SIGN < 0 ? ARC_LEFT : ARC_RIGHT
-      }
+    v${targetYWithPlaceHolder - sourceY - FIRST_LINE_LENGTH - ARC_LENGTH} ${
+      SIGN < 0 ? ARC_LEFT_DOWN : ARC_RIGHT_DOWN
+    }
+    h${targetX - sourceX - 2 * SIGN * ARC_LENGTH} ${
+      SIGN < 0 ? ARC_LEFT : ARC_RIGHT
+    }
     v${FIRST_LINE_LENGTH - ARC_LENGTH}
     ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
   };
 }
 
 const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
-
   const [showButtonShadow, setShowButtonShadow] = useState(false);
-  const [activeDraggingStep, flowVersion] = useBuilderStateContext((state) => [state.activeDraggingStep, state.flowVersion]);
+  const [activeDraggingStep, flowVersion] = useBuilderStateContext((state) => [
+    state.activeDraggingStep,
+    state.flowVersion,
+  ]);
   const { edgePath, buttonPosition } = getEdgePath(props);
   const { setNodeRef } = useDroppable({
     id: props.id,
     data: props.data,
   });
-  const draggedStep = isNil(activeDraggingStep) ? undefined : flowHelper.getStep(flowVersion, activeDraggingStep);
+  const draggedStep = isNil(activeDraggingStep)
+    ? undefined
+    : flowHelper.getStep(flowVersion, activeDraggingStep);
   const parentStep = props.data?.parentStep;
-  const isPartOfInnerFlow = isNil(parentStep) || isNil(draggedStep) ? false : flowHelper.isPartOfInnerFlow({
-    parentStep: draggedStep,
-    childName: parentStep,
-  });
+  const isPartOfInnerFlow =
+    isNil(parentStep) || isNil(draggedStep)
+      ? false
+      : flowHelper.isPartOfInnerFlow({
+          parentStep: draggedStep,
+          childName: parentStep,
+        });
   const isDropzone = !isPartOfInnerFlow && !isNil(activeDraggingStep);
 
   useDndMonitor({
@@ -105,22 +116,23 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
         path={edgePath}
         style={{ strokeWidth: 1.5 }}
       />
-      {isDropzone && props.data?.addButton && buttonPosition && <foreignObject
-        width={18}
-        height={18}
-        x={buttonPosition.x}
-        y={buttonPosition.y}
-        className={cn('bg-primary w-[17px] h-[17px] rounded-[3px] box-content opacity-90', {
-          // TODO fix colors and add box shadow
-          'bg-destructive': showButtonShadow,
-        })}
-      >
-        <div className='w-4 h-4'
-          ref={setNodeRef}>
-        </div>
-      </foreignObject>
-
-      }
+      {isDropzone && props.data?.addButton && buttonPosition && (
+        <foreignObject
+          width={18}
+          height={18}
+          x={buttonPosition.x}
+          y={buttonPosition.y}
+          className={cn(
+            'bg-primary w-[17px] h-[17px] rounded-[3px] box-content opacity-90',
+            {
+              // TODO fix colors and add box shadow
+              'bg-destructive': showButtonShadow,
+            },
+          )}
+        >
+          <div className="w-4 h-4" ref={setNodeRef}></div>
+        </foreignObject>
+      )}
       {!isDropzone && props.data?.addButton && buttonPosition && (
         <foreignObject
           width={18}
