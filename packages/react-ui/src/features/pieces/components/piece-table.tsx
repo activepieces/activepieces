@@ -1,16 +1,16 @@
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { isNil, PieceType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { Trash } from 'lucide-react';
-
-import { piecesApi } from '../lib/pieces-api';
-
-import { PieceIcon } from './piece-icon';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { isNil, PieceType } from '@activepieces/shared';
+
+import { piecesApi } from '../lib/pieces-api';
+
+import { PieceIcon } from './piece-icon';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
