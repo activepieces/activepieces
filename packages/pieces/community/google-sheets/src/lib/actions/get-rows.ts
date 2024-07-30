@@ -80,7 +80,7 @@ export const getRowsAction = createAction({
   displayName: 'Get next row(s)',
   props: {
     markdown: Property.MarkDown({
-      value: `This action stores the last row number in a memory key. In the next run, this saved number will be used as the starting row. For example, if the last processed row was 10, the next run will start from row 11.`,
+      value: `This action stores the last row number in a memory key. In the next run, this saved number will be used as the starting row. For example, if the last processed row was 10, the next run will start from row 11.Republishing the flow will still retain the memory key.`,
     }),
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     include_team_drives: googleSheetsCommon.include_team_drives,
