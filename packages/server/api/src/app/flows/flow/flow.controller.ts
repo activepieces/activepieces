@@ -83,6 +83,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             status: request.query.status,
+            name: request.query.name,
         })
     })
 
@@ -256,7 +257,7 @@ const DeleteFlowRequestOptions = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+            [StatusCodes.NO_CONTENT]: Type.Never(),
         },
     },
 }

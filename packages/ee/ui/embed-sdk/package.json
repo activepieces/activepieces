@@ -3,9 +3,5 @@
   "version": "0.3.0",
   "type": "commonjs",
   "main": "./src/index.js",
-  "typings": "./src/index.d.ts",
-  "dependencies": {
-    "@nx/webpack": "19.3.0",
-    "tslib": "2.6.2"
-  }
+  "typings": "./src/index.d.ts"
 }

@@ -56,6 +56,14 @@ export const projectService = {
         return this.getOneOrThrow(projectId)
     },
 
+    async getPlatformId(projectId: ProjectId): Promise<string> {
+        const result =  await repo().createQueryBuilder('project').select('"platformId"').where({
+            id: projectId,
+        }).getRawOne()
+        const platformId = result?.platformId
+        assertNotNullOrUndefined(platformId, 'platformId for project is undefined in webhook')
+        return platformId
+    },
     async getOneOrThrow(projectId: ProjectId): Promise<Project> {
         const project = await this.getOne(projectId)
 

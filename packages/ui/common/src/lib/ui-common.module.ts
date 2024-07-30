@@ -85,6 +85,7 @@ import { ConfirmActionDialogComponent } from './components/dialogs/confirm-actio
 import { DurationFormatterPipe } from './pipe';
 import { ContactSalesDialogComponent } from './components/dialogs/contact-sales-dialog/contact-sales-dialog.component';
 import { ContactSalesComponent } from './components/contact-sales/contact-sales.component';
+import { PortalModule } from '@angular/cdk/portal';
 
 const exportedImports = [
   CommonModule,
@@ -122,6 +123,7 @@ const exportedImports = [
   VersionHistoryIndicatorComponent,
   InsideBuilderDatePipe,
   DurationFormatterPipe,
+  PortalModule,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,

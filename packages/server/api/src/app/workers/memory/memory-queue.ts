@@ -1,6 +1,6 @@
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, WebhookJobData } from '@activepieces/server-shared'
-import { DelayPauseMetadata, Flow, FlowRunStatus, PauseType, ProgressUpdateType, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { DelayPauseMetadata, Flow, FlowRun, FlowRunStatus, PauseType, ProgressUpdateType, RunEnvironment, TriggerType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
@@ -8,6 +8,7 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { triggerUtils } from '../../flows/trigger/hooks/trigger-utils'
 import { QueueManager } from '../queue/queue-manager'
 import { ApMemoryQueue } from './ap-memory-queue'
+
 
 export const memoryQueues = {
     [QueueName.ONE_TIME]: new ApMemoryQueue<OneTimeJobData>(),
@@ -40,6 +41,7 @@ export const memoryQueue: QueueManager = {
                     id,
                     cronExpression: params.scheduleOptions.cronExpression,
                     cronTimezone: params.scheduleOptions.timezone,
+                    failureCount: params.scheduleOptions.failureCount,
                 })
                 break
             }
@@ -74,7 +76,7 @@ async function addDelayedRun(): Promise<void> {
     const flowRuns = await flowRunRepo().findBy({
         status: FlowRunStatus.PAUSED,
     })
-    flowRuns.forEach((flowRun) => {
+    flowRuns.forEach((flowRun: FlowRun) => {
         if (flowRun.pauseMetadata?.type === PauseType.DELAY) {
             const delayPauseMetadata = flowRun.pauseMetadata as DelayPauseMetadata
             const delay = Math.max(
@@ -120,6 +122,7 @@ async function renewEnabledRepeating(): Promise<void> {
             scheduleOptions: {
                 cronExpression: flow.schedule!.cronExpression,
                 timezone: flow.schedule!.timezone,
+                failureCount: flow.schedule!.failureCount ?? 0,
             },
         }).catch((e) => logger.error(e, '[MemoryQueue#init] add'))
     })
@@ -171,7 +174,10 @@ async function renewWebhooks(): Promise<void> {
                 flowId: flow.id,
                 jobType: RepeatableJobType.RENEW_WEBHOOK,
             },
-            scheduleOptions,
+            scheduleOptions: {
+                ...scheduleOptions,
+                failureCount: 0,
+            },
         }).catch((e) => logger.error(e, '[MemoryQueue#init] add'))
     })
 }

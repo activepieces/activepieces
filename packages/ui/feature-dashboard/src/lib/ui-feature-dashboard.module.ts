@@ -3,6 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import {
   ApDatePipe,
+  ApFilterComponent,
   DropdownSearchControlComponent,
   SelectAllDirective,
   UiCommonModule,
@@ -70,6 +71,7 @@ import { FlowActionsListComponent } from '@activepieces/ui-feature-flow-actions-
     AdminConsoleButtonComponent,
     InviteUserButtonComponent,
     FlowActionsListComponent,
+    ApFilterComponent,
   ],
   declarations: [
     DashboardContainerComponent,
