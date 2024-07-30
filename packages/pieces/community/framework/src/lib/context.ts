@@ -96,6 +96,12 @@ export type PauseHook = (params: {
 
 export type PropertyContext = {
   server: ServerContext;
+  flow: {
+    id: string;
+    version: {
+      id: string;
+    };
+  };
   project: {
     id: ProjectId;
     externalId: () => Promise<string | undefined>;
