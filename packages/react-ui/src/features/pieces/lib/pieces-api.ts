@@ -1,7 +1,9 @@
 import { api } from '@/lib/api';
 import {
+  DropdownState,
   PieceMetadataModel,
   PieceMetadataModelSummary,
+  PiecePropertyMap,
 } from '@activepieces/pieces-framework';
 import {
   Action,
@@ -9,6 +11,7 @@ import {
   GetPieceRequestParams,
   GetPieceRequestQuery,
   ListPiecesRequestQuery,
+  PieceOptionRequest,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
@@ -24,6 +27,9 @@ export const piecesApi = {
     return api.get<PieceMetadataModel>(`/v1/pieces/${request.name}`, {
       version: request.version ?? undefined,
     });
+  },
+  options<T extends DropdownState<unknown> | PiecePropertyMap>(request: PieceOptionRequest): Promise<T> {
+    return api.post<T>(`/v1/pieces/options`, request);
   },
   async getMetadata(step: Action | Trigger): Promise<StepMetadata> {
       switch (step.type) {

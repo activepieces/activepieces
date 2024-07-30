@@ -15,6 +15,8 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import { JsonEditor } from '@/components/custom/json-editior';
+import { MultiSelectPieceProperty } from './multi-select-piece-property';
+import { SelectPieceProperty } from './select-piece-property';
 
 type AutoFormProps = {
   props: PiecePropertyMap;
@@ -111,14 +113,34 @@ const selectRightComponent = (
           <JsonEditor intialValue={field.value} onChange={field.onChange}></JsonEditor>
         </AutoFormFieldWrapper>
       );
+    case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+      return (
+        <AutoFormFieldWrapper
+          property={property}
+          allowDynamicValues={allowDynamicValues}
+        >
+          <MultiSelectPieceProperty placeholder={property.options.placeholder ?? 'Select a option'}
+            options={property.options.options}
+            onChange={field.onChange}
+            initialValues={field.value}
+            disabled={property.options.disabled}></MultiSelectPieceProperty>
+        </AutoFormFieldWrapper>
+      )
+    case PropertyType.DROPDOWN:
+      return (
+        <AutoFormFieldWrapper
+          property={property}
+          allowDynamicValues={allowDynamicValues}
+        >
+          <SelectPieceProperty refreshers={property.refreshers} propertyName={key}></SelectPieceProperty>
+        </AutoFormFieldWrapper>
+      )
     case PropertyType.DATE_TIME:
     case PropertyType.SHORT_TEXT:
     case PropertyType.LONG_TEXT:
     case PropertyType.FILE:
     case PropertyType.NUMBER:
     case PropertyType.MULTI_SELECT_DROPDOWN:
-    case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-    case PropertyType.DROPDOWN:
     case PropertyType.DYNAMIC:
     case PropertyType.SECRET_TEXT:
       return (

@@ -93,7 +93,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               key={selectedAction.name}
               prefixValue="settings.input"
               props={actionPropsWithoutAuth}
-              allowDynamicValues={false}
+              allowDynamicValues={true}
             ></AutoPropertiesFormComponent>
           )}
           {selectedTrigger && (
@@ -101,7 +101,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               key={selectedTrigger.name}
               prefixValue="settings.input"
               props={triggerPropsWithoutAuth}
-              allowDynamicValues={false}
+              allowDynamicValues={true}
             ></AutoPropertiesFormComponent>
           )}
         </>
