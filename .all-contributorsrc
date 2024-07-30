@@ -1190,6 +1190,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Trayshmhirk",
+      "name": "Frank Micheal ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/112286458?v=4",
+      "profile": "https://github.com/Trayshmhirk",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
