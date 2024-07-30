@@ -6,8 +6,8 @@ const statusCodeVariants = cva(
   {
     variants: {
       variant: {
-        success: 'bg-success text-success-foreground',
-        error: 'bg-destructive text-destructive-foreground',
+        success: 'bg-success-100 text-success-300',
+        error: 'bg-destructive-100 text-destructive-300',
         default: 'bg-accent text-accent-foreground',
       },
     },
@@ -16,6 +16,20 @@ const statusCodeVariants = cva(
     },
   },
 );
+
+const innerSpanVariants = cva('', {
+  variants: {
+    variant: {
+      success: 'font-semibold text-success-300',
+      error: 'font-semibold text-destructive-300',
+      default: 'text-accent-foreground',
+    },
+  },
+  defaultVariants: {
+    variant: 'default',
+  },
+});
+
 interface StatusIconWithTextProps
   extends VariantProps<typeof statusCodeVariants> {
   icon: any;
@@ -27,7 +41,7 @@ const StatusIconWithText = React.memo(
     return (
       <span className={statusCodeVariants({ variant })}>
         <Icon className="size-4" />
-        <span>{text}</span>
+        <span className={innerSpanVariants({ variant })}>{text}</span>
       </span>
     );
   },
