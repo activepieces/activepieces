@@ -298,12 +298,17 @@ export const airtableCommon = {
     airtable.fields.forEach((field) => {
       if (!AirtableEnterpriseFields.includes(field.type)) {
         const key = field.id;
+
         if (field.type === 'multipleAttachments') {
           newFields[key] = [
             {
               url: fields[key] as string,
             },
           ];
+        } else if (field.type === 'multipleRecordLinks') {
+          if (Array.isArray(fields[key]) && (fields[key] as any[]).length > 0) {
+            newFields[key] = fields[key];
+          }
         } else {
           newFields[key] = fields[key];
         }

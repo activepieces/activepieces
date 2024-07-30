@@ -38,6 +38,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { telemetry } from '../../helper/telemetry.utils'
 import { webhookResponseWatcher } from '../../workers/helper/webhook-response-watcher'
+import { getJobPriority } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
@@ -288,10 +289,12 @@ export const flowRunService = {
                 logger.error(e, '[FlowRunService#Start] telemetry.trackProject'),
             )
 
+        const priority = await getJobPriority(savedFlowRun.projectId, synchronousHandlerId)
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,
             httpRequestId,
             payload,
+            priority,
             synchronousHandlerId,
             executionType,
             progressUpdateType,
@@ -403,12 +406,12 @@ async function updateLogs({ flowRunId, projectId, executionState }: UpdateLogs):
 }
 
 type UpdateLogs = {
-    flowRunId: string 
+    flowRunId: string
     projectId: ProjectId
     executionState: ExecutionState | null
 }
 
-type FinishParams =  {
+type FinishParams = {
     flowRunId: FlowRunId
     projectId: string
     status: FlowRunStatus

@@ -13,6 +13,7 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { flowQueue } from '../workers/queue'
+import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
 
 const appWebhooks: Record<string, Piece> = {
@@ -100,7 +101,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                             flowId: listener.flowId,
                             simulate: false,
                         },
-                        priority: 'medium',
+                        priority: DEFAULT_PRIORITY,
                     })
                 })))
             }

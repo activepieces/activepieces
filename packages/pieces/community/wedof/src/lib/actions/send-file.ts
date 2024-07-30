@@ -38,23 +38,23 @@ export const sendFile = createAction({
         required: false,
     }),
     typeId: Property.DynamicProperties({
-      displayName: 'Merge Fields',
-      refreshers: ['entityClass', 'Id'],
+      displayName: 'Type du fichier',
+      refreshers: ['entityClass', 'externalId'],
       required: true,
-      props: async ({ auth, entityClass, Id }) => {
+      props: async ({ auth, entityClass, externalId }) => {
         const fields: DynamicPropsValue = {};
         if (!entityClass) {
           console.error('entityClass is undefined');
           return {};
         }
-        if (!Id) {
-          console.error('Id is undefined');
+       if (!externalId) {
+          console.error('externalId is undefined');
           return {};
         }
         try {
           const res = await httpClient.sendRequest({
             method: HttpMethod.GET,
-            url: `${wedofCommon.baseUrl}/${entityClass}/${Id}/files`,
+            url: `${wedofCommon.baseUrl}/${entityClass}/${externalId}/files`,
             headers: {
               'Content-Type': 'application/json',
               'X-Api-Key': auth as unknown as string,
@@ -82,18 +82,56 @@ export const sendFile = createAction({
         return fields;
       },
     }),
-    
-    file: Property.File({
-        displayName: "Fichier a envoyer",
-        required: true,
+    typeFile: Property.StaticDropdown({
+      displayName: "Choisir le format d'envoi du fichier",
+      description: "Permet de choisir la méthode d'envoi du fichier",
+      required: false,
+      defaultValue: "file",
+      options:  {
+          options: [
+            {
+              value: "file",
+              label: 'Attacher un document',
+            },
+            {
+              value: "url",
+              label: "Ajouter à partir d'un lien",
+            },
+          ],
+       disabled : false,
+      },
+      
     }),
-
+  files: Property.DynamicProperties({
+    description: '',
+    displayName: 'ez',
+    required: true,
+    refreshers: ['typeFile'],
+    props: async ({ typeFile }) => {
+      const _type = typeFile as unknown as string;
+      const props: DynamicPropsValue = {};
+      if (_type === "url") {
+        props['fileToDownload'] = Property.LongText({
+          displayName: "Lien vers le document",
+           description: 'URL du fichier à télécharger',
+          required: true,
+      });
+      } else if (_type === "file") {
+        props['file'] = Property.File({
+          displayName: "Fichier a envoyer",
+          required: true,
+      });
+      }
+      return props;
+    },
+  }),
   },
   async run(context) {
-    const message = {
+     const message = {
         title: context.propsValue.title ?? null,
-        typeId: context.propsValue.typeId,
-        file: context.propsValue.file,
+        typeId: String(context.propsValue.typeId['undefined'])?? null,
+        file:context.propsValue.files['file'] ?? null,
+        fileToDownload: context.propsValue.files['fileToDownload'] ?? null,
       };
       return (
         await httpClient.sendRequest({

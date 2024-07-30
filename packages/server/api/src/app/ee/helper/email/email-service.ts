@@ -196,6 +196,25 @@ export const emailService = {
             },
         })
     },
+
+    async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
+        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
+        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const project = await projectService.getOneOrThrow(projectId)
+        
+        await emailSender.send({
+            emails,
+            platformId: project.platformId,
+            templateData: {
+                name: 'trigger-failure',
+                vars: {
+                    flowName,
+                    projectName: project.displayName,
+                },
+            },
+        })
+    },
+
 }
 
 async function getEntityNameForInvitation(userInvitation: UserInvitation): Promise<{ name: string, role: string }> {

@@ -31,13 +31,13 @@ export const getPiecePackage = async (
     projectId: string,
     pkg: Omit<PublicPiecePackage, 'directoryPath'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>,
 ): Promise<PiecePackage> => {
+    const pieceMetadata = await pieceMetadataService.getOrThrow({
+        name: pkg.pieceName,
+        version: pkg.pieceVersion,
+        projectId,
+    })
     switch (pkg.packageType) {
         case PackageType.ARCHIVE: {
-            const pieceMetadata = await pieceMetadataService.getOrThrow({
-                name: pkg.pieceName,
-                version: pkg.pieceVersion,
-                projectId,
-            })
             const archiveFile = await fileService.getOneOrThrow({
                 fileId: pieceMetadata.archiveId!,
             })
@@ -51,7 +51,12 @@ export const getPiecePackage = async (
             }
         }
         case PackageType.REGISTRY: {
-            return pkg
+            return {
+                packageType: PackageType.REGISTRY,
+                pieceName: pkg.pieceName,
+                pieceVersion: pkg.pieceVersion,
+                pieceType: pkg.pieceType,
+            }
         }
     }
 }

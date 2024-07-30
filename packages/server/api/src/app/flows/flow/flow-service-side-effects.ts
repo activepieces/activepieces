@@ -63,6 +63,7 @@ export const flowSideEffects = {
             scheduleOptions: {
                 ...scheduleOptions,
                 type: ScheduleType.CRON_EXPRESSION,
+                failureCount: flowToUpdate.schedule?.failureCount ?? 0,
             },
         }
     },
@@ -102,6 +103,7 @@ export const flowSideEffects = {
             scheduleOptions: {
                 ...scheduleOptions,
                 type: ScheduleType.CRON_EXPRESSION,
+                failureCount: 0,
             },
         }
     },

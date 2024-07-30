@@ -75,7 +75,7 @@ export const PieceOptionRequest = Type.Object({
     pieceType: Type.Enum(PieceType),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
-    stepName: Type.String({}),
+    actionOrTriggerName: Type.String({}),
     propertyName: Type.String({}),
     flowId: Type.String(),
     flowVersionId: Type.String(),

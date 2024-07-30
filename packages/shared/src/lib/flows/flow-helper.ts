@@ -9,6 +9,7 @@ import {
     LoopOnItemsAction,
     SingleActionSchema,
 } from './actions/action'
+import { PopulatedFlow } from './flow'
 import {
     AddActionRequest,
     DeleteActionRequest,
@@ -125,6 +126,17 @@ function traverseInternal(
         step = step.nextAction
     }
     return steps
+}
+
+async function updateFlowSecrets(originalFlow: PopulatedFlow, newFlow: PopulatedFlow): Promise<FlowVersion> {
+    return transferFlow(newFlow.version, (step) => {
+        const oldStep = getStep(originalFlow.version, step.name)
+        if (oldStep?.settings?.input?.auth) {
+            step.settings.input.auth = oldStep.settings.input.auth
+        }
+        return step
+    },
+    )
 }
 
 async function transferStepAsync<T extends Step>(
@@ -706,6 +718,9 @@ function normalize(flowVersion: FlowVersion): FlowVersion {
         (step) => {
             const clonedStep: Step = JSON.parse(JSON.stringify(step))
             clonedStep.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
+            if (clonedStep?.settings?.input?.auth && [ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
+                clonedStep.settings.input.auth = ''
+            }
             return upgradePiece(clonedStep, clonedStep.name)
         },
     )
@@ -1000,5 +1015,6 @@ export const flowHelper = {
     duplicateStep,
     findAvailableStepName,
     doesActionHaveChildren,
+    updateFlowSecrets,
 
 }

@@ -1,30 +1,32 @@
-name: build-cloud-nx
-
+name: CI
 on:
   push:
     branches:
       - main
   pull_request:
 
+permissions:
+  actions: read
+  contents: read
+
 jobs:
   main:
-    name: Nx Cloud - Main Job
-    secrets:
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-    uses: nrwl/ci/.github/workflows/nx-cloud-main.yml@v0.14.0
-    with:
-      number-of-agents: 3
-      init-commands: |
-        npx nx-cloud start-ci-run --stop-agents-after="build" --agent-count=3
-      parallel-commands-on-agents: |
-        npx nx affected --target=lint --parallel=3
-        npx nx affected --target=build -c production --parallel=3
-        npx nx run-many --target=test --projects=engine,shared,server-api --parallel=3
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'npm'
 
-  agents:
-    name: Nx Cloud - Agents
-    secrets:
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-    uses: nrwl/ci/.github/workflows/nx-cloud-agents.yml@v0.14.0
-    with:
-      number-of-agents: 3
+      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js" --agents
+
+      - run: npm ci
+
+      - uses: nrwl/nx-set-shas@v4
+
+      - run: npx nx affected --target=lint --agents
+      - run: npx nx affected --target=build -c production --agents
+      - run: npx nx run-many --target=test --projects=engine,shared,server-api --agents
