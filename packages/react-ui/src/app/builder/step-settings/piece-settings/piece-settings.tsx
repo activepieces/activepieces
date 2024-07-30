@@ -58,7 +58,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
         break;
       }
     }
-    
+
   }, [watchedForm]);
 
   const removeAuthFromProps = (
@@ -68,7 +68,8 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     return rest;
   };
 
-  const propsWithoutAuth = removeAuthFromProps(selectedAction?.props ?? {});
+  const actionPropsWithoutAuth = removeAuthFromProps(selectedAction?.props ?? {});
+  const triggerPropsWithoutAuth = removeAuthFromProps(selectedTrigger?.props ?? {});
 
   return (
     <div
@@ -91,7 +92,15 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
             <AutoPropertiesFormComponent
               key={selectedAction.name}
               prefixValue="settings.input"
-              props={propsWithoutAuth}
+              props={actionPropsWithoutAuth}
+              allowDynamicValues={false}
+            ></AutoPropertiesFormComponent>
+          )}
+          {selectedTrigger && (
+            <AutoPropertiesFormComponent
+              key={selectedTrigger.name}
+              prefixValue="settings.input"
+              props={triggerPropsWithoutAuth}
               allowDynamicValues={false}
             ></AutoPropertiesFormComponent>
           )}

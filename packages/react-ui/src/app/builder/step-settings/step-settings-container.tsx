@@ -1,7 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { useUpdateEffect } from 'react-use';
+import { useEffectOnce, useUpdateEffect } from 'react-use';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Form } from '@/components/ui/form';
 import {
@@ -29,10 +29,9 @@ import { BranchSettings } from './branch-settings/branch-settings';
 import { CodeSettings } from './code-settings/code-settings';
 import { LoopsSettings } from './loops-settings';
 import { formUtils } from '@/features/properties-form/lib/form-utils';
-import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { PieceMetadataModel } from '../../../../../pieces/community/framework/src';
 import { PieceSettings } from './piece-settings/piece-settings';
 import { PieceCardInfo } from '@/features/pieces/components/piece-card-info';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 
 type StepSettingsContainerProps = {
   selectedStep: Action | Trigger;
@@ -47,19 +46,33 @@ const StepSettingsContainer = React.memo(({ selectedStep }: StepSettingsContaine
     state.flowVersion,
   ]);
 
-  const [pieceModel, setPieceModel] = useState<PieceMetadataModel | null>(null);
 
-  useEffect(() => {
-    const pieceName = selectedStep?.settings.pieceName;
-    const pieceVersion = selectedStep?.settings.pieceVersion;
-    if (!pieceName || !pieceVersion) {
-      return;
-    }
+  const { pieceModel } = piecesHooks.usePiece({
+    name: selectedStep?.settings.pieceName,
+    version: selectedStep?.settings.pieceVersion,
+    enabled: selectedStep?.type === ActionType.PIECE || selectedStep?.type === TriggerType.PIECE,
+  })
 
-    piecesApi.get({ name: pieceName, version: pieceVersion }).then(setPieceModel);
-  }, [selectedStep]);
+  const [actionOrTriggerName, setActionOrTriggerName] = useState<string>(selectedStep?.settings?.actionName ?? selectedStep?.settings?.triggerName ?? '');
+
+  const { stepMetadata } = piecesHooks.useStepMetadata({
+    step: selectedStep,
+  })
 
   const { toast } = useToast();
+
+  const debouncedTrigger = useMemo(() => {
+    const updateTrigger = (newTrigger: Trigger) => {
+      applyOperation(
+        {
+          type: FlowOperationType.UPDATE_TRIGGER,
+          request: newTrigger,
+        },
+        () => toast(UNSAVED_CHANGES_TOAST),
+      );
+    };
+    return debounce(updateTrigger, 200);
+  }, [applyOperation]);
   const debouncedAction = useMemo(() => {
     const updateAction = (newAction: Action) => {
       applyOperation(
@@ -78,15 +91,29 @@ const StepSettingsContainer = React.memo(({ selectedStep }: StepSettingsContaine
     mode: 'all',
     context: {
       pieceModel,
-      selectedStep
+      selectedStep,
+      actionOrTriggerName,
     },
-    reValidateMode: 'onChange',
-    defaultValues: formUtils.buildPieceDefaultValue(selectedStep!, pieceModel),
     resolver: (values, context, options) => {
-      const formSchema = formUtils.buildPieceSchema(context.selectedStep, context.pieceModel);
+      const formSchema = formUtils.buildPieceSchema(context.selectedStep.type, context.actionOrTriggerName, context.pieceModel);
       return typeboxResolver(formSchema)(values, context, options);
     }
   })
+
+  const hasExecuted = useRef(false);
+
+  useEffect(() => {
+    if (hasExecuted.current || !selectedStep) {
+      return;
+    }
+    if (!pieceModel && (selectedStep.type === ActionType.PIECE || selectedStep.type === TriggerType.PIECE)) {
+      return;
+    }
+    hasExecuted.current = true;
+    const defaultValues = formUtils.buildPieceDefaultValue(selectedStep, pieceModel ?? null);
+    form.reset(defaultValues)
+    form.trigger()
+  }, [selectedStep, pieceModel]);
 
   const inputChanges = useWatch({
     name: 'settings.input',
@@ -115,19 +142,26 @@ const StepSettingsContainer = React.memo(({ selectedStep }: StepSettingsContaine
 
   useUpdateEffect(() => {
     const currentStep = JSON.parse(JSON.stringify(form.getValues()))
-    const newValue = formUtils.buildPieceDefaultValue(currentStep, pieceModel);
-    console.log("action name changed", newValue);
+    setActionOrTriggerName(currentStep.settings.actionName ?? currentStep.settings.triggerName ?? '');
+    const newValue = formUtils.buildPieceDefaultValue(currentStep, pieceModel!);
     form.reset(newValue);
+    form.trigger()
   }, [actionName, triggerName]);
 
 
   useUpdateEffect(() => {
-    const formSchema = formUtils.buildPieceSchema(selectedStep, pieceModel);
+    const currentStep = JSON.parse(JSON.stringify(form.getValues()))
+    const formSchema = formUtils.buildPieceSchema(currentStep.type, actionOrTriggerName, pieceModel!);
     const castedForm = Value.Clean(
       formSchema,
       JSON.parse(JSON.stringify(form.getValues())),
     ) as Action | Trigger;
-    debouncedAction(castedForm as Action);
+    if (currentStep.type === ActionType.PIECE) {
+      debouncedAction(castedForm as Action);
+    } else if (currentStep.type === TriggerType.PIECE) {
+      debouncedTrigger(castedForm as Trigger);
+    }
+
   }, [inputChanges, itemsChange, conditionsChange, sourceCodeChange]);
 
   const modifiedStep = form.getValues();
@@ -141,7 +175,7 @@ const StepSettingsContainer = React.memo(({ selectedStep }: StepSettingsContaine
           <ResizablePanel defaultSize={55}>
             <ScrollArea className="h-full ">
               <div className="flex flex-col gap-4 px-4">
-                {pieceModel && <PieceCardInfo piece={pieceModel}></PieceCardInfo>}
+                {stepMetadata && <PieceCardInfo piece={stepMetadata}></PieceCardInfo>}
                 {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
                   <LoopsSettings></LoopsSettings>
                 )}
@@ -154,7 +188,10 @@ const StepSettingsContainer = React.memo(({ selectedStep }: StepSettingsContaine
                 {modifiedStep.type === ActionType.PIECE && modifiedStep && (
                   <PieceSettings step={modifiedStep}></PieceSettings>
                 )}
-                {[ActionType.CODE, TriggerType.PIECE, ActionType.PIECE].includes(modifiedStep.type) && (
+                {modifiedStep.type === TriggerType.PIECE && modifiedStep && (
+                  <PieceSettings step={modifiedStep}></PieceSettings>
+                )}
+                {[ActionType.CODE, ActionType.PIECE].includes(modifiedStep.type as ActionType) && (
                   <ActionErrorHandlingForm
                     hideContinueOnFailure={
                       modifiedStep.settings.errorHandlingOptions

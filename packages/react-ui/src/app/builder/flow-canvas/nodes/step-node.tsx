@@ -47,7 +47,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     );
   });
 
-  const { pieceMetadata } = piecesHooks.useStepMetadata({
+  const { stepMetadata } = piecesHooks.useStepMetadata({
     step: data.step!,
   });
 
@@ -105,14 +105,14 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
             >
               <div className="flex h-full items-center justify-between gap-4 w-full">
                 <div className="flex items-center justify-center min-w-[46px] h-full">
-                  <img src={pieceMetadata?.logoUrl} width="46" height="46" />
+                  <img src={stepMetadata?.logoUrl} width="46" height="46" />
                 </div>
                 <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
                   <div className="text-sm text-ellipsis overflow-hidden whitespace-nowrap w-full">
                     {data.step!.displayName}
                   </div>
                   <div className="text-xs text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
-                    {pieceMetadata?.displayName}
+                    {stepMetadata?.displayName}
                   </div>
                 </div>
               </div>

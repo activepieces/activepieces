@@ -25,7 +25,7 @@ export const piecesApi = {
       version: request.version ?? undefined,
     });
   },
-  getMetadata(step: Action | Trigger) => {
+  async getMetadata(step: Action | Trigger): Promise<StepMetadata> {
       switch (step.type) {
         case ActionType.BRANCH:
           return {
@@ -54,7 +54,6 @@ export const piecesApi = {
         case ActionType.PIECE:
         case TriggerType.PIECE: {
           const { pieceName, pieceVersion } = step.settings;
-          // TODO optmize the query and use cached version
           const piece = await piecesApi.get({
             name: pieceName,
             version: pieceVersion,

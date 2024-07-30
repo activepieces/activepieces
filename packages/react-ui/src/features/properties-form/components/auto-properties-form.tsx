@@ -14,6 +14,7 @@ import {
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
+import { JsonEditor } from '@/components/custom/json-editior';
 
 type AutoFormProps = {
   props: PiecePropertyMap;
@@ -34,7 +35,7 @@ const AutoPropertiesFormComponent = React.memo(
               name={prefixValue + '.' + key}
               control={form.control}
               render={({ field }) =>
-                selectRightComponent(field, key, props[key], allowDynamicValues)
+                selectRightComponent(field, key, prefixValue + '.' + key, props[key], allowDynamicValues)
               }
             />
           );
@@ -47,6 +48,7 @@ const AutoPropertiesFormComponent = React.memo(
 const selectRightComponent = (
   field: ControllerRenderProps<Record<string, any>, string>,
   key: string,
+  inputName: string,
   property: PieceProperty,
   allowDynamicValues: boolean,
 ) => {
@@ -57,7 +59,7 @@ const selectRightComponent = (
           property={property}
           allowDynamicValues={allowDynamicValues}
         >
-          <ArrayInput items={[]} onChange={(items) => {}}></ArrayInput>
+          <ArrayInput inputName={inputName}></ArrayInput>
         </AutoFormFieldWrapper>
       );
     case PropertyType.OBJECT:
@@ -66,7 +68,7 @@ const selectRightComponent = (
           property={property}
           allowDynamicValues={allowDynamicValues}
         >
-          <DictionaryInput values={{}} onChange={() => {}}></DictionaryInput>
+          <DictionaryInput values={field.value} onChange={field.onChange}></DictionaryInput>
         </AutoFormFieldWrapper>
       );
     case PropertyType.CHECKBOX:
@@ -100,12 +102,20 @@ const selectRightComponent = (
           ></SearchableSelect>
         </AutoFormFieldWrapper>
       );
+    case PropertyType.JSON:
+      return (
+        <AutoFormFieldWrapper
+          property={property}
+          allowDynamicValues={allowDynamicValues}
+        >
+          <JsonEditor intialValue={field.value} onChange={field.onChange}></JsonEditor>
+        </AutoFormFieldWrapper>
+      );
     case PropertyType.DATE_TIME:
     case PropertyType.SHORT_TEXT:
     case PropertyType.LONG_TEXT:
     case PropertyType.FILE:
     case PropertyType.NUMBER:
-    case PropertyType.JSON:
     case PropertyType.MULTI_SELECT_DROPDOWN:
     case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
     case PropertyType.DROPDOWN:

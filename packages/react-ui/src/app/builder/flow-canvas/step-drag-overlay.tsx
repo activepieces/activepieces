@@ -6,7 +6,7 @@ type StepDragTemplateProps = {
 };
 
 const StepDragOverlay = ({ step }: StepDragTemplateProps) => {
-  const { pieceMetadata} = piecesHooks.useStepMetadata({
+  const { stepMetadata} = piecesHooks.useStepMetadata({
     step: step!,
   });
 
@@ -15,7 +15,7 @@ const StepDragOverlay = ({ step }: StepDragTemplateProps) => {
       <img
         id="logo"
         className="object-contain left-0 right-0  static"
-        src={pieceMetadata?.logoUrl}
+        src={stepMetadata?.logoUrl}
         alt="Step Icon"
       />
     </div>

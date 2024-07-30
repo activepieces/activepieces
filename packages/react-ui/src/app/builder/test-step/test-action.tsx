@@ -63,7 +63,7 @@ const TestActionComponent = React.memo(
       formValues.settings.inputUiInfo?.lastTestDate,
     );
     const { currentSelectedData } = formValues.settings.inputUiInfo ?? {};
-    const sampleDataExists = !isNil(currentSelectedData);
+    const sampleDataExists = !isNil(currentSelectedData) || !isNil(errorMessage);
 
     const socket = useSocket();
 

@@ -11,6 +11,7 @@ import { piecesApi } from './pieces-api';
 type UsePieceProps = {
   name: string;
   version?: string;
+  enabled?: boolean;
 };
 
 type UseMultiplePiecesProps = {
@@ -19,6 +20,7 @@ type UseMultiplePiecesProps = {
 
 type UsePieceMetadata = {
   step: Action | Trigger;
+  enabled?: boolean;
 };
 
 type UsePiecesProps = {
@@ -51,18 +53,18 @@ export const piecesHooks = {
       })),
     });
   },
-  useStepMetadata: ({ step }: UsePieceMetadata) => {
+  useStepMetadata: ({ step, enabled = true }: UsePieceMetadata) => {
     const { type } = step;
     const pieceName = step.settings?.pieceName;
     const pieceVersion = step.settings?.pieceVersion;
     const query = useQuery<StepMetadata, Error>({
       queryKey: ['piece', type, pieceName, pieceVersion],
-      queryFn: async () => 
-      },
+      queryFn: () => piecesApi.getMetadata(step),
       staleTime: Infinity,
+      enabled,
     });
     return {
-      pieceMetadata: query.data,
+      stepMetadata: query.data,
       isLoading: query.isLoading,
     }
   },

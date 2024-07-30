@@ -43,52 +43,41 @@ export const formUtils = {
           },
         };
       case ActionType.CODE:
+        const defaultCode = `export const code = async (inputs) => {
+  return true;
+};`
         return {
           ...selectedStep,
           settings: {
             ...selectedStep.settings,
             sourceCode: {
-              code: selectedStep.settings.sourceCode.code ?? `export const code = async (inputs) => {
-  return true;
-};`,
+              code: selectedStep.settings.sourceCode.code ?? defaultCode,
               packageJson: selectedStep.settings.sourceCode.packageJson ?? '{}',
             },
           },
         };
       case ActionType.PIECE: {
-        const defaultValues =
-          piece && selectedStep.settings.actionName
-            ? formUtils.defaultValues(
-              piece.actions[selectedStep.settings.actionName].props,
-            )
-            : {};
+        const props = piece?.actions?.[selectedStep?.settings?.actionName]?.props ?? {};
+        const input = (selectedStep?.settings?.input ?? {}) as Record<string, unknown>;
+        const defaultValues = getDefaultValueForStep(props, input)
         return {
           ...selectedStep,
           settings: {
             ...selectedStep.settings,
-            input: {
-              ...defaultValues,
-              ...(selectedStep.settings.input ?? {}),
-            },
+            input: defaultValues,
           },
         };
       }
       case TriggerType.PIECE: {
-        const defaultValues =
-          piece && selectedStep.settings.triggerName
-            ? formUtils.defaultValues(
-              piece.triggers[selectedStep.settings.triggerName].props,
-            )
-            : {};
+        const props = piece?.triggers?.[selectedStep?.settings?.triggerName]?.props ?? {};
+        const input = (selectedStep?.settings?.input ?? {}) as Record<string, unknown>;
+        const defaultValues = getDefaultValueForStep(props, input)
+
         return {
           ...selectedStep,
           settings: {
             ...selectedStep.settings,
-            input: {
-              ...defaultValues,
-              ...(selectedStep.settings.input ?? {}),
-
-            },
+            input: defaultValues,
           },
         };
       }
@@ -96,8 +85,7 @@ export const formUtils = {
         throw new Error('Unsupported type: ' + type);
     }
   },
-  buildPieceSchema: (selectedStep: Action | Trigger, piece: PieceMetadataModel | null) => {
-    const { type } = selectedStep;
+  buildPieceSchema: (type: ActionType | TriggerType, actionNameOrTriggerName: string, piece: PieceMetadataModel | null) => {
     switch (type) {
       case ActionType.LOOP_ON_ITEMS:
         return Type.Composite([
@@ -124,74 +112,21 @@ export const formUtils = {
             actionName: Type.String({
               minLength: 1,
             }),
-            input: piece && selectedStep.settings.actionName ? formUtils.buildSchema(piece.actions[selectedStep.settings.actionName].props,) : Type.Object({})
+            input: piece && actionNameOrTriggerName ? formUtils.buildSchema(piece.actions[actionNameOrTriggerName].props,) : Type.Object({})
           }),
         })])
       }
       case TriggerType.PIECE: {
         const formSchema =
-          piece && selectedStep.settings.triggerName
+          (piece && actionNameOrTriggerName)
             ? formUtils.buildSchema(
-              piece.triggers[selectedStep.settings.triggerName].props,
+              piece.triggers[actionNameOrTriggerName].props,
             )
             : Type.Object({});
         return ExactPieceTrigger(formSchema);
       }
       default:
         throw new Error('Unsupported type: ' + type);
-    }
-  },
-  defaultValues: (props: PiecePropertyMap) => {
-    const defaultValues: Record<string, unknown> = {};
-    const entries = Object.entries(props);
-    for (const [name, property] of entries) {
-      switch (property.type) {
-        case PropertyType.MARKDOWN:
-          defaultValues[name] = property.defaultValue ?? '';
-          break;
-        case PropertyType.DATE_TIME:
-        case PropertyType.SHORT_TEXT:
-        case PropertyType.LONG_TEXT:
-        case PropertyType.FILE:
-          defaultValues[name] = property.defaultValue ?? '';
-          break;
-        case PropertyType.CHECKBOX:
-          defaultValues[name] = property.defaultValue ?? '';
-          break;
-        case PropertyType.NUMBER:
-          defaultValues[name] = property.defaultValue ?? '';
-          break;
-        case PropertyType.STATIC_DROPDOWN:
-          defaultValues[name] = property.defaultValue ?? '';
-          break;
-        case PropertyType.DROPDOWN:
-          defaultValues[name] = property.defaultValue ?? '';
-          break;
-        case PropertyType.BASIC_AUTH:
-        case PropertyType.CUSTOM_AUTH:
-        case PropertyType.SECRET_TEXT:
-        case PropertyType.OAUTH2:
-          defaultValues[name] = property.defaultValue ?? '';
-          break;
-        case PropertyType.ARRAY:
-          defaultValues[name] = property.defaultValue ?? [];
-          break;
-        case PropertyType.OBJECT:
-          defaultValues[name] = property.defaultValue ?? {};
-          break;
-        case PropertyType.JSON:
-          defaultValues[name] = property.defaultValue ?? '';
-          break;
-        case PropertyType.MULTI_SELECT_DROPDOWN:
-          defaultValues[name] = [];
-          break;
-        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-          defaultValues[name] = [];
-          break;
-        case PropertyType.DYNAMIC:
-          defaultValues[name] = {};
-          break;
-      }
     }
   },
   buildSchema: (props: PiecePropertyMap) => {
@@ -306,3 +241,41 @@ export const formUtils = {
     return Type.Object(propsSchema);
   },
 };
+
+function getDefaultValueForStep(props: PiecePropertyMap, input: Record<string, unknown>): Record<string, unknown> {
+  const defaultValues: Record<string, unknown> = {};
+  const entries = Object.entries(props);
+  for (const [name, property] of entries) {
+    switch (property.type) {
+      case PropertyType.MARKDOWN:
+      case PropertyType.DATE_TIME:
+      case PropertyType.SHORT_TEXT:
+      case PropertyType.LONG_TEXT:
+      case PropertyType.FILE:
+      case PropertyType.CHECKBOX:
+      case PropertyType.NUMBER:
+      case PropertyType.STATIC_DROPDOWN:
+      case PropertyType.DROPDOWN:
+      case PropertyType.BASIC_AUTH:
+      case PropertyType.CUSTOM_AUTH:
+      case PropertyType.SECRET_TEXT:
+      case PropertyType.OAUTH2:
+      case PropertyType.ARRAY:
+      case PropertyType.OBJECT:
+      case PropertyType.JSON:{
+        defaultValues[name] = input[name] ?? property.defaultValue ?? '';
+        break;
+      }
+      case PropertyType.MULTI_SELECT_DROPDOWN:
+        defaultValues[name] = [];
+        break;
+      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+        defaultValues[name] = [];
+        break;
+      case PropertyType.DYNAMIC:
+        defaultValues[name] = {};
+        break;
+    }
+  }
+  return defaultValues
+}

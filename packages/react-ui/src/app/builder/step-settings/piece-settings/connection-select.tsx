@@ -41,6 +41,8 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
     projectId: authenticationSession.getProjectId(),
   });
 
+  const addBrackets = (str: string) => `{{connections['${str}']}}`; 
+
   return (
     <FormField
       control={form.control}
@@ -51,7 +53,7 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
             piece={params.piece}
             onConnectionCreated={(connectionName) => {
               refetch();
-              field.onChange(connectionName);
+              field.onChange(addBrackets(connectionName));
             }}
             open={connectionDialogOpen}
             setOpen={setConnectionDialogOpen}
@@ -86,7 +88,7 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
                     connectionsPage.data.map((connection) => {
                       return (
                         <SelectItem
-                          value={connection.name}
+                          value={addBrackets(connection.name)}
                           key={connection.name}
                         >
                           {connection.name}

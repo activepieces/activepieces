@@ -69,7 +69,7 @@ const FlowStepDetailsCardItem = React.memo(
 
         return [state.selectStep, isStepSelected, isInPath, step, stepOutput];
       });
-    const { pieceMetadata } = piecesHooks.useStepMetadata({
+    const { stepMetadata } = piecesHooks.useStepMetadata({
       step,
     });
     const [isOpen, setIsOpen] = React.useState(false);
@@ -108,7 +108,7 @@ const FlowStepDetailsCardItem = React.memo(
                   />
                 </Button>
               )}
-              <img className="w-6 h-6" src={pieceMetadata?.logoUrl} />
+              <img className="w-6 h-6" src={stepMetadata?.logoUrl} />
               <div>{step.displayName}</div>
               <div className="flex-grow"></div>
               <div className="flex gap-2 justfy-center items-center">
