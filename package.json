@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.29.1",
-  "rcVersion": "0.30.0-rc.1",
+  "rcVersion": "0.30.0-rc.3",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -22,6 +22,7 @@
   "private": true,
   "dependencies": {
     "@activepieces/import-fresh-webpack": "3.3.0",
+    "@actual-app/api": "6.8.1",
     "@angular/animations": "18.0.3",
     "@angular/cdk": "18.0.3",
     "@angular/common": "18.0.3",
@@ -43,6 +44,7 @@
     "@bull-board/api": "5.9.1",
     "@bull-board/fastify": "5.9.1",
     "@ctrl/ngx-codemirror": "5.1.1",
+    "@datastructures-js/queue": "4.2.3",
     "@fastify/basic-auth": "5.0.0",
     "@fastify/cors": "8.3.0",
     "@fastify/formbody": "7.4.0",

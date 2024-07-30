@@ -124,40 +124,24 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         '/options',
         OptionsPieceRequest,
         async (req) => {
-            const {
-                packageType,
-                pieceType,
-                pieceName,
-                pieceVersion,
-                propertyName,
-                stepName,
-                input,
-                flowVersionId,
-                flowId,
-                searchValue,
-            } = req.body
+            const request = req.body
             const { projectId } = req.principal
             const flow = await flowService.getOnePopulatedOrThrow({
                 projectId,
-                id: flowId,
-                versionId: flowVersionId,
+                id: request.flowId,
+                versionId: request.flowVersionId,
             })
             const engineToken = await accessTokenManager.generateEngineToken({
                 projectId,
             })
             const { result } = await engineRunner.executeProp(engineToken, {
-                piece: await getPiecePackage(projectId, {
-                    packageType,
-                    pieceType,
-                    pieceName,
-                    pieceVersion,
-                }),
+                piece: await getPiecePackage(projectId, request),
                 flowVersion: flow.version,
-                propertyName,
-                stepName,
-                input,
+                propertyName: request.propertyName,
+                actionOrTriggerName: request.actionOrTriggerName,
+                input: request.input,
                 projectId,
-                searchValue,
+                searchValue: request.searchValue,
             })
 
             return result

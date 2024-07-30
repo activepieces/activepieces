@@ -38,6 +38,7 @@ export const askClaude = createAction({
           { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' },
           { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet' },
           { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
+          { value: 'claude-3-5-sonnet-20240620', label: 'Claude 3.5 Sonnet' },
         ],
       },
     }),

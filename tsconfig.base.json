@@ -27,6 +27,9 @@
       "@activepieces/piece-activepieces": [
         "packages/pieces/community/activepieces/src/index.ts"
       ],
+      "@activepieces/piece-actualbudget": [
+        "packages/pieces/community/actualbudget/src/index.ts"
+      ],
       "@activepieces/piece-acumbamail": [
         "packages/pieces/community/acumbamail/src/index.ts"
       ],
@@ -41,6 +44,9 @@
       ],
       "@activepieces/piece-amazon-sqs": [
         "packages/pieces/community/amazon-sqs/src/index.ts"
+      ],
+      "@activepieces/piece-aminos": [
+        "packages/pieces/community/aminos/src/index.ts"
       ],
       "@activepieces/piece-apitable": [
         "packages/pieces/community/apitable/src/index.ts"
@@ -447,6 +453,9 @@
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
       ],
+      "@activepieces/piece-razorpay": [
+        "packages/pieces/community/razorpay/src/index.ts"
+      ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
@@ -697,6 +706,7 @@
         "packages/ui/feature-templates/src/index.ts"
       ],
       "@ee/*": ["packages/ee/*"],
+      "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
       "ee-billing-ui": ["packages/ee/ui/billing/src/index.ts"],
       "ee-components": ["packages/ee/ui/components/src/index.ts"],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
