@@ -257,7 +257,7 @@ const DeleteFlowRequestOptions = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+            [StatusCodes.NO_CONTENT]: Type.Never(),
         },
     },
 }

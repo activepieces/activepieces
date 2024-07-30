@@ -16,14 +16,9 @@ export const createTask = createAction({
       required: true,
       options: {
         options: [
-          {
-            value: "certificationFolders",
-            label: 'Dossier de certification',
-          },
-          {
-            value: "registrationFolders",
-            label: 'Dossier de formation',
-          },
+          {label: "Dossier de certification", value: "CertificationFolder"},
+          {label: "Dossier de formation", value: "RegistrationFolder"},
+          {label: "Proposition commerciale", value: "Proposal"}
         ],
         disabled: false,
       },
@@ -40,7 +35,7 @@ export const createTask = createAction({
     }),
     dueDate: Property.DateTime({
         displayName: "Date d'échéance",
-        description: 'Date au format YYYY-MM-DD.',
+        description: 'Date au format YYYY-MM-DDTHH:mm:ssZ.',
         required: false,
     }),
     type:wedofCommon.tasks,
@@ -62,9 +57,7 @@ export const createTask = createAction({
   async run(context) {
     const message = {
         title: context.propsValue.title ?? null,
-        dueDate: context.propsValue.dueDate
-        ? dayjs(context.propsValue.dueDate).format('YYYY-MM-DD')
-        : null,
+        dueDate: context.propsValue.dueDate ? dayjs(context.propsValue.dueDate) : null,
         eventEndTime: null,
         type: context.propsValue.type,
         qualiopiIndicators: context.propsValue.qualiopiIndicators,
