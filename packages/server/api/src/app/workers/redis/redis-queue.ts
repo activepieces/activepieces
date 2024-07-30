@@ -56,6 +56,9 @@ export const redisQueue: QueueManager = {
             exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`))
             return
         }
+        logger.info({
+            flowVersionId,
+        }, '[redisQueue#removeRepeatingJob] removing the jobs')
         const result = await queue.removeRepeatableByKey(repeatJob)
         if (!result) {
             throw new ActivepiecesError({
