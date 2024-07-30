@@ -22,14 +22,13 @@ export const chargekeepAuth = PieceAuth.SecretText({
 });
 
 export const chargekeep = createPiece({
-  displayName: 'ChargeKeep (Beta)',
-  description: 'ChargeKeep Beta API',
+  displayName: 'ChargeKeep',
+  description: 'Recurring Payments Software',
   auth: chargekeepAuth,
   minimumSupportedRelease: '0.20.0',
-  logoUrl:
-    'https://zapier-images.imgix.net/storage/developer_cli/a981561431e555e4d5e355d3546f368e.png?auto=format&fit=crop&ixlib=react-9.8.1&q=50&w=20&h=20&dpr=1',
+  logoUrl: 'https://cdn.activepieces.com/pieces/chargekeep.png',
   categories: [PieceCategory.COMMERCE, PieceCategory.PAYMENT_PROCESSING],
-  authors: [],
+  authors: ['Trayshmhirk'],
   actions: [
     addOrUpdateContact,
     addOrUpdateContactExtended,
