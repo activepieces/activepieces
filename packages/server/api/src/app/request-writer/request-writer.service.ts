@@ -100,20 +100,19 @@ async function HtmlToMd(html: string): Promise<string>  {
         throw new Error('Failed to convert HTML to Markdown')
     }
 }
-
-export const requestWriterService = {
-    customGPTPrompt: `We're building a something called http request writer based on user prompts.
+const customGPTPrompt = `We're building a something called http request writer based on user prompts.
     First I need to extract from the user prompt the following:
     1. Service Name: The service name that the user want to make an api request to, like: slack, taskade, hubspot, thriveCart, stripe 
     2. API Action: The http request itself like: post a message, list all products. 
     Based on the Service Name and the Action, return an ONLY search query (short, straightforward one) to find the api docs reference on google search, only return the text itself, no quotations, no introduction, always append the word 'api reference' to the query.
-    `,
+    `
+export const requestWriterService = {
 
     async generateSearchQuery({ prompt }: RequestWriteParams): Promise<string> {
         const openAI = getOpenAI()
         const extractedSearchQuery = await openAI.chat.completions.create({
             model: 'gpt-4o-mini',
-            messages: [{ role: 'system', content: this.customGPTPrompt }, { role: 'user', content: prompt }],
+            messages: [{ role: 'system', content: customGPTPrompt }, { role: 'user', content: prompt }],
             temperature: 0.2,
         })
         assertNotNullOrUndefined(

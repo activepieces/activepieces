@@ -14,7 +14,7 @@ import {
   Output,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, tap } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 import { RequestWriterDialogComponent } from './request-writer-dialog/request-writer-dialog.component';
 
 @Component({
@@ -39,9 +39,9 @@ export class HttpRequestWriterComponent {
     this.generateHttpRequestEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.CODE_COPILOT_ENABLED
     );
-    this.showGeneratedHttpRequest$ = this.flagService.isFlagEnabled(
-      ApFlagId.SHOW_COPILOTS
-    );
+    this.showGeneratedHttpRequest$ = this.flagService
+      .isFlagEnabled(ApFlagId.SHOW_COPILOTS)
+      .pipe(map(() => true));
   }
 
   openHttpRequestWriterDialog() {

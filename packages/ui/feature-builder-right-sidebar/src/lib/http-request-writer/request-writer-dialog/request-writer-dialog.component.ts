@@ -15,7 +15,7 @@ import {
 } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
-import { BehaviorSubject, Observable, map, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, of, tap } from 'rxjs';
 import { RequestWriterService } from './request-writer.service';
 @Component({
   selector: 'app-request-writer-dialog',
@@ -30,10 +30,10 @@ export class RequestWriterDialogComponent implements OnInit {
     prompt: FormControl<string>;
     reference: FormControl<string>;
   }>;
-  method$: any;
-  url$: any;
-  body$: any;
-  error$: any;
+  method$?: Observable<unknown>;
+  url$?: Observable<unknown>;
+  body$?: Observable<unknown>;
+  error$?: Observable<boolean>;
   generatedHttpRequest$: BehaviorSubject<Record<string, unknown> | null> =
     new BehaviorSubject<Record<string, unknown> | null>(null);
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
@@ -89,9 +89,6 @@ export class RequestWriterDialogComponent implements OnInit {
           tap((response) => {
             this.promptForm.enable();
             try {
-              // this.generatedHttpRequest$.next(
-              //   this.beautifyResponsePresentation(response.result)
-              // );
               this.generatedHttpRequest$.next(JSON.parse(response.result));
               if (this.stepper.selected) {
                 this.stepper.selected.completed = true;
@@ -105,7 +102,7 @@ export class RequestWriterDialogComponent implements OnInit {
             } catch (e) {
               console.error('Copilot response not valid JSON.');
               console.error((e as Error).message);
-              this.error$ = true;
+              this.error$ = of(true);
             }
             this.loading$.next(false);
           }),
