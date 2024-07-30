@@ -12,11 +12,9 @@ export const syncedAuth = PieceAuth.SecretText({
 
 export const synced = createPiece({
   displayName: "Synced",
-  //auth: PieceAuth.None(),
-  // 'https://syncedtestingapi.azurewebsites.net/api/',
   minimumSupportedRelease: '0.20.0',
   logoUrl: "https://synced.azurewebsites.net/assets/img/sidebar/synced-black-logo.png",
-  authors: ["lldiegon","doskyft","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ["Sam Will"],
   categories: [PieceCategory.COMMERCE, PieceCategory.PAYMENT_PROCESSING],
   auth: syncedAuth,
   actions: [
