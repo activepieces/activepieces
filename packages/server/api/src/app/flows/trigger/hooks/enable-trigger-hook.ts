@@ -113,6 +113,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
                         scheduleOptions: {
                             cronExpression: renewConfiguration.cronExpression,
                             timezone: 'UTC',
+                            failureCount: 0,
                         },
                     })
                     break
@@ -127,6 +128,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
                 engineHelperResponse.result.scheduleOptions = {
                     cronExpression: POLLING_FREQUENCY_CRON_EXPRESSON,
                     timezone: 'UTC',
+                    failureCount: 0,
                 }
                 // BEGIN EE
                 const edition = system.getEdition()

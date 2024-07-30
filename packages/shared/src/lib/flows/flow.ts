@@ -18,6 +18,7 @@ export const FlowScheduleOptions = Type.Object({
     type: Type.Literal(ScheduleType.CRON_EXPRESSION),
     cronExpression: Type.String(),
     timezone: Type.String(),
+    failureCount: Type.Optional(Type.Number()),
 })
 
 export type FlowScheduleOptions = Static<typeof FlowScheduleOptions>

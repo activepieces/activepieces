@@ -45,8 +45,8 @@ export const DelayedJobData = Type.Object({
     flowVersionId: Type.String(),
     runId: Type.String(),
     httpRequestId: Type.Optional(Type.String()),
-    synchronousHandlerId: Type.Union([Type.String(), Type.Null()]),
-    progressUpdateType: Type.Enum(ProgressUpdateType),
+    synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
     jobType: Type.Literal(RepeatableJobType.DELAYED_FLOW),
 
 })
@@ -60,7 +60,7 @@ export const OneTimeJobData = Type.Object({
     environment: Type.Enum(RunEnvironment),
     flowVersionId: Type.String(),
     runId: Type.String(),
-    synchronousHandlerId: Type.Union([Type.String(), Type.Null()]),
+    synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     httpRequestId: Type.Optional(Type.String()),
     payload: Type.Any(),
     executionType: Type.Enum(ExecutionType),

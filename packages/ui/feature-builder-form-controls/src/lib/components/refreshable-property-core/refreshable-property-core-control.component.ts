@@ -118,7 +118,7 @@ export class RefreshablePropertyCoreControlComponent implements OnChanges {
             pieceType: this.pieceMetaData.pieceType,
             pieceVersion: this.pieceMetaData.version,
             propertyName: this.propertyName,
-            stepName: this.actionOrTriggerName,
+            actionOrTriggerName: this.actionOrTriggerName,
             searchValue: res.search,
           })
           .pipe(

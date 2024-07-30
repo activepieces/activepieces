@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { baseUrl } from './lib/common/common';
 import { promptCompletion } from './lib/actions/prompt-completion';
+import { imageGeneration } from './lib/actions/image-generation';
 import { PieceCategory } from '@activepieces/shared';
 
 const markdownDescription = `
@@ -54,6 +55,7 @@ export const straico = createPiece({
   authors: ['dennisrongo'],
   actions: [
     promptCompletion,
+    imageGeneration,
     createCustomApiCallAction({
       auth: straicoAuth,
       baseUrl: () => baseUrl,
