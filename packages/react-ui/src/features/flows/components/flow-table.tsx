@@ -2,7 +2,7 @@ import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon, EllipsisVertical, Import } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import FlowActionMenu from './flow-actions-menu';
@@ -19,6 +19,7 @@ import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FolderBadge } from '@/features/folders/component/folder-badge';
+import { FolderFilterList } from '@/features/folders/component/folder-filter-list';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
@@ -48,6 +49,9 @@ const filters: DataTableFilter[] = [
 const FlowsTable = () => {
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
+  const [selectedFolderId, setSelectedFolderId] = useState<
+    string | undefined
+  >();
 
   async function fetchData(queryParams: URLSearchParams) {
     return flowsApi.list({
@@ -56,8 +60,13 @@ const FlowsTable = () => {
       limit: parseInt(queryParams.get('limit') ?? '10'),
       status: (queryParams.getAll('status') ?? []) as FlowStatus[],
       name: queryParams.get('name') ?? undefined,
+      folderId: selectedFolderId,
     });
   }
+
+  useEffect(() => {
+    setRefresh(refresh + 1);
+  }, [selectedFolderId]);
 
   const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
     PopulatedFlow,
@@ -162,6 +171,7 @@ const FlowsTable = () => {
               readonly={false}
               flowVersion={flow.version}
               onRename={() => setRefresh(refresh + 1)}
+              onMoveTo={() => setRefresh(refresh + 1)}
               onDuplicate={() => setRefresh(refresh + 1)}
               onDelete={() => setRefresh(refresh + 1)}
             >
@@ -174,32 +184,39 @@ const FlowsTable = () => {
   ];
 
   return (
-    <div className="flex-col w-full">
-      <div className="mb-4 flex">
-        <h1 className="text-3xl font-bold">Flows</h1>
-        <div className="ml-auto flex flex-row gap-2">
-          <ImportFlowDialog>
-            <Button variant="outline">
-              <Import className="w-4 h-4 mr-2" />
-              Import Flow
-            </Button>
-          </ImportFlowDialog>
-          <Button
-            variant="default"
-            onClick={() => createFlow()}
-            loading={isCreateFlowPending}
-          >
-            New flow
-          </Button>
-        </div>
-      </div>
-      <DataTable
-        columns={columns}
-        fetchData={fetchData}
-        filters={filters}
+    <div className="flex flex-row gap-4 w-full">
+      <FolderFilterList
         refresh={refresh}
-        onRowClick={(row) => navigate(`/flows/${row.id}`)}
+        selectedFolderId={selectedFolderId}
+        setSelectedFolderId={setSelectedFolderId}
       />
+      <div className="flex-col w-full">
+        <div className="mb-4 flex">
+          <h1 className="text-3xl font-bold">Flows</h1>
+          <div className="ml-auto flex flex-row gap-2">
+            <ImportFlowDialog>
+              <Button variant="outline">
+                <Import className="w-4 h-4 mr-2" />
+                Import Flow
+              </Button>
+            </ImportFlowDialog>
+            <Button
+              variant="default"
+              onClick={() => createFlow()}
+              loading={isCreateFlowPending}
+            >
+              New flow
+            </Button>
+          </div>
+        </div>
+        <DataTable
+          columns={columns}
+          fetchData={fetchData}
+          filters={filters}
+          refresh={refresh}
+          onRowClick={(row) => navigate(`/flows/${row.id}`)}
+        />
+      </div>
     </div>
   );
 };
