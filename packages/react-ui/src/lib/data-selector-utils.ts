@@ -36,19 +36,18 @@ function traverseStepOutputAndReturnMentionTree({
 
   if (isObject) {
     return handleObjectStepOutput({ propertyPath, displayName, stepOutput });
-  } else {
-    const value = formatStepOutput(stepOutput);
-    return {
-      key: propertyPath,
-      data: {
-        propertyPath,
-        displayName,
-        value,
-        isSlice: false,
-      },
-      children: undefined,
-    };
   }
+
+  return {
+    key: propertyPath,
+    data: {
+      propertyPath,
+      displayName,
+      value: formatStepOutput(stepOutput),
+      isSlice: false,
+    },
+    children: undefined,
+  };
 }
 
 const handlingArrayStepOutput = ({
@@ -66,13 +65,11 @@ const handlingArrayStepOutput = ({
   if (stepOutput.length <= MAX_ARRAY_LENGTH_BEFORE_SLICING) {
     return {
       key: lastDisplayName,
-      children: stepOutput.map((v, idx) => {
-        const newPath = `${path}[${idx + startingIndex}]`;
-        const newDisplayName = `${lastDisplayName} ${idx + startingIndex}`;
+      children: stepOutput.map((ouput, idx) => {
         return traverseStepOutputAndReturnMentionTree({
-          stepOutput: v,
-          propertyPath: newPath,
-          displayName: newDisplayName,
+          stepOutput: ouput,
+          propertyPath: `${path}[${idx + startingIndex}]`,
+          displayName: `${lastDisplayName} ${idx + startingIndex}`,
         });
       }),
       data: {
@@ -88,10 +85,10 @@ const handlingArrayStepOutput = ({
     Math.ceil(stepOutput.length / MAX_ARRAY_LENGTH_BEFORE_SLICING),
   ).fill(0);
   const children: MentionTreeNode[] = [];
-  numberOfSlices.forEach((_, i) => {
-    const startingIndex = i * MAX_ARRAY_LENGTH_BEFORE_SLICING;
+  numberOfSlices.forEach((_, idx) => {
+    const startingIndex = idx * MAX_ARRAY_LENGTH_BEFORE_SLICING;
     const endingIndex =
-      Math.min((i + 1) * MAX_ARRAY_LENGTH_BEFORE_SLICING, stepOutput.length) -
+      Math.min((idx + 1) * MAX_ARRAY_LENGTH_BEFORE_SLICING, stepOutput.length) -
       1;
     const displayName = `${lastDisplayName} ${startingIndex}-${endingIndex}`;
     const sliceOutput = handlingArrayStepOutput({
