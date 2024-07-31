@@ -71,7 +71,6 @@ export const DictionaryInput = ({ values, onChange }: DictionaryInputProps) => {
           <div className="basis-[50%] max-w-[50%]">
             <TextInputWithMentions
               originalValue={value}
-              extraClasses=""
               onChange={(e) => onChangeValue(index, e, undefined)}
             ></TextInputWithMentions>
           </div>

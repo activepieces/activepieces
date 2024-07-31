@@ -13,7 +13,7 @@ type UsePieceProps = {
 };
 type Step = Action | Trigger;
 type UseStepMetadata = {
-  step: Action | Trigger;
+  step: Step;
 };
 type UseStepsMetadata = Step[];
 
@@ -25,14 +25,21 @@ type UsePiecesProps = {
   searchQuery?: string;
 };
 
-export type StepMetadata = {
+export type StepMetadata<
+  T extends ActionType | TriggerType = ActionType | TriggerType,
+> = {
   displayName: string;
   logoUrl: string;
   description: string;
-  pieceName: string;
-  pieceVersion: string;
-  type: ActionType | TriggerType;
+  type: T;
+  pieceName: T extends ActionType.PIECE | TriggerType.PIECE
+    ? string
+    : undefined;
+  pieceVersion: T extends ActionType.PIECE | TriggerType.PIECE
+    ? string
+    : undefined;
 };
+
 export const piecesHooks = {
   usePiece: ({ name, version }: UsePieceProps) => {
     return useQuery<PieceMetadataModel, Error>({
@@ -42,7 +49,7 @@ export const piecesHooks = {
     });
   },
   useStepMetadata: ({ step }: UseStepMetadata) => {
-    return useQuery<StepMetadata, Error>(stepMetadataQueryBuilder({ step }));
+    return useQuery<StepMetadata, Error>(stepMetadataQueryBuilder(step));
   },
   useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
     return useQueries({
@@ -54,9 +61,8 @@ export const piecesHooks = {
     });
   },
   useStepsMetadata: (props: UseStepsMetadata) => {
-    const queries = props.map((step) => stepMetadataQueryBuilder({ step }));
     return useQueries({
-      queries,
+      queries: props.map((step) => stepMetadataQueryBuilder(step)),
     });
   },
   usePieces: ({ searchQuery }: UsePiecesProps) => {
@@ -68,19 +74,18 @@ export const piecesHooks = {
   },
 };
 
-function stepMetadataQueryBuilder({ step }: { step: Action | Trigger }) {
+function stepMetadataQueryBuilder(step: Step) {
   const isPieceStep =
     step.type === ActionType.PIECE || step.type === TriggerType.PIECE;
-  const pieceName = isPieceStep ? step.settings.pieceName : `${step.type}`;
-  const pieceVersion = isPieceStep ? step.settings.pieceVersion : ``;
-  const type = step.type;
+  const pieceName = isPieceStep ? step.settings.pieceName : undefined;
+  const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
   return {
-    queryKey: ['piece', type, pieceName, pieceVersion],
+    queryKey: ['piece', step.type, pieceName, pieceVersion],
     queryFn: async () => {
-      const metadata = await getStepMetadata(type, pieceName, pieceVersion);
+      const metadata = await getStepMetadata(step);
       return {
         ...metadata,
-        type,
+        type: step.type,
         pieceName,
         pieceVersion,
       };
@@ -89,51 +94,53 @@ function stepMetadataQueryBuilder({ step }: { step: Action | Trigger }) {
   };
 }
 
-async function getStepMetadata(
-  type: ActionType | TriggerType,
-  pieceName: string,
-  pieceVersion: string,
-): Promise<StepMetadata> {
-  const metadataExtractor = async () => {
-    switch (type) {
-      case ActionType.BRANCH:
-        return {
-          displayName: 'Branch',
-          logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
-          description: 'Branch',
-        };
-      case ActionType.CODE:
-        return {
-          displayName: 'Code',
-          logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
-          description: 'Powerful nodejs & typescript code with npm',
-        };
-      case ActionType.LOOP_ON_ITEMS:
-        return {
-          displayName: 'Loop on Items',
-          logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
-          description: 'Iterate over a list of items',
-        };
-      case TriggerType.EMPTY:
-        return {
-          displayName: 'Empty Trigger',
-          logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
-          description: 'Empty Trigger',
-        };
-      case ActionType.PIECE:
-      case TriggerType.PIECE: {
-        // TODO optmize the query and use cached version
-        const piece = await piecesApi.get({
-          name: pieceName,
-          version: pieceVersion,
-        });
-        return {
-          displayName: piece.displayName,
-          logoUrl: piece.logoUrl,
-          description: piece.description,
-        };
-      }
+async function getStepMetadata(step: Step): Promise<StepMetadata> {
+  switch (step.type) {
+    case ActionType.BRANCH:
+      return {
+        displayName: 'Branch',
+        logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
+        description: 'Branch',
+        type: ActionType.BRANCH,
+      };
+    case ActionType.CODE:
+      return {
+        displayName: 'Code',
+        logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
+        description: 'Powerful nodejs & typescript code with npm',
+        type: ActionType.CODE,
+      };
+    case ActionType.LOOP_ON_ITEMS:
+      return {
+        displayName: 'Loop on Items',
+        logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
+        description: 'Iterate over a list of items',
+        type: ActionType.LOOP_ON_ITEMS,
+      };
+    case TriggerType.EMPTY: {
+      return {
+        displayName: 'Empty Trigger',
+        logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
+        description: 'Empty Trigger',
+        type: TriggerType.EMPTY,
+      };
     }
-  };
-  return { ...(await metadataExtractor()), pieceName, pieceVersion, type };
+    case ActionType.PIECE:
+    case TriggerType.PIECE: {
+      // TODO optmize the query and use cached version
+
+      const piece = await piecesApi.get({
+        name: step.settings.pieceName,
+        version: step.settings.pieceVersion,
+      });
+      return {
+        displayName: piece.displayName,
+        logoUrl: piece.logoUrl,
+        description: piece.description,
+        type: step.type,
+        pieceName: step.settings.pieceName,
+        pieceVersion: step.settings.pieceVersion,
+      };
+    }
+  }
 }

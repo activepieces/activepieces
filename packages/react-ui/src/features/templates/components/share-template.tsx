@@ -1,17 +1,17 @@
+import { FlowOperationType, FlowTemplate } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import { LoadingSpinner } from '../../../components/ui/spinner';
+import { PieceIconList } from '../../pieces/components/piece-icon-list';
+import { templatesApi } from '../lib/templates-api';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/seperator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { FlowOperationType, FlowTemplate } from '@activepieces/shared';
-
-import { LoadingSpinner } from '../../../components/ui/spinner';
-import { PieceIconList } from '../../pieces/components/piece-icon-list';
-import { templatesApi } from '../lib/templates-api';
 
 const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
   const navigate = useNavigate();

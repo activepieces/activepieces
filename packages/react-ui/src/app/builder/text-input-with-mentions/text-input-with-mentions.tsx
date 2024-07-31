@@ -15,14 +15,11 @@ import { useBuilderStateContext } from '../builder-hooks';
 
 import { textMentionUtils } from '@/lib/text-input-utils';
 
-const defaultClassName =
-  ' w-full  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';
 type TextInputWithMentionsProps = {
   className?: string;
   originalValue?: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  extraClasses?: string;
 };
 const extensions = (placeholder?: string) => {
   return [
@@ -50,12 +47,13 @@ const extensions = (placeholder?: string) => {
   ];
 };
 
+const defaultClassName =
+  ' w-full  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';
 export const TextInputWithMentions = ({
   className,
   originalValue,
   onChange,
   placeholder,
-  extraClasses,
 }: TextInputWithMentionsProps) => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
   const piecesMetadata = piecesHooks.useStepsMetadata(
@@ -121,7 +119,7 @@ export const TextInputWithMentions = ({
     },
     editorProps: {
       attributes: {
-        class: className ?? defaultClassName + ' ' + extraClasses,
+        class: className ?? defaultClassName,
       },
     },
     onUpdate: ({ editor }) => {

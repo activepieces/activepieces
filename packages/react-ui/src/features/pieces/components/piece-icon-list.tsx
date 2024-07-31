@@ -24,7 +24,7 @@ export function PieceIconList({
 
   const uniqueMetadata: StepMetadata[] = Array.from(
     new Map<string, StepMetadata>(
-      stepsMetadata.map((item) => [item.pieceName, item]),
+      stepsMetadata.map((item) => [item.pieceName ?? item.type, item]),
     ).values(),
   );
 
@@ -36,12 +36,12 @@ export function PieceIconList({
         <div className="flex gap-2">
           {visibleMetadata.map((metadata, index) => (
             <PieceIcon
-              logoUrl={metadata?.logoUrl || ''}
+              logoUrl={metadata.logoUrl}
               showTooltip={false}
               circle={true}
               size={'md'}
               border={true}
-              displayName={metadata?.displayName || ''}
+              displayName={metadata.displayName}
               key={index}
             />
           ))}
