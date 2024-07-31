@@ -24,22 +24,18 @@ import { StepSettings } from './step-settings/step-settings-container';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const useAnimateSidebar = (
-  isSidebarClosed: () => boolean,
   sidebarValue: LeftSideBarType | RightSideBarType,
 ) => {
   const handleRef = useRef<ImperativePanelHandle>(null);
+  const sidebarbarClosed = [LeftSideBarType.NONE, RightSideBarType.NONE].includes(sidebarValue);
   useEffect(() => {
-    if (
-      !isSidebarClosed() &&
-      (handleRef.current?.getSize() === 0 ||
-        handleRef.current?.getSize() === undefined)
-    ) {
-      handleRef.current?.resize(25);
-    } else if (isSidebarClosed()) {
-      console.log(handleRef.current);
+    const sidebarSize = handleRef.current?.getSize() ?? 0;
+    if (sidebarbarClosed) {
       handleRef.current?.resize(0);
+    } else if (sidebarSize === 0){
+      handleRef.current?.resize(25);
     }
-  }, [handleRef, isSidebarClosed, sidebarValue]);
+  }, [handleRef, sidebarValue]);
   return handleRef;
 };
 const animateResizeClassName = `transition-all duration-200`;
