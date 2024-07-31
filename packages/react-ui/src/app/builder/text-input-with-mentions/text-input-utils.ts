@@ -1,13 +1,15 @@
 import {
-  ActionType,
-  flowHelper,
-  FlowVersion,
-  TriggerType,
+  Action,
+  Trigger,
 } from '@activepieces/shared';
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
-
 import { StepMetadata } from '../../../features/pieces/lib/pieces-hook';
+
+
+const removeIntroplationBrackets = (text: string) => {
+  return text.slice(2, text.length - 2);
+};
 
 const removeQuotes = (text: string) => {
   if (
@@ -94,53 +96,28 @@ const parseTextAndHardBreakNodes = (item: string) => {
       return hardBreak;
     });
 };
+
+
 const getStepMetadataFromPath = (
   path: string,
-  flowVersion: FlowVersion,
-  stepsMetadata: StepMetadata[],
+  steps: (Action | Trigger)[],
+  stepsMetadata: (StepMetadata | undefined)[],
 ) => {
-  const itemPathWithoutInterpolationDenotation = path.slice(2, path.length - 2);
-
-  const stepName = textMentionUtils.keysWithinPath(
-    itemPathWithoutInterpolationDenotation,
-  )[0];
-  const step = flowHelper.getStep(flowVersion, stepName);
-
-  if (step) {
-    const dfsIndex = flowHelper.findStepDfsIndex(
-      flowVersion.trigger,
-      step.name,
-    );
-
-    const data = stepsMetadata.find((res) => {
-      if (
-        (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) &&
-        res.type === step.type
-      ) {
-        return res.pieceName === step.settings.pieceName;
-      }
-      return res.type === step.type;
-    });
-
-    if (data) {
-      return {
-        ...data,
-        dfsIndex,
-      };
-    }
-  }
-  return undefined;
+  const stepPath = removeIntroplationBrackets(path);
+  const stepName = textMentionUtils.keysWithinPath(stepPath)[0];
+  const index = steps.findIndex((step) => step.name === stepName);
+  return {
+    dfsIndex: index,
+    stepMetadata: stepsMetadata[index]
+  };
 };
 
-function convertTextToTipTapJsonContent({
-  userInputText,
-  piecesMetadata,
-  flowVersion,
-}: {
-  userInputText: string;
-  piecesMetadata: StepMetadata[];
-  flowVersion: FlowVersion;
-}): {
+
+function convertTextToTipTapJsonContent(
+  userInputText: string,
+  steps: (Action | Trigger)[],
+  stepsMetadata: (StepMetadata | undefined)[],
+): {
   type: TipTapNodeTypes.paragraph;
   content: JSONContent[];
 } {
@@ -148,17 +125,17 @@ function convertTextToTipTapJsonContent({
     .split(/(\{\{.*?\}\})/)
     .filter((el) => el);
   const contentNodes: JSONContent[] = inputSplitToNodesContent.map((nc) => {
-    const metadata = getStepMetadataFromPath(nc, flowVersion, piecesMetadata);
+    const { stepMetadata, dfsIndex } = getStepMetadataFromPath(nc, steps, stepsMetadata);
     return isMentionNodeText(nc)
       ? parseMentionNodeFromText({
-          path: nc,
-          stepDisplayName: metadata?.displayName ?? '',
-          stepLogoUrl: metadata?.logoUrl ?? '',
-          stepDfsIndex: metadata?.dfsIndex ?? 0,
-        })
+        path: nc,
+        stepDisplayName: stepMetadata?.displayName ?? '',
+        stepLogoUrl: stepMetadata?.logoUrl ?? '',
+        stepDfsIndex: dfsIndex ?? 0,
+      })
       : nc.includes('\n')
-      ? parseTextAndHardBreakNodes(nc)
-      : { type: TipTapNodeTypes.text, text: nc };
+        ? parseTextAndHardBreakNodes(nc)
+        : { type: TipTapNodeTypes.text, text: nc };
   });
   return { type: TipTapNodeTypes.paragraph, content: contentNodes.flat(1) };
 }

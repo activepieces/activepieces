@@ -1098,6 +1098,5 @@ export const flowHelper = {
     findAvailableStepName,
     doesActionHaveChildren,
     findPathToStep,
-    findStepDfsIndex,
     updateFlowSecrets,
 }

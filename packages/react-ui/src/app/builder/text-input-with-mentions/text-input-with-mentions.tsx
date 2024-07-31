@@ -7,12 +7,9 @@ import Paragraph from '@tiptap/extension-paragraph';
 import Placeholder from '@tiptap/extension-placeholder';
 import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
-
 import './tip-tap.css';
-
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import { useBuilderStateContext } from '../builder-hooks';
-
 import { textMentionUtils } from './text-input-utils';
 
 type TextInputWithMentionsProps = {
@@ -47,6 +44,7 @@ const extensions = (placeholder?: string) => {
   ];
 };
 
+
 export const TextInputWithMentions = ({
   className,
   originalValue,
@@ -54,28 +52,22 @@ export const TextInputWithMentions = ({
   placeholder,
 }: TextInputWithMentionsProps) => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
+  const steps = flowHelper.getAllSteps(flowVersion.trigger)
   const stepsMetadata = piecesHooks
-    .useStepsMetadata(flowHelper.getAllSteps(flowVersion.trigger))
+    .useStepsMetadata(steps)
     .map((res) => res.data)
-    .filter((res) => res !== undefined);
+
   const setInsertMentionHandler = useBuilderStateContext(
     (state) => state.setInsertMentionHandler,
   );
 
   const insertMention = (propertyPath: string) => {
-    const jsonContent = textMentionUtils.convertTextToTipTapJsonContent({
-      userInputText: `{{${propertyPath}}}`,
-      piecesMetadata: stepsMetadata,
-      flowVersion: flowVersion,
-    });
+    const jsonContent = textMentionUtils.convertTextToTipTapJsonContent(`{{${propertyPath}}}`, steps, stepsMetadata);
     editor?.chain().focus().insertContent(jsonContent.content).run();
   };
+
   const content = [
-    textMentionUtils.convertTextToTipTapJsonContent({
-      userInputText: originalValue ?? '',
-      piecesMetadata: stepsMetadata,
-      flowVersion: flowVersion,
-    }),
+    textMentionUtils.convertTextToTipTapJsonContent(originalValue ?? '', steps, stepsMetadata)
   ];
   const editor = useEditor({
     extensions: extensions(placeholder),
