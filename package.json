@@ -38,7 +38,7 @@
     "@anthropic-ai/sdk": "0.19.0",
     "@auth0/angular-jwt": "5.1.2",
     "@authenio/samlify-node-xmllint": "2.0.0",
-    "@aws-sdk/client-s3": "3.620.1",
+    "@aws-sdk/client-s3": "3.621.0",
     "@azure/openai": "1.0.0-beta.11",
     "@babel/runtime": "7.22.11",
     "@bull-board/api": "5.9.1",
