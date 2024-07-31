@@ -36,15 +36,27 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
     const stepNeedsTesting = isNil(
       step.settings.inputUiInfo?.currentSelectedData,
     );
+    const displayName = `${step.dfsIndex}. ${step.displayName}`;
     if (stepNeedsTesting) {
       return {
+        key: step.name,
         data: {
-          displayName: step.displayName,
+          displayName,
           propertyPath: step.name,
-          isTestStepNode: true,
+          isTestStepNode: false,
           isSlice: false,
         },
-        key: step.name,
+        children: [
+          {
+            data: {
+              displayName: displayName,
+              propertyPath: step.name,
+              isTestStepNode: true,
+              isSlice: false,
+            },
+            key: `test_${step.name}`,
+          },
+        ],
       };
     }
     const stepMentionNode: MentionTreeNode =
@@ -54,7 +66,13 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
         displayName: step.displayName,
       });
 
-    return stepMentionNode;
+    return {
+      ...stepMentionNode,
+      data: {
+        ...stepMentionNode.data,
+        displayName,
+      },
+    };
   });
 };
 
@@ -63,7 +81,7 @@ const DataSelector = () => {
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
 
   const nodes = useBuilderStateContext(getAllStepsMentions);
-
+  console.log(nodes);
   return (
     <div
       className={cn(

@@ -130,7 +130,7 @@ function convertTextToTipTapJsonContent(
           path: nc,
           stepDisplayName: stepMetadata?.displayName ?? '',
           stepLogoUrl: stepMetadata?.logoUrl ?? '',
-          stepDfsIndex: dfsIndex ?? 0,
+          stepDfsIndex: dfsIndex + 1 ?? 0,
         })
       : nc.includes('\n')
       ? parseTextAndHardBreakNodes(nc)
