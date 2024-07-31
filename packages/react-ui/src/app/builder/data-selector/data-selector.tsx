@@ -1,9 +1,12 @@
+import { flowHelper, isNil } from '@activepieces/shared';
 import { useState } from 'react';
 
-import { cn } from '@/lib/utils';
-
 import { ScrollArea } from '../../../components/ui/scroll-area';
-import { builderSelectors, useBuilderStateContext } from '../builder-hooks';
+import {
+  dataSelectorUtils,
+  MentionTreeNode,
+} from '../../../lib/data-selector-utils';
+import { BuilderState, useBuilderStateContext } from '../builder-hooks';
 
 import { DataSelectorNode } from './data-selector-node';
 import {
@@ -11,11 +14,55 @@ import {
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
 
+import { cn } from '@/lib/utils';
+
+const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
+  state,
+) => {
+  const { selectedStep, flowVersion } = state;
+  if (!selectedStep || !flowVersion || !flowVersion.trigger) {
+    return [];
+  }
+  const targetStep = flowHelper.getStep(flowVersion, selectedStep.stepName);
+  if (!targetStep) {
+    return [];
+  }
+  const pathToTargetStep = flowHelper.findPathToStep({
+    targetStep,
+    trigger: flowVersion.trigger,
+  });
+
+  return pathToTargetStep.map((step) => {
+    const stepNeedsTesting = isNil(
+      step.settings.inputUiInfo?.currentSelectedData,
+    );
+    if (stepNeedsTesting) {
+      return {
+        data: {
+          displayName: step.displayName,
+          propertyPath: step.name,
+          isTestStepNode: true,
+          isSlice: false,
+        },
+        key: step.name,
+      };
+    }
+    const stepMentionNode: MentionTreeNode =
+      dataSelectorUtils.traverseStepOutputAndReturnMentionTree({
+        stepOutput: step.settings.inputUiInfo?.currentSelectedData,
+        propertyPath: step.name,
+        displayName: step.displayName,
+      });
+
+    return stepMentionNode;
+  });
+};
+
 const DataSelector = () => {
   const [DataSelectorSize, setDataSelectorSize] =
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
 
-  const nodes = useBuilderStateContext(builderSelectors.getAllStepsMentions);
+  const nodes = useBuilderStateContext(getAllStepsMentions);
 
   return (
     <div

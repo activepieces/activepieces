@@ -1,11 +1,8 @@
-import {
-  Action,
-  Trigger,
-} from '@activepieces/shared';
+import { Action, Trigger } from '@activepieces/shared';
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
-import { StepMetadata } from '../../../features/pieces/lib/pieces-hook';
 
+import { StepMetadata } from '../../../features/pieces/lib/pieces-hook';
 
 const removeIntroplationBrackets = (text: string) => {
   return text.slice(2, text.length - 2);
@@ -97,7 +94,6 @@ const parseTextAndHardBreakNodes = (item: string) => {
     });
 };
 
-
 const getStepMetadataFromPath = (
   path: string,
   steps: (Action | Trigger)[],
@@ -108,10 +104,9 @@ const getStepMetadataFromPath = (
   const index = steps.findIndex((step) => step.name === stepName);
   return {
     dfsIndex: index,
-    stepMetadata: stepsMetadata[index]
+    stepMetadata: stepsMetadata[index],
   };
 };
-
 
 function convertTextToTipTapJsonContent(
   userInputText: string,
@@ -125,17 +120,21 @@ function convertTextToTipTapJsonContent(
     .split(/(\{\{.*?\}\})/)
     .filter((el) => el);
   const contentNodes: JSONContent[] = inputSplitToNodesContent.map((nc) => {
-    const { stepMetadata, dfsIndex } = getStepMetadataFromPath(nc, steps, stepsMetadata);
+    const { stepMetadata, dfsIndex } = getStepMetadataFromPath(
+      nc,
+      steps,
+      stepsMetadata,
+    );
     return isMentionNodeText(nc)
       ? parseMentionNodeFromText({
-        path: nc,
-        stepDisplayName: stepMetadata?.displayName ?? '',
-        stepLogoUrl: stepMetadata?.logoUrl ?? '',
-        stepDfsIndex: dfsIndex ?? 0,
-      })
+          path: nc,
+          stepDisplayName: stepMetadata?.displayName ?? '',
+          stepLogoUrl: stepMetadata?.logoUrl ?? '',
+          stepDfsIndex: dfsIndex ?? 0,
+        })
       : nc.includes('\n')
-        ? parseTextAndHardBreakNodes(nc)
-        : { type: TipTapNodeTypes.text, text: nc };
+      ? parseTextAndHardBreakNodes(nc)
+      : { type: TipTapNodeTypes.text, text: nc };
   });
   return { type: TipTapNodeTypes.paragraph, content: contentNodes.flat(1) };
 }

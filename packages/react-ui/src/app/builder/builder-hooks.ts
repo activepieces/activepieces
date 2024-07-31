@@ -1,8 +1,3 @@
-import { createContext, useContext } from 'react';
-import { create, useStore } from 'zustand';
-
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { PromiseQueue } from '@/lib/promise-queue';
 import {
   ActionType,
   ExecutionState,
@@ -13,8 +8,11 @@ import {
   StepOutput,
   flowHelper,
 } from '@activepieces/shared';
+import { createContext, useContext } from 'react';
+import { create, useStore } from 'zustand';
 
-import { MentionTreeNode, dataSelector } from '../../lib/data-selector-utils';
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PromiseQueue } from '@/lib/promise-queue';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -204,7 +202,7 @@ function getStepOutputFromExecutionPath({
 
 function getStateAtPath(
   currentPath: StepPathWithName,
-  steps: Record<string, StepOutput>
+  steps: Record<string, StepOutput>,
 ): Record<string, StepOutput> {
   let targetMap = steps;
   currentPath.path.forEach(([stepName, iteration]) => {
@@ -219,66 +217,6 @@ function getStateAtPath(
   return targetMap;
 }
 
-const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
-  state,
-) => {
-  const { selectedStep, flowVersion } = state;
-  if (!selectedStep || !flowVersion || !flowVersion.trigger) {
-    return [];
-  }
-  const step = flowHelper.getStep(flowVersion, selectedStep.stepName);
-  if (!step) {
-    return [];
-  }
-  const path = flowHelper.findPathToStep({
-    stepToFind: step,
-    trigger: flowVersion?.trigger,
-  });
-
-  return path.map((s) => {
-    const stepMentionNode: MentionTreeNode =
-      dataSelector.traverseStepOutputAndReturnMentionTree({
-        stepOutput: s.settings.inputUiInfo?.currentSelectedData,
-        propertyPath: s.name,
-        displayName: s.displayName,
-      });
-    const stepNeedsTesting =
-      s.settings.inputUiInfo?.currentSelectedData === undefined;
-    return {
-      ...stepMentionNode,
-      data: {
-        ...stepMentionNode.data,
-        displayName: `${s.dfsIndex}. ${s.displayName}`,
-      },
-      children: stepNeedsTesting
-        ? [
-          {
-            data: {
-              displayName: 'Testing Step',
-              propertyPath: s.name,
-              isTestStepNode: true,
-              isSlice: false,
-            },
-            key: s.name,
-          },
-        ]
-        : stepMentionNode.children,
-    };
-  });
-};
-
-const getStep = (stepName: string) => {
-  return (state: BuilderState) => {
-    const { flowVersion } = state;
-    if (!flowVersion) {
-      return undefined;
-    }
-    return flowHelper.getStep(flowVersion, stepName);
-  };
-};
-
 export const builderSelectors = {
-  getAllStepsMentions,
   getStepOutputFromExecutionPath,
-  getStep,
 };

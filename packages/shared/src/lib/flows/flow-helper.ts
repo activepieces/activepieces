@@ -1001,8 +1001,8 @@ function  findStepDfsIndex(trigger: Trigger, stepName: string): number {
 }
 
 type StepWithIndex = Step & { dfsIndex: number }
-function findPathToStep({ stepToFind, trigger }: {
-    stepToFind: Step
+function findPathToStep({ targetStep: stepToFind, trigger }: {
+    targetStep: Step
     trigger: Trigger
 }): StepWithIndex[] {
     if (stepToFind.name === trigger.name) {

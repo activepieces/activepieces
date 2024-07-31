@@ -72,6 +72,7 @@ const handlingArrayStepOutput = (
   lastDisplayName: string,
   startingIndex = 0,
 ): MentionTreeNode => {
+  const MAX_ARRAY_LENGTH_BEFORE_SLICING = 100;
   if (stepOutput.length <= MAX_ARRAY_LENGTH_BEFORE_SLICING) {
     return {
       key: lastDisplayName,
@@ -93,16 +94,19 @@ const handlingArrayStepOutput = (
     };
   }
 
-  const numberOfSlices = new Array(Math.ceil(stepOutput.length / 100)).fill(0);
+  const numberOfSlices = new Array(
+    Math.ceil(stepOutput.length / MAX_ARRAY_LENGTH_BEFORE_SLICING),
+  ).fill(0);
   const children: MentionTreeNode[] = [];
   numberOfSlices.forEach((_, i) => {
-    const startingIndex = i * 100;
-    const endingIndex = Math.min((i + 1) * 100, stepOutput.length) - 1;
-    const newPath = `${path}`;
+    const startingIndex = i * MAX_ARRAY_LENGTH_BEFORE_SLICING;
+    const endingIndex =
+      Math.min((i + 1) * MAX_ARRAY_LENGTH_BEFORE_SLICING, stepOutput.length) -
+      1;
     const displayName = `${lastDisplayName} ${startingIndex}-${endingIndex}`;
     const sliceOutput = handlingArrayStepOutput(
       stepOutput.slice(startingIndex, endingIndex),
-      newPath,
+      path,
       lastDisplayName,
       startingIndex,
     );
@@ -139,14 +143,8 @@ function formatStepOutput(stepOutput: unknown) {
 
   return stepOutput;
 }
-const MAX_ARRAY_LENGTH_BEFORE_SLICING = 100;
-const isStepName = (name: string) => {
-  const regex = /^(trigger|step_\d+)$/;
-  return regex.test(name);
-};
 
-export const dataSelector = {
-  isStepName,
+export const dataSelectorUtils = {
   formatStepOutput,
   traverseStepOutputAndReturnMentionTree,
   handlingArrayStepOutput,
