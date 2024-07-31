@@ -39,10 +39,10 @@ async function getRows(
     if (isNaN(startingRow)) {
       throw Error(
         'The value stored in memory key : ' +
-          memKey +
-          ' is ' +
-          memVal +
-          ' and it is not a number'
+        memKey +
+        ' is ' +
+        memVal +
+        ' and it is not a number'
       );
     }
   }
@@ -73,15 +73,18 @@ async function getRows(
   return row;
 }
 
+const notes = `
+**Notes:**
+
+- Memory key is used to remember where last row was processed and will be used in the following runs.
+- Republishing the flow **keeps** the memory key value, If you want to start over **change** the memory key.
+`
 export const getRowsAction = createAction({
   auth: googleSheetsAuth,
   name: 'get_next_rows',
   description: 'Get next group of rows from a Google Sheet',
   displayName: 'Get next row(s)',
   props: {
-    markdown: Property.MarkDown({
-      value: `This action stores the last row number in a memory key. In the next run, this saved number will be used as the starting row. For example, if the last processed row was 10, the next run will start from row 11.Republishing the flow will still retain the memory key.`,
-    }),
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     include_team_drives: googleSheetsCommon.include_team_drives,
     sheet_id: googleSheetsCommon.sheet_id,
@@ -91,6 +94,9 @@ export const getRowsAction = createAction({
       required: true,
       defaultValue: 1,
       validators: [Validators.minValue(1)],
+    }),
+    markdown: Property.MarkDown({
+      value: notes
     }),
     memKey: Property.ShortText({
       displayName: 'Memory Key',
