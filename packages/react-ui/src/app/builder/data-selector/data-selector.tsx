@@ -81,7 +81,6 @@ const DataSelector = () => {
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
 
   const nodes = useBuilderStateContext(getAllStepsMentions);
-  console.log(nodes);
   return (
     <div
       className={cn(

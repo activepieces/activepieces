@@ -677,9 +677,9 @@ export function getImportOperations(
             case ActionType.PIECE:
             case TriggerType.PIECE:
             case TriggerType.EMPTY:
-            {
-                break
-            }
+                {
+                    break
+                }
         }
 
 
@@ -951,13 +951,13 @@ function findPathToStep({ targetStep: stepToFind, trigger }: {
         ...step,
         dfsIndex,
     }));
-    return steps.filter((step) => isPartOfInnerFlow({
-        parentStep: step,
-        childName: stepToFind.name,
-    })).filter((step) => step.name !== stepToFind.name)
+    return steps.filter((step) => {
+        const steps = getAllSteps(step)
+        return steps.some((s) => s.name === stepToFind.name)
+    }).filter((step) => step.name !== stepToFind.name)
 }
-  
-  
+
+
 export const flowHelper = {
     isValid,
     apply(
