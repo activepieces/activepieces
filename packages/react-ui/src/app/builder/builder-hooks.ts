@@ -191,27 +191,21 @@ export const stepPathToKeyString = (path: StepPathWithName): string => {
   return path.path.map((p) => p.join('-')).join('/') + '/' + path.stepName;
 };
 
-export function getStepOutputFromExecutionPath({
+function getStepOutputFromExecutionPath({
   path,
   executionState,
 }: {
   path: StepPathWithName;
   executionState: ExecutionState;
 }): StepOutput | undefined {
-  const stateAtPath = getStateAtPath({
-    currentPath: path,
-    steps: executionState.steps,
-  });
+  const stateAtPath = getStateAtPath(path, executionState.steps);
   return stateAtPath[path.stepName];
 }
 
-function getStateAtPath({
-  currentPath,
-  steps,
-}: {
-  currentPath: StepPathWithName;
-  steps: Record<string, StepOutput>;
-}): Record<string, StepOutput> {
+function getStateAtPath(
+  currentPath: StepPathWithName,
+  steps: Record<string, StepOutput>
+): Record<string, StepOutput> {
   let targetMap = steps;
   currentPath.path.forEach(([stepName, iteration]) => {
     const stepOutput = targetMap[stepName];
@@ -258,16 +252,16 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
       },
       children: stepNeedsTesting
         ? [
-            {
-              data: {
-                displayName: 'Testing Step',
-                propertyPath: s.name,
-                isTestStepNode: true,
-                isSlice: false,
-              },
-              key: s.name,
+          {
+            data: {
+              displayName: 'Testing Step',
+              propertyPath: s.name,
+              isTestStepNode: true,
+              isSlice: false,
             },
-          ]
+            key: s.name,
+          },
+        ]
         : stepMentionNode.children,
     };
   });

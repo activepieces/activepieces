@@ -2,7 +2,7 @@ import { Timer } from 'lucide-react';
 import React from 'react';
 
 import {
-  getStepOutputFromExecutionPath,
+  builderSelectors,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { JsonViewer } from '@/components/json-viewer';
@@ -17,7 +17,7 @@ const FlowStepInputOutput = React.memo(() => {
     if (!selectedStep || !run) {
       return undefined;
     }
-    return getStepOutputFromExecutionPath({
+    return builderSelectors.getStepOutputFromExecutionPath({
       path: selectedStep,
       executionState: run,
     });
