@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
-import { piecesHooks } from '../lib/pieces-hook';
+import { piecesHooks, StepMetadata } from '../lib/pieces-hook';
 
 import { PieceIcon } from './piece-icon';
 
@@ -16,15 +16,17 @@ export function PieceIconList({
   trigger: Trigger;
   maxNumberOfIconsToShow: number;
 }) {
-  const steps = flowHelper.getAllSteps(trigger).map((step) => ({ step }));
+  const steps = flowHelper.getAllSteps(trigger);
   const stepsMetadata = piecesHooks
     .useStepsMetadata(steps)
     .map((data) => data.data)
     .filter((data) => !!data);
 
-  const uniqueMetadata = [
-    ...new Map(stepsMetadata.map((item) => [item['pieceName'], item])).values(),
-  ];
+  const uniqueMetadata: StepMetadata[] = Array.from(
+    new Map<string, StepMetadata>(
+      stepsMetadata.map((item) => [item.pieceName, item]),
+    ).values(),
+  );
 
   const visibleMetadata = uniqueMetadata.slice(0, maxNumberOfIconsToShow);
   const extraPieces = uniqueMetadata.length - visibleMetadata.length;
