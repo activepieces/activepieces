@@ -1,5 +1,12 @@
 import { ReactFlowProvider } from '@xyflow/react';
 
+import { BuilderNavBar } from './builder-nav-bar';
+import { FlowVersionsList } from './flow-versions/flow-versions-list';
+import { PiecesCardList } from './pieces-list/pieces-card-list';
+import { FlowRunDetails } from './run-details/flow-run-details-list';
+import { FlowRecentRunsList } from './run-list/flow-runs-list';
+import { StepSettings } from './step-settings/step-settings-container';
+
 import {
   LeftSideBarType,
   RightSideBarType,
@@ -12,13 +19,6 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
-
-import { BuilderNavBar } from './builder-nav-bar';
-import { FlowVersionsList } from './flow-versions/flow-versions-list';
-import { PiecesCardList } from './pieces-list/pieces-card-list';
-import { FlowRunDetails } from './run-details/flow-run-details-list';
-import { FlowRecentRunsList } from './run-list/flow-runs-list';
-import { StepSettings } from './step-settings/step-settings-container';
 
 const BuilderPage = () => {
   const [flowVersion, leftSidebar, rightSidebar, run, ExitRun, selectedStep] =
@@ -43,7 +43,7 @@ const BuilderPage = () => {
               defaultSize={25}
               order={1}
               minSize={25}
-              maxSize={47}
+              maxSize={30}
             >
               {leftSidebar === LeftSideBarType.RUNS && <FlowRecentRunsList />}
               {leftSidebar === LeftSideBarType.RUN_DETAILS && (

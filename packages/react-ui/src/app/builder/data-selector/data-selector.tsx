@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { builderSelectors, useBuilderStateContext } from '../builder-hooks';
 
-import './data-selector.css';
 import { DataSelectorNode } from './data-selector-node';
 import {
   DataSelectorSizeState,
