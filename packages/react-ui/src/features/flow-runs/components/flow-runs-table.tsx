@@ -1,9 +1,7 @@
-import { FlowRun, FlowRunStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-
-import { flowRunUtils } from '../lib/flow-run-utils';
+import { useNavigate } from 'react-router-dom';
 
 import {
   DataTable,
@@ -16,6 +14,9 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
+import { FlowRun, FlowRunStatus } from '@activepieces/shared';
+
+import { flowRunUtils } from '../lib/flow-run-utils';
 
 const fetchData = async (params: URLSearchParams) => {
   const status = params.getAll('status') as FlowRunStatus[];
@@ -31,6 +32,7 @@ const fetchData = async (params: URLSearchParams) => {
 };
 
 export default function FlowRunsTable() {
+  const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
   const { data, isFetching } = flowsHooks.useFlows();
 
@@ -154,6 +156,7 @@ export default function FlowRunsTable() {
         fetchData={fetchData}
         filters={filters}
         refresh={refresh}
+        onRowClick={(row) => navigate(`/flows/${row.flowId}`)}
       />
     </div>
   );

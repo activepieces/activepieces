@@ -1,8 +1,8 @@
-import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/server-shared'
+import { JobType, logger, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Job, Queue } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
-import { AddParams, QueueManager } from '../queue/queue-manager'
+import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = 8 * 60 * 1000
@@ -53,7 +53,8 @@ export const redisQueue: QueueManager = {
         const client = await queue.client
         const repeatJob = await findRepeatableJobKey(flowVersionId)
         if (isNil(repeatJob)) {
-            exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`))
+            // TODO renable this when we are sure this is thread safe, and no two flows will be disabled at the same time.
+            // exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`))
             return
         }
         const result = await queue.removeRepeatable(repeatJob.name, repeatJob.opts)
@@ -101,7 +102,7 @@ async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOO
     const { id, data, priority } = params
     await queue.add(id, data, {
         jobId: id,
-        priority: priority === 'high' ? 1 : undefined,
+        priority: JOB_PRIORITY[priority],
     })
 }
 

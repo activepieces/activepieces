@@ -99,4 +99,5 @@ const FlowCanvas = React.memo(() => {
   );
 });
 
+FlowCanvas.displayName = 'FlowCanvas';
 export { FlowCanvas };

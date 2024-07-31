@@ -20,4 +20,7 @@ export const piecesApi = {
       version: request.version ?? undefined,
     });
   },
+  delete(id: string) {
+    return api.delete(`/v1/pieces/${id}`);
+  },
 };

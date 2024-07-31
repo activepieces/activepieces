@@ -26,8 +26,7 @@
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/community/convertkit/**/*.ts",
-          "packages/pieces/community/convertkit/package.json"
+          "packages/pieces/community/convertkit/**/*.ts"
         ]
       }
     }

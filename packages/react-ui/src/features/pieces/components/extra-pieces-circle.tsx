@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 
-import { piecesHooks } from '../lib/pieces-hook';
-
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+
+import { piecesHooks } from '../lib/pieces-hook';
 
 export function ExtraPiecesCircle({
   extraStepsCount,

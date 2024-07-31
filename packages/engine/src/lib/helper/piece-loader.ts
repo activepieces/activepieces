@@ -63,11 +63,11 @@ const getPieceAndActionOrThrow = async (params: {
 }
 
 const getPropOrThrow = async ({ params, piecesSource }: { params: ExecutePropsOptions, piecesSource: string }) => {
-    const { piece: piecePackage, stepName, propertyName } = params
+    const { piece: piecePackage, actionOrTriggerName, propertyName } = params
 
     const piece = await loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, piecesSource })
 
-    const action = piece.getAction(stepName) ?? piece.getTrigger(stepName)
+    const action = piece.getAction(actionOrTriggerName) ?? piece.getTrigger(actionOrTriggerName)
 
     if (isNil(action)) {
         throw new ActivepiecesError({
@@ -75,7 +75,7 @@ const getPropOrThrow = async ({ params, piecesSource }: { params: ExecutePropsOp
             params: {
                 pieceName: piecePackage.pieceName,
                 pieceVersion: piecePackage.pieceVersion,
-                stepName,
+                stepName: actionOrTriggerName,
             },
         })
     }
@@ -88,7 +88,7 @@ const getPropOrThrow = async ({ params, piecesSource }: { params: ExecutePropsOp
             params: {
                 pieceName: piecePackage.pieceName,
                 pieceVersion: piecePackage.pieceVersion,
-                stepName,
+                stepName: actionOrTriggerName,
                 configName: propertyName,
             },
         })

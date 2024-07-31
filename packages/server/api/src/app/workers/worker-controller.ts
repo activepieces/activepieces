@@ -1,5 +1,5 @@
 import { DeleteWebhookSimulationRequest, JobData, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendWebhookUpdateRequest, SubmitPayloadsRequest, WebhookJobData } from '@activepieces/server-shared'
-import { apId, ExecutionType, PrincipalType, RunEnvironment } from '@activepieces/shared'
+import { apId, ExecutionType, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { flowService } from '../flows/flow/flow.service'
@@ -126,7 +126,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             executionType: ExecutionType.RESUME,
             httpRequestId: data.httpRequestId,
             environment: RunEnvironment.PRODUCTION,
-            progressUpdateType: data.progressUpdateType,
+            progressUpdateType: data.progressUpdateType ?? ProgressUpdateType.NONE,
         })
     })
 

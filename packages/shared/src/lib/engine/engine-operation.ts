@@ -54,7 +54,7 @@ export type ExecuteStepOperation = BaseEngineOperation &  {
 export type ExecutePropsOptions = BaseEngineOperation & {
     piece: PiecePackage
     propertyName: string
-    stepName: string
+    actionOrTriggerName: string
     flowVersion: FlowVersion
     input: Record<string, unknown>
     searchValue?: string
@@ -185,6 +185,7 @@ export type ExecuteValidateAuthResponse =
 export type ScheduleOptions = {
     cronExpression: string
     timezone: string
+    failureCount: number
 }
 
 export type EngineResponse<T> = {
