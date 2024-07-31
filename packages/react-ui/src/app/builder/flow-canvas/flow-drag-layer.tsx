@@ -20,7 +20,6 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { ApEdge } from './flow-canvas-utils';
 import StepDragOverlay from './step-drag-overlay';
 
-
 type FlowDragLayerProps = {
   children: React.ReactNode;
 };
