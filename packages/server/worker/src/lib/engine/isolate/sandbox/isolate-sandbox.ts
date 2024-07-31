@@ -11,6 +11,8 @@ type SandboxCtorParams = {
 }
 
 
+const memoryLimit = Math.floor((Number(system.getOrThrow(SharedSystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
+
 type AssignCacheParams = {
     cacheKey: string
     globalCachePath: string
@@ -83,6 +85,7 @@ export class IsolateSandbox {
                 '--stdout=_standardOutput.txt',
                 '--stderr=_standardError.txt',
                 '--run',
+                `--mem=${memoryLimit}`,
                 ...propagatedEnvVars,
                 IsolateSandbox.nodeExecutablePath,
                 `${IsolateSandbox.sandboxGlobalCachePath}/main.js`,

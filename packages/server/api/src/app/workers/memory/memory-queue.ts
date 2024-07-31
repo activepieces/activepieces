@@ -1,6 +1,6 @@
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, WebhookJobData } from '@activepieces/server-shared'
-import { DelayPauseMetadata, Flow, FlowRun, FlowRunStatus, PauseType, ProgressUpdateType, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { DelayPauseMetadata, Flow, FlowRun, FlowRunStatus, isNil, PauseType, ProgressUpdateType, RunEnvironment, TriggerType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
@@ -142,10 +142,20 @@ async function renewWebhooks(): Promise<void> {
                     return null
                 }
 
-                const piece = await triggerUtils.getPieceTriggerOrThrow({
+                const piece = await triggerUtils.getPieceTrigger({
                     trigger,
                     projectId: flow.projectId,
                 })
+
+                if (isNil(piece)) {
+                    logger.warn( {
+                        trigger,
+                        flowId: flow.id,
+                    },
+                    'Piece not found for trigger',
+                    )
+                    return null
+                }
 
                 const renewConfiguration = piece.renewConfiguration
 
