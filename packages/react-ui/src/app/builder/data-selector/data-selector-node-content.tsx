@@ -1,12 +1,14 @@
-import { flowHelper } from '@activepieces/shared';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+
+import { flowHelper } from '@activepieces/shared';
 
 import { useApRipple } from '../../../components/theme-provider';
 import { Button } from '../../../components/ui/button';
 import { PieceIcon } from '../../../features/pieces/components/piece-icon';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
-import { MentionTreeNode } from '../../../lib/data-selector-utils';
 import { useBuilderStateContext } from '../builder-hooks';
+
+import { MentionTreeNode } from './data-selector-utils';
 
 const ToggleIcon = ({ expanded }: { expanded: boolean }) => {
   const toggleIconSize = 15;
@@ -40,6 +42,7 @@ const DataSelectorNodeContent = ({
   const stepMetadata = step
     ? piecesHooks.useStepMetadata({ step }).data
     : undefined;
+
   const showInsertButton =
     !node.data.isSlice &&
     !(

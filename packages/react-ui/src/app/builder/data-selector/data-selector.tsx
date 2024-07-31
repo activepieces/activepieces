@@ -1,11 +1,9 @@
-import { flowHelper, isNil } from '@activepieces/shared';
 import { useState } from 'react';
 
+import { cn } from '@/lib/utils';
+import { Action, flowHelper, isNil, Trigger } from '@activepieces/shared';
+
 import { ScrollArea } from '../../../components/ui/scroll-area';
-import {
-  dataSelectorUtils,
-  MentionTreeNode,
-} from '../../../lib/data-selector-utils';
 import { BuilderState, useBuilderStateContext } from '../builder-hooks';
 
 import { DataSelectorNode } from './data-selector-node';
@@ -13,8 +11,30 @@ import {
   DataSelectorSizeState,
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
+import { dataSelectorUtils, MentionTreeNode } from './data-selector-utils';
 
-import { cn } from '@/lib/utils';
+const createTestNode = (
+  step: Action | Trigger,
+  displayName: string,
+): MentionTreeNode => {
+  return {
+    key: step.name,
+    data: {
+      displayName,
+      propertyPath: step.name,
+    },
+    children: [
+      {
+        data: {
+          displayName: displayName,
+          propertyPath: step.name,
+          isTestStepNode: true,
+        },
+        key: `test_${step.name}`,
+      },
+    ],
+  };
+};
 
 const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
   state,
@@ -23,12 +43,8 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
   if (!selectedStep || !flowVersion || !flowVersion.trigger) {
     return [];
   }
-  const targetStep = flowHelper.getStep(flowVersion, selectedStep.stepName);
-  if (!targetStep) {
-    return [];
-  }
   const pathToTargetStep = flowHelper.findPathToStep({
-    targetStep,
+    targetStepName: selectedStep.stepName,
     trigger: flowVersion.trigger,
   });
 
@@ -36,43 +52,15 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
     const stepNeedsTesting = isNil(
       step.settings.inputUiInfo?.currentSelectedData,
     );
-    const displayName = `${step.dfsIndex}. ${step.displayName}`;
+    const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
     if (stepNeedsTesting) {
-      return {
-        key: step.name,
-        data: {
-          displayName,
-          propertyPath: step.name,
-          isTestStepNode: false,
-          isSlice: false,
-        },
-        children: [
-          {
-            data: {
-              displayName: displayName,
-              propertyPath: step.name,
-              isTestStepNode: true,
-              isSlice: false,
-            },
-            key: `test_${step.name}`,
-          },
-        ],
-      };
+      return createTestNode(step, displayName);
     }
-    const stepMentionNode: MentionTreeNode =
-      dataSelectorUtils.traverseStepOutputAndReturnMentionTree({
-        stepOutput: step.settings.inputUiInfo?.currentSelectedData,
-        propertyPath: step.name,
-        displayName: step.displayName,
-      });
-
-    return {
-      ...stepMentionNode,
-      data: {
-        ...stepMentionNode.data,
-        displayName,
-      },
-    };
+    return dataSelectorUtils.traverseStepOutputAndReturnMentionTree({
+      stepOutput: step.settings.inputUiInfo?.currentSelectedData,
+      propertyPath: step.name,
+      displayName: displayName,
+    });
   });
 };
 

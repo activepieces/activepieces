@@ -1,6 +1,7 @@
 import { Plus, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 
+// TDO fix this import
 import { TextInputWithMentions } from '../../app/builder/text-input-with-mentions/text-input-with-mentions';
 
 import { Button } from './button';
@@ -70,7 +71,7 @@ export const DictionaryInput = ({ values, onChange }: DictionaryInputProps) => {
           />
           <div className="basis-[50%] max-w-[50%]">
             <TextInputWithMentions
-              originalValue={value}
+              initialValue={value}
               onChange={(e) => onChangeValue(index, e, undefined)}
             ></TextInputWithMentions>
           </div>

@@ -88,10 +88,7 @@ function stepMetadataQueryBuilder(step: Step) {
   const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
   return {
     queryKey: ['piece', step.type, pieceName, pieceVersion],
-    queryFn: async () => {
-      const metadata = await getStepMetadata(step);
-      return metadata;
-    },
+    queryFn: () => getStepMetadata(step),
     staleTime: Infinity,
   };
 }

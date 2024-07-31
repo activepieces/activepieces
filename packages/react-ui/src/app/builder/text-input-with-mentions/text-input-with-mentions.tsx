@@ -1,4 +1,3 @@
-import { flowHelper } from '@activepieces/shared';
 import Document from '@tiptap/extension-document';
 import HardBreak from '@tiptap/extension-hard-break';
 import History from '@tiptap/extension-history';
@@ -8,6 +7,8 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 
+import { flowHelper } from '@activepieces/shared';
+
 import './tip-tap.css';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import { useBuilderStateContext } from '../builder-hooks';
@@ -16,7 +17,7 @@ import { textMentionUtils } from './text-input-utils';
 
 type TextInputWithMentionsProps = {
   className?: string;
-  originalValue?: string;
+  initialValue?: string;
   onChange: (value: string) => void;
   placeholder?: string;
 };
@@ -48,7 +49,7 @@ const extensions = (placeholder?: string) => {
 
 export const TextInputWithMentions = ({
   className,
-  originalValue,
+  initialValue,
   onChange,
   placeholder,
 }: TextInputWithMentionsProps) => {
@@ -71,9 +72,9 @@ export const TextInputWithMentions = ({
     editor?.chain().focus().insertContent(jsonContent.content).run();
   };
 
-  const content = [
+  const parentContent = [
     textMentionUtils.convertTextToTipTapJsonContent(
-      originalValue ?? '',
+      initialValue ?? '',
       steps,
       stepsMetadata,
     ),
@@ -82,18 +83,19 @@ export const TextInputWithMentions = ({
     extensions: extensions(placeholder),
     content: {
       type: 'doc',
-      content,
+      content: parentContent,
     },
     editorProps: {
       attributes: {
         class:
           className ??
-          ' w-full  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
+          ' w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
       },
     },
     onUpdate: ({ editor }) => {
-      const content = editor.getJSON();
-      const textResult = textMentionUtils.convertTiptapJsonToText(content);
+      const editorContent = editor.getJSON();
+      const textResult =
+        textMentionUtils.convertTiptapJsonToText(editorContent);
       if (onChange) {
         onChange(textResult);
       }

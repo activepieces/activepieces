@@ -67,7 +67,7 @@ const LoopsSettings = React.memo(
                     field.onChange(e);
                     updateFormChange();
                   }}
-                  originalValue={field.value}
+                  initialValue={field.value}
                   placeholder="Select an array of items"
                 ></TextInputWithMentions>
                 <FormMessage />

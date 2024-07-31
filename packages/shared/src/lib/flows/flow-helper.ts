@@ -943,8 +943,8 @@ function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAct
 
 type StepWithIndex = Step & { dfsIndex: number }
 
-function findPathToStep({ targetStep: stepToFind, trigger }: {
-    targetStep: Step
+function findPathToStep({ targetStepName, trigger }: {
+    targetStepName: string
     trigger: Trigger
 }): StepWithIndex[] {
     const steps = getAllSteps(trigger).map((step, dfsIndex) => ({
@@ -953,8 +953,8 @@ function findPathToStep({ targetStep: stepToFind, trigger }: {
     }));
     return steps.filter((step) => {
         const steps = getAllSteps(step)
-        return steps.some((s) => s.name === stepToFind.name)
-    }).filter((step) => step.name !== stepToFind.name)
+        return steps.some((s) => s.name === targetStepName)
+    }).filter((step) => step.name !== targetStepName)
 }
 
 

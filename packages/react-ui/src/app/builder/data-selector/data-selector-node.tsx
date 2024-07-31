@@ -5,9 +5,9 @@ import {
   Collapsible,
   CollapsibleTrigger,
 } from '../../../components/ui/collapsible';
-import { MentionTreeNode } from '../../../lib/data-selector-utils';
 
 import { DataSelectorNodeContent } from './data-selector-node-content';
+import { MentionTreeNode } from './data-selector-utils';
 import { TestStepSection } from './test-step-section';
 
 type DataSelectoNodeProps = {

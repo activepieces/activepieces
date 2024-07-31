@@ -1,6 +1,11 @@
-import { Action, Trigger } from '@activepieces/shared';
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
+
+import {
+  Action,
+  Trigger,
+  assertNotNullOrUndefined,
+} from '@activepieces/shared';
 
 import { StepMetadata } from '../../../features/pieces/lib/pieces-hook';
 
@@ -17,7 +22,7 @@ const removeQuotes = (text: string) => {
   }
   return text;
 };
-/**i.e: path-> step_1['prop1'] => result: ['step_1','prop1'] */
+
 const keysWithinPath = (path: string) => {
   return path
     .split(/\.|\[|\]/)
@@ -31,7 +36,6 @@ type ApMentionNodeAttrs = {
   serverValue: string;
 };
 
-const customCodeMentionDisplayName = 'Custom Code';
 enum TipTapNodeTypes {
   paragraph = 'paragraph',
   text = 'text',
@@ -39,46 +43,40 @@ enum TipTapNodeTypes {
   mention = 'mention',
 }
 const isMentionNodeText = (item: string) => /^\{\{.*\}\}$/.test(item);
-const parseMentionNodeFromText = ({
-  path,
-  stepDisplayName,
-  stepLogoUrl,
-  stepDfsIndex,
-}: {
+
+type ParseMentionNodeFromText = {
   path: string;
   stepDisplayName: string;
   stepLogoUrl: string;
   stepDfsIndex: number;
-}) => {
-  const itemPathWithoutInterpolationDenotation = path.slice(2, path.length - 2);
-  const keys = keysWithinPath(itemPathWithoutInterpolationDenotation);
+};
+function getLabelForMention({
+  stepDisplayName,
+  stepLogoUrl,
+  stepDfsIndex,
+  path,
+}: ParseMentionNodeFromText) {
+  const keys = keysWithinPath(removeIntroplationBrackets(path));
   if (keys.length === 0) {
-    const attrs: MentionNodeAttrs = {
-      id: path,
-      label: customCodeMentionDisplayName,
-    };
-    const insertMention: JSONContent = {
-      type: TipTapNodeTypes.mention,
-      attrs: attrs,
-    };
-    return insertMention;
+    return 'Custom Code';
   }
   const mentionText = [stepDisplayName, ...keys.slice(1)].join(' ');
-  const apMentionNodeAttrs: ApMentionNodeAttrs = {
+  return JSON.stringify({
     logoUrl: stepLogoUrl,
     displayText: `${stepDfsIndex}. ${mentionText}`,
     serverValue: path,
-  };
-  const attrs: MentionNodeAttrs = {
-    id: path,
-    label: JSON.stringify(apMentionNodeAttrs),
-  };
-  const insertMention: JSONContent = {
+  });
+}
+
+function parseMentionNodeFromText(request: ParseMentionNodeFromText) {
+  return {
     type: TipTapNodeTypes.mention,
-    attrs: attrs,
+    attrs: {
+      id: request.path,
+      label: getLabelForMention(request),
+    },
   };
-  return insertMention;
-};
+}
 
 const parseTextAndHardBreakNodes = (item: string) => {
   const endlineRegex = new RegExp(`(\n)`);
@@ -119,65 +117,52 @@ function convertTextToTipTapJsonContent(
   const inputSplitToNodesContent = userInputText
     .split(/(\{\{.*?\}\})/)
     .filter((el) => el);
-  const contentNodes: JSONContent[] = inputSplitToNodesContent.map((nc) => {
+  const contentNodes: JSONContent[] = inputSplitToNodesContent.map((node) => {
     const { stepMetadata, dfsIndex } = getStepMetadataFromPath(
-      nc,
+      node,
       steps,
       stepsMetadata,
     );
-    return isMentionNodeText(nc)
-      ? parseMentionNodeFromText({
-          path: nc,
-          stepDisplayName: stepMetadata?.displayName ?? '',
-          stepLogoUrl: stepMetadata?.logoUrl ?? '',
-          stepDfsIndex: dfsIndex + 1 ?? 0,
-        })
-      : nc.includes('\n')
-      ? parseTextAndHardBreakNodes(nc)
-      : { type: TipTapNodeTypes.text, text: nc };
+    const includeNewLine = node.includes('\n');
+    if (includeNewLine) {
+      return parseTextAndHardBreakNodes(node);
+    }
+    if (isMentionNodeText(node)) {
+      return parseMentionNodeFromText({
+        path: node,
+        stepDisplayName: stepMetadata?.displayName ?? '',
+        stepLogoUrl: stepMetadata?.logoUrl ?? '',
+        stepDfsIndex: dfsIndex + 1,
+      });
+    }
+    return { type: TipTapNodeTypes.text, text: node };
   });
   return { type: TipTapNodeTypes.paragraph, content: contentNodes.flat(1) };
 }
 
-const convertTiptapJsonToText: (content: JSONContent) => string = ({
-  content,
-}: JSONContent) => {
-  let isFirstParagraph = true;
+function convertTiptapJsonToText({ content }: JSONContent): string {
   const nodes = content ?? [];
   return nodes
-    .map((n) => {
-      switch (n.type) {
+    .map((node) => {
+      switch (node.type) {
         case TipTapNodeTypes.hardBreak:
           return '\n';
-
-        case TipTapNodeTypes.text:
-          if (n.text) {
-            return n.text;
-          } else {
-            tiptapWarning('node.text is undefined', n);
-            return '';
-          }
-
+        case TipTapNodeTypes.text: {
+          console.log(node);
+          return node.text ?? '';
+        }
         case TipTapNodeTypes.mention:
-          if (n.attrs?.label) {
-            const mentionAttrs: ApMentionNodeAttrs = JSON.parse(n.attrs.label);
-            return mentionAttrs.serverValue;
-          } else {
-            tiptapWarning('node.attrs.label is undefined', n);
-            return '';
-          }
-
+          return node.attrs?.label
+            ? JSON.parse(node.attrs.label).serverValue
+            : '';
         case TipTapNodeTypes.paragraph:
-          if (!isFirstParagraph) return '\n';
-          isFirstParagraph = false;
-          return convertTiptapJsonToText(n);
+          return convertTiptapJsonToText(node);
         default:
-          tiptapWarning('unknown node type', n);
           return '';
       }
     })
     .join('');
-};
+}
 
 const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   const mentionElement = document.createElement('span');
@@ -185,26 +170,16 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
     mentionAttrs.label || '{}',
   );
   mentionElement.className =
-    'inline-flex bg-[#fafafa]  my-1 mx-[1px] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px]  text-accent-foreground ';
-
-  if (mentionAttrs.label) {
-    mentionElement.dataset.label = mentionAttrs.label;
-  } else {
-    tiptapWarning('mentionAttrs.label is undefined', mentionAttrs);
-  }
-  if (mentionAttrs.id) {
-    mentionElement.dataset.id = mentionAttrs.id;
-  } else {
-    tiptapWarning('mentionAttrs.id is undefined', mentionAttrs);
-  }
-  if (apMentionNodeAttrs.displayText) {
-    mentionElement.dataset.displayText = apMentionNodeAttrs.displayText;
-  } else {
-    tiptapWarning(
-      'apMentionNodeAttrs.displayText is undefined',
-      apMentionNodeAttrs,
-    );
-  }
+    'inline-flex bg-muted/10  my-1 mx-[1px] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px] text-muted-foreground ';
+  assertNotNullOrUndefined(mentionAttrs.label, 'mentionAttrs.label');
+  assertNotNullOrUndefined(mentionAttrs.id, 'mentionAttrs.id');
+  assertNotNullOrUndefined(
+    apMentionNodeAttrs.displayText,
+    'apMentionNodeAttrs.displayText',
+  );
+  mentionElement.dataset.id = mentionAttrs.id;
+  mentionElement.dataset.label = mentionAttrs.label;
+  mentionElement.dataset.displayText = apMentionNodeAttrs.displayText;
   mentionElement.dataset.type = TipTapNodeTypes.mention;
   mentionElement.contentEditable = 'false';
 
@@ -222,10 +197,6 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
 
   mentionElement.appendChild(mentiontextDiv);
   return mentionElement;
-};
-
-const tiptapWarning = (message: string, el: unknown) => {
-  console.warn(`${message} el=${JSON.stringify(el, null, 2)}`);
 };
 
 export const textMentionUtils = {

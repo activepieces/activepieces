@@ -2,11 +2,9 @@ export type MentionTreeNode = {
   key: string;
   data: {
     propertyPath: string;
-    /**Key for json value */
     displayName: string;
-    /**value for json key */
     value?: string | unknown;
-    isSlice: boolean;
+    isSlice?: boolean;
     isTestStepNode?: boolean;
   };
   children?: MentionTreeNode[];
@@ -18,86 +16,70 @@ type HandleStepOutputProps = {
   displayName: string;
 };
 
-/**Traverses an object to find its child properties and their paths, stepOutput has to be an object on first invocation */
 function traverseStepOutputAndReturnMentionTree({
   stepOutput,
   propertyPath,
   displayName,
 }: HandleStepOutputProps): MentionTreeNode {
   if (Array.isArray(stepOutput)) {
-    return handlingArrayStepOutput({
-      stepOutput,
-      lastDisplayName: displayName,
-      path: propertyPath,
-      startingIndex: 0,
-    });
+    return handlingArrayStepOutput(stepOutput, propertyPath, displayName);
   }
   const isObject = stepOutput && typeof stepOutput === 'object';
-
   if (isObject) {
-    return handleObjectStepOutput({ propertyPath, displayName, stepOutput });
+    return handleObjectStepOutput(propertyPath, displayName, stepOutput);
   }
-
   return {
     key: propertyPath,
     data: {
       propertyPath,
       displayName,
       value: formatStepOutput(stepOutput),
-      isSlice: false,
     },
     children: undefined,
   };
 }
 
-const handlingArrayStepOutput = ({
-  lastDisplayName,
-  startingIndex,
-  stepOutput,
-  path,
-}: {
-  stepOutput: unknown[];
-  path: string;
-  lastDisplayName: string;
-  startingIndex: number;
-}): MentionTreeNode => {
-  const MAX_ARRAY_LENGTH_BEFORE_SLICING = 100;
-  if (stepOutput.length <= MAX_ARRAY_LENGTH_BEFORE_SLICING) {
+function handlingArrayStepOutput(
+  stepOutput: unknown[],
+  path: string,
+  parentDisplayName: string,
+  startingIndex = 0,
+): MentionTreeNode {
+  const maxSliceLength = 100;
+  const isEmptyList = Object.keys(stepOutput).length === 0;
+  if (stepOutput.length <= maxSliceLength) {
     return {
-      key: lastDisplayName,
-      children: stepOutput.map((ouput, idx) => {
-        return traverseStepOutputAndReturnMentionTree({
+      key: parentDisplayName,
+      children: stepOutput.map((ouput, idx) =>
+        traverseStepOutputAndReturnMentionTree({
           stepOutput: ouput,
           propertyPath: `${path}[${idx + startingIndex}]`,
-          displayName: `${lastDisplayName} ${idx + startingIndex}`,
-        });
-      }),
+          displayName: `${parentDisplayName} [${idx + startingIndex + 1}]`,
+        }),
+      ),
       data: {
         propertyPath: path,
-        displayName: lastDisplayName,
-        value: stepOutput.length === 0 ? 'Empty List' : undefined,
-        isSlice: false,
+        displayName: parentDisplayName,
+        value: isEmptyList ? 'Empty List' : undefined,
       },
     };
   }
 
   const numberOfSlices = new Array(
-    Math.ceil(stepOutput.length / MAX_ARRAY_LENGTH_BEFORE_SLICING),
+    Math.ceil(stepOutput.length / maxSliceLength),
   ).fill(0);
-  const children: MentionTreeNode[] = [];
-  numberOfSlices.forEach((_, idx) => {
-    const startingIndex = idx * MAX_ARRAY_LENGTH_BEFORE_SLICING;
+  const children: MentionTreeNode[] = numberOfSlices.map((_, idx) => {
+    const startingIndex = idx * maxSliceLength;
     const endingIndex =
-      Math.min((idx + 1) * MAX_ARRAY_LENGTH_BEFORE_SLICING, stepOutput.length) -
-      1;
-    const displayName = `${lastDisplayName} ${startingIndex}-${endingIndex}`;
-    const sliceOutput = handlingArrayStepOutput({
-      stepOutput: stepOutput.slice(startingIndex, endingIndex),
+      Math.min((idx + 1) * maxSliceLength, stepOutput.length) - 1;
+    const displayName = `${parentDisplayName} ${startingIndex}-${endingIndex}`;
+    const sliceOutput = handlingArrayStepOutput(
+      stepOutput.slice(startingIndex, endingIndex),
       path,
-      lastDisplayName,
+      parentDisplayName,
       startingIndex,
-    });
-    children.push({
+    );
+    return {
       ...sliceOutput,
       key: displayName,
       data: {
@@ -105,43 +87,39 @@ const handlingArrayStepOutput = ({
         displayName,
         isSlice: true,
       },
-    });
+    };
   });
+
   return {
-    key: lastDisplayName,
+    key: parentDisplayName,
     data: {
       propertyPath: path,
-      displayName: lastDisplayName,
+      displayName: parentDisplayName,
       value: stepOutput,
       isSlice: false,
     },
     children: children,
   };
-};
+}
 
-function handleObjectStepOutput({
-  displayName,
-  propertyPath,
-  stepOutput,
-}: {
-  propertyPath: string;
-  displayName: string;
-  stepOutput: object;
-}): MentionTreeNode {
+function handleObjectStepOutput(
+  propertyPath: string,
+  displayName: string,
+  stepOutput: object,
+): MentionTreeNode {
+  const isEmptyList = Object.keys(stepOutput).length === 0;
   return {
     key: propertyPath,
     data: {
       propertyPath: propertyPath,
       displayName: displayName,
-      isSlice: false,
-      value: Object.keys(stepOutput).length === 0 ? 'Empty List' : undefined,
+      value: isEmptyList ? 'Empty List' : undefined,
     },
     children: Object.keys(stepOutput).map((childPropertyKey) => {
       const escapedKey = childPropertyKey.replaceAll(
         /[\\"'\n\r\t’]/g,
         (char) => `\\${char}`,
       );
-
       return traverseStepOutputAndReturnMentionTree({
         stepOutput: (stepOutput as Record<string, unknown>)[childPropertyKey],
         propertyPath: `${propertyPath}['${escapedKey}']`,
@@ -155,16 +133,12 @@ function formatStepOutput(stepOutput: unknown) {
   if (stepOutput === null) {
     return 'null';
   }
-
   if (typeof stepOutput === 'string') {
     return `"${stepOutput}"`;
   }
-
   return stepOutput;
 }
 
 export const dataSelectorUtils = {
-  formatStepOutput,
   traverseStepOutputAndReturnMentionTree,
-  handlingArrayStepOutput,
 };

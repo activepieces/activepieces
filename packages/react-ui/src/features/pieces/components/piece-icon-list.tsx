@@ -1,9 +1,4 @@
-import {
-  ActionType,
-  Trigger,
-  TriggerType,
-  flowHelper,
-} from '@activepieces/shared';
+import { Trigger, flowHelper } from '@activepieces/shared';
 
 import {
   Tooltip,
@@ -22,23 +17,17 @@ export function PieceIconList({
   maxNumberOfIconsToShow: number;
 }) {
   const steps = flowHelper.getAllSteps(trigger);
-  const stepsMetadata = piecesHooks
+  const stepsMetadata: StepMetadata[] = piecesHooks
     .useStepsMetadata(steps)
     .map((data) => data.data)
-    .filter((data) => !!data);
-  const uniqueMetadata: StepMetadata[] = Array.from(
-    new Map<string, StepMetadata>(
-      stepsMetadata.map((item) => [
-        item.type === ActionType.PIECE || item.type === TriggerType.PIECE
-          ? item.pieceName
-          : item.type,
-        item,
-      ]),
-    ).values(),
-  );
+    .filter((data) => !!data) as StepMetadata[];
 
+  const uniqueMetadata: StepMetadata[] = stepsMetadata.filter(
+    (item, index, self) => self.indexOf(item) === index,
+  );
   const visibleMetadata = uniqueMetadata.slice(0, maxNumberOfIconsToShow);
   const extraPieces = uniqueMetadata.length - visibleMetadata.length;
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
