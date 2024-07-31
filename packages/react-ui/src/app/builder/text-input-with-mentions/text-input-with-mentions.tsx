@@ -37,13 +37,7 @@ const linkMetadataWithStepsThatUseThem = (
           step.settings.pieceVersion === metadata.pieceVersion
         );
       }
-      return (
-        (step.type === ActionType.CODE ||
-          step.type === ActionType.BRANCH ||
-          step.type === TriggerType.EMPTY ||
-          step.type === ActionType.LOOP_ON_ITEMS) &&
-        step.type === metadata.type
-      );
+      return step.type === metadata.type;
     })
     .map((step) => step.name);
   return { ...metadata, stepNamesThatUseThisMetadata };
