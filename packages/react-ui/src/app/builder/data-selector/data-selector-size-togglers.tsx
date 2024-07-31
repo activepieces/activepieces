@@ -1,6 +1,7 @@
 import { ExpandIcon, MinusIcon, PanelRightDashedIcon } from 'lucide-react';
 
 import { Button } from '../../../components/ui/button';
+import { cn } from '../../../lib/utils';
 
 export enum DataSelectorSizeState {
   EXPANDED,
@@ -20,15 +21,14 @@ export const DataSelectorSizeTogglers = ({
   const handleClick = (newState: DataSelectorSizeState) => {
     setDataSelectorSizeState(newState);
   };
+
   const buttonClassName = (btnState: DataSelectorSizeState) =>
-    state === btnState ? 'text-outline' : 'text-outline opacity-50';
-  const buttonClassName = (btnState: DataSelectorSizeState) => cn(
-    '',
-    {
+    cn('', {
       'text-outline': state === btnState,
       'text-outline opacity-50': state !== btnState,
-    },
-  );
+    });
+
+  return (
     <>
       <Button
         size="icon"

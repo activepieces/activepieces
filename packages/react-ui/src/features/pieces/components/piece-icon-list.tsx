@@ -1,9 +1,4 @@
-import {
-  ActionType,
-  Trigger,
-  TriggerType,
-  flowHelper,
-} from '@activepieces/shared';
+import { ActionType, Trigger, flowHelper } from '@activepieces/shared';
 
 import {
   Tooltip,

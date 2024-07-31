@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { StepMetadata } from '../lib/pieces-hook';
-
 import { cn } from '@/lib/utils';
+
+import { StepMetadata } from '../lib/pieces-hook';
 
 type PieceCardInfoProps = {
   piece: StepMetadata;

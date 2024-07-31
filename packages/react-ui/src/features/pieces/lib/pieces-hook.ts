@@ -1,9 +1,10 @@
+import { useQueries, useQuery } from '@tanstack/react-query';
+
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
 import { Action, ActionType, Trigger, TriggerType } from '@activepieces/shared';
-import { useQueries, useQuery } from '@tanstack/react-query';
 
 import { piecesApi } from './pieces-api';
 
@@ -31,7 +32,6 @@ type PieceStepMetadata = {
   description: string;
   type: ActionType.PIECE | TriggerType.PIECE;
   pieceName: string;
-  pieceVersion: string;
 };
 
 type NonPieceStepMetadata = {
@@ -139,7 +139,6 @@ async function getStepMetadata(step: Step): Promise<StepMetadata> {
         description: piece.description,
         type: step.type,
         pieceName: step.settings.pieceName,
-        pieceVersion: step.settings.pieceVersion,
       };
     }
   }
