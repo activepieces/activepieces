@@ -1,8 +1,4 @@
 
-*[data-pd-ripple="true"]{
-    overflow: hidden;
-    position: relative;
-}
 @keyframes ripple {
     100% {
         opacity: 0;
