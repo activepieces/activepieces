@@ -29,7 +29,6 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
   const [language, setLanguage] = useState<'typescript' | 'json'>('typescript');
 
-
   const extensions = [
     styleTheme,
     EditorState.readOnly.of(readonly),
@@ -86,7 +85,7 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
             variant="outline"
             className="flex gap-2"
             size={'sm'}
-            onClick={() => { }}
+            onClick={() => {}}
           >
             <Package className="w-3 h-3" />
             Add
