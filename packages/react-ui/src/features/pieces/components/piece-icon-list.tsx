@@ -1,4 +1,9 @@
-import { ActionType, Trigger, flowHelper } from '@activepieces/shared';
+import {
+  ActionType,
+  Trigger,
+  TriggerType,
+  flowHelper,
+} from '@activepieces/shared';
 
 import {
   Tooltip,
@@ -24,7 +29,9 @@ export function PieceIconList({
   const uniqueMetadata: StepMetadata[] = Array.from(
     new Map<string, StepMetadata>(
       stepsMetadata.map((item) => [
-        item.type === ActionType.PIECE ? item.pieceName : item.type,
+        item.type === ActionType.PIECE || item.type === TriggerType.PIECE
+          ? item.pieceName
+          : item.type,
         item,
       ]),
     ).values(),
