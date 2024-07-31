@@ -26,7 +26,6 @@ import { Trigger, TriggerType } from './triggers/trigger'
 
 type Step = Action | Trigger
 
-
 type GetStepFromSubFlow = {
     subFlowStartStep: Step
     stepName: string
