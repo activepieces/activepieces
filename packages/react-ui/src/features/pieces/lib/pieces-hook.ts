@@ -16,6 +16,10 @@ type UseStepMetadata = {
   step: Action | Trigger;
 };
 
+type UseMultiplePiecesProps = {
+  names: string[];
+};
+
 type UsePiecesProps = {
   searchQuery?: string;
 };
@@ -38,6 +42,15 @@ export const piecesHooks = {
   },
   useStepMetadata: ({ step }: UseStepMetadata) => {
     return useQuery<StepMetadata, Error>(stepMetadataQueryBuilder({ step }));
+  },
+  useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
+    return useQueries({
+      queries: names.map((name) => ({
+        queryKey: ['piece', name, undefined],
+        queryFn: () => piecesApi.get({ name, version: undefined }),
+        staleTime: Infinity,
+      })),
+    });
   },
   useStepsMetadata: (props: UseStepMetadata[]) => {
     const queries = props.map(({ step }) => stepMetadataQueryBuilder({ step }));

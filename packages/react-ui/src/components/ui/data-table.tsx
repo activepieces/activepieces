@@ -1,6 +1,5 @@
 'use client';
 
-import { SeekPage } from '@activepieces/shared';
 import {
   ColumnDef,
   flexRender,
@@ -10,12 +9,6 @@ import {
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { Button } from './button';
-import { DataTableFacetedFilter } from './data-table-options-filter';
-import { DataTableSkeleton } from './data-table-skeleton';
-import { DataTableToolbar } from './data-table-toolbar';
-import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
-
 import {
   Table,
   TableBody,
@@ -24,13 +17,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { SeekPage } from '@activepieces/shared';
+
+import { Button } from './button';
+import { DataTableFacetedFilter } from './data-table-options-filter';
+import { DataTableSkeleton } from './data-table-skeleton';
+import { DataTableToolbar } from './data-table-toolbar';
+import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
 
 export type RowDataWithActions<TData> = TData & {
   delete: () => void;
 };
 
 export type DataTableFilter = {
-  type: 'select';
+  type: 'select' | 'input' | 'date';
   title: string;
   accessorKey: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -140,6 +140,7 @@ export function DataTable<TData, TValue>({
           filters.map((filter) => (
             <DataTableFacetedFilter
               key={filter.accessorKey}
+              type={filter.type}
               column={table.getColumn(filter.accessorKey)}
               title={filter.title}
               options={filter.options}
