@@ -5,7 +5,7 @@ export const TestStepSection = ({ stepName }: { stepName: string }) => {
   const isTrigger = stepName === 'trigger';
   const selectStep = useBuilderStateContext((state) => state.selectStep);
   return (
-    <div className="flex flex-col gap-3 select-none text-center px-12 py-2 flex-grow items-center justify-center ">
+    <div className="flex flex-col gap-3 select-none text-center px-12 py-10 flex-grow items-center justify-center ">
       <div>
         {isTrigger
           ? 'This trigger needs to have data loaded from your account, to use as sample data.'

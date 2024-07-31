@@ -1,3 +1,9 @@
+import {
+  ActionType,
+  flowHelper,
+  FlowVersion,
+  TriggerType,
+} from '@activepieces/shared';
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
 
@@ -88,15 +94,52 @@ const parseTextAndHardBreakNodes = (item: string) => {
       return hardBreak;
     });
 };
+const getStepMetadataFromPath = (
+  path: string,
+  flowVersion: FlowVersion,
+  stepsMetadata: StepMetadata[],
+) => {
+  const itemPathWithoutInterpolationDenotation = path.slice(2, path.length - 2);
+
+  const stepName = textMentionUtils.keysWithinPath(
+    itemPathWithoutInterpolationDenotation,
+  )[0];
+  const step = flowHelper.getStep(flowVersion, stepName);
+
+  if (step) {
+    const dfsIndex = flowHelper.findStepDfsIndex(
+      flowVersion.trigger,
+      step.name,
+    );
+
+    const data = stepsMetadata.find((res) => {
+      if (
+        (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) &&
+        res.type === step.type
+      ) {
+        return res.pieceName === step.settings.pieceName;
+      }
+      return res.type === step.type;
+    });
+
+    if (data) {
+      return {
+        ...data,
+        dfsIndex,
+      };
+    }
+  }
+  return undefined;
+};
 
 function convertTextToTipTapJsonContent({
   userInputText,
-  stepMetadataFinder,
+  piecesMetadata,
+  flowVersion,
 }: {
   userInputText: string;
-  stepMetadataFinder: (
-    path: string,
-  ) => (StepMetadata & { dfsIndex: number }) | undefined;
+  piecesMetadata: StepMetadata[];
+  flowVersion: FlowVersion;
 }): {
   type: TipTapNodeTypes.paragraph;
   content: JSONContent[];
@@ -105,7 +148,7 @@ function convertTextToTipTapJsonContent({
     .split(/(\{\{.*?\}\})/)
     .filter((el) => el);
   const contentNodes: JSONContent[] = inputSplitToNodesContent.map((nc) => {
-    const metadata = stepMetadataFinder(nc);
+    const metadata = getStepMetadataFromPath(nc, flowVersion, piecesMetadata);
     return isMentionNodeText(nc)
       ? parseMentionNodeFromText({
           path: nc,

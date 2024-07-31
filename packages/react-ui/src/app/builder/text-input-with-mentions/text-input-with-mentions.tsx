@@ -47,8 +47,6 @@ const extensions = (placeholder?: string) => {
   ];
 };
 
-const defaultClassName =
-  ' w-full  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';
 export const TextInputWithMentions = ({
   className,
   originalValue,
@@ -56,61 +54,27 @@ export const TextInputWithMentions = ({
   placeholder,
 }: TextInputWithMentionsProps) => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
-  const piecesMetadata = piecesHooks.useStepsMetadata(
-    flowHelper.getAllSteps(flowVersion.trigger),
-  );
+  const stepsMetadata = piecesHooks
+    .useStepsMetadata(flowHelper.getAllSteps(flowVersion.trigger))
+    .map((res) => res.data)
+    .filter((res) => res !== undefined);
   const setInsertMentionHandler = useBuilderStateContext(
     (state) => state.setInsertMentionHandler,
   );
 
-  const getStepMetadataFromPath = (path: string) => {
-    const itemPathWithoutInterpolationDenotation = path.slice(
-      2,
-      path.length - 2,
-    );
-
-    const stepName = textMentionUtils.keysWithinPath(
-      itemPathWithoutInterpolationDenotation,
-    )[0];
-    const step = flowHelper.getStep(flowVersion, stepName);
-
-    if (step) {
-      const dfsIndex = flowHelper.findStepDfsIndex(
-        flowVersion.trigger,
-        step.name,
-      );
-
-      const data = piecesMetadata.find((res) => {
-        if (
-          (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) &&
-          res.data?.type === step.type
-        ) {
-          return res.data?.pieceName === step.settings.pieceName;
-        }
-        return res.data?.type === step.type;
-      })?.data;
-
-      if (data) {
-        return {
-          ...data,
-          dfsIndex,
-        };
-      }
-    }
-    return undefined;
-  };
-
   const insertMention = (propertyPath: string) => {
     const jsonContent = textMentionUtils.convertTextToTipTapJsonContent({
       userInputText: `{{${propertyPath}}}`,
-      stepMetadataFinder: getStepMetadataFromPath,
+      piecesMetadata: stepsMetadata,
+      flowVersion: flowVersion,
     });
     editor?.chain().focus().insertContent(jsonContent.content).run();
   };
   const content = [
     textMentionUtils.convertTextToTipTapJsonContent({
       userInputText: originalValue ?? '',
-      stepMetadataFinder: getStepMetadataFromPath,
+      piecesMetadata: stepsMetadata,
+      flowVersion: flowVersion,
     }),
   ];
   const editor = useEditor({
@@ -121,7 +85,9 @@ export const TextInputWithMentions = ({
     },
     editorProps: {
       attributes: {
-        class: className ?? defaultClassName,
+        class:
+          className ??
+          ' w-full  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
       },
     },
     onUpdate: ({ editor }) => {
