@@ -12,7 +12,7 @@ import {
 
 import { cn } from '@/lib/utils';
 
-export function DataSelector() {
+const DataSelector = () => {
   const [DataSelectorSize, setDataSelectorSize] =
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
 
@@ -59,4 +59,7 @@ export function DataSelector() {
       </ScrollArea>
     </div>
   );
-}
+};
+
+DataSelector.displayName = 'DataSelector';
+export { DataSelector };

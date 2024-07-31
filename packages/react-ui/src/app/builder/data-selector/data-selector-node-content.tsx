@@ -1,5 +1,6 @@
-import { flowHelper } from '@activepieces/shared';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+
+import { flowHelper } from '@activepieces/shared';
 
 import { useRipple } from '../../../components/theme-provider';
 import { Button } from '../../../components/ui/button';

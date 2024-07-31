@@ -23,8 +23,6 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 
-
-
 type AutoFormProps = {
   props: PiecePropertyMap;
   allowDynamicValues: boolean;

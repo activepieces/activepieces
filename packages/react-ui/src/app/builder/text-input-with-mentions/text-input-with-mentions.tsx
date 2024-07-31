@@ -5,6 +5,7 @@ import {
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
+
 import Document from '@tiptap/extension-document';
 import HardBreak from '@tiptap/extension-hard-break';
 import History from '@tiptap/extension-history';
@@ -14,14 +15,15 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 
+import './tip-tap.css';
+
+import { textMentionUtils } from '@/lib/text-input-utils';
+
 import {
   piecesHooks,
   StepMetadata,
 } from '../../../features/pieces/lib/pieces-hook';
-import './tip-tap.css';
 import { useBuilderStateContext } from '../builder-hooks';
-
-import { textMentionUtils } from '@/lib/text-input-utils';
 
 const extensions = (placeholder?: string) => {
   return [

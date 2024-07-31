@@ -11,7 +11,6 @@ import '@xyflow/react/dist/style.css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useBuilderStateContext } from '../builder-hooks';
-
 import { DataSelector } from '../data-selector/data-selector';
 
 import { ApEdgeWithButton } from './edges/edge-with-button';
@@ -96,8 +95,7 @@ const FlowCanvas = React.memo(() => {
           <Background />
           <Controls showInteractive={false} orientation="horizontal" />
         </ReactFlow>
-        <DataSelector> </DataSelector>
-
+        <DataSelector />
       </FlowDragLayer>
     </div>
   );

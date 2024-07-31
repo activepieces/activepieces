@@ -1,3 +1,8 @@
+import { createContext, useContext } from 'react';
+import { create, useStore } from 'zustand';
+
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PromiseQueue } from '@/lib/promise-queue';
 import {
   ActionType,
   ExecutionState,
@@ -8,13 +13,8 @@ import {
   StepOutput,
   flowHelper,
 } from '@activepieces/shared';
-import { createContext, useContext } from 'react';
-import { create, useStore } from 'zustand';
 
 import { MentionTreeNode, dataSelector } from '../../lib/data-selector-utils';
-
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { PromiseQueue } from '@/lib/promise-queue';
 
 const flowUpdatesQueue = new PromiseQueue();
 

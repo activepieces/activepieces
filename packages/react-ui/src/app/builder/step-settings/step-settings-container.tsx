@@ -1,19 +1,4 @@
-import {
-  Action,
-  ActionType,
-  FlowOperationType,
-  TriggerType,
-  debounce,
-  flowHelper,
-} from '@activepieces/shared';
 import React from 'react';
-
-import { SidebarHeader } from '../sidebar-header';
-import { TestActionComponent } from '../test-step/test-action';
-
-import { BranchSettings } from './branch-settings/branch-settings';
-import { CodeSettings } from './code-settings/code-settings';
-import { LoopsSettings } from './loops-settings';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import {
@@ -27,6 +12,21 @@ import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
 import { PieceCardInfo } from '@/features/pieces/components/piece-card-info';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { ActionErrorHandlingForm } from '@/features/properties-form/components/action-error-handling';
+import {
+  Action,
+  ActionType,
+  FlowOperationType,
+  TriggerType,
+  debounce,
+  flowHelper,
+} from '@activepieces/shared';
+
+import { SidebarHeader } from '../sidebar-header';
+import { TestActionComponent } from '../test-step/test-action';
+
+import { BranchSettings } from './branch-settings/branch-settings';
+import { CodeSettings } from './code-settings/code-settings';
+import { LoopsSettings } from './loops-settings';
 
 const STEPS_WITH_ERROR_HANDLING: (ActionType | TriggerType)[] = [
   ActionType.CODE,

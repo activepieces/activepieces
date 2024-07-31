@@ -1,15 +1,15 @@
-import { LoopOnItemsAction } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 
-import { TextInputWithMentions } from '../text-input-with-mentions/text-input-with-mentions';
-
 import { ApMarkdown } from '@/components/custom/markdown';
 import { FormField, FormItem, FormMessage, Form } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
+import { LoopOnItemsAction } from '@activepieces/shared';
+
+import { TextInputWithMentions } from '../text-input-with-mentions/text-input-with-mentions';
 
 type LoopsSettingsProps = {
   selectedStep: LoopOnItemsAction;
