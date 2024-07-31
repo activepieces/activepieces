@@ -18,7 +18,7 @@ const ToggleIcon = ({ expanded }: { expanded: boolean }) => {
   );
 };
 type NodeTemplateProps = {
-  node: MentionTreeNode;
+type DataSelectorNodeContentProps = {
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
   depth: number;
