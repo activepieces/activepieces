@@ -41,7 +41,7 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
     projectId: authenticationSession.getProjectId(),
   });
 
-  const addBrackets = (str: string) => `{{connections['${str}']}}`; 
+  const addBrackets = (str: string) => `{{connections['${str}']}}`;
 
   return (
     <FormField

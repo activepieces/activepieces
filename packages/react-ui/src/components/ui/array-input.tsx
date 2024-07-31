@@ -14,13 +14,12 @@ type ArrayInputProps = {
 };
 
 const ArrayInput = ({ inputName }: ArrayInputProps) => {
-  const form = useFormContext()
+  const form = useFormContext();
 
   const { fields, append, move, remove } = useFieldArray({
     control: form.control,
     name: inputName,
   });
-
 
   return (
     <>
@@ -54,10 +53,7 @@ const ArrayInput = ({ inputName }: ArrayInputProps) => {
                   render={({ field }) => (
                     <FormItem className="grow">
                       <FormControl>
-                        <Input
-                          className="h-8"
-                          {...field}
-                        />
+                        <Input className="h-8" {...field} />
                       </FormControl>
                     </FormItem>
                   )}

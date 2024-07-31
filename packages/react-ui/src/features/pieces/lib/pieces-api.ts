@@ -15,6 +15,7 @@ import {
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
+
 import { StepMetadata } from './pieces-hook';
 
 export const piecesApi = {
@@ -28,48 +29,53 @@ export const piecesApi = {
       version: request.version ?? undefined,
     });
   },
-  options<T extends DropdownState<unknown> | PiecePropertyMap>(request: PieceOptionRequest): Promise<T> {
+  options<T extends DropdownState<unknown> | PiecePropertyMap>(
+    request: PieceOptionRequest,
+  ): Promise<T> {
     return api.post<T>(`/v1/pieces/options`, request);
   },
   async getMetadata(step: Action | Trigger): Promise<StepMetadata> {
-      switch (step.type) {
-        case ActionType.BRANCH:
-          return {
-            displayName: 'Branch',
-            logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
-            description: 'Branch',
-          };
-        case ActionType.CODE:
-          return {
-            displayName: 'Code',
-            logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
-            description: 'Powerful nodejs & typescript code with npm',
-          };
-        case ActionType.LOOP_ON_ITEMS:
-          return {
-            displayName: 'Loop on Items',
-            logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
-            description: 'Iterate over a list of items',
-          };
-        case TriggerType.EMPTY:
-          return {
-            displayName: 'Empty Trigger',
-            logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
-            description: 'Empty Trigger',
-          };
-        case ActionType.PIECE:
-        case TriggerType.PIECE: {
-          const { pieceName, pieceVersion } = step.settings;
-          const piece = await piecesApi.get({
-            name: pieceName,
-            version: pieceVersion,
-          });
-          return {
-            displayName: piece.displayName,
-            logoUrl: piece.logoUrl,
-            description: piece.description,
-          };
-        }
+    switch (step.type) {
+      case ActionType.BRANCH:
+        return {
+          displayName: 'Branch',
+          logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
+          description: 'Branch',
+        };
+      case ActionType.CODE:
+        return {
+          displayName: 'Code',
+          logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
+          description: 'Powerful nodejs & typescript code with npm',
+        };
+      case ActionType.LOOP_ON_ITEMS:
+        return {
+          displayName: 'Loop on Items',
+          logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
+          description: 'Iterate over a list of items',
+        };
+      case TriggerType.EMPTY:
+        return {
+          displayName: 'Empty Trigger',
+          logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
+          description: 'Empty Trigger',
+        };
+      case ActionType.PIECE:
+      case TriggerType.PIECE: {
+        const { pieceName, pieceVersion } = step.settings;
+        const piece = await piecesApi.get({
+          name: pieceName,
+          version: pieceVersion,
+        });
+        return {
+          displayName: piece.displayName,
+          logoUrl: piece.logoUrl,
+          description: piece.description,
+        };
       }
-  }
+    }
+  },
+  delete(id: string) {
+    return api.delete(`/v1/pieces/${id}`);
+  },
 };

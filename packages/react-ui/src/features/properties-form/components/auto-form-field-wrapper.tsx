@@ -23,7 +23,7 @@ const AutoFormFieldWrapper = ({
 }: AutoFormFieldWrapperProps) => {
   return (
     <FormItem className="flex flex-col gap-1">
-      <FormLabel className="flex items-center gap-1" >
+      <FormLabel className="flex items-center gap-1">
         {placeBeforeLabelText && children}
         <span>{property.displayName}</span>
         {property.required && <span className="text-destructive">*</span>}

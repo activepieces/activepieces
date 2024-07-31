@@ -55,7 +55,8 @@ const BranchSingleCondition = ({
 }: BranchSingleConditionProps) => {
   const form = useFormContext<BranchAction>();
 
-  const condition = form.getValues().settings.conditions[groupIndex][conditionIndex];
+  const condition =
+    form.getValues().settings.conditions[groupIndex][conditionIndex];
   const isTextCondition =
     condition.operator && textConditions.includes(condition?.operator);
   const isSingleValueCondition =

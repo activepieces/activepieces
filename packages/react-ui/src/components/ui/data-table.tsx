@@ -30,7 +30,7 @@ export type RowDataWithActions<TData> = TData & {
 };
 
 export type DataTableFilter = {
-  type: 'select';
+  type: 'select' | 'input' | 'date';
   title: string;
   accessorKey: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -140,6 +140,7 @@ export function DataTable<TData, TValue>({
           filters.map((filter) => (
             <DataTableFacetedFilter
               key={filter.accessorKey}
+              type={filter.type}
               column={table.getColumn(filter.accessorKey)}
               title={filter.title}
               options={filter.options}

@@ -1,4 +1,5 @@
 import { ReactFlowProvider } from '@xyflow/react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import {
   LeftSideBarType,
@@ -12,6 +13,7 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
+import { flowHelper } from '@activepieces/shared';
 
 import { BuilderNavBar } from './builder-nav-bar';
 import { FlowVersionsList } from './flow-versions/flow-versions-list';
@@ -19,16 +21,16 @@ import { PiecesCardList } from './pieces-list/pieces-card-list';
 import { FlowRunDetails } from './run-details/flow-run-details-list';
 import { FlowRecentRunsList } from './run-list/flow-runs-list';
 import { StepSettingsContainer } from './step-settings/step-settings-container';
-import React, { useEffect, useMemo, useState } from 'react';
-import { flowHelper } from '../../../../shared/src';
 
 const BuilderPage = React.memo(() => {
-  const [leftSidebar, rightSidebar, flowVersion, selectedStep] =
+  const [leftSidebar, rightSidebar, flowVersion, selectedStep, exitRun, run] =
     useBuilderStateContext((state) => [
       state.leftSidebar,
       state.rightSidebar,
       state.flowVersion,
       state.selectedStep,
+      state.exitRun,
+      state.run,
     ]);
 
   const [containerKey, setContainerKey] = useState<string | undefined>(
@@ -42,7 +44,6 @@ const BuilderPage = React.memo(() => {
     return flowHelper.getStep(flowVersion, selectedStep.stepName);
   }, [flowVersion.id, selectedStep]);
 
-
   useEffect(() => {
     if (!selectedStep) {
       return;
@@ -50,10 +51,9 @@ const BuilderPage = React.memo(() => {
     setContainerKey(flowVersion.id + selectedStep.stepName);
   }, [selectedStep, flowVersion]);
 
-
   return (
     <div className="flex h-screen w-screen flex-col">
-      <RunDetailsBar />
+      <RunDetailsBar run={run} exitRun={exitRun} />
       <BuilderNavBar />
       <ResizablePanelGroup direction="horizontal">
         {leftSidebar !== LeftSideBarType.NONE && (
@@ -94,9 +94,13 @@ const BuilderPage = React.memo(() => {
               {rightSidebar === RightSideBarType.PIECE_SELECTOR && (
                 <PiecesCardList />
               )}
-              {rightSidebar === RightSideBarType.PIECE_SETTINGS && memorizedSelectedStep && (
-                <StepSettingsContainer key={containerKey} selectedStep={memorizedSelectedStep} />
-              )}
+              {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
+                memorizedSelectedStep && (
+                  <StepSettingsContainer
+                    key={containerKey}
+                    selectedStep={memorizedSelectedStep}
+                  />
+                )}
             </ResizablePanel>
           </>
         )}
@@ -104,5 +108,5 @@ const BuilderPage = React.memo(() => {
     </div>
   );
 });
-
+BuilderPage.displayName = 'BuilderPage';
 export { BuilderPage };

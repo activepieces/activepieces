@@ -1,24 +1,23 @@
+import { QuestionMarkIcon } from '@radix-ui/react-icons';
 import React from 'react';
 
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import { FlowRun } from '@activepieces/shared';
 
 import { flowRunUtils } from '../lib/flow-run-utils';
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { QuestionMarkIcon } from '@radix-ui/react-icons';
 
-const RunDetailsBar = React.memo(() => {
-
-  const [run, exitRun] = useBuilderStateContext((state) => [
-    state.run,
-    state.exitRun,
-  ]);
-
-
-  const { Icon } = run ? flowRunUtils.getStatusIcon(run.status) : { Icon: QuestionMarkIcon };
+type RunDetailsBarProps = {
+  run?: FlowRun;
+  exitRun: () => void;
+};
+const RunDetailsBar = React.memo(({ run, exitRun }: RunDetailsBarProps) => {
+  const { Icon } = run
+    ? flowRunUtils.getStatusIcon(run.status)
+    : { Icon: QuestionMarkIcon };
 
   if (!run) {
-    return <></>
+    return <></>;
   }
   return (
     <div

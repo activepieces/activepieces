@@ -3,7 +3,12 @@ import { useFormContext } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { DictionaryInput } from '@/components/ui/dictionary-input';
-import { FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { CodeAction } from '@activepieces/shared';
 
 import { CodeEditior } from './code-editior';
@@ -24,9 +29,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const form = useFormContext<CodeAction>();
 
   return (
-    <div
-      className="flex flex-col gap-4"
-    >
+    <div className="flex flex-col gap-4">
       <FormField
         control={form.control}
         name="settings.input"

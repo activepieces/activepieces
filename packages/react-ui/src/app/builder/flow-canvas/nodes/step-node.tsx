@@ -62,8 +62,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: data.step!.name,
-    // TODO fix later
-    disabled: true,
+    disabled: isTrigger,
   });
 
   return (

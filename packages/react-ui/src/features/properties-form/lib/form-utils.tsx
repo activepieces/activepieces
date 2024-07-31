@@ -7,7 +7,19 @@ import {
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { Action, ActionType, BranchActionSchema, BranchOperator, CodeActionSchema, ExactPieceTrigger, LoopOnItemsActionSchema, PieceActionSchema, Trigger, TriggerType, ValidBranchCondition } from '@activepieces/shared';
+import {
+  Action,
+  ActionType,
+  BranchActionSchema,
+  BranchOperator,
+  CodeActionSchema,
+  ExactPieceTrigger,
+  LoopOnItemsActionSchema,
+  PieceActionSchema,
+  Trigger,
+  TriggerType,
+  ValidBranchCondition,
+} from '@activepieces/shared';
 
 export const formUtils = {
   buildPieceDefaultValue: (
@@ -42,10 +54,10 @@ export const formUtils = {
             inputUiInfo: {},
           },
         };
-      case ActionType.CODE:
+      case ActionType.CODE: {
         const defaultCode = `export const code = async (inputs) => {
   return true;
-};`
+};`;
         return {
           ...selectedStep,
           settings: {
@@ -56,10 +68,15 @@ export const formUtils = {
             },
           },
         };
+      }
       case ActionType.PIECE: {
-        const props = piece?.actions?.[selectedStep?.settings?.actionName]?.props ?? {};
-        const input = (selectedStep?.settings?.input ?? {}) as Record<string, unknown>;
-        const defaultValues = getDefaultValueForStep(props, input)
+        const props =
+          piece?.actions?.[selectedStep?.settings?.actionName]?.props ?? {};
+        const input = (selectedStep?.settings?.input ?? {}) as Record<
+          string,
+          unknown
+        >;
+        const defaultValues = getDefaultValueForStep(props, input);
         return {
           ...selectedStep,
           settings: {
@@ -69,9 +86,13 @@ export const formUtils = {
         };
       }
       case TriggerType.PIECE: {
-        const props = piece?.triggers?.[selectedStep?.settings?.triggerName]?.props ?? {};
-        const input = (selectedStep?.settings?.input ?? {}) as Record<string, unknown>;
-        const defaultValues = getDefaultValueForStep(props, input)
+        const props =
+          piece?.triggers?.[selectedStep?.settings?.triggerName]?.props ?? {};
+        const input = (selectedStep?.settings?.input ?? {}) as Record<
+          string,
+          unknown
+        >;
+        const defaultValues = getDefaultValueForStep(props, input);
 
         return {
           ...selectedStep,
@@ -85,7 +106,11 @@ export const formUtils = {
         throw new Error('Unsupported type: ' + type);
     }
   },
-  buildPieceSchema: (type: ActionType | TriggerType, actionNameOrTriggerName: string, piece: PieceMetadataModel | null) => {
+  buildPieceSchema: (
+    type: ActionType | TriggerType,
+    actionNameOrTriggerName: string,
+    piece: PieceMetadataModel | null,
+  ) => {
     switch (type) {
       case ActionType.LOOP_ON_ITEMS:
         return Type.Composite([
@@ -96,32 +121,43 @@ export const formUtils = {
                 minLength: 1,
               }),
             }),
-          })
+          }),
         ]);
       case ActionType.BRANCH:
-        return Type.Composite([BranchActionSchema, Type.Object({
-          settings: Type.Object({
-            conditions: Type.Array(Type.Array(ValidBranchCondition)),
+        return Type.Composite([
+          BranchActionSchema,
+          Type.Object({
+            settings: Type.Object({
+              conditions: Type.Array(Type.Array(ValidBranchCondition)),
+            }),
           }),
-        })])
+        ]);
       case ActionType.CODE:
         return CodeActionSchema;
       case ActionType.PIECE: {
-        return Type.Composite([PieceActionSchema, Type.Object({
-          settings: Type.Object({
-            actionName: Type.String({
-              minLength: 1,
+        return Type.Composite([
+          PieceActionSchema,
+          Type.Object({
+            settings: Type.Object({
+              actionName: Type.String({
+                minLength: 1,
+              }),
+              input:
+                piece && actionNameOrTriggerName
+                  ? formUtils.buildSchema(
+                      piece.actions[actionNameOrTriggerName].props,
+                    )
+                  : Type.Object({}),
             }),
-            input: piece && actionNameOrTriggerName ? formUtils.buildSchema(piece.actions[actionNameOrTriggerName].props,) : Type.Object({})
           }),
-        })])
+        ]);
       }
       case TriggerType.PIECE: {
         const formSchema =
-          (piece && actionNameOrTriggerName)
+          piece && actionNameOrTriggerName
             ? formUtils.buildSchema(
-              piece.triggers[actionNameOrTriggerName].props,
-            )
+                piece.triggers[actionNameOrTriggerName].props,
+              )
             : Type.Object({});
         return ExactPieceTrigger(formSchema);
       }
@@ -242,7 +278,10 @@ export const formUtils = {
   },
 };
 
-function getDefaultValueForStep(props: PiecePropertyMap, input: Record<string, unknown>): Record<string, unknown> {
+function getDefaultValueForStep(
+  props: PiecePropertyMap,
+  input: Record<string, unknown>,
+): Record<string, unknown> {
   const defaultValues: Record<string, unknown> = {};
   const entries = Object.entries(props);
   for (const [name, property] of entries) {
@@ -262,7 +301,7 @@ function getDefaultValueForStep(props: PiecePropertyMap, input: Record<string, u
       case PropertyType.OAUTH2:
       case PropertyType.ARRAY:
       case PropertyType.OBJECT:
-      case PropertyType.JSON:{
+      case PropertyType.JSON: {
         defaultValues[name] = input[name] ?? property.defaultValue ?? '';
         break;
       }
@@ -277,5 +316,5 @@ function getDefaultValueForStep(props: PiecePropertyMap, input: Record<string, u
         break;
     }
   }
-  return defaultValues
+  return defaultValues;
 }

@@ -15,7 +15,11 @@ type JsonEditorProps = {
   readonly?: boolean;
 };
 
-const JsonEditor = ({ intialValue, onChange, readonly = false }: JsonEditorProps) => {
+const JsonEditor = ({
+  intialValue,
+  onChange,
+  readonly = false,
+}: JsonEditorProps) => {
   const extensions = [
     styleTheme,
     EditorState.readOnly.of(readonly),

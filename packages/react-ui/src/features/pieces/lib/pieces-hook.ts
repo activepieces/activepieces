@@ -4,7 +4,7 @@ import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
-import { Action, ActionType, Trigger, TriggerType } from '@activepieces/shared';
+import { Action, Trigger } from '@activepieces/shared';
 
 import { piecesApi } from './pieces-api';
 
@@ -43,13 +43,14 @@ export const piecesHooks = {
       pieceModel: query.data,
       isLoading: query.isLoading,
       isSuccess: query.isSuccess,
-    }
+    };
   },
   useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
     return useQueries({
       queries: names.map((name) => ({
         queryKey: ['piece', name, undefined],
         queryFn: () => piecesApi.get({ name, version: undefined }),
+        staleTime: Infinity,
       })),
     });
   },
@@ -66,7 +67,7 @@ export const piecesHooks = {
     return {
       stepMetadata: query.data,
       isLoading: query.isLoading,
-    }
+    };
   },
   usePieces: ({ searchQuery }: UsePiecesProps) => {
     return useQuery<PieceMetadataModelSummary[], Error>({

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
+import { JsonEditor } from '@/components/custom/json-editior';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { ArrayInput } from '@/components/ui/array-input';
@@ -14,7 +15,7 @@ import {
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { JsonEditor } from '@/components/custom/json-editior';
+
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
 import { SelectPieceProperty } from './select-piece-property';
 
@@ -37,7 +38,13 @@ const AutoPropertiesFormComponent = React.memo(
               name={prefixValue + '.' + key}
               control={form.control}
               render={({ field }) =>
-                selectRightComponent(field, key, prefixValue + '.' + key, props[key], allowDynamicValues)
+                selectRightComponent(
+                  field,
+                  key,
+                  prefixValue + '.' + key,
+                  props[key],
+                  allowDynamicValues,
+                )
               }
             />
           );
@@ -70,7 +77,10 @@ const selectRightComponent = (
           property={property}
           allowDynamicValues={allowDynamicValues}
         >
-          <DictionaryInput values={field.value} onChange={field.onChange}></DictionaryInput>
+          <DictionaryInput
+            values={field.value}
+            onChange={field.onChange}
+          ></DictionaryInput>
         </AutoFormFieldWrapper>
       );
     case PropertyType.CHECKBOX:
@@ -110,7 +120,10 @@ const selectRightComponent = (
           property={property}
           allowDynamicValues={allowDynamicValues}
         >
-          <JsonEditor intialValue={field.value} onChange={field.onChange}></JsonEditor>
+          <JsonEditor
+            intialValue={field.value}
+            onChange={field.onChange}
+          ></JsonEditor>
         </AutoFormFieldWrapper>
       );
     case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
@@ -119,22 +132,27 @@ const selectRightComponent = (
           property={property}
           allowDynamicValues={allowDynamicValues}
         >
-          <MultiSelectPieceProperty placeholder={property.options.placeholder ?? 'Select a option'}
+          <MultiSelectPieceProperty
+            placeholder={property.options.placeholder ?? 'Select a option'}
             options={property.options.options}
             onChange={field.onChange}
             initialValues={field.value}
-            disabled={property.options.disabled}></MultiSelectPieceProperty>
+            disabled={property.options.disabled}
+          ></MultiSelectPieceProperty>
         </AutoFormFieldWrapper>
-      )
+      );
     case PropertyType.DROPDOWN:
       return (
         <AutoFormFieldWrapper
           property={property}
           allowDynamicValues={allowDynamicValues}
         >
-          <SelectPieceProperty refreshers={property.refreshers} propertyName={key}></SelectPieceProperty>
+          <SelectPieceProperty
+            refreshers={property.refreshers}
+            propertyName={key}
+          ></SelectPieceProperty>
         </AutoFormFieldWrapper>
-      )
+      );
     case PropertyType.DATE_TIME:
     case PropertyType.SHORT_TEXT:
     case PropertyType.LONG_TEXT:

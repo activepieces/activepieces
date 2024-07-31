@@ -6,7 +6,7 @@ type StepDragTemplateProps = {
 };
 
 const StepDragOverlay = ({ step }: StepDragTemplateProps) => {
-  const { stepMetadata} = piecesHooks.useStepMetadata({
+  const { stepMetadata } = piecesHooks.useStepMetadata({
     step: step!,
   });
 

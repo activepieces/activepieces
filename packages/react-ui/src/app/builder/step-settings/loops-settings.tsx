@@ -21,7 +21,7 @@ const LoopsSettings = React.memo(() => {
       control={form.control}
       name="settings.items"
       render={({ field }) => (
-        <FormItem className='flex flex-col gap-2'>
+        <FormItem className="flex flex-col gap-2">
           <ApMarkdown markdown={markdown} />
           <FormLabel htmlFor="email">Items</FormLabel>
           <TextInputWithMentions

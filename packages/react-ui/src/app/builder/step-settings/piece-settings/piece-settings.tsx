@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Form } from '@/components/ui/form';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { AutoPropertiesFormComponent } from '@/features/properties-form/components/auto-properties-form';
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
@@ -58,7 +57,6 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
         break;
       }
     }
-
   }, [watchedForm]);
 
   const removeAuthFromProps = (
@@ -68,13 +66,15 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     return rest;
   };
 
-  const actionPropsWithoutAuth = removeAuthFromProps(selectedAction?.props ?? {});
-  const triggerPropsWithoutAuth = removeAuthFromProps(selectedTrigger?.props ?? {});
+  const actionPropsWithoutAuth = removeAuthFromProps(
+    selectedAction?.props ?? {},
+  );
+  const triggerPropsWithoutAuth = removeAuthFromProps(
+    selectedTrigger?.props ?? {},
+  );
 
   return (
-    <div
-      className="flex flex-col gap-4 w-full"
-    >
+    <div className="flex flex-col gap-4 w-full">
       {pieceModel && (
         <>
           <PieceActionTriggerSelector
