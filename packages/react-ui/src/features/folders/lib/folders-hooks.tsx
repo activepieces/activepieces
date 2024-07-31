@@ -11,4 +11,10 @@ export const foldersHooks = {
       queryFn: foldersApi.list,
     });
   },
+  useFolder: (folderId: string) => {
+    return useQuery({
+      queryKey: ['folder', folderId],
+      queryFn: () => foldersApi.get(folderId),
+    });
+  },
 };

@@ -1,19 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-
 import { Badge } from '@/components/ui/badge';
 
-import { foldersApi } from '../lib/folders-api';
+import { foldersHooks } from '../lib/folders-hooks';
 
 type FolderBadgeProps = {
   folderId: string;
 };
 
 const FolderBadge = ({ folderId }: FolderBadgeProps) => {
-  const { data } = useQuery({
-    queryKey: ['folder', folderId],
-    queryFn: () => foldersApi.get(folderId),
-    staleTime: Infinity,
-  });
+  const { data } = foldersHooks.useFolder(folderId);
 
   return (
     <Badge variant={'outline'}>

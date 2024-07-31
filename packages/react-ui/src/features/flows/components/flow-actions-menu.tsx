@@ -34,7 +34,7 @@ interface FlowActionMenuProps {
   children?: React.ReactNode;
   readonly: boolean;
   onRename: (newName: string) => void;
-  onMoveTo: () => void;
+  onMoveTo: (folderId: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
 }

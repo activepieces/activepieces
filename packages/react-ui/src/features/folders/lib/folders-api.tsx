@@ -24,12 +24,8 @@ export const foldersApi = {
   delete(folderId: string) {
     return api.delete<void>(`/v1/folders/${folderId}`);
   },
-  renameFolder(
-    req: {
-      folderId: string;
-    } & CreateOrRenameFolderRequest,
-  ) {
-    return api.post<Folder>(`/v1/folders/${req.folderId}`, {
+  renameFolder(folderId: string, req: CreateOrRenameFolderRequest) {
+    return api.post<Folder>(`/v1/folders/${folderId}`, {
       displayName: req.displayName,
     });
   },

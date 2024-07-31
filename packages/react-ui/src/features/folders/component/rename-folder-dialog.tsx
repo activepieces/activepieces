@@ -40,14 +40,9 @@ const RenameFolderDialog = ({
     resolver: typeboxResolver(RenameFolderSchema),
   });
 
-  const { mutate, isPending } = useMutation<
-    Folder,
-    Error,
-    { displayName: string }
-  >({
+  const { mutate, isPending } = useMutation<Folder, Error, RenameFolderSchema>({
     mutationFn: async (data) =>
-      await foldersApi.renameFolder({
-        folderId,
+      await foldersApi.renameFolder(folderId, {
         displayName: data.displayName,
       }),
     onSuccess: () => {

@@ -1,7 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
-import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -44,7 +44,7 @@ type MoveToDialogProps = {
   children: React.ReactNode;
   flow: Flow;
   flowVersion: FlowVersion;
-  onMoveTo: () => void;
+  onMoveTo: (folderId: string) => void;
 };
 const MoveToDialog = ({
   children,
@@ -61,7 +61,7 @@ const MoveToDialog = ({
   const { mutate, isPending } = useMutation<
     PopulatedFlow,
     Error,
-    { folder: string }
+    MoveToFormSchema
   >({
     mutationFn: async (data) => {
       return await flowsApi.update(flow.id, {
@@ -72,19 +72,13 @@ const MoveToDialog = ({
       });
     },
     onSuccess: () => {
-      onMoveTo();
+      onMoveTo(form.getValues().folder);
       toast({
         title: 'Moved flow successfully',
       });
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
-
-  const onSubmit: SubmitHandler<{
-    folder: string;
-  }> = (data) => {
-    mutate(data);
-  };
 
   return (
     <Dialog>
@@ -94,7 +88,7 @@ const MoveToDialog = ({
           <DialogTitle>Move {flowVersion.displayName}</DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form onSubmit={form.handleSubmit((data) => mutate(data))}>
             <FormField
               control={form.control}
               name="folder"

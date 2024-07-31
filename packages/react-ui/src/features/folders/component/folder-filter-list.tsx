@@ -44,6 +44,8 @@ import { foldersHooks } from '../lib/folders-hooks';
 
 import { RenameFolderDialog } from './rename-folder-dialog';
 
+import { cn } from '@/lib/utils';
+
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
     errorMessage: 'Please enter folder name',
@@ -76,7 +78,7 @@ const FolderFilterList = ({
   const { mutate, isPending } = useMutation<
     FolderDto,
     Error,
-    { displayName: string }
+    CreateFolderFormSchema
   >({
     mutationFn: async (data) => {
       return await foldersApi.create({
@@ -95,7 +97,7 @@ const FolderFilterList = ({
         switch (error.response?.status) {
           case HttpStatusCode.Conflict: {
             form.setError('root.serverError', {
-              message: 'The email is already added.',
+              message: 'The folder name is already added.',
             });
             break;
           }
@@ -168,9 +170,9 @@ const FolderFilterList = ({
         <div className="flex w-[200px] flex-col space-y-1">
           <Button
             variant="secondary"
-            className={`flex w-full justify-start ${
-              !selectedFolderId ? 'bg-muted' : 'bg-background'
-            }`}
+            className={cn('flex w-full justify-start bg-background', {
+              'bg-muted': !selectedFolderId,
+            })}
             onClick={() => setSelectedFolderId(undefined)}
           >
             <TextWithIcon icon={<Folder size={18} />} text="All flows" />
@@ -184,9 +186,9 @@ const FolderFilterList = ({
                 <div key={folder.id} className="group">
                   <Button
                     variant="ghost"
-                    className={`w-full justify-between ${
-                      selectedFolderId === folder.id ? 'bg-muted' : ''
-                    }`}
+                    className={cn('w-full justify-between', {
+                      'bg-muted': selectedFolderId === folder.id,
+                    })}
                     onClick={() => setSelectedFolderId(folder.id)}
                   >
                     <span>{folder.displayName}</span>

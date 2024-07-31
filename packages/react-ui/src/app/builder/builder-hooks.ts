@@ -59,6 +59,7 @@ export type BuilderState = {
   ExitRun: () => void;
   ExitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
+  moveToFolderClientSide: (folderId: string) => void;
   selectStep(path: StepPathWithName): void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
@@ -108,6 +109,16 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           flowVersion: {
             ...state.flowVersion,
             displayName: newName,
+          },
+        };
+      });
+    },
+    moveToFolderClientSide: (folderId: string) => {
+      set((state) => {
+        return {
+          flow: {
+            ...state.flow,
+            folderId,
           },
         };
       });
