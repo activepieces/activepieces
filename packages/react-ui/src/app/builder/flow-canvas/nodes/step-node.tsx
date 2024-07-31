@@ -47,7 +47,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     );
   });
 
-  const { stepMetadata } = piecesHooks.useStepMetadata({
+  const { data: stepMetadata } = piecesHooks.useStepMetadata({
     step: data.step!,
   });
 
@@ -67,7 +67,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   return (
     <div
-      className={cn('h-[70px] w-[260px]', {
+      className={cn('h-[70px] w-[260px] transition-all', {
         'border-primary': toolbarOpen || isSelected,
         'rounded bg-background border border-solid box-border': !isDragging,
       })}
@@ -90,7 +90,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
           <>
             <div
               className={cn(
-                'absolute left-0 right-0 top-0 mx-auto h-[3px] bg-primary opacity-0 rounded-tl-md rounded-tr-md',
+                'absolute left-0 right-0 top-0 mx-auto h-[3px] transition-all bg-primary opacity-0 rounded-tl-md rounded-tr-md',
                 {
                   'opacity-100': toolbarOpen || isSelected,
                   'opacity-0': !toolbarOpen && !isSelected,

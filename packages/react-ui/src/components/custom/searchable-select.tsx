@@ -33,7 +33,7 @@ export const SearchableSelect = React.memo(
     value,
     placeholder,
     disabled,
-    loading
+    loading,
   }: SearchableSelectProps<T>) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterOptionsIndices, setFilteredOptions] = useState<number[]>([]);

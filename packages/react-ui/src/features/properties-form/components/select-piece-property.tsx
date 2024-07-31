@@ -1,11 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
+
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { Action, Trigger } from '@activepieces/shared';
-import { DropdownState } from '@activepieces/pieces-framework';
 import { SearchableSelect } from '@/components/custom/searchable-select';
+import { piecesApi } from '@/features/pieces/lib/pieces-api';
+import { DropdownState } from '@activepieces/pieces-framework';
+import { Action, Trigger } from '@activepieces/shared';
 
 type SelectPiecePropertyProps = {
   refreshers: string[];
@@ -25,8 +26,11 @@ const SelectPieceProperty = React.memo((props: SelectPiecePropertyProps) => {
     options: [],
   });
 
-
-  const { mutate } = useMutation<DropdownState<unknown>, Error, Record<string, unknown>>({
+  const { mutate } = useMutation<
+    DropdownState<unknown>,
+    Error,
+    Record<string, unknown>
+  >({
     mutationFn: async (input) => {
       setLoading(true);
       const { settings } = form.getValues();
@@ -75,14 +79,16 @@ const SelectPieceProperty = React.memo((props: SelectPiecePropertyProps) => {
     value: option.value as React.Key,
   }));
 
-  return <SearchableSelect
-    options={selectOptions}
-    disabled={dropdownState.disabled}
-    loading={loading}
-    placeholder={dropdownState.placeholder ?? 'Select a option'}
-    value={props.intialValue}
-    onChange={(value) => props.onChange(value)}
-  />;
+  return (
+    <SearchableSelect
+      options={selectOptions}
+      disabled={dropdownState.disabled}
+      loading={loading}
+      placeholder={dropdownState.placeholder ?? 'Select a option'}
+      value={props.intialValue}
+      onChange={(value) => props.onChange(value)}
+    />
+  );
 });
 
 SelectPieceProperty.displayName = 'SelectPieceProperty';
