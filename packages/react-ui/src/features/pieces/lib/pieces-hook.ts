@@ -25,20 +25,27 @@ type UsePiecesProps = {
   searchQuery?: string;
 };
 
-export type StepMetadata<
-  T extends ActionType | TriggerType = ActionType | TriggerType,
-> = {
+type PieceStepMetadata = {
   displayName: string;
   logoUrl: string;
   description: string;
-  type: T;
-  pieceName: T extends ActionType.PIECE | TriggerType.PIECE
-    ? string
-    : undefined;
-  pieceVersion: T extends ActionType.PIECE | TriggerType.PIECE
-    ? string
-    : undefined;
+  type: ActionType.PIECE | TriggerType.PIECE;
+  pieceName: string;
+  pieceVersion: string;
 };
+
+type NonPieceStepMetadata = {
+  displayName: string;
+  logoUrl: string;
+  description: string;
+  type:
+    | ActionType.BRANCH
+    | ActionType.CODE
+    | ActionType.LOOP_ON_ITEMS
+    | TriggerType.EMPTY;
+};
+
+export type StepMetadata = NonPieceStepMetadata | PieceStepMetadata;
 
 export const piecesHooks = {
   usePiece: ({ name, version }: UsePieceProps) => {
@@ -83,12 +90,7 @@ function stepMetadataQueryBuilder(step: Step) {
     queryKey: ['piece', step.type, pieceName, pieceVersion],
     queryFn: async () => {
       const metadata = await getStepMetadata(step);
-      return {
-        ...metadata,
-        type: step.type,
-        pieceName,
-        pieceVersion,
-      };
+      return metadata;
     },
     staleTime: Infinity,
   };
@@ -101,7 +103,7 @@ async function getStepMetadata(step: Step): Promise<StepMetadata> {
         displayName: 'Branch',
         logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
         description: 'Branch',
-        type: ActionType.BRANCH,
+        type: step.type,
       };
     case ActionType.CODE:
       return {
@@ -127,8 +129,6 @@ async function getStepMetadata(step: Step): Promise<StepMetadata> {
     }
     case ActionType.PIECE:
     case TriggerType.PIECE: {
-      // TODO optmize the query and use cached version
-
       const piece = await piecesApi.get({
         name: step.settings.pieceName,
         version: step.settings.pieceVersion,
