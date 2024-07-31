@@ -1,4 +1,8 @@
-import { EngineHttpResponse, EngineOperationType, ProgressUpdateType } from '@activepieces/shared'
+import {
+    EngineHttpResponse,
+    EngineOperationType,
+    ProgressUpdateType,
+} from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { system } from '../system/system'
 import { SharedSystemProp } from '../system/system-prop'
@@ -41,7 +45,9 @@ export const UpdateFailureCountRequest = Type.Object({
     success: Type.Boolean(),
 })
 
-export type UpdateFailureCountRequest = Static<typeof UpdateFailureCountRequest>
+export type UpdateFailureCountRequest = Static<
+  typeof UpdateFailureCountRequest
+>
 
 export const ApQueueJob = Type.Object({
     id: Type.String(),
@@ -51,12 +57,13 @@ export const ApQueueJob = Type.Object({
 
 export type ApQueueJob = Static<typeof ApQueueJob>
 
-
 export const DeleteWebhookSimulationRequest = Type.Object({
     flowId: Type.String(),
     projectId: Type.String(),
 })
-export type DeleteWebhookSimulationRequest = Static<typeof DeleteWebhookSimulationRequest>
+export type DeleteWebhookSimulationRequest = Static<
+  typeof DeleteWebhookSimulationRequest
+>
 
 export const SendWebhookUpdateRequest = Type.Object({
     workerServerId: Type.String(),
@@ -91,9 +98,12 @@ export type GetRunForWorkerRequest = Static<typeof GetRunForWorkerRequest>
 export const ResumeRunRequest = DelayedJobData
 export type ResumeRunRequest = Static<typeof ResumeRunRequest>
 
-export const flowTimeoutSandbox = system.getNumber(SharedSystemProp.FLOW_TIMEOUT_SECONDS) ?? system.getNumber(SharedSystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
-export const triggerTimeoutSandbox = system.getNumber(SharedSystemProp.TRIGGER_TIMEOUT_SECONDS) ?? 60
-
+export const flowTimeoutSandbox =
+  system.getNumber(SharedSystemProp.FLOW_TIMEOUT_SECONDS) ??
+  system.getNumber(SharedSystemProp.SANDBOX_RUN_TIME_SECONDS) ??
+  600
+export const triggerTimeoutSandbox =
+  system.getNumber(SharedSystemProp.TRIGGER_TIMEOUT_SECONDS) ?? 60
 
 export function getEngineTimeout(operationType: EngineOperationType): number {
     switch (operationType) {

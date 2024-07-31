@@ -2,7 +2,9 @@ import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/serv
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
+import { redisRateLimiter } from '../helper/redis-rate-limiter'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
+import { redisHandler } from './redis-handler'
 import { redisMigrations } from './redis-migration'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = 8 * 60 * 1000
@@ -20,6 +22,7 @@ export const bullMqGroups: Record<string, Queue> = {}
 
 export const redisQueue: QueueManager = {
     async init(): Promise<void> {
+        await redisHandler.init()
         const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName))
         await Promise.all(queues)
         await redisMigrations.run()
@@ -103,6 +106,10 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
 
 async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOOK | JobType.ONE_TIME>): Promise<void> {
     const { id, data, priority } = params
+    if (await redisHandler.shouldBeLimited(data.payload.userId)) {
+        await redisRateLimiter.delayJob(params)
+        return
+    }
     await queue.add(id, data, {
         jobId: id,
         priority: JOB_PRIORITY[priority],

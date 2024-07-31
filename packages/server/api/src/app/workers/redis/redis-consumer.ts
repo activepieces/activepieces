@@ -4,8 +4,12 @@ import { Job, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 import { createRedisClient } from '../../database/redis-connection'
 import { ConsumerManager } from '../consumer/consumer-manager'
+import { redisRateLimiter } from '../helper/redis-rate-limiter'
+import { redisHandler } from './redis-handler'
+import { bullMqGroups } from './redis-queue'
 
-const consumerGroups: Record<string, Worker>  = {}
+const consumer: Record<string, Worker>  = {}
+
 
 
 export const redisConsumer: ConsumerManager = {
@@ -55,11 +59,13 @@ export const redisConsumer: ConsumerManager = {
         }
     },
     async init(): Promise<void> {
+        await redisHandler.init()
+        await redisRateLimiter.init()
         const sharedConsumers = Object.values(QueueName).map((queueName) => ensureWorkerExists(queueName))
         await Promise.all(sharedConsumers)
     },
     async close(): Promise<void> {
-        const promises = Object.values(consumerGroups).map((consumerGroup) => {
+        const promises = Object.values(consumer).map((consumerGroup) => {
             return Promise.all(Object.values(consumerGroup).map((consumer) => consumer.close()))
         })
         await Promise.all(promises)
@@ -68,20 +74,36 @@ export const redisConsumer: ConsumerManager = {
 
 
 async function ensureWorkerExists( queueName: QueueName): Promise<Worker> {
-    if (!isNil(consumerGroups[queueName])) {
-        return consumerGroups[queueName]
+    if (!isNil(consumer[queueName])) {
+        return consumer[queueName]
     }
     const lockDuration = getLockDurationInMs(queueName)
-    consumerGroups[queueName] = new Worker(queueName, null, {
+    consumer[queueName] = new Worker(queueName, null, {
         connection: createRedisClient(),
         lockDuration,
         maxStalledCount: 5,
         drainDelay: 5,
         stalledInterval: 30000,
     })
-    await consumerGroups[queueName].waitUntilReady()
-    await consumerGroups[queueName].startStalledCheckTimer()
-    return consumerGroups[queueName]
+
+    consumer[queueName].on('completed', () => {
+        async (job: Job) => {
+            const activeQueue = bullMqGroups[queueName]
+            await redisRateLimiter.activeJob(job, activeQueue)
+        }
+    })
+
+    consumer[queueName].on('failed', () => {
+        async (job: Job) => {
+            const activeQueue = bullMqGroups[queueName]
+            await redisRateLimiter.activeJob(job, activeQueue)
+        }
+    })
+    
+
+    await consumer[queueName].waitUntilReady()
+    await consumer[queueName].startStalledCheckTimer()
+    return consumer[queueName]
 }
 
 function getLockDurationInMs(queueName: QueueName): number {
