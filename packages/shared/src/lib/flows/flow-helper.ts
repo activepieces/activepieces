@@ -941,87 +941,20 @@ function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAct
     return step.type === ActionType.BRANCH || step.type === ActionType.LOOP_ON_ITEMS
 }
 
-const findPathToTargettedStep: (req: {
-    target: Step
-    source: Step | undefined
-}) => Step[] | undefined = ({ target, source }) => {
-    if (source === undefined) {
-        return undefined
-    }
-    if (target.name === source.name) {
-        return []
-    }
-    const pathFromNextAction = findPathToTargettedStep({
-        target,
-        source: source.nextAction,
-    })
-    if (pathFromNextAction) {
-        switch (source.type) {
-            case ActionType.CODE:
-            case ActionType.PIECE:
-            case TriggerType.EMPTY:
-            case TriggerType.PIECE:
-                return [source, ...pathFromNextAction]
-            case ActionType.LOOP_ON_ITEMS:
-            case ActionType.BRANCH:
-                return [...pathFromNextAction]
-        }
-    }
-    if (source.type === ActionType.BRANCH) {
-        const pathFromTrueBranch =  findPathToTargettedStep({
-            target,
-            source: source.onSuccessAction,
-        })
-        if (pathFromTrueBranch) {
-            return [...pathFromTrueBranch]
-        }
-        const pathFromFalseBranch = findPathToTargettedStep({
-            target,
-            source: source.onFailureAction,
-        })
-        if (pathFromFalseBranch) {
-            return [...pathFromFalseBranch]
-        }
-    }
-    if (source.type === ActionType.LOOP_ON_ITEMS) {
-        const pathFromLoop = findPathToTargettedStep({
-            target,
-            source: source.firstLoopAction,
-        })
-        if (pathFromLoop) {
-            return [source, ...pathFromLoop]
-        }
-    }
-     
-    return undefined
-}
-
-function  findStepDfsIndex(trigger: Trigger, stepName: string): number {
-    return getAllSteps(trigger).findIndex((f) => stepName === f.name) + 1
-}
-
 type StepWithIndex = Step & { dfsIndex: number }
+
 function findPathToStep({ targetStep: stepToFind, trigger }: {
     targetStep: Step
     trigger: Trigger
 }): StepWithIndex[] {
-    if (stepToFind.name === trigger.name) {
-        return []
-    }
-    const path = findPathToTargettedStep({
-        source: trigger.nextAction,
-        target: stepToFind,
-    })
-    if (!path) {
-        throw new Error('Step not found while traversing to find it ')
-    }
-    const pathWithIndex = path.map((f) => {
-        return {
-            ...f,
-            dfsIndex: findStepDfsIndex(trigger, f.name),
-        }
-    })
-    return [{ ...trigger, dfsIndex: 1 }, ...pathWithIndex]
+    const steps = getAllSteps(trigger).map((step, dfsIndex) => ({
+        ...step,
+        dfsIndex,
+    }));
+    return steps.filter((step) => isPartOfInnerFlow({
+        parentStep: step,
+        childName: stepToFind.name,
+    })).filter((step) => step.name !== stepToFind.name)
 }
   
   
