@@ -18,7 +18,7 @@ import {
   singleValueConditions,
 } from '@activepieces/shared';
 
-import { TextInputWithMentions } from '../../data-to-insert/text-input-with-mentions';
+import { TextInputWithMentions } from '../../text-input-with-mentions/text-input-with-mentions';
 
 const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_CONTAINS]: '(Text) Contains',
@@ -101,7 +101,7 @@ const BranchSingleCondition = ({
                 <TextInputWithMentions
                   placeholder="First value"
                   onChange={field.onChange}
-                  originalValue={field.value}
+                  initialValue={field.value}
                 ></TextInputWithMentions>
                 <FormMessage />
               </FormItem>
@@ -131,7 +131,7 @@ const BranchSingleCondition = ({
                   <TextInputWithMentions
                     placeholder="Second value"
                     {...field}
-                    originalValue={field.value}
+                    initialValue={field.value}
                   ></TextInputWithMentions>
                   <FormMessage />
                 </FormItem>

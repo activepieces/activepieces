@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
 import { LoopOnItemsAction } from '@activepieces/shared';
 
-import { TextInputWithMentions } from '../data-to-insert/text-input-with-mentions';
+import { TextInputWithMentions } from '../text-input-with-mentions/text-input-with-mentions';
 
 type LoopsSettingsProps = {
   selectedStep: LoopOnItemsAction;
@@ -67,7 +67,7 @@ const LoopsSettings = React.memo(
                     field.onChange(e);
                     updateFormChange();
                   }}
-                  originalValue={field.value}
+                  initialValue={field.value}
                   placeholder="Select an array of items"
                 ></TextInputWithMentions>
                 <FormMessage />

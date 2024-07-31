@@ -7,50 +7,48 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-import { piecesHooks } from '../lib/pieces-hook';
-
-const pieceIconVariants = cva(
-  'flex items-center justify-center bg-accent p-2',
-  {
-    variants: {
-      circle: {
-        true: 'rounded-full',
-      },
-      size: {
-        md: 'size-[36px]',
-      },
-      border: {
-        true: 'border border-solid',
-        false: '',
-      },
+const pieceIconVariants = cva('flex items-center justify-center  ', {
+  variants: {
+    circle: {
+      true: 'rounded-full bg-white p-2',
     },
-    defaultVariants: {},
+    size: {
+      md: 'size-[36px]',
+      sm: 'size-[25px]',
+    },
+    border: {
+      true: 'border border-solid',
+      false: '',
+    },
   },
-);
+  defaultVariants: {},
+});
 
 interface PieceIconCircleProps extends VariantProps<typeof pieceIconVariants> {
-  pieceName: string;
+  displayName: string;
+  logoUrl: string;
+  showTooltip: boolean;
 }
 
 const PieceIcon = React.memo(
-  ({ pieceName, border, size, circle }: PieceIconCircleProps) => {
-    const { data, isSuccess } = piecesHooks.usePiece({
-      name: pieceName,
-      version: undefined,
-    });
-
+  ({
+    displayName,
+    logoUrl,
+    border,
+    size,
+    circle,
+    showTooltip,
+  }: PieceIconCircleProps) => {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={pieceIconVariants({ border, size, circle })}>
-            {isSuccess && data ? (
-              <img src={data?.logoUrl} className="object-contain" />
-            ) : null}
+            <img src={logoUrl} className="object-contain" alt={displayName} />
           </div>
         </TooltipTrigger>
-        <TooltipContent side="bottom">
-          {isSuccess && data ? data?.displayName : null}
-        </TooltipContent>
+        {showTooltip ? (
+          <TooltipContent side="bottom">{displayName}</TooltipContent>
+        ) : null}
       </Tooltip>
     );
   },

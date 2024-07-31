@@ -57,9 +57,9 @@ export type BuilderState = {
   allowCanvasPanning: boolean;
   saving: boolean;
   ExitRun: () => void;
+  selectStep(path: StepPathWithName | null): void;
   ExitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
-  selectStep(path: StepPathWithName): void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
@@ -73,6 +73,8 @@ export type BuilderState = {
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: Flow) => void;
   setVersion: (flowVersion: FlowVersion) => void;
+  insertMention: (propertyPath: string) => void;
+  setInsertMentionHandler: (handler: (propertyPath: string) => void) => void;
 };
 
 export type BuilderInitialState = Pick<
@@ -125,10 +127,12 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         rightSidebar: RightSideBarType.NONE,
         selectedStep: null,
       }),
-    selectStep: (path: StepPathWithName) =>
+    selectStep: (path: StepPathWithName | null) =>
       set({
         selectedStep: path,
-        rightSidebar: RightSideBarType.PIECE_SETTINGS,
+        rightSidebar: path
+          ? RightSideBarType.PIECE_SETTINGS
+          : RightSideBarType.NONE,
       }),
     setRightSidebar: (rightSidebar: RightSideBarType) => set({ rightSidebar }),
     setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
@@ -171,46 +175,35 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       }),
     setReadOnly: (readonly: boolean) => set({ readonly }),
     setVersion: (flowVersion: FlowVersion) => set({ flowVersion, run: null }),
+    insertMention: (propertyPath: string) => {
+      console.warn('insertMention is not assigned yet', propertyPath);
+    },
+    setInsertMentionHandler: (
+      insertMention: (propertyPath: string) => void,
+    ) => {
+      set({ insertMention });
+    },
   }));
 
 export const stepPathToKeyString = (path: StepPathWithName): string => {
   return path.path.map((p) => p.join('-')).join('/') + '/' + path.stepName;
 };
 
-export const equalStepPath = (
-  path1: StepPathWithName,
-  path2: StepPathWithName,
-): boolean => {
-  return (
-    path1.path.length === path2.path.length &&
-    path1.path.every(
-      (p, idx) => p[0] === path2.path[idx][0] && p[1] === path2.path[idx][1],
-    ) &&
-    path1.stepName === path2.stepName
-  );
-};
-
-export function getStepOutputFromExecutionPath({
+function getStepOutputFromExecutionPath({
   path,
   executionState,
 }: {
   path: StepPathWithName;
   executionState: ExecutionState;
 }): StepOutput | undefined {
-  const stateAtPath = getStateAtPath({
-    currentPath: path,
-    steps: executionState.steps,
-  });
+  const stateAtPath = getStateAtPath(path, executionState.steps);
   return stateAtPath[path.stepName];
 }
 
-function getStateAtPath({
-  currentPath,
-  steps,
-}: {
-  currentPath: StepPathWithName;
-  steps: Record<string, StepOutput>;
-}): Record<string, StepOutput> {
+function getStateAtPath(
+  currentPath: StepPathWithName,
+  steps: Record<string, StepOutput>,
+): Record<string, StepOutput> {
   let targetMap = steps;
   currentPath.path.forEach(([stepName, iteration]) => {
     const stepOutput = targetMap[stepName];
@@ -223,3 +216,7 @@ function getStateAtPath({
   });
   return targetMap;
 }
+
+export const builderSelectors = {
+  getStepOutputFromExecutionPath,
+};

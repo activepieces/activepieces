@@ -25,7 +25,9 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
             circle={true}
             size={'md'}
             border={true}
-            pieceName={row.original.name}
+            displayName={row.original.displayName}
+            logoUrl={row.original.logoUrl}
+            showTooltip={false}
           />
         </div>
       );

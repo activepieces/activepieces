@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import * as RippleHook from 'use-ripple-hook';
 
 type Theme = 'dark' | 'light' | 'system';
 
@@ -19,11 +20,15 @@ const initialState: ThemeProviderState = {
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
-
+const extractSystemTheme = () => {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
+};
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
-  storageKey = 'vite-ui-theme',
+  storageKey = 'ap-ui-theme',
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
@@ -36,12 +41,7 @@ export function ThemeProvider({
     root.classList.remove('light', 'dark');
 
     if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light';
-
-      root.classList.add(systemTheme);
+      root.classList.add(extractSystemTheme());
       return;
     }
 
@@ -70,4 +70,15 @@ export const useTheme = () => {
     throw new Error('useTheme must be used within a ThemeProvider');
 
   return context;
+};
+
+export const useApRipple = () => {
+  const { theme } = useTheme();
+  return RippleHook.default({
+    color:
+      theme === 'dark'
+        ? 'rgba(233, 233, 233, 0.2)'
+        : 'rgba(155, 155, 155, 0.2)',
+    cancelAutomatically: true,
+  });
 };
