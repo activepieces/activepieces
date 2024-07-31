@@ -1,15 +1,6 @@
 import { ReactFlowProvider } from '@xyflow/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
-
-import { cn } from '../../lib/utils';
-
-import { BuilderNavBar } from './builder-nav-bar';
-import { FlowVersionsList } from './flow-versions/flow-versions-list';
-import { PiecesCardList } from './pieces-list/pieces-card-list';
-import { FlowRunDetails } from './run-details/flow-run-details-list';
-import { FlowRecentRunsList } from './run-list/flow-runs-list';
-import { StepSettings } from './step-settings/step-settings-container';
 
 import {
   LeftSideBarType,
@@ -23,6 +14,15 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
+
+import { cn } from '../../lib/utils';
+
+import { BuilderNavBar } from './builder-nav-bar';
+import { FlowVersionsList } from './flow-versions/flow-versions-list';
+import { PiecesCardList } from './pieces-list/pieces-card-list';
+import { FlowRunDetails } from './run-details/flow-run-details-list';
+import { FlowRecentRunsList } from './run-list/flow-runs-list';
+import { StepSettings } from './step-settings/step-settings-container';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const useAnimateSidebar = (
