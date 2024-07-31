@@ -65,7 +65,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY]: '10',
     [SharedSystemProp.LOG_LEVEL]: 'info',
     [SharedSystemProp.LOG_PRETTY]: 'false',
-    [SharedSystemProp.PACKAGE_ARCHIVE_PATH]: 'dist/archives',
+    [SharedSystemProp.PACKAGE_ARCHIVE_PATH]: 'cache/archives',
     [SharedSystemProp.PIECES_SOURCE]: PiecesSource.CLOUD_AND_DB,
     [AppSystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [SharedSystemProp.SANDBOX_MEMORY_LIMIT]: '524288',

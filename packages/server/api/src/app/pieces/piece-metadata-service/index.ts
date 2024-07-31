@@ -54,7 +54,7 @@ export const getPiecePackage = async (
             return {
                 packageType: PackageType.REGISTRY,
                 pieceName: pkg.pieceName,
-                pieceVersion: pkg.pieceVersion,
+                pieceVersion: pieceMetadata.version,
                 pieceType: pkg.pieceType,
             }
         }
