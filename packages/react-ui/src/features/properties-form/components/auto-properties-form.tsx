@@ -149,6 +149,10 @@ const selectRightComponent = (
         >
           <SelectPieceProperty
             refreshers={property.refreshers}
+            intialValue={field.value}
+            onChange={(value) => {
+              field.onChange(value);
+            }}
             propertyName={key}
           ></SelectPieceProperty>
         </AutoFormFieldWrapper>

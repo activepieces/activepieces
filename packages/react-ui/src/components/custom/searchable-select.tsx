@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
+import { LoadingSpinner } from '../ui/spinner';
 
 type SelectOption<T> = {
   value: T;
@@ -22,6 +23,7 @@ type SearchableSelectProps<T> = {
   value: T | undefined;
   placeholder: string;
   disabled?: boolean;
+  loading?: boolean;
 };
 
 export const SearchableSelect = React.memo(
@@ -31,6 +33,7 @@ export const SearchableSelect = React.memo(
     value,
     placeholder,
     disabled,
+    loading
   }: SearchableSelectProps<T>) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterOptionsIndices, setFilteredOptions] = useState<number[]>([]);
@@ -82,13 +85,14 @@ export const SearchableSelect = React.memo(
 
     return (
       <Select
-        disabled={disabled}
+        disabled={disabled || loading}
         autoComplete={undefined}
         value={selectedIndex === -1 ? undefined : String(selectedIndex)}
         onValueChange={onSelect}
       >
         <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
+          {loading && <LoadingSpinner className="w-4 h-4" />}
+          {!loading && <SelectValue placeholder={placeholder} />}
         </SelectTrigger>
         <SelectContent className="w-full">
           <div
@@ -109,6 +113,9 @@ export const SearchableSelect = React.memo(
           </div>
           {filterOptionsIndices.map((index) => {
             const option = options[index];
+            if (option === undefined) {
+              return <></>;
+            }
             return (
               <SelectItem key={index} value={String(index)} className="w-full">
                 {option.label}
