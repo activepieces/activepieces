@@ -26,9 +26,6 @@ import { Trigger, TriggerType } from './triggers/trigger'
 
 type Step = Action | Trigger
 
-type GetAllSubFlowSteps = {
-    subFlowStartStep: Step
-}
 
 type GetStepFromSubFlow = {
     subFlowStartStep: Step
@@ -315,7 +312,7 @@ const getStepFromSubFlow = ({
     subFlowStartStep,
     stepName,
 }: GetStepFromSubFlow): Step | undefined => {
-    const subFlowSteps = getAllSteps(subFlowStartStep,)
+    const subFlowSteps = getAllSteps(subFlowStartStep)
 
     return subFlowSteps.find((step) => step.name === stepName)
 }
