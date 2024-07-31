@@ -68,10 +68,12 @@ export const TextInputWithMentions = ({
       2,
       path.length - 2,
     );
+
     const stepName = textMentionUtils.keysWithinPath(
       itemPathWithoutInterpolationDenotation,
     )[0];
     const step = flowHelper.getStep(flowVersion, stepName);
+
     if (step) {
       const dfsIndex = flowHelper.findStepDfsIndex(
         flowVersion.trigger,
@@ -100,14 +102,14 @@ export const TextInputWithMentions = ({
 
   const insertMention = (propertyPath: string) => {
     const jsonContent = textMentionUtils.convertTextToTipTapJsonContent({
-      propertyPath: `{{${propertyPath}}}`,
+      userInputText: `{{${propertyPath}}}`,
       stepMetadataFinder: getStepMetadataFromPath,
     });
     editor?.chain().focus().insertContent(jsonContent.content).run();
   };
   const content = [
     textMentionUtils.convertTextToTipTapJsonContent({
-      propertyPath: originalValue ?? '',
+      userInputText: originalValue ?? '',
       stepMetadataFinder: getStepMetadataFromPath,
     }),
   ];

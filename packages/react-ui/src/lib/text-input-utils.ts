@@ -90,10 +90,10 @@ const parseTextAndHardBreakNodes = (item: string) => {
 };
 
 function convertTextToTipTapJsonContent({
-  propertyPath: userTextInput,
+  userInputText,
   stepMetadataFinder,
 }: {
-  propertyPath: string;
+  userInputText: string;
   stepMetadataFinder: (
     path: string,
   ) => (StepMetadata & { dfsIndex: number }) | undefined;
@@ -101,7 +101,7 @@ function convertTextToTipTapJsonContent({
   type: TipTapNodeTypes.paragraph;
   content: JSONContent[];
 } {
-  const inputSplitToNodesContent = userTextInput
+  const inputSplitToNodesContent = userInputText
     .split(/(\{\{.*?\}\})/)
     .filter((el) => el);
   const contentNodes: JSONContent[] = inputSplitToNodesContent.map((nc) => {
