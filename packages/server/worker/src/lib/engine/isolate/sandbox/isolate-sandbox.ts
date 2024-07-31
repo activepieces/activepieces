@@ -101,10 +101,6 @@ export class IsolateSandbox {
             const metaResult = await this.parseMetaFile()
             timeInSeconds = Number.parseFloat(metaResult['time'] as string)
             verdict = metaResult['status'] == 'TO' ? EngineResponseStatus.TIMEOUT : EngineResponseStatus.ERROR
-            verdict =
-                metaResult['status'] == 'TO'
-                    ? EngineResponseStatus.TIMEOUT
-                    : EngineResponseStatus.ERROR
         }
 
         const result = {
@@ -115,7 +111,7 @@ export class IsolateSandbox {
             standardError: await readFile(this.getSandboxFilePath('_standardError.txt'), { encoding: 'utf-8' }),
         }
 
-        logger.trace(result, '[IsolateSandbox#runCommandLine] result')
+        logger.debug(result, '[IsolateSandbox#runCommandLine] result')
 
         return result
     }

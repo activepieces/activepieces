@@ -30,11 +30,14 @@ export const triggerUtils = {
         return pieceTrigger
     },
     async getPieceTrigger({ trigger, projectId }: GetPieceTriggerOrThrowParams): Promise<TriggerBase | null> {
-        const piece = await pieceMetadataService.getOrThrow({
+        const piece = await pieceMetadataService.get({
             projectId,
             name: trigger.settings.pieceName,
             version: trigger.settings.pieceVersion,
         })
+        if (isNil(piece)) {
+            return null
+        }
         const pieceTrigger = piece.triggers[trigger.settings.triggerName]
         return pieceTrigger
     },
