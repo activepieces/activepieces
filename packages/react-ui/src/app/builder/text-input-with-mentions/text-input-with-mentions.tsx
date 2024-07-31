@@ -1,4 +1,4 @@
-import { ActionType, flowHelper, TriggerType } from '@activepieces/shared';
+import { flowHelper } from '@activepieces/shared';
 import Document from '@tiptap/extension-document';
 import HardBreak from '@tiptap/extension-hard-break';
 import History from '@tiptap/extension-history';
@@ -13,7 +13,7 @@ import './tip-tap.css';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { textMentionUtils } from '@/lib/text-input-utils';
+import { textMentionUtils } from './text-input-utils';
 
 type TextInputWithMentionsProps = {
   className?: string;

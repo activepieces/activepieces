@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { cn } from '@/lib/utils';
+
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { builderSelectors, useBuilderStateContext } from '../builder-hooks';
 
@@ -8,8 +10,6 @@ import {
   DataSelectorSizeState,
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
-
-import { cn } from '@/lib/utils';
 
 const DataSelector = () => {
   const [DataSelectorSize, setDataSelectorSize] =
