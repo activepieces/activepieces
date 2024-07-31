@@ -25,6 +25,40 @@ import {
 } from '../../../features/pieces/lib/pieces-hook';
 import { useBuilderStateContext } from '../builder-hooks';
 
+const linkMetadataWithStepsThatUseThem = (
+  metadata: StepMetadata,
+  steps: (Action | Trigger)[],
+) => {
+  const stepNamesThatUseThisMetadata = steps
+    .filter((step) => {
+      if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {
+        return (
+          step.settings.pieceName === metadata.pieceName &&
+          step.settings.pieceVersion === metadata.pieceVersion
+        );
+      }
+      return (
+        (step.type === ActionType.CODE ||
+          step.type === ActionType.BRANCH ||
+          step.type === TriggerType.EMPTY ||
+          step.type === ActionType.LOOP_ON_ITEMS) &&
+        step.type === metadata.type
+      );
+    })
+    .map((step) => step.name);
+  return { ...metadata, stepNamesThatUseThisMetadata };
+};
+
+
+const defaultClassName =
+  ' w-full  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';
+type TextInputWithMentionsProps = {
+  className?: string;
+  originalValue?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  extraClasses?: string;
+};
 const extensions = (placeholder?: string) => {
   return [
     Document,
@@ -51,38 +85,6 @@ const extensions = (placeholder?: string) => {
   ];
 };
 
-const linkMetadataWithStepsThatUseThem = (
-  metadata: StepMetadata,
-  steps: (Action | Trigger)[],
-) => {
-  const stepNamesThatUseThisMetadata = steps
-    .filter((step) => {
-      if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {
-        return (
-          step.settings.pieceName === metadata.pieceName &&
-          step.settings.pieceVersion === metadata.pieceVersion
-        );
-      }
-      return (
-        (step.type === ActionType.CODE ||
-          step.type === ActionType.BRANCH ||
-          step.type === TriggerType.EMPTY ||
-          step.type === ActionType.LOOP_ON_ITEMS) &&
-        step.type === metadata.type
-      );
-    })
-    .map((step) => step.name);
-  return { ...metadata, stepNamesThatUseThisMetadata };
-};
-const defaultClassName =
-  ' w-full  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';
-type TextInputWithMentionsProps = {
-  className?: string;
-  originalValue?: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  extraClasses?: string;
-};
 export const TextInputWithMentions = ({
   className,
   originalValue,
