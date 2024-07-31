@@ -22,7 +22,13 @@ export const DataSelectorSizeTogglers = ({
   };
   const buttonClassName = (btnState: DataSelectorSizeState) =>
     state === btnState ? 'text-outline' : 'text-outline opacity-50';
-  return (
+  const buttonClassName = (btnState: DataSelectorSizeState) => cn(
+    '',
+    {
+      'text-outline': state === btnState,
+      'text-outline opacity-50': state !== btnState,
+    },
+  );
     <>
       <Button
         size="icon"
