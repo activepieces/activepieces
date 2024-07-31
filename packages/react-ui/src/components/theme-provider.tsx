@@ -1,5 +1,5 @@
-import { Ripple } from 'primereact/ripple';
 import { createContext, useContext, useEffect, useState } from 'react';
+import * as RippleHook from 'use-ripple-hook';
 
 type Theme = 'dark' | 'light' | 'system';
 
@@ -72,27 +72,13 @@ export const useTheme = () => {
   return context;
 };
 
-export const useRipple = () => {
-  const context = useContext(ThemeProviderContext);
-
-  if (context === undefined)
-    throw new Error('useTheme must be used within a ThemeProvider');
-  const theme =
-    context.theme === 'system' ? extractSystemTheme() : context.theme;
-  if (theme === 'dark') {
-    return (
-      <Ripple
-        pt={{
-          root: { style: { background: 'rgba(233, 233, 233, 0.2)' } },
-        }}
-      />
-    );
-  }
-  return (
-    <Ripple
-      pt={{
-        root: { style: { background: 'rgba(150, 150, 150, 0.2)' } },
-      }}
-    />
-  );
+export const useApRipple = () => {
+  const { theme } = useTheme();
+  return RippleHook.default({
+    color:
+      theme === 'dark'
+        ? 'rgba(233, 233, 233, 0.2)'
+        : 'rgba(155, 155, 155, 0.2)',
+    cancelAutomatically: true,
+  });
 };

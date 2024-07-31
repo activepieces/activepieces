@@ -1,6 +1,5 @@
-import { ChevronDown, ChevronUp } from 'lucide-react';
-
 import { flowHelper } from '@activepieces/shared';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 import { useRipple } from '../../../components/theme-provider';
 import { Button } from '../../../components/ui/button';
@@ -17,11 +16,12 @@ const ToggleIcon = ({ expanded }: { expanded: boolean }) => {
     <ChevronDown height={toggleIconSize} width={toggleIconSize}></ChevronDown>
   );
 };
-type NodeTemplateProps = {
+
 type DataSelectorNodeContentProps = {
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
   depth: number;
+  node: MentionTreeNode;
 };
 
 const DataSelectorNodeContent = ({
@@ -29,10 +29,11 @@ const DataSelectorNodeContent = ({
   expanded,
   setExpanded,
   depth,
-}: NodeTemplateProps) => {
-  const ripple = useRipple();
+}: DataSelectorNodeContentProps) => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
   const insertMention = useBuilderStateContext((state) => state.insertMention);
+
+  const [ripple, rippleEvent] = useRipple();
   const step = !node.data.isSlice
     ? flowHelper.getStep(flowVersion, node.data.propertyPath)
     : undefined;
@@ -49,16 +50,18 @@ const DataSelectorNodeContent = ({
   const showNodeValue = !node.children && !!node.data.value;
   return (
     <div
-      onClick={() => {
+      ref={ripple}
+      onClick={(e) => {
+        rippleEvent(e);
         if (node.children && node.children.length > 0) {
           setExpanded(!expanded);
         } else {
           insertMention(node.data.propertyPath);
         }
       }}
-      className="w-full p-ripple select-none hover:bg-accent hover:bg-opacity-75 cursor-pointer group"
+      className="w-full select-none hover:bg-accent  cursor-pointer group"
     >
-      <div className="flex-grow flex items-center  gap-3 min-h-[48px] px-5  select-none">
+      <div className="flex-grow flex items-center  gap-3 min-h-[48px] px-1  select-none">
         <div
           style={{
             minWidth: `${depth * 25 + (depth === 0 ? 0 : 25) + 18}px`,
@@ -108,7 +111,6 @@ const DataSelectorNodeContent = ({
           )}
         </div>
       </div>
-      {ripple}
     </div>
   );
 };

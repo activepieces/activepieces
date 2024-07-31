@@ -17,6 +17,7 @@ type DataSelectoNodeProps = {
 
 const DataSelectorNode = ({ node, depth }: DataSelectoNodeProps) => {
   const [expanded, setExpanded] = useState(false);
+
   if (node.data.isTestStepNode) {
     return (
       <TestStepSection stepName={node.data.propertyPath}></TestStepSection>
@@ -25,7 +26,7 @@ const DataSelectorNode = ({ node, depth }: DataSelectoNodeProps) => {
   return (
     <Collapsible className="w-full" open={expanded} onOpenChange={setExpanded}>
       <>
-        <CollapsibleTrigger asChild={true} className="w-full">
+        <CollapsibleTrigger asChild={true} className="w-full relative">
           <DataSelectorNodeContent
             node={node}
             expanded={expanded}
@@ -35,7 +36,7 @@ const DataSelectorNode = ({ node, depth }: DataSelectoNodeProps) => {
         </CollapsibleTrigger>
         <CollapsibleContent className="w-full">
           {node.children && node.children.length > 0 && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col ">
               {node.children.map((node) => (
                 <DataSelectorNode
                   depth={depth + 1}

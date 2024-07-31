@@ -1,11 +1,4 @@
-import {
-  Action,
-  ActionType,
-  flowHelper,
-  Trigger,
-  TriggerType,
-} from '@activepieces/shared';
-
+import { ActionType, flowHelper, TriggerType } from '@activepieces/shared';
 import Document from '@tiptap/extension-document';
 import HardBreak from '@tiptap/extension-hard-break';
 import History from '@tiptap/extension-history';
@@ -17,32 +10,10 @@ import { useEditor, EditorContent } from '@tiptap/react';
 
 import './tip-tap.css';
 
-import { textMentionUtils } from '@/lib/text-input-utils';
-
-import {
-  piecesHooks,
-  StepMetadata,
-} from '../../../features/pieces/lib/pieces-hook';
+import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import { useBuilderStateContext } from '../builder-hooks';
 
-const linkMetadataWithStepsThatUseThem = (
-  metadata: StepMetadata,
-  steps: (Action | Trigger)[],
-) => {
-  const stepNamesThatUseThisMetadata = steps
-    .filter((step) => {
-      if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {
-        return (
-          step.settings.pieceName === metadata.pieceName &&
-          step.settings.pieceVersion === metadata.pieceVersion
-        );
-      }
-      return step.type === metadata.type;
-    })
-    .map((step) => step.name);
-  return { ...metadata, stepNamesThatUseThisMetadata };
-};
-
+import { textMentionUtils } from '@/lib/text-input-utils';
 
 const defaultClassName =
   ' w-full  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';
@@ -87,15 +58,9 @@ export const TextInputWithMentions = ({
   extraClasses,
 }: TextInputWithMentionsProps) => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
-  const steps = flowHelper.getAllSteps(flowVersion.trigger);
-  const piecesMetadata = piecesHooks
-    .useStepsMetadata(steps.map((step) => ({ step })))
-    .filter((res) => res.data !== undefined)
-    .map((res) => res.data)
-    .map((res) => {
-      return linkMetadataWithStepsThatUseThem(res, steps);
-    });
-
+  const piecesMetadata = piecesHooks.useStepsMetadata(
+    flowHelper.getAllSteps(flowVersion.trigger),
+  );
   const setInsertMentionHandler = useBuilderStateContext(
     (state) => state.setInsertMentionHandler,
   );
@@ -114,9 +79,17 @@ export const TextInputWithMentions = ({
         flowVersion.trigger,
         step.name,
       );
-      const data = piecesMetadata.find((res) =>
-        res.stepNamesThatUseThisMetadata.includes(stepName),
-      );
+
+      const data = piecesMetadata.find((res) => {
+        if (
+          (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) &&
+          res.data?.type === step.type
+        ) {
+          return res.data?.pieceName === step.settings.pieceName;
+        }
+        return res.data?.type === step.type;
+      })?.data;
+
       if (data) {
         return {
           ...data,
