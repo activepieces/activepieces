@@ -1,7 +1,7 @@
 import { flowHelper } from '@activepieces/shared';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-import { useRipple } from '../../../components/theme-provider';
+import { useApRipple } from '../../../components/theme-provider';
 import { Button } from '../../../components/ui/button';
 import { PieceIcon } from '../../../features/pieces/components/piece-icon';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
@@ -33,7 +33,7 @@ const DataSelectorNodeContent = ({
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
   const insertMention = useBuilderStateContext((state) => state.insertMention);
 
-  const [ripple, rippleEvent] = useRipple();
+  const [ripple, rippleEvent] = useApRipple();
   const step = !node.data.isSlice
     ? flowHelper.getStep(flowVersion, node.data.propertyPath)
     : undefined;
