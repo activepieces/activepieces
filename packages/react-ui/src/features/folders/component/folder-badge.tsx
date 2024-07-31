@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { foldersApi } from '../lib/folders-api';
-
 import { Badge } from '@/components/ui/badge';
+
+import { foldersApi } from '../lib/folders-api';
 
 type FolderBadgeProps = {
   folderId: string;

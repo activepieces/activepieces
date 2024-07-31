@@ -1,11 +1,10 @@
+import { api } from '@/lib/api';
 import {
   CreateOrRenameFolderRequest,
   Folder,
   FolderDto,
   SeekPage,
 } from '@activepieces/shared';
-
-import { api } from '@/lib/api';
 
 export const foldersApi = {
   list() {

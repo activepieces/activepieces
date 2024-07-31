@@ -1,4 +1,3 @@
-import { FolderDto } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -12,11 +11,6 @@ import {
 } from 'lucide-react';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-
-import { foldersApi } from '../lib/folders-api';
-import { foldersHooks } from '../lib/folders-hooks';
-
-import { RenameFolderDialog } from './rename-folder-dialog';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -43,6 +37,12 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { FolderDto } from '@activepieces/shared';
+
+import { foldersApi } from '../lib/folders-api';
+import { foldersHooks } from '../lib/folders-hooks';
+
+import { RenameFolderDialog } from './rename-folder-dialog';
 
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
