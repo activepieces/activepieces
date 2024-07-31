@@ -10,6 +10,7 @@ import { updateColumnValuesOfItemAction } from './lib/actions/update-column-valu
 import { updateItemNameAction } from './lib/actions/update-item-name';
 import { newItemInBoardTrigger } from './lib/triggers/new-item-in-board';
 import { specificColumnValueUpdatedTrigger } from './lib/triggers/specific-column-updated';
+import { uploadFileToColumnAction } from './lib/actions/upload-file-to-column';
 
 const markdown = `
 1.Log into your monday.com account.\n
@@ -31,7 +32,15 @@ export const monday = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/monday.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ["kanarelo","haseebrehmanpc","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: [
+    'kanarelo',
+    'haseebrehmanpc',
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   auth: mondayAuth,
   actions: [
     createColumnAction,
@@ -42,6 +51,7 @@ export const monday = createPiece({
     getItemsColumnValuesAction,
     updateColumnValuesOfItemAction,
     updateItemNameAction,
+    uploadFileToColumnAction,
   ],
   triggers: [newItemInBoardTrigger, specificColumnValueUpdatedTrigger],
 });
