@@ -51,11 +51,9 @@ const BuilderPage = () => {
     ]);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const rightHandleRef = useAnimateSidebar(
-    useCallback(() => rightSidebar === RightSideBarType.NONE, [rightSidebar]),
     rightSidebar,
   );
   const leftHandleRef = useAnimateSidebar(
-    useCallback(() => leftSidebar === LeftSideBarType.NONE, [leftSidebar]),
     leftSidebar,
   );
   return (
