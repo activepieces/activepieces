@@ -1,5 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Trash } from 'lucide-react';
+import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { isNil, PieceType } from '@activepieces/shared';
 
 import { piecesApi } from '../lib/pieces-api';
 
+import { InstallPieceDialog } from './install-piece-dialog';
 import { PieceIcon } from './piece-icon';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
@@ -102,15 +104,17 @@ const fetchData = async () => {
 };
 
 export default function PiecesTable() {
+  const [refresh, setRefresh] = useState(0);
+
   return (
-    <div className="mx-auto w-full flex-col">
-      <div className="-space-y-2">
-        <h3 className="text-2xl font-semibold leading-none tracking-tight">
-          Pieces
-        </h3>
-        <div className="ml-auto"></div>
+    <div className="mx-auto w-full flex-col py-10">
+      <div className="mb-4 flex">
+        <h1 className="text-3xl font-bold">Pieces </h1>
+        <div className="ml-auto">
+          <InstallPieceDialog onInstallPiece={() => setRefresh(refresh + 1)} />
+        </div>
       </div>
-      <DataTable columns={columns} fetchData={fetchData} />
+      <DataTable columns={columns} refresh={refresh} fetchData={fetchData} />
     </div>
   );
 }
