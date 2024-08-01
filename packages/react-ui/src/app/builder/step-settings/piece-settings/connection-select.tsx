@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { FormField, FormItem, FormLabel } from '@/components/ui/form';
 import {
   Select,
@@ -19,7 +20,6 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceAction, PieceTrigger } from '@activepieces/shared';
 
-import { CreateOrEditConnectionDialog } from '../../../../features/connections/components/create-edit-connection-dialog';
 import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
 
 type ConnectionSelectProps = {

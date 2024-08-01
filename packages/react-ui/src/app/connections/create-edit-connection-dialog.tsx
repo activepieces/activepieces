@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +21,6 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/seperator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
-import { formUtils } from '@/features/properties-form/lib/form-utils';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -41,7 +41,7 @@ import {
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
 
-import { appConnectionUtils } from '../lib/app-connections-utils';
+import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';

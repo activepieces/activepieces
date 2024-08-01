@@ -2,7 +2,6 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
-import { DictionaryInput } from '@/components/ui/dictionary-input';
 import {
   FormField,
   FormItem,
@@ -10,6 +9,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { CodeAction } from '@activepieces/shared';
+
+import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 
 import { CodeEditior } from './code-editior';
 
@@ -37,10 +38,10 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
           <FormItem>
             <FormLabel>Inputs</FormLabel>
             <ApMarkdown markdown={markdown} />
-            <DictionaryInput
+            <DictionaryProperty
               values={field.value}
               onChange={field.onChange}
-            ></DictionaryInput>
+            ></DictionaryProperty>
             <FormMessage />
           </FormItem>
         )}

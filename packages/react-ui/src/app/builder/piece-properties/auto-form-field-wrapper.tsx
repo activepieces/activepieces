@@ -1,13 +1,13 @@
 import { SquareFunction } from 'lucide-react';
+import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
 import { FormItem, FormLabel } from '@/components/ui/form';
 import { Toggle } from '@/components/ui/toggle';
 import { PieceProperty } from '@activepieces/pieces-framework';
+import { Action, Trigger } from '@activepieces/shared';
 
 import { ReadMoreDescription } from './read-more-description';
-import { ControllerRenderProps, useFormContext } from 'react-hook-form';
-import { Action, Trigger } from '@activepieces/shared';
-import { TextInputWithMentions } from '@/app/builder/text-input-with-mentions/text-input-with-mentions';
+import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
 
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ type AutoFormFieldWrapperProps = {
   property: PieceProperty;
   hideDescription?: boolean;
   placeBeforeLabelText?: boolean;
-  field: ControllerRenderProps<Record<string, any>, string>
+  field: ControllerRenderProps<Record<string, any>, string>;
 };
 
 const AutoFormFieldWrapper = ({
@@ -28,14 +28,18 @@ const AutoFormFieldWrapper = ({
   property,
   field,
 }: AutoFormFieldWrapperProps) => {
-
   const form = useFormContext<Action | Trigger>();
-  const toggled = form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyKey];
+  const toggled =
+    form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyKey];
 
   function handleChange(pressed: boolean) {
-    form.setValue(`settings.inputUiInfo.customizedInputs.${propertyKey}` as const, pressed, {
-      shouldValidate: true,
-    });
+    form.setValue(
+      `settings.inputUiInfo.customizedInputs.${propertyKey}` as const,
+      pressed,
+      {
+        shouldValidate: true,
+      },
+    );
   }
 
   return (
@@ -51,9 +55,12 @@ const AutoFormFieldWrapper = ({
           </Toggle>
         )}
       </FormLabel>
-      {toggled && <>
-        <TextInputWithMentions onChange={field.onChange} initialValue={field.value}></TextInputWithMentions>
-      </>}
+      {toggled && (
+        <TextInputWithMentions
+          onChange={field.onChange}
+          initialValue={field.value}
+        ></TextInputWithMentions>
+      )}
       {!placeBeforeLabelText && !toggled && children}
       {property.description && !hideDescription && (
         <ReadMoreDescription text={property.description} />

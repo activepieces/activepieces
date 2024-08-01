@@ -1,12 +1,11 @@
 import { Plus, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 
-// TDO fix this import
-import { TextInputWithMentions } from '../../app/builder/text-input-with-mentions/text-input-with-mentions';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { TextWithIcon } from '@/components/ui/text-with-icon';
 
-import { Button } from './button';
-import { Input } from './input';
-import { TextWithIcon } from './text-with-icon';
+import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
 
 type DictionaryInputItem = {
   key: string;
@@ -18,7 +17,10 @@ type DictionaryInputProps = {
   onChange: (values: Record<string, string>) => void;
 };
 
-export const DictionaryInput = ({ values, onChange }: DictionaryInputProps) => {
+export const DictionaryProperty = ({
+  values,
+  onChange,
+}: DictionaryInputProps) => {
   const [formValue, setFormValue] = useState<DictionaryInputItem[]>(
     Object.keys(values).map((key) => ({ key, value: values[key] })),
   );

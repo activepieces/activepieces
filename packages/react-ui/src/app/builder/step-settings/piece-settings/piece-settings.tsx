@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { AutoPropertiesFormComponent } from '@/features/properties-form/components/auto-properties-form';
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 import {
   ActionType,
@@ -10,6 +9,8 @@ import {
   PieceTrigger,
   TriggerType,
 } from '@activepieces/shared';
+
+import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
 
 import { ConnectionSelect } from './connection-select';
 import { PieceActionTriggerSelector } from './piece-action-trigger-selector';

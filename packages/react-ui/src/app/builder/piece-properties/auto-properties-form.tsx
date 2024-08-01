@@ -5,20 +5,19 @@ import { JsonEditor } from '@/components/custom/json-editior';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { ArrayInput } from '@/components/ui/array-input';
-import { DictionaryInput } from '@/components/ui/dictionary-input';
 import { FormControl, FormField } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { AutoFormFieldWrapper } from '@/features/properties-form/components/auto-form-field-wrapper';
 import {
   PieceProperty,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
 
+import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
+import { DictionaryProperty } from './dictionary-property';
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
 import { SelectPieceProperty } from './select-piece-property';
-import { TextInputWithMentions } from '@/app/builder/text-input-with-mentions/text-input-with-mentions';
+import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
 
 type AutoFormProps = {
   props: PiecePropertyMap;
@@ -82,10 +81,10 @@ const selectRightComponent = (
           field={field}
           allowDynamicValues={allowDynamicValues}
         >
-          <DictionaryInput
+          <DictionaryProperty
             values={field.value}
             onChange={field.onChange}
-          ></DictionaryInput>
+          ></DictionaryProperty>
         </AutoFormFieldWrapper>
       );
     case PropertyType.CHECKBOX:
@@ -188,7 +187,7 @@ const selectRightComponent = (
           <TextInputWithMentions
             initialValue={field.value}
             onChange={field.onChange}
-          ></TextInputWithMentions> 
+          ></TextInputWithMentions>
         </AutoFormFieldWrapper>
       );
 

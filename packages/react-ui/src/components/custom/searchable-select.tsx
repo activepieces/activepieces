@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from '../ui/select';
 import { LoadingSpinner } from '../ui/spinner';
-import { set } from 'date-fns';
 
 type SelectOption<T> = {
   value: T;
@@ -43,7 +42,9 @@ export const SearchableSelect = <T extends React.Key>({
   );
 
   useEffect(() => {
-    setSelectedIndex(options.findIndex((option) => option.value === value) ?? -1);
+    setSelectedIndex(
+      options.findIndex((option) => option.value === value) ?? -1,
+    );
   }, [value, options]);
 
   useEffect(() => {
@@ -59,9 +60,7 @@ export const SearchableSelect = <T extends React.Key>({
           };
         })
         .filter((option) => {
-          return option.label
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase());
+          return option.label.toLowerCase().includes(searchTerm.toLowerCase());
         });
       setFilteredOptions(filteredOptions.map((op) => op.index));
     }
@@ -130,6 +129,5 @@ export const SearchableSelect = <T extends React.Key>({
     </Select>
   );
 };
- 
 
 SearchableSelect.displayName = 'SearchableSelect';

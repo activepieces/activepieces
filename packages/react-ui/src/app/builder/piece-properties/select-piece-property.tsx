@@ -57,12 +57,14 @@ const SelectPieceProperty = React.memo((props: SelectPiecePropertyProps) => {
     },
   });
 
+  /* eslint-disable react-hooks/rules-of-hooks */
   const refresherValues = newRefreshers.map((refresher) =>
     useWatch({
       name: `settings.input.${refresher}` as const,
       control: form.control,
     }),
   );
+  /* eslint-enable react-hooks/rules-of-hooks */
 
   useEffect(() => {
     const record: Record<string, unknown> = {};

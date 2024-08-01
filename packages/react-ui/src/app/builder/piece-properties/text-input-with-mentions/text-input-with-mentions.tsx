@@ -7,11 +7,12 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { flowHelper } from '@activepieces/shared';
 
 import './tip-tap.css';
-import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
-import { useBuilderStateContext } from '../builder-hooks';
+
+import { useBuilderStateContext } from '../../builder-hooks';
 
 import { textMentionUtils } from './text-input-utils';
 

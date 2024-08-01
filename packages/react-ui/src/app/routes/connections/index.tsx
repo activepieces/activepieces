@@ -1,8 +1,7 @@
 import { useState } from 'react';
 
-import { AppConnectionsTable } from '@/features/connections/components/connection-table';
-
-import { NewConnectionTypeDialog } from '../../../features/connections/components/new-connection-type-dialog';
+import { AppConnectionsTable } from '@/app/connections/connection-table';
+import { NewConnectionTypeDialog } from '@/app/connections/new-connection-type-dialog';
 
 export default function AppConnectionsPage() {
   const [openNewConnectionDialog, setOpenNewConnectionDialog] = useState(false);

@@ -24,7 +24,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { oauth2AppsHooks } from '../lib/oauth2-apps-hooks';
+import { oauth2AppsHooks } from '../../features/connections/lib/oauth2-apps-hooks';
 
 type OAuth2ConnectionSettingsProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;

@@ -1,13 +1,12 @@
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
 
+import { StepMetadata } from '@/features/pieces/lib/pieces-hook';
 import {
   Action,
   Trigger,
   assertNotNullOrUndefined,
 } from '@activepieces/shared';
-
-import { StepMetadata } from '../../../features/pieces/lib/pieces-hook';
 
 const removeIntroplationBrackets = (text: string) => {
   return text.slice(2, text.length - 2);
