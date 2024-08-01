@@ -1,5 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
-import { Copy, Download, Pencil, Share2, Trash2 } from 'lucide-react';
+import {
+  Copy,
+  CornerUpLeft,
+  Download,
+  Pencil,
+  Share2,
+  Trash2,
+} from 'lucide-react';
 import React from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -17,6 +24,7 @@ import { Flow, FlowOperationType, FlowVersion } from '@activepieces/shared';
 import { flowsApi } from '../lib/flows-api';
 import { flowsUtils } from '../lib/flows-utils';
 
+import { MoveToDialog } from './move-to-dialog';
 import { RenameFlowDialog } from './rename-flow-dialog';
 import { ShareTemplateDialog } from './share-template-dialog';
 
@@ -26,6 +34,7 @@ interface FlowActionMenuProps {
   children?: React.ReactNode;
   readonly: boolean;
   onRename: (newName: string) => void;
+  onMoveTo: (folderId: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
 }
@@ -36,6 +45,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   children,
   readonly,
   onRename,
+  onMoveTo,
   onDuplicate,
   onDelete,
 }) => {
@@ -92,6 +102,14 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </DropdownMenuItem>
           </RenameFlowDialog>
         )}
+        <MoveToDialog flow={flow} flowVersion={flowVersion} onMoveTo={onMoveTo}>
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <div className="flex flex-row gap-2 items-center">
+              <CornerUpLeft className="h-4 w-4" />
+              <span>Move To</span>
+            </div>
+          </DropdownMenuItem>
+        </MoveToDialog>
         <DropdownMenuItem onClick={() => duplicateFlow()}>
           <div className="flex flex-row gap-2 items-center">
             {isExportPending ? (

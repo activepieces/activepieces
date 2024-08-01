@@ -1,8 +1,3 @@
-import { createContext, useContext } from 'react';
-import { create, useStore } from 'zustand';
-
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { PromiseQueue } from '@/lib/promise-queue';
 import {
   ActionType,
   ExecutionState,
@@ -13,6 +8,11 @@ import {
   StepOutput,
   flowHelper,
 } from '@activepieces/shared';
+import { createContext, useContext } from 'react';
+import { create, useStore } from 'zustand';
+
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PromiseQueue } from '@/lib/promise-queue';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -62,6 +62,7 @@ export type BuilderState = {
   selectStep(path: StepPathWithName | null): void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
+  moveToFolderClientSide: (folderId: string) => void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
@@ -112,6 +113,16 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           flowVersion: {
             ...state.flowVersion,
             displayName: newName,
+          },
+        };
+      });
+    },
+    moveToFolderClientSide: (folderId: string) => {
+      set((state) => {
+        return {
+          flow: {
+            ...state.flow,
+            folderId,
           },
         };
       });
