@@ -3,6 +3,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { Plus } from 'lucide-react';
+import { useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -33,7 +34,6 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { ApFlagId, PackageType, PieceScope } from '@activepieces/shared';
 
 import { piecesApi } from '../lib/pieces-api';
-import { useState } from 'react';
 
 const FormSchema = Type.Object({
   pieceName: Type.String({
@@ -59,7 +59,6 @@ type InstallPieceDialogProps = {
   onInstallPiece: () => void;
 };
 const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
-
   const [isOpen, setIsOpen] = useState(false);
   const queryClient = useQueryClient();
 
