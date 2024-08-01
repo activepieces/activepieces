@@ -20,6 +20,9 @@ export const piecesApi = {
       version: request.version ?? undefined,
     });
   },
+  installCommunityPiece(params: FormData) {
+    return api.post<PieceMetadataModel>(`/v1/pieces`, params);
+  },
   delete(id: string) {
     return api.delete(`/v1/pieces/${id}`);
   },

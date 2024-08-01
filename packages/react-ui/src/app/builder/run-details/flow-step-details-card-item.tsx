@@ -3,7 +3,7 @@ import React from 'react';
 
 import {
   StepPathWithName,
-  getStepOutputFromExecutionPath,
+  builderSelectors,
   stepPathToKeyString,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
@@ -62,14 +62,14 @@ const FlowStepDetailsCardItem = React.memo(
           (selectedStep.path.some((p) => p[0] === path.stepName) ||
             selectedStep.stepName === step.name);
 
-        const stepOutput = getStepOutputFromExecutionPath({
+        const stepOutput = builderSelectors.getStepOutputFromExecutionPath({
           path,
           executionState: state.run ?? { steps: {} },
         })!;
 
         return [state.selectStep, isStepSelected, isInPath, step, stepOutput];
       });
-    const { data: pieceMetadata } = piecesHooks.usePieceMetadata({
+    const { data: pieceMetadata } = piecesHooks.useStepMetadata({
       step,
     });
     const [isOpen, setIsOpen] = React.useState(false);

@@ -1,51 +1,64 @@
-import {
-  ActionType,
-  PopulatedFlow,
-  TriggerType,
-  flowHelper,
-} from '@activepieces/shared';
+import { Trigger, flowHelper } from '@activepieces/shared';
 
-import { ExtraPiecesCircle } from './extra-pieces-circle';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '../../../components/ui/tooltip';
+import { piecesHooks, StepMetadata } from '../lib/pieces-hook';
+
 import { PieceIcon } from './piece-icon';
 
-export function PieceIconList({ flow }: { flow: PopulatedFlow }) {
-  const steps = flowHelper
-    .getAllSteps(flow.version.trigger)
-    .map((step) => {
-      if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {
-        return step.settings.pieceName;
-      }
-      return null;
-    })
-    .filter((pieceName): pieceName is string => pieceName !== null);
+export function PieceIconList({
+  maxNumberOfIconsToShow,
+  trigger,
+}: {
+  trigger: Trigger;
+  maxNumberOfIconsToShow: number;
+}) {
+  const steps = flowHelper.getAllSteps(trigger);
+  const stepsMetadata: StepMetadata[] = piecesHooks
+    .useStepsMetadata(steps)
+    .map((data) => data.data)
+    .filter((data) => !!data) as StepMetadata[];
 
-  const visibleSteps = steps.slice(0, 2);
-  const extraStepsCount = steps.length - visibleSteps.length;
-  const extraSteps = steps.slice(2);
+  const uniqueMetadata: StepMetadata[] = stepsMetadata.filter(
+    (item, index, self) => self.indexOf(item) === index,
+  );
+  const visibleMetadata = uniqueMetadata.slice(0, maxNumberOfIconsToShow);
+  const extraPieces = uniqueMetadata.length - visibleMetadata.length;
 
   return (
-    <div className="flex gap-2">
-      {steps.length === 0 ? (
-        <PieceIcon circle={true} size={'md'} border={true} pieceName={''} />
-      ) : (
-        <>
-          {visibleSteps.map((pieceName, index) => (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex gap-2">
+          {visibleMetadata.map((metadata, index) => (
             <PieceIcon
+              logoUrl={metadata.logoUrl}
+              showTooltip={false}
               circle={true}
               size={'md'}
               border={true}
-              pieceName={pieceName}
+              displayName={metadata.displayName}
               key={index}
             />
           ))}
-          {extraStepsCount > 0 && (
-            <ExtraPiecesCircle
-              extraStepsCount={extraStepsCount}
-              pieces={extraSteps}
-            />
+          {extraPieces > 0 && (
+            <div className="flex items-center justify-center bg-white text-black  p-2 rounded-full border border-solid size-[36px]">
+              +{extraPieces}
+            </div>
           )}
-        </>
-      )}
-    </div>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        {uniqueMetadata.length > 1 &&
+          uniqueMetadata
+            .map((m) => m?.displayName || '')
+            .slice(0, -1)
+            .join(', ') +
+            ` and ${uniqueMetadata[uniqueMetadata.length - 1].displayName}`}
+        {uniqueMetadata.length === 1 && uniqueMetadata[0].displayName}
+      </TooltipContent>
+    </Tooltip>
   );
 }

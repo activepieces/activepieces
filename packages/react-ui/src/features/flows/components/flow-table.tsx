@@ -103,7 +103,12 @@ const FlowsTable = () => {
         <DataTableColumnHeader column={column} title="Steps" />
       ),
       cell: ({ row }) => {
-        return <PieceIconList flow={row.original} />;
+        return (
+          <PieceIconList
+            trigger={row.original.version.trigger}
+            maxNumberOfIconsToShow={2}
+          />
+        );
       },
     },
     {

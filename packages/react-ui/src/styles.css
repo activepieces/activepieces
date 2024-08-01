@@ -1,7 +1,6 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
-
 /* You can add global styles to this file, and also import other style files */
 
 
@@ -81,4 +80,18 @@
     }
 
 
+}
+
+*[data-pd-ripple="true"]{
+    overflow: hidden;
+    position: relative;
+}
+@keyframes ripple {
+    100% {
+        opacity: 0;
+        transform: scale(2.5);
+    }
+}
+span.p-ink-active{
+    animation: ripple 0.5s linear !important;
 }
