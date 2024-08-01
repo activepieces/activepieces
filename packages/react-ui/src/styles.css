@@ -1,7 +1,6 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
-
 /* You can add global styles to this file, and also import other style files */
 
 
@@ -21,18 +20,20 @@
         --muted-foreground: 220 8.9% 46.1%;
         --accent: 220 14.3% 95.9%;
         --accent-foreground: 220.9 39.3% 11%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 210 20% 98%;
         --border: 220 13% 91%;
         --input: 220 13% 91%;
         --ring: 262.1 83.3% 57.8%;
         --radius: 0.75rem;
 
+        --destructive: 0 84.2% 60.2%;
+        --destructive-100: 0 84.2% 90%;
+        --destructive-300: 0 84.2% 40%;
+
         --success: 148 48% 46%;
-        --success-foreground:  210 20% 98;
+        --success-100: 148 48% 90%;
+        --success-300: 148 48% 40%;
 
         --warning: 38 92% 50%;
-        --warning-foreground: 48 96% 89%;
     }
 
     .dark {
@@ -50,17 +51,19 @@
         --muted-foreground: 217.9 10.6% 64.9%;
         --accent: 215 27.9% 16.9%;
         --accent-foreground: 210 20% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 210 20% 98%;
         --border: 215 27.9% 16.9%;
         --input: 215 27.9% 16.9%;
         --ring: 263.4 70% 50.4%;
 
+        --destructive: 0 62.8% 30.6%;
+        --destructive-100: 0 62.8% 20%;
+        --destructive-300: 0 62.8% 60%;
+
         --success: 166 97% 14%;
-        --success-foreground: 210 20% 98%;
+        --success-100: 166 97% 20%;
+        --success-300: 166 97% 60%;
 
         --warning: 48 96% 89%;
-        --warning-foreground: 38 92% 50%;
     }
 }
 
@@ -77,4 +80,18 @@
     }
 
 
+}
+
+*[data-pd-ripple="true"]{
+    overflow: hidden;
+    position: relative;
+}
+@keyframes ripple {
+    100% {
+        opacity: 0;
+        transform: scale(2.5);
+    }
+}
+span.p-ink-active{
+    animation: ripple 0.5s linear !important;
 }

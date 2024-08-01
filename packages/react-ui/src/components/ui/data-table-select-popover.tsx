@@ -1,6 +1,8 @@
 import { PlusCircledIcon } from '@radix-ui/react-icons';
 import { CheckIcon } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
+
 import { Badge } from './badge';
 import { Button } from './button';
 import {
@@ -14,8 +16,6 @@ import {
 } from './command';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { Separator } from './seperator';
-
-import { cn } from '@/lib/utils';
 
 type DataTableSelectPopoverProps = {
   title?: string;
@@ -82,8 +82,8 @@ const DataTableSelectPopover = ({
           <CommandInput placeholder={title} />
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
-            <CommandGroup>
-              {options.map((option) => {
+            <CommandGroup className="max-h-[300px] overflow-y-scroll">
+              {options.map((option, index) => {
                 const isSelected = selectedValues.has(option.value);
                 return (
                   <CommandItem
@@ -111,7 +111,10 @@ const DataTableSelectPopover = ({
                     {option.icon && (
                       <option.icon className="mr-2 size-4 text-muted-foreground" />
                     )}
-                    <span>{option.label}</span>
+                    <div>
+                      <span>{option.label}</span>
+                      <span className="hidden">{index}</span>
+                    </div>
                     {facets?.get(option.value) && (
                       <span className="ml-auto flex size-4 items-center justify-center font-mono text-xs">
                         {facets.get(option.value)}

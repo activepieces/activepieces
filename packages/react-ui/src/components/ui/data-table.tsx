@@ -1,6 +1,5 @@
 'use client';
 
-import { SeekPage } from '@activepieces/shared';
 import {
   ColumnDef,
   flexRender,
@@ -10,12 +9,6 @@ import {
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { Button } from './button';
-import { DataTableFacetedFilter } from './data-table-options-filter';
-import { DataTableSkeleton } from './data-table-skeleton';
-import { DataTableToolbar } from './data-table-toolbar';
-import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
-
 import {
   Table,
   TableBody,
@@ -24,13 +17,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { SeekPage } from '@activepieces/shared';
+
+import { Button } from './button';
+import { DataTableFacetedFilter } from './data-table-options-filter';
+import { DataTableSkeleton } from './data-table-skeleton';
+import { DataTableToolbar } from './data-table-toolbar';
+import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
 
 export type RowDataWithActions<TData> = TData & {
   delete: () => void;
 };
 
 export type DataTableFilter = {
-  type: 'select' | 'input';
+  type: 'select' | 'input' | 'date';
   title: string;
   accessorKey: string;
   icon: React.ComponentType<{ className?: string }>;

@@ -17,12 +17,14 @@ import { alertsService } from '../../ee/alerts/alerts-service'
 import { issuesService } from '../../ee/issues/issues-service'
 import { eventsHooks } from '../../helper/application-events'
 import { flowQueue } from '../../workers/queue'
+import { JOB_PRIORITY } from '../../workers/queue/queue-manager'
 import { flowRunHooks } from './flow-run-hooks'
 
 type StartParams = {
     flowRun: FlowRun
     executionType: ExecutionType
     payload: unknown
+    priority: keyof typeof JOB_PRIORITY
     synchronousHandlerId: string | undefined
     progressUpdateType: ProgressUpdateType
     httpRequestId: string | undefined
@@ -76,6 +78,7 @@ export const flowRunSideEffects = {
         payload,
         synchronousHandlerId,
         httpRequestId,
+        priority,
         progressUpdateType,
     }: StartParams): Promise<void> {
         logger.info(
@@ -85,7 +88,7 @@ export const flowRunSideEffects = {
         await flowQueue.add({
             id: flowRun.id,
             type: JobType.ONE_TIME,
-            priority: isNil(synchronousHandlerId) ? 'medium' : 'high',
+            priority,
             data: {
                 synchronousHandlerId: synchronousHandlerId ?? null,
                 projectId: flowRun.projectId,

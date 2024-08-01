@@ -13,6 +13,13 @@ import crypto from 'node:crypto';
 import { noteAddedToConversation } from './lib/triggers/note-added-to-conversation';
 import { addNoteToConversation } from './lib/actions/add-note-to-conversation';
 import { replyToConversation } from './lib/actions/reply-to-conversation';
+import { newConversationFromUser } from './lib/triggers/new-conversation-from-user';
+import { replyFromUser } from './lib/triggers/reply-from-user';
+import { replyFromAdmin } from './lib/triggers/reply-from-admin';
+import { conversationAssigned } from './lib/triggers/conversation-assigned';
+import { conversationClosed } from './lib/triggers/conversation-closed';
+import { conversationSnoozed } from './lib/triggers/conversation-snoozed';
+import { conversationUnsnoozed } from './lib/triggers/conversation-unsnoozed';
 
 export const intercomAuth = PieceAuth.OAuth2({
   authUrl: 'https://app.{region}.com/oauth',
@@ -41,7 +48,16 @@ export const intercom = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/intercom.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: intercomAuth,
-  triggers: [noteAddedToConversation],
+  triggers: [
+    newConversationFromUser,
+    replyFromUser,
+    replyFromAdmin,
+    noteAddedToConversation,
+    conversationAssigned,
+    conversationClosed,
+    conversationSnoozed,
+    conversationUnsnoozed,
+  ],
   authors: [
     'kishanprmr',
     'MoShizzle',
@@ -58,9 +74,7 @@ export const intercom = createPiece({
     replyToConversation,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        `https://api.${
-          (auth as OAuth2PropertyValue).props?.['region']
-        }.io`,
+        `https://api.${(auth as OAuth2PropertyValue).props?.['region']}.io`,
       auth: intercomAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,

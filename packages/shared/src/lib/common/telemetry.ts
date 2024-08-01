@@ -126,6 +126,13 @@ type UserInvited = {
     email: string
 }
 
+type TriggerFailuresExceeded = {
+    projectId: string
+    flowId: string
+    pieceName: string
+    pieceVersion: string
+}
+
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     QUOTA_ALERT = 'quota.alert',
@@ -156,6 +163,7 @@ export enum TelemetryEventName {
     FORMS_SUBMITTED = 'forms.submitted',
     REWARDS_OPENED = 'rewards.opened',
     REWARDS_INSTRUCTION_CLICKED = 'rewards.instructions.clicked',
+    TRIGGER_FAILURES_EXCEEDED = 'trigger.failures.exceeded',
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -191,3 +199,4 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.FORMS_SUBMITTED, FormsViewed>
     | BaseTelemetryEvent<TelemetryEventName.REWARDS_OPENED, RewardButtonClicked>
     | BaseTelemetryEvent<TelemetryEventName.REWARDS_INSTRUCTION_CLICKED, RewardInstructionsClicked>
+    | BaseTelemetryEvent<TelemetryEventName.TRIGGER_FAILURES_EXCEEDED, TriggerFailuresExceeded>

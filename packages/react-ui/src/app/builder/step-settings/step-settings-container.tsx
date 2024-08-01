@@ -1,9 +1,6 @@
 import React from 'react';
 
-import {
-  RightSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -66,7 +63,7 @@ const StepSettingsContainer = React.memo(() => {
     return <></>;
   }
 
-  const { data: pieceMetadata } = piecesHooks.usePieceMetadata({
+  const { data: pieceMetadata } = piecesHooks.useStepMetadata({
     step: selectedStep,
   });
 
