@@ -103,7 +103,7 @@ const FolderFilterList = ({
         switch (error.response?.status) {
           case HttpStatusCode.Conflict: {
             form.setError('root.serverError', {
-              message: 'The folder name is already added.',
+              message: 'The folder name already exists.',
             });
             break;
           }
