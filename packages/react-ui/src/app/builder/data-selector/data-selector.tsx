@@ -38,53 +38,36 @@ const createTestNode = (
   };
 };
 
-function useDataSelectorVisibility(
-  containerRef: React.RefObject<HTMLDivElement>,
-  setShowDataSelector: (showDataSelector: boolean) => void,
-) {
-  const checkFocus = useCallback(() => {
-    if (
-      (containerRef.current &&
-        containerRef.current.contains(document.activeElement)) ||
-      document.activeElement?.classList.contains('ap-text-with-mentions')
-    ) {
-      setShowDataSelector(true);
-    } else {
-      setShowDataSelector(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Add event listeners for focus changes
-    document.addEventListener('focusin', checkFocus);
-    document.addEventListener('focusout', checkFocus);
-
-    // Cleanup function
-    return () => {
-      document.removeEventListener('focusin', checkFocus);
-      document.removeEventListener('focusout', checkFocus);
-    };
-  }, [checkFocus]);
-}
-
 function filterBy(arr: MentionTreeNode[], query: string): MentionTreeNode[] {
-  return query
-    ? arr.reduce((acc, item) => {
-        if (item.children?.length) {
-          const filtered = filterBy(item.children, query);
-          if (filtered.length) return [...acc, { ...item, children: filtered }];
-        }
+  if (!query) {
+    return arr;
+  }
 
-        const { children, ...itemWithoutChildren } = item;
-        return item.data.displayName
-          ?.toLowerCase()
-          .includes(query.toLowerCase())
-          ? [...acc, itemWithoutChildren]
-          : acc;
-      }, [] as MentionTreeNode[])
-    : arr;
+  return arr.reduce((acc, item) => {
+    const isTestNode = !isNil(item.children) && item?.children?.[0]?.data?.isTestStepNode;
+    if (isTestNode) {
+      return acc;
+    }
+
+    if (item.children?.length) {
+      const filteredChildren = filterBy(item.children, query);
+      if (filteredChildren.length) {
+        acc.push({ ...item, children: filteredChildren });
+        return acc; // return acc as we have handled this item
+      }
+    }
+
+    const normalizedValue = item?.data?.value;
+    const value = isNil(normalizedValue) ? '' : JSON.stringify(normalizedValue).toLowerCase();
+    const displayName = item?.data?.displayName?.toLowerCase();
+
+    if (displayName?.includes(query.toLowerCase()) || value.includes(query.toLowerCase())) {
+      acc.push({ ...item, children: undefined });
+    }
+
+    return acc; // Always return acc
+  }, [] as MentionTreeNode[]);
 }
-
 const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
   state,
 ) => {
@@ -126,7 +109,23 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const mentions = useBuilderStateContext(getAllStepsMentions);
   const filteredMentions = filterBy(mentions, searchTerm);
   const [showDataSelector, setShowDataSelector] = useState(false);
-  useDataSelectorVisibility(containerRef, setShowDataSelector);
+
+  const checkFocus = useCallback(() => {
+    const isTextMentionInputFocused = (!isNil(containerRef.current) &&
+      containerRef.current.contains(document.activeElement)) ||
+      (document.activeElement?.classList.contains('ap-text-with-mentions') ?? false)
+    setShowDataSelector(isTextMentionInputFocused);
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('focusin', checkFocus);
+    document.addEventListener('focusout', checkFocus);
+
+    return () => {
+      document.removeEventListener('focusin', checkFocus);
+      document.removeEventListener('focusout', checkFocus);
+    };
+  }, [checkFocus]);
 
   return (
     <div
@@ -135,11 +134,11 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       className={cn(
         'absolute bottom-[0px]  mr-5 mb-5  right-[0px]  z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-background shadow-lg rounded-md',
         {
-          'opacity-0  pointer-events-none': !showDataSelector,
+          'opacity-0 pointer-events-none': !showDataSelector,
         },
       )}
     >
-      <div className="text-lg pointer-events-auto items-center font-semibold px-5 py-2 flex gap-2">
+      <div className="text-lg items-center font-semibold px-5 py-2 flex gap-2">
         Data Selector <div className="flex-grow"></div>{' '}
         <DataSelectorSizeTogglers
           state={DataSelectorSize}
@@ -152,14 +151,14 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             DataSelectorSize === DataSelectorSizeState.COLLAPSED
               ? '0px'
               : DataSelectorSize === DataSelectorSizeState.DOCKED
-              ? '450px'
-              : `${parentHeight - 100}px`,
+                ? '450px'
+                : `${parentHeight - 100}px`,
           width:
             DataSelectorSize === DataSelectorSizeState.COLLAPSED
               ? '0px'
               : DataSelectorSize === DataSelectorSizeState.DOCKED
-              ? '450px'
-              : `${parentWidth - 40}px`,
+                ? '450px'
+                : `${parentWidth - 40}px`,
         }}
         className="transition-all overflow-hidden"
       >
