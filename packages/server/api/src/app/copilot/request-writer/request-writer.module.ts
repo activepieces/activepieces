@@ -1,6 +1,6 @@
 import { GenerateHttpRequestBodyRequest, GenerateHttpRequestBodyResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { websocketService } from '../websockets/websockets.service'
+import { websocketService } from '../../websockets/websockets.service'
 import { requestWriterService } from './request-writer.service'
 
 export const requestWriterModule: FastifyPluginAsyncTypebox = async () => {
