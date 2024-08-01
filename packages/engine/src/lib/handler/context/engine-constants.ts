@@ -8,9 +8,9 @@ type RetryConstants = {
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
-    maxAttempts: 3,
-    retryExponential: 4,
-    retryInterval: 1000,
+    maxAttempts: 4,
+    retryExponential: 2,
+    retryInterval: 2000,
 }
 
 export class EngineConstants {
