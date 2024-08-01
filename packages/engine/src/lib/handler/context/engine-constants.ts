@@ -8,7 +8,7 @@ type RetryConstants = {
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
-    maxAttempts: 4,
+    maxAttempts: 3,
     retryExponential: 4,
     retryInterval: 1000,
 }
