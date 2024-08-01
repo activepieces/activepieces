@@ -1,13 +1,22 @@
 import { api } from '@/lib/api';
 import {
+  DropdownState,
   PieceMetadataModel,
   PieceMetadataModelSummary,
+  PiecePropertyMap,
 } from '@activepieces/pieces-framework';
 import {
+  Action,
+  ActionType,
   GetPieceRequestParams,
   GetPieceRequestQuery,
   ListPiecesRequestQuery,
+  PieceOptionRequest,
+  Trigger,
+  TriggerType,
 } from '@activepieces/shared';
+
+import { StepMetadata } from './pieces-hook';
 
 export const piecesApi = {
   list(request: ListPiecesRequestQuery): Promise<PieceMetadataModelSummary[]> {
@@ -19,6 +28,52 @@ export const piecesApi = {
     return api.get<PieceMetadataModel>(`/v1/pieces/${request.name}`, {
       version: request.version ?? undefined,
     });
+  },
+  options<T extends DropdownState<unknown> | PiecePropertyMap>(
+    request: PieceOptionRequest,
+  ): Promise<T> {
+    return api.post<T>(`/v1/pieces/options`, request);
+  },
+  async getMetadata(step: Action | Trigger): Promise<StepMetadata> {
+    switch (step.type) {
+      case ActionType.BRANCH:
+        return {
+          displayName: 'Branch',
+          logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
+          description: 'Branch',
+        };
+      case ActionType.CODE:
+        return {
+          displayName: 'Code',
+          logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
+          description: 'Powerful nodejs & typescript code with npm',
+        };
+      case ActionType.LOOP_ON_ITEMS:
+        return {
+          displayName: 'Loop on Items',
+          logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
+          description: 'Iterate over a list of items',
+        };
+      case TriggerType.EMPTY:
+        return {
+          displayName: 'Empty Trigger',
+          logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
+          description: 'Empty Trigger',
+        };
+      case ActionType.PIECE:
+      case TriggerType.PIECE: {
+        const { pieceName, pieceVersion } = step.settings;
+        const piece = await piecesApi.get({
+          name: pieceName,
+          version: pieceVersion,
+        });
+        return {
+          displayName: piece.displayName,
+          logoUrl: piece.logoUrl,
+          description: piece.description,
+        };
+      }
+    }
   },
   installCommunityPiece(params: FormData) {
     return api.post<PieceMetadataModel>(`/v1/pieces`, params);

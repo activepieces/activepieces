@@ -11,6 +11,7 @@ import { oauth2Utils } from '@/lib/oauth2-utils';
 import {
   OAuth2Property,
   OAuth2Props,
+  PieceMetadataModel,
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
 import {
@@ -23,10 +24,10 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { oauth2AppsHooks } from '../lib/oauth2-apps-hooks';
+import { oauth2AppsHooks } from '../../features/connections/lib/oauth2-apps-hooks';
 
 type OAuth2ConnectionSettingsProps = {
-  piece: PieceMetadataModelSummary;
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
   authProperty: OAuth2Property<OAuth2Props>;
 };
 

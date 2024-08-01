@@ -53,6 +53,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       asChild = false,
       loading = false,
       keyboardShortcut,
+      disabled,
       onKeyboardShortcut,
       children,
       ...props
@@ -69,7 +70,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       return () => {
         document.removeEventListener('keydown', handleKeyDown);
       };
-    }, [keyboardShortcut]);
+    }, [keyboardShortcut, disabled]);
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -78,7 +79,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ) {
         event.preventDefault();
         event.stopPropagation();
-        if (onKeyboardShortcut) {
+        if (onKeyboardShortcut && !disabled) {
           onKeyboardShortcut();
         }
       }
@@ -88,6 +89,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         className={cn(buttonVariants({ variant, size, className }), {})}
         ref={ref}
+        disabled={disabled}
         {...props}
       >
         {loading ? (

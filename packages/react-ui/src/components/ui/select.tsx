@@ -11,6 +11,8 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
+import { LoadingSpinner } from './spinner';
+
 const Select = SelectPrimitive.Root;
 
 const SelectGroup = SelectPrimitive.Group;
@@ -137,6 +139,44 @@ const SelectItem = React.forwardRef<
   </SelectPrimitive.Item>
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;
+
+type SelectItemProps = {
+  className?: string;
+};
+const SelectLoader = React.forwardRef<HTMLDivElement, SelectItemProps>(
+  ({ className }, ref) => (
+    <SelectItem
+      key="none"
+      disabled={true}
+      ref={ref}
+      value="random-value"
+      className={cn('flex items-center justify-center w-full', className)}
+    >
+      <LoadingSpinner />
+    </SelectItem>
+  ),
+);
+SelectLoader.displayName = 'SelectLoader';
+export { SelectLoader };
+
+const SelectAction = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }
+>(({ className, children, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      'relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none hover:bg-accent hover:text-accent-foreground',
+      className,
+    )}
+    {...props}
+  >
+    {children}
+  </div>
+));
+
+SelectAction.displayName = 'SelectAction';
+export { SelectAction };
 
 const SelectSeparator = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Separator>,

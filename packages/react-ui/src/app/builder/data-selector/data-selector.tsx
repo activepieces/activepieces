@@ -44,7 +44,8 @@ function filterBy(arr: MentionTreeNode[], query: string): MentionTreeNode[] {
   }
 
   return arr.reduce((acc, item) => {
-    const isTestNode = !isNil(item.children) && item?.children?.[0]?.data?.isTestStepNode;
+    const isTestNode =
+      !isNil(item.children) && item?.children?.[0]?.data?.isTestStepNode;
     if (isTestNode) {
       return acc;
     }
@@ -58,10 +59,15 @@ function filterBy(arr: MentionTreeNode[], query: string): MentionTreeNode[] {
     }
 
     const normalizedValue = item?.data?.value;
-    const value = isNil(normalizedValue) ? '' : JSON.stringify(normalizedValue).toLowerCase();
+    const value = isNil(normalizedValue)
+      ? ''
+      : JSON.stringify(normalizedValue).toLowerCase();
     const displayName = item?.data?.displayName?.toLowerCase();
 
-    if (displayName?.includes(query.toLowerCase()) || value.includes(query.toLowerCase())) {
+    if (
+      displayName?.includes(query.toLowerCase()) ||
+      value.includes(query.toLowerCase())
+    ) {
       acc.push({ ...item, children: undefined });
     }
 
@@ -111,9 +117,11 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const [showDataSelector, setShowDataSelector] = useState(false);
 
   const checkFocus = useCallback(() => {
-    const isTextMentionInputFocused = (!isNil(containerRef.current) &&
-      containerRef.current.contains(document.activeElement)) ||
-      (document.activeElement?.classList.contains('ap-text-with-mentions') ?? false)
+    const isTextMentionInputFocused =
+      (!isNil(containerRef.current) &&
+        containerRef.current.contains(document.activeElement)) ||
+      (document.activeElement?.classList.contains('ap-text-with-mentions') ??
+        false);
     setShowDataSelector(isTextMentionInputFocused);
   }, []);
 
@@ -151,14 +159,14 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             DataSelectorSize === DataSelectorSizeState.COLLAPSED
               ? '0px'
               : DataSelectorSize === DataSelectorSizeState.DOCKED
-                ? '450px'
-                : `${parentHeight - 100}px`,
+              ? '450px'
+              : `${parentHeight - 100}px`,
           width:
             DataSelectorSize === DataSelectorSizeState.COLLAPSED
               ? '0px'
               : DataSelectorSize === DataSelectorSizeState.DOCKED
-                ? '450px'
-                : `${parentWidth - 40}px`,
+              ? '450px'
+              : `${parentWidth - 40}px`,
         }}
         className="transition-all overflow-hidden"
       >

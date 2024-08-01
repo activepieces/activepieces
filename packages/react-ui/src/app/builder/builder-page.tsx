@@ -1,5 +1,5 @@
 import { ReactFlowProvider } from '@xyflow/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
 
 import {
@@ -14,6 +14,7 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
+import { flowHelper } from '@activepieces/shared';
 
 import { cn } from '../../lib/utils';
 
@@ -22,7 +23,10 @@ import { FlowVersionsList } from './flow-versions/flow-versions-list';
 import { PiecesCardList } from './pieces-list/pieces-card-list';
 import { FlowRunDetails } from './run-details/flow-run-details-list';
 import { FlowRecentRunsList } from './run-list/flow-runs-list';
-import { StepSettings } from './step-settings/step-settings-container';
+import { StepSettingsContainer } from './step-settings/step-settings-container';
+
+const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
+const animateResizeClassName = `transition-all duration-200`;
 
 const useAnimateSidebar = (
   sidebarValue: LeftSideBarType | RightSideBarType,
@@ -42,25 +46,43 @@ const useAnimateSidebar = (
   }, [handleRef, sidebarValue, sidebarbarClosed]);
   return handleRef;
 };
-const animateResizeClassName = `transition-all duration-200`;
-const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 
 const BuilderPage = () => {
-  const [flowVersion, leftSidebar, rightSidebar, run, exitRun, selectedStep] =
+  const [leftSidebar, rightSidebar, flowVersion, selectedStep, exitRun, run] =
     useBuilderStateContext((state) => [
-      state.flowVersion,
       state.leftSidebar,
       state.rightSidebar,
-      state.run,
-      state.exitRun,
+      state.flowVersion,
       state.selectedStep,
+      state.exitRun,
+      state.run,
     ]);
+
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const rightHandleRef = useAnimateSidebar(rightSidebar);
   const leftHandleRef = useAnimateSidebar(leftSidebar);
+
+  const [containerKey, setContainerKey] = useState<string | undefined>(
+    undefined,
+  );
+
+  const memorizedSelectedStep = useMemo(() => {
+    if (!flowVersion || !selectedStep?.stepName) {
+      return undefined;
+    }
+    return flowHelper.getStep(flowVersion, selectedStep.stepName);
+  }, [flowVersion.id, selectedStep]);
+
+  useEffect(() => {
+    if (!selectedStep) {
+      return;
+    }
+    setContainerKey(flowVersion.id + selectedStep.stepName);
+  }, [selectedStep, flowVersion]);
+
   return (
     <div className="flex h-screen w-screen flex-col">
-      {run && <RunDetailsBar run={run} onExitRun={exitRun} />}
+      {run && <RunDetailsBar run={run} exitRun={exitRun} />}
       <BuilderNavBar />
       <ResizablePanelGroup direction="horizontal">
         <>
@@ -115,14 +137,18 @@ const BuilderPage = () => {
             {rightSidebar === RightSideBarType.PIECE_SELECTOR && (
               <PiecesCardList />
             )}
-            {rightSidebar === RightSideBarType.PIECE_SETTINGS && (
-              <StepSettings key={flowVersion.id + selectedStep?.stepName} />
-            )}
+            {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
+              memorizedSelectedStep && (
+                <StepSettingsContainer
+                  key={containerKey}
+                  selectedStep={memorizedSelectedStep}
+                />
+              )}
           </ResizablePanel>
         </>
       </ResizablePanelGroup>
     </div>
   );
 };
-
+BuilderPage.displayName = 'BuilderPage';
 export { BuilderPage };

@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +21,6 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/seperator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
-import { formUtils } from '@/features/properties-form/lib/form-utils';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -28,6 +28,7 @@ import {
   CustomAuthProperty,
   OAuth2Property,
   OAuth2Props,
+  PieceMetadataModel,
   PieceMetadataModelSummary,
   PropertyType,
   SecretTextProperty,
@@ -40,7 +41,7 @@ import {
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
 
-import { appConnectionUtils } from '../lib/app-connections-utils';
+import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
@@ -48,10 +49,10 @@ import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
 type ConnectionDialogProps = {
-  piece: PieceMetadataModelSummary;
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
   connectionName?: string;
   open: boolean;
-  onConnectionCreated: () => void;
+  onConnectionCreated: (name: string) => void;
   setOpen: (open: boolean) => void;
 };
 
@@ -63,7 +64,7 @@ const CreateOrEditConnectionDialog = React.memo(
       piece.auth?.type === PropertyType.CUSTOM_AUTH
         ? Type.Object({
             request: Type.Object({
-              value: formUtils.buildSchema(
+              value: formUtils.buildPieceSchema(
                 (piece.auth as CustomAuthProperty<any>).props,
               ),
             }),
@@ -98,7 +99,8 @@ const CreateOrEditConnectionDialog = React.memo(
       },
       onSuccess: () => {
         setOpen(false);
-        onConnectionCreated();
+        const name = form.getValues().request.name;
+        onConnectionCreated(name);
         setErrorMessage('');
       },
       onError: (response) => {
@@ -205,7 +207,7 @@ CreateOrEditConnectionDialog.displayName = 'CreateOrEditConnectionDialog';
 export { CreateOrEditConnectionDialog };
 
 function createDefaultValues(
-  piece: PieceMetadataModelSummary,
+  piece: PieceMetadataModelSummary | PieceMetadataModel,
 ): Partial<UpsertAppConnectionRequestBody> {
   const suggestedConnectionName = appConnectionUtils.findName(piece.name);
   switch (piece.auth?.type) {

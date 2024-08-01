@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { JsonViewer } from '@/components/json-viewer';
 import { useSocket } from '@/components/socket-provider';
@@ -13,22 +14,48 @@ import {
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { formatUtils } from '@/lib/utils';
 import {
   Action,
+  ActionType,
   StepOutputStatus,
   StepRunResponse,
   isNil,
 } from '@activepieces/shared';
 
 type TestActionComponentProps = {
-  selectedStep: Action;
   flowVersionId: string;
-  onActionUpdate: (action: Action) => void;
   isSaving: boolean;
 };
+
+function formatSampleData(sampleData: unknown, type: ActionType) {
+  if (sampleData === undefined) {
+    return 'undefined';
+  }
+  const shouldRemoveIterations =
+    type === ActionType.LOOP_ON_ITEMS &&
+    sampleData &&
+    typeof sampleData === 'object' &&
+    'iterations' in sampleData;
+  if (shouldRemoveIterations) {
+    delete sampleData.iterations;
+  }
+  return sampleData;
+}
+
+function formatErrorMessage(errorMessage: string): string {
+  const errorMessagesSplit = errorMessage.split('Error:');
+  if (errorMessagesSplit.length < 2) {
+    return errorMessage;
+  }
+
+  const indentationStep = '  ';
+  return errorMessagesSplit.reduce((acc, current, index) => {
+    const indentation = indentationStep.repeat(index);
+    return `${acc}${indentation}Error ${index + 1}: ${current.trim()}\n`;
+  }, '');
+}
 
 const TestButtonTooltip = ({
   children,
@@ -52,21 +79,20 @@ const TestButtonTooltip = ({
   );
 };
 const TestActionComponent = React.memo(
-  ({
-    selectedStep,
-    flowVersionId,
-    onActionUpdate,
-    isSaving,
-  }: TestActionComponentProps) => {
+  ({ flowVersionId, isSaving }: TestActionComponentProps) => {
     const { toast } = useToast();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
+    const form = useFormContext<Action>();
+
+    const formValues = form.getValues();
     const [lastTestDate, setLastTestDate] = useState(
-      selectedStep.settings.inputUiInfo?.lastTestDate,
+      formValues.settings.inputUiInfo?.lastTestDate,
     );
-    const { currentSelectedData } = selectedStep.settings.inputUiInfo ?? {};
-    const sampleDataExists = !isNil(currentSelectedData);
+    const { currentSelectedData } = formValues.settings.inputUiInfo ?? {};
+    const sampleDataExists =
+      !isNil(currentSelectedData) || !isNil(errorMessage);
 
     const socket = useSocket();
 
@@ -74,20 +100,27 @@ const TestActionComponent = React.memo(
       mutationFn: async () => {
         return flowsApi.testStep(socket, {
           flowVersionId,
-          stepName: selectedStep.name,
+          stepName: formValues.name,
         });
       },
       onSuccess: (stepResponse) => {
         if (stepResponse.success) {
           setErrorMessage(undefined);
-          const newAction = flowVersionUtils.buildActionWithSampleData(
-            selectedStep,
-            stepResponse.output,
+          form.setValue(
+            'settings.inputUiInfo',
+            {
+              ...formValues.settings.inputUiInfo,
+              currentSelectedData: formatSampleData(
+                stepResponse.output,
+                formValues.type,
+              ),
+              lastTestDate: dayjs().toISOString(),
+            },
+            { shouldValidate: true },
           );
-          onActionUpdate(newAction);
         } else {
           setErrorMessage(
-            flowVersionUtils.formatErrorMessage(
+            formatErrorMessage(
               stepResponse.output?.toString() ||
                 'Failed to run test step and no error message was returned',
             ),
@@ -105,14 +138,15 @@ const TestActionComponent = React.memo(
         <div className="text-md font-semibold">Generate Sample Data</div>
         {!sampleDataExists && (
           <div className="flex-grow flex justify-center items-center w-full h-full">
-            <TestButtonTooltip disabled={!selectedStep.valid}>
+            <TestButtonTooltip disabled={!form.formState.isValid}>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => mutate()}
                 keyboardShortcut="G"
                 onKeyboardShortcut={mutate}
-                loading={isPending || isSaving}
+                loading={isPending}
+                disabled={isSaving || !form.formState.isValid}
               >
                 Test Step
               </Button>
@@ -147,15 +181,15 @@ const TestActionComponent = React.memo(
                     formatUtils.formatDate(new Date(lastTestDate))}
                 </div>
               </div>
-              <TestButtonTooltip disabled={!selectedStep.valid}>
+              <TestButtonTooltip disabled={!form.formState.isValid}>
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={!selectedStep.valid}
+                  disabled={!form.formState.isValid || isSaving}
                   keyboardShortcut="G"
                   onKeyboardShortcut={mutate}
                   onClick={() => mutate()}
-                  loading={isPending || isSaving}
+                  loading={isPending}
                 >
                   Retest
                 </Button>

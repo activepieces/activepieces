@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { AutoPropertiesFormComponent } from '@/features/properties-form/components/auto-properties-form';
+import { AutoPropertiesFormComponent } from '@/app/builder/piece-properties/auto-properties-form';
 import { CustomAuthProperty } from '@activepieces/pieces-framework';
 
 type CustomAuthConnectionSettingsProps = {
@@ -14,8 +14,6 @@ const CustomAuthConnectionSettings = React.memo(
         prefixValue="request.value"
         props={authProperty.props}
         allowDynamicValues={false}
-        renderSecretTextDescription={true}
-        renderSecretText={true}
       />
     );
   },

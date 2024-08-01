@@ -63,8 +63,8 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
             }
             const projectId = request.params.projectId
             const platform = await platformService.getOneOrThrow(project.platformId)
-            const projectRole = await projectMemberService.getRole({ userId: request.principal.id, projectId })
-            const response: SwitchProjectResponse = {
+            const projectRole = await projectMemberService.getRole({ userId: request.principal.id, projectId  })
+            return {
                 token: await accessTokenManager.generateToken({
                     id: request.principal.id,
                     type: request.principal.type,
@@ -75,7 +75,6 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
                 }),
                 projectRole,
             }
-            return response
         },
     )
 

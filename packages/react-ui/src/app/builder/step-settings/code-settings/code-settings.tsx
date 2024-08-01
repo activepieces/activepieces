@@ -1,14 +1,16 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
-import React, { useEffect } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import React from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
-import { DictionaryInput } from '@/components/ui/dictionary-input';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Label } from '@/components/ui/label';
-import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
-import { CodeAction, CodeActionSettings } from '@activepieces/shared';
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { CodeAction } from '@activepieces/shared';
+
+import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 
 import { CodeEditior } from './code-editior';
 
@@ -21,97 +23,45 @@ You can access these inputs in your code using \`inputs.key\`, where \`key\` is 
 `;
 
 type CodeSettingsProps = {
-  selectedStep: CodeAction;
   readonly: boolean;
-  onUpdateAction: (value: CodeAction) => void;
 };
 
-const FormSchema = Type.Object({
-  sourceCode: Type.Object({
-    code: Type.String({
-      minLength: 1,
-      errorMessage: 'You need to write a code snippet',
-    }),
-    packageJson: Type.String({
-      minLength: 0,
-      errorMessage: 'You need to write a package.json snippet',
-    }),
-  }),
-  input: Type.Record(Type.String(), Type.String()),
+const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
+  const form = useFormContext<CodeAction>();
+
+  return (
+    <div className="flex flex-col gap-4">
+      <FormField
+        control={form.control}
+        name="settings.input"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Inputs</FormLabel>
+            <ApMarkdown markdown={markdown} />
+            <DictionaryProperty
+              values={field.value}
+              onChange={field.onChange}
+            ></DictionaryProperty>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="settings.sourceCode"
+        render={({ field }) => (
+          <FormItem>
+            <CodeEditior
+              sourceCode={field.value}
+              onChange={field.onChange}
+              readonly={readonly}
+            ></CodeEditior>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
 });
-
-type FormSchema = Static<typeof FormSchema>;
-
-const CodeSettings = React.memo(
-  ({ selectedStep, readonly, onUpdateAction }: CodeSettingsProps) => {
-    const codeSettings = selectedStep.settings as CodeActionSettings;
-    const form = useForm<FormSchema>({
-      defaultValues: {
-        sourceCode: codeSettings.sourceCode,
-        input: codeSettings.input,
-      },
-      resolver: typeboxResolver(FormSchema),
-    });
-
-    const watchedForm = useWatch({ control: form.control });
-
-    useEffect(() => {
-      if (!form.formState.isDirty) {
-        return;
-      }
-      updateFormChange();
-    }, [watchedForm]);
-
-    async function updateFormChange() {
-      await form.trigger();
-      const { sourceCode, input } = form.getValues();
-      const newAction = flowVersionUtils.buildActionWithNewCode(
-        selectedStep,
-        sourceCode,
-        input,
-      );
-      onUpdateAction(newAction);
-    }
-
-    return (
-      <Form {...form}>
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className="flex flex-col gap-4"
-        >
-          <FormField
-            control={form.control}
-            name="input"
-            render={({ field }) => (
-              <FormItem>
-                <Label>Inputs</Label>
-                <ApMarkdown markdown={markdown} />
-                <DictionaryInput
-                  values={field.value}
-                  onChange={field.onChange}
-                ></DictionaryInput>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="sourceCode"
-            render={({ field }) => (
-              <FormItem>
-                <CodeEditior
-                  sourceCode={field.value}
-                  onChange={field.onChange}
-                  readonly={readonly}
-                ></CodeEditior>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </form>
-      </Form>
-    );
-  },
-);
 CodeSettings.displayName = 'CodeSettings';
 export { CodeSettings };

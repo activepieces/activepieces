@@ -48,7 +48,7 @@ const DataSelectorNodeContent = ({
     ? flowHelper.getStep(flowVersion, node.data.propertyPath)
     : undefined;
   const stepMetadata = step
-    ? piecesHooks.useStepMetadata({ step }).data
+    ? piecesHooks.useStepMetadata({ step }).stepMetadata
     : undefined;
 
   const showInsertButton =

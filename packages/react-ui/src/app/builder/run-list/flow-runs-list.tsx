@@ -28,6 +28,7 @@ const FlowRecentRunsList = React.memo(
       state.flow,
       state.setLeftSidebar,
     ]);
+
     const {
       data: flowPage,
       isLoading,
