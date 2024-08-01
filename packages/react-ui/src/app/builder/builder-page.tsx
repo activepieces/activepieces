@@ -48,6 +48,7 @@ const useAnimateSidebar = (
 };
 
 const BuilderPage = () => {
+
   const [leftSidebar, rightSidebar, flowVersion, selectedStep, exitRun, run] =
     useBuilderStateContext((state) => [
       state.leftSidebar,

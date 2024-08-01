@@ -1,8 +1,3 @@
-import { createContext, useContext } from 'react';
-import { create, useStore } from 'zustand';
-
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { PromiseQueue } from '@/lib/promise-queue';
 import {
   ActionType,
   ExecutionState,
@@ -13,6 +8,11 @@ import {
   StepOutput,
   flowHelper,
 } from '@activepieces/shared';
+import { createContext, useContext } from 'react';
+import { create, useStore } from 'zustand';
+
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PromiseQueue } from '@/lib/promise-queue';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -45,6 +45,8 @@ export enum RightSideBarType {
   PIECE_SETTINGS = 'piece-settings',
 }
 
+type InsertMentionHandler = (propertyPath: string) => void;
+
 export type BuilderState = {
   flow: Flow;
   flowVersion: FlowVersion;
@@ -59,6 +61,7 @@ export type BuilderState = {
   exitRun: () => void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
+  moveToFolderClientSide: (folderId: string) => void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
@@ -66,15 +69,15 @@ export type BuilderState = {
     operation: FlowOperationRequest,
     onError: () => void,
   ) => void;
-  selectStep: (path: StepPathWithName | null) => void;
+  selectStep: (path: StepPathWithName) => void;
   startSaving: () => void;
   setAllowCanvasPanning: (allowCanvasPanning: boolean) => void;
   setReadOnly: (readonly: boolean) => void;
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: Flow) => void;
   setVersion: (flowVersion: FlowVersion) => void;
-  insertMention: (propertyPath: string) => void;
-  setInsertMentionHandler: (handler: (propertyPath: string) => void) => void;
+  insertMention: InsertMentionHandler | null;
+  setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
 };
 
 export type BuilderInitialState = Pick<
@@ -114,6 +117,16 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         };
       });
     },
+    moveToFolderClientSide: (folderId: string) => {
+      set((state) => {
+        return {
+          flow: {
+            ...state.flow,
+            folderId,
+          },
+        };
+      });
+    },
     setFlow: (flow: Flow) => set({ flow }),
     exitRun: () =>
       set({
@@ -127,7 +140,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         rightSidebar: RightSideBarType.NONE,
         selectedStep: null,
       }),
-    selectStep: (path: StepPathWithName | null) =>
+    selectStep: (path: StepPathWithName) =>
       set({
         selectedStep: path,
         rightSidebar: path
@@ -175,12 +188,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       }),
     setReadOnly: (readonly: boolean) => set({ readonly }),
     setVersion: (flowVersion: FlowVersion) => set({ flowVersion, run: null }),
-    insertMention: (propertyPath: string) => {
-      console.warn('insertMention is not assigned yet', propertyPath);
-    },
-    setInsertMentionHandler: (
-      insertMention: (propertyPath: string) => void,
-    ) => {
+    insertMention: null,
+    setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
       set({ insertMention });
     },
   }));

@@ -73,4 +73,7 @@ export const flowsApi = {
   delete(flowId: string) {
     return api.delete<void>(`/v1/flows/${flowId}`);
   },
+  count() {
+    return api.get<number>('/v1/flows/count');
+  },
 };

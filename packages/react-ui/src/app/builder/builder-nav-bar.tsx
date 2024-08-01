@@ -1,5 +1,8 @@
+import { FlowVersionState } from '@activepieces/shared';
 import { ChevronDown, History, Home, Logs } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+
+import { BuilderPublishButton } from './builder-publish-button';
 
 import {
   LeftSideBarType,
@@ -13,20 +16,26 @@ import {
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import FlowActionMenu from '@/features/flows/components/flow-actions-menu';
-import { FlowVersionState } from '@activepieces/shared';
-
-import { BuilderPublishButton } from './builder-publish-button';
+import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 
 export const BuilderNavBar = () => {
   const navigate = useNavigate();
 
-  const [flow, flowVersion, setLeftSidebar, renameFlowClientSide] =
-    useBuilderStateContext((state) => [
-      state.flow,
-      state.flowVersion,
-      state.setLeftSidebar,
-      state.renameFlowClientSide,
-    ]);
+  const [
+    flow,
+    flowVersion,
+    setLeftSidebar,
+    renameFlowClientSide,
+    moveToFolderClientSide,
+  ] = useBuilderStateContext((state) => [
+    state.flow,
+    state.flowVersion,
+    state.setLeftSidebar,
+    state.renameFlowClientSide,
+    state.moveToFolderClientSide,
+  ]);
+
+  const { data: folderData } = foldersHooks.useFolder(flow.folderId ?? 'NULL');
 
   const isLatestVersion =
     flowVersion.state === FlowVersionState.DRAFT ||
@@ -45,7 +54,10 @@ export const BuilderNavBar = () => {
           </TooltipTrigger>
           <TooltipContent side="bottom">Home</TooltipContent>
         </Tooltip>
-        <span>{flowVersion.displayName}</span>
+        <span>
+          {folderData?.displayName ?? 'Uncategorized'} /{' '}
+          <strong>{flowVersion.displayName}</strong>
+        </span>
         <FlowActionMenu
           flow={flow}
           flowVersion={flowVersion}
@@ -54,6 +66,7 @@ export const BuilderNavBar = () => {
             navigate('/flows');
           }}
           onRename={(newName) => renameFlowClientSide(newName)}
+          onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
           onDuplicate={() => {}}
         >
           <ChevronDown className="h-4 w-4" />
