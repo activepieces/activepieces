@@ -1,12 +1,9 @@
-import { ApFlagId, PackageType, PieceScope } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { Plus } from 'lucide-react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-
-import { piecesApi } from '../lib/pieces-api';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -33,6 +30,10 @@ import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { ApFlagId, PackageType, PieceScope } from '@activepieces/shared';
+
+import { piecesApi } from '../lib/pieces-api';
+import { useState } from 'react';
 
 const FormSchema = Type.Object({
   pieceName: Type.String({
@@ -54,7 +55,12 @@ const FormSchema = Type.Object({
 
 type FormSchema = Static<typeof FormSchema>;
 
-const InstallPieceDialog = () => {
+type InstallPieceDialogProps = {
+  onInstallPiece: () => void;
+};
+const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
+
+  const [isOpen, setIsOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: privatePiecesEnabled } = flagsHooks.useFlag<boolean>(
@@ -94,6 +100,8 @@ const InstallPieceDialog = () => {
       await piecesApi.installCommunityPiece(formData);
     },
     onSuccess: () => {
+      setIsOpen(false);
+      onInstallPiece();
       toast({
         title: 'Success',
         description: 'Piece installed',
@@ -131,7 +139,7 @@ const InstallPieceDialog = () => {
   };
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="size-4" />
@@ -163,7 +171,7 @@ const InstallPieceDialog = () => {
                     required
                     id="pieceName"
                     type="text"
-                    placeholder="Piece name"
+                    placeholder="@activepieces/piece-name"
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -181,7 +189,7 @@ const InstallPieceDialog = () => {
                     required
                     id="pieceVersion"
                     type="text"
-                    placeholder="Piece name"
+                    placeholder="0.0.1"
                     className="rounded-sm"
                   />
                   <FormMessage />
