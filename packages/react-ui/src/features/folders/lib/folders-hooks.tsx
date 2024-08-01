@@ -15,6 +15,7 @@ export const foldersHooks = {
     return useQuery({
       queryKey: ['folder', folderId],
       queryFn: () => foldersApi.get(folderId),
+      enabled: folderId !== 'NULL',
     });
   },
 };

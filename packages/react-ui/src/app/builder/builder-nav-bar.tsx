@@ -35,7 +35,7 @@ export const BuilderNavBar = () => {
     state.moveToFolderClientSide,
   ]);
 
-  const { data: folderData } = foldersHooks.useFolder(flow.folderId!);
+  const { data: folderData } = foldersHooks.useFolder(flow.folderId ?? 'NULL');
 
   const isLatestVersion =
     flowVersion.state === FlowVersionState.DRAFT ||
@@ -55,7 +55,8 @@ export const BuilderNavBar = () => {
           <TooltipContent side="bottom">Home</TooltipContent>
         </Tooltip>
         <span>
-          {folderData?.displayName} / <strong>{flowVersion.displayName}</strong>
+          {folderData?.displayName ?? 'Uncategorized'} /{' '}
+          <strong>{flowVersion.displayName}</strong>
         </span>
         <FlowActionMenu
           flow={flow}
