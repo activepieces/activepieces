@@ -24,7 +24,6 @@ import { FlowRunDetails } from './run-details/flow-run-details-list';
 import { FlowRecentRunsList } from './run-list/flow-runs-list';
 import { StepSettings } from './step-settings/step-settings-container';
 
-const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const useAnimateSidebar = (
   sidebarValue: LeftSideBarType | RightSideBarType,
 ) => {
@@ -44,14 +43,16 @@ const useAnimateSidebar = (
   return handleRef;
 };
 const animateResizeClassName = `transition-all duration-200`;
+const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
+
 const BuilderPage = () => {
-  const [flowVersion, leftSidebar, rightSidebar, run, ExitRun, selectedStep] =
+  const [flowVersion, leftSidebar, rightSidebar, run, exitRun, selectedStep] =
     useBuilderStateContext((state) => [
       state.flowVersion,
       state.leftSidebar,
       state.rightSidebar,
       state.run,
-      state.ExitRun,
+      state.exitRun,
       state.selectedStep,
     ]);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
@@ -59,7 +60,7 @@ const BuilderPage = () => {
   const leftHandleRef = useAnimateSidebar(leftSidebar);
   return (
     <div className="flex h-screen w-screen flex-col">
-      {run && <RunDetailsBar run={run} onExitRun={ExitRun} />}
+      {run && <RunDetailsBar run={run} onExitRun={exitRun} />}
       <BuilderNavBar />
       <ResizablePanelGroup direction="horizontal">
         <>

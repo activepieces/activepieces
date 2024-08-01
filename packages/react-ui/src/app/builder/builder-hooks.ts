@@ -45,6 +45,8 @@ export enum RightSideBarType {
   PIECE_SETTINGS = 'piece-settings',
 }
 
+type InsertMentionHandler = (propertyPath: string) => void;
+
 export type BuilderState = {
   flow: Flow;
   flowVersion: FlowVersion;
@@ -56,9 +58,9 @@ export type BuilderState = {
   activeDraggingStep: string | null;
   allowCanvasPanning: boolean;
   saving: boolean;
-  ExitRun: () => void;
+  exitRun: () => void;
   selectStep(path: StepPathWithName | null): void;
-  ExitStepSettings: () => void;
+  exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
@@ -73,8 +75,8 @@ export type BuilderState = {
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: Flow) => void;
   setVersion: (flowVersion: FlowVersion) => void;
-  insertMention: (propertyPath: string) => void;
-  setInsertMentionHandler: (handler: (propertyPath: string) => void) => void;
+  insertMention: InsertMentionHandler | null;
+  setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
 };
 
 export type BuilderInitialState = Pick<
@@ -115,19 +117,19 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       });
     },
     setFlow: (flow: Flow) => set({ flow }),
-    ExitRun: () =>
+    exitRun: () =>
       set({
         run: null,
         readonly: false,
         leftSidebar: LeftSideBarType.NONE,
         rightSidebar: RightSideBarType.NONE,
       }),
-    ExitStepSettings: () =>
+    exitStepSettings: () =>
       set({
         rightSidebar: RightSideBarType.NONE,
         selectedStep: null,
       }),
-    selectStep: (path: StepPathWithName | null) =>
+    selectStep: (path: StepPathWithName) =>
       set({
         selectedStep: path,
         rightSidebar: path
@@ -175,12 +177,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       }),
     setReadOnly: (readonly: boolean) => set({ readonly }),
     setVersion: (flowVersion: FlowVersion) => set({ flowVersion, run: null }),
-    insertMention: (propertyPath: string) => {
-      console.warn('insertMention is not assigned yet', propertyPath);
-    },
-    setInsertMentionHandler: (
-      insertMention: (propertyPath: string) => void,
-    ) => {
+    insertMention: null,
+    setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
       set({ insertMention });
     },
   }));
