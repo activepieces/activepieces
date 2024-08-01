@@ -73,7 +73,8 @@ export const piecesApi = {
           description: piece.description,
         };
       }
-    },
+    }
+  },
   installCommunityPiece(params: FormData) {
     return api.post<PieceMetadataModel>(`/v1/pieces`, params);
   },

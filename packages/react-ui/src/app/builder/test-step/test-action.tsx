@@ -14,11 +14,11 @@ import {
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { flowVersionUtils } from '@/features/flows/lib/flow-version-util';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { formatUtils } from '@/lib/utils';
 import {
   Action,
+  ActionType,
   StepOutputStatus,
   StepRunResponse,
   isNil,
@@ -28,6 +28,34 @@ type TestActionComponentProps = {
   flowVersionId: string;
   isSaving: boolean;
 };
+
+function formatSampleData(sampleData: unknown, type: ActionType) {
+  if (sampleData === undefined) {
+    return 'undefined';
+  }
+  const shouldRemoveIterations =
+    type === ActionType.LOOP_ON_ITEMS &&
+    sampleData &&
+    typeof sampleData === 'object' &&
+    'iterations' in sampleData;
+  if (shouldRemoveIterations) {
+    delete sampleData.iterations;
+  }
+  return sampleData;
+}
+
+function formatErrorMessage(errorMessage: string): string {
+  const errorMessagesSplit = errorMessage.split('Error:');
+  if (errorMessagesSplit.length < 2) {
+    return errorMessage;
+  }
+
+  const indentationStep = '  ';
+  return errorMessagesSplit.reduce((acc, current, index) => {
+    const indentation = indentationStep.repeat(index);
+    return `${acc}${indentation}Error ${index + 1}: ${current.trim()}\n`;
+  }, '');
+}
 
 const TestButtonTooltip = ({
   children,
@@ -82,7 +110,7 @@ const TestActionComponent = React.memo(
             'settings.inputUiInfo',
             {
               ...formValues.settings.inputUiInfo,
-              currentSelectedData: flowVersionUtils.formatSampleData(
+              currentSelectedData: formatSampleData(
                 stepResponse.output,
                 formValues.type,
               ),
@@ -92,7 +120,7 @@ const TestActionComponent = React.memo(
           );
         } else {
           setErrorMessage(
-            flowVersionUtils.formatErrorMessage(
+            formatErrorMessage(
               stepResponse.output?.toString() ||
                 'Failed to run test step and no error message was returned',
             ),
