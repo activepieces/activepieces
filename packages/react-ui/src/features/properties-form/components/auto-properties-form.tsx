@@ -18,6 +18,7 @@ import {
 
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
 import { SelectPieceProperty } from './select-piece-property';
+import { TextInputWithMentions } from '@/app/builder/text-input-with-mentions/text-input-with-mentions';
 
 type AutoFormProps = {
   props: PiecePropertyMap;
@@ -66,6 +67,8 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
+          propertyKey={key}
+          field={field}
           allowDynamicValues={allowDynamicValues}
         >
           <ArrayInput inputName={inputName}></ArrayInput>
@@ -75,6 +78,8 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
+          propertyKey={key}
+          field={field}
           allowDynamicValues={allowDynamicValues}
         >
           <DictionaryInput
@@ -87,6 +92,8 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
+          propertyKey={key}
+          field={field}
           allowDynamicValues={allowDynamicValues}
         >
           <FormControl>
@@ -104,6 +111,8 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
+          propertyKey={key}
+          field={field}
           allowDynamicValues={allowDynamicValues}
         >
           <SearchableSelect
@@ -118,6 +127,8 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
+          propertyKey={key}
+          field={field}
           allowDynamicValues={allowDynamicValues}
         >
           <JsonEditor
@@ -130,6 +141,8 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
+          propertyKey={key}
+          field={field}
           allowDynamicValues={allowDynamicValues}
         >
           <MultiSelectPieceProperty
@@ -145,14 +158,14 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
+          propertyKey={key}
+          field={field}
           allowDynamicValues={allowDynamicValues}
         >
           <SelectPieceProperty
             refreshers={property.refreshers}
             intialValue={field.value}
-            onChange={(value) => {
-              field.onChange(value);
-            }}
+            onChange={field.onChange}
             propertyName={key}
           ></SelectPieceProperty>
         </AutoFormFieldWrapper>
@@ -168,9 +181,14 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
+          field={field}
+          propertyKey={key}
           allowDynamicValues={allowDynamicValues}
         >
-          <Input {...field} id={key} type="text" />
+          <TextInputWithMentions
+            initialValue={field.value}
+            onChange={field.onChange}
+          ></TextInputWithMentions> 
         </AutoFormFieldWrapper>
       );
 

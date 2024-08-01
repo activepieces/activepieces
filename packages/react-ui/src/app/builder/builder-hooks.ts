@@ -66,6 +66,7 @@ export type BuilderState = {
     operation: FlowOperationRequest,
     onError: () => void,
   ) => void;
+  selectStep: (path: StepPathWithName | null) => void;
   startSaving: () => void;
   setAllowCanvasPanning: (allowCanvasPanning: boolean) => void;
   setReadOnly: (readonly: boolean) => void;

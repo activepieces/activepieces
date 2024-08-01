@@ -38,8 +38,7 @@ const SelectPieceProperty = React.memo((props: SelectPiecePropertyProps) => {
       const { pieceName, pieceVersion, pieceType, packageType } = settings;
       return piecesApi.options({
         pieceName,
-        // TODO remove this hack and make the backend support versions with leading symbol
-        pieceVersion: pieceVersion.slice(1),
+        pieceVersion,
         pieceType,
         packageType,
         propertyName: props.propertyName,
@@ -52,7 +51,6 @@ const SelectPieceProperty = React.memo((props: SelectPiecePropertyProps) => {
     onSuccess: (response) => {
       setLoading(false);
       setDropdownState(response);
-      console.log(response);
     },
     onError: (error) => {
       console.error(error);

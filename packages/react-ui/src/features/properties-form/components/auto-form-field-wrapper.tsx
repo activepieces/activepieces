@@ -5,13 +5,18 @@ import { Toggle } from '@/components/ui/toggle';
 import { PieceProperty } from '@activepieces/pieces-framework';
 
 import { ReadMoreDescription } from './read-more-description';
+import { ControllerRenderProps, useFormContext } from 'react-hook-form';
+import { Action, Trigger } from '@activepieces/shared';
+import { TextInputWithMentions } from '@/app/builder/text-input-with-mentions/text-input-with-mentions';
 
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;
   allowDynamicValues: boolean;
+  propertyKey: string;
   property: PieceProperty;
   hideDescription?: boolean;
   placeBeforeLabelText?: boolean;
+  field: ControllerRenderProps<Record<string, any>, string>
 };
 
 const AutoFormFieldWrapper = ({
@@ -19,22 +24,37 @@ const AutoFormFieldWrapper = ({
   children,
   hideDescription,
   allowDynamicValues,
+  propertyKey,
   property,
+  field,
 }: AutoFormFieldWrapperProps) => {
+
+  const form = useFormContext<Action | Trigger>();
+  const toggled = form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyKey];
+
+  function handleChange(pressed: boolean) {
+    form.setValue(`settings.inputUiInfo.customizedInputs.${propertyKey}` as const, pressed, {
+      shouldValidate: true,
+    });
+  }
+
   return (
     <FormItem className="flex flex-col gap-1">
       <FormLabel className="flex items-center gap-1">
-        {placeBeforeLabelText && children}
+        {placeBeforeLabelText && !toggled && children}
         <span>{property.displayName}</span>
         {property.required && <span className="text-destructive">*</span>}
         <span className="grow"></span>
         {allowDynamicValues && (
-          <Toggle>
+          <Toggle pressed={toggled} onPressedChange={(e) => handleChange(e)}>
             <SquareFunction />
           </Toggle>
         )}
       </FormLabel>
-      {!placeBeforeLabelText && children}
+      {toggled && <>
+        <TextInputWithMentions onChange={field.onChange} initialValue={field.value}></TextInputWithMentions>
+      </>}
+      {!placeBeforeLabelText && !toggled && children}
       {property.description && !hideDescription && (
         <ReadMoreDescription text={property.description} />
       )}

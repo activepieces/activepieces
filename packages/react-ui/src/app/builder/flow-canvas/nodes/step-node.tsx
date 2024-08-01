@@ -47,7 +47,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     );
   });
 
-  const { data: stepMetadata } = piecesHooks.useStepMetadata({
+  const { stepMetadata } = piecesHooks.useStepMetadata({
     step: data.step!,
   });
 
