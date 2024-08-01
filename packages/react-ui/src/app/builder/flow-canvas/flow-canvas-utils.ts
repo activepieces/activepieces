@@ -66,7 +66,15 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
         firstLoopGraph,
       ];
 
-      return buildChildrenGraph(childrenGraphs, [StepLocationRelativeToParent.INSIDE_LOOP, StepLocationRelativeToParent.AFTER], nextAction, graph);
+      return buildChildrenGraph(
+        childrenGraphs,
+        [
+          StepLocationRelativeToParent.INSIDE_LOOP,
+          StepLocationRelativeToParent.AFTER,
+        ],
+        nextAction,
+        graph,
+      );
     }
     case ActionType.BRANCH: {
       const { nextAction, onSuccessAction, onFailureAction } = step;
@@ -75,7 +83,15 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
         return isNil(g) ? buildGraph(ApNodeType.BIG_BUTTON) : traverseFlow(g);
       });
 
-      return buildChildrenGraph(childrenGraphs, [StepLocationRelativeToParent.INSIDE_TRUE_BRANCH, StepLocationRelativeToParent.INSIDE_FALSE_BRANCH], nextAction, graph);
+      return buildChildrenGraph(
+        childrenGraphs,
+        [
+          StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
+          StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
+        ],
+        nextAction,
+        graph,
+      );
     }
     default: {
       const { nextAction } = step;
@@ -86,7 +102,13 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
         x: 0,
         y: VERTICAL_OFFSET,
       });
-      graph.edges.push(addEdge(graph.nodes[0], childGraph.nodes[0], StepLocationRelativeToParent.AFTER));
+      graph.edges.push(
+        addEdge(
+          graph.nodes[0],
+          childGraph.nodes[0],
+          StepLocationRelativeToParent.AFTER,
+        ),
+      );
       return mergeGraph(graph, childGraph);
     }
   }
@@ -127,12 +149,14 @@ function buildChildrenGraph(
       boundingBox(childrenGraphs[0]).widthLeft -
       boundingBox(childrenGraphs[childrenGraphs.length - 1]).widthRight
     ) /
-    2 -
+      2 -
     boundingBox(childrenGraphs[0]).widthLeft;
 
   for (let idx = 0; idx < childrenGraphs.length; ++idx) {
     const cbx = boundingBox(childrenGraphs[idx]);
-    graph.edges.push(addEdge(graph.nodes[0], childrenGraphs[idx].nodes[0], locations[idx]));
+    graph.edges.push(
+      addEdge(graph.nodes[0], childrenGraphs[idx].nodes[0], locations[idx]),
+    );
     const childGraph = offsetGraph(childrenGraphs[idx], {
       x: deltaLeftX + cbx.widthLeft,
       y: VERTICAL_OFFSET,
@@ -151,7 +175,11 @@ function buildChildrenGraph(
   return graph;
 }
 
-function addEdge(nodeOne: ApNode, nodeTwo: ApNode, stepLocationRelativeToParent: StepLocationRelativeToParent): ApEdge {
+function addEdge(
+  nodeOne: ApNode,
+  nodeTwo: ApNode,
+  stepLocationRelativeToParent: StepLocationRelativeToParent,
+): ApEdge {
   return {
     id: `${nodeOne.id}-${nodeTwo.id}`,
     source: nodeOne.id,
@@ -261,7 +289,7 @@ export type ApEdge = {
     addButton: boolean;
     targetType: ApNodeType;
     stepLocationRelativeToParent: StepLocationRelativeToParent;
-    parentStep?: string
+    parentStep?: string;
   };
 };
 

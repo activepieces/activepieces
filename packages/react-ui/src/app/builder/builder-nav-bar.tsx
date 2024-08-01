@@ -1,8 +1,5 @@
-import { FlowVersionState } from '@activepieces/shared';
 import { ChevronDown, History, Home, Logs } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-
-import { BuilderPublishButton } from './builder-publish-button';
 
 import {
   LeftSideBarType,
@@ -16,6 +13,9 @@ import {
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import FlowActionMenu from '@/features/flows/components/flow-actions-menu';
+import { FlowVersionState } from '@activepieces/shared';
+
+import { BuilderPublishButton } from './builder-publish-button';
 
 export const BuilderNavBar = () => {
   const navigate = useNavigate();

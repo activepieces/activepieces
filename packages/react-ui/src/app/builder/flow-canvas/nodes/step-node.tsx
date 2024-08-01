@@ -1,11 +1,8 @@
-import { FlowOperationType, flowHelper } from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
 import { CopyPlus, Replace, Trash } from 'lucide-react';
 import React, { useState } from 'react';
-
-import { ApNode } from '../flow-canvas-utils';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
@@ -13,6 +10,9 @@ import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
+import { FlowOperationType, flowHelper } from '@activepieces/shared';
+
+import { ApNode } from '../flow-canvas-utils';
 
 const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { toast } = useToast();
@@ -67,7 +67,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   return (
     <div
-      className={cn('h-[70px] w-[260px]', {
+      className={cn('h-[70px] w-[260px] transition-all', {
         'border-primary': toolbarOpen || isSelected,
         'rounded bg-background border border-solid box-border': !isDragging,
       })}
@@ -90,7 +90,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
           <>
             <div
               className={cn(
-                'absolute left-0 right-0 top-0 mx-auto h-[3px] bg-primary opacity-0 rounded-tl-md rounded-tr-md',
+                'absolute left-0 right-0 top-0 mx-auto h-[3px] transition-all bg-primary opacity-0 rounded-tl-md rounded-tr-md',
                 {
                   'opacity-100': toolbarOpen || isSelected,
                   'opacity-0': !toolbarOpen && !isSelected,

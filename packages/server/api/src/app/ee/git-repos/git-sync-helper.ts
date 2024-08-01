@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { ProjectSyncError } from '@activepieces/ee-shared'
-import { Flow, FlowOperationType, PopulatedFlow } from '@activepieces/shared'
+import { Flow, flowHelper, FlowOperationType, PopulatedFlow } from '@activepieces/shared'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
@@ -63,23 +63,26 @@ async function createFlowInProject(flow: PopulatedFlow, projectId: string): Prom
             projectId,
         },
     })
-    return updateFlowInProject(createdFlow.id, flow, projectId)
+    return updateFlowInProject(createdFlow, flow, projectId)
 }
 
-async function updateFlowInProject(targetFlowId: string, flow: PopulatedFlow,
+async function updateFlowInProject(originalFlow: PopulatedFlow, newFlow: PopulatedFlow,
     projectId: string,
 ): Promise<PopulatedFlow> {
     const project = await projectService.getOneOrThrow(projectId)
+
+    const newFlowVersion = await flowHelper.updateFlowSecrets(originalFlow, newFlow) 
+
     return flowService.update({
-        id: targetFlowId,
+        id: originalFlow.id,
         projectId,
         lock: true,
         userId: project.ownerId,
         operation: {
             type: FlowOperationType.IMPORT_FLOW,
             request: {
-                displayName: flow.version.displayName,
-                trigger: flow.version.trigger,
+                displayName: newFlow.version.displayName,
+                trigger: newFlowVersion.trigger,
             },
         },
     })

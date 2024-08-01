@@ -1,12 +1,14 @@
-import { flowHelper } from '@activepieces/shared';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-import { useRipple } from '../../../components/theme-provider';
+import { flowHelper } from '@activepieces/shared';
+
+import { useApRipple } from '../../../components/theme-provider';
 import { Button } from '../../../components/ui/button';
 import { PieceIcon } from '../../../features/pieces/components/piece-icon';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
-import { MentionTreeNode } from '../../../lib/data-selector-utils';
 import { useBuilderStateContext } from '../builder-hooks';
+
+import { MentionTreeNode } from './data-selector-utils';
 
 const ToggleIcon = ({ expanded }: { expanded: boolean }) => {
   const toggleIconSize = 15;
@@ -16,11 +18,12 @@ const ToggleIcon = ({ expanded }: { expanded: boolean }) => {
     <ChevronDown height={toggleIconSize} width={toggleIconSize}></ChevronDown>
   );
 };
-type NodeTemplateProps = {
-  node: MentionTreeNode;
+
+type DataSelectorNodeContentProps = {
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
   depth: number;
+  node: MentionTreeNode;
 };
 const handleKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
   if (event.key === 'Enter' || event.key === ' ') {
@@ -36,16 +39,18 @@ const DataSelectorNodeContent = ({
   expanded,
   setExpanded,
   depth,
-}: NodeTemplateProps) => {
-  const ripple = useRipple();
+}: DataSelectorNodeContentProps) => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
   const insertMention = useBuilderStateContext((state) => state.insertMention);
+
+  const [ripple, rippleEvent] = useApRipple();
   const step = !node.data.isSlice
     ? flowHelper.getStep(flowVersion, node.data.propertyPath)
     : undefined;
   const stepMetadata = step
     ? piecesHooks.useStepMetadata({ step }).data
     : undefined;
+
   const showInsertButton =
     !node.data.isSlice &&
     !(
@@ -59,7 +64,9 @@ const DataSelectorNodeContent = ({
     <div
       tabIndex={0}
       onKeyDown={handleKeyPress}
-      onClick={() => {
+      ref={ripple}
+      onClick={(e) => {
+        rippleEvent(e);
         if (node.children && node.children.length > 0) {
           setExpanded(!expanded);
         } else if (insertMention) {
@@ -120,7 +127,6 @@ const DataSelectorNodeContent = ({
           )}
         </div>
       </div>
-      {ripple}
     </div>
   );
 };

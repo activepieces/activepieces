@@ -9,6 +9,7 @@ import {
     LoopOnItemsAction,
     SingleActionSchema,
 } from './actions/action'
+import { PopulatedFlow } from './flow'
 import {
     AddActionRequest,
     DeleteActionRequest,
@@ -24,10 +25,6 @@ import { DEFAULT_SAMPLE_DATA_SETTINGS } from './sample-data'
 import { Trigger, TriggerType } from './triggers/trigger'
 
 type Step = Action | Trigger
-
-type GetAllSubFlowSteps = {
-    subFlowStartStep: Step
-}
 
 type GetStepFromSubFlow = {
     subFlowStartStep: Step
@@ -125,6 +122,17 @@ function traverseInternal(
         step = step.nextAction
     }
     return steps
+}
+
+async function updateFlowSecrets(originalFlow: PopulatedFlow, newFlow: PopulatedFlow): Promise<FlowVersion> {
+    return transferFlow(newFlow.version, (step) => {
+        const oldStep = getStep(originalFlow.version, step.name)
+        if (oldStep?.settings?.input?.auth) {
+            step.settings.input.auth = oldStep.settings.input.auth
+        }
+        return step
+    },
+    )
 }
 
 async function transferStepAsync<T extends Step>(
@@ -303,7 +311,7 @@ const getStepFromSubFlow = ({
     subFlowStartStep,
     stepName,
 }: GetStepFromSubFlow): Step | undefined => {
-    const subFlowSteps = getAllSteps(subFlowStartStep,)
+    const subFlowSteps = getAllSteps(subFlowStartStep)
 
     return subFlowSteps.find((step) => step.name === stepName)
 }
@@ -668,9 +676,9 @@ export function getImportOperations(
             case ActionType.PIECE:
             case TriggerType.PIECE:
             case TriggerType.EMPTY:
-            {
-                break
-            }
+                {
+                    break
+                }
         }
 
 
@@ -706,6 +714,9 @@ function normalize(flowVersion: FlowVersion): FlowVersion {
         (step) => {
             const clonedStep: Step = JSON.parse(JSON.stringify(step))
             clonedStep.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
+            if (clonedStep?.settings?.input?.auth && [ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
+                clonedStep.settings.input.auth = ''
+            }
             return upgradePiece(clonedStep, clonedStep.name)
         },
     )
@@ -929,90 +940,23 @@ function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAct
     return step.type === ActionType.BRANCH || step.type === ActionType.LOOP_ON_ITEMS
 }
 
-const findPathToTargettedStep: (req: {
-    target: Step
-    source: Step | undefined
-}) => Step[] | undefined = ({ target, source }) => {
-    if (source === undefined) {
-        return undefined
-    }
-    if (target.name === source.name) {
-        return []
-    }
-    const pathFromNextAction = findPathToTargettedStep({
-        target,
-        source: source.nextAction,
-    })
-    if (pathFromNextAction) {
-        switch (source.type) {
-            case ActionType.CODE:
-            case ActionType.PIECE:
-            case TriggerType.EMPTY:
-            case TriggerType.PIECE:
-                return [source, ...pathFromNextAction]
-            case ActionType.LOOP_ON_ITEMS:
-            case ActionType.BRANCH:
-                return [...pathFromNextAction]
-        }
-    }
-    if (source.type === ActionType.BRANCH) {
-        const pathFromTrueBranch =  findPathToTargettedStep({
-            target,
-            source: source.onSuccessAction,
-        })
-        if (pathFromTrueBranch) {
-            return [...pathFromTrueBranch]
-        }
-        const pathFromFalseBranch = findPathToTargettedStep({
-            target,
-            source: source.onFailureAction,
-        })
-        if (pathFromFalseBranch) {
-            return [...pathFromFalseBranch]
-        }
-    }
-    if (source.type === ActionType.LOOP_ON_ITEMS) {
-        const pathFromLoop = findPathToTargettedStep({
-            target,
-            source: source.firstLoopAction,
-        })
-        if (pathFromLoop) {
-            return [source, ...pathFromLoop]
-        }
-    }
-     
-    return undefined
-}
-
-function  findStepDfsIndex(trigger: Trigger, stepName: string): number {
-    return getAllSteps(trigger).findIndex((f) => stepName === f.name) + 1
-}
-
 type StepWithIndex = Step & { dfsIndex: number }
-function findPathToStep({ stepToFind, trigger }: {
-    stepToFind: Step
+
+function findPathToStep({ targetStepName, trigger }: {
+    targetStepName: string
     trigger: Trigger
 }): StepWithIndex[] {
-    if (stepToFind.name === trigger.name) {
-        return []
-    }
-    const path = findPathToTargettedStep({
-        source: trigger.nextAction,
-        target: stepToFind,
-    })
-    if (!path) {
-        throw new Error('Step not found while traversing to find it ')
-    }
-    const pathWithIndex = path.map((f) => {
-        return {
-            ...f,
-            dfsIndex: findStepDfsIndex(trigger, f.name),
-        }
-    })
-    return [{ ...trigger, dfsIndex: 1 }, ...pathWithIndex]
+    const steps = getAllSteps(trigger).map((step, dfsIndex) => ({
+        ...step,
+        dfsIndex,
+    }));
+    return steps.filter((step) => {
+        const steps = getAllSteps(step)
+        return steps.some((s) => s.name === targetStepName)
+    }).filter((step) => step.name !== targetStepName)
 }
-  
-  
+
+
 export const flowHelper = {
     isValid,
     apply(
@@ -1086,5 +1030,5 @@ export const flowHelper = {
     findAvailableStepName,
     doesActionHaveChildren,
     findPathToStep,
-    findStepDfsIndex,
+    updateFlowSecrets,
 }

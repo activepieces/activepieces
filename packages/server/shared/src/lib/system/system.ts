@@ -56,6 +56,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
     [AppSystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
     [AppSystemProp.AZURE_OPENAI_API_VERSION]: '2023-06-01-preview',
+    [AppSystemProp.TRIGGER_FAILURES_THRESHOLD]: '576',
     [SharedSystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
     [SharedSystemProp.ENVIRONMENT]: 'prod',
     [SharedSystemProp.EXECUTION_MODE]: 'UNSANDBOXED',

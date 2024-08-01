@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
-import { piecesHooks } from '../lib/pieces-hook';
+import { piecesHooks, StepMetadata } from '../lib/pieces-hook';
 
 import { PieceIcon } from './piece-icon';
 
@@ -16,30 +16,30 @@ export function PieceIconList({
   trigger: Trigger;
   maxNumberOfIconsToShow: number;
 }) {
-  const steps = flowHelper.getAllSteps(trigger).map((step) => ({ step }));
-  const stepsMetadata = piecesHooks
+  const steps = flowHelper.getAllSteps(trigger);
+  const stepsMetadata: StepMetadata[] = piecesHooks
     .useStepsMetadata(steps)
     .map((data) => data.data)
-    .filter((data) => !!data);
+    .filter((data) => !!data) as StepMetadata[];
 
-  const uniqueMetadata = [
-    ...new Map(stepsMetadata.map((item) => [item['pieceName'], item])).values(),
-  ];
-
+  const uniqueMetadata: StepMetadata[] = stepsMetadata.filter(
+    (item, index, self) => self.indexOf(item) === index,
+  );
   const visibleMetadata = uniqueMetadata.slice(0, maxNumberOfIconsToShow);
   const extraPieces = uniqueMetadata.length - visibleMetadata.length;
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="flex gap-2">
           {visibleMetadata.map((metadata, index) => (
             <PieceIcon
-              logoUrl={metadata?.logoUrl || ''}
+              logoUrl={metadata.logoUrl}
               showTooltip={false}
               circle={true}
               size={'md'}
               border={true}
-              displayName={metadata?.displayName || ''}
+              displayName={metadata.displayName}
               key={index}
             />
           ))}

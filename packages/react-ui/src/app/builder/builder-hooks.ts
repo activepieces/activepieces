@@ -1,3 +1,8 @@
+import { createContext, useContext } from 'react';
+import { create, useStore } from 'zustand';
+
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PromiseQueue } from '@/lib/promise-queue';
 import {
   ActionType,
   ExecutionState,
@@ -8,16 +13,6 @@ import {
   StepOutput,
   flowHelper,
 } from '@activepieces/shared';
-import { createContext, useCallback, useContext, useEffect } from 'react';
-import { create, useStore } from 'zustand';
-
-import {
-  MentionTreeNode,
-  dataSelectorUtils,
-} from '../../lib/data-selector-utils';
-
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { PromiseQueue } from '@/lib/promise-queue';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -192,27 +187,21 @@ export const stepPathToKeyString = (path: StepPathWithName): string => {
   return path.path.map((p) => p.join('-')).join('/') + '/' + path.stepName;
 };
 
-export function getStepOutputFromExecutionPath({
+function getStepOutputFromExecutionPath({
   path,
   executionState,
 }: {
   path: StepPathWithName;
   executionState: ExecutionState;
 }): StepOutput | undefined {
-  const stateAtPath = getStateAtPath({
-    currentPath: path,
-    steps: executionState.steps,
-  });
+  const stateAtPath = getStateAtPath(path, executionState.steps);
   return stateAtPath[path.stepName];
 }
 
-function getStateAtPath({
-  currentPath,
-  steps,
-}: {
-  currentPath: StepPathWithName;
-  steps: Record<string, StepOutput>;
-}): Record<string, StepOutput> {
+function getStateAtPath(
+  currentPath: StepPathWithName,
+  steps: Record<string, StepOutput>,
+): Record<string, StepOutput> {
   let targetMap = steps;
   currentPath.path.forEach(([stepName, iteration]) => {
     const stepOutput = targetMap[stepName];
@@ -226,100 +215,6 @@ function getStateAtPath({
   return targetMap;
 }
 
-const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
-  state,
-) => {
-  const { selectedStep, flowVersion } = state;
-  if (!selectedStep || !flowVersion || !flowVersion.trigger) {
-    return [];
-  }
-  const step = flowHelper.getStep(flowVersion, selectedStep.stepName);
-  if (!step) {
-    return [];
-  }
-  const path = flowHelper.findPathToStep({
-    stepToFind: step,
-    trigger: flowVersion?.trigger,
-  });
-
-  return path.map((s) => {
-    const stepMentionNode: MentionTreeNode =
-      dataSelectorUtils.traverseStepOutputAndReturnMentionTree({
-        stepOutput: s.settings.inputUiInfo?.currentSelectedData,
-        propertyPath: s.name,
-        displayName: s.displayName,
-      });
-    const stepNeedsTesting =
-      s.settings.inputUiInfo?.currentSelectedData === undefined;
-    return {
-      ...stepMentionNode,
-      data: {
-        ...stepMentionNode.data,
-        displayName: `${s.dfsIndex}. ${s.displayName}`,
-      },
-      children: stepNeedsTesting
-        ? [
-            {
-              data: {
-                displayName: '',
-                propertyPath: s.name,
-                isTestStepNode: true,
-                isSlice: false,
-              },
-              key: s.name,
-            },
-          ]
-        : stepMentionNode.children,
-    };
-  });
-};
-
-const getStep = (stepName: string) => {
-  return (state: BuilderState) => {
-    const { flowVersion } = state;
-    if (!flowVersion) {
-      return undefined;
-    }
-    return flowHelper.getStep(flowVersion, stepName);
-  };
-};
-
-export const useDataSelectorVisibility = ({
-  containerRef,
-  setShowDataSelector,
-}: {
-  containerRef: React.RefObject<HTMLDivElement>;
-  setShowDataSelector: (showDataSelector: boolean) => void;
-}) => {
-  const checkFocus = useCallback(() => {
-    if (
-      (containerRef.current &&
-        containerRef.current.contains(document.activeElement)) ||
-      document.activeElement?.classList.contains(
-        dataSelectorUtils.textWithMentionsClass,
-      )
-    ) {
-      setShowDataSelector(true);
-    } else {
-      setShowDataSelector(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Add event listeners for focus changes
-    document.addEventListener('focusin', checkFocus);
-    document.addEventListener('focusout', checkFocus);
-
-    // Cleanup function
-    return () => {
-      document.removeEventListener('focusin', checkFocus);
-      document.removeEventListener('focusout', checkFocus);
-    };
-  }, [checkFocus]);
-};
-
 export const builderSelectors = {
-  getAllStepsMentions,
   getStepOutputFromExecutionPath,
-  getStep,
 };

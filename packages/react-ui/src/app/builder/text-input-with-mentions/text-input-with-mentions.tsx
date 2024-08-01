@@ -1,10 +1,3 @@
-import {
-  Action,
-  ActionType,
-  flowHelper,
-  Trigger,
-  TriggerType,
-} from '@activepieces/shared';
 import Document from '@tiptap/extension-document';
 import HardBreak from '@tiptap/extension-hard-break';
 import History from '@tiptap/extension-history';
@@ -14,16 +7,20 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 
-import {
-  piecesHooks,
-  StepMetadata,
-} from '../../../features/pieces/lib/pieces-hook';
+import { flowHelper } from '@activepieces/shared';
+
 import './tip-tap.css';
-import { dataSelectorUtils } from '../../../lib/data-selector-utils';
+import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { textMentionUtils } from '@/lib/text-input-utils';
+import { textMentionUtils } from './text-input-utils';
 
+type TextInputWithMentionsProps = {
+  className?: string;
+  initialValue?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+};
 const extensions = (placeholder?: string) => {
   return [
     Document,
@@ -50,114 +47,55 @@ const extensions = (placeholder?: string) => {
   ];
 };
 
-const linkMetadataWithStepsThatUseThem = (
-  metadata: StepMetadata,
-  steps: (Action | Trigger)[],
-) => {
-  const stepNamesThatUseThisMetadata = steps
-    .filter((step) => {
-      if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {
-        return (
-          step.settings.pieceName === metadata.pieceName &&
-          step.settings.pieceVersion === metadata.pieceVersion
-        );
-      }
-      return (
-        (step.type === ActionType.CODE ||
-          step.type === ActionType.BRANCH ||
-          step.type === TriggerType.EMPTY ||
-          step.type === ActionType.LOOP_ON_ITEMS) &&
-        step.type === metadata.type
-      );
-    })
-    .map((step) => step.name);
-  return { ...metadata, stepNamesThatUseThisMetadata };
-};
-const defaultClassName =
-  dataSelectorUtils.textWithMentionsClass +
-  ' w-full  rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50';
-type TextInputWithMentionsProps = {
-  className?: string;
-  originalValue?: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  extraClasses?: string;
-};
 export const TextInputWithMentions = ({
   className,
-  originalValue,
+  initialValue,
   onChange,
   placeholder,
-  extraClasses,
 }: TextInputWithMentionsProps) => {
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
   const steps = flowHelper.getAllSteps(flowVersion.trigger);
-  const piecesMetadata = piecesHooks
-    .useStepsMetadata(steps.map((step) => ({ step })))
-    .filter((res) => res.data !== undefined)
-    .map((res) => res.data)
-    .map((res) => {
-      return linkMetadataWithStepsThatUseThem(res, steps);
-    });
+  const stepsMetadata = piecesHooks
+    .useStepsMetadata(steps)
+    .map((res) => res.data);
 
   const setInsertMentionHandler = useBuilderStateContext(
     (state) => state.setInsertMentionHandler,
   );
 
-  const stepMetadataFinder = (path: string) => {
-    const itemPathWithoutInterpolationDenotation = path.slice(
-      2,
-      path.length - 2,
-    );
-    const stepName = textMentionUtils.keysWithinPath(
-      itemPathWithoutInterpolationDenotation,
-    )[0];
-    const step = flowHelper.getStep(flowVersion, stepName);
-    if (step) {
-      const dfsIndex = flowHelper.findStepDfsIndex(
-        flowVersion.trigger,
-        step.name,
-      );
-      const data = piecesMetadata.find((res) =>
-        res.stepNamesThatUseThisMetadata.includes(stepName),
-      );
-      if (data) {
-        return {
-          ...data,
-          dfsIndex,
-        };
-      }
-    }
-    return undefined;
-  };
-
   const insertMention = (propertyPath: string) => {
-    const jsonContent = textMentionUtils.convertTextToTipTapJsonContent({
-      propertyPath: `{{${propertyPath}}}`,
-      stepMetadataFinder,
-    });
+    const jsonContent = textMentionUtils.convertTextToTipTapJsonContent(
+      `{{${propertyPath}}}`,
+      steps,
+      stepsMetadata,
+    );
     editor?.chain().focus().insertContent(jsonContent.content).run();
   };
-  const content = [
-    textMentionUtils.convertTextToTipTapJsonContent({
-      propertyPath: originalValue ?? '',
-      stepMetadataFinder,
-    }),
+
+  const parentContent = [
+    textMentionUtils.convertTextToTipTapJsonContent(
+      initialValue ?? '',
+      steps,
+      stepsMetadata,
+    ),
   ];
   const editor = useEditor({
     extensions: extensions(placeholder),
     content: {
       type: 'doc',
-      content,
+      content: parentContent,
     },
     editorProps: {
       attributes: {
-        class: className ?? defaultClassName + ' ' + extraClasses,
+        class:
+          className ??
+          ' w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
       },
     },
     onUpdate: ({ editor }) => {
-      const content = editor.getJSON();
-      const textResult = textMentionUtils.convertTiptapJsonToText(content);
+      const editorContent = editor.getJSON();
+      const textResult =
+        textMentionUtils.convertTiptapJsonToText(editorContent);
       if (onChange) {
         onChange(textResult);
       }

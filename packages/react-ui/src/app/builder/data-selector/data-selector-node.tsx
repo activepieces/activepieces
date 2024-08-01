@@ -5,9 +5,9 @@ import {
   Collapsible,
   CollapsibleTrigger,
 } from '../../../components/ui/collapsible';
-import { MentionTreeNode } from '../../../lib/data-selector-utils';
 
 import { DataSelectorNodeContent } from './data-selector-node-content';
+import { MentionTreeNode } from './data-selector-utils';
 import { TestStepSection } from './test-step-section';
 
 type DataSelectoNodeProps = {
@@ -22,6 +22,7 @@ const DataSelectorNode = ({
   searchTerm,
 }: DataSelectoNodeProps) => {
   const [expanded, setExpanded] = useState(false);
+
   useEffect(() => {
     if (searchTerm && depth <= 1) {
       setExpanded(true);
@@ -29,6 +30,7 @@ const DataSelectorNode = ({
       setExpanded(false);
     }
   }, [searchTerm, depth]);
+
   if (node.data.isTestStepNode) {
     return (
       <TestStepSection stepName={node.data.propertyPath}></TestStepSection>
@@ -37,7 +39,7 @@ const DataSelectorNode = ({
   return (
     <Collapsible className="w-full" open={expanded} onOpenChange={setExpanded}>
       <>
-        <CollapsibleTrigger asChild={true} className="w-full">
+        <CollapsibleTrigger asChild={true} className="w-full relative">
           <DataSelectorNodeContent
             node={node}
             expanded={expanded}
@@ -47,7 +49,7 @@ const DataSelectorNode = ({
         </CollapsibleTrigger>
         <CollapsibleContent className="w-full">
           {node.children && node.children.length > 0 && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col ">
               {node.children.map((node) => (
                 <DataSelectorNode
                   depth={depth + 1}

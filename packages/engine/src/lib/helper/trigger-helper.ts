@@ -66,6 +66,7 @@ export const triggerHelper = {
                 scheduleOptions = {
                     cronExpression: request.cronExpression,
                     timezone: request.timezone ?? 'UTC',
+                    failureCount: request.failureCount ?? 0,
                 }
             },
             webhookUrl: params.webhookUrl,

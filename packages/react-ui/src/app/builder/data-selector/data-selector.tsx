@@ -1,25 +1,71 @@
-import { useRef, useState } from 'react';
+import { SearchXIcon } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { Action, flowHelper, isNil, Trigger } from '@activepieces/shared';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
-import {
-  builderSelectors,
-  useBuilderStateContext,
-  useDataSelectorVisibility,
-} from '../builder-hooks';
+import { BuilderState, useBuilderStateContext } from '../builder-hooks';
 
-import './data-selector.css';
 import { DataSelectorNode } from './data-selector-node';
 import {
   DataSelectorSizeState,
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
+import { dataSelectorUtils, MentionTreeNode } from './data-selector-utils';
 
-import { cn } from '@/lib/utils';
+const createTestNode = (
+  step: Action | Trigger,
+  displayName: string,
+): MentionTreeNode => {
+  return {
+    key: step.name,
+    data: {
+      displayName,
+      propertyPath: step.name,
+    },
+    children: [
+      {
+        data: {
+          displayName: displayName,
+          propertyPath: step.name,
+          isTestStepNode: true,
+        },
+        key: `test_${step.name}`,
+      },
+    ],
+  };
+};
 
-import { MentionTreeNode } from '../../../lib/data-selector-utils';
-import { Input } from '../../../components/ui/input';
+function useDataSelectorVisibility(
+  containerRef: React.RefObject<HTMLDivElement>,
+  setShowDataSelector: (showDataSelector: boolean) => void,
+) {
+  const checkFocus = useCallback(() => {
+    if (
+      (containerRef.current &&
+        containerRef.current.contains(document.activeElement)) ||
+      document.activeElement?.classList.contains('ap-text-with-mentions')
+    ) {
+      setShowDataSelector(true);
+    } else {
+      setShowDataSelector(false);
+    }
+  }, []);
 
-import { SearchXIcon } from 'lucide-react';
+  useEffect(() => {
+    // Add event listeners for focus changes
+    document.addEventListener('focusin', checkFocus);
+    document.addEventListener('focusout', checkFocus);
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener('focusin', checkFocus);
+      document.removeEventListener('focusout', checkFocus);
+    };
+  }, [checkFocus]);
+}
 
 function filterBy(arr: MentionTreeNode[], query: string): MentionTreeNode[] {
   return query
@@ -39,24 +85,49 @@ function filterBy(arr: MentionTreeNode[], query: string): MentionTreeNode[] {
     : arr;
 }
 
-export const DataSelector = ({
-  parentHeight,
-  parentWidth,
-}: {
-  parentWidth: number;
+const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
+  state,
+) => {
+  const { selectedStep, flowVersion } = state;
+  if (!selectedStep || !flowVersion || !flowVersion.trigger) {
+    return [];
+  }
+  const pathToTargetStep = flowHelper.findPathToStep({
+    targetStepName: selectedStep.stepName,
+    trigger: flowVersion.trigger,
+  });
+
+  return pathToTargetStep.map((step) => {
+    const stepNeedsTesting = isNil(
+      step.settings.inputUiInfo?.currentSelectedData,
+    );
+    const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
+    if (stepNeedsTesting) {
+      return createTestNode(step, displayName);
+    }
+    return dataSelectorUtils.traverseStepOutputAndReturnMentionTree({
+      stepOutput: step.settings.inputUiInfo?.currentSelectedData,
+      propertyPath: step.name,
+      displayName: displayName,
+    });
+  });
+};
+
+type DataSelectorProps = {
   parentHeight: number;
-}) => {
+  parentWidth: number;
+};
+
+const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [DataSelectorSize, setDataSelectorSize] =
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
   const [searchTerm, setSearchTerm] = useState('');
-  const mentions = useBuilderStateContext(builderSelectors.getAllStepsMentions);
-  const nodes = filterBy(mentions, searchTerm);
+  const mentions = useBuilderStateContext(getAllStepsMentions);
+  const filteredMentions = filterBy(mentions, searchTerm);
   const [showDataSelector, setShowDataSelector] = useState(false);
-  useDataSelectorVisibility({
-    containerRef,
-    setShowDataSelector,
-  });
+  useDataSelectorVisibility(containerRef, setShowDataSelector);
+
   return (
     <div
       ref={containerRef}
@@ -101,8 +172,8 @@ export const DataSelector = ({
         </div>
 
         <ScrollArea className="transition-all h-[calc(100%-56px)] w-full ">
-          {nodes &&
-            nodes.map((node) => (
+          {filteredMentions &&
+            filteredMentions.map((node) => (
               <DataSelectorNode
                 depth={0}
                 key={node.key}
@@ -110,7 +181,7 @@ export const DataSelector = ({
                 searchTerm={searchTerm}
               ></DataSelectorNode>
             ))}
-          {nodes.length === 0 && (
+          {filteredMentions.length === 0 && (
             <div className="flex items-center justify-center gap-2 mt-5  flex-col">
               <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
               <div className="text-center font-semibold text-md">
@@ -124,4 +195,6 @@ export const DataSelector = ({
     </div>
   );
 };
+
 DataSelector.displayName = 'DataSelector';
+export { DataSelector };

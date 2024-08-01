@@ -1181,6 +1181,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "alexandrudanpop",
+      "name": "Alexandru-Dan Pop",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15979292?v=4",
+      "profile": "https://alexandrudanpop.dev/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Trayshmhirk",
+      "name": "Frank Micheal ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/112286458?v=4",
+      "profile": "https://github.com/Trayshmhirk",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
