@@ -1,11 +1,8 @@
-import { Folder } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-
-import { foldersApi } from '../lib/folders-api';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +16,9 @@ import {
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { Folder } from '@activepieces/shared';
+
+import { foldersApi } from '../lib/folders-api';
 
 const RenameFolderSchema = Type.Object({
   displayName: Type.String({
