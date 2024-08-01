@@ -39,18 +39,25 @@ const PieceIcon = React.memo(
       version: undefined,
     });
 
+    const defaultImageUrl =
+      'https://cdn.activepieces.com/pieces/empty-trigger.svg';
+
+    let imageUrl = defaultImageUrl;
+    let displayName = 'Empty Trigger';
+
+    if (isSuccess && data) {
+      imageUrl = data.logoUrl ?? defaultImageUrl;
+      displayName = data.displayName ?? displayName;
+    }
+
     return (
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={pieceIconVariants({ border, size, circle })}>
-            {isSuccess && data ? (
-              <img src={data?.logoUrl} className="object-contain" />
-            ) : null}
+            <img src={imageUrl} alt={displayName} className="object-contain" />
           </div>
         </TooltipTrigger>
-        <TooltipContent side="bottom">
-          {isSuccess && data ? data?.displayName : null}
-        </TooltipContent>
+        <TooltipContent side="bottom">{displayName}</TooltipContent>
       </Tooltip>
     );
   },

@@ -25,20 +25,26 @@ export function PieceIconList({ flow }: { flow: PopulatedFlow }) {
 
   return (
     <div className="flex gap-2">
-      {visibleSteps.map((pieceName, index) => (
-        <PieceIcon
-          circle={true}
-          size={'md'}
-          border={true}
-          pieceName={pieceName}
-          key={index}
-        />
-      ))}
-      {extraStepsCount > 0 && (
-        <ExtraPiecesCircle
-          extraStepsCount={extraStepsCount}
-          pieces={extraSteps}
-        />
+      {steps.length === 0 ? (
+        <PieceIcon circle={true} size={'md'} border={true} pieceName={''} />
+      ) : (
+        <>
+          {visibleSteps.map((pieceName, index) => (
+            <PieceIcon
+              circle={true}
+              size={'md'}
+              border={true}
+              pieceName={pieceName}
+              key={index}
+            />
+          ))}
+          {extraStepsCount > 0 && (
+            <ExtraPiecesCircle
+              extraStepsCount={extraStepsCount}
+              pieces={extraSteps}
+            />
+          )}
+        </>
       )}
     </div>
   );
