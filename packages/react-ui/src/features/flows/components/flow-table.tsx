@@ -185,12 +185,7 @@ const FlowsTable = () => {
 
   return (
     <div className="flex flex-row gap-4 w-full">
-      <FolderFilterList
-        refresh={refresh}
-        selectedFolderId={selectedFolderId}
-        setSelectedFolderId={setSelectedFolderId}
-      />
-      <div className="flex-col w-full">
+      <div className="flex flex-col w-full">
         <div className="mb-4 flex">
           <h1 className="text-3xl font-bold">Flows</h1>
           <div className="ml-auto flex flex-row gap-2">
@@ -209,13 +204,22 @@ const FlowsTable = () => {
             </Button>
           </div>
         </div>
-        <DataTable
-          columns={columns}
-          fetchData={fetchData}
-          filters={filters}
-          refresh={refresh}
-          onRowClick={(row) => navigate(`/flows/${row.id}`)}
-        />
+        <div className="flex flex-row gap-4">
+          <FolderFilterList
+            refresh={refresh}
+            selectedFolderId={selectedFolderId}
+            setSelectedFolderId={setSelectedFolderId}
+          />
+          <div className="w-full">
+            <DataTable
+              columns={columns}
+              fetchData={fetchData}
+              filters={filters}
+              refresh={refresh}
+              onRowClick={(row) => navigate(`/flows/${row.id}`)}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

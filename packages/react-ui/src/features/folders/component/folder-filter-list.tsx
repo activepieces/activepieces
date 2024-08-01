@@ -5,6 +5,7 @@ import { HttpStatusCode } from 'axios';
 import {
   EllipsisVertical,
   Folder,
+  FolderOpen,
   Pencil,
   PlusIcon,
   Trash2,
@@ -14,7 +15,6 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -31,7 +31,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/seperator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
@@ -41,6 +43,7 @@ import { FolderDto } from '@activepieces/shared';
 
 import { foldersApi } from '../lib/folders-api';
 import { foldersHooks } from '../lib/folders-hooks';
+import { foldersUtils } from '../lib/folders-utils';
 
 import { RenameFolderDialog } from './rename-folder-dialog';
 
@@ -68,7 +71,11 @@ const FolderFilterList = ({
     resolver: typeboxResolver(CreateFolderFormSchema),
   });
 
-  const { data, refetch } = foldersHooks.useFolders();
+  const {
+    data,
+    isPending: isFetchingFolders,
+    refetch,
+  } = foldersHooks.useFolders();
 
   const { data: allFlowsCount } = useQuery({
     queryKey: ['flowsCount', authenticationSession.getProjectId()],
@@ -115,140 +122,308 @@ const FolderFilterList = ({
   }, [refresh]);
 
   return (
-    <Card className="max-h-[350px]">
-      <CardHeader>
-        <CardTitle className="flex flex-row items-center justify-center">
-          <span className="flex">Folders</span>
-          <div className="grow"></div>
-          <div className="flex items-center justify-center">
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger>
-                <Button variant="ghost">
-                  <PlusIcon size={18} />
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>New Folder</DialogTitle>
-                </DialogHeader>
-                <FormProvider {...form}>
-                  <form onSubmit={form.handleSubmit((data) => mutate(data))}>
-                    <FormField
-                      control={form.control}
-                      name="displayName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <Input
-                            {...field}
-                            required
-                            id="folder"
-                            placeholder="Folder Name"
-                            className="rounded-sm"
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    {form?.formState?.errors?.root?.serverError && (
-                      <FormMessage>
-                        {form.formState.errors.root.serverError.message}
-                      </FormMessage>
+    <div className="p-2">
+      <div className="flex flex-row items-center mb-2">
+        <span className="flex">Folders</span>
+        <div className="grow"></div>
+        <div className="flex items-center justify-center">
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost">
+                <PlusIcon size={18} />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>New Folder</DialogTitle>
+              </DialogHeader>
+              <FormProvider {...form}>
+                <form onSubmit={form.handleSubmit((data) => mutate(data))}>
+                  <FormField
+                    control={form.control}
+                    name="displayName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Input
+                          {...field}
+                          required
+                          id="folder"
+                          placeholder="Folder Name"
+                          className="rounded-sm"
+                        />
+                        <FormMessage />
+                      </FormItem>
                     )}
-                    <DialogFooter>
-                      <Button type="submit" loading={isPending}>
-                        Confirm
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </FormProvider>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex w-[200px] flex-col space-y-1">
-          <Button
-            variant="secondary"
-            className={cn('flex w-full justify-start bg-background', {
-              'bg-muted': !selectedFolderId,
-            })}
-            onClick={() => setSelectedFolderId(undefined)}
-          >
-            <TextWithIcon icon={<Folder size={18} />} text="All flows" />
-            <div className="grow"></div>
-            <span className="text-muted-foreground">{allFlowsCount}</span>
-          </Button>
-          <Separator className="my-6" />
-          <div className="h-[200px] overflow-y-scroll">
-            {data?.data?.map((folder) => {
-              return (
-                <div key={folder.id} className="group">
-                  <Button
-                    variant="ghost"
-                    className={cn('w-full justify-between', {
-                      'bg-muted': selectedFolderId === folder.id,
-                    })}
-                    onClick={() => setSelectedFolderId(folder.id)}
-                  >
-                    <span>{folder.displayName}</span>
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex flex-row -space-x-4"
-                    >
-                      <span className="visible text-muted-foreground group-hover:invisible">
-                        {folder.numberOfFlows}
-                      </span>
-                      <DropdownMenu modal={false}>
-                        <DropdownMenuTrigger
-                          asChild
-                          className="invisible group-hover:visible"
-                        >
-                          <EllipsisVertical className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <RenameFolderDialog
-                            folderId={folder.id}
-                            onRename={() => refetch()}
-                          >
-                            <DropdownMenuItem
-                              onSelect={(e) => e.preventDefault()}
-                            >
-                              <div className="flex flex-row gap-2 items-center">
-                                <Pencil className="h-4 w-4" />
-                                <span>Rename</span>
-                              </div>
-                            </DropdownMenuItem>
-                          </RenameFolderDialog>
-                          <ConfirmationDeleteDialog
-                            title={`Delete folder ${folder.displayName}`}
-                            message="If you delete this folder, we will keep its flows and move them to Uncategorized."
-                            mutationFn={async () => {
-                              await foldersApi.delete(folder.id);
-                              refetch();
-                            }}
-                            entityName={folder.displayName}
-                          >
-                            <DropdownMenuItem
-                              onSelect={(e) => e.preventDefault()}
-                            >
-                              <div className="flex flex-row gap-2 items-center">
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                                <span className="text-destructive">Delete</span>
-                              </div>
-                            </DropdownMenuItem>
-                          </ConfirmationDeleteDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
+                  />
+                  {form?.formState?.errors?.root?.serverError && (
+                    <FormMessage>
+                      {form.formState.errors.root.serverError.message}
+                    </FormMessage>
+                  )}
+                  <DialogFooter>
+                    <Button type="submit" loading={isPending}>
+                      Confirm
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </FormProvider>
+            </DialogContent>
+          </Dialog>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+      <div className="flex w-[200px] flex-col space-y-1">
+        <Button
+          variant="secondary"
+          className={cn('flex w-full justify-start bg-background', {
+            'bg-muted': !selectedFolderId,
+          })}
+          onClick={() => setSelectedFolderId(undefined)}
+        >
+          <TextWithIcon icon={<Folder size={18} />} text="All flows" />
+          <div className="grow"></div>
+          <span className="text-muted-foreground">{allFlowsCount}</span>
+        </Button>
+        <Button
+          variant="ghost"
+          className={cn('w-full justify-between')}
+          onClick={() => setSelectedFolderId('NULL')}
+        >
+          <TextWithIcon icon={<Folder size={18} />} text="Uncategorized" />
+          <div className="grow"></div>
+          <div className="flex flex-row -space-x-4">
+            <span className="visible text-muted-foreground group-hover:invisible">
+              {foldersUtils.extractUncategorizedFlows(
+                allFlowsCount,
+                data?.data,
+              )}
+            </span>
+          </div>
+        </Button>
+        <Separator className="my-6" />
+        <ScrollArea className="h-[740px]">
+          {isFetchingFolders && (
+            <div className="flex flex-col gap-2">
+              {Array.from(Array(5)).map((_, index) => (
+                <Skeleton key={index} className="rounded-md w-full h-8" />
+              ))}
+            </div>
+          )}
+          {data?.data.map((folder) => {
+            return (
+              <div key={folder.id} className="group py-1">
+                <Button
+                  variant="ghost"
+                  className={cn('w-full justify-between', {
+                    'bg-muted': selectedFolderId === folder.id,
+                  })}
+                  onClick={() => setSelectedFolderId(folder.id)}
+                >
+                  <TextWithIcon
+                    icon={
+                      selectedFolderId === folder.id ? (
+                        <FolderOpen
+                          size={18}
+                          className="fill-muted-foreground/75 border-0 text-muted-foreground"
+                        />
+                      ) : (
+                        <Folder
+                          size={18}
+                          className="fill-muted-foreground border-0 text-muted-foreground"
+                        />
+                      )
+                    }
+                    text={folder.displayName}
+                  />
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex flex-row -space-x-4"
+                  >
+                    <span className="visible text-muted-foreground group-hover:invisible">
+                      {folder.numberOfFlows}
+                    </span>
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger
+                        asChild
+                        className="invisible group-hover:visible"
+                      >
+                        <EllipsisVertical className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <RenameFolderDialog
+                          folderId={folder.id}
+                          onRename={() => refetch()}
+                        >
+                          <DropdownMenuItem
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            <div className="flex flex-row gap-2 items-center">
+                              <Pencil className="h-4 w-4" />
+                              <span>Rename</span>
+                            </div>
+                          </DropdownMenuItem>
+                        </RenameFolderDialog>
+                        <ConfirmationDeleteDialog
+                          title={`Delete folder ${folder.displayName}`}
+                          message="If you delete this folder, we will keep its flows and move them to Uncategorized."
+                          mutationFn={async () => {
+                            await foldersApi.delete(folder.id);
+                            refetch();
+                          }}
+                          entityName={folder.displayName}
+                        >
+                          <DropdownMenuItem
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            <div className="flex flex-row gap-2 items-center">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <span className="text-destructive">Delete</span>
+                            </div>
+                          </DropdownMenuItem>
+                        </ConfirmationDeleteDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </Button>
+              </div>
+            );
+          })}
+        </ScrollArea>
+      </div>
+    </div>
+    // <Card className="p-0">
+    //   <CardHeader>
+    //     <CardTitle className="flex flex-row items-center justify-center">
+    //       <span className="flex">Folders</span>
+    //       <div className="grow"></div>
+    //       <div className="flex items-center justify-center">
+    //         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+    //           <DialogTrigger asChild>
+    //             <Button variant="ghost">
+    //               <PlusIcon size={18} />
+    //             </Button>
+    //           </DialogTrigger>
+    //           <DialogContent>
+    //             <DialogHeader>
+    //               <DialogTitle>New Folder</DialogTitle>
+    //             </DialogHeader>
+    //             <FormProvider {...form}>
+    //               <form onSubmit={form.handleSubmit((data) => mutate(data))}>
+    //                 <FormField
+    //                   control={form.control}
+    //                   name="displayName"
+    //                   render={({ field }) => (
+    //                     <FormItem>
+    //                       <Input
+    //                         {...field}
+    //                         required
+    //                         id="folder"
+    //                         placeholder="Folder Name"
+    //                         className="rounded-sm"
+    //                       />
+    //                       <FormMessage />
+    //                     </FormItem>
+    //                   )}
+    //                 />
+    //                 {form?.formState?.errors?.root?.serverError && (
+    //                   <FormMessage>
+    //                     {form.formState.errors.root.serverError.message}
+    //                   </FormMessage>
+    //                 )}
+    //                 <DialogFooter>
+    //                   <Button type="submit" loading={isPending}>
+    //                     Confirm
+    //                   </Button>
+    //                 </DialogFooter>
+    //               </form>
+    //             </FormProvider>
+    //           </DialogContent>
+    //         </Dialog>
+    //       </div>
+    //     </CardTitle>
+    //   </CardHeader>
+    //   <CardContent>
+    //     <div className="flex w-[200px] flex-col space-y-1">
+    //       <Button
+    //         variant="secondary"
+    //         className={cn('flex w-full justify-start bg-background', {
+    //           'bg-muted': !selectedFolderId,
+    //         })}
+    //         onClick={() => setSelectedFolderId(undefined)}
+    //       >
+    //         <TextWithIcon icon={<Folder size={18} />} text="All flows" />
+    //         <div className="grow"></div>
+    //         <span className="text-muted-foreground">{allFlowsCount}</span>
+    //       </Button>
+    //       <Separator className="my-6" />
+    //       <div className="h-[200px] overflow-y-scroll">
+    //         {data?.data?.map((folder) => {
+    //           return (
+    //             <div key={folder.id} className="group">
+    //               <Button
+    //                 variant="ghost"
+    //                 className={cn('w-full justify-between', {
+    //                   'bg-muted': selectedFolderId === folder.id,
+    //                 })}
+    //                 onClick={() => setSelectedFolderId(folder.id)}
+    //               >
+    //                 <span>{folder.displayName}</span>
+    //                 <div
+    //                   onClick={(e) => e.stopPropagation()}
+    //                   className="flex flex-row -space-x-4"
+    //                 >
+    //                   <span className="visible text-muted-foreground group-hover:invisible">
+    //                     {folder.numberOfFlows}
+    //                   </span>
+    //                   <DropdownMenu modal={false}>
+    //                     <DropdownMenuTrigger
+    //                       asChild
+    //                       className="invisible group-hover:visible"
+    //                     >
+    //                       <EllipsisVertical className="h-4 w-4" />
+    //                     </DropdownMenuTrigger>
+    //                     <DropdownMenuContent>
+    //                       <RenameFolderDialog
+    //                         folderId={folder.id}
+    //                         onRename={() => refetch()}
+    //                       >
+    //                         <DropdownMenuItem
+    //                           onSelect={(e) => e.preventDefault()}
+    //                         >
+    //                           <div className="flex flex-row gap-2 items-center">
+    //                             <Pencil className="h-4 w-4" />
+    //                             <span>Rename</span>
+    //                           </div>
+    //                         </DropdownMenuItem>
+    //                       </RenameFolderDialog>
+    //                       <ConfirmationDeleteDialog
+    //                         title={`Delete folder ${folder.displayName}`}
+    //                         message="If you delete this folder, we will keep its flows and move them to Uncategorized."
+    //                         mutationFn={async () => {
+    //                           await foldersApi.delete(folder.id);
+    //                           refetch();
+    //                         }}
+    //                         entityName={folder.displayName}
+    //                       >
+    //                         <DropdownMenuItem
+    //                           onSelect={(e) => e.preventDefault()}
+    //                         >
+    //                           <div className="flex flex-row gap-2 items-center">
+    //                             <Trash2 className="h-4 w-4 text-destructive" />
+    //                             <span className="text-destructive">Delete</span>
+    //                           </div>
+    //                         </DropdownMenuItem>
+    //                       </ConfirmationDeleteDialog>
+    //                     </DropdownMenuContent>
+    //                   </DropdownMenu>
+    //                 </div>
+    //               </Button>
+    //             </div>
+    //           );
+    //         })}
+    //       </div>
+    //     </div>
+    //   </CardContent>
+    // </Card>
   );
 };
 
