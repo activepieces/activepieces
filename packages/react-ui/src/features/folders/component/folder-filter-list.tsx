@@ -237,16 +237,16 @@ const FolderFilterList = ({
                     onClick={(e) => e.stopPropagation()}
                     className="flex flex-row -space-x-4"
                   >
-                    <span className="visible text-muted-foreground group-hover:invisible">
-                      {folder.numberOfFlows}
-                    </span>
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger
                         asChild
                         className="invisible group-hover:visible"
                       >
-                        <EllipsisVertical className="h-4 w-4" />
+                        <EllipsisVertical className="h-5 w-5" />
                       </DropdownMenuTrigger>
+                      <span className="text-muted-foreground self-end group-hover:invisible">
+                        {folder.numberOfFlows}
+                      </span>
                       <DropdownMenuContent>
                         <RenameFolderDialog
                           folderId={folder.id}
