@@ -1,8 +1,8 @@
+import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import { Permission } from '@activepieces/shared';
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import { PopoverContent } from '@radix-ui/react-popover';
 import { ChevronDownIcon, Trash } from 'lucide-react';
-
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
 import { Avatar, AvatarImage } from '../../../components/ui/avatar';
@@ -18,6 +18,8 @@ import {
 import { Popover, PopoverTrigger } from '../../../components/ui/popover';
 import { projectMembersApi } from '../lib/project-members-api';
 import { projectMembersHooks } from '../lib/project-members-hooks';
+
+import { Authorization } from '@/components/authorization';
 
 export function ProjectMemberCard({
   member,
@@ -95,16 +97,18 @@ export function ProjectMemberCard({
             </Command>
           </PopoverContent>
         </Popover>
-        <ConfirmationDeleteDialog
-          title={`Remove ${member.user.firstName} ${member.user.lastName}`}
-          message="Are you sure you want to remove this member?"
-          mutationFn={() => deleteMember()}
-          entityName={`${member.user.firstName} ${member.user.lastName}`}
-        >
-          <Button variant="ghost" className="size-8 p-0">
-            <Trash className="bg-destructive-500 size-4" />
-          </Button>
-        </ConfirmationDeleteDialog>
+        <Authorization permission={Permission.WRITE_INVITATION}>
+          <ConfirmationDeleteDialog
+            title={`Remove ${member.user.firstName} ${member.user.lastName}`}
+            message="Are you sure you want to remove this member?"
+            mutationFn={() => deleteMember()}
+            entityName={`${member.user.firstName} ${member.user.lastName}`}
+          >
+            <Button variant="ghost" className="size-8 p-0">
+              <Trash className="bg-destructive-500 size-4" />
+            </Button>
+          </ConfirmationDeleteDialog>
+        </Authorization>
       </div>
     </div>
   );

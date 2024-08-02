@@ -1,8 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {
   Flow,
   FlowOperationType,
@@ -11,6 +6,8 @@ import {
   PopulatedFlow,
   isNil,
 } from '@activepieces/shared';
+import { useMutation } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 
 import { Switch } from '../../../components/ui/switch';
 import {
@@ -21,12 +18,20 @@ import {
 import { flowsApi } from '../lib/flows-api';
 import { flowsUtils } from '../lib/flows-utils';
 
+import { LoadingSpinner } from '@/components/ui/spinner';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+
 type FlowStatusToggleProps = {
   flow: Flow;
   flowVersion: FlowVersion;
+  isDisabled?: boolean;
 };
 
-const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
+const FlowStatusToggle = ({
+  flow,
+  flowVersion,
+  isDisabled,
+}: FlowStatusToggleProps) => {
   const [isChecked, setIsChecked] = useState(
     flow.status === FlowStatus.ENABLED,
   );
@@ -64,7 +69,9 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
             <Switch
               checked={isChecked}
               onCheckedChange={() => changeStatus()}
-              disabled={isLoading || isNil(flow.publishedVersionId)}
+              disabled={
+                isLoading || isDisabled || isNil(flow.publishedVersionId)
+              }
             />
           </div>
         </TooltipTrigger>

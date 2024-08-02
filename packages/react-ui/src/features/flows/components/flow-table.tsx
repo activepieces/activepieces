@@ -1,9 +1,15 @@
+import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon, EllipsisVertical, Import } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import FlowActionMenu from './flow-actions-menu';
+import { FlowStatusToggle } from './flow-status-toggle';
+import { ImportFlowDialog } from './import-flow-dialog';
+
+import { Authorization } from '@/components/authorization';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
@@ -18,11 +24,6 @@ import { FolderFilterList } from '@/features/folders/component/folder-filter-lis
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
-
-import FlowActionMenu from './flow-actions-menu';
-import { FlowStatusToggle } from './flow-status-toggle';
-import { ImportFlowDialog } from './import-flow-dialog';
 
 const filters: DataTableFilter[] = [
   {
@@ -154,10 +155,21 @@ const FlowsTable = () => {
             className="flex items-center space-x-2"
             onClick={(e) => e.stopPropagation()}
           >
-            <FlowStatusToggle
-              flow={row.original}
-              flowVersion={row.original.version}
-            ></FlowStatusToggle>
+            <Authorization
+              permission={Permission.UPDATE_FLOW_STATUS}
+              forbiddenFallback={
+                <FlowStatusToggle
+                  flow={row.original}
+                  flowVersion={row.original.version}
+                  isDisabled={true}
+                ></FlowStatusToggle>
+              }
+            >
+              <FlowStatusToggle
+                flow={row.original}
+                flowVersion={row.original.version}
+              ></FlowStatusToggle>
+            </Authorization>
           </div>
         );
       },

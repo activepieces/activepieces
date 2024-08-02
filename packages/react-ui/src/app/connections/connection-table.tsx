@@ -1,8 +1,18 @@
+import {
+  AppConnection,
+  AppConnectionStatus,
+  Permission,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
+
+import { NewConnectionTypeDialog } from './new-connection-type-dialog';
+
+import { Authorization } from '@/components/authorization';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,15 +22,16 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
-
-import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
-
-import { NewConnectionTypeDialog } from './new-connection-type-dialog';
 
 const DeleteConnectionColumn = ({
   row,
@@ -30,23 +41,25 @@ const DeleteConnectionColumn = ({
   const [, setSearchParams] = useSearchParams();
   return (
     <div className="flex items-end justify-end">
-      <ConfirmationDeleteDialog
-        title={`Delete ${row.name} connection`}
-        message="Are you sure you want to delete this connection? all steps using it will fail."
-        mutationFn={() =>
-          appConnectionsApi.delete(row.id).then((data) => {
-            const newQueryParameters: URLSearchParams = new URLSearchParams();
-            newQueryParameters.set('current', new Date().toISOString());
-            setSearchParams(newQueryParameters);
-            return data;
-          })
-        }
-        entityName={row.name}
-      >
-        <Button variant="ghost" className="size-8 p-0">
-          <Trash className="size-4" />
-        </Button>
-      </ConfirmationDeleteDialog>
+      <Authorization permission={Permission.WRITE_APP_CONNECTION}>
+        <ConfirmationDeleteDialog
+          title={`Delete ${row.name} connection`}
+          message="Are you sure you want to delete this connection? all steps using it will fail."
+          mutationFn={() =>
+            appConnectionsApi.delete(row.id).then((data) => {
+              const newQueryParameters: URLSearchParams = new URLSearchParams();
+              newQueryParameters.set('current', new Date().toISOString());
+              setSearchParams(newQueryParameters);
+              return data;
+            })
+          }
+          entityName={row.name}
+        >
+          <Button variant="ghost" className="size-8 p-0">
+            <Trash className="size-4" />
+          </Button>
+        </ConfirmationDeleteDialog>
+      </Authorization>
     </div>
   );
 };
@@ -163,11 +176,29 @@ function AppConnectionsTable() {
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">Connections </h1>
         <div className="ml-auto">
-          <NewConnectionTypeDialog
-            onConnectionCreated={() => setRefresh(refresh + 1)}
+          <Authorization
+            permission={Permission.WRITE_APP_CONNECTION}
+            forbiddenFallback={
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Button variant="default" disabled>
+                      New Connection
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <span>Permission Needed</span>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            }
           >
-            <Button variant="default">New Connection</Button>
-          </NewConnectionTypeDialog>
+            <NewConnectionTypeDialog
+              onConnectionCreated={() => setRefresh(refresh + 1)}
+            >
+              <Button variant="default">New Connection</Button>
+            </NewConnectionTypeDialog>
+          </Authorization>
         </div>
       </div>
       <DataTable
