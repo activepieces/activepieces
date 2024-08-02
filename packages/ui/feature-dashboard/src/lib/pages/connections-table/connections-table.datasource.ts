@@ -85,7 +85,11 @@ export class ConnectionsTableDataSource extends DataSource<any> {
             .getPieceMetadata(item.pieceName, undefined)
             .pipe(
               take(1),
-              map((metadata) => metadata.logoUrl)
+              map((metadata) => metadata.logoUrl),
+              catchError((err) => {
+                console.error(err);
+                return of('');
+              })
             )
         );
         return forkJoin(logos).pipe(
