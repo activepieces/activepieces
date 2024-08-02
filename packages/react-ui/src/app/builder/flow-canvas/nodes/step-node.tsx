@@ -16,12 +16,13 @@ import { ApNode } from '../flow-canvas-utils';
 
 const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { toast } = useToast();
-  const [selectStep, setAllowCanvasPanning, isSelected, isDragging] =
+  const [selectStep, setAllowCanvasPanning, isSelected, isDragging, removeStepSelection] =
     useBuilderStateContext((state) => [
       state.selectStep,
       state.setAllowCanvasPanning,
       state.selectedStep?.stepName === data.step?.name,
       state.activeDraggingStep === data.step?.name,
+      state.removeStepSelection,
     ]);
   const deleteStep = useBuilderStateContext((state) => () => {
     state.applyOperation(
@@ -33,6 +34,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       },
       () => toast(UNSAVED_CHANGES_TOAST),
     );
+    state.removeStepSelection();
   });
 
   const duplicateStep = useBuilderStateContext((state) => () => {
@@ -62,7 +64,8 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: data.step!.name,
-    disabled: isTrigger,
+    // TODO fix the drag and enable
+    disabled: true,
   });
 
   return (

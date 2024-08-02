@@ -10,6 +10,7 @@ import {
   FlowOperationRequest,
   FlowRun,
   FlowVersion,
+  StepLocationRelativeToParent,
   StepOutput,
   flowHelper,
 } from '@activepieces/shared';
@@ -47,6 +48,12 @@ export enum RightSideBarType {
 
 type InsertMentionHandler = (propertyPath: string) => void;
 
+type SelectedButtonType = {
+  stepname: string;
+  type: 'action' | 'trigger';
+  relativeLocation: StepLocationRelativeToParent
+}
+
 export type BuilderState = {
   flow: Flow;
   flowVersion: FlowVersion;
@@ -57,6 +64,7 @@ export type BuilderState = {
   selectedStep: StepPathWithName | null;
   activeDraggingStep: string | null;
   allowCanvasPanning: boolean;
+  selectedButton: SelectedButtonType | null
   saving: boolean;
   exitRun: () => void;
   exitStepSettings: () => void;
@@ -69,14 +77,17 @@ export type BuilderState = {
     operation: FlowOperationRequest,
     onError: () => void,
   ) => void;
+  removeStepSelection: () => void;
   selectStep: (path: StepPathWithName) => void;
   startSaving: () => void;
   setAllowCanvasPanning: (allowCanvasPanning: boolean) => void;
   setReadOnly: (readonly: boolean) => void;
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: Flow) => void;
+  exitPieceSelector: () => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
+  clickOnNewNodeButton: (stepname: string, relativeLocation: StepLocationRelativeToParent, type: 'action' | 'trigger') => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
 };
 
@@ -99,6 +110,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     activeDraggingStep: null,
     allowCanvasPanning: true,
     rightSidebar: RightSideBarType.NONE,
+    selectedButton: null,
+    removeStepSelection: () => set({ selectedStep: null, rightSidebar: RightSideBarType.NONE }),
     setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
       set({
         allowCanvasPanning,
@@ -137,11 +150,27 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       }),
     exitStepSettings: () =>
       set({
+        selectedButton: null,
         rightSidebar: RightSideBarType.NONE,
         selectedStep: null,
       }),
+    exitPieceSelector: () =>
+      set({
+        selectedButton: null,
+        rightSidebar: RightSideBarType.NONE,
+      }),
+    clickOnNewNodeButton: (stepname: string, relativeLocation: StepLocationRelativeToParent, type: 'action' | 'trigger') =>
+      set({
+        selectedButton: {
+          stepname,
+          type,
+          relativeLocation
+        },
+        rightSidebar: RightSideBarType.PIECE_SELECTOR,
+      }),
     selectStep: (path: StepPathWithName) =>
       set({
+        selectedButton: null,
         selectedStep: path,
         rightSidebar: path
           ? RightSideBarType.PIECE_SETTINGS

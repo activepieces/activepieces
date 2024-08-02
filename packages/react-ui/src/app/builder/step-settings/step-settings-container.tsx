@@ -13,9 +13,7 @@ import {
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
-import { PieceCardInfo } from '@/features/pieces/components/piece-card-info';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { formatUtils } from '@/lib/utils';
 import {
   Action,
   ActionType,
@@ -35,6 +33,7 @@ import { BranchSettings } from './branch-settings/branch-settings';
 import { CodeSettings } from './code-settings/code-settings';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings/piece-settings';
+import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
 
 type StepSettingsContainerProps = {
   selectedStep: Action | Trigger;
@@ -60,8 +59,8 @@ const StepSettingsContainer = React.memo(
 
     const [actionOrTriggerName, setActionOrTriggerName] = useState<string>(
       selectedStep?.settings?.actionName ??
-        selectedStep?.settings?.triggerName ??
-        '',
+      selectedStep?.settings?.triggerName ??
+      '',
     );
 
     const { stepMetadata } = piecesHooks.useStepMetadata({
@@ -98,13 +97,14 @@ const StepSettingsContainer = React.memo(
 
     const form = useForm<Action | Trigger>({
       mode: 'all',
+      reValidateMode: 'onChange',
       context: {
         pieceModel,
         selectedStep,
         actionOrTriggerName,
       },
       resolver: (values, context, options) => {
-        const formSchema = formatUtils.buildPieceSchema(
+        const formSchema = formUtils.buildPieceSchema(
           context.selectedStep.type,
           context.actionOrTriggerName,
           context.pieceModel,
@@ -119,6 +119,7 @@ const StepSettingsContainer = React.memo(
       if (hasExecuted.current || !selectedStep) {
         return;
       }
+
       if (
         !pieceModel &&
         (selectedStep.type === ActionType.PIECE ||
@@ -126,6 +127,7 @@ const StepSettingsContainer = React.memo(
       ) {
         return;
       }
+
       hasExecuted.current = true;
       const defaultValues = formUtils.buildPieceDefaultValue(
         selectedStep,
@@ -133,6 +135,8 @@ const StepSettingsContainer = React.memo(
       );
       form.reset(defaultValues);
       form.trigger();
+      // TODO workaround to validate code action, I don't understand why it's not validating.
+      const _formValid = form.formState.isValid;
     }, [selectedStep, pieceModel]);
 
     const inputChanges = useWatch({
@@ -164,8 +168,8 @@ const StepSettingsContainer = React.memo(
       const currentStep = JSON.parse(JSON.stringify(form.getValues()));
       setActionOrTriggerName(
         currentStep.settings.actionName ??
-          currentStep.settings.triggerName ??
-          '',
+        currentStep.settings.triggerName ??
+        '',
       );
       const newValue = formUtils.buildPieceDefaultValue(
         currentStep,
@@ -209,7 +213,7 @@ const StepSettingsContainer = React.memo(
               <ScrollArea className="h-full ">
                 <div className="flex flex-col gap-4 px-4">
                   {stepMetadata && (
-                    <PieceCardInfo piece={stepMetadata}></PieceCardInfo>
+                    <PieceCardInfo piece={stepMetadata} interactive={false}></PieceCardInfo>
                   )}
                   {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
                     <LoopsSettings></LoopsSettings>
@@ -229,17 +233,17 @@ const StepSettingsContainer = React.memo(
                   {[ActionType.CODE, ActionType.PIECE].includes(
                     modifiedStep.type as ActionType,
                   ) && (
-                    <ActionErrorHandlingForm
-                      hideContinueOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.continueOnFailure?.hide
-                      }
-                      hideRetryOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.retryOnFailure?.hide
-                      }
-                    ></ActionErrorHandlingForm>
-                  )}
+                      <ActionErrorHandlingForm
+                        hideContinueOnFailure={
+                          modifiedStep.settings.errorHandlingOptions
+                            ?.continueOnFailure?.hide
+                        }
+                        hideRetryOnFailure={
+                          modifiedStep.settings.errorHandlingOptions
+                            ?.retryOnFailure?.hide
+                        }
+                      ></ActionErrorHandlingForm>
+                    )}
                 </div>
               </ScrollArea>
             </ResizablePanel>

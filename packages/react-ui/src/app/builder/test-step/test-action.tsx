@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { JsonViewer } from '@/components/json-viewer';
@@ -85,8 +85,14 @@ const TestActionComponent = React.memo(
       undefined,
     );
     const form = useFormContext<Action>();
-
     const formValues = form.getValues();
+
+    const [isValid, setIsValid] = useState(false);
+
+    useEffect(() => {
+      setIsValid(form.formState.isValid);
+    }, [form.formState.isValid]);
+
     const [lastTestDate, setLastTestDate] = useState(
       formValues.settings.inputUiInfo?.lastTestDate,
     );
@@ -122,7 +128,7 @@ const TestActionComponent = React.memo(
           setErrorMessage(
             formatErrorMessage(
               stepResponse.output?.toString() ||
-                'Failed to run test step and no error message was returned',
+              'Failed to run test step and no error message was returned',
             ),
           );
         }
@@ -138,7 +144,7 @@ const TestActionComponent = React.memo(
         <div className="text-md font-semibold">Generate Sample Data</div>
         {!sampleDataExists && (
           <div className="flex-grow flex justify-center items-center w-full h-full">
-            <TestButtonTooltip disabled={!form.formState.isValid}>
+            <TestButtonTooltip disabled={!isValid}>
               <Button
                 variant="outline"
                 size="sm"
@@ -146,7 +152,7 @@ const TestActionComponent = React.memo(
                 keyboardShortcut="G"
                 onKeyboardShortcut={mutate}
                 loading={isPending}
-                disabled={isSaving || !form.formState.isValid}
+                disabled={isSaving || !isValid}
               >
                 Test Step
               </Button>
@@ -181,11 +187,11 @@ const TestActionComponent = React.memo(
                     formatUtils.formatDate(new Date(lastTestDate))}
                 </div>
               </div>
-              <TestButtonTooltip disabled={!form.formState.isValid}>
+              <TestButtonTooltip disabled={!isValid}>
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={!form.formState.isValid || isSaving}
+                  disabled={!isValid || isSaving}
                   keyboardShortcut="G"
                   onKeyboardShortcut={mutate}
                   onClick={() => mutate()}

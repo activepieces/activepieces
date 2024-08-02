@@ -20,10 +20,10 @@ import { cn } from '../../lib/utils';
 
 import { BuilderNavBar } from './builder-nav-bar';
 import { FlowVersionsList } from './flow-versions/flow-versions-list';
-import { PiecesCardList } from './pieces-list/pieces-card-list';
 import { FlowRunDetails } from './run-details/flow-run-details-list';
 import { FlowRecentRunsList } from './run-list/flow-runs-list';
 import { StepSettingsContainer } from './step-settings/step-settings-container';
+import { PiecesSelectorList } from './pieces-selector/piece-selector-list';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -135,7 +135,7 @@ const BuilderPage = () => {
             })}
           >
             {rightSidebar === RightSideBarType.PIECE_SELECTOR && (
-              <PiecesCardList />
+              <PiecesSelectorList />
             )}
             {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
               memorizedSelectedStep && (

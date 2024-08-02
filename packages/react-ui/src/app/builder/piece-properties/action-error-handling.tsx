@@ -8,7 +8,7 @@ import {
   FormControl,
 } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
-import { CodeAction } from '@activepieces/shared';
+import { Action, ActionType, CodeAction, Trigger, TriggerType, isNil } from '@activepieces/shared';
 
 import { ReadMoreDescription } from './read-more-description';
 
@@ -22,14 +22,15 @@ const ActionErrorHandlingForm = React.memo(
     hideContinueOnFailure,
     hideRetryOnFailure,
   }: ActionErrorHandlingFormProps) => {
-    const errorHandlingOptionsForm = useFormContext<CodeAction>();
-
-    return (
-      <div className="grid gap-4">
+    const form = useFormContext<Action | Trigger>();
+    const showShowForPiece = (!isNil(form.getValues().settings.actionName) || !isNil(form.getValues().settings.triggerName));
+    const isPieceType = [ActionType.PIECE, TriggerType.PIECE].includes(form.getValues().type)
+    return (<>
+      {(!isPieceType || showShowForPiece) && <div className="grid gap-4">
         {hideContinueOnFailure !== true && (
           <FormField
             name="settings.errorHandlingOptions.continueOnFailure.value"
-            control={errorHandlingOptionsForm.control}
+            control={form.control}
             render={({ field }) => (
               <FormItem className="flex flex-col items-start justify-between">
                 <FormLabel
@@ -53,7 +54,7 @@ const ActionErrorHandlingForm = React.memo(
         {hideRetryOnFailure !== true && (
           <FormField
             name="settings.errorHandlingOptions.retryOnFailure.value"
-            control={errorHandlingOptionsForm.control}
+            control={form.control}
             render={({ field }) => (
               <FormItem className="flex flex-col items-start justify-between">
                 <FormLabel
@@ -74,7 +75,8 @@ const ActionErrorHandlingForm = React.memo(
             )}
           />
         )}
-      </div>
+      </div>}
+    </>
     );
   },
 );

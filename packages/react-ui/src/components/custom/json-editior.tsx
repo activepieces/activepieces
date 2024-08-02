@@ -15,6 +15,13 @@ type JsonEditorProps = {
   readonly?: boolean;
 };
 
+const convertToString = (value: unknown): string => {
+  if (typeof value === 'string') {
+    return value;
+  }
+  return JSON.stringify(value, null, 2);
+};
+
 const JsonEditor = ({
   intialValue,
   onChange,
@@ -27,7 +34,7 @@ const JsonEditor = ({
     json(),
   ];
 
-  const [value, setValue] = useState(intialValue);
+  const [value, setValue] = useState(convertToString(intialValue));
 
   return (
     <div className="flex flex-col gap-2 border rounded py-2 px-2">
