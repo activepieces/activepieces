@@ -87,7 +87,7 @@ export type BuilderState = {
   exitPieceSelector: () => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
-  clickOnNewNodeButton: (stepname: string, relativeLocation: StepLocationRelativeToParent, type: 'action' | 'trigger') => void;
+  clickOnNewNodeButton: (type: 'action' | 'trigger', stepname: string, relativeLocation: StepLocationRelativeToParent) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
 };
 
@@ -159,7 +159,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         selectedButton: null,
         rightSidebar: RightSideBarType.NONE,
       }),
-    clickOnNewNodeButton: (stepname: string, relativeLocation: StepLocationRelativeToParent, type: 'action' | 'trigger') =>
+    clickOnNewNodeButton: (type: 'action' | 'trigger', stepname: string, relativeLocation: StepLocationRelativeToParent) =>
       set({
         selectedButton: {
           stepname,

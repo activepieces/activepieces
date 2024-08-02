@@ -4,7 +4,6 @@ import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 import { JsonEditor } from '@/components/custom/json-editior';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { ArrayInput } from '@/components/ui/array-input';
 import { FormControl, FormField } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -18,6 +17,7 @@ import { DictionaryProperty } from './dictionary-property';
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
 import { SelectPieceProperty } from './select-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
+import { ArrayProperty } from './array-property';
 
 type AutoFormProps = {
   props: PiecePropertyMap;
@@ -70,7 +70,7 @@ const selectRightComponent = (
           field={field}
           allowDynamicValues={allowDynamicValues}
         >
-          <ArrayInput inputName={inputName}></ArrayInput>
+          <ArrayProperty inputName={inputName}></ArrayProperty>
         </AutoFormFieldWrapper>
       );
     case PropertyType.OBJECT:
@@ -175,7 +175,6 @@ const selectRightComponent = (
     case PropertyType.FILE:
     case PropertyType.NUMBER:
     case PropertyType.MULTI_SELECT_DROPDOWN:
-    case PropertyType.DYNAMIC:
     case PropertyType.SECRET_TEXT:
       return (
         <AutoFormFieldWrapper
@@ -190,7 +189,7 @@ const selectRightComponent = (
           ></TextInputWithMentions>
         </AutoFormFieldWrapper>
       );
-
+    case PropertyType.DYNAMIC:
     case PropertyType.CUSTOM_AUTH:
     case PropertyType.BASIC_AUTH:
     case PropertyType.OAUTH2:

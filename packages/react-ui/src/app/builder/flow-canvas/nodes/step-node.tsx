@@ -10,19 +10,19 @@ import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
-import { FlowOperationType, flowHelper } from '@activepieces/shared';
+import { FlowOperationType, StepLocationRelativeToParent, flowHelper } from '@activepieces/shared';
 
 import { ApNode } from '../flow-canvas-utils';
 
 const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { toast } = useToast();
-  const [selectStep, setAllowCanvasPanning, isSelected, isDragging, removeStepSelection] =
+  const [selectStep, setAllowCanvasPanning, isSelected, isDragging, clickOnNewNodeButton] =
     useBuilderStateContext((state) => [
       state.selectStep,
       state.setAllowCanvasPanning,
       state.selectedStep?.stepName === data.step?.name,
       state.activeDraggingStep === data.step?.name,
-      state.removeStepSelection,
+      state.clickOnNewNodeButton,
     ]);
   const deleteStep = useBuilderStateContext((state) => () => {
     state.applyOperation(
@@ -137,6 +137,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                           size="icon"
                           className="rounded-full"
                           onClick={(e) => {
+                            clickOnNewNodeButton('trigger', data.step?.name!, StepLocationRelativeToParent.AFTER);
                             e.stopPropagation();
                           }}
                         >

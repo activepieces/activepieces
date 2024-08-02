@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { PieceStepMetadata, StepMetadata, piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
-import { Action, ActionType, CodeAction, FlowOperationType, PieceAction, TriggerType, deepMergeAndCast, flowHelper, isNil } from '@activepieces/shared';
+import { Action, ActionType, CodeAction, FlowOperationType, PieceAction, Trigger, TriggerType, deepMergeAndCast, flowHelper, isNil } from '@activepieces/shared';
 import { UNSAVED_CHANGES_TOAST, toast } from '@/components/ui/use-toast';
 import { useEffect } from 'react';
 import { pieceSelectorUtils } from './piece-selector-utils';
@@ -32,7 +32,10 @@ const PiecesSelectorList = () => {
   }, [selectedButton]);
 
 
-  function getStepName() {
+  function getStepName(piece: StepMetadata) {
+    if (piece.type === TriggerType.PIECE) {
+      return 'trigger';
+    }
     const baseName = 'step_'
     let number = 1;
     const steps = flowHelper.getAllSteps(flowVersion.trigger);
@@ -47,21 +50,28 @@ const PiecesSelectorList = () => {
     if (!selectedButton) {
       return;
     }
-    const stepName = getStepName();
-    const defaultAction = pieceSelectorUtils.getDefaultAction(stepName, piece);
-    applyOperation({
-      type: FlowOperationType.ADD_ACTION,
-      request: {
-        parentStep: selectedButton.stepname,
-        stepLocationRelativeToParent: selectedButton.relativeLocation,
-        action: defaultAction,
-      },
-    }, () => toast(UNSAVED_CHANGES_TOAST));
-
+    const stepName = getStepName(piece);
+    const defaultStep = pieceSelectorUtils.getDefaultStep(stepName, piece);
+    if (piece.type === TriggerType.PIECE) {
+      console.log(defaultStep);
+      applyOperation({
+        type: FlowOperationType.UPDATE_TRIGGER,
+        request: defaultStep as Trigger,
+      }, () => toast(UNSAVED_CHANGES_TOAST));
+    } else {
+      applyOperation({
+        type: FlowOperationType.ADD_ACTION,
+        request: {
+          parentStep: selectedButton.stepname,
+          stepLocationRelativeToParent: selectedButton.relativeLocation,
+          action: defaultStep as Action,
+        },
+      }, () => toast(UNSAVED_CHANGES_TOAST));
+    }
     // TODO pick the default path
     selectStep({
       path: [],
-      stepName: defaultAction.name,
+      stepName: defaultStep.name,
     });
   }
 

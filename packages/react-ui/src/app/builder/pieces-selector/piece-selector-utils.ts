@@ -1,12 +1,22 @@
 import { PieceStepMetadata, StepMetadata } from "@/features/pieces/lib/pieces-hook";
-import { Action, ActionType, BranchOperator, CodeAction, PieceAction, TriggerType, deepMergeAndCast } from "@activepieces/shared";
+import { Action, ActionType, BranchOperator, CodeAction, PieceAction, PieceTrigger, Trigger, TriggerType, deepMergeAndCast } from "@activepieces/shared";
 
 const defaultCode = `export const code = async (inputs) => {
   return true;
 };`
 
 export const pieceSelectorUtils = {
-  getDefaultAction(stepName: string, piece: StepMetadata): Action {
+  getDefaultStep(stepName: string, piece: StepMetadata): Action | Trigger {
+    const errorHandlingOptions = {
+      continueOnFailure: {
+        hide: true,
+        value: false,
+      },
+      retryOnFailure: {
+        hide: true,
+        value: false,
+      },
+    };
     const common = {
       name: stepName,
       valid: false,
@@ -14,15 +24,7 @@ export const pieceSelectorUtils = {
       settings: {
         inputUiInfo: {
           customizedInputs: {}
-        },
-        errorHandlingOptions: {
-          continueOnFailure: {
-            value: false,
-          },
-          retryOnFailure: {
-            value: false,
-          },
-        },
+        }
       }
     }
     switch (piece.type) {
@@ -38,6 +40,7 @@ export const pieceSelectorUtils = {
             inputUiInfo: {
               customizedInputs: {}
             },
+            errorHandlingOptions: errorHandlingOptions,
           },
         }, common);
       case ActionType.LOOP_ON_ITEMS:
@@ -69,18 +72,19 @@ export const pieceSelectorUtils = {
             actionName: undefined,
             pieceVersion: pieceStepmetadta.pieceVersion,
             input: {},
+            errorHandlingOptions: errorHandlingOptions,
           },
         }, common)
       }
       case TriggerType.PIECE: {
         const pieceStepmetadta = piece as PieceStepMetadata;
-        return deepMergeAndCast<PieceAction>({
-          type: ActionType.PIECE,
+        return deepMergeAndCast<PieceTrigger>({
+          type: TriggerType.PIECE,
           settings: {
             pieceName: pieceStepmetadta.pieceName,
             pieceType: pieceStepmetadta.pieceType,
             packageType: pieceStepmetadta.packageType,
-            actionName: undefined,
+            triggerName: '',
             pieceVersion: pieceStepmetadta.pieceVersion,
             input: {},
           },

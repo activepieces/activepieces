@@ -1,19 +1,18 @@
 import { DragHandleDots2Icon } from '@radix-ui/react-icons';
 import { Plus, TrashIcon } from 'lucide-react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
-
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { FormControl, FormField, FormItem } from '@/components/ui/form';
+import { Sortable, SortableDragHandle, SortableItem } from '@/components/ui/sortable';
+import { TextWithIcon } from '@/components/ui/text-with-icon';
+import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
 
-import { Button } from './button';
-import { FormControl, FormField, FormItem } from './form';
-import { Sortable, SortableDragHandle, SortableItem } from './sortable';
-import { TextWithIcon } from './text-with-icon';
-
-type ArrayInputProps = {
+type ArrayPropertyProps = {
   inputName: string;
 };
 
-const ArrayInput = ({ inputName }: ArrayInputProps) => {
+const ArrayProperty = ({ inputName }: ArrayPropertyProps) => {
   const form = useFormContext();
 
   const { fields, append, move, remove } = useFieldArray({
@@ -53,7 +52,10 @@ const ArrayInput = ({ inputName }: ArrayInputProps) => {
                   render={({ field }) => (
                     <FormItem className="grow">
                       <FormControl>
-                        <Input className="h-8" {...field} />
+                        <TextInputWithMentions
+                          initialValue={field.value}
+                          onChange={field.onChange}
+                        ></TextInputWithMentions>
                       </FormControl>
                     </FormItem>
                   )}
@@ -92,4 +94,4 @@ const ArrayInput = ({ inputName }: ArrayInputProps) => {
   );
 };
 
-export { ArrayInput };
+export { ArrayProperty };

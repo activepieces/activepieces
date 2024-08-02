@@ -18,7 +18,6 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { formatUtils } from '@/lib/utils';
 import {
   Action,
-  ActionType,
   StepOutputStatus,
   StepRunResponse,
   isNil,
@@ -26,15 +25,72 @@ import {
 import { testStepUtils } from './test-step-utils';
 
 type TestActionComponentProps = {
-  isValid: boolean;
-  mutate: () => void;
+  flowVersionId: string;
   isSaving: boolean;
 };
 
 
 const TestActionComponent = React.memo(
   ({ flowVersionId, isSaving }: TestActionComponentProps) => {
+    const { toast } = useToast();
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(
+      undefined,
+    );
+    const form = useFormContext<Action>();
+    const formValues = form.getValues();
 
+    const [isValid, setIsValid] = useState(false);
+
+    useEffect(() => {
+      setIsValid(form.formState.isValid);
+    }, [form.formState.isValid]);
+
+    const [lastTestDate, setLastTestDate] = useState(
+      formValues.settings.inputUiInfo?.lastTestDate,
+    );
+    const { currentSelectedData } = formValues.settings.inputUiInfo ?? {};
+    const sampleDataExists =
+      !isNil(currentSelectedData) || !isNil(errorMessage);
+
+    const socket = useSocket();
+
+    const { mutate, isPending } = useMutation<StepRunResponse, Error, void>({
+      mutationFn: async () => {
+        return flowsApi.testStep(socket, {
+          flowVersionId,
+          stepName: formValues.name,
+        });
+      },
+      onSuccess: (stepResponse) => {
+        if (stepResponse.success) {
+          setErrorMessage(undefined);
+          form.setValue(
+            'settings.inputUiInfo',
+            {
+              ...formValues.settings.inputUiInfo,
+              currentSelectedData: testStepUtils.formatSampleData(
+                stepResponse.output,
+                formValues.type,
+              ),
+              lastTestDate: dayjs().toISOString(),
+            },
+            { shouldValidate: true },
+          );
+        } else {
+          setErrorMessage(
+            testStepUtils.formatErrorMessage(
+              stepResponse.output?.toString() ||
+              'Failed to run test step and no error message was returned',
+            ),
+          );
+        }
+        setLastTestDate(dayjs().toISOString());
+      },
+      onError: (error) => {
+        console.error(error);
+        toast(INTERNAL_ERROR_TOAST);
+      },
+    });
     return (
       <>
         <div className="text-md font-semibold">Generate Sample Data</div>
