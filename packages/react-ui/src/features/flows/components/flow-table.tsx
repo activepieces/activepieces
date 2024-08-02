@@ -1,8 +1,13 @@
+import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon, EllipsisVertical, Import } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import FlowActionMenu from './flow-actions-menu';
+import { FlowStatusToggle } from './flow-status-toggle';
+import { ImportFlowDialog } from './import-flow-dialog';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,11 +23,6 @@ import { FolderFilterList } from '@/features/folders/component/folder-filter-lis
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
-
-import FlowActionMenu from './flow-actions-menu';
-import { FlowStatusToggle } from './flow-status-toggle';
-import { ImportFlowDialog } from './import-flow-dialog';
 
 const filters: DataTableFilter[] = [
   {
@@ -49,9 +49,6 @@ const filters: DataTableFilter[] = [
 const FlowsTable = () => {
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
-  const [selectedFolderId, setSelectedFolderId] = useState<
-    string | undefined
-  >();
 
   async function fetchData(queryParams: URLSearchParams) {
     return flowsApi.list({
@@ -60,13 +57,9 @@ const FlowsTable = () => {
       limit: parseInt(queryParams.get('limit') ?? '10'),
       status: (queryParams.getAll('status') ?? []) as FlowStatus[],
       name: queryParams.get('name') ?? undefined,
-      folderId: selectedFolderId,
+      folderId: queryParams.get('folderId') ?? undefined,
     });
   }
-
-  useEffect(() => {
-    setRefresh(refresh + 1);
-  }, [selectedFolderId]);
 
   const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
     PopulatedFlow,
@@ -210,11 +203,7 @@ const FlowsTable = () => {
           </div>
         </div>
         <div className="flex flex-row gap-4">
-          <FolderFilterList
-            refresh={refresh}
-            selectedFolderId={selectedFolderId}
-            setSelectedFolderId={setSelectedFolderId}
-          />
+          <FolderFilterList />
           <div className="w-full">
             <DataTable
               columns={columns}

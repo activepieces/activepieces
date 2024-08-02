@@ -1,5 +1,8 @@
+import { FlowVersionState } from '@activepieces/shared';
 import { ChevronDown, History, Home, Logs } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { createSearchParams, Link, useNavigate } from 'react-router-dom';
+
+import { BuilderPublishButton } from './builder-publish-button';
 
 import {
   LeftSideBarType,
@@ -9,14 +12,12 @@ import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import FlowActionMenu from '@/features/flows/components/flow-actions-menu';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { FlowVersionState } from '@activepieces/shared';
-
-import { BuilderPublishButton } from './builder-publish-button';
 
 export const BuilderNavBar = () => {
   const navigate = useNavigate();
@@ -41,6 +42,8 @@ export const BuilderNavBar = () => {
     flowVersion.state === FlowVersionState.DRAFT ||
     flowVersion.id === flow.publishedVersionId;
 
+  const folderName = folderData?.displayName ?? 'Uncategorized';
+
   return (
     <div className="items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
       <div className="flex h-full items-center justify-center gap-2">
@@ -55,7 +58,26 @@ export const BuilderNavBar = () => {
           <TooltipContent side="bottom">Home</TooltipContent>
         </Tooltip>
         <span>
-          {folderData?.displayName ?? 'Uncategorized'} /{' '}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                onClick={() =>
+                  navigate({
+                    pathname: '/flows',
+                    search: createSearchParams({
+                      folderId: folderData?.id ?? 'NULL',
+                    }).toString(),
+                  })
+                }
+              >
+                {folderName}
+              </TooltipTrigger>
+              <TooltipContent>
+                <span>Go to folder {folderName}</span>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          {' / '}
           <strong>{flowVersion.displayName}</strong>
         </span>
         <FlowActionMenu
