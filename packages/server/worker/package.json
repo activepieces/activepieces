@@ -10,7 +10,8 @@
     "http-status-codes": "2.2.0",
     "chalk": "4.1.2",
     "async-mutex": "0.4.0",
-    "axios-retry": "4.4.1"
+    "axios-retry": "4.4.1",
+    "write-file-atomic": "5.0.1"
   },
   "type": "commonjs",
   "main": "./src/index.js",
