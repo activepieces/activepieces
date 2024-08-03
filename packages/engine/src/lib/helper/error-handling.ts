@@ -49,7 +49,7 @@ export async function continueIfFailureHandler(
 
 export const handleExecutionError = (error: unknown): ErrorHandlingResponse => {
     logError(error)
-    const isEngineError = (error instanceof ExecutionError) && error.type === ExecutionErrorType.ENGINE;
+    const isEngineError = (error instanceof ExecutionError) && error.type === ExecutionErrorType.ENGINE
     return {
         message: error instanceof Error ? error.message : JSON.stringify(error),
         verdictResponse: isEngineError ? {

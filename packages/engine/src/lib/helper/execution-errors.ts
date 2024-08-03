@@ -1,6 +1,7 @@
+
 export enum ExecutionErrorType {
     ENGINE = 'ENGINE',
-    USER = 'USER'
+    USER = 'USER',
 }
 export class ExecutionError extends Error {
 
@@ -15,7 +16,7 @@ export class ExecutionError extends Error {
 
 function formatMessage(message: string) {
     return JSON.stringify({
-        message
+        message,
     }, null, 2)
 }
 
@@ -38,8 +39,12 @@ export class ConnectionExpiredError extends ExecutionError {
 }
 
 export class StorageLimitError extends ExecutionError {
-    constructor(key: string, cause?: unknown) {
-        super('StorageLimitError', formatMessage(`Failed to read/write key (${key}), the storage value is too large`), ExecutionErrorType.USER, cause)
+
+    public maxStorageSizeInBytes: number
+
+    constructor(key: string, maxStorageSizeInBytes: number, cause?: unknown) {
+        super('StorageLimitError', formatMessage(`Failed to read/write key "${key}", the storage value is larger than ${Math.floor(maxStorageSizeInBytes)} MB`), ExecutionErrorType.USER, cause)
+        this.maxStorageSizeInBytes = maxStorageSizeInBytes
     }
 }
 
