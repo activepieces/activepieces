@@ -43,7 +43,6 @@ async function push({ store, queueName, items, testing }: { store: Store, queueN
     return await store.put(key, updatedQueueItems, StoreScope.PROJECT)
   } catch (e: unknown) {
     const name = (e as Error)?.name;
-    console.error("GO GO GO " + name)
     if (name === 'StorageLimitError') {
       throw formatStorageError(e)
     } else {
