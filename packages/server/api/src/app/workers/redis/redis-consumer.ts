@@ -60,7 +60,10 @@ export const redisConsumer: ConsumerManager = {
     },
     async close(): Promise<void> {
         const promises = Object.values(consumerGroups).map((consumerGroup) => {
-            return Promise.all(Object.values(consumerGroup).map((consumer) => consumer.close()))
+            return Promise.all(Object.values(consumerGroup).map(async (consumer) => {
+                await consumer.drain()
+                await consumer.close()
+            }))
         })
         await Promise.all(promises)
     },
