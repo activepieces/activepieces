@@ -21,7 +21,7 @@ import { DataSelector } from '../data-selector/data-selector';
 
 import { ApEdgeWithButton } from './edges/edge-with-button';
 import { ReturnLoopedgeButton } from './edges/return-loop-edge';
-import { ApEdge, ApNode, flowCanvasUtils } from './flow-canvas-utils';
+import { ApEdge, ApGraph, ApNode, flowCanvasUtils } from './flow-canvas-utils';
 import { FlowDragLayer } from './flow-drag-layer';
 import { ApBigButton } from './nodes/big-button';
 import { LoopStepPlaceHolder } from './nodes/loop-step-placeholder';
@@ -51,6 +51,7 @@ function useContainerSize(
     };
   }, [containerRef, setSize]);
 }
+
 const FlowCanvas = React.memo(() => {
   const [allowCanvasPanning, flowVersion] = useBuilderStateContext((state) => [
     state.allowCanvasPanning,
@@ -59,7 +60,7 @@ const FlowCanvas = React.memo(() => {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const graph = useMemo(() => {
-    return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
+    return flowCanvasUtils.createLeftToRightGraph(flowVersion);
   }, [flowVersion]);
   const [size, setSize] = useState({ width: 0, height: 0 });
   useContainerSize(setSize, containerRef);

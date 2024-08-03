@@ -1,8 +1,11 @@
+import { FlowOperationType, flowHelper } from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
 import { CopyPlus, Replace, Trash } from 'lucide-react';
 import React, { useState } from 'react';
+
+import { ApNode } from '../flow-canvas-utils';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
@@ -10,9 +13,6 @@ import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
-import { FlowOperationType, flowHelper } from '@activepieces/shared';
-
-import { ApNode } from '../flow-canvas-utils';
 
 const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { toast } = useToast();
@@ -192,9 +192,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         <Handle
           type="source"
           style={{ opacity: 0 }}
-          position={Position.Bottom}
+          position={Position.Right}
         />
-        <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+        <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
       </div>
     </div>
   );

@@ -6,8 +6,8 @@ const LoopStepPlaceHolder = React.memo(() => {
     <>
       <div className="h-[70px] w-[260px] "></div>
 
-      <Handle type="source" style={{ opacity: 0 }} position={Position.Bottom} />
-      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="source" style={{ opacity: 0 }} position={Position.Right} />
+      <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
     </>
   );
 });

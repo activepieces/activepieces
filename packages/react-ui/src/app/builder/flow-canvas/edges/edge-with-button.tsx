@@ -1,10 +1,8 @@
+import { flowHelper, isNil } from '@activepieces/shared';
 import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
-import { BaseEdge } from '@xyflow/react';
+import { BaseEdge, Position, SmoothStepEdge } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-
-import { cn } from '@/lib/utils';
-import { flowHelper, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import {
@@ -13,6 +11,8 @@ import {
   ApNodeType,
   flowCanvasUtils,
 } from '../flow-canvas-utils';
+
+import { cn } from '@/lib/utils';
 
 interface ApEdgeWithButtonProps {
   id: string;
@@ -27,6 +27,7 @@ const BUTTON_SIZE = {
   width: 16,
   height: 16,
 };
+
 function getEdgePath({
   sourceX,
   sourceY,
@@ -34,49 +35,49 @@ function getEdgePath({
   targetY,
   data,
 }: ApEdgeWithButtonProps) {
-  const ARROW_DOWN = 'm6 -6 l-6 6 m-6 -6 l6 6';
+  const ARROW_RIGHT = 'm-6 -6 l6 6 m-6 6 l6 -6';
 
-  const targetYWithPlaceHolder =
-    targetY +
+  const targetXWithPlaceHolder =
+    targetX +
     (flowCanvasUtils.isPlaceHolder(data.targetType)
-      ? AP_NODE_SIZE[data.targetType].height + 10
+      ? AP_NODE_SIZE[data.targetType].width + 10
       : 0);
-  if (sourceX === targetX) {
+
+  const MID_X = (sourceX + targetX) / 2;
+  const MID_Y = (sourceY + targetY) / 2;
+
+  if (sourceY === targetY) {
     return {
       buttonPosition: {
-        x: (targetX + sourceX) / 2 - BUTTON_SIZE.width / 2,
-        y: (targetYWithPlaceHolder + sourceY) / 2 - BUTTON_SIZE.height / 2,
+        x: MID_X - BUTTON_SIZE.width / 2,
+        y: sourceY - BUTTON_SIZE.height / 2,
       },
-      edgePath: `M ${sourceX} ${sourceY} v ${
-        targetYWithPlaceHolder - sourceY
-      } ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
+      edgePath: `M ${sourceX} ${sourceY} h ${
+        targetXWithPlaceHolder - sourceX
+      } ${data.targetType === ApNodeType.STEP_NODE ? ARROW_RIGHT : ''}`,
     };
   }
-  const FIRST_LINE_LENGTH = 55;
-  const ARC_LEFT = 'a15,15 0 0,0 -15,15';
-  const ARC_RIGHT = 'a15,15 0 0,1 15,15';
-  const ARC_LEFT_DOWN = 'a15,15 0 0,1 -15,15';
-  const ARC_RIGHT_DOWN = 'a15,15 0 0,0 15,15';
-  const ARC_LENGTH = 15;
-  const SIGN = sourceX > targetX ? -1 : 1;
+
+  const controlPointOffset = 1;
+
   return {
     buttonPosition: {
-      x: targetX - BUTTON_SIZE.width / 2,
-      y: targetYWithPlaceHolder - FIRST_LINE_LENGTH / 2 - 10,
+      x: MID_X - BUTTON_SIZE.width / 2,
+      y: MID_Y - BUTTON_SIZE.height / 2,
     },
-    edgePath: `M${sourceX} ${sourceY} 
-    v${targetYWithPlaceHolder - sourceY - FIRST_LINE_LENGTH - ARC_LENGTH} ${
-      SIGN < 0 ? ARC_LEFT_DOWN : ARC_RIGHT_DOWN
-    }
-    h${targetX - sourceX - 2 * SIGN * ARC_LENGTH} ${
-      SIGN < 0 ? ARC_LEFT : ARC_RIGHT
-    }
-    v${FIRST_LINE_LENGTH - ARC_LENGTH}
-    ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
+    edgePath: `M${sourceX} ${sourceY}
+    C${MID_X - controlPointOffset} ${sourceY}, ${
+      MID_X + controlPointOffset
+    } ${targetY}, ${targetXWithPlaceHolder} ${targetY}
+    ${data.targetType === ApNodeType.STEP_NODE ? ARROW_RIGHT : ''}`,
   };
 }
 
 const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
+  const isBranch =
+    props.data.stepLocationRelativeToParent === 'INSIDE_FALSE_BRANCH' ||
+    props.data.stepLocationRelativeToParent === 'INSIDE_TRUE_BRANCH';
+
   const [showButtonShadow, setShowButtonShadow] = useState(false);
   const [activeDraggingStep, flowVersion] = useBuilderStateContext((state) => [
     state.activeDraggingStep,
@@ -111,11 +112,26 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
 
   return (
     <>
-      <BaseEdge
-        interactionWidth={0}
-        path={edgePath}
-        style={{ strokeWidth: 1.5 }}
-      />
+      {isBranch ? (
+        <SmoothStepEdge
+          interactionWidth={0}
+          style={{ strokeWidth: 1.5 }}
+          label=""
+          sourceX={props.sourceX}
+          sourceY={props.sourceY}
+          targetX={props.targetX}
+          targetY={props.targetY}
+          sourcePosition={Position.Right}
+          targetPosition={Position.Left}
+        />
+      ) : (
+        <BaseEdge
+          interactionWidth={0}
+          path={edgePath}
+          style={{ strokeWidth: 1.5 }}
+        />
+      )}
+
       {isDropzone && props.data?.addButton && buttonPosition && (
         <foreignObject
           width={18}

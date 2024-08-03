@@ -1,5 +1,3 @@
-import { nanoid } from 'nanoid';
-
 import {
   Action,
   ActionType,
@@ -8,6 +6,7 @@ import {
   Trigger,
   isNil,
 } from '@activepieces/shared';
+import { nanoid } from 'nanoid';
 
 const VERTICAL_OFFSET = 160;
 const HORIZONTAL_SPACE_BETWEEN_NODES = 80;
@@ -45,6 +44,7 @@ export const flowCanvasUtils = {
   convertFlowVersionToGraph(version: FlowVersion): ApGraph {
     return traverseFlow(version.trigger);
   },
+  createLeftToRightGraph: createLeftToRightGraph,
 };
 
 function traverseFlow(step: Action | Trigger | undefined): ApGraph {
@@ -112,6 +112,45 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
       return mergeGraph(graph, childGraph);
     }
   }
+}
+
+function createLeftToRightGraph(flowVersion: FlowVersion): ApGraph {
+  const graph = flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
+
+  function getParentBranch(i: number) {
+    let parentBranchIndex = 0;
+    let hasParentBranch = false;
+    const indexesToCheck = [i - 1, i - 2];
+
+    indexesToCheck.forEach((parentIndex) => {
+      if (graph.nodes?.[parentIndex]?.data?.step?.type === 'BRANCH') {
+        parentBranchIndex = parentIndex;
+        hasParentBranch = true;
+      }
+    });
+
+    return { hasParentBranch, parentBranchIndex };
+  }
+
+  return {
+    ...graph,
+    nodes: graph.nodes.map((n, i) => {
+      console.log(JSON.stringify(n, null, 2));
+      const { hasParentBranch, parentBranchIndex } = getParentBranch(i);
+
+      const xPositionIncrement = hasParentBranch
+        ? 270 * (parentBranchIndex + 1)
+        : 230 * (i + 1);
+
+      return {
+        ...n,
+        position: {
+          x: n.position.y + xPositionIncrement,
+          y: n.position.x,
+        },
+      };
+    }),
+  };
 }
 
 function buildChildrenGraph(

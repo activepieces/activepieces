@@ -5,8 +5,8 @@ const StepPlaceHolder = React.memo(() => {
   return (
     <>
       <div className="h-[5px] w-[260px] "></div>
-      <Handle type="source" style={{ opacity: 0 }} position={Position.Bottom} />
-      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="source" style={{ opacity: 0 }} position={Position.Right} />
+      <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
     </>
   );
 });
