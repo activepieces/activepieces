@@ -2,7 +2,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
-import { Package } from 'lucide-react';
+import { BetweenHorizontalEnd, Package } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -22,9 +22,11 @@ type CodeEditorProps = {
   sourceCode: SourceCode;
   onChange: (sourceCode: SourceCode) => void;
   readonly: boolean;
+  skipLineNumbers?: boolean;
+  applyButton?: boolean;
 };
 
-const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
+const CodeEditior = ({ sourceCode, readonly, onChange, skipLineNumbers = false, applyButton = false }: CodeEditorProps) => {
   const { code, packageJson } = sourceCode;
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
   const [language, setLanguage] = useState<'typescript' | 'json'>('typescript');
@@ -80,27 +82,45 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
           </div>
         </div>
         <div className="flex flex-grow"></div>
-        <AddNpmDialog onAdd={handleAddPackages}>
-          <Button
-            variant="outline"
-            className="flex gap-2"
-            size={'sm'}
-            onClick={() => {}}
-          >
-            <Package className="w-3 h-3" />
-            Add
-          </Button>
-        </AddNpmDialog>
+        {applyButton && (
+          <>
+            <Button
+              variant="outline"
+              className="flex gap-2"
+              size={'sm'}
+              onClick={() => { }}
+            >
+              <BetweenHorizontalEnd className="w-3 h-3" />
+              Apply
+            </Button>
+          </>)}
+
+        {applyButton === false && (
+          <>
+            <AddNpmDialog onAdd={handleAddPackages}>
+              <Button
+                variant="outline"
+                className="flex gap-2"
+                size={'sm'}
+                onClick={() => { }}
+              >
+                <Package className="w-3 h-3" />
+                Add
+              </Button>
+            </AddNpmDialog>
+          </>
+        )}
+
       </div>
       <CodeMirror
         value={activeTab === 'code' ? code : packageJson}
-        className="border-none"
+        className="border-none h-full"
         height="250px"
         width="100%"
         maxWidth="100%"
         basicSetup={{
           foldGutter: false,
-          lineNumbers: true,
+          lineNumbers: (skipLineNumbers ? false : true),
           searchKeymap: false,
           lintKeymap: true,
           autocompletion: true,

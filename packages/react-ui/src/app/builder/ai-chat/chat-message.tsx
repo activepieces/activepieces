@@ -13,7 +13,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, userType }) =
         code: message,
         packageJson: ''
     };
-    
+
     return (
         <div className={`flex ${userType === 'user' ? 'justify-end' : 'justify-start'} m-4`}>
             {userType === 'bot' && (
@@ -22,7 +22,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, userType }) =
                         <Bot className="w-5 h-5 text-gray-500" />
                     </div>
                     <div className={`w-full pl-7 pr-7 mb-6`}>
-                        <CodeEditior sourceCode={sourceCode} readonly={true} onChange={() => {}}></CodeEditior>
+                        <CodeEditior sourceCode={sourceCode} readonly={true} onChange={() => { }} skipLineNumbers={true} applyButton={true}></CodeEditior>
                     </div>
                 </>
             )}
