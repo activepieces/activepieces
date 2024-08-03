@@ -10,20 +10,29 @@ import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
-import { FlowOperationType, StepLocationRelativeToParent, flowHelper } from '@activepieces/shared';
+import {
+  FlowOperationType,
+  StepLocationRelativeToParent,
+  flowHelper,
+} from '@activepieces/shared';
 
 import { ApNode } from '../flow-canvas-utils';
 
 const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { toast } = useToast();
-  const [selectStep, setAllowCanvasPanning, isSelected, isDragging, clickOnNewNodeButton] =
-    useBuilderStateContext((state) => [
-      state.selectStep,
-      state.setAllowCanvasPanning,
-      state.selectedStep?.stepName === data.step?.name,
-      state.activeDraggingStep === data.step?.name,
-      state.clickOnNewNodeButton,
-    ]);
+  const [
+    selectStep,
+    setAllowCanvasPanning,
+    isSelected,
+    isDragging,
+    clickOnNewNodeButton,
+  ] = useBuilderStateContext((state) => [
+    state.selectStep,
+    state.setAllowCanvasPanning,
+    state.selectedStep?.stepName === data.step?.name,
+    state.activeDraggingStep === data.step?.name,
+    state.clickOnNewNodeButton,
+  ]);
   const deleteStep = useBuilderStateContext((state) => () => {
     state.applyOperation(
       {
@@ -61,6 +70,8 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   const isTrigger = flowHelper.isTrigger(data.step!.type);
   const isAction = flowHelper.isAction(data.step!.type);
+
+  const stepName = data?.step?.name;
 
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: data.step!.name,
@@ -129,7 +140,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 )}
               >
                 <div className="flex flex-col gap-2 items-center justify-center mr-4 h-full">
-                  {isTrigger && (
+                  {isTrigger && stepName && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -137,7 +148,11 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                           size="icon"
                           className="rounded-full"
                           onClick={(e) => {
-                            clickOnNewNodeButton('trigger', data.step?.name!, StepLocationRelativeToParent.AFTER);
+                            clickOnNewNodeButton(
+                              'trigger',
+                              stepName,
+                              StepLocationRelativeToParent.AFTER,
+                            );
                             e.stopPropagation();
                           }}
                         >

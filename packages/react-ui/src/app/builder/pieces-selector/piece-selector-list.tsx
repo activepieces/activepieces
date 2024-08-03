@@ -1,29 +1,51 @@
+import { useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
-import {
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SidebarHeader } from '@/app/builder/sidebar-header';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { PieceStepMetadata, StepMetadata, piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
-import { Action, ActionType, CodeAction, FlowOperationType, PieceAction, Trigger, TriggerType, deepMergeAndCast, flowHelper, isNil } from '@activepieces/shared';
 import { UNSAVED_CHANGES_TOAST, toast } from '@/components/ui/use-toast';
-import { useEffect } from 'react';
-import { pieceSelectorUtils } from './piece-selector-utils';
+import {
+  PieceStepMetadata,
+  StepMetadata,
+  piecesHooks,
+} from '@/features/pieces/lib/pieces-hook';
+import {
+  Action,
+  ActionType,
+  FlowOperationType,
+  Trigger,
+  TriggerType,
+  flowHelper,
+  isNil,
+} from '@activepieces/shared';
 
+import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
+
+import { pieceSelectorUtils } from './piece-selector-utils';
 
 const PiecesSelectorList = () => {
   const [searchQuery, setSearchQuery] = useDebounce<string>('', 300);
 
-  const [exitPieceSelector, applyOperation, selectedButton, flowVersion, selectStep] = useBuilderStateContext(
-    (state) => [state.exitPieceSelector, state.applyOperation, state.selectedButton, state.flowVersion, state.selectStep],
-  );
+  const [
+    exitPieceSelector,
+    applyOperation,
+    selectedButton,
+    flowVersion,
+    selectStep,
+  ] = useBuilderStateContext((state) => [
+    state.exitPieceSelector,
+    state.applyOperation,
+    state.selectedButton,
+    state.flowVersion,
+    state.selectStep,
+  ]);
 
   const { metadata, isLoading, refetch } = piecesHooks.useAllStepsMetadata({
     searchQuery,
-    type: selectedButton?.type!,
+    type: selectedButton!.type!,
     enabled: !isNil(selectedButton),
   });
 
@@ -31,12 +53,11 @@ const PiecesSelectorList = () => {
     refetch();
   }, [selectedButton]);
 
-
   function getStepName(piece: StepMetadata) {
     if (piece.type === TriggerType.PIECE) {
       return 'trigger';
     }
-    const baseName = 'step_'
+    const baseName = 'step_';
     let number = 1;
     const steps = flowHelper.getAllSteps(flowVersion.trigger);
     while (steps.some((step) => step.name === `${baseName}${number}`)) {
@@ -44,7 +65,6 @@ const PiecesSelectorList = () => {
     }
     return `${baseName}${number}`;
   }
-
 
   function handleClick(piece: StepMetadata) {
     if (!selectedButton) {
@@ -54,19 +74,25 @@ const PiecesSelectorList = () => {
     const defaultStep = pieceSelectorUtils.getDefaultStep(stepName, piece);
     if (piece.type === TriggerType.PIECE) {
       console.log(defaultStep);
-      applyOperation({
-        type: FlowOperationType.UPDATE_TRIGGER,
-        request: defaultStep as Trigger,
-      }, () => toast(UNSAVED_CHANGES_TOAST));
-    } else {
-      applyOperation({
-        type: FlowOperationType.ADD_ACTION,
-        request: {
-          parentStep: selectedButton.stepname,
-          stepLocationRelativeToParent: selectedButton.relativeLocation,
-          action: defaultStep as Action,
+      applyOperation(
+        {
+          type: FlowOperationType.UPDATE_TRIGGER,
+          request: defaultStep as Trigger,
         },
-      }, () => toast(UNSAVED_CHANGES_TOAST));
+        () => toast(UNSAVED_CHANGES_TOAST),
+      );
+    } else {
+      applyOperation(
+        {
+          type: FlowOperationType.ADD_ACTION,
+          request: {
+            parentStep: selectedButton.stepname,
+            stepLocationRelativeToParent: selectedButton.relativeLocation,
+            action: defaultStep as Action,
+          },
+        },
+        () => toast(UNSAVED_CHANGES_TOAST),
+      );
     }
     // TODO pick the default path
     selectStep({
@@ -79,7 +105,8 @@ const PiecesSelectorList = () => {
     switch (stepMetadata.type) {
       case ActionType.PIECE:
       case TriggerType.PIECE: {
-        const pieceMetadata: PieceStepMetadata = stepMetadata as PieceStepMetadata;
+        const pieceMetadata: PieceStepMetadata =
+          stepMetadata as PieceStepMetadata;
         return `${stepMetadata.type}-${pieceMetadata.pieceName}-${pieceMetadata.pieceVersion}`;
       }
       default:
@@ -115,7 +142,12 @@ const PiecesSelectorList = () => {
             <div className="flex h-max flex-col gap-4">
               {metadata &&
                 metadata.map((stepMetadata) => (
-                  <PieceCardInfo piece={stepMetadata} key={toKey(stepMetadata)} interactive={true} onClick={() => handleClick(stepMetadata)} />
+                  <PieceCardInfo
+                    piece={stepMetadata}
+                    key={toKey(stepMetadata)}
+                    interactive={true}
+                    onClick={() => handleClick(stepMetadata)}
+                  />
                 ))}
             </div>
           </ScrollArea>

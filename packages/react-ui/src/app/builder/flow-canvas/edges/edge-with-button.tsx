@@ -47,8 +47,9 @@ function getEdgePath({
         x: (targetX + sourceX) / 2 - BUTTON_SIZE.width / 2,
         y: (targetYWithPlaceHolder + sourceY) / 2 - BUTTON_SIZE.height / 2,
       },
-      edgePath: `M ${sourceX} ${sourceY} v ${targetYWithPlaceHolder - sourceY
-        } ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
+      edgePath: `M ${sourceX} ${sourceY} v ${
+        targetYWithPlaceHolder - sourceY
+      } ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
     };
   }
   const FIRST_LINE_LENGTH = 55;
@@ -64,10 +65,12 @@ function getEdgePath({
       y: targetYWithPlaceHolder - FIRST_LINE_LENGTH / 2 - 10,
     },
     edgePath: `M${sourceX} ${sourceY} 
-    v${targetYWithPlaceHolder - sourceY - FIRST_LINE_LENGTH - ARC_LENGTH} ${SIGN < 0 ? ARC_LEFT_DOWN : ARC_RIGHT_DOWN
-      }
-    h${targetX - sourceX - 2 * SIGN * ARC_LENGTH} ${SIGN < 0 ? ARC_LEFT : ARC_RIGHT
-      }
+    v${targetYWithPlaceHolder - sourceY - FIRST_LINE_LENGTH - ARC_LENGTH} ${
+      SIGN < 0 ? ARC_LEFT_DOWN : ARC_RIGHT_DOWN
+    }
+    h${targetX - sourceX - 2 * SIGN * ARC_LENGTH} ${
+      SIGN < 0 ? ARC_LEFT : ARC_RIGHT
+    }
     v${FIRST_LINE_LENGTH - ARC_LENGTH}
     ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
   };
@@ -75,11 +78,12 @@ function getEdgePath({
 
 const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
   const [showButtonShadow, setShowButtonShadow] = useState(false);
-  const [activeDraggingStep, flowVersion, clickOnNewNodeButton] = useBuilderStateContext((state) => [
-    state.activeDraggingStep,
-    state.flowVersion,
-    state.clickOnNewNodeButton
-  ]);
+  const [activeDraggingStep, flowVersion, clickOnNewNodeButton] =
+    useBuilderStateContext((state) => [
+      state.activeDraggingStep,
+      state.flowVersion,
+      state.clickOnNewNodeButton,
+    ]);
   const { edgePath, buttonPosition } = getEdgePath(props);
   const { setNodeRef } = useDroppable({
     id: props.id,
@@ -93,9 +97,9 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
     isNil(parentStep) || isNil(draggedStep)
       ? false
       : flowHelper.isPartOfInnerFlow({
-        parentStep: draggedStep,
-        childName: parentStep,
-      });
+          parentStep: draggedStep,
+          childName: parentStep,
+        });
   const isDropzone = !isPartOfInnerFlow && !isNil(activeDraggingStep);
 
   useDndMonitor({
@@ -141,7 +145,13 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
         >
           <div
             className="bg-[#a6b1bf] w-4 h-4 flex items-center justify-center"
-            onClick={() => clickOnNewNodeButton('action', props.data.parentStep!, props.data.stepLocationRelativeToParent!)}
+            onClick={() =>
+              clickOnNewNodeButton(
+                'action',
+                props.data.parentStep!,
+                props.data.stepLocationRelativeToParent!,
+              )
+            }
           >
             <Plus className="w-3 h-3 text-white" />
           </div>

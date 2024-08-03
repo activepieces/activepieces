@@ -1,23 +1,27 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 type TestButtonTooltipProps = {
-    children: React.ReactNode;
-    disabled: boolean;
+  children: React.ReactNode;
+  disabled: boolean;
 };
-const TestButtonTooltip = ({
-    children,
-    disabled,
-}: TestButtonTooltipProps) => {
-    return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild className="disabled:pointer-events-auto">
-                    {children}
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{disabled ? 'Please fix inputs first' : ''}</TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-    );
+const TestButtonTooltip = ({ children, disabled }: TestButtonTooltipProps) => {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild className="disabled:pointer-events-auto">
+          {children}
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {disabled ? 'Please fix inputs first' : ''}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 };
 
 TestButtonTooltip.displayName = 'TestButtonTooltip';

@@ -1,9 +1,22 @@
-import { PieceStepMetadata, StepMetadata } from "@/features/pieces/lib/pieces-hook";
-import { Action, ActionType, BranchOperator, CodeAction, PieceAction, PieceTrigger, Trigger, TriggerType, deepMergeAndCast } from "@activepieces/shared";
+import {
+  PieceStepMetadata,
+  StepMetadata,
+} from '@/features/pieces/lib/pieces-hook';
+import {
+  Action,
+  ActionType,
+  BranchOperator,
+  CodeAction,
+  PieceAction,
+  PieceTrigger,
+  Trigger,
+  TriggerType,
+  deepMergeAndCast,
+} from '@activepieces/shared';
 
 const defaultCode = `export const code = async (inputs) => {
   return true;
-};`
+};`;
 
 export const pieceSelectorUtils = {
   getDefaultStep(stepName: string, piece: StepMetadata): Action | Trigger {
@@ -23,75 +36,99 @@ export const pieceSelectorUtils = {
       displayName: piece.displayName,
       settings: {
         inputUiInfo: {
-          customizedInputs: {}
-        }
-      }
-    }
+          customizedInputs: {},
+        },
+      },
+    };
     switch (piece.type) {
       case ActionType.CODE:
-        return deepMergeAndCast<CodeAction>({
-          type: ActionType.CODE,
-          settings: {
-            sourceCode: {
-              code: defaultCode,
-              packageJson: '{}',
+        return deepMergeAndCast<CodeAction>(
+          {
+            type: ActionType.CODE,
+            settings: {
+              sourceCode: {
+                code: defaultCode,
+                packageJson: '{}',
+              },
+              input: {},
+              inputUiInfo: {
+                customizedInputs: {},
+              },
+              errorHandlingOptions: errorHandlingOptions,
             },
-            input: {},
-            inputUiInfo: {
-              customizedInputs: {}
-            },
-            errorHandlingOptions: errorHandlingOptions,
           },
-        }, common);
+          common,
+        );
       case ActionType.LOOP_ON_ITEMS:
-        return deepMergeAndCast<Action>({
-          type: ActionType.LOOP_ON_ITEMS,
-          settings: {
-            items: '',
-            inputUiInfo: {
-              customizedInputs: {}
+        return deepMergeAndCast<Action>(
+          {
+            type: ActionType.LOOP_ON_ITEMS,
+            settings: {
+              items: '',
+              inputUiInfo: {
+                customizedInputs: {},
+              },
             },
           },
-        }, common);
+          common,
+        );
       case ActionType.BRANCH:
-        return deepMergeAndCast<Action>({
-          type: ActionType.BRANCH,
-          settings: {
-            conditions: [[{ firstValue: '', operator: BranchOperator.TEXT_CONTAINS, secondValue: '', caseSensitive: false }]],
+        return deepMergeAndCast<Action>(
+          {
+            type: ActionType.BRANCH,
+            settings: {
+              conditions: [
+                [
+                  {
+                    firstValue: '',
+                    operator: BranchOperator.TEXT_CONTAINS,
+                    secondValue: '',
+                    caseSensitive: false,
+                  },
+                ],
+              ],
+            },
           },
-        }, common);
+          common,
+        );
       case ActionType.PIECE: {
         // TODO add default values
         const pieceStepmetadta = piece as PieceStepMetadata;
-        return deepMergeAndCast<PieceAction>({
-          type: ActionType.PIECE,
-          settings: {
-            pieceName: pieceStepmetadta.pieceName,
-            pieceType: pieceStepmetadta.pieceType,
-            packageType: pieceStepmetadta.packageType,
-            actionName: undefined,
-            pieceVersion: pieceStepmetadta.pieceVersion,
-            input: {},
-            errorHandlingOptions: errorHandlingOptions,
+        return deepMergeAndCast<PieceAction>(
+          {
+            type: ActionType.PIECE,
+            settings: {
+              pieceName: pieceStepmetadta.pieceName,
+              pieceType: pieceStepmetadta.pieceType,
+              packageType: pieceStepmetadta.packageType,
+              actionName: undefined,
+              pieceVersion: pieceStepmetadta.pieceVersion,
+              input: {},
+              errorHandlingOptions: errorHandlingOptions,
+            },
           },
-        }, common)
+          common,
+        );
       }
       case TriggerType.PIECE: {
         const pieceStepmetadta = piece as PieceStepMetadata;
-        return deepMergeAndCast<PieceTrigger>({
-          type: TriggerType.PIECE,
-          settings: {
-            pieceName: pieceStepmetadta.pieceName,
-            pieceType: pieceStepmetadta.pieceType,
-            packageType: pieceStepmetadta.packageType,
-            triggerName: '',
-            pieceVersion: pieceStepmetadta.pieceVersion,
-            input: {},
+        return deepMergeAndCast<PieceTrigger>(
+          {
+            type: TriggerType.PIECE,
+            settings: {
+              pieceName: pieceStepmetadta.pieceName,
+              pieceType: pieceStepmetadta.pieceType,
+              packageType: pieceStepmetadta.packageType,
+              triggerName: '',
+              pieceVersion: pieceStepmetadta.pieceVersion,
+              input: {},
+            },
           },
-        }, common)
+          common,
+        );
       }
       default:
         throw new Error('Unsupported type: ' + piece.type);
     }
-  }
-}
+  },
+};

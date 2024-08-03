@@ -12,21 +12,27 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 
+import { ArrayProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { DictionaryProperty } from './dictionary-property';
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
 import { SelectPieceProperty } from './select-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
-import { ArrayProperty } from './array-property';
 
 type AutoFormProps = {
   props: PiecePropertyMap;
   allowDynamicValues: boolean;
   prefixValue: string;
+  markdownVariables?: Record<string, string>;
 };
 
 const AutoPropertiesFormComponent = React.memo(
-  ({ props, allowDynamicValues, prefixValue }: AutoFormProps) => {
+  ({
+    markdownVariables,
+    props,
+    allowDynamicValues,
+    prefixValue,
+  }: AutoFormProps) => {
     const form = useFormContext();
 
     return (
@@ -44,6 +50,7 @@ const AutoPropertiesFormComponent = React.memo(
                   prefixValue + '.' + key,
                   props[key],
                   allowDynamicValues,
+                  markdownVariables ?? {},
                 )
               }
             />
@@ -60,6 +67,7 @@ const selectRightComponent = (
   inputName: string,
   property: PieceProperty,
   allowDynamicValues: boolean,
+  markdownVariables: Record<string, string>,
 ) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -105,7 +113,12 @@ const selectRightComponent = (
         </AutoFormFieldWrapper>
       );
     case PropertyType.MARKDOWN:
-      return <ApMarkdown markdown={property.description} />;
+      return (
+        <ApMarkdown
+          markdown={property.description}
+          variables={markdownVariables}
+        />
+      );
     case PropertyType.STATIC_DROPDOWN:
       return (
         <AutoFormFieldWrapper

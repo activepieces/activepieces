@@ -14,6 +14,7 @@ import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
@@ -21,6 +22,26 @@ import { AppConnection, AppConnectionStatus } from '@activepieces/shared';
 import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
 
 import { NewConnectionTypeDialog } from './new-connection-type-dialog';
+
+type PieceIconWithPieceNameProps = {
+  pieceName: string;
+};
+const PieceIconWithPieceName = ({ pieceName }: PieceIconWithPieceNameProps) => {
+  const { pieceModel } = piecesHooks.usePiece({
+    name: pieceName,
+  });
+
+  return (
+    <PieceIcon
+      circle={true}
+      size={'md'}
+      border={true}
+      displayName={pieceModel?.displayName}
+      logoUrl={pieceModel?.logoUrl}
+      showTooltip={true}
+    />
+  );
+};
 
 const DeleteConnectionColumn = ({
   row,
@@ -59,12 +80,7 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
     cell: ({ row }) => {
       return (
         <div className="text-left">
-          <PieceIcon
-            circle={true}
-            size={'md'}
-            border={true}
-            pieceName={row.original.pieceName}
-          />
+          <PieceIconWithPieceName pieceName={row.original.pieceName} />
         </div>
       );
     },

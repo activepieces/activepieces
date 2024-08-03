@@ -1,11 +1,16 @@
 import { DragHandleDots2Icon } from '@radix-ui/react-icons';
 import { Plus, TrashIcon } from 'lucide-react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
-import { Input } from '@/components/ui/input';
+
 import { Button } from '@/components/ui/button';
 import { FormControl, FormField, FormItem } from '@/components/ui/form';
-import { Sortable, SortableDragHandle, SortableItem } from '@/components/ui/sortable';
+import {
+  Sortable,
+  SortableDragHandle,
+  SortableItem,
+} from '@/components/ui/sortable';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
+
 import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
 
 type ArrayPropertyProps = {

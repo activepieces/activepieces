@@ -11,7 +11,7 @@ const styleTheme = EditorView.baseTheme({
 
 type JsonEditorProps = {
   intialValue: string;
-  onChange: (sourceCode: string) => void;
+  onChange: (value: unknown) => void;
   readonly?: boolean;
 };
 
@@ -20,6 +20,17 @@ const convertToString = (value: unknown): string => {
     return value;
   }
   return JSON.stringify(value, null, 2);
+};
+
+const tryParseJson = (value: unknown): unknown => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  try {
+    return JSON.parse(value);
+  } catch (e) {
+    return value;
+  }
 };
 
 const JsonEditor = ({
@@ -54,7 +65,7 @@ const JsonEditor = ({
         lang="json"
         onChange={(value) => {
           setValue(value);
-          onChange(value);
+          onChange(tryParseJson(value));
         }}
         theme={githubLight}
         readOnly={readonly}

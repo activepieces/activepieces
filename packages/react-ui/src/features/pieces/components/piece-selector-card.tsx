@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { cn } from '@/lib/utils';
+
 import { StepMetadata } from '../lib/pieces-hook';
 
 type PieceCardInfoProps = {
@@ -13,7 +15,6 @@ const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
   interactive,
   onClick,
 }) => {
-
   return (
     <div
       onClick={onClick}

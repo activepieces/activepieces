@@ -4,7 +4,14 @@ import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
-import { Action, ActionType, PackageType, PieceType, Trigger, TriggerType } from '@activepieces/shared';
+import {
+  Action,
+  ActionType,
+  PackageType,
+  PieceType,
+  Trigger,
+  TriggerType,
+} from '@activepieces/shared';
 
 import { PRIMITIVE_STEP_METADATA, piecesApi } from './pieces-api';
 
@@ -34,7 +41,7 @@ type UseMetadataProps = {
   searchQuery?: string;
   enabled?: boolean;
   type: 'action' | 'trigger';
-}
+};
 
 type BaseStepMetadata = {
   displayName: string;
@@ -46,13 +53,13 @@ export type PieceStepMetadata = BaseStepMetadata & {
   type: ActionType.PIECE | TriggerType.PIECE;
   pieceName: string;
   pieceVersion: string;
-  packageType: PackageType,
-  pieceType: PieceType,
-}
+  packageType: PackageType;
+  pieceType: PieceType;
+};
 
 export type PrimitiveStepMetadata = BaseStepMetadata & {
   type: Omit<ActionType | TriggerType, ActionType.PIECE | TriggerType.PIECE>;
-}
+};
 
 export type StepMetadata = PieceStepMetadata | PrimitiveStepMetadata;
 
@@ -108,17 +115,27 @@ export const piecesHooks = {
     return {
       pieces: query.data,
       isLoading: query.isLoading,
-    }
+    };
   },
   useAllStepsMetadata: ({ searchQuery, type, enabled }: UseMetadataProps) => {
     const query = useQuery<StepMetadata[], Error>({
       queryKey: ['pieces-metadata', searchQuery],
       queryFn: async () => {
         const pieces = await piecesApi.list({ searchQuery });
-        const piecesMetadata = pieces.filter(piece => (type === 'action' && piece.actions > 0) || (type === 'trigger' && piece.triggers > 0)).map(piece => piecesApi.mapToMetadata(type, piece));
+        const piecesMetadata = pieces
+          .filter(
+            (piece) =>
+              (type === 'action' && piece.actions > 0) ||
+              (type === 'trigger' && piece.triggers > 0),
+          )
+          .map((piece) => piecesApi.mapToMetadata(type, piece));
         switch (type) {
           case 'action': {
-            const filtersPrimitive = [PRIMITIVE_STEP_METADATA[ActionType.CODE], PRIMITIVE_STEP_METADATA[ActionType.LOOP_ON_ITEMS], PRIMITIVE_STEP_METADATA[ActionType.BRANCH]].filter(step => passSearch(searchQuery, step));
+            const filtersPrimitive = [
+              PRIMITIVE_STEP_METADATA[ActionType.CODE],
+              PRIMITIVE_STEP_METADATA[ActionType.LOOP_ON_ITEMS],
+              PRIMITIVE_STEP_METADATA[ActionType.BRANCH],
+            ].filter((step) => passSearch(searchQuery, step));
             return [...filtersPrimitive, ...piecesMetadata];
           }
           case 'trigger':
@@ -132,7 +149,7 @@ export const piecesHooks = {
       refetch: query.refetch,
       metadata: query.data,
       isLoading: query.isLoading,
-    }
+    };
   },
 };
 function stepMetadataQueryBuilder(step: Step) {
@@ -147,9 +164,14 @@ function stepMetadataQueryBuilder(step: Step) {
   };
 }
 
-function passSearch(searchQuery: string | undefined, data: PrimitiveStepMetadata) {
+function passSearch(
+  searchQuery: string | undefined,
+  data: PrimitiveStepMetadata,
+) {
   if (!searchQuery) {
     return true;
   }
-  return JSON.stringify({ data }).toLowerCase().includes(searchQuery?.toLowerCase());
+  return JSON.stringify({ data })
+    .toLowerCase()
+    .includes(searchQuery?.toLowerCase());
 }

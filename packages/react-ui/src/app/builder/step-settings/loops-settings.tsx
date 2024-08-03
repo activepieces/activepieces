@@ -26,7 +26,7 @@ const LoopsSettings = React.memo(() => {
           <FormLabel htmlFor="email">Items</FormLabel>
           <TextInputWithMentions
             onChange={field.onChange}
-            originalValue={field.value}
+            initialValue={field.value}
             placeholder="Select an array of items"
           ></TextInputWithMentions>
         </FormItem>

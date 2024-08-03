@@ -43,7 +43,7 @@ export const PRIMITIVE_STEP_METADATA = {
     description: 'Empty Trigger',
     type: TriggerType.EMPTY,
   },
-}
+};
 
 export const piecesApi = {
   list(request: ListPiecesRequestQuery): Promise<PieceMetadataModelSummary[]> {
@@ -61,7 +61,10 @@ export const piecesApi = {
   ): Promise<T> {
     return api.post<T>(`/v1/pieces/options`, request);
   },
-  mapToMetadata(type: 'action' | 'trigger', piece: PieceMetadataModelSummary | PieceMetadataModel): StepMetadata {
+  mapToMetadata(
+    type: 'action' | 'trigger',
+    piece: PieceMetadataModelSummary | PieceMetadataModel,
+  ): StepMetadata {
     return {
       displayName: piece.displayName,
       logoUrl: piece.logoUrl,
@@ -71,7 +74,7 @@ export const piecesApi = {
       pieceName: piece.name,
       pieceVersion: piece.version,
       packageType: piece.packageType,
-    }
+    };
   },
   async getMetadata(step: Action | Trigger): Promise<StepMetadata> {
     switch (step.type) {
@@ -87,7 +90,10 @@ export const piecesApi = {
           name: pieceName,
           version: pieceVersion,
         });
-        return piecesApi.mapToMetadata(step.type === ActionType.PIECE ? 'action' : 'trigger', piece);
+        return piecesApi.mapToMetadata(
+          step.type === ActionType.PIECE ? 'action' : 'trigger',
+          piece,
+        );
       }
     }
   },

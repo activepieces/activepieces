@@ -51,8 +51,8 @@ type InsertMentionHandler = (propertyPath: string) => void;
 type SelectedButtonType = {
   stepname: string;
   type: 'action' | 'trigger';
-  relativeLocation: StepLocationRelativeToParent
-}
+  relativeLocation: StepLocationRelativeToParent;
+};
 
 export type BuilderState = {
   flow: Flow;
@@ -64,7 +64,7 @@ export type BuilderState = {
   selectedStep: StepPathWithName | null;
   activeDraggingStep: string | null;
   allowCanvasPanning: boolean;
-  selectedButton: SelectedButtonType | null
+  selectedButton: SelectedButtonType | null;
   saving: boolean;
   exitRun: () => void;
   exitStepSettings: () => void;
@@ -87,7 +87,11 @@ export type BuilderState = {
   exitPieceSelector: () => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
-  clickOnNewNodeButton: (type: 'action' | 'trigger', stepname: string, relativeLocation: StepLocationRelativeToParent) => void;
+  clickOnNewNodeButton: (
+    type: 'action' | 'trigger',
+    stepname: string,
+    relativeLocation: StepLocationRelativeToParent,
+  ) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
 };
 
@@ -111,7 +115,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     allowCanvasPanning: true,
     rightSidebar: RightSideBarType.NONE,
     selectedButton: null,
-    removeStepSelection: () => set({ selectedStep: null, rightSidebar: RightSideBarType.NONE }),
+    removeStepSelection: () =>
+      set({ selectedStep: null, rightSidebar: RightSideBarType.NONE }),
     setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
       set({
         allowCanvasPanning,
@@ -159,12 +164,16 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         selectedButton: null,
         rightSidebar: RightSideBarType.NONE,
       }),
-    clickOnNewNodeButton: (type: 'action' | 'trigger', stepname: string, relativeLocation: StepLocationRelativeToParent) =>
+    clickOnNewNodeButton: (
+      type: 'action' | 'trigger',
+      stepname: string,
+      relativeLocation: StepLocationRelativeToParent,
+    ) =>
       set({
         selectedButton: {
           stepname,
           type,
-          relativeLocation
+          relativeLocation,
         },
         rightSidebar: RightSideBarType.PIECE_SELECTOR,
       }),
