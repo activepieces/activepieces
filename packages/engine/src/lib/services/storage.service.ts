@@ -1,6 +1,6 @@
 import { URL } from 'node:url'
 import { Store, StoreScope } from '@activepieces/pieces-framework'
-import { DeleteStoreEntryRequest, FlowId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared'
+import { DeleteStoreEntryRequest, FlowId, PutStoreEntryRequest, STORE_VALUE_MAX_SIZE, StoreEntry } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { ExecutionError, FetchError, StorageError, StorageLimitError } from '../helper/execution-errors'
 
@@ -144,7 +144,7 @@ const handleResponseError = async ({ key, response }: HandleResponseErrorParams)
         return null
     }
     if (response.status === StatusCodes.REQUEST_TOO_LONG) {
-        throw new StorageLimitError(key)
+        throw new StorageLimitError(key, STORE_VALUE_MAX_SIZE)
     }
     const cause = await response.text()
     throw new StorageError(key, cause)
