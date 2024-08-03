@@ -23,7 +23,7 @@ type FlowRunCardProps = {
 
 const FlowRunCard = React.memo((params: FlowRunCardProps) => {
   const { run } = params;
-  const { Icon, varient } = flowRunUtils.getStatusIcon(run.status);
+  const { Icon, variant } = flowRunUtils.getStatusIcon(run.status);
   const [setLeftSidebar, setRun] = useBuilderStateContext((state) => [
     state.setLeftSidebar,
     state.setRun,
@@ -70,8 +70,8 @@ const FlowRunCard = React.memo((params: FlowRunCardProps) => {
         <span>
           <Icon
             className={cn('w-5 h-5', {
-              'text-success': varient === 'success',
-              'text-destructive': varient === 'error',
+              'text-success': variant === 'success',
+              'text-destructive': variant === 'error',
             })}
           />
         </span>

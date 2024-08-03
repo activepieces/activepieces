@@ -12,7 +12,7 @@ import { FlowRunStatus, StepOutputStatus } from '@activepieces/shared';
 
 export const flowRunUtils = {
   getStatusIconForStep(stepOutput: StepOutputStatus): {
-    varient: 'default' | 'success' | 'error';
+    variant: 'default' | 'success' | 'error';
     Icon:
       | typeof Timer
       | typeof CircleCheck
@@ -22,70 +22,70 @@ export const flowRunUtils = {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:
         return {
-          varient: 'default',
+          variant: 'default',
           Icon: Timer,
         };
       case StepOutputStatus.PAUSED:
         return {
-          varient: 'default',
+          variant: 'default',
           Icon: PauseCircleIcon,
         };
       case StepOutputStatus.STOPPED:
       case StepOutputStatus.SUCCEEDED:
         return {
-          varient: 'success',
+          variant: 'success',
           Icon: CircleCheck,
         };
       case StepOutputStatus.FAILED:
         return {
-          varient: 'error',
+          variant: 'error',
           Icon: CircleX,
         };
     }
   },
   getStatusIcon(status: FlowRunStatus): {
-    varient: 'default' | 'success' | 'error';
+    variant: 'default' | 'success' | 'error';
     Icon: typeof Timer | typeof Check | typeof PauseIcon | typeof X;
   } {
     switch (status) {
       case FlowRunStatus.RUNNING:
         return {
-          varient: 'default',
+          variant: 'default',
           Icon: Timer,
         };
       case FlowRunStatus.SUCCEEDED:
         return {
-          varient: 'success',
+          variant: 'success',
           Icon: Check,
         };
       case FlowRunStatus.STOPPED:
         return {
-          varient: 'success',
+          variant: 'success',
           Icon: Check,
         };
       case FlowRunStatus.FAILED:
         return {
-          varient: 'error',
+          variant: 'error',
           Icon: X,
         };
       case FlowRunStatus.PAUSED:
         return {
-          varient: 'default',
+          variant: 'default',
           Icon: PauseIcon,
         };
       case FlowRunStatus.QUOTA_EXCEEDED:
         return {
-          varient: 'error',
+          variant: 'error',
           Icon: X,
         };
       case FlowRunStatus.INTERNAL_ERROR:
         return {
-          varient: 'error',
+          variant: 'error',
           Icon: X,
         };
       case FlowRunStatus.TIMEOUT:
         return {
-          varient: 'error',
+          variant: 'error',
           Icon: X,
         };
     }

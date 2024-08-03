@@ -22,7 +22,7 @@ const statusText = {
   [StepOutputStatus.FAILED]: 'Step Failed',
 };
 const StepStatusIcon = React.memo(({ status, size }: StepStatusIconProps) => {
-  const { varient, Icon } = flowRunUtils.getStatusIconForStep(status);
+  const { variant, Icon } = flowRunUtils.getStatusIconForStep(status);
 
   return (
     <Tooltip>
@@ -35,9 +35,9 @@ const StepStatusIcon = React.memo(({ status, size }: StepStatusIconProps) => {
             'h-4': size === '4',
             'w-5': size === '5',
             'h-5': size === '5',
-            'text-success': varient === 'success',
-            'text-destructive': varient === 'error',
-            'text-foreground': varient === 'default',
+            'text-success': variant === 'success',
+            'text-destructive': variant === 'error',
+            'text-foreground': variant === 'default',
           })}
         ></Icon>
       </TooltipTrigger>

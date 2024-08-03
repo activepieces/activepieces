@@ -144,7 +144,7 @@ const selectRightComponent = (
           allowDynamicValues={allowDynamicValues}
         >
           <JsonEditor
-            intialValue={field.value}
+            initial={field.value}
             onChange={field.onChange}
           ></JsonEditor>
         </AutoFormFieldWrapper>
@@ -176,7 +176,7 @@ const selectRightComponent = (
         >
           <SelectPieceProperty
             refreshers={property.refreshers}
-            intialValue={field.value}
+            initial={field.value}
             onChange={field.onChange}
             propertyName={key}
           ></SelectPieceProperty>

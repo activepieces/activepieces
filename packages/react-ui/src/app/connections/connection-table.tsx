@@ -101,13 +101,13 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
     ),
     cell: ({ row }) => {
       const status = row.original.status;
-      const { varient, icon: Icon } = appConnectionUtils.getStatusIcon(status);
+      const { variant, icon: Icon } = appConnectionUtils.getStatusIcon(status);
       return (
         <div className="text-left">
           <StatusIconWithText
             icon={Icon}
             text={formatUtils.convertEnumToHumanReadable(status)}
-            variant={varient}
+            variant={variant}
           />
         </div>
       );

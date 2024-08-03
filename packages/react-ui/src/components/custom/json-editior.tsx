@@ -10,7 +10,7 @@ const styleTheme = EditorView.baseTheme({
 });
 
 type JsonEditorProps = {
-  intialValue: string;
+  initial: string;
   onChange: (value: unknown) => void;
   readonly?: boolean;
 };
@@ -34,7 +34,7 @@ const tryParseJson = (value: unknown): unknown => {
 };
 
 const JsonEditor = ({
-  intialValue,
+  initial,
   onChange,
   readonly = false,
 }: JsonEditorProps) => {
@@ -45,7 +45,7 @@ const JsonEditor = ({
     json(),
   ];
 
-  const [value, setValue] = useState(convertToString(intialValue));
+  const [value, setValue] = useState(convertToString(initial));
 
   return (
     <div className="flex flex-col gap-2 border rounded py-2 px-2">
