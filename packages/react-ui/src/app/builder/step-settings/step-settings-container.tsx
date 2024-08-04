@@ -1,9 +1,8 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Value } from '@sinclair/typebox/value';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useUpdateEffect } from 'react-use';
-
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Form } from '@/components/ui/form';
 import {
@@ -22,23 +21,23 @@ import {
   TriggerType,
   debounce,
 } from '@activepieces/shared';
-
 import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
 import { TestStepContainer } from '../test-step/test-step-container';
-
 import { BranchSettings } from './branch-settings/branch-settings';
 import { CodeSettings } from './code-settings/code-settings';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings/piece-settings';
+import { PieceMetadataModel } from '../../../../../pieces/community/framework/src';
 
 type StepSettingsContainerProps = {
   selectedStep: Action | Trigger;
+  pieceModel: PieceMetadataModel | undefined;
 };
 const StepSettingsContainer = React.memo(
-  ({ selectedStep }: StepSettingsContainerProps) => {
+  ({ selectedStep, pieceModel }: StepSettingsContainerProps) => {
     const [readonly, exitStepSettings, applyOperation, saving, flowVersion] =
       useBuilderStateContext((state) => [
         state.readonly,
@@ -48,18 +47,11 @@ const StepSettingsContainer = React.memo(
         state.flowVersion,
       ]);
 
-    const { pieceModel } = piecesHooks.usePiece({
-      name: selectedStep?.settings.pieceName,
-      version: selectedStep?.settings.pieceVersion,
-      enabled:
-        selectedStep?.type === ActionType.PIECE ||
-        selectedStep?.type === TriggerType.PIECE,
-    });
 
     const [actionOrTriggerName, setActionOrTriggerName] = useState<string>(
       selectedStep?.settings?.actionName ??
-        selectedStep?.settings?.triggerName ??
-        '',
+      selectedStep?.settings?.triggerName ??
+      '',
     );
 
     const { stepMetadata } = piecesHooks.useStepMetadata({
@@ -80,6 +72,7 @@ const StepSettingsContainer = React.memo(
       };
       return debounce(updateTrigger, 200);
     }, [applyOperation]);
+
     const debouncedAction = useMemo(() => {
       const updateAction = (newAction: Action) => {
         applyOperation(
@@ -94,50 +87,24 @@ const StepSettingsContainer = React.memo(
       return debounce(updateAction, 200);
     }, [applyOperation]);
 
+
+    const defaultValues = formUtils.buildPieceDefaultValue(
+      selectedStep,
+      pieceModel!,
+    );
+
+    const formSchema = formUtils.buildPieceSchema(
+      selectedStep.type,
+      actionOrTriggerName,
+      pieceModel ?? null,
+    );
+
     const form = useForm<Action | Trigger>({
-      mode: 'all',
+      mode: 'onChange',
       reValidateMode: 'onChange',
-      context: {
-        pieceModel,
-        selectedStep,
-        actionOrTriggerName,
-      },
-      resolver: (values, context, options) => {
-        const formSchema = formUtils.buildPieceSchema(
-          context.selectedStep.type,
-          context.actionOrTriggerName,
-          context.pieceModel,
-        );
-        return typeboxResolver(formSchema)(values, context, options);
-      },
+      defaultValues,
+      resolver: typeboxResolver(formSchema),
     });
-
-    const hasExecuted = useRef(false);
-
-    useEffect(() => {
-      if (hasExecuted.current || !selectedStep) {
-        return;
-      }
-
-      if (
-        !pieceModel &&
-        (selectedStep.type === ActionType.PIECE ||
-          selectedStep.type === TriggerType.PIECE)
-      ) {
-        return;
-      }
-
-      hasExecuted.current = true;
-      const defaultValues = formUtils.buildPieceDefaultValue(
-        selectedStep,
-        pieceModel ?? null,
-      );
-      form.reset(defaultValues);
-      form.trigger();
-      // TODO workaround to validate code action, I don't understand why it's not validating.
-      const _formValid = form.formState.isValid;
-      console.log('fix me', _formValid);
-    }, [selectedStep, pieceModel]);
 
     const inputChanges = useWatch({
       name: 'settings.input',
@@ -168,8 +135,8 @@ const StepSettingsContainer = React.memo(
       const currentStep = JSON.parse(JSON.stringify(form.getValues()));
       setActionOrTriggerName(
         currentStep.settings.actionName ??
-          currentStep.settings.triggerName ??
-          '',
+        currentStep.settings.triggerName ??
+        '',
       );
       const newValue = formUtils.buildPieceDefaultValue(
         currentStep,
@@ -242,17 +209,17 @@ const StepSettingsContainer = React.memo(
                   {[ActionType.CODE, ActionType.PIECE].includes(
                     modifiedStep.type as ActionType,
                   ) && (
-                    <ActionErrorHandlingForm
-                      hideContinueOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.continueOnFailure?.hide
-                      }
-                      hideRetryOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.retryOnFailure?.hide
-                      }
-                    ></ActionErrorHandlingForm>
-                  )}
+                      <ActionErrorHandlingForm
+                        hideContinueOnFailure={
+                          modifiedStep.settings.errorHandlingOptions
+                            ?.continueOnFailure?.hide
+                        }
+                        hideRetryOnFailure={
+                          modifiedStep.settings.errorHandlingOptions
+                            ?.retryOnFailure?.hide
+                        }
+                      ></ActionErrorHandlingForm>
+                    )}
                 </div>
               </ScrollArea>
             </ResizablePanel>

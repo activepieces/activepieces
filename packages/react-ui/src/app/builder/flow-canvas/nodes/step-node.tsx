@@ -83,7 +83,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     <div
       className={cn('h-[70px] w-[260px] transition-all', {
         'border-primary': toolbarOpen || isSelected,
-        'rounded bg-background border border-solid box-border': !isDragging,
+        'bg-background border border-solid box-border': !isDragging,
       })}
       onClick={() => handleClick()}
       onMouseEnter={() => {
