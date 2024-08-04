@@ -33,6 +33,9 @@ const AutoFormFieldWrapper = ({
     form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyKey];
 
   function handleChange(pressed: boolean) {
+    form.setValue(`settings.input.${propertyKey}` as const, '', {
+      shouldValidate: true,
+    });
     form.setValue(
       `settings.inputUiInfo.customizedInputs.${propertyKey}` as const,
       pressed,

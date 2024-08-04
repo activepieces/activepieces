@@ -4,7 +4,6 @@ import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 import { JsonEditor } from '@/components/custom/json-editior';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { ArrayInput } from '@/components/ui/array-input';
 import { FormControl, FormField } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -13,6 +12,7 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 
+import { ArrayProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { DictionaryProperty } from './dictionary-property';
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
@@ -23,10 +23,16 @@ type AutoFormProps = {
   props: PiecePropertyMap;
   allowDynamicValues: boolean;
   prefixValue: string;
+  markdownVariables?: Record<string, string>;
 };
 
 const AutoPropertiesFormComponent = React.memo(
-  ({ props, allowDynamicValues, prefixValue }: AutoFormProps) => {
+  ({
+    markdownVariables,
+    props,
+    allowDynamicValues,
+    prefixValue,
+  }: AutoFormProps) => {
     const form = useFormContext();
 
     return (
@@ -44,6 +50,7 @@ const AutoPropertiesFormComponent = React.memo(
                   prefixValue + '.' + key,
                   props[key],
                   allowDynamicValues,
+                  markdownVariables ?? {},
                 )
               }
             />
@@ -60,6 +67,7 @@ const selectRightComponent = (
   inputName: string,
   property: PieceProperty,
   allowDynamicValues: boolean,
+  markdownVariables: Record<string, string>,
 ) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -70,7 +78,7 @@ const selectRightComponent = (
           field={field}
           allowDynamicValues={allowDynamicValues}
         >
-          <ArrayInput inputName={inputName}></ArrayInput>
+          <ArrayProperty inputName={inputName}></ArrayProperty>
         </AutoFormFieldWrapper>
       );
     case PropertyType.OBJECT:
@@ -105,7 +113,12 @@ const selectRightComponent = (
         </AutoFormFieldWrapper>
       );
     case PropertyType.MARKDOWN:
-      return <ApMarkdown markdown={property.description} />;
+      return (
+        <ApMarkdown
+          markdown={property.description}
+          variables={markdownVariables}
+        />
+      );
     case PropertyType.STATIC_DROPDOWN:
       return (
         <AutoFormFieldWrapper
@@ -131,7 +144,7 @@ const selectRightComponent = (
           allowDynamicValues={allowDynamicValues}
         >
           <JsonEditor
-            intialValue={field.value}
+            initial={field.value}
             onChange={field.onChange}
           ></JsonEditor>
         </AutoFormFieldWrapper>
@@ -163,7 +176,7 @@ const selectRightComponent = (
         >
           <SelectPieceProperty
             refreshers={property.refreshers}
-            intialValue={field.value}
+            initial={field.value}
             onChange={field.onChange}
             propertyName={key}
           ></SelectPieceProperty>
@@ -175,7 +188,6 @@ const selectRightComponent = (
     case PropertyType.FILE:
     case PropertyType.NUMBER:
     case PropertyType.MULTI_SELECT_DROPDOWN:
-    case PropertyType.DYNAMIC:
     case PropertyType.SECRET_TEXT:
       return (
         <AutoFormFieldWrapper
@@ -190,7 +202,7 @@ const selectRightComponent = (
           ></TextInputWithMentions>
         </AutoFormFieldWrapper>
       );
-
+    case PropertyType.DYNAMIC:
     case PropertyType.CUSTOM_AUTH:
     case PropertyType.BASIC_AUTH:
     case PropertyType.OAUTH2:

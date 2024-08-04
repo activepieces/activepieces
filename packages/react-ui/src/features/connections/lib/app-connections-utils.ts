@@ -8,18 +8,18 @@ export const appConnectionUtils = {
     return split[split.length - 1].replaceAll('piece-', '');
   },
   getStatusIcon(status: AppConnectionStatus): {
-    varient: 'default' | 'success' | 'error';
+    variant: 'default' | 'success' | 'error';
     icon: React.ComponentType;
   } {
     switch (status) {
       case AppConnectionStatus.ACTIVE:
         return {
-          varient: 'success',
+          variant: 'success',
           icon: CheckCircledIcon,
         };
       case AppConnectionStatus.ERROR:
         return {
-          varient: 'error',
+          variant: 'error',
           icon: CrossCircledIcon,
         };
     }

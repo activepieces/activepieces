@@ -1,6 +1,7 @@
 import { VariantProps, cva } from 'class-variance-authority';
 import React from 'react';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -25,8 +26,8 @@ const pieceIconVariants = cva('flex items-center justify-center  ', {
 });
 
 interface PieceIconCircleProps extends VariantProps<typeof pieceIconVariants> {
-  displayName: string;
-  logoUrl: string;
+  displayName?: string;
+  logoUrl?: string;
   showTooltip: boolean;
 }
 
@@ -43,7 +44,11 @@ const PieceIcon = React.memo(
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={pieceIconVariants({ border, size, circle })}>
-            <img src={logoUrl} className="object-contain" alt={displayName} />
+            {logoUrl ? (
+              <img src={logoUrl} className="object-contain" alt={displayName} />
+            ) : (
+              <Skeleton className="rounded-full w-full h-full" />
+            )}
           </div>
         </TooltipTrigger>
         {showTooltip ? (

@@ -1,10 +1,13 @@
+import { useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 import {
   ActionType,
+  ApFlagId,
   PieceAction,
   PieceTrigger,
   TriggerType,
@@ -17,6 +20,7 @@ import { PieceActionTriggerSelector } from './piece-action-trigger-selector';
 
 type PieceSettingsProps = {
   step: PieceAction | PieceTrigger;
+  flowId: string;
 };
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
@@ -74,6 +78,16 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     selectedTrigger?.props ?? {},
   );
 
+  const queryClient = useQueryClient();
+  const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.WEBHOOK_URL_PREFIX,
+    queryClient,
+  );
+
+  const markdownVariables = {
+    webhookUrl: `${webhookPrefixUrl}/${props.flowId}`,
+  };
+
   return (
     <div className="flex flex-col gap-4 w-full">
       {pieceModel && (
@@ -95,6 +109,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               prefixValue="settings.input"
               props={actionPropsWithoutAuth}
               allowDynamicValues={true}
+              markdownVariables={markdownVariables}
             ></AutoPropertiesFormComponent>
           )}
           {selectedTrigger && (
@@ -103,6 +118,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               prefixValue="settings.input"
               props={triggerPropsWithoutAuth}
               allowDynamicValues={true}
+              markdownVariables={markdownVariables}
             ></AutoPropertiesFormComponent>
           )}
         </>

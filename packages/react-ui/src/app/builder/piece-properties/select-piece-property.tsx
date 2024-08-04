@@ -11,7 +11,7 @@ import { Action, Trigger } from '@activepieces/shared';
 type SelectPiecePropertyProps = {
   refreshers: string[];
   propertyName: string;
-  intialValue: React.Key;
+  initial: React.Key;
   onChange: (value: unknown | undefined) => void;
 };
 const SelectPieceProperty = React.memo((props: SelectPiecePropertyProps) => {
@@ -85,7 +85,7 @@ const SelectPieceProperty = React.memo((props: SelectPiecePropertyProps) => {
       disabled={dropdownState.disabled}
       loading={loading}
       placeholder={dropdownState.placeholder ?? 'Select a option'}
-      value={props.intialValue}
+      value={props.initial}
       onChange={(value) => props.onChange(value)}
     />
   );

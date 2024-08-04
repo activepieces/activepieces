@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Value } from '@sinclair/typebox/value';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useUpdateEffect } from 'react-use';
 
@@ -13,9 +13,8 @@ import {
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
-import { PieceCardInfo } from '@/features/pieces/components/piece-card-info';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { formatUtils } from '@/lib/utils';
+import { PieceMetadataModel } from '@activepieces/pieces-framework';
 import {
   Action,
   ActionType,
@@ -23,13 +22,13 @@ import {
   Trigger,
   TriggerType,
   debounce,
-  flowHelper,
 } from '@activepieces/shared';
 
+import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
-import { TestActionComponent } from '../test-step/test-action';
+import { TestStepContainer } from '../test-step/test-step-container';
 
 import { BranchSettings } from './branch-settings/branch-settings';
 import { CodeSettings } from './code-settings/code-settings';
@@ -38,9 +37,10 @@ import { PieceSettings } from './piece-settings/piece-settings';
 
 type StepSettingsContainerProps = {
   selectedStep: Action | Trigger;
+  pieceModel: PieceMetadataModel | undefined;
 };
 const StepSettingsContainer = React.memo(
-  ({ selectedStep }: StepSettingsContainerProps) => {
+  ({ selectedStep, pieceModel }: StepSettingsContainerProps) => {
     const [readonly, exitStepSettings, applyOperation, saving, flowVersion] =
       useBuilderStateContext((state) => [
         state.readonly,
@@ -49,14 +49,6 @@ const StepSettingsContainer = React.memo(
         state.saving,
         state.flowVersion,
       ]);
-
-    const { pieceModel } = piecesHooks.usePiece({
-      name: selectedStep?.settings.pieceName,
-      version: selectedStep?.settings.pieceVersion,
-      enabled:
-        selectedStep?.type === ActionType.PIECE ||
-        selectedStep?.type === TriggerType.PIECE,
-    });
 
     const [actionOrTriggerName, setActionOrTriggerName] = useState<string>(
       selectedStep?.settings?.actionName ??
@@ -82,6 +74,7 @@ const StepSettingsContainer = React.memo(
       };
       return debounce(updateTrigger, 200);
     }, [applyOperation]);
+
     const debouncedAction = useMemo(() => {
       const updateAction = (newAction: Action) => {
         applyOperation(
@@ -96,44 +89,23 @@ const StepSettingsContainer = React.memo(
       return debounce(updateAction, 200);
     }, [applyOperation]);
 
+    const defaultValues = formUtils.buildPieceDefaultValue(
+      selectedStep,
+      pieceModel!,
+    );
+
+    const formSchema = formUtils.buildPieceSchema(
+      selectedStep.type,
+      actionOrTriggerName,
+      pieceModel ?? null,
+    );
+
     const form = useForm<Action | Trigger>({
-      mode: 'all',
-      context: {
-        pieceModel,
-        selectedStep,
-        actionOrTriggerName,
-      },
-      resolver: (values, context, options) => {
-        const formSchema = formatUtils.buildPieceSchema(
-          context.selectedStep.type,
-          context.actionOrTriggerName,
-          context.pieceModel,
-        );
-        return typeboxResolver(formSchema)(values, context, options);
-      },
+      mode: 'onChange',
+      reValidateMode: 'onChange',
+      defaultValues,
+      resolver: typeboxResolver(formSchema),
     });
-
-    const hasExecuted = useRef(false);
-
-    useEffect(() => {
-      if (hasExecuted.current || !selectedStep) {
-        return;
-      }
-      if (
-        !pieceModel &&
-        (selectedStep.type === ActionType.PIECE ||
-          selectedStep.type === TriggerType.PIECE)
-      ) {
-        return;
-      }
-      hasExecuted.current = true;
-      const defaultValues = formUtils.buildPieceDefaultValue(
-        selectedStep,
-        pieceModel ?? null,
-      );
-      form.reset(defaultValues);
-      form.trigger();
-    }, [selectedStep, pieceModel]);
 
     const inputChanges = useWatch({
       name: 'settings.input',
@@ -209,7 +181,10 @@ const StepSettingsContainer = React.memo(
               <ScrollArea className="h-full ">
                 <div className="flex flex-col gap-4 px-4">
                   {stepMetadata && (
-                    <PieceCardInfo piece={stepMetadata}></PieceCardInfo>
+                    <PieceCardInfo
+                      piece={stepMetadata}
+                      interactive={false}
+                    ></PieceCardInfo>
                   )}
                   {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
                     <LoopsSettings></LoopsSettings>
@@ -221,10 +196,16 @@ const StepSettingsContainer = React.memo(
                     <BranchSettings></BranchSettings>
                   )}
                   {modifiedStep.type === ActionType.PIECE && modifiedStep && (
-                    <PieceSettings step={modifiedStep}></PieceSettings>
+                    <PieceSettings
+                      step={modifiedStep}
+                      flowId={flowVersion.flowId}
+                    ></PieceSettings>
                   )}
                   {modifiedStep.type === TriggerType.PIECE && modifiedStep && (
-                    <PieceSettings step={modifiedStep}></PieceSettings>
+                    <PieceSettings
+                      step={modifiedStep}
+                      flowId={flowVersion.flowId}
+                    ></PieceSettings>
                   )}
                   {[ActionType.CODE, ActionType.PIECE].includes(
                     modifiedStep.type as ActionType,
@@ -249,11 +230,13 @@ const StepSettingsContainer = React.memo(
                 <ResizablePanel defaultSize={45}>
                   <ScrollArea className="h-full">
                     <div className="p-4 flex flex-col gap-4 h-full">
-                      {flowHelper.isAction(modifiedStep.type) && (
-                        <TestActionComponent
+                      {modifiedStep.type && (
+                        <TestStepContainer
+                          type={modifiedStep.type}
+                          flowId={flowVersion.flowId}
                           flowVersionId={flowVersion.id}
                           isSaving={saving}
-                        ></TestActionComponent>
+                        ></TestStepContainer>
                       )}
                     </div>
                   </ScrollArea>

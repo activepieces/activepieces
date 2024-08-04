@@ -54,8 +54,16 @@ export const api = {
         });
       },
     }),
-  delete: <TResponse>(url: string) =>
-    request<TResponse>(url, { method: 'DELETE' }),
+  delete: <TResponse>(url: string, query: Record<string, string>) =>
+    request<TResponse>(url, {
+      method: 'DELETE',
+      params: query,
+      paramsSerializer: (params) => {
+        return qs.stringify(params, {
+          arrayFormat: 'repeat',
+        });
+      },
+    }),
   post: <TResponse, TBody = unknown>(url: string, body?: TBody) =>
     request<TResponse>(url, {
       method: 'POST',

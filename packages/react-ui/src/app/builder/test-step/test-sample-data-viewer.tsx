@@ -1,0 +1,82 @@
+import React from 'react';
+
+import { JsonViewer } from '@/components/json-viewer';
+import { Button } from '@/components/ui/button';
+import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
+import { formatUtils } from '@/lib/utils';
+import { StepOutputStatus } from '@activepieces/shared';
+
+import { TestButtonTooltip } from './test-step-tooltip';
+
+type TestSampleDataViewerProps = {
+  onRetest: () => void;
+  isValid: boolean;
+  isSaving: boolean;
+  isTesting: boolean;
+  currentSelectedData: unknown;
+  errorMessage: string | undefined;
+  lastTestDate: string | undefined;
+};
+
+const TestSampleDataViewer = React.memo(
+  ({
+    onRetest,
+    isValid,
+    isSaving,
+    isTesting,
+    currentSelectedData,
+    errorMessage,
+    lastTestDate,
+  }: TestSampleDataViewerProps) => {
+    return (
+      <div className="flex-grow flex flex-col w-full text-start gap-4">
+        <div className="flex justify-center items-center">
+          <div className="flex flex-col flex-grow gap-2">
+            <div className="text-md flex gap-2 justyf-center items-center">
+              {errorMessage ? (
+                <>
+                  <StepStatusIcon
+                    status={StepOutputStatus.FAILED}
+                    size="5"
+                  ></StepStatusIcon>
+                  <span>Testing Failed</span>
+                </>
+              ) : (
+                <>
+                  <StepStatusIcon
+                    status={StepOutputStatus.SUCCEEDED}
+                    size="5"
+                  ></StepStatusIcon>
+                  <span> Tested Successfully</span>
+                </>
+              )}
+            </div>
+            <div className="text-muted-foreground text-xs">
+              {lastTestDate && formatUtils.formatDate(new Date(lastTestDate))}
+            </div>
+          </div>
+          <TestButtonTooltip disabled={!isValid}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!isValid || isSaving}
+              keyboardShortcut="G"
+              onKeyboardShortcut={onRetest}
+              onClick={onRetest}
+              loading={isTesting}
+            >
+              Retest
+            </Button>
+          </TestButtonTooltip>
+        </div>
+        <JsonViewer
+          json={errorMessage ?? currentSelectedData}
+          title="Output"
+        ></JsonViewer>
+      </div>
+    );
+  },
+);
+
+TestSampleDataViewer.displayName = 'TestSampleDataViewer';
+export { TestSampleDataViewer };
