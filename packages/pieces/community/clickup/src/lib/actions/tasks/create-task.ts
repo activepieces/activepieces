@@ -30,6 +30,11 @@ export const createClickupTask = createAction({
       displayName: 'Task Description',
       required: true,
     }),
+    markdown_description: Property.LongText({
+      description: 'The description of the task to create (in markdown)',
+      displayName: 'Task Description (Markdown)',
+      required: false,
+    }),
   },
   async run(configValue) {
     const { list_id, name, description, status_id, priority_id, assignee_id } =
