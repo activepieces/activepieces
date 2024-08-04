@@ -28,7 +28,7 @@ export const createClickupTask = createAction({
     description: Property.LongText({
       description: 'The description of the task to create',
       displayName: 'Task Description',
-      required: true,
+      required: false,
     }),
     markdown_description: Property.LongText({
       description: 'The description of the task to create (in markdown)',
