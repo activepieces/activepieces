@@ -14,6 +14,7 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { ActionType, TriggerType, flowHelper } from '@activepieces/shared';
 
 import { cn } from '../../lib/utils';
@@ -24,7 +25,6 @@ import { PiecesSelectorList } from './pieces-selector/piece-selector-list';
 import { FlowRunDetails } from './run-details/flow-run-details-list';
 import { FlowRecentRunsList } from './run-list/flow-runs-list';
 import { StepSettingsContainer } from './step-settings/step-settings-container';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -78,8 +78,8 @@ const BuilderPage = () => {
     name: memorizedSelectedStep?.settings.pieceName,
     version: memorizedSelectedStep?.settings.pieceVersion,
     enabled:
-    memorizedSelectedStep?.type === ActionType.PIECE ||
-    memorizedSelectedStep?.type === TriggerType.PIECE,
+      memorizedSelectedStep?.type === ActionType.PIECE ||
+      memorizedSelectedStep?.type === TriggerType.PIECE,
   });
 
   useEffect(() => {
@@ -147,7 +147,8 @@ const BuilderPage = () => {
               <PiecesSelectorList />
             )}
             {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-              memorizedSelectedStep && !isPieceLoading && (
+              memorizedSelectedStep &&
+              !isPieceLoading && (
                 <StepSettingsContainer
                   key={containerKey}
                   pieceModel={pieceModel}
