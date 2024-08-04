@@ -6,11 +6,13 @@ import { BetweenHorizontalEnd, Package } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_TOAST, toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { SourceCode } from '@activepieces/shared';
+import { Action, ActionType, flowHelper, FlowOperationType, SourceCode } from '@activepieces/shared';
 
 import { AddNpmDialog } from './add-npm-dialog';
+import { useBuilderStateContext } from '../../builder-hooks';
+import { useTheme } from '@/components/theme-provider';
 
 const styleTheme = EditorView.baseTheme({
   '&.cm-editor.cm-focused': {
@@ -30,6 +32,23 @@ const CodeEditior = ({ sourceCode, readonly, onChange, skipLineNumbers = false, 
   const { code, packageJson } = sourceCode;
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
   const [language, setLanguage] = useState<'typescript' | 'json'>('typescript');
+  const [selectedStep, flowVersion, applyOperation] = useBuilderStateContext((state) => [
+    state.selectedStep,
+    state.flowVersion,
+    state.applyOperation,
+  ]);
+
+  const { theme } = useTheme();
+
+  const updateAction = (newAction: Action): void => {
+    applyOperation(
+      {
+        type: FlowOperationType.UPDATE_ACTION,
+        request: newAction,
+      },
+      () => toast(UNSAVED_CHANGES_TOAST),
+    );
+  };
 
   const extensions = [
     styleTheme,
@@ -57,6 +76,16 @@ const CodeEditior = ({ sourceCode, readonly, onChange, skipLineNumbers = false, 
     } catch (e) {
       console.error(e);
       toast(INTERNAL_ERROR_TOAST);
+    }
+  }
+
+  function handleApplyButton() {
+    if(!selectedStep) return;
+    const step = flowHelper.getStep(flowVersion, selectedStep.stepName);
+    if(!step) return;
+    if (step.type === ActionType.CODE) {
+      step.settings.sourceCode = { code, packageJson };
+      updateAction(step);
     }
   }
 
@@ -88,7 +117,7 @@ const CodeEditior = ({ sourceCode, readonly, onChange, skipLineNumbers = false, 
               variant="outline"
               className="flex gap-2"
               size={'sm'}
-              onClick={() => { }}
+              onClick={handleApplyButton}
             >
               <BetweenHorizontalEnd className="w-3 h-3" />
               Apply
@@ -133,7 +162,7 @@ const CodeEditior = ({ sourceCode, readonly, onChange, skipLineNumbers = false, 
               : { code, packageJson: value },
           );
         }}
-        theme={githubLight}
+        theme={theme === 'dark' ? 'dark' : githubLight}
         readOnly={readonly}
         extensions={extensions}
       />

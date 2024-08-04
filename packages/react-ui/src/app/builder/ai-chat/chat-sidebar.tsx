@@ -6,6 +6,14 @@ import { ChatMessage } from './chat-message';
 import { Button } from '@/components/ui/button';
 import { ArrowUp } from 'lucide-react';
 import { LeftSideBarType, useBuilderStateContext } from '../builder-hooks';
+import { GenerateCodeRequest, GenerateCodeResponse, WebsocketClientEvent, WebsocketServerEvent } from '../../../../../shared/src';
+import { nanoid } from 'nanoid';
+import { useSocket } from '@/components/socket-provider';
+import { Socket } from 'socket.io-client';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from '@/components/ui/use-toast';
+
 
 interface ChatMessageType {
     message: string;
@@ -14,14 +22,26 @@ interface ChatMessageType {
 
 const initialMessages: ChatMessageType[] = [
     {
-        message: 'Hello',
+        message: 'Hello! How can I help you today?',
         userType: 'bot'
     },
-    {
-        message: 'Hi',
-        userType: 'user'
-    },
 ];
+
+async function getCodeResponse(socket: Socket<DefaultEventsMap, DefaultEventsMap>, request: GenerateCodeRequest): Promise<GenerateCodeResponse> {
+    const id = nanoid();
+    socket.emit(WebsocketServerEvent.GENERATE_CODE, {
+        ...request,
+        id,
+    });
+    return new Promise<GenerateCodeResponse>((resolve, reject) => {
+        socket.on(WebsocketClientEvent.GENERATE_CODE_FINISHED, (response: GenerateCodeResponse) => {
+            resolve(response);
+        });
+        socket.on('error', (error: any) => {
+            reject(error);
+        });
+    });
+}
 
 export const ChatSidebar = () => {
     const [messages, setMessages] = useState<ChatMessageType[]>(initialMessages);
@@ -29,18 +49,48 @@ export const ChatSidebar = () => {
     const [setLeftSidebar] = useBuilderStateContext((state) => [
         state.setLeftSidebar,
         state.run,
-      ]);
+    ]);
+
+    const socket = useSocket();
+
+    const { isPending, mutate } = useMutation({
+        mutationFn: (request: GenerateCodeRequest) => getCodeResponse(socket, request),
+        onSuccess: (response: GenerateCodeResponse) => {
+            toast({
+                title: 'Code generated successfully',
+            });
+            const result = JSON.parse(response.result);
+            console.log(result)
+            setMessages((prevMessages) => [
+                ...prevMessages,
+                { message: result.code, userType: 'bot' },
+            ]);
+        },
+        onError: (error: any) => {
+            toast({
+                title: 'Error generating code',
+                description: error.message,
+            });
+        },
+    });
 
     const handleSendMessage = () => {
         if (inputMessage.trim() !== '') {
             setMessages([...messages, { message: inputMessage, userType: 'user' }]);
+
+            const request: GenerateCodeRequest = {
+                prompt: inputMessage,
+            };
+
+            mutate(request);
+
             setInputMessage('');
         }
     };
 
     return (
         <div className="flex flex-col h-full">
-            <SidebarHeader onClose={() => {setLeftSidebar(LeftSideBarType.NONE)}}>
+            <SidebarHeader onClose={() => { setLeftSidebar(LeftSideBarType.NONE) }}>
                 Chat
             </SidebarHeader>
             <div className="flex flex-col flex-grow overflow-hidden">
@@ -52,11 +102,11 @@ export const ChatSidebar = () => {
                         <ScrollBar />
                     </CardList>
                 </ScrollArea>
-                <div className="relative p-4 bg-white border-t">
-                    <input 
+                <div className="relative p-4 bg-white dark:bg-gray-900 border-t dark:border-gray-700">
+                    <input
                         value={inputMessage}
                         type="text"
-                        className="w-full p-2 border rounded-xl bg-gray-100 pr-12"
+                        className="w-full p-2 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12"
                         onChange={(e) => setInputMessage(e.target.value)}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
@@ -64,12 +114,13 @@ export const ChatSidebar = () => {
                             }
                         }}
                     />
-                    <button 
+                    <button
                         onClick={handleSendMessage}
-                        className="absolute right-5 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center border border-gray-300 bg-white shadow-md hover:bg-gray-100"
+                        className="absolute right-5 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md hover:bg-gray-100 dark:hover:bg-gray-600"
                         aria-label="Send"
+                        disabled={isPending}
                     >
-                        <ArrowUp className="w-5 h-5 text-gray-700" />
+                        <ArrowUp className="w-5 h-5 text-gray-700 dark:text-gray-300" />
                     </button>
                 </div>
             </div>
