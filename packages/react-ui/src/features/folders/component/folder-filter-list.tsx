@@ -1,3 +1,4 @@
+import { FolderDto } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -10,8 +11,15 @@ import {
   PlusIcon,
   Trash2,
 } from 'lucide-react';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useLocation, useSearchParams } from 'react-router-dom';
+
+import { foldersApi } from '../lib/folders-api';
+import { foldersHooks } from '../lib/folders-hooks';
+import { foldersUtils } from '../lib/folders-utils';
+
+import { RenameFolderDialog } from './rename-folder-dialog';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -40,13 +48,6 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { FolderDto } from '@activepieces/shared';
-
-import { foldersApi } from '../lib/folders-api';
-import { foldersHooks } from '../lib/folders-hooks';
-import { foldersUtils } from '../lib/folders-utils';
-
-import { RenameFolderDialog } from './rename-folder-dialog';
 
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
@@ -56,15 +57,11 @@ const CreateFolderFormSchema = Type.Object({
 
 type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>;
 
-const FolderFilterList = ({
-  refresh,
-  selectedFolderId,
-  setSelectedFolderId,
-}: {
-  refresh: number;
-  selectedFolderId: string | undefined;
-  setSelectedFolderId: Dispatch<SetStateAction<string | undefined>>;
-}) => {
+const FolderFilterList = () => {
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams(location.search);
+  const selectedFolderId = searchParams.get('folderId');
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const form = useForm<CreateFolderFormSchema>({
     resolver: typeboxResolver(CreateFolderFormSchema),
@@ -116,9 +113,15 @@ const FolderFilterList = ({
     },
   });
 
-  useEffect(() => {
-    refetch();
-  }, [refresh]);
+  const updateSearchParams = (folderId: string | undefined) => {
+    const newQueryParameters: URLSearchParams = new URLSearchParams(
+      searchParams,
+    );
+    folderId
+      ? newQueryParameters.set('folderId', folderId)
+      : newQueryParameters.delete('folderId');
+    setSearchParams(newQueryParameters);
+  };
 
   return (
     <div className="p-2">
@@ -176,7 +179,7 @@ const FolderFilterList = ({
           className={cn('flex w-full justify-start bg-background', {
             'bg-muted': !selectedFolderId,
           })}
-          onClick={() => setSelectedFolderId(undefined)}
+          onClick={() => updateSearchParams(undefined)}
         >
           <TextWithIcon icon={<Folder size={18} />} text="All flows" />
           <div className="grow"></div>
@@ -184,8 +187,10 @@ const FolderFilterList = ({
         </Button>
         <Button
           variant="ghost"
-          className={cn('w-full justify-between')}
-          onClick={() => setSelectedFolderId('NULL')}
+          className={cn('flex w-full justify-start bg-background', {
+            'bg-muted': selectedFolderId === 'NULL',
+          })}
+          onClick={() => updateSearchParams('NULL')}
         >
           <TextWithIcon icon={<Folder size={18} />} text="Uncategorized" />
           <div className="grow"></div>
@@ -215,7 +220,7 @@ const FolderFilterList = ({
                   className={cn('w-full justify-between', {
                     'bg-muted': selectedFolderId === folder.id,
                   })}
-                  onClick={() => setSelectedFolderId(folder.id)}
+                  onClick={() => updateSearchParams(folder.id)}
                 >
                   <TextWithIcon
                     icon={
