@@ -1,14 +1,10 @@
-import { FlowVersionState, Permission } from '@activepieces/shared';
 import { ChevronDown, History, Home, Logs } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-
-import { BuilderPublishButton } from './builder-publish-button';
 
 import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { Authorization } from '@/components/authorization';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -18,6 +14,9 @@ import {
 import { UserAvatar } from '@/components/ui/user-avatar';
 import FlowActionMenu from '@/features/flows/components/flow-actions-menu';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { FlowVersionState } from '@activepieces/shared';
+
+import { BuilderPublishButton } from './builder-publish-button';
 
 export const BuilderNavBar = () => {
   const navigate = useNavigate();
@@ -98,12 +97,7 @@ export const BuilderNavBar = () => {
           <TooltipContent side="bottom">Run Logs</TooltipContent>
         </Tooltip>
 
-        <Authorization
-          permission={Permission.UPDATE_FLOW_STATUS}
-          forbiddenFallback={<BuilderPublishButton isDisabled={true} />}
-        >
-          <BuilderPublishButton></BuilderPublishButton>
-        </Authorization>
+        <BuilderPublishButton></BuilderPublishButton>
         <UserAvatar></UserAvatar>
       </div>
     </div>

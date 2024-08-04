@@ -1,14 +1,14 @@
-import { rolePermissions } from '@activepieces/ee-shared';
-import { Permission } from '@activepieces/shared';
 import React from 'react';
 
 import { authenticationSession } from '@/lib/authentication-session';
+import { rolePermissions } from '@activepieces/ee-shared';
+import { Permission } from '@activepieces/shared';
 
-const useAuthorization = () => {
+export const useAuthorization = () => {
   const role = authenticationSession.getUserProjectRole();
 
   const checkAccess = React.useCallback(
-    ({ permission }: { permission: Permission }) => {
+    (permission: Permission) => {
       if (!role) return true;
 
       return rolePermissions[role].includes(permission);
@@ -35,7 +35,7 @@ export const Authorization = ({
   let canAccess = false;
 
   if (permission) {
-    canAccess = checkAccess({ permission });
+    canAccess = checkAccess(permission);
   }
 
   return <>{canAccess ? children : forbiddenFallback}</>;

@@ -1,24 +1,15 @@
-import {
-  AuthenticationResponse,
-  ProjectMemberRole,
-} from '@activepieces/shared';
-
 import { projectApi } from '@/lib/project-api';
+import { AuthenticationResponse } from '@activepieces/shared';
 
 const currentUserKey = 'currentUser';
 const tokenKey = 'token';
 const projectIdKey = 'projectId';
-const projectRole = 'projectRole';
 export const platformCacheKey = 'platform';
 export const authenticationSession = {
   saveResponse(response: AuthenticationResponse) {
     localStorage.setItem(tokenKey, response.token);
     localStorage.setItem(currentUserKey, JSON.stringify(response));
     localStorage.setItem(projectIdKey, response.projectId);
-    localStorage.setItem(
-      projectRole,
-      response.projectRole ?? ProjectMemberRole.VIEWER,
-    );
   },
   getToken(): string | null {
     return localStorage.getItem(tokenKey) ?? null;
@@ -45,7 +36,6 @@ export const authenticationSession = {
     localStorage.removeItem(tokenKey);
     localStorage.removeItem(currentUserKey);
     localStorage.removeItem(projectIdKey);
-    localStorage.removeItem(projectRole);
     window.location.href = '/sign-in';
   },
   getCurrentUser(): AuthenticationResponse | null {

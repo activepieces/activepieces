@@ -1,13 +1,18 @@
+import { useMutation } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+
+import { useAuthorization } from '@/components/authorization';
+import { LoadingSpinner } from '@/components/ui/spinner';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {
   Flow,
   FlowOperationType,
   FlowStatus,
   FlowVersion,
+  Permission,
   PopulatedFlow,
   isNil,
 } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
 
 import { Switch } from '../../../components/ui/switch';
 import {
@@ -18,23 +23,17 @@ import {
 import { flowsApi } from '../lib/flows-api';
 import { flowsUtils } from '../lib/flows-utils';
 
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-
 type FlowStatusToggleProps = {
   flow: Flow;
   flowVersion: FlowVersion;
-  isDisabled?: boolean;
 };
 
-const FlowStatusToggle = ({
-  flow,
-  flowVersion,
-  isDisabled,
-}: FlowStatusToggleProps) => {
+const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
   const [isChecked, setIsChecked] = useState(
     flow.status === FlowStatus.ENABLED,
   );
+
+  const { checkAccess } = useAuthorization();
 
   useEffect(() => {
     setIsChecked(flow.status === FlowStatus.ENABLED);
@@ -70,7 +69,9 @@ const FlowStatusToggle = ({
               checked={isChecked}
               onCheckedChange={() => changeStatus()}
               disabled={
-                isLoading || isDisabled || isNil(flow.publishedVersionId)
+                isLoading ||
+                !checkAccess(Permission.UPDATE_FLOW_STATUS) ||
+                isNil(flow.publishedVersionId)
               }
             />
           </div>

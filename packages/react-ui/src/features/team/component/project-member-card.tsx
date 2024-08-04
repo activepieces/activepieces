@@ -1,8 +1,16 @@
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-import { Permission } from '@activepieces/shared';
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import { PopoverContent } from '@radix-ui/react-popover';
-import { ChevronDownIcon, Trash } from 'lucide-react';
+import { Check, ChevronDownIcon, Trash } from 'lucide-react';
+
+import { Authorization } from '@/components/authorization';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import { Permission } from '@activepieces/shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
 import { Avatar, AvatarImage } from '../../../components/ui/avatar';
@@ -18,8 +26,6 @@ import {
 import { Popover, PopoverTrigger } from '../../../components/ui/popover';
 import { projectMembersApi } from '../lib/project-members-api';
 import { projectMembersHooks } from '../lib/project-members-hooks';
-
-import { Authorization } from '@/components/authorization';
 
 export function ProjectMemberCard({
   member,
@@ -97,7 +103,24 @@ export function ProjectMemberCard({
             </Command>
           </PopoverContent>
         </Popover>
-        <Authorization permission={Permission.WRITE_INVITATION}>
+        <Authorization
+          permission={Permission.WRITE_INVITATION}
+          forbiddenFallback={
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Button disabled className="gap-2" size={'sm'}>
+                    <Check className="size-4" />
+                    Mark as Resolved
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span>Permission Needed</span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          }
+        >
           <ConfirmationDeleteDialog
             title={`Remove ${member.user.firstName} ${member.user.lastName}`}
             message="Are you sure you want to remove this member?"
