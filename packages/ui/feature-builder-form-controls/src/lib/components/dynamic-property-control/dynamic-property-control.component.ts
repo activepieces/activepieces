@@ -62,18 +62,26 @@ export class DynamicPropertyControlComponent
   @Input({ required: true })
   stepMetaDataForMentions: StepMetaDataForMentions[] = [];
   readonly PropertyType = PropertyType;
+  private isInitialLoad = true;
   constructor(piecetaDataService: PieceMetadataService) {
     super(piecetaDataService);
   }
   ngOnInit() {
     this.properties$ = this.createRefreshers<PiecePropertyMap>();
+
+    // Set isInitialLoad to false after initialization is complete
+    setTimeout(() => {
+      this.isInitialLoad = false;
+    });
   }
   override refreshersChanged() {
-    //if emit event is true each control removal will result in a save request
-    Object.keys(this.passedFormControl.controls).forEach((ctrlName) => {
-      this.passedFormControl.removeControl(ctrlName, { emitEvent: false });
-    });
-    this.passedFormControl.setValue({});
+    if (!this.isInitialLoad) {
+      // if emit event is true each control removal will result in a save request
+      Object.keys(this.passedFormControl.controls).forEach((ctrlName) => {
+        this.passedFormControl.removeControl(ctrlName, { emitEvent: false });
+      });
+      this.passedFormControl.setValue({});
+    }
   }
 
   customizedInputsChangedHandler(newValue: {
