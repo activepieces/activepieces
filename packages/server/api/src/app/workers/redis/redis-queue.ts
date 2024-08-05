@@ -2,10 +2,9 @@ import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/serv
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
-import { redisRateLimiter } from '../helper/redis-rate-limiter'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
-import { redisHandler } from './redis-handler'
 import { redisMigrations } from './redis-migration'
+import { redisRateLimiter } from './redis-rate-limiter'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = 8 * 60 * 1000
 const defaultJobOptions: DefaultJobOptions = {
@@ -22,14 +21,23 @@ export const bullMqGroups: Record<string, Queue> = {}
 
 export const redisQueue: QueueManager = {
     async init(): Promise<void> {
-        await redisHandler.init()
+        await redisRateLimiter.init()
         const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName))
         await Promise.all(queues)
         await redisMigrations.run()
         logger.info('[redisQueueManager#init] Redis queues initialized')
     },
     async add(params): Promise<void> {
-        const { type } = params
+        const { type, data } = params
+        const queueHasRateLimit = JobType.ONE_TIME === type || JobType.WEBHOOK === type
+        if (queueHasRateLimit) {
+            const concurrentJobExceeded = await redisRateLimiter.shouldBeLimited(data.projectId)
+            if (concurrentJobExceeded) {
+                await redisRateLimiter.rateLimitJob(params)
+                return
+            }
+            await redisRateLimiter.changeActiveCount(data.projectId, 1)
+        }
         switch (type) {
             case JobType.REPEATING: {
                 await addRepeatingJob(params)
@@ -106,10 +114,6 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
 
 async function addJobWithPriority(queue: Queue, params: AddParams<JobType.WEBHOOK | JobType.ONE_TIME>): Promise<void> {
     const { id, data, priority } = params
-    if (await redisHandler.shouldBeLimited(data.payload.userId)) {
-        await redisRateLimiter.delayJob(params)
-        return
-    }
     await queue.add(id, data, {
         jobId: id,
         priority: JOB_PRIORITY[priority],

@@ -6,6 +6,8 @@ import { FastifyAdapter } from '@bull-board/fastify'
 import basicAuth from '@fastify/basic-auth'
 import { FastifyInstance } from 'fastify'
 import { bullMqGroups } from './redis-queue'
+import { redisRateLimiter } from './redis-rate-limiter'
+
 
 const QUEUE_BASE_PATH = '/ui'
 
@@ -34,11 +36,15 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
         authenticate: true,
     })
 
+    const AllQueues = Object.values(bullMqGroups).map((queue) => new BullMQAdapter(queue))
+    AllQueues.push(new BullMQAdapter(await redisRateLimiter.getQueue()))
+
     const serverAdapter = new FastifyAdapter()
     createBullBoard({
-        queues: Object.values(bullMqGroups).map((queue) => new BullMQAdapter(queue)),
+        queues: AllQueues,
         serverAdapter,
     })
+
     serverAdapter.setBasePath(`/api${QUEUE_BASE_PATH}`)
     app.addHook('onRequest', (req, reply, next) => {
         if (!req.routerPath.startsWith(QUEUE_BASE_PATH)) {

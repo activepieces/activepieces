@@ -1,12 +1,10 @@
-import { exceptionHandler, flowTimeoutSandbox, JobStatus, memoryLock, QueueName, triggerTimeoutSandbox } from '@activepieces/server-shared'
+import { exceptionHandler, flowTimeoutSandbox, JobStatus, memoryLock, QueueName, rejectedPromiseHandler, triggerTimeoutSandbox } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { Job, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 import { createRedisClient } from '../../database/redis-connection'
 import { ConsumerManager } from '../consumer/consumer-manager'
-import { redisRateLimiter } from '../helper/redis-rate-limiter'
-import { redisHandler } from './redis-handler'
-import { bullMqGroups } from './redis-queue'
+import { redisRateLimiter } from './redis-rate-limiter'
 
 const consumer: Record<string, Worker>  = {}
 
@@ -48,7 +46,8 @@ export const redisConsumer: ConsumerManager = {
         const job = await Job.fromId(worker, jobId)
         assertNotNullOrUndefined(job, 'Job not found')
         assertNotNullOrUndefined(token, 'Token not found')
-        
+        rejectedPromiseHandler(redisRateLimiter.onCompleteOrFailedJob(job))
+
         switch (status) {
             case JobStatus.COMPLETED:
                 await job.moveToCompleted({}, token, false)
@@ -59,7 +58,6 @@ export const redisConsumer: ConsumerManager = {
         }
     },
     async init(): Promise<void> {
-        await redisHandler.init()
         await redisRateLimiter.init()
         const sharedConsumers = Object.values(QueueName).map((queueName) => ensureWorkerExists(queueName))
         await Promise.all(sharedConsumers)
@@ -85,21 +83,6 @@ async function ensureWorkerExists( queueName: QueueName): Promise<Worker> {
         drainDelay: 5,
         stalledInterval: 30000,
     })
-
-    consumer[queueName].on('completed', () => {
-        async (job: Job) => {
-            const activeQueue = bullMqGroups[queueName]
-            await redisRateLimiter.activeJob(job, activeQueue)
-        }
-    })
-
-    consumer[queueName].on('failed', () => {
-        async (job: Job) => {
-            const activeQueue = bullMqGroups[queueName]
-            await redisRateLimiter.activeJob(job, activeQueue)
-        }
-    })
-    
 
     await consumer[queueName].waitUntilReady()
     await consumer[queueName].startStalledCheckTimer()
