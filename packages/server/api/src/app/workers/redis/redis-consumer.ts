@@ -58,12 +58,11 @@ export const redisConsumer: ConsumerManager = {
         }
     },
     async init(): Promise<void> {
-        await redisRateLimiter.init()
         const sharedConsumers = Object.values(QueueName).map((queueName) => ensureWorkerExists(queueName))
         await Promise.all(sharedConsumers)
     },
     async close(): Promise<void> {
-        const promises = Object.values(consumerGroups).map((consumerGroup) => {
+        const promises = Object.values(consumer).map((consumerGroup) => {
             return Promise.all(Object.values(consumerGroup).map(async (consumer) => {
                 await consumer.drain()
                 await consumer.close()
