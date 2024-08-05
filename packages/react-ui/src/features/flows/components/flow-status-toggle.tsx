@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
+import { useAuthorization } from '@/components/authorization';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {
@@ -8,6 +9,7 @@ import {
   FlowOperationType,
   FlowStatus,
   FlowVersion,
+  Permission,
   PopulatedFlow,
   isNil,
 } from '@activepieces/shared';
@@ -30,6 +32,8 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
   const [isChecked, setIsChecked] = useState(
     flow.status === FlowStatus.ENABLED,
   );
+
+  const { checkAccess } = useAuthorization();
 
   useEffect(() => {
     setIsChecked(flow.status === FlowStatus.ENABLED);
@@ -64,7 +68,11 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
             <Switch
               checked={isChecked}
               onCheckedChange={() => changeStatus()}
-              disabled={isLoading || isNil(flow.publishedVersionId)}
+              disabled={
+                isLoading ||
+                !checkAccess(Permission.UPDATE_FLOW_STATUS) ||
+                isNil(flow.publishedVersionId)
+              }
             />
           </div>
         </TooltipTrigger>

@@ -143,7 +143,9 @@ export const formUtils = {
                 minLength: 1,
               }),
               input:
-                piece && actionNameOrTriggerName
+                piece &&
+                actionNameOrTriggerName &&
+                piece.actions[actionNameOrTriggerName]
                   ? formUtils.buildSchema(
                       piece.actions[actionNameOrTriggerName].props,
                     )
@@ -154,7 +156,9 @@ export const formUtils = {
       }
       case TriggerType.PIECE: {
         const formSchema =
-          piece && actionNameOrTriggerName
+          piece &&
+          actionNameOrTriggerName &&
+          piece.triggers[actionNameOrTriggerName]
             ? formUtils.buildSchema(
                 piece.triggers[actionNameOrTriggerName].props,
               )

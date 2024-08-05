@@ -10,13 +10,31 @@ const styleTheme = EditorView.baseTheme({
 });
 
 type JsonEditorProps = {
-  intialValue: string;
-  onChange: (sourceCode: string) => void;
+  initial: string;
+  onChange: (value: unknown) => void;
   readonly?: boolean;
 };
 
+const convertToString = (value: unknown): string => {
+  if (typeof value === 'string') {
+    return value;
+  }
+  return JSON.stringify(value, null, 2);
+};
+
+const tryParseJson = (value: unknown): unknown => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  try {
+    return JSON.parse(value);
+  } catch (e) {
+    return value;
+  }
+};
+
 const JsonEditor = ({
-  intialValue,
+  initial,
   onChange,
   readonly = false,
 }: JsonEditorProps) => {
@@ -27,7 +45,7 @@ const JsonEditor = ({
     json(),
   ];
 
-  const [value, setValue] = useState(intialValue);
+  const [value, setValue] = useState(convertToString(initial));
 
   return (
     <div className="flex flex-col gap-2 border rounded py-2 px-2">
@@ -47,7 +65,7 @@ const JsonEditor = ({
         lang="json"
         onChange={(value) => {
           setValue(value);
-          onChange(value);
+          onChange(tryParseJson(value));
         }}
         theme={githubLight}
         readOnly={readonly}

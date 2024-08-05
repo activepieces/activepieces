@@ -147,7 +147,6 @@ function convertTiptapJsonToText({ content }: JSONContent): string {
         case TipTapNodeTypes.hardBreak:
           return '\n';
         case TipTapNodeTypes.text: {
-          console.log(node);
           return node.text ?? '';
         }
         case TipTapNodeTypes.mention:

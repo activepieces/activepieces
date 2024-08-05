@@ -10,8 +10,9 @@ import {
   PlusIcon,
   Trash2,
 } from 'lucide-react';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -56,15 +57,11 @@ const CreateFolderFormSchema = Type.Object({
 
 type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>;
 
-const FolderFilterList = ({
-  refresh,
-  selectedFolderId,
-  setSelectedFolderId,
-}: {
-  refresh: number;
-  selectedFolderId: string | undefined;
-  setSelectedFolderId: Dispatch<SetStateAction<string | undefined>>;
-}) => {
+const FolderFilterList = () => {
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams(location.search);
+  const selectedFolderId = searchParams.get('folderId');
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const form = useForm<CreateFolderFormSchema>({
     resolver: typeboxResolver(CreateFolderFormSchema),
@@ -116,9 +113,15 @@ const FolderFilterList = ({
     },
   });
 
-  useEffect(() => {
-    refetch();
-  }, [refresh]);
+  const updateSearchParams = (folderId: string | undefined) => {
+    const newQueryParameters: URLSearchParams = new URLSearchParams(
+      searchParams,
+    );
+    folderId
+      ? newQueryParameters.set('folderId', folderId)
+      : newQueryParameters.delete('folderId');
+    setSearchParams(newQueryParameters);
+  };
 
   return (
     <div className="p-2">
@@ -176,7 +179,7 @@ const FolderFilterList = ({
           className={cn('flex w-full justify-start bg-background', {
             'bg-muted': !selectedFolderId,
           })}
-          onClick={() => setSelectedFolderId(undefined)}
+          onClick={() => updateSearchParams(undefined)}
         >
           <TextWithIcon icon={<Folder size={18} />} text="All flows" />
           <div className="grow"></div>
@@ -184,8 +187,10 @@ const FolderFilterList = ({
         </Button>
         <Button
           variant="ghost"
-          className={cn('w-full justify-between')}
-          onClick={() => setSelectedFolderId('NULL')}
+          className={cn('flex w-full justify-start bg-background', {
+            'bg-muted': selectedFolderId === 'NULL',
+          })}
+          onClick={() => updateSearchParams('NULL')}
         >
           <TextWithIcon icon={<Folder size={18} />} text="Uncategorized" />
           <div className="grow"></div>
@@ -215,7 +220,7 @@ const FolderFilterList = ({
                   className={cn('w-full justify-between', {
                     'bg-muted': selectedFolderId === folder.id,
                   })}
-                  onClick={() => setSelectedFolderId(folder.id)}
+                  onClick={() => updateSearchParams(folder.id)}
                 >
                   <TextWithIcon
                     icon={

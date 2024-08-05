@@ -2,14 +2,21 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Check } from 'lucide-react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 
+import { Authorization } from '@/components/authorization';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { PopulatedIssue } from '@activepieces/ee-shared';
-import { FlowRunStatus } from '@activepieces/shared';
+import { FlowRunStatus, Permission } from '@activepieces/shared';
 
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
@@ -34,7 +41,6 @@ export default function IssuesTable() {
   const navigate = useNavigate();
   const { refetch } = issueHooks.useIssuesNotification();
 
-  // TODO implement permissions here when done
   const handleMarkAsResolved = async (
     flowDisplayName: string,
     issueId: string,
@@ -103,20 +109,39 @@ export default function IssuesTable() {
       cell: ({ row }) => {
         return (
           <div className="flex items-end justify-end">
-            <Button
-              className="gap-2"
-              size={'sm'}
-              onClick={() =>
-                handleMarkAsResolved(
-                  row.original.flowDisplayName,
-                  row.original.id,
-                  row.original.delete,
-                )
+            <Authorization
+              permission={Permission.WRITE_ISSUES}
+              forbiddenFallback={
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Button disabled className="gap-2" size={'sm'}>
+                        <Check className="size-4" />
+                        Mark as Resolved
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <span>Permission Needed</span>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               }
             >
-              <Check className="size-4" />
-              Mark as Resolved
-            </Button>
+              <Button
+                className="gap-2"
+                size={'sm'}
+                onClick={() =>
+                  handleMarkAsResolved(
+                    row.original.flowDisplayName,
+                    row.original.id,
+                    row.original.delete,
+                  )
+                }
+              >
+                <Check className="size-4" />
+                Mark as Resolved
+              </Button>
+            </Authorization>
           </div>
         );
       },

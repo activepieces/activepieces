@@ -6,17 +6,20 @@ import { StepMetadata } from '../lib/pieces-hook';
 
 type PieceCardInfoProps = {
   piece: StepMetadata;
-  interactive?: boolean;
+  interactive: boolean;
+  onClick?: () => void;
 };
 
 const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
   piece,
   interactive,
+  onClick,
 }) => {
   return (
     <div
+      onClick={onClick}
       className={cn(
-        'flex h-[110px] items-center justify-center gap-4 rounded border border-solid p-4',
+        'flex h-[110px] items-center justify-center gap-4 rounded border border-solid cursor-pointer p-4',
         {
           'cursor-pointer hover:bg-accent hover:text-accent-foreground':
             interactive,

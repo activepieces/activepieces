@@ -14,13 +14,14 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
-import { flowHelper } from '@activepieces/shared';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { ActionType, TriggerType, flowHelper } from '@activepieces/shared';
 
 import { cn } from '../../lib/utils';
 
 import { BuilderNavBar } from './builder-nav-bar';
 import { FlowVersionsList } from './flow-versions/flow-versions-list';
-import { PiecesCardList } from './pieces-list/pieces-card-list';
+import { PiecesSelectorList } from './pieces-selector/piece-selector-list';
 import { FlowRunDetails } from './run-details/flow-run-details-list';
 import { FlowRecentRunsList } from './run-list/flow-runs-list';
 import { StepSettingsContainer } from './step-settings/step-settings-container';
@@ -73,6 +74,14 @@ const BuilderPage = () => {
     }
     return flowHelper.getStep(flowVersion, selectedStep.stepName);
   }, [flowVersion.id, selectedStep]);
+
+  const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
+    name: memorizedSelectedStep?.settings.pieceName,
+    version: memorizedSelectedStep?.settings.pieceVersion,
+    enabled:
+      memorizedSelectedStep?.type === ActionType.PIECE ||
+      memorizedSelectedStep?.type === TriggerType.PIECE,
+  });
 
   useEffect(() => {
     if (!selectedStep) {
@@ -137,12 +146,14 @@ const BuilderPage = () => {
             })}
           >
             {rightSidebar === RightSideBarType.PIECE_SELECTOR && (
-              <PiecesCardList />
+              <PiecesSelectorList />
             )}
             {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-              memorizedSelectedStep && (
+              memorizedSelectedStep &&
+              !isPieceLoading && (
                 <StepSettingsContainer
                   key={containerKey}
+                  pieceModel={pieceModel}
                   selectedStep={memorizedSelectedStep}
                 />
               )}

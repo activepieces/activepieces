@@ -78,10 +78,12 @@ function getEdgePath({
 
 const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
   const [showButtonShadow, setShowButtonShadow] = useState(false);
-  const [activeDraggingStep, flowVersion] = useBuilderStateContext((state) => [
-    state.activeDraggingStep,
-    state.flowVersion,
-  ]);
+  const [activeDraggingStep, flowVersion, clickOnNewNodeButton] =
+    useBuilderStateContext((state) => [
+      state.activeDraggingStep,
+      state.flowVersion,
+      state.clickOnNewNodeButton,
+    ]);
   const { edgePath, buttonPosition } = getEdgePath(props);
   const { setNodeRef } = useDroppable({
     id: props.id,
@@ -143,9 +145,13 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
         >
           <div
             className="bg-[#a6b1bf] w-4 h-4 flex items-center justify-center"
-            onClick={() => {
-              console.log('clicked');
-            }}
+            onClick={() =>
+              clickOnNewNodeButton(
+                'action',
+                props.data.parentStep!,
+                props.data.stepLocationRelativeToParent!,
+              )
+            }
           >
             <Plus className="w-3 h-3 text-white" />
           </div>

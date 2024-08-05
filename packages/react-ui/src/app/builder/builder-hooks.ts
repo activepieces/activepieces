@@ -10,6 +10,7 @@ import {
   FlowOperationRequest,
   FlowRun,
   FlowVersion,
+  StepLocationRelativeToParent,
   StepOutput,
   flowHelper,
 } from '@activepieces/shared';
@@ -48,6 +49,12 @@ export enum RightSideBarType {
 
 type InsertMentionHandler = (propertyPath: string) => void;
 
+type SelectedButtonType = {
+  stepname: string;
+  type: 'action' | 'trigger';
+  relativeLocation: StepLocationRelativeToParent;
+};
+
 export type BuilderState = {
   flow: Flow;
   flowVersion: FlowVersion;
@@ -58,6 +65,7 @@ export type BuilderState = {
   selectedStep: StepPathWithName | null;
   activeDraggingStep: string | null;
   allowCanvasPanning: boolean;
+  selectedButton: SelectedButtonType | null;
   saving: boolean;
   exitRun: () => void;
   exitStepSettings: () => void;
@@ -70,14 +78,22 @@ export type BuilderState = {
     operation: FlowOperationRequest,
     onError: () => void,
   ) => void;
-  selectStep: (path: StepPathWithName) => void;
+  removeStepSelection: () => void;
+  selectStepByPath: (path: StepPathWithName) => void;
+  selectStepByName: (stepName: string) => void;
   startSaving: () => void;
   setAllowCanvasPanning: (allowCanvasPanning: boolean) => void;
   setReadOnly: (readonly: boolean) => void;
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: Flow) => void;
+  exitPieceSelector: () => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
+  clickOnNewNodeButton: (
+    type: 'action' | 'trigger',
+    stepname: string,
+    relativeLocation: StepLocationRelativeToParent,
+  ) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
 };
 
@@ -100,6 +116,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     activeDraggingStep: null,
     allowCanvasPanning: true,
     rightSidebar: RightSideBarType.NONE,
+    selectedButton: null,
+    removeStepSelection: () =>
+      set({ selectedStep: null, rightSidebar: RightSideBarType.NONE }),
     setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
       set({
         allowCanvasPanning,
@@ -115,6 +134,28 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             ...state.flowVersion,
             displayName: newName,
           },
+        };
+      });
+    },
+    selectStepByName: (stepName: string) => {
+      set((state) => {
+        const pathToStep = flowHelper
+          .getAllSteps(state.flowVersion.trigger)
+          .filter((step) =>
+            flowHelper.isPartOfInnerFlow({
+              parentStep: step,
+              childName: stepName,
+            }),
+          );
+        return {
+          selectedButton: null,
+          selectedStep: {
+            path: pathToStep
+              .filter((p) => p.name !== stepName)
+              .map((p) => [p.name, 0]),
+            stepName,
+          },
+          rightSidebar: RightSideBarType.PIECE_SETTINGS,
         };
       });
     },
@@ -138,11 +179,31 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       }),
     exitStepSettings: () =>
       set({
+        selectedButton: null,
         rightSidebar: RightSideBarType.NONE,
         selectedStep: null,
       }),
-    selectStep: (path: StepPathWithName) =>
+    exitPieceSelector: () =>
       set({
+        selectedButton: null,
+        rightSidebar: RightSideBarType.NONE,
+      }),
+    clickOnNewNodeButton: (
+      type: 'action' | 'trigger',
+      stepname: string,
+      relativeLocation: StepLocationRelativeToParent,
+    ) =>
+      set({
+        selectedButton: {
+          stepname,
+          type,
+          relativeLocation,
+        },
+        rightSidebar: RightSideBarType.PIECE_SELECTOR,
+      }),
+    selectStepByPath: (path: StepPathWithName) =>
+      set({
+        selectedButton: null,
         selectedStep: path,
         rightSidebar: path
           ? RightSideBarType.PIECE_SETTINGS

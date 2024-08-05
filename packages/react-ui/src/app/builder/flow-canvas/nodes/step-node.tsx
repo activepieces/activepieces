@@ -10,19 +10,29 @@ import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
-import { FlowOperationType, flowHelper } from '@activepieces/shared';
+import {
+  FlowOperationType,
+  StepLocationRelativeToParent,
+  flowHelper,
+} from '@activepieces/shared';
 
 import { ApNode } from '../flow-canvas-utils';
 
 const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { toast } = useToast();
-  const [selectStep, setAllowCanvasPanning, isSelected, isDragging] =
-    useBuilderStateContext((state) => [
-      state.selectStep,
-      state.setAllowCanvasPanning,
-      state.selectedStep?.stepName === data.step?.name,
-      state.activeDraggingStep === data.step?.name,
-    ]);
+  const [
+    selectStepByName,
+    setAllowCanvasPanning,
+    isSelected,
+    isDragging,
+    clickOnNewNodeButton,
+  ] = useBuilderStateContext((state) => [
+    state.selectStepByName,
+    state.setAllowCanvasPanning,
+    state.selectedStep?.stepName === data.step?.name,
+    state.activeDraggingStep === data.step?.name,
+    state.clickOnNewNodeButton,
+  ]);
   const deleteStep = useBuilderStateContext((state) => () => {
     state.applyOperation(
       {
@@ -33,6 +43,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       },
       () => toast(UNSAVED_CHANGES_TOAST),
     );
+    state.removeStepSelection();
   });
 
   const duplicateStep = useBuilderStateContext((state) => () => {
@@ -53,25 +64,24 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   const [toolbarOpen, setToolbarOpen] = useState(false);
 
-  const handleClick = () => {
-    selectStep({ path: [], stepName: data.step!.name });
-  };
-
   const isTrigger = flowHelper.isTrigger(data.step!.type);
   const isAction = flowHelper.isAction(data.step!.type);
 
+  const stepName = data?.step?.name;
+
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: data.step!.name,
-    disabled: isTrigger,
+    // TODO fix the drag and enable
+    disabled: true,
   });
 
   return (
     <div
       className={cn('h-[70px] w-[260px] transition-all', {
         'border-primary': toolbarOpen || isSelected,
-        'rounded bg-background border border-solid box-border': !isDragging,
+        'bg-background border border-solid box-border': !isDragging,
       })}
-      onClick={() => handleClick()}
+      onClick={() => selectStepByName(data.step!.name)}
       onMouseEnter={() => {
         setToolbarOpen(true);
         setAllowCanvasPanning(false);
@@ -100,7 +110,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
             ></div>
             <div
               className="px-2 h-full w-full box-border"
-              onClick={() => handleClick()}
+              onClick={() => selectStepByName(data.step!.name)}
             >
               <div className="flex h-full items-center justify-between gap-4 w-full">
                 <div className="flex items-center justify-center min-w-[46px] h-full">
@@ -126,7 +136,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 )}
               >
                 <div className="flex flex-col gap-2 items-center justify-center mr-4 h-full">
-                  {isTrigger && (
+                  {isTrigger && stepName && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -134,6 +144,11 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                           size="icon"
                           className="rounded-full"
                           onClick={(e) => {
+                            clickOnNewNodeButton(
+                              'trigger',
+                              stepName,
+                              StepLocationRelativeToParent.AFTER,
+                            );
                             e.stopPropagation();
                           }}
                         >

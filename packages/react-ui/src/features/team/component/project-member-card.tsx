@@ -1,8 +1,16 @@
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import { PopoverContent } from '@radix-ui/react-popover';
-import { ChevronDownIcon, Trash } from 'lucide-react';
+import { Check, ChevronDownIcon, Trash } from 'lucide-react';
 
+import { Authorization } from '@/components/authorization';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import { Permission } from '@activepieces/shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
 import { Avatar, AvatarImage } from '../../../components/ui/avatar';
@@ -95,16 +103,35 @@ export function ProjectMemberCard({
             </Command>
           </PopoverContent>
         </Popover>
-        <ConfirmationDeleteDialog
-          title={`Remove ${member.user.firstName} ${member.user.lastName}`}
-          message="Are you sure you want to remove this member?"
-          mutationFn={() => deleteMember()}
-          entityName={`${member.user.firstName} ${member.user.lastName}`}
+        <Authorization
+          permission={Permission.WRITE_INVITATION}
+          forbiddenFallback={
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Button disabled className="gap-2" size={'sm'}>
+                    <Check className="size-4" />
+                    Mark as Resolved
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span>Permission Needed</span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          }
         >
-          <Button variant="ghost" className="size-8 p-0">
-            <Trash className="bg-destructive-500 size-4" />
-          </Button>
-        </ConfirmationDeleteDialog>
+          <ConfirmationDeleteDialog
+            title={`Remove ${member.user.firstName} ${member.user.lastName}`}
+            message="Are you sure you want to remove this member?"
+            mutationFn={() => deleteMember()}
+            entityName={`${member.user.firstName} ${member.user.lastName}`}
+          >
+            <Button variant="ghost" className="size-8 p-0">
+              <Trash className="bg-destructive-500 size-4" />
+            </Button>
+          </ConfirmationDeleteDialog>
+        </Authorization>
       </div>
     </div>
   );

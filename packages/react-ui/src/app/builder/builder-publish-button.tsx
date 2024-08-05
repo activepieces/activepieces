@@ -16,13 +16,14 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FlowOperationType, FlowVersionState } from '@activepieces/shared';
 
 const BuilderPublishButton = React.memo(() => {
-  const [flowVersion, flow, isSaving, setVersion, setFlow] =
+  const [flowVersion, flow, isSaving, setVersion, setFlow, readonly] =
     useBuilderStateContext((state) => [
       state.flowVersion,
       state.flow,
       state.saving,
       state.setVersion,
       state.setFlow,
+      state.readonly,
     ]);
 
   const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
@@ -82,7 +83,7 @@ const BuilderPublishButton = React.memo(() => {
               <Button
                 size={'sm'}
                 loading={isSaving || isPublishingPending}
-                disabled={isPublishedVersion}
+                disabled={isPublishedVersion || readonly}
                 onClick={() => publish()}
               >
                 Publish

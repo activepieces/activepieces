@@ -48,22 +48,24 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
         </div>
       </div>
       <ScrollArea className="w-full h-full">
-        <div className="px-2 py-3 max-h-[300px]">
-          {typeof json !== 'string' && typeof json !== 'object' && (
-            <pre className="text-sm">{JSON.stringify(json)}</pre>
-          )}
-          {typeof json === 'string' && <pre className="text-sm">{json}</pre>}
-          {typeof json === 'object' && (
-            <ReactJson
-              enableClipboard={false}
-              groupArraysAfterLength={100}
-              displayDataTypes={false}
-              name={false}
-              quotesOnKeys={false}
-              src={json}
-            />
-          )}
-        </div>
+        {json && (
+          <div className="px-2 py-3 max-h-[300px]">
+            {typeof json !== 'string' && typeof json !== 'object' && (
+              <pre className="text-sm">{JSON.stringify(json)}</pre>
+            )}
+            {typeof json === 'string' && <pre className="text-sm">{json}</pre>}
+            {typeof json === 'object' && (
+              <ReactJson
+                enableClipboard={false}
+                groupArraysAfterLength={100}
+                displayDataTypes={false}
+                name={false}
+                quotesOnKeys={false}
+                src={json}
+              />
+            )}
+          </div>
+        )}
       </ScrollArea>
     </div>
   );

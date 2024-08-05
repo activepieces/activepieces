@@ -1,23 +1,83 @@
+import { useMutation } from '@tanstack/react-query';
+import { Check, Copy } from 'lucide-react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import { Alert, AlertDescription } from '../ui/alert';
+import { Button } from '../ui/button';
+import { useToast } from '../ui/use-toast';
+
+function applyVariables(markdown: string, variables: Record<string, string>) {
+  return markdown
+    .replaceAll('<br>', '\n')
+    .replaceAll(/\{\{(.*?)\}\}/g, (_, variableName) => {
+      return variables[variableName] ?? '';
+    });
+}
 
 type MarkdownProps = {
   markdown: string | undefined;
+  variables?: Record<string, string>;
   className?: string;
 };
 
-export const ApMarkdown = ({ markdown }: MarkdownProps) => {
+const ApMarkdown = React.memo(({ markdown, variables }: MarkdownProps) => {
+  const [copiedText, setCopiedText] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const { mutate: copyToClipboard } = useMutation({
+    mutationFn: async (text: string) => {
+      await navigator.clipboard.writeText(text);
+      setCopiedText(text);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setCopiedText(null);
+    },
+    onError: () => {
+      toast({
+        title: 'Failed to copy to clipboard',
+        duration: 3000,
+      });
+    },
+  });
+
   if (!markdown) {
     return null;
   }
+
+  const markdownProcessed = applyVariables(markdown, variables ?? {});
   return (
     <Alert>
       <AlertDescription>
         <ReactMarkdown
           components={{
             code(props) {
-              return <code {...props} className="text-wrap" />;
+              const isLanguageText = props.className?.includes('language-text');
+              if (!isLanguageText) {
+                return <code {...props} className="text-wrap" />;
+              }
+              const codeContent = String(props.children).trim();
+              const isCopying = codeContent === copiedText;
+              return (
+                <div className="relative py-2">
+                  <input
+                    type="text"
+                    className="col-span-6 bg-white border border-solid text-sm rounded-lg block w-full p-2.5"
+                    value={codeContent}
+                    disabled
+                  />
+                  <Button
+                    variant="ghost"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-background rounded-lg p-2 inline-flex items-center justify-center"
+                    onClick={() => copyToClipboard(codeContent)}
+                  >
+                    {isCopying ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+              );
             },
             h1: ({ node, ...props }) => (
               <h1
@@ -58,9 +118,12 @@ export const ApMarkdown = ({ markdown }: MarkdownProps) => {
             ),
           }}
         >
-          {markdown.replaceAll('<br>', '\n')}
+          {markdownProcessed}
         </ReactMarkdown>
       </AlertDescription>
     </Alert>
   );
-};
+});
+
+ApMarkdown.displayName = 'ApMarkdown';
+export { ApMarkdown };
