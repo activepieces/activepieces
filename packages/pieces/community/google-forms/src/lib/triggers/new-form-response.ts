@@ -128,5 +128,10 @@ const getResponse = async (
     },
     queryParams: filter,
   });
-  return response.body['responses'];
+
+  const formResponses = response.body.responses;
+  if (formResponses && Array.isArray(formResponses)) {
+    return formResponses;
+  }
+  return [];
 };

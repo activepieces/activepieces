@@ -18,7 +18,7 @@ export const JOB_PRIORITY = {
 }
 
 export const ENTERPRISE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'high'
-export const TEST_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'medium'
+export const TEST_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'low'
 export const SYNC_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'medium'
 export const DEFAULT_PRIORITY: keyof typeof JOB_PRIORITY = 'low'
 

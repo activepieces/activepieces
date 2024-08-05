@@ -29,7 +29,7 @@ export {
     EnginePrincipal,
 } from './lib/authentication/model/principal'
 export * from './lib/flows/actions/action'
-export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry'
+export { StoreEntry, StoreEntryId, STORE_VALUE_MAX_SIZE } from './lib/store-entry/store-entry'
 export * from './lib/user'
 export { TestFlowRunRequestBody } from './lib/flow-run/test-flow-run-request'
 export {

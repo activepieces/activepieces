@@ -326,6 +326,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     }
 
     app.addHook('onClose', async () => {
+        logger.info('Shutting down')
         await flowConsumer.close()
         await systemJobsSchedule.close()
         await webhookResponseWatcher.shutdown()

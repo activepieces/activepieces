@@ -1,6 +1,6 @@
-import { JobType, logger, QueueName } from '@activepieces/server-shared'
+import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
-import { DefaultJobOptions, Job, Queue } from 'bullmq'
+import { DefaultJobOptions, Queue } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
@@ -53,11 +53,13 @@ export const redisQueue: QueueManager = {
         const client = await queue.client
         const repeatJob = await findRepeatableJobKey(flowVersionId)
         if (isNil(repeatJob)) {
-            // TODO renable this when we are sure this is thread safe, and no two flows will be disabled at the same time.
-            // exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`))
+            exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`))
             return
         }
-        const result = await queue.removeRepeatable(repeatJob.name, repeatJob.opts)
+        logger.info({
+            flowVersionId,
+        }, '[redisQueue#removeRepeatingJob] removing the jobs')
+        const result = await queue.removeRepeatableByKey(repeatJob)
         if (!result) {
             throw new ActivepiecesError({
                 code: ErrorCode.JOB_REMOVAL_FAILURE,
@@ -70,7 +72,7 @@ export const redisQueue: QueueManager = {
     },
 }
 
-async function findRepeatableJobKey(flowVersionId: ApId): Promise<Job | undefined> {
+async function findRepeatableJobKey(flowVersionId: ApId): Promise<string | undefined> {
     const queue = await ensureQueueExists(QueueName.SCHEDULED)
     const client = await queue.client
     const jobKey = await client.get(repeatingJobKey(flowVersionId))
@@ -78,9 +80,10 @@ async function findRepeatableJobKey(flowVersionId: ApId): Promise<Job | undefine
         logger.warn({ flowVersionId }, 'Job key not found in redis, trying to find it in the queue')
         // TODO: this temporary solution for jobs that doesn't have repeatJobKey in redis, it's also confusing because it search by flowVersionId
         const jobs = await queue.getJobs()
-        return jobs.filter(f => !isNil(f) && !isNil(f.data)).find((f) => f.data.flowVersionId === flowVersionId)
+        const jobKeyInRedis = jobs.filter(f => !isNil(f) && !isNil(f.data)).find((f) => f.data.flowVersionId === flowVersionId)
+        return jobKeyInRedis?.repeatJobKey
     }
-    return undefined
+    return jobKey
 }
 
 async function ensureQueueExists(queueName: QueueName): Promise<Queue> {

@@ -60,10 +60,14 @@ export class PieceMetadataService {
                 includeHidden: request.includeHidden ? 'true' : 'false',
                 ...spreadIfDefined('includeTags', request.includeTags),
                 ...spreadIfDefined('searchQuery', request.searchQuery),
-                ...spreadIfDefined('suggestionType', !isNil(request.searchQuery) && request.searchQuery.length > 3 ? request.suggestionType : undefined)
+                ...spreadIfDefined('suggestionType', this.shouldShowSuggestionType(request.searchQuery) ? request.suggestionType : undefined)
             }
         });
     }
+
+    private shouldShowSuggestionType(searchQuery: string | undefined) {
+        return !isNil(searchQuery) && searchQuery.length >= 2;
+      }
 
     private listCorePieces(searchQuery: string | undefined, suggestionType: SuggestionType): Observable<PieceMetadataModelSummary[]> {
         return this.listPieces({
