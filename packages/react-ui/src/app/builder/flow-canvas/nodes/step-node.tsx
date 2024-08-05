@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
   StepLocationRelativeToParent,
+  TriggerType,
   flowHelper,
 } from '@activepieces/shared';
 
@@ -75,13 +76,28 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     disabled: true,
   });
 
+  const handleStepClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const { type, name } = data.step!;
+    if (type === TriggerType.EMPTY) {
+      clickOnNewNodeButton(
+        'trigger',
+        name,
+        StepLocationRelativeToParent.AFTER,
+      );
+      return;
+    }else{
+      selectStepByName(name);
+    }
+    e.stopPropagation();
+  }
+  
   return (
     <div
       className={cn('h-[70px] w-[260px] transition-all', {
         'border-primary': toolbarOpen || isSelected,
         'bg-background border border-solid box-border': !isDragging,
       })}
-      onClick={() => selectStepByName(data.step!.name)}
+      onClick={(e) => handleStepClick(e)}
       onMouseEnter={() => {
         setToolbarOpen(true);
         setAllowCanvasPanning(false);
