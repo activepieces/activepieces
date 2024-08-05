@@ -1,6 +1,6 @@
 import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
-import { DefaultJobOptions, Queue } from 'bullmq'
+import { DefaultJobOptions, Job, Queue } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
@@ -19,6 +19,13 @@ const repeatingJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
 export const bullMqGroups: Record<string, Queue> = {}
 
+const jobTypeToQueueName: Record<JobType, QueueName> = {
+    [JobType.DELAYED]: QueueName.SCHEDULED,
+    [JobType.ONE_TIME]: QueueName.ONE_TIME,
+    [JobType.REPEATING]: QueueName.SCHEDULED,
+    [JobType.WEBHOOK]: QueueName.WEBHOOK
+}
+
 export const redisQueue: QueueManager = {
     async init(): Promise<void> {
         await redisRateLimiter.init()
@@ -27,17 +34,14 @@ export const redisQueue: QueueManager = {
         await redisMigrations.run()
         logger.info('[redisQueueManager#init] Redis queues initialized')
     },
-    async add(params): Promise<void> {
+    async add(params, skipRateLimit): Promise<void> {
         const { type, data } = params
-        const queueHasRateLimit = JobType.ONE_TIME === type || JobType.WEBHOOK === type
-        if (queueHasRateLimit) {
-            const concurrentJobExceeded = await redisRateLimiter.shouldBeLimited(data.projectId)
-            if (concurrentJobExceeded) {
-                await redisRateLimiter.rateLimitJob(params)
-                return
-            }
-            await redisRateLimiter.changeActiveCount(data.projectId, 1)
+        const { shouldRateLimit } = await redisRateLimiter.changeTotalRunCount(jobTypeToQueueName[type], data.projectId, 1)
+        if (shouldRateLimit && !skipRateLimit) {
+            await redisRateLimiter.rateLimitJob(params)
+            return
         }
+    
         switch (type) {
             case JobType.REPEATING: {
                 await addRepeatingJob(params)

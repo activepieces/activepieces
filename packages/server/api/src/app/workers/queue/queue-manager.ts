@@ -38,7 +38,7 @@ export async function getJobPriority(projectId: string, synchronousHandlerId: st
 
 export type QueueManager = {
     init(): Promise<void>
-    add<JT extends JobType>(params: AddParams<JT>): Promise<void>
+    add<JT extends JobType>(params: AddParams<JT>, skipRateLimit?: boolean): Promise<void>
     removeRepeatingJob(params: RemoveParams): Promise<void>
 }
 
