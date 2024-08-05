@@ -1,4 +1,4 @@
-import { exceptionHandler, flowTimeoutSandbox, JobStatus, logger, memoryLock, QueueName, rejectedPromiseHandler, triggerTimeoutSandbox } from '@activepieces/server-shared'
+import { exceptionHandler, flowTimeoutSandbox, JobStatus, memoryLock, QueueName, rejectedPromiseHandler, triggerTimeoutSandbox } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { Job, Worker } from 'bullmq'
 import dayjs from 'dayjs'

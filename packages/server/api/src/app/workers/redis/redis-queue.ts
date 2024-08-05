@@ -1,6 +1,6 @@
 import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
-import { DefaultJobOptions, Job, Queue } from 'bullmq'
+import { DefaultJobOptions, Queue } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
@@ -23,7 +23,7 @@ const jobTypeToQueueName: Record<JobType, QueueName> = {
     [JobType.DELAYED]: QueueName.SCHEDULED,
     [JobType.ONE_TIME]: QueueName.ONE_TIME,
     [JobType.REPEATING]: QueueName.SCHEDULED,
-    [JobType.WEBHOOK]: QueueName.WEBHOOK
+    [JobType.WEBHOOK]: QueueName.WEBHOOK,
 }
 
 export const redisQueue: QueueManager = {
