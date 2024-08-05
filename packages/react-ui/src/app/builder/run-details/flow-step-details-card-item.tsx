@@ -1,5 +1,6 @@
 import { ChevronRight } from 'lucide-react';
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useUpdateEffect } from 'react-use';
 
 import {
   StepPathWithName,
@@ -14,7 +15,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Input } from '@/components/ui/input';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn, formatUtils } from '@/lib/utils';
 import {
@@ -26,82 +26,140 @@ import {
 
 import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
 
+import { LoopIterationInput } from './loop-iteration-input';
+
 type FlowStepDetailsCardProps = {
   path: StepPathWithName;
+};
+
+type FindChildrenPathsResult = {
+  totalIterations: number;
+  children: StepPathWithName[];
+  currentIteration: number;
 };
 
 function findChildrenPaths(
   path: StepPathWithName,
   stepOutput: StepOutput,
-): StepPathWithName[] {
+): FindChildrenPathsResult {
   if (stepOutput.type === ActionType.LOOP_ON_ITEMS) {
-    const childrenPaths: StepPathWithName[] = [];
     const loopStepOutput = stepOutput as LoopStepOutput;
-    Object.keys(loopStepOutput?.output?.iterations[0] ?? {}).forEach((key) => {
-      const newPath: StepPathWithName = {
-        stepName: key,
-        path: [...path.path, [path.stepName, 0]],
-      };
-      childrenPaths.push(newPath);
-    });
-    return childrenPaths;
+    const currentIteration =
+      path.path.find((p) => p[0] === path.stepName)?.[1] ?? 0;
+    return {
+      currentIteration,
+      totalIterations: loopStepOutput?.output?.iterations.length ?? 0,
+      children: Object.keys(
+        loopStepOutput?.output?.iterations[currentIteration] ?? {},
+      ).map((key) => {
+        const newPath: StepPathWithName = {
+          stepName: key,
+          path: [...path.path, [path.stepName, currentIteration]] as [
+            string,
+            number,
+          ][], // Ensure the correct type
+        };
+        return newPath;
+      }),
+    };
   }
-  return [];
+  return {
+    totalIterations: 0,
+    children: [],
+    currentIteration: 0,
+  };
 }
 
 const FlowStepDetailsCardItem = React.memo(
   ({ path }: FlowStepDetailsCardProps) => {
-    const [selectStep, isStepSelected, isInPath, step, stepOutput] =
-      useBuilderStateContext((state) => {
+    const [selectStepByPath, step, selectedStep, run] = useBuilderStateContext(
+      (state) => {
         const step = flowHelper.getStep(state.flowVersion, path.stepName)!;
-        const isStepSelected = state.selectedStep?.stepName === path.stepName;
+        return [state.selectStepByPath, step, state.selectedStep, state.run];
+      },
+    );
 
-        const { selectedStep } = state;
-        const isInPath =
-          selectedStep &&
-          (selectedStep.path.some((p) => p[0] === path.stepName) ||
-            selectedStep.stepName === step.name);
+    const isStepSelected = selectedStep?.stepName === path.stepName;
 
-        const stepOutput = builderSelectors.getStepOutputFromExecutionPath({
-          path,
-          executionState: state.run ?? { steps: {} },
-        })!;
+    const isInPath =
+      selectedStep &&
+      (selectedStep.path.some((p) => p[0] === path.stepName) ||
+        selectedStep.stepName === step.name);
 
-        return [state.selectStep, isStepSelected, isInPath, step, stepOutput];
-      });
+    const stepOutput = builderSelectors.getStepOutputFromExecutionPath({
+      path,
+      executionState: run ?? { steps: {} },
+    })!;
+
     const { stepMetadata } = piecesHooks.useStepMetadata({
       step,
     });
     const [isOpen, setIsOpen] = React.useState(false);
-    const childrenPaths: StepPathWithName[] = findChildrenPaths(
-      path,
-      stepOutput,
+
+    const { children, totalIterations, currentIteration } = useMemo(
+      () => findChildrenPaths(path, stepOutput),
+      [path, stepOutput],
     );
-    const marginLeft = `ml-[${path.path.length * 35}px]`;
+
     const isLoopStep = stepOutput.type === ActionType.LOOP_ON_ITEMS;
 
-    // TODO finish the iteration input logic
+    function setIterationIndex(newIterationIndex: number) {
+      if (!selectedStep) return;
+      const newSelectedPaths = selectedStep.path.map(
+        ([stepName, iterationIndex]) =>
+          (stepName === path.stepName
+            ? [stepName, newIterationIndex]
+            : [stepName, iterationIndex]) as [string, number],
+      );
+      selectStepByPath({
+        path: newSelectedPaths,
+        stepName: selectedStep.stepName,
+      });
+    }
+
+    useUpdateEffect(() => {
+      if (!isOpen && isInPath) {
+        setIsOpen(true);
+      }
+    }, [selectedStep]);
+
     return (
       <Collapsible open={isOpen} className="w-full">
         <CollapsibleTrigger asChild={true}>
           <CardListItem
             onClick={() => {
               if (!isStepSelected) {
-                selectStep(path);
+                selectStepByPath(path);
                 setIsOpen(true);
               } else {
                 setIsOpen(!isOpen);
               }
             }}
-            className={cn('cursor-pointer select-none', {
+            className={cn('cursor-pointer select-none px-4 py-3 h-14', {
               'bg-accent text-accent-foreground': isStepSelected,
             })}
           >
             <div
-              className={`flex items-center justify-between w-full gap-3 ${marginLeft}`}
+              style={{
+                minWidth: `${path.path.length * 25}px`,
+              }}
+            ></div>
+            <div
+              className={cn(
+                `flex items-center justify-between w-full gap-3`,
+                {},
+              )}
             >
-              {childrenPaths.length > 0 && (
-                <Button variant="ghost" size={'icon'} className="w-4 h-4">
+              {children.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size={'icon'}
+                  className="w-4 h-4"
+                  onClick={(e) => {
+                    setIsOpen(!isOpen);
+                    e.stopPropagation();
+                  }}
+                >
                   <ChevronRight
                     size={16}
                     className={cn('', { 'rotate-90': isOpen })}
@@ -116,18 +174,11 @@ const FlowStepDetailsCardItem = React.memo(
                   <span className="text-sm">All Iterations</span>
                 )}
                 {isLoopStep && !isStepSelected && isInPath && (
-                  <div className="flex gap-1 items-center">
-                    <span className="text-sm">Iteration:</span>
-                    <Input
-                      key={path.stepName}
-                      className="w-16"
-                      value={1}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                    />
-                  </div>
+                  <LoopIterationInput
+                    totalIterations={totalIterations}
+                    value={currentIteration}
+                    onChange={setIterationIndex}
+                  />
                 )}
                 {(!isLoopStep || (isLoopStep && !isInPath)) && (
                   <>
@@ -148,7 +199,7 @@ const FlowStepDetailsCardItem = React.memo(
           </CardListItem>
         </CollapsibleTrigger>
         <CollapsibleContent className="p-0">
-          {childrenPaths.map((path) => (
+          {children.map((path) => (
             <FlowStepDetailsCardItem
               path={path}
               key={stepPathToKeyString(path)}

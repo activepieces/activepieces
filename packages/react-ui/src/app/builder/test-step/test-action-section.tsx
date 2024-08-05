@@ -55,17 +55,13 @@ const TestActionSection = React.memo(
         });
       },
       onSuccess: (stepResponse) => {
-        console.log(stepResponse);
         if (stepResponse.success) {
           setErrorMessage(undefined);
           form.setValue(
             'settings.inputUiInfo',
             {
               ...formValues.settings.inputUiInfo,
-              currentSelectedData: testStepUtils.formatSampleData(
-                stepResponse.output,
-                formValues.type,
-              ),
+              currentSelectedData: stepResponse.output,
               lastTestDate: dayjs().toISOString(),
             },
             { shouldValidate: true },
@@ -117,6 +113,7 @@ const TestActionSection = React.memo(
             currentSelectedData={currentSelectedData}
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
+            type={formValues.type}
           ></TestSampleDataViewer>
         )}
       </>

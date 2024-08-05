@@ -2,6 +2,8 @@ import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
 import { twMerge } from 'tailwind-merge';
 
+import { ActionType, TriggerType } from '@activepieces/shared';
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -11,6 +13,26 @@ const EMAIL_REGEX =
 
 export const formatUtils = {
   EMAIL_REGEX,
+  formatStepInputAndOutput(
+    sampleData: unknown,
+    type: ActionType | TriggerType | null,
+  ) {
+    if (sampleData === undefined) {
+      return 'undefined';
+    }
+    const shouldRemoveIterations =
+      type === ActionType.LOOP_ON_ITEMS &&
+      sampleData &&
+      typeof sampleData === 'object' &&
+      'iterations' in sampleData;
+    if (shouldRemoveIterations) {
+      return {
+        ...sampleData,
+        iterations: undefined,
+      };
+    }
+    return sampleData;
+  },
   convertEnumToHumanReadable(str: string) {
     const words = str.split('_');
     return words

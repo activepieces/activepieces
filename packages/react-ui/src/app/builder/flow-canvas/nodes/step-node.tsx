@@ -21,13 +21,13 @@ import { ApNode } from '../flow-canvas-utils';
 const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { toast } = useToast();
   const [
-    selectStep,
+    selectStepByName,
     setAllowCanvasPanning,
     isSelected,
     isDragging,
     clickOnNewNodeButton,
   ] = useBuilderStateContext((state) => [
-    state.selectStep,
+    state.selectStepByName,
     state.setAllowCanvasPanning,
     state.selectedStep?.stepName === data.step?.name,
     state.activeDraggingStep === data.step?.name,
@@ -64,10 +64,6 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   const [toolbarOpen, setToolbarOpen] = useState(false);
 
-  const handleClick = () => {
-    selectStep({ path: [], stepName: data.step!.name });
-  };
-
   const isTrigger = flowHelper.isTrigger(data.step!.type);
   const isAction = flowHelper.isAction(data.step!.type);
 
@@ -85,7 +81,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         'border-primary': toolbarOpen || isSelected,
         'bg-background border border-solid box-border': !isDragging,
       })}
-      onClick={() => handleClick()}
+      onClick={() => selectStepByName(data.step!.name)}
       onMouseEnter={() => {
         setToolbarOpen(true);
         setAllowCanvasPanning(false);
@@ -114,7 +110,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
             ></div>
             <div
               className="px-2 h-full w-full box-border"
-              onClick={() => handleClick()}
+              onClick={() => selectStepByName(data.step!.name)}
             >
               <div className="flex h-full items-center justify-between gap-4 w-full">
                 <div className="flex items-center justify-center min-w-[46px] h-full">

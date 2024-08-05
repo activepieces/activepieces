@@ -3,7 +3,9 @@ import { useBuilderStateContext } from '../builder-hooks';
 
 export const TestStepSection = ({ stepName }: { stepName: string }) => {
   const isTrigger = stepName === 'trigger';
-  const selectStep = useBuilderStateContext((state) => state.selectStep);
+  const selectStepByName = useBuilderStateContext(
+    (state) => state.selectStepByName,
+  );
   return (
     <div className="flex flex-col gap-3 select-none text-center px-12 py-10 flex-grow items-center justify-center ">
       <div>
@@ -13,9 +15,7 @@ export const TestStepSection = ({ stepName }: { stepName: string }) => {
       </div>
       <div>
         <Button
-          onClick={() => {
-            selectStep({ path: [], stepName });
-          }}
+          onClick={() => selectStepByName(stepName)}
           variant="default"
           size="default"
         >

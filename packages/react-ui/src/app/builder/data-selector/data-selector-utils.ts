@@ -1,3 +1,5 @@
+import { formatUtils } from '@/lib/utils';
+
 export type MentionTreeNode = {
   key: string;
   data: {
@@ -33,7 +35,7 @@ function traverseStepOutputAndReturnMentionTree({
     data: {
       propertyPath,
       displayName,
-      value: formatStepOutput(stepOutput),
+      value: formatUtils.formatStepInputAndOutput(stepOutput, null),
     },
     children: undefined,
   };
@@ -127,16 +129,6 @@ function handleObjectStepOutput(
       });
     }),
   };
-}
-
-function formatStepOutput(stepOutput: unknown) {
-  if (stepOutput === null) {
-    return 'null';
-  }
-  if (typeof stepOutput === 'string') {
-    return `"${stepOutput}"`;
-  }
-  return stepOutput;
 }
 
 export const dataSelectorUtils = {
