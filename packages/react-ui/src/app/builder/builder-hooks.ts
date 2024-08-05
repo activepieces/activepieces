@@ -78,7 +78,8 @@ export type BuilderState = {
     onError: () => void,
   ) => void;
   removeStepSelection: () => void;
-  selectStep: (path: StepPathWithName) => void;
+  selectStepByPath: (path: StepPathWithName) => void;
+  selectStepByName: (stepName: string) => void;
   startSaving: () => void;
   setAllowCanvasPanning: (allowCanvasPanning: boolean) => void;
   setReadOnly: (readonly: boolean) => void;
@@ -135,6 +136,28 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         };
       });
     },
+    selectStepByName: (stepName: string) => {
+      set((state) => {
+        const pathToStep = flowHelper
+          .getAllSteps(state.flowVersion.trigger)
+          .filter((step) =>
+            flowHelper.isPartOfInnerFlow({
+              parentStep: step,
+              childName: stepName,
+            }),
+          );
+        return {
+          selectedButton: null,
+          selectedStep: {
+            path: pathToStep
+              .filter((p) => p.name !== stepName)
+              .map((p) => [p.name, 0]),
+            stepName,
+          },
+          rightSidebar: RightSideBarType.PIECE_SETTINGS,
+        };
+      });
+    },
     moveToFolderClientSide: (folderId: string) => {
       set((state) => {
         return {
@@ -177,7 +200,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         },
         rightSidebar: RightSideBarType.PIECE_SELECTOR,
       }),
-    selectStep: (path: StepPathWithName) =>
+    selectStepByPath: (path: StepPathWithName) =>
       set({
         selectedButton: null,
         selectedStep: path,

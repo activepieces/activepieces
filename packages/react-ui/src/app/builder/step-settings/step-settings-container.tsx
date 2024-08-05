@@ -132,6 +132,11 @@ const StepSettingsContainer = React.memo(
       control: form.control,
     });
 
+    const inputUIInfo = useWatch({
+      name: 'settings.inputUiInfo',
+      control: form.control,
+    });
+
     useUpdateEffect(() => {
       const currentStep = JSON.parse(JSON.stringify(form.getValues()));
       setActionOrTriggerName(
@@ -163,7 +168,13 @@ const StepSettingsContainer = React.memo(
       } else {
         debouncedAction(castedForm as Action);
       }
-    }, [inputChanges, itemsChange, conditionsChange, sourceCodeChange]);
+    }, [
+      inputChanges,
+      itemsChange,
+      conditionsChange,
+      sourceCodeChange,
+      inputUIInfo,
+    ]);
 
     const modifiedStep = form.getValues();
     return (

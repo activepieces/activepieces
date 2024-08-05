@@ -34,13 +34,13 @@ const PiecesSelectorList = () => {
     applyOperation,
     selectedButton,
     flowVersion,
-    selectStep,
+    selectStepByName,
   ] = useBuilderStateContext((state) => [
     state.exitPieceSelector,
     state.applyOperation,
     state.selectedButton,
     state.flowVersion,
-    state.selectStep,
+    state.selectStepByName,
   ]);
 
   const { metadata, isLoading, refetch } = piecesHooks.useAllStepsMetadata({
@@ -73,7 +73,6 @@ const PiecesSelectorList = () => {
     const stepName = getStepName(piece);
     const defaultStep = pieceSelectorUtils.getDefaultStep(stepName, piece);
     if (piece.type === TriggerType.PIECE) {
-      console.log(defaultStep);
       applyOperation(
         {
           type: FlowOperationType.UPDATE_TRIGGER,
@@ -94,11 +93,7 @@ const PiecesSelectorList = () => {
         () => toast(UNSAVED_CHANGES_TOAST),
       );
     }
-    // TODO pick the default path
-    selectStep({
-      path: [],
-      stepName: defaultStep.name,
-    });
+    selectStepByName(defaultStep.name);
   }
 
   function toKey(stepMetadata: StepMetadata): string {

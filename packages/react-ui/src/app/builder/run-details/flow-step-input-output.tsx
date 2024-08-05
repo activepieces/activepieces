@@ -23,6 +23,10 @@ const FlowStepInputOutput = React.memo(() => {
     });
   });
 
+  const loopStepOut = stepDetails
+    ? formatUtils.formatStepInputAndOutput(stepDetails.output, stepDetails.type)
+    : {};
+
   const flowVersion = useBuilderStateContext((state) => state.flowVersion);
 
   return (
@@ -46,7 +50,7 @@ const FlowStepInputOutput = React.memo(() => {
           </div>
           <JsonViewer title="Input" json={stepDetails.input} />
           <div className="mt-4"></div>
-          <JsonViewer title="Output" json={stepDetails.output} />
+          <JsonViewer title="Output" json={loopStepOut} />
         </div>
       )}
     </ScrollArea>

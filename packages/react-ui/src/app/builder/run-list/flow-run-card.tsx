@@ -80,10 +80,12 @@ const FlowRunCard = React.memo((params: FlowRunCardProps) => {
         <p className="text-sm font-medium leading-none">
           {formatUtils.formatDate(new Date(run.startTime))}
         </p>
-        <p className="flex gap-1 text-xs text-muted-foreground">
-          <StopwatchIcon />
-          Took {formatUtils.formatDuration(run.duration, false)}
-        </p>
+        {run.duration && (
+          <p className="flex gap-1 text-xs text-muted-foreground">
+            <StopwatchIcon />
+            Took {formatUtils.formatDuration(run.duration, false)}
+          </p>
+        )}
       </div>
       <div className="ml-auto font-medium">
         <Button variant="ghost" disabled={isPending}>
