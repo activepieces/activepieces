@@ -50,6 +50,7 @@ export class RefreshableDropdownControlComponent
   refresh$ = new BehaviorSubject<void>(undefined);
   readonly PropertyType = PropertyType;
   readonly loadingText = $localize`Loading...`;
+  private isInitialLoad = true;
   constructor(piecetaDataService: PieceMetadataService) {
     const searchControl = new FormControl('', { nonNullable: true });
     super(piecetaDataService, searchControl.valueChanges);
@@ -65,9 +66,16 @@ export class RefreshableDropdownControlComponent
       this.stepChanged$.asObservable()
     ).pipe(
       tap(() => {
-        this.selectedItemsCache$.next([]);
+        if (!this.isInitialLoad) {
+          this.selectedItemsCache$.next([]);
+        }
       })
     );
+
+    // Set isInitialLoad to false after initialization is complete
+    setTimeout(() => {
+      this.isInitialLoad = false;
+    });
   }
   dropdownCompareWithFunction(opt: unknown, formControlValue: string) {
     return (
@@ -76,7 +84,9 @@ export class RefreshableDropdownControlComponent
     );
   }
   override refreshersChanged() {
-    this.passedFormControl.setValue(undefined);
+    if (!this.isInitialLoad) {
+      this.passedFormControl.setValue(undefined);
+    }
   }
   refreshOptions() {
     this.refresh$.next(undefined);
