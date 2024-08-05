@@ -64,10 +64,15 @@ export const api = {
         });
       },
     }),
-  post: <TResponse, TBody = unknown>(url: string, body?: TBody) =>
+  post: <TResponse, TBody = unknown, TParams = unknown>(
+    url: string,
+    body?: TBody,
+    params?: TParams,
+  ) =>
     request<TResponse>(url, {
       method: 'POST',
       data: body,
       headers: { 'Content-Type': 'application/json' },
+      params: params,
     }),
 };
