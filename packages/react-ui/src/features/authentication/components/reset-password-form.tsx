@@ -20,7 +20,11 @@ import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
-import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
+
+export enum OtpType {
+  EMAIL_VERIFICATION = 'EMAIL_VERIFICATION',
+  PASSWORD_RESET = 'PASSWORD_RESET',
+}
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -40,11 +44,7 @@ const ResetPasswordForm = () => {
     },
   });
 
-  const { mutate, isPending } = useMutation<
-    void,
-    HttpError,
-    CreateOtpRequestBody
-  >({
+  const { mutate, isPending } = useMutation<void, HttpError, any>({
     mutationFn: authenticationApi.sendOtpEmail,
     onSuccess: () => setIsSent(true),
     onError: (error) => {
@@ -61,7 +61,7 @@ const ResetPasswordForm = () => {
     form.handleSubmit(onSubmit)(e);
   };
 
-  const onSubmit: SubmitHandler<CreateOtpRequestBody> = (data) => {
+  const onSubmit: SubmitHandler<any> = (data) => {
     mutate(data);
   };
 

@@ -1,14 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-
 import { authenticationSession } from '../../../lib/authentication-session';
 
 import { projectMembersApi } from './project-members-api';
 
 export const projectMembersHooks = {
   useProjectMembers: () => {
-    const query = useQuery<ProjectMemberWithUser[]>({
+    const query = useQuery<any[]>({
       queryKey: ['project-members'],
       queryFn: () => {
         return projectMembersApi

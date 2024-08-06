@@ -1,26 +1,19 @@
 import { api } from '@/lib/api';
-import {
-  ConfigureRepoRequest,
-  GitRepo,
-  ProjectSyncPlan,
-  PullGitRepoRequest,
-  PushGitRepoRequest,
-} from '@activepieces/ee-shared';
 
 export const syncProjectApi = {
   get() {
-    return api.get<GitRepo>(`/v1/git-repos`);
+    return api.get<any>(`/v1/git-repos`);
   },
-  configure(request: ConfigureRepoRequest) {
-    return api.post<GitRepo>(`/v1/git-repos`, request);
+  configure(request: any) {
+    return api.post<any>(`/v1/git-repos`, request);
   },
   disconnect(repoId: string) {
     return api.delete<void>(`/v1/git-repos/${repoId}`);
   },
-  push(repoId: string, request: PushGitRepoRequest) {
+  push(repoId: string, request: any) {
     return api.post<void>(`/v1/git-repos/${repoId}/push`, request);
   },
-  pull(repoId: string, request: PullGitRepoRequest) {
+  pull(repoId: string, request: any) {
     return api.post<ProjectSyncPlan>(`/v1/git-repos/${repoId}/pull`, request);
   },
 };

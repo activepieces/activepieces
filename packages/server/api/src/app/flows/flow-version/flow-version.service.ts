@@ -17,7 +17,6 @@ import {
     FlowVersionState,
     ImportFlowRequest,
     isNil,
-    LoopOnItemsActionSettingsWithValidation,
     PieceActionSettings,
     PieceCategory,
     PieceTriggerSettings,
@@ -41,7 +40,7 @@ const branchSettingsValidator = TypeCompiler.Compile(
     BranchActionSettingsWithValidation,
 )
 const loopSettingsValidator = TypeCompiler.Compile(
-    LoopOnItemsActionSettingsWithValidation,
+    BranchActionSettingsWithValidation,
 )
 const flowVersionRepo = repoFactory(FlowVersionEntity)
 
@@ -544,7 +543,7 @@ async function validateTrigger({
     if (!isNil(piece.auth)) {
         props.auth = piece.auth
     }
-    return validateProps(props, settings.input)
+    return validateProps(props, settings.input as any)
 }
 
 async function assertEnterprisePiecesEnabled(piece: PieceMetadataModel, projectId: ProjectId): Promise<void> {

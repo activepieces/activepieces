@@ -1,3 +1,4 @@
+import { ProjectWithLimits } from '@activepieces/shared';
 import {
   useQuery,
   QueryClient,
@@ -5,11 +6,9 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 
-import { authenticationSession } from '@/lib/authentication-session';
-import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
-import { ProjectWithLimits } from '@activepieces/shared';
-
 import { projectApi } from '../lib/project-api';
+
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const projectHooks = {
   prefetchProject: () => {
@@ -45,10 +44,7 @@ export const projectHooks = {
   },
 };
 
-const updateProject = async (
-  queryClient: QueryClient,
-  request: UpdateProjectPlatformRequest,
-) => {
+const updateProject = async (queryClient: QueryClient, request: any) => {
   queryClient.setQueryData(['current-project'], {
     ...queryClient.getQueryData(['current-project'])!,
     ...request,

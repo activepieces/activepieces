@@ -1,12 +1,12 @@
-import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
-import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import {
   ListProjectRequestForUserQueryParams,
   ProjectWithLimits,
   SeekPage,
   SwitchProjectResponse,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const projectApi = {
   current: async () => {
@@ -18,7 +18,7 @@ export const projectApi = {
   get: async (projectId: string) => {
     return api.get<ProjectWithLimits>(`/v1/users/projects/${projectId}`);
   },
-  update: async (projectId: string, request: UpdateProjectPlatformRequest) => {
+  update: async (projectId: string, request: any) => {
     return api.post<ProjectWithLimits>(`/v1/projects/${projectId}`, request);
   },
   getTokenForProject: async (projectId: string) => {

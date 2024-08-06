@@ -1,6 +1,10 @@
+import { FlowRunStatus, Permission } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { Check } from 'lucide-react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
+
+import { issuesApi } from '../api/issues-api';
+import { issueHooks } from '../hooks/issue-hooks';
 
 import { Authorization } from '@/components/authorization';
 import { Button } from '@/components/ui/button';
@@ -15,11 +19,6 @@ import {
 import { toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { PopulatedIssue } from '@activepieces/ee-shared';
-import { FlowRunStatus, Permission } from '@activepieces/shared';
-
-import { issuesApi } from '../api/issues-api';
-import { issueHooks } from '../hooks/issue-hooks';
 
 const fetchData = async (queryParams: URLSearchParams) => {
   const pagination: {
@@ -56,7 +55,7 @@ export default function IssuesTable() {
     });
   };
 
-  const columns: ColumnDef<RowDataWithActions<PopulatedIssue>>[] = [
+  const columns: ColumnDef<RowDataWithActions<any>>[] = [
     {
       accessorKey: 'flowName',
       header: ({ column }) => (

@@ -18,7 +18,6 @@ import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
-import { ResetPasswordRequestBody } from '@activepieces/ee-shared';
 
 const FormSchema = Type.Object({
   otp: Type.String(),
@@ -42,11 +41,7 @@ const ChangePasswordForm = () => {
     },
   });
 
-  const { mutate, isPending } = useMutation<
-    void,
-    HttpError,
-    ResetPasswordRequestBody
-  >({
+  const { mutate, isPending } = useMutation<void, HttpError, any>({
     mutationFn: authenticationApi.resetPassword,
     onSuccess: () => {
       toast({
@@ -63,7 +58,7 @@ const ChangePasswordForm = () => {
     },
   });
 
-  const onSubmit: SubmitHandler<ResetPasswordRequestBody> = (data) => {
+  const onSubmit: SubmitHandler<any> = (data) => {
     mutate(data);
   };
 

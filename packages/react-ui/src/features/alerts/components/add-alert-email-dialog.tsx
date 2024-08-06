@@ -6,6 +6,8 @@ import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { alertsApi } from '../lib/alerts-api';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,9 +25,6 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { Alert, AlertChannel } from '@activepieces/ee-shared';
-
-import { alertsApi } from '../lib/alerts-api';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -34,11 +33,30 @@ const FormSchema = Type.Object({
   }),
 });
 
+// simply re-implement the type & move it somewhere else
+export enum AlertChannel {
+  EMAIL = 'EMAIL',
+}
+
+// simply re-implement the type
+export const Alert = Type.Object({
+  ...BaseModelSchema,
+  projectId: ApId,
+  channel: Type.Enum(AlertChannel),
+  receiver: Type.String({}),
+});
+
+export type Alert = Static<typeof Alert>;
 type FormSchema = Static<typeof FormSchema>;
 
 type AddAlertEmailDialogProps = {
-  onAdd: (alert: Alert) => void;
+  onAdd: (alert: any) => void;
 };
+
+type MutationArgs = {
+  email: string;
+};
+
 const AddAlertEmailDialog = React.memo(
   ({ onAdd }: AddAlertEmailDialogProps) => {
     const [open, setOpen] = useState(false);
@@ -48,7 +66,7 @@ const AddAlertEmailDialog = React.memo(
       defaultValues: {},
     });
 
-    const { mutate, isPending } = useMutation<Alert, Error, { email: string }>({
+    const { mutate, isPending } = useMutation<Alert, Error, MutationArgs>({
       mutationFn: async (params) =>
         alertsApi.create({
           receiver: params.email,

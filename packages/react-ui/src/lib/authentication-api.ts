@@ -1,8 +1,3 @@
-import { api } from '@/lib/api';
-import {
-  CreateOtpRequestBody,
-  ResetPasswordRequestBody,
-} from '@activepieces/ee-shared';
 import {
   AuthenticationResponse,
   ClaimTokenRequest,
@@ -11,6 +6,8 @@ import {
   SignUpRequest,
   ThirdPartyAuthnProviderEnum,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const authenticationApi = {
   signIn(request: SignInRequest) {
@@ -36,10 +33,10 @@ export const authenticationApi = {
       request,
     );
   },
-  sendOtpEmail(request: CreateOtpRequestBody) {
+  sendOtpEmail(request: any) {
     return api.post<void>('/v1/otp', request);
   },
-  resetPassword(request: ResetPasswordRequestBody) {
+  resetPassword(request: any) {
     return api.post<void>('/v1/authn/local/reset-password', request);
   },
 };

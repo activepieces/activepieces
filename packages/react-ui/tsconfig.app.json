@@ -17,9 +17,6 @@
       "@activepieces/shared": [
         "../../packages/shared/src"
       ],
-      "@activepieces/ee-shared": [
-        "../../packages/ee/shared/src"  
-      ],
       "@activepieces/pieces-framework": [
         "../../packages/pieces/community/framework/src" 
       ]

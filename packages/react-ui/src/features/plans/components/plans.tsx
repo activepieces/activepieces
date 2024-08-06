@@ -13,7 +13,6 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { HttpError } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
-import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 
 import { billingApi } from '../api/billing-api';
@@ -59,7 +58,7 @@ const Plans: React.FC = () => {
   const onManageBillingClick = () => manageBilling();
 
   const { mutate: updateLimitsData, isPending: isUpdateLimitsPending } =
-    useMutation<ProjectWithLimits, HttpError, UpdateProjectPlatformRequest>({
+    useMutation<ProjectWithLimits, HttpError, any>({
       mutationFn: (request) =>
         projectApi.update(authenticationSession.getProjectId(), request),
       onSuccess: () =>

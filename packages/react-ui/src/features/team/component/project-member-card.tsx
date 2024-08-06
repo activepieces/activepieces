@@ -1,16 +1,7 @@
+import { Permission } from '@activepieces/shared';
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import { PopoverContent } from '@radix-ui/react-popover';
 import { Check, ChevronDownIcon, Trash } from 'lucide-react';
-
-import { Authorization } from '@/components/authorization';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-import { Permission } from '@activepieces/shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
 import { Avatar, AvatarImage } from '../../../components/ui/avatar';
@@ -27,11 +18,15 @@ import { Popover, PopoverTrigger } from '../../../components/ui/popover';
 import { projectMembersApi } from '../lib/project-members-api';
 import { projectMembersHooks } from '../lib/project-members-hooks';
 
-export function ProjectMemberCard({
-  member,
-}: {
-  member: ProjectMemberWithUser;
-}) {
+import { Authorization } from '@/components/authorization';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
+export function ProjectMemberCard({ member }: { member: any }) {
   const { refetch } = projectMembersHooks.useProjectMembers();
 
   async function deleteMember() {
