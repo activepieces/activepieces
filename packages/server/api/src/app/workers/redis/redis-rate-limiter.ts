@@ -81,8 +81,9 @@ export const redisRateLimiter = {
                 shouldRateLimit: false,
             }
         }
-        const projectKey = `active_runs:${projectId}`
+        const projectKey = `active_jobs:${projectId}`
         const newActiveRuns = await redis.incrby(projectKey, value)
+        await redis.expire(projectKey, 600)
         if (newActiveRuns >= MAX_CONCURRENT_JOBS_PER_PROJECT) {
             await redis.incrby(projectKey, -value)
             return {
