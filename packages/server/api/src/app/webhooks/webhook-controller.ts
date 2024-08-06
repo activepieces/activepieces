@@ -87,6 +87,7 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
         id: requestId,
         type: JobType.WEBHOOK,
         data: {
+            projectId: flow.projectId,
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             requestId,
             synchronousHandlerId,
