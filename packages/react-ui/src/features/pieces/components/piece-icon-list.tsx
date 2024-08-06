@@ -1,3 +1,5 @@
+import { cva } from 'class-variance-authority';
+
 import { flowHelper, Trigger } from '@activepieces/shared';
 
 import {
@@ -7,7 +9,6 @@ import {
 } from '../../../components/ui/tooltip';
 import { piecesHooks, StepMetadata } from '../lib/pieces-hook';
 
-import { cva } from 'class-variance-authority';
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
