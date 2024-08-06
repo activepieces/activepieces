@@ -36,7 +36,7 @@ const SignUpSchema = Type.Object({
     errorMessage: 'Last name is required',
   }),
   email: Type.String({
-    errorMessage: 'Please enter a valid email address',
+    errorMessage: 'Email is invalid',
     pattern: '^[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,}$',
   }),
   password: Type.String({
