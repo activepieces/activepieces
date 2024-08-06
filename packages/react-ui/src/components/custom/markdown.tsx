@@ -19,35 +19,45 @@ type MarkdownProps = {
   markdown: string | undefined;
   variables?: Record<string, string>;
   className?: string;
+  withBorder?: boolean;
 };
 
-const ApMarkdown = React.memo(({ markdown, variables }: MarkdownProps) => {
-  const [copiedText, setCopiedText] = useState<string | null>(null);
-  const { toast } = useToast();
+const ApMarkdown = React.memo(
+  ({ markdown, variables, withBorder = true }: MarkdownProps) => {
+    const [copiedText, setCopiedText] = useState<string | null>(null);
+    const { toast } = useToast();
 
-  const { mutate: copyToClipboard } = useMutation({
-    mutationFn: async (text: string) => {
-      await navigator.clipboard.writeText(text);
-      setCopiedText(text);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setCopiedText(null);
-    },
-    onError: () => {
-      toast({
-        title: 'Failed to copy to clipboard',
-        duration: 3000,
-      });
-    },
-  });
+    const { mutate: copyToClipboard } = useMutation({
+      mutationFn: async (text: string) => {
+        await navigator.clipboard.writeText(text);
+        setCopiedText(text);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setCopiedText(null);
+      },
+      onError: () => {
+        toast({
+          title: 'Failed to copy to clipboard',
+          duration: 3000,
+        });
+      },
+    });
 
-  if (!markdown) {
-    return null;
-  }
+    const Container = ({ children }: { children: React.ReactNode }) =>
+      withBorder ? (
+        <Alert>
+          <AlertDescription>{children}</AlertDescription>
+        </Alert>
+      ) : (
+        children
+      );
 
-  const markdownProcessed = applyVariables(markdown, variables ?? {});
-  return (
-    <Alert>
-      <AlertDescription>
+    if (!markdown) {
+      return null;
+    }
+
+    const markdownProcessed = applyVariables(markdown, variables ?? {});
+    return (
+      <Container>
         <ReactMarkdown
           components={{
             code(props) {
@@ -120,10 +130,10 @@ const ApMarkdown = React.memo(({ markdown, variables }: MarkdownProps) => {
         >
           {markdownProcessed}
         </ReactMarkdown>
-      </AlertDescription>
-    </Alert>
-  );
-});
+      </Container>
+    );
+  },
+);
 
 ApMarkdown.displayName = 'ApMarkdown';
 export { ApMarkdown };
