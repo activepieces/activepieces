@@ -17,7 +17,7 @@ let redis: Redis
 let worker: Worker | null = null
 let queue: Queue | null = null
 
-const projecyKey = (projectId: string): string => `active_jobs:${projectId}`
+const projecyKey = (projectId: string): string => `active_job_count:${projectId}`
 
 export const redisRateLimiter = {
 
