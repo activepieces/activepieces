@@ -1,17 +1,17 @@
-import {
-  FlowOperationType,
-  FlowTemplate,
-  PopulatedFlow,
-} from '@activepieces/shared';
 import { DialogDescription } from '@radix-ui/react-dialog';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Info, Workflow, Zap } from 'lucide-react';
+import { ArrowLeft, Info, Workflow } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { flowsApi } from '../lib/flows-api';
-
+import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
+import {
+  Carousel,
+  CarouselApi,
+  CarouselContent,
+  CarouselItem,
+} from '@/components/ui/carousel';
 import {
   Dialog,
   DialogContent,
@@ -20,24 +20,24 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { templatesApi } from '@/features/templates/lib/templates-api';
-import { authenticationSession } from '@/lib/authentication-session';
-import {
-  Carousel,
-  CarouselApi,
-  CarouselContent,
-  CarouselItem,
-} from '@/components/ui/carousel';
 import {
   TooltipContent,
   TooltipTrigger,
   Tooltip,
 } from '@/components/ui/tooltip';
-import { ApMarkdown } from '@/components/custom/markdown';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
+import { templatesApi } from '@/features/templates/lib/templates-api';
+import { authenticationSession } from '@/lib/authentication-session';
+import {
+  FlowOperationType,
+  FlowTemplate,
+  PopulatedFlow,
+} from '@activepieces/shared';
+
+import { flowsApi } from '../lib/flows-api';
 
 const SelectFlowTemplateDialog = ({
   children,
@@ -125,7 +125,8 @@ const SelectFlowTemplateDialog = ({
             ) : (
               <Workflow className="w-4 h-4" />
             )}
-            Browse Templates</DialogTitle>
+            Browse Templates
+          </DialogTitle>
         </DialogHeader>
         <Carousel setApi={(api) => (carousel.current = api)}>
           <CarouselContent>
@@ -166,7 +167,8 @@ const SelectFlowTemplateDialog = ({
                                 onClick={() => createFlow(template)}
                                 disabled={isPending}
                               >
-                                <Workflow className="w-4 h-4 me-2" /> Use Template
+                                <Workflow className="w-4 h-4 me-2" /> Use
+                                Template
                               </Button>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -218,6 +220,7 @@ const SelectFlowTemplateDialog = ({
                           href={selectedTemplate.blogUrl}
                           target="_blank"
                           className="text-primary underline underline-offset-4"
+                          rel="noreferrer"
                         >
                           this blog!
                         </a>

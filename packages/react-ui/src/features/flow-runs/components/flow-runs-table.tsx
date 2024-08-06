@@ -156,7 +156,7 @@ export default function FlowRunsTable() {
         fetchData={fetchData}
         filters={filters}
         refresh={refresh}
-        onRowClick={(row) => navigate(`/flows/${row.flowId}`)}
+        onRowClick={(row) => navigate(`/runs/${row.id}`)}
       />
     </div>
   );

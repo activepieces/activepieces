@@ -14,6 +14,7 @@ import { ResetPasswordPage } from './routes/forget-password';
 import IssuesPage from './routes/issues';
 import PlansPage from './routes/plans';
 import FlowsRunPage from './routes/runs';
+import { FlowRunPage } from './routes/runs/id';
 import AlertsPage from './routes/settings/alerts';
 import AppearancePage from './routes/settings/appearance';
 import PiecesPage from './routes/settings/pieces';
@@ -47,6 +48,14 @@ export const router = createBrowserRouter([
     element: (
       <AllowOnlyLoggedIn>
         <FlowBuilderPage />
+      </AllowOnlyLoggedIn>
+    ),
+  },
+  {
+    path: '/runs/:runId',
+    element: (
+      <AllowOnlyLoggedIn>
+        <FlowRunPage />
       </AllowOnlyLoggedIn>
     ),
   },
