@@ -45,7 +45,7 @@ export const redisRateLimiter = {
                 maxStalledCount: 5,
                 stalledInterval: 30000,
                 limiter: {
-                    max: 10,
+                    max: 100,
                     duration: 1000,
                 },
             })
