@@ -114,20 +114,15 @@ const SelectFlowTemplateDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:min-w-[850px] flex flex-col">
         <DialogHeader className="p-1 flex flex-row items-center min-h-[50px] gap-1">
-          {selectedTemplate ? (
-            <Button variant="ghost" size="sm" onClick={unselectTemplate}>
-              <ArrowLeft className="w-4 h-4 mt-1" />
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              disabled
-              size="sm"
-              onClick={unselectTemplate}
-            >
-              <Zap className="w-4 h-4 mt-1" />
-            </Button>
-          )}
+          <div className="flex justify-center items-center min-w-[50px] h-[50px] mt-1">
+            {selectedTemplate ? (
+              <Button variant="ghost" size="sm" onClick={unselectTemplate}>
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            ) : (
+              <Zap className="w-4 h-4" />
+            )}
+          </div>
           <DialogTitle>Browse Templates</DialogTitle>
         </DialogHeader>
         <Carousel setApi={(api) => (carousel.current = api)}>
