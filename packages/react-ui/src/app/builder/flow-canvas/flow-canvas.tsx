@@ -27,7 +27,7 @@ import { ApBigButton } from './nodes/big-button';
 import { LoopStepPlaceHolder } from './nodes/loop-step-placeholder';
 import { StepPlaceHolder } from './nodes/step-holder-placeholder';
 import { ApStepNode } from './nodes/step-node';
-
+import { TestFlowWidget } from './test-flow-widget';
 function useContainerSize(
   setSize: (size: { width: number; height: number }) => void,
   containerRef: React.RefObject<HTMLDivElement>,
@@ -81,6 +81,7 @@ const FlowCanvas = React.memo(() => {
   const [nodes, setNodes] = useState(graph.nodes);
   const [edges, setEdges] = useState(graph.edges);
 
+
   useEffect(() => {
     setNodes(graph.nodes);
     setEdges(graph.edges);
@@ -100,33 +101,35 @@ const FlowCanvas = React.memo(() => {
   return (
     <div className="size-full grow relative" ref={containerRef}>
       <FlowDragLayer>
-        <ReactFlow
-          nodeTypes={nodeTypes}
-          nodes={nodes}
-          edgeTypes={edgeTypes}
-          onNodesChange={onNodesChange}
-          edges={edges}
-          draggable={false}
-          onEdgesChange={onEdgesChange}
-          maxZoom={1.5}
-          minZoom={0.5}
-          panOnDrag={allowCanvasPanning}
-          zoomOnDoubleClick={false}
-          panOnScroll={true}
-          fitView={true}
-          nodesConnectable={false}
-          elementsSelectable={true}
-          nodesDraggable={false}
-          fitViewOptions={{
-            includeHiddenNodes: false,
-            minZoom: 0.5,
-            maxZoom: 1.2,
-            duration: 0,
-          }}
-        >
-          <Background />
-          <Controls showInteractive={false} orientation="horizontal" />
-        </ReactFlow>
+      <ReactFlow
+        nodeTypes={nodeTypes}
+        nodes={nodes}
+        edgeTypes={edgeTypes}
+        onNodesChange={onNodesChange}
+        edges={edges}
+        draggable={false}
+        onEdgesChange={onEdgesChange}
+        maxZoom={1.5}
+        minZoom={0.5}
+        panOnDrag={allowCanvasPanning}
+        zoomOnDoubleClick={false}
+        panOnScroll={true}
+        fitView={true}
+        nodesConnectable={false}
+        elementsSelectable={true}
+        nodesDraggable={false}
+        fitViewOptions={{
+          includeHiddenNodes: false,
+          minZoom: 0.5,
+          maxZoom: 1.2,
+          duration: 0,
+        }}
+      >
+        <TestFlowWidget></TestFlowWidget>
+        <Background />
+        <Controls showInteractive={false} orientation="horizontal" />
+
+      </ReactFlow>
       </FlowDragLayer>
       <DataSelector
         parentHeight={size.height}

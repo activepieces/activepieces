@@ -54,7 +54,7 @@ export const api = {
         });
       },
     }),
-  delete: <TResponse>(url: string, query: Record<string, string>) =>
+  delete: <TResponse>(url: string, query?: Record<string, string>) =>
     request<TResponse>(url, {
       method: 'DELETE',
       params: query,
