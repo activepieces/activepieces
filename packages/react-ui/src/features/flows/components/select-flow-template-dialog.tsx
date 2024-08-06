@@ -5,8 +5,8 @@ import {
 } from '@activepieces/shared';
 import { DialogDescription } from '@radix-ui/react-dialog';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Info, Zap } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, Info, Workflow, Zap } from 'lucide-react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { flowsApi } from '../lib/flows-api';
@@ -37,7 +37,7 @@ import {
   Tooltip,
 } from '@/components/ui/tooltip';
 import { ApMarkdown } from '@/components/custom/markdown';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const SelectFlowTemplateDialog = ({
   children,
@@ -55,7 +55,10 @@ const SelectFlowTemplateDialog = ({
 
   const { data: templates, isLoading } = useQuery<FlowTemplate[], Error>({
     queryKey: ['templates'],
-    queryFn: () => templatesApi.list().then((res) => res.data),
+    queryFn: async () => {
+      const templates = await templatesApi.list();
+      return templates.data;
+    },
     staleTime: 0,
   });
 
@@ -113,17 +116,16 @@ const SelectFlowTemplateDialog = ({
     <Dialog onOpenChange={unselectTemplate}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:min-w-[850px] flex flex-col">
-        <DialogHeader className="p-1 flex flex-row items-center min-h-[50px] gap-1">
-          <div className="flex justify-center items-center min-w-[50px] h-[50px] mt-1">
+        <DialogHeader>
+          <DialogTitle className="flex flex-row items-center] gap-1 justify-start gap-2 items-center h-full">
             {selectedTemplate ? (
               <Button variant="ghost" size="sm" onClick={unselectTemplate}>
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             ) : (
-              <Zap className="w-4 h-4" />
+              <Workflow className="w-4 h-4" />
             )}
-          </div>
-          <DialogTitle>Browse Templates</DialogTitle>
+            Browse Templates</DialogTitle>
         </DialogHeader>
         <Carousel setApi={(api) => (carousel.current = api)}>
           <CarouselContent>
@@ -142,7 +144,7 @@ const SelectFlowTemplateDialog = ({
                       <LoadingSpinner />
                     </div>
                   ) : (
-                    <div className="h-[680px] max-h-[680px] overflow-y-auto">
+                    <ScrollArea className="h-[680px] max-h-[680px] overflow-y-auto">
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filteredTemplates?.map((template) => (
                           <div
@@ -164,7 +166,7 @@ const SelectFlowTemplateDialog = ({
                                 onClick={() => createFlow(template)}
                                 disabled={isPending}
                               >
-                                <Zap className="w-4 h-4 me-2" /> Use Template
+                                <Workflow className="w-4 h-4 me-2" /> Use Template
                               </Button>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -186,7 +188,7 @@ const SelectFlowTemplateDialog = ({
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </ScrollArea>
                   )}
                 </DialogDescription>
               </div>
