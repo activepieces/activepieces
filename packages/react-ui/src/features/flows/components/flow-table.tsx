@@ -58,15 +58,6 @@ const FlowsTable = () => {
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
 
-  const { data: templates, isLoading } = useQuery<FlowTemplate[], Error>({
-    queryKey: ['templates'],
-    queryFn: () =>
-      templatesApi
-        .list()
-        .then((res) => res.data),
-    staleTime: 0,
-  });
-
   async function fetchData(queryParams: URLSearchParams) {
     return flowsApi.list({
       projectId: authenticationSession.getProjectId(),
@@ -228,7 +219,7 @@ const FlowsTable = () => {
                   <Plus className="h-4 w-4 me-2" />
                   <span>From scratch</span>
                 </DropdownMenuItem>
-                <SelectFlowTemplateDialog templates={{ templates, isLoading }}>
+                <SelectFlowTemplateDialog>
                   <DropdownMenuItem
                     onSelect={(e) => e.preventDefault()}
                     disabled={isCreateFlowPending}

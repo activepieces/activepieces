@@ -7,11 +7,7 @@ export interface ISVGProps extends React.SVGProps<SVGSVGElement> {
 }
 
 const LoadingSpinner = React.memo(({ size = 24 }: ISVGProps) => {
-  return (
-    <div className="animate-spin">
-      <LoaderIcon height={size} width={size}></LoaderIcon>
-    </div>
-  );
+  return <LoaderIcon className="animate-spin" height={size} width={size} />;
 });
 
 LoadingSpinner.displayName = 'LoadingSpinner';
