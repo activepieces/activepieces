@@ -17,6 +17,8 @@ let redis: Redis
 let worker: Worker | null = null
 let queue: Queue | null = null
 
+const projecyKey = (projectId: string): string => `active_job_count:${projectId}`
+
 export const redisRateLimiter = {
 
     async init(): Promise<void> {
@@ -62,7 +64,11 @@ export const redisRateLimiter = {
     },
 
     async onCompleteOrFailedJob(queueName: QueueName, job: Job<WebhookJobData | OneTimeJobData>): Promise<void> {
-        await redisRateLimiter.changeActiveRunCount(queueName, job.data.projectId, -1)
+        if (!SUPPORTED_QUEUES.includes(queueName)) {
+            return
+        }
+        const redisKey = projecyKey(job.data.projectId)
+        await redis.incrby(redisKey, -1)
     },
 
     async getQueue(): Promise<Queue> {
@@ -78,15 +84,15 @@ export const redisRateLimiter = {
                 shouldRateLimit: false,
             }
         }
-        const projectKey = `active_jobs:${projectId}`
-        const newActiveRuns = await redis.incrby(projectKey, 0)
-        await redis.expire(projectKey, 600)
+        const redisKey = projecyKey(projectId)
+        const newActiveRuns = await redis.incrby(redisKey, 0)
+        await redis.expire(redisKey, 600)
         if (newActiveRuns >= MAX_CONCURRENT_JOBS_PER_PROJECT) {
             return {
                 shouldRateLimit: true,
             }
         }
-        await redis.incrby(projectKey, value)
+        await redis.incrby(redisKey, value)
         return {
             shouldRateLimit: false,
         }
