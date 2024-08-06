@@ -1,5 +1,4 @@
-import { Static, TSchema, Type } from '@sinclair/typebox'
-
+import { Static, Type } from '@sinclair/typebox'
 import { PackageType, PieceType, VersionType } from '../../pieces'
 import { SampleDataSettingsObject } from '../sample-data'
 import { PieceTriggerSettings } from '../triggers/trigger'
@@ -60,7 +59,7 @@ export const PieceActionSettings = Type.Object({
 })
 export type PieceActionSettings = Static<typeof PieceActionSettings>
 
-export const PieceActionSchema =Type.Object({
+export const PieceActionSchema = Type.Object({
     ...commonActionProps,
     type: Type.Literal(ActionType.PIECE),
     settings: PieceActionSettings,
@@ -161,9 +160,7 @@ const BranchConditionValid = (addMinLength: boolean) => Type.Union([
     BranchTextConditionValid(addMinLength),
     BranchNumberConditionValid(addMinLength),
     BranchSingleValueConditionValid(addMinLength),
-], {
-    errorMessage: 'The condition settings is incomplete',
-})
+])
 
 export const BranchActionSettingsWithValidation = Type.Object({
     conditions: Type.Array(Type.Array(BranchConditionValid(true))),

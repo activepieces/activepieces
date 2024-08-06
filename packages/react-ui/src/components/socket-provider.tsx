@@ -1,12 +1,10 @@
 import React from 'react';
 import { io } from 'socket.io-client';
 
+import { API_BASE_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
-// TODO change and handle when the user is not logged in.
-const url = 'https://cloud.activepieces.com';
-
-const socket = io(url, {
+const socket = io(API_BASE_URL, {
   transports: ['websocket'],
   path: '/api/socket.io',
   auth: (cb) => {

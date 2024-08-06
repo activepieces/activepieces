@@ -101,7 +101,8 @@ const FlowStepDetailsCardItem = React.memo(
       [path, stepOutput],
     );
 
-    const isLoopStep = stepOutput && stepOutput.type === ActionType.LOOP_ON_ITEMS;
+    const isLoopStep =
+      stepOutput && stepOutput.type === ActionType.LOOP_ON_ITEMS;
 
     function setIterationIndex(newIterationIndex: number) {
       if (!selectedStep) return;
@@ -188,10 +189,12 @@ const FlowStepDetailsCardItem = React.memo(
                         true,
                       )}
                     </span>
-                    {stepOutput && stepOutput.status && <StepStatusIcon
-                      status={stepOutput.status}
-                      size="4"
-                    ></StepStatusIcon>}
+                    {stepOutput && stepOutput.status && (
+                      <StepStatusIcon
+                        status={stepOutput.status}
+                        size="4"
+                      ></StepStatusIcon>
+                    )}
                   </>
                 )}
               </div>

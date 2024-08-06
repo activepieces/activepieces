@@ -676,9 +676,9 @@ export function getImportOperations(
             case ActionType.PIECE:
             case TriggerType.PIECE:
             case TriggerType.EMPTY:
-                {
-                    break
-                }
+            {
+                break
+            }
         }
 
 
@@ -949,7 +949,7 @@ function findPathToStep({ targetStepName, trigger }: {
     const steps = getAllSteps(trigger).map((step, dfsIndex) => ({
         ...step,
         dfsIndex,
-    }));
+    }))
     return steps.filter((step) => {
         const steps = getAllSteps(step)
         return steps.some((s) => s.name === targetStepName)

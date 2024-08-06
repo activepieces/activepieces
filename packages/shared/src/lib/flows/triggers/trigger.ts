@@ -24,13 +24,13 @@ export const EmptyTrigger = Type.Object({
 
 export type EmptyTrigger = Static<typeof EmptyTrigger>
 
-export const ExactPieceTriggerSettings = (input: TSchema) => Type.Object({
+export const ExactPieceTriggerSettings = <T extends TSchema> (input: T) => Type.Object({
     pieceName: Type.String({}),
     pieceVersion: VersionType,
     pieceType: Type.Enum(PieceType),
     packageType: Type.Enum(PackageType),
     triggerName: Type.String({}),
-    input: input,
+    input,
     inputUiInfo: SampleDataSettingsObject,
 })
 
@@ -38,7 +38,7 @@ export const PieceTriggerSettings = ExactPieceTriggerSettings(Type.Record(Type.S
 
 export type PieceTriggerSettings = Static<typeof PieceTriggerSettings>
 
-export const ExactPieceTrigger = (input: TSchema) => Type.Object({
+export const ExactPieceTrigger = <T extends TSchema> (input: T) => Type.Object({
     ...commonProps,
     type: Type.Literal(TriggerType.PIECE),
     settings: ExactPieceTriggerSettings(input),

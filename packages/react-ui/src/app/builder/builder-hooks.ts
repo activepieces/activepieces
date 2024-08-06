@@ -155,7 +155,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               .map((p) => [p.name, 0]),
             stepName,
           },
-          leftSidebar: isNil(state.run) ? LeftSideBarType.NONE : LeftSideBarType.RUN_DETAILS,
+          leftSidebar: isNil(state.run)
+            ? LeftSideBarType.NONE
+            : LeftSideBarType.RUN_DETAILS,
           rightSidebar: RightSideBarType.PIECE_SETTINGS,
         };
       });
@@ -207,11 +209,13 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         return {
           selectedButton: null,
           selectedStep: path,
-          leftSidebar: isNil(state.run) ? LeftSideBarType.NONE : LeftSideBarType.RUN_DETAILS,
+          leftSidebar: isNil(state.run)
+            ? LeftSideBarType.NONE
+            : LeftSideBarType.RUN_DETAILS,
           rightSidebar: path
             ? RightSideBarType.PIECE_SETTINGS
             : RightSideBarType.NONE,
-        }
+        };
       }),
     setRightSidebar: (rightSidebar: RightSideBarType) => set({ rightSidebar }),
     setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
@@ -291,7 +295,7 @@ function getStateAtPath(
   currentPath.path.forEach(([stepName, iteration]) => {
     const stepOutput = targetMap[stepName];
     if (isNil(stepOutput)) {
-      return {}
+      return {};
     }
     if (!stepOutput.output || stepOutput.type !== ActionType.LOOP_ON_ITEMS) {
       throw new Error(

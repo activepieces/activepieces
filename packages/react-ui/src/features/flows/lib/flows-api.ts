@@ -41,7 +41,11 @@ export const flowsApi = {
       params: request,
     });
   },
-  testFlow(socket: Socket, request: TestFlowRunRequestBody, onUpdate: (response: FlowRun) => void) {
+  testFlow(
+    socket: Socket,
+    request: TestFlowRunRequestBody,
+    onUpdate: (response: FlowRun) => void,
+  ) {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
     return new Promise<void>((resolve, reject) => {
       socket.on(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, (response) => {

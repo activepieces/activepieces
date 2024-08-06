@@ -80,17 +80,13 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const handleStepClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const { type, name } = data.step!;
     if (type === TriggerType.EMPTY) {
-      clickOnNewNodeButton(
-        'trigger',
-        name,
-        StepLocationRelativeToParent.AFTER,
-      );
+      clickOnNewNodeButton('trigger', name, StepLocationRelativeToParent.AFTER);
       return;
     } else {
       selectStepByName(name);
     }
     e.stopPropagation();
-  }
+  };
 
   return (
     <div
@@ -115,7 +111,6 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       <div className="px-2 h-full w-full box-border">
         {!isDragging && (
           <>
-
             <div
               className={cn(
                 'w-[40px] h-[70px] absolute right-[-50px] top-[20px] transition-opacity duration-300',
@@ -125,7 +120,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 },
               )}
             >
-              <span className='text-sm text-muted-foreground'>
+              <span className="text-sm text-muted-foreground">
                 {data.step!.name}
               </span>
             </div>
@@ -155,16 +150,17 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                     {stepMetadata?.displayName}
                   </div>
                 </div>
-                <div className='w-4 flex items-center justify-center'>
-                  {!data.step?.valid && <Tooltip >
-                    <TooltipTrigger asChild>
-                      <CircleAlert className='text-warning'></CircleAlert>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      Incomplete settings
-                    </TooltipContent>
-                  </Tooltip>}
-                  
+                <div className="w-4 flex items-center justify-center">
+                  {!data.step?.valid && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <CircleAlert className="text-warning"></CircleAlert>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        Incomplete settings
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
               </div>
 
