@@ -1,7 +1,7 @@
 import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
-import { CopyPlus, Replace, Trash } from 'lucide-react';
+import { CircleAlert, CopyPlus, Replace, Trash } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -34,6 +34,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     state.activeDraggingStep === data.step?.name,
     state.clickOnNewNodeButton,
   ]);
+
   const deleteStep = useBuilderStateContext((state) => () => {
     state.applyOperation(
       {
@@ -85,12 +86,12 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         StepLocationRelativeToParent.AFTER,
       );
       return;
-    }else{
+    } else {
       selectStepByName(name);
     }
     e.stopPropagation();
   }
-  
+
   return (
     <div
       className={cn('h-[70px] w-[260px] transition-all', {
@@ -114,6 +115,20 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       <div className="px-2 h-full w-full box-border">
         {!isDragging && (
           <>
+
+            <div
+              className={cn(
+                'w-[40px] h-[70px] absolute right-[-50px] top-[20px] transition-opacity duration-300',
+                {
+                  'opacity-0': !toolbarOpen,
+                  'opacity-100': toolbarOpen,
+                },
+              )}
+            >
+              <span className='text-sm text-muted-foreground'>
+                {data.step!.name}
+              </span>
+            </div>
             <div
               className={cn(
                 'absolute left-0 right-0 top-0 mx-auto h-[3px] transition-all bg-primary opacity-0 rounded-tl-md rounded-tr-md',
@@ -139,6 +154,17 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                   <div className="text-xs text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
                     {stepMetadata?.displayName}
                   </div>
+                </div>
+                <div className='w-4 flex items-center justify-center'>
+                  {!data.step?.valid && <Tooltip >
+                    <TooltipTrigger asChild>
+                      <CircleAlert className='text-warning'></CircleAlert>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      Incomplete settings
+                    </TooltipContent>
+                  </Tooltip>}
+                  
                 </div>
               </div>
 
