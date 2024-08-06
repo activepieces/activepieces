@@ -155,7 +155,7 @@ const SelectFlowTemplateDialog = ({
                                 maxNumberOfIconsToShow={2}
                               />
                             </div>
-                            <div className="text-sm font-medium leading-none px-4 leading-6">
+                            <div className="text-sm font-medium px-4">
                               {template.name}
                             </div>
                             <div className="py-2 flex">
@@ -193,9 +193,10 @@ const SelectFlowTemplateDialog = ({
             </CarouselItem>
             <CarouselItem key="template-details">
               {selectedTemplate ? (
-                <>
+                <div className="px-2">
                   <div className="mb-4 p-8 flex items-center justify-center gap-2 width-full bg-green-300 rounded-lg">
                     <PieceIconList
+                      size="xl"
                       trigger={selectedTemplate.template.trigger}
                       maxNumberOfIconsToShow={3}
                     />
@@ -221,7 +222,7 @@ const SelectFlowTemplateDialog = ({
                       </div>
                     )}
                   </div>
-                </>
+                </div>
               ) : null}
             </CarouselItem>
           </CarouselContent>
