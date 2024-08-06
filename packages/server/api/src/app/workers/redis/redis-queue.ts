@@ -34,10 +34,10 @@ export const redisQueue: QueueManager = {
         await redisMigrations.run()
         logger.info('[redisQueueManager#init] Redis queues initialized')
     },
-    async add(params, skipRateLimit): Promise<void> {
+    async add(params): Promise<void> {
         const { type, data } = params
-        const { shouldRateLimit } = await redisRateLimiter.changeTotalRunCount(jobTypeToQueueName[type], data.projectId, 1)
-        if (shouldRateLimit && !skipRateLimit) {
+        const { shouldRateLimit } = await redisRateLimiter.changeActiveRunCount(jobTypeToQueueName[type], data.projectId, 1)
+        if (shouldRateLimit) {
             await redisRateLimiter.rateLimitJob(params)
             return
         }
