@@ -141,7 +141,6 @@ const ApEdgeWithButton: React.FC<ApEdgeWithButtonProps> = (props) => {
           height={18}
           x={buttonPosition.x}
           y={buttonPosition.y}
-          onClick={() => console.log('clicked')}
         >
           <div
             className="bg-[#a6b1bf] w-4 h-4 flex items-center justify-center"

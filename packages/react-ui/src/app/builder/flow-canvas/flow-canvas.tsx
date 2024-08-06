@@ -27,7 +27,7 @@ import { ApBigButton } from './nodes/big-button';
 import { LoopStepPlaceHolder } from './nodes/loop-step-placeholder';
 import { StepPlaceHolder } from './nodes/step-holder-placeholder';
 import { ApStepNode } from './nodes/step-node';
-
+import { TestFlowWidget } from './test-flow-widget';
 function useContainerSize(
   setSize: (size: { width: number; height: number }) => void,
   containerRef: React.RefObject<HTMLDivElement>,
@@ -124,6 +124,7 @@ const FlowCanvas = React.memo(() => {
             duration: 0,
           }}
         >
+          <TestFlowWidget></TestFlowWidget>
           <Background />
           <Controls showInteractive={false} orientation="horizontal" />
         </ReactFlow>

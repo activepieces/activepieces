@@ -31,7 +31,7 @@ const FlowStepInputOutput = React.memo(() => {
 
   return (
     <ScrollArea className="h-full p-4 ">
-      {!stepDetails && <div>No step selected</div>}
+      {!stepDetails && <div>No step information is available.</div>}
       {stepDetails && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 justify-start mb-4">

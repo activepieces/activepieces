@@ -1,6 +1,6 @@
 import { api } from '@/lib/api';
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
-import { FlowTemplate } from '@activepieces/shared';
+import { FlowTemplate, ListFlowTemplatesRequest, SeekPage } from '@activepieces/shared';
 
 export const templatesApi = {
   getTemplate(templateId: string) {
@@ -9,4 +9,7 @@ export const templatesApi = {
   create(request: CreateFlowTemplateRequest) {
     return api.post<FlowTemplate>(`/v1/flow-templates`, request);
   },
+  list(request?: ListFlowTemplatesRequest) {
+    return api.get<SeekPage<FlowTemplate>>(`/v1/flow-templates`, request ?? {});
+  }
 };

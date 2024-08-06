@@ -6,6 +6,7 @@ import {
   FlowVersion,
   StepLocationRelativeToParent,
   Trigger,
+  assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
 
@@ -49,17 +50,14 @@ export const flowCanvasUtils = {
 
 function traverseFlow(step: Action | Trigger | undefined): ApGraph {
   if (isNil(step)) {
-    return {
-      nodes: [],
-      edges: [],
-    };
+    return buildGraph(ApNodeType.PLACEHOLDER);
   }
   const graph: ApGraph = buildGraph(ApNodeType.STEP_NODE, step);
   switch (step.type) {
     case ActionType.LOOP_ON_ITEMS: {
       const { firstLoopAction, nextAction } = step;
       const firstLoopGraph = isNil(firstLoopAction)
-        ? buildGraph(ApNodeType.BIG_BUTTON)
+        ? buildBigButton(step.name, StepLocationRelativeToParent.INSIDE_LOOP)
         : traverseFlow(firstLoopAction);
       const childrenGraphs = [
         buildGraph(ApNodeType.LOOP_PLACEHOLDER),
@@ -79,9 +77,18 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
     case ActionType.BRANCH: {
       const { nextAction, onSuccessAction, onFailureAction } = step;
 
-      const childrenGraphs = [onSuccessAction, onFailureAction].map((g) => {
-        return isNil(g) ? buildGraph(ApNodeType.BIG_BUTTON) : traverseFlow(g);
-      });
+      const childrenGraphs = [onSuccessAction, onFailureAction].map(
+        (g, index) => {
+          return isNil(g)
+            ? buildBigButton(
+                step.name,
+                index === 0
+                  ? StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+                  : StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
+              )
+            : traverseFlow(g);
+        },
+      );
 
       return buildChildrenGraph(
         childrenGraphs,
@@ -95,18 +102,21 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
     }
     default: {
       const { nextAction } = step;
-      if (isNil(nextAction)) {
-        return graph;
-      }
       const childGraph = offsetGraph(traverseFlow(nextAction), {
         x: 0,
         y: VERTICAL_OFFSET,
       });
+      const stepName = graph.nodes[0].data.step?.name;
+      assertNotNullOrUndefined(
+        stepName,
+        'stepName for first node in graph should be defined',
+      );
       graph.edges.push(
         addEdge(
           graph.nodes[0],
           childGraph.nodes[0],
           StepLocationRelativeToParent.AFTER,
+          stepName,
         ),
       );
       return mergeGraph(graph, childGraph);
@@ -155,18 +165,26 @@ function buildChildrenGraph(
   for (let idx = 0; idx < childrenGraphs.length; ++idx) {
     const cbx = boundingBox(childrenGraphs[idx]);
     graph.edges.push(
-      addEdge(graph.nodes[0], childrenGraphs[idx].nodes[0], locations[idx]),
+      addEdge(
+        graph.nodes[0],
+        childrenGraphs[idx].nodes[0],
+        locations[idx],
+        graph.nodes[0].data.parentStep!,
+      ),
     );
     const childGraph = offsetGraph(childrenGraphs[idx], {
       x: deltaLeftX + cbx.widthLeft,
       y: VERTICAL_OFFSET,
     });
     graph = mergeGraph(graph, childGraph);
+    const rootStepName = graph.nodes[0].data.step?.name;
+    assertNotNullOrUndefined(rootStepName, 'rootStepName should be defined');
     graph.edges.push(
       addEdge(
         childGraph.nodes[childGraph.nodes.length - 1],
         commonPartGraph.nodes[0],
         StepLocationRelativeToParent.AFTER,
+        rootStepName,
       ),
     );
     deltaLeftX += cbx.width + HORIZONTAL_SPACE_BETWEEN_NODES;
@@ -179,6 +197,7 @@ function addEdge(
   nodeOne: ApNode,
   nodeTwo: ApNode,
   stepLocationRelativeToParent: StepLocationRelativeToParent,
+  parentStep: string,
 ): ApEdge {
   return {
     id: `${nodeOne.id}-${nodeTwo.id}`,
@@ -189,9 +208,9 @@ function addEdge(
       nodeTwo.type === ApNodeType.LOOP_PLACEHOLDER ? 'apReturnEdge' : 'apEdge',
     label: nodeTwo.id,
     data: {
-      parentStep: nodeOne.data.step?.name,
+      parentStep: parentStep,
       stepLocationRelativeToParent,
-      addButton: nodeTwo.type === ApNodeType.STEP_NODE,
+      addButton: nodeTwo.type !== ApNodeType.BIG_BUTTON,
       targetType: nodeTwo.type,
     },
   };
@@ -237,6 +256,26 @@ function offsetGraph(
   };
 }
 
+function buildBigButton(
+  parentStep: string,
+  stepLocationRelativeToParent?: StepLocationRelativeToParent,
+): ApGraph {
+  return {
+    nodes: [
+      {
+        id: nanoid(),
+        position: { x: 0, y: 0 },
+        type: ApNodeType.BIG_BUTTON,
+        data: {
+          parentStep,
+          stepLocationRelativeToParent,
+        },
+      },
+    ],
+    edges: [],
+  };
+}
+
 function buildGraph(type: ApNodeType, step?: Step): ApGraph {
   return {
     nodes: [
@@ -275,6 +314,8 @@ export type ApNode = {
   type: ApNodeType;
   data: {
     step?: Step;
+    parentStep?: string;
+    stepLocationRelativeToParent?: StepLocationRelativeToParent;
   };
 };
 

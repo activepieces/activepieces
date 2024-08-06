@@ -7,7 +7,10 @@ import axios, {
 import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
-const apiUrl = 'https://cloud.activepieces.com/api';
+
+export const API_BASE_URL = 'https://cloud.activepieces.com';
+// export const API_BASE_URL = 'http://localhost:4200';
+export const API_URL = `${API_BASE_URL}/api`;
 
 const disallowedRoutes = [
   '/v1/authentication/sign-in',
@@ -28,7 +31,7 @@ function request<TResponse>(
   config: AxiosRequestConfig = {},
 ): Promise<TResponse> {
   return axios({
-    url: !isUrlRelative(url) ? url : `${apiUrl}${url}`,
+    url: !isUrlRelative(url) ? url : `${API_URL}${url}`,
     ...config,
     headers: {
       ...config.headers,
@@ -54,7 +57,7 @@ export const api = {
         });
       },
     }),
-  delete: <TResponse>(url: string, query: Record<string, string>) =>
+  delete: <TResponse>(url: string, query?: Record<string, string>) =>
     request<TResponse>(url, {
       method: 'DELETE',
       params: query,

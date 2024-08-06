@@ -13,6 +13,7 @@ import {
   StepLocationRelativeToParent,
   StepOutput,
   flowHelper,
+  isNil,
 } from '@activepieces/shared';
 
 const flowUpdatesQueue = new PromiseQueue();
@@ -155,6 +156,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               .map((p) => [p.name, 0]),
             stepName,
           },
+          leftSidebar: isNil(state.run)
+            ? LeftSideBarType.NONE
+            : LeftSideBarType.RUN_DETAILS,
           rightSidebar: RightSideBarType.PIECE_SETTINGS,
         };
       });
@@ -202,12 +206,17 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         rightSidebar: RightSideBarType.PIECE_SELECTOR,
       }),
     selectStepByPath: (path: StepPathWithName) =>
-      set({
-        selectedButton: null,
-        selectedStep: path,
-        rightSidebar: path
-          ? RightSideBarType.PIECE_SETTINGS
-          : RightSideBarType.NONE,
+      set((state) => {
+        return {
+          selectedButton: null,
+          selectedStep: path,
+          leftSidebar: isNil(state.run)
+            ? LeftSideBarType.NONE
+            : LeftSideBarType.RUN_DETAILS,
+          rightSidebar: path
+            ? RightSideBarType.PIECE_SETTINGS
+            : RightSideBarType.NONE,
+        };
       }),
     setRightSidebar: (rightSidebar: RightSideBarType) => set({ rightSidebar }),
     setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
@@ -215,7 +224,12 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       set({
         run,
         flowVersion,
-        selectedStep: null,
+        leftSidebar: LeftSideBarType.RUN_DETAILS,
+        rightSidebar: RightSideBarType.PIECE_SETTINGS,
+        selectedStep: {
+          path: [],
+          stepName: flowVersion.trigger.name,
+        },
         readonly: true,
       }),
     startSaving: () => set({ saving: true }),
@@ -265,10 +279,13 @@ function getStepOutputFromExecutionPath({
   executionState,
 }: {
   path: StepPathWithName;
-  executionState: ExecutionState;
+  executionState: ExecutionState | FlowRun | undefined | null;
 }): StepOutput | undefined {
+  if (isNil(executionState)) {
+    return undefined;
+  }
   const stateAtPath = getStateAtPath(path, executionState.steps);
-  return stateAtPath[path.stepName];
+  return stateAtPath?.[path.stepName];
 }
 
 function getStateAtPath(
@@ -278,6 +295,9 @@ function getStateAtPath(
   let targetMap = steps;
   currentPath.path.forEach(([stepName, iteration]) => {
     const stepOutput = targetMap[stepName];
+    if (isNil(stepOutput)) {
+      return {};
+    }
     if (!stepOutput.output || stepOutput.type !== ActionType.LOOP_ON_ITEMS) {
       throw new Error(
         '[ExecutionState#getTargetMap] Not instance of Loop On Items step output',

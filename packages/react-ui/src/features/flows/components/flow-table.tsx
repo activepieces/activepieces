@@ -1,6 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import { CheckIcon, EllipsisVertical, Import } from 'lucide-react';
+import { CheckIcon, ChevronDown, EllipsisVertical, Import, Plus, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -18,11 +18,19 @@ import { FolderFilterList } from '@/features/folders/component/folder-filter-lis
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
+import { FlowStatus, FlowTemplate, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from './flow-actions-menu';
 import { FlowStatusToggle } from './flow-status-toggle';
 import { ImportFlowDialog } from './import-flow-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { SelectFlowTemplateDialog } from './select-flow-template-dialog';
+import { templatesApi } from '@/features/templates/lib/templates-api';
 
 const filters: DataTableFilter[] = [
   {
@@ -193,13 +201,35 @@ const FlowsTable = () => {
                 Import Flow
               </Button>
             </ImportFlowDialog>
-            <Button
-              variant="default"
-              onClick={() => createFlow()}
-              loading={isCreateFlowPending}
-            >
-              New flow
-            </Button>
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default" loading={isCreateFlowPending}>
+                  <span>New flow</span>
+                  <ChevronDown className="h-4 w-4 ms-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    createFlow();
+                  }}
+                  disabled={isCreateFlowPending}
+                >
+                  <Plus className="h-4 w-4 me-2" />
+                  <span>From scratch</span>
+                </DropdownMenuItem>
+                <SelectFlowTemplateDialog>
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    disabled={isCreateFlowPending}
+                  >
+                    <Zap className="h-4 w-4 me-2" />
+                    <span>Use a template</span>
+                  </DropdownMenuItem>
+                </SelectFlowTemplateDialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         <div className="flex flex-row gap-4">

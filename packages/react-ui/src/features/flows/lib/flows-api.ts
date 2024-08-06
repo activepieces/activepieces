@@ -6,6 +6,8 @@ import {
   CreateFlowRequest,
   CreateStepRunRequestBody,
   FlowOperationRequest,
+  FlowRun,
+  FlowRunStatus,
   FlowTemplate,
   FlowVersion,
   FlowVersionMetadata,
@@ -16,6 +18,7 @@ import {
   PopulatedFlow,
   SeekPage,
   StepRunResponse,
+  TestFlowRunRequestBody,
   WebsocketClientEvent,
   WebsocketServerEvent,
 } from '@activepieces/shared';
@@ -36,6 +39,24 @@ export const flowsApi = {
   getTemplate(flowId: string, request: GetFlowTemplateRequestQuery) {
     return api.get<FlowTemplate>(`/v1/flows/${flowId}/template`, {
       params: request,
+    });
+  },
+  testFlow(
+    socket: Socket,
+    request: TestFlowRunRequestBody,
+    onUpdate: (response: FlowRun) => void,
+  ) {
+    socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
+    return new Promise<void>((resolve, reject) => {
+      socket.on(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, (response) => {
+        onUpdate(response);
+        if (response.status !== FlowRunStatus.RUNNING) {
+          resolve();
+        }
+      });
+      socket.on('error', (error) => {
+        reject(error);
+      });
     });
   },
   testStep(socket: Socket, request: Omit<CreateStepRunRequestBody, 'id'>) {

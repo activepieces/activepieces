@@ -40,9 +40,9 @@ type FindChildrenPathsResult = {
 
 function findChildrenPaths(
   path: StepPathWithName,
-  stepOutput: StepOutput,
+  stepOutput: StepOutput | undefined,
 ): FindChildrenPathsResult {
-  if (stepOutput.type === ActionType.LOOP_ON_ITEMS) {
+  if (stepOutput?.type === ActionType.LOOP_ON_ITEMS) {
     const loopStepOutput = stepOutput as LoopStepOutput;
     const currentIteration =
       path.path.find((p) => p[0] === path.stepName)?.[1] ?? 0;
@@ -89,7 +89,7 @@ const FlowStepDetailsCardItem = React.memo(
     const stepOutput = builderSelectors.getStepOutputFromExecutionPath({
       path,
       executionState: run ?? { steps: {} },
-    })!;
+    });
 
     const { stepMetadata } = piecesHooks.useStepMetadata({
       step,
@@ -101,7 +101,8 @@ const FlowStepDetailsCardItem = React.memo(
       [path, stepOutput],
     );
 
-    const isLoopStep = stepOutput.type === ActionType.LOOP_ON_ITEMS;
+    const isLoopStep =
+      stepOutput && stepOutput.type === ActionType.LOOP_ON_ITEMS;
 
     function setIterationIndex(newIterationIndex: number) {
       if (!selectedStep) return;
@@ -188,10 +189,12 @@ const FlowStepDetailsCardItem = React.memo(
                         true,
                       )}
                     </span>
-                    <StepStatusIcon
-                      status={stepOutput.status}
-                      size="4"
-                    ></StepStatusIcon>
+                    {stepOutput && stepOutput.status && (
+                      <StepStatusIcon
+                        status={stepOutput.status}
+                        size="4"
+                      ></StepStatusIcon>
+                    )}
                   </>
                 )}
               </div>

@@ -1,4 +1,4 @@
-import { BranchAction, BranchActionSettings, BranchCondition, BranchOperator, BranchStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertNotNullOrUndefined, BranchAction, BranchActionSettings, BranchCondition, BranchOperator, BranchStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
@@ -61,6 +61,7 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
         let andGroup = true
         for (const condition of conditionGroup) {
             const castedCondition = condition
+            assertNotNullOrUndefined(castedCondition.operator, 'The operator is required but found to be undefined')
             switch (castedCondition.operator) {
                 case BranchOperator.TEXT_CONTAINS: {
                     const firstValueContains = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).includes(
