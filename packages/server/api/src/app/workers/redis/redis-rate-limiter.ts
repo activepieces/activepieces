@@ -10,7 +10,7 @@ import { redisQueue } from './redis-queue'
 
 
 const RATE_LIMIT_QUEUE_NAME = 'rateLimitJobs'
-const PROJECT_RATE_LIMIT = system.getNumberOrThrow(AppSystemProp.PROJECT_RATE_LIMIT)
+const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
 const SUPPORTED_QUEUES = [QueueName.ONE_TIME, QueueName.WEBHOOK]
 
 let redis: Redis
@@ -83,7 +83,7 @@ export const redisRateLimiter = {
         }
         const projectKey = `active_runs:${projectId}`
         const newActiveRuns = await redis.incrby(projectKey, value)
-        if (newActiveRuns >= PROJECT_RATE_LIMIT) {
+        if (newActiveRuns >= MAX_CONCURRENT_JOBS_PER_PROJECT) {
             await redis.incrby(projectKey, -value)
             return {
                 shouldRateLimit: true,
