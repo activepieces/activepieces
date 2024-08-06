@@ -78,7 +78,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.TEMPLATES_SOURCE_URL]:
         'https://cloud.activepieces.com/api/v1/flow-templates',
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
-    [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '10',
+    [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '40',
 }
 
 export const system = {
