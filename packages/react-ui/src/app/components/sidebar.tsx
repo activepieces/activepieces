@@ -1,5 +1,5 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { Bug, Link2, Logs, Settings, Shield, Workflow } from 'lucide-react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
@@ -10,16 +10,15 @@ import {
 } from '@/components/ui/tooltip';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { theme } from '@/lib/theme';
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId, isNil } from '@activepieces/shared';
 
 import { Button } from '../../components/ui/button';
 import { UserAvatar } from '../../components/ui/user-avatar';
 import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
 
-import { RequestTrial } from './request-trial';
+import { FlagGuard } from './flag-gaurd';
 
 type Link = {
   icon: React.ReactNode;
@@ -64,14 +63,43 @@ const CustomTooltipLink = ({
   );
 };
 
+const TaskLimitButton = React.memo(() => {
+  const { data: project } = projectHooks.useCurrentProject();
+
+  if (isNil(project?.plan?.tasks) || isNil(project?.usage?.tasks)) {
+    return null;
+  }
+
+  return (
+    <FlagGuard flag={ApFlagId.SHOW_BILLING}>
+      <Link to={'/plans'}>
+        <Button
+          variant={'outline'}
+          size="sm"
+          className="flex items-center justify-center gap-2"
+        >
+          <ProgressCircularComponent
+            size="small"
+            data={{
+              plan: project.plan.tasks,
+              usage: project.usage.tasks,
+            }}
+          />
+          <span>
+            <strong>
+              {project.usage.tasks}/{project.plan.tasks}
+            </strong>{' '}
+            Tasks Per Month
+          </span>
+        </Button>
+      </Link>
+    </FlagGuard>
+  );
+});
+TaskLimitButton.displayName = 'TaskLimitButton';
+
 export function Sidebar({ children }: { children: React.ReactNode }) {
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
-  const { data: project } = projectHooks.useCurrentProject();
-  const queryClient = useQueryClient();
-  const billingEnabled = flagsHooks.useFlag<boolean>(
-    ApFlagId.BILLING_ENABLED,
-    queryClient,
-  );
 
   return (
     <div className="flex min-h-screen w-full ">
@@ -95,7 +123,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
           />
           <CustomTooltipLink
             to="/connections"
-            label="Connnections"
+            label="Connections"
             Icon={Link2}
           />
           <CustomTooltipLink to="/settings" label="Settings" Icon={Settings} />
@@ -116,30 +144,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                 <Shield className="size-4" />
                 <span>Platform Admin</span>
               </Button>
-              <RequestTrial></RequestTrial>
-              {billingEnabled && (
-                <Link to={'/plans'}>
-                  <Button
-                    variant={'outline'}
-                    size="sm"
-                    className="flex items-center justify-center gap-2"
-                  >
-                    <ProgressCircularComponent
-                      size="small"
-                      data={{
-                        plan: project.plan.tasks,
-                        usage: project.usage.tasks,
-                      }}
-                    />
-                    <span>
-                      <strong>
-                        {project.usage.tasks}/{project.plan.tasks}
-                      </strong>{' '}
-                      Tasks Per Month
-                    </span>
-                  </Button>
-                </Link>
-              )}
+              <TaskLimitButton />
               <UserAvatar />
             </div>
           </div>

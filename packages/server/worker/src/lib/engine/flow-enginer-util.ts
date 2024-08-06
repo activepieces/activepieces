@@ -1,4 +1,4 @@
-import { Action, ActionType, assertEqual, CodeAction, EXACT_VERSION_PATTERN, flowHelper, FlowVersion, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, PieceType, Trigger, TriggerType } from '@activepieces/shared'
+import { Action, ActionType, assertEqual, CodeAction, EXACT_VERSION_REGEX, flowHelper, FlowVersion, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, PieceType, Trigger, TriggerType } from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
 import { CodeArtifact } from './engine-runner'
 
@@ -62,7 +62,7 @@ export const pieceEngineUtil = {
                 }
             }
             case PackageType.REGISTRY: {
-                const exactVersion = EXACT_VERSION_PATTERN.test(pieceVersion)
+                const exactVersion = EXACT_VERSION_REGEX.test(pieceVersion)
                 const version = exactVersion ? pieceVersion : (await engineApiService(engineToken).getPiece(pieceName, {
                     version: pieceVersion,
                 })).version

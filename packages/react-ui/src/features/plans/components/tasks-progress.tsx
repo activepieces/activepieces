@@ -1,7 +1,7 @@
-import dayjs from 'dayjs';
 import React from 'react';
 
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
+import { formatUtils } from '@/lib/utils';
 
 type TasksProgressProps = {
   usage: number;
@@ -23,11 +23,7 @@ const TasksProgress: React.FC<TasksProgressProps> = ({
         </span>
         <span className="text-md text-muted-foreground">
           Resets at{' '}
-          {`${dayjs(nextBillingDate).format('MMM D, h:mm')} ${dayjs(
-            nextBillingDate,
-          )
-            .format('a')
-            .toUpperCase()}`}
+          {`${formatUtils.formatDate(new Date(nextBillingDate)).toUpperCase()}`}
         </span>
       </div>
     </div>
