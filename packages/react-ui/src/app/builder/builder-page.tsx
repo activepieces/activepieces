@@ -1,4 +1,4 @@
-import { ReactFlowProvider, ViewportPortal } from '@xyflow/react';
+import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
 

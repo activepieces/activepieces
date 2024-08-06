@@ -1,4 +1,4 @@
-import deepmerge from 'deepmerge';
+import deepmerge from 'deepmerge'
 
 export function isString(str: unknown): str is string {
     return str != null && typeof str === 'string'
@@ -25,10 +25,10 @@ export function debounce<T>(func: (...args: T[]) => void, wait: number): (...arg
 
 type DeepPartial<T> = {
     [P in keyof T]?: T[P] extends Record<string, unknown> ? DeepPartial<T[P]> : T[P];
-};
+}
 
 export function deepMergeAndCast<T>(target: DeepPartial<T>, source: DeepPartial<T>): T {
-    return deepmerge(target as Partial<T>, source as Partial<T>) as T;
+    return deepmerge(target as Partial<T>, source as Partial<T>) as T
 }
 
 
