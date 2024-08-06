@@ -45,7 +45,7 @@ export const redisRateLimiter = {
                 maxStalledCount: 5,
                 stalledInterval: 30000,
                 limiter: {
-                    max: 100,
+                    max: 20,
                     duration: 1000,
                 },
             })
@@ -62,9 +62,6 @@ export const redisRateLimiter = {
     },
 
     async onCompleteOrFailedJob(queueName: QueueName, job: Job<WebhookJobData | OneTimeJobData>): Promise<void> {
-        if (!SUPPORTED_QUEUES.includes(queueName)) {
-            return
-        }
         await redisRateLimiter.changeActiveRunCount(queueName, job.data.projectId, -1)
     },
 
@@ -82,15 +79,14 @@ export const redisRateLimiter = {
             }
         }
         const projectKey = `active_jobs:${projectId}`
-        const newActiveRuns = await redis.incrby(projectKey, value)
+        const newActiveRuns = await redis.incrby(projectKey, 0)
         await redis.expire(projectKey, 600)
         if (newActiveRuns >= MAX_CONCURRENT_JOBS_PER_PROJECT) {
-            await redis.incrby(projectKey, -value)
             return {
                 shouldRateLimit: true,
             }
         }
-
+        await redis.incrby(projectKey, value)
         return {
             shouldRateLimit: false,
         }
