@@ -76,7 +76,7 @@ export const redisRateLimiter = {
         return queue
     },
 
-    async changeActiveRunCount(queueName: QueueName, projectId: string, value: number): Promise<{
+    async shouldBeLimited(queueName: QueueName, projectId: string, value: number): Promise<{
         shouldRateLimit: boolean
     }> {
         if (!SUPPORTED_QUEUES.includes(queueName)) {
@@ -85,14 +85,14 @@ export const redisRateLimiter = {
             }
         }
         const redisKey = projecyKey(projectId)
-        const newActiveRuns = await redis.incrby(redisKey, 0)
+        const newActiveRuns = await redis.incrby(redisKey, value)
         await redis.expire(redisKey, 600)
         if (newActiveRuns >= MAX_CONCURRENT_JOBS_PER_PROJECT) {
+            await redis.incrby(redisKey, -value)
             return {
                 shouldRateLimit: true,
             }
         }
-        await redis.incrby(redisKey, value)
         return {
             shouldRateLimit: false,
         }
