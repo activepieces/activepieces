@@ -15,8 +15,9 @@ import {
 import { ArrayProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { DictionaryProperty } from './dictionary-property';
+import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
+import { DynamicProperties } from './dynamic-piece-property';
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
-import { SelectPieceProperty } from './select-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
 
 type AutoFormProps = {
@@ -166,6 +167,7 @@ const selectRightComponent = (
           ></MultiSelectPieceProperty>
         </AutoFormFieldWrapper>
       );
+    case PropertyType.MULTI_SELECT_DROPDOWN:
     case PropertyType.DROPDOWN:
       return (
         <AutoFormFieldWrapper
@@ -174,12 +176,12 @@ const selectRightComponent = (
           field={field}
           allowDynamicValues={allowDynamicValues}
         >
-          <SelectPieceProperty
+          <DynamicDropdownPieceProperty
             refreshers={property.refreshers}
-            initial={field.value}
+            initialValue={field.value}
             onChange={field.onChange}
             propertyName={key}
-          ></SelectPieceProperty>
+          ></DynamicDropdownPieceProperty>
         </AutoFormFieldWrapper>
       );
     case PropertyType.DATE_TIME:
@@ -187,7 +189,6 @@ const selectRightComponent = (
     case PropertyType.LONG_TEXT:
     case PropertyType.FILE:
     case PropertyType.NUMBER:
-    case PropertyType.MULTI_SELECT_DROPDOWN:
     case PropertyType.SECRET_TEXT:
       return (
         <AutoFormFieldWrapper
@@ -203,6 +204,19 @@ const selectRightComponent = (
         </AutoFormFieldWrapper>
       );
     case PropertyType.DYNAMIC:
+      return (
+        <AutoFormFieldWrapper
+          propertyKey={key}
+          property={property}
+          field={field}
+          allowDynamicValues={allowDynamicValues}
+        >
+          <DynamicProperties
+            refreshers={property.refreshers}
+            propertyName={key}
+          ></DynamicProperties>
+        </AutoFormFieldWrapper>
+      );
     case PropertyType.CUSTOM_AUTH:
     case PropertyType.BASIC_AUTH:
     case PropertyType.OAUTH2:

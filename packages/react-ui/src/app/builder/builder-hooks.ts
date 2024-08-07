@@ -63,6 +63,7 @@ export type BuilderState = {
   leftSidebar: LeftSideBarType;
   rightSidebar: RightSideBarType;
   selectedStep: StepPathWithName | null;
+  canExitRun: boolean;
   activeDraggingStep: string | null;
   allowCanvasPanning: boolean;
   selectedButton: SelectedButtonType | null;
@@ -99,7 +100,7 @@ export type BuilderState = {
 
 export type BuilderInitialState = Pick<
   BuilderState,
-  'flow' | 'flowVersion' | 'readonly' | 'run'
+  'flow' | 'flowVersion' | 'readonly' | 'run' | 'canExitRun'
 >;
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
@@ -113,6 +114,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     run: initialState.run,
     saving: false,
     selectedStep: null,
+    canExitRun: initialState.canExitRun,
     activeDraggingStep: null,
     allowCanvasPanning: true,
     rightSidebar: RightSideBarType.NONE,

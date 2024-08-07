@@ -1,4 +1,6 @@
-import { Trigger, flowHelper } from '@activepieces/shared';
+import { cva } from 'class-variance-authority';
+
+import { flowHelper, Trigger } from '@activepieces/shared';
 
 import {
   Tooltip,
@@ -9,12 +11,29 @@ import { piecesHooks, StepMetadata } from '../lib/pieces-hook';
 
 import { PieceIcon } from './piece-icon';
 
+const extraIconVariants = cva(
+  'flex items-center justify-center bg-white text-black  p-2 rounded-full border border-solid',
+  {
+    variants: {
+      size: {
+        xl: 'size-[64px]',
+        lg: 'size-[48px]',
+        md: 'size-[36px]',
+        sm: 'size-[25px]',
+      },
+    },
+    defaultVariants: {},
+  },
+);
+
 export function PieceIconList({
   maxNumberOfIconsToShow,
   trigger,
+  size,
 }: {
   trigger: Trigger;
   maxNumberOfIconsToShow: number;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }) {
   const steps = flowHelper.getAllSteps(trigger);
   const stepsMetadata: StepMetadata[] = piecesHooks
@@ -37,14 +56,14 @@ export function PieceIconList({
               logoUrl={metadata.logoUrl}
               showTooltip={false}
               circle={true}
-              size={'md'}
+              size={size ?? 'md'}
               border={true}
               displayName={metadata.displayName}
               key={index}
             />
           ))}
           {extraPieces > 0 && (
-            <div className="flex items-center justify-center bg-white text-black  p-2 rounded-full border border-solid size-[36px]">
+            <div className={extraIconVariants({ size: size ?? 'md' })}>
               +{extraPieces}
             </div>
           )}

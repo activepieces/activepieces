@@ -49,15 +49,23 @@ const useAnimateSidebar = (
 };
 
 const BuilderPage = () => {
-  const [leftSidebar, rightSidebar, flowVersion, selectedStep, exitRun, run] =
-    useBuilderStateContext((state) => [
-      state.leftSidebar,
-      state.rightSidebar,
-      state.flowVersion,
-      state.selectedStep,
-      state.exitRun,
-      state.run,
-    ]);
+  const [
+    leftSidebar,
+    rightSidebar,
+    flowVersion,
+    selectedStep,
+    exitRun,
+    run,
+    canExitRun,
+  ] = useBuilderStateContext((state) => [
+    state.leftSidebar,
+    state.rightSidebar,
+    state.flowVersion,
+    state.selectedStep,
+    state.exitRun,
+    state.run,
+    state.canExitRun,
+  ]);
 
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const rightHandleRef = useAnimateSidebar(rightSidebar);
@@ -91,7 +99,9 @@ const BuilderPage = () => {
 
   return (
     <div className="flex h-screen w-screen flex-col">
-      {run && <RunDetailsBar run={run} exitRun={exitRun} />}
+      {run && (
+        <RunDetailsBar canExitRun={canExitRun} run={run} exitRun={exitRun} />
+      )}
       <BuilderNavBar />
       <ResizablePanelGroup direction="horizontal">
         <>

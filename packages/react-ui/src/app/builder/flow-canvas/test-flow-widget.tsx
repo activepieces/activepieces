@@ -4,8 +4,14 @@ import React from 'react';
 
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { TriggerType, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -14,6 +20,11 @@ const TestFlowWidget = React.memo(() => {
     state.flowVersion,
     state.setRun,
   ]);
+
+  const triggerHasSampleData =
+    flowVersion.trigger.type === TriggerType.PIECE &&
+    !isNil(flowVersion.trigger.settings.inputUiInfo?.currentSelectedData);
+
   const socket = useSocket();
   const { mutate, isPending } = useMutation<void>({
     mutationFn: () =>
@@ -42,22 +53,32 @@ const TestFlowWidget = React.memo(() => {
         }}
       >
         <div className="justify-center items-center flex w-[260px]">
-          {flowVersion.valid && (
+          {flowVersion.valid && triggerHasSampleData && (
             <Button
               variant="outline"
               className="h-8"
               loading={isPending}
               onClick={() => mutate()}
             >
-              {' '}
-              Test Flow{' '}
+              Test Flow
             </Button>
           )}
           {!flowVersion.valid && (
             <Button variant="outline" className="h-8">
-              {' '}
-              Complete Settings{' '}
+              Complete Settings
             </Button>
+          )}
+          {flowVersion.valid && !triggerHasSampleData && (
+            <Tooltip>
+              <TooltipTrigger asChild className="disabled:pointer-events-auto">
+                <Button variant="outline" className="h-8" disabled={true}>
+                  Test Trigger
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                Please test the trigger first
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       </div>
