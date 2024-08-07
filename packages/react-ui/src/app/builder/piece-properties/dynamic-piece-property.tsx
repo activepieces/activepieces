@@ -1,14 +1,14 @@
+import { PiecePropertyMap } from '@activepieces/pieces-framework';
+import { Action, Trigger } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
+import { AutoPropertiesFormComponent } from './auto-properties-form';
+
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { PiecePropertyMap } from '@activepieces/pieces-framework';
-import { Action, Trigger } from '@activepieces/shared';
-
-import { AutoPropertiesFormComponent } from './auto-properties-form';
 
 type DynamicPropertiesProps = {
   refreshers: string[];
@@ -32,6 +32,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
       const { settings } = form.getValues();
       const actionOrTriggerName = settings.actionName ?? settings.triggerName;
       const { pieceName, pieceVersion, pieceType, packageType } = settings;
+
       return piecesApi.options({
         pieceName,
         pieceVersion,
@@ -42,6 +43,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
         input: input,
         flowVersionId: flowVersion.id,
         flowId: flowVersion.flowId,
+        stepName: actionOrTriggerName,
       });
     },
     onSuccess: (response) => {
