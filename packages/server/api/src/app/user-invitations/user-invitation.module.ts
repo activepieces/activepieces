@@ -1,3 +1,11 @@
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
+import { assertRoleHasPermission } from '../ee/authentication/rbac/rbac-middleware'
+import { projectMembersLimit } from '../ee/project-plan/members-limit'
+import { projectService } from '../project/project-service'
+import { userInvitationsService } from './user-invitation.service'
 import {
     AcceptUserInvitationRequest,
     ActivepiecesError,
@@ -15,14 +23,6 @@ import {
     UserInvitation,
     UserInvitationWithLink,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
-import { assertRoleHasPermission } from '../ee/authentication/rbac/rbac-middleware'
-import { projectMembersLimit } from '../ee/project-plan/members-limit'
-import { projectService } from '../project/project-service'
-import { userInvitationsService } from './user-invitation.service'
 
 
 export const invitationModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -122,6 +122,7 @@ const ListUserInvitationsRequestParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         permission: Permission.READ_INVITATION,
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         tags: ['user-invitations'],
@@ -136,6 +137,7 @@ const ListUserInvitationsRequestParams = {
 const AcceptUserInvitationRequestParams = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         body: AcceptUserInvitationRequest,
@@ -145,6 +147,7 @@ const AcceptUserInvitationRequestParams = {
 const DeleteInvitationRequestParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         tags: ['user-invitations'],
