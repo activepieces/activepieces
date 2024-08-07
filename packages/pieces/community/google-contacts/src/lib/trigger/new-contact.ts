@@ -15,38 +15,110 @@ import {
 } from '@activepieces/pieces-common';
 import { googleContactsCommon } from '../common';
 import { googleContactsAuth } from '../../';
+import { google } from 'googleapis';
+import { OAuth2Client } from 'googleapis-common';
+import dayjs from 'dayjs';
 
 const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
-  strategy: DedupeStrategy.LAST_ITEM,
+  strategy: DedupeStrategy.TIMEBASED,
   items: async ({ store, auth }) => {
-    let newContacts: Connection[] = [];
-    let fetchMore = true;
-    while (fetchMore) {
-      const syncToken = (await store.get<string>('syncToken'))!;
-      const response = await listContacts(
-        getAccessTokenOrThrow(auth),
-        syncToken
-      );
-      const newConnections = response.body.connections;
-      await store.put('syncToken', response.body.nextSyncToken);
-      if (newConnections === undefined || newConnections.length == 0) {
-        fetchMore = false;
-      }
-      if (newConnections !== undefined) {
-        newContacts = [...newContacts, ...newConnections];
-      }
-    }
-    console.log(`Found ${newContacts.length} new contacts`);
-    newContacts = newContacts.filter((f) => {
-      return f.metadata.deleted !== true;
-    });
+    const authClient = new OAuth2Client();
+    authClient.setCredentials(auth);
 
-    return newContacts.map((item) => ({
-      id: newContacts.indexOf(item),
-      data: item,
-    }));
+    const contactsClient = google.people({ version: 'v1', auth: authClient });
+
+    let nextPageToken;
+    const contactItems: Array<{ data: any; epochMilliSeconds: number }> = [];
+
+    do {
+      const response: any = await contactsClient.people.connections.list({
+        pageToken: nextPageToken,
+        pageSize: 100,
+        sortOrder: 'LAST_MODIFIED_DESCENDING',
+        personFields: [
+          'addresses',
+          'ageRanges',
+          'biographies',
+          'birthdays',
+          'calendarUrls',
+          'clientData',
+          'coverPhotos',
+          'emailAddresses',
+          'events',
+          'externalIds',
+          'genders',
+          'imClients',
+          'interests',
+          'locales',
+          'locations',
+          'memberships',
+          'metadata',
+          'miscKeywords',
+          'names',
+          'nicknames',
+          'occupations',
+          'organizations',
+          'phoneNumbers',
+          'photos',
+          'relations',
+          'sipAddresses',
+          'skills',
+          'urls',
+          'userDefined',
+        ].join(),
+      });
+
+      console.log(JSON.stringify(response.data, null, 2));
+
+      for (const contact of response.data.connections || []) {
+        if (contact.metadata?.deleted !== true) {
+          contactItems.push({
+            data: contact,
+            epochMilliSeconds: dayjs(
+              contact.metadata?.sources?.[0].updateTime
+            ).valueOf(),
+          });
+        }
+      }
+
+      nextPageToken = response.data.nextPageToken;
+    } while (nextPageToken);
+
+    return contactItems;
   },
 };
+
+// const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+//   strategy: DedupeStrategy.LAST_ITEM,
+//   items: async ({ store, auth }) => {
+//     let newContacts: Connection[] = [];
+//     let fetchMore = true;
+//     while (fetchMore) {
+//       const syncToken = (await store.get<string>('syncToken'))!;
+//       const response = await listContacts(
+//         getAccessTokenOrThrow(auth),
+//         syncToken
+//       );
+//       const newConnections = response.body.connections;
+//       await store.put('syncToken', response.body.nextSyncToken);
+//       if (newConnections === undefined || newConnections.length == 0) {
+//         fetchMore = false;
+//       }
+//       if (newConnections !== undefined) {
+//         newContacts = [...newContacts, ...newConnections];
+//       }
+//     }
+//     console.log(`Found ${newContacts.length} new contacts`);
+//     newContacts = newContacts.filter((f) => {
+//       return f.metadata.deleted !== true;
+//     });
+
+//     return newContacts.map((item) => ({
+//       id: newContacts.indexOf(item),
+//       data: item,
+//     }));
+//   },
+// };
 
 export const googleContactNewOrUpdatedContact = createTrigger({
   auth: googleContactsAuth,
