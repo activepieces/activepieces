@@ -11,7 +11,8 @@ import { redisQueue } from './redis-queue'
 
 const RATE_LIMIT_QUEUE_NAME = 'rateLimitJobs'
 const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
-const SUPPORTED_QUEUES = [QueueName.ONE_TIME]
+const PROJECT_RATE_LIMITER_ENABLED = system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED)
+const SUPPORTED_QUEUES = [QueueName.ONE_TIME, QueueName.WEBHOOK]
 
 let redis: Redis
 let worker: Worker | null = null
@@ -64,7 +65,7 @@ export const redisRateLimiter = {
     },
 
     async onCompleteOrFailedJob(queueName: QueueName, job: Job<WebhookJobData | OneTimeJobData>): Promise<void> {
-        if (!SUPPORTED_QUEUES.includes(queueName)) {
+        if (!SUPPORTED_QUEUES.includes(queueName) || !PROJECT_RATE_LIMITER_ENABLED) {
             return
         }
         const redisKey = projecyKey(job.data.projectId)
@@ -79,7 +80,7 @@ export const redisRateLimiter = {
     async shouldBeLimited(queueName: QueueName, projectId: string, value: number): Promise<{
         shouldRateLimit: boolean
     }> {
-        if (!SUPPORTED_QUEUES.includes(queueName)) {
+        if (!SUPPORTED_QUEUES.includes(queueName) || !PROJECT_RATE_LIMITER_ENABLED) {
             return {
                 shouldRateLimit: false,
             }
