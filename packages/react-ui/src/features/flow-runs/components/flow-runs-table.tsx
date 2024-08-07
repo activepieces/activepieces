@@ -28,7 +28,7 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { FlowRetryStrategy, FlowRun, FlowRunStatus, Permission } from '@activepieces/shared';
+import { FlowRetryStrategy, FlowRun, FlowRunStatus, Permission, isFailedState, isFlowStateTerminal } from '@activepieces/shared';
 
 import { flowRunUtils } from '../lib/flow-run-utils';
 import { Authorization } from '@/components/authorization';
@@ -58,10 +58,9 @@ export default function FlowRunsTable() {
     Error,
     { runId: string; strategy: FlowRetryStrategy }
   >({
-    mutationFn: async (data) => {
-      await flowRunsApi.retry(data.runId, data.strategy);
-    },
+    mutationFn: (data) => flowRunsApi.retry(data.runId, data),
     onSuccess: () => {
+      // TODO This should auto refresh the table when there is run with success tatus
       setRefresh(refresh + 1);
     },
     onError: () => {
@@ -160,7 +159,7 @@ export default function FlowRunsTable() {
                         <span>Retry on latest version</span>
                       </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem
+                    {isFailedState(row.original.status) && <DropdownMenuItem
                       onClick={() =>
                         mutate({
                           runId: row.original.id,
@@ -172,7 +171,7 @@ export default function FlowRunsTable() {
                         <RotateCcw className="h-4 w-4" />
                         <span>Retry from failed step</span>
                       </div>
-                    </DropdownMenuItem>
+                    </DropdownMenuItem>}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
