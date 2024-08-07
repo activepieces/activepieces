@@ -37,6 +37,7 @@ export const redisQueue: QueueManager = {
     async add(params): Promise<void> {
         const { type, data } = params
         const { shouldRateLimit } = await redisRateLimiter.shouldBeLimited(jobTypeToQueueName[type], data.projectId, 1)
+
         if (shouldRateLimit) {
             await redisRateLimiter.rateLimitJob(params)
             return
