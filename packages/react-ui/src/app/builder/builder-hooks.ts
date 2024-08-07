@@ -84,7 +84,6 @@ export type BuilderState = {
   selectStepByName: (stepName: string) => void;
   startSaving: () => void;
   setAllowCanvasPanning: (allowCanvasPanning: boolean) => void;
-  setReadOnly: (readonly: boolean) => void;
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: Flow) => void;
   exitPieceSelector: () => void;
@@ -263,7 +262,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         flowUpdatesQueue.add(updateRequest);
         return { flowVersion: newFlowVersion };
       }),
-    setReadOnly: (readonly: boolean) => set({ readonly }),
     setVersion: (flowVersion: FlowVersion) => set({ flowVersion, run: null }),
     insertMention: null,
     setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
@@ -300,9 +298,7 @@ function getStateAtPath(
       return {};
     }
     if (!stepOutput.output || stepOutput.type !== ActionType.LOOP_ON_ITEMS) {
-      throw new Error(
-        '[ExecutionState#getTargetMap] Not instance of Loop On Items step output',
-      );
+      return {};
     }
     targetMap = stepOutput.output.iterations[iteration];
   });

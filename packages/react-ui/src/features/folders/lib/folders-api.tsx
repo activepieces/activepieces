@@ -7,13 +7,16 @@ import {
 } from '@activepieces/shared';
 
 export const foldersApi = {
-  list() {
+  async list(): Promise<FolderDto[]> {
     const params: Record<string, string | number> = {
       limit: 1000000,
     };
-    return api.get<SeekPage<FolderDto>>('/v1/folders', {
+    const response = await api.get<SeekPage<FolderDto>>('/v1/folders', {
       params: params,
     });
+    return response.data.sort((a, b) =>
+      a.displayName.localeCompare(b.displayName),
+    );
   },
   get(folderId: string) {
     return api.get<Folder>(`/v1/folders/${folderId}`);

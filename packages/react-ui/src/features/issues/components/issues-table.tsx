@@ -130,13 +130,14 @@ export default function IssuesTable() {
               <Button
                 className="gap-2"
                 size={'sm'}
-                onClick={() =>
+                onClick={(e) => {
                   handleMarkAsResolved(
                     row.original.flowDisplayName,
                     row.original.id,
                     row.original.delete,
-                  )
-                }
+                  );
+                  e.stopPropagation();
+                }}
               >
                 <Check className="size-4" />
                 Mark as Resolved

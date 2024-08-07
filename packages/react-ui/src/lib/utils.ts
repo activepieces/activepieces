@@ -42,6 +42,9 @@ export const formatUtils = {
       )
       .join(' ');
   },
+  formatNumber(number: number) {
+    return new Intl.NumberFormat('en-US').format(number);
+  },
   formatDate(date: Date) {
     const now = dayjs();
     const inputDate = dayjs(date);

@@ -56,7 +56,7 @@
         "plugin:vitest/legacy-recommended"
       ],
       "rules": {
-        "react-hooks/rules-of-hooks": "error", 
+        "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "warn",
         "import/no-restricted-paths": [
           "error",
@@ -90,7 +90,7 @@
           "error",
           "unix"
         ],
-        "react/prop-types": "off",
+        "react/prop-types": "error",
         "import/order": [
           "error",
           {
@@ -137,6 +137,14 @@
             "usePrettierrc": true
           }
         ]
+      }
+    },
+    {
+      "files": [
+        "./src/components/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "react/prop-types": "off"
       }
     },
     {

@@ -1,4 +1,5 @@
 import { BaseEdge } from '@xyflow/react';
+import React from 'react';
 
 import { AP_NODE_SIZE, ApNodeType } from '../flow-canvas-utils';
 
@@ -11,7 +12,7 @@ interface ReturnLoopedgeButtonProps {
   data: Record<string, unknown>;
 }
 
-const ReturnLoopedgeButton: React.FC<ReturnLoopedgeButtonProps> = (props) => {
+const ReturnLoopedgeButton = React.memo((props: ReturnLoopedgeButtonProps) => {
   const offset = AP_NODE_SIZE[ApNodeType.LOOP_PLACEHOLDER].height + 6;
 
   const ARC_UP_RIGHT = 'a15,15 0 0,1 15,-15';
@@ -28,6 +29,7 @@ const ReturnLoopedgeButton: React.FC<ReturnLoopedgeButtonProps> = (props) => {
       style={{ strokeWidth: 1.5 }}
     />
   );
-};
+});
 
+ReturnLoopedgeButton.displayName = 'ReturnLoopedgeButton';
 export { ReturnLoopedgeButton };

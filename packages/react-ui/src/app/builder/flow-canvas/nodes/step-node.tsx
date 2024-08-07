@@ -90,9 +90,20 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   return (
     <div
-      className={cn('h-[70px] w-[260px] transition-all', {
+      style={{
+        boxShadow:
+          isSelected || toolbarOpen
+            ? 'inset 0 3px 0 hsl(var(--primary))'
+            : 'none',
+        borderRadius: '8px',
+        borderTopColor:
+          isSelected || toolbarOpen
+            ? 'hsl(var(--primary))'
+            : 'hsl(var(--border))',
+      }}
+      className={cn('h-[70px] w-[260px] transition-all border-box border', {
         'border-primary': toolbarOpen || isSelected,
-        'bg-background border border-solid box-border': !isDragging,
+        'bg-background': !isDragging,
       })}
       onClick={(e) => handleStepClick(e)}
       onMouseEnter={() => {
@@ -108,7 +119,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       {...attributes}
       {...listeners}
     >
-      <div className="px-2 h-full w-full box-border">
+      <div className="px-2 h-full w-full">
         {!isDragging && (
           <>
             <div
@@ -124,18 +135,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 {data.step!.name}
               </span>
             </div>
+
             <div
-              className={cn(
-                'absolute left-0 right-0 top-0 mx-auto h-[3px] transition-all bg-primary opacity-0 rounded-tl-md rounded-tr-md',
-                {
-                  'opacity-100': toolbarOpen || isSelected,
-                  'opacity-0': !toolbarOpen && !isSelected,
-                },
-              )}
-              style={{ width: 'calc(100% - 2px)' }}
-            ></div>
-            <div
-              className="px-2 h-full w-full box-border"
+              className="px-2 h-full w-full "
               onClick={() => selectStepByName(data.step!.name)}
             >
               <div className="flex h-full items-center justify-between gap-4 w-full">

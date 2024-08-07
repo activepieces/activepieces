@@ -11,17 +11,23 @@ import {
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { StepLocationRelativeToParent, TriggerType, flowHelper, isNil } from '@activepieces/shared';
+import {
+  StepLocationRelativeToParent,
+  TriggerType,
+  flowHelper,
+  isNil,
+} from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
 const TestFlowWidget = React.memo(() => {
-  const [flowVersion, setRun, selectStepByName, clickOnNewNodeButton] = useBuilderStateContext((state) => [
-    state.flowVersion,
-    state.setRun,
-    state.selectStepByName,
-    state.clickOnNewNodeButton
-  ]);
+  const [flowVersion, setRun, selectStepByName, clickOnNewNodeButton] =
+    useBuilderStateContext((state) => [
+      state.flowVersion,
+      state.setRun,
+      state.selectStepByName,
+      state.clickOnNewNodeButton,
+    ]);
 
   const triggerHasSampleData =
     flowVersion.trigger.type === TriggerType.PIECE &&
@@ -39,7 +45,7 @@ const TestFlowWidget = React.memo(() => {
           setRun(run, flowVersion);
         },
       ),
-    onSuccess: () => { },
+    onSuccess: () => {},
     onError: (error) => {
       console.log(error);
       toast(INTERNAL_ERROR_TOAST);
@@ -47,7 +53,9 @@ const TestFlowWidget = React.memo(() => {
   });
 
   function handleCompleteSettings() {
-    const invalidSteps = flowHelper.getAllSteps(flowVersion.trigger).filter(step => !step.valid)
+    const invalidSteps = flowHelper
+      .getAllSteps(flowVersion.trigger)
+      .filter((step) => !step.valid);
     if (invalidSteps.length > 0) {
       if (invalidSteps[0].type === TriggerType.EMPTY) {
         clickOnNewNodeButton(

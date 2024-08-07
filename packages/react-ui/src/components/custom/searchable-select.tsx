@@ -1,16 +1,23 @@
-import { Search } from 'lucide-react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
-import { LoadingSpinner } from '../ui/spinner';
+import { Button } from '../ui/button';
+import { ScrollArea } from '../ui/scroll-area';
 
 type SelectOption<T> = {
   value: T;
@@ -35,6 +42,7 @@ export const SearchableSelect = <T extends React.Key>({
   loading,
 }: SearchableSelectProps<T>) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [open, setOpen] = useState(false);
   const [filterOptionsIndices, setFilteredOptions] = useState<number[]>([]);
 
   const [selectedIndex, setSelectedIndex] = useState(
@@ -66,11 +74,6 @@ export const SearchableSelect = <T extends React.Key>({
     }
   }, [searchTerm, options]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    e.preventDefault();
-  };
-
   const onSelect = (index: string) => {
     const optionIndex =
       Number.isInteger(parseInt(index)) && !Number.isNaN(parseInt(index))
@@ -87,46 +90,70 @@ export const SearchableSelect = <T extends React.Key>({
   };
 
   return (
-    <Select
-      disabled={disabled || loading}
-      autoComplete={undefined}
-      value={selectedIndex === -1 ? undefined : String(selectedIndex)}
-      onValueChange={onSelect}
-    >
-      <SelectTrigger>
-        {loading && <LoadingSpinner className="w-4 h-4" />}
-        {!loading && <SelectValue placeholder={placeholder} />}
-      </SelectTrigger>
-      <SelectContent className="w-full">
-        <div
-          className="flex items-center border-b px-3 w-full"
-          /* eslint-disable-next-line react/no-unknown-property */
-          cmdk-input-wrapper=""
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          disabled={disabled}
+          role="combobox"
+          loading={loading}
+          aria-expanded={open}
+          className="w-full justify-between w-full"
         >
-          <Search className="mr-2 size-4 shrink-0 opacity-50" />
-          <input
+          <span className="flex text-ellipsis w-full overflow-hidden whitespace-nowrap">
+            {value
+              ? options.find((framework) => framework.value === value)?.label
+              : placeholder}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="min-w-full w-full p-0">
+        <Command className="w-full" shouldFilter={false}>
+          <CommandInput
             placeholder={placeholder}
             value={searchTerm}
-            onChange={handleSearch}
-            className={cn(
-              'flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground',
-              { 'cursor-not-allowed opacity-50': disabled },
-            )}
+            onValueChange={(e) => {
+              setSearchTerm(e);
+            }}
           />
-        </div>
-        {filterOptionsIndices.map((index) => {
-          const option = options[index];
-          if (option === undefined) {
-            return <></>;
-          }
-          return (
-            <SelectItem key={index} value={String(index)} className="w-full">
-              {option.label}
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
+          {filterOptionsIndices.length === 0 && (
+            <CommandEmpty>No results found.</CommandEmpty>
+          )}
+          <ScrollArea className="h-full" viewPortClassName={'max-h-[200px]'}>
+            <CommandGroup>
+              <CommandList className={'min-h-[12000px]'}>
+                {filterOptionsIndices &&
+                  filterOptionsIndices.map((filterIndex) => {
+                    console.log();
+                    const option = options[filterIndex];
+                    return (
+                      <CommandItem
+                        key={option.label}
+                        value={String(filterIndex)}
+                        onSelect={(currentValue) => {
+                          setOpen(false);
+                          onSelect(currentValue);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            selectedIndex === filterIndex
+                              ? 'opacity-100'
+                              : 'opacity-0',
+                          )}
+                        />
+                        {option.label}
+                      </CommandItem>
+                    );
+                  })}
+              </CommandList>
+            </CommandGroup>
+          </ScrollArea>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };
 

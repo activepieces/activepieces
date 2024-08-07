@@ -5,6 +5,7 @@ import { JsonEditor } from '@/components/custom/json-editior';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { FormControl, FormField } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import {
   PieceProperty,
@@ -25,6 +26,7 @@ type AutoFormProps = {
   allowDynamicValues: boolean;
   prefixValue: string;
   markdownVariables?: Record<string, string>;
+  useMentionTextInput?: boolean;
 };
 
 const AutoPropertiesFormComponent = React.memo(
@@ -33,6 +35,7 @@ const AutoPropertiesFormComponent = React.memo(
     props,
     allowDynamicValues,
     prefixValue,
+    useMentionTextInput,
   }: AutoFormProps) => {
     const form = useFormContext();
 
@@ -52,6 +55,7 @@ const AutoPropertiesFormComponent = React.memo(
                   props[key],
                   allowDynamicValues,
                   markdownVariables ?? {},
+                  useMentionTextInput ?? false,
                 )
               }
             />
@@ -69,6 +73,7 @@ const selectRightComponent = (
   property: PieceProperty,
   allowDynamicValues: boolean,
   markdownVariables: Record<string, string>,
+  useMentionTextInput: boolean,
 ) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -79,7 +84,10 @@ const selectRightComponent = (
           field={field}
           allowDynamicValues={allowDynamicValues}
         >
-          <ArrayProperty inputName={inputName}></ArrayProperty>
+          <ArrayProperty
+            inputName={inputName}
+            useMentionTextInput={useMentionTextInput}
+          ></ArrayProperty>
         </AutoFormFieldWrapper>
       );
     case PropertyType.OBJECT:
@@ -197,10 +205,14 @@ const selectRightComponent = (
           propertyKey={key}
           allowDynamicValues={allowDynamicValues}
         >
-          <TextInputWithMentions
-            initialValue={field.value}
-            onChange={field.onChange}
-          ></TextInputWithMentions>
+          {useMentionTextInput ? (
+            <TextInputWithMentions
+              initialValue={field.value}
+              onChange={field.onChange}
+            ></TextInputWithMentions>
+          ) : (
+            <Input value={field.value} onChange={field.onChange}></Input>
+          )}
         </AutoFormFieldWrapper>
       );
     case PropertyType.DYNAMIC:

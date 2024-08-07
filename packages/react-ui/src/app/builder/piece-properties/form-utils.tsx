@@ -165,8 +165,9 @@ export const formUtils = {
             : Type.Object({});
         return ExactPieceTrigger(formSchema);
       }
-      default:
+      default: {
         throw new Error('Unsupported type: ' + type);
+      }
     }
   },
   buildSchema: (props: PiecePropertyMap) => {
