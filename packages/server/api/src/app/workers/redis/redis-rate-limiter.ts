@@ -93,7 +93,6 @@ export const redisRateLimiter = {
                 shouldRateLimit: true,
             }
         }
-        await redis.incrby(redisKey, value)
         return {
             shouldRateLimit: false,
         }
