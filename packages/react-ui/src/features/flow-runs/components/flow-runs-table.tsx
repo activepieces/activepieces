@@ -1,5 +1,12 @@
+import { useMutation } from '@tanstack/react-query';
+
 import { ColumnDef } from '@tanstack/react-table';
-import { CheckIcon } from 'lucide-react';
+import {
+  CheckIcon,
+  EllipsisVertical,
+  RefreshCw,
+  RotateCcw,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,14 +16,22 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { FlowRun, FlowRunStatus } from '@activepieces/shared';
+import { FlowRetryStrategy, FlowRun, FlowRunStatus, Permission, isFailedState, isFlowStateTerminal } from '@activepieces/shared';
 
 import { flowRunUtils } from '../lib/flow-run-utils';
+import { Authorization } from '@/components/authorization';
 
 const fetchData = async (params: URLSearchParams) => {
   const status = params.getAll('status') as FlowRunStatus[];
@@ -37,6 +52,21 @@ export default function FlowRunsTable() {
   const { data, isFetching } = flowsHooks.useFlows();
 
   const flows = data?.data;
+
+  const { mutate } = useMutation<
+    void,
+    Error,
+    { runId: string; strategy: FlowRetryStrategy }
+  >({
+    mutationFn: (data) => flowRunsApi.retry(data.runId, data),
+    onSuccess: () => {
+      // TODO This should auto refresh the table when there is run with success tatus
+      setRefresh(refresh + 1);
+    },
+    onError: () => {
+      toast(INTERNAL_ERROR_TOAST);
+    },
+  });
 
   const columns: ColumnDef<RowDataWithActions<FlowRun>>[] = useMemo(
     () => [
@@ -93,6 +123,59 @@ export default function FlowRunsTable() {
             <div className="text-left">
               {formatUtils.formatDuration(row.original.duration)}
             </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'actions',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="" />
+        ),
+        cell: ({ row }) => {
+          return (
+            <Authorization permission={Permission.RETRY_RUN}>
+              <div
+                className="flex items-end justify-end"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger
+                    asChild
+                    className="rounded-full p-2 hover:bg-muted cursor-pointer"
+                  >
+                    <EllipsisVertical className="h-10 w-10" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        mutate({
+                          runId: row.original.id,
+                          strategy: FlowRetryStrategy.ON_LATEST_VERSION,
+                        })
+                      }
+                    >
+                      <div className="flex flex-row gap-2 items-center">
+                        <RefreshCw className="h-4 w-4" />
+                        <span>Retry on latest version</span>
+                      </div>
+                    </DropdownMenuItem>
+                    {isFailedState(row.original.status) && <DropdownMenuItem
+                      onClick={() =>
+                        mutate({
+                          runId: row.original.id,
+                          strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+                        })
+                      }
+                    >
+                      <div className="flex flex-row gap-2 items-center">
+                        <RotateCcw className="h-4 w-4" />
+                        <span>Retry from failed step</span>
+                      </div>
+                    </DropdownMenuItem>}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </Authorization>
           );
         },
       },
