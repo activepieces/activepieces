@@ -1,3 +1,10 @@
+import {
+  Action,
+  ActionType,
+  flowHelper,
+  FlowOperationType,
+  SourceCode,
+} from '@activepieces/shared';
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import { githubLight } from '@uiw/codemirror-theme-github';
@@ -5,14 +12,18 @@ import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
 import { BetweenHorizontalEnd, Package } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { INTERNAL_ERROR_TOAST, toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
-import { cn } from '@/lib/utils';
-import { Action, ActionType, flowHelper, FlowOperationType, SourceCode } from '@activepieces/shared';
+import { useBuilderStateContext } from '../../builder-hooks';
 
 import { AddNpmDialog } from './add-npm-dialog';
-import { useBuilderStateContext } from '../../builder-hooks';
+
 import { useTheme } from '@/components/theme-provider';
+import { Button } from '@/components/ui/button';
+import {
+  INTERNAL_ERROR_TOAST,
+  toast,
+  UNSAVED_CHANGES_TOAST,
+} from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 
 const styleTheme = EditorView.baseTheme({
   '&.cm-editor.cm-focused': {
@@ -28,15 +39,19 @@ type CodeEditorProps = {
   applyButton?: boolean;
 };
 
-const CodeEditior = ({ sourceCode, readonly, onChange, skipLineNumbers = false, applyButton = false }: CodeEditorProps) => {
+const CodeEditior = ({
+  sourceCode,
+  readonly,
+  onChange,
+  skipLineNumbers = false,
+  applyButton = false,
+}: CodeEditorProps) => {
   const { code, packageJson } = sourceCode;
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
   const [language, setLanguage] = useState<'typescript' | 'json'>('typescript');
-  const [selectedStep, flowVersion, applyOperation] = useBuilderStateContext((state) => [
-    state.selectedStep,
-    state.flowVersion,
-    state.applyOperation,
-  ]);
+  const [selectedStep, flowVersion, applyOperation] = useBuilderStateContext(
+    (state) => [state.selectedStep, state.flowVersion, state.applyOperation],
+  );
 
   const { theme } = useTheme();
 
@@ -80,9 +95,9 @@ const CodeEditior = ({ sourceCode, readonly, onChange, skipLineNumbers = false, 
   }
 
   function handleApplyButton() {
-    if(!selectedStep) return;
+    if (!selectedStep) return;
     const step = flowHelper.getStep(flowVersion, selectedStep.stepName);
-    if(!step) return;
+    if (!step) return;
     if (step.type === ActionType.CODE) {
       step.settings.sourceCode = { code, packageJson };
       updateAction(step);
@@ -112,34 +127,30 @@ const CodeEditior = ({ sourceCode, readonly, onChange, skipLineNumbers = false, 
         </div>
         <div className="flex flex-grow"></div>
         {applyButton && (
-          <>
+          <Button
+            variant="outline"
+            className="flex gap-2"
+            size={'sm'}
+            onClick={handleApplyButton}
+          >
+            <BetweenHorizontalEnd className="w-3 h-3" />
+            Apply
+          </Button>
+        )}
+
+        {applyButton === false && (
+          <AddNpmDialog onAdd={handleAddPackages}>
             <Button
               variant="outline"
               className="flex gap-2"
               size={'sm'}
-              onClick={handleApplyButton}
+              onClick={() => {}}
             >
-              <BetweenHorizontalEnd className="w-3 h-3" />
-              Apply
+              <Package className="w-3 h-3" />
+              Add
             </Button>
-          </>)}
-
-        {applyButton === false && (
-          <>
-            <AddNpmDialog onAdd={handleAddPackages}>
-              <Button
-                variant="outline"
-                className="flex gap-2"
-                size={'sm'}
-                onClick={() => { }}
-              >
-                <Package className="w-3 h-3" />
-                Add
-              </Button>
-            </AddNpmDialog>
-          </>
+          </AddNpmDialog>
         )}
-
       </div>
       <CodeMirror
         value={activeTab === 'code' ? code : packageJson}
@@ -149,7 +160,7 @@ const CodeEditior = ({ sourceCode, readonly, onChange, skipLineNumbers = false, 
         maxWidth="100%"
         basicSetup={{
           foldGutter: false,
-          lineNumbers: (skipLineNumbers ? false : true),
+          lineNumbers: skipLineNumbers ? false : true,
           searchKeymap: false,
           lintKeymap: true,
           autocompletion: true,

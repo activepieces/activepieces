@@ -17,7 +17,6 @@ import { SidebarHeader } from '../sidebar-header';
 import { ChatMessage } from './chat-message';
 
 import { useSocket } from '@/components/socket-provider';
-import { Button } from '@/components/ui/button';
 import { CardList } from '@/components/ui/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/use-toast';
@@ -29,7 +28,8 @@ interface ChatMessageType {
 
 const initialMessages: ChatMessageType[] = [
   {
-    message: 'Hello! How can I help you today?',
+    message:
+      'Hi! I can help you writing your code. What do you need help with?',
     userType: 'bot',
   },
 ];
@@ -123,6 +123,7 @@ export const ChatSidebar = () => {
             {messages.map((message, index) => (
               <ChatMessage
                 key={index}
+                isFirstPrompt={index === 0}
                 message={message.message}
                 userType={message.userType}
                 ref={latestMessageRef}
