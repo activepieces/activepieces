@@ -43,6 +43,7 @@ const TestFlowWidget = React.memo(() => {
       toast(INTERNAL_ERROR_TOAST);
     },
   });
+
   return (
     <ViewportPortal>
       <div
@@ -55,30 +56,39 @@ const TestFlowWidget = React.memo(() => {
         <div className="justify-center items-center flex w-[260px]">
           {flowVersion.valid && triggerHasSampleData && (
             <Button
+              key={'test-flow-button'}
               variant="outline"
-              className="h-8"
+              className="h-8 bg-primary-100/50 text-primary-300 hover:bg-primary-100/80 hover:text-primary-300"
               loading={isPending}
               onClick={() => mutate()}
             >
               Test Flow
             </Button>
           )}
-          {!flowVersion.valid && (
-            <Button variant="outline" className="h-8">
-              Complete Settings
-            </Button>
-          )}
           {flowVersion.valid && !triggerHasSampleData && (
             <Tooltip>
               <TooltipTrigger asChild className="disabled:pointer-events-auto">
-                <Button variant="outline" className="h-8" disabled={true}>
-                  Test Trigger
+                <Button
+                  variant="ghost"
+                  className="h-8 bg-primary-100/80 text-primary-300 hover:bg-primary-100/80 hover:text-primary-300"
+                  disabled={true}
+                >
+                  Test Flow
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
                 Please test the trigger first
               </TooltipContent>
             </Tooltip>
+          )}
+          {!flowVersion.valid && (
+            <Button
+              variant="ghost"
+              className="h-8 bg-warning-100/50 text-warning-300 hover:bg-warning-100/80 hover:text-warning-300"
+              key={'complete-flow-button'}
+            >
+              Complete Settings
+            </Button>
           )}
         </div>
       </div>

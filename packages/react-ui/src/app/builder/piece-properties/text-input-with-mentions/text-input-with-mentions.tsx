@@ -8,7 +8,7 @@ import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { flowHelper } from '@activepieces/shared';
+import { flowHelper, isNil } from '@activepieces/shared';
 
 import './tip-tap.css';
 
@@ -18,7 +18,7 @@ import { textMentionUtils } from './text-input-utils';
 
 type TextInputWithMentionsProps = {
   className?: string;
-  initialValue?: string;
+  initialValue?: unknown;
   onChange: (value: string) => void;
   placeholder?: string;
 };
@@ -48,6 +48,19 @@ const extensions = (placeholder?: string) => {
   ];
 };
 
+function convertToText(value: unknown): string {
+  if (isNil(value)) {
+    return '';
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return value.toString();
+  }
+  return JSON.stringify(value);
+}
+
 export const TextInputWithMentions = ({
   className,
   initialValue,
@@ -75,7 +88,7 @@ export const TextInputWithMentions = ({
 
   const parentContent = [
     textMentionUtils.convertTextToTipTapJsonContent(
-      initialValue ?? '',
+      convertToText(initialValue),
       steps,
       stepsMetadata,
     ),
