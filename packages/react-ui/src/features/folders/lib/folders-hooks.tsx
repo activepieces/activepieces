@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
+import { FolderDto } from '@activepieces/shared';
 
 import { foldersApi } from './folders-api';
 
 export const foldersHooks = {
   useFolders: () => {
-    return useQuery({
+    return useQuery<FolderDto[]>({
       queryKey: ['folders', authenticationSession.getProjectId()],
       queryFn: foldersApi.list,
     });

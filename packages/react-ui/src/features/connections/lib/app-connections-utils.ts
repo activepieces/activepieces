@@ -1,4 +1,4 @@
-import { CheckCircledIcon, CrossCircledIcon } from '@radix-ui/react-icons';
+import { CheckIcon, XIcon } from 'lucide-react';
 
 import { AppConnectionStatus } from '@activepieces/shared';
 
@@ -15,12 +15,12 @@ export const appConnectionUtils = {
       case AppConnectionStatus.ACTIVE:
         return {
           variant: 'success',
-          icon: CheckCircledIcon,
+          icon: CheckIcon,
         };
       case AppConnectionStatus.ERROR:
         return {
           variant: 'error',
-          icon: CrossCircledIcon,
+          icon: XIcon,
         };
     }
   },

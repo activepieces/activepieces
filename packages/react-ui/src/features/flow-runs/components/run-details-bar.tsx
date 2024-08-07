@@ -57,15 +57,16 @@ const RunDetailsBar = React.memo(
       >
         <Icon
           className={cn('w-6 h-6 mr-3', {
+            'text-foreground': variant === 'default',
             'text-success': variant === 'success',
             'text-destructive': variant === 'error',
           })}
         />
         <div className="flex-col flex flex-grow text-foreground gap-0">
-          <div className="text-md">
+          <div className="text-sm">
             {getStatusText(run.status, timeoutSeconds ?? -1)}
           </div>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             {run?.id ?? 'Unknown'}
           </div>
         </div>

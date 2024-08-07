@@ -15,11 +15,13 @@ type DictionaryInputItem = {
 type DictionaryInputProps = {
   values: Record<string, string>;
   onChange: (values: Record<string, string>) => void;
+  useMentionTextInput?: boolean;
 };
 
 export const DictionaryProperty = ({
   values,
   onChange,
+  useMentionTextInput,
 }: DictionaryInputProps) => {
   const [formValue, setFormValue] = useState<DictionaryInputItem[]>(
     Object.keys(values).map((key) => ({ key, value: values[key] })),
@@ -72,10 +74,19 @@ export const DictionaryProperty = ({
             onChange={(e) => onChangeValue(index, undefined, e.target.value)}
           />
           <div className="basis-[50%] max-w-[50%]">
-            <TextInputWithMentions
-              initialValue={value}
-              onChange={(e) => onChangeValue(index, e, undefined)}
-            ></TextInputWithMentions>
+            {useMentionTextInput ? (
+              <TextInputWithMentions
+                initialValue={value}
+                onChange={(e) => onChangeValue(index, e, undefined)}
+              ></TextInputWithMentions>
+            ) : (
+              <Input
+                value={value}
+                onChange={(e) =>
+                  onChangeValue(index, undefined, e.target.value)
+                }
+              ></Input>
+            )}
           </div>
 
           <Button

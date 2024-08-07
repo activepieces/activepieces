@@ -50,7 +50,7 @@ export const BuilderNavBar = () => {
         <Tooltip>
           <TooltipTrigger asChild>
             <Link to="/flows">
-              <Button variant="ghost" size={'icon'} className="p-0">
+              <Button variant="ghost" size={'icon'} className="p-2.5">
                 <Home />
               </Button>
             </Link>

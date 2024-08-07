@@ -67,8 +67,9 @@ export const TextInputWithMentions = ({
   onChange,
   placeholder,
 }: TextInputWithMentionsProps) => {
-  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
-  const steps = flowHelper.getAllSteps(flowVersion.trigger);
+  const steps = useBuilderStateContext((state) =>
+    flowHelper.getAllSteps(state.flowVersion.trigger),
+  );
   const stepsMetadata = piecesHooks
     .useStepsMetadata(steps)
     .map((res) => res.data);

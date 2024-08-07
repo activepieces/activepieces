@@ -50,10 +50,11 @@ const StepSettingsContainer = React.memo(
         state.flowVersion,
       ]);
 
+
     const [actionOrTriggerName, setActionOrTriggerName] = useState<string>(
       selectedStep?.settings?.actionName ??
-        selectedStep?.settings?.triggerName ??
-        '',
+      selectedStep?.settings?.triggerName ??
+      '',
     );
 
     const { stepMetadata } = piecesHooks.useStepMetadata({
@@ -102,10 +103,12 @@ const StepSettingsContainer = React.memo(
 
     const form = useForm<Action | Trigger>({
       mode: 'onChange',
+      disabled: readonly,
       reValidateMode: 'onChange',
       defaultValues,
       resolver: typeboxResolver(formSchema),
     });
+
 
     useUpdateEffect(() => {
       form.setValue('valid', form.formState.isValid);
@@ -149,13 +152,14 @@ const StepSettingsContainer = React.memo(
       const currentStep = JSON.parse(JSON.stringify(form.getValues()));
       setActionOrTriggerName(
         currentStep.settings.actionName ??
-          currentStep.settings.triggerName ??
-          '',
+        currentStep.settings.triggerName ??
+        '',
       );
       const newValue = formUtils.buildPieceDefaultValue(
         currentStep,
         pieceModel!,
       );
+
       form.reset(newValue);
       form.trigger();
     }, [actionName, triggerName]);
@@ -230,17 +234,17 @@ const StepSettingsContainer = React.memo(
                   {[ActionType.CODE, ActionType.PIECE].includes(
                     modifiedStep.type as ActionType,
                   ) && (
-                    <ActionErrorHandlingForm
-                      hideContinueOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.continueOnFailure?.hide
-                      }
-                      hideRetryOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.retryOnFailure?.hide
-                      }
-                    ></ActionErrorHandlingForm>
-                  )}
+                      <ActionErrorHandlingForm
+                        hideContinueOnFailure={
+                          modifiedStep.settings.errorHandlingOptions
+                            ?.continueOnFailure?.hide
+                        }
+                        hideRetryOnFailure={
+                          modifiedStep.settings.errorHandlingOptions
+                            ?.retryOnFailure?.hide
+                        }
+                      ></ActionErrorHandlingForm>
+                    )}
                 </div>
               </ScrollArea>
             </ResizablePanel>
