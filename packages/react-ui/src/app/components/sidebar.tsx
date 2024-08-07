@@ -1,6 +1,13 @@
+import { ApFlagId, isNil } from '@activepieces/shared';
 import { Bug, Link2, Logs, Settings, Shield, Workflow } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+
+import { Button } from '../../components/ui/button';
+import { UserAvatar } from '../../components/ui/user-avatar';
+import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
+
+import { FlagGuard } from './flag-gaurd';
 
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import {
@@ -12,13 +19,6 @@ import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { projectHooks } from '@/hooks/project-hooks';
 import { theme } from '@/lib/theme';
-import { ApFlagId, isNil } from '@activepieces/shared';
-
-import { Button } from '../../components/ui/button';
-import { UserAvatar } from '../../components/ui/user-avatar';
-import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
-
-import { FlagGuard } from './flag-gaurd';
 
 type Link = {
   icon: React.ReactNode;
@@ -108,7 +108,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
           <div className="h-[48px] items-center justify-center p-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <img src={theme.logoIconUrl} alt="logo" />
+                <img src={theme.logoIconUrl} alt="logo" className="w-8 h-8" />
               </TooltipTrigger>
               <TooltipContent side="right">{theme.websiteName}</TooltipContent>
             </Tooltip>
@@ -135,7 +135,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
             <ProjectSwitcher />
             <div className="grow"></div>
             <div className="flex items-center justify-center gap-4">
-              <InviteUserDialog></InviteUserDialog>
+              {/* <InviteUserDialog></InviteUserDialog>
               <Button
                 variant={'outline'}
                 size="sm"
@@ -144,7 +144,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                 <Shield className="size-4" />
                 <span>Platform Admin</span>
               </Button>
-              <TaskLimitButton />
+              <TaskLimitButton /> */}
               <UserAvatar />
             </div>
           </div>

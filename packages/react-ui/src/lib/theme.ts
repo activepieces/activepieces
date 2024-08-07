@@ -1,6 +1,9 @@
+import logoWithText from '@/assets/img/logo/logo-with-text.svg';
+import logo from '@/assets/img/logo/logo.svg';
+
 export const theme = {
-  websiteName: 'Activepieces',
-  fullLogoUrl: 'https://cdn.activepieces.com/brand/full-logo.png',
-  favIconUrl: 'https://cdn.activepieces.com/brand/favicon.ico',
-  logoIconUrl: 'https://cdn.activepieces.com/brand/logo.svg',
+  websiteName: 'OpenOps',
+  fullLogoUrl: logoWithText,
+  favIconUrl: 'https://www.openops.com/favicon.ico',
+  logoIconUrl: logo,
 };
