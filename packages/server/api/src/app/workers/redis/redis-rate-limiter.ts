@@ -11,7 +11,7 @@ import { redisQueue } from './redis-queue'
 
 const RATE_LIMIT_QUEUE_NAME = 'rateLimitJobs'
 const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
-const SUPPORTED_QUEUES = [QueueName.ONE_TIME]
+const SUPPORTED_QUEUES = [QueueName.ONE_TIME, QueueName.WEBHOOK]
 
 let redis: Redis
 let worker: Worker | null = null
