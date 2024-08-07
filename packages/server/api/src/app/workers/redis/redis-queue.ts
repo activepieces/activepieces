@@ -1,4 +1,4 @@
-import { AppSystemProp, exceptionHandler, JobType, logger, QueueName, system } from '@activepieces/server-shared'
+import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
@@ -6,7 +6,6 @@ import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
 import { redisRateLimiter } from './redis-rate-limiter'
 
-const PROJECT_RATE_LIMITER_ENABLED = system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED)
 const EIGHT_MINUTES_IN_MILLISECONDS = 8 * 60 * 1000
 const defaultJobOptions: DefaultJobOptions = {
     attempts: 5,
