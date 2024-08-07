@@ -5,6 +5,7 @@
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
+    "build:frontend": "nx build react-ui",
     "serve:backend": "nx serve server-api",
     "serve:engine": "nx serve engine",
     "serve:pieces": "turbowatch tools/scripts/pieces/turbowatch.ts",
