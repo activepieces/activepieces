@@ -163,9 +163,9 @@ const SelectFlowTemplateDialog = ({
                             </div>
                             <div className="py-2 flex">
                               <Button
-                                variant="link"
+                                variant="basic"
+                                loading={isPending}
                                 onClick={() => createFlow(template)}
-                                disabled={isPending}
                               >
                                 <Workflow className="w-4 h-4 me-2" /> Use
                                 Template
