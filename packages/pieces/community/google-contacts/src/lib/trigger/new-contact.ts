@@ -4,16 +4,10 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import {
-  getAccessTokenOrThrow,
-  HttpResponse,
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
   Polling,
   DedupeStrategy,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { googleContactsCommon } from '../common';
 import { googleContactsAuth } from '../../';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
@@ -32,6 +26,7 @@ const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
 
     do {
       const response: any = await contactsClient.people.connections.list({
+        resourceName: 'people/me',
         pageToken: nextPageToken,
         pageSize: 100,
         sortOrder: 'LAST_MODIFIED_DESCENDING',
@@ -68,8 +63,6 @@ const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
         ].join(),
       });
 
-      console.log(JSON.stringify(response.data, null, 2));
-
       for (const contact of response.data.connections || []) {
         if (contact.metadata?.deleted !== true) {
           contactItems.push({
@@ -87,38 +80,6 @@ const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
     return contactItems;
   },
 };
-
-// const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
-//   strategy: DedupeStrategy.LAST_ITEM,
-//   items: async ({ store, auth }) => {
-//     let newContacts: Connection[] = [];
-//     let fetchMore = true;
-//     while (fetchMore) {
-//       const syncToken = (await store.get<string>('syncToken'))!;
-//       const response = await listContacts(
-//         getAccessTokenOrThrow(auth),
-//         syncToken
-//       );
-//       const newConnections = response.body.connections;
-//       await store.put('syncToken', response.body.nextSyncToken);
-//       if (newConnections === undefined || newConnections.length == 0) {
-//         fetchMore = false;
-//       }
-//       if (newConnections !== undefined) {
-//         newContacts = [...newContacts, ...newConnections];
-//       }
-//     }
-//     console.log(`Found ${newContacts.length} new contacts`);
-//     newContacts = newContacts.filter((f) => {
-//       return f.metadata.deleted !== true;
-//     });
-
-//     return newContacts.map((item) => ({
-//       id: newContacts.indexOf(item),
-//       data: item,
-//     }));
-//   },
-// };
 
 export const googleContactNewOrUpdatedContact = createTrigger({
   auth: googleContactsAuth,
@@ -208,45 +169,10 @@ export const googleContactNewOrUpdatedContact = createTrigger({
     });
   },
   test: async (ctx) => {
-    return await pollingHelper.poll(polling, {
+    return await pollingHelper.test(polling, {
       store: ctx.store,
       auth: ctx.auth,
       propsValue: {},
     });
   },
 });
-
-function listContacts(
-  access_token: string,
-  syncToken: string | undefined
-): Promise<HttpResponse<{ connections: Connection[]; nextSyncToken: string }>> {
-  let qParams: Record<string, string> = {
-    personFields:
-      'addresses,ageRanges,biographies,birthdays,calendarUrls,clientData,coverPhotos,emailAddresses,events,externalIds,genders,imClients,interests,locales,locations,memberships,metadata,miscKeywords,names,nicknames,occupations,organizations,phoneNumbers,photos,relations,sipAddresses,skills,urls,userDefined',
-    requestSyncToken: 'true',
-  };
-  if (syncToken !== undefined && syncToken !== null) {
-    qParams = {
-      ...qParams,
-      syncToken: syncToken,
-    };
-  }
-  return httpClient.sendRequest<{
-    connections: Connection[];
-    nextSyncToken: string;
-  }>({
-    method: HttpMethod.GET,
-    url: googleContactsCommon.baseUrl + '/me/connections',
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: access_token,
-    },
-    queryParams: qParams,
-  });
-}
-
-interface Connection {
-  metadata: {
-    deleted?: boolean;
-  };
-}
