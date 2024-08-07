@@ -44,25 +44,25 @@ const Separator = () => {
   );
 };
 
-const AuthFormTemplate: React.FC<{
-  form: 'signin' | 'signup';
-}> = React.memo(({ form }) => {
-  const isSignUp = form === 'signup';
+const AuthFormTemplate = React.memo(
+  ({ form }: { form: 'signin' | 'signup' }) => {
+    const isSignUp = form === 'signup';
 
-  return (
-    <Card className="w-[28rem] rounded-sm drop-shadow-xl">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">{data[form].title}</CardTitle>
-        <CardDescription>{data[form].description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ThirdPartyLogin isSignUp={isSignUp} />
-        <Separator />
-        {isSignUp ? <SignUpForm /> : <SignInForm />}
-      </CardContent>
-    </Card>
-  );
-});
+    return (
+      <Card className="w-[28rem] rounded-sm drop-shadow-xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">{data[form].title}</CardTitle>
+          <CardDescription>{data[form].description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ThirdPartyLogin isSignUp={isSignUp} />
+          <Separator />
+          {isSignUp ? <SignUpForm /> : <SignInForm />}
+        </CardContent>
+      </Card>
+    );
+  },
+);
 
 AuthFormTemplate.displayName = 'AuthFormTemplate';
 
