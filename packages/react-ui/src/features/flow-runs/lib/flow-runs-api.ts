@@ -1,11 +1,10 @@
+import { api } from '@/lib/api';
 import {
   FlowRun,
   SeekPage,
   ListFlowRunsRequestQuery,
   RetryFlowRequestBody,
 } from '@activepieces/shared';
-
-import { api } from '@/lib/api';
 
 export const flowRunsApi = {
   list(request: ListFlowRunsRequestQuery): Promise<SeekPage<FlowRun>> {
@@ -16,10 +15,6 @@ export const flowRunsApi = {
   },
   // TODO move retry flow request to body.
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<void> {
-    return api.post<void>(
-      `/v1/flow-runs/${flowRunId}/retry`,
-      {},
-      request,
-    );
+    return api.post<void>(`/v1/flow-runs/${flowRunId}/retry`, {}, request);
   },
 };

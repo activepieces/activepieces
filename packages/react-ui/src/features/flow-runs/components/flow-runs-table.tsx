@@ -1,5 +1,4 @@
 import { useMutation } from '@tanstack/react-query';
-
 import { ColumnDef } from '@tanstack/react-table';
 import {
   CheckIcon,
@@ -10,6 +9,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { Authorization } from '@/components/authorization';
 import {
   DataTable,
   DataTableFilter,
@@ -28,10 +28,15 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { FlowRetryStrategy, FlowRun, FlowRunStatus, Permission, isFailedState, isFlowStateTerminal } from '@activepieces/shared';
+import {
+  FlowRetryStrategy,
+  FlowRun,
+  FlowRunStatus,
+  Permission,
+  isFailedState,
+} from '@activepieces/shared';
 
 import { flowRunUtils } from '../lib/flow-run-utils';
-import { Authorization } from '@/components/authorization';
 
 const fetchData = async (params: URLSearchParams) => {
   const status = params.getAll('status') as FlowRunStatus[];
@@ -159,19 +164,21 @@ export default function FlowRunsTable() {
                         <span>Retry on latest version</span>
                       </div>
                     </DropdownMenuItem>
-                    {isFailedState(row.original.status) && <DropdownMenuItem
-                      onClick={() =>
-                        mutate({
-                          runId: row.original.id,
-                          strategy: FlowRetryStrategy.FROM_FAILED_STEP,
-                        })
-                      }
-                    >
-                      <div className="flex flex-row gap-2 items-center">
-                        <RotateCcw className="h-4 w-4" />
-                        <span>Retry from failed step</span>
-                      </div>
-                    </DropdownMenuItem>}
+                    {isFailedState(row.original.status) && (
+                      <DropdownMenuItem
+                        onClick={() =>
+                          mutate({
+                            runId: row.original.id,
+                            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+                          })
+                        }
+                      >
+                        <div className="flex flex-row gap-2 items-center">
+                          <RotateCcw className="h-4 w-4" />
+                          <span>Retry from failed step</span>
+                        </div>
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
