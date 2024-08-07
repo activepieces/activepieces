@@ -1,5 +1,8 @@
-import { ChevronDown, History, Home, Logs } from 'lucide-react';
+import { FlowVersionState } from '@activepieces/shared';
+import { Bot, ChevronDown, History, Home, Logs } from 'lucide-react';
 import { createSearchParams, Link, useNavigate } from 'react-router-dom';
+
+import { BuilderPublishButton } from './builder-publish-button';
 
 import {
   LeftSideBarType,
@@ -15,9 +18,6 @@ import {
 import { UserAvatar } from '@/components/ui/user-avatar';
 import FlowActionMenu from '@/features/flows/components/flow-actions-menu';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { FlowVersionState } from '@activepieces/shared';
-
-import { BuilderPublishButton } from './builder-publish-button';
 
 export const BuilderNavBar = () => {
   const navigate = useNavigate();
@@ -96,6 +96,17 @@ export const BuilderNavBar = () => {
       </div>
       <div className="grow"></div>
       <div className="flex items-center justify-center gap-4">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              onClick={() => setLeftSidebar(LeftSideBarType.CHAT)}
+            >
+              <Bot />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">AI Chat</TooltipContent>
+        </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

@@ -25,6 +25,7 @@ import { PiecesSelectorList } from './pieces-selector/piece-selector-list';
 import { FlowRunDetails } from './run-details/flow-run-details-list';
 import { FlowRecentRunsList } from './run-list/flow-runs-list';
 import { StepSettingsContainer } from './step-settings/step-settings-container';
+import { ChatSidebar } from './ai-chat/chat-sidebar';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -120,6 +121,7 @@ const BuilderPage = () => {
             {leftSidebar === LeftSideBarType.RUNS && <FlowRecentRunsList />}
             {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
             {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
+            {leftSidebar === LeftSideBarType.CHAT && <ChatSidebar/>}
           </ResizablePanel>
           <ResizableHandle
             disabled={leftSidebar === LeftSideBarType.NONE}

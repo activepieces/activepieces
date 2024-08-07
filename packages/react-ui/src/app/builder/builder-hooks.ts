@@ -38,6 +38,7 @@ export enum LeftSideBarType {
   RUNS = 'runs',
   VERSIONS = 'versions',
   RUN_DETAILS = 'run-details',
+  CHAT = 'chat',
   NONE = 'none',
 }
 

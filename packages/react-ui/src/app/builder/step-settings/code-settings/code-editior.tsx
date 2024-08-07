@@ -1,16 +1,29 @@
+import {
+  Action,
+  ActionType,
+  flowHelper,
+  FlowOperationType,
+  SourceCode,
+} from '@activepieces/shared';
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
-import { Package } from 'lucide-react';
+import { BetweenHorizontalEnd, Package } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { cn } from '@/lib/utils';
-import { SourceCode } from '@activepieces/shared';
+import { useBuilderStateContext } from '../../builder-hooks';
 
 import { AddNpmDialog } from './add-npm-dialog';
+
+import { useTheme } from '@/components/theme-provider';
+import { Button } from '@/components/ui/button';
+import {
+  INTERNAL_ERROR_TOAST,
+  toast,
+  UNSAVED_CHANGES_TOAST,
+} from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 
 const styleTheme = EditorView.baseTheme({
   '&.cm-editor.cm-focused': {
@@ -22,12 +35,35 @@ type CodeEditorProps = {
   sourceCode: SourceCode;
   onChange: (sourceCode: SourceCode) => void;
   readonly: boolean;
+  skipLineNumbers?: boolean;
+  applyButton?: boolean;
 };
 
-const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
+const CodeEditior = ({
+  sourceCode,
+  readonly,
+  onChange,
+  skipLineNumbers = false,
+  applyButton = false,
+}: CodeEditorProps) => {
   const { code, packageJson } = sourceCode;
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
   const [language, setLanguage] = useState<'typescript' | 'json'>('typescript');
+  const [selectedStep, flowVersion, applyOperation] = useBuilderStateContext(
+    (state) => [state.selectedStep, state.flowVersion, state.applyOperation],
+  );
+
+  const { theme } = useTheme();
+
+  const updateAction = (newAction: Action): void => {
+    applyOperation(
+      {
+        type: FlowOperationType.UPDATE_ACTION,
+        request: newAction,
+      },
+      () => toast(UNSAVED_CHANGES_TOAST),
+    );
+  };
 
   const extensions = [
     styleTheme,
@@ -58,6 +94,16 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
     }
   }
 
+  function handleApplyButton() {
+    if (!selectedStep) return;
+    const step = flowHelper.getStep(flowVersion, selectedStep.stepName);
+    if (!step) return;
+    if (step.type === ActionType.CODE) {
+      step.settings.sourceCode = { code, packageJson };
+      updateAction(step);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-2 border rounded py-2 px-2">
       <div className="flex flex-row justify-center items-center h-full">
@@ -80,27 +126,41 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
           </div>
         </div>
         <div className="flex flex-grow"></div>
-        <AddNpmDialog onAdd={handleAddPackages}>
+        {applyButton && (
           <Button
             variant="outline"
             className="flex gap-2"
             size={'sm'}
-            onClick={() => {}}
+            onClick={handleApplyButton}
           >
-            <Package className="w-3 h-3" />
-            Add
+            <BetweenHorizontalEnd className="w-3 h-3" />
+            Apply
           </Button>
-        </AddNpmDialog>
+        )}
+
+        {applyButton === false && (
+          <AddNpmDialog onAdd={handleAddPackages}>
+            <Button
+              variant="outline"
+              className="flex gap-2"
+              size={'sm'}
+              onClick={() => {}}
+            >
+              <Package className="w-3 h-3" />
+              Add
+            </Button>
+          </AddNpmDialog>
+        )}
       </div>
       <CodeMirror
         value={activeTab === 'code' ? code : packageJson}
-        className="border-none"
+        className="border-none h-full"
         height="250px"
         width="100%"
         maxWidth="100%"
         basicSetup={{
           foldGutter: false,
-          lineNumbers: true,
+          lineNumbers: skipLineNumbers ? false : true,
           searchKeymap: false,
           lintKeymap: true,
           autocompletion: true,
@@ -113,7 +173,7 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
               : { code, packageJson: value },
           );
         }}
-        theme={githubLight}
+        theme={theme === 'dark' ? 'dark' : githubLight}
         readOnly={readonly}
         extensions={extensions}
       />
