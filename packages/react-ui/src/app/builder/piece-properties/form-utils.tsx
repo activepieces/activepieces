@@ -206,9 +206,12 @@ export const formUtils = {
           break;
         case PropertyType.NUMBER:
           // Because it could be a variable
-          propsSchema[name] = Type.String({
-            minLength: property.required ? 1 : undefined,
-          });
+          propsSchema[name] = Type.Union([
+            Type.String({
+              minLength: property.required ? 1 : undefined,
+            }),
+            Type.Number(),
+          ]);
           break;
         case PropertyType.STATIC_DROPDOWN:
           propsSchema[name] = nonNullableUnknownPropType;

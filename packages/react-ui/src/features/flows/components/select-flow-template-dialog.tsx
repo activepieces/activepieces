@@ -39,12 +39,88 @@ import {
 
 import { flowsApi } from '../lib/flows-api';
 
+type TemplateCardProps = {
+  template: FlowTemplate;
+  onSelectTemplate: (template: FlowTemplate) => void;
+};
+const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
+  const selectTemplate = (template: FlowTemplate) => {
+    onSelectTemplate(template);
+  };
+
+  const navigate = useNavigate();
+
+  const { mutate: createFlow, isPending } = useMutation<
+    PopulatedFlow,
+    Error,
+    FlowTemplate
+  >({
+    mutationFn: async (template: FlowTemplate) => {
+      const newFlow = await flowsApi.create({
+        displayName: template.name,
+        projectId: authenticationSession.getProjectId(),
+      });
+      return await flowsApi.update(newFlow.id, {
+        type: FlowOperationType.IMPORT_FLOW,
+        request: {
+          displayName: template.name,
+          trigger: template.template.trigger,
+        },
+      });
+    },
+    onSuccess: (flow) => {
+      navigate(`/flows/${flow.id}`);
+    },
+    onError: () => {
+      toast(INTERNAL_ERROR_TOAST);
+    },
+  });
+  return (
+    <div
+      key={template.id}
+      className="rounded-lg border border-solid border-dividers overflow-hidden"
+    >
+      <div className="flex items-center gap-2 p-4 ">
+        <PieceIconList
+          trigger={template.template.trigger}
+          maxNumberOfIconsToShow={2}
+        />
+      </div>
+      <div className="text-sm font-medium px-4">{template.name}</div>
+      <div className="p-2 flex">
+        <Button
+          variant="basic"
+          loading={isPending}
+          onClick={() => createFlow(template)}
+        >
+          <Workflow className="w-4 h-4 me-2" /> Use Template
+        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="size-10 flex justify-center items-center">
+              <Button
+                variant="ghost"
+                className="rounded-full p-3 hover:bg-muted cursor-pointer flex justify-center items-center"
+                onClick={() => selectTemplate(template)}
+              >
+                <Info className="w-4 h-4" />
+              </Button>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <span className="text-sm">Learn more</span>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    </div>
+  );
+};
+
 const SelectFlowTemplateDialog = ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
-  const navigate = useNavigate();
   const [search, setSearch] = useState<string>('');
 
   const carousel = useRef<CarouselApi>();
@@ -72,39 +148,8 @@ const SelectFlowTemplateDialog = ({
     );
   });
 
-  const { mutate: createFlow, isPending } = useMutation<
-    PopulatedFlow,
-    Error,
-    FlowTemplate
-  >({
-    mutationFn: async (template: FlowTemplate) => {
-      const newFlow = await flowsApi.create({
-        displayName: template.name,
-        projectId: authenticationSession.getProjectId(),
-      });
-      return await flowsApi.update(newFlow.id, {
-        type: FlowOperationType.IMPORT_FLOW,
-        request: {
-          displayName: template.name,
-          trigger: template.template.trigger,
-        },
-      });
-    },
-    onSuccess: (flow) => {
-      navigate(`/flows/${flow.id}`);
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
-  });
-
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value);
-  };
-
-  const selectTemplate = (template: FlowTemplate) => {
-    setSelectedTemplate(template);
-    carousel.current?.scrollNext();
   };
 
   const unselectTemplate = () => {
@@ -117,14 +162,14 @@ const SelectFlowTemplateDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:min-w-[850px] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex flex-row items-center] gap-1 justify-start gap-2 items-center h-full">
-            {selectedTemplate ? (
-              <Button variant="ghost" size="sm" onClick={unselectTemplate}>
+          <DialogTitle className="flex flex-row items-center justify-start gap-2 items-center h-full">
+            <Button variant="ghost" size="sm" onClick={unselectTemplate}>
+              {selectedTemplate ? (
                 <ArrowLeft className="w-4 h-4" />
-              </Button>
-            ) : (
-              <Workflow className="w-4 h-4" />
-            )}
+              ) : (
+                <Workflow className="w-4 h-4" />
+              )}
+            </Button>
             Browse Templates
           </DialogTitle>
         </DialogHeader>
@@ -148,46 +193,14 @@ const SelectFlowTemplateDialog = ({
                     <ScrollArea className="h-[680px] max-h-[680px] overflow-y-auto">
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filteredTemplates?.map((template) => (
-                          <div
+                          <TemplateCard
                             key={template.id}
-                            className="rounded-lg border border-solid border-dividers overflow-hidden"
-                          >
-                            <div className="flex items-center gap-2 p-4 ">
-                              <PieceIconList
-                                trigger={template.template.trigger}
-                                maxNumberOfIconsToShow={2}
-                              />
-                            </div>
-                            <div className="text-sm font-medium px-4">
-                              {template.name}
-                            </div>
-                            <div className="py-2 flex">
-                              <Button
-                                variant="basic"
-                                loading={isPending}
-                                onClick={() => createFlow(template)}
-                              >
-                                <Workflow className="w-4 h-4 me-2" /> Use
-                                Template
-                              </Button>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="size-10 flex justify-center items-center">
-                                    <Button
-                                      variant="ghost"
-                                      className="rounded-full p-3 hover:bg-muted cursor-pointer flex justify-center items-center"
-                                      onClick={() => selectTemplate(template)}
-                                    >
-                                      <Info className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom">
-                                  <span className="text-sm">Learn more</span>
-                                </TooltipContent>
-                              </Tooltip>
-                            </div>
-                          </div>
+                            template={template}
+                            onSelectTemplate={(template) => {
+                              setSelectedTemplate(template);
+                              carousel.current?.scrollNext();
+                            }}
+                          />
                         ))}
                       </div>
                     </ScrollArea>

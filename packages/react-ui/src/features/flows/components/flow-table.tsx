@@ -6,7 +6,7 @@ import {
   EllipsisVertical,
   Import,
   Plus,
-  Zap,
+  Workflow,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -230,7 +230,7 @@ const FlowsTable = () => {
                     onSelect={(e) => e.preventDefault()}
                     disabled={isCreateFlowPending}
                   >
-                    <Zap className="h-4 w-4 me-2" />
+                    <Workflow className="h-4 w-4 me-2" />
                     <span>Use a template</span>
                   </DropdownMenuItem>
                 </SelectFlowTemplateDialog>
