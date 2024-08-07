@@ -1,0 +1,12 @@
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--version" # prevent Netlify npm install
+
+[build]
+  publish = "dist/packages/react-ui"
+  command = "npm i && npm run build:frontend"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
