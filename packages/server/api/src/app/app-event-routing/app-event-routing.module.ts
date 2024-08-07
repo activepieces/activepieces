@@ -94,6 +94,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         id: requestId,
                         type: JobType.WEBHOOK,
                         data: {
+                            projectId: listener.projectId,
                             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                             requestId,
                             synchronousHandlerId: null,
