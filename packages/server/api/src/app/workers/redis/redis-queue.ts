@@ -39,7 +39,7 @@ export const redisQueue: QueueManager = {
         const { type, data } = params
         const { shouldRateLimit } = await redisRateLimiter.shouldBeLimited(jobTypeToQueueName[type], data.projectId, 1)
 
-        if (PROJECT_RATE_LIMITER_ENABLED && shouldRateLimit) {
+        if (shouldRateLimit) {
             await redisRateLimiter.rateLimitJob(params)
             return
         }
