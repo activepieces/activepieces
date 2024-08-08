@@ -71,7 +71,7 @@ const ApMarkdown = React.memo(
                 <div className="relative py-2">
                   <input
                     type="text"
-                    className="col-span-6 bg-white border border-solid text-sm rounded-lg block w-full p-2.5"
+                    className="col-span-6 bg-background border border-solid text-sm rounded-lg block w-full p-2.5"
                     value={codeContent}
                     disabled
                   />
