@@ -1,8 +1,10 @@
 import {
   createAction,
+  DynamicPropsValue,
   OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
+import { NotionToMarkdown } from 'notion-to-md';
 import { notionAuth } from '../..';
 import { Client, collectPaginatedAPI, isFullBlock } from '@notionhq/client';
 import { PartialBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints';
@@ -17,11 +19,30 @@ export const getPageOrBlockChildren = createAction({
       displayName: 'Page or parent block ID',
       required: true,
     }),
-    depth: Property.Number({
-      displayName: 'Depth',
-      description: 'Recursively retrieve children up to this depth',
+    markdown: Property.Checkbox({
+      displayName: 'Markdown',
+      description: 'Convert Notion JSON blocks to Markdown',
       required: true,
-      defaultValue: 1,
+      defaultValue: false,
+    }),
+    dynamic: Property.DynamicProperties({
+      displayName: 'Dynamic properties',
+      refreshers: ['markdown'],
+      required: true,
+      props: async ({ markdown }) => {
+        if (markdown) {
+          return {};
+        }
+        const fields: DynamicPropsValue = {
+          depth: Property.Number({
+            displayName: 'Depth',
+            description: 'Recursively retrieve children up to this depth',
+            required: true,
+            defaultValue: 1,
+          }),
+        };
+        return fields;
+      },
     }),
   },
   async run(context) {
@@ -30,12 +51,22 @@ export const getPageOrBlockChildren = createAction({
       notionVersion: '2022-02-22',
     });
 
-    return getBlockChildrenRecursively(
-      notion,
-      context.propsValue.parentId,
-      context.propsValue.depth,
-      0
-    );
+    if (context.propsValue.markdown) {
+      const n2m = new NotionToMarkdown({
+        notionClient: notion,
+        config: { parseChildPages: false },
+      });
+      return n2m.toMarkdownString(
+        await n2m.pageToMarkdown(context.propsValue.parentId)
+      ).parent;
+    } else {
+      return getBlockChildrenRecursively(
+        notion,
+        context.propsValue.parentId,
+        context.propsValue.dynamic['depth'],
+        0
+      );
+    }
   },
 });
 
