@@ -42,7 +42,7 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
             })
             return toPieceMetadataModelSummary(filteredPieces, piecesWithTags, params.suggestionType)
         },
-        async getOrThrow({ projectId, version, name }): Promise<PieceMetadataModel> {
+        async get({ projectId, version, name }): Promise<PieceMetadataModel | undefined> {
             let platformId: string | undefined = undefined
             if (!isNil(projectId)) {
                 // TODO: this might be database intensive, consider caching, passing platform id from caller cause major changes
@@ -61,6 +61,10 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
                 ))
                 return piece.name === name && strictlyLessThan
             })
+            return piece
+        },
+        async getOrThrow({ projectId, version, name }): Promise<PieceMetadataModel> {
+            const piece = await this.get({ projectId, version, name })
             if (isNil(piece)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,

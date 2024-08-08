@@ -45,6 +45,9 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
     setActiveDraggingStep(e.active.id.toString());
   };
 
+  const handleDragCancel = () => {
+    setActiveDraggingStep(null);
+  };
   const handleDragStartEnd = (e: DragEndEvent) => {
     const collision = e?.collisions?.[0]?.data?.['droppableContainer'].data
       .current as ApEdge['data'];
@@ -93,6 +96,7 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
     <DndContext
       onDragStart={handleDragStart}
       onDragEnd={handleDragStartEnd}
+      onDragCancel={handleDragCancel}
       sensors={sensors}
     >
       {children}

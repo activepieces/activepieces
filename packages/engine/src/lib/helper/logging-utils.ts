@@ -31,7 +31,7 @@ function removeLeavesInTopologicalOrder(json: Record<string, unknown>): Record<s
         const curNode = leaves.poll()
 
         const isDepthGreaterThanOne = curNode && curNode.depth > 1
-        const isTruncatable = curNode && (!nonTruncatableKeys.includes(curNode.key) || curNode.depth > 2)
+        const isTruncatable = curNode && (!nonTruncatableKeys.includes(curNode.key))
 
         if (isDepthGreaterThanOne && isTruncatable) {
             totalJsonSize += SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - curNode.size
@@ -58,7 +58,7 @@ function traverseJsonAndConvertToNodes(root: unknown) {
 
     while (!nodesQueue.isEmpty()) {
         const curNode = nodesQueue.dequeue()
-        const children = findChildren(curNode.value)
+        const children = findChildren(curNode.value, curNode.key === 'iterations')
 
         nodes.push({
             index: nodes.length,
@@ -81,11 +81,12 @@ function traverseJsonAndConvertToNodes(root: unknown) {
     return nodes
 }
 
-function findChildren(curNode: unknown): [Key, unknown][] {
+function findChildren(curNode: unknown, traverseArray: boolean): [Key, unknown][] {
     if (isObject(curNode)) {
         return Object.entries(curNode)
     }
-    if (Array.isArray(curNode)) {
+    // Array should be treated as a leaf node as If it has too many small items, It will prioritize the other steps first 
+    if (Array.isArray(curNode) && traverseArray) {
         const children: [Key, unknown][] = []
         for (let i = 0; i < curNode.length; i++) {
             children.push([i, curNode[i]])

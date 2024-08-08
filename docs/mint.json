@@ -174,7 +174,8 @@
         "flows/passing-data",
         "flows/publishing-flows",
         "flows/debugging-runs",
-        "flows/versioning"
+        "flows/versioning",
+        "flows/known-limits"
       ]
     },
     {

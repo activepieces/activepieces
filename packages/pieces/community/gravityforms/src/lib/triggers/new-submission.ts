@@ -45,7 +45,4 @@ export const gravityFormsNewSubmission = createTrigger({
   async run(context) {
     return [context.payload];
   },
-  async test(context) {
-    return [context.payload];
-  },
 });

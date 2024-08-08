@@ -42,6 +42,10 @@ export const getEvents = createAction({
         ],
       },
     }),
+    search: Property.ShortText({
+      displayName: 'Search Term',
+      required: false,
+    }),
     start_date: Property.DateTime({
       displayName: 'Date from',
       required: false,
@@ -57,11 +61,17 @@ export const getEvents = createAction({
       calendar_id: calendarId,
       start_date,
       end_date,
+      search,
       event_types,
     } = configValue.propsValue;
     const { access_token: token } = configValue.auth;
     const queryParams: Record<string, string> = { showDeleted: 'false' };
     let url = `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`;
+
+    if (search) {
+      queryParams['q'] = `"${search}"`;
+    }
+
     // date range
     if (start_date) {
       queryParams['timeMin'] = dayjs(start_date).format(

@@ -185,7 +185,7 @@ export const RequestTrial = () => {
       onOpenChange={(open) => setIsOpen(open)}
     >
       <DrawerTrigger asChild>
-        <Button variant="outline">Request Trial</Button>
+        <Button>Request Trial</Button>
       </DrawerTrigger>
       <DrawerContent className="h-screen top-0 right-0 left-auto mt-0 w-[600px] rounded-none py-2 px-6 gap-6 flex">
         <DrawerHeader className="mt-4">

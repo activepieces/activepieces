@@ -103,6 +103,9 @@
       "@activepieces/piece-certopus": [
         "packages/pieces/community/certopus/src/index.ts"
       ],
+      "@activepieces/piece-chargekeep": [
+        "packages/pieces/community/chargekeep/src/index.ts"
+      ],
       "@activepieces/piece-clarifai": [
         "packages/pieces/community/clarifai/src/index.ts"
       ],

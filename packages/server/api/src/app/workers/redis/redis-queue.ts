@@ -1,9 +1,10 @@
-import { JobType, logger, QueueName } from '@activepieces/server-shared'
+import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
-import { DefaultJobOptions, Job, Queue } from 'bullmq'
+import { DefaultJobOptions, Queue } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
+import { redisRateLimiter } from './redis-rate-limiter'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = 8 * 60 * 1000
 const defaultJobOptions: DefaultJobOptions = {
@@ -18,15 +19,30 @@ const repeatingJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
 export const bullMqGroups: Record<string, Queue> = {}
 
+const jobTypeToQueueName: Record<JobType, QueueName> = {
+    [JobType.DELAYED]: QueueName.SCHEDULED,
+    [JobType.ONE_TIME]: QueueName.ONE_TIME,
+    [JobType.REPEATING]: QueueName.SCHEDULED,
+    [JobType.WEBHOOK]: QueueName.WEBHOOK,
+}
+
 export const redisQueue: QueueManager = {
     async init(): Promise<void> {
+        await redisRateLimiter.init()
         const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName))
         await Promise.all(queues)
         await redisMigrations.run()
         logger.info('[redisQueueManager#init] Redis queues initialized')
     },
     async add(params): Promise<void> {
-        const { type } = params
+        const { type, data } = params
+        const { shouldRateLimit } = await redisRateLimiter.shouldBeLimited(jobTypeToQueueName[type], data.projectId, 1)
+
+        if (shouldRateLimit) {
+            await redisRateLimiter.rateLimitJob(params)
+            return
+        }
+    
         switch (type) {
             case JobType.REPEATING: {
                 await addRepeatingJob(params)
@@ -53,11 +69,13 @@ export const redisQueue: QueueManager = {
         const client = await queue.client
         const repeatJob = await findRepeatableJobKey(flowVersionId)
         if (isNil(repeatJob)) {
-            // TODO renable this when we are sure this is thread safe, and no two flows will be disabled at the same time.
-            // exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`))
+            exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`))
             return
         }
-        const result = await queue.removeRepeatable(repeatJob.name, repeatJob.opts)
+        logger.info({
+            flowVersionId,
+        }, '[redisQueue#removeRepeatingJob] removing the jobs')
+        const result = await queue.removeRepeatableByKey(repeatJob)
         if (!result) {
             throw new ActivepiecesError({
                 code: ErrorCode.JOB_REMOVAL_FAILURE,
@@ -70,7 +88,7 @@ export const redisQueue: QueueManager = {
     },
 }
 
-async function findRepeatableJobKey(flowVersionId: ApId): Promise<Job | undefined> {
+async function findRepeatableJobKey(flowVersionId: ApId): Promise<string | undefined> {
     const queue = await ensureQueueExists(QueueName.SCHEDULED)
     const client = await queue.client
     const jobKey = await client.get(repeatingJobKey(flowVersionId))
@@ -78,9 +96,10 @@ async function findRepeatableJobKey(flowVersionId: ApId): Promise<Job | undefine
         logger.warn({ flowVersionId }, 'Job key not found in redis, trying to find it in the queue')
         // TODO: this temporary solution for jobs that doesn't have repeatJobKey in redis, it's also confusing because it search by flowVersionId
         const jobs = await queue.getJobs()
-        return jobs.filter(f => !isNil(f) && !isNil(f.data)).find((f) => f.data.flowVersionId === flowVersionId)
+        const jobKeyInRedis = jobs.filter(f => !isNil(f) && !isNil(f.data)).find((f) => f.data.flowVersionId === flowVersionId)
+        return jobKeyInRedis?.repeatJobKey
     }
-    return undefined
+    return jobKey
 }
 
 async function ensureQueueExists(queueName: QueueName): Promise<Queue> {

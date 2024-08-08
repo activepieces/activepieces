@@ -1,32 +1,15 @@
-import { ApFlagId, isNil } from '@activepieces/shared';
-import {
-  AlertCircle,
-  Link2,
-  Logs,
-  Shield,
-  Workflow,
-  Wrench,
-} from 'lucide-react';
+import { LockKeyhole } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { Button } from '../../components/ui/button';
-import { UserAvatar } from '../../components/ui/user-avatar';
-// import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
+import { Header } from './header';
 
-import { FlagGuard } from './flag-gaurd';
-
-import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { issueHooks } from '@/features/issues/hooks/issue-hooks';
-import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
-import { projectHooks } from '@/hooks/project-hooks';
 import { theme } from '@/lib/theme';
-import { formatUtils } from '@/lib/utils';
 
 type Link = {
   icon: React.ReactNode;
@@ -41,12 +24,14 @@ const CustomTooltipLink = ({
   Icon,
   extraClasses,
   notification,
+  locked,
 }: {
   to: string;
   label: string;
   Icon: React.ElementType;
   extraClasses?: string;
   notification?: boolean;
+  locked?: boolean;
 }) => {
   const location = useLocation();
 
@@ -57,6 +42,12 @@ const CustomTooltipLink = ({
       <div
         className={`relative flex flex-col items-center justify-center gap-1`}
       >
+        {locked && (
+          <LockKeyhole
+            className="absolute right-[-1px] bottom-[20px] size-3"
+            color="grey"
+          />
+        )}
         <Icon
           className={`size-10 p-2.5 hover:text-primary rounded-lg transition-colors ${
             isActive ? 'bg-accent text-primary' : ''
@@ -71,45 +62,21 @@ const CustomTooltipLink = ({
   );
 };
 
-const TaskLimitButton = React.memo(() => {
-  const { data: project } = projectHooks.useCurrentProject();
+export type SidebarLink = {
+  to: string;
+  label: string;
+  icon: React.ElementType;
+  notification?: boolean;
+  locked?: boolean;
+};
 
-  if (isNil(project?.plan?.tasks) || isNil(project?.usage?.tasks)) {
-    return null;
-  }
-
-  return (
-    <FlagGuard flag={ApFlagId.SHOW_BILLING}>
-      <Link to={'/plans'}>
-        <Button
-          variant={'outline'}
-          size="sm"
-          className="flex items-center justify-center gap-2"
-        >
-          <ProgressCircularComponent
-            size="small"
-            data={{
-              plan: project.plan.tasks,
-              usage: project.usage.tasks,
-            }}
-          />
-          <span>
-            <strong>
-              {formatUtils.formatNumber(project.usage.tasks)}/
-              {formatUtils.formatNumber(project.plan.tasks)}
-            </strong>{' '}
-            Tasks Per Month
-          </span>
-        </Button>
-      </Link>
-    </FlagGuard>
-  );
-});
-TaskLimitButton.displayName = 'TaskLimitButton';
-
-export function Sidebar({ children }: { children: React.ReactNode }) {
-  const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
-
+export function Sidebar({
+  children,
+  links,
+}: {
+  children: React.ReactNode;
+  links: SidebarLink[];
+}) {
   return (
     <div className="flex min-h-screen w-full ">
       <aside className="flex flex-col border-r bg-muted/50">
@@ -122,20 +89,15 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
               <TooltipContent side="right">{theme.websiteName}</TooltipContent>
             </Tooltip>
           </div>
-          <CustomTooltipLink to="/flows" label="Flows" Icon={Workflow} />
-          <CustomTooltipLink to="/runs" label="Runs" Icon={Logs} />
-          <CustomTooltipLink
-            to="/issues"
-            label="Issues"
-            Icon={AlertCircle}
-            notification={showIssuesNotification}
-          />
-          <CustomTooltipLink
-            to="/connections"
-            label="Connections"
-            Icon={Link2}
-          />
-          <CustomTooltipLink to="/settings" label="Settings" Icon={Wrench} />
+          {links.map((link, index) => (
+            <CustomTooltipLink
+              to={link.to}
+              label={link.label}
+              Icon={link.icon}
+              key={index}
+              locked={link.locked}
+            />
+          ))}
         </nav>
       </aside>
       <div className="flex-1 p-4">

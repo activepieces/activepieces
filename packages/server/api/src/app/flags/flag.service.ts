@@ -77,13 +77,19 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.COPILOT_ENABLED,
+                id: ApFlagId.CODE_COPILOT_ENABLED,
                 value: !isNil(system.get(AppSystemProp.OPENAI_API_KEY)),
                 created,
                 updated,
             },
             {
-                id: ApFlagId.SHOW_COPILOT,
+                id: ApFlagId.HTTP_REQUEST_COPILOT_ENABLED,
+                value: !isNil(system.get(AppSystemProp.OPENAI_API_KEY)) && !isNil(system.get(AppSystemProp.RAPID_API_KEY)),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_COPILOTS,
                 value: true,
                 created,
                 updated,

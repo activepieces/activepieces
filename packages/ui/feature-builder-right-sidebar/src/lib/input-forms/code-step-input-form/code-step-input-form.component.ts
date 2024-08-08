@@ -73,10 +73,10 @@ export class CodeStepInputFormComponent extends InputFormCore {
   ) {
     super(store, pieceService);
     this.generateCodeEnabled$ = this.flagService.isFlagEnabled(
-      ApFlagId.COPILOT_ENABLED
+      ApFlagId.CODE_COPILOT_ENABLED
     );
     this.showGenerateCode$ = this.flagService.isFlagEnabled(
-      ApFlagId.SHOW_COPILOT
+      ApFlagId.SHOW_COPILOTS
     );
     this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(
       tap((val) => {

@@ -1,7 +1,8 @@
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 import { join } from 'path'
-import { fileExists, threadSafeMkdir } from '@activepieces/server-shared'
+import { fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
+import writeFileAtomic from 'write-file-atomic'
 
 export enum CacheState {
     READY = 'READY',
@@ -28,13 +29,25 @@ const getCache = async (folderPath: string): Promise<CacheMap> => {
 export const cacheHandler = (folderPath: string) => {
     return {
         async cacheCheckState(cacheAlias: string): Promise<CacheState | undefined> {
-            const cache = await getCache(folderPath)
-            return cache[cacheAlias]
+            const lock = await memoryLock.acquire('cache_' + cacheAlias)
+            try {
+                const cache = await getCache(folderPath)
+                return cache[cacheAlias]
+            }
+            finally {
+                await lock.release()
+            }
         },
         async setCache(cacheAlias: string, state: CacheState): Promise<void> {
-            const cache = await getCache(folderPath)
-            cache[cacheAlias] = state
-            await saveToCache(cache, folderPath)
+            const lock = await memoryLock.acquire('cache_' + cacheAlias)
+            try {
+                const cache = await getCache(folderPath)
+                cache[cacheAlias] = state
+                await saveToCache(cache, folderPath)
+            }
+            finally {
+                await lock.release()
+            }
         },
     }
 }
@@ -42,7 +55,7 @@ export const cacheHandler = (folderPath: string) => {
 async function saveToCache(cache: CacheMap, folderPath: string): Promise<void> {
     await threadSafeMkdir(folderPath)
     const filePath = cachePath(folderPath)
-    await writeFile(filePath, JSON.stringify(cache), 'utf8')
+    await writeFileAtomic(filePath, JSON.stringify(cache), 'utf8')
 }
 
 async function readCache(folderPath: string): Promise<CacheMap> {

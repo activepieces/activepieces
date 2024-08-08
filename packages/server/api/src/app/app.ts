@@ -14,6 +14,7 @@ import { authenticationServiceHooks } from './authentication/authentication-serv
 import { authenticationModule } from './authentication/authentication.module'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
 import { copilotModule } from './copilot/copilot.module'
+import { requestWriterModule } from './copilot/request-writer/request-writer.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { getRedisConnection } from './database/redis-connection'
@@ -205,7 +206,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(stepFileModule)
     await app.register(userModule)
     await app.register(authenticationModule)
-    await app.register(copilotModule)
+    await app.register(copilotModule),
+    await app.register(requestWriterModule),
     await app.register(platformModule)
     await app.register(formModule)
     await app.register(tagsModule)
@@ -324,6 +326,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     }
 
     app.addHook('onClose', async () => {
+        logger.info('Shutting down')
         await flowConsumer.close()
         await systemJobsSchedule.close()
         await webhookResponseWatcher.shutdown()
