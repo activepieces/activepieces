@@ -91,11 +91,11 @@ const BuilderPage = () => {
   });
 
   useEffect(() => {
-    if (!selectedStep) {
+    if (!memorizedSelectedStep) {
       return;
     }
-    setContainerKey(flowVersion.id + selectedStep.stepName);
-  }, [selectedStep, flowVersion]);
+    setContainerKey(flowVersion.id + memorizedSelectedStep.name);
+  }, [memorizedSelectedStep, flowVersion]);
 
   return (
     <div className="flex h-screen w-screen flex-col">

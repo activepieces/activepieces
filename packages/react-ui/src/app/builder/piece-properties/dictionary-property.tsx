@@ -24,7 +24,7 @@ export const DictionaryProperty = ({
   useMentionTextInput,
 }: DictionaryInputProps) => {
   const [formValue, setFormValue] = useState<DictionaryInputItem[]>(
-    Object.entries(values ?? {}).map(([key, value]) => ({ key, value }))
+    Object.entries(values ?? {}).map(([key, value]) => ({ key, value })),
   );
 
   const remove = (index: number) => {
@@ -83,7 +83,7 @@ export const DictionaryProperty = ({
               <Input
                 value={value}
                 onChange={(e) =>
-                  onChangeValue(index, undefined, e.target.value)
+                  onChangeValue(index, e.target.value, undefined)
                 }
               ></Input>
             )}

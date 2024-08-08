@@ -1,3 +1,4 @@
+import { LockKeyhole } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -8,8 +9,6 @@ import {
 } from '@/components/ui/tooltip';
 import { theme } from '@/lib/theme';
 
-
-import { LockKeyhole } from 'lucide-react';
 import { Header } from './header';
 
 type Link = {
@@ -44,11 +43,15 @@ const CustomTooltipLink = ({
         className={`relative flex flex-col items-center justify-center gap-1`}
       >
         {locked && (
-          <LockKeyhole className="absolute right-[-1px] bottom-[20px] size-3" color="grey" />
+          <LockKeyhole
+            className="absolute right-[-1px] bottom-[20px] size-3"
+            color="grey"
+          />
         )}
         <Icon
-          className={`size-10 p-2.5 hover:text-primary rounded-lg transition-colors ${isActive ? 'bg-accent text-primary' : ''
-            } ${extraClasses || ''}`}
+          className={`size-10 p-2.5 hover:text-primary rounded-lg transition-colors ${
+            isActive ? 'bg-accent text-primary' : ''
+          } ${extraClasses || ''}`}
         />
         <span className="text-[10px]">{label}</span>
         {notification && (
@@ -65,10 +68,15 @@ export type SidebarLink = {
   icon: React.ElementType;
   notification?: boolean;
   locked?: boolean;
-}
+};
 
-export function Sidebar({ children, links }: { children: React.ReactNode, links: SidebarLink[] }) {
-
+export function Sidebar({
+  children,
+  links,
+}: {
+  children: React.ReactNode;
+  links: SidebarLink[];
+}) {
   return (
     <div className="flex min-h-screen w-full ">
       <aside className="flex flex-col border-r bg-muted/50">
@@ -81,9 +89,15 @@ export function Sidebar({ children, links }: { children: React.ReactNode, links:
               <TooltipContent side="right">{theme.websiteName}</TooltipContent>
             </Tooltip>
           </div>
-          {links.map((link, index) =>
-            <CustomTooltipLink to={link.to} label={link.label} Icon={link.icon} key={index} locked={link.locked} />
-          )}
+          {links.map((link, index) => (
+            <CustomTooltipLink
+              to={link.to}
+              label={link.label}
+              Icon={link.icon}
+              key={index}
+              locked={link.locked}
+            />
+          ))}
         </nav>
       </aside>
       <div className="flex-1 p-4">

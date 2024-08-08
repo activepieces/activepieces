@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Value } from '@sinclair/typebox/value';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useUpdateEffect } from 'react-use';
 
@@ -50,12 +50,6 @@ const StepSettingsContainer = React.memo(
         state.flowVersion,
       ]);
 
-    const [actionOrTriggerName, setActionOrTriggerName] = useState<string>(
-      selectedStep?.settings?.actionName ??
-        selectedStep?.settings?.triggerName ??
-        '',
-    );
-
     const { stepMetadata } = piecesHooks.useStepMetadata({
       step: selectedStep,
     });
@@ -89,10 +83,8 @@ const StepSettingsContainer = React.memo(
       return debounce(updateAction, 200);
     }, [applyOperation]);
 
-    const defaultValues = formUtils.buildPieceDefaultValue(
-      selectedStep,
-      pieceModel!,
-    );
+    const actionOrTriggerName =
+      selectedStep.settings.actionName ?? selectedStep.settings.triggerName;
 
     const formSchema = formUtils.buildPieceSchema(
       selectedStep.type,
@@ -104,7 +96,9 @@ const StepSettingsContainer = React.memo(
       mode: 'onChange',
       disabled: readonly,
       reValidateMode: 'onChange',
-      defaultValues,
+      defaultValues: useMemo(() => {
+        return formUtils.buildPieceDefaultValue(selectedStep, pieceModel!);
+      }, [selectedStep, pieceModel]),
       resolver: typeboxResolver(formSchema),
     });
 
@@ -148,22 +142,18 @@ const StepSettingsContainer = React.memo(
 
     useUpdateEffect(() => {
       const currentStep = JSON.parse(JSON.stringify(form.getValues()));
-      setActionOrTriggerName(
-        currentStep.settings.actionName ??
-          currentStep.settings.triggerName ??
-          '',
-      );
       const newValue = formUtils.buildPieceDefaultValue(
         currentStep,
         pieceModel!,
       );
-
       form.reset(newValue);
       form.trigger();
     }, [actionName, triggerName]);
 
     useUpdateEffect(() => {
       const currentStep = JSON.parse(JSON.stringify(form.getValues()));
+      const actionOrTriggerName =
+        currentStep.settings.actionName ?? currentStep.settings.triggerName;
       const formSchema = formUtils.buildPieceSchema(
         currentStep.type,
         actionOrTriggerName,
