@@ -9,6 +9,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { theme } from '@/lib/theme';
 
 type Link = {
