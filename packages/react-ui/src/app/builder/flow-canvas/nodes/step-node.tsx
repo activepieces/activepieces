@@ -101,8 +101,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: data.step!.name,
-    // TODO fix the drag and enable
-    disabled: true,
+    disabled: isTrigger,
   });
 
   const stepOutputStatus = useMemo(
@@ -128,7 +127,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     <div
       style={{
         boxShadow:
-          isSelected || toolbarOpen
+          (isSelected || toolbarOpen) && !isDragging
             ? 'inset 0 3px 0 hsl(var(--primary))'
             : 'none',
         borderRadius: '8px',
@@ -140,6 +139,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       className={cn('h-[70px] w-[260px] transition-all border-box border', {
         'border-primary': toolbarOpen || isSelected,
         'bg-background': !isDragging,
+        'border-none': isDragging,
       })}
       onClick={(e) => handleStepClick(e)}
       onMouseEnter={() => {

@@ -92,9 +92,6 @@
 
 }
 
-:root {
-    --xy-edge-stroke-selected-default: #b1b1b7; 
-}
 
 .react-flow__panel.react-flow__attribution.bottom.right {
     display: none;
