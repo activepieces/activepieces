@@ -3,7 +3,7 @@ import PiecesTable from '@/features/pieces/components/piece-table';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export default function PlatformPiecesPage() {
-  const { data: platform } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.managePiecesEnabled;
   return (
     <LockedFeatureGuard

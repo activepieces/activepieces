@@ -11,9 +11,12 @@ export const platformHooks = {
     });
   },
   useCurrentPlatform: () => {
-    return useSuspenseQuery({
+    const query = useSuspenseQuery({
       queryKey: ['platform'],
       queryFn: platformApi.getCurrentPlatform,
     });
+    return {
+      platform: query.data,
+    };
   },
 };

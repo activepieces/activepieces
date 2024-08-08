@@ -135,10 +135,14 @@ export const formUtils = {
       case ActionType.CODE:
         return CodeActionSchema;
       case ActionType.PIECE: {
-        const inputSchema = piece && actionNameOrTriggerName &&
+        const inputSchema =
+          piece &&
+          actionNameOrTriggerName &&
           piece.actions[actionNameOrTriggerName]
-          ? formUtils.buildSchema(piece.actions[actionNameOrTriggerName].props)
-          : Type.Object({})
+            ? formUtils.buildSchema(
+                piece.actions[actionNameOrTriggerName].props,
+              )
+            : Type.Object({});
         return Type.Composite([
           PieceActionSchema,
           Type.Object({
@@ -154,11 +158,14 @@ export const formUtils = {
       case TriggerType.PIECE: {
         const formSchema =
           piece &&
-            actionNameOrTriggerName &&
-            piece.triggers[actionNameOrTriggerName]
-            ? formUtils.buildSchema(piece.triggers[actionNameOrTriggerName].props)
+          actionNameOrTriggerName &&
+          piece.triggers[actionNameOrTriggerName]
+            ? formUtils.buildSchema(
+                piece.triggers[actionNameOrTriggerName].props,
+              )
             : Type.Object({});
-        return Type.Composite([PieceTrigger,
+        return Type.Composite([
+          PieceTrigger,
           Type.Object({
             settings: Type.Object({
               triggerName: Type.String({
@@ -166,7 +173,8 @@ export const formUtils = {
               }),
               input: formSchema,
             }),
-          })]);
+          }),
+        ]);
       }
       default: {
         throw new Error('Unsupported type: ' + type);

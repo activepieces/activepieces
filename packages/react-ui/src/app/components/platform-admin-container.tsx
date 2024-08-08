@@ -17,32 +17,32 @@ export function PlatformAdminContainer({
 }: {
   children: React.ReactNode;
 }) {
-  const platform = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform();
 
   const links: SidebarLink[] = [
     {
       to: '/platform/projects',
       label: 'Projects',
       icon: LayoutGrid,
-      locked: !platform.data.manageProjectsEnabled,
+      locked: !platform.manageProjectsEnabled,
     },
     {
       to: '/platform/appearance',
       label: 'Appearance',
       icon: Palette,
-      locked: !platform.data.customAppearanceEnabled,
+      locked: !platform.customAppearanceEnabled,
     },
     {
       to: '/platform/pieces',
       label: 'Pieces',
       icon: Puzzle,
-      locked: !platform.data.managePiecesEnabled,
+      locked: !platform.managePiecesEnabled,
     },
     {
       to: '/platform/templates',
       label: 'Templates',
       icon: Workflow,
-      locked: !platform.data.manageTemplatesEnabled,
+      locked: !platform.manageTemplatesEnabled,
     },
     {
       to: '/platform/users',

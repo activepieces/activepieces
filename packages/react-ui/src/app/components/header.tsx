@@ -43,7 +43,7 @@ export const Header = () => {
 };
 
 const TaskLimitButton = React.memo(() => {
-  const { data: project } = projectHooks.useCurrentProject();
+  const { project } = projectHooks.useCurrentProject();
 
   if (isNil(project?.plan?.tasks) || isNil(project?.usage?.tasks)) {
     return null;

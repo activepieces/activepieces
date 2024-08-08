@@ -2,7 +2,7 @@ import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export default function AppearancePage() {
-  const { data: platform } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.customAppearanceEnabled;
   return (
     <LockedFeatureGuard
