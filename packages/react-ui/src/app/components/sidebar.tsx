@@ -10,14 +10,11 @@ import {
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { Button, Button } from '../../components/ui/button';
-import { UserAvatar, UserAvatar } from '../../components/ui/user-avatar';
-import {
-  InviteUserDialog,
-  InviteUserDialog,
-} from '../../features/team/component/invite-user-dialog';
+import { Button } from '../../components/ui/button';
+import { UserAvatar } from '../../components/ui/user-avatar';
+// import { InviteUserDialog } from '../../features/team/component/invite-user-dialog';
 
-import { FlagGuard, FlagGuard } from './flag-gaurd';
+import { FlagGuard } from './flag-gaurd';
 
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import {
@@ -156,7 +153,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
                 <Shield className="size-4" />
                 <span>Platform Admin</span>
               </Button>
-              <TaskLimitButton /> */}
+              <TaskLimitButton />  */}
               <UserAvatar />
             </div>
           </div>
