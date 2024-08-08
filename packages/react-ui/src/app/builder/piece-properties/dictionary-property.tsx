@@ -13,7 +13,7 @@ type DictionaryInputItem = {
 };
 
 type DictionaryInputProps = {
-  values: Record<string, string>;
+  values: Record<string, string> | undefined;
   onChange: (values: Record<string, string>) => void;
   useMentionTextInput?: boolean;
 };
@@ -24,7 +24,7 @@ export const DictionaryProperty = ({
   useMentionTextInput,
 }: DictionaryInputProps) => {
   const [formValue, setFormValue] = useState<DictionaryInputItem[]>(
-    Object.keys(values).map((key) => ({ key, value: values[key] })),
+    Object.entries(values ?? {}).map(([key, value]) => ({ key, value }))
   );
 
   const remove = (index: number) => {

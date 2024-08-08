@@ -144,11 +144,11 @@ export const formUtils = {
               }),
               input:
                 piece &&
-                actionNameOrTriggerName &&
-                piece.actions[actionNameOrTriggerName]
+                  actionNameOrTriggerName &&
+                  piece.actions[actionNameOrTriggerName]
                   ? formUtils.buildSchema(
-                      piece.actions[actionNameOrTriggerName].props,
-                    )
+                    piece.actions[actionNameOrTriggerName].props,
+                  )
                   : Type.Object({}),
             }),
           }),
@@ -157,11 +157,11 @@ export const formUtils = {
       case TriggerType.PIECE: {
         const formSchema =
           piece &&
-          actionNameOrTriggerName &&
-          piece.triggers[actionNameOrTriggerName]
+            actionNameOrTriggerName &&
+            piece.triggers[actionNameOrTriggerName]
             ? formUtils.buildSchema(
-                piece.triggers[actionNameOrTriggerName].props,
-              )
+              piece.triggers[actionNameOrTriggerName].props,
+            )
             : Type.Object({});
         return ExactPieceTrigger(formSchema);
       }
@@ -300,7 +300,6 @@ function getDefaultValueForStep(
       case PropertyType.LONG_TEXT:
       case PropertyType.FILE:
       case PropertyType.CHECKBOX:
-      case PropertyType.NUMBER:
       case PropertyType.STATIC_DROPDOWN:
       case PropertyType.DROPDOWN:
       case PropertyType.BASIC_AUTH:
@@ -308,19 +307,23 @@ function getDefaultValueForStep(
       case PropertyType.SECRET_TEXT:
       case PropertyType.OAUTH2:
       case PropertyType.ARRAY:
-      case PropertyType.OBJECT:
       case PropertyType.JSON: {
         defaultValues[name] = input[name] ?? property.defaultValue ?? '';
         break;
       }
+      case PropertyType.NUMBER: {
+        defaultValues[name] = input[name] ?? property.defaultValue ?? 0;
+        break;
+      }
       case PropertyType.MULTI_SELECT_DROPDOWN:
-        defaultValues[name] = [];
+        defaultValues[name] = input[name] ?? property.defaultValue ?? [];
         break;
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-        defaultValues[name] = [];
+        defaultValues[name] = input[name] ?? property.defaultValue ?? [];
         break;
+      case PropertyType.OBJECT:
       case PropertyType.DYNAMIC:
-        defaultValues[name] = {};
+        defaultValues[name] = input[name] ?? property.defaultValue ?? {};
         break;
     }
   }

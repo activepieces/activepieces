@@ -101,7 +101,7 @@ export const pieceSelectorUtils = {
               pieceName: pieceStepmetadta.pieceName,
               pieceType: pieceStepmetadta.pieceType,
               packageType: pieceStepmetadta.packageType,
-              actionName: undefined,
+              actionName: '',
               pieceVersion: pieceStepmetadta.pieceVersion,
               input: {},
               errorHandlingOptions: errorHandlingOptions,
