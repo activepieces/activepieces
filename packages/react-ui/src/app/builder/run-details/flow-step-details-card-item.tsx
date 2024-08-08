@@ -87,8 +87,9 @@ const FlowStepDetailsCardItem = React.memo(
         selectedStep.stepName === step.name);
 
     const stepOutput = builderSelectors.getStepOutputFromExecutionPath({
-      path,
+      selectedPath: path,
       executionState: run ?? { steps: {} },
+      stepName: path.stepName,
     });
 
     const { stepMetadata } = piecesHooks.useStepMetadata({

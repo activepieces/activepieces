@@ -1,10 +1,7 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
-
 import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
-
 import { FlowsPage } from '../app/routes/flows';
 import { authenticationSession } from '../lib/authentication-session';
-
 import { DashboardContainer } from './components/dashboard-container';
 import NotFoundPage from './routes/404-page';
 import { ChangePasswordPage } from './routes/change-password';
@@ -22,11 +19,36 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+import { jwtDecode } from "jwt-decode";
+import dayjs from 'dayjs';
+
+
+function isJwtExpired(token: string): boolean {
+  if (!token) {
+    return true;
+  }
+  try {
+    const decoded = jwtDecode(token);
+    if (decoded && decoded.exp && dayjs().isAfter(dayjs.unix(decoded.exp))) {
+      return true;
+    }
+    return false;
+  } catch (e) {
+    return true;
+  }
+}
 
 const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
+  const token = authenticationSession.getToken();
+
   if (!authenticationSession.isLoggedIn()) {
     return <Navigate to="/sign-in" replace />;
   }
+
+  if (token && isJwtExpired(token)) {
+    return <Navigate to="/sign-in" replace />;
+  }
+
   return children;
 };
 
