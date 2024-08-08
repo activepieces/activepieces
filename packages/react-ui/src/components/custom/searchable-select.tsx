@@ -125,7 +125,6 @@ export const SearchableSelect = <T extends React.Key>({
               <CommandList className={'min-h-[12000px]'}>
                 {filterOptionsIndices &&
                   filterOptionsIndices.map((filterIndex) => {
-                    console.log();
                     const option = options[filterIndex];
                     return (
                       <CommandItem

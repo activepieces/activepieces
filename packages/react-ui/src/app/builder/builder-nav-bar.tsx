@@ -91,7 +91,7 @@ export const BuilderNavBar = () => {
           onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
           onDuplicate={() => {}}
         >
-          <ChevronDown className="h-4 w-4" />
+          <ChevronDown className="h-8 w-8" />
         </FlowActionMenu>
       </div>
       <div className="grow"></div>
