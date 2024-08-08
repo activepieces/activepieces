@@ -82,57 +82,68 @@ export class Processors {
       if (isBase64(urlOrBase64, { allowMime: true })) {
         const matches = urlOrBase64.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
         let base64 = urlOrBase64;
-        let contentType: string | null = null;
 
         if (matches && matches?.length === 3) {
-          contentType = matches[1];
           base64 = matches[2];
 
-          // You need to provide how you decide filename and extension in case of base64 string
-          const filename = 'unknown';
-          const extension = contentType.split('/')[1];
-
           return new ApFile(
-            filename + '.' + extension,
+            'unknown.bin',
             Buffer.from(base64, 'base64'),
-            extension
           );
         }
       }
-      const response = await axios.head(urlOrBase64);
-      const contentType = response.headers['content-type'];
 
-      console.info(`Content type: ${contentType}`);
-      // Check if content type is file
-      if (
-        !contentType ||
-        !(
-          contentType.startsWith('application/') ||
-          contentType.startsWith('image') ||
-          contentType.startsWith('audio') ||
-          contentType.startsWith('video') ||
-          contentType === 'application/octet-stream'
-        )
-      ) {
-        return null;
-      }
       const fileResponse = await axios.get(urlOrBase64, {
         responseType: 'arraybuffer',
       });
 
-      // Get filename and extension
-      const filename = urlOrBase64.substring(urlOrBase64.lastIndexOf('/') + 1);
-      const extension = filename.split('.').pop();
+      // Default filename: last part of the URL.
+      let filename = urlOrBase64.substring(urlOrBase64.lastIndexOf('/') + 1);
+
+      // Check for filename in the Content-Disposition header.
+      const contentDisposition = fileResponse.headers['content-disposition'];
+      if (contentDisposition) {
+        const contentDispositionFilename = this.getContentDispositionFileName(contentDisposition);
+        if (contentDispositionFilename) {
+          filename = contentDispositionFilename;
+        }
+      }
 
       // Return the ApFile object
       return new ApFile(
         filename,
         Buffer.from(fileResponse.data, 'binary'),
-        extension
+        // Only take the extension when there is a dot in the filename.
+        filename.split('.').length > 1 ? filename.split('.').pop() : undefined,
       );
     } catch (e) {
       console.error(e);
       return null;
     }
   };
+
+  static getContentDispositionFileName(disposition: string): string | null {
+    const utf8FilenameRegex = /filename\*=UTF-8''([\w%\-.]+)(?:; ?|$)/i;
+    const asciiFilenameRegex = /^filename=(["']?)(.*?[^\\])\1(?:; ?|$)/i;
+
+    let fileName: string | null = null;
+    if (utf8FilenameRegex.test(disposition)) {
+      const result = utf8FilenameRegex.exec(disposition);
+      if (result && result.length > 1) {
+        fileName = decodeURIComponent(result[1]);
+      }
+    } else {
+      // prevent ReDos attacks by anchoring the ascii regex to string start and
+      // slicing off everything before 'filename='
+      const filenameStart = disposition.toLowerCase().indexOf('filename=');
+      if (filenameStart >= 0) {
+        const partialDisposition = disposition.slice(filenameStart);
+        const matches = asciiFilenameRegex.exec(partialDisposition);
+        if (matches != null && matches[2]) {
+          fileName = matches[2];
+        }
+      }
+    }
+    return fileName;
+  }
 }
