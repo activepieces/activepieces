@@ -25,17 +25,17 @@ export const chargekeepAuth = PieceAuth.CustomAuth({
   props: {
     base_url: Property.StaticDropdown({
       displayName: 'Base URL',
-      description: 'Select the base URL',
+      description: 'Select the base environment URL',
       required: true,
       options: {
         disabled: false,
         options: [
           {
-            label: 'CRM (Live App)',
+            label: 'ChargeKeep Live (crm.chargekeep.com)',
             value: 'https://crm.chargekeep.com',
           },
           {
-            label: 'BETA',
+            label: 'ChargeKeep Beta (beta.chargekeep.com)',
             value: 'https://beta.chargekeep.com',
           },
         ],
