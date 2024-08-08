@@ -187,7 +187,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 </div>
                 <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
                   <div className="text-sm text-ellipsis overflow-hidden whitespace-nowrap w-full">
-                    {data.step!.displayName} {stepOutputStatus}
+                    {data.step!.displayName}
                   </div>
                   <div className="text-xs text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
                     {stepMetadata?.displayName}
