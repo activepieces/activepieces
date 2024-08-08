@@ -47,9 +47,8 @@ function getEdgePath({
         x: (targetX + sourceX) / 2 - BUTTON_SIZE.width / 2,
         y: (targetYWithPlaceHolder + sourceY) / 2 - BUTTON_SIZE.height / 2,
       },
-      edgePath: `M ${sourceX} ${sourceY} v ${
-        targetYWithPlaceHolder - sourceY
-      } ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
+      edgePath: `M ${sourceX} ${sourceY} v ${targetYWithPlaceHolder - sourceY
+        } ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
     };
   }
   const FIRST_LINE_LENGTH = 55;
@@ -65,12 +64,10 @@ function getEdgePath({
       y: targetYWithPlaceHolder - FIRST_LINE_LENGTH / 2 - 10,
     },
     edgePath: `M${sourceX} ${sourceY} 
-    v${targetYWithPlaceHolder - sourceY - FIRST_LINE_LENGTH - ARC_LENGTH} ${
-      SIGN < 0 ? ARC_LEFT_DOWN : ARC_RIGHT_DOWN
-    }
-    h${targetX - sourceX - 2 * SIGN * ARC_LENGTH} ${
-      SIGN < 0 ? ARC_LEFT : ARC_RIGHT
-    }
+    v${targetYWithPlaceHolder - sourceY - FIRST_LINE_LENGTH - ARC_LENGTH} ${SIGN < 0 ? ARC_LEFT_DOWN : ARC_RIGHT_DOWN
+      }
+    h${targetX - sourceX - 2 * SIGN * ARC_LENGTH} ${SIGN < 0 ? ARC_LEFT : ARC_RIGHT
+      }
     v${FIRST_LINE_LENGTH - ARC_LENGTH}
     ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
   };
@@ -78,11 +75,12 @@ function getEdgePath({
 
 const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
   const [showButtonShadow, setShowButtonShadow] = useState(false);
-  const [activeDraggingStep, flowVersion, clickOnNewNodeButton] =
+  const [activeDraggingStep, flowVersion, clickOnNewNodeButton, selectedButton] =
     useBuilderStateContext((state) => [
       state.activeDraggingStep,
       state.flowVersion,
       state.clickOnNewNodeButton,
+      state.selectedButton
     ]);
   const { edgePath, buttonPosition } = getEdgePath(props);
   const { setNodeRef } = useDroppable({
@@ -97,10 +95,11 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
     isNil(parentStep) || isNil(draggedStep)
       ? false
       : flowHelper.isPartOfInnerFlow({
-          parentStep: draggedStep,
-          childName: parentStep,
-        });
+        parentStep: draggedStep,
+        childName: parentStep,
+      });
   const isDropzone = !isPartOfInnerFlow && !isNil(activeDraggingStep);
+  const isSelected = selectedButton && selectedButton.type === 'action' && selectedButton?.stepname === props.data?.parentStep && selectedButton?.relativeLocation === props.data.stepLocationRelativeToParent;
 
   useDndMonitor({
     onDragMove(event: DragMoveEvent) {
@@ -126,33 +125,38 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
           y={buttonPosition.y}
           className={cn(
             'bg-primary w-[17px] h-[17px] rounded-[3px] box-content opacity-90',
-            {
-              // TODO fix colors and add box shadow
-              'bg-destructive': showButtonShadow,
-            },
           )}
+          style={{
+            borderRadius: '2px',
+            boxShadow: '0 0 0 6px hsl(var(--primary-100))'
+          }}
         >
           <div className="w-4 h-4" ref={setNodeRef}></div>
         </foreignObject>
       )}
       {!isDropzone && props.data?.addButton && buttonPosition && (
         <foreignObject
-          width={18}
-          height={18}
+          width={26}
+          height={26}
           x={buttonPosition.x}
           y={buttonPosition.y}
+          className={cn('bg-[#a6b1bf] w-4 h-4 flex items-center justify-center  transition-all duration-300 ease-in-out', {
+            'bg-primary ': isSelected,
+          })}
+          style={{
+            borderRadius: '2px',
+            boxShadow: isSelected ? '0 0 0 6px hsl(var(--primary-100))' : 'none',
+          }}
+          onClick={() =>
+            clickOnNewNodeButton(
+              'action',
+              props.data.parentStep!,
+              props.data.stepLocationRelativeToParent,
+            )
+          }
         >
-          <div
-            className="bg-[#a6b1bf] w-4 h-4 flex items-center justify-center"
-            onClick={() =>
-              clickOnNewNodeButton(
-                'action',
-                props.data.parentStep!,
-                props.data.stepLocationRelativeToParent,
-              )
-            }
-          >
-            <Plus className="w-3 h-3 text-white" />
+          <div className='w-full h-full justify-center items-center flex'>
+            {!isSelected && <Plus className="w-3 h-3 text-white" />}
           </div>
         </foreignObject>
       )}

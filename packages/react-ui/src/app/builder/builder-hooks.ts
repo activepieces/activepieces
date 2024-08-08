@@ -195,6 +195,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       relativeLocation: StepLocationRelativeToParent,
     ) =>
       set({
+        selectedStep: null,
         selectedButton: {
           stepname,
           type,

@@ -7,6 +7,7 @@ import {
   EdgeChange,
   NodeChange,
 } from '@xyflow/react';
+
 import '@xyflow/react/dist/style.css';
 import React, {
   useCallback,
@@ -108,6 +109,8 @@ const FlowCanvas = React.memo(() => {
           onNodesChange={onNodesChange}
           edges={edges}
           draggable={false}
+          edgesFocusable={false}
+          elevateEdgesOnSelect={false}
           onEdgesChange={onEdgesChange}
           maxZoom={1.5}
           minZoom={0.5}
