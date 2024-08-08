@@ -4,9 +4,9 @@ const memoryLocks = new Map<string, MutexLockWrapper>()
 class MutexLockWrapper {
     private lock: MutexInterface
 
-    constructor(key?: number) {
-        if (key) {
-            this.lock = withTimeout(new Mutex(), key)
+    constructor(timeout?: number) {
+        if (timeout) {
+            this.lock = withTimeout(new Mutex(), timeout)
         }
         else {
             this.lock = new Mutex()
@@ -42,4 +42,3 @@ export const memoryLock = {
 export type ApLock = {
     release(): Promise<unknown>
 }
-

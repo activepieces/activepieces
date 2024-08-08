@@ -22,6 +22,12 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+import { PlatformAdminContainer } from './components/platform-admin-container';
+import TemplatesPage from './routes/platform/templates';
+import ProjectsPage from './routes/platform/projects';
+import UsersPage from './routes/platform/users';
+import PlatformAppearancePage from './routes/platform/appearance';
+import PlatformPiecesPage from './routes/platform/pieces';
 
 export const router = createBrowserRouter([
   {
@@ -168,4 +174,52 @@ export const router = createBrowserRouter([
     path: '/404',
     element: <NotFoundPage />,
   },
+  {
+    path: '/platform/appearance',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformAppearancePage />
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/pieces',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformPiecesPage />
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/projects',
+    element: (
+      <PlatformAdminContainer>
+        <ProjectsPage />
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/templates',
+    element: (
+      <PlatformAdminContainer>
+        <TemplatesPage />
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/users',
+    element: (
+      <PlatformAdminContainer>
+        <UsersPage />
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform',
+    element: (
+      <PlatformAdminContainer>
+        <Navigate to="/platform/projects" replace />
+      </PlatformAdminContainer>
+    ),
+  }
 ]);
