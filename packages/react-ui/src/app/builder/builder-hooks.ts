@@ -84,7 +84,6 @@ export type BuilderState = {
   selectStepByName: (stepName: string) => void;
   startSaving: () => void;
   setAllowCanvasPanning: (allowCanvasPanning: boolean) => void;
-  setReadOnly: (readonly: boolean) => void;
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: Flow) => void;
   exitPieceSelector: () => void;
@@ -263,7 +262,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         flowUpdatesQueue.add(updateRequest);
         return { flowVersion: newFlowVersion };
       }),
-    setReadOnly: (readonly: boolean) => set({ readonly }),
     setVersion: (flowVersion: FlowVersion) => set({ flowVersion, run: null }),
     insertMention: null,
     setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
@@ -276,39 +274,47 @@ export const stepPathToKeyString = (path: StepPathWithName): string => {
 };
 
 function getStepOutputFromExecutionPath({
-  path,
+  stepName,
+  selectedPath,
   executionState,
 }: {
-  path: StepPathWithName;
+  stepName: string;
+  selectedPath: StepPathWithName | null;
   executionState: ExecutionState | FlowRun | undefined | null;
 }): StepOutput | undefined {
   if (isNil(executionState)) {
     return undefined;
   }
-  const stateAtPath = getStateAtPath(path, executionState.steps);
-  return stateAtPath?.[path.stepName];
+  const stateAtPath = constructCurrentStateForEachStep(
+    executionState.steps,
+    selectedPath,
+  );
+  return stateAtPath?.[stepName];
 }
 
-function getStateAtPath(
-  currentPath: StepPathWithName,
-  steps: Record<string, StepOutput>,
+function constructCurrentStateForEachStep(
+  steps: Record<string, StepOutput> | undefined,
+  selectedPath: StepPathWithName | null,
 ): Record<string, StepOutput> {
-  let targetMap = steps;
-  currentPath.path.forEach(([stepName, iteration]) => {
-    const stepOutput = targetMap[stepName];
-    if (isNil(stepOutput)) {
-      return {};
-    }
-    if (!stepOutput.output || stepOutput.type !== ActionType.LOOP_ON_ITEMS) {
-      throw new Error(
-        '[ExecutionState#getTargetMap] Not instance of Loop On Items step output',
+  const currentState: Record<string, StepOutput> = {};
+  Object.entries(steps ?? {}).forEach(([key, value]) => {
+    currentState[key] = value;
+    if (value.type === ActionType.LOOP_ON_ITEMS && value.output) {
+      const [, iteration] = selectedPath?.path.find((p) => p[0] === key) ?? [
+        undefined,
+        0,
+      ];
+      const state = constructCurrentStateForEachStep(
+        value.output.iterations[iteration],
+        selectedPath,
       );
+      for (const [key, value] of Object.entries(state)) {
+        currentState[key] = value;
+      }
     }
-    targetMap = stepOutput.output.iterations[iteration];
   });
-  return targetMap;
+  return currentState;
 }
-
 export const builderSelectors = {
   getStepOutputFromExecutionPath,
 };

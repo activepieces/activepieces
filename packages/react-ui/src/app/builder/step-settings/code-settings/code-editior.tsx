@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { SourceCode } from '@activepieces/shared';
+import { SourceCode, deepMergeAndCast } from '@activepieces/shared';
 
 import { AddNpmDialog } from './add-npm-dialog';
 
@@ -48,8 +48,11 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
 
   function handleAddPackages(packageName: string, packageVersion: string) {
     try {
-      const json = JSON.parse(packageJson);
-      json.dependencies[packageName] = packageVersion;
+      const json = deepMergeAndCast(JSON.parse(packageJson), {
+        dependencies: {
+          [packageName]: packageVersion,
+        },
+      });
       setActiveTab('packageJson');
       onChange({ code, packageJson: JSON.stringify(json, null, 2) });
     } catch (e) {

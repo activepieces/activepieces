@@ -101,7 +101,7 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
             status: StatusCodes.OK,
             body: {},
             headers: {},
-        }
+    }
     }
     return webhookResponseWatcher.oneTimeListener(requestId, true)
 }

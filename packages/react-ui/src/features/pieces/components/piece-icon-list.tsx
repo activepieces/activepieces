@@ -12,7 +12,7 @@ import { piecesHooks, StepMetadata } from '../lib/pieces-hook';
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
-  'flex items-center justify-center bg-white text-black  p-2 rounded-full border border-solid',
+  'flex items-center justify-center bg-accent text-accent-foreground  p-2 rounded-full border border-solid',
   {
     variants: {
       size: {

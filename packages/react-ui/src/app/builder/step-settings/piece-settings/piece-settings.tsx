@@ -23,6 +23,13 @@ type PieceSettingsProps = {
   flowId: string;
 };
 
+const removeAuthFromProps = (
+  props: Record<string, any>,
+): Record<string, any> => {
+  const { auth, ...rest } = props;
+  return rest;
+};
+
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
   const [selectedAction, setSelectedAction] = useState<ActionBase | undefined>(
     undefined,
@@ -63,13 +70,6 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
       }
     }
   }, [watchedForm]);
-
-  const removeAuthFromProps = (
-    props: Record<string, any>,
-  ): Record<string, any> => {
-    const { auth, ...rest } = props;
-    return rest;
-  };
 
   const actionPropsWithoutAuth = removeAuthFromProps(
     selectedAction?.props ?? {},

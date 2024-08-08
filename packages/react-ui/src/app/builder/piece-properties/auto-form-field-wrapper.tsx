@@ -58,7 +58,7 @@ const AutoFormFieldWrapper = ({
           </Toggle>
         )}
       </FormLabel>
-      {toggled && (
+      {allowDynamicValues && toggled && (
         <TextInputWithMentions
           onChange={field.onChange}
           initialValue={field.value}

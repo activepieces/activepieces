@@ -192,6 +192,7 @@
     "jsonwebtoken": "9.0.1",
     "jszip": "3.10.1",
     "jwks-rsa": "3.1.0",
+    "jwt-decode": "4.0.0",
     "kl-angular-mentions": "1.2.3",
     "langchain": "0.0.156",
     "lottie-web": "5.12.2",

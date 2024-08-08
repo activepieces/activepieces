@@ -121,6 +121,7 @@ const FlowCanvas = React.memo(() => {
             includeHiddenNodes: false,
             minZoom: 0.5,
             maxZoom: 1.2,
+            nodes: nodes.slice(0, 5),
             duration: 0,
           }}
         >

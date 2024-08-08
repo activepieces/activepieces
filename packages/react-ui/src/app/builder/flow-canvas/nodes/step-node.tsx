@@ -2,22 +2,46 @@ import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
 import { CircleAlert, CopyPlus, Replace, Trash } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import {
+  StepPathWithName,
+  builderSelectors,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
+import ImageWithFallback from '@/app/components/image-with-fallback';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
+import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
+  FlowRun,
   StepLocationRelativeToParent,
   TriggerType,
   flowHelper,
+  isNil,
 } from '@activepieces/shared';
 
 import { ApNode } from '../flow-canvas-utils';
+
+function getStepStatus(
+  stepName: string | undefined,
+  selectedStep: StepPathWithName | null,
+  run: FlowRun | null,
+) {
+  if (!run || !stepName) {
+    return undefined;
+  }
+  const state = builderSelectors.getStepOutputFromExecutionPath({
+    selectedPath: selectedStep,
+    stepName,
+    executionState: run,
+  });
+  return state?.status;
+}
 
 const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { toast } = useToast();
@@ -27,12 +51,16 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     isSelected,
     isDragging,
     clickOnNewNodeButton,
+    selectedStep,
+    run,
   ] = useBuilderStateContext((state) => [
     state.selectStepByName,
     state.setAllowCanvasPanning,
     state.selectedStep?.stepName === data.step?.name,
     state.activeDraggingStep === data.step?.name,
     state.clickOnNewNodeButton,
+    state.selectedStep,
+    state.run,
   ]);
 
   const deleteStep = useBuilderStateContext((state) => () => {
@@ -77,6 +105,14 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     disabled: true,
   });
 
+  const stepOutputStatus = useMemo(
+    () => getStepStatus(stepName, selectedStep, run),
+    [stepName, selectedStep, run],
+  );
+  const statusInfo = isNil(stepOutputStatus)
+    ? undefined
+    : flowRunUtils.getStatusIconForStep(stepOutputStatus);
+
   const handleStepClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const { type, name } = data.step!;
     if (type === TriggerType.EMPTY) {
@@ -90,9 +126,20 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   return (
     <div
-      className={cn('h-[70px] w-[260px] transition-all', {
+      style={{
+        boxShadow:
+          isSelected || toolbarOpen
+            ? 'inset 0 3px 0 hsl(var(--primary))'
+            : 'none',
+        borderRadius: '8px',
+        borderTopColor:
+          isSelected || toolbarOpen
+            ? 'hsl(var(--primary))'
+            : 'hsl(var(--border))',
+      }}
+      className={cn('h-[70px] w-[260px] transition-all border-box border', {
         'border-primary': toolbarOpen || isSelected,
-        'bg-background border border-solid box-border': !isDragging,
+        'bg-background': !isDragging,
       })}
       onClick={(e) => handleStepClick(e)}
       onMouseEnter={() => {
@@ -108,7 +155,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       {...attributes}
       {...listeners}
     >
-      <div className="px-2 h-full w-full box-border">
+      <div className="px-2 h-full w-full">
         {!isDragging && (
           <>
             <div
@@ -124,23 +171,19 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 {data.step!.name}
               </span>
             </div>
+
             <div
-              className={cn(
-                'absolute left-0 right-0 top-0 mx-auto h-[3px] transition-all bg-primary opacity-0 rounded-tl-md rounded-tr-md',
-                {
-                  'opacity-100': toolbarOpen || isSelected,
-                  'opacity-0': !toolbarOpen && !isSelected,
-                },
-              )}
-              style={{ width: 'calc(100% - 2px)' }}
-            ></div>
-            <div
-              className="px-2 h-full w-full box-border"
+              className="px-2 h-full w-full "
               onClick={() => selectStepByName(data.step!.name)}
             >
               <div className="flex h-full items-center justify-between gap-4 w-full">
                 <div className="flex items-center justify-center min-w-[46px] h-full">
-                  <img src={stepMetadata?.logoUrl} width="46" height="46" />
+                  <ImageWithFallback
+                    width={46}
+                    height={46}
+                    src={stepMetadata?.logoUrl}
+                    alt={stepMetadata?.displayName}
+                  />
                 </div>
                 <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
                   <div className="text-sm text-ellipsis overflow-hidden whitespace-nowrap w-full">
@@ -151,6 +194,13 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                   </div>
                 </div>
                 <div className="w-4 flex items-center justify-center">
+                  {statusInfo?.Icon &&
+                    React.createElement(statusInfo.Icon, {
+                      className: cn('', {
+                        'text-success-300': statusInfo.variant === 'success',
+                        'text-destructive-300': statusInfo.variant === 'error',
+                      }),
+                    })}
                   {!data.step?.valid && (
                     <Tooltip>
                       <TooltipTrigger asChild>

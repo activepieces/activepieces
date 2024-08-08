@@ -68,7 +68,7 @@ const FolderFilterList = () => {
   });
 
   const {
-    data,
+    data: allFolders,
     isPending: isFetchingFolders,
     refetch,
   } = foldersHooks.useFolders();
@@ -198,7 +198,7 @@ const FolderFilterList = () => {
             <span className="visible text-muted-foreground group-hover:invisible">
               {foldersUtils.extractUncategorizedFlows(
                 allFlowsCount,
-                data?.data,
+                allFolders,
               )}
             </span>
           </div>
@@ -212,85 +212,86 @@ const FolderFilterList = () => {
               ))}
             </div>
           )}
-          {data?.data.map((folder) => {
-            return (
-              <div key={folder.id} className="group py-1">
-                <Button
-                  variant="ghost"
-                  className={cn('w-full justify-between', {
-                    'bg-muted': selectedFolderId === folder.id,
-                  })}
-                  onClick={() => updateSearchParams(folder.id)}
-                >
-                  <TextWithIcon
-                    icon={
-                      selectedFolderId === folder.id ? (
-                        <FolderOpen
-                          size={18}
-                          className="fill-muted-foreground/75 border-0 text-muted-foreground"
-                        />
-                      ) : (
-                        <Folder
-                          size={18}
-                          className="fill-muted-foreground border-0 text-muted-foreground"
-                        />
-                      )
-                    }
-                    text={folder.displayName}
-                  />
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex flex-row -space-x-4"
+          {allFolders &&
+            allFolders.map((folder) => {
+              return (
+                <div key={folder.id} className="group py-1">
+                  <Button
+                    variant="ghost"
+                    className={cn('w-full justify-between', {
+                      'bg-muted': selectedFolderId === folder.id,
+                    })}
+                    onClick={() => updateSearchParams(folder.id)}
                   >
-                    <DropdownMenu modal={false}>
-                      <DropdownMenuTrigger
-                        asChild
-                        className="invisible group-hover:visible"
-                      >
-                        <EllipsisVertical className="h-5 w-5" />
-                      </DropdownMenuTrigger>
-                      <span className="text-muted-foreground self-end group-hover:invisible">
-                        {folder.numberOfFlows}
-                      </span>
-                      <DropdownMenuContent>
-                        <RenameFolderDialog
-                          folderId={folder.id}
-                          onRename={() => refetch()}
+                    <TextWithIcon
+                      icon={
+                        selectedFolderId === folder.id ? (
+                          <FolderOpen
+                            size={18}
+                            className="fill-muted-foreground/75 border-0 text-muted-foreground"
+                          />
+                        ) : (
+                          <Folder
+                            size={18}
+                            className="fill-muted-foreground border-0 text-muted-foreground"
+                          />
+                        )
+                      }
+                      text={folder.displayName}
+                    />
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex flex-row -space-x-4"
+                    >
+                      <DropdownMenu modal={false}>
+                        <DropdownMenuTrigger
+                          asChild
+                          className="invisible group-hover:visible"
                         >
-                          <DropdownMenuItem
-                            onSelect={(e) => e.preventDefault()}
+                          <EllipsisVertical className="h-5 w-5" />
+                        </DropdownMenuTrigger>
+                        <span className="text-muted-foreground self-end group-hover:invisible">
+                          {folder.numberOfFlows}
+                        </span>
+                        <DropdownMenuContent>
+                          <RenameFolderDialog
+                            folderId={folder.id}
+                            onRename={() => refetch()}
                           >
-                            <div className="flex flex-row gap-2 items-center">
-                              <Pencil className="h-4 w-4" />
-                              <span>Rename</span>
-                            </div>
-                          </DropdownMenuItem>
-                        </RenameFolderDialog>
-                        <ConfirmationDeleteDialog
-                          title={`Delete folder ${folder.displayName}`}
-                          message="If you delete this folder, we will keep its flows and move them to Uncategorized."
-                          mutationFn={async () => {
-                            await foldersApi.delete(folder.id);
-                            refetch();
-                          }}
-                          entityName={folder.displayName}
-                        >
-                          <DropdownMenuItem
-                            onSelect={(e) => e.preventDefault()}
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              <div className="flex flex-row gap-2 items-center">
+                                <Pencil className="h-4 w-4" />
+                                <span>Rename</span>
+                              </div>
+                            </DropdownMenuItem>
+                          </RenameFolderDialog>
+                          <ConfirmationDeleteDialog
+                            title={`Delete folder ${folder.displayName}`}
+                            message="If you delete this folder, we will keep its flows and move them to Uncategorized."
+                            mutationFn={async () => {
+                              await foldersApi.delete(folder.id);
+                              refetch();
+                            }}
+                            entityName={folder.displayName}
                           >
-                            <div className="flex flex-row gap-2 items-center">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                              <span className="text-destructive">Delete</span>
-                            </div>
-                          </DropdownMenuItem>
-                        </ConfirmationDeleteDialog>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </Button>
-              </div>
-            );
-          })}
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              <div className="flex flex-row gap-2 items-center">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <span className="text-destructive">Delete</span>
+                              </div>
+                            </DropdownMenuItem>
+                          </ConfirmationDeleteDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </Button>
+                </div>
+              );
+            })}
         </ScrollArea>
       </div>
     </div>

@@ -90,19 +90,12 @@
         font-feature-settings: "rlig" 1, "calt" 1;
     }
 
-
 }
 
-*[data-pd-ripple="true"]{
-    overflow: hidden;
-    position: relative;
+:root {
+    --xy-edge-stroke-selected-default: #b1b1b7; 
 }
-@keyframes ripple {
-    100% {
-        opacity: 0;
-        transform: scale(2.5);
-    }
-}
-span.p-ink-active{
-    animation: ripple 0.5s linear !important;
+
+.react-flow__panel.react-flow__attribution.bottom.right {
+    display: none;
 }

@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { formatUtils } from '@/lib/utils';
+
 type PlanDataProps = {
   minimumPollingInterval: number;
   includedUsers: number;
@@ -24,7 +26,7 @@ const PlanData: React.FC<PlanDataProps> = ({
     },
     {
       title: 'Included Tasks',
-      data: includedTasks,
+      data: formatUtils.formatNumber(includedTasks),
     },
   ];
 

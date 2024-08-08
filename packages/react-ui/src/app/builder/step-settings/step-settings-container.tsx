@@ -102,6 +102,7 @@ const StepSettingsContainer = React.memo(
 
     const form = useForm<Action | Trigger>({
       mode: 'onChange',
+      disabled: readonly,
       reValidateMode: 'onChange',
       defaultValues,
       resolver: typeboxResolver(formSchema),
@@ -156,6 +157,7 @@ const StepSettingsContainer = React.memo(
         currentStep,
         pieceModel!,
       );
+
       form.reset(newValue);
       form.trigger();
     }, [actionName, triggerName]);
