@@ -9,7 +9,7 @@ import { ApFlagId, isNil } from '@activepieces/shared'
 import { Shield } from "lucide-react"
 import React from "react"
 import { Link, useLocation } from "react-router-dom"
-import { FlagGuard } from "./flag-gaurd"
+import { FlagGuard } from "./flag-guard"
 
 export const Header = () => {
 
