@@ -18,8 +18,9 @@ const FlowStepInputOutput = React.memo(() => {
       return undefined;
     }
     return builderSelectors.getStepOutputFromExecutionPath({
-      path: selectedStep,
+      selectedPath: selectedStep,
       executionState: run,
+      stepName: selectedStep.stepName,
     });
   });
 
