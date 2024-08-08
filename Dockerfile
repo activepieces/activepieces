@@ -23,7 +23,8 @@ COPY . .
 COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
-RUN npx nx run-many --target=build --projects=react-ui
+RUN npx nx run-many --target=build --projects=server-api --configuration production --skip-nx-cache
+RUN npx nx run-many --target=build --projects=react-ui --configuration production --skip-nx-cache
 
 
 ### STAGE 2: Run ###

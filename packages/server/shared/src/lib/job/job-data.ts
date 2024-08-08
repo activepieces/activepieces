@@ -70,6 +70,7 @@ export const OneTimeJobData = Type.Object({
 export type OneTimeJobData = Static<typeof OneTimeJobData>
 
 export const WebhookJobData = Type.Object({
+    projectId: Type.String(),
     schemaVersion: Type.Number(),
     requestId: Type.String(),
     synchronousHandlerId: Type.Union([Type.String(), Type.Null()]),

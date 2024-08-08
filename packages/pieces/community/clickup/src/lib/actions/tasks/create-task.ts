@@ -21,19 +21,31 @@ export const createClickupTask = createAction({
       'ID of assignee for Clickup Task'
     ),
     name: Property.ShortText({
-      description: 'The name of the task to create',
-      displayName: 'Task Name',
+      description: 'The name of task',
+      displayName: 'Name',
       required: true,
     }),
     description: Property.LongText({
-      description: 'The description of the task to create',
-      displayName: 'Task Description',
-      required: true,
+      description: 'The description of task',
+      displayName: 'Description',
+      required: false,
+    }),
+    markdown_description: Property.LongText({
+      displayName: 'Markdown Description',
+      description: 'The description of task with markdown formatting',
+      required: false,
     }),
   },
   async run(configValue) {
-    const { list_id, name, description, status_id, priority_id, assignee_id } =
-      configValue.propsValue;
+    const {
+      list_id,
+      name,
+      description,
+      status_id,
+      priority_id,
+      assignee_id,
+      markdown_description,
+    } = configValue.propsValue;
     const response = await callClickUpApi(
       HttpMethod.POST,
       `list/${list_id}/task`,
@@ -41,6 +53,7 @@ export const createClickupTask = createAction({
       {
         name,
         description,
+        markdown_description,
         status: status_id,
         priority: priority_id,
         assignees: assignee_id,
