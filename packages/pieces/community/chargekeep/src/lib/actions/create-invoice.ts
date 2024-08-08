@@ -449,9 +449,9 @@ export const createInvoice = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://beta.chargekeep.com/api/services/CRM/Import/ImportInvoice',
+      url: `${context.auth.base_url}/api/services/CRM/Import/ImportInvoice`,
       headers: {
-        'api-key': context.auth, // Pass API key in headers
+        'api-key': context.auth.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {
