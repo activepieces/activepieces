@@ -3,8 +3,7 @@ import { DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import React, { useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
-
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,11 +24,12 @@ const RenameFlowSchema = Type.Object({
 
 type RenameFlowSchema = Static<typeof RenameFlowSchema>;
 
-const RenameFlowDialog: React.FC<{
+type RenameFlowDialogProps = {
   children: React.ReactNode;
   flowId: string;
   onRename: (newName: string) => void;
-}> = ({ children, flowId, onRename }) => {
+};
+const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({ children, flowId, onRename }) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const renameFlowForm = useForm<RenameFlowSchema>({
     resolver: typeboxResolver(RenameFlowSchema),
@@ -46,9 +46,7 @@ const RenameFlowDialog: React.FC<{
     mutationFn: () =>
       flowsApi.update(flowId, {
         type: FlowOperationType.CHANGE_NAME,
-        request: {
-          displayName: renameFlowForm.getValues().displayName,
-        },
+        request: renameFlowForm.getValues(),
       }),
     onSuccess: () => {
       setIsRenameDialogOpen(false);
@@ -62,14 +60,6 @@ const RenameFlowDialog: React.FC<{
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const onRenameFlowSubmit: SubmitHandler<{
-    displayName: string;
-  }> = (data) => {
-    mutate({
-      flowId,
-      displayName: data.displayName,
-    });
-  };
 
   return (
     <Dialog
@@ -84,7 +74,10 @@ const RenameFlowDialog: React.FC<{
         <Form {...renameFlowForm}>
           <form
             className="grid space-y-4"
-            onSubmit={renameFlowForm.handleSubmit(onRenameFlowSubmit)}
+            onSubmit={renameFlowForm.handleSubmit((data) => mutate({
+              flowId,
+              displayName: data.displayName,
+            }))}
           >
             <FormField
               control={renameFlowForm.control}
@@ -94,7 +87,6 @@ const RenameFlowDialog: React.FC<{
                   <Label htmlFor="displayName">Name</Label>
                   <Input
                     {...field}
-                    required
                     id="displayName"
                     placeholder="New Flow Name"
                     className="rounded-sm"
