@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useEffectOnce } from 'react-use';
 import { io } from 'socket.io-client';
+
 import { API_BASE_URL } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { useLocalStorage } from 'react-use';
 
-// Initialize the socket but don't auto-connect
 const socket = io(API_BASE_URL, {
   transports: ['websocket'],
   path: '/api/socket.io',
@@ -14,9 +14,8 @@ const socket = io(API_BASE_URL, {
 const SocketContext = React.createContext<typeof socket>(socket);
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-  const [token, setToken] = useState(authenticationSession.getToken());
-
-  React.useEffect(() => {
+  const token = authenticationSession.getToken();
+  useEffectOnce(() => {
     if (token) {
       socket.auth = { token };
       if (!socket.connected) {
@@ -38,22 +37,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socket.off('connect');
       socket.off('disconnect');
     };
-  }, [token]);
-
-  React.useEffect(() => {
-    const handleStorageChange = () => {
-      const newToken = authenticationSession.getToken();
-      if (newToken !== token) {
-        setToken(newToken);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [token, setToken]);
+  });
 
   return (
     <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>

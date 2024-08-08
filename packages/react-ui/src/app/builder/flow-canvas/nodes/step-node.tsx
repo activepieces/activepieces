@@ -4,27 +4,34 @@ import { Handle, Position } from '@xyflow/react';
 import { CircleAlert, CopyPlus, Replace, Trash } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { StepPathWithName, builderSelectors, useBuilderStateContext } from '@/app/builder/builder-hooks';
+import {
+  StepPathWithName,
+  builderSelectors,
+  useBuilderStateContext,
+} from '@/app/builder/builder-hooks';
+import ImageWithFallback from '@/app/components/image-with-fallback';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
+import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
   FlowRun,
   StepLocationRelativeToParent,
-  StepOutputStatus,
   TriggerType,
   flowHelper,
   isNil,
 } from '@activepieces/shared';
 
 import { ApNode } from '../flow-canvas-utils';
-import ImageWithFallback from '@/app/components/image-with-fallback';
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 
-function getStepStatus(stepName: string | undefined, selectedStep: StepPathWithName | null, run: FlowRun | null) {
+function getStepStatus(
+  stepName: string | undefined,
+  selectedStep: StepPathWithName | null,
+  run: FlowRun | null,
+) {
   if (!run || !stepName) {
     return undefined;
   }
@@ -98,8 +105,13 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     disabled: true,
   });
 
-  const stepOutputStatus = useMemo(() => getStepStatus(stepName, selectedStep, run), [stepName, selectedStep, run]);
-  const statusInfo = isNil(stepOutputStatus) ? undefined : flowRunUtils.getStatusIconForStep(stepOutputStatus);
+  const stepOutputStatus = useMemo(
+    () => getStepStatus(stepName, selectedStep, run),
+    [stepName, selectedStep, run],
+  );
+  const statusInfo = isNil(stepOutputStatus)
+    ? undefined
+    : flowRunUtils.getStatusIconForStep(stepOutputStatus);
 
   const handleStepClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const { type, name } = data.step!;
@@ -184,12 +196,11 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 <div className="w-4 flex items-center justify-center">
                   {statusInfo?.Icon &&
                     React.createElement(statusInfo.Icon, {
-                      className: cn('',{
+                      className: cn('', {
                         'text-success-300': statusInfo.variant === 'success',
                         'text-destructive-300': statusInfo.variant === 'error',
-                      })
-                    })
-                  }
+                      }),
+                    })}
                   {!data.step?.valid && (
                     <Tooltip>
                       <TooltipTrigger asChild>

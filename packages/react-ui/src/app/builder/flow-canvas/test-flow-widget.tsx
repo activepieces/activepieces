@@ -21,13 +21,12 @@ import {
 import { useBuilderStateContext } from '../builder-hooks';
 
 const TestFlowWidget = React.memo(() => {
-  const [flowVersion, setRun, selectStepByName, clickOnNewNodeButton, saving] =
+  const [flowVersion, setRun, selectStepByName, clickOnNewNodeButton] =
     useBuilderStateContext((state) => [
       state.flowVersion,
       state.setRun,
       state.selectStepByName,
       state.clickOnNewNodeButton,
-      state.saving,
     ]);
 
   const triggerHasSampleData =

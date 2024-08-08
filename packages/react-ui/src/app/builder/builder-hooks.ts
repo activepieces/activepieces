@@ -279,24 +279,35 @@ function getStepOutputFromExecutionPath({
   executionState,
 }: {
   stepName: string;
-  selectedPath: StepPathWithName  | null;
+  selectedPath: StepPathWithName | null;
   executionState: ExecutionState | FlowRun | undefined | null;
 }): StepOutput | undefined {
   if (isNil(executionState)) {
     return undefined;
   }
-  const stateAtPath = constructCurrentStateForEachStep(executionState.steps, selectedPath);
+  const stateAtPath = constructCurrentStateForEachStep(
+    executionState.steps,
+    selectedPath,
+  );
   return stateAtPath?.[stepName];
 }
 
-
-function constructCurrentStateForEachStep(steps: Record<string, StepOutput> | undefined, selectedPath: StepPathWithName | null): Record<string, StepOutput> {
+function constructCurrentStateForEachStep(
+  steps: Record<string, StepOutput> | undefined,
+  selectedPath: StepPathWithName | null,
+): Record<string, StepOutput> {
   const currentState: Record<string, StepOutput> = {};
   Object.entries(steps ?? {}).forEach(([key, value]) => {
     currentState[key] = value;
     if (value.type === ActionType.LOOP_ON_ITEMS && value.output) {
-      const [_, iteration] = selectedPath?.path.find((p) => p[0] === key) ?? [undefined, 0]; 
-      const state = constructCurrentStateForEachStep(value.output.iterations[iteration], selectedPath);
+      const [, iteration] = selectedPath?.path.find((p) => p[0] === key) ?? [
+        undefined,
+        0,
+      ];
+      const state = constructCurrentStateForEachStep(
+        value.output.iterations[iteration],
+        selectedPath,
+      );
       for (const [key, value] of Object.entries(state)) {
         currentState[key] = value;
       }

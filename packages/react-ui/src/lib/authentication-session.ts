@@ -30,7 +30,9 @@ export const authenticationSession = {
     localStorage.setItem(projectIdKey, projectId);
   },
   isLoggedIn(): boolean {
-    return !!this.getToken() && !!this.getCurrentUser() && !!this.getProjectId();
+    return (
+      !!this.getToken() && !!this.getCurrentUser() && !!this.getProjectId()
+    );
   },
   LogOut() {
     localStorage.removeItem(tokenKey);
