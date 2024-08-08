@@ -30,14 +30,17 @@ function request<TResponse>(
   url: string,
   config: AxiosRequestConfig = {},
 ): Promise<TResponse> {
+  const resolvedUrl = !isUrlRelative(url) ? url : `${API_URL}${url}`;
+  const isApWebsite = resolvedUrl.startsWith(API_URL);
   return axios({
-    url: !isUrlRelative(url) ? url : `${API_URL}${url}`,
+    url: resolvedUrl,
     ...config,
     headers: {
       ...config.headers,
-      Authorization: disallowedRoutes.includes(url)
-        ? undefined
-        : `Bearer ${authenticationSession.getToken()}`,
+      Authorization:
+        disallowedRoutes.includes(url) || !isApWebsite
+          ? undefined
+          : `Bearer ${authenticationSession.getToken()}`,
     },
   }).then((response) => response.data as TResponse);
 }
