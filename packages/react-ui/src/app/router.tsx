@@ -218,7 +218,7 @@ export const router = createBrowserRouter([
     path: '/platform',
     element: (
       <PlatformAdminContainer>
-        <Navigate to="/platform/projects" replace />
+        <Navigate to="/platform/projects" />
       </PlatformAdminContainer>
     ),
   }
