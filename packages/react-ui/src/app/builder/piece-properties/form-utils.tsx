@@ -13,9 +13,9 @@ import {
   BranchActionSchema,
   BranchOperator,
   CodeActionSchema,
-  ExactPieceTrigger,
   LoopOnItemsActionSchema,
   PieceActionSchema,
+  PieceTrigger,
   Trigger,
   TriggerType,
   ValidBranchCondition,
@@ -135,6 +135,14 @@ export const formUtils = {
       case ActionType.CODE:
         return CodeActionSchema;
       case ActionType.PIECE: {
+        const inputSchema =
+          piece &&
+          actionNameOrTriggerName &&
+          piece.actions[actionNameOrTriggerName]
+            ? formUtils.buildSchema(
+                piece.actions[actionNameOrTriggerName].props,
+              )
+            : Type.Object({});
         return Type.Composite([
           PieceActionSchema,
           Type.Object({
@@ -142,14 +150,7 @@ export const formUtils = {
               actionName: Type.String({
                 minLength: 1,
               }),
-              input:
-                piece &&
-                  actionNameOrTriggerName &&
-                  piece.actions[actionNameOrTriggerName]
-                  ? formUtils.buildSchema(
-                    piece.actions[actionNameOrTriggerName].props,
-                  )
-                  : Type.Object({}),
+              input: inputSchema,
             }),
           }),
         ]);
@@ -157,13 +158,23 @@ export const formUtils = {
       case TriggerType.PIECE: {
         const formSchema =
           piece &&
-            actionNameOrTriggerName &&
-            piece.triggers[actionNameOrTriggerName]
+          actionNameOrTriggerName &&
+          piece.triggers[actionNameOrTriggerName]
             ? formUtils.buildSchema(
-              piece.triggers[actionNameOrTriggerName].props,
-            )
+                piece.triggers[actionNameOrTriggerName].props,
+              )
             : Type.Object({});
-        return ExactPieceTrigger(formSchema);
+        return Type.Composite([
+          PieceTrigger,
+          Type.Object({
+            settings: Type.Object({
+              triggerName: Type.String({
+                minLength: 1,
+              }),
+              input: formSchema,
+            }),
+          }),
+        ]);
       }
       default: {
         throw new Error('Unsupported type: ' + type);
@@ -306,9 +317,12 @@ function getDefaultValueForStep(
       case PropertyType.CUSTOM_AUTH:
       case PropertyType.SECRET_TEXT:
       case PropertyType.OAUTH2:
-      case PropertyType.ARRAY:
-      case PropertyType.JSON: {
+      case PropertyType.ARRAY: {
         defaultValues[name] = input[name] ?? property.defaultValue ?? '';
+        break;
+      }
+      case PropertyType.JSON: {
+        defaultValues[name] = input[name] ?? property.defaultValue ?? {};
         break;
       }
       case PropertyType.NUMBER: {

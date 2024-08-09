@@ -424,6 +424,13 @@
     "webpack-cli": "5.1.4",
     "webpack-ignore-dynamic-require": "1.0.0"
   },
+  "optionalDependencies": {
+    "@nx/nx-darwin-arm64": "18.0.4",
+    "@nx/nx-darwin-x64": "18.0.4",
+    "@nx/nx-linux-x64-gnu": "18.0.4",
+    "@nx/nx-win32-x64-msvc": "18.0.4",
+    "@rollup/rollup-linux-arm64-gnu": "4.20.0"
+  },
   "nx": {
     "includedScripts": []
   },

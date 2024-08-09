@@ -148,14 +148,10 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
-          propertyKey={key}
           field={field}
           allowDynamicValues={allowDynamicValues}
         >
-          <JsonEditor
-            initial={field.value}
-            onChange={field.onChange}
-          ></JsonEditor>
+          <JsonEditor field={field}></JsonEditor>
         </AutoFormFieldWrapper>
       );
     case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:

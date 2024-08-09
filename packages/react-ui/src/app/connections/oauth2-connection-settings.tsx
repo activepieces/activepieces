@@ -36,7 +36,7 @@ const OAuth2ConnectionSettings = ({
   piece,
 }: OAuth2ConnectionSettingsProps) => {
   const queryClient = useQueryClient();
-  const { data: platform } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform();
   const [readyToConect, setReadyToConect] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const [currentOAuth2Type, setOAuth2Type] = useState<

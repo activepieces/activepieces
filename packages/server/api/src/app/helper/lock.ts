@@ -63,5 +63,5 @@ const acquireLock = async ({
 }
 
 export const distributedLock = {
-    acquireLock
+    acquireLock,
 }

@@ -60,12 +60,12 @@ const TestActionSection = React.memo(
           form.setValue(
             'settings.inputUiInfo.currentSelectedData',
             stepResponse.output,
-            { shouldValidate: true }
+            { shouldValidate: true },
           );
           form.setValue(
             'settings.inputUiInfo.lastTestDate',
             dayjs().toISOString(),
-            { shouldValidate: true }
+            { shouldValidate: true },
           );
         } else {
           setErrorMessage(

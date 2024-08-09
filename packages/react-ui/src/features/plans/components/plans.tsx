@@ -37,17 +37,17 @@ const Plans: React.FC = () => {
     queryFn: fetchSubscriptionInfo,
   });
 
-  const { data: projectData } = projectHooks.useCurrentProject();
+  const { project } = projectHooks.useCurrentProject();
 
   const form = useForm<TasksSchema>({
     resolver: typeboxResolver(TasksSchema),
   });
 
   useEffect(() => {
-    if (projectData?.plan.tasks) {
-      form.reset({ tasks: projectData.plan.tasks });
+    if (project?.plan.tasks) {
+      form.reset({ tasks: project.plan.tasks });
     }
-  }, [projectData, form]);
+  }, [project, form]);
 
   const { mutate: manageBilling, isPending: isBillingPending } = useMutation({
     mutationFn: billingApi.portalLink,
@@ -89,19 +89,19 @@ const Plans: React.FC = () => {
         <h1 className="text-3xl font-bold">Your Automation Plan</h1>
         <div className="ml-auto"></div>
       </div>
-      {projectData && subscriptionData && (
+      {project && subscriptionData && (
         <>
           <div className="border-2 h-48 rounded-md grid grid-cols-4 divide-x">
             <TasksProgress
-              usage={projectData.usage.tasks}
-              plan={projectData.plan.tasks}
+              usage={project.usage.tasks}
+              plan={project.plan.tasks}
               nextBillingDate={subscriptionData.nextBillingDate}
             />
             <div className="flex flex-row items-center justify-center">
-              <span>{planNameFormatter(projectData.plan.name)}</span>
+              <span>{planNameFormatter(project.plan.name)}</span>
             </div>
             <PlanData
-              minimumPollingInterval={projectData.plan.minimumPollingInterval}
+              minimumPollingInterval={project.plan.minimumPollingInterval}
               includedUsers={subscriptionData.subscription.includedUsers}
               includedTasks={subscriptionData.subscription.includedTasks}
             />

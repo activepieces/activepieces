@@ -156,9 +156,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               .map((p) => [p.name, 0]),
             stepName,
           },
-          leftSidebar: isNil(state.run)
-            ? LeftSideBarType.NONE
-            : LeftSideBarType.RUN_DETAILS,
           rightSidebar: RightSideBarType.PIECE_SETTINGS,
         };
       });
@@ -198,6 +195,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       relativeLocation: StepLocationRelativeToParent,
     ) =>
       set({
+        selectedStep: null,
         selectedButton: {
           stepname,
           type,

@@ -29,7 +29,7 @@ const RolesDisplayNames: { [k: string]: string } = {
 
 const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
   const queryClient = useQueryClient();
-  const { data: project } = projectHooks.useCurrentProject();
+  const { project } = projectHooks.useCurrentProject();
 
   const { data: isCloudPlatform } = flagsHooks.useFlag<boolean>(
     ApFlagId.IS_CLOUD_PLATFORM,
