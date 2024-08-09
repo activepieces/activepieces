@@ -319,7 +319,7 @@ function getDefaultValueForStep(
       case PropertyType.SECRET_TEXT:
       case PropertyType.OAUTH2:
       case PropertyType.ARRAY: {
-        defaultValues[name] = input[name] ?? property.defaultValue ?? '';
+        defaultValues[name] = input[name] ?? property.defaultValue;
         break;
       }
       case PropertyType.JSON: {
@@ -327,7 +327,7 @@ function getDefaultValueForStep(
         break;
       }
       case PropertyType.NUMBER: {
-        defaultValues[name] = input[name] ?? property.defaultValue ?? 0;
+        defaultValues[name] = input[name] ?? property.defaultValue;
         break;
       }
       case PropertyType.MULTI_SELECT_DROPDOWN:
