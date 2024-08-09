@@ -89,6 +89,7 @@ export type BuilderState = {
   exitPieceSelector: () => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
+  setReadOnly: (readOnly: boolean) => void;
   clickOnNewNodeButton: (
     type: 'action' | 'trigger',
     stepname: string,
@@ -128,6 +129,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       set({
         activeDraggingStep: stepName,
       }),
+    setReadOnly: (readonly: boolean) => set({ readonly }),
     renameFlowClientSide: (newName: string) => {
       set((state) => {
         return {
