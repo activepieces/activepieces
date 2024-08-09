@@ -1,4 +1,8 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import {
+  createPiece,
+  PieceAuth,
+  Property,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { addOrUpdateContactExtended } from './lib/actions/add-or-update-contact-extended';
 import { addOrUpdateContact } from './lib/actions/add-or-update-contact';
@@ -11,14 +15,38 @@ import { newSubscription } from './lib/triggers/new-subscription';
 const markdownDescription = `
   Follow these instructions to get your Chargekeep API Key:
 
-  1. Visit the following website: https://beta.chargekeep.com/
+  1. Visit the following website: https://crm.chargekeep.com/ or the beta website: https://beta.chargekeep.com
   2. Once on the website, locate and click on the admin to obtain your chargekeep API Key.
 `;
 
-export const chargekeepAuth = PieceAuth.SecretText({
+export const chargekeepAuth = PieceAuth.CustomAuth({
   description: markdownDescription,
-  displayName: 'API Key',
   required: true,
+  props: {
+    base_url: Property.StaticDropdown({
+      displayName: 'Base URL',
+      description: 'Select the base environment URL',
+      required: true,
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'ChargeKeep Live (crm.chargekeep.com)',
+            value: 'https://crm.chargekeep.com',
+          },
+          {
+            label: 'ChargeKeep Beta (beta.chargekeep.com)',
+            value: 'https://beta.chargekeep.com',
+          },
+        ],
+      },
+    }),
+    api_key: PieceAuth.SecretText({
+      displayName: 'Secret API Key',
+      description: 'Enter the API Key',
+      required: true,
+    }),
+  },
 });
 
 export const chargekeep = createPiece({
