@@ -72,18 +72,7 @@ export const askClaude = createAction({
     roles: Property.Json({
       displayName: 'Roles',
       required: false,
-      description: 'Array of roles to specify more accurate response',
-      defaultValue: [
-        {
-          role: 'assistant',
-          content: [
-            {
-              type: 'text',
-              text: 'Hello, how are you?',
-            },
-          ],
-        },
-      ],
+      description: `Array of roles to specify more accurate response.Please check [guide to Input Messages](https://docs.anthropic.com/en/api/messages-examples#vision).`,
     }),
   },
   async run({ auth, propsValue }) {
@@ -165,6 +154,7 @@ export const askClaude = createAction({
           system: systemPrompt,
           messages: roles,
         });
+
         response = req?.content[0].text?.trim();
 
         break; // Break out of the loop if the request is successful
