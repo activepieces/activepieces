@@ -11,7 +11,7 @@ export const addOrUpdateSubscription = createAction({
     contactId: Property.Number({
       displayName: 'Contact ID',
       defaultValue: 0,
-      required: true,
+      required: false,
     }),
     productId: Property.Number({
       displayName: 'Product ID',

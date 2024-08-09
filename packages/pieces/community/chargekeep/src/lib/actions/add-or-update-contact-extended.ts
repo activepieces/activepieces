@@ -72,7 +72,7 @@ export const addOrUpdateContactExtended = createAction({
       displayName: 'Contact ID',
       description: 'Sperse Contact ID. Will be used for looking a client',
       defaultValue: 0,
-      required: true,
+      required: false,
     }),
     contactXref: Property.ShortText({
       displayName: 'Contact XREF',
@@ -280,32 +280,32 @@ export const addOrUpdateContactExtended = createAction({
       required: false,
     }),
     // email
-    email1: Property.ShortText({
+    email1: Property.LongText({
       displayName: 'Personal Email',
       description: "The contact's personal email.",
       required: false,
     }),
-    email2: Property.ShortText({
+    email2: Property.LongText({
       displayName: 'Alternative Personal email',
       description: "The contact's alternative personal email.",
       required: false,
     }),
-    email3: Property.ShortText({
+    email3: Property.LongText({
       displayName: 'Other Personal email',
       description: "The contact's additional email.",
       required: false,
     }),
-    workEmail1: Property.ShortText({
+    workEmail1: Property.LongText({
       displayName: 'Work Email',
       description: "The contact's work email.",
       required: false,
     }),
-    workEmail2: Property.ShortText({
+    workEmail2: Property.LongText({
       displayName: 'Alternative Work Email',
       description: "The contact's alternative work email.",
       required: false,
     }),
-    workEmail3: Property.ShortText({
+    workEmail3: Property.LongText({
       displayName: 'Other Work Email',
       description: "The contact's other work email.",
       required: false,
@@ -352,17 +352,17 @@ export const addOrUpdateContactExtended = createAction({
       required: false,
     }),
     // home address
-    home_street: Property.ShortText({
+    home_street: Property.LongText({
       displayName: 'Home Street',
       description:
         "The contact's full street address (can include apartment or unit number).",
       required: false,
     }),
-    home_addressLine2: Property.ShortText({
+    home_addressLine2: Property.LongText({
       displayName: 'Address 2',
       required: false,
     }),
-    home_city: Property.ShortText({
+    home_city: Property.LongText({
       displayName: 'City',
       description: "The contact's city of residence.",
       required: false,
@@ -393,16 +393,16 @@ export const addOrUpdateContactExtended = createAction({
       required: false,
     }),
     // work address
-    work_street: Property.ShortText({
+    work_street: Property.LongText({
       displayName: 'Work Street',
       description: "The contact's work address.",
       required: false,
     }),
-    work_addressLine2: Property.ShortText({
+    work_addressLine2: Property.LongText({
       displayName: 'Address 2',
       required: false,
     }),
-    work_city: Property.ShortText({
+    work_city: Property.LongText({
       displayName: 'City',
       description: "The contact's work city.",
       required: false,
@@ -534,7 +534,7 @@ export const addOrUpdateContactExtended = createAction({
       required: false,
     }),
     // business info
-    companyName: Property.ShortText({
+    companyName: Property.LongText({
       displayName: 'Company Name',
       description:
         "Name of the contact's company (This field is mandatory if the First Name and Last Name fields are empty).",
@@ -622,7 +622,7 @@ export const addOrUpdateContactExtended = createAction({
       description: 'Valid date format YYYY-MM-DD or MM-DD-YYYY',
       required: false,
     }),
-    ein: Property.ShortText({
+    ein: Property.LongText({
       displayName: 'EIN',
       required: false,
     }),
@@ -643,11 +643,11 @@ export const addOrUpdateContactExtended = createAction({
       displayName: 'Company Phone Extention',
       required: false,
     }),
-    companyFaxNumber: Property.ShortText({
+    companyFaxNumber: Property.LongText({
       displayName: 'Company Fax Number',
       required: false,
     }),
-    companyEmail: Property.ShortText({
+    companyEmail: Property.LongText({
       displayName: 'Company Email',
       required: false,
     }),
@@ -700,11 +700,11 @@ export const addOrUpdateContactExtended = createAction({
       required: false,
     }),
     // company full Address
-    company_street: Property.ShortText({
+    company_street: Property.LongText({
       displayName: 'Company Street',
       required: false,
     }),
-    company_addressLine2: Property.ShortText({
+    company_addressLine2: Property.LongText({
       displayName: 'Address 2',
       required: false,
     }),
@@ -724,7 +724,7 @@ export const addOrUpdateContactExtended = createAction({
       displayName: 'Company Zip Code',
       required: false,
     }),
-    company_countryName: Property.ShortText({
+    company_countryName: Property.LongText({
       displayName: 'Company Country Name',
       required: false,
     }),
@@ -758,7 +758,7 @@ export const addOrUpdateContactExtended = createAction({
       displayName: 'Google Click ID',
       required: false,
     }),
-    refererURL: Property.ShortText({
+    refererURL: Property.LongText({
       displayName: 'Referer URL',
       description:
         'The webpage where the contact clicked a link that sent them to your website.',
@@ -772,7 +772,7 @@ export const addOrUpdateContactExtended = createAction({
       displayName: 'Application ID',
       required: false,
     }),
-    ipAddress: Property.ShortText({
+    ipAddress: Property.LongText({
       displayName: 'IP Address',
       required: false,
     }),
@@ -784,7 +784,7 @@ export const addOrUpdateContactExtended = createAction({
       displayName: 'Site ID',
       required: false,
     }),
-    siteUrl: Property.ShortText({
+    siteUrl: Property.LongText({
       displayName: 'Site URL',
       required: false,
     }),
@@ -793,7 +793,7 @@ export const addOrUpdateContactExtended = createAction({
       description: 'Valid date format YYYY-MM-DD HH:MM:SS',
       required: false,
     }),
-    entryUrl: Property.ShortText({
+    entryUrl: Property.LongText({
       displayName: 'Entry URL',
       description:
         'The first page of visit through which the contact visited your website.',
@@ -818,56 +818,56 @@ export const addOrUpdateContactExtended = createAction({
       required: false,
     }),
     // UtmParameters
-    utmSource: Property.ShortText({
+    utmSource: Property.LongText({
       displayName: 'UTM Source',
       required: false,
     }),
-    utmMedium: Property.ShortText({
+    utmMedium: Property.LongText({
       displayName: 'UTM Medium',
       required: false,
     }),
-    utmCampaign: Property.ShortText({
+    utmCampaign: Property.LongText({
       displayName: 'UTM Campaign',
       required: false,
     }),
-    utmTerm: Property.ShortText({
+    utmTerm: Property.LongText({
       displayName: 'UTM Term',
       required: false,
     }),
-    utmContent: Property.ShortText({
+    utmContent: Property.LongText({
       displayName: 'UTM Content',
       required: false,
     }),
-    utmKeyword: Property.ShortText({
+    utmKeyword: Property.LongText({
       displayName: 'UTM Keyword',
       required: false,
     }),
-    utmAdGroup: Property.ShortText({
+    utmAdGroup: Property.LongText({
       displayName: 'UTM AdGroup',
       required: false,
     }),
-    utmName: Property.ShortText({
+    utmName: Property.LongText({
       displayName: 'UTM Name',
       required: false,
     }),
     // requestCustomInfo
-    requestCustomField1: Property.ShortText({
+    requestCustomField1: Property.LongText({
       displayName: 'Request Custom Field 1',
       required: false,
     }),
-    requestCustomField2: Property.ShortText({
+    requestCustomField2: Property.LongText({
       displayName: 'Request Custom Field 2',
       required: false,
     }),
-    requestCustomField3: Property.ShortText({
+    requestCustomField3: Property.LongText({
       displayName: 'Request Custom Field 3',
       required: false,
     }),
-    requestCustomField4: Property.ShortText({
+    requestCustomField4: Property.LongText({
       displayName: 'Request Custom Field 4',
       required: false,
     }),
-    requestCustomField5: Property.ShortText({
+    requestCustomField5: Property.LongText({
       displayName: 'Request Custom Field 5',
       required: false,
     }),
