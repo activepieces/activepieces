@@ -26,7 +26,7 @@ type AutoFormProps = {
   allowDynamicValues: boolean;
   prefixValue: string;
   markdownVariables?: Record<string, string>;
-  useMentionTextInput?: boolean;
+  useMentionTextInput: boolean;
   disabled?: boolean;
 };
 
@@ -57,7 +57,7 @@ const AutoPropertiesFormComponent = React.memo(
                   props[key],
                   allowDynamicValues,
                   markdownVariables ?? {},
-                  useMentionTextInput ?? false,
+                  useMentionTextInput,
                   disabled ?? false,
                 )
               }
@@ -152,7 +152,7 @@ const selectRightComponent = (
             onChange={field.onChange}
             value={field.value}
             disabled={disabled}
-            placeholder={property.options.placeholder ?? 'Select a option'}
+            placeholder={property.options.placeholder ?? 'Select an option'}
           ></SearchableSelect>
         </AutoFormFieldWrapper>
       );
@@ -178,7 +178,7 @@ const selectRightComponent = (
           allowDynamicValues={allowDynamicValues}
         >
           <MultiSelectPieceProperty
-            placeholder={property.options.placeholder ?? 'Select a option'}
+            placeholder={property.options.placeholder ?? 'Select an option'}
             options={property.options.options}
             onChange={field.onChange}
             initialValues={field.value}

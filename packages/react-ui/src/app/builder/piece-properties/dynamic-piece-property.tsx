@@ -77,6 +77,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
         <AutoPropertiesFormComponent
           prefixValue={`settings.input.${props.propertyName}`}
           props={propertyMap}
+          useMentionTextInput={true}
           disabled={props.disabled}
           allowDynamicValues={true}
         ></AutoPropertiesFormComponent>

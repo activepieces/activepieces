@@ -337,7 +337,7 @@ function getDefaultValueForStep(
         break;
       case PropertyType.OBJECT:
       case PropertyType.DYNAMIC:
-        defaultValues[name] = input[name] ?? property.defaultValue ?? {};
+        defaultValues[name] = input[name] ?? property.defaultValue;
         break;
     }
   }

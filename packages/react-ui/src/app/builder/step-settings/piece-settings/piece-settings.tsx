@@ -113,6 +113,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               props={actionPropsWithoutAuth}
               allowDynamicValues={true}
               disabled={props.readonly}
+              useMentionTextInput={true}
               markdownVariables={markdownVariables}
             ></AutoPropertiesFormComponent>
           )}
@@ -121,6 +122,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               key={selectedTrigger.name}
               prefixValue="settings.input"
               props={triggerPropsWithoutAuth}
+              useMentionTextInput={true}
               allowDynamicValues={true}
               disabled={props.readonly}
               markdownVariables={markdownVariables}

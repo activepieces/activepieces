@@ -48,6 +48,9 @@ const useAnimateSidebar = (
   return handleRef;
 };
 
+const constructContainerKey = (flowVersionId: string, stepName: string, triggerOrActionName?: string) => {
+  return flowVersionId + stepName + (triggerOrActionName ?? '');
+};
 const BuilderPage = () => {
   const [
     leftSidebar,
@@ -90,11 +93,13 @@ const BuilderPage = () => {
       memorizedSelectedStep?.type === TriggerType.PIECE,
   });
 
+
   useEffect(() => {
     if (!memorizedSelectedStep) {
       return;
     }
-    setContainerKey(flowVersion.id + memorizedSelectedStep.name);
+    const actionOrTriggerName = memorizedSelectedStep.settings.triggerName ?? memorizedSelectedStep.settings.actionName;
+    setContainerKey(constructContainerKey(flowVersion.id, memorizedSelectedStep.name, actionOrTriggerName));
   }, [memorizedSelectedStep, flowVersion]);
 
   return (
@@ -161,6 +166,9 @@ const BuilderPage = () => {
               !isPieceLoading && (
                 <StepSettingsContainer
                   key={containerKey}
+                  onChangeActionOrTrigger={(actionOrTriggerName) => {
+                    setContainerKey(constructContainerKey(flowVersion.id, memorizedSelectedStep.name, actionOrTriggerName));
+                  }}
                   pieceModel={pieceModel}
                   selectedStep={memorizedSelectedStep}
                 />
