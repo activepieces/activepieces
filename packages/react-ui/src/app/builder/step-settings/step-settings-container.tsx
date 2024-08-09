@@ -38,10 +38,9 @@ import { PieceSettings } from './piece-settings/piece-settings';
 type StepSettingsContainerProps = {
   selectedStep: Action | Trigger;
   pieceModel: PieceMetadataModel | undefined;
-  onChangeActionOrTrigger: (actionOrTriggerName: string) => void;
 };
 const StepSettingsContainer = React.memo(
-  ({ selectedStep, pieceModel, onChangeActionOrTrigger }: StepSettingsContainerProps) => {
+  ({ selectedStep, pieceModel }: StepSettingsContainerProps) => {
     const [readonly, exitStepSettings, applyOperation, saving, flowVersion] =
       useBuilderStateContext((state) => [
         state.readonly,
@@ -57,30 +56,33 @@ const StepSettingsContainer = React.memo(
 
     const { toast } = useToast();
 
+
+    const updateTrigger = (newTrigger: Trigger) => {
+      applyOperation(
+        {
+          type: FlowOperationType.UPDATE_TRIGGER,
+          request: newTrigger,
+        },
+        () => toast(UNSAVED_CHANGES_TOAST),
+      );
+    };
+    
     const debouncedTrigger = useMemo(() => {
-      const updateTrigger = (newTrigger: Trigger) => {
-        applyOperation(
-          {
-            type: FlowOperationType.UPDATE_TRIGGER,
-            request: newTrigger,
-          },
-          () => toast(UNSAVED_CHANGES_TOAST),
-        );
-      };
       return debounce(updateTrigger, 200);
     }, [applyOperation]);
 
-    const debouncedAction = useMemo(() => {
-      const updateAction = (newAction: Action) => {
-        applyOperation(
-          {
-            type: FlowOperationType.UPDATE_ACTION,
-            request: newAction,
-          },
-          () => toast(UNSAVED_CHANGES_TOAST),
-        );
-      };
 
+    const updateAction = (newAction: Action) => {
+      applyOperation(
+        {
+          type: FlowOperationType.UPDATE_ACTION,
+          request: newAction,
+        },
+        () => toast(UNSAVED_CHANGES_TOAST),
+      );
+    };
+
+    const debouncedAction = useMemo(() => {
       return debounce(updateAction, 200);
     }, [applyOperation]);
 
@@ -98,7 +100,7 @@ const StepSettingsContainer = React.memo(
       disabled: readonly,
       reValidateMode: 'onChange',
       defaultValues: useMemo(() => {
-        return formUtils.buildPieceDefaultValue(selectedStep, pieceModel!);
+        return formUtils.buildPieceDefaultValue(selectedStep, pieceModel!, true);
       }, [selectedStep, pieceModel]),
       resolver: typeboxResolver(formSchema),
     });
@@ -148,8 +150,14 @@ const StepSettingsContainer = React.memo(
 
     useUpdateEffect(() => {
       const currentStep = JSON.parse(JSON.stringify(form.getValues()));
-      const actionOrTriggerName = currentStep.type === TriggerType.PIECE ? currentStep.settings.triggerName : currentStep.settings.actionName;
-      onChangeActionOrTrigger(actionOrTriggerName);
+      const defaultValues = formUtils.buildPieceDefaultValue(currentStep, pieceModel!, false);
+      if (defaultValues.type === TriggerType.PIECE) {
+        const triggerName = defaultValues.settings.triggerName;
+        updateTrigger(defaultValues);
+      } else {
+        const actionName = defaultValues.settings.actionName;
+        updateAction(defaultValues as Action);
+      }
     }, [actionName, triggerName]);
 
     useUpdateEffect(() => {

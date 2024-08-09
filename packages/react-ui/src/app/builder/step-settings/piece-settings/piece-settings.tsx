@@ -1,15 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useEffect, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import React from 'react';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 import {
-  ActionType,
   ApFlagId,
   PieceAction,
+  PieceActionSettings,
   PieceTrigger,
+  PieceTriggerSettings,
   TriggerType,
 } from '@activepieces/shared';
 
@@ -32,45 +31,18 @@ const removeAuthFromProps = (
 };
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
-  const [selectedAction, setSelectedAction] = useState<ActionBase | undefined>(
-    undefined,
-  );
-  const [selectedTrigger, setSelectedTrigger] = useState<
-    TriggerBase | undefined
-  >(undefined);
 
   const { pieceModel, isLoading } = piecesHooks.usePiece({
     name: props.step.settings.pieceName,
     version: props.step.settings.pieceVersion,
   });
 
-  const form = useFormContext<PieceAction | PieceTrigger>();
 
-  const watchedForm = form.watch([
-    'settings.actionName',
-    'settings.triggerName',
-  ]);
+  const actionName = (props.step.settings as PieceActionSettings).actionName
+  const selectedAction = actionName ? pieceModel?.actions[actionName] : undefined
+  const triggerName = (props.step.settings as PieceTriggerSettings).triggerName
+  const selectedTrigger = triggerName ? pieceModel?.triggers[triggerName] : undefined
 
-  useEffect(() => {
-    switch (props.step.type) {
-      case ActionType.PIECE: {
-        const actionName = (form.getValues() as PieceAction).settings
-          .actionName;
-        if (actionName) {
-          setSelectedAction(pieceModel?.actions[actionName]);
-        }
-        break;
-      }
-      case TriggerType.PIECE: {
-        const triggerName = (form.getValues() as PieceTrigger).settings
-          .triggerName;
-        if (triggerName) {
-          setSelectedTrigger(pieceModel?.triggers[triggerName]);
-        }
-        break;
-      }
-    }
-  }, [watchedForm]);
 
   const actionPropsWithoutAuth = removeAuthFromProps(
     selectedAction?.props ?? {},

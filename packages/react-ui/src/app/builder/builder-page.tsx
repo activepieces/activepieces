@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { ActionType, TriggerType, flowHelper } from '@activepieces/shared';
+import { ActionType, PieceTrigger, TriggerType, flowHelper } from '@activepieces/shared';
 
 import { cn } from '../../lib/utils';
 
@@ -56,7 +56,6 @@ const BuilderPage = () => {
     leftSidebar,
     rightSidebar,
     flowVersion,
-    selectedStep,
     exitRun,
     run,
     canExitRun,
@@ -64,26 +63,32 @@ const BuilderPage = () => {
     state.leftSidebar,
     state.rightSidebar,
     state.flowVersion,
-    state.selectedStep,
     state.exitRun,
     state.run,
     state.canExitRun,
   ]);
 
+  const { memorizedSelectedStep, containerKey } = useBuilderStateContext((state) => {
+    const stepPath = state.selectedStep
+    const flowVerison = state.flowVersion
+    if (!stepPath || !flowVerison) {
+      return {
+        memorizedSelectedStep: undefined,
+        containerKey: undefined,
+      };
+    }
+    const step = flowHelper.getStep(flowVerison, stepPath.stepName)
+    const triggerOrActionName = step?.type === TriggerType.PIECE ? (step as PieceTrigger).settings.triggerName : step?.settings.actionName
+    return {
+      memorizedSelectedStep: flowHelper.getStep(flowVerison, stepPath.stepName),
+      containerKey: constructContainerKey(flowVerison.id, stepPath.stepName, triggerOrActionName),
+    }
+  });
+
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const rightHandleRef = useAnimateSidebar(rightSidebar);
   const leftHandleRef = useAnimateSidebar(leftSidebar);
 
-  const [containerKey, setContainerKey] = useState<string | undefined>(
-    undefined,
-  );
-
-  const memorizedSelectedStep = useMemo(() => {
-    if (!flowVersion || !selectedStep?.stepName) {
-      return undefined;
-    }
-    return flowHelper.getStep(flowVersion, selectedStep.stepName);
-  }, [flowVersion.id, selectedStep]);
 
   const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
     name: memorizedSelectedStep?.settings.pieceName,
@@ -93,14 +98,6 @@ const BuilderPage = () => {
       memorizedSelectedStep?.type === TriggerType.PIECE,
   });
 
-
-  useEffect(() => {
-    if (!memorizedSelectedStep) {
-      return;
-    }
-    const actionOrTriggerName = memorizedSelectedStep.settings.triggerName ?? memorizedSelectedStep.settings.actionName;
-    setContainerKey(constructContainerKey(flowVersion.id, memorizedSelectedStep.name, actionOrTriggerName));
-  }, [memorizedSelectedStep, flowVersion]);
 
   return (
     <div className="flex h-screen w-screen flex-col">
@@ -166,9 +163,6 @@ const BuilderPage = () => {
               !isPieceLoading && (
                 <StepSettingsContainer
                   key={containerKey}
-                  onChangeActionOrTrigger={(actionOrTriggerName) => {
-                    setContainerKey(constructContainerKey(flowVersion.id, memorizedSelectedStep.name, actionOrTriggerName));
-                  }}
                   pieceModel={pieceModel}
                   selectedStep={memorizedSelectedStep}
                 />
