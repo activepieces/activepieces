@@ -1,4 +1,5 @@
 import {
+  CollisionDetection,
   DndContext,
   DragEndEvent,
   DragOverlay,
@@ -7,6 +8,7 @@ import {
   MouseSensor,
   PointerSensor,
   TouchSensor,
+  rectIntersection,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -23,6 +25,31 @@ import StepDragOverlay from './step-drag-overlay';
 type FlowDragLayerProps = {
   children: React.ReactNode;
 };
+
+// https://github.com/clauderic/dnd-kit/pull/334#issuecomment-1965708784
+const fixCursorSnapOffset: CollisionDetection = (args) => {
+  // Bail out if keyboard activated
+  if (!args.pointerCoordinates) {
+    return rectIntersection(args);
+  }
+  const { x, y } = args.pointerCoordinates;
+  const { width, height } = args.collisionRect;
+  const updated = {
+    ...args,
+    // The collision rectangle is broken when using snapCenterToCursor. Reset
+    // the collision rectangle based on pointer location and overlay size.
+    collisionRect: {
+      width,
+      height,
+      bottom: y + height / 2,
+      left: x - width / 2,
+      right: x + width / 2,
+      top: y - height / 2,
+    },
+  };
+  return rectIntersection(updated);
+};
+
 const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
   const { toast } = useToast();
   const [
@@ -48,7 +75,7 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
   const handleDragCancel = () => {
     setActiveDraggingStep(null);
   };
-  const handleDragStartEnd = (e: DragEndEvent) => {
+  const handleDragEnd = (e: DragEndEvent) => {
     const collision = e?.collisions?.[0]?.data?.['droppableContainer'].data
       .current as ApEdge['data'];
     setActiveDraggingStep(null);
@@ -84,8 +111,8 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
     useSensor(MouseSensor),
     useSensor(PointerSensor, {
       activationConstraint: {
-        delay: 100,
-        tolerance: 10,
+        delay: 150,
+        tolerance: 5,
       },
     }),
     useSensor(KeyboardSensor),
@@ -95,9 +122,10 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
   return (
     <DndContext
       onDragStart={handleDragStart}
-      onDragEnd={handleDragStartEnd}
+      onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
       sensors={sensors}
+      collisionDetection={fixCursorSnapOffset}
     >
       {children}
       <DragOverlay
