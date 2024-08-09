@@ -60,13 +60,9 @@ const FlowCanvas = React.memo(() => {
   ]);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  console.log('flowVersion', flowVersion);
-  // const graph = useMemo(() => {
-  //   return flowCanvasUtils.convertFlowVersionToGraph(mockFlowVersion as any);
-  // }, [mockFlowVersion]);
   const graph = useMemo(() => {
-    return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
-  }, [flowVersion]);
+    return flowCanvasUtils.convertFlowVersionToGraph(mockFlowVersion as any);
+  }, [mockFlowVersion]);
   const [size, setSize] = useState({ width: 0, height: 0 });
   useContainerSize(setSize, containerRef);
 

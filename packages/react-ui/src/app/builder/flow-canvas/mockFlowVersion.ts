@@ -395,7 +395,7 @@ export const mockFlowVersion = {
           type: 'SWITCH',
           valid: false,
           settings: {
-            // this part needs to be re-thought
+            // TODO settings for switch
             conditions: [
               [
                 {
@@ -411,31 +411,6 @@ export const mockFlowVersion = {
             },
           },
           switchActions: [
-            {
-              name: 'step_7',
-              type: 'PIECE',
-              valid: false,
-              settings: {
-                input: {},
-                pieceName: '@openops/piece-aws',
-                pieceType: 'OFFICIAL',
-                actionName: '',
-                inputUiInfo: {
-                  customizedInputs: {},
-                },
-                packageType: 'REGISTRY',
-                pieceVersion: '~0.0.3',
-                errorHandlingOptions: {
-                  retryOnFailure: {
-                    value: false,
-                  },
-                  continueOnFailure: {
-                    value: false,
-                  },
-                },
-              },
-              displayName: 'AWS',
-            },
             {
               name: 'step_8',
               type: 'PIECE',
@@ -462,7 +437,7 @@ export const mockFlowVersion = {
               displayName: 'AWS Athena',
             },
             {
-              name: 'step_9',
+              name: 'step_7',
               type: 'PIECE',
               valid: false,
               settings: {
@@ -485,31 +460,61 @@ export const mockFlowVersion = {
                 },
               },
               displayName: 'AWS',
+              nextAction: null, // todo
             },
             {
-              name: 'step_10',
-              type: 'PIECE',
+              displayName: 'AWS Compute Optimizer',
+              name: 'step_4',
               valid: false,
+              type: 'PIECE',
               settings: {
-                input: {},
-                pieceName: '@openops/piece-aws-athena',
+                pieceName: '@openops/piece-aws-compute-optimizer',
                 pieceType: 'OFFICIAL',
+                packageType: 'REGISTRY',
                 actionName: '',
+                pieceVersion: '~0.0.1',
+                input: {},
+                errorHandlingOptions: {
+                  continueOnFailure: {
+                    hide: true,
+                    value: false,
+                  },
+                  retryOnFailure: {
+                    hide: true,
+                    value: false,
+                  },
+                },
                 inputUiInfo: {
                   customizedInputs: {},
                 },
-                packageType: 'REGISTRY',
-                pieceVersion: '~0.0.1',
-                errorHandlingOptions: {
-                  retryOnFailure: {
-                    value: false,
+              },
+              nextAction: {
+                displayName: 'FinOps Opportunity',
+                name: 'step_5',
+                valid: false,
+                type: 'PIECE',
+                settings: {
+                  pieceName: '@openops/piece-finops-opportunity',
+                  pieceType: 'OFFICIAL',
+                  packageType: 'REGISTRY',
+                  actionName: '',
+                  pieceVersion: '~0.0.1',
+                  input: {},
+                  errorHandlingOptions: {
+                    continueOnFailure: {
+                      hide: true,
+                      value: false,
+                    },
+                    retryOnFailure: {
+                      hide: true,
+                      value: false,
+                    },
                   },
-                  continueOnFailure: {
-                    value: false,
+                  inputUiInfo: {
+                    customizedInputs: {},
                   },
                 },
               },
-              displayName: 'AWS Athena',
             },
           ],
           nextAction: {
@@ -539,56 +544,6 @@ export const mockFlowVersion = {
             displayName: 'End Workflow',
           },
           displayName: 'Switch',
-          // onFailureAction: {
-          //   name: 'step_7',
-          //   type: 'PIECE',
-          //   valid: false,
-          //   settings: {
-          //     input: {},
-          //     pieceName: '@openops/piece-aws',
-          //     pieceType: 'OFFICIAL',
-          //     actionName: '',
-          //     inputUiInfo: {
-          //       customizedInputs: {},
-          //     },
-          //     packageType: 'REGISTRY',
-          //     pieceVersion: '~0.0.3',
-          //     errorHandlingOptions: {
-          //       retryOnFailure: {
-          //         value: false,
-          //       },
-          //       continueOnFailure: {
-          //         value: false,
-          //       },
-          //     },
-          //   },
-          //   displayName: 'AWS',
-          // },
-          // onSuccessAction: {
-          //   name: 'step_8',
-          //   type: 'PIECE',
-          //   valid: false,
-          //   settings: {
-          //     input: {},
-          //     pieceName: '@openops/piece-aws-athena',
-          //     pieceType: 'OFFICIAL',
-          //     actionName: '',
-          //     inputUiInfo: {
-          //       customizedInputs: {},
-          //     },
-          //     packageType: 'REGISTRY',
-          //     pieceVersion: '~0.0.1',
-          //     errorHandlingOptions: {
-          //       retryOnFailure: {
-          //         value: false,
-          //       },
-          //       continueOnFailure: {
-          //         value: false,
-          //       },
-          //     },
-          //   },
-          //   displayName: 'AWS Athena',
-          // },
         },
         displayName: 'Code',
       },
