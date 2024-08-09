@@ -142,8 +142,6 @@ export const askClaude = createAction({
       ],
     });
 
-    console.log('ROLES', JSON.stringify(roles, null, 2));
-
     const maxRetries = 4;
     let retries = 0;
     let response: string | undefined;
@@ -157,7 +155,6 @@ export const askClaude = createAction({
           messages: roles,
         });
 
-        console.log('RESPONSE', JSON.stringify(req, null, 2));
         response = req?.content[0].text?.trim();
 
         break; // Break out of the loop if the request is successful
