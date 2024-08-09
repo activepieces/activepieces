@@ -15,6 +15,7 @@ type SelectPiecePropertyProps = {
   propertyName: string;
   initialValue: unknown;
   multiple?: boolean;
+  disabled: boolean;
   onChange: (value: unknown | undefined) => void;
 };
 const DynamicDropdownPieceProperty = React.memo(
@@ -90,12 +91,12 @@ const DynamicDropdownPieceProperty = React.memo(
             placeholder={dropdownState.placeholder ?? 'Select a option'}
             options={selectOptions}
             onChange={(value) => props.onChange(value)}
-            disabled={dropdownState.disabled}
+            disabled={dropdownState.disabled || props.disabled}
           />
         ) : (
           <SearchableSelect
             options={selectOptions}
-            disabled={dropdownState.disabled}
+            disabled={dropdownState.disabled || props.disabled}
             loading={isPending}
             placeholder={dropdownState.placeholder ?? 'Select a option'}
             value={props.initialValue as React.Key}

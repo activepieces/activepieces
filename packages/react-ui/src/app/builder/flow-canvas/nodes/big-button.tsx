@@ -8,8 +8,9 @@ import { useBuilderStateContext } from '../../builder-hooks';
 import { ApNode } from '../flow-canvas-utils';
 
 const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
-  const [clickOnNewNodeButton] = useBuilderStateContext((state) => [
+  const [clickOnNewNodeButton, readonly] = useBuilderStateContext((state) => [
     state.clickOnNewNodeButton,
+    state.readonly,
   ]);
 
   return (
@@ -25,7 +26,7 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
             )
           }
         >
-          <Button variant="ghost" className="w-full h-full">
+          <Button variant="ghost" className="w-full h-full" disabled={readonly}>
             <Plus className="w-6 h-6 text-accent-foreground" />
           </Button>
         </div>

@@ -15,12 +15,14 @@ type DictionaryInputItem = {
 type DictionaryInputProps = {
   values: Record<string, string> | undefined;
   onChange: (values: Record<string, string>) => void;
+  disabled?: boolean;
   useMentionTextInput?: boolean;
 };
 
 export const DictionaryProperty = ({
   values,
   onChange,
+  disabled,
   useMentionTextInput,
 }: DictionaryInputProps) => {
   const [formValue, setFormValue] = useState<DictionaryInputItem[]>(
@@ -70,6 +72,7 @@ export const DictionaryProperty = ({
         >
           <Input
             value={key}
+            disabled={disabled}
             className="basis-[50%] h-full max-w-[50%]"
             onChange={(e) => onChangeValue(index, undefined, e.target.value)}
           />
@@ -77,11 +80,13 @@ export const DictionaryProperty = ({
             {useMentionTextInput ? (
               <TextInputWithMentions
                 initialValue={value}
+                disabled={disabled}
                 onChange={(e) => onChangeValue(index, e, undefined)}
               ></TextInputWithMentions>
             ) : (
               <Input
                 value={value}
+                disabled={disabled}
                 onChange={(e) =>
                   onChangeValue(index, e.target.value, undefined)
                 }
@@ -94,6 +99,7 @@ export const DictionaryProperty = ({
             variant="outline"
             size="icon"
             className="size-8 shrink-0"
+            disabled={disabled}
             onClick={() => remove(index)}
           >
             <TrashIcon className="size-4 text-destructive" aria-hidden="true" />
@@ -101,7 +107,13 @@ export const DictionaryProperty = ({
           </Button>
         </div>
       ))}
-      <Button variant="outline" size="sm" onClick={add} type="button">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={add}
+        type="button"
+        disabled={disabled}
+      >
         <TextWithIcon icon={<Plus size={18} />} text="Add Item" />
       </Button>
     </div>

@@ -44,6 +44,7 @@ type BranchSingleConditionProps = {
   showDelete: boolean;
   groupIndex: number;
   conditionIndex: number;
+  readonly: boolean;
   deleteClick: () => void;
 };
 
@@ -52,6 +53,7 @@ const BranchSingleCondition = ({
   groupIndex,
   conditionIndex,
   showDelete,
+  readonly,
 }: BranchSingleConditionProps) => {
   const form = useFormContext<BranchAction>();
 
@@ -75,6 +77,7 @@ const BranchSingleCondition = ({
           render={({ field }) => (
             <FormItem>
               <TextInputWithMentions
+                disabled={readonly}
                 placeholder="First value"
                 onChange={field.onChange}
                 initialValue={field.value}
@@ -89,6 +92,7 @@ const BranchSingleCondition = ({
           render={({ field }) => (
             <FormItem>
               <SearchableSelect
+                disabled={readonly}
                 value={field.value}
                 options={operationOptions}
                 placeholder={''}
@@ -106,7 +110,7 @@ const BranchSingleCondition = ({
               <FormItem>
                 <TextInputWithMentions
                   placeholder="Second value"
-                  {...field}
+                  disabled={readonly}
                   initialValue={field.value}
                   onChange={field.onChange}
                 ></TextInputWithMentions>
@@ -126,6 +130,7 @@ const BranchSingleCondition = ({
               <FormItem>
                 <div className="flex items-center gap-2 p-1">
                   <Switch
+                    disabled={readonly}
                     id="case-sensitive"
                     checked={field.value}
                     onCheckedChange={(e) => field.onChange(e)}

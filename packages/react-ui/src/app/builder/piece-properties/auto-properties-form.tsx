@@ -27,6 +27,7 @@ type AutoFormProps = {
   prefixValue: string;
   markdownVariables?: Record<string, string>;
   useMentionTextInput?: boolean;
+  disabled?: boolean;
 };
 
 const AutoPropertiesFormComponent = React.memo(
@@ -35,6 +36,7 @@ const AutoPropertiesFormComponent = React.memo(
     props,
     allowDynamicValues,
     prefixValue,
+    disabled,
     useMentionTextInput,
   }: AutoFormProps) => {
     const form = useFormContext();
@@ -56,6 +58,7 @@ const AutoPropertiesFormComponent = React.memo(
                   allowDynamicValues,
                   markdownVariables ?? {},
                   useMentionTextInput ?? false,
+                  disabled ?? false,
                 )
               }
             />
@@ -74,6 +77,7 @@ const selectRightComponent = (
   allowDynamicValues: boolean,
   markdownVariables: Record<string, string>,
   useMentionTextInput: boolean,
+  disabled: boolean,
 ) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -82,9 +86,11 @@ const selectRightComponent = (
           property={property}
           propertyKey={key}
           field={field}
+          disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >
           <ArrayProperty
+            disabled={disabled}
             inputName={inputName}
             useMentionTextInput={useMentionTextInput}
           ></ArrayProperty>
@@ -96,9 +102,11 @@ const selectRightComponent = (
           property={property}
           propertyKey={key}
           field={field}
+          disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >
           <DictionaryProperty
+            disabled={disabled}
             values={field.value}
             onChange={field.onChange}
           ></DictionaryProperty>
@@ -109,6 +117,7 @@ const selectRightComponent = (
         <AutoFormFieldWrapper
           property={property}
           propertyKey={key}
+          disabled={disabled}
           field={field}
           allowDynamicValues={allowDynamicValues}
         >
@@ -116,6 +125,7 @@ const selectRightComponent = (
             <Switch
               id={key}
               checked={field.value}
+              disabled={disabled}
               onCheckedChange={field.onChange}
             />
           </FormControl>
@@ -134,12 +144,14 @@ const selectRightComponent = (
           property={property}
           propertyKey={key}
           field={field}
+          disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >
           <SearchableSelect
             options={property.options.options}
             onChange={field.onChange}
             value={field.value}
+            disabled={disabled}
             placeholder={property.options.placeholder ?? 'Select a option'}
           ></SearchableSelect>
         </AutoFormFieldWrapper>
@@ -147,11 +159,13 @@ const selectRightComponent = (
     case PropertyType.JSON:
       return (
         <AutoFormFieldWrapper
+          propertyKey={key}
           property={property}
           field={field}
+          disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >
-          <JsonEditor field={field}></JsonEditor>
+          <JsonEditor field={field} readonly={disabled}></JsonEditor>
         </AutoFormFieldWrapper>
       );
     case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
@@ -160,6 +174,7 @@ const selectRightComponent = (
           property={property}
           propertyKey={key}
           field={field}
+          disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >
           <MultiSelectPieceProperty
@@ -167,7 +182,7 @@ const selectRightComponent = (
             options={property.options.options}
             onChange={field.onChange}
             initialValues={field.value}
-            disabled={property.options.disabled}
+            disabled={disabled}
           ></MultiSelectPieceProperty>
         </AutoFormFieldWrapper>
       );
@@ -178,12 +193,14 @@ const selectRightComponent = (
           property={property}
           propertyKey={key}
           field={field}
+          disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >
           <DynamicDropdownPieceProperty
             refreshers={property.refreshers}
             initialValue={field.value}
             onChange={field.onChange}
+            disabled={disabled}
             propertyName={key}
           ></DynamicDropdownPieceProperty>
         </AutoFormFieldWrapper>
@@ -199,15 +216,21 @@ const selectRightComponent = (
           property={property}
           field={field}
           propertyKey={key}
+          disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >
           {useMentionTextInput ? (
             <TextInputWithMentions
+              disabled={disabled}
               initialValue={field.value}
               onChange={field.onChange}
             ></TextInputWithMentions>
           ) : (
-            <Input value={field.value} onChange={field.onChange}></Input>
+            <Input
+              value={field.value}
+              onChange={field.onChange}
+              disabled={disabled}
+            ></Input>
           )}
         </AutoFormFieldWrapper>
       );
@@ -217,11 +240,13 @@ const selectRightComponent = (
           propertyKey={key}
           property={property}
           field={field}
+          disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >
           <DynamicProperties
             refreshers={property.refreshers}
             propertyName={key}
+            disabled={disabled}
           ></DynamicProperties>
         </AutoFormFieldWrapper>
       );

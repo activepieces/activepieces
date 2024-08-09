@@ -30,45 +30,43 @@ const tryParseJson = (value: unknown): unknown => {
 
 type JsonEditorProps = {
   field: ControllerRenderProps<Record<string, any>, string>;
-  readonly?: boolean;
+  readonly: boolean;
 };
 
-const JsonEditor = React.memo(
-  ({ field, readonly = false }: JsonEditorProps) => {
-    const extensions = [
-      styleTheme,
-      EditorState.readOnly.of(readonly),
-      EditorView.editable.of(!readonly),
-      json(),
-    ];
+const JsonEditor = React.memo(({ field, readonly }: JsonEditorProps) => {
+  const extensions = [
+    styleTheme,
+    EditorState.readOnly.of(readonly),
+    EditorView.editable.of(!readonly),
+    json(),
+  ];
 
-    return (
-      <div className="flex flex-col gap-2 border rounded py-2 px-2">
-        <CodeMirror
-          value={convertToString(field.value)}
-          className="border-none"
-          height="250px"
-          width="100%"
-          maxWidth="100%"
-          basicSetup={{
-            foldGutter: false,
-            lineNumbers: true,
-            searchKeymap: false,
-            lintKeymap: true,
-            autocompletion: true,
-          }}
-          lang="json"
-          onChange={(value) => {
-            field.onChange(tryParseJson(value));
-          }}
-          theme={githubLight}
-          readOnly={readonly}
-          extensions={extensions}
-        />
-      </div>
-    );
-  },
-);
+  return (
+    <div className="flex flex-col gap-2 border rounded py-2 px-2">
+      <CodeMirror
+        value={convertToString(field.value)}
+        className="border-none"
+        height="250px"
+        width="100%"
+        maxWidth="100%"
+        basicSetup={{
+          foldGutter: false,
+          lineNumbers: true,
+          searchKeymap: false,
+          lintKeymap: true,
+          autocompletion: true,
+        }}
+        lang="json"
+        onChange={(value) => {
+          field.onChange(tryParseJson(value));
+        }}
+        theme={githubLight}
+        readOnly={readonly}
+        extensions={extensions}
+      />
+    </div>
+  );
+});
 
 JsonEditor.displayName = 'JsonEditor';
 export { JsonEditor };

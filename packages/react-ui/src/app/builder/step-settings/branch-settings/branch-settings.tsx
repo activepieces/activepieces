@@ -18,7 +18,11 @@ const emptyCondition: ValidBranchCondition = {
   caseSensitive: false,
 };
 
-const BranchSettings = () => {
+type BranchSettingsProps = {
+  readonly: boolean;
+};
+
+const BranchSettings = React.memo(({ readonly }: BranchSettingsProps) => {
   const form = useFormContext<BranchAction>();
 
   const handleDelete = (groupIndex: number, conditionIndex: number) => {
@@ -68,6 +72,7 @@ const BranchSettings = () => {
             )}
             {fieldGroup.length === 0 && (
               <BranchConditionToolbar
+                readonly={readonly}
                 key={`toolbar-${groupIndex}`}
                 onAnd={() => handleAnd(groupIndex)}
                 onOr={() => handleOr()}
@@ -82,6 +87,7 @@ const BranchSettings = () => {
                 {conditionIndex > 0 && <div>And If</div>}
                 <BranchSingleCondition
                   groupIndex={groupIndex}
+                  readonly={readonly}
                   conditionIndex={conditionIndex}
                   deleteClick={() => handleDelete(groupIndex, conditionIndex)}
                   showDelete={
@@ -93,6 +99,7 @@ const BranchSettings = () => {
             <BranchConditionToolbar
               onAnd={() => handleAnd(groupIndex)}
               onOr={() => handleOr()}
+              readonly={readonly}
               showOr={groupIndex === conditions.length - 1}
               showAnd={true}
             ></BranchConditionToolbar>
@@ -101,6 +108,7 @@ const BranchSettings = () => {
       })}
     </div>
   );
-};
+});
 
+BranchSettings.displayName = 'BranchSettings';
 export { BranchSettings };

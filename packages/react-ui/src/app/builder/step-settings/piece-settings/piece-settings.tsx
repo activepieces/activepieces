@@ -21,6 +21,7 @@ import { PieceActionTriggerSelector } from './piece-action-trigger-selector';
 type PieceSettingsProps = {
   step: PieceAction | PieceTrigger;
   flowId: string;
+  readonly: boolean;
 };
 
 const removeAuthFromProps = (
@@ -96,19 +97,22 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
             piece={pieceModel}
             isLoading={isLoading}
             type={props.step.type}
+            disabled={props.readonly}
           ></PieceActionTriggerSelector>
-          {pieceModel.auth && selectedAction?.requireAuth && (
-            <ConnectionSelect piece={pieceModel}></ConnectionSelect>
-          )}
-          {pieceModel.auth && selectedTrigger && (
-            <ConnectionSelect piece={pieceModel}></ConnectionSelect>
-          )}
+          {pieceModel.auth &&
+            (selectedAction?.requireAuth || selectedTrigger) && (
+              <ConnectionSelect
+                piece={pieceModel}
+                disabled={props.readonly}
+              ></ConnectionSelect>
+            )}
           {selectedAction && (
             <AutoPropertiesFormComponent
               key={selectedAction.name}
               prefixValue="settings.input"
               props={actionPropsWithoutAuth}
               allowDynamicValues={true}
+              disabled={props.readonly}
               markdownVariables={markdownVariables}
             ></AutoPropertiesFormComponent>
           )}
@@ -118,6 +122,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               prefixValue="settings.input"
               props={triggerPropsWithoutAuth}
               allowDynamicValues={true}
+              disabled={props.readonly}
               markdownVariables={markdownVariables}
             ></AutoPropertiesFormComponent>
           )}

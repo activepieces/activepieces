@@ -83,11 +83,13 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
     flowVersion,
     clickOnNewNodeButton,
     selectedButton,
+    readonly,
   ] = useBuilderStateContext((state) => [
     state.activeDraggingStep,
     state.flowVersion,
     state.clickOnNewNodeButton,
     state.selectedButton,
+    state.readonly,
   ]);
   const { edgePath, buttonPosition } = getEdgePath(props);
   const { setNodeRef } = useDroppable({
@@ -129,7 +131,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
         path={edgePath}
         style={{ strokeWidth: 1.5 }}
       />
-      {isDropzone && props.data?.addButton && buttonPosition && (
+      {isDropzone && props.data?.addButton && !readonly && buttonPosition && (
         <foreignObject
           width={18}
           height={18}
@@ -150,7 +152,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
           ></div>
         </foreignObject>
       )}
-      {!isDropzone && props.data?.addButton && buttonPosition && (
+      {!isDropzone && props.data?.addButton && !readonly && buttonPosition && (
         <foreignObject
           width={18}
           height={18}

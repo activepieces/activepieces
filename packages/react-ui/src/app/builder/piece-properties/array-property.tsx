@@ -17,11 +17,13 @@ import { TextInputWithMentions } from './text-input-with-mentions/text-input-wit
 type ArrayPropertyProps = {
   inputName: string;
   useMentionTextInput: boolean;
+  disabled: boolean;
 };
 
 const ArrayProperty = ({
   inputName,
   useMentionTextInput,
+  disabled,
 }: ArrayPropertyProps) => {
   const form = useFormContext();
 
@@ -66,10 +68,12 @@ const ArrayProperty = ({
                           <TextInputWithMentions
                             initialValue={field.value}
                             onChange={field.onChange}
+                            disabled={disabled}
                           ></TextInputWithMentions>
                         ) : (
                           <Input
                             value={field.value}
+                            disabled={disabled}
                             onChange={field.onChange}
                           ></Input>
                         )}
@@ -81,6 +85,7 @@ const ArrayProperty = ({
                   type="button"
                   variant="outline"
                   size="icon"
+                  disabled={disabled}
                   className="size-8 shrink-0"
                   onClick={() => {
                     remove(index);
@@ -100,6 +105,7 @@ const ArrayProperty = ({
       <Button
         variant="outline"
         size="sm"
+        disabled={disabled}
         onClick={() => {
           append('');
         }}

@@ -205,24 +205,26 @@ const StepSettingsContainer = React.memo(
                     ></PieceCardInfo>
                   )}
                   {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
-                    <LoopsSettings></LoopsSettings>
+                    <LoopsSettings readonly={readonly}></LoopsSettings>
                   )}
                   {modifiedStep.type === ActionType.CODE && (
                     <CodeSettings readonly={readonly}></CodeSettings>
                   )}
                   {modifiedStep.type === ActionType.BRANCH && (
-                    <BranchSettings></BranchSettings>
+                    <BranchSettings readonly={readonly}></BranchSettings>
                   )}
                   {modifiedStep.type === ActionType.PIECE && modifiedStep && (
                     <PieceSettings
                       step={modifiedStep}
                       flowId={flowVersion.flowId}
+                      readonly={readonly}
                     ></PieceSettings>
                   )}
                   {modifiedStep.type === TriggerType.PIECE && modifiedStep && (
                     <PieceSettings
                       step={modifiedStep}
                       flowId={flowVersion.flowId}
+                      readonly={readonly}
                     ></PieceSettings>
                   )}
                   {[ActionType.CODE, ActionType.PIECE].includes(
@@ -233,6 +235,7 @@ const StepSettingsContainer = React.memo(
                         modifiedStep.settings.errorHandlingOptions
                           ?.continueOnFailure?.hide
                       }
+                      disabled={readonly}
                       hideRetryOnFailure={
                         modifiedStep.settings.errorHandlingOptions
                           ?.retryOnFailure?.hide

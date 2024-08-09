@@ -21,6 +21,7 @@ type TextInputWithMentionsProps = {
   initialValue?: unknown;
   onChange: (value: string) => void;
   placeholder?: string;
+  disabled?: boolean;
 };
 const extensions = (placeholder?: string) => {
   return [
@@ -65,6 +66,7 @@ export const TextInputWithMentions = ({
   className,
   initialValue,
   onChange,
+  disabled,
   placeholder,
 }: TextInputWithMentionsProps) => {
   const steps = useBuilderStateContext((state) =>
@@ -95,6 +97,7 @@ export const TextInputWithMentions = ({
     ),
   ];
   const editor = useEditor({
+    editable: !disabled,
     extensions: extensions(placeholder),
     content: {
       type: 'doc',
