@@ -101,7 +101,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: data.step!.name,
-    disabled: true,
+    disabled: isTrigger,
   });
 
   const stepOutputStatus = useMemo(
@@ -125,6 +125,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   return (
     <div
+      id={data.step!.name}
       style={{
         boxShadow:
           (isSelected || toolbarOpen) && !isDragging

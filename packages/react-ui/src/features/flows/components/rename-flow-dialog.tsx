@@ -4,6 +4,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -29,7 +30,11 @@ type RenameFlowDialogProps = {
   flowId: string;
   onRename: (newName: string) => void;
 };
-const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({ children, flowId, onRename }) => {
+const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
+  children,
+  flowId,
+  onRename,
+}) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const renameFlowForm = useForm<RenameFlowSchema>({
     resolver: typeboxResolver(RenameFlowSchema),
@@ -60,7 +65,6 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({ children, flowId, o
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-
   return (
     <Dialog
       open={isRenameDialogOpen}
@@ -74,10 +78,12 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({ children, flowId, o
         <Form {...renameFlowForm}>
           <form
             className="grid space-y-4"
-            onSubmit={renameFlowForm.handleSubmit((data) => mutate({
-              flowId,
-              displayName: data.displayName,
-            }))}
+            onSubmit={renameFlowForm.handleSubmit((data) =>
+              mutate({
+                flowId,
+                displayName: data.displayName,
+              }),
+            )}
           >
             <FormField
               control={renameFlowForm.control}

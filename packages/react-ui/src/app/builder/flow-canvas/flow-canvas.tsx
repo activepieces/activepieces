@@ -120,6 +120,7 @@ const FlowCanvas = React.memo(() => {
           nodesConnectable={false}
           elementsSelectable={true}
           nodesDraggable={false}
+          nodesFocusable={false}
           fitViewOptions={{
             includeHiddenNodes: false,
             minZoom: 0.5,

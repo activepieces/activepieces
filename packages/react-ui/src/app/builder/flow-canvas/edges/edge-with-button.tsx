@@ -135,9 +135,6 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
           height={18}
           x={buttonPosition.x}
           y={buttonPosition.y}
-          className={cn(
-            'bg-primary w-[17px] h-[17px] rounded-[3px] box-content opacity-90',
-          )}
           style={{
             borderRadius: '2px',
             boxShadow: showButtonShadow
@@ -145,21 +142,20 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
               : 'none',
           }}
         >
-          <div className="w-4 h-4" ref={setNodeRef}></div>
+          <div
+            className={cn(
+              'w-4 h-4 bg-primary w-[18px] h-[18px] rounded-[3px] box-content opacity-90',
+            )}
+            ref={setNodeRef}
+          ></div>
         </foreignObject>
       )}
       {!isDropzone && props.data?.addButton && buttonPosition && (
         <foreignObject
-          width={26}
-          height={26}
+          width={18}
+          height={18}
           x={buttonPosition.x}
           y={buttonPosition.y}
-          className={cn(
-            'bg-[#a6b1bf] w-4 h-4 flex items-center justify-center  transition-all duration-300 ease-in-out',
-            {
-              'bg-primary ': isSelected,
-            },
-          )}
           style={{
             borderRadius: '2px',
             boxShadow: isSelected
@@ -174,7 +170,14 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
             )
           }
         >
-          <div className="w-full h-full justify-center items-center flex">
+          <div
+            className={cn(
+              'bg-[#a6b1bf] w-[18px] h-[18px] flex items-center justify-center  transition-all duration-300 ease-in-out',
+              {
+                'bg-primary ': isSelected,
+              },
+            )}
+          >
             {!isSelected && <Plus className="w-3 h-3 text-white" />}
           </div>
         </foreignObject>
