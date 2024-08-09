@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
+import { isNil } from '../../../../shared/src';
 
 type SelectOption<T> = {
   value: T;
@@ -101,7 +102,7 @@ export const SearchableSelect = <T extends React.Key>({
           className="w-full justify-between w-full"
         >
           <span className="flex text-ellipsis w-full overflow-hidden whitespace-nowrap">
-            {value
+            {!isNil(value)
               ? options.find((framework) => framework.value === value)?.label
               : placeholder}
           </span>
