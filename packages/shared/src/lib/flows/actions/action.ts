@@ -8,6 +8,7 @@ export enum ActionType {
     PIECE = 'PIECE',
     LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
     BRANCH = 'BRANCH',
+    SWITCH = 'SWITCH',
 }
 
 const commonActionProps = {
@@ -195,6 +196,12 @@ export const BranchActionSchema = Type.Object({
     settings: BranchActionSettings,
 })
 
+export const SwitchActionSchema = Type.Object({
+    ...commonActionProps,
+    type: Type.Literal(ActionType.BRANCH),
+    settings: BranchActionSettings, // todo different settings schema for switch
+})
+
 // Union of all actions
 
 export const Action = Type.Recursive(action => Type.Union([
@@ -212,6 +219,9 @@ export const Action = Type.Recursive(action => Type.Union([
         nextAction: Type.Optional(action),
         onSuccessAction: Type.Optional(action),
         onFailureAction: Type.Optional(action),
+    })]),
+    Type.Intersect([SwitchActionSchema, Type.Object({
+        switchActions: Type.Array(action),
     })]),
 ]))
 
