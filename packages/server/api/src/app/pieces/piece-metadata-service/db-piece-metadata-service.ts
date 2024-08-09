@@ -1,6 +1,6 @@
 
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, EXACT_VERSION_PATTERN, isNil, ListVersionsResponse, PieceType } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, EXACT_VERSION_REGEX, isNil, ListVersionsResponse, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import semVer from 'semver'
 import { IsNull } from 'typeorm'
@@ -112,7 +112,7 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
             })
         },
         async getExactPieceVersion({ name, version, projectId }): Promise<string> {
-            const isExactVersion = EXACT_VERSION_PATTERN.test(version)
+            const isExactVersion = EXACT_VERSION_REGEX.test(version)
 
             if (isExactVersion) {
                 return version

@@ -8,12 +8,12 @@ import { ApId } from './id-generator'
 import { Permission } from './security'
 
 export class ActivepiecesError extends Error {
-    constructor(public error: ErrorParams, message?: string) {
+    constructor(public error: ApErrorParams, message?: string) {
         super(error.code + (message ? `: ${message}` : ''))
     }
 }
 
-type ErrorParams =
+export type ApErrorParams =
     | AuthenticationParams
     | AuthorizationErrorParams
     | ConfigNotFoundErrorParams

@@ -25,18 +25,28 @@ export const UpsertCustomAuthRequest = Type.Object({
     description: 'Custom Auth',
 })
 
+
+const commonOAuth2ValueProps = {
+    client_id: Type.String({
+        minLength: 1,
+    }),
+    code: Type.String({
+        minLength: 1,
+    }),
+    code_challenge: Type.Optional(Type.String({})),
+    scope: Type.String(),
+    authorization_method: Type.Optional(Type.Enum(OAuth2AuthorizationMethod)),
+}
 export const UpsertPlatformOAuth2Request = Type.Object({
     ...commonAuthProps,
     type: Type.Literal(AppConnectionType.PLATFORM_OAUTH2),
     value: Type.Object({
-        client_id: Type.String(),
-        authorization_method: Type.Optional(Type.Enum(OAuth2AuthorizationMethod)),
-        code: Type.String(),
-        code_challenge: Type.Optional(Type.String()),
+        ...commonOAuth2ValueProps,
         props: Type.Optional(Type.Record(Type.String(), Type.String())),
-        scope: Type.String(),
         type: Type.Literal(AppConnectionType.PLATFORM_OAUTH2),
-        redirect_url: Type.String({}),
+        redirect_url: Type.String({
+            minLength: 1,
+        }),
     }),
 }, {
     title: 'Platform OAuth2',
@@ -48,10 +58,7 @@ export const UpsertCloudOAuth2Request = Type.Object({
     ...commonAuthProps,
     type: Type.Literal(AppConnectionType.CLOUD_OAUTH2),
     value: Type.Object({
-        client_id: Type.String(),
-        authorization_method: Type.Optional(Type.Enum(OAuth2AuthorizationMethod)),
-        code: Type.String(),
-        code_challenge: Type.Optional(Type.String()),
+        ...commonOAuth2ValueProps,
         props: Type.Optional(Type.Record(Type.String(), Type.String())),
         scope: Type.String(),
         type: Type.Literal(AppConnectionType.CLOUD_OAUTH2),
@@ -66,7 +73,9 @@ export const UpsertSecretTextRequest = Type.Object({
     type: Type.Literal(AppConnectionType.SECRET_TEXT),
     value: Type.Object({
         type: Type.Literal(AppConnectionType.SECRET_TEXT),
-        secret_text: Type.String({}),
+        secret_text: Type.String({
+            minLength: 1,
+        }),
     }),
 }, {
     title: 'Secret Text',
@@ -77,15 +86,16 @@ export const UpsertOAuth2Request = Type.Object({
     ...commonAuthProps,
     type: Type.Literal(AppConnectionType.OAUTH2),
     value: Type.Object({
-        client_id: Type.String({}),
-        client_secret: Type.String({}),
+        ...commonOAuth2ValueProps,
+        client_secret: Type.String({
+            minLength: 1,
+        }),
         grant_type: Type.Optional(Type.Enum(OAuth2GrantType)),
         props: Type.Optional(Type.Record(Type.String(), Type.Any())),
-        scope: Type.String(),
-        code: Type.String(),
         authorization_method: Type.Optional(Type.Enum(OAuth2AuthorizationMethod)),
-        code_challenge: Type.Optional(Type.String()),
-        redirect_url: Type.String({}),
+        redirect_url: Type.String({
+            minLength: 1,
+        }),
         type: Type.Literal(AppConnectionType.OAUTH2),
     }),
 }, {
@@ -97,8 +107,12 @@ export const UpsertBasicAuthRequest = Type.Object({
     ...commonAuthProps,
     type: Type.Literal(AppConnectionType.BASIC_AUTH),
     value: Type.Object({
-        username: Type.String({}),
-        password: Type.String({}),
+        username: Type.String({
+            minLength: 1,
+        }),
+        password: Type.String({
+            minLength: 1,
+        }),
         type: Type.Literal(AppConnectionType.BASIC_AUTH),
     }),
 }, {

@@ -39,3 +39,9 @@ export const ListFlowTemplatesRequest = Type.Object({
 })
 
 export type ListFlowTemplatesRequest = Static<typeof ListFlowTemplatesRequest>
+
+export const GetFlowTemplateRequestQuery = Type.Object({
+    versionId: Type.Optional(Type.String()),
+})
+
+export type GetFlowTemplateRequestQuery = Static<typeof GetFlowTemplateRequestQuery>

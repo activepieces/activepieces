@@ -7,7 +7,7 @@ import {
     ActivepiecesError,
     ApEdition,
     ErrorCode,
-    EXACT_VERSION_PATTERN,
+    EXACT_VERSION_REGEX,
     extractPieceFromModule,
     isNil,
     ListVersionsResponse,
@@ -170,7 +170,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
         },
 
         async getExactPieceVersion({ projectId, name, version }): Promise<string> {
-            const isExactVersion = EXACT_VERSION_PATTERN.test(version)
+            const isExactVersion = EXACT_VERSION_REGEX.test(version)
 
             if (isExactVersion) {
                 return version

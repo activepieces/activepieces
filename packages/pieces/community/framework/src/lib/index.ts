@@ -7,3 +7,5 @@ export * from './piece-metadata';
 export * from './validators/validators';
 export * from './processors/processors';
 export * from './processors/types';
+export * from './validators/types';
+export * from './validators'

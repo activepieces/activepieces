@@ -1,3 +1,5 @@
+import deepmerge from 'deepmerge'
+
 export function isString(str: unknown): str is string {
     return str != null && typeof str === 'string'
 }
@@ -5,6 +7,30 @@ export function isString(str: unknown): str is string {
 export function isNil<T>(value: T | null | undefined): value is null | undefined {
     return value === null || value === undefined
 }
+
+export function debounce<T>(func: (...args: T[]) => void, wait: number): (...args: T[]) => void {
+    let timeout: NodeJS.Timeout
+
+    return function (...args: T[]) {
+        const later = () => {
+            clearTimeout(timeout)
+            func(...args)
+        }
+
+        clearTimeout(timeout)
+        timeout = setTimeout(later, wait)
+    }
+}
+
+
+type DeepPartial<T> = {
+    [P in keyof T]?: T[P] extends Record<string, unknown> ? DeepPartial<T[P]> : T[P];
+}
+
+export function deepMergeAndCast<T>(target: DeepPartial<T>, source: DeepPartial<T>): T {
+    return deepmerge(target as Partial<T>, source as Partial<T>) as T
+}
+
 
 export function kebabCase(str: string): string {
     return str

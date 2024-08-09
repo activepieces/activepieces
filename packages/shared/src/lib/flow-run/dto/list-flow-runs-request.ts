@@ -1,6 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
 import { ApId } from '../../common/id-generator'
-import { Cursor } from '../../common/seek-page'
 import { FlowRunStatus } from '../execution/flow-execution'
 
 export const ListFlowRunsRequestQuery = Type.Object({
@@ -15,4 +14,4 @@ export const ListFlowRunsRequestQuery = Type.Object({
     projectId: Type.Optional(ApId),
 })
 
-export type ListFlowRunsRequestQuery = Static<typeof ListFlowRunsRequestQuery> & { cursor: Cursor }
+export type ListFlowRunsRequestQuery = Static<typeof ListFlowRunsRequestQuery>
