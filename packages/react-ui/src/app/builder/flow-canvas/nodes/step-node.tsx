@@ -221,7 +221,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 className={cn(
                   'w-[40px] h-[70px] absolute left-[-40px] top-[0px] transition-opacity duration-300',
                   {
-                    'opacity-0': !toolbarOpen,
+                    'opacity-0 pointer-events-none': !toolbarOpen,
                     'opacity-100': toolbarOpen,
                   },
                 )}
@@ -235,6 +235,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                           size="icon"
                           className="rounded-full"
                           onClick={(e) => {
+                            if (!toolbarOpen) {
+                              return
+                            }
                             clickOnNewNodeButton(
                               'trigger',
                               stepName,
@@ -260,6 +263,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                             size="icon"
                             className="rounded-full"
                             onClick={(e) => {
+                              if (!toolbarOpen) {
+                                return
+                              }
                               deleteStep();
                               e.stopPropagation();
                             }}
@@ -276,6 +282,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                             size="icon"
                             className="rounded-full"
                             onClick={(e) => {
+                              if (!toolbarOpen) {
+                                return
+                              }
                               duplicateStep();
                               e.stopPropagation();
                             }}
