@@ -16,6 +16,7 @@ type AutoFormFieldWrapperProps = {
   property: PieceProperty;
   hideDescription?: boolean;
   placeBeforeLabelText?: boolean;
+  disabled: boolean;
   field: ControllerRenderProps<Record<string, any>, string>;
 };
 
@@ -26,6 +27,7 @@ const AutoFormFieldWrapper = ({
   allowDynamicValues,
   propertyKey,
   property,
+  disabled,
   field,
 }: AutoFormFieldWrapperProps) => {
   const form = useFormContext<Action | Trigger>();
@@ -53,13 +55,18 @@ const AutoFormFieldWrapper = ({
         {property.required && <span className="text-destructive">*</span>}
         <span className="grow"></span>
         {allowDynamicValues && (
-          <Toggle pressed={toggled} onPressedChange={(e) => handleChange(e)}>
+          <Toggle
+            pressed={toggled}
+            onPressedChange={(e) => handleChange(e)}
+            disabled={disabled}
+          >
             <SquareFunction />
           </Toggle>
         )}
       </FormLabel>
-      {toggled && (
+      {allowDynamicValues && toggled && (
         <TextInputWithMentions
+          disabled={disabled}
           onChange={field.onChange}
           initialValue={field.value}
         ></TextInputWithMentions>

@@ -9,7 +9,7 @@ import qs from 'qs';
 import { authenticationSession } from '@/lib/authentication-session';
 
 export const API_BASE_URL = 'https://cloud.activepieces.com';
-// export const API_BASE_URL = 'http://localhost:4200';
+//export const API_BASE_URL = 'http://localhost:4200';
 export const API_URL = `${API_BASE_URL}/api`;
 
 const disallowedRoutes = [
@@ -30,14 +30,17 @@ function request<TResponse>(
   url: string,
   config: AxiosRequestConfig = {},
 ): Promise<TResponse> {
+  const resolvedUrl = !isUrlRelative(url) ? url : `${API_URL}${url}`;
+  const isApWebsite = resolvedUrl.startsWith(API_URL);
   return axios({
-    url: !isUrlRelative(url) ? url : `${API_URL}${url}`,
+    url: resolvedUrl,
     ...config,
     headers: {
       ...config.headers,
-      Authorization: disallowedRoutes.includes(url)
-        ? undefined
-        : `Bearer ${authenticationSession.getToken()}`,
+      Authorization:
+        disallowedRoutes.includes(url) || !isApWebsite
+          ? undefined
+          : `Bearer ${authenticationSession.getToken()}`,
     },
   }).then((response) => response.data as TResponse);
 }
@@ -67,10 +70,15 @@ export const api = {
         });
       },
     }),
-  post: <TResponse, TBody = unknown>(url: string, body?: TBody) =>
+  post: <TResponse, TBody = unknown, TParams = unknown>(
+    url: string,
+    body?: TBody,
+    params?: TParams,
+  ) =>
     request<TResponse>(url, {
       method: 'POST',
       data: body,
       headers: { 'Content-Type': 'application/json' },
+      params: params,
     }),
 };

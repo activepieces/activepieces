@@ -1,6 +1,13 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import { CheckIcon, ChevronDown, EllipsisVertical, Import, Plus, Zap } from 'lucide-react';
+import {
+  CheckIcon,
+  ChevronDown,
+  EllipsisVertical,
+  Import,
+  Plus,
+  Workflow,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,6 +18,12 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FolderBadge } from '@/features/folders/component/folder-badge';
@@ -18,19 +31,12 @@ import { FolderFilterList } from '@/features/folders/component/folder-filter-lis
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { FlowStatus, FlowTemplate, PopulatedFlow } from '@activepieces/shared';
+import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from './flow-actions-menu';
 import { FlowStatusToggle } from './flow-status-toggle';
 import { ImportFlowDialog } from './import-flow-dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { SelectFlowTemplateDialog } from './select-flow-template-dialog';
-import { templatesApi } from '@/features/templates/lib/templates-api';
 
 const filters: DataTableFilter[] = [
   {
@@ -224,7 +230,7 @@ const FlowsTable = () => {
                     onSelect={(e) => e.preventDefault()}
                     disabled={isCreateFlowPending}
                   >
-                    <Zap className="h-4 w-4 me-2" />
+                    <Workflow className="h-4 w-4 me-2" />
                     <span>Use a template</span>
                   </DropdownMenuItem>
                 </SelectFlowTemplateDialog>

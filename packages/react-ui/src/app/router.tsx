@@ -3,9 +3,10 @@ import { Navigate, createBrowserRouter } from 'react-router-dom';
 import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
 
 import { FlowsPage } from '../app/routes/flows';
-import { authenticationSession } from '../lib/authentication-session';
 
+import { AllowOnlyLoggedInUserOnlyGuard } from './components/allow-logged-in-user-only-guard';
 import { DashboardContainer } from './components/dashboard-container';
+import { PlatformAdminContainer } from './components/platform-admin-container';
 import NotFoundPage from './routes/404-page';
 import { ChangePasswordPage } from './routes/change-password';
 import AppConnectionsPage from './routes/connections';
@@ -13,7 +14,13 @@ import { FlowBuilderPage } from './routes/flows/id';
 import { ResetPasswordPage } from './routes/forget-password';
 import IssuesPage from './routes/issues';
 import PlansPage from './routes/plans';
+import PlatformAppearancePage from './routes/platform/appearance';
+import PlatformPiecesPage from './routes/platform/pieces';
+import ProjectsPage from './routes/platform/projects';
+import TemplatesPage from './routes/platform/templates';
+import UsersPage from './routes/platform/users';
 import FlowsRunPage from './routes/runs';
+import { FlowRunPage } from './routes/runs/id';
 import AlertsPage from './routes/settings/alerts';
 import AppearancePage from './routes/settings/appearance';
 import PiecesPage from './routes/settings/pieces';
@@ -21,13 +28,6 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
-
-const AllowOnlyLoggedIn = ({ children }: { children: React.ReactNode }) => {
-  if (!authenticationSession.isLoggedIn()) {
-    return <Navigate to="/sign-in" replace />;
-  }
-  return children;
-};
 
 export const router = createBrowserRouter([
   {
@@ -45,17 +45,25 @@ export const router = createBrowserRouter([
   {
     path: '/flows/:flowId',
     element: (
-      <AllowOnlyLoggedIn>
+      <AllowOnlyLoggedInUserOnlyGuard>
         <FlowBuilderPage />
-      </AllowOnlyLoggedIn>
+      </AllowOnlyLoggedInUserOnlyGuard>
+    ),
+  },
+  {
+    path: '/runs/:runId',
+    element: (
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <FlowRunPage />
+      </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
   {
     path: '/templates/:templateId',
     element: (
-      <AllowOnlyLoggedIn>
+      <AllowOnlyLoggedInUserOnlyGuard>
         <ShareTemplatePage />
-      </AllowOnlyLoggedIn>
+      </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
   {
@@ -165,5 +173,53 @@ export const router = createBrowserRouter([
   {
     path: '/404',
     element: <NotFoundPage />,
+  },
+  {
+    path: '/platform/appearance',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformAppearancePage />
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/pieces',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformPiecesPage />
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/projects',
+    element: (
+      <PlatformAdminContainer>
+        <ProjectsPage />
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/templates',
+    element: (
+      <PlatformAdminContainer>
+        <TemplatesPage />
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/users',
+    element: (
+      <PlatformAdminContainer>
+        <UsersPage />
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform',
+    element: (
+      <PlatformAdminContainer>
+        <Navigate to="/platform/projects" />
+      </PlatformAdminContainer>
+    ),
   },
 ]);

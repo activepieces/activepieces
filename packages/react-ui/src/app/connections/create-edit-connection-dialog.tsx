@@ -64,7 +64,7 @@ const CreateOrEditConnectionDialog = React.memo(
       piece.auth?.type === PropertyType.CUSTOM_AUTH
         ? Type.Object({
             request: Type.Object({
-              value: formUtils.buildPieceSchema(
+              value: formUtils.buildSchema(
                 (piece.auth as CustomAuthProperty<any>).props,
               ),
             }),
@@ -118,7 +118,7 @@ const CreateOrEditConnectionDialog = React.memo(
           }
         } else {
           toast(INTERNAL_ERROR_TOAST);
-          console.log(response);
+          console.error(response);
         }
       },
     });
@@ -131,7 +131,7 @@ const CreateOrEditConnectionDialog = React.memo(
       >
         <DialogContent
           onInteractOutside={(e) => e.preventDefault()}
-          className="max-h-[70vh] max-w-[60vw] overflow-y-auto"
+          className="max-h-[70vh] min-w-[800px] overflow-y-auto"
         >
           <DialogHeader>
             <DialogTitle>Create {piece.displayName} Connection</DialogTitle>

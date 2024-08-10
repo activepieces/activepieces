@@ -28,6 +28,7 @@ import { LoopStepPlaceHolder } from './nodes/loop-step-placeholder';
 import { StepPlaceHolder } from './nodes/step-holder-placeholder';
 import { ApStepNode } from './nodes/step-node';
 import { TestFlowWidget } from './test-flow-widget';
+
 function useContainerSize(
   setSize: (size: { width: number; height: number }) => void,
   containerRef: React.RefObject<HTMLDivElement>,
@@ -107,6 +108,8 @@ const FlowCanvas = React.memo(() => {
           onNodesChange={onNodesChange}
           edges={edges}
           draggable={false}
+          edgesFocusable={false}
+          elevateEdgesOnSelect={false}
           onEdgesChange={onEdgesChange}
           maxZoom={1.5}
           minZoom={0.5}
@@ -117,10 +120,12 @@ const FlowCanvas = React.memo(() => {
           nodesConnectable={false}
           elementsSelectable={true}
           nodesDraggable={false}
+          nodesFocusable={false}
           fitViewOptions={{
             includeHiddenNodes: false,
             minZoom: 0.5,
             maxZoom: 1.2,
+            nodes: nodes.slice(0, 5),
             duration: 0,
           }}
         >

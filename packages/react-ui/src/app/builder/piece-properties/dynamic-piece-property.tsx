@@ -3,36 +3,33 @@ import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { SearchableSelect } from '@/components/custom/searchable-select';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { DropdownState } from '@activepieces/pieces-framework';
+import { PiecePropertyMap } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
-type SelectPiecePropertyProps = {
+import { AutoPropertiesFormComponent } from './auto-properties-form';
+
+type DynamicPropertiesProps = {
   refreshers: string[];
   propertyName: string;
-  initial: React.Key;
-  onChange: (value: unknown | undefined) => void;
+  disabled: boolean;
 };
-const SelectPieceProperty = React.memo((props: SelectPiecePropertyProps) => {
+const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   const [flowVersion] = useBuilderStateContext((state) => [state.flowVersion]);
   const form = useFormContext<Action | Trigger>();
 
-  const [loading, setLoading] = useState(false);
+  const [propertyMap, setPropertyMap] = useState<PiecePropertyMap | undefined>(
+    undefined,
+  );
   const newRefreshers = [...props.refreshers, 'auth'];
-  const [dropdownState, setDropdownState] = useState<DropdownState<unknown>>({
-    disabled: false,
-    placeholder: 'Select a option',
-    options: [],
-  });
 
-  const { mutate } = useMutation<
-    DropdownState<unknown>,
+  const { mutate, isPending } = useMutation<
+    PiecePropertyMap,
     Error,
     Record<string, unknown>
   >({
     mutationFn: async (input) => {
-      setLoading(true);
       const { settings } = form.getValues();
       const actionOrTriggerName = settings.actionName ?? settings.triggerName;
       const { pieceName, pieceVersion, pieceType, packageType } = settings;
@@ -49,8 +46,7 @@ const SelectPieceProperty = React.memo((props: SelectPiecePropertyProps) => {
       });
     },
     onSuccess: (response) => {
-      setLoading(false);
-      setDropdownState(response);
+      setPropertyMap(response);
     },
     onError: (error) => {
       console.error(error);
@@ -74,22 +70,21 @@ const SelectPieceProperty = React.memo((props: SelectPiecePropertyProps) => {
     mutate(record);
   }, refresherValues);
 
-  const selectOptions = dropdownState.options.map((option) => ({
-    label: option.label,
-    value: option.value as React.Key,
-  }));
-
   return (
-    <SearchableSelect
-      options={selectOptions}
-      disabled={dropdownState.disabled}
-      loading={loading}
-      placeholder={dropdownState.placeholder ?? 'Select a option'}
-      value={props.initial}
-      onChange={(value) => props.onChange(value)}
-    />
+    <>
+      {isPending && <LoadingSpinner></LoadingSpinner>}
+      {!isPending && propertyMap && (
+        <AutoPropertiesFormComponent
+          prefixValue={`settings.input.${props.propertyName}`}
+          props={propertyMap}
+          useMentionTextInput={true}
+          disabled={props.disabled}
+          allowDynamicValues={true}
+        ></AutoPropertiesFormComponent>
+      )}
+    </>
   );
 });
 
-SelectPieceProperty.displayName = 'SelectPieceProperty';
-export { SelectPieceProperty };
+DynamicProperties.displayName = 'DynamicProperties';
+export { DynamicProperties };

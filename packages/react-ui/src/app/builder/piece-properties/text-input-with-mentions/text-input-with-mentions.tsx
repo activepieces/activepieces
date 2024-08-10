@@ -8,7 +8,7 @@ import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { flowHelper } from '@activepieces/shared';
+import { flowHelper, isNil } from '@activepieces/shared';
 
 import './tip-tap.css';
 
@@ -18,9 +18,10 @@ import { textMentionUtils } from './text-input-utils';
 
 type TextInputWithMentionsProps = {
   className?: string;
-  initialValue?: string;
+  initialValue?: unknown;
   onChange: (value: string) => void;
   placeholder?: string;
+  disabled?: boolean;
 };
 const extensions = (placeholder?: string) => {
   return [
@@ -48,14 +49,29 @@ const extensions = (placeholder?: string) => {
   ];
 };
 
+function convertToText(value: unknown): string {
+  if (isNil(value)) {
+    return '';
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return value.toString();
+  }
+  return JSON.stringify(value);
+}
+
 export const TextInputWithMentions = ({
   className,
   initialValue,
   onChange,
+  disabled,
   placeholder,
 }: TextInputWithMentionsProps) => {
-  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
-  const steps = flowHelper.getAllSteps(flowVersion.trigger);
+  const steps = useBuilderStateContext((state) =>
+    flowHelper.getAllSteps(state.flowVersion.trigger),
+  );
   const stepsMetadata = piecesHooks
     .useStepsMetadata(steps)
     .map((res) => res.data);
@@ -75,12 +91,13 @@ export const TextInputWithMentions = ({
 
   const parentContent = [
     textMentionUtils.convertTextToTipTapJsonContent(
-      initialValue ?? '',
+      convertToText(initialValue),
       steps,
       stepsMetadata,
     ),
   ];
   const editor = useEditor({
+    editable: !disabled,
     extensions: extensions(placeholder),
     content: {
       type: 'doc',

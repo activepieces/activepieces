@@ -1,0 +1,136 @@
+<ap-dialog-title-template i18n>HTTP Request Copilot
+  <span class="ap-typography-caption ap-text-primary ap-mt-1">BETA</span>
+</ap-dialog-title-template>
+
+<mat-dialog-content>
+  <div class="ap-max-w-[40.625rem]">
+    <mat-stepper linear #stepper>
+      <mat-step
+        [completed]="(generatedHttpRequest$ | async) !== undefined"
+        [editable]="false"
+      >
+        <ng-template matStepLabel>Describe Your Request</ng-template>
+        <ng-container *ngTemplateOutlet="promptTemplate"></ng-container>
+      </mat-step>
+      <mat-step>
+        <ng-template matStepLabel>Review Output</ng-template>
+        <ng-container *ngIf="(error$ | async) === false" class="ap-p-0">
+          <ng-container *ngTemplateOutlet="editTemplate"></ng-container>
+        </ng-container>
+        <ng-container *ngIf="(error$ | async) === true">
+          <ng-container *ngTemplateOutlet="errorResult"></ng-container>
+        </ng-container>
+      </mat-step>
+    </mat-stepper>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" i18n>
+      Close
+    </ap-button>
+    <ap-button
+      *ngIf="
+        (generatedHttpRequest$ | async) === undefined ||
+        (generatedHttpRequest$ | async) === null
+      "
+      cdkFocusInitial
+      btnSize="default"
+      btnColor="primary"
+      (click)="prompt()"
+      [loading]="loading$ | async | defaultFalse"
+      i18n
+    >
+      Next
+    </ap-button>
+    <ap-button
+      *ngIf="
+        (generatedHttpRequest$ | async) !== undefined &&
+        (generatedHttpRequest$ | async) !== null &&
+        (error$ | async) !== true
+      "
+      cdkFocusInitial
+      btnSize="default"
+      btnColor="primary"
+      [disabled]="loading$ | async | defaultFalse"
+      (click)="useGeneratedHttpRequest()"
+      i18n
+    >
+      Use Generated Request
+    </ap-button>
+  </div>
+</mat-dialog-actions>
+
+<ng-template #promptTemplate>
+  <div class="ap-typography-body-1 ap-text-description ap-mb-4" i18n>
+    Let AI generate an HTTP request for this step.
+  </div>
+  <ng-container [ngTemplateOutlet]="promptFormTemplate"></ng-container>
+</ng-template>
+
+<ng-template #errorResult>
+  <div class="ap-typography-body-1 ap-text-danger">
+    An error occurred while generating the request.
+  </div>
+</ng-template>
+
+<ng-template #editTemplate>
+  <div class="ap-typography-body-1 ap-text-description ap-mb-4" i18n>
+    Here is the AI generated request by your description. Click the button below
+    to use it in the HTTP step.
+  </div>
+  <ng-template #requestBodyResult>{{ body$ | async | json }}</ng-template>
+  <div class="ap-mb-4">
+    <div
+      class="ap-flex ap-gap-2 thin-scrollbars ap-text-sm ap-px-4 ap-pt-4 !ap-bg-gray-card"
+    >
+      <strong class="ap-text-primary">{{ method$ | async }}</strong>
+      <pre>{{ url$ | async }}</pre>
+    </div>
+    <pre
+      *ngIf="prisimFix === false"
+      class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card"
+    ><code class="language-js"><ng-container *ngTemplateOutlet="requestBodyResult"> </ng-container></code></pre>
+    <pre
+      *ngIf="prisimFix === true"
+      class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card"
+    ><code class="language-js"><ng-container *ngTemplateOutlet="requestBodyResult"> </ng-container></code></pre>
+  </div>
+</ng-template>
+
+<ng-container *ngIf="promptOperation$ | async"></ng-container>
+
+<ng-template #promptFormTemplate let-reprompt="reprompt">
+  <form
+    class="ap-flex ap-flex-col ap-gap-2"
+    [formGroup]="promptForm"
+    (submit)="prompt()"
+  >
+    <div class="ap-flex ap-items-center ap-gap-2">
+      <div class="smaller-input ap-flex ap-flex-col ap-gap-2 ap-flex-grow">
+        <mat-form-field
+          class="ap-w-full"
+          appearance="outline"
+          subscriptSizing="dynamic"
+        >
+          <mat-label i18n> Prompt </mat-label>
+          <textarea
+            class="!ap-resize-none"
+            cdkFocusInitial
+            (keydown.enter)="$event.preventDefault(); $event.stopPropagation()"
+            (keyup.enter)="prompt()"
+            [formControl]="promptForm.controls.prompt"
+            matInput
+            type="text"
+            rows="4"
+          ></textarea>
+
+          <mat-error *ngIf="promptForm.controls.prompt.invalid" i18n
+            >Prompt is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+  </form>
+</ng-template>

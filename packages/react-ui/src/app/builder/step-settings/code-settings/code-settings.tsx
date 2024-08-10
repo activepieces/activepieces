@@ -39,6 +39,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
             <FormLabel>Inputs</FormLabel>
             <ApMarkdown markdown={markdown} />
             <DictionaryProperty
+              disabled={readonly}
               values={field.value}
               onChange={field.onChange}
             ></DictionaryProperty>

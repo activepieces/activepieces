@@ -90,9 +90,7 @@ const BuilderPublishButton = React.memo(() => {
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {isPublishedVersion
-                ? 'Latest version is published'
-                : 'Publishing...'}
+              {isPublishedVersion ? 'Latest version is published' : 'Publish'}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

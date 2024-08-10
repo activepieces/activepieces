@@ -58,16 +58,16 @@ const TestActionSection = React.memo(
         if (stepResponse.success) {
           setErrorMessage(undefined);
           form.setValue(
-            'settings.inputUiInfo',
-            {
-              ...formValues.settings.inputUiInfo,
-              currentSelectedData: stepResponse.output,
-              lastTestDate: dayjs().toISOString(),
-            },
+            'settings.inputUiInfo.currentSelectedData',
+            stepResponse.output,
+            { shouldValidate: true },
+          );
+          form.setValue(
+            'settings.inputUiInfo.lastTestDate',
+            dayjs().toISOString(),
             { shouldValidate: true },
           );
         } else {
-          console.log(stepResponse);
           setErrorMessage(
             testStepUtils.formatErrorMessage(
               stepResponse.output?.toString() ||
@@ -75,6 +75,7 @@ const TestActionSection = React.memo(
             ),
           );
         }
+
         setLastTestDate(dayjs().toISOString());
       },
       onError: (error) => {

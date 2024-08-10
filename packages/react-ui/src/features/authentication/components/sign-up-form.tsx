@@ -36,8 +36,9 @@ const SignUpSchema = Type.Object({
     errorMessage: 'Last name is required',
   }),
   email: Type.String({
-    format: 'email',
-    errorMessage: 'Email is required',
+    errorMessage: 'Email is invalid',
+    pattern:
+      '^[a-zA-Z0-9.!#$%&’+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)$',
   }),
   password: Type.String({
     errorMessage: 'Password is required',
@@ -192,7 +193,7 @@ const SignUpForm: React.FC = () => {
                   {...field}
                   required
                   id="email"
-                  type="text"
+                  type="email"
                   placeholder="email@activepieces.com"
                   className="rounded-sm"
                 />

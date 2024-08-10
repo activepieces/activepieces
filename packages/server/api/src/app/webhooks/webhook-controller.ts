@@ -83,10 +83,25 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
     const payload = await convertRequest(request)
     const requestId = apId()
     const synchronousHandlerId = async ? null : webhookResponseWatcher.getServerId()
+    if (isNil(flow)) {
+        return {
+            status: StatusCodes.GONE,
+            body: {},
+            headers: {},
+        }
+    }
+    if (flow.status !== FlowStatus.ENABLED && !simulate) {
+        return {
+            status: StatusCodes.NOT_FOUND,
+            body: {},
+            headers: {},
+        }
+    }
     await flowQueue.add({
         id: requestId,
         type: JobType.WEBHOOK,
         data: {
+            projectId: flow.projectId,
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             requestId,
             synchronousHandlerId,

@@ -13,9 +13,9 @@ import {
   BranchActionSchema,
   BranchOperator,
   CodeActionSchema,
-  ExactPieceTrigger,
   LoopOnItemsActionSchema,
   PieceActionSchema,
+  PieceTrigger,
   Trigger,
   TriggerType,
   ValidBranchCondition,
@@ -25,6 +25,7 @@ export const formUtils = {
   buildPieceDefaultValue: (
     selectedStep: Action | Trigger,
     piece: PieceMetadata | null,
+    includeCurrentInput: boolean,
   ): Action | Trigger => {
     const { type } = selectedStep;
     switch (type) {
@@ -76,7 +77,7 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep(props, input);
+        const defaultValues = getDefaultValueForStep(props, includeCurrentInput ? input : {});
         return {
           ...selectedStep,
           settings: {
@@ -92,7 +93,7 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep(props, input);
+        const defaultValues = getDefaultValueForStep(props, includeCurrentInput ? input : {});
 
         return {
           ...selectedStep,
@@ -135,6 +136,14 @@ export const formUtils = {
       case ActionType.CODE:
         return CodeActionSchema;
       case ActionType.PIECE: {
+        const inputSchema =
+          piece &&
+            actionNameOrTriggerName &&
+            piece.actions[actionNameOrTriggerName]
+            ? formUtils.buildSchema(
+              piece.actions[actionNameOrTriggerName].props,
+            )
+            : Type.Object({});
         return Type.Composite([
           PieceActionSchema,
           Type.Object({
@@ -142,14 +151,7 @@ export const formUtils = {
               actionName: Type.String({
                 minLength: 1,
               }),
-              input:
-                piece &&
-                actionNameOrTriggerName &&
-                piece.actions[actionNameOrTriggerName]
-                  ? formUtils.buildSchema(
-                      piece.actions[actionNameOrTriggerName].props,
-                    )
-                  : Type.Object({}),
+              input: inputSchema,
             }),
           }),
         ]);
@@ -157,16 +159,27 @@ export const formUtils = {
       case TriggerType.PIECE: {
         const formSchema =
           piece &&
-          actionNameOrTriggerName &&
-          piece.triggers[actionNameOrTriggerName]
+            actionNameOrTriggerName &&
+            piece.triggers[actionNameOrTriggerName]
             ? formUtils.buildSchema(
-                piece.triggers[actionNameOrTriggerName].props,
-              )
+              piece.triggers[actionNameOrTriggerName].props,
+            )
             : Type.Object({});
-        return ExactPieceTrigger(formSchema);
+        return Type.Composite([
+          PieceTrigger,
+          Type.Object({
+            settings: Type.Object({
+              triggerName: Type.String({
+                minLength: 1,
+              }),
+              input: formSchema,
+            }),
+          }),
+        ]);
       }
-      default:
+      default: {
         throw new Error('Unsupported type: ' + type);
+      }
     }
   },
   buildSchema: (props: PiecePropertyMap) => {
@@ -206,9 +219,12 @@ export const formUtils = {
           break;
         case PropertyType.NUMBER:
           // Because it could be a variable
-          propsSchema[name] = Type.String({
-            minLength: property.required ? 1 : undefined,
-          });
+          propsSchema[name] = Type.Union([
+            Type.String({
+              minLength: property.required ? 1 : undefined,
+            }),
+            Type.Number(),
+          ]);
           break;
         case PropertyType.STATIC_DROPDOWN:
           propsSchema[name] = nonNullableUnknownPropType;
@@ -296,27 +312,33 @@ function getDefaultValueForStep(
       case PropertyType.LONG_TEXT:
       case PropertyType.FILE:
       case PropertyType.CHECKBOX:
-      case PropertyType.NUMBER:
       case PropertyType.STATIC_DROPDOWN:
       case PropertyType.DROPDOWN:
       case PropertyType.BASIC_AUTH:
       case PropertyType.CUSTOM_AUTH:
       case PropertyType.SECRET_TEXT:
       case PropertyType.OAUTH2:
-      case PropertyType.ARRAY:
-      case PropertyType.OBJECT:
+      case PropertyType.ARRAY: {
+        defaultValues[name] = input[name] ?? property.defaultValue;
+        break;
+      }
       case PropertyType.JSON: {
-        defaultValues[name] = input[name] ?? property.defaultValue ?? '';
+        defaultValues[name] = input[name] ?? property.defaultValue;
+        break;
+      }
+      case PropertyType.NUMBER: {
+        defaultValues[name] = input[name] ?? property.defaultValue;
         break;
       }
       case PropertyType.MULTI_SELECT_DROPDOWN:
-        defaultValues[name] = [];
+        defaultValues[name] = input[name] ?? property.defaultValue ?? [];
         break;
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-        defaultValues[name] = [];
+        defaultValues[name] = input[name] ?? property.defaultValue ?? [];
         break;
+      case PropertyType.OBJECT:
       case PropertyType.DYNAMIC:
-        defaultValues[name] = {};
+        defaultValues[name] = input[name] ?? property.defaultValue ?? {};
         break;
     }
   }

@@ -24,6 +24,8 @@ module.exports = {
       colors: {
         warning: {
           DEFAULT: 'hsl(var(--warning))',
+          100: 'hsl(var(--warning-100))',
+          300: 'hsl(var(--warning-300))',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -33,6 +35,8 @@ module.exports = {
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
+          100: 'hsl(var(--primary-100))',
+          300: 'hsl(var(--primary-300))',
         },
         success: {
           DEFAULT: 'hsl(var(--success))',

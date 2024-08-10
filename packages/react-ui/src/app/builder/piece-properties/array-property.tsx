@@ -4,6 +4,7 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { FormControl, FormField, FormItem } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Sortable,
   SortableDragHandle,
@@ -15,9 +16,15 @@ import { TextInputWithMentions } from './text-input-with-mentions/text-input-wit
 
 type ArrayPropertyProps = {
   inputName: string;
+  useMentionTextInput: boolean;
+  disabled: boolean;
 };
 
-const ArrayProperty = ({ inputName }: ArrayPropertyProps) => {
+const ArrayProperty = ({
+  inputName,
+  useMentionTextInput,
+  disabled,
+}: ArrayPropertyProps) => {
   const form = useFormContext();
 
   const { fields, append, move, remove } = useFieldArray({
@@ -57,10 +64,19 @@ const ArrayProperty = ({ inputName }: ArrayPropertyProps) => {
                   render={({ field }) => (
                     <FormItem className="grow">
                       <FormControl>
-                        <TextInputWithMentions
-                          initialValue={field.value}
-                          onChange={field.onChange}
-                        ></TextInputWithMentions>
+                        {useMentionTextInput ? (
+                          <TextInputWithMentions
+                            initialValue={field.value}
+                            onChange={field.onChange}
+                            disabled={disabled}
+                          ></TextInputWithMentions>
+                        ) : (
+                          <Input
+                            value={field.value}
+                            disabled={disabled}
+                            onChange={field.onChange}
+                          ></Input>
+                        )}
                       </FormControl>
                     </FormItem>
                   )}
@@ -69,6 +85,7 @@ const ArrayProperty = ({ inputName }: ArrayPropertyProps) => {
                   type="button"
                   variant="outline"
                   size="icon"
+                  disabled={disabled}
                   className="size-8 shrink-0"
                   onClick={() => {
                     remove(index);
@@ -88,6 +105,7 @@ const ArrayProperty = ({ inputName }: ArrayPropertyProps) => {
       <Button
         variant="outline"
         size="sm"
+        disabled={disabled}
         onClick={() => {
           append('');
         }}

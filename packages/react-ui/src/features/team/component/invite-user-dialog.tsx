@@ -75,9 +75,9 @@ type FormSchema = Static<typeof FormSchema>;
 export function InviteUserDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
-  const { data: platform } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { refetch } = userInvitationsHooks.useInvitations();
-  const { data: project } = projectHooks.useCurrentProject();
+  const { project } = projectHooks.useCurrentProject();
   const currentUser = authenticationSession.getCurrentUser();
 
   const { mutate, isPending } = useMutation<
