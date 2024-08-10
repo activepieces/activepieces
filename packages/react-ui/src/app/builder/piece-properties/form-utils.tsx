@@ -2,6 +2,7 @@ import { TSchema, Type } from '@sinclair/typebox';
 
 import {
   CONNECTION_REGEX,
+  OAuth2Props,
   PieceMetadata,
   PieceMetadataModel,
   PiecePropertyMap,
@@ -296,10 +297,11 @@ export const formUtils = {
 
     return Type.Object(propsSchema);
   },
+  getDefaultValueForStep,
 };
 
 function getDefaultValueForStep(
-  props: PiecePropertyMap,
+  props: PiecePropertyMap | OAuth2Props,
   input: Record<string, unknown>,
 ): Record<string, unknown> {
   const defaultValues: Record<string, unknown> = {};
