@@ -66,9 +66,9 @@ const OAuth2ConnectionSettings = ({
 
   const form = useFormContext<{
     request:
-    | UpsertCloudOAuth2Request
-    | UpsertOAuth2Request
-    | UpsertPlatformOAuth2Request;
+      | UpsertCloudOAuth2Request
+      | UpsertOAuth2Request
+      | UpsertPlatformOAuth2Request;
   }>();
 
   const hasCode = form.getValues().request.value.code;
@@ -85,7 +85,11 @@ const OAuth2ConnectionSettings = ({
         shouldValidate: true,
       });
     }
-    form.setValue('request.value.props', formUtils.getDefaultValueForStep(authProperty.props ?? {}, {}), { shouldValidate: true });
+    form.setValue(
+      'request.value.props',
+      formUtils.getDefaultValueForStep(authProperty.props ?? {}, {}),
+      { shouldValidate: true },
+    );
     form.setValue(
       'request.value.client_secret',
       currentOAuth2Type === AppConnectionType.OAUTH2 ? '' : 'FAKE_SECRET',
@@ -116,11 +120,15 @@ const OAuth2ConnectionSettings = ({
     const hasClientSecret = !isNil(clientSecret);
     setReadyToConect(
       baseCriteria &&
-      (currentOAuth2Type !== AppConnectionType.OAUTH2 || hasClientSecret),
+        (currentOAuth2Type !== AppConnectionType.OAUTH2 || hasClientSecret),
     );
   }, [watchedForm]);
 
-  function replaceVariables(authUrl: string, scope: string, props: Record<string, unknown>) {
+  function replaceVariables(
+    authUrl: string,
+    scope: string,
+    props: Record<string, unknown>,
+  ) {
     let newAuthUrl = authUrl;
     Object.entries(props).forEach(([key, value]) => {
       newAuthUrl = newAuthUrl.replace(`{${key}}`, value as string);
@@ -132,12 +140,20 @@ const OAuth2ConnectionSettings = ({
     });
     return {
       authUrl: newAuthUrl,
-      scope: newScope
-    }
+      scope: newScope,
+    };
   }
 
-  async function openPopup(redirectUrl: string, clientId: string, props: Record<string, unknown> | undefined) {
-    const { authUrl, scope } = replaceVariables(authProperty.authUrl, authProperty.scope.join(' '), props ?? {});
+  async function openPopup(
+    redirectUrl: string,
+    clientId: string,
+    props: Record<string, unknown> | undefined,
+  ) {
+    const { authUrl, scope } = replaceVariables(
+      authProperty.authUrl,
+      authProperty.scope.join(' '),
+      props ?? {},
+    );
     const { code, codeChallenge } = await oauth2Utils.openOAuth2Popup({
       authUrl,
       clientId,
@@ -185,12 +201,14 @@ const OAuth2ConnectionSettings = ({
             ></FormField>
           </>
         )}
-        {authProperty.props && <AutoPropertiesFormComponent
-          prefixValue="request.value.props"
-          props={authProperty.props}
-          useMentionTextInput={false}
-          allowDynamicValues={false}
-        />}
+        {authProperty.props && (
+          <AutoPropertiesFormComponent
+            prefixValue="request.value.props"
+            props={authProperty.props}
+            useMentionTextInput={false}
+            allowDynamicValues={false}
+          />
+        )}
 
         <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-ful">
           <div className="rounded-full border border-solid p-1 flex items-center justify-center">

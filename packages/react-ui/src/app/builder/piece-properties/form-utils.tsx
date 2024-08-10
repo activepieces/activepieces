@@ -78,7 +78,10 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep(props, includeCurrentInput ? input : {});
+        const defaultValues = getDefaultValueForStep(
+          props,
+          includeCurrentInput ? input : {},
+        );
         return {
           ...selectedStep,
           settings: {
@@ -94,7 +97,10 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep(props, includeCurrentInput ? input : {});
+        const defaultValues = getDefaultValueForStep(
+          props,
+          includeCurrentInput ? input : {},
+        );
 
         return {
           ...selectedStep,
@@ -139,11 +145,11 @@ export const formUtils = {
       case ActionType.PIECE: {
         const inputSchema =
           piece &&
-            actionNameOrTriggerName &&
-            piece.actions[actionNameOrTriggerName]
+          actionNameOrTriggerName &&
+          piece.actions[actionNameOrTriggerName]
             ? formUtils.buildSchema(
-              piece.actions[actionNameOrTriggerName].props,
-            )
+                piece.actions[actionNameOrTriggerName].props,
+              )
             : Type.Object({});
         return Type.Composite([
           PieceActionSchema,
@@ -160,11 +166,11 @@ export const formUtils = {
       case TriggerType.PIECE: {
         const formSchema =
           piece &&
-            actionNameOrTriggerName &&
-            piece.triggers[actionNameOrTriggerName]
+          actionNameOrTriggerName &&
+          piece.triggers[actionNameOrTriggerName]
             ? formUtils.buildSchema(
-              piece.triggers[actionNameOrTriggerName].props,
-            )
+                piece.triggers[actionNameOrTriggerName].props,
+              )
             : Type.Object({});
         return Type.Composite([
           PieceTrigger,
