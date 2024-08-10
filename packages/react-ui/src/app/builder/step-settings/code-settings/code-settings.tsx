@@ -13,6 +13,11 @@ import { CodeAction } from '@activepieces/shared';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 
 import { CodeEditior } from './code-editior';
+import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
+import { TooltipTrigger } from '@radix-ui/react-tooltip';
+import { Button } from '@/components/ui/button';
+import { LeftSideBarType, useBuilderStateContext } from '../../builder-hooks';
+import { Bot } from 'lucide-react';
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below.
@@ -28,40 +33,58 @@ type CodeSettingsProps = {
 
 const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const form = useFormContext<CodeAction>();
+  const [setLeftSidebar] = useBuilderStateContext((state) => [
+    state.setLeftSidebar,
+  ]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <FormField
-        control={form.control}
-        name="settings.input"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Inputs</FormLabel>
-            <ApMarkdown markdown={markdown} />
-            <DictionaryProperty
-              disabled={readonly}
-              values={field.value}
-              onChange={field.onChange}
-            ></DictionaryProperty>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="settings.sourceCode"
-        render={({ field }) => (
-          <FormItem>
-            <CodeEditior
-              sourceCode={field.value}
-              onChange={field.onChange}
-              readonly={readonly}
-            ></CodeEditior>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </div>
+    <>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button onClick={() => setLeftSidebar(LeftSideBarType.CHAT)}>
+            <Bot />
+            <span className="ml-2"> Ask AI </span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          AI chat. Use the Apply button from left sidebar to use the generated
+          code.
+        </TooltipContent>
+      </Tooltip>
+
+      <div className="flex flex-col gap-4">
+        <FormField
+          control={form.control}
+          name="settings.input"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Inputs</FormLabel>
+              <ApMarkdown markdown={markdown} />
+              <DictionaryProperty
+                disabled={readonly}
+                values={field.value}
+                onChange={field.onChange}
+              ></DictionaryProperty>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="settings.sourceCode"
+          render={({ field }) => (
+            <FormItem>
+              <CodeEditior
+                sourceCode={field.value}
+                onChange={field.onChange}
+                readonly={readonly}
+              ></CodeEditior>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </>
   );
 });
 CodeSettings.displayName = 'CodeSettings';

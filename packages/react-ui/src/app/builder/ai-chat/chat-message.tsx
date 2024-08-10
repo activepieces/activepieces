@@ -38,7 +38,6 @@ export const ChatMessage = React.forwardRef<HTMLDivElement, ChatMessageProps>(
                   sourceCode={sourceCode}
                   readonly={true}
                   onChange={() => {}}
-                  skipLineNumbers={true}
                   applyButton={true}
                 ></CodeEditior>
               )}

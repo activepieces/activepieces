@@ -1,5 +1,5 @@
 import { FlowVersionState } from '@activepieces/shared';
-import { Bot, ChevronDown, History, Home, Logs } from 'lucide-react';
+import { ChevronDown, History, Home, Logs } from 'lucide-react';
 import { createSearchParams, Link, useNavigate } from 'react-router-dom';
 
 import { BuilderPublishButton } from './builder-publish-button';
@@ -96,17 +96,6 @@ export const BuilderNavBar = () => {
       </div>
       <div className="grow"></div>
       <div className="flex items-center justify-center gap-4">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              onClick={() => setLeftSidebar(LeftSideBarType.CHAT)}
-            >
-              <Bot />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">AI Chat</TooltipContent>
-        </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
