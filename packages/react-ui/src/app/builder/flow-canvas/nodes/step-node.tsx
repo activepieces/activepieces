@@ -236,7 +236,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                           className="rounded-full"
                           onClick={(e) => {
                             if (!toolbarOpen) {
-                              return
+                              return;
                             }
                             clickOnNewNodeButton(
                               'trigger',
@@ -264,7 +264,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                             className="rounded-full"
                             onClick={(e) => {
                               if (!toolbarOpen) {
-                                return
+                                return;
                               }
                               deleteStep();
                               e.stopPropagation();
@@ -283,7 +283,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                             className="rounded-full"
                             onClick={(e) => {
                               if (!toolbarOpen) {
-                                return
+                                return;
                               }
                               duplicateStep();
                               e.stopPropagation();

@@ -9,7 +9,6 @@ import {
   PieceActionSettings,
   PieceTrigger,
   PieceTriggerSettings,
-  TriggerType,
 } from '@activepieces/shared';
 
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
@@ -31,18 +30,19 @@ const removeAuthFromProps = (
 };
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
-
   const { pieceModel, isLoading } = piecesHooks.usePiece({
     name: props.step.settings.pieceName,
     version: props.step.settings.pieceVersion,
   });
 
-
-  const actionName = (props.step.settings as PieceActionSettings).actionName
-  const selectedAction = actionName ? pieceModel?.actions[actionName] : undefined
-  const triggerName = (props.step.settings as PieceTriggerSettings).triggerName
-  const selectedTrigger = triggerName ? pieceModel?.triggers[triggerName] : undefined
-
+  const actionName = (props.step.settings as PieceActionSettings).actionName;
+  const selectedAction = actionName
+    ? pieceModel?.actions[actionName]
+    : undefined;
+  const triggerName = (props.step.settings as PieceTriggerSettings).triggerName;
+  const selectedTrigger = triggerName
+    ? pieceModel?.triggers[triggerName]
+    : undefined;
 
   const actionPropsWithoutAuth = removeAuthFromProps(
     selectedAction?.props ?? {},
