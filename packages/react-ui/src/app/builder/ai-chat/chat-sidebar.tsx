@@ -7,8 +7,7 @@ import {
 import { useMutation } from '@tanstack/react-query';
 import { ArrowUp, LoaderCircle } from 'lucide-react';
 import { nanoid } from 'nanoid';
-import React, { useState, useEffect } from 'react';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 
 import { LeftSideBarType, useBuilderStateContext } from '../builder-hooks';
@@ -24,6 +23,10 @@ import { toast } from '@/components/ui/use-toast';
 interface ChatMessageType {
   message: string;
   userType: 'user' | 'bot';
+}
+
+interface DefaultEventsMap {
+  [event: string]: (...args: any[]) => void;
 }
 
 const initialMessages: ChatMessageType[] = [
@@ -63,7 +66,7 @@ export const ChatSidebar = () => {
     state.setLeftSidebar,
     state.run,
   ]);
-  const latestMessageRef = React.useRef<HTMLDivElement>(null);
+  const latestMessageRef = useRef<HTMLDivElement>(null);
 
   const socket = useSocket();
 
@@ -91,7 +94,7 @@ export const ChatSidebar = () => {
       setMessages([...messages, { message: inputMessage, userType: 'user' }]);
 
       const request: GenerateCodeRequest = {
-        prompt: inputMessage,
+        prompt: `${inputMessage}. Format the code so each statement is on a new line.`,
         previousContext: messages.map((message) => ({
           role: message.userType === 'user' ? 'user' : 'assistant',
           content: message.message,
