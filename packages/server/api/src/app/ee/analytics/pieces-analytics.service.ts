@@ -10,6 +10,9 @@ import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
 const flowRepo = repoFactory(FlowEntity)
 const flowVersionRepo = repoFactory(FlowVersionEntity)
+const activeProjectsIncludingCodePieces = new Set<string>()
+const activeProjectsExcludingCodePieces = new Set<string>()
+
 export const piecesAnalyticsService = {
     async init(): Promise<void> {
         systemJobHandlers.registerJobHandler(SystemJobName.PIECES_ANALYTICS, piecesAnalyticsHandler)
@@ -51,8 +54,13 @@ async function piecesAnalyticsHandler(): Promise<void> {
                 step.type === ActionType.PIECE || step.type === TriggerType.PIECE || step.type === ActionType.CODE,
         ).map((step) => {
             if (step.type === ActionType.CODE) {
-                logger.info('Code action found in flow')
-                return
+                if (step.settings.sourceCode.packageJson.length > 0) {
+                    activeProjectsIncludingCodePieces.add(flow.projectId)
+                }
+                else {
+                    activeProjectsExcludingCodePieces.add(flow.projectId)
+                }
+                return null
             }
             const clonedStep = step as (PieceTrigger | PieceAction)
             return {
@@ -60,11 +68,13 @@ async function piecesAnalyticsHandler(): Promise<void> {
                 version: clonedStep.settings.pieceVersion,
             }
         })
+
+        logger.info('The number of code pieces with package.json: ', activeProjectsIncludingCodePieces.size)
+        logger.info('The number of code pieces without package.json: ', activeProjectsExcludingCodePieces.size)
+
         for (const piece of pieces) {
             try {
-                if (isNil(piece)) {
-                    continue
-                }
+                if (isNil(piece)) continue
                 const pieceMetadata = await pieceMetadataService.getOrThrow({
                     name: piece.name,
                     version: piece.version,
@@ -75,9 +85,7 @@ async function piecesAnalyticsHandler(): Promise<void> {
                 activeProjects[pieceId].add(flow.projectId)
             }
             catch (e) {
-                if (isNil(piece)) {
-                    continue
-                }
+                if (isNil(piece)) continue
                 logger.error({
                     name: piece.name,
                     version: piece.version,
