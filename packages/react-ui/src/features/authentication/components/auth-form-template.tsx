@@ -34,15 +34,7 @@ const data: {
   },
 };
 
-const Separator = () => {
-  return (
-    <div className="my-4 flex w-full flex-row items-center">
-      <div className="w-1/2 border" />
-      <span className="mx-2 text-sm">OR</span>
-      <div className="w-1/2 border" />
-    </div>
-  );
-};
+
 
 const AuthFormTemplate = React.memo(
   ({ form }: { form: 'signin' | 'signup' }) => {
@@ -56,7 +48,6 @@ const AuthFormTemplate = React.memo(
         </CardHeader>
         <CardContent>
           <ThirdPartyLogin isSignUp={isSignUp} />
-          <Separator />
           {isSignUp ? <SignUpForm /> : <SignInForm />}
         </CardContent>
       </Card>

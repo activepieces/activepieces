@@ -73,7 +73,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
     (window.location.href = '/api/v1/authn/saml/login');
 
   return (
-    <div className="flex flex-col gap-4">
+    <><div className="flex flex-col gap-4">
       {thirdPartyAuthProviders?.google && (
         <Button
           variant="outline"
@@ -109,6 +109,18 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
         </Button>
       )}
     </div>
+    {
+      thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.github || thirdPartyAuthProviders?.saml ?
+        <div className="my-4 flex w-full flex-row items-center">
+          <div className="w-1/2 border" />
+          <span className="mx-2 text-sm">OR</span>
+          <div className="w-1/2 border" />
+      </div> 
+     : null
+    }
+    
+    </>
+    
   );
 });
 
