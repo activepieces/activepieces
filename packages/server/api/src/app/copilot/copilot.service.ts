@@ -7,8 +7,8 @@ import {
 } from 'openai/resources'
 
 type GenerateCodeParams = {
-    prompt: string;
-    previousContext: ChatCompletionMessageParam[];
+    prompt: string
+    previousContext: ChatCompletionMessageParam[]
 }
 
 
