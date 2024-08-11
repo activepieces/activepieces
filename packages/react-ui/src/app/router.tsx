@@ -28,6 +28,7 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+import { FormPage } from './routes/forms';
 
 export const router = createBrowserRouter([
   {
@@ -49,6 +50,14 @@ export const router = createBrowserRouter([
         <FlowBuilderPage />
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
+  },
+  {
+    path: '/forms/:flowId',
+    element: (
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <FormPage />
+      </AllowOnlyLoggedInUserOnlyGuard>
+    ),  
   },
   {
     path: '/runs/:runId',
