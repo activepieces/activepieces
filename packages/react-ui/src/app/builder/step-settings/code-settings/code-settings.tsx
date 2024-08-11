@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -37,11 +37,15 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
     state.setLeftSidebar,
   ]);
 
+  useEffect(() => {
+    return () => setLeftSidebar(LeftSideBarType.NONE);
+  }, [setLeftSidebar]);
+
   return (
     <>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button onClick={() => setLeftSidebar(LeftSideBarType.CHAT)}>
+          <Button onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}>
             <Bot />
             <span className="ml-2"> Ask AI </span>
           </Button>
