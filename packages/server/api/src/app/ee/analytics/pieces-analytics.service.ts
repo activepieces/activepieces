@@ -69,9 +69,6 @@ async function piecesAnalyticsHandler(): Promise<void> {
             }
         })
 
-        logger.info('The number of code pieces with package.json: ', activeProjectsIncludingCodePieces.size)
-        logger.info('The number of code pieces without package.json: ', activeProjectsExcludingCodePieces.size)
-
         for (const piece of pieces) {
             try {
                 if (isNil(piece)) continue
@@ -100,4 +97,6 @@ async function piecesAnalyticsHandler(): Promise<void> {
         })
     }
     logger.info('Synced pieces analytics finished')
+    logger.info('The number of code pieces with package.json: ' + activeProjectsIncludingCodePieces.size)
+    logger.info('The number of code pieces without package.json: ' + activeProjectsExcludingCodePieces.size)
 }
