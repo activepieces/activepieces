@@ -8,6 +8,7 @@ import { FormControl, FormField } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import {
+  OAuth2Props,
   PieceProperty,
   PiecePropertyMap,
   PropertyType,
@@ -22,7 +23,7 @@ import { MultiSelectPieceProperty } from './multi-select-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
 
 type AutoFormProps = {
-  props: PiecePropertyMap;
+  props: PiecePropertyMap | OAuth2Props;
   allowDynamicValues: boolean;
   prefixValue: string;
   markdownVariables?: Record<string, string>;

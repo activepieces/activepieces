@@ -170,10 +170,8 @@ const StepSettingsContainer = React.memo(
         false,
       );
       if (defaultValues.type === TriggerType.PIECE) {
-        const triggerName = defaultValues.settings.triggerName;
         updateTrigger(defaultValues);
       } else {
-        const actionName = defaultValues.settings.actionName;
         updateAction(defaultValues as Action);
       }
     }, [actionName, triggerName]);

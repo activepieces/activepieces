@@ -15,10 +15,10 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { isNil } from '@activepieces/shared';
 
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
-import { isNil } from '../../../../shared/src';
 
 type SelectOption<T> = {
   value: T;
