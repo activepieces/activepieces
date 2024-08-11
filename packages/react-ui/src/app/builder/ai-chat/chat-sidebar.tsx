@@ -92,6 +92,10 @@ export const ChatSidebar = () => {
 
       const request: GenerateCodeRequest = {
         prompt: inputMessage,
+        previousContext: messages.map((message) => ({
+          role: message.userType === 'user' ? 'user' : 'assistant',
+          content: message.message,
+        })),
       };
 
       mutate(request);
