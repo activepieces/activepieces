@@ -5,6 +5,11 @@
 
 
 @layer base {
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
     :root {
         --background: 0 0% 100%;
         --foreground: 224 71.4% 4.1%;
