@@ -1,6 +1,11 @@
 import { Static, Type } from '@sinclair/typebox'
 
+
 export const GenerateCodeRequest = Type.Object({
+    previousContext: Type.Array(Type.Object({
+        role: Type.Union([Type.Literal('user'), Type.Literal('assistant')] ),
+        content: Type.String(),
+    })),
     prompt: Type.String(),
 })
 
