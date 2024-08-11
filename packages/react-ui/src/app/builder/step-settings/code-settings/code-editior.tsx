@@ -1,17 +1,3 @@
-import { javascript } from '@codemirror/lang-javascript';
-import { json } from '@codemirror/lang-json';
-import { githubLight } from '@uiw/codemirror-theme-github';
-import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
-import { BetweenHorizontalEnd, Package } from 'lucide-react';
-import { useState } from 'react';
-
-import { Button } from '@/components/ui/button';
-import {
-  INTERNAL_ERROR_TOAST,
-  toast,
-  UNSAVED_CHANGES_TOAST,
-} from '@/components/ui/use-toast';
-import { cn } from '@/lib/utils';
 import {
   Action,
   ActionType,
@@ -20,9 +6,24 @@ import {
   deepMergeAndCast,
   flowHelper,
 } from '@activepieces/shared';
+import { javascript } from '@codemirror/lang-javascript';
+import { json } from '@codemirror/lang-json';
+import { githubLight } from '@uiw/codemirror-theme-github';
+import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
+import { BetweenHorizontalEnd, Package } from 'lucide-react';
+import { useState } from 'react';
+
+import { useBuilderStateContext } from '../../builder-hooks';
 
 import { AddNpmDialog } from './add-npm-dialog';
-import { useBuilderStateContext } from '../../builder-hooks';
+
+import { Button } from '@/components/ui/button';
+import {
+  INTERNAL_ERROR_TOAST,
+  toast,
+  UNSAVED_CHANGES_TOAST,
+} from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 
 const styleTheme = EditorView.baseTheme({
   '&.cm-editor.cm-focused': {
@@ -141,7 +142,7 @@ const CodeEditior = ({
             onClick={handleApplyButton}
           >
             <BetweenHorizontalEnd className="w-3 h-3" />
-            Apply
+            Apply code
           </Button>
         ) : (
           <AddNpmDialog onAdd={handleAddPackages}>
@@ -152,7 +153,7 @@ const CodeEditior = ({
               onClick={() => {}}
             >
               <Package className="w-3 h-3" />
-              Add
+              Add package
             </Button>
           </AddNpmDialog>
         )}

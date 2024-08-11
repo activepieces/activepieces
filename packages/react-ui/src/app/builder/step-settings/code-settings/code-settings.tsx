@@ -46,7 +46,17 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         name="settings.input"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Inputs</FormLabel>
+            <div className="flex align-center justify-between">
+              <FormLabel className="pt-4">Inputs</FormLabel>
+              <Button
+                variant="ghost"
+                onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}
+                className="flex items-right max-w-max"
+              >
+                <Bot />
+                <span className="ml-2"> Ask AI </span>
+              </Button>
+            </div>
             <ApMarkdown markdown={markdown} />
             <DictionaryProperty
               disabled={readonly}
@@ -57,16 +67,6 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
           </FormItem>
         )}
       />
-      <div className="flex justify-end">
-        <Button
-          variant="ghost"
-          onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}
-          className="flex items-right max-w-max"
-        >
-          <Bot />
-          <span className="ml-2"> Ask AI </span>
-        </Button>
-      </div>
       <FormField
         control={form.control}
         name="settings.sourceCode"
