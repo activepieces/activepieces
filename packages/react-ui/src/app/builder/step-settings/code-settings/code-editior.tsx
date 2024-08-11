@@ -46,9 +46,13 @@ const CodeEditior = ({
   const { code, packageJson } = sourceCode;
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
   const [language, setLanguage] = useState<'typescript' | 'json'>('typescript');
-  const [selectedStep, flowVersion, applyOperation] = useBuilderStateContext(
-    (state) => [state.selectedStep, state.flowVersion, state.applyOperation],
-  );
+  const [selectedStep, flowVersion, refreshSettings, applyOperation] =
+    useBuilderStateContext((state) => [
+      state.selectedStep,
+      state.flowVersion,
+      state.refreshSettings,
+      state.applyOperation,
+    ]);
 
   const extensions = [
     styleTheme,
@@ -103,6 +107,7 @@ const CodeEditior = ({
         settings: { ...step.settings, sourceCode: { code, packageJson } },
       };
       updateAction(newStep);
+      refreshSettings();
     }
   }
 

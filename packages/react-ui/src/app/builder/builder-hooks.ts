@@ -69,6 +69,8 @@ export type BuilderState = {
   allowCanvasPanning: boolean;
   selectedButton: SelectedButtonType | null;
   saving: boolean;
+  settingsRefreshSignal: boolean;
+  refreshSettings: () => void;
   exitRun: () => void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
@@ -120,6 +122,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     allowCanvasPanning: true,
     rightSidebar: RightSideBarType.NONE,
     selectedButton: null,
+    settingsRefreshSignal: false,
+
     removeStepSelection: () =>
       set({ selectedStep: null, rightSidebar: RightSideBarType.NONE }),
     setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
@@ -268,6 +272,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
       set({ insertMention });
     },
+    refreshSettings: () =>
+      set((state) => ({ settingsRefreshSignal: !state.settingsRefreshSignal })),
   }));
 
 export const stepPathToKeyString = (path: StepPathWithName): string => {

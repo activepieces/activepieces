@@ -46,10 +46,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
             <span className="ml-2"> Ask AI </span>
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="bottom">
-          AI chat. Use the Apply button from left sidebar to use the generated
-          code.
-        </TooltipContent>
+        <TooltipContent side="bottom">Use AI to generate code.</TooltipContent>
       </Tooltip>
 
       <div className="flex flex-col gap-4">
