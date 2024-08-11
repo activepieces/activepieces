@@ -18,4 +18,9 @@ export const userInvitationApi = {
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/user-invitations/${id}`);
   },
+  accept(token: string): Promise<{ registered: boolean }> {
+    return api.post<{ registered: boolean }>(`/v1/user-invitations/accept`, {
+      invitationToken: token,
+    });
+  },
 };
