@@ -13,6 +13,9 @@ module.exports = {
     ...createGlobPatternsForDependencies(__dirname),
   ],
   theme: {
+    transitionTimingFunction: {
+      'expand-out': 'cubic-bezier(0.35, 0, 0.25, 1)',
+    },
     container: {
       center: true,
       padding: '2rem',
@@ -73,6 +76,7 @@ module.exports = {
         lg: `var(--radius)`,
         md: `calc(var(--radius) - 2px)`,
         sm: 'calc(var(--radius) - 4px)',
+        xs: 'calc(var(--radius) - 8px)',
       },
       fontFamily: {
         sans: ['var(--font-sans)', ...fontFamily.sans],
@@ -86,10 +90,19 @@ module.exports = {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
+        "fade": {
+          "0%": {
+              opacity: 0
+          },
+          "100%": {
+              opacity: 1
+          },
+      },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'fade': 'fade 0.2s ease-out',
       },
     },
   },
