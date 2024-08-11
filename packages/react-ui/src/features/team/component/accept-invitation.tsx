@@ -1,9 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
+import { HttpStatusCode } from 'axios';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 
+import { api } from '../../../lib/api';
 import { userInvitationApi } from '../lib/user-invitation';
 
 const AcceptInvitation = () => {
@@ -26,8 +29,21 @@ const AcceptInvitation = () => {
         navigate('/sign-in');
       }
     },
-    onError: () => {
+
+    onError: (error) => {
       setIsInvitationLinkValid(false);
+      if (api.isError(error)) {
+        switch (error.response?.status) {
+          case HttpStatusCode.InternalServerError: {
+            console.log(error);
+            toast(INTERNAL_ERROR_TOAST);
+            break;
+          }
+          default: {
+            break;
+          }
+        }
+      }
     },
   });
   useEffect(() => {
