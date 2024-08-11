@@ -48,8 +48,12 @@ async function piecesAnalyticsHandler(): Promise<void> {
         }
         const pieces = flowHelper.getAllSteps(flowVersion.trigger).filter(
             (step) =>
-                step.type === ActionType.PIECE || step.type === TriggerType.PIECE,
+                step.type === ActionType.PIECE || step.type === TriggerType.PIECE || step.type === ActionType.CODE,
         ).map((step) => {
+            if (step.type === ActionType.CODE) {
+                logger.info('Code action found in flow')
+                return
+            }
             const clonedStep = step as (PieceTrigger | PieceAction)
             return {
                 name: clonedStep.settings.pieceName,
@@ -58,6 +62,9 @@ async function piecesAnalyticsHandler(): Promise<void> {
         })
         for (const piece of pieces) {
             try {
+                if (isNil(piece)) {
+                    continue
+                }
                 const pieceMetadata = await pieceMetadataService.getOrThrow({
                     name: piece.name,
                     version: piece.version,
@@ -68,6 +75,9 @@ async function piecesAnalyticsHandler(): Promise<void> {
                 activeProjects[pieceId].add(flow.projectId)
             }
             catch (e) {
+                if (isNil(piece)) {
+                    continue
+                }
                 logger.error({
                     name: piece.name,
                     version: piece.version,
