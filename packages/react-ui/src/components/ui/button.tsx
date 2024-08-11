@@ -63,6 +63,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const Comp = asChild ? Slot : 'button';
 
+    const isMac = /(Mac)/i.test(navigator.userAgent);
+
     React.useEffect(() => {
       if (keyboardShortcut) {
         document.addEventListener('keydown', handleKeyDown);
@@ -101,7 +103,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
               <div className="flex justify-center items-center gap-2">
                 {children}
                 <span className="flex-grow text-xs tracking-widest text-muted-foreground">
-                  ⌘{keyboardShortcut.toString().toLocaleUpperCase()}
+                  {isMac ? '⌘' : 'Ctrl'}{' '}
+                  {keyboardShortcut.toString().toLocaleUpperCase()}
                 </span>
               </div>
             )}
