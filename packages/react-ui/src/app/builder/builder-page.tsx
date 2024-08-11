@@ -135,7 +135,7 @@ const BuilderPage = () => {
             {leftSidebar === LeftSideBarType.RUNS && <FlowRecentRunsList />}
             {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
             {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
-            {leftSidebar === LeftSideBarType.CHAT && <ChatSidebar/>}
+            {leftSidebar === LeftSideBarType.AI_COPILOT && <ChatSidebar/>}
           </ResizablePanel>
           <ResizableHandle
             disabled={leftSidebar === LeftSideBarType.NONE}

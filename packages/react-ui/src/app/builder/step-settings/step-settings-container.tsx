@@ -47,14 +47,14 @@ const StepSettingsContainer = React.memo(
       applyOperation,
       saving,
       flowVersion,
-      settingsRefreshSignal,
+      refreshPieceFormSettings,
     ] = useBuilderStateContext((state) => [
       state.readonly,
       state.exitStepSettings,
       state.applyOperation,
       state.saving,
       state.flowVersion,
-      state.settingsRefreshSignal,
+      state.refreshPieceFormSettings,
     ]);
 
     const defaultValues = useMemo(() => {
@@ -113,16 +113,13 @@ const StepSettingsContainer = React.memo(
     useEffect(() => {
       form.reset(defaultValues);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [settingsRefreshSignal]);
+    }, [refreshPieceFormSettings]);
 
     useUpdateEffect(() => {
       form.setValue('valid', form.formState.isValid);
     }, [form.formState.isValid]);
 
-    // could we add a single useWatch for all?
-    // const formData = useWatch({
-    //   control: form.control,
-    // });
+    // Watch changes in form execluding actionName or triggerName from watching // 
     const inputChanges = useWatch({
       name: 'settings.input',
       control: form.control,
@@ -252,18 +249,18 @@ const StepSettingsContainer = React.memo(
                   {[ActionType.CODE, ActionType.PIECE].includes(
                     modifiedStep.type as ActionType,
                   ) && (
-                    <ActionErrorHandlingForm
-                      hideContinueOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.continueOnFailure?.hide
-                      }
-                      disabled={readonly}
-                      hideRetryOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.retryOnFailure?.hide
-                      }
-                    ></ActionErrorHandlingForm>
-                  )}
+                      <ActionErrorHandlingForm
+                        hideContinueOnFailure={
+                          modifiedStep.settings.errorHandlingOptions
+                            ?.continueOnFailure?.hide
+                        }
+                        disabled={readonly}
+                        hideRetryOnFailure={
+                          modifiedStep.settings.errorHandlingOptions
+                            ?.retryOnFailure?.hide
+                        }
+                      ></ActionErrorHandlingForm>
+                    )}
                 </div>
               </ScrollArea>
             </ResizablePanel>
