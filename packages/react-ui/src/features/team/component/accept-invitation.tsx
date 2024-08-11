@@ -2,9 +2,10 @@ import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { LoadingSpinner } from '@/components/ui/spinner';
+
 import { userInvitationApi } from '../lib/user-invitation';
 
-import { LoadingSpinner } from '@/components/ui/spinner';
 const AcceptInvitation = () => {
   const [isInvitationLinkValid, setIsInvitationLinkValid] = useState(true);
   const navigate = useNavigate();

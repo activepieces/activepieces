@@ -1,5 +1,8 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 
+import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
+import { AcceptInvitation } from '@/features/team/component/accept-invitation';
+
 import { FlowsPage } from '../app/routes/flows';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './components/allow-logged-in-user-only-guard';
@@ -26,9 +29,6 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
-
-import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
-import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 
 export const router = createBrowserRouter([
   {

@@ -34,8 +34,6 @@ const data: {
   },
 };
 
-
-
 const AuthFormTemplate = React.memo(
   ({ form }: { form: 'signin' | 'signup' }) => {
     const isSignUp = form === 'signup';
