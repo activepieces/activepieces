@@ -73,42 +73,53 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
     (window.location.href = '/api/v1/authn/saml/login');
 
   return (
-    <div className="flex flex-col gap-4">
-      {thirdPartyAuthProviders?.google && (
-        <Button
-          variant="outline"
-          className="w-full rounded-sm"
-          onClick={(e) =>
-            handleProviderClick(e, ThirdPartyAuthnProviderEnum.GOOGLE)
-          }
-        >
-          <ThirdPartyIcon icon={GoogleIcon} />
-          Sign {isSignUp ? 'up' : 'in'} with Google
-        </Button>
-      )}
-      {thirdPartyAuthProviders?.github && (
-        <Button
-          variant="outline"
-          className="w-full rounded-sm"
-          onClick={(e) =>
-            handleProviderClick(e, ThirdPartyAuthnProviderEnum.GITHUB)
-          }
-        >
-          <ThirdPartyIcon icon={Github} />
-          Sign {isSignUp ? 'up' : 'in'} with Github
-        </Button>
-      )}
-      {thirdPartyAuthProviders?.saml && (
-        <Button
-          variant="outline"
-          className="w-full rounded-sm"
-          onClick={signInWithSaml}
-        >
-          <ThirdPartyIcon icon={SamlIcon} />
-          Sign {isSignUp ? 'up' : 'in'} with SAML
-        </Button>
-      )}
-    </div>
+    <>
+      <div className="flex flex-col gap-4">
+        {thirdPartyAuthProviders?.google && (
+          <Button
+            variant="outline"
+            className="w-full rounded-sm"
+            onClick={(e) =>
+              handleProviderClick(e, ThirdPartyAuthnProviderEnum.GOOGLE)
+            }
+          >
+            <ThirdPartyIcon icon={GoogleIcon} />
+            Sign {isSignUp ? 'up' : 'in'} with Google
+          </Button>
+        )}
+        {thirdPartyAuthProviders?.github && (
+          <Button
+            variant="outline"
+            className="w-full rounded-sm"
+            onClick={(e) =>
+              handleProviderClick(e, ThirdPartyAuthnProviderEnum.GITHUB)
+            }
+          >
+            <ThirdPartyIcon icon={Github} />
+            Sign {isSignUp ? 'up' : 'in'} with Github
+          </Button>
+        )}
+        {thirdPartyAuthProviders?.saml && (
+          <Button
+            variant="outline"
+            className="w-full rounded-sm"
+            onClick={signInWithSaml}
+          >
+            <ThirdPartyIcon icon={SamlIcon} />
+            Sign {isSignUp ? 'up' : 'in'} with SAML
+          </Button>
+        )}
+      </div>
+      {thirdPartyAuthProviders?.google ||
+      thirdPartyAuthProviders?.github ||
+      thirdPartyAuthProviders?.saml ? (
+        <div className="my-4 flex w-full flex-row items-center">
+          <div className="w-1/2 border" />
+          <span className="mx-2 text-sm">OR</span>
+          <div className="w-1/2 border" />
+        </div>
+      ) : null}
+    </>
   );
 });
 

@@ -5,7 +5,7 @@ import { HttpStatusCode } from 'axios';
 import { Check, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -72,7 +72,7 @@ const PasswordValidator = ({ password }: { password: string }) => {
 
 const SignUpForm: React.FC = () => {
   const queryClient = useQueryClient();
-
+  const [searchParams] = useSearchParams();
   const { data: isCloudPlatform } = flagsHooks.useFlag<boolean>(
     ApFlagId.IS_CLOUD_PLATFORM,
     queryClient,
@@ -90,6 +90,7 @@ const SignUpForm: React.FC = () => {
     trackEvents: true,
     newsLetter: false,
     password: '',
+    email: searchParams.get('email') || '',
   };
 
   const form = useForm<SignUpSchema>({
