@@ -15,7 +15,7 @@ export { DropdownOption } from './input/dropdown/common';
 export { OAuth2PropertyValue } from './authentication/oauth2-prop';
 export { PieceAuthProperty } from './authentication';
 export { ShortTextProperty } from './input/text-property';
-export { ArrayProperty } from './input/array-property';
+export { ArrayProperty, ArraySubProps } from './input/array-property';
 export { BasePropertySchema } from './input/common';
 export { CheckboxProperty } from './input/checkbox-property';
 export { DateTimeProperty } from './input/date-time-property';

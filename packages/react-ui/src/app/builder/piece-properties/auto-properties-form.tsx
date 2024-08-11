@@ -12,9 +12,10 @@ import {
   PieceProperty,
   PiecePropertyMap,
   PropertyType,
+  ArraySubProps,
 } from '@activepieces/pieces-framework';
 
-import { ArrayProperty } from './array-property';
+import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
@@ -23,7 +24,7 @@ import { MultiSelectPieceProperty } from './multi-select-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
 
 type AutoFormProps = {
-  props: PiecePropertyMap | OAuth2Props;
+  props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
   allowDynamicValues: boolean;
   prefixValue: string;
   markdownVariables?: Record<string, string>;
@@ -43,7 +44,7 @@ const AutoPropertiesFormComponent = React.memo(
     const form = useFormContext();
 
     return (
-      <div className="flex flex-col gap-4 p-1">
+      <div className="flex flex-col gap-4 p-1 w-full">
         {Object.entries(props).map(([key]) => {
           return (
             <FormField
@@ -90,11 +91,12 @@ const selectRightComponent = (
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >
-          <ArrayProperty
+          <ArrayPieceProperty
             disabled={disabled}
+            arrayProperty={property}
             inputName={inputName}
             useMentionTextInput={useMentionTextInput}
-          ></ArrayProperty>
+          ></ArrayPieceProperty>
         </AutoFormFieldWrapper>
       );
     case PropertyType.OBJECT:
