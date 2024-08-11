@@ -78,7 +78,7 @@ export const copilotService = {
                 type: 'function',
                 function: {
                     name: 'generate_code',
-                    description: 'Write TypeScript code snippet based on user prompt. Format the code so each statement is on a new line.',
+                    description: 'Write TypeScript code snippet based on user prompt.',
                     parameters: {
                         type: 'object',
                         properties: {

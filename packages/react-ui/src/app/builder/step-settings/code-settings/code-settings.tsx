@@ -1,23 +1,21 @@
+import { CodeAction } from '@activepieces/shared';
+import { Bot } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { LeftSideBarType, useBuilderStateContext } from '../../builder-hooks';
+import { DictionaryProperty } from '../../piece-properties/dictionary-property';
+
+import { CodeEditior } from './code-editior';
+
 import { ApMarkdown } from '@/components/custom/markdown';
+import { Button } from '@/components/ui/button';
 import {
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { CodeAction } from '@activepieces/shared';
-
-import { DictionaryProperty } from '../../piece-properties/dictionary-property';
-
-import { CodeEditior } from './code-editior';
-import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
-import { TooltipTrigger } from '@radix-ui/react-tooltip';
-import { Button } from '@/components/ui/button';
-import { LeftSideBarType, useBuilderStateContext } from '../../builder-hooks';
-import { Bot } from 'lucide-react';
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below.
@@ -42,50 +40,48 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   }, [setLeftSidebar]);
 
   return (
-    <>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}>
-            <Bot />
-            <span className="ml-2"> Ask AI </span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">Use AI to generate code.</TooltipContent>
-      </Tooltip>
-
-      <div className="flex flex-col gap-4">
-        <FormField
-          control={form.control}
-          name="settings.input"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Inputs</FormLabel>
-              <ApMarkdown markdown={markdown} />
-              <DictionaryProperty
-                disabled={readonly}
-                values={field.value}
-                onChange={field.onChange}
-              ></DictionaryProperty>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="settings.sourceCode"
-          render={({ field }) => (
-            <FormItem>
-              <CodeEditior
-                sourceCode={field.value}
-                onChange={field.onChange}
-                readonly={readonly}
-              ></CodeEditior>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <div className="flex flex-col gap-4">
+      <FormField
+        control={form.control}
+        name="settings.input"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Inputs</FormLabel>
+            <ApMarkdown markdown={markdown} />
+            <DictionaryProperty
+              disabled={readonly}
+              values={field.value}
+              onChange={field.onChange}
+            ></DictionaryProperty>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="flex justify-end">
+        <Button
+          variant="ghost"
+          onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}
+          className="flex items-right max-w-max"
+        >
+          <Bot />
+          <span className="ml-2"> Ask AI </span>
+        </Button>
       </div>
-    </>
+      <FormField
+        control={form.control}
+        name="settings.sourceCode"
+        render={({ field }) => (
+          <FormItem>
+            <CodeEditior
+              sourceCode={field.value}
+              onChange={field.onChange}
+              readonly={readonly}
+            ></CodeEditior>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
   );
 });
 CodeSettings.displayName = 'CodeSettings';
