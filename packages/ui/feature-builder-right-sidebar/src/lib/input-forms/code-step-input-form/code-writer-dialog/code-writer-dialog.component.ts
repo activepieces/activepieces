@@ -80,6 +80,7 @@ export class CodeWriterDialogComponent {
       this.promptOperation$ = this.codeWriterService
         .prompt({
           prompt,
+          previousContext: [],
         })
         .pipe(
           tap((response) => {
