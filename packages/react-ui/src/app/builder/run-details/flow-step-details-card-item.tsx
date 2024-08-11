@@ -95,7 +95,7 @@ const FlowStepDetailsCardItem = React.memo(
     const { stepMetadata } = piecesHooks.useStepMetadata({
       step,
     });
-    const [isOpen, setIsOpen] = React.useState(false);
+    const [isOpen, setIsOpen] = React.useState(true);
 
     const { children, totalIterations, currentIteration } = useMemo(
       () => findChildrenPaths(path, stepOutput),
@@ -180,7 +180,7 @@ const FlowStepDetailsCardItem = React.memo(
                   />
                 )}
                 {(!isLoopStep || (isLoopStep && !isInPath)) && (
-                  <>
+                  <div className="flex gap-1 animate-fade">
                     <span className="text-muted-foreground text-xs">
                       {formatUtils.formatDuration(
                         stepOutput?.duration ?? 0,
@@ -193,7 +193,7 @@ const FlowStepDetailsCardItem = React.memo(
                         size="4"
                       ></StepStatusIcon>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
             </div>
