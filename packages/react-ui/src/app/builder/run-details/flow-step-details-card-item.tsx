@@ -146,12 +146,7 @@ const FlowStepDetailsCardItem = React.memo(
                 minWidth: `${path.path.length * 25}px`,
               }}
             ></div>
-            <div
-              className={cn(
-                `flex items-center justify-between w-full gap-3`,
-                {},
-              )}
-            >
+            <div className="flex items-center  w-full gap-3">
               {children.length > 0 && (
                 <Button
                   variant="ghost"
@@ -170,10 +165,12 @@ const FlowStepDetailsCardItem = React.memo(
               )}
               <img className="w-6 h-6" src={stepMetadata?.logoUrl} />
               <div>{step.displayName}</div>
-              <div className="flex-grow"></div>
-              <div className="flex gap-2 justfy-center items-center">
+              <div className="w-2"></div>
+              <div className="flex gap-1 justify-end  items-center flex-grow">
                 {isLoopStep && isStepSelected && isInPath && (
-                  <span className="text-sm">All Iterations</span>
+                  <span className="text-sm font-semibold animate-fade">
+                    All Iterations
+                  </span>
                 )}
                 {isLoopStep && !isStepSelected && isInPath && (
                   <LoopIterationInput
