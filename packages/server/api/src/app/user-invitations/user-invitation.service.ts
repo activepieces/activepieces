@@ -86,7 +86,7 @@ export const userInvitationsService = {
         const platform = await platformService.getOneOrThrow(platformId)
 
         if (!isNil(invitation)) {
-            return handleInvitationLink({platform,userInvitation:invitation})
+            return handleInvitationLink({ platform, userInvitation: invitation })
         }
         const id = apId()
         await repo().upsert({
@@ -105,7 +105,7 @@ export const userInvitationsService = {
             platformId,
         })
         
-       return handleInvitationLink({platform,userInvitation})
+        return handleInvitationLink({ platform, userInvitation })
     },
     async list(params: ListUserParams): Promise<SeekPage<UserInvitation>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursor ?? null)
@@ -208,7 +208,7 @@ async function generateInvitationLink(userInvitation: UserInvitation): Promise<s
         path: `invitation?token=${token}&email=${encodeURIComponent(userInvitation.email)}`,
     })
 }
-const handleInvitationLink = async ({platform,userInvitation }:{platform: Platform, userInvitation: UserInvitation}) => {
+const handleInvitationLink = async ({ platform, userInvitation }: { platform: Platform, userInvitation: UserInvitation }) => {
     const invitationLink = await generateInvitationLink(userInvitation)
     if (!smtpEmailSender.isSmtpConfigured(platform)) {
         return {
