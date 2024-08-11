@@ -7,7 +7,8 @@ import {
 } from 'openai/resources'
 
 type GenerateCodeParams = {
-    prompt: string
+    prompt: string;
+    previousContext: ChatCompletionMessageParam[];
 }
 
 
@@ -39,12 +40,13 @@ function getOpenAI(): OpenAI {
 }
 
 export const copilotService = {
-    async generateCode({ prompt }: GenerateCodeParams): Promise<string> {
+    async generateCode({ prompt, previousContext }: GenerateCodeParams): Promise<string> {
         logger.debug({ prompt }, '[CopilotService#generateCode] Prompting...')
         const result = await getOpenAI().chat.completions.create({
             model: 'gpt-3.5-turbo',
             messages: [
                 ...this.createCodeMessageContext(),
+                ...previousContext,
                 {
                     role: 'user',
                     content: prompt,
