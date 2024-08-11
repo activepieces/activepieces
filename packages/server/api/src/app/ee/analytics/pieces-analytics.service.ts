@@ -10,8 +10,7 @@ import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
 const flowRepo = repoFactory(FlowEntity)
 const flowVersionRepo = repoFactory(FlowVersionEntity)
-const activeProjectsIncludingCodePieces = new Set<string>()
-const activeProjectsExcludingCodePieces = new Set<string>()
+
 
 export const piecesAnalyticsService = {
     async init(): Promise<void> {
@@ -33,12 +32,16 @@ function countDeps(packageJson: string | undefined) {
     if (!packageJson) return 0
     try {
         const dep = JSON.parse(packageJson)
-        return dep.dependencies.length
-    } catch (e) {
+        return Object.keys(dep.dependencies).length
+    }
+    catch (e) {
         return 0
     }
 }
 async function piecesAnalyticsHandler(): Promise<void> {
+    const activeProjectsIncludingCodePieces = new Set<string>()
+    const activeProjectsExcludingCodePieces = new Set<string>()
+    const activeNullableProjects = new Set<string>()
     const flowIds: string[] = (await flowRepo().createQueryBuilder().select('id').where({
         status: FlowStatus.ENABLED,
     }).getRawMany()).map((flow) => flow.id)
@@ -64,7 +67,10 @@ async function piecesAnalyticsHandler(): Promise<void> {
         ).map((step) => {
             if (step.type === ActionType.CODE) {
                 const length = countDeps(step.settings?.sourceCode?.packageJson)
-                if (length && length > 0) {
+                if (isNil(step.settings?.sourceCode?.packageJson)) {
+                    activeNullableProjects.add(flow.projectId)
+                }
+                else if (length && length > 0) {
                     activeProjectsIncludingCodePieces.add(flow.projectId)
                 }
                 else {
@@ -108,5 +114,7 @@ async function piecesAnalyticsHandler(): Promise<void> {
     }
     logger.info('Synced pieces analytics finished')
     logger.info('The number of code pieces with package.json modiifed: ' + activeProjectsIncludingCodePieces.size)
-    logger.info('The number of code pieces without package.json modiifed: ' + activeProjectsExcludingCodePieces.size)
+    logger.info('The number of code pieces eith empty package.json: ' + activeProjectsExcludingCodePieces.size)
+    logger.info('The number of code pieces without package.json at all: ' + activeNullableProjects.size)
+
 }
