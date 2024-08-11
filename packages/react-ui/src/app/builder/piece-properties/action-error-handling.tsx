@@ -15,8 +15,8 @@ import {
   TriggerType,
   isNil,
 } from '@activepieces/shared';
+import { ReadMoreDescription } from '@/components/ui/read-more-description';
 
-import { ReadMoreDescription } from './read-more-description';
 
 type ActionErrorHandlingFormProps = {
   hideContinueOnFailure?: boolean;

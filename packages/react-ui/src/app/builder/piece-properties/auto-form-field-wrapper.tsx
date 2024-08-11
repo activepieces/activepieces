@@ -6,8 +6,8 @@ import { Toggle } from '@/components/ui/toggle';
 import { PieceProperty } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
-import { ReadMoreDescription } from './read-more-description';
 import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
+import { ReadMoreDescription } from '@/components/ui/read-more-description';
 
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;

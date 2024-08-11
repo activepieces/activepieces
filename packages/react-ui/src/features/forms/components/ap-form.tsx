@@ -1,32 +1,39 @@
-import { FormResult, FormResultTypes, formsApi } from "../lib/forms-api";
-import { FileResponseInterface, FormInput, FormInputType, FormResponse, } from "../../../../../shared/src";
-import { useMutation } from "@tanstack/react-query";
+import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { Separator } from '@radix-ui/react-dropdown-menu';
+import { Static, TObject, TSchema, Type } from '@sinclair/typebox';
+import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
-import { Button } from "@/components/ui/button"
+import { ApMarkdown } from '@/components/custom/markdown';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { useForm } from "react-hook-form";
-import { typeboxResolver } from "@hookform/resolvers/typebox";
-import { Static, TObject, TSchema, Type } from "@sinclair/typebox";
-import { Form, FormControl, FormField, FormLabel, FormItem } from "@/components/ui/form";
-import { ReadMoreDescription } from "@/app/builder/piece-properties/read-more-description";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
-import { toast } from "@/components/ui/use-toast";
-import { api } from "@/lib/api";
-import { ApMarkdown } from "@/components/custom/markdown";
-import { Separator } from "@radix-ui/react-dropdown-menu";
+  Form,
+  FormControl,
+  FormField,
+  FormLabel,
+  FormItem,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { ReadMoreDescription } from '@/components/ui/read-more-description';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/use-toast';
+import { api } from '@/lib/api';
+import {
+  FileResponseInterface,
+  FormInput,
+  FormInputType,
+  FormResponse,
+} from '@activepieces/shared';
+
+import { FormResult, FormResultTypes, formsApi } from '../lib/forms-api';
 
 type ApFormProps = {
   form: FormResponse;
   useDraft: boolean;
-}
+};
 
 function buildSchema(inputs: FormInput[]): TObject {
   const properties: Record<string, TSchema> = {};
@@ -49,7 +56,6 @@ function buildSchema(inputs: FormInput[]): TObject {
   return Type.Object(properties);
 }
 
-
 const handleDownloadFile = (formResult: FormResult) => {
   const link = document.createElement('a');
   const fileBase = formResult.value as FileResponseInterface;
@@ -60,7 +66,10 @@ const handleDownloadFile = (formResult: FormResult) => {
   URL.revokeObjectURL(fileBase.base64Url);
 };
 
-const fileToBase64 = (file: File, callback: (result: string | ArrayBuffer | null) => void) => {
+const fileToBase64 = (
+  file: File,
+  callback: (result: string | ArrayBuffer | null) => void,
+) => {
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onloadend = () => {
@@ -68,9 +77,7 @@ const fileToBase64 = (file: File, callback: (result: string | ArrayBuffer | null
   };
 };
 
-
 const ApForm = ({ form, useDraft }: ApFormProps) => {
-
   const schema = buildSchema(form.props.inputs);
 
   const [markdownResponse, setMarkdownResponse] = useState<string | null>(null);
@@ -78,9 +85,13 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
   const reactForm = useForm<Static<typeof schema>>({
     defaultValues: {},
     resolver: typeboxResolver(schema),
-  })
+  });
 
-  const { mutate: submitForm, isPending } = useMutation<FormResult | null, Error, unknown>({
+  const { mutate: submitForm, isPending } = useMutation<
+    FormResult | null,
+    Error,
+    unknown
+  >({
     mutationFn: async (data) => formsApi.submitForm(form, useDraft, data),
     onSuccess: (formResult) => {
       switch (formResult?.type) {
@@ -107,19 +118,18 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
             title: 'Flow not found',
             description: 'The flow you are trying to submit to does not exist.',
             duration: 3000,
-          })
+          });
         } else {
           toast({
             title: 'Error',
             description: 'The flow failed to execute.',
             duration: 3000,
-          })
+          });
         }
       }
       console.error(error);
     },
   });
-
 
   return (
     <div className="w-full h-full flex">
@@ -131,67 +141,100 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                 <CardTitle className="text-center">{form?.title}</CardTitle>
               </CardHeader>
               <CardContent>
-
                 <div className="grid w-full items-center gap-6">
                   {form?.props.inputs.map((input) => {
-                    return <FormField key={input.displayName} control={reactForm.control} name={input.displayName} render={({ field }) => (
-                      <>
-                        {input.type === FormInputType.TOGGLE && (
-                          <FormItem className="flex items-center gap-2">
-                            <Switch onCheckedChange={(e) => field.onChange(e)} checked={field.value as boolean} />
-                            <FormLabel
-                              htmlFor={input.displayName}
-                              className="flex items-center justify-center"
-                            >
-                              {input.displayName}
-                            </FormLabel>
-                          </FormItem>
+                    return (
+                      <FormField
+                        key={input.displayName}
+                        control={reactForm.control}
+                        name={input.displayName}
+                        render={({ field }) => (
+                          <>
+                            {input.type === FormInputType.TOGGLE && (
+                              <FormItem className="flex items-center gap-2">
+                                <Switch
+                                  onCheckedChange={(e) => field.onChange(e)}
+                                  checked={field.value as boolean}
+                                />
+                                <FormLabel
+                                  htmlFor={input.displayName}
+                                  className="flex items-center justify-center"
+                                >
+                                  {input.displayName}
+                                </FormLabel>
+                              </FormItem>
+                            )}
+                            {input.type !== FormInputType.TOGGLE && (
+                              <FormItem className="flex flex-col gap-1">
+                                <FormLabel
+                                  htmlFor={input.displayName}
+                                  className="flex items-center justify-between"
+                                >
+                                  {input.displayName}
+                                </FormLabel>
+                                <FormControl className="flex flex-col gap-1">
+                                  <>
+                                    {input.type === FormInputType.TEXT_AREA && (
+                                      <Textarea
+                                        onChange={field.onChange}
+                                        value={
+                                          field.value as string | undefined
+                                        }
+                                      />
+                                    )}
+                                    {input.type === FormInputType.TEXT && (
+                                      <Input
+                                        onChange={field.onChange}
+                                        value={
+                                          field.value as string | undefined
+                                        }
+                                      />
+                                    )}
+                                    {input.type === FormInputType.FILE && (
+                                      <Input
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) {
+                                            fileToBase64(file, (result) => {
+                                              field.onChange(result);
+                                            });
+                                          }
+                                        }}
+                                        placeholder={input.displayName}
+                                        type="file"
+                                      />
+                                    )}
+                                    <ReadMoreDescription
+                                      text={input.description ?? ''}
+                                    />
+                                  </>
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          </>
                         )}
-                        {input.type !== FormInputType.TOGGLE && <>
-                          <FormItem className="flex flex-col gap-1">
-                            <FormLabel
-                              htmlFor={input.displayName}
-                              className="flex items-center justify-between"
-                            >
-                              {input.displayName}
-                            </FormLabel>
-                            <FormControl className="flex flex-col gap-1">
-                              <>
-                                {input.type === FormInputType.TEXT_AREA && <Textarea onChange={field.onChange} value={field.value as string | undefined} />}
-                                {input.type === FormInputType.TEXT && <Input onChange={field.onChange} value={field.value as string | undefined} />}
-                                {input.type === FormInputType.FILE && <Input onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    fileToBase64(file, (result) => {
-                                      field.onChange(result);
-                                    });
-                                  }
-                                }} placeholder={input.displayName} type='file' />}
-                                <ReadMoreDescription text={input.description ?? ''} />
-                              </>
-                            </FormControl>
-                          </FormItem>
-                        </>}
-                      </>
-
-                    )} />
+                      />
+                    );
                   })}
                 </div>
-                <Button type="submit" className="w-full" loading={isPending}>Submit</Button>
+                <Button type="submit" className="w-full" loading={isPending}>
+                  Submit
+                </Button>
 
-                {markdownResponse && <>
-                  <Separator className="my-4" />
-                  <ApMarkdown markdown={markdownResponse} />
-                </>}
+                {markdownResponse && (
+                  <>
+                    <Separator className="my-4" />
+                    <ApMarkdown markdown={markdownResponse} />
+                  </>
+                )}
               </CardContent>
             </Card>
           </form>
         </Form>
       </div>
     </div>
-
-  )
-}
+  );
+};
 
 ApForm.displayName = 'ApForm';
 export { ApForm };

@@ -12,6 +12,7 @@ import { ChangePasswordPage } from './routes/change-password';
 import AppConnectionsPage from './routes/connections';
 import { FlowBuilderPage } from './routes/flows/id';
 import { ResetPasswordPage } from './routes/forget-password';
+import { FormPage } from './routes/forms';
 import IssuesPage from './routes/issues';
 import PlansPage from './routes/plans';
 import PlatformAppearancePage from './routes/platform/appearance';
@@ -28,7 +29,6 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
-import { FormPage } from './routes/forms';
 
 export const router = createBrowserRouter([
   {
@@ -57,7 +57,7 @@ export const router = createBrowserRouter([
       <AllowOnlyLoggedInUserOnlyGuard>
         <FormPage />
       </AllowOnlyLoggedInUserOnlyGuard>
-    ),  
+    ),
   },
   {
     path: '/runs/:runId',
