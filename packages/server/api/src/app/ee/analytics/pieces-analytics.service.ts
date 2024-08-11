@@ -29,6 +29,15 @@ export const piecesAnalyticsService = {
     },
 }
 
+function countDeps(packageJson: string | undefined) {
+    if (!packageJson) return 0
+    try {
+        const dep = JSON.parse(packageJson)
+        return dep.dependencies.length
+    } catch (e) {
+        return 0
+    }
+}
 async function piecesAnalyticsHandler(): Promise<void> {
     const flowIds: string[] = (await flowRepo().createQueryBuilder().select('id').where({
         status: FlowStatus.ENABLED,
@@ -54,7 +63,8 @@ async function piecesAnalyticsHandler(): Promise<void> {
                 step.type === ActionType.PIECE || step.type === TriggerType.PIECE || step.type === ActionType.CODE,
         ).map((step) => {
             if (step.type === ActionType.CODE) {
-                if (step.settings.sourceCode.packageJson.length > 0) {
+                const length = countDeps(step.settings?.sourceCode?.packageJson)
+                if (length && length > 0) {
                     activeProjectsIncludingCodePieces.add(flow.projectId)
                 }
                 else {
@@ -97,6 +107,6 @@ async function piecesAnalyticsHandler(): Promise<void> {
         })
     }
     logger.info('Synced pieces analytics finished')
-    logger.info('The number of code pieces with package.json: ' + activeProjectsIncludingCodePieces.size)
-    logger.info('The number of code pieces without package.json: ' + activeProjectsExcludingCodePieces.size)
+    logger.info('The number of code pieces with package.json modiifed: ' + activeProjectsIncludingCodePieces.size)
+    logger.info('The number of code pieces without package.json modiifed: ' + activeProjectsExcludingCodePieces.size)
 }
