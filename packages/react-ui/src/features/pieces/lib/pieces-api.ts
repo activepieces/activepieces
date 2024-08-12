@@ -22,7 +22,7 @@ export const PRIMITIVE_STEP_METADATA = {
   [ActionType.CODE]: {
     displayName: 'Code',
     logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
-    description: 'Powerful nodejs & typescript code with npm',
+    description: 'Powerful Node.js & TypeScript code with npm',
     type: ActionType.CODE,
   },
   [ActionType.LOOP_ON_ITEMS]: {

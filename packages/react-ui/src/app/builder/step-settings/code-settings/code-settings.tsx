@@ -46,6 +46,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         name="settings.input"
         render={({ field }) => (
           <FormItem>
+            <FormLabel>Inputs</FormLabel>
             <div className="flex align-center justify-between">
               <FormLabel className="pt-4">Inputs</FormLabel>
               <Button
@@ -57,7 +58,8 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
                 <span className="ml-2"> Ask AI </span>
               </Button>
             </div>
-            <ApMarkdown markdown={markdown} />
+            <ApMarkdown markdown={markdown} className="mt-2" />
+
             <DictionaryProperty
               disabled={readonly}
               values={field.value}

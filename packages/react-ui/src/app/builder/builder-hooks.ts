@@ -165,6 +165,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             stepName,
           },
           rightSidebar: RightSideBarType.PIECE_SETTINGS,
+          leftSidebar: !isNil(state.run)
+            ? LeftSideBarType.RUN_DETAILS
+            : LeftSideBarType.NONE,
         };
       });
     },
