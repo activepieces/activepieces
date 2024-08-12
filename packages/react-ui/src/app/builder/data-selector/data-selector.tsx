@@ -1,9 +1,6 @@
+import { Action, flowHelper, isNil, Trigger } from '@activepieces/shared';
 import { SearchXIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { Action, flowHelper, isNil, Trigger } from '@activepieces/shared';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { BuilderState, useBuilderStateContext } from '../builder-hooks';
@@ -14,6 +11,9 @@ import {
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
 import { dataSelectorUtils, MentionTreeNode } from './data-selector-utils';
+
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 const createTestNode = (
   step: Action | Trigger,
@@ -123,6 +123,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       (document.activeElement?.classList.contains('ap-text-with-mentions') ??
         false);
     setShowDataSelector(isTextMentionInputFocused);
+    console.log(document.activeElement);
   }, []);
 
   useEffect(() => {
@@ -162,9 +163,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
               ? '450px'
               : `${parentHeight - 100}px`,
           width:
-            DataSelectorSize === DataSelectorSizeState.COLLAPSED
-              ? '0px'
-              : DataSelectorSize === DataSelectorSizeState.DOCKED
+            DataSelectorSize !== DataSelectorSizeState.EXPANDED
               ? '450px'
               : `${parentWidth - 40}px`,
         }}
