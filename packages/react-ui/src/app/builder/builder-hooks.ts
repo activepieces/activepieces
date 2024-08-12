@@ -156,7 +156,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             }),
           );
         return {
-          leftSidebar: state.leftSidebar === LeftSideBarType.AI_COPILOT ? LeftSideBarType.NONE : state.leftSidebar,
           selectedButton: null,
           selectedStep: {
             path: pathToStep
@@ -277,7 +276,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       set({ insertMention });
     },
     refreshSettings: () =>
-      set((state) => ({ refreshPieceFormSettings: !state.refreshPieceFormSettings })),
+      set((state) => ({
+        refreshPieceFormSettings: !state.refreshPieceFormSettings,
+      })),
   }));
 
 export const stepPathToKeyString = (path: StepPathWithName): string => {

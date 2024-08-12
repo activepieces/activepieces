@@ -1,6 +1,17 @@
+import { useMutation } from '@tanstack/react-query';
+import { ArrowUp, LoaderCircle } from 'lucide-react';
+import { nanoid } from 'nanoid';
+import { useState, useEffect, useRef } from 'react';
+import { Socket } from 'socket.io-client';
+
+import { useSocket } from '@/components/socket-provider';
+import { CardList } from '@/components/ui/card-list';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
 import {
   Action,
   ActionType,
+  deepMergeAndCast,
   flowHelper,
   FlowOperationType,
   GenerateCodeRequest,
@@ -8,36 +19,20 @@ import {
   WebsocketClientEvent,
   WebsocketServerEvent,
 } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
-import { ArrowUp, LoaderCircle } from 'lucide-react';
-import { nanoid } from 'nanoid';
-import { useState, useEffect, useRef } from 'react';
-import { Socket } from 'socket.io-client';
 
 import { LeftSideBarType, useBuilderStateContext } from '../builder-hooks';
 import { SidebarHeader } from '../sidebar-header';
 
-import { ChatMessage } from './chat-message';
-
-import { useSocket } from '@/components/socket-provider';
-import { CardList } from '@/components/ui/card-list';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
-
-interface ChatMessageType {
-  message: string;
-  userType: 'user' | 'bot';
-  packages?: string[];
-  inputs?: { key: string; value: string }[];
-}
+import { ChatMessage, CopilotMessage } from './chat-message';
 
 interface DefaultEventsMap {
   [event: string]: (...args: any[]) => void;
 }
 
-const initialMessages: ChatMessageType[] = [
+const initialMessages: CopilotMessage[] = [
   {
-    message:
+    messageType: 'text',
+    content:
       'Hi! I can help you writing your code. What do you need help with?',
     userType: 'bot',
   },
@@ -66,7 +61,7 @@ async function getCodeResponse(
 }
 
 export const ChatSidebar = () => {
-  const [messages, setMessages] = useState<ChatMessageType[]>(initialMessages);
+  const [messages, setMessages] = useState<CopilotMessage[]>(initialMessages);
   const [inputMessage, setInputMessage] = useState('');
   const [
     selectedStep,
@@ -82,22 +77,24 @@ export const ChatSidebar = () => {
     state.setLeftSidebar,
   ]);
   const latestMessageRef = useRef<HTMLDivElement>(null);
-
   const socket = useSocket();
+
 
   const { isPending, mutate } = useMutation({
     mutationFn: (request: GenerateCodeRequest) =>
       getCodeResponse(socket, request),
     onSuccess: (response: GenerateCodeResponse) => {
-      const result = JSON.parse(response.result);
-      console.log(result);
+
       setMessages((prevMessages) => [
         ...prevMessages,
         {
-          message: result.code,
+          content: {
+            code: response.code,
+            packages: response.packageJson,
+            inputs: response.inputs,
+          },
+          messageType: 'code',
           userType: 'bot',
-          packages: result.packages,
-          inputs: result.inputs,
         },
       ]);
     },
@@ -110,21 +107,22 @@ export const ChatSidebar = () => {
   });
 
   const handleSendMessage = () => {
-    if (inputMessage.trim() !== '') {
-      setMessages([...messages, { message: inputMessage, userType: 'user' }]);
-
-      const request: GenerateCodeRequest = {
-        prompt: `${inputMessage}. Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies.`,
-        previousContext: messages.map((message) => ({
-          role: message.userType === 'user' ? 'user' : 'assistant',
-          content: message.message,
-        })),
-      };
-
-      mutate(request);
-
-      setInputMessage('');
+    const trimmedInputMessage = inputMessage.trim();
+    if (trimmedInputMessage === '') {
+      return;
     }
+    mutate({
+      prompt: `${inputMessage}. Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies.`,
+      previousContext: messages.map((message) => ({
+        role: message.userType === 'user' ? 'user' : 'assistant',
+        content: JSON.stringify(message.content),
+      })),
+    });
+    setMessages([
+      ...messages,
+      { content: inputMessage, userType: 'user', messageType: 'text' },
+    ]);
+    setInputMessage('');
   };
 
   const updateAction = (newAction: Action): void => {
@@ -137,43 +135,51 @@ export const ChatSidebar = () => {
     );
   };
 
-  const applyCodeToCurrentStep = (index: number) => {
-    if (!selectedStep) return;
-    const step = flowHelper.getStep(flowVersion, selectedStep.stepName);
-    if (!step) return;
-
-    const code = messages[index].message;
-    const packages = messages[index].packages;
-    const packageJson = JSON.stringify(
-      {
-        dependencies: packages?.reduce((acc, pkg) => {
-          acc[pkg] = '*';
-          return acc;
-        }, {} as Record<string, string>),
+  const mergeInputs = (
+    inputsOne: Record<string, string>,
+    inputsTwo: Record<string, string> | undefined,
+  ) => {
+    if (!inputsOne) {
+      return {};
+    }
+    return Object.keys(inputsOne).reduce(
+      (acc: Record<string, string>, input) => {
+        acc[input] = inputsOne[input];
+        if (inputsTwo && inputsTwo[input] !== undefined) {
+          acc[input] = inputsTwo[input];
+        }
+        return acc;
       },
-      null,
-      2,
+      {},
     );
+  };
 
-    const inputs = messages[index].inputs;
-    const { inputs: currentInputs } = step.settings.input;
-
+  const applyCodeToCurrentStep = (message: CopilotMessage) => {
+    if (!selectedStep) {
+      return;
+    }
+    const step = flowHelper.getStep(flowVersion, selectedStep.stepName);
+    if (!step) {
+      return;
+    }
+    const isCodeType = message.messageType !== 'code';
+    if (isCodeType) {
+      return;
+    }
+    const mergedInputs = mergeInputs(
+      message.content.inputs,
+      step.settings.input,
+    );
     if (step.type === ActionType.CODE) {
-      const newStep = {
-        ...step,
+      const newStep = deepMergeAndCast(step, {
         settings: {
-          ...step.settings,
-          input:
-            inputs?.reduce(
-              (acc, input) => ({
-                ...acc,
-                [input.key]: input.value,
-              }),
-              {},
-            ) || currentInputs,
-          sourceCode: { code, packageJson },
+          input: mergedInputs,
+          sourceCode: {
+            code: message.content.code,
+            packageJson: JSON.stringify(message.content.packages, null, 2),
+          },
         },
-      };
+      });
       updateAction(newStep);
       refreshSettings();
     }
@@ -189,11 +195,7 @@ export const ChatSidebar = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <SidebarHeader
-        onClose={() => {
-          setLeftSidebar(LeftSideBarType.NONE);
-        }}
-      >
+      <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
         Chat
       </SidebarHeader>
       <div className="flex flex-col flex-grow overflow-hidden">
@@ -202,10 +204,8 @@ export const ChatSidebar = () => {
             {messages.map((message, index) => (
               <ChatMessage
                 key={index}
-                chatMessageIndex={index}
-                message={message.message}
-                userType={message.userType}
-                applyCodeToCurrentStep={applyCodeToCurrentStep}
+                message={message}
+                onApplyCode={(message) => applyCodeToCurrentStep(message)}
                 ref={latestMessageRef}
               />
             ))}

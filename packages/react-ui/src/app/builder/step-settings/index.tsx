@@ -106,7 +106,7 @@ const StepSettingsContainer = React.memo(
       mode: 'onChange',
       disabled: readonly,
       reValidateMode: 'onChange',
-      defaultValues: defaultValues,
+      defaultValues,
       resolver: typeboxResolver(formSchema),
     });
 
@@ -119,7 +119,7 @@ const StepSettingsContainer = React.memo(
       form.setValue('valid', form.formState.isValid);
     }, [form.formState.isValid]);
 
-    // Watch changes in form execluding actionName or triggerName from watching // 
+    // Watch changes in form execluding actionName or triggerName from watching //
     const inputChanges = useWatch({
       name: 'settings.input',
       control: form.control,
@@ -189,7 +189,6 @@ const StepSettingsContainer = React.memo(
       if (currentStep.type === TriggerType.PIECE) {
         debouncedTrigger(castedForm as Trigger);
       } else {
-        // can we diff before sending?
         debouncedAction(castedForm as Action);
       }
     }, [
@@ -249,18 +248,18 @@ const StepSettingsContainer = React.memo(
                   {[ActionType.CODE, ActionType.PIECE].includes(
                     modifiedStep.type as ActionType,
                   ) && (
-                      <ActionErrorHandlingForm
-                        hideContinueOnFailure={
-                          modifiedStep.settings.errorHandlingOptions
-                            ?.continueOnFailure?.hide
-                        }
-                        disabled={readonly}
-                        hideRetryOnFailure={
-                          modifiedStep.settings.errorHandlingOptions
-                            ?.retryOnFailure?.hide
-                        }
-                      ></ActionErrorHandlingForm>
-                    )}
+                    <ActionErrorHandlingForm
+                      hideContinueOnFailure={
+                        modifiedStep.settings.errorHandlingOptions
+                          ?.continueOnFailure?.hide
+                      }
+                      disabled={readonly}
+                      hideRetryOnFailure={
+                        modifiedStep.settings.errorHandlingOptions
+                          ?.retryOnFailure?.hide
+                      }
+                    ></ActionErrorHandlingForm>
+                  )}
                 </div>
               </ScrollArea>
             </ResizablePanel>

@@ -1,4 +1,3 @@
-import { SourceCode, deepMergeAndCast } from '@activepieces/shared';
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import { githubLight } from '@uiw/codemirror-theme-github';
@@ -6,11 +5,12 @@ import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
 import { BetweenHorizontalEnd, Package } from 'lucide-react';
 import { useState } from 'react';
 
-import { AddNpmDialog } from './add-npm-dialog';
-
 import { Button } from '@/components/ui/button';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+import { SourceCode, deepMergeAndCast } from '@activepieces/shared';
+
+import { AddNpmDialog } from './add-npm-dialog';
 
 const styleTheme = EditorView.baseTheme({
   '&.cm-editor.cm-focused': {
@@ -80,16 +80,14 @@ const CodeEditior = ({
           >
             Code
           </div>
-          {!codeApplicationEnabled && (
-            <div
-              className={cn('text-sm cursor-pointer', {
-                'font-bold': activeTab === 'packageJson',
-              })}
-              onClick={() => handlePackageClick()}
-            >
-              Dependencies
-            </div>
-          )}
+          <div
+            className={cn('text-sm cursor-pointer', {
+              'font-bold': activeTab === 'packageJson',
+            })}
+            onClick={() => handlePackageClick()}
+          >
+            Dependencies
+          </div>
         </div>
         <div className="flex flex-grow"></div>
         {codeApplicationEnabled ? (
@@ -108,7 +106,7 @@ const CodeEditior = ({
               variant="outline"
               className="flex gap-2"
               size={'sm'}
-              onClick={() => {}}
+              onClick={() => { }}
             >
               <Package className="w-4 h-4" />
               Add package
