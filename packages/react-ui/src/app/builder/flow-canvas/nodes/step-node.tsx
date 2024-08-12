@@ -1,8 +1,18 @@
+import {
+  FlowOperationType,
+  FlowRun,
+  StepLocationRelativeToParent,
+  TriggerType,
+  flowHelper,
+  isNil,
+} from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
 import { CircleAlert, CopyPlus, Replace, Trash } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+
+import { AP_NODE_SIZE, ApNode } from '../flow-canvas-utils';
 
 import {
   StepPathWithName,
@@ -16,16 +26,6 @@ import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
-import {
-  FlowOperationType,
-  FlowRun,
-  StepLocationRelativeToParent,
-  TriggerType,
-  flowHelper,
-  isNil,
-} from '@activepieces/shared';
-
-import { ApNode } from '../flow-canvas-utils';
 
 function getStepStatus(
   stepName: string | undefined,
@@ -104,6 +104,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: data.step!.name,
     disabled: isTrigger,
+    data: {
+      type: 'draggableFlowItem',
+    },
   });
 
   const stepOutputStatus = useMemo(
@@ -138,8 +141,10 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
           isSelected || toolbarOpen
             ? 'hsl(var(--primary))'
             : 'hsl(var(--border))',
+        height: `${AP_NODE_SIZE.stepNode.height}px`,
+        width: `${AP_NODE_SIZE.stepNode.width}px`,
       }}
-      className={cn('h-[70px] w-[260px] transition-all border-box border', {
+      className={cn('transition-all border-box border', {
         'border-primary': toolbarOpen || isSelected,
         'bg-background': !isDragging,
         'border-none': isDragging,

@@ -1,10 +1,8 @@
+import { flowHelper, isNil } from '@activepieces/shared';
 import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
 import { BaseEdge } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
-
-import { cn } from '@/lib/utils';
-import { flowHelper, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import {
@@ -13,6 +11,8 @@ import {
   ApNodeType,
   flowCanvasUtils,
 } from '../flow-canvas-utils';
+
+import { cn } from '@/lib/utils';
 
 interface ApEdgeWithButtonProps {
   id: string;
@@ -94,7 +94,10 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
   const { edgePath, buttonPosition } = getEdgePath(props);
   const { setNodeRef } = useDroppable({
     id: props.id,
-    data: props.data,
+    data: {
+      accepts: 'draggableFlowItem',
+      ...props.data,
+    },
   });
   const draggedStep = isNil(activeDraggingStep)
     ? undefined
@@ -131,12 +134,13 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
         path={edgePath}
         style={{ strokeWidth: 1.5 }}
       />
-      {isDropzone && props.data?.addButton && !readonly && buttonPosition && (
+      {true && (
         <foreignObject
-          width={18}
-          height={18}
+          width={AP_NODE_SIZE.smallButton.width}
+          height={AP_NODE_SIZE.smallButton.height}
           x={buttonPosition.x}
           y={buttonPosition.y}
+          className="transition-all overflow-visible relative"
           style={{
             borderRadius: '2px',
             boxShadow: showButtonShadow
@@ -145,10 +149,27 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
           }}
         >
           <div
-            className={cn(
-              'w-4 h-4 bg-primary w-[18px] h-[18px] rounded-[3px] box-content opacity-90',
-            )}
+            style={{
+              height: `${AP_NODE_SIZE.stepNode.height}px`,
+              width: `${AP_NODE_SIZE.stepNode.width}px`,
+              left: `-${
+                AP_NODE_SIZE.stepNode.width / 2 -
+                AP_NODE_SIZE.smallButton.height / 2
+              }px`,
+              top: `-${
+                AP_NODE_SIZE.stepNode.height / 2 -
+                AP_NODE_SIZE.smallButton.width / 2
+              }px`,
+            }}
+            className=" absolute"
             ref={setNodeRef}
+          >
+            {' '}
+          </div>
+          <div
+            className={cn(
+              'bg-primary w-[18px] h-[18px] rounded-[3px] box-content opacity-90',
+            )}
           ></div>
         </foreignObject>
       )}

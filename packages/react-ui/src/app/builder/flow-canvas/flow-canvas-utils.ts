@@ -1,5 +1,3 @@
-import { nanoid } from 'nanoid';
-
 import {
   Action,
   ActionType,
@@ -9,6 +7,7 @@ import {
   assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
+import { nanoid } from 'nanoid';
 
 const VERTICAL_OFFSET = 160;
 const HORIZONTAL_SPACE_BETWEEN_NODES = 80;
@@ -17,6 +16,7 @@ export enum ApNodeType {
   PLACEHOLDER = 'placeholder',
   BIG_BUTTON = 'bigButton',
   STEP_NODE = 'stepNode',
+  SMALL_BUTTON = 'smallButton',
 }
 
 export const AP_NODE_SIZE: Record<
@@ -38,6 +38,10 @@ export const AP_NODE_SIZE: Record<
   [ApNodeType.LOOP_PLACEHOLDER]: {
     height: 70,
     width: 260,
+  },
+  [ApNodeType.SMALL_BUTTON]: {
+    height: 18,
+    width: 18,
   },
 };
 
