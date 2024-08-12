@@ -90,7 +90,6 @@ export const ChatSidebar = () => {
       getCodeResponse(socket, request),
     onSuccess: (response: GenerateCodeResponse) => {
       const result = JSON.parse(response.result);
-      // todo
       console.log(result);
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -115,7 +114,7 @@ export const ChatSidebar = () => {
       setMessages([...messages, { message: inputMessage, userType: 'user' }]);
 
       const request: GenerateCodeRequest = {
-        prompt: inputMessage,
+        prompt: `${inputMessage}. Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies.`,
         previousContext: messages.map((message) => ({
           role: message.userType === 'user' ? 'user' : 'assistant',
           content: message.message,

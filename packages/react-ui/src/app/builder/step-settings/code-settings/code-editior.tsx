@@ -110,7 +110,7 @@ const CodeEditior = ({
               size={'sm'}
               onClick={() => {}}
             >
-              <Package className="w-3 h-3" />
+              <Package className="w-4 h-4" />
               Add package
             </Button>
           </AddNpmDialog>

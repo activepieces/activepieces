@@ -46,7 +46,6 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         name="settings.input"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Inputs</FormLabel>
             <div className="flex align-center justify-between">
               <FormLabel className="pt-4">Inputs</FormLabel>
               <Button
