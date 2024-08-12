@@ -24,6 +24,7 @@ import {
 import { cn } from '../../lib/utils';
 
 import { BuilderNavBar } from './builder-nav-bar';
+import { ChatSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
 import { PiecesSelectorList } from './pieces-selector';
@@ -134,6 +135,7 @@ const BuilderPage = () => {
             {leftSidebar === LeftSideBarType.RUNS && <FlowRecentRunsList />}
             {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
             {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
+            {leftSidebar === LeftSideBarType.AI_COPILOT && <ChatSidebar />}
           </ResizablePanel>
           <ResizableHandle
             disabled={leftSidebar === LeftSideBarType.NONE}

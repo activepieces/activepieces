@@ -38,6 +38,7 @@ export enum LeftSideBarType {
   RUNS = 'runs',
   VERSIONS = 'versions',
   RUN_DETAILS = 'run-details',
+  AI_COPILOT = 'chat',
   NONE = 'none',
 }
 
@@ -68,6 +69,8 @@ export type BuilderState = {
   allowCanvasPanning: boolean;
   selectedButton: SelectedButtonType | null;
   saving: boolean;
+  refreshPieceFormSettings: boolean;
+  refreshSettings: () => void;
   exitRun: () => void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
@@ -119,6 +122,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     allowCanvasPanning: true,
     rightSidebar: RightSideBarType.NONE,
     selectedButton: null,
+    refreshPieceFormSettings: false,
+
     removeStepSelection: () =>
       set({ selectedStep: null, rightSidebar: RightSideBarType.NONE }),
     setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
@@ -270,6 +275,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
       set({ insertMention });
     },
+    refreshSettings: () =>
+      set((state) => ({
+        refreshPieceFormSettings: !state.refreshPieceFormSettings,
+      })),
   }));
 
 export const stepPathToKeyString = (path: StepPathWithName): string => {

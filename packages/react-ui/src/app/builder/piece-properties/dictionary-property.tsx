@@ -1,5 +1,4 @@
 import { Plus, TrashIcon } from 'lucide-react';
-import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,9 +24,10 @@ export const DictionaryProperty = ({
   disabled,
   useMentionTextInput,
 }: DictionaryInputProps) => {
-  const [formValue, setFormValue] = useState<DictionaryInputItem[]>(
-    Object.entries(values ?? {}).map(([key, value]) => ({ key, value })),
-  );
+  const formValue = Object.entries(values ?? {}).map(([key, value]) => ({
+    key,
+    value,
+  }));
 
   const remove = (index: number) => {
     const newValues = formValue.filter((_, i) => i !== index);
@@ -54,7 +54,6 @@ export const DictionaryProperty = ({
   };
 
   const updateValue = (items: DictionaryInputItem[]) => {
-    setFormValue(items);
     onChange(
       items.reduce(
         (acc, current) => ({ ...acc, [current.key]: current.value }),
