@@ -1,4 +1,4 @@
-import { AlertCircle, Bug, LayoutGrid, Link2, Logs, Palette, Puzzle, Settings, UserCog, Workflow, Wrench, Zap } from 'lucide-react';
+import { AlertCircle, Bug, LayoutGrid, Link2, Logs, LogsIcon, Palette, Puzzle, Settings, UserCog, Workflow, Wrench, Zap } from 'lucide-react';
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { Sidebar, SidebarLink } from './sidebar';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
@@ -20,9 +20,9 @@ export function PlatformAdminContainer({
       locked: !platform.data.manageProjectsEnabled
     },
     {
-      to: "/platform/appearance",
-      label: "Appearance",
-      icon: Palette,
+      to: "/platform/audit-logs",
+      label: "Audit Logs",
+      icon: LogsIcon,
       locked: !platform.data.customAppearanceEnabled
     },
     {

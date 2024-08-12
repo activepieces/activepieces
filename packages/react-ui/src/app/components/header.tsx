@@ -17,7 +17,9 @@ export const Header = () => {
   const isInPlatformAdmin = history.pathname.startsWith('/platform')
 
   return <div className="flex ">
-    <ProjectSwitcher />
+    {isInPlatformAdmin ? <span className="text-2xl px-4 py-2">
+      Platform Admin
+    </span> : <ProjectSwitcher />}
     <div className="grow"></div>
     <div className="flex items-center justify-center gap-4">
       <InviteUserDialog></InviteUserDialog>

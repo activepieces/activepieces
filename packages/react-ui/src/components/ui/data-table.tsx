@@ -24,6 +24,7 @@ import { DataTableFacetedFilter } from './data-table-options-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
+import { DataTableColumnHeader } from './data-table-column-header';
 
 export type RowDataWithActions<TData> = TData & {
   delete: () => void;
@@ -40,21 +41,41 @@ export type DataTableFilter = {
     icon?: React.ComponentType<{ className?: string }>;
   }[];
 };
+
+type DataTableAction<TData> = (row: RowDataWithActions<TData>) => JSX.Element
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
   fetchData: (queryParams: URLSearchParams) => Promise<SeekPage<TData>>;
   onRowClick?: (row: RowDataWithActions<TData>) => void;
   filters?: DataTableFilter[];
   refresh?: number;
+  actions?: DataTableAction<TData>[];
 }
 
 export function DataTable<TData, TValue>({
-  columns,
+  columns: columnsInitial,
   fetchData,
   onRowClick,
   filters,
   refresh,
+  actions = []
 }: DataTableProps<TData, TValue>) {
+
+  const columns = columnsInitial.concat([
+    {
+      accessorKey: 'actions',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
+      cell: ({ row }) => {
+        return <div className="flex items-end justify-end gap-4">
+          {actions.map((action, index) => {
+            return action(row.original);
+          })}
+        </div>
+      },
+    }
+  ]);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
@@ -127,7 +148,7 @@ export function DataTable<TData, TValue>({
       tableData.filter(
         (row) =>
           !deletedRows.some(
-            (deletedRow) => JSON.stringify(deletedRow) === JSON.stringify(row),
+            (deletedRow) => JSON.stringify(deletedRow) === JSON.stringify(row), // use `props.rowKeySelector(row)` instead of `row` to compare deleted rows
           ),
       ),
     );
@@ -158,9 +179,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}

@@ -7,7 +7,7 @@ type LockedFeatureGuardProps = {
   locked: boolean;
   lockTitle: string;
   lockDescription: string;
-  lockVideoUrl: string;
+  lockVideoUrl?: string;
 };
 
 export const LockedFeatureGuard = ({
@@ -40,7 +40,7 @@ export const LockedFeatureGuard = ({
           </div>
         </div>
 
-        <video autoPlay loop muted playsInline className="max-w-full rounded-lg" controls={false} src={lockVideoUrl} />
+        {lockVideoUrl && <video autoPlay loop muted playsInline className="max-w-full rounded-lg" controls={false} src={lockVideoUrl} />}
       </div>
     </div>
   );

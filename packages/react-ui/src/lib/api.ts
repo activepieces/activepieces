@@ -81,4 +81,16 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       params: params,
     }),
+
+  patch: <TResponse, TBody = unknown, TParams = unknown>(
+    url: string,
+    body?: TBody,
+    params?: TParams,
+  ) =>
+    request<TResponse>(url, {
+      method: 'PATCH',
+      data: body,
+      headers: { 'Content-Type': 'application/json' },
+      params: params,
+    }),
 };

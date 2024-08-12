@@ -26,8 +26,9 @@ import { PlatformAdminContainer } from './components/platform-admin-container';
 import TemplatesPage from './routes/platform/templates';
 import ProjectsPage from './routes/platform/projects';
 import UsersPage from './routes/platform/users';
-import PlatformAppearancePage from './routes/platform/appearance';
+import AuditLogsPage from './routes/platform/audit-logs';
 import PlatformPiecesPage from './routes/platform/pieces';
+import GeneralPage from './routes/settings/general';
 
 export const router = createBrowserRouter([
   {
@@ -102,7 +103,7 @@ export const router = createBrowserRouter([
     path: '/settings',
     element: (
       <DashboardContainer>
-        <Navigate to="/settings/alerts" />
+        <Navigate to="/settings/general" />
       </DashboardContainer>
     ),
   },
@@ -143,6 +144,16 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/settings/general',
+    element: (
+      <DashboardContainer>
+        <ProjectSettingsLayout>
+          <GeneralPage />
+        </ProjectSettingsLayout>
+      </DashboardContainer>
+    ),
+  },
+  {
     path: '/settings/pieces',
     element: (
       <DashboardContainer>
@@ -175,10 +186,10 @@ export const router = createBrowserRouter([
     element: <NotFoundPage />,
   },
   {
-    path: '/platform/appearance',
+    path: '/platform/audit-logs',
     element: (
       <PlatformAdminContainer>
-        <PlatformAppearancePage />
+        <AuditLogsPage />
       </PlatformAdminContainer>
     ),
   },

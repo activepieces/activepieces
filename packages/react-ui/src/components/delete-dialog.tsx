@@ -48,7 +48,9 @@ export function ConfirmationDeleteDialog({
         <DialogFooter>
           <Button
             variant={'outline'}
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
               setIsOpen(false);
             }}
           >
@@ -57,7 +59,9 @@ export function ConfirmationDeleteDialog({
           <Button
             loading={isPending}
             variant={'destructive'}
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
               mutate();
             }}
           >
