@@ -208,7 +208,6 @@ const TestTriggerSection = React.memo(
 
     return (
       <>
-        <div className="text-md font-semibold">Generate Sample Data</div>
         {isTestedBefore && (
           <>
             <Select

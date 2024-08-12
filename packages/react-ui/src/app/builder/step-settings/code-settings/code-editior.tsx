@@ -90,8 +90,8 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
             size={'sm'}
             onClick={() => {}}
           >
-            <Package className="w-3 h-3" />
-            Add
+            <Package className="w-4 h-4" />
+            Add Package
           </Button>
         </AddNpmDialog>
       </div>

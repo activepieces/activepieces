@@ -20,6 +20,7 @@ import {
   Trigger,
   TriggerType,
   ValidBranchCondition,
+  isNil,
 } from '@activepieces/shared';
 
 export const formUtils = {
@@ -254,15 +255,19 @@ export const formUtils = {
             }),
           ]);
           break;
-        case PropertyType.ARRAY:
+        case PropertyType.ARRAY: {
+          const arraySchema = isNil(property.properties)
+            ? Type.Unknown()
+            : formUtils.buildSchema(property.properties);
           // Only accepts connections variable.
           propsSchema[name] = Type.Union([
-            Type.Array(Type.Unknown({})),
+            Type.Array(arraySchema),
             Type.String({
               minLength: property.required ? 1 : undefined,
             }),
           ]);
           break;
+        }
         case PropertyType.OBJECT:
           propsSchema[name] = Type.Union([
             Type.Record(Type.String(), Type.Any()),

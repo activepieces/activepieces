@@ -16,6 +16,7 @@ const TestStepContainer = React.memo(
   ({ flowVersionId, isSaving, type, flowId }: TestStepContainerProps) => {
     return (
       <>
+        <div className="text-md font-semibold mb-5">Generate Sample Data</div>
         {type === TriggerType.PIECE ? (
           <TestTriggerSection
             flowId={flowId}

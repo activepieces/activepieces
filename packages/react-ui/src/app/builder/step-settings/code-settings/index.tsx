@@ -37,11 +37,12 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Inputs</FormLabel>
-            <ApMarkdown markdown={markdown} />
+            <ApMarkdown markdown={markdown} className="mt-2" />
             <DictionaryProperty
               disabled={readonly}
               values={field.value}
               onChange={field.onChange}
+              useMentionTextInput={true}
             ></DictionaryProperty>
             <FormMessage />
           </FormItem>
