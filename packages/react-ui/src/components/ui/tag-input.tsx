@@ -14,7 +14,7 @@ type TagInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   onChange: (value: ReadonlyArray<string>) => void
 }
 
-const SEPERATOR = " "
+const SEPARATOR = " "
 
 const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
   const { className, value = [], onChange, ...domProps } = props
@@ -22,8 +22,8 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
   const [pendingDataPoint, setPendingDataPoint] = useState('')
 
   useEffect(() => {
-    if (pendingDataPoint.includes(SEPERATOR)) {
-      const newDataPoints = new Set([...value, ...pendingDataPoint.split(SEPERATOR)]
+    if (pendingDataPoint.includes(SEPARATOR)) {
+      const newDataPoints = new Set([...value, ...pendingDataPoint.split(SEPARATOR)]
         .flatMap(x => {
           const trimmedX = x.trim()
           return trimmedX.length > 0 ? [trimmedX] : []
@@ -36,7 +36,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
 
   const addPendingDataPoint = () => {
     if (pendingDataPoint) {
-      const newDataPoints = new Set([...value, ...pendingDataPoint.split(SEPERATOR)]
+      const newDataPoints = new Set([...value, ...pendingDataPoint.split(SEPARATOR)]
         .flatMap(x => {
           const trimmedX = x.trim()
           return trimmedX.length > 0 ? [trimmedX] : []
@@ -77,7 +77,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
         value={pendingDataPoint}
         onChange={(e) => setPendingDataPoint(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === SEPERATOR) {
+          if (e.key === 'Enter' || e.key === SEPARATOR) {
             e.preventDefault()
             addPendingDataPoint()
           } else if (
