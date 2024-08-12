@@ -32,6 +32,7 @@ const BaseAuditEventProps = {
     ...BaseModelSchema,
     platformId: Type.String(),
     projectId: Type.Optional(Type.String()),
+    projectDisplayName: Type.Optional(Type.String()),
     userId: Type.Optional(Type.String()),
     userEmail: Type.Optional(Type.String()),
     ip: Type.Optional(Type.String()),

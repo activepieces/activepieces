@@ -34,7 +34,7 @@ export const FlowRun = Type.Object({
     status: Type.Enum(FlowRunStatus),
     duration: Type.Optional(Type.Number()),
     startTime: Type.String(),
-    finishTime: Type.String(),
+    finishTime: Type.Optional(Type.String()),
     environment: Type.Enum(RunEnvironment),
     pauseMetadata: Type.Optional(PauseMetadata),
     steps: Type.Record(Type.String(), Type.Unknown()),
