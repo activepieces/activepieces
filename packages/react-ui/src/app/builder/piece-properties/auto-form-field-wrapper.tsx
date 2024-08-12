@@ -7,7 +7,7 @@ import { PieceProperty } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
 import { ReadMoreDescription } from './read-more-description';
-import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
+import { TextInputWithMentions } from './text-input-with-mentions';
 
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;

@@ -14,7 +14,7 @@ import { TextWithIcon } from '@/components/ui/text-with-icon';
 import { ArrayProperty } from '@activepieces/pieces-framework';
 
 import { AutoPropertiesFormComponent } from './auto-properties-form';
-import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
+import { TextInputWithMentions } from './text-input-with-mentions';
 
 type ArrayPropertyProps = {
   inputName: string;

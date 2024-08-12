@@ -14,7 +14,7 @@ import {
   BranchAction,
 } from '@activepieces/shared';
 
-import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions/text-input-with-mentions';
+import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
 
 const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_CONTAINS]: '(Text) Contains',

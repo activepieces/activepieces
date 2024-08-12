@@ -28,12 +28,12 @@ import { PieceCardInfo } from '../../../features/pieces/components/piece-selecto
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
-import { TestStepContainer } from '../test-step/test-step-container';
+import { TestStepContainer } from '../test-step';
 
-import { BranchSettings } from './branch-settings/branch-settings';
-import { CodeSettings } from './code-settings/code-settings';
+import { BranchSettings } from './branch-settings';
+import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
-import { PieceSettings } from './piece-settings/piece-settings';
+import { PieceSettings } from './piece-settings';
 
 type StepSettingsContainerProps = {
   selectedStep: Action | Trigger;
