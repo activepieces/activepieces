@@ -219,7 +219,11 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                     );
                   })}
                 </div>
-                <Button type="submit" className="w-full mt-4" loading={isPending}>
+                <Button
+                  type="submit"
+                  className="w-full mt-4"
+                  loading={isPending}
+                >
                   Submit
                 </Button>
 
