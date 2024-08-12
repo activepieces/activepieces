@@ -1,4 +1,8 @@
 import {
+  Action,
+  ActionType,
+  flowHelper,
+  FlowOperationType,
   GenerateCodeRequest,
   GenerateCodeResponse,
   WebsocketClientEvent,
@@ -18,11 +22,13 @@ import { ChatMessage } from './chat-message';
 import { useSocket } from '@/components/socket-provider';
 import { CardList } from '@/components/ui/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { toast } from '@/components/ui/use-toast';
+import { toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
 
 interface ChatMessageType {
   message: string;
   userType: 'user' | 'bot';
+  packages?: string[];
+  inputs?: { key: string; value: string }[];
 }
 
 interface DefaultEventsMap {
@@ -62,9 +68,18 @@ async function getCodeResponse(
 export const ChatSidebar = () => {
   const [messages, setMessages] = useState<ChatMessageType[]>(initialMessages);
   const [inputMessage, setInputMessage] = useState('');
-  const [setLeftSidebar] = useBuilderStateContext((state) => [
+  const [
+    selectedStep,
+    flowVersion,
+    refreshSettings,
+    applyOperation,
+    setLeftSidebar,
+  ] = useBuilderStateContext((state) => [
+    state.selectedStep,
+    state.flowVersion,
+    state.refreshSettings,
+    state.applyOperation,
     state.setLeftSidebar,
-    state.run,
   ]);
   const latestMessageRef = useRef<HTMLDivElement>(null);
 
@@ -75,10 +90,16 @@ export const ChatSidebar = () => {
       getCodeResponse(socket, request),
     onSuccess: (response: GenerateCodeResponse) => {
       const result = JSON.parse(response.result);
+      // todo
       console.log(result);
       setMessages((prevMessages) => [
         ...prevMessages,
-        { message: result.code, userType: 'bot' },
+        {
+          message: result.code,
+          userType: 'bot',
+          packages: result.packages,
+          inputs: result.inputs,
+        },
       ]);
     },
     onError: (error: any) => {
@@ -94,7 +115,7 @@ export const ChatSidebar = () => {
       setMessages([...messages, { message: inputMessage, userType: 'user' }]);
 
       const request: GenerateCodeRequest = {
-        prompt: `${inputMessage}. Format the code so each statement is on a new line.`,
+        prompt: inputMessage,
         previousContext: messages.map((message) => ({
           role: message.userType === 'user' ? 'user' : 'assistant',
           content: message.message,
@@ -104,6 +125,58 @@ export const ChatSidebar = () => {
       mutate(request);
 
       setInputMessage('');
+    }
+  };
+
+  const updateAction = (newAction: Action): void => {
+    applyOperation(
+      {
+        type: FlowOperationType.UPDATE_ACTION,
+        request: newAction,
+      },
+      () => toast(UNSAVED_CHANGES_TOAST),
+    );
+  };
+
+  const applyCodeToCurrentStep = (index: number) => {
+    if (!selectedStep) return;
+    const step = flowHelper.getStep(flowVersion, selectedStep.stepName);
+    if (!step) return;
+
+    const code = messages[index].message;
+    const packages = messages[index].packages;
+    const packageJson = JSON.stringify(
+      {
+        dependencies: packages?.reduce((acc, pkg) => {
+          acc[pkg] = '*';
+          return acc;
+        }, {} as Record<string, string>),
+      },
+      null,
+      2,
+    );
+
+    const inputs = messages[index].inputs;
+    const { inputs: currentInputs } = step.settings.input;
+
+    if (step.type === ActionType.CODE) {
+      const newStep = {
+        ...step,
+        settings: {
+          ...step.settings,
+          input:
+            inputs?.reduce(
+              (acc, input) => ({
+                ...acc,
+                [input.key]: input.value,
+              }),
+              {},
+            ) || currentInputs,
+          sourceCode: { code, packageJson },
+        },
+      };
+      updateAction(newStep);
+      refreshSettings();
     }
   };
 
@@ -130,9 +203,10 @@ export const ChatSidebar = () => {
             {messages.map((message, index) => (
               <ChatMessage
                 key={index}
-                isFirstPrompt={index === 0}
+                chatMessageIndex={index}
                 message={message.message}
                 userType={message.userType}
+                applyCodeToCurrentStep={applyCodeToCurrentStep}
                 ref={latestMessageRef}
               />
             ))}

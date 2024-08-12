@@ -6,15 +6,18 @@ import { CodeEditior } from '../step-settings/code-settings/code-editior';
 interface ChatMessageProps {
   message: string;
   userType: string;
-  isFirstPrompt: boolean;
+  chatMessageIndex: number;
+  applyCodeToCurrentStep: (index: number) => void;
 }
 
 export const ChatMessage = React.forwardRef<HTMLDivElement, ChatMessageProps>(
-  ({ message, userType, isFirstPrompt }, ref) => {
+  ({ message, userType, chatMessageIndex, applyCodeToCurrentStep }, ref) => {
     const sourceCode = {
       code: message,
       packageJson: '',
     };
+
+    const isFirstPrompt = chatMessageIndex === 0;
 
     return (
       <div
@@ -38,7 +41,9 @@ export const ChatMessage = React.forwardRef<HTMLDivElement, ChatMessageProps>(
                   sourceCode={sourceCode}
                   readonly={true}
                   onChange={() => {}}
-                  applyButton={true}
+                  applyCodeToCurrentStep={() =>
+                    applyCodeToCurrentStep(chatMessageIndex)
+                  }
                 ></CodeEditior>
               )}
             </div>
