@@ -7,12 +7,12 @@ import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, rejectedPromiseHandler
 import {
     ActivepiecesError, ALL_PRINCIPAL_TYPES,
     apId,
+    assertNotNullOrUndefined,
     ErrorCode,
     isNil,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
-import { flowQueue } from '../workers/queue'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
 
@@ -22,7 +22,6 @@ const appWebhooks: Record<string, Piece> = {
     'facebook-leads': facebookLeads,
     intercom,
 }
-
 const pieceNames: Record<string, string> = {
     slack: '@activepieces/piece-slack',
     square: '@activepieces/piece-square',
@@ -37,79 +36,79 @@ export const appEventRoutingModule: FastifyPluginAsyncTypebox = async (app) => {
 export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
     fastify,
 ) => {
-    fastify.all(
-        '/:pieceUrl',
-        {
-            config: {
-                rawBody: true,
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
-            },
-            logLevel: 'silent',
-        },
-        async (
-            request: FastifyRequest<{
-                Body: unknown
-                Params: {
-                    pieceUrl: string
-                }
-            }>,
-            requestReply,
-        ) => {
-            const pieceUrl = request.params.pieceUrl
-            const eventPayload = {
-                headers: request.headers as Record<string, string>,
-                body: request.body,
-                rawBody: request.rawBody,
-                method: request.method,
-                queryParams: request.query as Record<string, string>,
-            }
-            const piece = appWebhooks[pieceUrl]
-            if (isNil(piece)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.PIECE_NOT_FOUND,
-                    params: {
-                        pieceName: pieceUrl,
-                        pieceVersion: 'latest',
-                        message: 'Pieces is not found in app event routing',
-                    },
-                })
-            }
-            const pieceName = pieceNames[pieceUrl]
-            const { reply, event, identifierValue } = piece.events!.parseAndReply({
-                payload: eventPayload,
+    fastify.all('/:pieceUrl', EventRoutingParam, async (request, requestReply) => {
+        const pieceUrl = request.params.pieceUrl
+        const payload = {
+            headers: request.headers as Record<string, string>,
+            body: request.body,
+            rawBody: request.rawBody,
+            method: request.method,
+            queryParams: request.query as Record<string, string>,
+        }
+        const piece = appWebhooks[pieceUrl]
+        if (isNil(piece)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PIECE_NOT_FOUND,
+                params: {
+                    pieceName: pieceUrl,
+                    pieceVersion: 'latest',
+                    message: 'Pieces is not found in app event routing',
+                },
             })
-
-            logger.debug(
-                `Received event ${event} with identifier ${identifierValue} in app ${pieceName}`,
-            )
-            if (event && identifierValue) {
-                const listeners = await appEventRoutingService.listListeners({
-                    appName: pieceName,
-                    event,
-                    identifierValue,
-                })
-                rejectedPromiseHandler(Promise.all(listeners.map(async (listener) => {
-                    const requestId = apId()
-                    await flowQueue.add({
-                        id: requestId,
-                        type: JobType.WEBHOOK,
-                        data: {
-                            projectId: listener.projectId,
-                            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                            requestId,
-                            synchronousHandlerId: null,
-                            payload: eventPayload,
-                            flowId: listener.flowId,
-                            simulate: false,
-                        },
-                        priority: DEFAULT_PRIORITY,
-                    })
-                })))
+        }
+        const appName = pieceNames[pieceUrl]
+        assertNotNullOrUndefined(piece.events, 'Event is possible in this piece')
+        const { reply, event, identifierValue } = piece.events.parseAndReply({ payload })
+        if (!isNil(reply)) {
+            logger.info({
+                reply,
+                piece: pieceUrl,
+            }, '[AppEventRoutingController#event] reply')
+            return requestReply.status(StatusCodes.OK).headers(reply?.headers ?? {}).send(reply?.body ?? {})
+        }
+        logger.info({
+            event,
+            identifierValue,
+        }, '[AppEventRoutingController#event] event')
+        if (isNil(event) || isNil(identifierValue)) {
+            return requestReply.status(StatusCodes.BAD_REQUEST).send({})
+        }
+        const listeners = await appEventRoutingService.listListeners({
+            appName,
+            event,
+            identifierValue,
+        })
+        const eventsQueue = listeners.map(async (listener) => {
+            const requestId = apId()
+            return {
+                id: requestId,
+                type: JobType.WEBHOOK,
+                data: {
+                    projectId: listener.projectId,
+                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                    requestId,
+                    synchronousHandlerId: null,
+                    payload,
+                    flowId: listener.flowId,
+                    simulate: false,
+                },
+                priority: DEFAULT_PRIORITY,
             }
-            return requestReply
-                .status(200)
-                .headers(reply?.headers ?? {})
-                .send(reply?.body ?? {})
-        },
-    )
+        })
+        rejectedPromiseHandler(Promise.all(eventsQueue))
+        return requestReply.status(StatusCodes.OK).send({})
+    })
+}
+
+const EventRoutingParam = {
+    config: {
+        rawBody: true,
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        params: Type.Object({
+            pieceUrl: Type.String(),
+        }),
+        body: Type.Unknown(),
+    },
 }
