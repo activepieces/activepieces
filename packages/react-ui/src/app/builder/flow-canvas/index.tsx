@@ -17,7 +17,7 @@ import React, {
 } from 'react';
 
 import { useBuilderStateContext } from '../builder-hooks';
-import { DataSelector } from '../data-selector/data-selector';
+import { DataSelector } from '../data-selector';
 
 import { ApEdgeWithButton } from './edges/edge-with-button';
 import { ReturnLoopedgeButton } from './edges/return-loop-edge';
