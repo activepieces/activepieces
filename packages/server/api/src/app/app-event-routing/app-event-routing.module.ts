@@ -11,11 +11,11 @@ import {
     ErrorCode,
     isNil,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
-import { FastifyRequest } from 'fastify'
 
 const appWebhooks: Record<string, Piece> = {
     slack,

@@ -12,7 +12,11 @@ export const GenerateCodeRequest = Type.Object({
 export type GenerateCodeRequest = Static<typeof GenerateCodeRequest>
 
 export const GenerateCodeResponse = Type.Object({
-    result: Type.String(),
+    code: Type.String(),
+    packageJson: Type.Object({
+        depdedencies: Type.Record(Type.String(), Type.String()),
+    }),
+    inputs: Type.Record(Type.String(), Type.String()),
 })
 
 export type GenerateCodeResponse = Static<typeof GenerateCodeResponse>
