@@ -1,6 +1,9 @@
-import { Action, flowHelper, isNil, Trigger } from '@activepieces/shared';
 import { SearchXIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { Action, flowHelper, isNil, Trigger } from '@activepieces/shared';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { BuilderState, useBuilderStateContext } from '../builder-hooks';
@@ -11,9 +14,6 @@ import {
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
 import { dataSelectorUtils, MentionTreeNode } from './data-selector-utils';
-
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 
 const createTestNode = (
   step: Action | Trigger,

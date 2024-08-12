@@ -1,5 +1,6 @@
-import { ActionType, TriggerType } from '@activepieces/shared';
 import React from 'react';
+
+import { ActionType, TriggerType } from '@activepieces/shared';
 
 import { TestActionSection } from './test-action-section';
 import { TestTriggerSection } from './test-trigger-section';
