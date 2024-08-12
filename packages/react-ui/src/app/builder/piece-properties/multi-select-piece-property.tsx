@@ -7,6 +7,7 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from '@/components/custom/multi-select';
+import { Button } from '@/components/ui/button';
 
 type MultiSelectOption = {
   label: string;
@@ -19,6 +20,7 @@ type MultiSelectPiecePropertyProps = {
   onChange: (value: unknown[]) => void;
   initialValues: unknown[];
   disabled?: boolean;
+  enableSelectOrClear?: boolean;
 };
 
 const MultiSelectPieceProperty = ({
@@ -27,12 +29,16 @@ const MultiSelectPieceProperty = ({
   onChange,
   disabled,
   initialValues,
+  enableSelectOrClear,
 }: MultiSelectPiecePropertyProps) => {
-  const selectedIndicies = initialValues
-    .map((value) =>
-      String(options.findIndex((option) => option.value === value)),
-    )
-    .filter((index) => index !== undefined);
+  const selectedIndicies = Array.isArray(initialValues)
+    ? initialValues
+        .map((value) =>
+          String(options.findIndex((option) => option.value === value)),
+        )
+        .filter((index) => index !== undefined && index !== '-1') || []
+    : [];
+
   const sendChanges = (indicides: string[]) => {
     const newSelectedIndicies = indicides.filter(
       (index) => index !== undefined,
@@ -51,6 +57,21 @@ const MultiSelectPieceProperty = ({
       </MultiSelectTrigger>
       <MultiSelectContent>
         <MultiSelectSearch />
+        {enableSelectOrClear && (
+          <SelectOrClear
+            sendChanges={(changeType) => {
+              switch (changeType) {
+                case 'selectAll':
+                  sendChanges(options.map((_, i) => i.toString()));
+                  break;
+                case 'clear':
+                  sendChanges([]);
+                  break;
+              }
+            }}
+          />
+        )}
+
         <MultiSelectList>
           {options.map((option, index) => (
             <MultiSelectItem key={index} value={String(index)}>
@@ -62,6 +83,29 @@ const MultiSelectPieceProperty = ({
     </MultiSelect>
   );
 };
+
+const SelectOrClear = ({
+  sendChanges,
+}: {
+  sendChanges: (changeType: 'selectAll' | 'clear') => void;
+}) => (
+  <div className="flex justify-center py-1">
+    <Button
+      variant="transparent"
+      size="sm"
+      onClick={() => sendChanges('selectAll')}
+    >
+      Select All
+    </Button>
+    <Button
+      variant="transparent"
+      size="sm"
+      onClick={() => sendChanges('clear')}
+    >
+      Clear all
+    </Button>
+  </div>
+);
 
 MultiSelectPieceProperty.displayName = 'MultiSelectPieceProperty';
 export { MultiSelectPieceProperty };

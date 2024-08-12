@@ -8,8 +8,6 @@ import { Check, ChevronsUpDown, X } from 'lucide-react';
 import React, { ComponentPropsWithoutRef } from 'react';
 import { createPortal } from 'react-dom';
 
-import { cn } from '@/lib/utils';
-
 import { Badge } from '../ui/badge';
 import {
   Command,
@@ -26,6 +24,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
+
+import { cn } from '@/lib/utils';
 
 export interface MultiSelectOptionItem {
   value: string;
@@ -346,7 +346,7 @@ const MultiSelectList = React.forwardRef<
   return (
     <CommandList
       ref={ref}
-      className={cn('py-1 px-0 max-h-[unset]', className)}
+      className={cn('py-1 px-0 max-h-[unset] overflow-y-auto', className)}
       {...props}
     />
   );
