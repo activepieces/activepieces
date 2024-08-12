@@ -22,8 +22,9 @@ export const newSubscription = createTrigger({
   async onEnable(context) {
     const webhookId = await chargekeepCommon.subscribeWebhook(
       'Subscription.CreatedOrUpdated',
-      context.webhookUrl,
-      context.auth
+      context.auth.base_url,
+      context.auth.api_key,
+      context.webhookUrl
     );
 
     await context.store?.put<WebhookInformation>('_new_subscription_trigger', {
@@ -38,8 +39,9 @@ export const newSubscription = createTrigger({
 
     if (response !== null && response !== undefined) {
       await chargekeepCommon.unsubscribeWebhook(
-        response.webhookId,
-        context.auth
+        context.auth.base_url,
+        context.auth.api_key,
+        response.webhookId
       );
     }
   },

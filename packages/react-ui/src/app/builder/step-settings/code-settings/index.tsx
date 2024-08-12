@@ -63,6 +63,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
               disabled={readonly}
               values={field.value}
               onChange={field.onChange}
+              useMentionTextInput={true}
             ></DictionaryProperty>
             <FormMessage />
           </FormItem>

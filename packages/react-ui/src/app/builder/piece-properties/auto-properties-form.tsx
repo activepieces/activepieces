@@ -21,7 +21,7 @@ import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
-import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
+import { TextInputWithMentions } from './text-input-with-mentions';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
@@ -112,6 +112,7 @@ const selectRightComponent = (
             disabled={disabled}
             values={field.value}
             onChange={field.onChange}
+            useMentionTextInput={useMentionTextInput}
           ></DictionaryProperty>
         </AutoFormFieldWrapper>
       );

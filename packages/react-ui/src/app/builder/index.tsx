@@ -7,7 +7,6 @@ import {
   RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { FlowCanvas } from '@/app/builder/flow-canvas/flow-canvas';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -25,12 +24,12 @@ import {
 import { cn } from '../../lib/utils';
 
 import { BuilderNavBar } from './builder-nav-bar';
-import { FlowVersionsList } from './flow-versions/flow-versions-list';
-import { PiecesSelectorList } from './pieces-selector/piece-selector-list';
-import { FlowRunDetails } from './run-details/flow-run-details-list';
-import { FlowRecentRunsList } from './run-list/flow-runs-list';
-import { StepSettingsContainer } from './step-settings/step-settings-container';
-import { ChatSidebar } from './ai-chat/chat-sidebar';
+import { FlowCanvas } from './flow-canvas';
+import { FlowVersionsList } from './flow-versions';
+import { PiecesSelectorList } from './pieces-selector';
+import { FlowRunDetails } from './run-details';
+import { FlowRecentRunsList } from './run-list';
+import { StepSettingsContainer } from './step-settings';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -74,25 +73,25 @@ const BuilderPage = () => {
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
       const stepPath = state.selectedStep;
-      const flowVerison = state.flowVersion;
-      if (!stepPath || !flowVerison) {
+      const flowVersion = state.flowVersion;
+      if (!stepPath || !flowVersion) {
         return {
           memorizedSelectedStep: undefined,
           containerKey: undefined,
         };
       }
-      const step = flowHelper.getStep(flowVerison, stepPath.stepName);
+      const step = flowHelper.getStep(flowVersion, stepPath.stepName);
       const triggerOrActionName =
         step?.type === TriggerType.PIECE
           ? (step as PieceTrigger).settings.triggerName
           : step?.settings.actionName;
       return {
         memorizedSelectedStep: flowHelper.getStep(
-          flowVerison,
+          flowVersion,
           stepPath.stepName,
         ),
         containerKey: constructContainerKey(
-          flowVerison.id,
+          flowVersion.id,
           stepPath.stepName,
           triggerOrActionName,
         ),

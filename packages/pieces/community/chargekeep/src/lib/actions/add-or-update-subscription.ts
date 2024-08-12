@@ -11,7 +11,7 @@ export const addOrUpdateSubscription = createAction({
     contactId: Property.Number({
       displayName: 'Contact ID',
       defaultValue: 0,
-      required: true,
+      required: false,
     }),
     productId: Property.Number({
       displayName: 'Product ID',
@@ -92,9 +92,9 @@ export const addOrUpdateSubscription = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.PUT,
-      url: 'https://beta.chargekeep.com/api/services/CRM/OrderSubscription/Update',
+      url: `${context.auth.base_url}/api/services/CRM/OrderSubscription/Update`,
       headers: {
-        'api-key': context.auth, // Pass API key in headers
+        'api-key': context.auth.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

@@ -3,7 +3,6 @@ title: 'Webhook Trigger'
 description: 'Listen to user events through a single URL'
 ---
 
-
 The way webhook triggers usually work is as follows:
 
 **On Enable:**
@@ -24,14 +23,14 @@ To test the trigger, publish the flow, perform the event. Then check the flow ru
 
 **Examples:**
 
-- [New Form Submission on Typeform](https://github.com/activepieces/activepieces/blob/main/packages/pieces/typeform/src/lib/trigger/new-submission.ts)
+- [New Form Submission on Typeform](https://github.com/activepieces/activepieces/blob/main/packages/pieces/community/typeform/src/lib/trigger/new-submission.ts)
 
 <Warning>
 To make your webhook accessible from the internet, you need to configure the backend URL. Follow these steps:
 
 1. Install ngrok.
-2. Run the command `ngrok http 3000`.
-3. Replace the `AP_WEBHOOK_URL` environment variable in `packages/server/api/.env` with the ngrok URL.
+2. Run the command `ngrok http 4200`.
+3. Replace the `AP_FRONTEND_URL` environment variable in `packages/server/api/.env` with the ngrok URL.
 
 Once you have completed these configurations, you are good to go!
 

@@ -86,7 +86,6 @@ const TestActionSection = React.memo(
 
     return (
       <>
-        <div className="text-md font-semibold">Generate Sample Data</div>
         {!sampleDataExists && (
           <div className="flex-grow flex justify-center items-center w-full h-full">
             <TestButtonTooltip disabled={!isValid}>
