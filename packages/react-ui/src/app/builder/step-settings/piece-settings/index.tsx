@@ -57,8 +57,13 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     queryClient,
   );
 
+  const { data: frontendUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.FRONTEND_URL,
+    queryClient,
+  );
   const markdownVariables = {
     webhookUrl: `${webhookPrefixUrl}/${props.flowId}`,
+    formUrl: `${frontendUrl}/forms/${props.flowId}`,
   };
 
   return (

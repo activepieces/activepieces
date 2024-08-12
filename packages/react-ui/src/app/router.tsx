@@ -13,6 +13,7 @@ import { ChangePasswordPage } from './routes/change-password';
 import AppConnectionsPage from './routes/connections';
 import { FlowBuilderPage } from './routes/flows/id';
 import { ResetPasswordPage } from './routes/forget-password';
+import { FormPage } from './routes/forms';
 import IssuesPage from './routes/issues';
 import PlansPage from './routes/plans';
 import PlatformAppearancePage from './routes/platform/appearance';
@@ -50,6 +51,10 @@ export const router = createBrowserRouter([
         <FlowBuilderPage />
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
+  },
+  {
+    path: '/forms/:flowId',
+    element: <FormPage />,
   },
   {
     path: '/runs/:runId',
