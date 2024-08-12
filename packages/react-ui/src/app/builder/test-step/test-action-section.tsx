@@ -1,18 +1,18 @@
+import { Action, StepRunResponse, isNil } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+
+import { TestSampleDataViewer } from './test-sample-data-viewer';
+import { TestButtonTooltip } from './test-step-tooltip';
+import { testStepUtils } from './test-step-utils';
 
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { Action, StepRunResponse, isNil } from '@activepieces/shared';
-
-import { TestSampleDataViewer } from './test-sample-data-viewer';
-import { TestButtonTooltip } from './test-step-tooltip';
-import { testStepUtils } from './test-step-utils';
 
 type TestActionComponentProps = {
   isSaving: boolean;
@@ -86,7 +86,6 @@ const TestActionSection = React.memo(
 
     return (
       <>
-        <div className="text-md font-semibold">Generate Sample Data</div>
         {!sampleDataExists && (
           <div className="flex-grow flex justify-center items-center w-full h-full">
             <TestButtonTooltip disabled={!isValid}>
