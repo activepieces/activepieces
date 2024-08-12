@@ -2,6 +2,7 @@ import { TSchema, Type } from '@sinclair/typebox';
 
 import {
   CONNECTION_REGEX,
+  OAuth2Props,
   PieceMetadata,
   PieceMetadataModel,
   PiecePropertyMap,
@@ -13,18 +14,20 @@ import {
   BranchActionSchema,
   BranchOperator,
   CodeActionSchema,
-  ExactPieceTrigger,
   LoopOnItemsActionSchema,
   PieceActionSchema,
+  PieceTrigger,
   Trigger,
   TriggerType,
   ValidBranchCondition,
+  isNil,
 } from '@activepieces/shared';
 
 export const formUtils = {
   buildPieceDefaultValue: (
     selectedStep: Action | Trigger,
     piece: PieceMetadata | null,
+    includeCurrentInput: boolean,
   ): Action | Trigger => {
     const { type } = selectedStep;
     switch (type) {
@@ -76,7 +79,10 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep(props, input);
+        const defaultValues = getDefaultValueForStep(
+          props,
+          includeCurrentInput ? input : {},
+        );
         return {
           ...selectedStep,
           settings: {
@@ -92,7 +98,10 @@ export const formUtils = {
           string,
           unknown
         >;
-        const defaultValues = getDefaultValueForStep(props, input);
+        const defaultValues = getDefaultValueForStep(
+          props,
+          includeCurrentInput ? input : {},
+        );
 
         return {
           ...selectedStep,
@@ -135,6 +144,14 @@ export const formUtils = {
       case ActionType.CODE:
         return CodeActionSchema;
       case ActionType.PIECE: {
+        const inputSchema =
+          piece &&
+          actionNameOrTriggerName &&
+          piece.actions[actionNameOrTriggerName]
+            ? formUtils.buildSchema(
+                piece.actions[actionNameOrTriggerName].props,
+              )
+            : Type.Object({});
         return Type.Composite([
           PieceActionSchema,
           Type.Object({
@@ -142,14 +159,7 @@ export const formUtils = {
               actionName: Type.String({
                 minLength: 1,
               }),
-              input:
-                piece &&
-                actionNameOrTriggerName &&
-                piece.actions[actionNameOrTriggerName]
-                  ? formUtils.buildSchema(
-                      piece.actions[actionNameOrTriggerName].props,
-                    )
-                  : Type.Object({}),
+              input: inputSchema,
             }),
           }),
         ]);
@@ -163,7 +173,17 @@ export const formUtils = {
                 piece.triggers[actionNameOrTriggerName].props,
               )
             : Type.Object({});
-        return ExactPieceTrigger(formSchema);
+        return Type.Composite([
+          PieceTrigger,
+          Type.Object({
+            settings: Type.Object({
+              triggerName: Type.String({
+                minLength: 1,
+              }),
+              input: formSchema,
+            }),
+          }),
+        ]);
       }
       default: {
         throw new Error('Unsupported type: ' + type);
@@ -235,15 +255,19 @@ export const formUtils = {
             }),
           ]);
           break;
-        case PropertyType.ARRAY:
+        case PropertyType.ARRAY: {
+          const arraySchema = isNil(property.properties)
+            ? Type.Unknown()
+            : formUtils.buildSchema(property.properties);
           // Only accepts connections variable.
           propsSchema[name] = Type.Union([
-            Type.Array(Type.Unknown({})),
+            Type.Array(arraySchema),
             Type.String({
               minLength: property.required ? 1 : undefined,
             }),
           ]);
           break;
+        }
         case PropertyType.OBJECT:
           propsSchema[name] = Type.Union([
             Type.Record(Type.String(), Type.Any()),
@@ -284,10 +308,11 @@ export const formUtils = {
 
     return Type.Object(propsSchema);
   },
+  getDefaultValueForStep,
 };
 
 function getDefaultValueForStep(
-  props: PiecePropertyMap,
+  props: PiecePropertyMap | OAuth2Props,
   input: Record<string, unknown>,
 ): Record<string, unknown> {
   const defaultValues: Record<string, unknown> = {};
@@ -300,27 +325,33 @@ function getDefaultValueForStep(
       case PropertyType.LONG_TEXT:
       case PropertyType.FILE:
       case PropertyType.CHECKBOX:
-      case PropertyType.NUMBER:
       case PropertyType.STATIC_DROPDOWN:
       case PropertyType.DROPDOWN:
       case PropertyType.BASIC_AUTH:
       case PropertyType.CUSTOM_AUTH:
       case PropertyType.SECRET_TEXT:
       case PropertyType.OAUTH2:
-      case PropertyType.ARRAY:
-      case PropertyType.OBJECT:
+      case PropertyType.ARRAY: {
+        defaultValues[name] = input[name] ?? property.defaultValue;
+        break;
+      }
       case PropertyType.JSON: {
-        defaultValues[name] = input[name] ?? property.defaultValue ?? '';
+        defaultValues[name] = input[name] ?? property.defaultValue;
+        break;
+      }
+      case PropertyType.NUMBER: {
+        defaultValues[name] = input[name] ?? property.defaultValue;
         break;
       }
       case PropertyType.MULTI_SELECT_DROPDOWN:
-        defaultValues[name] = [];
+        defaultValues[name] = input[name] ?? property.defaultValue ?? [];
         break;
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-        defaultValues[name] = [];
+        defaultValues[name] = input[name] ?? property.defaultValue ?? [];
         break;
+      case PropertyType.OBJECT:
       case PropertyType.DYNAMIC:
-        defaultValues[name] = {};
+        defaultValues[name] = input[name] ?? property.defaultValue ?? {};
         break;
     }
   }

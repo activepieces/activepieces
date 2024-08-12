@@ -107,7 +107,7 @@ export default function PiecesTable() {
   const [refresh, setRefresh] = useState(0);
 
   return (
-    <div className="mx-auto w-full flex-col py-10">
+    <div className="mx-auto w-full flex-col">
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">Pieces </h1>
         <div className="ml-auto">

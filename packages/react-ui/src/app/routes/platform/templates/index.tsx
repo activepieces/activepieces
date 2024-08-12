@@ -23,7 +23,7 @@ import { CreateFlowTemplateRequest } from "../../../../../../ee/shared/src";
 import { FlowTemplate, TemplateType } from "../../../../../../shared/src";
 
 export default function TemplatesPage() {
-  const { data: platform } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform();
 
   const [refreshCount, setRefreshCount] = useState(0);
 

@@ -13,6 +13,7 @@ const CustomAuthConnectionSettings = React.memo(
       <AutoPropertiesFormComponent
         prefixValue="request.value"
         props={authProperty.props}
+        useMentionTextInput={false}
         allowDynamicValues={false}
       />
     );

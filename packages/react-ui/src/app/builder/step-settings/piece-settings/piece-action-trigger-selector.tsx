@@ -21,6 +21,7 @@ import {
 type PieceActionTriggerSelectorProps = {
   piece: PieceMetadataModel;
   isLoading: boolean;
+  disabled: boolean;
   type: ActionType.PIECE | TriggerType.PIECE;
 };
 
@@ -28,6 +29,7 @@ const PieceActionTriggerSelector = ({
   piece,
   isLoading,
   type,
+  disabled,
 }: PieceActionTriggerSelectorProps) => {
   const form = useFormContext<PieceAction | PieceTrigger>();
   const controlName =
@@ -67,7 +69,11 @@ const PieceActionTriggerSelector = ({
       control={form.control}
       render={({ field }) => (
         <FormItem>
-          <Select defaultValue={field.value} onValueChange={field.onChange}>
+          <Select
+            defaultValue={field.value}
+            onValueChange={field.onChange}
+            disabled={disabled}
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select an option" asChild>
                 <>{selectedDisplayName}</>

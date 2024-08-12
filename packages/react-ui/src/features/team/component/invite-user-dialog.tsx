@@ -75,9 +75,9 @@ type FormSchema = Static<typeof FormSchema>;
 export function InviteUserDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
-  const { data: platform } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { refetch } = userInvitationsHooks.useInvitations();
-  const { data: project } = projectHooks.useCurrentProject();
+  const { project } = projectHooks.useCurrentProject();
   const currentUser = authenticationSession.getCurrentUser();
 
   const { mutate, isPending } = useMutation<
@@ -139,6 +139,7 @@ export function InviteUserDialog() {
         setIsOpen(open);
         if (open) {
           form.reset();
+          setInvitationLink('');
         }
       }}
     >
@@ -176,7 +177,7 @@ export function InviteUserDialog() {
                 control={form.control}
                 name="email"
                 render={({ field }) => (
-                  <FormItem className="grid gap-3">
+                  <FormItem className="grid gap-2">
                     <Label htmlFor="email">Email</Label>
                     <Input {...field} type="text" placeholder="jon@doe.com" />
                     <FormMessage />
@@ -188,7 +189,7 @@ export function InviteUserDialog() {
                 control={form.control}
                 name="type"
                 render={({ field }) => (
-                  <FormItem className="grid gap-3">
+                  <FormItem className="grid gap-2">
                     <Label>Invite To</Label>
                     <Select
                       onValueChange={field.onChange}

@@ -1,16 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useEffect, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import React from 'react';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 import {
-  ActionType,
   ApFlagId,
   PieceAction,
+  PieceActionSettings,
   PieceTrigger,
-  TriggerType,
+  PieceTriggerSettings,
 } from '@activepieces/shared';
 
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
@@ -21,6 +19,7 @@ import { PieceActionTriggerSelector } from './piece-action-trigger-selector';
 type PieceSettingsProps = {
   step: PieceAction | PieceTrigger;
   flowId: string;
+  readonly: boolean;
 };
 
 const removeAuthFromProps = (
@@ -31,45 +30,19 @@ const removeAuthFromProps = (
 };
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
-  const [selectedAction, setSelectedAction] = useState<ActionBase | undefined>(
-    undefined,
-  );
-  const [selectedTrigger, setSelectedTrigger] = useState<
-    TriggerBase | undefined
-  >(undefined);
-
   const { pieceModel, isLoading } = piecesHooks.usePiece({
     name: props.step.settings.pieceName,
     version: props.step.settings.pieceVersion,
   });
 
-  const form = useFormContext<PieceAction | PieceTrigger>();
-
-  const watchedForm = form.watch([
-    'settings.actionName',
-    'settings.triggerName',
-  ]);
-
-  useEffect(() => {
-    switch (props.step.type) {
-      case ActionType.PIECE: {
-        const actionName = (form.getValues() as PieceAction).settings
-          .actionName;
-        if (actionName) {
-          setSelectedAction(pieceModel?.actions[actionName]);
-        }
-        break;
-      }
-      case TriggerType.PIECE: {
-        const triggerName = (form.getValues() as PieceTrigger).settings
-          .triggerName;
-        if (triggerName) {
-          setSelectedTrigger(pieceModel?.triggers[triggerName]);
-        }
-        break;
-      }
-    }
-  }, [watchedForm]);
+  const actionName = (props.step.settings as PieceActionSettings).actionName;
+  const selectedAction = actionName
+    ? pieceModel?.actions[actionName]
+    : undefined;
+  const triggerName = (props.step.settings as PieceTriggerSettings).triggerName;
+  const selectedTrigger = triggerName
+    ? pieceModel?.triggers[triggerName]
+    : undefined;
 
   const actionPropsWithoutAuth = removeAuthFromProps(
     selectedAction?.props ?? {},
@@ -96,19 +69,23 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
             piece={pieceModel}
             isLoading={isLoading}
             type={props.step.type}
+            disabled={props.readonly}
           ></PieceActionTriggerSelector>
-          {pieceModel.auth && selectedAction?.requireAuth && (
-            <ConnectionSelect piece={pieceModel}></ConnectionSelect>
-          )}
-          {pieceModel.auth && selectedTrigger && (
-            <ConnectionSelect piece={pieceModel}></ConnectionSelect>
-          )}
+          {pieceModel.auth &&
+            (selectedAction?.requireAuth || selectedTrigger) && (
+              <ConnectionSelect
+                piece={pieceModel}
+                disabled={props.readonly}
+              ></ConnectionSelect>
+            )}
           {selectedAction && (
             <AutoPropertiesFormComponent
               key={selectedAction.name}
               prefixValue="settings.input"
               props={actionPropsWithoutAuth}
               allowDynamicValues={true}
+              disabled={props.readonly}
+              useMentionTextInput={true}
               markdownVariables={markdownVariables}
             ></AutoPropertiesFormComponent>
           )}
@@ -117,7 +94,9 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               key={selectedTrigger.name}
               prefixValue="settings.input"
               props={triggerPropsWithoutAuth}
+              useMentionTextInput={true}
               allowDynamicValues={true}
+              disabled={props.readonly}
               markdownVariables={markdownVariables}
             ></AutoPropertiesFormComponent>
           )}

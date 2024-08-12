@@ -1,11 +1,13 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 
 import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
+import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 
 import { FlowsPage } from '../app/routes/flows';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './components/allow-logged-in-user-only-guard';
 import { DashboardContainer } from './components/dashboard-container';
+import { PlatformAdminContainer } from './components/platform-admin-container';
 import NotFoundPage from './routes/404-page';
 import { ChangePasswordPage } from './routes/change-password';
 import AppConnectionsPage from './routes/connections';
@@ -13,22 +15,21 @@ import { FlowBuilderPage } from './routes/flows/id';
 import { ResetPasswordPage } from './routes/forget-password';
 import IssuesPage from './routes/issues';
 import PlansPage from './routes/plans';
+import AuditLogsPage from './routes/platform/audit-logs';
+import PlatformPiecesPage from './routes/platform/pieces';
+import ProjectsPage from './routes/platform/projects';
+import TemplatesPage from './routes/platform/templates';
+import UsersPage from './routes/platform/users';
 import FlowsRunPage from './routes/runs';
 import { FlowRunPage } from './routes/runs/id';
 import AlertsPage from './routes/settings/alerts';
 import AppearancePage from './routes/settings/appearance';
+import GeneralPage from './routes/settings/general';
 import PiecesPage from './routes/settings/pieces';
 import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
-import { PlatformAdminContainer } from './components/platform-admin-container';
-import TemplatesPage from './routes/platform/templates';
-import ProjectsPage from './routes/platform/projects';
-import UsersPage from './routes/platform/users';
-import AuditLogsPage from './routes/platform/audit-logs';
-import PlatformPiecesPage from './routes/platform/pieces';
-import GeneralPage from './routes/settings/general';
 
 export const router = createBrowserRouter([
   {
@@ -174,6 +175,10 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/invitation',
+    element: <AcceptInvitation />,
+  },
+  {
     path: '/*',
     element: (
       <DashboardContainer>
@@ -232,5 +237,5 @@ export const router = createBrowserRouter([
         <Navigate to="/platform/projects" />
       </PlatformAdminContainer>
     ),
-  }
+  },
 ]);

@@ -53,6 +53,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     clickOnNewNodeButton,
     selectedStep,
     run,
+    readonly,
   ] = useBuilderStateContext((state) => [
     state.selectStepByName,
     state.setAllowCanvasPanning,
@@ -61,6 +62,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     state.clickOnNewNodeButton,
     state.selectedStep,
     state.run,
+    state.readonly,
   ]);
 
   const deleteStep = useBuilderStateContext((state) => () => {
@@ -125,6 +127,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   return (
     <div
+      id={data.step!.name}
       style={{
         boxShadow:
           (isSelected || toolbarOpen) && !isDragging
@@ -143,7 +146,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       })}
       onClick={(e) => handleStepClick(e)}
       onMouseEnter={() => {
-        setToolbarOpen(true);
+        setToolbarOpen(true && !readonly);
         setAllowCanvasPanning(false);
       }}
       onMouseLeave={() => {
@@ -218,7 +221,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 className={cn(
                   'w-[40px] h-[70px] absolute left-[-40px] top-[0px] transition-opacity duration-300',
                   {
-                    'opacity-0': !toolbarOpen,
+                    'opacity-0 pointer-events-none': !toolbarOpen,
                     'opacity-100': toolbarOpen,
                   },
                 )}
@@ -232,6 +235,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                           size="icon"
                           className="rounded-full"
                           onClick={(e) => {
+                            if (!toolbarOpen) {
+                              return;
+                            }
                             clickOnNewNodeButton(
                               'trigger',
                               stepName,
@@ -257,6 +263,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                             size="icon"
                             className="rounded-full"
                             onClick={(e) => {
+                              if (!toolbarOpen) {
+                                return;
+                              }
                               deleteStep();
                               e.stopPropagation();
                             }}
@@ -273,6 +282,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                             size="icon"
                             className="rounded-full"
                             onClick={(e) => {
+                              if (!toolbarOpen) {
+                                return;
+                              }
                               duplicateStep();
                               e.stopPropagation();
                             }}

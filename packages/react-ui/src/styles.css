@@ -5,6 +5,11 @@
 
 
 @layer base {
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
     :root {
         --background: 0 0% 100%;
         --foreground: 224 71.4% 4.1%;
@@ -92,7 +97,12 @@
 
 }
 
-
 .react-flow__panel.react-flow__attribution.bottom.right {
     display: none;
+}
+.react-flow {
+    --xy-edge-stroke-selected-default: #b1b1b7 !important;
+    --node-boxshadow-selected-default: 0 0 0 0 #b1b1b7;  
+    --selection-border-default: 0px solid #b1b1b7;
+    --node-border-default: 0px solid #b1b1b7;
 }

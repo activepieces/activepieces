@@ -19,8 +19,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function UsersPage() {
-  const { data: platform } = platformHooks.useCurrentPlatform();
-
   const [refreshCount, setRefreshCount] = useState(0);
 
   const { toast } = useToast();

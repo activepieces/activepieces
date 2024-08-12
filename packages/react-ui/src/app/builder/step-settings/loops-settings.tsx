@@ -13,7 +13,11 @@ Select the items to iterate over from the previous step by clicking on the **Ite
 The loop will iterate over each item in the list and execute the next step for every item.
 `;
 
-const LoopsSettings = React.memo(() => {
+type LoopsSettingsProps = {
+  readonly: boolean;
+};
+
+const LoopsSettings = React.memo(({ readonly }: LoopsSettingsProps) => {
   const form = useFormContext<LoopOnItemsAction>();
 
   return (
@@ -25,6 +29,7 @@ const LoopsSettings = React.memo(() => {
           <ApMarkdown markdown={markdown} />
           <FormLabel htmlFor="email">Items</FormLabel>
           <TextInputWithMentions
+            disabled={readonly}
             onChange={field.onChange}
             initialValue={field.value}
             placeholder="Select an array of items"

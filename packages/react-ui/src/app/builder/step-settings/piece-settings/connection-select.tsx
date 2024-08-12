@@ -23,6 +23,7 @@ import { PieceAction, PieceTrigger } from '@activepieces/shared';
 import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
 
 type ConnectionSelectProps = {
+  disabled: boolean;
   piece: PieceMetadataModelSummary | PieceMetadataModel;
 };
 const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
@@ -64,6 +65,7 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
             onOpenChange={setSelectConnectionOpen}
             defaultValue={field.value as string | undefined}
             onValueChange={field.onChange}
+            disabled={params.disabled}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select a connection" />

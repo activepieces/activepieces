@@ -15,6 +15,7 @@ type SelectPiecePropertyProps = {
   propertyName: string;
   initialValue: unknown;
   multiple?: boolean;
+  disabled: boolean;
   onChange: (value: unknown | undefined) => void;
 };
 const DynamicDropdownPieceProperty = React.memo(
@@ -27,7 +28,7 @@ const DynamicDropdownPieceProperty = React.memo(
     const newRefreshers = [...props.refreshers, 'auth'];
     const [dropdownState, setDropdownState] = useState<DropdownState<unknown>>({
       disabled: false,
-      placeholder: 'Select a option',
+      placeholder: 'Select an option',
       options: [],
     });
 
@@ -87,17 +88,17 @@ const DynamicDropdownPieceProperty = React.memo(
         {props.multiple ? (
           <MultiSelectPieceProperty
             initialValues={props.initialValue as unknown[]}
-            placeholder={dropdownState.placeholder ?? 'Select a option'}
+            placeholder={dropdownState.placeholder ?? 'Select an option'}
             options={selectOptions}
             onChange={(value) => props.onChange(value)}
-            disabled={dropdownState.disabled}
+            disabled={dropdownState.disabled || props.disabled}
           />
         ) : (
           <SearchableSelect
             options={selectOptions}
-            disabled={dropdownState.disabled}
+            disabled={dropdownState.disabled || props.disabled}
             loading={isPending}
-            placeholder={dropdownState.placeholder ?? 'Select a option'}
+            placeholder={dropdownState.placeholder ?? 'Select an option'}
             value={props.initialValue as React.Key}
             onChange={(value) => props.onChange(value)}
           />

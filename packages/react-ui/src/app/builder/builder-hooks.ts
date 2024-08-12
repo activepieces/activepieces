@@ -89,6 +89,7 @@ export type BuilderState = {
   exitPieceSelector: () => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
+  setReadOnly: (readOnly: boolean) => void;
   clickOnNewNodeButton: (
     type: 'action' | 'trigger',
     stepname: string,
@@ -128,6 +129,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       set({
         activeDraggingStep: stepName,
       }),
+    setReadOnly: (readonly: boolean) => set({ readonly }),
     renameFlowClientSide: (newName: string) => {
       set((state) => {
         return {
@@ -156,10 +158,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               .map((p) => [p.name, 0]),
             stepName,
           },
-          leftSidebar: isNil(state.run)
-            ? LeftSideBarType.NONE
-            : LeftSideBarType.RUN_DETAILS,
           rightSidebar: RightSideBarType.PIECE_SETTINGS,
+          leftSidebar: !isNil(state.run)
+            ? LeftSideBarType.RUN_DETAILS
+            : LeftSideBarType.NONE,
         };
       });
     },
@@ -198,6 +200,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       relativeLocation: StepLocationRelativeToParent,
     ) =>
       set({
+        selectedStep: null,
         selectedButton: {
           stepname,
           type,

@@ -21,7 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { CreatePlatformProjectRequest } from "../../../../../../ee/shared/src";
 
 export default function ProjectsPage() {
-  const { data: platform } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform();
   const [refreshCount, setRefreshCount] = useState(0);
 
   const { data: currentProject } = projectHooks.useCurrentProject();

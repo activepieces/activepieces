@@ -102,9 +102,12 @@ const FlowVersionDetailsCard = React.memo(
     selected,
     published,
   }: FlowVersionDetailsCardProps) => {
-    const [setBuilderVersion, setLeftSidebar] = useBuilderStateContext(
-      (state) => [state.setVersion, state.setLeftSidebar],
-    );
+    const [setBuilderVersion, setLeftSidebar, setReadonly] =
+      useBuilderStateContext((state) => [
+        state.setVersion,
+        state.setLeftSidebar,
+        state.setReadOnly,
+      ]);
     const [dropdownMenuOpen, setDropdownMenuOpen] = useState(false);
     const { mutate, isPending } = useMutation<
       FlowVersion,
@@ -119,6 +122,7 @@ const FlowVersionDetailsCard = React.memo(
       },
       onSuccess: (populatedFlowVersion) => {
         setBuilderVersion(populatedFlowVersion);
+        setReadonly(populatedFlowVersion.state === FlowVersionState.LOCKED);
       },
       onError: (error) => {
         toast(INTERNAL_ERROR_TOAST);

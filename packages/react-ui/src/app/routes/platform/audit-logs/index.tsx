@@ -9,7 +9,7 @@ import { Folder, Key, Link2, Logs, Users, Workflow } from "lucide-react";
 import { ApplicationEvent, ApplicationEventName, summarizeApplicationEvent } from "../../../../../../ee/shared/src";
 
 export default function AuditLogsPage() {
-  const { data: platform } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform();
 
   const isEnabled = platform.auditLogEnabled;
   return <LockedFeatureGuard

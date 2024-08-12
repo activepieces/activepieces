@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Value } from '@sinclair/typebox/value';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useUpdateEffect } from 'react-use';
 
@@ -50,49 +50,42 @@ const StepSettingsContainer = React.memo(
         state.flowVersion,
       ]);
 
-    const [actionOrTriggerName, setActionOrTriggerName] = useState<string>(
-      selectedStep?.settings?.actionName ??
-        selectedStep?.settings?.triggerName ??
-        '',
-    );
-
     const { stepMetadata } = piecesHooks.useStepMetadata({
       step: selectedStep,
     });
 
     const { toast } = useToast();
 
+    const updateTrigger = (newTrigger: Trigger) => {
+      applyOperation(
+        {
+          type: FlowOperationType.UPDATE_TRIGGER,
+          request: newTrigger,
+        },
+        () => toast(UNSAVED_CHANGES_TOAST),
+      );
+    };
+
     const debouncedTrigger = useMemo(() => {
-      const updateTrigger = (newTrigger: Trigger) => {
-        applyOperation(
-          {
-            type: FlowOperationType.UPDATE_TRIGGER,
-            request: newTrigger,
-          },
-          () => toast(UNSAVED_CHANGES_TOAST),
-        );
-      };
       return debounce(updateTrigger, 200);
     }, [applyOperation]);
 
-    const debouncedAction = useMemo(() => {
-      const updateAction = (newAction: Action) => {
-        applyOperation(
-          {
-            type: FlowOperationType.UPDATE_ACTION,
-            request: newAction,
-          },
-          () => toast(UNSAVED_CHANGES_TOAST),
-        );
-      };
+    const updateAction = (newAction: Action) => {
+      applyOperation(
+        {
+          type: FlowOperationType.UPDATE_ACTION,
+          request: newAction,
+        },
+        () => toast(UNSAVED_CHANGES_TOAST),
+      );
+    };
 
+    const debouncedAction = useMemo(() => {
       return debounce(updateAction, 200);
     }, [applyOperation]);
 
-    const defaultValues = formUtils.buildPieceDefaultValue(
-      selectedStep,
-      pieceModel!,
-    );
+    const actionOrTriggerName =
+      selectedStep.settings.actionName ?? selectedStep.settings.triggerName;
 
     const formSchema = formUtils.buildPieceSchema(
       selectedStep.type,
@@ -104,7 +97,13 @@ const StepSettingsContainer = React.memo(
       mode: 'onChange',
       disabled: readonly,
       reValidateMode: 'onChange',
-      defaultValues,
+      defaultValues: useMemo(() => {
+        return formUtils.buildPieceDefaultValue(
+          selectedStep,
+          pieceModel!,
+          true,
+        );
+      }, [selectedStep, pieceModel]),
       resolver: typeboxResolver(formSchema),
     });
 
@@ -146,24 +145,29 @@ const StepSettingsContainer = React.memo(
       control: form.control,
     });
 
+    const errorHandlingOptions = useWatch({
+      name: 'settings.errorHandlingOptions',
+      control: form.control,
+    });
+
     useUpdateEffect(() => {
       const currentStep = JSON.parse(JSON.stringify(form.getValues()));
-      setActionOrTriggerName(
-        currentStep.settings.actionName ??
-          currentStep.settings.triggerName ??
-          '',
-      );
-      const newValue = formUtils.buildPieceDefaultValue(
+      const defaultValues = formUtils.buildPieceDefaultValue(
         currentStep,
         pieceModel!,
+        false,
       );
-
-      form.reset(newValue);
-      form.trigger();
+      if (defaultValues.type === TriggerType.PIECE) {
+        updateTrigger(defaultValues);
+      } else {
+        updateAction(defaultValues as Action);
+      }
     }, [actionName, triggerName]);
 
     useUpdateEffect(() => {
       const currentStep = JSON.parse(JSON.stringify(form.getValues()));
+      const actionOrTriggerName =
+        currentStep.settings.actionName ?? currentStep.settings.triggerName;
       const formSchema = formUtils.buildPieceSchema(
         currentStep.type,
         actionOrTriggerName,
@@ -181,6 +185,7 @@ const StepSettingsContainer = React.memo(
     }, [
       inputChanges,
       itemsChange,
+      errorHandlingOptions,
       conditionsChange,
       sourceCodeChange,
       inputUIInfo,
@@ -209,24 +214,26 @@ const StepSettingsContainer = React.memo(
                     ></PieceCardInfo>
                   )}
                   {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
-                    <LoopsSettings></LoopsSettings>
+                    <LoopsSettings readonly={readonly}></LoopsSettings>
                   )}
                   {modifiedStep.type === ActionType.CODE && (
                     <CodeSettings readonly={readonly}></CodeSettings>
                   )}
                   {modifiedStep.type === ActionType.BRANCH && (
-                    <BranchSettings></BranchSettings>
+                    <BranchSettings readonly={readonly}></BranchSettings>
                   )}
                   {modifiedStep.type === ActionType.PIECE && modifiedStep && (
                     <PieceSettings
                       step={modifiedStep}
                       flowId={flowVersion.flowId}
+                      readonly={readonly}
                     ></PieceSettings>
                   )}
                   {modifiedStep.type === TriggerType.PIECE && modifiedStep && (
                     <PieceSettings
                       step={modifiedStep}
                       flowId={flowVersion.flowId}
+                      readonly={readonly}
                     ></PieceSettings>
                   )}
                   {[ActionType.CODE, ActionType.PIECE].includes(
@@ -237,6 +244,7 @@ const StepSettingsContainer = React.memo(
                         modifiedStep.settings.errorHandlingOptions
                           ?.continueOnFailure?.hide
                       }
+                      disabled={readonly}
                       hideRetryOnFailure={
                         modifiedStep.settings.errorHandlingOptions
                           ?.retryOnFailure?.hide

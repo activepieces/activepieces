@@ -21,12 +21,14 @@ import { ReadMoreDescription } from './read-more-description';
 type ActionErrorHandlingFormProps = {
   hideContinueOnFailure?: boolean;
   hideRetryOnFailure?: boolean;
+  disabled: boolean;
 };
 
 const ActionErrorHandlingForm = React.memo(
   ({
     hideContinueOnFailure,
     hideRetryOnFailure,
+    disabled,
   }: ActionErrorHandlingFormProps) => {
     const form = useFormContext<Action | Trigger>();
     const showShowForPiece =
@@ -51,6 +53,7 @@ const ActionErrorHandlingForm = React.memo(
                     >
                       <FormControl>
                         <Switch
+                          disabled={disabled}
                           id="continueOnFailure"
                           checked={field.value}
                           onCheckedChange={field.onChange}
@@ -77,6 +80,7 @@ const ActionErrorHandlingForm = React.memo(
                     >
                       <FormControl>
                         <Switch
+                          disabled={disabled}
                           id="retryOnFailure"
                           checked={field.value}
                           onCheckedChange={field.onChange}

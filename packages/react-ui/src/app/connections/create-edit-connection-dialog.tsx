@@ -118,7 +118,7 @@ const CreateOrEditConnectionDialog = React.memo(
           }
         } else {
           toast(INTERNAL_ERROR_TOAST);
-          console.log(response);
+          console.error(response);
         }
       },
     });
