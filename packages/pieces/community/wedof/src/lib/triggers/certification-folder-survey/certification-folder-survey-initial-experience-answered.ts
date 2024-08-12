@@ -6,11 +6,64 @@ import { wedofCommon } from '../../common/wedof';
 export const certificationFolderSurveyInitialExperienceAnswered = createTrigger({
   auth: wedofAuth,
   name: 'certificationFolderSurveyInitialExperienceAnswered',
-  displayName: 'Enquéte "Situation professionnelle en début de cursus" répondue',
-  description: "Se déclenche lorsqu'un une enquéte de début de cursus est répondue",
+  displayName: 'Enquête "Situation professionnelle en début de cursus" répondue',
+  description: "Se déclenche lorsqu'un une enquête de début de cursus est répondue",
   type: TriggerStrategy.WEBHOOK,
   props: {},
-  sampleData: {},
+  sampleData: {
+    "id": 0,
+    "initialExperience": {
+      "id": 0,
+      "qualification": 0,
+      "certificationName": "string",
+      "job": "string",
+      "companyName": "string",
+      "salaryYearly": 0,
+      "situation": "string",
+      "contractType": "string",
+      "executiveStatus": true,
+      "startDate": "2019-08-24T14:15:22Z",
+      "endDate": "2019-08-24T14:15:22Z",
+      "createdOn": "2019-08-24T14:15:22Z",
+      "updatedOn": "2019-08-24T14:15:22Z"
+    },
+    "initialExperienceAnsweredDate": "2019-08-24T14:15:22Z",
+    "sixMonthExperience": {
+      "id": 0,
+      "qualification": 0,
+      "certificationName": "string",
+      "job": "string",
+      "companyName": "string",
+      "salaryYearly": 0,
+      "situation": "string",
+      "contractType": "string",
+      "executiveStatus": true,
+      "startDate": "2019-08-24T14:15:22Z",
+      "endDate": "2019-08-24T14:15:22Z",
+      "createdOn": "2019-08-24T14:15:22Z",
+      "updatedOn": "2019-08-24T14:15:22Z"
+    },
+    "sixMonthExperienceAnsweredDate": "2019-08-24T14:15:22Z",
+    "sixMonthExperienceStartDate": "2019-08-24T14:15:22Z",
+    "longTermExperience": {
+      "id": 0,
+      "qualification": 0,
+      "certificationName": "string",
+      "job": "string",
+      "companyName": "string",
+      "salaryYearly": 0,
+      "situation": "string",
+      "contractType": "string",
+      "executiveStatus": true,
+      "startDate": "2019-08-24T14:15:22Z",
+      "endDate": "2019-08-24T14:15:22Z",
+      "createdOn": "2019-08-24T14:15:22Z",
+      "updatedOn": "2019-08-24T14:15:22Z"
+    },
+    "longTermExperienceAnsweredDate": "2019-08-24T14:15:22Z",
+    "longTermExperienceStartDate": "2019-08-24T14:15:22Z",
+    "state": "created"
+  },
 
   async onEnable(context) {
     const url = context.webhookUrl as string;

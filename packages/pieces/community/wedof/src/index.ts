@@ -53,6 +53,8 @@ import { certificationFolderSurveyLongTermExperienceAnswered } from './lib/trigg
 import { certificationFolderSurveyLongTermExperienceAvailable } from './lib/triggers/certification-folder-survey/certification-folder-survey-long-experience-available';
 import { certificationFolderSurveySixMonthExperienceAnswered } from './lib/triggers/certification-folder-survey/certification-folder-survey-six-month-experience-answered';
 import { certificationFolderSurveySixMonthExperienceAvailable } from './lib/triggers/certification-folder-survey/certification-folder-survey-six-month-experience-available';
+import { getCertificationFolderSurvey } from './lib/actions/certification-folder-survey/get-certification-folder-survey';
+import { listCertificationFolderSurveys } from './lib/actions/certification-folder-survey/list-certification-folder-surveys';
 
 export const wedofAuth = PieceAuth.SecretText({
     displayName: 'Clé API',
@@ -123,6 +125,9 @@ export const wedof = createPiece({
     createTask,
     createActivitie,
     sendFile,
+    ///////////// certificationFoldersSurvey ///////
+    getCertificationFolderSurvey,
+    listCertificationFolderSurveys
   ],
   triggers: [
     ////////////// registrationFolders ////////////
