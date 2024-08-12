@@ -112,6 +112,7 @@ const selectRightComponent = (
             disabled={disabled}
             values={field.value}
             onChange={field.onChange}
+            useMentionTextInput={useMentionTextInput}
           ></DictionaryProperty>
         </AutoFormFieldWrapper>
       );
