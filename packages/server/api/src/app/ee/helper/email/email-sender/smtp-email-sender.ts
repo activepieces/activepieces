@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { AppSystemProp, system } from '@activepieces/server-shared'
+import { AppSystemProp, logger, system } from '@activepieces/server-shared'
 import { isNil, Platform } from '@activepieces/shared'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
@@ -31,6 +31,7 @@ export const smtpEmailSender: SMTPEmailSender = {
         const senderEmail = platform?.smtpSenderEmail ?? system.get(AppSystemProp.SMTP_SENDER_EMAIL)
 
         if (!isSmtpConfigured(platform)) {
+            logger.error(`SMTP isn't configured for sending the email ${emailSubject}`)
             return
         }
 

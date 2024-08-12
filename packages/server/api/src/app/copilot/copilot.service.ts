@@ -8,6 +8,7 @@ import {
 
 type GenerateCodeParams = {
     prompt: string
+    previousContext: ChatCompletionMessageParam[]
 }
 
 
@@ -39,12 +40,13 @@ function getOpenAI(): OpenAI {
 }
 
 export const copilotService = {
-    async generateCode({ prompt }: GenerateCodeParams): Promise<string> {
+    async generateCode({ prompt, previousContext }: GenerateCodeParams): Promise<string> {
         logger.debug({ prompt }, '[CopilotService#generateCode] Prompting...')
         const result = await getOpenAI().chat.completions.create({
             model: 'gpt-3.5-turbo',
             messages: [
                 ...this.createCodeMessageContext(),
+                ...previousContext,
                 {
                     role: 'user',
                     content: prompt,
@@ -131,7 +133,6 @@ You are a TypeScript coding bot that helps users turn natural language into usea
 # RESPONSE FORMAT
 You will not respond to any messages that require a conversational answer.
 You will not elaborate.
-You will write the code in a single line, and add ***NEW_LINE*** at the end of every statement you write.
 You MUST respond ONLY with a function call.
 You will use import to import any libraries you need. You will be penalized for using require. You will be punished for using libraries that are not imported.
                 `,
@@ -147,7 +148,7 @@ You will use import to import any libraries you need. You will be penalized for 
                 function_call: {
                     name: 'generate_code',
                     arguments:
-                        '{ "code": "export const code = async (inputs) => {***NEW_LINE***  const combinedArray = [...inputs.array1, ...inputs.array2]***NEW_LINE***  const uniqueArray = Array.from(new Set(combinedArray))***NEW_LINE***  return uniqueArray***NEW_LINE***};", "inputs": [ { "key": "array1", "value": "[1,2,3]" }, { "key": "array2", "value": "[4,5,6]" } ], "packages": [] }',
+                        '{ "code": "export const code = async (inputs) => {  const combinedArray = [...inputs.array1, ...inputs.array2]  const uniqueArray = Array.from(new Set(combinedArray))  return uniqueArray};", "inputs": [ { "key": "array1", "value": "[1,2,3]" }, { "key": "array2", "value": "[4,5,6]" } ], "packages": [] }',
                 },
             },
             {
@@ -161,7 +162,7 @@ You will use import to import any libraries you need. You will be penalized for 
                 function_call: {
                     name: 'generate_code',
                     arguments:
-                        '{ "code": "export const code = async (inputs) => {***NEW_LINE***  const nameParts = inputs.fullName.split(\' \')***NEW_LINE***  const firstName = nameParts[0]***NEW_LINE***  const lastName = nameParts.slice(1).join(\'\')***NEW_LINE***  return { firstName, lastName }***NEW_LINE***};", "inputs": [ { "key": "fullName","value": "John Doe" } ], "packages": [] }',
+                        '{ "code": "export const code = async (inputs) => {  const nameParts = inputs.fullName.split(\' \')  const firstName = nameParts[0]  const lastName = nameParts.slice(1).join(\'\')  return { firstName, lastName }};", "inputs": [ { "key": "fullName","value": "John Doe" } ], "packages": [] }',
                 },
             },
             {
@@ -175,7 +176,7 @@ You will use import to import any libraries you need. You will be penalized for 
                 function_call: {
                     name: 'generate_code',
                     arguments:
-                        '{ "code": "export const code = async (inputs) => {***NEW_LINE***  const isoStrings = inputs.array.map(obj => new Date(obj.created_at).toISOString())***NEW_LINE***  return isoStrings;***NEW_LINE***};", "inputs": [ { "key": "array","value": "[{ "created_at": "2022-01-14T12:34:56Z" }, { "created_at": "2022-01-15T09:45:30Z" } ]" } ], "packages": [] }',
+                        '{ "code": "export const code = async (inputs) => {  const isoStrings = inputs.array.map(obj => new Date(obj.created_at).toISOString())  return isoStrings;};", "inputs": [ { "key": "array","value": "[{ "created_at": "2022-01-14T12:34:56Z" }, { "created_at": "2022-01-15T09:45:30Z" } ]" } ], "packages": [] }',
                 },
             },
             {
@@ -188,34 +189,7 @@ You will use import to import any libraries you need. You will be penalized for 
                 function_call: {
                     name: 'generate_code',
                     arguments:
-                        '{ "code": "export const code = async (inputs) => {***NEW_LINE*** return \'Hi\'***NEW_LINE***};", "inputs": [], "packages": [] }',
-                },
-            },
-            {
-                role: 'user',
-                content: 'How are you?',
-            },
-            {
-                role: 'assistant',
-                content: null,
-                function_call: {
-                    name: 'generate_code',
-                    arguments:
-                        '{ "code": "export const code = async (inputs) => {***NEW_LINE*** return \'How are you?\'***NEW_LINE***};", "inputs": [], "packages": [] }',
-                },
-            },
-            {
-                role: 'user',
-                content:
-                    'Using axios, send a GET request to https://cloud.activepieces.com/api/v1/pieces',
-            },
-            {
-                role: 'assistant',
-                content: null,
-                function_call: {
-                    name: 'generate_code',
-                    arguments:
-                        '{ "code": "import axios from \'axios\'***NEW_LINE***export const code = async (inputs) => {***NEW_LINE***  const response = await axios.get(\'https://cloud.activepieces.com/api/v1/pieces\');***NEW_LINE***  return response.data;***NEW_LINE***};", "inputs": [], "packages": ["axios"] }',
+                        '{ "code": "export const code = async (inputs) => { return \'Hi\'};", "inputs": [], "packages": [] }',
                 },
             },
         ]

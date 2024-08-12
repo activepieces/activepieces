@@ -602,7 +602,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
                 break
             case PropertyType.NUMBER:
                 // Because it could be a variable
-                propsSchema[name] = Type.String({})
+                propsSchema[name] = Type.Union([Type.String({}), Type.Number({})])
                 break
             case PropertyType.STATIC_DROPDOWN:
                 propsSchema[name] = nonNullableUnknownPropType
