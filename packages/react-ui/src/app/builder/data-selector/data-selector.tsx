@@ -123,7 +123,6 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       (document.activeElement?.classList.contains('ap-text-with-mentions') ??
         false);
     setShowDataSelector(isTextMentionInputFocused);
-    console.log(document.activeElement);
   }, []);
 
   useEffect(() => {
