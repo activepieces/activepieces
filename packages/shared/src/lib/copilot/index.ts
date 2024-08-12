@@ -14,7 +14,7 @@ export type GenerateCodeRequest = Static<typeof GenerateCodeRequest>
 export const GenerateCodeResponse = Type.Object({
     code: Type.String(),
     packageJson: Type.Object({
-        depdedencies: Type.Record(Type.String(), Type.String())
+        depdedencies: Type.Record(Type.String(), Type.String()),
     }),
     inputs: Type.Record(Type.String(), Type.String()),
 })
