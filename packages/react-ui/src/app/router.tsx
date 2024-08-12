@@ -53,11 +53,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/forms/:flowId',
-    element: (
-      <AllowOnlyLoggedInUserOnlyGuard>
-        <FormPage />
-      </AllowOnlyLoggedInUserOnlyGuard>
-    ),
+    element: <FormPage />,
   },
   {
     path: '/runs/:runId',

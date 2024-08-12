@@ -5,7 +5,7 @@ import { useSearchParam } from 'react-use';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ApForm } from '@/features/forms/components/ap-form';
 import { formsApi } from '@/features/forms/lib/forms-api';
-import { FormResponse } from '@activepieces/shared';
+import { FormResponse, isNil } from '@activepieces/shared';
 
 export const FormPage = () => {
   const { flowId } = useParams();
@@ -18,10 +18,13 @@ export const FormPage = () => {
   } = useQuery<FormResponse | null, Error>({
     queryKey: ['form', flowId],
     queryFn: () => formsApi.get(flowId!, useDraft === 'true'),
-    enabled: !!flowId,
+    enabled: !isNil(flowId),
     staleTime: Infinity,
   });
 
+  if (!isNil(flowId)) {
+    return <Navigate to={`/404`} replace />;
+  }
   return (
     <>
       {isLoading && (

@@ -36,23 +36,23 @@ type ApFormProps = {
 };
 
 function buildSchema(inputs: FormInput[]): TObject {
-  const properties: Record<string, TSchema> = {};
-  inputs.forEach((input) => {
+  const properties = inputs.reduce<Record<string, TSchema>>((acc, input) => {
     switch (input.type) {
       case FormInputType.FILE:
-        properties[input.displayName] = Type.String();
+        acc[input.displayName] = Type.String();
         break;
       case FormInputType.TEXT:
       case FormInputType.TEXT_AREA:
-        properties[input.displayName] = Type.String();
+        acc[input.displayName] = Type.String();
         break;
       case FormInputType.TOGGLE:
-        properties[input.displayName] = Type.Boolean();
+        acc[input.displayName] = Type.Boolean();
         break;
       default:
         break;
     }
-  });
+    return acc;
+  }, {});
   return Type.Object(properties);
 }
 
@@ -62,6 +62,8 @@ const handleDownloadFile = (formResult: FormResult) => {
   link.download = fileBase.fileName;
   link.href = fileBase.base64Url;
   link.target = '_blank';
+  link.rel = 'noreferrer noopener';
+
   link.click();
   URL.revokeObjectURL(fileBase.base64Url);
 };
@@ -217,7 +219,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                     );
                   })}
                 </div>
-                <Button type="submit" className="w-full" loading={isPending}>
+                <Button type="submit" className="w-full mt-4" loading={isPending}>
                   Submit
                 </Button>
 

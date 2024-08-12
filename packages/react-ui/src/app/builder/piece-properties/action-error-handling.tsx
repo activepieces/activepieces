@@ -7,6 +7,7 @@ import {
   FormLabel,
   FormControl,
 } from '@/components/ui/form';
+import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Switch } from '@/components/ui/switch';
 import {
   Action,
@@ -15,8 +16,6 @@ import {
   TriggerType,
   isNil,
 } from '@activepieces/shared';
-import { ReadMoreDescription } from '@/components/ui/read-more-description';
-
 
 type ActionErrorHandlingFormProps = {
   hideContinueOnFailure?: boolean;
