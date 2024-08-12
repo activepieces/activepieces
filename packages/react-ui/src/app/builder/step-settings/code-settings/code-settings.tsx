@@ -1,5 +1,10 @@
+import { CodeAction } from '@activepieces/shared';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+
+import { DictionaryProperty } from '../../piece-properties/dictionary-property';
+
+import { CodeEditior } from './code-editior';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import {
@@ -8,11 +13,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { CodeAction } from '@activepieces/shared';
-
-import { DictionaryProperty } from '../../piece-properties/dictionary-property';
-
-import { CodeEditior } from './code-editior';
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below.
@@ -42,6 +42,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
               disabled={readonly}
               values={field.value}
               onChange={field.onChange}
+              useMentionTextInput={true}
             ></DictionaryProperty>
             <FormMessage />
           </FormItem>
