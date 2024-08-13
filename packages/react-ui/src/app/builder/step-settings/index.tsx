@@ -1,19 +1,3 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Value } from '@sinclair/typebox/value';
-import React, { useEffect, useMemo } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
-import { useUpdateEffect } from 'react-use';
-
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { Form } from '@/components/ui/form';
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from '@/components/ui/resizable-panel';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { PieceMetadataModel } from '@activepieces/pieces-framework';
 import {
   Action,
@@ -23,6 +7,11 @@ import {
   TriggerType,
   debounce,
 } from '@activepieces/shared';
+import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { Value } from '@sinclair/typebox/value';
+import React, { useEffect, useMemo } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { useUpdateEffect } from 'react-use';
 
 import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
@@ -34,6 +23,17 @@ import { BranchSettings } from './branch-settings';
 import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
+
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { Form } from '@/components/ui/form';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable-panel';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 
 type StepSettingsContainerProps = {
   selectedStep: Action | Trigger;
@@ -267,17 +267,15 @@ const StepSettingsContainer = React.memo(
               <>
                 <ResizableHandle withHandle={true} />
                 <ResizablePanel defaultSize={45}>
-                  <ScrollArea className="h-full">
-                    <div className="p-4 flex flex-col gap-4 h-full">
-                      {modifiedStep.type && (
-                        <TestStepContainer
-                          type={modifiedStep.type}
-                          flowId={flowVersion.flowId}
-                          flowVersionId={flowVersion.id}
-                          isSaving={saving}
-                        ></TestStepContainer>
-                      )}
-                    </div>
+                  <ScrollArea className="h-[calc(100%-35px)] p-4 pb-10 ">
+                    {modifiedStep.type && (
+                      <TestStepContainer
+                        type={modifiedStep.type}
+                        flowId={flowVersion.flowId}
+                        flowVersionId={flowVersion.id}
+                        isSaving={saving}
+                      ></TestStepContainer>
+                    )}
                   </ScrollArea>
                 </ResizablePanel>
               </>

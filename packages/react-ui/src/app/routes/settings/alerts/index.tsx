@@ -1,5 +1,5 @@
-import AlertsEmailsCard from '@/features/alerts/components/alerts-email-list-card';
-import { AlertFrequencyCard } from '@/features/alerts/components/alerts-frequency-card';
+import AlertsEmailsCard from '@/app/routes/settings/alerts/alerts-email-list-card';
+import { AlertFrequencyCard } from '@/app/routes/settings/alerts/alerts-frequency-card';
 
 export default function AlertsPage() {
   return (
