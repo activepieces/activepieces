@@ -3,7 +3,6 @@ import React from 'react';
 import ReactJson from 'react-json-view';
 
 import { Button } from './ui/button';
-import { ScrollArea } from './ui/scroll-area';
 import { toast } from './ui/use-toast';
 
 type JsonViewerProps = {
@@ -47,26 +46,34 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
           </Button>
         </div>
       </div>
-      <ScrollArea className="w-full h-full">
-        {json && (
-          <div className="px-2 py-3 max-h-[300px]">
-            {typeof json !== 'string' && typeof json !== 'object' && (
-              <pre className="text-sm">{JSON.stringify(json)}</pre>
-            )}
-            {typeof json === 'string' && <pre className="text-sm">{json}</pre>}
-            {typeof json === 'object' && (
-              <ReactJson
-                enableClipboard={false}
-                groupArraysAfterLength={100}
-                displayDataTypes={false}
-                name={false}
-                quotesOnKeys={false}
-                src={json}
-              />
-            )}
-          </div>
-        )}
-      </ScrollArea>
+
+      {json && (
+        <>
+          {typeof json !== 'string' && typeof json !== 'object' && (
+            <pre className="text-sm whitespace-pre-wrap overflow-x-auto p-2">
+              {JSON.stringify(json)}
+            </pre>
+          )}
+          {typeof json === 'string' && (
+            <pre className="text-sm whitespace-pre-wrap overflow-x-auto p-2">
+              {json}
+            </pre>
+          )}
+          {typeof json === 'object' && (
+            <ReactJson
+              style={{
+                overflowX: 'auto',
+              }}
+              enableClipboard={false}
+              groupArraysAfterLength={100}
+              displayDataTypes={false}
+              name={false}
+              quotesOnKeys={false}
+              src={json}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 });
