@@ -21,7 +21,7 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 
-const TestFlowWidget = React.memo(() => {
+const AboveFlowWidget = React.memo(() => {
   const [
     flowVersion,
     setRun,
@@ -148,5 +148,5 @@ const TestFlowWidget = React.memo(() => {
   );
 });
 
-TestFlowWidget.displayName = 'TestFlowWidget';
-export { TestFlowWidget };
+AboveFlowWidget.displayName = 'TestFlowWidget';
+export { AboveFlowWidget as TestFlowWidget };

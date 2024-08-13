@@ -11,9 +11,11 @@ import {
   flowHelper,
   isNil,
 } from '@activepieces/shared';
+import { useMutation } from '@tanstack/react-query';
 import { createContext, useContext } from 'react';
 import { create, useStore } from 'zustand';
 
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 
@@ -340,4 +342,29 @@ function constructCurrentStateForEachStep(
 }
 export const builderSelectors = {
   getStepOutputFromExecutionPath,
+};
+
+export const useSwitchToDraft = () => {
+  const [flowVersion, setVersion] = useBuilderStateContext((state) => [
+    state.flowVersion,
+    state.setVersion,
+  ]);
+
+  const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
+    useMutation({
+      mutationFn: async () => {
+        const flow = await flowsApi.get(flowVersion.flowId);
+        return flow;
+      },
+      onSuccess: (flow) => {
+        setVersion(flow.version);
+      },
+      onError: () => {
+        toast(INTERNAL_ERROR_TOAST);
+      },
+    });
+  return {
+    switchToDraft,
+    isSwitchingToDraftPending,
+  };
 };
