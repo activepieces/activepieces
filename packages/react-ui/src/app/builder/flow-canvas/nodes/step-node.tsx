@@ -12,7 +12,7 @@ import { Handle, Position } from '@xyflow/react';
 import { CircleAlert, CopyPlus, Replace, Trash } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { AP_NODE_SIZE, ApNode } from '../flow-canvas-utils';
+import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 
 import {
   StepPathWithName,
@@ -105,7 +105,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     id: data.step!.name,
     disabled: isTrigger,
     data: {
-      type: 'draggableFlowItem',
+      type: DRAGGED_STEP_TAG,
     },
   });
 

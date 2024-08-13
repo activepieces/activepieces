@@ -72,10 +72,11 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
         childrenGraphs,
         [
           StepLocationRelativeToParent.INSIDE_LOOP,
-          StepLocationRelativeToParent.AFTER,
+          StepLocationRelativeToParent.INSIDE_LOOP,
         ],
         nextAction,
         graph,
+        step.name,
       );
     }
     case ActionType.BRANCH: {
@@ -102,6 +103,7 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
         ],
         nextAction,
         graph,
+        step.name,
       );
     }
     default: {
@@ -133,6 +135,7 @@ function buildChildrenGraph(
   locations: StepLocationRelativeToParent[],
   nextAction: Action | Trigger | undefined,
   graph: ApGraph,
+  parentStep: string,
 ): ApGraph {
   const totalWidth =
     (childrenGraphs.length - 1) * HORIZONTAL_SPACE_BETWEEN_NODES +
@@ -166,33 +169,28 @@ function buildChildrenGraph(
       2 -
     boundingBox(childrenGraphs[0]).widthLeft;
 
-  for (let idx = 0; idx < childrenGraphs.length; ++idx) {
-    const cbx = boundingBox(childrenGraphs[idx]);
+  childrenGraphs.forEach((childGraph, idx) => {
+    const cbx = boundingBox(childGraph);
     graph.edges.push(
-      addEdge(
-        graph.nodes[0],
-        childrenGraphs[idx].nodes[0],
-        locations[idx],
-        graph.nodes[0].data.parentStep!,
-      ),
+      addEdge(graph.nodes[0], childGraph.nodes[0], locations[idx], parentStep),
     );
-    const childGraph = offsetGraph(childrenGraphs[idx], {
+    const childGraphAfterOffset = offsetGraph(childGraph, {
       x: deltaLeftX + cbx.widthLeft,
       y: VERTICAL_OFFSET,
     });
-    graph = mergeGraph(graph, childGraph);
+    graph = mergeGraph(graph, childGraphAfterOffset);
     const rootStepName = graph.nodes[0].data.step?.name;
     assertNotNullOrUndefined(rootStepName, 'rootStepName should be defined');
     graph.edges.push(
       addEdge(
-        childGraph.nodes[childGraph.nodes.length - 1],
+        childGraphAfterOffset.nodes[childGraphAfterOffset.nodes.length - 1],
         commonPartGraph.nodes[0],
         StepLocationRelativeToParent.AFTER,
         rootStepName,
       ),
     );
     deltaLeftX += cbx.width + HORIZONTAL_SPACE_BETWEEN_NODES;
-  }
+  });
   graph = mergeGraph(graph, commonPartGraph);
   return graph;
 }
@@ -342,3 +340,5 @@ export type ApGraph = {
   nodes: ApNode[];
   edges: ApEdge[];
 };
+
+export const DRAGGED_STEP_TAG = 'dragged-step';

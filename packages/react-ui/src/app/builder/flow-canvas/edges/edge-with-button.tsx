@@ -9,6 +9,7 @@ import {
   AP_NODE_SIZE,
   ApEdge,
   ApNodeType,
+  DRAGGED_STEP_TAG,
   flowCanvasUtils,
 } from '../flow-canvas-utils';
 
@@ -95,7 +96,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
   const { setNodeRef } = useDroppable({
     id: props.id,
     data: {
-      accepts: 'draggableFlowItem',
+      accepts: DRAGGED_STEP_TAG,
       ...props.data,
     },
   });
@@ -125,6 +126,9 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
       }
       setShowButtonShadow(event.collisions?.[0]?.id === props.id);
     },
+    onDragEnd() {
+      setShowButtonShadow(false);
+    },
   });
 
   return (
@@ -134,7 +138,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
         path={edgePath}
         style={{ strokeWidth: 1.5 }}
       />
-      {true && (
+      {isDropzone && props.data?.addButton && !readonly && buttonPosition && (
         <foreignObject
           width={AP_NODE_SIZE.smallButton.width}
           height={AP_NODE_SIZE.smallButton.height}
