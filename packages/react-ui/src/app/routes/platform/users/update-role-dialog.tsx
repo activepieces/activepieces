@@ -4,7 +4,7 @@ import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { INTERNAL_ERROR_TOAST, useToast } from "@/components/ui/use-toast";
-import { platformUserApi } from "@/lib/platform-user-api";
+import { platformUserApi } from "@/features/platform-admin-panel/lib/platform-user-api";
 import { typeboxResolver } from "@hookform/resolvers/typebox";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";

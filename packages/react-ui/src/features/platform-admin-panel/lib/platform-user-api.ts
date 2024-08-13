@@ -1,6 +1,6 @@
 import { Update } from "@sinclair/typebox/build/cjs/value";
-import { SeekPage, UpdateUserRequestBody, User } from "../../../shared/src";
-import { api } from "./api";
+import { SeekPage, UpdateUserRequestBody, User } from "../../../../../shared/src";
+import { api } from "../../../lib/api";
 
 export const platformUserApi = {
   list() {

@@ -14,7 +14,7 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
 import { Alert } from '@activepieces/ee-shared';
 
-import { alertsApi } from '../lib/alerts-api';
+import { alertsApi } from '../../../../features/alerts/lib/alerts-api';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
 

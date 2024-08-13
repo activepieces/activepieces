@@ -3,7 +3,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { platformHooks } from "@/hooks/platform-hooks";
-import { auditEventsApi } from "@/lib/audit-events-api";
+import { auditEventsApi } from "@/features/platform-admin-panel/lib/audit-events-api";
 import { formatUtils } from "@/lib/utils";
 import { Folder, Key, Link2, Logs, Users, Workflow } from "lucide-react";
 import { ApplicationEvent, ApplicationEventName, summarizeApplicationEvent } from "@activepieces/ee-shared";

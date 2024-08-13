@@ -1,7 +1,7 @@
 import { Update } from "@sinclair/typebox/build/cjs/value";
-import { SeekPage, UpdateUserRequestBody, User } from "../../../shared/src";
-import { api } from "./api";
-import { AddDomainRequest, CustomDomain } from "../../../ee/shared/src";
+import { SeekPage, UpdateUserRequestBody, User } from "../../../../../shared/src";
+import { api } from "../../../lib/api";
+import { AddDomainRequest, CustomDomain } from "../../../../../ee/shared/src";
 
 type HostnameDetailsResponse = {
   txtName: string;
