@@ -11,10 +11,9 @@ import {
 } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { alertsApi } from '@/features/alerts/lib/alerts-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { Alert } from '@activepieces/ee-shared';
-
-import { alertsApi } from '../lib/alerts-api';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
 

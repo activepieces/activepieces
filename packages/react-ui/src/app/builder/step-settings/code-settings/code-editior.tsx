@@ -106,7 +106,7 @@ const CodeEditior = ({
               variant="outline"
               className="flex gap-2"
               size={'sm'}
-              onClick={() => { }}
+              onClick={() => {}}
             >
               <Package className="w-4 h-4" />
               Add package

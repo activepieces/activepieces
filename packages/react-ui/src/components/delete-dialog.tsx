@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { Button } from './ui/button';
 import {
@@ -15,7 +15,7 @@ import { toast } from './ui/use-toast';
 
 type ConfirmationDeleteDialogProps = {
   title: string;
-  message: string;
+  message: React.ReactNode;
   children: React.ReactNode;
   entityName: string;
   mutationFn: () => Promise<void>;
@@ -27,7 +27,7 @@ export function ConfirmationDeleteDialog({
   title,
   mutationFn,
   entityName,
-  onError
+  onError,
 }: ConfirmationDeleteDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { isPending, mutate } = useMutation({
@@ -38,7 +38,7 @@ export function ConfirmationDeleteDialog({
       });
       setIsOpen(false);
     },
-    onError
+    onError,
   });
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>

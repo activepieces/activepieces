@@ -15,8 +15,8 @@ type TestStepContainerProps = {
 const TestStepContainer = React.memo(
   ({ flowVersionId, isSaving, type, flowId }: TestStepContainerProps) => {
     return (
-      <>
-        <div className="text-md font-semibold mb-5">Generate Sample Data</div>
+      <div className="flex flex-col gap-4">
+        <div className="text-md font-semibold ">Generate Sample Data</div>
         {type === TriggerType.PIECE ? (
           <TestTriggerSection
             flowId={flowId}
@@ -29,7 +29,7 @@ const TestStepContainer = React.memo(
             isSaving={isSaving}
           ></TestActionSection>
         )}
-      </>
+      </div>
     );
   },
 );

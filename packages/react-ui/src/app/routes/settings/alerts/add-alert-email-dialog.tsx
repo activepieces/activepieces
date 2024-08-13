@@ -20,12 +20,11 @@ import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { alertsApi } from '@/features/alerts/lib/alerts-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { Alert, AlertChannel } from '@activepieces/ee-shared';
-
-import { alertsApi } from '../lib/alerts-api';
 
 const FormSchema = Type.Object({
   email: Type.String({

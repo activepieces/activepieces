@@ -79,12 +79,10 @@ export const ChatSidebar = () => {
   const latestMessageRef = useRef<HTMLDivElement>(null);
   const socket = useSocket();
 
-
   const { isPending, mutate } = useMutation({
     mutationFn: (request: GenerateCodeRequest) =>
       getCodeResponse(socket, request),
     onSuccess: (response: GenerateCodeResponse) => {
-
       setMessages((prevMessages) => [
         ...prevMessages,
         {
