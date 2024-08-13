@@ -40,6 +40,8 @@ services:
     network_mode: service:redis
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
   redis:
     image: redis:7.0.7

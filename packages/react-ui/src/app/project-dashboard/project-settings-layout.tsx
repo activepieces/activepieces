@@ -1,11 +1,16 @@
 import { Separator } from '@radix-ui/react-dropdown-menu';
-import { SunMoon, Users, Puzzle, Bell } from 'lucide-react';
+import { SunMoon, Users, Puzzle, Bell, Settings } from 'lucide-react';
 
 import { ProjectSettingsSidebarItem } from './project-settings-sidebar-item';
 
 const iconSize = 20;
 
 const sidebarNavItems = [
+  {
+    title: 'General',
+    href: '/settings/general',
+    icon: <Settings size={iconSize} />,
+  },
   {
     title: 'Appearance',
     href: '/settings/appearance',

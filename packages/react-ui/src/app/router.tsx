@@ -16,7 +16,7 @@ import { ResetPasswordPage } from './routes/forget-password';
 import { FormPage } from './routes/forms';
 import IssuesPage from './routes/issues';
 import PlansPage from './routes/plans';
-import PlatformAppearancePage from './routes/platform/appearance';
+import AuditLogsPage from './routes/platform/audit-logs';
 import PlatformPiecesPage from './routes/platform/pieces';
 import ProjectsPage from './routes/platform/projects';
 import TemplatesPage from './routes/platform/templates';
@@ -25,6 +25,7 @@ import FlowsRunPage from './routes/runs';
 import { FlowRunPage } from './routes/runs/id';
 import AlertsPage from './routes/settings/alerts';
 import AppearancePage from './routes/settings/appearance';
+import GeneralPage from './routes/settings/general';
 import PiecesPage from './routes/settings/pieces';
 import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
@@ -108,7 +109,7 @@ export const router = createBrowserRouter([
     path: '/settings',
     element: (
       <DashboardContainer>
-        <Navigate to="/settings/alerts" />
+        <Navigate to="/settings/general" />
       </DashboardContainer>
     ),
   },
@@ -144,6 +145,16 @@ export const router = createBrowserRouter([
       <DashboardContainer>
         <ProjectSettingsLayout>
           <AppearancePage></AppearancePage>
+        </ProjectSettingsLayout>
+      </DashboardContainer>
+    ),
+  },
+  {
+    path: '/settings/general',
+    element: (
+      <DashboardContainer>
+        <ProjectSettingsLayout>
+          <GeneralPage />
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
@@ -185,10 +196,10 @@ export const router = createBrowserRouter([
     element: <NotFoundPage />,
   },
   {
-    path: '/platform/appearance',
+    path: '/platform/audit-logs',
     element: (
       <PlatformAdminContainer>
-        <PlatformAppearancePage />
+        <AuditLogsPage />
       </PlatformAdminContainer>
     ),
   },
