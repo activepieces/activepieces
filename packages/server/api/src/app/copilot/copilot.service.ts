@@ -208,7 +208,7 @@ export const copilotService = {
             }, {} as Record<string, string>),
             packageJson: {
                 dependencies: response.packages.reduce((acc, curr) => {
-                    acc[curr] = curr
+                    acc[curr] = '*'
                     return acc
                 }, {} as Record<string, string>),
             },
