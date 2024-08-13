@@ -1,6 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 
-import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
+import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 
 import { FlowsPage } from '../app/routes/flows';
@@ -26,6 +26,7 @@ import { FlowRunPage } from './routes/runs/id';
 import AlertsPage from './routes/settings/alerts';
 import AppearancePage from './routes/settings/appearance';
 import GeneralPage from './routes/settings/general';
+import { GitSyncPage } from './routes/settings/git-sync';
 import PiecesPage from './routes/settings/pieces';
 import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
@@ -175,6 +176,16 @@ export const router = createBrowserRouter([
       <DashboardContainer>
         <ProjectSettingsLayout>
           <TeamPage></TeamPage>
+        </ProjectSettingsLayout>
+      </DashboardContainer>
+    ),
+  },
+  {
+    path: '/settings/git-sync',
+    element: (
+      <DashboardContainer>
+        <ProjectSettingsLayout>
+          <GitSyncPage></GitSyncPage>
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),

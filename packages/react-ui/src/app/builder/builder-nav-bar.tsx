@@ -13,9 +13,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import FlowActionMenu from '@/features/flows/components/flow-actions-menu';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { FlowVersionState } from '@activepieces/shared';
+
+import FlowActionMenu from '../components/flow-actions-menu';
 
 import { BuilderPublishButton } from './builder-publish-button';
 

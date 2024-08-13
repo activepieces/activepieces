@@ -1,17 +1,31 @@
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { INTERNAL_ERROR_TOAST, useToast } from "@/components/ui/use-toast";
-import { projectApi } from "@/lib/project-api";
-import { CreatePlatformProjectRequest } from "@activepieces/ee-shared";
-import { typeboxResolver } from "@hookform/resolvers/typebox";
-import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
-export const NewProjectDialog = ({ children, onCreate }: { children: React.ReactNode, onCreate: () => void }) => {
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { projectApi } from '@/lib/project-api';
+import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
+
+export const NewProjectDialog = ({
+  children,
+  onCreate,
+}: {
+  children: React.ReactNode;
+  onCreate: () => void;
+}) => {
   const [open, setOpen] = useState(false);
   const form = useForm<CreatePlatformProjectRequest>({
     resolver: typeboxResolver(CreatePlatformProjectRequest),
@@ -33,29 +47,19 @@ export const NewProjectDialog = ({ children, onCreate }: { children: React.React
   });
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => setOpen(open)}
-    >
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create New Project</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form
-            className="grid space-y-4"
-            onSubmit={(e) => e.preventDefault()}
-          >
+          <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
             <FormField
               name="displayName"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="displayName">
-                    Project Name
-                  </Label>
+                  <Label htmlFor="displayName">Project Name</Label>
                   <Input
                     {...field}
                     required
@@ -99,5 +103,5 @@ export const NewProjectDialog = ({ children, onCreate }: { children: React.React
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

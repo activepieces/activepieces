@@ -6,6 +6,7 @@ import {
   Pencil,
   Share2,
   Trash2,
+  UploadCloud,
 } from 'lucide-react';
 import React from 'react';
 
@@ -18,15 +19,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
+import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { GitBranchType } from '@activepieces/ee-shared';
 import { Flow, FlowOperationType, FlowVersion } from '@activepieces/shared';
 
-import { flowsApi } from '../lib/flows-api';
-import { flowsUtils } from '../lib/flows-utils';
-
-import { MoveToDialog } from './move-to-dialog';
-import { RenameFlowDialog } from './rename-flow-dialog';
-import { ShareTemplateDialog } from './share-template-dialog';
+import { MoveToDialog } from '../../features/flows/components/move-to-dialog';
+import { RenameFlowDialog } from '../../features/flows/components/rename-flow-dialog';
+import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
+import { flowsApi } from '../../features/flows/lib/flows-api';
+import { flowsUtils } from '../../features/flows/lib/flows-utils';
 
 interface FlowActionMenuProps {
   flow: Flow;
@@ -49,6 +53,15 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onDuplicate,
   onDelete,
 }) => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { gitSync } = gitSyncHooks.useGitSync(
+    authenticationSession.getProjectId(),
+    platform.gitSyncEnabled,
+  );
+
+  const isDevelopmentBranch =
+    gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
+
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
       const createdFlow = await flowsApi.create({
@@ -102,6 +115,14 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </DropdownMenuItem>
           </RenameFlowDialog>
         )}
+        <PushToGitDialog flowId={flow.id}>
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <div className="flex flex-row gap-2 items-center">
+              <UploadCloud className="h-4 w-4" />
+              <span>Push to Git</span>
+            </div>
+          </DropdownMenuItem>
+        </PushToGitDialog>
         <MoveToDialog flow={flow} flowVersion={flowVersion} onMoveTo={onMoveTo}>
           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
             <div className="flex flex-row gap-2 items-center">
@@ -112,7 +133,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         </MoveToDialog>
         <DropdownMenuItem onClick={() => duplicateFlow()}>
           <div className="flex flex-row gap-2 items-center">
-            {isExportPending ? (
+            {isDuplicatePending ? (
               <LoadingSpinner />
             ) : (
               <Copy className="h-4 w-4" />
@@ -141,7 +162,21 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         {!readonly && (
           <ConfirmationDeleteDialog
             title={`Delete flow ${flowVersion.displayName}`}
-            message="Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs."
+            message={
+              <>
+                <div>
+                  Are you sure you want to delete this flow? This will
+                  permanently delete the flow, all its data and any background
+                  runs.
+                </div>
+                {isDevelopmentBranch && (
+                  <div className="font-bold mt-2">
+                    You are on a development branch, this will not delete the
+                    flow from the remote repository.
+                  </div>
+                )}
+              </>
+            }
             mutationFn={async () => {
               await flowsApi.delete(flow.id);
               onDelete();

@@ -6,6 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import deepEqual from 'deep-equal';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -20,12 +21,11 @@ import {
 import { SeekPage } from '@activepieces/shared';
 
 import { Button } from './button';
+import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableFacetedFilter } from './data-table-options-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
-import { DataTableColumnHeader } from './data-table-column-header';
-import deepEqual from 'deep-equal';
 
 export type RowDataWithActions<TData> = TData & {
   delete: () => void;
@@ -43,7 +43,7 @@ export type DataTableFilter = {
   }[];
 };
 
-type DataTableAction<TData> = (row: RowDataWithActions<TData>) => JSX.Element
+type DataTableAction<TData> = (row: RowDataWithActions<TData>) => JSX.Element;
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
@@ -60,21 +60,24 @@ export function DataTable<TData, TValue>({
   onRowClick,
   filters,
   refresh,
-  actions = []
+  actions = [],
 }: DataTableProps<TData, TValue>) {
-
   const columns = columnsInitial.concat([
     {
       accessorKey: 'actions',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="" />
+      ),
       cell: ({ row }) => {
-        return <div className="flex items-end justify-end gap-4">
-          {actions.map((action, index) => {
-            return action(row.original);
-          })}
-        </div>
+        return (
+          <div className="flex items-end justify-end gap-4">
+            {actions.map((action, index) => {
+              return action(row.original);
+            })}
+          </div>
+        );
       },
-    }
+    },
   ]);
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -148,8 +151,8 @@ export function DataTable<TData, TValue>({
     setTableData(
       tableData.filter(
         (row) =>
-          !deletedRows.some(
-            (deletedRow) => deepEqual(deletedRow, row, { strict: true }),
+          !deletedRows.some((deletedRow) =>
+            deepEqual(deletedRow, row, { strict: true }),
           ),
       ),
     );
@@ -180,9 +183,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableHead>
                   );
                 })}

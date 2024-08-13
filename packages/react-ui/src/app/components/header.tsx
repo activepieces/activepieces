@@ -19,9 +19,11 @@ export const Header = () => {
 
   return (
     <div className="flex ">
-      {isInPlatformAdmin ? <span className="text-2xl px-4 py-2">
-        Platform Admin
-      </span> : <ProjectSwitcher />}
+      {isInPlatformAdmin ? (
+        <span className="text-2xl px-4 py-2">Platform Admin</span>
+      ) : (
+        <ProjectSwitcher />
+      )}
       <div className="grow"></div>
       <div className="flex items-center justify-center gap-4">
         <InviteUserDialog></InviteUserDialog>
@@ -31,7 +33,11 @@ export const Header = () => {
             size="sm"
             className="flex items-center justify-center gap-2"
           >
-            {isInPlatformAdmin ? <X className="size-4" /> : <Shield className="size-4" />}
+            {isInPlatformAdmin ? (
+              <X className="size-4" />
+            ) : (
+              <Shield className="size-4" />
+            )}
             <span>
               {isInPlatformAdmin ? 'Exit Platform Admin' : 'Platform Admin'}
             </span>

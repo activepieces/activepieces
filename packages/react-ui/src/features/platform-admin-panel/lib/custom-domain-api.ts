@@ -1,12 +1,12 @@
-import { AddDomainRequest, CustomDomain } from "@activepieces/ee-shared";
-import { SeekPage } from "@activepieces/shared";
-import { api } from "@/lib/api";
+import { api } from '@/lib/api';
+import { AddDomainRequest, CustomDomain } from '@activepieces/ee-shared';
+import { SeekPage } from '@activepieces/shared';
 
 type HostnameDetailsResponse = {
   txtName: string;
   txtValue: string;
   hostname: string;
-}
+};
 
 export const customDomainApi = {
   list() {
@@ -24,12 +24,12 @@ export const customDomainApi = {
   verifyDomain(keyId: string) {
     return api.patch<{ status: string }>(
       `/v1/custom-domains/verify/${keyId}`,
-      {}
+      {},
     );
   },
   validationData(keyId: string) {
     return api.get<HostnameDetailsResponse>(
-      `/v1/custom-domains/validation/${keyId}`
+      `/v1/custom-domains/validation/${keyId}`,
     );
   },
 };
