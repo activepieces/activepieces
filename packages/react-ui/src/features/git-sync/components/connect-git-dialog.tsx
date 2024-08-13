@@ -1,15 +1,6 @@
-import {
-  ConfigureRepoRequest,
-  GitBranchType,
-  GitRepo,
-} from '@activepieces/ee-shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-
-import { gitSyncApi } from '../lib/git-sync-api';
-import { gitSyncHooks } from '../lib/git-sync-hooks';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +25,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import {
+  ConfigureRepoRequest,
+  GitBranchType,
+  GitRepo,
+} from '@activepieces/ee-shared';
+
+import { gitSyncApi } from '../lib/git-sync-api';
+import { gitSyncHooks } from '../lib/git-sync-hooks';
 
 const ConnectGitDialog = () => {
   const projectId = authenticationSession.getProjectId();

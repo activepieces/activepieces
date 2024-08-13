@@ -45,15 +45,17 @@ export const LockedFeatureGuard = ({
           </div>
         </div>
 
-        {lockVideoUrl && <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="max-w-[70vh] rounded-lg"
-          controls={false}
-          src={lockVideoUrl}
-        />}
+        {lockVideoUrl && (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="max-w-[70vh] rounded-lg"
+            controls={false}
+            src={lockVideoUrl}
+          />
+        )}
       </div>
     </div>
   );

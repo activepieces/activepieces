@@ -1,15 +1,7 @@
-import {
-  GitRepo,
-  ProjectOperationType,
-  ProjectSyncPlan,
-  ProjectSyncPlanOperation,
-} from '@activepieces/ee-shared';
 import { UpdateIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { Minus, Plus } from 'lucide-react';
 import React from 'react';
-
-import { gitSyncApi } from '../lib/git-sync-api';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +15,14 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import {
+  GitRepo,
+  ProjectOperationType,
+  ProjectSyncPlan,
+  ProjectSyncPlanOperation,
+} from '@activepieces/ee-shared';
+
+import { gitSyncApi } from '../lib/git-sync-api';
 
 type GitChangeProps = {
   change: ProjectSyncPlanOperation;

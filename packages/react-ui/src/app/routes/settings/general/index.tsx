@@ -1,20 +1,26 @@
-import { FlagGuard } from "@/app/components/flag-guard";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { INTERNAL_ERROR_TOAST, useToast } from "@/components/ui/use-toast";
-import { projectHooks } from "@/hooks/project-hooks";
-import { authenticationSession } from "@/lib/authentication-session";
-import { projectApi } from "@/lib/project-api";
-import { typeboxResolver } from "@hookform/resolvers/typebox";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { ApFlagId, ProjectWithLimits } from "@activepieces/shared";
+import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+
+import { FlagGuard } from '@/app/components/flag-guard';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { projectHooks } from '@/hooks/project-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
+import { projectApi } from '@/lib/project-api';
+import { ApFlagId, ProjectWithLimits } from '@activepieces/shared';
 
 export default function GeneralPage() {
-
   const queryClient = useQueryClient();
   const { project, updateProject } = projectHooks.useCurrentProject();
 
@@ -65,17 +71,12 @@ export default function GeneralPage() {
       </CardHeader>
       <CardContent className="grid gap-1 mt-4">
         <Form {...form}>
-          <form
-            className="grid space-y-4"
-            onSubmit={(e) => e.preventDefault()}
-          >
+          <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
             <FormField
               name="displayName"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="displayName">
-                    Project Name
-                  </Label>
+                  <Label htmlFor="displayName">Project Name</Label>
                   <Input
                     {...field}
                     required
@@ -92,9 +93,7 @@ export default function GeneralPage() {
                 name="plan.tasks"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <Label htmlFor="plan.tasks">
-                      Tasks
-                    </Label>
+                    <Label htmlFor="plan.tasks">Tasks</Label>
                     <Input
                       type="number"
                       {...field}

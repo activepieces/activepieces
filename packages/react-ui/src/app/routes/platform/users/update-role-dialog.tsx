@@ -1,17 +1,42 @@
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { INTERNAL_ERROR_TOAST, useToast } from "@/components/ui/use-toast";
-import { platformUserApi } from "@/features/platform-admin-panel/lib/platform-user-api";
-import { typeboxResolver } from "@hookform/resolvers/typebox";
-import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { PlatformRole, UpdateUserRequestBody } from "@activepieces/shared";
+import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
-export const UpdateUserRoleDialog = ({ children, onUpdate, userId, role }: { children: React.ReactNode, onUpdate: (role: PlatformRole) => void, userId: string, role: PlatformRole }) => {
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { platformUserApi } from '@/features/platform-admin-panel/lib/platform-user-api';
+import { PlatformRole, UpdateUserRequestBody } from '@activepieces/shared';
+
+export const UpdateUserRoleDialog = ({
+  children,
+  onUpdate,
+  userId,
+  role,
+}: {
+  children: React.ReactNode;
+  onUpdate: (role: PlatformRole) => void;
+  userId: string;
+  role: PlatformRole;
+}) => {
   const [open, setOpen] = useState(false);
   const form = useForm<{ role: PlatformRole }>({
     defaultValues: {
@@ -22,7 +47,8 @@ export const UpdateUserRoleDialog = ({ children, onUpdate, userId, role }: { chi
   const { toast } = useToast();
   const { mutate, isPending } = useMutation({
     mutationKey: ['update-user'],
-    mutationFn: (request: { platformRole: PlatformRole }) => platformUserApi.update(userId, request),
+    mutationFn: (request: { platformRole: PlatformRole }) =>
+      platformUserApi.update(userId, request),
     onSuccess: (_, request) => {
       onUpdate(request.platformRole);
       setOpen(false);
@@ -37,31 +63,25 @@ export const UpdateUserRoleDialog = ({ children, onUpdate, userId, role }: { chi
     <Dialog
       open={open}
       onOpenChange={(open) => {
-        form.reset()
-        setOpen(open)
+        form.reset();
+        setOpen(open);
       }}
     >
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Update User Role</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form
-            className="grid space-y-4"
-            onSubmit={(e) => e.preventDefault()}
-          >
+          <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
             <FormField
               name="role"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="role">
-                    Role
-                  </Label>
+                  <Label htmlFor="role">Role</Label>
                   <Select
-                    defaultValue={field.value} onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    onValueChange={field.onChange}
                     required
                   >
                     <SelectTrigger className="w-full">
@@ -113,5 +133,5 @@ export const UpdateUserRoleDialog = ({ children, onUpdate, userId, role }: { chi
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
