@@ -26,6 +26,8 @@ type MultiSelectPiecePropertyProps = {
   enableSelectOrClear?: boolean;
 };
 
+const SELECT_OR_CLEAR_MIN_OPTIONS = 3;
+
 const MultiSelectPieceProperty = ({
   placeholder,
   options,
@@ -36,6 +38,8 @@ const MultiSelectPieceProperty = ({
 }: MultiSelectPiecePropertyProps) => {
   const [filteredOptions, setFilteredOptions] =
     useState<MultiSelectOption[]>(options);
+  const selectClearEnabled =
+    enableSelectOrClear && options.length > SELECT_OR_CLEAR_MIN_OPTIONS;
 
   const selectedIndicies = Array.isArray(initialValues)
     ? initialValues
@@ -86,7 +90,7 @@ const MultiSelectPieceProperty = ({
       </MultiSelectTrigger>
       <MultiSelectContent>
         <MultiSelectSearch />
-        {enableSelectOrClear && (
+        {selectClearEnabled && (
           <SelectOrClear
             allSelected={selectedIndicies.length === options.length}
             sendChanges={onSelectOrClearChanged}
