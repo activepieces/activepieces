@@ -1,8 +1,3 @@
-import { createContext, useContext } from 'react';
-import { create, useStore } from 'zustand';
-
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { PromiseQueue } from '@/lib/promise-queue';
 import {
   ActionType,
   ExecutionState,
@@ -10,11 +5,17 @@ import {
   FlowOperationRequest,
   FlowRun,
   FlowVersion,
+  FlowVersionState,
   StepLocationRelativeToParent,
   StepOutput,
   flowHelper,
   isNil,
 } from '@activepieces/shared';
+import { createContext, useContext } from 'react';
+import { create, useStore } from 'zustand';
+
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PromiseQueue } from '@/lib/promise-queue';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -270,7 +271,17 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         flowUpdatesQueue.add(updateRequest);
         return { flowVersion: newFlowVersion };
       }),
-    setVersion: (flowVersion: FlowVersion) => set({ flowVersion, run: null }),
+    setVersion: (flowVersion: FlowVersion) => {
+      set((state) => ({
+        flowVersion,
+        run: null,
+        readonly:
+          state.flow.publishedVersionId !== flowVersion.id &&
+          flowVersion.state === FlowVersionState.LOCKED,
+        leftSidebar: LeftSideBarType.NONE,
+        rightSidebar: RightSideBarType.NONE,
+      }));
+    },
     insertMention: null,
     setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
       set({ insertMention });

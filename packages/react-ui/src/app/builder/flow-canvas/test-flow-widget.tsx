@@ -1,6 +1,15 @@
+import {
+  FlowVersionState,
+  StepLocationRelativeToParent,
+  TriggerType,
+  flowHelper,
+  isNil,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ViewportPortal } from '@xyflow/react';
 import React from 'react';
+
+import { useBuilderStateContext } from '../builder-hooks';
 
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
@@ -11,23 +20,21 @@ import {
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import {
-  StepLocationRelativeToParent,
-  TriggerType,
-  flowHelper,
-  isNil,
-} from '@activepieces/shared';
-
-import { useBuilderStateContext } from '../builder-hooks';
 
 const TestFlowWidget = React.memo(() => {
-  const [flowVersion, setRun, selectStepByName, clickOnNewNodeButton] =
-    useBuilderStateContext((state) => [
-      state.flowVersion,
-      state.setRun,
-      state.selectStepByName,
-      state.clickOnNewNodeButton,
-    ]);
+  const [
+    flowVersion,
+    setRun,
+    selectStepByName,
+    clickOnNewNodeButton,
+    readonly,
+  ] = useBuilderStateContext((state) => [
+    state.flowVersion,
+    state.setRun,
+    state.selectStepByName,
+    state.clickOnNewNodeButton,
+    state.readonly,
+  ]);
 
   const triggerHasSampleData =
     flowVersion.trigger.type === TriggerType.PIECE &&
@@ -80,41 +87,59 @@ const TestFlowWidget = React.memo(() => {
         }}
       >
         <div className="justify-center items-center flex w-[260px]">
-          {flowVersion.valid && triggerHasSampleData && (
-            <Button
-              key={'test-flow-button'}
-              variant="outline"
-              className="h-8 bg-primary-100/50 text-primary-300 hover:bg-primary-100/80 hover:text-primary-300 border-none"
-              loading={isPending}
-              onClick={() => mutate()}
-            >
-              Test Flow
-            </Button>
-          )}
-          {flowVersion.valid && !triggerHasSampleData && (
-            <Tooltip>
-              <TooltipTrigger asChild className="disabled:pointer-events-auto">
+          {!readonly && (
+            <>
+              {flowVersion.valid && triggerHasSampleData && (
                 <Button
-                  variant="ghost"
-                  className="h-8 bg-primary-100/80 text-primary-300 hover:bg-primary-100/80 hover:text-primary-300 border-none"
-                  disabled={true}
+                  key={'test-flow-button'}
+                  variant="outline"
+                  className="h-8 bg-primary-100/50 text-primary-300 hover:bg-primary-100/80 hover:text-primary-300 border-none"
+                  loading={isPending}
+                  onClick={() => mutate()}
                 >
                   Test Flow
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                Please test the trigger first
-              </TooltipContent>
-            </Tooltip>
+              )}
+              {flowVersion.valid && !triggerHasSampleData && (
+                <Tooltip>
+                  <TooltipTrigger
+                    asChild
+                    className="disabled:pointer-events-auto"
+                  >
+                    <Button
+                      variant="ghost"
+                      className="h-8 bg-primary-100/80 text-primary-300 hover:bg-primary-100/80 hover:text-primary-300 border-none"
+                      disabled={true}
+                    >
+                      Test Flow
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    Please test the trigger first
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {!flowVersion.valid && (
+                <Button
+                  variant="ghost"
+                  className="h-8 bg-warning-100/50 text-warning-300 hover:bg-warning-100/80 hover:text-warning-300 border-none"
+                  key={'complete-flow-button'}
+                  onClick={handleCompleteSettings}
+                >
+                  Complete Settings
+                </Button>
+              )}
+            </>
           )}
-          {!flowVersion.valid && (
+          {readonly && (
             <Button
               variant="ghost"
-              className="h-8 bg-warning-100/50 text-warning-300 hover:bg-warning-100/80 hover:text-warning-300 border-none"
+              className="h-8 bg-muted text-accent-foreground border-none disabled:opacity-100"
+              disabled={true}
               key={'complete-flow-button'}
               onClick={handleCompleteSettings}
             >
-              Complete Settings
+              View Only
             </Button>
           )}
         </div>
