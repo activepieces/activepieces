@@ -78,7 +78,7 @@ function getEdgePath({
 }
 
 const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
-  const [showButtonShadow, setShowButtonShadow] = useState(false);
+  const [setIsStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
   const [activeDraggingStep, clickOnNewNodeButton, selectedButton, readonly] =
     useBuilderStateContext((state) => [
       state.activeDraggingStep,
@@ -105,10 +105,10 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
 
   useDndMonitor({
     onDragMove(event: DragMoveEvent) {
-      setShowButtonShadow(event.collisions?.[0]?.id === props.id);
+      setIsStepInsideDropzone(event.collisions?.[0]?.id === props.id);
     },
     onDragEnd() {
-      setShowButtonShadow(false);
+      setIsStepInsideDropzone(false);
     },
   });
 
@@ -128,7 +128,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
           className="transition-all overflow-visible relative"
           style={{
             borderRadius: '2px',
-            boxShadow: showButtonShadow
+            boxShadow: setIsStepInsideDropZone
               ? '0 0 0 6px hsl(var(--primary-100))'
               : 'none',
           }}
