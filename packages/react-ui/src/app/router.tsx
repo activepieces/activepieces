@@ -35,10 +35,6 @@ import { ShareTemplatePage } from './routes/templates/share-template';
 
 export const router = createBrowserRouter([
   {
-    path: '/',
-    element: <Navigate to="/flows" />,
-  },
-  {
     path: '/flows',
     element: (
       <DashboardContainer>
@@ -195,14 +191,6 @@ export const router = createBrowserRouter([
     element: <AcceptInvitation />,
   },
   {
-    path: '/*',
-    element: (
-      <DashboardContainer>
-        <Navigate to="/flows" replace />
-      </DashboardContainer>
-    ),
-  },
-  {
     path: '/404',
     element: <NotFoundPage />,
   },
@@ -252,6 +240,22 @@ export const router = createBrowserRouter([
       <PlatformAdminContainer>
         <Navigate to="/platform/projects" />
       </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings',
+    element: (
+      <PlatformAdminContainer>
+        <span>Something will be there</span>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/*',
+    element: (
+      <DashboardContainer>
+        <Navigate to="/flows" replace />
+      </DashboardContainer>
     ),
   },
 ]);

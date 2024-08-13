@@ -2,9 +2,9 @@ import {
   LayoutGrid,
   LogsIcon,
   Puzzle,
-  Settings,
   UserCog,
   Workflow,
+  Wrench,
 } from 'lucide-react';
 
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -52,7 +52,7 @@ export function PlatformAdminContainer({
     {
       to: '/platform/settings',
       label: 'Settings',
-      icon: Settings,
+      icon: Wrench,
     },
   ];
 

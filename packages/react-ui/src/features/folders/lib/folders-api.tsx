@@ -8,11 +8,8 @@ import {
 
 export const foldersApi = {
   async list(): Promise<FolderDto[]> {
-    const params: Record<string, string | number> = {
-      limit: 1000000,
-    };
     const response = await api.get<SeekPage<FolderDto>>('/v1/folders', {
-      params: params,
+      limit: 1000000,
     });
     return response.data.sort((a, b) =>
       a.displayName.localeCompare(b.displayName),
