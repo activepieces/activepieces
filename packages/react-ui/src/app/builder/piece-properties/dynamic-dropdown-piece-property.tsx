@@ -1,14 +1,14 @@
+import { DropdownState } from '@activepieces/pieces-framework';
+import { Action, Trigger } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
+import { MultiSelectPieceProperty } from './multi-select-piece-property';
+
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { DropdownState } from '@activepieces/pieces-framework';
-import { Action, Trigger } from '@activepieces/shared';
-
-import { MultiSelectPieceProperty } from './multi-select-piece-property';
 
 type SelectPiecePropertyProps = {
   refreshers: string[];
@@ -79,10 +79,11 @@ const DynamicDropdownPieceProperty = React.memo(
       mutate(record);
     }, refresherValues);
 
-    const selectOptions = dropdownState.options.map((option) => ({
-      label: option.label,
-      value: option.value as React.Key,
-    }));
+    const selectOptions =
+      dropdownState.options?.map((option) => ({
+        label: option.label,
+        value: option.value as React.Key,
+      })) || [];
 
     return (
       <>
