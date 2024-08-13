@@ -4,13 +4,14 @@ import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { cn } from '@/lib/utils';
-import { flowHelper, isNil } from '@activepieces/shared';
+import { StepLocationRelativeToParent, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import {
   AP_NODE_SIZE,
   ApEdge,
   ApNodeType,
+  DRAGGED_STEP_TAG,
   flowCanvasUtils,
 } from '../flow-canvas-utils';
 
@@ -77,37 +78,24 @@ function getEdgePath({
 }
 
 const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
-  const [showButtonShadow, setShowButtonShadow] = useState(false);
-  const [
-    activeDraggingStep,
-    flowVersion,
-    clickOnNewNodeButton,
-    selectedButton,
-    readonly,
-  ] = useBuilderStateContext((state) => [
-    state.activeDraggingStep,
-    state.flowVersion,
-    state.clickOnNewNodeButton,
-    state.selectedButton,
-    state.readonly,
-  ]);
+  const [setIsStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
+  const [activeDraggingStep, clickOnNewNodeButton, selectedButton, readonly] =
+    useBuilderStateContext((state) => [
+      state.activeDraggingStep,
+      state.clickOnNewNodeButton,
+      state.selectedButton,
+      state.readonly,
+    ]);
   const { edgePath, buttonPosition } = getEdgePath(props);
   const { setNodeRef } = useDroppable({
     id: props.id,
-    data: props.data,
+    data: {
+      accepts: DRAGGED_STEP_TAG,
+      ...props.data,
+    },
   });
-  const draggedStep = isNil(activeDraggingStep)
-    ? undefined
-    : flowHelper.getStep(flowVersion, activeDraggingStep);
-  const parentStep = props.data?.parentStep;
-  const isPartOfInnerFlow =
-    isNil(parentStep) || isNil(draggedStep)
-      ? false
-      : flowHelper.isPartOfInnerFlow({
-          parentStep: draggedStep,
-          childName: parentStep,
-        });
-  const isDropzone = !isPartOfInnerFlow && !isNil(activeDraggingStep);
+
+  const showDropIndicator = !isNil(activeDraggingStep);
   const isSelected =
     selectedButton &&
     selectedButton.type === 'action' &&
@@ -117,13 +105,17 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
 
   useDndMonitor({
     onDragMove(event: DragMoveEvent) {
-      if (isPartOfInnerFlow) {
-        return;
-      }
-      setShowButtonShadow(event.collisions?.[0]?.id === props.id);
+      setIsStepInsideDropzone(event.collisions?.[0]?.id === props.id);
+    },
+    onDragEnd() {
+      setIsStepInsideDropzone(false);
     },
   });
-
+  const labelDirectionSign =
+    props.data.stepLocationRelativeToParent ===
+    StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+      ? -1
+      : 1;
   return (
     <>
       <BaseEdge
@@ -131,28 +123,65 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
         path={edgePath}
         style={{ strokeWidth: 1.5 }}
       />
-      {isDropzone && props.data?.addButton && !readonly && buttonPosition && (
+      {(props.data.stepLocationRelativeToParent ===
+        StepLocationRelativeToParent.INSIDE_FALSE_BRANCH ||
+        props.data.stepLocationRelativeToParent ===
+          StepLocationRelativeToParent.INSIDE_TRUE_BRANCH) && (
         <foreignObject
-          width={18}
-          height={18}
+          width={35}
+          height={100}
+          className="z-50 relative"
+          x={buttonPosition.x - 100 * labelDirectionSign}
+          y={buttonPosition.y - 25}
+        >
+          <div className="text-accent-foreground text-sm text-center bg-background">
+            {props.data.stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+              ? 'True'
+              : 'False'}
+          </div>
+        </foreignObject>
+      )}
+      {showDropIndicator && props.data?.addButton && !readonly && (
+        <foreignObject
+          width={AP_NODE_SIZE.smallButton.width}
+          height={AP_NODE_SIZE.smallButton.height}
           x={buttonPosition.x}
           y={buttonPosition.y}
+          className="transition-all overflow-visible relative"
           style={{
             borderRadius: '2px',
-            boxShadow: showButtonShadow
+            boxShadow: setIsStepInsideDropZone
               ? '0 0 0 6px hsl(var(--primary-100))'
               : 'none',
           }}
         >
           <div
-            className={cn(
-              'w-4 h-4 bg-primary w-[18px] h-[18px] rounded-[3px] box-content opacity-90',
-            )}
+            style={{
+              height: `${AP_NODE_SIZE.stepNode.height}px`,
+              width: `${AP_NODE_SIZE.stepNode.width}px`,
+              left: `-${
+                AP_NODE_SIZE.stepNode.width / 2 -
+                AP_NODE_SIZE.smallButton.height / 2
+              }px`,
+              top: `-${
+                AP_NODE_SIZE.stepNode.height / 2 -
+                AP_NODE_SIZE.smallButton.width / 2
+              }px`,
+            }}
+            className="absolute"
             ref={setNodeRef}
+          >
+            {' '}
+          </div>
+          <div
+            className={cn(
+              'bg-primary w-[18px] h-[18px] rounded-[3px] box-content opacity-90',
+            )}
           ></div>
         </foreignObject>
       )}
-      {!isDropzone && props.data?.addButton && !readonly && buttonPosition && (
+      {!showDropIndicator && props.data?.addButton && !readonly && (
         <foreignObject
           width={18}
           height={18}

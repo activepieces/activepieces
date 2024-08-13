@@ -25,7 +25,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { ApNode } from '../flow-canvas-utils';
+import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 
 function getStepStatus(
   stepName: string | undefined,
@@ -104,6 +104,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: data.step!.name,
     disabled: isTrigger,
+    data: {
+      type: DRAGGED_STEP_TAG,
+    },
   });
 
   const stepOutputStatus = useMemo(
@@ -138,8 +141,10 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
           isSelected || toolbarOpen
             ? 'hsl(var(--primary))'
             : 'hsl(var(--border))',
+        height: `${AP_NODE_SIZE.stepNode.height}px`,
+        width: `${AP_NODE_SIZE.stepNode.width}px`,
       }}
-      className={cn('h-[70px] w-[260px] transition-all border-box border', {
+      className={cn('transition-all border-box border', {
         'border-primary': toolbarOpen || isSelected,
         'bg-background': !isDragging,
         'border-none': isDragging,
