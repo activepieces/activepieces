@@ -1,15 +1,6 @@
-import {
-  FlowVersionState,
-  StepLocationRelativeToParent,
-  TriggerType,
-  flowHelper,
-  isNil,
-} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ViewportPortal } from '@xyflow/react';
 import React from 'react';
-
-import { useBuilderStateContext } from '../builder-hooks';
 
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
@@ -20,6 +11,14 @@ import {
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import {
+  StepLocationRelativeToParent,
+  TriggerType,
+  flowHelper,
+  isNil,
+} from '@activepieces/shared';
+
+import { useBuilderStateContext } from '../builder-hooks';
 
 const AboveFlowWidget = React.memo(() => {
   const [

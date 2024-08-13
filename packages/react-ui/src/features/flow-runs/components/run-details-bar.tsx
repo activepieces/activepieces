@@ -1,19 +1,19 @@
-import { ApFlagId, FlowRun, FlowRunStatus } from '@activepieces/shared';
 import { QuestionMarkIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 
-import { flowRunUtils } from '../lib/flow-run-utils';
-
-import { useSwitchToDraft } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
+import { ApFlagId, FlowRun, FlowRunStatus } from '@activepieces/shared';
+
+import { flowRunUtils } from '../lib/flow-run-utils';
 
 type RunDetailsBarProps = {
   run?: FlowRun;
   canExitRun: boolean;
   exitRun: () => void;
+  isLoading: boolean;
 };
 
 function getStatusText(status: FlowRunStatus, timeout: number) {
@@ -36,7 +36,7 @@ function getStatusText(status: FlowRunStatus, timeout: number) {
   }
 }
 const RunDetailsBar = React.memo(
-  ({ run, canExitRun, exitRun }: RunDetailsBarProps) => {
+  ({ run, canExitRun, exitRun, isLoading }: RunDetailsBarProps) => {
     const { Icon, variant } = run
       ? flowRunUtils.getStatusIcon(run.status)
       : { Icon: QuestionMarkIcon, variant: 'default' };
@@ -46,7 +46,6 @@ const RunDetailsBar = React.memo(
       ApFlagId.FLOW_RUN_TIME_SECONDS,
       queryClient,
     );
-    const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
 
     if (!run) {
       return <></>;
@@ -75,8 +74,8 @@ const RunDetailsBar = React.memo(
         {canExitRun && (
           <Button
             variant={'outline'}
-            onClick={() => switchToDraft()}
-            loading={isSwitchingToDraftPending}
+            onClick={() => exitRun()}
+            loading={isLoading}
           >
             Exit Run
           </Button>

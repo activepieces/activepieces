@@ -6,6 +6,7 @@ import {
   LeftSideBarType,
   RightSideBarType,
   useBuilderStateContext,
+  useSwitchToDraft,
 } from '@/app/builder/builder-hooks';
 import {
   ResizableHandle,
@@ -62,14 +63,14 @@ const constructContainerKey = (
   return flowVersionId + stepName + (triggerOrActionName ?? '');
 };
 const BuilderPage = () => {
-  const [leftSidebar, rightSidebar, exitRun, run, canExitRun] =
-    useBuilderStateContext((state) => [
+  const [leftSidebar, rightSidebar, run, canExitRun] = useBuilderStateContext(
+    (state) => [
       state.leftSidebar,
       state.rightSidebar,
-      state.exitRun,
       state.run,
       state.canExitRun,
-    ]);
+    ],
+  );
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
@@ -112,10 +113,17 @@ const BuilderPage = () => {
       memorizedSelectedStep?.type === TriggerType.PIECE,
   });
 
+  const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
+
   return (
     <div className="flex h-screen w-screen flex-col">
       {run && (
-        <RunDetailsBar canExitRun={canExitRun} run={run} exitRun={exitRun} />
+        <RunDetailsBar
+          canExitRun={canExitRun}
+          run={run}
+          isLoading={isSwitchingToDraftPending}
+          exitRun={switchToDraft}
+        />
       )}
       <BuilderNavBar />
       <ResizablePanelGroup direction="horizontal">
