@@ -176,11 +176,11 @@ export const createInvoice = createAction({
       displayName: 'Zip',
       required: false,
     }),
-    bAddress1: Property.ShortText({
+    bAddress1: Property.LongText({
       displayName: 'Billing Address 1',
       required: false,
     }),
-    bAddress2: Property.ShortText({
+    bAddress2: Property.LongText({
       displayName: 'Billing Address 2',
       required: false,
     }),
@@ -225,20 +225,20 @@ export const createInvoice = createAction({
       displayName: 'Zip',
       required: false,
     }),
-    sAddress1: Property.ShortText({
+    sAddress1: Property.LongText({
       displayName: 'Shipping Address 1',
       required: false,
     }),
-    sAddress2: Property.ShortText({
+    sAddress2: Property.LongText({
       displayName: 'Shipping Address 2',
       required: false,
     }),
     //
-    note: Property.ShortText({
+    note: Property.LongText({
       displayName: 'Invoice Note',
       required: false,
     }),
-    invoiceDescription: Property.ShortText({
+    invoiceDescription: Property.LongText({
       displayName: 'Invoice Description',
       required: true,
     }),
@@ -449,9 +449,9 @@ export const createInvoice = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://beta.chargekeep.com/api/services/CRM/Import/ImportInvoice',
+      url: `${context.auth.base_url}/api/services/CRM/Import/ImportInvoice`,
       headers: {
-        'api-key': context.auth, // Pass API key in headers
+        'api-key': context.auth.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

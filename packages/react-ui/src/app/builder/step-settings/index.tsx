@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Value } from '@sinclair/typebox/value';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useUpdateEffect } from 'react-use';
 
@@ -28,12 +28,12 @@ import { PieceCardInfo } from '../../../features/pieces/components/piece-selecto
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
-import { TestStepContainer } from '../test-step/test-step-container';
+import { TestStepContainer } from '../test-step';
 
-import { BranchSettings } from './branch-settings/branch-settings';
-import { CodeSettings } from './code-settings/code-settings';
+import { BranchSettings } from './branch-settings';
+import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
-import { PieceSettings } from './piece-settings/piece-settings';
+import { PieceSettings } from './piece-settings';
 
 type StepSettingsContainerProps = {
   selectedStep: Action | Trigger;
@@ -41,21 +41,31 @@ type StepSettingsContainerProps = {
 };
 const StepSettingsContainer = React.memo(
   ({ selectedStep, pieceModel }: StepSettingsContainerProps) => {
-    const [readonly, exitStepSettings, applyOperation, saving, flowVersion] =
-      useBuilderStateContext((state) => [
-        state.readonly,
-        state.exitStepSettings,
-        state.applyOperation,
-        state.saving,
-        state.flowVersion,
-      ]);
+    const [
+      readonly,
+      exitStepSettings,
+      applyOperation,
+      saving,
+      flowVersion,
+      refreshPieceFormSettings,
+    ] = useBuilderStateContext((state) => [
+      state.readonly,
+      state.exitStepSettings,
+      state.applyOperation,
+      state.saving,
+      state.flowVersion,
+      state.refreshPieceFormSettings,
+    ]);
+
+    const defaultValues = useMemo(() => {
+      return formUtils.buildPieceDefaultValue(selectedStep, pieceModel!, true);
+    }, [selectedStep, pieceModel]);
 
     const { stepMetadata } = piecesHooks.useStepMetadata({
       step: selectedStep,
     });
 
     const { toast } = useToast();
-
     const updateTrigger = (newTrigger: Trigger) => {
       applyOperation(
         {
@@ -65,7 +75,6 @@ const StepSettingsContainer = React.memo(
         () => toast(UNSAVED_CHANGES_TOAST),
       );
     };
-
     const debouncedTrigger = useMemo(() => {
       return debounce(updateTrigger, 200);
     }, [applyOperation]);
@@ -97,20 +106,20 @@ const StepSettingsContainer = React.memo(
       mode: 'onChange',
       disabled: readonly,
       reValidateMode: 'onChange',
-      defaultValues: useMemo(() => {
-        return formUtils.buildPieceDefaultValue(
-          selectedStep,
-          pieceModel!,
-          true,
-        );
-      }, [selectedStep, pieceModel]),
+      defaultValues,
       resolver: typeboxResolver(formSchema),
     });
+
+    useEffect(() => {
+      form.reset(defaultValues);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [refreshPieceFormSettings]);
 
     useUpdateEffect(() => {
       form.setValue('valid', form.formState.isValid);
     }, [form.formState.isValid]);
 
+    // Watch changes in form execluding actionName or triggerName from watching //
     const inputChanges = useWatch({
       name: 'settings.input',
       control: form.control,

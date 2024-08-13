@@ -200,8 +200,9 @@ export const newLead = createTrigger({
   async onEnable(context) {
     const webhookId = await chargekeepCommon.subscribeWebhook(
       'LeadCreated',
-      context.webhookUrl,
-      context.auth
+      context.auth.base_url,
+      context.auth.api_key,
+      context.webhookUrl
     );
 
     await context.store?.put<WebhookInformation>('_new_lead_trigger', {
@@ -216,8 +217,9 @@ export const newLead = createTrigger({
 
     if (response !== null && response !== undefined) {
       await chargekeepCommon.unsubscribeWebhook(
-        response.webhookId,
-        context.auth
+        context.auth.base_url,
+        context.auth.api_key,
+        response.webhookId
       );
     }
   },

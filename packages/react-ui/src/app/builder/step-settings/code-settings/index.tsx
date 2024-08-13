@@ -1,7 +1,9 @@
+import { Bot } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
+import { Button } from '@/components/ui/button';
 import {
   FormField,
   FormItem,
@@ -10,6 +12,7 @@ import {
 } from '@/components/ui/form';
 import { CodeAction } from '@activepieces/shared';
 
+import { LeftSideBarType, useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 
 import { CodeEditior } from './code-editior';
@@ -28,6 +31,9 @@ type CodeSettingsProps = {
 
 const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const form = useFormContext<CodeAction>();
+  const [setLeftSidebar] = useBuilderStateContext((state) => [
+    state.setLeftSidebar,
+  ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -36,12 +42,24 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         name="settings.input"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Inputs</FormLabel>
+            <div className="flex align-center justify-between">
+              <FormLabel className="pt-4">Inputs</FormLabel>
+              <Button
+                variant="ghost"
+                onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}
+                className="flex items-right max-w-max"
+              >
+                <Bot />
+                <span className="ml-2"> Ask AI </span>
+              </Button>
+            </div>
             <ApMarkdown markdown={markdown} className="mt-2" />
+
             <DictionaryProperty
               disabled={readonly}
               values={field.value}
               onChange={field.onChange}
+              useMentionTextInput={true}
             ></DictionaryProperty>
             <FormMessage />
           </FormItem>
