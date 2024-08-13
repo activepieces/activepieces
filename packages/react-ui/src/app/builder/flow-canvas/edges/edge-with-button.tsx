@@ -1,8 +1,4 @@
-import {
-  StepLocationRelativeToParent,
-  flowHelper,
-  isNil,
-} from '@activepieces/shared';
+import { StepLocationRelativeToParent, isNil } from '@activepieces/shared';
 import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
 import { BaseEdge } from '@xyflow/react';
 import { Plus } from 'lucide-react';

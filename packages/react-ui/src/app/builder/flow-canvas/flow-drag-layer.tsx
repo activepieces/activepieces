@@ -1,4 +1,3 @@
-import { FlowOperationType, flowHelper } from '@activepieces/shared';
 import {
   CollisionDetection,
   DndContext,
@@ -15,12 +14,13 @@ import {
 } from '@dnd-kit/core';
 import { snapCenterToCursor } from '@dnd-kit/modifiers';
 
+import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
+import { FlowOperationType, flowHelper } from '@activepieces/shared';
+
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { ApEdge } from './flow-canvas-utils';
 import StepDragOverlay from './step-drag-overlay';
-
-import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 
 type FlowDragLayerProps = {
   children: React.ReactNode;

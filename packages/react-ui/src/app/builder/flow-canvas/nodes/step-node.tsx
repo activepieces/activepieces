@@ -1,18 +1,8 @@
-import {
-  FlowOperationType,
-  FlowRun,
-  StepLocationRelativeToParent,
-  TriggerType,
-  flowHelper,
-  isNil,
-} from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
 import { CircleAlert, CopyPlus, Replace, Trash } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-
-import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 
 import {
   StepPathWithName,
@@ -26,6 +16,16 @@ import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
+import {
+  FlowOperationType,
+  FlowRun,
+  StepLocationRelativeToParent,
+  TriggerType,
+  flowHelper,
+  isNil,
+} from '@activepieces/shared';
+
+import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 
 function getStepStatus(
   stepName: string | undefined,

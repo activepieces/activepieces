@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/shared';
 import { DragMoveEvent, useDndMonitor, useDroppable } from '@dnd-kit/core';
-import { BaseEdge, Handle, Position } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 import React, { useId, useState } from 'react';
 
