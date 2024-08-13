@@ -7,16 +7,32 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { platformHooks } from "@/hooks/platform-hooks";
 import { projectHooks } from "@/hooks/project-hooks";
 import { projectApi } from "@/lib/project-api";
-import { formatUtils } from "@/lib/utils";
+import { formatUtils, validationUtils } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Trash } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NewProjectDialog } from "./new-project-dialog";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const [refreshCount, setRefreshCount] = useState(0);
+
+  const { toast } = useToast();
+
+  const errorToastMessage = (projectName: string, error: unknown): string | undefined => {
+    if (validationUtils.isValidationError(error)) {
+      console.error("Validation error", error);
+      switch (error.response?.data?.params?.message) {
+        case 'PROJECT_HAS_ENABLED_FLOWS':
+          return `project (${projectName}) has enabled flows. Please disable them first.`;
+        case 'ACTIVE_PROJECT':
+          return `project (${projectName}) is active. Please switch to another project first.`;
+      }
+      return undefined;
+    };
+  }
 
   const { data: currentProject } = projectHooks.useCurrentProject();
 
@@ -135,6 +151,13 @@ export default function ProjectsPage() {
                 mutationFn={async () => {
                   await projectApi.delete(row.id)
                   refreshData()
+                }}
+                onError={(error) => {
+                  toast({
+                    title: 'Error',
+                    description: errorToastMessage(row.displayName, error),
+                    duration: 3000,
+                  });
                 }}
               >
                 {isActiveProject ? <Tooltip>

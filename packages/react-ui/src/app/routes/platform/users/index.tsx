@@ -172,7 +172,7 @@ export default function UsersPage() {
                     deleteUser(row.id)
                   }}
                 >
-                  <Button disabled={isDeleting} variant="ghost" className="size-8 p-0">
+                  <Button loading={isDeleting} variant="ghost" className="size-8 p-0">
                     <Trash className="size-4 text-destructive" />
                   </Button>
                 </ConfirmationDeleteDialog>

@@ -22,11 +22,9 @@ export const UpdateUserRoleDialog = ({ children, onUpdate, userId, role }: { chi
   const { toast } = useToast();
   const { mutate, isPending } = useMutation({
     mutationKey: ['update-user'],
-    mutationFn: async (request: { platformRole: PlatformRole }) => {
-      await platformUserApi.update(userId, request);
+    mutationFn: (request: { platformRole: PlatformRole }) => platformUserApi.update(userId, request),
+    onSuccess: (_, request) => {
       onUpdate(request.platformRole);
-    },
-    onSuccess: () => {
       setOpen(false);
     },
     onError: () => {

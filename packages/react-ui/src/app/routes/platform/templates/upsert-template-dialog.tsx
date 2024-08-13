@@ -27,11 +27,9 @@ export const UpsertTemplateDialog = ({ children, onDone, template }: { children:
 
   const { mutate, isPending } = useMutation({
     mutationKey: ['create-template'],
-    mutationFn: async () => {
-      await templatesApi.create(form.getValues())
-      onDone()
-    },
+    mutationFn: () => templatesApi.create(form.getValues()),
     onSuccess: () => {
+      onDone()
       setOpen(false);
     },
     onError: () => {

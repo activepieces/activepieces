@@ -25,6 +25,7 @@ import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
 import { DataTableColumnHeader } from './data-table-column-header';
+import deepEqual from 'deep-equal';
 
 export type RowDataWithActions<TData> = TData & {
   delete: () => void;
@@ -148,7 +149,7 @@ export function DataTable<TData, TValue>({
       tableData.filter(
         (row) =>
           !deletedRows.some(
-            (deletedRow) => JSON.stringify(deletedRow) === JSON.stringify(row), // use `props.rowKeySelector(row)` instead of `row` to compare deleted rows
+            (deletedRow) => deepEqual(deletedRow, row, { strict: true }),
           ),
       ),
     );

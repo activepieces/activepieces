@@ -21,11 +21,9 @@ export const NewProjectDialog = ({ children, onCreate }: { children: React.React
 
   const { mutate, isPending } = useMutation({
     mutationKey: ['create-project'],
-    mutationFn: async () => {
-      await projectApi.create(form.getValues())
-      onCreate()
-    },
+    mutationFn: () => projectApi.create(form.getValues()),
     onSuccess: () => {
+      onCreate();
       setOpen(false);
     },
     onError: () => {

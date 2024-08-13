@@ -27,9 +27,7 @@ export default function TemplatesPage() {
 
   const { mutate: deleteTemplate, isPending: isDeleting } = useMutation({
     mutationKey: ['delete-template'],
-    mutationFn: async (templateId: string) => {
-      await templatesApi.delete(templateId);
-    },
+    mutationFn: (templateId: string) => templatesApi.delete(templateId),
     onSuccess: () => {
       refreshData();
       toast({

@@ -19,6 +19,7 @@ type ConfirmationDeleteDialogProps = {
   children: React.ReactNode;
   entityName: string;
   mutationFn: () => Promise<void>;
+  onError?: (error: Error) => void;
 };
 export function ConfirmationDeleteDialog({
   children,
@@ -26,6 +27,7 @@ export function ConfirmationDeleteDialog({
   title,
   mutationFn,
   entityName,
+  onError
 }: ConfirmationDeleteDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { isPending, mutate } = useMutation({
@@ -36,6 +38,7 @@ export function ConfirmationDeleteDialog({
       });
       setIsOpen(false);
     },
+    onError
   });
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>

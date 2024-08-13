@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { twMerge } from 'tailwind-merge';
 
 import { ActionType, TriggerType } from '@activepieces/shared';
+import { AxiosError } from 'axios';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -92,14 +93,21 @@ export const formatUtils = {
     if (minutes > 0) {
       const remainingSeconds = seconds % 60;
       return short
-        ? `${minutes} min ${
-            remainingSeconds > 0 ? `${remainingSeconds} s` : ''
-          }`
-        : `${minutes} minutes${
-            remainingSeconds > 0 ? ` ${remainingSeconds} seconds` : ''
-          }`;
+        ? `${minutes} min ${remainingSeconds > 0 ? `${remainingSeconds} s` : ''}`
+        : `${minutes} minutes${remainingSeconds > 0 ? ` ${remainingSeconds} seconds` : ''}`;
     }
 
     return short ? `${seconds} s` : `${seconds} seconds`;
   },
 };
+
+export const validationUtils = {
+  isValidationError: (error: unknown): error is AxiosError<{ code?: string, params?: { message?: string } }> => {
+    console.error("isValidationError", error);
+    return (
+      error instanceof AxiosError &&
+      error.response?.status === 409 &&
+      error.response?.data?.code === 'VALIDATION'
+    );
+  }
+}
