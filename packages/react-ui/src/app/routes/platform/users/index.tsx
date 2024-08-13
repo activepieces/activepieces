@@ -1,9 +1,6 @@
-import { UserStatus } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { CircleMinus, Pencil, RotateCcw, Trash } from 'lucide-react';
 import { useState } from 'react';
-
-import { UpdateUserRoleDialog } from './update-role-dialog';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -17,6 +14,9 @@ import {
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { platformUserApi } from '@/lib/platform-user-api';
 import { formatUtils } from '@/lib/utils';
+import { UserStatus } from '@activepieces/shared';
+
+import { UpdateUserRoleDialog } from './update-role-dialog';
 
 export default function UsersPage() {
   const [refreshCount, setRefreshCount] = useState(0);
@@ -45,33 +45,31 @@ export default function UsersPage() {
     },
   });
 
-  const { mutate: updateUserStatus, isPending: isUpdatingStatus } = useMutation(
-    {
-      mutationFn: async (data: { userId: string; status: UserStatus }) => {
-        await platformUserApi.update(data.userId, {
-          status: data.status,
-        });
-        return {
-          userId: data.userId,
-          status: data.status,
-        };
-      },
-      onSuccess: (data) => {
-        refreshData();
-        toast({
-          title: 'Success',
-          description:
-            data.status === UserStatus.ACTIVE
-              ? 'User activated successfully'
-              : 'User deactivated successfully',
-          duration: 3000,
-        });
-      },
-      onError: () => {
-        toast(INTERNAL_ERROR_TOAST);
-      },
+  const { mutate: updateUserStatus } = useMutation({
+    mutationFn: async (data: { userId: string; status: UserStatus }) => {
+      await platformUserApi.update(data.userId, {
+        status: data.status,
+      });
+      return {
+        userId: data.userId,
+        status: data.status,
+      };
     },
-  );
+    onSuccess: (data) => {
+      refreshData();
+      toast({
+        title: 'Success',
+        description:
+          data.status === UserStatus.ACTIVE
+            ? 'User activated successfully'
+            : 'User deactivated successfully',
+        duration: 3000,
+      });
+    },
+    onError: () => {
+      toast(INTERNAL_ERROR_TOAST);
+    },
+  });
 
   return (
     <div className="flex flex-col gap-4 w-full">

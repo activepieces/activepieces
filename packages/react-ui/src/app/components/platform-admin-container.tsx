@@ -1,7 +1,6 @@
 import {
   LayoutGrid,
   LogsIcon,
-  Palette,
   Puzzle,
   Settings,
   UserCog,
@@ -28,10 +27,10 @@ export function PlatformAdminContainer({
       locked: !platform.manageProjectsEnabled,
     },
     {
-      to: "/platform/audit-logs",
-      label: "Audit Logs",
+      to: '/platform/audit-logs',
+      label: 'Audit Logs',
       icon: LogsIcon,
-      locked: !platform.auditLogEnabled
+      locked: !platform.auditLogEnabled,
     },
     {
       to: '/platform/pieces',

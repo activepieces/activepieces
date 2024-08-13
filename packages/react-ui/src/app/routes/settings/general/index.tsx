@@ -1,4 +1,3 @@
-import { ApFlagId, ProjectWithLimits } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -19,6 +18,7 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
+import { ApFlagId, ProjectWithLimits } from '@activepieces/shared';
 
 export default function GeneralPage() {
   const queryClient = useQueryClient();

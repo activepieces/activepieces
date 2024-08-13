@@ -26,12 +26,12 @@ import { FlowRunPage } from './routes/runs/id';
 import AlertsPage from './routes/settings/alerts';
 import AppearancePage from './routes/settings/appearance';
 import GeneralPage from './routes/settings/general';
+import { GitSyncPage } from './routes/settings/git-sync';
 import PiecesPage from './routes/settings/pieces';
 import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
-import { GitSyncPage } from './routes/settings/git-sync';
 
 export const router = createBrowserRouter([
   {

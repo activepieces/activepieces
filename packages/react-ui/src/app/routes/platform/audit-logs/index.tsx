@@ -1,8 +1,3 @@
-import {
-  ApplicationEvent,
-  ApplicationEventName,
-  summarizeApplicationEvent,
-} from '@activepieces/ee-shared';
 import { Folder, Key, Link2, Logs, Users, Workflow } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -16,6 +11,11 @@ import {
 import { platformHooks } from '@/hooks/platform-hooks';
 import { auditEventsApi } from '@/lib/audit-events-api';
 import { formatUtils } from '@/lib/utils';
+import {
+  ApplicationEvent,
+  ApplicationEventName,
+  summarizeApplicationEvent,
+} from '@activepieces/ee-shared';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();

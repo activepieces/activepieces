@@ -9,12 +9,11 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/seperator';
 import { InvitationCard } from '@/features/team/component/invitation-card';
+import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 import { ProjectMemberCard } from '@/features/team/component/project-member-card';
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { userInvitationsHooks } from '@/features/team/lib/user-invitations-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-
-import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 
 export default function TeamPage() {
   const { projectMembers, isLoading: projectMembersIsPending } =

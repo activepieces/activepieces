@@ -76,7 +76,7 @@ const PieceActionTriggerSelector = ({
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select an option" asChild>
-                <>{selectedDisplayName}</>
+                {selectedDisplayName}
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="w-full">

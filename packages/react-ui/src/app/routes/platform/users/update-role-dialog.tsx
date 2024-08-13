@@ -1,4 +1,3 @@
-import { PlatformRole, UpdateUserRequestBody } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -25,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { platformUserApi } from '@/lib/platform-user-api';
+import { PlatformRole, UpdateUserRequestBody } from '@activepieces/shared';
 
 export const UpdateUserRoleDialog = ({
   children,

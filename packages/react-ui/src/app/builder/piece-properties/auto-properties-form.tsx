@@ -257,7 +257,7 @@ const selectRightComponent = (
     case PropertyType.CUSTOM_AUTH:
     case PropertyType.BASIC_AUTH:
     case PropertyType.OAUTH2:
-      return <></>;
+      return null;
   }
 };
 AutoPropertiesFormComponent.displayName = 'AutoFormComponent';

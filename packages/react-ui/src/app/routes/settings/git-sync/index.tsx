@@ -11,6 +11,7 @@ import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 const GitSyncPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -21,7 +22,11 @@ const GitSyncPage = () => {
   );
 
   const { mutate } = useMutation({
-    mutationFn: () => gitSyncApi.disconnect(gitSync?.id!),
+    mutationFn: () => {
+      const gitSyncId = gitSync?.id;
+      assertNotNullOrUndefined(gitSyncId, 'gitSyncId');
+      return gitSyncApi.disconnect(gitSyncId);
+    },
     onSuccess: () => {
       refetch();
       toast({
