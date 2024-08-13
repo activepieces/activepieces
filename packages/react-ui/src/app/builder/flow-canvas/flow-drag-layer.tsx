@@ -113,7 +113,12 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
   };
 
   const sensors = useSensors(
-    useSensor(MouseSensor),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        delay: 50,
+        tolerance: 1,
+      },
+    }),
     useSensor(PointerSensor, {
       activationConstraint: {
         delay: 150,

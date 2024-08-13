@@ -79,19 +79,13 @@ function getEdgePath({
 
 const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
   const [showButtonShadow, setShowButtonShadow] = useState(false);
-  const [
-    activeDraggingStep,
-    flowVersion,
-    clickOnNewNodeButton,
-    selectedButton,
-    readonly,
-  ] = useBuilderStateContext((state) => [
-    state.activeDraggingStep,
-    state.flowVersion,
-    state.clickOnNewNodeButton,
-    state.selectedButton,
-    state.readonly,
-  ]);
+  const [activeDraggingStep, clickOnNewNodeButton, selectedButton, readonly] =
+    useBuilderStateContext((state) => [
+      state.activeDraggingStep,
+      state.clickOnNewNodeButton,
+      state.selectedButton,
+      state.readonly,
+    ]);
   const { edgePath, buttonPosition } = getEdgePath(props);
   const { setNodeRef } = useDroppable({
     id: props.id,
@@ -100,18 +94,8 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
       ...props.data,
     },
   });
-  const draggedStep = isNil(activeDraggingStep)
-    ? undefined
-    : flowHelper.getStep(flowVersion, activeDraggingStep);
-  const parentStep = props.data?.parentStep;
-  const isPartOfInnerFlow =
-    isNil(parentStep) || isNil(draggedStep)
-      ? false
-      : flowHelper.isPartOfInnerFlow({
-          parentStep: draggedStep,
-          childName: parentStep,
-        });
-  const isDropzone = !isPartOfInnerFlow && !isNil(activeDraggingStep);
+
+  const showDropIndicator = !isNil(activeDraggingStep);
   const isSelected =
     selectedButton &&
     selectedButton.type === 'action' &&
@@ -121,9 +105,6 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
 
   useDndMonitor({
     onDragMove(event: DragMoveEvent) {
-      if (isPartOfInnerFlow) {
-        return;
-      }
       setShowButtonShadow(event.collisions?.[0]?.id === props.id);
     },
     onDragEnd() {
@@ -138,7 +119,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
         path={edgePath}
         style={{ strokeWidth: 1.5 }}
       />
-      {isDropzone && props.data?.addButton && !readonly && buttonPosition && (
+      {showDropIndicator && props.data?.addButton && !readonly && (
         <foreignObject
           width={AP_NODE_SIZE.smallButton.width}
           height={AP_NODE_SIZE.smallButton.height}
@@ -165,7 +146,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
                 AP_NODE_SIZE.smallButton.width / 2
               }px`,
             }}
-            className=" absolute"
+            className="absolute"
             ref={setNodeRef}
           >
             {' '}
@@ -177,7 +158,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
           ></div>
         </foreignObject>
       )}
-      {!isDropzone && props.data?.addButton && !readonly && buttonPosition && (
+      {!showDropIndicator && props.data?.addButton && !readonly && (
         <foreignObject
           width={18}
           height={18}
