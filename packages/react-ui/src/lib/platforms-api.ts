@@ -1,4 +1,4 @@
-import { Platform } from '@activepieces/shared';
+import { Platform, UpdatePlatformRequestBody } from '@activepieces/shared';
 
 import { api } from './api';
 import { authenticationSession } from './authentication-session';
@@ -11,4 +11,8 @@ export const platformApi = {
     }
     return api.get<Platform>(`/v1/platforms/${platformId}`);
   },
+
+  updatePlatform(req: UpdatePlatformRequestBody, platformId: string) {
+    return api.post<void>(`/v1/platforms/${platformId}`, req)
+  }
 };
