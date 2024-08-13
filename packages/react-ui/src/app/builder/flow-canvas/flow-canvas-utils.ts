@@ -12,6 +12,8 @@ import {
 
 const VERTICAL_OFFSET = 160;
 const HORIZONTAL_SPACE_BETWEEN_NODES = 80;
+export const DRAGGED_STEP_TAG = 'dragged-step';
+
 export enum ApNodeType {
   LOOP_PLACEHOLDER = 'loopPlaceholder',
   PLACEHOLDER = 'placeholder',
@@ -341,5 +343,3 @@ export type ApGraph = {
   nodes: ApNode[];
   edges: ApEdge[];
 };
-
-export const DRAGGED_STEP_TAG = 'dragged-step';
