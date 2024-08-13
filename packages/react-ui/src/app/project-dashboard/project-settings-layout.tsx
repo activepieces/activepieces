@@ -1,5 +1,5 @@
 import { Separator } from '@radix-ui/react-dropdown-menu';
-import { SunMoon, Users, Puzzle, Bell } from 'lucide-react';
+import { SunMoon, Users, Puzzle, Bell, GitBranch } from 'lucide-react';
 
 import { ProjectSettingsSidebarItem } from './project-settings-sidebar-item';
 
@@ -26,6 +26,11 @@ const sidebarNavItems = [
     href: '/settings/alerts',
     icon: <Bell size={iconSize} />,
   },
+  {
+    title: 'Git Sync',
+    href: '/settings/git-sync',
+    icon: <GitBranch size={iconSize} />,
+  }
 ];
 
 interface SettingsLayoutProps {

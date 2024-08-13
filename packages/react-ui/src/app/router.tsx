@@ -30,6 +30,7 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+import { GitSyncPage } from './routes/settings/git-sync';
 
 export const router = createBrowserRouter([
   {
@@ -164,6 +165,16 @@ export const router = createBrowserRouter([
       <DashboardContainer>
         <ProjectSettingsLayout>
           <TeamPage></TeamPage>
+        </ProjectSettingsLayout>
+      </DashboardContainer>
+    ),
+  },
+  {
+    path: '/settings/git-sync',
+    element: (
+      <DashboardContainer>
+        <ProjectSettingsLayout>
+          <GitSyncPage></GitSyncPage>
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
