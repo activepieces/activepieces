@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   MultiSelect,
@@ -34,6 +34,9 @@ const MultiSelectPieceProperty = ({
   initialValues,
   enableSelectOrClear,
 }: MultiSelectPiecePropertyProps) => {
+  const [filteredOptions, setFilteredOptions] =
+    useState<MultiSelectOption[]>(options);
+
   const selectedIndicies = Array.isArray(initialValues)
     ? initialValues
         .map((value) =>
@@ -49,10 +52,33 @@ const MultiSelectPieceProperty = ({
     onChange(newSelectedIndicies.map((index) => options[Number(index)].value));
   };
 
+  const onSearchChanged = (searchTerm: string | undefined) => {
+    if (!searchTerm) {
+      setFilteredOptions(options);
+      return;
+    }
+
+    if (Array.isArray(options)) {
+      const filtered = options.filter((option) =>
+        option.label.toLowerCase().includes(searchTerm.trim().toLowerCase()),
+      );
+      setFilteredOptions(filtered);
+    }
+  };
+
+  const onSelectOrClearChanged = (changeType: SelectOrClearChangeType) => {
+    if (changeType === 'selectAll') {
+      sendChanges(options.map((_, index) => String(index)));
+    } else {
+      sendChanges([]);
+    }
+  };
+
   return (
     <MultiSelect
       value={selectedIndicies}
       onValueChange={sendChanges}
+      onSearch={onSearchChanged}
       disabled={disabled}
     >
       <MultiSelectTrigger className="w-full">
@@ -63,21 +89,11 @@ const MultiSelectPieceProperty = ({
         {enableSelectOrClear && (
           <SelectOrClear
             allSelected={selectedIndicies.length === options.length}
-            sendChanges={(changeType) => {
-              switch (changeType) {
-                case 'selectAll':
-                  sendChanges(options.map((_, i) => i.toString()));
-                  break;
-                case 'clear':
-                  sendChanges([]);
-                  break;
-              }
-            }}
+            sendChanges={onSelectOrClearChanged}
           />
         )}
-
         <MultiSelectList>
-          {options.map((option, index) => (
+          {filteredOptions.map((option, index) => (
             <MultiSelectItem key={index} value={String(index)}>
               {option.label}
             </MultiSelectItem>
@@ -88,14 +104,18 @@ const MultiSelectPieceProperty = ({
   );
 };
 
-const SelectOrClear = ({
-  allSelected,
-  sendChanges,
-}: {
+type SelectOrClearChangeType = 'selectAll' | 'clear';
+type SelectOrClearProps = {
   allSelected: boolean;
-  sendChanges: (changeType: 'selectAll' | 'clear') => void;
-}) => {
+  sendChanges: (changeType: SelectOrClearChangeType) => void;
+};
+
+const SelectOrClear = ({ allSelected, sendChanges }: SelectOrClearProps) => {
   const [checked, setChecked] = useState(allSelected);
+
+  useEffect(() => {
+    setChecked(allSelected);
+  }, [allSelected]);
 
   const onCheckedChange = (checked: boolean) => {
     sendChanges(checked ? 'selectAll' : 'clear');
