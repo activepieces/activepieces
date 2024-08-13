@@ -3,22 +3,16 @@ import { ConfirmationDeleteDialog } from "@/components/delete-dialog";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { platformHooks } from "@/hooks/platform-hooks";
 import { projectHooks } from "@/hooks/project-hooks";
 import { projectApi } from "@/lib/project-api";
 import { formatUtils } from "@/lib/utils";
-import { typeboxResolver } from "@hookform/resolvers/typebox";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Trash } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { CreatePlatformProjectRequest } from "../../../../../../ee/shared/src";
+import { NewProjectDialog } from "./new-project-dialog";
 
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -44,16 +38,16 @@ export default function ProjectsPage() {
     <div className="flex flex-col gap-4 w-full">
       <div className="flex items-center justify-between flex-row">
         <span className="text-2xl py-2">Projects</span>
-        <CreateNewProjectDialog onCreate={() => refreshData()}>
+        <NewProjectDialog onCreate={() => refreshData()}>
           <Button variant="outline" size="sm" className="flex items-center justify-center gap-2">
             <Plus className="size-4" />
             New Project
           </Button>
-        </CreateNewProjectDialog>
+        </NewProjectDialog>
       </div>
       <DataTable
-        onRowClick={row => {
-          setCurrentProject(queryClient, row)
+        onRowClick={async project => {
+          await setCurrentProject(queryClient, project, false)
           navigate("/")
         }}
         columns={[
@@ -110,10 +104,10 @@ export default function ProjectsPage() {
             return <div className="flex items-end justify-end">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" className="size-8 p-0" onClick={e => {
+                  <Button variant="ghost" className="size-8 p-0" onClick={async e => {
                     e.stopPropagation();
                     e.preventDefault();
-                    setCurrentProject(queryClient, row)
+                    await setCurrentProject(queryClient, row, false)
                     navigate("/settings/general")
                   }}>
                     <Pencil className="size-4" />
@@ -156,90 +150,4 @@ export default function ProjectsPage() {
       />
     </div>
   </LockedFeatureGuard >
-}
-
-const CreateNewProjectDialog = ({ children, onCreate }: { children: React.ReactNode, onCreate: () => void }) => {
-  const [open, setOpen] = useState(false);
-  const form = useForm<CreatePlatformProjectRequest>({
-    resolver: typeboxResolver(CreatePlatformProjectRequest),
-  });
-  const { mutate, isPending } = useMutation({
-    mutationKey: ['create-project'],
-    mutationFn: async () => {
-      await projectApi.create(form.getValues())
-      onCreate()
-    },
-    onSuccess: () => {
-      setOpen(false);
-    },
-  });
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => setOpen(open)}
-    >
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form
-            className="grid space-y-4"
-            onSubmit={(e) => e.preventDefault()}
-          >
-            <FormField
-              name="displayName"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="displayName">
-                    Project Name
-                  </Label>
-                  <Input
-                    {...field}
-                    required
-                    id="displayName"
-                    placeholder="Project Name"
-                    className="rounded-sm"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
-            )}
-          </form>
-        </Form>
-        <DialogFooter>
-          <Button
-            variant={'outline'}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setOpen(false);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            disabled={isPending || !form.formState.isValid}
-            loading={isPending}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              mutate();
-            }}
-          >
-            Save
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
 }

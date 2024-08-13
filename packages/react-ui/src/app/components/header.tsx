@@ -1,4 +1,4 @@
-import { Shield } from 'lucide-react';
+import { Shield, X } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -31,7 +31,7 @@ export const Header = () => {
             size="sm"
             className="flex items-center justify-center gap-2"
           >
-            <Shield className="size-4" />
+            {isInPlatformAdmin ? <X className="size-4" /> : <Shield className="size-4" />}
             <span>
               {isInPlatformAdmin ? 'Exit Platform Admin' : 'Platform Admin'}
             </span>

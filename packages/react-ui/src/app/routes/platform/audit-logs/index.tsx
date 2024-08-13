@@ -6,7 +6,7 @@ import { platformHooks } from "@/hooks/platform-hooks";
 import { auditEventsApi } from "@/lib/audit-events-api";
 import { formatUtils } from "@/lib/utils";
 import { Folder, Key, Link2, Logs, Users, Workflow } from "lucide-react";
-import { ApplicationEvent, ApplicationEventName, summarizeApplicationEvent } from "../../../../../../ee/shared/src";
+import { ApplicationEvent, ApplicationEventName, summarizeApplicationEvent } from "@activepieces/ee-shared";
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -88,31 +88,7 @@ export default function AuditLogsPage() {
             },
           },
         ]}
-        fetchData={() => auditEventsApi.list({})
-          // .then((res) => ({
-          //   ...res, data: [...res.data, {
-          //     action: ApplicationEventName.FLOW_CREATED,
-          //     id: '123id',
-          //     created: '2023-04-18T13:25:13.000Z',
-          //     updated: '2023-04-18T13:25:13.000Z',
-          //     userEmail: 'dev@activepieces.com',
-          //     platformId: '123platform',
-          //     userId: '123user',
-          //     ip: '1.1.1.1',
-          //     projectId: '123project',
-          //     data: {
-          //       flow: {
-          //         id: '123flow',
-          //         created: '2023-04-18T13:25:13.000Z',
-          //         updated: '2023-04-18T13:25:13.000Z',
-          //       },
-          //       project: {
-          //         displayName: 'Project Name XXX',
-          //       }
-          //     }
-          //   }]
-          // }))
-        }
+        fetchData={() => auditEventsApi.list({})}
       />
     </div>
   </LockedFeatureGuard>

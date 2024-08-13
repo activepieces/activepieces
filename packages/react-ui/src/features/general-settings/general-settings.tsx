@@ -1,24 +1,22 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { projectHooks } from "@/hooks/project-hooks";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ApFlagId, ProjectWithLimits } from "../../../../shared/src";
-import { projectApi } from "@/lib/project-api";
-import { authenticationSession } from "@/lib/authentication-session";
-import { INTERNAL_ERROR_TOAST, useToast } from "@/components/ui/use-toast";
-import { flagsHooks } from "@/hooks/flags-hooks";
-import { useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
-import { typeboxResolver } from "@hookform/resolvers/typebox";
-import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Label } from "@/components/ui/label";
+import { FlagGuard } from "@/app/components/flag-guard";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { INTERNAL_ERROR_TOAST, useToast } from "@/components/ui/use-toast";
+import { projectHooks } from "@/hooks/project-hooks";
+import { authenticationSession } from "@/lib/authentication-session";
+import { projectApi } from "@/lib/project-api";
+import { typeboxResolver } from "@hookform/resolvers/typebox";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { ApFlagId, ProjectWithLimits } from "../../../../shared/src";
 
 export default function GeneralSettingsPage() {
 
   const queryClient = useQueryClient();
   const { project, updateProject } = projectHooks.useCurrentProject();
-
-  const isProjectLimitsEnabled = flagsHooks.useFlag(ApFlagId.PROJECT_LIMITS_ENABLED, queryClient); // Means that the user can change the project plan tasks
 
   const { toast } = useToast();
 
@@ -66,7 +64,6 @@ export default function GeneralSettingsPage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1 mt-4">
-        {/* a Form with a save button as submit .. use form field to get and set the values */}
         <Form {...form}>
           <form
             className="grid space-y-4"
@@ -90,25 +87,27 @@ export default function GeneralSettingsPage() {
                 </FormItem>
               )}
             />
-            {isProjectLimitsEnabled && <FormField
-              name="plan.tasks"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="plan.tasks">
-                    Tasks
-                  </Label>
-                  <Input
-                    type="number"
-                    {...field}
-                    required
-                    id="plan.tasks"
-                    placeholder="Tasks"
-                    className="rounded-sm"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />}
+            <FlagGuard flag={ApFlagId.PROJECT_LIMITS_ENABLED}>
+              <FormField
+                name="plan.tasks"
+                render={({ field }) => (
+                  <FormItem className="grid space-y-2">
+                    <Label htmlFor="plan.tasks">
+                      Tasks
+                    </Label>
+                    <Input
+                      type="number"
+                      {...field}
+                      required
+                      id="plan.tasks"
+                      placeholder="Tasks"
+                      className="rounded-sm"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </FlagGuard>
             {form?.formState?.errors?.root?.serverError && (
               <FormMessage>
                 {form.formState.errors.root.serverError.message}
