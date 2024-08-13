@@ -25,7 +25,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { Alert, AlertChannel } from '@activepieces/ee-shared';
 
-import { alertsApi } from '../lib/alerts-api';
+import { alertsApi } from '@/features/alerts/lib/alerts-api';
 
 const FormSchema = Type.Object({
   email: Type.String({

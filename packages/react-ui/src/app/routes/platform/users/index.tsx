@@ -4,7 +4,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { INTERNAL_ERROR_TOAST, useToast } from "@/components/ui/use-toast";
-import { platformUserApi } from "@/lib/platform-user-api";
+import { platformUserApi } from "@/features/platform-admin-panel/lib/platform-user-api";
 import { formatUtils } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { CircleMinus, Pencil, RotateCcw, Trash } from "lucide-react";
