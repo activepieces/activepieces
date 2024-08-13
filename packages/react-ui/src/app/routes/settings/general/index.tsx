@@ -11,7 +11,7 @@ import { projectApi } from "@/lib/project-api";
 import { typeboxResolver } from "@hookform/resolvers/typebox";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { ApFlagId, ProjectWithLimits } from "../../../../../../shared/src";
+import { ApFlagId, ProjectWithLimits } from "@activepieces/shared";
 
 export default function GeneralPage() {
 

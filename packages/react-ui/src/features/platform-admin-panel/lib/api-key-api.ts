@@ -2,7 +2,7 @@ import { api } from '@/lib/api';
 import {
   SeekPage
 } from '@activepieces/shared';
-import { ApiKeyResponseWithoutValue, ApiKeyResponseWithValue, CreateApiKeyRequest } from '../../../../../ee/shared/src';
+import { ApiKeyResponseWithoutValue, ApiKeyResponseWithValue, CreateApiKeyRequest } from '@activepieces/ee-shared';
 
 export const apiKeyApi = {
   list() {

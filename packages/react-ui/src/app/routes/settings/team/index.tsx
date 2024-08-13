@@ -14,7 +14,7 @@ import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { userInvitationsHooks } from '@/features/team/lib/user-invitations-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
-import { InviteUserDialog } from '../../../../features/team/component/invite-user-dialog';
+import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 
 export default function TeamPage() {
   const { projectMembers, isLoading: projectMembersIsPending } =
