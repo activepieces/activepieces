@@ -7,10 +7,7 @@ export const copilotModule: FastifyPluginAsyncTypebox = async () => {
     websocketService.addListener(WebsocketServerEvent.GENERATE_CODE, (socket) => {
         return async (data: GenerateCodeRequest) => {
             const { prompt, previousContext } = data
-            const result = await copilotService.generateCode({ prompt, previousContext })
-            const response: GenerateCodeResponse = {
-                result,
-            }
+            const response: GenerateCodeResponse = await copilotService.generateCode({ prompt, previousContext })
             socket.emit(WebsocketClientEvent.GENERATE_CODE_FINISHED, response)
         }
     })
