@@ -1,4 +1,8 @@
-import { flowHelper, isNil } from '@activepieces/shared';
+import {
+  StepLocationRelativeToParent,
+  flowHelper,
+  isNil,
+} from '@activepieces/shared';
 import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
 import { BaseEdge } from '@xyflow/react';
 import { Plus } from 'lucide-react';
@@ -111,7 +115,11 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
       setIsStepInsideDropzone(false);
     },
   });
-
+  const labelDirectionSign =
+    props.data.stepLocationRelativeToParent ===
+    StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+      ? -1
+      : 1;
   return (
     <>
       <BaseEdge
@@ -119,6 +127,25 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
         path={edgePath}
         style={{ strokeWidth: 1.5 }}
       />
+      {(props.data.stepLocationRelativeToParent ===
+        StepLocationRelativeToParent.INSIDE_FALSE_BRANCH ||
+        props.data.stepLocationRelativeToParent ===
+          StepLocationRelativeToParent.INSIDE_TRUE_BRANCH) && (
+        <foreignObject
+          width={35}
+          height={100}
+          className="z-50 relative"
+          x={buttonPosition.x - 100 * labelDirectionSign}
+          y={buttonPosition.y - 25}
+        >
+          <div className="text-accent-foreground text-sm text-center bg-background">
+            {props.data.stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+              ? 'True'
+              : 'False'}
+          </div>
+        </foreignObject>
+      )}
       {showDropIndicator && props.data?.addButton && !readonly && (
         <foreignObject
           width={AP_NODE_SIZE.smallButton.width}

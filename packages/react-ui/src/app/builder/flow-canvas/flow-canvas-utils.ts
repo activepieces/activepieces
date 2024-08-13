@@ -83,15 +83,15 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
       const { nextAction, onSuccessAction, onFailureAction } = step;
 
       const childrenGraphs = [onSuccessAction, onFailureAction].map(
-        (g, index) => {
-          return isNil(g)
+        (childGraph, index) => {
+          return isNil(childGraph)
             ? buildBigButton(
                 step.name,
                 index === 0
                   ? StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
                   : StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
               )
-            : traverseFlow(g);
+            : traverseFlow(childGraph);
         },
       );
 
