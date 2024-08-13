@@ -57,8 +57,96 @@ const CreateFolderFormSchema = Type.Object({
 
 type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>;
 
+type FolderItemProps = {
+  folder: FolderDto;
+  refetch: () => void;
+  updateSearchParams: (folderId: string | undefined) => void;
+  selectedFolderId: string | null;
+};
+const FolderItem = ({
+  folder,
+  refetch,
+  updateSearchParams,
+  selectedFolderId,
+}: FolderItemProps) => {
+  return (
+    <div key={folder.id} className="group py-1">
+      <Button
+        variant="ghost"
+        className={cn('w-full justify-between', {
+          'bg-muted': selectedFolderId === folder.id,
+        })}
+        onClick={() => updateSearchParams(folder.id)}
+      >
+        <TextWithIcon
+          icon={
+            selectedFolderId === folder.id ? (
+              <FolderOpen
+                size={18}
+                className="fill-muted-foreground/75 border-0 text-muted-foreground"
+              />
+            ) : (
+              <Folder
+                size={18}
+                className="fill-muted-foreground border-0 text-muted-foreground"
+              />
+            )
+          }
+          text={folder.displayName}
+        />
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="flex flex-row -space-x-4"
+        >
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger
+              asChild
+              className="invisible group-hover:visible"
+            >
+              <EllipsisVertical className="h-5 w-5" />
+            </DropdownMenuTrigger>
+            <span className="text-muted-foreground self-end group-hover:invisible">
+              {folder.numberOfFlows}
+            </span>
+            <DropdownMenuContent>
+              <RenameFolderDialog
+                folderId={folder.id}
+                onRename={() => refetch()}
+              >
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <div className="flex flex-row gap-2 items-center">
+                    <Pencil className="h-4 w-4" />
+                    <span>Rename</span>
+                  </div>
+                </DropdownMenuItem>
+              </RenameFolderDialog>
+              <ConfirmationDeleteDialog
+                title={`Delete folder ${folder.displayName}`}
+                message="If you delete this folder, we will keep its flows and move them to Uncategorized."
+                mutationFn={async () => {
+                  await foldersApi.delete(folder.id);
+                  refetch();
+                }}
+                entityName={folder.displayName}
+              >
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <div className="flex flex-row gap-2 items-center">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <span className="text-destructive">Delete</span>
+                  </div>
+                </DropdownMenuItem>
+              </ConfirmationDeleteDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </Button>
+    </div>
+  );
+};
+
 const FolderFilterList = () => {
   const location = useLocation();
+
   const [searchParams, setSearchParams] = useSearchParams(location.search);
   const selectedFolderId = searchParams.get('folderId');
 
@@ -67,11 +155,17 @@ const FolderFilterList = () => {
     resolver: typeboxResolver(CreateFolderFormSchema),
   });
 
-  const {
-    data: allFolders,
-    isPending: isFetchingFolders,
-    refetch,
-  } = foldersHooks.useFolders();
+  const updateSearchParams = (folderId: string | undefined) => {
+    const newQueryParameters: URLSearchParams = new URLSearchParams(
+      searchParams,
+    );
+    folderId
+      ? newQueryParameters.set('folderId', folderId)
+      : newQueryParameters.delete('folderId');
+    setSearchParams(newQueryParameters);
+  };
+
+  const { folders, isLoading, refetch } = foldersHooks.useFolders();
 
   const { data: allFlowsCount } = useQuery({
     queryKey: ['flowsCount', authenticationSession.getProjectId()],
@@ -88,8 +182,10 @@ const FolderFilterList = () => {
         displayName: data.displayName,
       });
     },
-    onSuccess: () => {
+    onSuccess: (folder) => {
+      form.reset();
       setIsDialogOpen(false);
+      updateSearchParams(folder.id);
       refetch();
       toast({
         title: 'Added folder successfully',
@@ -112,16 +208,6 @@ const FolderFilterList = () => {
       }
     },
   });
-
-  const updateSearchParams = (folderId: string | undefined) => {
-    const newQueryParameters: URLSearchParams = new URLSearchParams(
-      searchParams,
-    );
-    folderId
-      ? newQueryParameters.set('folderId', folderId)
-      : newQueryParameters.delete('folderId');
-    setSearchParams(newQueryParameters);
-  };
 
   return (
     <div className="p-2">
@@ -173,7 +259,7 @@ const FolderFilterList = () => {
           </Dialog>
         </div>
       </div>
-      <div className="flex w-[200px] flex-col space-y-1">
+      <div className="flex w-[200px] h-full flex-col space-y-1">
         <Button
           variant="secondary"
           className={cn('flex w-full justify-start bg-background', {
@@ -196,102 +282,33 @@ const FolderFilterList = () => {
           <div className="grow"></div>
           <div className="flex flex-row -space-x-4">
             <span className="visible text-muted-foreground group-hover:invisible">
-              {foldersUtils.extractUncategorizedFlows(
-                allFlowsCount,
-                allFolders,
-              )}
+              {foldersUtils.extractUncategorizedFlows(allFlowsCount, folders)}
             </span>
           </div>
         </Button>
         <Separator className="my-6" />
-        <ScrollArea className="h-[740px]">
-          {isFetchingFolders && (
-            <div className="flex flex-col gap-2">
-              {Array.from(Array(5)).map((_, index) => (
-                <Skeleton key={index} className="rounded-md w-full h-8" />
-              ))}
-            </div>
-          )}
-          {allFolders &&
-            allFolders.map((folder) => {
-              return (
-                <div key={folder.id} className="group py-1">
-                  <Button
-                    variant="ghost"
-                    className={cn('w-full justify-between', {
-                      'bg-muted': selectedFolderId === folder.id,
-                    })}
-                    onClick={() => updateSearchParams(folder.id)}
-                  >
-                    <TextWithIcon
-                      icon={
-                        selectedFolderId === folder.id ? (
-                          <FolderOpen
-                            size={18}
-                            className="fill-muted-foreground/75 border-0 text-muted-foreground"
-                          />
-                        ) : (
-                          <Folder
-                            size={18}
-                            className="fill-muted-foreground border-0 text-muted-foreground"
-                          />
-                        )
-                      }
-                      text={folder.displayName}
-                    />
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex flex-row -space-x-4"
-                    >
-                      <DropdownMenu modal={false}>
-                        <DropdownMenuTrigger
-                          asChild
-                          className="invisible group-hover:visible"
-                        >
-                          <EllipsisVertical className="h-5 w-5" />
-                        </DropdownMenuTrigger>
-                        <span className="text-muted-foreground self-end group-hover:invisible">
-                          {folder.numberOfFlows}
-                        </span>
-                        <DropdownMenuContent>
-                          <RenameFolderDialog
-                            folderId={folder.id}
-                            onRename={() => refetch()}
-                          >
-                            <DropdownMenuItem
-                              onSelect={(e) => e.preventDefault()}
-                            >
-                              <div className="flex flex-row gap-2 items-center">
-                                <Pencil className="h-4 w-4" />
-                                <span>Rename</span>
-                              </div>
-                            </DropdownMenuItem>
-                          </RenameFolderDialog>
-                          <ConfirmationDeleteDialog
-                            title={`Delete folder ${folder.displayName}`}
-                            message="If you delete this folder, we will keep its flows and move them to Uncategorized."
-                            mutationFn={async () => {
-                              await foldersApi.delete(folder.id);
-                              refetch();
-                            }}
-                            entityName={folder.displayName}
-                          >
-                            <DropdownMenuItem
-                              onSelect={(e) => e.preventDefault()}
-                            >
-                              <div className="flex flex-row gap-2 items-center">
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                                <span className="text-destructive">Delete</span>
-                              </div>
-                            </DropdownMenuItem>
-                          </ConfirmationDeleteDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </Button>
-                </div>
-              );
-            })}
+        <ScrollArea type="auto">
+          <div className="flex flex-col w-full max-h-[590px]">
+            {isLoading && (
+              <div className="flex flex-col gap-2">
+                {Array.from(Array(5)).map((_, index) => (
+                  <Skeleton key={index} className="rounded-md w-full h-8" />
+                ))}
+              </div>
+            )}
+            {folders &&
+              folders.map((folder) => {
+                return (
+                  <FolderItem
+                    key={folder.id}
+                    folder={folder}
+                    refetch={refetch}
+                    selectedFolderId={selectedFolderId}
+                    updateSearchParams={updateSearchParams}
+                  />
+                );
+              })}
+          </div>
         </ScrollArea>
       </div>
     </div>

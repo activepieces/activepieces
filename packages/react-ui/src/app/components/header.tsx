@@ -1,4 +1,4 @@
-import { Shield, X } from 'lucide-react';
+import { LogOut, Shield } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -18,9 +18,9 @@ export const Header = () => {
   const isInPlatformAdmin = history.pathname.startsWith('/platform');
 
   return (
-    <div className="flex ">
+    <div className="flex h-[60px]">
       {isInPlatformAdmin ? (
-        <span className="text-2xl px-4 py-2">Platform Admin</span>
+        <span className="text-xl px-4 py-2">Platform Admin</span>
       ) : (
         <ProjectSwitcher />
       )}
@@ -34,7 +34,7 @@ export const Header = () => {
             className="flex items-center justify-center gap-2"
           >
             {isInPlatformAdmin ? (
-              <X className="size-4" />
+              <LogOut className="size-4" />
             ) : (
               <Shield className="size-4" />
             )}
