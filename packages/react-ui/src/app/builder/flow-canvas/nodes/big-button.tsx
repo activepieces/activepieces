@@ -1,14 +1,14 @@
-import { isNil } from '@activepieces/shared';
 import { DragMoveEvent, useDndMonitor, useDroppable } from '@dnd-kit/core';
 import { Handle, Position } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 import React, { useId, useState } from 'react';
 
-import { useBuilderStateContext } from '../../builder-hooks';
-import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
-
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { isNil } from '@activepieces/shared';
+
+import { useBuilderStateContext } from '../../builder-hooks';
+import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 
 const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
   const [isIsStepInsideDropzone, setIsStepInsideDropzone] = useState(false);

@@ -1,8 +1,10 @@
-import { StepLocationRelativeToParent, isNil } from '@activepieces/shared';
 import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
 import { BaseEdge } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
+
+import { cn } from '@/lib/utils';
+import { StepLocationRelativeToParent, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import {
@@ -12,8 +14,6 @@ import {
   DRAGGED_STEP_TAG,
   flowCanvasUtils,
 } from '../flow-canvas-utils';
-
-import { cn } from '@/lib/utils';
 
 interface ApEdgeWithButtonProps {
   id: string;
