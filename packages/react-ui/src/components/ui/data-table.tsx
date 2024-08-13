@@ -6,6 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import deepEqual from 'deep-equal';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -20,6 +21,7 @@ import {
 import { SeekPage } from '@activepieces/shared';
 
 import { Button } from './button';
+import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableFacetedFilter } from './data-table-options-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
@@ -40,21 +42,44 @@ export type DataTableFilter = {
     icon?: React.ComponentType<{ className?: string }>;
   }[];
 };
+
+type DataTableAction<TData> = (row: RowDataWithActions<TData>) => JSX.Element;
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
   fetchData: (queryParams: URLSearchParams) => Promise<SeekPage<TData>>;
   onRowClick?: (row: RowDataWithActions<TData>) => void;
   filters?: DataTableFilter[];
   refresh?: number;
+  actions?: DataTableAction<TData>[];
 }
 
 export function DataTable<TData, TValue>({
-  columns,
+  columns: columnsInitial,
   fetchData,
   onRowClick,
   filters,
   refresh,
+  actions = [],
 }: DataTableProps<TData, TValue>) {
+  const columns = columnsInitial.concat([
+    {
+      accessorKey: 'actions',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="" />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-end justify-end gap-4">
+            {actions.map((action, index) => {
+              return action(row.original);
+            })}
+          </div>
+        );
+      },
+    },
+  ]);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
@@ -126,8 +151,8 @@ export function DataTable<TData, TValue>({
     setTableData(
       tableData.filter(
         (row) =>
-          !deletedRows.some(
-            (deletedRow) => JSON.stringify(deletedRow) === JSON.stringify(row),
+          !deletedRows.some((deletedRow) =>
+            deepEqual(deletedRow, row, { strict: true }),
           ),
       ),
     );

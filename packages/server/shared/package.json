@@ -9,7 +9,7 @@
     "@activepieces/shared": "*",
     "fastify": "4.12.0",
     "async-mutex": "0.4.0",
-    "@sinclair/typebox": "0.32.34"
+    "@sinclair/typebox": "0.32.35"
   },
   "type": "commonjs",
   "main": "./src/index.js",

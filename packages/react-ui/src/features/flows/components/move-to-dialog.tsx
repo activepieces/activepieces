@@ -56,7 +56,7 @@ const MoveToDialog = ({
     resolver: typeboxResolver(MoveToFormSchema),
   });
 
-  const { data } = foldersHooks.useFolders();
+  const { folders, isLoading } = foldersHooks.useFolders();
 
   const { mutate, isPending } = useMutation<
     PopulatedFlow,
@@ -94,17 +94,24 @@ const MoveToDialog = ({
               name="folder"
               render={({ field }) => (
                 <FormItem>
-                  <Select onValueChange={field.onChange}>
+                  <Select
+                    onValueChange={field.onChange}
+                    disabled={isLoading || folders?.length === 0}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Folder" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        {data?.data.map((folder) => (
-                          <SelectItem key={folder.id} value={folder.id}>
-                            {folder.displayName}
-                          </SelectItem>
-                        ))}
+                        {folders && folders.length === 0 && (
+                          <SelectItem value="NULL">No Folders</SelectItem>
+                        )}
+                        {folders &&
+                          folders.map((folder) => (
+                            <SelectItem key={folder.id} value={folder.id}>
+                              {folder.displayName}
+                            </SelectItem>
+                          ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>

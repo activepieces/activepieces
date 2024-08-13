@@ -53,8 +53,9 @@ export const newPayment = createTrigger({
   async onEnable(context) {
     const webhookId = await chargekeepCommon.subscribeWebhook(
       'Payment.Created',
-      context.webhookUrl,
-      context.auth
+      context.auth.base_url,
+      context.auth.api_key,
+      context.webhookUrl
     );
 
     await context.store?.put<WebhookInformation>('_new_payment_trigger', {
@@ -69,8 +70,9 @@ export const newPayment = createTrigger({
 
     if (response !== null && response !== undefined) {
       await chargekeepCommon.unsubscribeWebhook(
-        response.webhookId,
-        context.auth
+        context.auth.base_url,
+        context.auth.api_key,
+        response.webhookId
       );
     }
   },

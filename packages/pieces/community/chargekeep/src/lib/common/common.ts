@@ -1,15 +1,15 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const chargekeepCommon = {
-  baseUrl: 'https://beta.chargekeep.com',
   subscribeWebhook: async (
     eventName: string,
-    webhookUrl: string,
-    apiKey: string
+    baseUrl: string,
+    apiKey: string,
+    webhookUrl: string
   ) => {
     const request = {
       method: HttpMethod.POST,
-      url: `${chargekeepCommon.baseUrl}/api/services/Platform/Event/Subscribe`,
+      url: `${baseUrl}/api/services/Platform/Event/Subscribe`,
       headers: {
         'api-key': apiKey,
         'Content-Type': 'application/json',
@@ -27,10 +27,14 @@ export const chargekeepCommon = {
     return webhookId;
   },
 
-  unsubscribeWebhook: async (webhookId: number, apiKey: string) => {
+  unsubscribeWebhook: async (
+    baseUrl: string,
+    apiKey: string,
+    webhookId: number
+  ) => {
     const request = {
       method: HttpMethod.POST,
-      url: `${chargekeepCommon.baseUrl}/api/services/Platform/Event/Unsubscribe?id=${webhookId}`,
+      url: `${baseUrl}/api/services/Platform/Event/Unsubscribe?id=${webhookId}`,
       headers: {
         'api-key': apiKey,
         'Content-Type': 'application/json',

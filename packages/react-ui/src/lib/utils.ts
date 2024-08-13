@@ -1,3 +1,4 @@
+import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
 import { twMerge } from 'tailwind-merge';
@@ -101,5 +102,18 @@ export const formatUtils = {
     }
 
     return short ? `${seconds} s` : `${seconds} seconds`;
+  },
+};
+
+export const validationUtils = {
+  isValidationError: (
+    error: unknown,
+  ): error is AxiosError<{ code?: string; params?: { message?: string } }> => {
+    console.error('isValidationError', error);
+    return (
+      error instanceof AxiosError &&
+      error.response?.status === 409 &&
+      error.response?.data?.code === 'VALIDATION'
+    );
   },
 };

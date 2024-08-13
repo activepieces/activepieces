@@ -55,7 +55,7 @@ export const addOrUpdateContact = createAction({
       displayName: 'Contact ID',
       description: 'Sperse Contact ID. Will be used for looking a client',
       defaultValue: 0,
-      required: true,
+      required: false,
     }),
     // fullname
     fullName: Property.ShortText({
@@ -132,17 +132,17 @@ export const addOrUpdateContact = createAction({
       required: false,
     }),
     // email
-    workEmail1: Property.ShortText({
+    workEmail1: Property.LongText({
       displayName: 'Work Email',
       description: "The contact's work email.",
       required: false,
     }),
-    email1: Property.ShortText({
+    email1: Property.LongText({
       displayName: 'Personal Email',
       description: "The contact's personal email.",
       required: false,
     }),
-    email2: Property.ShortText({
+    email2: Property.LongText({
       displayName: 'Other email',
       description: "The contact's additional email.",
       required: false,
@@ -346,9 +346,9 @@ export const addOrUpdateContact = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://beta.chargekeep.com/api/services/CRM/Import/ImportContact',
+      url: `${context.auth.base_url}/api/services/CRM/Import/ImportContact`,
       headers: {
-        'api-key': context.auth, // Pass API key in headers
+        'api-key': context.auth.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

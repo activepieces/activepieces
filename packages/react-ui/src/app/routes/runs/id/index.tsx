@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 
-import { BuilderPage } from '@/app/builder/builder-page';
+import { BuilderPage } from '@/app/builder';
 import { BuilderStateProvider } from '@/app/builder/builder-state-provider';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
