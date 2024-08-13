@@ -1,6 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 
-import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
+import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 
 import { FlowsPage } from '../app/routes/flows';

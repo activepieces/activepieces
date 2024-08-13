@@ -33,7 +33,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 
-import FlowActionMenu from './flow-actions-menu';
+import FlowActionMenu from '../../../app/components/flow-actions-menu';
 import { FlowStatusToggle } from './flow-status-toggle';
 import { ImportFlowDialog } from './import-flow-dialog';
 import { SelectFlowTemplateDialog } from './select-flow-template-dialog';

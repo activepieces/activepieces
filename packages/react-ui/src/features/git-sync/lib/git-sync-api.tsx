@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   ConfigureRepoRequest,
   GitRepo,
@@ -6,10 +5,19 @@ import {
   PullGitRepoRequest,
   PushGitRepoRequest,
 } from '@activepieces/ee-shared';
+import { SeekPage } from '@activepieces/shared';
 
-export const syncProjectApi = {
-  get() {
-    return api.get<GitRepo>(`/v1/git-repos`);
+import { api } from '@/lib/api';
+
+export const gitSyncApi = {
+  async get(projectId: string): Promise<GitRepo | null> {
+    const response = await api.get<SeekPage<GitRepo>>(`/v1/git-repos`, {
+      projectId,
+    });
+    if (response.data.length === 0) {
+      return null;
+    }
+    return response.data[0];
   },
   configure(request: ConfigureRepoRequest) {
     return api.post<GitRepo>(`/v1/git-repos`, request);
