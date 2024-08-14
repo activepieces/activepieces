@@ -36,54 +36,23 @@ const MultiSelectPieceProperty = ({
   initialValues,
   enableSelectOrClear,
 }: MultiSelectPiecePropertyProps) => {
-  const [filteredOptions, setFilteredOptions] =
-    useState<MultiSelectOption[]>(options);
   const selectClearEnabled =
     enableSelectOrClear && options.length > SELECT_OR_CLEAR_MIN_OPTIONS;
 
-  const selectedIndicies = Array.isArray(initialValues)
-    ? initialValues
-        .map((value) =>
-          String(options.findIndex((option) => option.value === value)),
-        )
-        .filter((index) => index !== undefined && index !== '-1') || []
-    : [];
-
-  const sendChanges = (indicides: string[]) => {
-    const newSelectedIndicies = indicides.filter(
-      (index) => index !== undefined,
-    );
-    onChange(newSelectedIndicies.map((index) => options[Number(index)].value));
-  };
-
-  const onSearchChanged = (searchTerm: string | undefined) => {
-    if (!searchTerm) {
-      setFilteredOptions(options);
-      return;
-    }
-
-    if (Array.isArray(options)) {
-      const filtered = options.filter((option) =>
-        option.label.toLowerCase().includes(searchTerm.trim().toLowerCase()),
-      );
-      setFilteredOptions(filtered);
-    }
-  };
-
   const onSelectOrClearChanged = (changeType: SelectOrClearChangeType) => {
     if (changeType === 'selectAll') {
-      sendChanges(options.map((_, index) => String(index)));
+      onChange(options.map((o) => String(o.value)));
     } else {
-      sendChanges([]);
+      onChange([]);
     }
   };
 
   return (
     <MultiSelect
-      value={selectedIndicies}
-      onValueChange={sendChanges}
-      onSearch={onSearchChanged}
+      value={initialValues as string[]}
+      onValueChange={onChange}
       disabled={disabled}
+      filter={true}
     >
       <MultiSelectTrigger className="w-full">
         <MultiSelectValue placeholder={placeholder} />
@@ -92,13 +61,16 @@ const MultiSelectPieceProperty = ({
         <MultiSelectSearch />
         {selectClearEnabled && (
           <SelectOrClear
-            allSelected={selectedIndicies.length === options.length}
+            allSelected={initialValues.length === options.length}
             sendChanges={onSelectOrClearChanged}
           />
         )}
         <MultiSelectList>
-          {filteredOptions.map((option, index) => (
-            <MultiSelectItem key={index} value={String(index)}>
+          {options.map((option) => (
+            <MultiSelectItem
+              key={String(option.value)}
+              value={String(option.value)}
+            >
               {option.label}
             </MultiSelectItem>
           ))}

@@ -85,12 +85,16 @@ const DynamicDropdownPieceProperty = React.memo(
         value: option.value as React.Key,
       })) || [];
 
+    const placeHolder = isPending
+      ? 'Loading...'
+      : dropdownState.placeholder ?? 'Select an option';
+
     return (
       <>
         {props.multiple ? (
           <MultiSelectPieceProperty
             initialValues={props.initialValue as unknown[]}
-            placeholder={dropdownState.placeholder ?? 'Select an option'}
+            placeholder={placeHolder}
             options={selectOptions}
             onChange={(value) => props.onChange(value)}
             disabled={dropdownState.disabled || props.disabled}
@@ -101,7 +105,7 @@ const DynamicDropdownPieceProperty = React.memo(
             options={selectOptions}
             disabled={dropdownState.disabled || props.disabled}
             loading={isPending}
-            placeholder={dropdownState.placeholder ?? 'Select an option'}
+            placeholder={placeHolder}
             value={props.initialValue as React.Key}
             onChange={(value) => props.onChange(value)}
           />
