@@ -244,6 +244,7 @@ const selectRightComponent = (
           propertyKey={key}
           property={property}
           field={field}
+          hideLabel={true}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >

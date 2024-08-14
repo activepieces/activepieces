@@ -16,6 +16,7 @@ type AutoFormFieldWrapperProps = {
   property: PieceProperty;
   hideDescription?: boolean;
   placeBeforeLabelText?: boolean;
+  hideLabel?: boolean;
   disabled: boolean;
   field: ControllerRenderProps<Record<string, any>, string>;
 };
@@ -29,6 +30,7 @@ const AutoFormFieldWrapper = ({
   property,
   disabled,
   field,
+  hideLabel = false,
 }: AutoFormFieldWrapperProps) => {
   const form = useFormContext<Action | Trigger>();
   const toggled =
@@ -49,21 +51,23 @@ const AutoFormFieldWrapper = ({
 
   return (
     <FormItem className="flex flex-col gap-1">
-      <FormLabel className="flex items-center gap-1">
-        {placeBeforeLabelText && !toggled && children}
-        <span>{property.displayName}</span>
-        {property.required && <span className="text-destructive">*</span>}
-        <span className="grow"></span>
-        {allowDynamicValues && (
-          <Toggle
-            pressed={toggled}
-            onPressedChange={(e) => handleChange(e)}
-            disabled={disabled}
-          >
-            <SquareFunction />
-          </Toggle>
-        )}
-      </FormLabel>
+      {!hideLabel && (
+        <FormLabel className="flex items-center gap-1">
+          {placeBeforeLabelText && !toggled && children}
+          <span>{property.displayName}</span>
+          {property.required && <span className="text-destructive">*</span>}
+          <span className="grow"></span>
+          {allowDynamicValues && (
+            <Toggle
+              pressed={toggled}
+              onPressedChange={(e) => handleChange(e)}
+              disabled={disabled}
+            >
+              <SquareFunction />
+            </Toggle>
+          )}
+        </FormLabel>
+      )}
       {allowDynamicValues && toggled && (
         <TextInputWithMentions
           disabled={disabled}

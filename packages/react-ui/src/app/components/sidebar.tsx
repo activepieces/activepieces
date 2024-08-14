@@ -2,8 +2,6 @@ import { LockKeyhole } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { Header } from './header';
-
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Tooltip,
@@ -11,6 +9,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { theme } from '@/lib/theme';
+
+import { Header } from './header';
 type Link = {
   icon: React.ReactNode;
   label: string;
