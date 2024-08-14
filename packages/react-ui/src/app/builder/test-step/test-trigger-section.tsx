@@ -29,6 +29,7 @@ import {
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { formatUtils } from '@/lib/utils';
 
 type TestTriggerSectionProps = {
   isSaving: boolean;
@@ -161,7 +162,10 @@ const TestTriggerSection = React.memo(
         'settings.inputUiInfo',
         {
           ...formValues.settings.inputUiInfo,
-          currentSelectedData: testStepUtils.cleanResponse(data.payload),
+          currentSelectedData: formatUtils.formatStepInputAndOutput(
+            data.payload,
+            null,
+          ),
           lastTestDate: dayjs().toISOString(),
         },
         { shouldValidate: true },
