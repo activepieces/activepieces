@@ -1,7 +1,6 @@
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-
 import { foldersHooks } from '../lib/folders-hooks';
+
+import { Skeleton } from '@/components/ui/skeleton';
 
 type FolderBadgeProps = {
   folderId: string;
@@ -13,9 +12,7 @@ const FolderBadge = ({ folderId }: FolderBadgeProps) => {
   return (
     <div>
       {data ? (
-        <Badge variant={'outline'}>
-          <span>{data.displayName}</span>
-        </Badge>
+        <span>{data.displayName}</span>
       ) : (
         <Skeleton className="rounded-full h-6 w-24" />
       )}

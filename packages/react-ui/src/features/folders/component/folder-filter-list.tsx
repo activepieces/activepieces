@@ -1,3 +1,4 @@
+import { FolderDto } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -13,6 +14,12 @@ import {
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useLocation, useSearchParams } from 'react-router-dom';
+
+import { foldersApi } from '../lib/folders-api';
+import { foldersHooks } from '../lib/folders-hooks';
+import { foldersUtils } from '../lib/folders-utils';
+
+import { RenameFolderDialog } from './rename-folder-dialog';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -41,13 +48,6 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { FolderDto } from '@activepieces/shared';
-
-import { foldersApi } from '../lib/folders-api';
-import { foldersHooks } from '../lib/folders-hooks';
-import { foldersUtils } from '../lib/folders-utils';
-
-import { RenameFolderDialog } from './rename-folder-dialog';
 
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
@@ -73,7 +73,7 @@ const FolderItem = ({
     <div key={folder.id} className="group py-1">
       <Button
         variant="ghost"
-        className={cn('w-full justify-between', {
+        className={cn('w-full  items-center justify-start gap-2', {
           'bg-muted': selectedFolderId === folder.id,
         })}
         onClick={() => updateSearchParams(folder.id)}
@@ -82,63 +82,68 @@ const FolderItem = ({
           icon={
             selectedFolderId === folder.id ? (
               <FolderOpen
-                size={18}
-                className="fill-muted-foreground/75 border-0 text-muted-foreground"
+                size={'18px'}
+                className="fill-muted-foreground/75 border-0 text-muted-foreground flex-shrink-0"
               />
             ) : (
               <Folder
-                size={18}
-                className="fill-muted-foreground border-0 text-muted-foreground"
+                size={'18px'}
+                className="fill-muted-foreground border-0 text-muted-foreground flex-shrink-0"
               />
             )
           }
-          text={folder.displayName}
-        />
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="flex flex-row -space-x-4"
+          text={
+            <div className="flex-grow whitespace-break-spaces break-all text-start">
+              {folder.displayName}
+            </div>
+          }
         >
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger
-              asChild
-              className="invisible group-hover:visible"
-            >
-              <EllipsisVertical className="h-5 w-5" />
-            </DropdownMenuTrigger>
-            <span className="text-muted-foreground self-end group-hover:invisible">
-              {folder.numberOfFlows}
-            </span>
-            <DropdownMenuContent>
-              <RenameFolderDialog
-                folderId={folder.id}
-                onRename={() => refetch()}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-row -space-x-4 min-w-5"
+          >
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger
+                asChild
+                className="invisible group-hover:visible"
               >
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <div className="flex flex-row gap-2 items-center">
-                    <Pencil className="h-4 w-4" />
-                    <span>Rename</span>
-                  </div>
-                </DropdownMenuItem>
-              </RenameFolderDialog>
-              <ConfirmationDeleteDialog
-                title={`Delete folder ${folder.displayName}`}
-                message="If you delete this folder, we will keep its flows and move them to Uncategorized."
-                mutationFn={async () => {
-                  await foldersApi.delete(folder.id);
-                  refetch();
-                }}
-                entityName={folder.displayName}
-              >
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <div className="flex flex-row gap-2 items-center">
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                    <span className="text-destructive">Delete</span>
-                  </div>
-                </DropdownMenuItem>
-              </ConfirmationDeleteDialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                <EllipsisVertical className="h-5 w-5" />
+              </DropdownMenuTrigger>
+              <span className="text-muted-foreground self-end group-hover:invisible">
+                {folder.numberOfFlows}
+              </span>
+              <DropdownMenuContent>
+                <RenameFolderDialog
+                  folderId={folder.id}
+                  onRename={() => refetch()}
+                >
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <div className="flex flex-row gap-2 items-center">
+                      <Pencil className="h-4 w-4" />
+                      <span>Rename</span>
+                    </div>
+                  </DropdownMenuItem>
+                </RenameFolderDialog>
+                <ConfirmationDeleteDialog
+                  title={`Delete folder ${folder.displayName}`}
+                  message="If you delete this folder, we will keep its flows and move them to Uncategorized."
+                  mutationFn={async () => {
+                    await foldersApi.delete(folder.id);
+                    refetch();
+                  }}
+                  entityName={folder.displayName}
+                >
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <div className="flex flex-row gap-2 items-center">
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <span className="text-destructive">Delete</span>
+                    </div>
+                  </DropdownMenuItem>
+                </ConfirmationDeleteDialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </TextWithIcon>
       </Button>
     </div>
   );
