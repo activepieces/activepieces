@@ -1,3 +1,4 @@
+import { CheckedState } from '@radix-ui/react-checkbox';
 import { useEffect, useState } from 'react';
 
 import {
@@ -61,7 +62,8 @@ const MultiSelectPieceProperty = ({
         <MultiSelectSearch />
         {selectClearEnabled && (
           <SelectOrClear
-            allSelected={initialValues.length === options.length}
+            selectedCount={initialValues.length}
+            totalCount={options.length}
             sendChanges={onSelectOrClearChanged}
           />
         )}
@@ -82,31 +84,48 @@ const MultiSelectPieceProperty = ({
 
 type SelectOrClearChangeType = 'selectAll' | 'clear';
 type SelectOrClearProps = {
-  allSelected: boolean;
+  selectedCount: number;
+  totalCount: number;
   sendChanges: (changeType: SelectOrClearChangeType) => void;
 };
 
-const SelectOrClear = ({ allSelected, sendChanges }: SelectOrClearProps) => {
-  const [checked, setChecked] = useState(allSelected);
+const SelectOrClear = ({
+  selectedCount,
+  totalCount,
+  sendChanges,
+}: SelectOrClearProps) => {
+  const allSelected = selectedCount === totalCount;
+  const indeterminate = selectedCount > 0 && selectedCount < totalCount;
+
+  const dataState = allSelected
+    ? true
+    : indeterminate
+    ? 'indeterminate'
+    : false;
+
+  const [checkedState, setCheckedState] = useState<CheckedState>(dataState);
 
   useEffect(() => {
-    setChecked(allSelected);
-  }, [allSelected]);
+    setCheckedState(dataState);
+  }, [dataState]);
 
-  const onCheckedChange = (checked: boolean) => {
-    sendChanges(checked ? 'selectAll' : 'clear');
-    setChecked(checked);
+  const onCheckedChange = () => {
+    const nextState = checkedState === 'indeterminate' ? false : !checkedState;
+    sendChanges(nextState ? 'selectAll' : 'clear');
+    setCheckedState(nextState);
   };
 
   return (
     <div className="flex justify-start items-center py-2 px-1">
       <Checkbox
         id="select-all"
-        checked={checked}
+        checked={checkedState}
         onCheckedChange={onCheckedChange}
       />
-      <Label className="text-sm ml-2" onClick={() => onCheckedChange(!checked)}>
-        {allSelected ? 'Clear all' : 'Select All'}
+      <Label className="text-sm ml-2" onClick={onCheckedChange}>
+        {allSelected || dataState === 'indeterminate'
+          ? 'Clear all'
+          : 'Select All'}
       </Label>
     </div>
   );
