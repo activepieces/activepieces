@@ -47,6 +47,14 @@ import { sendFile } from './lib/actions/send-file';
 import { getRegistrationFolderDocuments } from './lib/actions/registration-folders/list-registration-folder-documents';
 import {updateCertificationFolder} from "./lib/actions/certification-folders/update-certification-folder";
 import { updateCompletionRate } from './lib/actions/registration-folders/update-completion-rate';
+import { certificationFolderSurveyInitialExperienceAvailable } from './lib/triggers/certification-folder-survey/certification-folder-survey-initial-experience-available';
+import { certificationFolderSurveyInitialExperienceAnswered } from './lib/triggers/certification-folder-survey/certification-folder-survey-initial-experience-answered';
+import { certificationFolderSurveyLongTermExperienceAnswered } from './lib/triggers/certification-folder-survey/certification-folder-survey-long-experience-answered';
+import { certificationFolderSurveyLongTermExperienceAvailable } from './lib/triggers/certification-folder-survey/certification-folder-survey-long-experience-available';
+import { certificationFolderSurveySixMonthExperienceAnswered } from './lib/triggers/certification-folder-survey/certification-folder-survey-six-month-experience-answered';
+import { certificationFolderSurveySixMonthExperienceAvailable } from './lib/triggers/certification-folder-survey/certification-folder-survey-six-month-experience-available';
+import { getCertificationFolderSurvey } from './lib/actions/certification-folder-survey/get-certification-folder-survey';
+import { listCertificationFolderSurveys } from './lib/actions/certification-folder-survey/list-certification-folder-surveys';
 
 export const wedofAuth = PieceAuth.SecretText({
     displayName: 'Clé API',
@@ -84,7 +92,7 @@ export const wedof = createPiece({
     PieceCategory.CONTENT_AND_FILES,
     PieceCategory.PRODUCTIVITY,
   ],
-  authors: ['vbarrier', 'obenazouz'],
+  authors: ['vbarrier','obenazouz'],
   actions: [
     ////////////// registrationFolders ////////////
     getRegistrationFolder,
@@ -117,6 +125,9 @@ export const wedof = createPiece({
     createTask,
     createActivitie,
     sendFile,
+    ///////////// certificationFoldersSurvey ///////
+    getCertificationFolderSurvey,
+    listCertificationFolderSurveys
   ],
   triggers: [
     ////////////// registrationFolders ////////////
@@ -136,6 +147,13 @@ export const wedof = createPiece({
     certificationFolderToControl,
     certificationFolderSuccess,
     certificationFolderToretake,
-    certificationFolderSelected
+    certificationFolderSelected,
+    ///////////// certificationFoldersSurvey ///////
+    certificationFolderSurveyInitialExperienceAvailable,
+    certificationFolderSurveyInitialExperienceAnswered,
+    certificationFolderSurveyLongTermExperienceAnswered,
+    certificationFolderSurveyLongTermExperienceAvailable,
+    certificationFolderSurveySixMonthExperienceAnswered,
+    certificationFolderSurveySixMonthExperienceAvailable
   ],
 });
