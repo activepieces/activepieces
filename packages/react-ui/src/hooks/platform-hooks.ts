@@ -8,14 +8,14 @@ export const platformHooks = {
     usePrefetchQuery({
       queryKey: ['platform'],
       queryFn: platformApi.getCurrentPlatform,
-      staleTime: Infinity
+      staleTime: Infinity,
     });
   },
   useCurrentPlatform: () => {
     const query = useSuspenseQuery({
       queryKey: ['platform'],
       queryFn: platformApi.getCurrentPlatform,
-      staleTime: Infinity
+      staleTime: Infinity,
     });
     return {
       platform: query.data,
