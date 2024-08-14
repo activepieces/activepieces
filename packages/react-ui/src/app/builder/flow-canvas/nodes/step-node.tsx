@@ -231,7 +231,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                   },
                 )}
               >
-                {readonly && (
+                {!readonly && (
                   <div className="flex flex-col gap-2 items-center justify-center mr-4 h-full">
                     {isTrigger && stepName && (
                       <Tooltip>
