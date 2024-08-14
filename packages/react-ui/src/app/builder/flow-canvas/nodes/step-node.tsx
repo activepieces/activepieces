@@ -1,8 +1,18 @@
+import {
+  FlowOperationType,
+  FlowRun,
+  StepLocationRelativeToParent,
+  TriggerType,
+  flowHelper,
+  isNil,
+} from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
 import { CircleAlert, CopyPlus, Replace, Trash } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+
+import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 
 import {
   StepPathWithName,
@@ -16,16 +26,6 @@ import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
-import {
-  FlowOperationType,
-  FlowRun,
-  StepLocationRelativeToParent,
-  TriggerType,
-  flowHelper,
-  isNil,
-} from '@activepieces/shared';
-
-import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 
 function getStepStatus(
   stepName: string | undefined,
@@ -103,7 +103,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: data.step!.name,
-    disabled: isTrigger,
+    disabled: isTrigger || readonly,
     data: {
       type: DRAGGED_STEP_TAG,
     },
@@ -231,36 +231,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                   },
                 )}
               >
-                <div className="flex flex-col gap-2 items-center justify-center mr-4 h-full">
-                  {isTrigger && stepName && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="rounded-full"
-                          onClick={(e) => {
-                            if (!toolbarOpen) {
-                              return;
-                            }
-                            clickOnNewNodeButton(
-                              'trigger',
-                              stepName,
-                              StepLocationRelativeToParent.AFTER,
-                            );
-                            e.stopPropagation();
-                          }}
-                        >
-                          <Replace className="w-4 h-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left">
-                        Replace Trigger
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                  {isAction && (
-                    <>
+                {readonly && (
+                  <div className="flex flex-col gap-2 items-center justify-center mr-4 h-full">
+                    {isTrigger && stepName && (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -271,39 +244,70 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                               if (!toolbarOpen) {
                                 return;
                               }
-                              deleteStep();
+                              clickOnNewNodeButton(
+                                'trigger',
+                                stepName,
+                                StepLocationRelativeToParent.AFTER,
+                              );
                               e.stopPropagation();
                             }}
                           >
-                            <Trash className="w-4 h-4 text-destructive" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="left">Delete step</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="rounded-full"
-                            onClick={(e) => {
-                              if (!toolbarOpen) {
-                                return;
-                              }
-                              duplicateStep();
-                              e.stopPropagation();
-                            }}
-                          >
-                            <CopyPlus className="w-4 h-4" />
+                            <Replace className="w-4 h-4" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent side="left">
-                          Duplicate step
+                          Replace Trigger
                         </TooltipContent>
                       </Tooltip>
-                    </>
-                  )}
-                </div>
+                    )}
+                    {isAction && (
+                      <>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="rounded-full"
+                              onClick={(e) => {
+                                if (!toolbarOpen) {
+                                  return;
+                                }
+                                deleteStep();
+                                e.stopPropagation();
+                              }}
+                            >
+                              <Trash className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            Delete step
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="rounded-full"
+                              onClick={(e) => {
+                                if (!toolbarOpen) {
+                                  return;
+                                }
+                                duplicateStep();
+                                e.stopPropagation();
+                              }}
+                            >
+                              <CopyPlus className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            Duplicate step
+                          </TooltipContent>
+                        </Tooltip>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </>
