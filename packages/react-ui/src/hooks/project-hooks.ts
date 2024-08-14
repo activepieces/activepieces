@@ -17,12 +17,14 @@ export const projectHooks = {
     usePrefetchQuery<ProjectWithLimits, Error>({
       queryKey: ['current-project'],
       queryFn: projectApi.current,
+      staleTime: Infinity
     });
   },
   useCurrentProject: () => {
     const query = useSuspenseQuery<ProjectWithLimits, Error>({
       queryKey: ['current-project'],
       queryFn: projectApi.current,
+      staleTime: Infinity
     });
     return {
       ...query,

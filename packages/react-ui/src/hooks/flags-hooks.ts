@@ -14,12 +14,14 @@ export const flagsHooks = {
     usePrefetchQuery<FlagsMap, Error>({
       queryKey: ['flags'],
       queryFn: flagsApi.getAll,
+      staleTime: Infinity
     });
   },
   useFlags: () => {
     return useSuspenseQuery<FlagsMap, Error>({
       queryKey: ['flags'],
       queryFn: flagsApi.getAll,
+      staleTime: Infinity
     });
   },
   useFlag: <T>(flagId: ApFlagId, queryClient: QueryClient) => {
