@@ -44,9 +44,7 @@ export default function IssuesTable() {
   const handleMarkAsResolved = async (
     flowDisplayName: string,
     issueId: string,
-    deleteRow: () => void,
   ) => {
-    deleteRow();
     await issuesApi.resolve(issueId);
     refetch();
     toast({
@@ -131,10 +129,10 @@ export default function IssuesTable() {
                 className="gap-2"
                 size={'sm'}
                 onClick={(e) => {
+                  row.original.delete();
                   handleMarkAsResolved(
                     row.original.flowDisplayName,
                     row.original.id,
-                    row.original.delete,
                   );
                   e.stopPropagation();
                 }}

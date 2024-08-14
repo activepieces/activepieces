@@ -109,9 +109,8 @@ export function ProjectMemberCard({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
-                  <Button disabled className="gap-2" size={'sm'}>
-                    <Check className="size-4" />
-                    Mark as Resolved
+                  <Button disabled variant="ghost" className="size-8 p-0">
+                    <Trash className="bg-destructive-500 size-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
