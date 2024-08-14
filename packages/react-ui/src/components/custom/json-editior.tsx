@@ -1,7 +1,7 @@
 import { json } from '@codemirror/lang-json';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
-import React from 'react';
+import React, { useState } from 'react';
 import { ControllerRenderProps } from 'react-hook-form';
 
 const styleTheme = EditorView.baseTheme({
@@ -34,6 +34,7 @@ type JsonEditorProps = {
 };
 
 const JsonEditor = React.memo(({ field, readonly }: JsonEditorProps) => {
+  const [value, setValue] = useState(convertToString(field.value));
   const extensions = [
     styleTheme,
     EditorState.readOnly.of(readonly),
@@ -44,7 +45,7 @@ const JsonEditor = React.memo(({ field, readonly }: JsonEditorProps) => {
   return (
     <div className="flex flex-col gap-2 border rounded py-2 px-2">
       <CodeMirror
-        value={convertToString(field.value)}
+        value={value}
         className="border-none"
         height="250px"
         width="100%"
@@ -58,6 +59,7 @@ const JsonEditor = React.memo(({ field, readonly }: JsonEditorProps) => {
         }}
         lang="json"
         onChange={(value) => {
+          setValue(value);
           field.onChange(tryParseJson(value));
         }}
         theme={githubLight}

@@ -50,7 +50,7 @@ const LoopIterationInput = (params: LoopIterationInputProps) => {
         style={{
           width: isFocused
             ? '100%'
-            : (inputRef.current?.value.length || 1) * 2.6 + 'ch',
+            : ((inputRef.current?.value.length || 1) * 2.6 + 1) + 'ch',
         }}
       >
         <div
@@ -83,7 +83,7 @@ const LoopIterationInput = (params: LoopIterationInputProps) => {
           style={{
             width: isFocused
               ? '100%'
-              : (inputRef.current?.value.length || 1) * 2.6 + 'ch',
+              : ((inputRef.current?.value.length || 1) * 2.6 + 1) + 'ch',
           }}
           value={value}
           type="number"
