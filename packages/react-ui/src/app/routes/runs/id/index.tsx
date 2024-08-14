@@ -1,3 +1,4 @@
+import { FlowRun, PopulatedFlow } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 
@@ -6,7 +7,6 @@ import { BuilderStateProvider } from '@/app/builder/builder-state-provider';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { FlowRun, PopulatedFlow } from '@activepieces/shared';
 
 const FlowRunPage = () => {
   const { runId } = useParams();
@@ -42,19 +42,17 @@ const FlowRunPage = () => {
   }
 
   return (
-    <>
-      {data && (
-        <BuilderStateProvider
-          flow={data.flow}
-          flowVersion={data.flow.version}
-          readonly={true}
-          canExitRun={false}
-          run={data.run}
-        >
-          <BuilderPage />
-        </BuilderStateProvider>
-      )}
-    </>
+    data && (
+      <BuilderStateProvider
+        flow={data.flow}
+        flowVersion={data.flow.version}
+        readonly={true}
+        canExitRun={false}
+        run={data.run}
+      >
+        <BuilderPage />
+      </BuilderStateProvider>
+    )
   );
 };
 

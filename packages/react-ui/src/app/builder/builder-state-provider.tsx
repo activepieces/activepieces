@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/shared';
 import { useRef } from 'react';
 
 import {
@@ -7,7 +8,6 @@ import {
   createBuilderStore,
 } from '@/app/builder/builder-hooks';
 import { useAuthorization } from '@/components/authorization';
-import { Permission } from '@activepieces/shared';
 
 type BuilderStateProviderProps = React.PropsWithChildren<BuilderInitialState>;
 
@@ -20,7 +20,7 @@ export function BuilderStateProvider({
   if (!storeRef.current) {
     storeRef.current = createBuilderStore({
       ...props,
-      readonly: !checkAccess(Permission.UPDATE_FLOW_STATUS),
+      readonly: !checkAccess(Permission.UPDATE_FLOW_STATUS) || props.readonly,
     });
   }
   return (
