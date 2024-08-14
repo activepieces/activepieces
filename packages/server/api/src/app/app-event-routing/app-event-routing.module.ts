@@ -16,6 +16,7 @@ import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
+import { flowQueue } from '../workers/queue'
 
 const appWebhooks: Record<string, Piece> = {
     slack,
@@ -97,7 +98,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             })
             const eventsQueue = listeners.map(async (listener) => {
                 const requestId = apId()
-                return {
+                return flowQueue.add({
                     id: requestId,
                     type: JobType.WEBHOOK,
                     data: {
@@ -110,7 +111,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         simulate: false,
                     },
                     priority: DEFAULT_PRIORITY,
-                }
+                })
             })
             rejectedPromiseHandler(Promise.all(eventsQueue))
             return requestReply.status(StatusCodes.OK).send({})
