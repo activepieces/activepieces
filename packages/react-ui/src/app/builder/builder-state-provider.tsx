@@ -20,7 +20,7 @@ export function BuilderStateProvider({
   if (!storeRef.current) {
     storeRef.current = createBuilderStore({
       ...props,
-      readonly: !checkAccess(Permission.UPDATE_FLOW_STATUS),
+      readonly: !checkAccess(Permission.UPDATE_FLOW_STATUS) || props.readonly,
     });
   }
   return (

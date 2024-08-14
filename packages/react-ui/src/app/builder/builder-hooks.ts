@@ -115,15 +115,24 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set) => ({
     flow: initialState.flow,
     flowVersion: initialState.flowVersion,
-    leftSidebar: LeftSideBarType.NONE,
+    leftSidebar: initialState.run
+      ? LeftSideBarType.RUN_DETAILS
+      : LeftSideBarType.NONE,
     readonly: initialState.readonly,
     run: initialState.run,
     saving: false,
-    selectedStep: null,
+    selectedStep: initialState.run
+      ? {
+          path: [],
+          stepName: initialState.flowVersion.trigger.name,
+        }
+      : null,
     canExitRun: initialState.canExitRun,
     activeDraggingStep: null,
     allowCanvasPanning: true,
-    rightSidebar: RightSideBarType.NONE,
+    rightSidebar: initialState.run
+      ? RightSideBarType.PIECE_SETTINGS
+      : RightSideBarType.NONE,
     selectedButton: null,
     refreshPieceFormSettings: false,
 

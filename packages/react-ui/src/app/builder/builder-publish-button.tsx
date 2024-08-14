@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import {
   useBuilderStateContext,
@@ -19,6 +20,8 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FlowOperationType, FlowVersionState } from '@activepieces/shared';
 
 const BuilderPublishButton = React.memo(() => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [flowVersion, flow, isSaving, setVersion, setFlow, readonly] =
     useBuilderStateContext((state) => [
       state.flowVersion,
@@ -30,7 +33,6 @@ const BuilderPublishButton = React.memo(() => {
     ]);
 
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
-
   const { mutate: publish, isPending: isPublishingPending } = useMutation({
     mutationFn: async () => {
       return flowsApi.update(flow.id, {
@@ -57,7 +59,7 @@ const BuilderPublishButton = React.memo(() => {
     flowVersion.state === FlowVersionState.LOCKED;
   return (
     <>
-      {flow.publishedVersionId && (
+      {!readonly && flow.publishedVersionId && (
         <div className="flex items-center space-x-2">
           <FlowVersionStateDot state={flowVersion.state}></FlowVersionStateDot>
           <FlowStatusToggle
@@ -91,7 +93,13 @@ const BuilderPublishButton = React.memo(() => {
           size={'sm'}
           variant={'outline'}
           loading={isSwitchingToDraftPending || isSaving}
-          onClick={() => switchToDraft()}
+          onClick={() => {
+            if (location.pathname.includes('/runs')) {
+              navigate(`/flows/${flow.id}`);
+            } else {
+              switchToDraft();
+            }
+          }}
         >
           Edit Flow
         </Button>
