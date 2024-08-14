@@ -2,14 +2,14 @@ import { LockKeyhole } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { Header } from './header';
+
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { theme } from '@/lib/theme';
-
-import { Header } from './header';
 
 type Link = {
   icon: React.ReactNode;
@@ -78,8 +78,8 @@ export function Sidebar({
   links: SidebarLink[];
 }) {
   return (
-    <div className="flex min-h-screen w-full ">
-      <aside className="flex flex-col border-r bg-muted/50 w-[65px]">
+    <div className="flex min-h-screen w-full  ">
+      <aside className="flex flex-col border-r sticky top-[1px] h-screen bg-muted/50 w-[65px]">
         <nav className="flex flex-col items-center gap-5 px-1.5 sm:py-5">
           <div className="h-[48px] items-center justify-center p-2">
             <Tooltip>
