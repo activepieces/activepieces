@@ -5,6 +5,7 @@ import { webhookUtils } from 'server-worker'
 import { repoFactory } from '../core/db/repo-factory'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
+import { getRedisConnection } from 'packages/server/api/src/app/database/redis-connection'
 
 const flagRepo = repoFactory(FlagEntity)
 
@@ -254,9 +255,18 @@ export const flagService = {
     },
     async getLatestRelease(): Promise<string> {
         try {
+            const redis = getRedisConnection()
+            const cachedVersion = await redis.get('latest-version')
+            if (cachedVersion) {
+                return cachedVersion
+            }
             const response = await axios.get<PackageJson>(
                 'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
+                {
+                    timeout: 5000,
+                }
             )
+            await redis.set('latest-version', response.data.version)
             return response.data.version
         }
         catch (ex) {
