@@ -1,17 +1,17 @@
 import { PathLike } from 'fs'
-import { randomUUID } from 'node:crypto'
 import { copyFile, rename, unlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { logger, memoryLock, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
+import { nanoid } from 'nanoid'
 import { cacheHandler } from './cache-handler'
 
 const engineExecutablePath = system.getOrThrow(
     SharedSystemProp.ENGINE_EXECUTABLE_PATH,
 )
 const isDev = system.getOrThrow(SharedSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT
-const ENGINE_CACHE_ID = randomUUID()
+const ENGINE_CACHE_ID = nanoid()
 
 /**
  * Installs the engine executable to the given path
@@ -38,7 +38,7 @@ export const engineInstaller = {
 }
 
 async function atomicCopy(src: PathLike, dest: PathLike): Promise<void> {
-    const tempPath = join(tmpdir(), randomUUID())
+    const tempPath = join(tmpdir(), nanoid())
     try {
         await copyFile(src, tempPath)
         await rename(tempPath, dest)

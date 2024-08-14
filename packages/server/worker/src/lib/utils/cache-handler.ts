@@ -1,4 +1,3 @@
-import { UUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
 import { fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
@@ -9,7 +8,7 @@ export enum CacheState {
     READY = 'READY',
     PENDING = 'PENDING',
 }
-type CacheMap = Record<string, CacheState | UUID>
+type CacheMap = Record<string, CacheState | string>
 
 const cachePath = (folderPath: string): string => join(folderPath, 'cache.json')
 
@@ -32,7 +31,7 @@ const getCache = async (folderPath: string): Promise<CacheMap> => {
 
 export const cacheHandler = (folderPath: string) => {
     return {
-        async cacheCheckState(cacheAlias: string): Promise<CacheState | UUID | undefined> {
+        async cacheCheckState(cacheAlias: string): Promise<CacheState | string | undefined> {
             const lock = await memoryLock.acquire('cache_' + cacheAlias)
             try {
                 const cache = await getCache(folderPath)
@@ -42,7 +41,7 @@ export const cacheHandler = (folderPath: string) => {
                 await lock.release()
             }
         },
-        async setCache(cacheAlias: string, state: CacheState | UUID): Promise<void> {
+        async setCache(cacheAlias: string, state: CacheState | string): Promise<void> {
             const lock = await memoryLock.acquire('cache_' + cacheAlias)
             try {
                 const cache = await getCache(folderPath)
