@@ -1,12 +1,17 @@
-import { copyFile } from 'node:fs/promises'
+import { PathLike } from 'fs'
+import { randomUUID } from 'node:crypto'
+import { copyFile, rename, unlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { logger, memoryLock, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
-import { cacheHandler, CacheState } from './cache-handler'
+import { cacheHandler } from './cache-handler'
 
 const engineExecutablePath = system.getOrThrow(
     SharedSystemProp.ENGINE_EXECUTABLE_PATH,
 )
 const isDev = system.getOrThrow(SharedSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT
+const ENGINE_CACHE_ID = randomUUID()
 
 /**
  * Installs the engine executable to the given path
@@ -15,25 +20,38 @@ export const engineInstaller = {
     async install({ path }: InstallParams): Promise<void> {
         const lock = await memoryLock.acquire(`engineInstaller#${path}`)
         try {
-
-            const cache = cacheHandler(path) 
-            
-            const engineFileExists =  await cache.cacheCheckState('main.js') === CacheState.READY
             logger.debug({ path }, '[engineInstaller#install]')
-            if (!engineFileExists || isDev) {
-                await copyFile(engineExecutablePath, `${path}/main.js`) 
-                await cache.setCache('main.js', CacheState.READY)
+            const cache = cacheHandler(path) 
+            const isEngineInstalled = await cache.cacheCheckState('ENGINE_INSTALLED') === ENGINE_CACHE_ID
+            if (!isEngineInstalled || isDev) {
+                await atomicCopy(engineExecutablePath, `${path}/main.js`) 
             }
-            const engineMapFileExists =  await cache.cacheCheckState('main.js.map') === CacheState.READY
-            if (!engineMapFileExists || isDev) {
-                await copyFile(`${engineExecutablePath}.map`, `${path}/main.js.map`)
-                await cache.setCache('main.js.map', CacheState.READY)
+            if (!isEngineInstalled || isDev) {
+                await atomicCopy(`${engineExecutablePath}.map`, `${path}/main.js.map`)
             }
+            await cache.setCache('ENGINE_INSTALLED', ENGINE_CACHE_ID)
         }
         finally {
             await lock.release()
         }
     },
+}
+
+async function atomicCopy(src: PathLike, dest: PathLike): Promise<void> {
+    const tempPath = join(tmpdir(), randomUUID())
+    try {
+        await copyFile(src, tempPath)
+        await rename(tempPath, dest)
+    }
+    catch (error: unknown) {
+        if ((error as { code: string }).code === 'EXDEV') {
+            await copyFile(tempPath, dest)
+            await unlink(tempPath)
+        }
+        else {
+            throw error
+        }
+    }
 }
 
 type InstallParams = {

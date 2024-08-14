@@ -1,3 +1,4 @@
+import { UUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
 import { fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
@@ -8,7 +9,7 @@ export enum CacheState {
     READY = 'READY',
     PENDING = 'PENDING',
 }
-type CacheMap = Record<string, CacheState>
+type CacheMap = Record<string, CacheState | UUID>
 
 const cachePath = (folderPath: string): string => join(folderPath, 'cache.json')
 
@@ -20,15 +21,18 @@ const getCache = async (folderPath: string): Promise<CacheMap> => {
         if (!cacheExists) {
             await saveToCache({}, folderPath)
         }
-        cached[folderPath] = await readCache(folderPath)
+        const newCache = await readCache(folderPath)
+        if (typeof newCache === 'object') {
+            cached[folderPath] = newCache
+        }
     }
-    const cache = cached[folderPath] || {}
+    const cache = (cached[folderPath] as CacheMap) || {}
     return cache
 }
 
 export const cacheHandler = (folderPath: string) => {
     return {
-        async cacheCheckState(cacheAlias: string): Promise<CacheState | undefined> {
+        async cacheCheckState(cacheAlias: string): Promise<CacheState | UUID | undefined> {
             const lock = await memoryLock.acquire('cache_' + cacheAlias)
             try {
                 const cache = await getCache(folderPath)
@@ -38,7 +42,7 @@ export const cacheHandler = (folderPath: string) => {
                 await lock.release()
             }
         },
-        async setCache(cacheAlias: string, state: CacheState): Promise<void> {
+        async setCache(cacheAlias: string, state: CacheState | UUID): Promise<void> {
             const lock = await memoryLock.acquire('cache_' + cacheAlias)
             try {
                 const cache = await getCache(folderPath)
