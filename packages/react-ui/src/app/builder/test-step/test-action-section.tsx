@@ -40,7 +40,7 @@ const TestActionSection = React.memo(
     );
     const { currentSelectedData } = formValues.settings.inputUiInfo ?? {};
     const sampleDataExists =
-      !isNil(currentSelectedData) || !isNil(errorMessage);
+      !isNil(lastTestDate) || !isNil(errorMessage);
 
     const socket = useSocket();
 
@@ -77,7 +77,7 @@ const TestActionSection = React.memo(
           setErrorMessage(
             testStepUtils.formatErrorMessage(
               JSON.stringify(formattedResponse) ||
-                'Failed to run test step and no error message was returned',
+              'Failed to run test step and no error message was returned',
             ),
           );
         }
