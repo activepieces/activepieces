@@ -14,9 +14,9 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { flowQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
-import { flowQueue } from '../workers/queue'
 
 const appWebhooks: Record<string, Piece> = {
     slack,
