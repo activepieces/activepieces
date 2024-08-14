@@ -5,7 +5,6 @@ import { webhookUtils } from 'server-worker'
 import { repoFactory } from '../core/db/repo-factory'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
-import { getRedisConnection } from 'packages/server/api/src/app/database/redis-connection'
 
 const flagRepo = repoFactory(FlagEntity)
 
