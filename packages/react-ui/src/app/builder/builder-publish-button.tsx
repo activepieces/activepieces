@@ -59,7 +59,7 @@ const BuilderPublishButton = React.memo(() => {
     flowVersion.state === FlowVersionState.LOCKED;
   return (
     <>
-      {flow.publishedVersionId && (
+      {!readonly && flow.publishedVersionId && (
         <div className="flex items-center space-x-2">
           <FlowVersionStateDot state={flowVersion.state}></FlowVersionStateDot>
           <FlowStatusToggle
