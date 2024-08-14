@@ -9,7 +9,7 @@ import {
 import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
-import { CircleAlert, CopyPlus, Replace, Trash } from 'lucide-react';
+import { ArrowRightLeft, CircleAlert, CopyPlus,  Trash } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
@@ -252,7 +252,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                               e.stopPropagation();
                             }}
                           >
-                            <Replace className="w-4 h-4" />
+                            <ArrowRightLeft className="w-4 h-4" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent side="left">
