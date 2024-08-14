@@ -9,6 +9,8 @@ import { getRedisConnection } from 'packages/server/api/src/app/database/redis-c
 
 const flagRepo = repoFactory(FlagEntity)
 
+let cachedVersion: string | undefined
+
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {
         return flagRepo().save({
@@ -229,7 +231,7 @@ export const flagService = {
                 created,
                 updated,
             },
-            
+
         )
 
         return flags
@@ -255,8 +257,6 @@ export const flagService = {
     },
     async getLatestRelease(): Promise<string> {
         try {
-            const redis = getRedisConnection()
-            const cachedVersion = await redis.get('latest-version')
             if (cachedVersion) {
                 return cachedVersion
             }
@@ -266,7 +266,7 @@ export const flagService = {
                     timeout: 5000,
                 }
             )
-            await redis.set('latest-version', response.data.version)
+            cachedVersion = response.data.version
             return response.data.version
         }
         catch (ex) {
