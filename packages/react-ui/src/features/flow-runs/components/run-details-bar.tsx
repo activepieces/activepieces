@@ -13,6 +13,7 @@ type RunDetailsBarProps = {
   run?: FlowRun;
   canExitRun: boolean;
   exitRun: () => void;
+  isLoading: boolean;
 };
 
 function getStatusText(status: FlowRunStatus, timeout: number) {
@@ -35,7 +36,7 @@ function getStatusText(status: FlowRunStatus, timeout: number) {
   }
 }
 const RunDetailsBar = React.memo(
-  ({ run, canExitRun, exitRun }: RunDetailsBarProps) => {
+  ({ run, canExitRun, exitRun, isLoading }: RunDetailsBarProps) => {
     const { Icon, variant } = run
       ? flowRunUtils.getStatusIcon(run.status)
       : { Icon: QuestionMarkIcon, variant: 'default' };
@@ -71,7 +72,11 @@ const RunDetailsBar = React.memo(
           </div>
         </div>
         {canExitRun && (
-          <Button variant={'outline'} onClick={exitRun}>
+          <Button
+            variant={'outline'}
+            onClick={() => exitRun()}
+            loading={isLoading}
+          >
             Exit Run
           </Button>
         )}

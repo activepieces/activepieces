@@ -1,7 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import React from 'react';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import {
+  useBuilderStateContext,
+  useSwitchToDraft,
+} from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -26,19 +29,7 @@ const BuilderPublishButton = React.memo(() => {
       state.readonly,
     ]);
 
-  const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
-    useMutation({
-      mutationFn: async () => {
-        const flow = await flowsApi.get(flowVersion.flowId);
-        return flow;
-      },
-      onSuccess: (flow) => {
-        setVersion(flow.version);
-      },
-      onError: () => {
-        toast(INTERNAL_ERROR_TOAST);
-      },
-    });
+  const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
 
   const { mutate: publish, isPending: isPublishingPending } = useMutation({
     mutationFn: async () => {
@@ -53,8 +44,8 @@ const BuilderPublishButton = React.memo(() => {
         description: 'Flow has been published.',
         duration: 3000,
       });
-      setVersion(flow.version);
       setFlow(flow);
+      setVersion(flow.version);
     },
     onError: () => {
       toast(INTERNAL_ERROR_TOAST);
@@ -76,7 +67,7 @@ const BuilderPublishButton = React.memo(() => {
         </div>
       )}
 
-      {(flowVersion.state === FlowVersionState.DRAFT || isPublishedVersion) && (
+      {!readonly && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild className="disabled:pointer-events-auto">
@@ -95,7 +86,7 @@ const BuilderPublishButton = React.memo(() => {
           </Tooltip>
         </TooltipProvider>
       )}
-      {flowVersion.state === FlowVersionState.LOCKED && !isPublishedVersion && (
+      {readonly && (
         <Button
           size={'sm'}
           variant={'outline'}
