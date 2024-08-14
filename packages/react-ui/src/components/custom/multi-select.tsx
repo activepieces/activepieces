@@ -8,8 +8,6 @@ import { Check, ChevronsUpDown, X } from 'lucide-react';
 import React, { ComponentPropsWithoutRef } from 'react';
 import { createPortal } from 'react-dom';
 
-import { cn } from '@/lib/utils';
-
 import { Badge } from '../ui/badge';
 import {
   Command,
@@ -20,12 +18,15 @@ import {
   CommandList,
   CommandSeparator,
 } from '../ui/command';
+import { ScrollArea } from '../ui/scroll-area';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
+
+import { cn } from '@/lib/utils';
 
 export interface MultiSelectOptionItem {
   value: string;
@@ -344,11 +345,13 @@ const MultiSelectList = React.forwardRef<
   ComponentPropsWithoutRef<typeof CommandList>
 >(({ className, ...props }, ref) => {
   return (
-    <CommandList
-      ref={ref}
-      className={cn('py-1 px-0 max-h-[unset]', className)}
-      {...props}
-    />
+    <ScrollArea className="h-full" viewPortClassName={'max-h-[200px]'}>
+      <CommandList
+        ref={ref}
+        className={cn('py-1 px-0 ', className)}
+        {...props}
+      />
+    </ScrollArea>
   );
 });
 
