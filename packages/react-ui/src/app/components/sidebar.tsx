@@ -2,15 +2,15 @@ import { LockKeyhole } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { Header } from './header';
+
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { theme } from '@/lib/theme';
-
-import { Header } from './header';
-
 type Link = {
   icon: React.ReactNode;
   label: string;
@@ -79,26 +79,30 @@ export function Sidebar({
 }) {
   return (
     <div className="flex min-h-screen w-full  ">
-      <aside className="flex flex-col border-r sticky top-[1px] h-screen bg-muted/50 w-[65px]">
-        <nav className="flex flex-col items-center gap-5 px-1.5 sm:py-5">
-          <div className="h-[48px] items-center justify-center p-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <img src={theme.logoIconUrl} alt="logo" />
-              </TooltipTrigger>
-              <TooltipContent side="right">{theme.websiteName}</TooltipContent>
-            </Tooltip>
-          </div>
-          {links.map((link, index) => (
-            <CustomTooltipLink
-              to={link.to}
-              label={link.label}
-              Icon={link.icon}
-              key={index}
-              locked={link.locked}
-            />
-          ))}
-        </nav>
+      <aside className=" border-r sticky  top-0 h-screen bg-muted/50 w-[65px] ">
+        <ScrollArea>
+          <nav className="flex flex-col items-center h-screen  sm:py-5  gap-5 p-2 ">
+            <div className="h-[48px] items-center justify-center ">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <img src={theme.logoIconUrl} alt="logo" />
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  {theme.websiteName}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            {links.map((link, index) => (
+              <CustomTooltipLink
+                to={link.to}
+                label={link.label}
+                Icon={link.icon}
+                key={index}
+                locked={link.locked}
+              />
+            ))}
+          </nav>
+        </ScrollArea>
       </aside>
       <div className="flex-1 p-4">
         <div className="flex flex-col">
