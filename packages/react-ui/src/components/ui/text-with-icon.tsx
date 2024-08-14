@@ -1,16 +1,16 @@
 export function TextWithIcon({
   icon,
   text,
-  className,
+  className = '',
   children,
 }: {
   icon: React.ReactNode;
   text: React.ReactNode;
-  className?: string;
   children?: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className={`flex items-center gap-2 ${className ?? ''}`}>
+    <div className={`flex items-center gap-2 ${className}`}>
       {icon}
       {text}
       {children}
