@@ -1,6 +1,5 @@
-import { deepEqual } from 'assert';
-
 import { isNil } from '@activepieces/shared';
+import deepEqual from 'deep-equal';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 
@@ -94,7 +93,7 @@ export const SearchableSelect = <T extends React.Key>({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover modal={true} open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           ref={triggerRef}

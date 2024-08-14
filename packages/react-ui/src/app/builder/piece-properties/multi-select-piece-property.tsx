@@ -1,3 +1,5 @@
+import deepEqual from 'deep-equal';
+
 import {
   MultiSelect,
   MultiSelectContent,
@@ -17,7 +19,7 @@ type MultiSelectPiecePropertyProps = {
   placeholder: string;
   options: MultiSelectOption[];
   onChange: (value: unknown[]) => void;
-  initialValues: unknown[];
+  initialValues?: unknown[];
   disabled?: boolean;
 };
 
@@ -29,10 +31,13 @@ const MultiSelectPieceProperty = ({
   initialValues,
 }: MultiSelectPiecePropertyProps) => {
   const selectedIndicies = initialValues
-    .map((value) =>
-      String(options.findIndex((option) => option.value === value)),
-    )
-    .filter((index) => index !== undefined);
+    ? initialValues
+        .map((value) =>
+          options.findIndex((option) => deepEqual(option.value, value)),
+        )
+        .filter((index) => index > -1)
+        .map((index) => String(index))
+    : [];
   const sendChanges = (indicides: string[]) => {
     const newSelectedIndicies = indicides.filter(
       (index) => index !== undefined,
@@ -42,6 +47,7 @@ const MultiSelectPieceProperty = ({
 
   return (
     <MultiSelect
+      modal={true}
       value={selectedIndicies}
       onValueChange={sendChanges}
       disabled={disabled}

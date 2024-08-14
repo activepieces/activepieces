@@ -1,12 +1,3 @@
-import React from 'react';
-import { ControllerRenderProps, useFormContext } from 'react-hook-form';
-
-import { JsonEditor } from '@/components/custom/json-editior';
-import { ApMarkdown } from '@/components/custom/markdown';
-import { SearchableSelect } from '@/components/custom/searchable-select';
-import { FormControl, FormField } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import {
   OAuth2Props,
   PieceProperty,
@@ -14,6 +5,8 @@ import {
   PropertyType,
   ArraySubProps,
 } from '@activepieces/pieces-framework';
+import React from 'react';
+import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
@@ -22,6 +15,13 @@ import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property'
 import { DynamicProperties } from './dynamic-piece-property';
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
+
+import { JsonEditor } from '@/components/custom/json-editior';
+import { ApMarkdown } from '@/components/custom/markdown';
+import { SearchableSelect } from '@/components/custom/searchable-select';
+import { FormControl, FormField } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
@@ -206,6 +206,7 @@ const selectRightComponent = (
             onChange={field.onChange}
             disabled={disabled}
             propertyName={key}
+            multiple={property.type === PropertyType.MULTI_SELECT_DROPDOWN}
           ></DynamicDropdownPieceProperty>
         </AutoFormFieldWrapper>
       );

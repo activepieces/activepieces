@@ -1,19 +1,19 @@
+import { DropdownState } from '@activepieces/pieces-framework';
+import { Action, Trigger } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
+import { MultiSelectPieceProperty } from './multi-select-piece-property';
+
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { DropdownState } from '@activepieces/pieces-framework';
-import { Action, Trigger } from '@activepieces/shared';
-
-import { MultiSelectPieceProperty } from './multi-select-piece-property';
 
 type SelectPiecePropertyProps = {
   refreshers: string[];
   propertyName: string;
-  initialValue: unknown;
+  initialValue?: unknown;
   multiple?: boolean;
   disabled: boolean;
   onChange: (value: unknown | undefined) => void;
@@ -82,28 +82,23 @@ const DynamicDropdownPieceProperty = React.memo(
       label: option.label,
       value: option.value as React.Key,
     }));
-
-    return (
-      <>
-        {props.multiple ? (
-          <MultiSelectPieceProperty
-            initialValues={props.initialValue as unknown[]}
-            placeholder={dropdownState.placeholder ?? 'Select an option'}
-            options={selectOptions}
-            onChange={(value) => props.onChange(value)}
-            disabled={dropdownState.disabled || props.disabled}
-          />
-        ) : (
-          <SearchableSelect
-            options={selectOptions}
-            disabled={dropdownState.disabled || props.disabled}
-            loading={isPending}
-            placeholder={dropdownState.placeholder ?? 'Select an option'}
-            value={props.initialValue as React.Key}
-            onChange={(value) => props.onChange(value)}
-          />
-        )}
-      </>
+    return props.multiple ? (
+      <MultiSelectPieceProperty
+        placeholder={dropdownState.placeholder ?? 'Select an option'}
+        options={selectOptions}
+        onChange={(value) => props.onChange(value)}
+        disabled={dropdownState.disabled || props.disabled}
+        initialValues={props.initialValue as unknown[]}
+      />
+    ) : (
+      <SearchableSelect
+        options={selectOptions}
+        disabled={dropdownState.disabled || props.disabled}
+        loading={isPending}
+        placeholder={dropdownState.placeholder ?? 'Select an option'}
+        value={props.initialValue as React.Key}
+        onChange={(value) => props.onChange(value)}
+      />
     );
   },
 );
