@@ -173,9 +173,13 @@ const FolderFilterList = () => {
     const newQueryParameters: URLSearchParams = new URLSearchParams(
       searchParams,
     );
-    folderId
-      ? newQueryParameters.set('folderId', folderId)
-      : newQueryParameters.delete('folderId');
+    if (folderId) {
+      newQueryParameters.set('folderId', folderId);
+    } else {
+      newQueryParameters.delete('folderId');
+    }
+    newQueryParameters.delete('cursor');
+
     setSearchParams(newQueryParameters);
   };
 
