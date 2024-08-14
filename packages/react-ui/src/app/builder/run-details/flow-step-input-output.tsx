@@ -1,16 +1,12 @@
-import { StepOutput } from '@activepieces/shared';
 import { Timer } from 'lucide-react';
 import React from 'react';
 
-import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
-
-import {
-  builderSelectors,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { JsonViewer } from '@/components/json-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
+import { StepOutput } from '@activepieces/shared';
 
 const FlowStepInputOutput = React.memo(
   ({ stepDetails }: { stepDetails: StepOutput | undefined }) => {

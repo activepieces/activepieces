@@ -1,11 +1,6 @@
 import { ChevronLeft } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { SidebarHeader } from '../sidebar-header';
-
-import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
-import { FlowStepInputOutput } from './flow-step-input-output';
-
 import {
   LeftSideBarType,
   StepPathWithName,
@@ -20,6 +15,11 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
+
+import { SidebarHeader } from '../sidebar-header';
+
+import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
+import { FlowStepInputOutput } from './flow-step-input-output';
 
 const FlowRunDetails = React.memo(() => {
   const [setLeftSidebar, run] = useBuilderStateContext((state) => [
