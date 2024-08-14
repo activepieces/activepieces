@@ -1,5 +1,11 @@
+import { deepEqual } from 'assert';
+
+import { isNil } from '@activepieces/shared';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+
+import { Button } from '../ui/button';
+import { ScrollArea } from '../ui/scroll-area';
 
 import {
   Command,
@@ -15,10 +21,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
-
-import { Button } from '../ui/button';
-import { ScrollArea } from '../ui/scroll-area';
 
 type SelectOption<T> = {
   value: T;
@@ -42,17 +44,18 @@ export const SearchableSelect = <T extends React.Key>({
   disabled,
   loading,
 }: SearchableSelectProps<T>) => {
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [open, setOpen] = useState(false);
   const [filterOptionsIndices, setFilteredOptions] = useState<number[]>([]);
-
+  const triggerWidth = `${triggerRef.current?.clientWidth ?? 0}px`;
   const [selectedIndex, setSelectedIndex] = useState(
-    options.findIndex((option) => option.value === value) ?? -1,
+    options.findIndex((option) => deepEqual(option.value, value)) ?? -1,
   );
 
   useEffect(() => {
     setSelectedIndex(
-      options.findIndex((option) => option.value === value) ?? -1,
+      options.findIndex((option) => deepEqual(option.value, value)) ?? -1,
     );
   }, [value, options]);
 
@@ -94,6 +97,7 @@ export const SearchableSelect = <T extends React.Key>({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          ref={triggerRef}
           variant="outline"
           disabled={disabled}
           role="combobox"
@@ -109,7 +113,13 @@ export const SearchableSelect = <T extends React.Key>({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="min-w-full w-full p-0">
+      <PopoverContent
+        style={{
+          maxWidth: triggerWidth,
+          minWidth: triggerWidth,
+        }}
+        className="min-w-full w-full p-0"
+      >
         <Command className="w-full" shouldFilter={false}>
           <CommandInput
             placeholder={placeholder}
@@ -123,7 +133,7 @@ export const SearchableSelect = <T extends React.Key>({
           )}
           <ScrollArea className="h-full" viewPortClassName={'max-h-[200px]'}>
             <CommandGroup>
-              <CommandList className={'min-h-[12000px]'}>
+              <CommandList>
                 {filterOptionsIndices &&
                   filterOptionsIndices.map((filterIndex) => {
                     const option = options[filterIndex];
@@ -138,10 +148,13 @@ export const SearchableSelect = <T extends React.Key>({
                           setOpen(false);
                           onSelect(currentValue);
                         }}
+                        className="flex gap-2 items-center"
                       >
                         <Check
+                          width={16}
+                          height={16}
                           className={cn(
-                            'mr-2 h-4 w-4',
+                            'flex-shrink-0',
                             selectedIndex === filterIndex
                               ? 'opacity-100'
                               : 'opacity-0',
