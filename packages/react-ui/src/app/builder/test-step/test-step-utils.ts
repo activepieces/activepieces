@@ -10,7 +10,25 @@ function formatErrorMessage(errorMessage: string): string {
     return `${acc}${indentation}Error ${index + 1}: ${current.trim()}\n`;
   }, '');
 }
-
+const cleanResponse = (response: unknown): unknown => {
+  if (Number.isNaN(response)) {
+    return 'NaN';
+  }
+  if (response === null) {
+    return 'null';
+  }
+  if (response === undefined) {
+    return 'undefined';
+  }
+  if (response === 0) {
+    return '0';
+  }
+  if (response === false) {
+    return 'false';
+  }
+  return response;
+};
 export const testStepUtils = {
   formatErrorMessage,
+  cleanResponse,
 };

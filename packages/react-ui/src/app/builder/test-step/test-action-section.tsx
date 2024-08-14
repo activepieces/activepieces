@@ -1,18 +1,18 @@
+import { Action, StepRunResponse, isNil } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+
+import { TestSampleDataViewer } from './test-sample-data-viewer';
+import { TestButtonTooltip } from './test-step-tooltip';
+import { testStepUtils } from './test-step-utils';
 
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { Action, StepRunResponse, isNil } from '@activepieces/shared';
-
-import { TestSampleDataViewer } from './test-sample-data-viewer';
-import { TestButtonTooltip } from './test-step-tooltip';
-import { testStepUtils } from './test-step-utils';
 
 type TestActionComponentProps = {
   isSaving: boolean;
@@ -55,11 +55,15 @@ const TestActionSection = React.memo(
         });
       },
       onSuccess: (stepResponse) => {
+        const formattedResponse = testStepUtils.cleanResponse(
+          stepResponse.output,
+        );
         if (stepResponse.success) {
           setErrorMessage(undefined);
+
           form.setValue(
             'settings.inputUiInfo.currentSelectedData',
-            stepResponse.output,
+            formattedResponse,
             { shouldValidate: true },
           );
           form.setValue(
@@ -70,7 +74,7 @@ const TestActionSection = React.memo(
         } else {
           setErrorMessage(
             testStepUtils.formatErrorMessage(
-              stepResponse.output?.toString() ||
+              JSON.stringify(formattedResponse) ||
                 'Failed to run test step and no error message was returned',
             ),
           );

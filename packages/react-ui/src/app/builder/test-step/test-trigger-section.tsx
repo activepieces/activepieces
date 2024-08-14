@@ -1,9 +1,20 @@
+import {
+  SeekPage,
+  Trigger,
+  TriggerEvent,
+  TriggerTestStrategy,
+  isNil,
+} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import deepEqual from 'deep-equal';
 import { AlertCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
+
+import { TestSampleDataViewer } from './test-sample-data-viewer';
+import { TestButtonTooltip } from './test-step-tooltip';
+import { testStepUtils } from './test-step-utils';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -18,17 +29,6 @@ import {
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import {
-  SeekPage,
-  Trigger,
-  TriggerEvent,
-  TriggerTestStrategy,
-  isNil,
-} from '@activepieces/shared';
-
-import { TestSampleDataViewer } from './test-sample-data-viewer';
-import { TestButtonTooltip } from './test-step-tooltip';
-import { testStepUtils } from './test-step-utils';
 
 type TestTriggerSectionProps = {
   isSaving: boolean;
@@ -161,7 +161,7 @@ const TestTriggerSection = React.memo(
         'settings.inputUiInfo',
         {
           ...formValues.settings.inputUiInfo,
-          currentSelectedData: data.payload,
+          currentSelectedData: testStepUtils.cleanResponse(data.payload),
           lastTestDate: dayjs().toISOString(),
         },
         { shouldValidate: true },
