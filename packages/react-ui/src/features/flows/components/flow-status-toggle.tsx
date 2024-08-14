@@ -1,9 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-
-import { useAuthorization } from '@/components/authorization';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {
   Flow,
   FlowOperationType,
@@ -13,6 +7,8 @@ import {
   PopulatedFlow,
   isNil,
 } from '@activepieces/shared';
+import { useMutation } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 
 import { Switch } from '../../../components/ui/switch';
 import {
@@ -22,6 +18,10 @@ import {
 } from '../../../components/ui/tooltip';
 import { flowsApi } from '../lib/flows-api';
 import { flowsUtils } from '../lib/flows-utils';
+
+import { useAuthorization } from '@/components/authorization';
+import { LoadingSpinner } from '@/components/ui/spinner';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 
 type FlowStatusToggleProps = {
   flow: Flow;
@@ -90,7 +90,7 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
         isChecked && (
           <Tooltip>
             <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <div className="p-2 rounded-full hover:bg-muted">
+              <div className="p-2 rounded-full ">
                 {flowsUtils.flowStatusIconRenderer(flow, flowVersion)}
               </div>
             </TooltipTrigger>
