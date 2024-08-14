@@ -10,9 +10,9 @@ export function TextWithIcon({
   children?: React.ReactNode;
 }) {
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center gap-2 ${className ?? ''}`}>
       {icon}
-      <span>{text}</span>
+      {text}
       {children}
     </div>
   );

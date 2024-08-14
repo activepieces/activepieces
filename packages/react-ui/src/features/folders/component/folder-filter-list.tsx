@@ -69,6 +69,7 @@ const FolderItem = ({
   updateSearchParams,
   selectedFolderId,
 }: FolderItemProps) => {
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   return (
     <div key={folder.id} className="group py-1">
       <Button
@@ -79,6 +80,7 @@ const FolderItem = ({
         onClick={() => updateSearchParams(folder.id)}
       >
         <TextWithIcon
+          className="flex-grow"
           icon={
             selectedFolderId === folder.id ? (
               <FolderOpen
@@ -102,14 +104,21 @@ const FolderItem = ({
             onClick={(e) => e.stopPropagation()}
             className="flex flex-row -space-x-4 min-w-5"
           >
-            <DropdownMenu modal={false}>
+            <DropdownMenu onOpenChange={setIsActionMenuOpen} modal={false}>
               <DropdownMenuTrigger
                 asChild
-                className="invisible group-hover:visible"
+                className={cn('invisible group-hover:visible', {
+                  visible: isActionMenuOpen,
+                })}
               >
                 <EllipsisVertical className="h-5 w-5" />
               </DropdownMenuTrigger>
-              <span className="text-muted-foreground self-end group-hover:invisible">
+              <span
+                className={cn(
+                  'text-muted-foreground self-end group-hover:invisible',
+                  { invisible: isActionMenuOpen },
+                )}
+              >
                 {folder.numberOfFlows}
               </span>
               <DropdownMenuContent>

@@ -1,6 +1,6 @@
-import { foldersHooks } from '../lib/folders-hooks';
-
 import { Skeleton } from '@/components/ui/skeleton';
+
+import { foldersHooks } from '../lib/folders-hooks';
 
 type FolderBadgeProps = {
   folderId: string;
