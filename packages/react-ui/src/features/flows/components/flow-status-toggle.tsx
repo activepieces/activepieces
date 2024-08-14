@@ -90,7 +90,7 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
         isChecked && (
           <Tooltip>
             <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <div className="p-2 rounded-full hover:bg-muted">
+              <div className="p-2 rounded-full ">
                 {flowsUtils.flowStatusIconRenderer(flow, flowVersion)}
               </div>
             </TooltipTrigger>

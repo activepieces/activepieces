@@ -42,19 +42,17 @@ const FlowRunPage = () => {
   }
 
   return (
-    <>
-      {data && (
-        <BuilderStateProvider
-          flow={data.flow}
-          flowVersion={data.flow.version}
-          readonly={true}
-          canExitRun={false}
-          run={data.run}
-        >
-          <BuilderPage />
-        </BuilderStateProvider>
-      )}
-    </>
+    data && (
+      <BuilderStateProvider
+        flow={data.flow}
+        flowVersion={data.flow.version}
+        readonly={true}
+        canExitRun={false}
+        run={data.run}
+      >
+        <BuilderPage />
+      </BuilderStateProvider>
+    )
   );
 };
 

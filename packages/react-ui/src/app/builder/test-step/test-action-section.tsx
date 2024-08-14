@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { formatUtils } from '@/lib/utils';
 import { Action, StepRunResponse, isNil } from '@activepieces/shared';
 
 import { TestSampleDataViewer } from './test-sample-data-viewer';
@@ -55,11 +56,16 @@ const TestActionSection = React.memo(
         });
       },
       onSuccess: (stepResponse) => {
+        const formattedResponse = formatUtils.formatStepInputAndOutput(
+          stepResponse.output,
+          null,
+        );
         if (stepResponse.success) {
           setErrorMessage(undefined);
+
           form.setValue(
             'settings.inputUiInfo.currentSelectedData',
-            stepResponse.output,
+            formattedResponse,
             { shouldValidate: true },
           );
           form.setValue(
@@ -70,7 +76,7 @@ const TestActionSection = React.memo(
         } else {
           setErrorMessage(
             testStepUtils.formatErrorMessage(
-              stepResponse.output?.toString() ||
+              JSON.stringify(formattedResponse) ||
                 'Failed to run test step and no error message was returned',
             ),
           );

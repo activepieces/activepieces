@@ -1,5 +1,11 @@
 import { ChevronDown, History, Home, Logs } from 'lucide-react';
-import { createSearchParams, Link, useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
+import {
+  createSearchParams,
+  Link,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 
 import {
   LeftSideBarType,
@@ -22,7 +28,11 @@ import { BuilderPublishButton } from './builder-publish-button';
 
 export const BuilderNavBar = () => {
   const navigate = useNavigate();
-
+  const location = useLocation();
+  const isInRunsPage = useMemo(
+    () => location.pathname.startsWith('/runs'),
+    [location.pathname],
+  );
   const [
     flow,
     flowVersion,
@@ -97,17 +107,20 @@ export const BuilderNavBar = () => {
       </div>
       <div className="grow"></div>
       <div className="flex items-center justify-center gap-4">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
-            >
-              <History />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Version History</TooltipContent>
-        </Tooltip>
+        {!isInRunsPage && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
+              >
+                <History />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Version History</TooltipContent>
+          </Tooltip>
+        )}
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
