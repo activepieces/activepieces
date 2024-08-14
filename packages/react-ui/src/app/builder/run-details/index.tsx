@@ -1,9 +1,15 @@
 import { ChevronLeft } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { SidebarHeader } from '../sidebar-header';
+
+import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
+import { FlowStepInputOutput } from './flow-step-input-output';
+
 import {
   LeftSideBarType,
   StepPathWithName,
+  builderSelectors,
   stepPathToKeyString,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
@@ -15,16 +21,22 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 
-import { SidebarHeader } from '../sidebar-header';
-
-import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
-import { FlowStepInputOutput } from './flow-step-input-output';
-
 const FlowRunDetails = React.memo(() => {
   const [setLeftSidebar, run] = useBuilderStateContext((state) => [
     state.setLeftSidebar,
     state.run,
   ]);
+  const stepDetails = useBuilderStateContext((state) => {
+    const { selectedStep, run } = state;
+    if (!selectedStep || !run) {
+      return undefined;
+    }
+    return builderSelectors.getStepOutputFromExecutionPath({
+      selectedPath: selectedStep,
+      executionState: run,
+      stepName: selectedStep.stepName,
+    });
+  });
 
   const [stepPaths, setStepPaths] = useState<StepPathWithName[]>([]);
 
@@ -63,10 +75,16 @@ const FlowRunDetails = React.memo(() => {
             ))}
         </CardList>
       </ResizablePanel>
-      <ResizableHandle withHandle={true} />
-      <ResizablePanel defaultValue={25}>
-        <FlowStepInputOutput></FlowStepInputOutput>
-      </ResizablePanel>
+      {stepDetails && (
+        <>
+          <ResizableHandle withHandle={true} />
+          <ResizablePanel defaultValue={25}>
+            <FlowStepInputOutput
+              stepDetails={stepDetails}
+            ></FlowStepInputOutput>
+          </ResizablePanel>
+        </>
+      )}
     </ResizablePanelGroup>
   );
 });
