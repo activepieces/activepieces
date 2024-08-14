@@ -1,10 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
-import { createContext, useContext } from 'react';
-import { create, useStore } from 'zustand';
-
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { PromiseQueue } from '@/lib/promise-queue';
 import {
   ActionType,
   ExecutionState,
@@ -18,6 +11,13 @@ import {
   flowHelper,
   isNil,
 } from '@activepieces/shared';
+import { useMutation } from '@tanstack/react-query';
+import { createContext, useContext } from 'react';
+import { create, useStore } from 'zustand';
+
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PromiseQueue } from '@/lib/promise-queue';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -115,15 +115,24 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set) => ({
     flow: initialState.flow,
     flowVersion: initialState.flowVersion,
-    leftSidebar: LeftSideBarType.NONE,
+    leftSidebar: initialState.run
+      ? LeftSideBarType.RUN_DETAILS
+      : LeftSideBarType.NONE,
     readonly: initialState.readonly,
     run: initialState.run,
     saving: false,
-    selectedStep: null,
+    selectedStep: initialState.run
+      ? {
+          path: [],
+          stepName: initialState.flowVersion.trigger.name,
+        }
+      : null,
     canExitRun: initialState.canExitRun,
     activeDraggingStep: null,
     allowCanvasPanning: true,
-    rightSidebar: RightSideBarType.NONE,
+    rightSidebar: initialState.run
+      ? RightSideBarType.PIECE_SETTINGS
+      : RightSideBarType.NONE,
     selectedButton: null,
     refreshPieceFormSettings: false,
 

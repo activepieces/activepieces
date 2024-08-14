@@ -21,6 +21,7 @@ export function BuilderStateProvider({
     storeRef.current = createBuilderStore({
       ...props,
       readonly: !checkAccess(Permission.UPDATE_FLOW_STATUS) || props.readonly,
+      
     });
   }
   return (
