@@ -56,7 +56,7 @@ const MultiSelectPieceProperty = ({
         <MultiSelectValue placeholder={placeholder} />
       </MultiSelectTrigger>
       <MultiSelectContent>
-        <MultiSelectSearch />
+        <MultiSelectSearch placeholder={placeholder} />
         <MultiSelectList>
           {options.map((option, index) => (
             <MultiSelectItem key={index} value={String(index)}>
