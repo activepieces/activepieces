@@ -1,10 +1,6 @@
-import { isNil } from '@activepieces/shared';
 import deepEqual from 'deep-equal';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
-
-import { Button } from '../ui/button';
-import { ScrollArea } from '../ui/scroll-area';
 
 import {
   Command,
@@ -20,6 +16,10 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { isNil } from '@activepieces/shared';
+
+import { Button } from '../ui/button';
+import { ScrollArea } from '../ui/scroll-area';
 
 type SelectOption<T> = {
   value: T;
