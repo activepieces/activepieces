@@ -1,5 +1,5 @@
 import { Pencil } from 'lucide-react';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
@@ -27,39 +27,16 @@ const EditableText = ({
         setContainerWidth(entries[0].contentRect.width);
       }
     };
-
     const resizeObserver = new ResizeObserver(handleResize);
-
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
     }
-
     return () => {
       resizeObserver.disconnect();
     };
   }, [containerRef, setContainerWidth]);
 
-  useEffect(() => {
-    if (editing) {
-      setSelectionToValue();
-    }
-  }, [editing]);
-
-  const clickHandler = () => {
-    if (readonly) return;
-    if (!editing) {
-      setEditing(true);
-      setValueOnEditingStarted(value ? value.trim() : '');
-      setSelectionToValue();
-    }
-  };
-
-  const saveTextOnFocusOut = () => {
-    emitChangedValue();
-    setEditing(false);
-  };
-
-  const emitChangedValue = () => {
+  const emitChangedValue = useCallback(() => {
     const nodeValue = (editableTextRef.current?.textContent ?? '').trim();
     const isValueEmptyOrSameAsBeforeEditingBegun =
       nodeValue.length === 0 || nodeValue === valueOnEditingStarted;
@@ -71,7 +48,7 @@ const EditableText = ({
     } else {
       setValue(valueOnEditingStarted);
     }
-  };
+  }, [onValueChange, valueOnEditingStarted]);
 
   const setSelectionToValue = () => {
     setTimeout(() => {
@@ -92,7 +69,17 @@ const EditableText = ({
   return (
     <Tooltip>
       <TooltipTrigger disabled={readonly || editing} asChild>
-        <div onClick={clickHandler} className="flex gap-2 items-center">
+        <div
+          onClick={() => {
+            if (readonly) return;
+            if (!editing) {
+              setEditing(true);
+              setValueOnEditingStarted(value ? value.trim() : '');
+              setSelectionToValue();
+            }
+          }}
+          className="flex gap-2 items-center"
+        >
           {!editing ? (
             <div
               key={'viewed'}
@@ -118,13 +105,15 @@ const EditableText = ({
               contentEditable
               suppressContentEditableWarning={true}
               className={`${className}  focus:outline-none break-all`}
-              onBlur={saveTextOnFocusOut}
+              onBlur={() => {
+                emitChangedValue();
+                setEditing(false);
+              }}
               onKeyDown={(event) => {
                 if (event.key === 'Escape') {
                   setValue(valueOnEditingStarted);
                   setEditing(false);
                 } else if (event.key === 'Enter') {
-                  event.stopPropagation();
                   emitChangedValue();
                   setEditing(false);
                 }
