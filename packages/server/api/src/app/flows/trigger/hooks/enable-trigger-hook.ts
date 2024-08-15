@@ -76,6 +76,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         flowVersion,
         webhookUrl,
         projectId,
+        test: simulate,
     })
 
     if (engineHelperResponse.status !== EngineResponseStatus.OK) {

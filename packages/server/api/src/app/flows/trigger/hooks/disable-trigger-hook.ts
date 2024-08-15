@@ -48,6 +48,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
                 flowId: flowVersion.flowId,
                 simulate,
             }),
+            test: simulate,
             projectId,
         })
         return result
