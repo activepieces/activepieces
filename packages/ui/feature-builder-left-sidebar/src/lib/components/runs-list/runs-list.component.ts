@@ -101,7 +101,7 @@ export class RunsListComponent implements OnInit {
   getBatch(cursor: Cursor, flowId: string, projectId: string) {
     return this.instanceRunService
       .list(projectId, {
-        flowId: flowId,
+        flowId: [flowId],
         cursor: cursor || '',
         limit: 30,
       })

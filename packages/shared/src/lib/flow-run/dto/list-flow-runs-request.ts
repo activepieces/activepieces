@@ -4,7 +4,7 @@ import { Cursor } from '../../common/seek-page'
 import { FlowRunStatus } from '../execution/flow-execution'
 
 export const ListFlowRunsRequestQuery = Type.Object({
-    flowId: Type.Optional(ApId),
+    flowId: Type.Optional(Type.Array(ApId)),
     tags: Type.Optional(Type.Array(Type.String({}))),
     status: Type.Optional(Type.Array(Type.Enum(FlowRunStatus))),
     limit: Type.Optional(Type.Number({})),
