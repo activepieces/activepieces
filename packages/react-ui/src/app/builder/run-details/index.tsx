@@ -53,7 +53,7 @@ const FlowRunDetails = React.memo(() => {
   return (
     <ResizablePanelGroup direction="vertical">
       <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
-        <div className="flex gap-2 justify-center items-center">
+        <div className="flex gap-2 items-center">
           <Button
             variant="ghost"
             size={'sm'}

@@ -1,10 +1,11 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Value } from '@sinclair/typebox/value';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useUpdateEffect } from 'react-use';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import EditableText from '@/components/ui/editable-text';
 import { Form } from '@/components/ui/form';
 import {
   ResizableHandle,
@@ -39,6 +40,7 @@ type StepSettingsContainerProps = {
   selectedStep: Action | Trigger;
   pieceModel: PieceMetadataModel | undefined;
 };
+
 const StepSettingsContainer = React.memo(
   ({ selectedStep, pieceModel }: StepSettingsContainerProps) => {
     const [
@@ -80,6 +82,7 @@ const StepSettingsContainer = React.memo(
     }, [applyOperation]);
 
     const updateAction = (newAction: Action) => {
+      console.log(newAction);
       applyOperation(
         {
           type: FlowOperationType.UPDATE_ACTION,
@@ -158,6 +161,10 @@ const StepSettingsContainer = React.memo(
       name: 'settings.errorHandlingOptions',
       control: form.control,
     });
+    const displayName = useWatch({
+      name: 'displayName',
+      control: form.control,
+    });
 
     useUpdateEffect(() => {
       const currentStep = JSON.parse(JSON.stringify(form.getValues()));
@@ -199,8 +206,9 @@ const StepSettingsContainer = React.memo(
       sourceCodeChange,
       inputUIInfo,
       validChange,
+      displayName,
     ]);
-
+    const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
     const modifiedStep = form.getValues();
     return (
       <Form {...form}>
@@ -209,9 +217,19 @@ const StepSettingsContainer = React.memo(
           onChange={(e) => e.preventDefault()}
           className="w-full h-full"
         >
-          <SidebarHeader onClose={() => exitStepSettings()}>
-            {modifiedStep.displayName}
-          </SidebarHeader>
+          <div ref={sidebarHeaderContainerRef}>
+            <SidebarHeader onClose={() => exitStepSettings()}>
+              <EditableText
+                containerRef={sidebarHeaderContainerRef}
+                onValueChange={(value) => {
+                  form.setValue('displayName', value);
+                }}
+                readonly={readonly}
+                value={modifiedStep.displayName}
+              ></EditableText>
+            </SidebarHeader>
+          </div>
+
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel defaultSize={55}>
               <ScrollArea className="h-full ">
