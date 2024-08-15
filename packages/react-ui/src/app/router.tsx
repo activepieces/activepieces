@@ -32,6 +32,8 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+import { BrandingPage } from '@/app/routes/platform/settings/branding';
+import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 
 export const router = createBrowserRouter([
   {
@@ -243,10 +245,20 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/platform/settings/branding',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <BrandingPage />
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
     path: '/platform/settings',
     element: (
       <PlatformAdminContainer>
-        <span>Something will be there</span>
+        <Navigate to="/platform/settings/branding" />
       </PlatformAdminContainer>
     ),
   },

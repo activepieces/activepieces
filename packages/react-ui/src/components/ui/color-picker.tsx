@@ -18,14 +18,17 @@ interface ColorPickerProps {
   onClose?: () => void;
   onSave?: (value: string) => void;
   defaultValue?: string;
+  children: React.ReactNode[];
+  disabled?: boolean;
+  className?: string;
 }
 
 const ColorPicker = forwardRef<
   HTMLInputElement,
-  Omit<ButtonProps, 'value' | 'onChange' | 'onBlur'> & ColorPickerProps
+  ColorPickerProps
 >(
   (
-    { disabled, onClose, onSave, defaultValue, name, className, ...props },
+    { disabled, onClose, onSave, defaultValue, children, className },
     forwardedRef
   ) => {
     const [color, setColor] = useState(defaultValue || '#FFFFFF');
@@ -36,21 +39,11 @@ const ColorPicker = forwardRef<
     return (
       <Popover onOpenChange={setOpen} open={open}>
         <PopoverTrigger asChild disabled={disabled} onBlur={onClose}>
-          <Button
-            {...props}
-            className={cn('block', className)}
-            name={name}
-            onClick={() => {
-              setOpen(true);
-            }}
-            size='icon'
-            style={{
-              backgroundColor: savedColor,
-            }}
-            variant='outline'
-          >
-            <div />
-          </Button>
+          <div className={className} onClick={() => {
+            setOpen(true);
+          }}>
+            {children}
+          </div>
         </PopoverTrigger>
         <PopoverContent className='flex flex-col gap-3 items-center max-w-min'>
           <HexColorPicker color={color} onChange={setColor} />
@@ -88,4 +81,4 @@ const ColorPicker = forwardRef<
 );
 ColorPicker.displayName = 'ColorPicker';
 
-export { ColorPicker as ComplexColorPicker };
+export { ColorPicker as ColorPicker };
