@@ -13,7 +13,7 @@ import { MultiSelectPieceProperty } from './multi-select-piece-property';
 type SelectPiecePropertyProps = {
   refreshers: string[];
   propertyName: string;
-  initialValue: unknown;
+  initialValue?: unknown;
   multiple?: boolean;
   disabled: boolean;
   onChange: (value: unknown | undefined) => void;
@@ -82,28 +82,23 @@ const DynamicDropdownPieceProperty = React.memo(
       label: option.label,
       value: option.value as React.Key,
     }));
-
-    return (
-      <>
-        {props.multiple ? (
-          <MultiSelectPieceProperty
-            initialValues={props.initialValue as unknown[]}
-            placeholder={dropdownState.placeholder ?? 'Select an option'}
-            options={selectOptions}
-            onChange={(value) => props.onChange(value)}
-            disabled={dropdownState.disabled || props.disabled}
-          />
-        ) : (
-          <SearchableSelect
-            options={selectOptions}
-            disabled={dropdownState.disabled || props.disabled}
-            loading={isPending}
-            placeholder={dropdownState.placeholder ?? 'Select an option'}
-            value={props.initialValue as React.Key}
-            onChange={(value) => props.onChange(value)}
-          />
-        )}
-      </>
+    return props.multiple ? (
+      <MultiSelectPieceProperty
+        placeholder={dropdownState.placeholder ?? 'Select an option'}
+        options={selectOptions}
+        onChange={(value) => props.onChange(value)}
+        disabled={dropdownState.disabled || props.disabled}
+        initialValues={props.initialValue as unknown[]}
+      />
+    ) : (
+      <SearchableSelect
+        options={selectOptions}
+        disabled={dropdownState.disabled || props.disabled}
+        loading={isPending}
+        placeholder={dropdownState.placeholder ?? 'Select an option'}
+        value={props.initialValue as React.Key}
+        onChange={(value) => props.onChange(value)}
+      />
     );
   },
 );

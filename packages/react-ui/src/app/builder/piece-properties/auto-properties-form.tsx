@@ -206,6 +206,7 @@ const selectRightComponent = (
             onChange={field.onChange}
             disabled={disabled}
             propertyName={key}
+            multiple={property.type === PropertyType.MULTI_SELECT_DROPDOWN}
           ></DynamicDropdownPieceProperty>
         </AutoFormFieldWrapper>
       );
@@ -244,6 +245,7 @@ const selectRightComponent = (
           propertyKey={key}
           property={property}
           field={field}
+          hideLabel={true}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >

@@ -1,3 +1,6 @@
+import deepEqual from 'deep-equal';
+import { useEffect, useState } from 'react';
+
 import {
   MultiSelect,
   MultiSelectContent,
@@ -7,17 +10,17 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from '@/components/custom/multi-select';
-
-type MultiSelectOption = {
-  label: string;
-  value: unknown;
-};
+import { CommandEmpty } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 type MultiSelectPiecePropertyProps = {
   placeholder: string;
-  options: MultiSelectOption[];
+  options: {
+    value: unknown;
+    label: string;
+  }[];
   onChange: (value: unknown[]) => void;
-  initialValues: unknown[];
+  initialValues?: unknown[];
   disabled?: boolean;
 };
 
@@ -28,11 +31,31 @@ const MultiSelectPieceProperty = ({
   disabled,
   initialValues,
 }: MultiSelectPiecePropertyProps) => {
+  const [originalOptionsWithIndexes] = useState(
+    options.map((option, index) => ({
+      ...option,
+      originalIndex: index,
+    })),
+  );
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredOptions, setFilteredOptions] = useState(
+    originalOptionsWithIndexes,
+  );
+  useEffect(() => {
+    setFilteredOptions(
+      originalOptionsWithIndexes.filter((option) => {
+        return option.label.toLowerCase().includes(searchTerm.toLowerCase());
+      }),
+    );
+  }, [searchTerm, originalOptionsWithIndexes]);
   const selectedIndicies = initialValues
-    .map((value) =>
-      String(options.findIndex((option) => option.value === value)),
-    )
-    .filter((index) => index !== undefined);
+    ? initialValues
+        .map((value) =>
+          options.findIndex((option) => deepEqual(option.value, value)),
+        )
+        .filter((index) => index > -1)
+        .map((index) => String(index))
+    : [];
   const sendChanges = (indicides: string[]) => {
     const newSelectedIndicies = indicides.filter(
       (index) => index !== undefined,
@@ -42,21 +65,31 @@ const MultiSelectPieceProperty = ({
 
   return (
     <MultiSelect
+      modal={true}
       value={selectedIndicies}
       onValueChange={sendChanges}
       disabled={disabled}
+      onSearch={(searchTerm) => setSearchTerm(searchTerm ?? '')}
     >
-      <MultiSelectTrigger className="w-full">
+      <MultiSelectTrigger
+        className={cn('w-full', { 'cursor-pointer': !disabled })}
+      >
         <MultiSelectValue placeholder={placeholder} />
       </MultiSelectTrigger>
       <MultiSelectContent>
-        <MultiSelectSearch />
+        <MultiSelectSearch placeholder={placeholder} />
         <MultiSelectList>
-          {options.map((option, index) => (
-            <MultiSelectItem key={index} value={String(index)}>
-              {option.label}
+          {filteredOptions.map((opt) => (
+            <MultiSelectItem
+              key={opt.originalIndex}
+              value={String(opt.originalIndex)}
+            >
+              {opt.label}
             </MultiSelectItem>
           ))}
+          {filteredOptions.length === 0 && (
+            <CommandEmpty>No results found.</CommandEmpty>
+          )}
         </MultiSelectList>
       </MultiSelectContent>
     </MultiSelect>
