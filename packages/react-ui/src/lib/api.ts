@@ -19,6 +19,7 @@ const disallowedRoutes = [
   '/v1/authn/federated/login',
   '/v1/authn/federated/claim',
   '/v1/otp',
+  '/v1/forms/',
   '/v1/authn/local/reset-password',
 ];
 
@@ -32,13 +33,16 @@ function request<TResponse>(
 ): Promise<TResponse> {
   const resolvedUrl = !isUrlRelative(url) ? url : `${API_URL}${url}`;
   const isApWebsite = resolvedUrl.startsWith(API_URL);
+  const unAuthenticated = disallowedRoutes.some((route) =>
+    url.startsWith(route),
+  );
   return axios({
     url: resolvedUrl,
     ...config,
     headers: {
       ...config.headers,
       Authorization:
-        disallowedRoutes.includes(url) || !isApWebsite
+        unAuthenticated || !isApWebsite
           ? undefined
           : `Bearer ${authenticationSession.getToken()}`,
     },
