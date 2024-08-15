@@ -143,7 +143,7 @@ export default function ProjectsPage() {
               },
             },
           ]}
-          fetchData={() => projectApi.list({ limit: 2 })}
+          fetchData={() => projectApi.list({})}
           refresh={refreshCount}
           actions={[
             (row) => {
