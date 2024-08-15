@@ -81,12 +81,7 @@ export class CodeWriterDialogComponent {
           prompt,
           previousContext: [],
         })
-        .pipe(
-          tap((response) => {
-     
-          }),
-          map(() => void 0)
-        );
+        .pipe(map(() => void 0));
     }
   }
 
@@ -116,5 +111,4 @@ export class CodeWriterDialogComponent {
     });
     this.reset();
   }
-
 }

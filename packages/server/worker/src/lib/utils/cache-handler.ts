@@ -8,7 +8,7 @@ export enum CacheState {
     READY = 'READY',
     PENDING = 'PENDING',
 }
-type CacheMap = Record<string, CacheState>
+type CacheMap = Record<string, CacheState | string>
 
 const cachePath = (folderPath: string): string => join(folderPath, 'cache.json')
 
@@ -22,13 +22,13 @@ const getCache = async (folderPath: string): Promise<CacheMap> => {
         }
         cached[folderPath] = await readCache(folderPath)
     }
-    const cache = cached[folderPath] || {}
+    const cache = (cached[folderPath] as CacheMap) || {}
     return cache
 }
 
 export const cacheHandler = (folderPath: string) => {
     return {
-        async cacheCheckState(cacheAlias: string): Promise<CacheState | undefined> {
+        async cacheCheckState(cacheAlias: string): Promise<CacheState | string | undefined> {
             const lock = await memoryLock.acquire('cache_' + cacheAlias)
             try {
                 const cache = await getCache(folderPath)
@@ -38,7 +38,7 @@ export const cacheHandler = (folderPath: string) => {
                 await lock.release()
             }
         },
-        async setCache(cacheAlias: string, state: CacheState): Promise<void> {
+        async setCache(cacheAlias: string, state: CacheState | string): Promise<void> {
             const lock = await memoryLock.acquire('cache_' + cacheAlias)
             try {
                 const cache = await getCache(folderPath)

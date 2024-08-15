@@ -27,6 +27,11 @@ export const rabbitmqAuth = PieceAuth.CustomAuth({
       description: "Port",
       required: true,
     }),
+    vhost: Property.ShortText({
+      displayName: "Virtual Host",
+      description: "Virtual Host",
+      required: false,
+    }),
   },
 });
 

@@ -80,6 +80,7 @@ export const triggerEventService = {
                         flowId: flow.id,
                         simulate: true,
                     }),
+                    test: true, 
                     projectId,
                 })
                 await triggerEventRepo().delete({

@@ -68,7 +68,7 @@ You are a TypeScript coding bot that helps users turn natural language into usab
 # RESPONSE FORMAT
 You will not respond to any messages that require a conversational answer.
 You will not elaborate.
-You MUST keep the function name and arguments code and inputs same as the examples.
+You MUST keep the function name code and inputs as the argument without any changes.
 You MUST respond ONLY with a function call.
 You must import syntax since you are using typescript, prefer fetch over axios.
             `,

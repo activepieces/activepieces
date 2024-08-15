@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-rabbitmq",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "dependencies": {
     "amqplib": "^0.10.4"
   },

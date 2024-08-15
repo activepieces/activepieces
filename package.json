@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.29.1",
-  "rcVersion": "0.30.0-rc.5",
+  "rcVersion": "0.30.0-rc.8",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -125,7 +125,7 @@
     "angular2-uuid": "1.1.1",
     "async-mutex": "0.4.0",
     "aws-sdk": "2.1642.0",
-    "axios": "1.6.7",
+    "axios": "1.7.4",
     "axios-retry": "4.4.1",
     "bcrypt": "5.1.1",
     "buffer": "6.0.3",
