@@ -1,6 +1,5 @@
 import { PathLike } from 'fs'
-import { copyFile, rename, unlink } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { copyFile, rename } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { logger, memoryLock, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
@@ -22,10 +21,10 @@ export const engineInstaller = {
         const lock = await memoryLock.acquire(`engineInstaller#${path}`)
         try {
             logger.debug({ path }, '[engineInstaller#install]')
-            const cache = cacheHandler(path) 
+            const cache = cacheHandler(path)
             const isEngineInstalled = await cache.cacheCheckState(ENGINE_INSTALLED) === ENGINE_CACHE_ID
             if (!isEngineInstalled || isDev) {
-                await atomicCopy(engineExecutablePath, `${path}/main.js`) 
+                await atomicCopy(engineExecutablePath, `${path}/main.js`)
             }
             if (!isEngineInstalled || isDev) {
                 await atomicCopy(`${engineExecutablePath}.map`, `${path}/main.js.map`)
@@ -41,13 +40,8 @@ export const engineInstaller = {
 async function atomicCopy(src: PathLike, dest: PathLike): Promise<void> {
     const srcDir = dirname(src.toString())
     const tempPath = join(srcDir, 'engine.temp.js')
-    try {
-        await copyFile(src, tempPath)
-        await rename(tempPath, dest)
-    }
-    catch (error: unknown) {
-        throw error
-    }
+    await copyFile(src, tempPath)
+    await rename(tempPath, dest)
 }
 
 type InstallParams = {
