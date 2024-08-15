@@ -18,6 +18,14 @@ type Link = {
   notification?: boolean;
 };
 
+type CustomTooltipLinkProps = {
+  to: string;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  extraClasses?: string;
+  notification?: boolean;
+  locked?: boolean;
+};
 const CustomTooltipLink = ({
   to,
   label,
@@ -25,14 +33,7 @@ const CustomTooltipLink = ({
   extraClasses,
   notification,
   locked,
-}: {
-  to: string;
-  label: string;
-  Icon: React.ElementType;
-  extraClasses?: string;
-  notification?: boolean;
-  locked?: boolean;
-}) => {
+}: CustomTooltipLinkProps) => {
   const location = useLocation();
 
   const isActive = location.pathname.startsWith(to);
