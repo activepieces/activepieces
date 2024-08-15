@@ -1,7 +1,7 @@
 import { PathLike } from 'fs'
 import { copyFile, rename, unlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { logger, memoryLock, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
@@ -12,6 +12,7 @@ const engineExecutablePath = system.getOrThrow(
 )
 const isDev = system.getOrThrow(SharedSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT
 const ENGINE_CACHE_ID = nanoid()
+const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
 
 /**
  * Installs the engine executable to the given path
@@ -22,14 +23,14 @@ export const engineInstaller = {
         try {
             logger.debug({ path }, '[engineInstaller#install]')
             const cache = cacheHandler(path) 
-            const isEngineInstalled = await cache.cacheCheckState('ENGINE_INSTALLED') === ENGINE_CACHE_ID
+            const isEngineInstalled = await cache.cacheCheckState(ENGINE_INSTALLED) === ENGINE_CACHE_ID
             if (!isEngineInstalled || isDev) {
                 await atomicCopy(engineExecutablePath, `${path}/main.js`) 
             }
             if (!isEngineInstalled || isDev) {
                 await atomicCopy(`${engineExecutablePath}.map`, `${path}/main.js.map`)
             }
-            await cache.setCache('ENGINE_INSTALLED', ENGINE_CACHE_ID)
+            await cache.setCache(ENGINE_INSTALLED, ENGINE_CACHE_ID)
         }
         finally {
             await lock.release()
@@ -38,19 +39,14 @@ export const engineInstaller = {
 }
 
 async function atomicCopy(src: PathLike, dest: PathLike): Promise<void> {
-    const tempPath = join(tmpdir(), nanoid())
+    const srcDir = dirname(src.toString())
+    const tempPath = join(srcDir, 'engine.temp.js')
     try {
         await copyFile(src, tempPath)
         await rename(tempPath, dest)
     }
     catch (error: unknown) {
-        if ((error as { code: string }).code === 'EXDEV') {
-            await copyFile(tempPath, dest)
-            await unlink(tempPath)
-        }
-        else {
-            throw error
-        }
+        throw error
     }
 }
 
