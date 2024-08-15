@@ -11,7 +11,7 @@ const memoryLimit = Math.floor((Number(system.getOrThrow(SharedSystemProp.SANDBO
 const sandboxPath = path.resolve('cache')
 const codesPath = path.resolve('cache', 'codes')
 const enginePath = path.join(sandboxPath, 'main.js')
-// TODO seperate this to a config file from flow worker concurrency as execute step is different operation
+// TODO separate this to a config file from flow worker concurrency as execute step is different operation
 const workerConcurrency = Math.max(5, system.getNumber(WorkerSystemProps.FLOW_WORKER_CONCURRENCY) ?? 10)
 let engineWorkers: EngineWorker
 
@@ -49,6 +49,7 @@ export const threadEngineRunner: EngineRunner = {
             hookType: operation.hookType,
             webhookUrl: operation.webhookUrl,
             triggerPayload: operation.triggerPayload,
+            test: operation.test,
             flowVersion: lockedVersion,
             appWebhookUrl: await webhookUtils.getAppWebhookUrl({
                 appName: triggerPiece.pieceName,

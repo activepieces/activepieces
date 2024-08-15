@@ -263,7 +263,7 @@ export const flagService = {
                 'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
                 {
                     timeout: 5000,
-                }
+                },
             )
             cachedVersion = response.data.version
             return response.data.version

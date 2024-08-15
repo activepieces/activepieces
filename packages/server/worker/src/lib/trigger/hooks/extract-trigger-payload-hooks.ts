@@ -28,6 +28,7 @@ export async function extractPayloads(
                 simulate,
             }),
             projectId,
+            test: simulate,
         })
         if (!isNil(result) && result.success && Array.isArray(result.output)) {
             handleFailureFlow(flowVersion, projectId, engineToken, true)

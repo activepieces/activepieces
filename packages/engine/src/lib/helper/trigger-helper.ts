@@ -45,7 +45,7 @@ export const triggerHelper = {
         }
 
         const appListeners: Listener[] = []
-        const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : ''
+        const prefix = params.test ? 'test' : ''
         let scheduleOptions: ScheduleOptions | undefined = undefined
         const context = {
             store: createContextStore({

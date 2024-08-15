@@ -59,6 +59,7 @@ export const isolateEngineRunner: EngineRunner = {
             projectId: operation.projectId,
             hookType: operation.hookType,
             webhookUrl: operation.webhookUrl,
+            test: operation.test,
             triggerPayload: operation.triggerPayload,
             flowVersion: lockedVersion,
             appWebhookUrl: await webhookUtils.getAppWebhookUrl({

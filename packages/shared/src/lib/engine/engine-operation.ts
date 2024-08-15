@@ -90,6 +90,7 @@ export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlow
 
 export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOperation & {
     hookType: HT
+    test: boolean
     flowVersion: FlowVersion
     webhookUrl: string
     triggerPayload?: TriggerPayload

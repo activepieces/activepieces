@@ -92,6 +92,7 @@ async function executeHandshake(
             flowId: flowVersion.flowId,
             simulate: false,
         }),
+        test: false,
         projectId,
     })
     if (!result.success || result.response === undefined) {
