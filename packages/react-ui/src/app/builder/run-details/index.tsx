@@ -15,6 +15,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
+import { isNil } from '@activepieces/shared';
 
 import { SidebarHeader } from '../sidebar-header';
 
@@ -67,12 +68,14 @@ const FlowRunDetails = React.memo(() => {
       <ResizablePanel>
         <CardList className="p-0">
           {stepPaths &&
-            stepPaths.map((path) => (
-              <FlowStepDetailsCardItem
-                path={path}
-                key={stepPathToKeyString(path)}
-              ></FlowStepDetailsCardItem>
-            ))}
+            stepPaths
+              .filter((path) => !isNil(path))
+              .map((path) => (
+                <FlowStepDetailsCardItem
+                  path={path}
+                  key={stepPathToKeyString(path)}
+                ></FlowStepDetailsCardItem>
+              ))}
         </CardList>
       </ResizablePanel>
       {stepDetails && (

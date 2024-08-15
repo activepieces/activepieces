@@ -96,7 +96,7 @@ const OAuth2ConnectionSettings = ({
       currentOAuth2Type === AppConnectionType.OAUTH2 ? '' : 'FAKE_SECRET',
       { shouldValidate: true },
     );
-    
+
     form.setValue(
       'request.value.client_id',
       currentOAuth2Type === AppConnectionType.OAUTH2
@@ -265,18 +265,19 @@ const OAuth2ConnectionSettings = ({
             </Button>
           </div>
         )}
-        {currentOAuth2Type === AppConnectionType.OAUTH2 && predefinedClientId && (
-          <div>
-            <Button
-              size="sm"
-              variant={'link'}
-              className="text-xs"
-              onClick={() => setOAuth2Type(AppConnectionType.CLOUD_OAUTH2)}
-            >
-              I would like to use predefined App Credentials
-            </Button>
-          </div>
-        )}
+        {currentOAuth2Type === AppConnectionType.OAUTH2 &&
+          predefinedClientId && (
+            <div>
+              <Button
+                size="sm"
+                variant={'link'}
+                className="text-xs"
+                onClick={() => setOAuth2Type(AppConnectionType.CLOUD_OAUTH2)}
+              >
+                I would like to use predefined App Credentials
+              </Button>
+            </div>
+          )}
       </form>
     </Form>
   );

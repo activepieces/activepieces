@@ -25,7 +25,10 @@ import { FlowRunStatus, Permission } from '@activepieces/shared';
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
 
-const fetchData = async (_params: Record<string, string>, pagination: PaginationParams) => {
+const fetchData = async (
+  _params: Record<string, string>,
+  pagination: PaginationParams,
+) => {
   return issuesApi.list({
     projectId: authenticationSession.getProjectId(),
     cursor: pagination.cursor,
