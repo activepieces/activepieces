@@ -8401,8 +8401,11 @@
         "parameters": [
           {
             "schema": {
-              "pattern": "^[0-9a-zA-Z]{21}$",
-              "type": "string"
+              "type": "array",
+              "items": {
+                "pattern": "^[0-9a-zA-Z]{21}$",
+                "type": "string"
+              }
             },
             "in": "query",
             "name": "flowId",
