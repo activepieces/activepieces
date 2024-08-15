@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { Authorization } from '@/components/authorization';
 import {
   DataTable,
-  DataTableFilter,
+  PaginationParams,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
@@ -38,16 +38,23 @@ import {
 
 import { flowRunUtils } from '../lib/flow-run-utils';
 
-const fetchData = async (params: URLSearchParams) => {
-  const status = params.getAll('status') as FlowRunStatus[];
+const fetchData = async (
+  params: {
+    flowId: string[];
+    status: FlowRunStatus[];
+    created: string;
+  },
+  pagination: PaginationParams,
+) => {
+  const status = params.status;
   return flowRunsApi.list({
     status,
     projectId: authenticationSession.getProjectId(),
-    flowId: params.get('flowId') ?? undefined,
-    cursor: params.get('cursor') ?? undefined,
-    limit: parseInt(params.get('limit') ?? '10'),
-    createdAfter: params.get('createdAfter') ?? undefined,
-    createdBefore: params.get('createdBefore') ?? undefined,
+    flowId: params.flowId[0] ?? undefined,
+    cursor: pagination.cursor,
+    limit: pagination.limit ?? 10,
+    createdAfter: pagination.createdAfter,
+    createdBefore: pagination.createdBefore,
   });
 };
 
@@ -190,7 +197,7 @@ export default function FlowRunsTable() {
     [],
   );
 
-  const filters: DataTableFilter[] = useMemo(
+  const filters = useMemo(
     () => [
       {
         type: 'select',
@@ -202,7 +209,7 @@ export default function FlowRunsTable() {
             value: flow.id,
           })) || [],
         icon: CheckIcon,
-      },
+      } as const,
       {
         type: 'select',
         title: 'Status',
@@ -217,14 +224,14 @@ export default function FlowRunsTable() {
             };
           }),
         icon: CheckIcon,
-      },
+      } as const,
       {
         type: 'date',
         title: 'Created',
         accessorKey: 'created',
         options: [],
         icon: CheckIcon,
-      },
+      } as const,
     ],
     [flows],
   );

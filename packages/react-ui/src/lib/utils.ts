@@ -1,9 +1,10 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
+import { useEffect, useRef } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-import { ActionType, TriggerType } from '@activepieces/shared';
+import { ActionType, TriggerType, LocalesEnum } from '@activepieces/shared';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -133,4 +134,36 @@ export const validationUtils = {
       error.response?.data?.code === 'VALIDATION'
     );
   },
+};
+
+export function useForwardedRef<T>(ref: React.ForwardedRef<T>) {
+  const innerRef = useRef<T>(null);
+
+  useEffect(() => {
+    if (!ref) return;
+    if (typeof ref === 'function') {
+      ref(innerRef.current);
+    } else {
+      ref.current = innerRef.current;
+    }
+  });
+
+  return innerRef;
+}
+
+export const localesMap = {
+  [LocalesEnum.BULGARIAN]: 'Български',
+  [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',
+  [LocalesEnum.INDONESIAN]: 'Bahasa Indonesia',
+  [LocalesEnum.GERMAN]: 'Deutsch',
+  [LocalesEnum.ENGLISH]: 'English',
+  [LocalesEnum.SPANISH]: 'Español',
+  [LocalesEnum.FRENCH]: 'Français',
+  [LocalesEnum.ITALIAN]: 'Italiano',
+  [LocalesEnum.JAPANESE]: '日本語',
+  [LocalesEnum.HUNGARIAN]: 'Magyar',
+  [LocalesEnum.DUTCH]: 'Nederlands',
+  [LocalesEnum.PORTUGUESE]: 'Português (Brasil)',
+  [LocalesEnum.UKRAINIAN]: 'Українська',
+  [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
 };

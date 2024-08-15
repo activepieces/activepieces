@@ -8,7 +8,7 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
-  DataTableFilter,
+  PaginationParams,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
@@ -161,7 +161,7 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
   },
 ];
 
-const filters: DataTableFilter[] = [
+const filters = [
   {
     type: 'select',
     title: 'Status',
@@ -173,14 +173,17 @@ const filters: DataTableFilter[] = [
       };
     }),
     icon: CheckIcon,
-  },
+  } as const,
 ];
-const fetchData = async (queryParams: URLSearchParams) => {
+const fetchData = async (
+  params: { status: AppConnectionStatus[] },
+  pagination: PaginationParams,
+) => {
   return appConnectionsApi.list({
     projectId: authenticationSession.getProjectId(),
-    cursor: queryParams.get('cursor') ?? undefined,
-    limit: parseInt(queryParams.get('limit') ?? '10'),
-    status: queryParams.getAll('status') as AppConnectionStatus[],
+    cursor: pagination.cursor,
+    limit: pagination.limit ?? 10,
+    status: params.status,
   });
 };
 

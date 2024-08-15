@@ -1,6 +1,8 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 
+import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
+import { BrandingPage } from '@/app/routes/platform/settings/branding';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 
 import { FlowsPage } from '../app/routes/flows';
@@ -243,10 +245,20 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/platform/settings/branding',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <BrandingPage />
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
     path: '/platform/settings',
     element: (
       <PlatformAdminContainer>
-        <span>Something will be there</span>
+        <Navigate to="/platform/settings/branding" />
       </PlatformAdminContainer>
     ),
   },
