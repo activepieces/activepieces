@@ -1,7 +1,10 @@
-const planNameFormatter = (planName: string) => {
+const planNameFormatter = (planName: string | undefined) => {
+  if (!planName) {
+    return 'Free Plan';
+  }
   const free = planName.startsWith('free');
   if (free) {
-    return 'Pro Plan';
+    return 'Free Plan';
   }
 
   const pro =
