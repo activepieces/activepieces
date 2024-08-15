@@ -73,6 +73,7 @@ const OAuth2ConnectionSettings = ({
 
   const hasCode = form.getValues().request.value.code;
 
+  const predefinedClientId = pieceToClientIdMap?.[piece.name]?.clientId;
   useEffect(() => {
     if (isNil(currentOAuth2Type) && !isNil(pieceToClientIdMap)) {
       setOAuth2Type(
@@ -95,11 +96,12 @@ const OAuth2ConnectionSettings = ({
       currentOAuth2Type === AppConnectionType.OAUTH2 ? '' : 'FAKE_SECRET',
       { shouldValidate: true },
     );
+    
     form.setValue(
       'request.value.client_id',
       currentOAuth2Type === AppConnectionType.OAUTH2
         ? ''
-        : pieceToClientIdMap?.[piece.name].clientId ?? '',
+        : predefinedClientId ?? '',
       { shouldValidate: true },
     );
     form.setValue('request.value.code', '', { shouldValidate: true });
@@ -263,7 +265,7 @@ const OAuth2ConnectionSettings = ({
             </Button>
           </div>
         )}
-        {currentOAuth2Type === AppConnectionType.OAUTH2 && (
+        {currentOAuth2Type === AppConnectionType.OAUTH2 && predefinedClientId && (
           <div>
             <Button
               size="sm"

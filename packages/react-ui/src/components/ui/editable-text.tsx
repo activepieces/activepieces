@@ -91,9 +91,9 @@ const EditableText = ({
               }}
               title={
                 editableTextRef.current &&
-                editableTextRef.current.scrollWidth >
+                  editableTextRef.current.scrollWidth >
                   editableTextRef.current.clientWidth &&
-                value
+                  value
                   ? value
                   : ''
               }
@@ -114,10 +114,11 @@ const EditableText = ({
               onKeyDown={(event) => {
                 if (event.key === 'Escape') {
                   setValue(valueOnEditingStarted);
+                  setEditing(false);
                 } else if (event.key === 'Enter') {
                   emitChangedValue();
+                  setEditing(false);
                 }
-                setEditing(false);
               }}
             >
               {value}
