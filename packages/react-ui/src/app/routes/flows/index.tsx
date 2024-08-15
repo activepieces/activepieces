@@ -24,7 +24,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
