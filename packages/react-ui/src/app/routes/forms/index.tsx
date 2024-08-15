@@ -22,9 +22,6 @@ export const FormPage = () => {
     staleTime: Infinity,
   });
 
-  if (!isNil(flowId)) {
-    return <Navigate to={`/404`} replace />;
-  }
   return (
     <>
       {isLoading && (
