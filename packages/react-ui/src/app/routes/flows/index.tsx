@@ -10,15 +10,15 @@ import {
   Workflow,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
 
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
-  DataTableFilter,
-  RowDataWithActions,
+  PaginationParams,
+  RowDataWithActions
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import {
@@ -27,7 +27,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
@@ -39,14 +38,14 @@ import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 
-const filters: DataTableFilter[] = [
+const filters = [
   {
     type: 'input',
     title: 'Flow name',
     accessorKey: 'name',
     options: [],
     icon: CheckIcon,
-  },
+  } as const,
   {
     type: 'select',
     title: 'Status',
@@ -58,21 +57,23 @@ const filters: DataTableFilter[] = [
       };
     }),
     icon: CheckIcon,
-  },
+  } as const,
 ];
 
 const FlowsPage = () => {
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
 
-  async function fetchData(queryParams: URLSearchParams) {
+  const [searchParams] = useSearchParams();
+
+  async function fetchData(params: { name: string; status: FlowStatus[] }, pagination: PaginationParams) {
     return flowsApi.list({
       projectId: authenticationSession.getProjectId(),
-      cursor: queryParams.get('cursor') ?? undefined,
-      limit: parseInt(queryParams.get('limit') ?? '10'),
-      status: (queryParams.getAll('status') ?? []) as FlowStatus[],
-      name: queryParams.get('name') ?? undefined,
-      folderId: queryParams.get('folderId') ?? undefined,
+      cursor: pagination.cursor,
+      limit: pagination.limit ?? 10,
+      status: params.status,
+      name: params.name,
+      folderId: searchParams.get('folderId') ?? undefined,
     });
   }
 

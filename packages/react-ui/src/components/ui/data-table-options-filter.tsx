@@ -8,10 +8,10 @@ import { DataTableSelectPopover } from './data-table-select-popover';
 import { DatePickerWithRange } from './date-picker-range';
 
 interface DataTableFacetedFilterProps<TData, TValue> {
-  type: string;
+  type: 'select' | 'input' | 'date';
   column?: Column<TData, TValue>;
   title?: string;
-  options: {
+  options: readonly { 
     label: string;
     value: string;
     icon?: React.ComponentType<{ className?: string }>;
@@ -114,6 +114,7 @@ export function DataTableFacetedFilter<TData, TValue>({
     }
 
     default:
-      return null;
+      // exhaustive check: This will not compile if we add a new variant to the union type without handling it in this switch statement
+      const _: never = type;
   }
 }

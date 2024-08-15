@@ -4,7 +4,7 @@ import { createSearchParams, useNavigate } from 'react-router-dom';
 
 import { Authorization } from '@/components/authorization';
 import { Button } from '@/components/ui/button';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
+import { DataTable, PaginationParams, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import {
   Tooltip,
@@ -21,15 +21,7 @@ import { FlowRunStatus, Permission } from '@activepieces/shared';
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
 
-const fetchData = async (queryParams: URLSearchParams) => {
-  const pagination: {
-    cursor?: string;
-    limit?: number;
-  } = {
-    cursor: queryParams.get('cursor') ?? undefined,
-    limit: parseInt(queryParams.get('limit') ?? '10'),
-  };
-
+const fetchData = async (_params: {}, pagination: PaginationParams) => {
   return issuesApi.list({
     projectId: authenticationSession.getProjectId(),
     cursor: pagination.cursor,

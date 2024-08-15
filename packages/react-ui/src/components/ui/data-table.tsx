@@ -7,7 +7,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import deepEqual from 'deep-equal';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -31,12 +31,16 @@ export type RowDataWithActions<TData> = TData & {
   delete: () => void;
 };
 
-export type DataTableFilter = {
+type FilterRecord<Keys extends string, F extends DataTableFilter<Keys>[]> = {
+  [K in F[number]as K['accessorKey']]: K['type'] extends 'select' ? K['options'][number]['value'][] : K['options'][number]['value'];
+}
+
+export type DataTableFilter<Keys extends string> = {
   type: 'select' | 'input' | 'date';
   title: string;
-  accessorKey: string;
+  accessorKey: Keys;
   icon: React.ComponentType<{ className?: string }>;
-  options: {
+  options: readonly {
     label: string;
     value: string;
     icon?: React.ComponentType<{ className?: string }>;
@@ -45,26 +49,33 @@ export type DataTableFilter = {
 
 type DataTableAction<TData> = (row: RowDataWithActions<TData>) => JSX.Element;
 
-interface DataTableProps<TData, TValue> {
+export type PaginationParams = {
+  cursor?: string,
+  limit?: number,
+  createdAfter?: string,
+  createdBefore?: string,
+}
+
+interface DataTableProps<TData, TValue, Keys extends string, F extends DataTableFilter<Keys>[]> {
   columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
-  fetchData: (queryParams: URLSearchParams) => Promise<SeekPage<TData>>;
+  fetchData: (filters: FilterRecord<Keys, F>, pagination: PaginationParams) => Promise<SeekPage<TData>>;
   onRowClick?: (row: RowDataWithActions<TData>) => void;
-  filters?: DataTableFilter[];
+  filters?: [...F]
   refresh?: number;
   actions?: DataTableAction<TData>[];
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData, TValue, Keys extends string, F extends DataTableFilter<Keys>[]>({
   columns: columnsInitial,
   fetchData,
   onRowClick,
   filters,
   refresh,
   actions = [],
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps<TData, TValue, Keys, F>) {
   const columns = columnsInitial.concat([
     {
-      accessorKey: 'actions',
+      accessorKey: '__actions',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="" />
       ),
@@ -72,7 +83,9 @@ export function DataTable<TData, TValue>({
         return (
           <div className="flex items-end justify-end gap-4">
             {actions.map((action, index) => {
-              return action(row.original);
+              return <React.Fragment key={index}>
+                {action(row.original)}
+              </React.Fragment>
             })}
           </div>
         );
@@ -99,7 +112,23 @@ export function DataTable<TData, TValue>({
     setLoading(true);
     setTableData([]);
     try {
-      const response = await fetchData(params);
+      const limit = params.get('limit') ?? undefined;
+      const filterNames = (filters ?? []).map((filter) => filter.accessorKey);
+      const paramsObject = filterNames.map((key) => [key, params.getAll(key)] as const)
+        .reduce((acc, [key, values]) => {
+          const value = values.length === 1 ? values?.[0] || undefined : values;
+          if (!value) {
+            return acc;
+          }
+          return { ...acc, [key]: value };
+        }, {} as FilterRecord<Keys, F>);
+
+      const response = await fetchData(paramsObject, {
+        cursor: params.get('cursor') ?? undefined,
+        limit: limit ? parseInt(limit) : undefined,
+        createdAfter: params.get('createdAfter') ?? undefined,
+        createdBefore: params.get('createdBefore') ?? undefined,
+      });
       const newData = response.data.map((row) => ({
         ...row,
         delete: () => {
@@ -110,6 +139,7 @@ export function DataTable<TData, TValue>({
       setNextPageCursor(response.next ?? undefined);
       setPreviousPageCursor(response.previous ?? undefined);
     } catch (error) {
+      console.error(error);
       toast(INTERNAL_ERROR_TOAST);
     } finally {
       setLoading(false);
@@ -183,9 +213,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}

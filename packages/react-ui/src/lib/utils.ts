@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { twMerge } from 'tailwind-merge';
 
 import { ActionType, TriggerType } from '@activepieces/shared';
+import { useEffect, useRef } from 'react';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -134,3 +135,18 @@ export const validationUtils = {
     );
   },
 };
+
+export function useForwardedRef<T>(ref: React.ForwardedRef<T>) {
+  const innerRef = useRef<T>(null);
+
+  useEffect(() => {
+    if (!ref) return;
+    if (typeof ref === 'function') {
+      ref(innerRef.current);
+    } else {
+      ref.current = innerRef.current;
+    }
+  });
+
+  return innerRef;
+}
