@@ -15,8 +15,16 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-
 import { PieceMetadataModel } from '@activepieces/pieces-framework';
+import {
+  Action,
+  ActionType,
+  FlowOperationType,
+  Trigger,
+  TriggerType,
+  debounce,
+} from '@activepieces/shared';
+
 import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { formUtils } from '../piece-properties/form-utils';
@@ -27,15 +35,6 @@ import { BranchSettings } from './branch-settings';
 import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
-
-import {
-  Action,
-  ActionType,
-  FlowOperationType,
-  Trigger,
-  TriggerType,
-  debounce,
-} from '@activepieces/shared';
 
 type StepSettingsContainerProps = {
   selectedStep: Action | Trigger;

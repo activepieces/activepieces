@@ -3,50 +3,52 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
+type EditableTextProps = {
+  value: string | undefined;
+  className?: string;
+  readonly: boolean;
+  onValueChange: (value: string) => void;
+  containerRef: React.RefObject<HTMLDivElement>;
+};
+
 const EditableText = ({
   value: initialValue,
   className = '',
   readonly = false,
   onValueChange,
   containerRef,
-}: {
-  value: string | undefined;
-  className?: string;
-  readonly: boolean;
-  onValueChange?: (value: string) => void;
-  containerRef: React.RefObject<HTMLElement>;
-}) => {
+}: EditableTextProps) => {
   const [value, setValue] = useState(initialValue);
   const [editing, setEditing] = useState(false);
+
   const [valueOnEditingStarted, setValueOnEditingStarted] = useState('');
+
   const editableTextRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+
   useEffect(() => {
-    const handleResize = (entries: ResizeObserverEntry[]) => {
-      if (entries[0]) {
-        setContainerWidth(entries[0].contentRect.width);
+    const resizeObserver = new ResizeObserver(([entry]) => {
+      if (entry) {
+        setContainerWidth(entry.contentRect.width);
       }
-    };
-    const resizeObserver = new ResizeObserver(handleResize);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
+    });
+
+    const currentContainer = containerRef.current;
+    if (currentContainer) {
+      resizeObserver.observe(currentContainer);
     }
-    return () => {
-      resizeObserver.disconnect();
-    };
+
+    return () => resizeObserver.disconnect();
   }, [containerRef, setContainerWidth]);
 
   const emitChangedValue = useCallback(() => {
     const nodeValue = (editableTextRef.current?.textContent ?? '').trim();
-    const isValueEmptyOrSameAsBeforeEditingBegun =
-      nodeValue.length === 0 || nodeValue === valueOnEditingStarted;
-    if (!isValueEmptyOrSameAsBeforeEditingBegun) {
-      setValue(nodeValue);
-      if (onValueChange) {
-        onValueChange(nodeValue);
-      }
-    } else {
-      setValue(valueOnEditingStarted);
+    const shouldUpdateValue =
+      nodeValue.length > 0 && nodeValue !== valueOnEditingStarted;
+
+    setValue(shouldUpdateValue ? nodeValue : valueOnEditingStarted);
+    if (shouldUpdateValue) {
+      onValueChange(nodeValue);
     }
   }, [onValueChange, valueOnEditingStarted]);
 
@@ -112,11 +114,10 @@ const EditableText = ({
               onKeyDown={(event) => {
                 if (event.key === 'Escape') {
                   setValue(valueOnEditingStarted);
-                  setEditing(false);
                 } else if (event.key === 'Enter') {
                   emitChangedValue();
-                  setEditing(false);
                 }
+                setEditing(false);
               }}
             >
               {value}
