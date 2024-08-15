@@ -1,25 +1,22 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import { PackageOpen } from 'lucide-react';
-import React from 'react';
+import React, { forwardRef } from 'react';
 
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 import { Skeleton } from './skeleton';
 
-type CardListProps = React.HTMLAttributes<HTMLDivElement> & {
-  children: React.ReactNode;
-};
-
-const CardList = React.forwardRef<HTMLDivElement, CardListProps>(
-  ({ children, ...props }, ref) => {
-    return (
-      <div ref={ref} className="flex flex-col gap-4 h-full" {...props}>
-        {children}
-      </div>
-    );
-  },
-);
-
+const CardList = forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ children, ...props }, ref) => (
+  <ScrollArea className="h-full overflow-y-auto">
+    <div ref={ref} className="flex flex-col gap-4 h-full" {...props}>
+      {children}
+    </div>
+  </ScrollArea>
+));
 CardList.displayName = 'CardList';
 export { CardList };
 

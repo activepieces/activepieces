@@ -11,6 +11,7 @@ import {
   PieceType,
   Trigger,
   TriggerType,
+  isNil,
 } from '@activepieces/shared';
 
 import { PRIMITIVE_STEP_METADATA, piecesApi } from './pieces-api';
@@ -29,7 +30,7 @@ type UseMultiplePiecesProps = {
 };
 
 type UsePieceMetadata = {
-  step: Action | Trigger;
+  step: Action | Trigger | undefined;
   enabled?: boolean;
 };
 
@@ -87,14 +88,13 @@ export const piecesHooks = {
     });
   },
   useStepMetadata: ({ step, enabled = true }: UsePieceMetadata) => {
-    const { type } = step;
-    const pieceName = step.settings?.pieceName;
-    const pieceVersion = step.settings?.pieceVersion;
+    const pieceName = step?.settings?.pieceName;
+    const pieceVersion = step?.settings?.pieceVersion;
     const query = useQuery<StepMetadata, Error>({
-      queryKey: ['piece', type, pieceName, pieceVersion],
-      queryFn: () => piecesApi.getMetadata(step),
+      queryKey: ['piece', step?.type, pieceName, pieceVersion],
+      queryFn: () => piecesApi.getMetadata(step!),
       staleTime: Infinity,
-      enabled,
+      enabled: enabled && !isNil(step),
     });
     return {
       stepMetadata: query.data,

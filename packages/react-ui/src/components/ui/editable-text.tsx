@@ -91,9 +91,9 @@ const EditableText = ({
               }}
               title={
                 editableTextRef.current &&
-                  editableTextRef.current.scrollWidth >
+                editableTextRef.current.scrollWidth >
                   editableTextRef.current.clientWidth &&
-                  value
+                value
                   ? value
                   : ''
               }

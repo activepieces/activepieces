@@ -82,7 +82,6 @@ const StepSettingsContainer = React.memo(
     }, [applyOperation]);
 
     const updateAction = (newAction: Action) => {
-      console.log(newAction);
       applyOperation(
         {
           type: FlowOperationType.UPDATE_ACTION,
@@ -166,6 +165,25 @@ const StepSettingsContainer = React.memo(
       control: form.control,
     });
 
+    const getDefaultName = (
+      step: Action | Trigger,
+      pieceModel: PieceMetadataModel | undefined,
+    ) => {
+      if (step.type === TriggerType.PIECE) {
+        return (
+          pieceModel?.triggers[step.settings.triggerName]?.displayName ??
+          step.displayName
+        );
+      }
+      if (step.type === ActionType.PIECE) {
+        return (
+          pieceModel?.actions[step.settings.actionName]?.displayName ??
+          step.displayName
+        );
+      }
+      return step.displayName;
+    };
+
     useUpdateEffect(() => {
       const currentStep = JSON.parse(JSON.stringify(form.getValues()));
       const defaultValues = formUtils.buildPieceDefaultValue(
@@ -173,6 +191,7 @@ const StepSettingsContainer = React.memo(
         pieceModel!,
         false,
       );
+      defaultValues.displayName = getDefaultName(defaultValues, pieceModel);
       if (defaultValues.type === TriggerType.PIECE) {
         updateTrigger(defaultValues);
       } else {
