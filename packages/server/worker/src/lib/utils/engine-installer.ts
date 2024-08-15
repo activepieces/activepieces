@@ -38,8 +38,8 @@ export const engineInstaller = {
 }
 
 async function atomicCopy(src: PathLike, dest: PathLike): Promise<void> {
-    const srcDir = dirname(src.toString())
-    const tempPath = join(srcDir, 'engine.temp.js')
+    const destDir = dirname(dest.toString())
+    const tempPath = join(destDir, 'engine.temp.js')
     await copyFile(src, tempPath)
     await rename(tempPath, dest)
 }

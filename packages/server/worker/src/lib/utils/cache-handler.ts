@@ -20,7 +20,7 @@ const getCache = async (folderPath: string): Promise<CacheMap> => {
         if (!cacheExists) {
             await saveToCache({}, folderPath)
         }
-        cached[folderPath]= await readCache(folderPath)
+        cached[folderPath] = await readCache(folderPath)
     }
     const cache = (cached[folderPath] as CacheMap) || {}
     return cache
