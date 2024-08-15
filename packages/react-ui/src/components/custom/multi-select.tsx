@@ -29,7 +29,7 @@ import {
 import { cn } from '@/lib/utils';
 
 export interface MultiSelectOptionItem {
-  value: string;
+  value: unknown;
   label?: React.ReactNode;
 }
 
@@ -190,9 +190,11 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 
 MultiSelect.displayName = 'MultiSelect';
 
-type MultiSelectTriggerElement = React.ElementRef<typeof Primitive.div>;
+type MultiSelectTriggerElement = React.ElementRef<typeof Primitive.button>;
 
-type MultiSelectTriggerProps = ComponentPropsWithoutRef<typeof Primitive.div>;
+type MultiSelectTriggerProps = ComponentPropsWithoutRef<
+  typeof Primitive.button
+>;
 
 const PreventClick = (e: React.MouseEvent | React.TouchEvent) => {
   e.preventDefault();
@@ -207,7 +209,7 @@ const MultiSelectTrigger = React.forwardRef<
 
   return (
     <PopoverPrimitive.Trigger ref={forwardedRef as any} asChild>
-      <div
+      <button
         aria-disabled={disabled}
         data-disabled={disabled}
         {...props}
@@ -221,7 +223,7 @@ const MultiSelectTrigger = React.forwardRef<
       >
         {children}
         <ChevronsUpDown aria-hidden className="h-4 w-4 opacity-50 shrink-0" />
-      </div>
+      </button>
     </PopoverPrimitive.Trigger>
   );
 });
@@ -274,9 +276,7 @@ const MultiSelectValue = React.forwardRef<
         >
           {renderItems.map((value) => {
             const item = itemCache.get(value);
-
             const content = item?.label || value;
-
             const child =
               maxItemLength &&
               typeof content === 'string' &&
@@ -548,42 +548,9 @@ export interface MultiSelectOptionGroup {
   children: MultiSelectOption[];
 }
 
-export type MultiSelectOption =
-  | Pick<
-      MultiSelectItemProps,
-      'value' | 'label' | 'disabled' | 'onSelect' | 'onDeselect'
-    >
-  | MultiSelectOptionSeparator
-  | MultiSelectOptionGroup;
-
-const renderMultiSelectOptions = (list: MultiSelectOption[]) => {
-  return list.map((option, index) => {
-    if ('type' in option) {
-      if (option.type === 'separator') {
-        return <MultiSelectSeparator key={index} />;
-      }
-
-      return null;
-    }
-
-    if ('children' in option) {
-      return (
-        <MultiSelectGroup
-          key={option.value || index}
-          value={option.value}
-          heading={option.heading}
-        >
-          {renderMultiSelectOptions(option.children)}
-        </MultiSelectGroup>
-      );
-    }
-
-    return (
-      <MultiSelectItem key={option.value} {...option}>
-        {option.label}
-      </MultiSelectItem>
-    );
-  });
+export type MultiSelectOption = {
+  value: unknown;
+  label: string;
 };
 
 export {
@@ -597,5 +564,4 @@ export {
   MultiSelectGroup,
   MultiSelectSeparator,
   MultiSelectEmpty,
-  renderMultiSelectOptions,
 };
