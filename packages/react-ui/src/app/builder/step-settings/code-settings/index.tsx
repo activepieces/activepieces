@@ -18,11 +18,11 @@ import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 import { CodeEditior } from './code-editior';
 
 const markdown = `
-To use data from previous steps in your code, include them as pairs of keys and values below.
+To use data from previous steps in your code, include them as pairs of keys and values below. 
 
-You can access these inputs in your code using \`inputs.key\`, where \`key\` is the name you assigned below.
+You can access these inputs in your code using \`inputs.key\`, where \`key\` is the name you assigned below.  
 
-**Warning: "const code" is the entry to the code, if it is removed or renamed, your step will fail.**
+**⚠️ Warning: "const code" is the entry to the code. If it is removed or renamed, your step will fail.** 
 `;
 
 type CodeSettingsProps = {
@@ -42,6 +42,10 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         name="settings.input"
         render={({ field }) => (
           <FormItem>
+            <div className='py-4'>
+              <ApMarkdown markdown={markdown} />
+            </div>
+
             <div className="flex align-center justify-between">
               <FormLabel className="pt-4">Inputs</FormLabel>
               <Button
@@ -53,7 +57,6 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
                 <span className="ml-2"> Ask AI </span>
               </Button>
             </div>
-            <ApMarkdown markdown={markdown} className="mt-2" />
 
             <DictionaryProperty
               disabled={readonly}
