@@ -88,10 +88,7 @@ const BuilderPage = () => {
           ? (step as PieceTrigger).settings.triggerName
           : step?.settings.actionName;
       return {
-        memorizedSelectedStep: flowHelper.getStep(
-          flowVersion,
-          stepPath.stepName,
-        ),
+        memorizedSelectedStep: step,
         containerKey: constructContainerKey(
           flowVersion.id,
           stepPath.stepName,

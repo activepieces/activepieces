@@ -64,7 +64,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : 'button';
 
     const isMac = /(Mac)/i.test(navigator.userAgent);
-
+    const isEscape = keyboardShortcut?.toLocaleLowerCase() === 'esc';
     React.useEffect(() => {
       if (keyboardShortcut) {
         document.addEventListener('keydown', handleKeyDown);
@@ -76,10 +76,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     }, [keyboardShortcut, disabled]);
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.key === keyboardShortcut?.toLocaleLowerCase() &&
-        (event.metaKey || event.ctrlKey)
-      ) {
+      const isEscapePressed = event.key === 'Escape' && isEscape;
+      const isCtrlWithShortcut =
+        keyboardShortcut &&
+        event.key === keyboardShortcut.toLocaleLowerCase() &&
+        event.ctrlKey;
+      if (isEscapePressed || isCtrlWithShortcut) {
         event.preventDefault();
         event.stopPropagation();
         if (onKeyboardShortcut && !disabled) {
@@ -103,7 +105,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
               <div className="flex justify-center items-center gap-2">
                 {children}
                 <span className="flex-grow text-xs tracking-widest text-muted-foreground">
-                  {isMac ? '⌘' : 'Ctrl'}{' '}
+                  {!isEscape && (isMac ? '⌘' : 'Ctrl')}{' '}
                   {keyboardShortcut.toString().toLocaleUpperCase()}
                 </span>
               </div>

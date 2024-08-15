@@ -30,6 +30,18 @@ export const formUtils = {
     includeCurrentInput: boolean,
   ): Action | Trigger => {
     const { type } = selectedStep;
+    const defaultErrorOptions = {
+      continueOnFailure: {
+        value:
+          selectedStep.settings.errorHandlingOptions?.continueOnFailure
+            ?.value ?? false,
+      },
+      retryOnFailure: {
+        value:
+          selectedStep.settings.errorHandlingOptions?.retryOnFailure?.value ??
+          false,
+      },
+    };
     switch (type) {
       case ActionType.LOOP_ON_ITEMS:
         return {
@@ -69,6 +81,7 @@ export const formUtils = {
               code: selectedStep.settings.sourceCode.code ?? defaultCode,
               packageJson: selectedStep.settings.sourceCode.packageJson ?? '{}',
             },
+            errorHandlingOptions: defaultErrorOptions,
           },
         };
       }
@@ -88,6 +101,7 @@ export const formUtils = {
           settings: {
             ...selectedStep.settings,
             input: defaultValues,
+            errorHandlingOptions: defaultErrorOptions,
           },
         };
       }

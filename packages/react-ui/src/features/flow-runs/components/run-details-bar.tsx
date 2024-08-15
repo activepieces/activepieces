@@ -76,6 +76,8 @@ const RunDetailsBar = React.memo(
             variant={'outline'}
             onClick={() => exitRun()}
             loading={isLoading}
+            onKeyboardShortcut={() => exitRun()}
+            keyboardShortcut="Esc"
           >
             Exit Run
           </Button>

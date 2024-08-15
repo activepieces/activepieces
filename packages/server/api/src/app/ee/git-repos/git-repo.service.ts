@@ -10,6 +10,7 @@ import {
 } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
+    ApEdition,
     apId,
     ErrorCode,
     FlowStatus,
@@ -25,6 +26,7 @@ import { GitRepoEntity } from './git-repo.entity'
 import { gitSyncHelper } from './git-sync-helper'
 import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
+import { system } from '@activepieces/server-shared'
 
 const repo = repoFactory(GitRepoEntity)
 
@@ -76,6 +78,10 @@ export const gitRepoService = {
         return paginationHelper.createPage<GitRepo>(repos, null)
     },
     async onFlowDeleted({ flowId, userId, projectId }: { flowId: string, userId: string, projectId: string }): Promise<void> {
+        const edition = system.getEdition()
+        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
+            return;
+        }
         const gitRepo = await repo().findOneByOrFail({ projectId })
         if (isNil(gitRepo) || gitRepo.branchType === GitBranchType.PRODUCTION) {
             return
