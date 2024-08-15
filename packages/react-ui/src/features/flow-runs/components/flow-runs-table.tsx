@@ -12,7 +12,6 @@ import { useNavigate } from 'react-router-dom';
 import { Authorization } from '@/components/authorization';
 import {
   DataTable,
-  DataTableFilter,
   PaginationParams,
   RowDataWithActions,
 } from '@/components/ui/data-table';
@@ -39,12 +38,15 @@ import {
 
 import { flowRunUtils } from '../lib/flow-run-utils';
 
-const fetchData = async (params: {
-  flowId: string[],
-  status: FlowRunStatus[],
-  created: string,
-}, pagination: PaginationParams) => {
-  const status = params.status
+const fetchData = async (
+  params: {
+    flowId: string[];
+    status: FlowRunStatus[];
+    created: string;
+  },
+  pagination: PaginationParams,
+) => {
+  const status = params.status;
   return flowRunsApi.list({
     status,
     projectId: authenticationSession.getProjectId(),

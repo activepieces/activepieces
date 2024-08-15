@@ -1,8 +1,9 @@
-import { CircleUser, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { Avatar, AvatarFallback } from './avatar';
+import { AvatarLetter } from './avatar-letter';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,10 +12,8 @@ import {
   DropdownMenuItem,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
-import { AvatarLetter } from './avatar-letter';
 
 export function UserAvatar() {
-
   const user = authenticationSession.getCurrentUser();
   if (!user) {
     return null;
@@ -29,7 +28,6 @@ export function UserAvatar() {
               email={user.email}
               disablePopup={true}
             ></AvatarLetter>
-
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>

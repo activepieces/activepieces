@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import {
   DataTable,
   PaginationParams,
-  RowDataWithActions
+  RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
@@ -175,7 +175,10 @@ const filters = [
     icon: CheckIcon,
   } as const,
 ];
-const fetchData = async (params: { status: AppConnectionStatus[] }, pagination: PaginationParams) => {
+const fetchData = async (
+  params: { status: AppConnectionStatus[] },
+  pagination: PaginationParams,
+) => {
   return appConnectionsApi.list({
     projectId: authenticationSession.getProjectId(),
     cursor: pagination.cursor,

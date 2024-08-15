@@ -1,12 +1,10 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
+import { useEffect, useRef } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-import { ActionType, TriggerType } from '@activepieces/shared';
-import { useEffect, useRef } from 'react';
-
-import { LocalesEnum } from '@activepieces/shared';
+import { ActionType, TriggerType, LocalesEnum } from '@activepieces/shared';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

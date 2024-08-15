@@ -32,8 +32,10 @@ export type RowDataWithActions<TData> = TData & {
 };
 
 type FilterRecord<Keys extends string, F extends DataTableFilter<Keys>[]> = {
-  [K in F[number]as K['accessorKey']]: K['type'] extends 'select' ? K['options'][number]['value'][] : K['options'][number]['value'];
-}
+  [K in F[number] as K['accessorKey']]: K['type'] extends 'select'
+    ? K['options'][number]['value'][]
+    : K['options'][number]['value'];
+};
 
 export type DataTableFilter<Keys extends string> = {
   type: 'select' | 'input' | 'date';
@@ -50,22 +52,35 @@ export type DataTableFilter<Keys extends string> = {
 type DataTableAction<TData> = (row: RowDataWithActions<TData>) => JSX.Element;
 
 export type PaginationParams = {
-  cursor?: string,
-  limit?: number,
-  createdAfter?: string,
-  createdBefore?: string,
-}
+  cursor?: string;
+  limit?: number;
+  createdAfter?: string;
+  createdBefore?: string;
+};
 
-interface DataTableProps<TData, TValue, Keys extends string, F extends DataTableFilter<Keys>[]> {
+interface DataTableProps<
+  TData,
+  TValue,
+  Keys extends string,
+  F extends DataTableFilter<Keys>[],
+> {
   columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
-  fetchData: (filters: FilterRecord<Keys, F>, pagination: PaginationParams) => Promise<SeekPage<TData>>;
+  fetchData: (
+    filters: FilterRecord<Keys, F>,
+    pagination: PaginationParams,
+  ) => Promise<SeekPage<TData>>;
   onRowClick?: (row: RowDataWithActions<TData>) => void;
-  filters?: [...F]
+  filters?: [...F];
   refresh?: number;
   actions?: DataTableAction<TData>[];
 }
 
-export function DataTable<TData, TValue, Keys extends string, F extends DataTableFilter<Keys>[]>({
+export function DataTable<
+  TData,
+  TValue,
+  Keys extends string,
+  F extends DataTableFilter<Keys>[],
+>({
   columns: columnsInitial,
   fetchData,
   onRowClick,
@@ -83,9 +98,11 @@ export function DataTable<TData, TValue, Keys extends string, F extends DataTabl
         return (
           <div className="flex items-end justify-end gap-4">
             {actions.map((action, index) => {
-              return <React.Fragment key={index}>
-                {action(row.original)}
-              </React.Fragment>
+              return (
+                <React.Fragment key={index}>
+                  {action(row.original)}
+                </React.Fragment>
+              );
             })}
           </div>
         );
@@ -114,7 +131,8 @@ export function DataTable<TData, TValue, Keys extends string, F extends DataTabl
     try {
       const limit = params.get('limit') ?? undefined;
       const filterNames = (filters ?? []).map((filter) => filter.accessorKey);
-      const paramsObject = filterNames.map((key) => [key, params.getAll(key)] as const)
+      const paramsObject = filterNames
+        .map((key) => [key, params.getAll(key)] as const)
         .reduce((acc, [key, values]) => {
           const value = values.length === 1 ? values?.[0] || undefined : values;
           if (!value) {
@@ -213,9 +231,9 @@ export function DataTable<TData, TValue, Keys extends string, F extends DataTabl
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableHead>
                   );
                 })}

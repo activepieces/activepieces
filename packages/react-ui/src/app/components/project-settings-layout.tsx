@@ -51,5 +51,9 @@ interface SettingsLayoutProps {
 export default function ProjectSettingsLayout({
   children,
 }: SettingsLayoutProps) {
-  return <SidebarLayout title="Settings" items={sidebarNavItems}>{children}</SidebarLayout>;
+  return (
+    <SidebarLayout title="Settings" items={sidebarNavItems}>
+      {children}
+    </SidebarLayout>
+  );
 }

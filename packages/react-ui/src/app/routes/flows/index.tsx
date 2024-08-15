@@ -1,4 +1,3 @@
-import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import {
@@ -12,13 +11,11 @@ import {
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import FlowActionMenu from '../../../app/components/flow-actions-menu';
-
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
   PaginationParams,
-  RowDataWithActions
+  RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import {
@@ -37,6 +34,9 @@ import { FolderFilterList } from '@/features/folders/component/folder-filter-lis
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
+import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
+
+import FlowActionMenu from '../../../app/components/flow-actions-menu';
 
 const filters = [
   {
@@ -66,7 +66,10 @@ const FlowsPage = () => {
 
   const [searchParams] = useSearchParams();
 
-  async function fetchData(params: { name: string; status: FlowStatus[] }, pagination: PaginationParams) {
+  async function fetchData(
+    params: { name: string; status: FlowStatus[] },
+    pagination: PaginationParams,
+  ) {
     return flowsApi.list({
       projectId: authenticationSession.getProjectId(),
       cursor: pagination.cursor,

@@ -1,18 +1,15 @@
 'use client';
 
-import { cn, useForwardedRef } from '@/lib/utils';
-import ContrastColor from "contrast-color";
+import ContrastColor from 'contrast-color';
 import { Check } from 'lucide-react';
 import { forwardRef, useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
-import type { ButtonProps } from './button';
+
+import { useForwardedRef } from '@/lib/utils';
+
 import { Button } from './button';
 import { Input } from './input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from './popover';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
 
 interface ColorPickerProps {
   onClose?: () => void;
@@ -23,29 +20,29 @@ interface ColorPickerProps {
   className?: string;
 }
 
-const ColorPicker = forwardRef<
-  HTMLInputElement,
-  ColorPickerProps
->(
+const ColorPicker = forwardRef<HTMLInputElement, ColorPickerProps>(
   (
     { disabled, onClose, onSave, defaultValue, children, className },
-    forwardedRef
+    forwardedRef,
   ) => {
     const [color, setColor] = useState(defaultValue || '#FFFFFF');
-    const [savedColor, setSavedColor] = useState(defaultValue || '#FFFFFF');
+    const [, setSavedColor] = useState(defaultValue || '#FFFFFF');
     const ref = useForwardedRef(forwardedRef);
     const [open, setOpen] = useState(false);
 
     return (
       <Popover onOpenChange={setOpen} open={open}>
         <PopoverTrigger asChild disabled={disabled} onBlur={onClose}>
-          <div className={className} onClick={() => {
-            setOpen(true);
-          }}>
+          <div
+            className={className}
+            onClick={() => {
+              setOpen(true);
+            }}
+          >
             {children}
           </div>
         </PopoverTrigger>
-        <PopoverContent className='flex flex-col gap-3 items-center max-w-min'>
+        <PopoverContent className="flex flex-col gap-3 items-center max-w-min">
           <HexColorPicker color={color} onChange={setColor} />
           <div className="flex flex-row gap-2 items-center">
             <Input
@@ -77,8 +74,8 @@ const ColorPicker = forwardRef<
         </PopoverContent>
       </Popover>
     );
-  }
+  },
 );
 ColorPicker.displayName = 'ColorPicker';
 
-export { ColorPicker as ColorPicker };
+export { ColorPicker };

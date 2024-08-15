@@ -11,7 +11,7 @@ interface DataTableFacetedFilterProps<TData, TValue> {
   type: 'select' | 'input' | 'date';
   column?: Column<TData, TValue>;
   title?: string;
-  options: readonly { 
+  options: readonly {
     label: string;
     value: string;
     icon?: React.ComponentType<{ className?: string }>;
@@ -112,9 +112,5 @@ export function DataTableFacetedFilter<TData, TValue>({
         />
       );
     }
-
-    default:
-      // exhaustive check: This will not compile if we add a new variant to the union type without handling it in this switch statement
-      const _: never = type;
   }
 }

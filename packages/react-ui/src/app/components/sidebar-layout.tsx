@@ -14,17 +14,13 @@ type SidebarItem = {
   title: string;
   href: string;
   icon: JSX.Element;
-}
+};
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
   items: SidebarItem[];
 }
 
-function SidebarItem({
-  className,
-  items,
-  ...props
-}: SidebarNavProps) {
+function SidebarItem({ className, items, ...props }: SidebarNavProps) {
   const location = useLocation();
 
   return (

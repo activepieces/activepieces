@@ -1,6 +1,4 @@
-import {
-  Palette
-} from 'lucide-react';
+import { Palette } from 'lucide-react';
 
 import SidebarLayout from '@/app/components/sidebar-layout';
 
@@ -21,5 +19,9 @@ interface SettingsLayoutProps {
 export default function PlatformSettingsLayout({
   children,
 }: SettingsLayoutProps) {
-  return <SidebarLayout title="Settings" items={sidebarNavItems}>{children}</SidebarLayout>;
+  return (
+    <SidebarLayout title="Settings" items={sidebarNavItems}>
+      {children}
+    </SidebarLayout>
+  );
 }
