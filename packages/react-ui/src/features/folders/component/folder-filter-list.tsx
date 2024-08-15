@@ -95,7 +95,7 @@ const FolderItem = ({
             )
           }
           text={
-            <div className="flex-grow whitespace-break-spaces break-all text-start">
+            <div className="flex-grow whitespace-break-spaces break-all text-start truncate">
               {folder.displayName}
             </div>
           }
@@ -273,7 +273,7 @@ const FolderFilterList = () => {
           </Dialog>
         </div>
       </div>
-      <div className="flex w-[200px] h-full flex-col space-y-1">
+      <div className="flex w-[270px] h-full flex-col space-y-1">
         <Button
           variant="secondary"
           className={cn('flex w-full justify-start bg-background', {
