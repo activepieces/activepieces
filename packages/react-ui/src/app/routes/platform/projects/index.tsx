@@ -60,12 +60,11 @@ export default function ProjectsPage() {
       lockDescription="Orchestrate your automation teams across projects with their own flows, connections and usage quotas"
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/projects.mp4"
     >
-      <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-2xl py-2">Projects</span>
+          <span className="text-3xl font-bold">Projects</span>
           <NewProjectDialog onCreate={() => refreshData()}>
             <Button
-              variant="outline"
               size="sm"
               className="flex items-center justify-center gap-2"
             >

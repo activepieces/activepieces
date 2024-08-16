@@ -27,9 +27,9 @@ export default function AuditLogsPage() {
       lockTitle="Unlock Audit Logs"
       lockDescription="Comply with internal and external security policies by tracking activities done within your account"
     >
-      <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col  w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-2xl py-2">Audit Logs</span>
+          <span className="text-3xl font-bold ">Audit Logs</span>
         </div>
         <DataTable
           columns={[

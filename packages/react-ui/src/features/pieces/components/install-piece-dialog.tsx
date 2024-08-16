@@ -140,7 +140,7 @@ const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button size="sm" className="flex items-center justify-center gap-2">
           <Plus className="size-4" />
           Install Piece
         </Button>

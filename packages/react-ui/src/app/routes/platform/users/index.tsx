@@ -80,9 +80,9 @@ export default function UsersPage() {
       lockTitle="Unlock Users"
       lockDescription="Manage your users and their access to your projects"
     >
-      <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-2xl py-2">Users</span>
+          <span className="text-3xl font-bold">Users</span>
         </div>
         <DataTable
           columns={[

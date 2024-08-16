@@ -19,13 +19,15 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectApi } from '@/lib/project-api';
 import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
 
+type NewProjectDialogProps = {
+  children: React.ReactNode;
+  onCreate: () => void;
+};
+
 export const NewProjectDialog = ({
   children,
   onCreate,
-}: {
-  children: React.ReactNode;
-  onCreate: () => void;
-}) => {
+}: NewProjectDialogProps) => {
   const [open, setOpen] = useState(false);
   const form = useForm<CreatePlatformProjectRequest>({
     resolver: typeboxResolver(CreatePlatformProjectRequest),

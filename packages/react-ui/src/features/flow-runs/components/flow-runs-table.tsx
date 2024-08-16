@@ -40,7 +40,7 @@ import { flowRunUtils } from '../lib/flow-run-utils';
 
 const fetchData = async (
   params: {
-    flowId: string[];
+    flowId: string;
     status: FlowRunStatus[];
     created: string;
   },
@@ -50,7 +50,7 @@ const fetchData = async (
   return flowRunsApi.list({
     status,
     projectId: authenticationSession.getProjectId(),
-    flowId: params.flowId[0] ?? undefined,
+    flowId: params.flowId,
     cursor: pagination.cursor,
     limit: pagination.limit ?? 10,
     createdAfter: pagination.createdAfter,

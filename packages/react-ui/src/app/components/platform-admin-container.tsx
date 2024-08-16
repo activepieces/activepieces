@@ -30,7 +30,7 @@ export function PlatformAdminContainer({
     queryClient,
   );
 
-  const isLocked = (locked: boolean) => !locked || (showPlatformDemo ?? false);
+  const isLocked = (locked: boolean) => locked || (showPlatformDemo ?? false);
 
   const links: SidebarLink[] = [
     {

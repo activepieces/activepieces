@@ -55,12 +55,11 @@ export default function TemplatesPage() {
       lockDescription="Convert the most common automations into reusable templates 1 click away from your users"
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/templates.mp4"
     >
-      <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-2xl py-2">Templates</span>
+          <span className="text-3xl font-bold">Templates</span>
           <UpsertTemplateDialog onDone={() => refreshData()}>
             <Button
-              variant="outline"
               size="sm"
               className="flex items-center justify-center gap-2"
             >
