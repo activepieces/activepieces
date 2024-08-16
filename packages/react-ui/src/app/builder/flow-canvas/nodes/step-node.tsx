@@ -11,6 +11,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import ImageWithFallback from '@/app/components/image-with-fallback';
 import { Button } from '@/components/ui/button';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
   FlowRun,
+  FlowRunStatus,
   StepLocationRelativeToParent,
   TriggerType,
   flowHelper,
@@ -113,6 +115,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     () => getStepStatus(stepName, selectedStep, run),
     [stepName, selectedStep, run],
   );
+
+  const showRunningIcon =
+    isNil(stepOutputStatus) && run?.status === FlowRunStatus.RUNNING;
   const statusInfo = isNil(stepOutputStatus)
     ? undefined
     : flowRunUtils.getStatusIconForStep(stepOutputStatus);
@@ -158,7 +163,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         setToolbarOpen(false);
         setAllowCanvasPanning(true);
       }}
-      key={data.step!.name}
+      key={data.step?.name}
       ref={setNodeRef}
       {...attributes}
       {...listeners}
@@ -176,13 +181,13 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
               )}
             >
               <span className="text-sm text-muted-foreground">
-                {data.step!.name}
+                {data.step?.name}
               </span>
             </div>
 
             <div
               className="px-2 h-full w-full "
-              onClick={() => selectStepByName(data.step!.name)}
+              onClick={() => selectStepByName(data.step?.name)}
             >
               <div className="flex h-full items-center justify-between gap-4 w-full">
                 <div className="flex items-center justify-center min-w-[46px] h-full">
@@ -195,20 +200,23 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 </div>
                 <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
                   <div className="text-sm text-ellipsis overflow-hidden whitespace-nowrap w-full">
-                    {data.step!.displayName}
+                    {data.step?.displayName}
                   </div>
                   <div className="text-xs text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
                     {stepMetadata?.displayName}
                   </div>
                 </div>
                 <div className="w-4 flex items-center justify-center">
-                  {statusInfo?.Icon &&
+                  {statusInfo &&
                     React.createElement(statusInfo.Icon, {
                       className: cn('', {
                         'text-success-300': statusInfo.variant === 'success',
                         'text-destructive-300': statusInfo.variant === 'error',
                       }),
                     })}
+                  {showRunningIcon && (
+                    <LoadingSpinner className="w-4 h-4 text-primary"></LoadingSpinner>
+                  )}
                   {!data.step?.valid && (
                     <Tooltip>
                       <TooltipTrigger asChild>
