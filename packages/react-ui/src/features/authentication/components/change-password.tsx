@@ -19,12 +19,13 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { ResetPasswordRequestBody } from '@activepieces/ee-shared';
+import { t } from 'i18next';
 
 const FormSchema = Type.Object({
   otp: Type.String(),
   userId: Type.String(),
   newPassword: Type.String({
-    errorMessage: 'Please enter your password',
+    errorMessage: t('Please enter your password'),
   }),
 });
 
@@ -50,8 +51,8 @@ const ChangePasswordForm = () => {
     mutationFn: authenticationApi.resetPassword,
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Your password was changed!',
+        title: t('Success'),
+        description: t('Your password was changed!'),
         duration: 3000,
       });
       navigate('/sign-in');
@@ -70,8 +71,8 @@ const ChangePasswordForm = () => {
   return (
     <Card className="w-[28rem] rounded-sm drop-shadow-xl">
       <CardHeader>
-        <CardTitle className="text-2xl">Reset Password</CardTitle>
-        <CardDescription>Enter your new password</CardDescription>
+        <CardTitle className="text-2xl">{t('Reset Password')}</CardTitle>
+        <CardDescription>{t('Enter your new password')}</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -81,7 +82,7 @@ const ChangePasswordForm = () => {
               name="newPassword"
               render={({ field }) => (
                 <FormItem className="w-full grid space-y-2">
-                  <Label htmlFor="email">Password</Label>
+                  <Label htmlFor="newPassword">{t('Password')}</Label>
                   <Input {...field} type="password" placeholder="********" />
                   <FormMessage />
                 </FormItem>
@@ -92,7 +93,7 @@ const ChangePasswordForm = () => {
               loading={isPending}
               onClick={(e) => form.handleSubmit(onSubmit)(e)}
             >
-              Confirm
+              {t('Confirm')}
             </Button>
           </form>
         </Form>

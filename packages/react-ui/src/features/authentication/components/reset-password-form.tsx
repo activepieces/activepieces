@@ -5,6 +5,7 @@ import { MailCheck } from 'lucide-react';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -21,10 +22,11 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
+import { t } from 'i18next';
 
 const FormSchema = Type.Object({
   email: Type.String({
-    errorMessage: 'Please enter your email',
+    errorMessage: t('Please enter your email'),
   }),
   type: Type.Enum(OtpType),
 });
@@ -40,11 +42,7 @@ const ResetPasswordForm = () => {
     },
   });
 
-  const { mutate, isPending } = useMutation<
-    void,
-    HttpError,
-    CreateOtpRequestBody
-  >({
+  const { mutate, isPending } = useMutation<void, HttpError, CreateOtpRequestBody>({
     mutationFn: authenticationApi.sendOtpEmail,
     onSuccess: () => setIsSent(true),
     onError: (error) => {
@@ -54,9 +52,7 @@ const ResetPasswordForm = () => {
     },
   });
 
-  const handleResendClick = (
-    e: React.MouseEvent<HTMLSpanElement, MouseEvent>,
-  ) => {
+  const handleResendClick = (e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
     e.preventDefault();
     form.handleSubmit(onSubmit)(e);
   };
@@ -69,7 +65,7 @@ const ResetPasswordForm = () => {
     <Card className="w-[28rem] rounded-sm drop-shadow-xl">
       <CardHeader>
         <CardTitle className="text-2xl">
-          {isSent ? 'Check Your Inbox' : 'Reset Password'}
+          {isSent ? t('Check Your Inbox') : t('Reset Password')}
         </CardTitle>
         <CardDescription>
           {isSent ? (
@@ -77,26 +73,18 @@ const ResetPasswordForm = () => {
               <div className="gap-4 w-full flex flex-row items-center justify-center">
                 <MailCheck className="w-16 h-16" />
                 <span className="text-left w-fit">
-                  We sent you a link to{' '}
-                  <strong>{form.getValues().email}</strong>. Check your email to
-                  reset your password.
+                  {t('We sent you a link to')} <strong>{form.getValues().email}</strong>. {t('Check your email to reset your password.')}
                 </span>
               </div>
               <div className="flex flex-row gap-1">
-                Didn&apos;t recieve an email?
-                <span
-                  className="cursor-pointer text-primary underline"
-                  onClick={handleResendClick}
-                >
-                  Resend
+                {t("Didn't receive an email?")}
+                <span className="cursor-pointer text-primary underline" onClick={handleResendClick}>
+                  {t('Resend')}
                 </span>
               </div>
             </div>
           ) : (
-            <span>
-              If the email you entered exists, you will receive an email with a
-              link to reset your password.
-            </span>
+            <span>{t('If the email you entered exists, you will receive an email with a link to reset your password.')}</span>
           )}
         </CardDescription>
       </CardHeader>
@@ -109,29 +97,21 @@ const ResetPasswordForm = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem className="w-full grid space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      {...field}
-                      type="text"
-                      placeholder="email@activepieces.com"
-                    />
+                    <Label htmlFor="email">{t('Email')}</Label>
+                    <Input {...field} type="text" placeholder={t('email@activepieces.com')} />
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button
-                className="w-full"
-                loading={isPending}
-                onClick={(e) => form.handleSubmit(onSubmit)(e)}
-              >
-                Send Password Reset Link
+              <Button className="w-full" loading={isPending} onClick={(e) => form.handleSubmit(onSubmit)(e)}>
+                {t('Send Password Reset Link')}
               </Button>
             </form>
           </Form>
         )}
         <div className="mt-2 text-center text-sm">
           <Link to="/sign-in" className="text-muted-foreground">
-            Back to sign in
+            {t('Back to sign in')}
           </Link>
         </div>
       </CardContent>
