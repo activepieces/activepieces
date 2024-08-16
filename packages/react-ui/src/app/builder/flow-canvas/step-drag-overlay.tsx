@@ -14,9 +14,7 @@ const StepDragOverlay = ({ step }: StepDragTemplateProps) => {
 
   return (
     <div
-      className={t(
-        'p-4 h-[100px] opacity-75 w-[100px] flex items-center justify-center rounded-lg border border-solid border bg-white relative',
-      )}
+      className={'p-4 h-[100px] opacity-75 w-[100px] flex items-center justify-center rounded-lg border border-solid border bg-white relative'}
     >
       <img
         id={t('logo')}

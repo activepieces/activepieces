@@ -251,9 +251,9 @@ const MultiSelectValue = React.forwardRef<
     const { value, itemCache, onDeselect } = useMultiSelect();
     const [firstRendered, setFirstRendered] = React.useState(false);
 
-    const renderRemain =
+    const remainingPiecesCount =
       maxDisplay && value.length > maxDisplay ? value.length - maxDisplay : 0;
-    const renderItems = renderRemain ? value.slice(0, maxDisplay) : value;
+    const renderItems = remainingPiecesCount ? value.slice(0, maxDisplay) : value;
 
     React.useLayoutEffect(() => {
       setFirstRendered(true);
@@ -320,9 +320,9 @@ const MultiSelectValue = React.forwardRef<
 
             return el;
           })}
-          {renderRemain ? (
+          {remainingPiecesCount ? (
             <span className="text-muted-foreground text-xs leading-4 py-.5">
-              {t('+{{renderRemain}} more', { renderRemain })}
+              {t('+{{remainingPiecesCount}} more', { remainingPiecesCount: remainingPiecesCount })}
             </span>
           ) : null}
         </div>

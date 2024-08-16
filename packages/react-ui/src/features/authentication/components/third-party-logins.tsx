@@ -97,7 +97,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
             }
           >
             <ThirdPartyIcon icon={Github} />
-            {t('Sign in With Github')}
+            {t('Sign in With GitHub')}
           </Button>
         )}
         {thirdPartyAuthProviders?.saml && (

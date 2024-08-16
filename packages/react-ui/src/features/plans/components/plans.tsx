@@ -34,11 +34,11 @@ const fetchSubscriptionInfo = async () => {
 
 const planNameFormatter = (planName: string | undefined) => {
   if (!planName) {
-    return t('Free Plan');
+    return 'Free Plan';
   }
   const free = planName.startsWith('free');
   if (free) {
-    return t('Free Plan');
+    return 'Free Plan';
   }
 
   const pro =
@@ -46,32 +46,32 @@ const planNameFormatter = (planName: string | undefined) => {
     planName.startsWith('growth') ||
     planName.startsWith('friends');
   if (pro) {
-    return t('Pro Plan');
+    return 'Pro Plan';
   }
 
   const ltd = planName.startsWith('ltd');
   if (ltd) {
-    return t('Life Time Plan');
+    return 'Life Time Plan';
   }
 
   const unlimited = planName.startsWith('unlimited');
   if (unlimited) {
-    return t('Unlimited Plan');
+    return 'Unlimited Plan';
   }
 
   switch (planName) {
     case 'appsumo_activepieces_tier1':
-      return t('AppSumo Tier 1');
+      return 'AppSumo Tier 1';
     case 'appsumo_activepieces_tier2':
-      return t('AppSumo Tier 2');
+      return 'AppSumo Tier 2';
     case 'appsumo_activepieces_tier3':
-      return t('AppSumo Tier 3');
+      return 'AppSumo Tier 3';
     case 'appsumo_activepieces_tier4':
-      return t('AppSumo Tier 4');
+      return 'AppSumo Tier 4';
     case 'appsumo_activepieces_tier5':
-      return t('AppSumo Tier 5');
+      return 'AppSumo Tier 5';
     case 'appsumo_activepieces_tier6':
-      return t('AppSumo Tier 6');
+      return 'AppSumo Tier 6';
   }
   return planName;
 };
@@ -182,7 +182,7 @@ const Plans: React.FC = () => {
                       required
                       id="tasks"
                       type="number"
-                      placeholder={t('15000')}
+                      placeholder={'15000'} 
                       className="rounded-sm w-1/4"
                       max={200000}
                       min={1}

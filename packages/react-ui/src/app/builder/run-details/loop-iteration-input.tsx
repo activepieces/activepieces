@@ -41,7 +41,7 @@ const LoopIterationInput = (params: LoopIterationInputProps) => {
     <>
       {!isFocused && (
         <div className="text-sm duration-300 animate-fade">
-          {t('Iteration:')}
+          {t('Iteration&#58;')}
         </div>
       )}
       <div

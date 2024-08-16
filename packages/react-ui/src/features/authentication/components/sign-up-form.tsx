@@ -222,7 +222,7 @@ const SignUpForm: React.FC = () => {
                       required
                       id="password"
                       type="password"
-                      placeholder={t('********')}
+                      placeholder={'********'}
                       className="rounded-sm"
                       ref={inputRef}
                       onBlur={() => setPasswordFocused(false)}
