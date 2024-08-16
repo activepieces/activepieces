@@ -7,7 +7,7 @@ const ShareTemplatePage = () => {
   const { templateId } = useParams<{ templateId: string }>();
 
   if (!templateId) {
-    return <div>{t('Error: templateId is missing')}</div>;
+    return <div>{t('templateId is missing')}</div>;
   }
 
   return (

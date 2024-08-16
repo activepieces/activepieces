@@ -17,7 +17,8 @@
     "create-action": "npx ts-node packages/cli/src/index.ts actions create",
     "create-trigger": "npx ts-node packages/cli/src/index.ts triggers create",
     "sync-pieces": "npx ts-node packages/cli/src/index.ts pieces sync",
-    "publish-piece": "npx ts-node tools/scripts/pieces/publish-piece.ts"
+    "publish-piece": "npx ts-node tools/scripts/pieces/publish-piece.ts",
+    "i18n:extract": "i18next 'packages/react-ui/src/**/*.{js,jsx,ts,tsx}' --config packages/react-ui/i18next-parser.config.js"
   },
   "private": true,
   "dependencies": {
