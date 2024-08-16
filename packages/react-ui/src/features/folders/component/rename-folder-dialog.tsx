@@ -19,10 +19,11 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { Folder } from '@activepieces/shared';
 
 import { foldersApi } from '../lib/folders-api';
+import { t } from 'i18next';
 
 const RenameFolderSchema = Type.Object({
   displayName: Type.String({
-    errorMessage: 'Please enter a folder name',
+    errorMessage: t('Please enter a folder name'),
   }),
 });
 
@@ -51,7 +52,7 @@ const RenameFolderDialog = ({
       setIsOpen(false);
       onRename();
       toast({
-        title: 'Renamed flow successfully',
+        title: t('Renamed flow successfully'),
       });
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
@@ -62,7 +63,7 @@ const RenameFolderDialog = ({
       <DialogTrigger className="w-full">{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Rename Folder</DialogTitle>
+          <DialogTitle>{t('Rename Folder')}</DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
@@ -74,7 +75,7 @@ const RenameFolderDialog = ({
                     {...field}
                     required
                     id="displayName"
-                    placeholder="New Folder Name"
+                    placeholder={t('New Folder Name')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -88,7 +89,7 @@ const RenameFolderDialog = ({
             )}
             <DialogFooter>
               <Button type="submit" loading={isPending}>
-                Confirm
+                {t('Confirm')}
               </Button>
             </DialogFooter>
           </form>

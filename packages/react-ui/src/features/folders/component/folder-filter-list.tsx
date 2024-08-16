@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -51,7 +52,7 @@ import { RenameFolderDialog } from './rename-folder-dialog';
 
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
-    errorMessage: 'Please enter folder name',
+    errorMessage: t('Please enter folder name'),
   }),
 });
 
@@ -129,13 +130,13 @@ const FolderItem = ({
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     <div className="flex flex-row gap-2 items-center">
                       <Pencil className="h-4 w-4" />
-                      <span>Rename</span>
+                      <span>{t('Rename')}</span>
                     </div>
                   </DropdownMenuItem>
                 </RenameFolderDialog>
                 <ConfirmationDeleteDialog
-                  title={`Delete folder ${folder.displayName}`}
-                  message="If you delete this folder, we will keep its flows and move them to Uncategorized."
+                  title={t('Delete folder {{folderName}}', { folderName: folder.displayName })}
+                  message={t('If you delete this folder, we will keep its flows and move them to Uncategorized.')}
                   mutationFn={async () => {
                     await foldersApi.delete(folder.id);
                     refetch();
@@ -145,7 +146,7 @@ const FolderItem = ({
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     <div className="flex flex-row gap-2 items-center">
                       <Trash2 className="h-4 w-4 text-destructive" />
-                      <span className="text-destructive">Delete</span>
+                      <span className="text-destructive">{t('Delete')}</span>
                     </div>
                   </DropdownMenuItem>
                 </ConfirmationDeleteDialog>
@@ -206,7 +207,7 @@ const FolderFilterList = () => {
       updateSearchParams(folder.id);
       refetch();
       toast({
-        title: 'Added folder successfully',
+        title: t('Added folder successfully'),
       });
     },
     onError: (error) => {
@@ -214,7 +215,7 @@ const FolderFilterList = () => {
         switch (error.response?.status) {
           case HttpStatusCode.Conflict: {
             form.setError('root.serverError', {
-              message: 'The folder name already exists.',
+              message: t('The folder name already exists.'),
             });
             break;
           }
@@ -230,7 +231,7 @@ const FolderFilterList = () => {
   return (
     <div className="p-2">
       <div className="flex flex-row items-center mb-2">
-        <span className="flex">Folders</span>
+        <span className="flex">{t('Folders')}</span>
         <div className="grow"></div>
         <div className="flex items-center justify-center">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -241,7 +242,7 @@ const FolderFilterList = () => {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>New Folder</DialogTitle>
+                <DialogTitle>{t('New Folder')}</DialogTitle>
               </DialogHeader>
               <FormProvider {...form}>
                 <form onSubmit={form.handleSubmit((data) => mutate(data))}>
@@ -254,7 +255,7 @@ const FolderFilterList = () => {
                           {...field}
                           required
                           id="folder"
-                          placeholder="Folder Name"
+                          placeholder={t('Folder Name')}
                           className="rounded-sm"
                         />
                         <FormMessage />
@@ -268,7 +269,7 @@ const FolderFilterList = () => {
                   )}
                   <DialogFooter>
                     <Button type="submit" loading={isPending}>
-                      Confirm
+                      {t('Confirm')}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -285,7 +286,7 @@ const FolderFilterList = () => {
           })}
           onClick={() => updateSearchParams(undefined)}
         >
-          <TextWithIcon icon={<Folder size={18} />} text="All flows" />
+          <TextWithIcon icon={<Folder size={18} />} text={t('All flows')} />
           <div className="grow"></div>
           <span className="text-muted-foreground">{allFlowsCount}</span>
         </Button>
@@ -296,7 +297,7 @@ const FolderFilterList = () => {
           })}
           onClick={() => updateSearchParams('NULL')}
         >
-          <TextWithIcon icon={<Folder size={18} />} text="Uncategorized" />
+          <TextWithIcon icon={<Folder size={18} />} text={t('Uncategorized')} />
           <div className="grow"></div>
           <div className="flex flex-row -space-x-4">
             <span className="visible text-muted-foreground group-hover:invisible">

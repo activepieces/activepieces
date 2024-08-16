@@ -1,6 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
+import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -62,8 +63,8 @@ const ConnectGitDialog = () => {
     onSuccess: (repo) => {
       refetch();
       toast({
-        title: 'Success',
-        description: 'Connected successfully',
+        title: t('Success'),
+        description: t('Connected successfully'),
         duration: 3000,
       });
     },
@@ -81,14 +82,14 @@ const ConnectGitDialog = () => {
         <Dialog>
           <DialogTrigger asChild>
             <Button size={'sm'} className="w-32">
-              Connect Git
+              {t('Connect Git')}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Connect Git</DialogTitle>
+              <DialogTitle>{t('Connect Git')}</DialogTitle>
               <DialogDescription>
-                Start by connecting an empty git repository to your project.
+                {t('Start by connecting an empty git repository to your project.')}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -97,7 +98,7 @@ const ConnectGitDialog = () => {
                 name="remoteUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Remote URL</FormLabel>
+                    <FormLabel>{t('Remote URL')}</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="git@github.com:activepieces/activepieces.git"
@@ -112,7 +113,7 @@ const ConnectGitDialog = () => {
                 name="branch"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Branch</FormLabel>
+                    <FormLabel>{t('Branch')}</FormLabel>
                     <FormControl>
                       <Input placeholder="main" {...field} />
                     </FormControl>
@@ -124,13 +125,12 @@ const ConnectGitDialog = () => {
                 name="slug"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Folder</FormLabel>
+                    <FormLabel>{t('Folder')}</FormLabel>
                     <FormControl>
                       <Input placeholder="activepieces" {...field} />
                     </FormControl>
                     <FormDescription>
-                      Folder name is the name of the folder where the project
-                      will be stored or fetched.
+                      {t('Folder name is the name of the folder where the project will be stored or fetched.')}
                     </FormDescription>
                   </FormItem>
                 )}
@@ -140,7 +140,7 @@ const ConnectGitDialog = () => {
                 name="sshPrivateKey"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>SSH Private Key</FormLabel>
+                    <FormLabel>{t('SSH Private Key')}</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
@@ -148,7 +148,7 @@ const ConnectGitDialog = () => {
                       />
                     </FormControl>
                     <FormDescription>
-                      The SSH private key to use for authentication.
+                      {t('The SSH private key to use for authentication.')}
                     </FormDescription>
                   </FormItem>
                 )}
@@ -161,7 +161,7 @@ const ConnectGitDialog = () => {
                 onClick={form.handleSubmit((data) => mutate(data))}
                 loading={isPending}
               >
-                Connect
+                {t('Connect')}
               </Button>
             </DialogFooter>
           </DialogContent>
