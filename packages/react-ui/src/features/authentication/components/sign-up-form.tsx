@@ -6,6 +6,7 @@ import { Check, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -25,7 +26,6 @@ import {
   AuthenticationResponse,
   SignUpRequest,
 } from '@activepieces/shared';
-
 import { generatePasswordValidation } from '../lib/password-validation-utils';
 
 const SignUpSchema = Type.Object({
@@ -62,7 +62,7 @@ const PasswordValidator = ({ password }: { password: string }) => {
             ) : (
               <X className="text-destructive" />
             )}
-            <span>{rule.label}</span>
+            <span>{t(rule.label)}</span>
           </div>
         );
       })}
@@ -73,6 +73,7 @@ const PasswordValidator = ({ password }: { password: string }) => {
 const SignUpForm: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
   const { data: isCloudPlatform } = flagsHooks.useFlag<boolean>(
     ApFlagId.IS_CLOUD_PLATFORM,
     queryClient,
@@ -115,13 +116,13 @@ const SignUpForm: React.FC = () => {
         switch (error.response?.status) {
           case HttpStatusCode.Conflict: {
             form.setError('root.serverError', {
-              message: 'Email is already used',
+              message: t('Email is already used'),
             });
             break;
           }
           default: {
             form.setError('root.serverError', {
-              message: 'Something went wrong, please try again later',
+              message: t('Something went wrong, please try again later'),
             });
             break;
           }
@@ -152,13 +153,13 @@ const SignUpForm: React.FC = () => {
               name="firstName"
               render={({ field }) => (
                 <FormItem className="w-full grid space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">{t('First Name')}</Label>
                   <Input
                     {...field}
                     required
                     id="firstName"
                     type="text"
-                    placeholder="John"
+                    placeholder={'John'}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -170,13 +171,13 @@ const SignUpForm: React.FC = () => {
               name="lastName"
               render={({ field }) => (
                 <FormItem className="w-full grid space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">{t('Last Name')}</Label>
                   <Input
                     {...field}
                     required
                     id="lastName"
                     type="text"
-                    placeholder="Doe"
+                    placeholder={'Doe'}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -189,13 +190,13 @@ const SignUpForm: React.FC = () => {
             name="email"
             render={({ field }) => (
               <FormItem className="grid space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('Email')}</Label>
                 <Input
                   {...field}
                   required
                   id="email"
                   type="email"
-                  placeholder="email@activepieces.com"
+                  placeholder={'email@activepieces.com'}
                   className="rounded-sm"
                 />
                 <FormMessage />
@@ -211,7 +212,7 @@ const SignUpForm: React.FC = () => {
                 onClick={() => inputRef?.current?.focus()}
                 onFocus={() => setPasswordFocused(true)}
               >
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('Password')}</Label>
                 <Popover open={isPasswordFocused}>
                   <PopoverTrigger asChild>
                     <Input
@@ -220,7 +221,7 @@ const SignUpForm: React.FC = () => {
                       required
                       id="password"
                       type="password"
-                      placeholder="********"
+                      placeholder={t('********')}
                       className="rounded-sm"
                       ref={inputRef}
                       onBlur={() => setPasswordFocused(false)}
@@ -244,38 +245,38 @@ const SignUpForm: React.FC = () => {
             loading={isPending}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
           >
-            Sign up
+            {t('Sign up')}
           </Button>
         </form>
       </Form>
       {isCloudPlatform && (
         <div className="mt-4 text-center text-sm">
-          By creating an account, you agree to our
+          {t('By creating an account, you agree to our')}
           <Link
             to={termsOfServiceUrl || ''}
             target="_blank"
             className="px-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
           >
-            terms of service
+            {t('terms of service')}
           </Link>
-          and
+          {t('and')}
           <Link
             to={privacyPolicyUrl || ''}
             target="_blank"
             className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
           >
-            privacy policy
+            {t('privacy policy')}
           </Link>
           .
         </div>
       )}
       <div className="mt-4 text-center text-sm">
-        Have an account?
+        {t('Have an account?')}
         <Link
           to="/sign-in"
           className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
         >
-          Sign in
+          {t('Sign in')}
         </Link>
       </div>
     </>

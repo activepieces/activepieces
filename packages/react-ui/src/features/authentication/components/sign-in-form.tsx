@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
-
+import { t } from 'i18next';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -14,12 +14,13 @@ import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { AuthenticationResponse, SignInRequest } from '@activepieces/shared';
 
+
 const SignInSchema = Type.Object({
   email: Type.String({
-    errorMessage: 'Email is required',
+    errorMessage: t('Email is required'),
   }),
   password: Type.String({
-    errorMessage: 'Password is required',
+    errorMessage: t('Password is required'),
   }),
 });
 
@@ -47,13 +48,13 @@ const SignInForm: React.FC = () => {
         switch (error.response?.status) {
           case HttpStatusCode.Unauthorized: {
             form.setError('root.serverError', {
-              message: 'Invalid email or password',
+              message: t('Invalid email or password'),
             });
             break;
           }
           default: {
             form.setError('root.serverError', {
-              message: 'Something went wrong, please try again later',
+              message: t('Something went wrong, please try again later'),
             });
             break;
           }
@@ -79,13 +80,13 @@ const SignInForm: React.FC = () => {
             name="email"
             render={({ field }) => (
               <FormItem className="grid space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('Email')}</Label>
                 <Input
                   {...field}
                   required
                   id="email"
                   type="text"
-                  placeholder="email@activepieces.com"
+                  placeholder={t('email@activepieces.com')}
                   className="rounded-sm"
                 />
                 <FormMessage />
@@ -98,12 +99,12 @@ const SignInForm: React.FC = () => {
             render={({ field }) => (
               <FormItem className="grid space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t('Password')}</Label>
                   <Link
                     to="/forget-password"
                     className="text-muted-foreground text-sm hover:text-primary transition-all duration-200"
                   >
-                    Forgot your password?
+                    {t('Forgot your password?')}
                   </Link>
                 </div>
                 <Input
@@ -111,7 +112,7 @@ const SignInForm: React.FC = () => {
                   required
                   id="password"
                   type="password"
-                  placeholder="********"
+                  placeholder={'********'}
                   className="rounded-sm"
                 />
                 <FormMessage />
@@ -127,18 +128,18 @@ const SignInForm: React.FC = () => {
             loading={isPending}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
           >
-            Sign in
+            {t('Sign in')}
           </Button>
         </form>
       </Form>
 
       <div className="mt-4 text-center text-sm">
-        Don&apos;t have an account?
+        {t("Don't have an account?")}
         <Link
           to="/sign-up"
           className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
         >
-          Sign up
+          {t('Sign up')}
         </Link>
       </div>
     </>

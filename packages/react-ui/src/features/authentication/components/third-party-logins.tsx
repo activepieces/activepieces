@@ -17,6 +17,8 @@ import { flagsHooks } from '../../../hooks/flags-hooks';
 import { authenticationApi } from '../../../lib/authentication-api';
 import { authenticationSession } from '../../../lib/authentication-session';
 import { oauth2Utils } from '../../../lib/oauth2-utils';
+import { t } from 'i18next';
+
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
@@ -72,6 +74,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   const signInWithSaml = () =>
     (window.location.href = '/api/v1/authn/saml/login');
 
+  const signUpOrIn = isSignUp ? t('Sign up') : t('Sign in');
   return (
     <>
       <div className="flex flex-col gap-4">
@@ -84,8 +87,8 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
             }
           >
             <ThirdPartyIcon icon={GoogleIcon} />
-            Sign {isSignUp ? 'up' : 'in'} with Google
-          </Button>
+            {t(`Sign in With Google`)}
+            </Button>
         )}
         {thirdPartyAuthProviders?.github && (
           <Button
@@ -96,7 +99,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
             }
           >
             <ThirdPartyIcon icon={Github} />
-            Sign {isSignUp ? 'up' : 'in'} with Github
+            {t('Sign in With Github')}
           </Button>
         )}
         {thirdPartyAuthProviders?.saml && (
@@ -106,7 +109,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
             onClick={signInWithSaml}
           >
             <ThirdPartyIcon icon={SamlIcon} />
-            Sign {isSignUp ? 'up' : 'in'} with SAML
+            {t('Sign in With SAML')}
           </Button>
         )}
       </div>
@@ -115,7 +118,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
       thirdPartyAuthProviders?.saml ? (
         <div className="my-4 flex w-full flex-row items-center">
           <div className="w-1/2 border" />
-          <span className="mx-2 text-sm">OR</span>
+          <span className="mx-2 text-sm">{t('OR')}</span>
           <div className="w-1/2 border" />
         </div>
       ) : null}

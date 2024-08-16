@@ -5,7 +5,7 @@ import { MailCheck } from 'lucide-react';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +22,6 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
-import { t } from 'i18next';
 
 const FormSchema = Type.Object({
   email: Type.String({
