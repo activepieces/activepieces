@@ -39,6 +39,8 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { requestTrialApi } from '@/lib/request-trial-api';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
+import { t } from 'i18next';
+
 const logos = [
   'https://www.activepieces.com/logos/alan.svg',
   'https://www.activepieces.com/logos/contentful.svg',
@@ -48,40 +50,40 @@ const logos = [
 
 const features = [
   {
-    label: 'Multiple Projects',
+    label: t('Multiple Projects'),
     key: `PROJECTS`,
   },
-  { label: 'Brand Activepieces', key: 'BRANDING' },
-  { label: 'Control Pieces', key: 'PIECES' },
-  { label: 'Enterprise Pieces', key: 'ENTERPRISE_PIECES' },
+  { label: t('Brand Activepieces'), key: 'BRANDING' },
+  { label: t('Control Pieces'), key: 'PIECES' },
+  { label: t('Enterprise Pieces'), key: 'ENTERPRISE_PIECES' },
   {
-    label: 'Custom Templates',
+    label: t('Custom Templates'),
     key: `TEMPLATES`,
   },
-  { label: 'Access Full API', key: `API` },
-  { label: 'Single Sign On', key: `SSO` },
-  { label: 'Audit Logs', key: `AUDIT_LOGS` },
+  { label: t('Access Full API'), key: `API` },
+  { label: t('Single Sign On'), key: `SSO` },
+  { label: t('Audit Logs'), key: `AUDIT_LOGS` },
   {
-    label: 'Team Collaboration via Git',
+    label: t('Team Collaboration via Git'),
     key: `GIT_SYNC`,
   },
   {
-    label: 'Alerts on Failed Runs',
+    label: t('Alerts on Failed Runs'),
     key: `ISSUES`,
   },
 ];
 
 const goals = [
   {
-    label: 'Internal automations in my company',
+    label: t('Internal automations in my company'),
     key: `INTERNAL_AUTOMATIONS`,
   },
   {
-    label: 'Embed Activepieces in our SaaS product',
+    label: t('Embed Activepieces in our SaaS product'),
     key: `EMBED_ACTIVEPIECES`,
   },
   {
-    label: 'Resell Activepieces to clients',
+    label: t('Resell Activepieces to clients'),
     key: `RESELL_ACTIVEPIECES`,
   },
 ];
@@ -96,19 +98,19 @@ const numberOfEmployeesOptions = [
 
 const formSchema = Type.Object({
   fullName: Type.String({
-    errorMessage: 'Name is required',
+    errorMessage: t('Name is required'),
   }),
   email: Type.String({
-    errorMessage: 'Email is required',
+    errorMessage: t('Email is required'),
   }),
   companyName: Type.String({
-    errorMessage: 'Company name is required',
+    errorMessage: t('Company name is required'),
   }),
   numberOfEmployees: Type.String({
-    errorMessage: 'Number of employees is required',
+    errorMessage: t('Number of employees is required'),
   }),
   goal: Type.String({
-    errorMessage: 'Goal is required',
+    errorMessage: t('Goal is required'),
   }),
 });
 type FormSchema = Static<typeof formSchema>;
@@ -143,7 +145,7 @@ export const RequestTrial = () => {
       switch (edition) {
         case ApEdition.CLOUD: {
           return {
-            message: 'Our sales team will be in contact with you soon.',
+            message: t('Our sales team will be in contact with you soon.'),
           };
         }
         case ApEdition.ENTERPRISE:
@@ -151,17 +153,17 @@ export const RequestTrial = () => {
           await requestTrialApi.createKey(request);
           return {
             message:
-              'Please check your email for your trial key and further instructions.',
+              t('Please check your email for your trial key and further instructions.'),
           };
         }
         default: {
-          throw new Error('Unexpected edition ' + edition);
+          throw new Error(t('Unexpected edition') + edition);
         }
       }
     },
     onSuccess: (response) => {
       toast({
-        title: 'Success',
+        title: t('Success'),
         description: response.message,
         duration: 3000,
       });
@@ -170,7 +172,7 @@ export const RequestTrial = () => {
     onError: (error) => {
       if (api.isError(error) && error.response?.status === 409) {
         form.setError('root.serverError', {
-          message: 'Email is already used for a trial',
+          message: t('Email is already used for a trial'),
         });
         return;
       }
@@ -185,12 +187,12 @@ export const RequestTrial = () => {
       onOpenChange={(open) => setIsOpen(open)}
     >
       <DrawerTrigger asChild>
-        <Button>Request Trial</Button>
+        <Button>{t('Request Trial')}</Button>
       </DrawerTrigger>
       <DrawerContent className="h-screen top-0 right-0 left-auto mt-0 w-[600px] rounded-none py-2 px-6 gap-6 flex">
         <DrawerHeader className="mt-4">
           <DrawerTitle className="text-2xl">
-            14-Day Enterprise Trial
+            {t('14-Day Enterprise Trial')}
           </DrawerTitle>
         </DrawerHeader>
         <Form {...form}>
@@ -201,7 +203,7 @@ export const RequestTrial = () => {
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{t('Name')}</FormLabel>
                     <FormControl>
                       <Input placeholder="Bertram Gilfoyle" {...field} />
                     </FormControl>
@@ -213,7 +215,7 @@ export const RequestTrial = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Work Email</FormLabel>
+                    <FormLabel>{t('Work Email')}</FormLabel>
                     <FormControl>
                       <Input placeholder="gilfoyle@piedpiper.com" {...field} />
                     </FormControl>
@@ -225,7 +227,7 @@ export const RequestTrial = () => {
                 name="companyName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Company Name</FormLabel>
+                    <FormLabel>{t('Company Name')}</FormLabel>
                     <FormControl>
                       <Input placeholder="Pied Piper" {...field} />
                     </FormControl>
@@ -237,7 +239,7 @@ export const RequestTrial = () => {
                 name="numberOfEmployees"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Number of Employees</FormLabel>
+                    <FormLabel>{t('Number of Employees')}</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
@@ -266,7 +268,7 @@ export const RequestTrial = () => {
               name="goal"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Goal</FormLabel>
+                  <FormLabel>{t('Goal')}</FormLabel>
                   <FormControl>
                     <Select
                       onValueChange={field.onChange}
@@ -297,7 +299,7 @@ export const RequestTrial = () => {
           </form>
         </Form>
         <div className="flex flex-col">
-          <div className="text-lg">Try Enterprise to access:</div>
+          <div className="text-lg">{t('Try Enterprise to access')}:</div>
           <div className="grid grid-cols-2 mt-4 gap-y-2 gap-x-6">
             {features.map((feature) => (
               <div className="flex gap-2 items-center my-3" key={feature.key}>
@@ -309,7 +311,7 @@ export const RequestTrial = () => {
         </div>
         <div className="flex flex-col gap-5 mt-6 items-center justify-center">
           <div className="text-lg text-muted-foreground font-semibold">
-            Deploy your automations securely with Activepieces
+            {t('Deploy your automations securely with Activepieces')}
           </div>
           <div className="flex flex-wrap gap-5 items-center justify-center">
             {logos.map((logo, index) => (
@@ -325,11 +327,11 @@ export const RequestTrial = () => {
             onClick={form.handleSubmit((data) => mutate(data))}
             loading={isPending}
           >
-            Submit
+            {t('Submit')}
           </Button>
           <DrawerClose asChild>
             <Button variant="outline" size={'lg'}>
-              Cancel
+              {t('Cancel')}
             </Button>
           </DrawerClose>
         </DrawerFooter>

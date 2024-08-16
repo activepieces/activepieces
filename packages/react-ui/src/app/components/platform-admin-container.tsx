@@ -14,6 +14,7 @@ import { ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { Sidebar, SidebarLink } from './sidebar';
+import { t } from 'i18next';
 
 type PlatformAdminContainerProps = {
   children: React.ReactNode;
@@ -35,37 +36,37 @@ export function PlatformAdminContainer({
   const links: SidebarLink[] = [
     {
       to: '/platform/projects',
-      label: 'Projects',
+      label: t('Projects'),
       icon: LayoutGrid,
       locked: isLocked(!platform.manageProjectsEnabled),
     },
     {
       to: '/platform/audit-logs',
-      label: 'Audit Logs',
+      label: t('Audit Logs'),
       icon: LogsIcon,
       locked: isLocked(!platform.auditLogEnabled),
     },
     {
       to: '/platform/pieces',
-      label: 'Pieces',
+      label: t('Pieces'),
       icon: Puzzle,
       locked: isLocked(!platform.managePiecesEnabled),
     },
     {
       to: '/platform/templates',
-      label: 'Templates',
+      label: t('Templates'),
       icon: Workflow,
       locked: isLocked(!platform.manageTemplatesEnabled),
     },
     {
       to: '/platform/users',
-      label: 'Users',
+      label: t('Users'),
       icon: UserCog,
       locked: isLocked(false),
     },
     {
       to: '/platform/settings',
-      label: 'Settings',
+      label: t('Settings'),
       icon: Wrench,
     },
   ];

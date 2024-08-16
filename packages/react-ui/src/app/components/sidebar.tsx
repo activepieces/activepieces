@@ -11,6 +11,7 @@ import {
 import { theme } from '@/lib/theme';
 
 import { Header } from './header';
+import { t } from 'i18next';
 type Link = {
   icon: React.ReactNode;
   label: string;
@@ -86,7 +87,7 @@ export function Sidebar({
             <div className="h-[48px] items-center justify-center ">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <img src={theme.logoIconUrl} alt="logo" />
+                  <img src={theme.logoIconUrl} alt={t('logo')} />
                 </TooltipTrigger>
                 <TooltipContent side="right">
                   {theme.websiteName}
