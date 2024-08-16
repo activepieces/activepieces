@@ -7,6 +7,7 @@ import { useControllableState } from '@radix-ui/react-use-controllable-state';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import React, { ComponentPropsWithoutRef } from 'react';
 import { createPortal } from 'react-dom';
+import { t } from 'i18next'; // Use t function from react-i18next
 
 import { cn } from '@/lib/utils';
 
@@ -61,7 +62,7 @@ const useMultiSelect = () => {
   const context = React.useContext(MultiSelectContext);
 
   if (!context) {
-    throw new Error('useMultiSelect must be used within MultiSelectProvider');
+    throw new Error(t('useMultiSelect must be used within MultiSelectProvider'));
   }
 
   return context;
@@ -259,7 +260,7 @@ const MultiSelectValue = React.forwardRef<
     if (!value.length || !firstRendered) {
       return (
         <span className="pointer-events-none text-muted-foreground">
-          {placeholder}
+          {t('Your selection')}
         </span>
       );
     }
@@ -319,7 +320,7 @@ const MultiSelectValue = React.forwardRef<
           })}
           {renderRemain ? (
             <span className="text-muted-foreground text-xs leading-4 py-.5">
-              +{renderRemain}
+              {t('+{{renderRemain}} more', { renderRemain })}
             </span>
           ) : null}
         </div>

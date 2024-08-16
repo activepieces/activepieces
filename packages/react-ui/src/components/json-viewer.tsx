@@ -1,4 +1,5 @@
 import { Copy, Download } from 'lucide-react';
+import { t } from 'i18next';
 import React from 'react';
 import ReactJson from 'react-json-view';
 
@@ -14,7 +15,7 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
   const handleCopy = () => {
     navigator.clipboard.writeText(JSON.stringify(json, null, 2));
     toast({
-      title: 'Copied to clipboard',
+      title: t('Copied to clipboard'),
       duration: 1000,
     });
   };

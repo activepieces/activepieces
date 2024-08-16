@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { Check, Copy } from 'lucide-react';
-
 import { toast } from '@/components/ui/use-toast';
+import { t } from 'i18next';
 
 type CopyToClipboardInputProps = {
   textToCopy: string;
@@ -15,7 +15,7 @@ const CopyToClipboardInput = ({ textToCopy }: CopyToClipboardInputProps) => {
     },
     onError: () => {
       toast({
-        title: 'Failed to copy to clipboard',
+        title: t('Failed to copy to clipboard'),
         duration: 3000,
       });
     },
