@@ -37,6 +37,7 @@ import {
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../lib/flow-run-utils';
+import { t } from 'i18next';
 
 const fetchData = async (
   params: {
@@ -85,7 +86,7 @@ export default function FlowRunsTable() {
       {
         accessorKey: 'flowId',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Flow" />
+          <DataTableColumnHeader column={column} title={t('Flow')} />
         ),
         cell: ({ row }) => {
           return (
@@ -96,7 +97,7 @@ export default function FlowRunsTable() {
       {
         accessorKey: 'status',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Status" />
+          <DataTableColumnHeader column={column} title={t('Status')} />
         ),
         cell: ({ row }) => {
           const status = row.original.status;
@@ -115,7 +116,7 @@ export default function FlowRunsTable() {
       {
         accessorKey: 'created',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Start Time" />
+          <DataTableColumnHeader column={column} title={t('Start Time')} />
         ),
         cell: ({ row }) => {
           return (
@@ -128,7 +129,7 @@ export default function FlowRunsTable() {
       {
         accessorKey: 'duration',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Duration" />
+          <DataTableColumnHeader column={column} title={t('Duration')} />
         ),
         cell: ({ row }) => {
           return (
@@ -141,7 +142,7 @@ export default function FlowRunsTable() {
       {
         accessorKey: 'actions',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="" />
+          <DataTableColumnHeader column={column} title={t('Actions')} />
         ),
         cell: ({ row }) => {
           return (
@@ -168,7 +169,7 @@ export default function FlowRunsTable() {
                     >
                       <div className="flex flex-row gap-2 items-center">
                         <RefreshCw className="h-4 w-4" />
-                        <span>Retry on latest version</span>
+                        <span>{t('Retry on latest version')}</span>
                       </div>
                     </DropdownMenuItem>
                     {isFailedState(row.original.status) && (
@@ -182,7 +183,7 @@ export default function FlowRunsTable() {
                       >
                         <div className="flex flex-row gap-2 items-center">
                           <RotateCcw className="h-4 w-4" />
-                          <span>Retry from failed step</span>
+                          <span>{t('Retry from failed step')}</span>
                         </div>
                       </DropdownMenuItem>
                     )}
@@ -201,7 +202,7 @@ export default function FlowRunsTable() {
     () => [
       {
         type: 'select',
-        title: 'Flow name',
+        title: t('Flow name'),
         accessorKey: 'flowId',
         options:
           flows?.map((flow) => ({
@@ -212,7 +213,7 @@ export default function FlowRunsTable() {
       } as const,
       {
         type: 'select',
-        title: 'Status',
+        title: t('Status'),
         accessorKey: 'status',
         options: Object.values(FlowRunStatus)
           .filter((status) => status !== FlowRunStatus.STOPPED)
@@ -227,7 +228,7 @@ export default function FlowRunsTable() {
       } as const,
       {
         type: 'date',
-        title: 'Created',
+        title: t('Created'),
         accessorKey: 'created',
         options: [],
         icon: CheckIcon,
@@ -245,7 +246,7 @@ export default function FlowRunsTable() {
   return (
     <div className="flex-col w-full">
       <div className="mb-4 flex">
-        <h1 className="text-3xl font-bold">Flow Runs</h1>
+        <h1 className="text-3xl font-bold">{t('Flow Runs')}</h1>
         <div className="ml-auto"></div>
       </div>
       <DataTable

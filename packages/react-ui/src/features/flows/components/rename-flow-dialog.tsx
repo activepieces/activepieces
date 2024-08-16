@@ -2,6 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -57,8 +58,8 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
       setIsRenameDialogOpen(false);
       onRename(renameFlowForm.getValues().displayName);
       toast({
-        title: 'Success',
-        description: 'Flow has been renamed.',
+        title: t('Success'),
+        description: t('Flow has been renamed.'),
         duration: 3000,
       });
     },
@@ -73,7 +74,7 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Rename Flow</DialogTitle>
+          <DialogTitle>{t('Rename Flow')}</DialogTitle>
         </DialogHeader>
         <Form {...renameFlowForm}>
           <form
@@ -90,11 +91,11 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
               name="displayName"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="displayName">Name</Label>
+                  <Label htmlFor="displayName">{t('Name')}</Label>
                   <Input
                     {...field}
                     id="displayName"
-                    placeholder="New Flow Name"
+                    placeholder={t('New Flow Name')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -103,10 +104,10 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
             />
             {renameFlowForm?.formState?.errors?.root?.serverError && (
               <FormMessage>
-                {renameFlowForm.formState.errors.root.serverError.message}
+                {renameFlowForm.formState.errors.root.serverError.message} 
               </FormMessage>
             )}
-            <Button loading={isPending}>Confirm</Button>
+            <Button loading={isPending}>{t('Confirm')}</Button>
           </form>
         </Form>
       </DialogContent>

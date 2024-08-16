@@ -1,13 +1,12 @@
 import { QuestionMarkIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
-
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 import { ApFlagId, FlowRun, FlowRunStatus } from '@activepieces/shared';
-
 import { flowRunUtils } from '../lib/flow-run-utils';
+import { t } from 'i18next';
 
 type RunDetailsBarProps = {
   run?: FlowRun;
@@ -20,21 +19,22 @@ function getStatusText(status: FlowRunStatus, timeout: number) {
   switch (status) {
     case FlowRunStatus.STOPPED:
     case FlowRunStatus.SUCCEEDED:
-      return 'Run Succeeded';
+      return t('Run Succeeded');
     case FlowRunStatus.FAILED:
-      return 'Run Failed';
+      return t('Run Failed');
     case FlowRunStatus.PAUSED:
-      return 'Flow Run is paused';
+      return t('Flow Run is paused');
     case FlowRunStatus.QUOTA_EXCEEDED:
-      return 'Run Failed due to quota exceeded';
+      return t('Run Failed due to quota exceeded');
     case FlowRunStatus.RUNNING:
-      return 'Running';
+      return t('Running');
     case FlowRunStatus.TIMEOUT:
-      return `Run exceeded ${timeout} seconds, try to optimize your steps.`;
+      return t('Run exceeded {{timeout}} seconds, try to optimize your steps.', { timeout });
     case FlowRunStatus.INTERNAL_ERROR:
-      return 'Run failed for an unknown reason, contact support.';
+      return t('Run failed for an unknown reason, contact support.');
   }
 }
+
 const RunDetailsBar = React.memo(
   ({ run, canExitRun, exitRun, isLoading }: RunDetailsBarProps) => {
     const { Icon, variant } = run
@@ -68,7 +68,7 @@ const RunDetailsBar = React.memo(
             {getStatusText(run.status, timeoutSeconds ?? -1)}
           </div>
           <div className="text-xs text-muted-foreground">
-            {run?.id ?? 'Unknown'}
+            {run?.id ?? t('Unknown')}
           </div>
         </div>
         {canExitRun && (
@@ -79,7 +79,7 @@ const RunDetailsBar = React.memo(
             onKeyboardShortcut={() => exitRun()}
             keyboardShortcut="Esc"
           >
-            Exit Run
+            {t('Exit Run')}
           </Button>
         )}
       </div>
