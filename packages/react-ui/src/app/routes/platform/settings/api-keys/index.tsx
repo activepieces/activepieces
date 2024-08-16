@@ -1,7 +1,7 @@
 import { ColumnDef } from '@tanstack/react-table';
+import { t } from 'i18next';
 import { Plus, Trash } from 'lucide-react';
 import { useState } from 'react';
-import { t } from 'i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { NewApiKeyDialog } from '@/app/routes/platform/settings/api-keys/new-api-key-dialog';
@@ -68,7 +68,9 @@ const ApiKeysPage = () => {
     <LockedFeatureGuard
       locked={!platform.apiKeysEnabled}
       lockTitle={t('Enable API Keys')}
-      lockDescription={t('Create and manage API keys to access Activepieces APIs.')}
+      lockDescription={t(
+        'Create and manage API keys to access Activepieces APIs.',
+      )}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/api-keys.mp4"
     >
       <div className="flex-col w-full">

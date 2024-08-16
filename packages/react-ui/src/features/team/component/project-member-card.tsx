@@ -1,5 +1,6 @@
 import { AvatarFallback } from '@radix-ui/react-avatar';
 import { PopoverContent } from '@radix-ui/react-popover';
+import { t } from 'i18next';
 import { ChevronDownIcon, Trash } from 'lucide-react';
 
 import { Authorization } from '@/components/authorization';
@@ -26,7 +27,6 @@ import {
 import { Popover, PopoverTrigger } from '../../../components/ui/popover';
 import { projectMembersApi } from '../lib/project-members-api';
 import { projectMembersHooks } from '../lib/project-members-hooks';
-import { t } from 'i18next';
 
 export function ProjectMemberCard({
   member,
@@ -122,7 +122,9 @@ export function ProjectMemberCard({
           }
         >
           <ConfirmationDeleteDialog
-            title={`${t('Remove')} ${member.user.firstName} ${member.user.lastName}`}
+            title={`${t('Remove')} ${member.user.firstName} ${
+              member.user.lastName
+            }`}
             message={t('Are you sure you want to remove this member?')}
             mutationFn={() => deleteMember()}
             entityName={`${member.user.firstName} ${member.user.lastName}`}

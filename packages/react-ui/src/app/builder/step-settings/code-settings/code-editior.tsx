@@ -2,6 +2,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
+import { t } from 'i18next';
 import { BetweenHorizontalEnd, Package } from 'lucide-react';
 import { useState } from 'react';
 
@@ -9,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { SourceCode, deepMergeAndCast } from '@activepieces/shared';
-import { t } from 'i18next';
 
 import { AddNpmDialog } from './add-npm-dialog';
 

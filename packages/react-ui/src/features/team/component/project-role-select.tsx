@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { UseFormReturn } from 'react-hook-form';
 import { t } from 'i18next';
+import { UseFormReturn } from 'react-hook-form';
 
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';

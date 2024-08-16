@@ -1,7 +1,7 @@
 import { ColumnDef } from '@tanstack/react-table';
+import { t } from 'i18next';
 import { Plus, Trash } from 'lucide-react';
 import { useState } from 'react';
-import { t } from 'i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { NewSigningKeyDialog } from '@/app/routes/platform/settings/signing-keys/new-signing-key-dialog';
@@ -69,7 +69,7 @@ const SigningKeysPage = () => {
       locked={!platform.embeddingEnabled}
       lockTitle={t('Unlock Embedding Through JS SDK')}
       lockDescription={t(
-        'Enable signing keys to access embedding functionalities.'
+        'Enable signing keys to access embedding functionalities.',
       )}
     >
       <div className="flex-col w-full">
@@ -79,7 +79,7 @@ const SigningKeysPage = () => {
               <h1 className="text-2xl font-bold w-full">{t('Signing Keys')}</h1>
               <span className="text-sm text-muted-foreground max-w-[500px]">
                 {t(
-                  'Use the JavaScript SDK to authenticate users with signing keys. Refer the documentation for details.'
+                  'Use the JavaScript SDK to authenticate users with signing keys. Refer the documentation for details.',
                 )}
               </span>
             </div>
@@ -104,7 +104,7 @@ const SigningKeysPage = () => {
                 <ConfirmationDeleteDialog
                   title={t('Delete Signing Key')}
                   message={t(
-                    'Are you sure you want to delete this signing key?'
+                    'Are you sure you want to delete this signing key?',
                   )}
                   entityName={t('Signing Key')}
                   mutationFn={async () => {

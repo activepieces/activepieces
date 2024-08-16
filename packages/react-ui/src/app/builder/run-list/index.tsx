@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import React from 'react';
 import { t } from 'i18next';
+import React from 'react';
 
 import {
   LeftSideBarType,

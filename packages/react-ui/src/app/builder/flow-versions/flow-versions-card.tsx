@@ -1,8 +1,8 @@
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { Eye, EyeIcon, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
-import { t } from 'i18next';
 
 import {
   LeftSideBarType,
@@ -73,7 +73,10 @@ const UseAsDraftDropdownMenuOption = ({
           <DialogTitle>{t('Are you sure?')}</DialogTitle>
           <DialogDescription>
             {t('Your current draft version will be overwritten with')}{' '}
-            <span className="font-semibold">{t('version #')}{versionIndex + 1}</span>
+            <span className="font-semibold">
+              {t('version #')}
+              {versionIndex + 1}
+            </span>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="justify-end">

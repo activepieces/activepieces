@@ -1,6 +1,7 @@
+import { t } from 'i18next';
+
 import { ChangePasswordForm } from '@/features/authentication/components/change-password';
 import { theme } from '@/lib/theme';
-import { t } from 'i18next';
 
 const ChangePasswordPage = () => {
   return (

@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { LockKeyhole } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -11,7 +12,6 @@ import {
 import { theme } from '@/lib/theme';
 
 import { Header } from './header';
-import { t } from 'i18next';
 type Link = {
   icon: React.ReactNode;
   label: string;

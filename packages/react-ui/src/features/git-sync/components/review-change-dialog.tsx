@@ -1,8 +1,8 @@
 import { UpdateIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { Minus, Plus } from 'lucide-react';
 import React from 'react';
-import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -35,7 +35,9 @@ const GitChange = React.memo(({ change }: GitChangeProps) => {
         <div className="flex gap-4 text-success-300 justify-center items-center">
           <Plus className="w-4 h-4"></Plus>
           <span className="flex-grow items-center justify-center">
-            {t('Create &quot;{{flowName}}&quot; Flow', { flowName: change.flow.displayName })}
+            {t('Create &quot;{{flowName}}&quot; Flow', {
+              flowName: change.flow.displayName,
+            })}
           </span>
         </div>
       )}
@@ -43,7 +45,9 @@ const GitChange = React.memo(({ change }: GitChangeProps) => {
         <div className="flex gap-4 text-warn-dark justify-center items-center">
           <UpdateIcon className="w-4 h-4"></UpdateIcon>
           <span className="flex-grow items-center justify-center">
-            {t('Update &quot;{{flowName}}&quot; Flow', { flowName: change.targetFlow.displayName })}
+            {t('Update &quot;{{flowName}}&quot; Flow', {
+              flowName: change.targetFlow.displayName,
+            })}
           </span>
         </div>
       )}
@@ -51,7 +55,9 @@ const GitChange = React.memo(({ change }: GitChangeProps) => {
         <div className="flex gap-4 text-destructive-300 justify-center items-center">
           <Minus className="w-4 h-4"></Minus>
           <span className="flex-grow items-center justify-center">
-            {t('Delete &quot;{{flowName}}&quot; Flow', { flowName: change.flow.displayName })}
+            {t('Delete &quot;{{flowName}}&quot; Flow', {
+              flowName: change.flow.displayName,
+            })}
           </span>
         </div>
       )}

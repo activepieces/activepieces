@@ -1,5 +1,5 @@
-import { Folder, Key, Link2, Logs, Users, Workflow } from 'lucide-react';
 import { t } from 'i18next';
+import { Folder, Key, Link2, Logs, Users, Workflow } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { DataTable } from '@/components/ui/data-table';
@@ -26,7 +26,9 @@ export default function AuditLogsPage() {
     <LockedFeatureGuard
       locked={!isEnabled}
       lockTitle={t('Unlock Audit Logs')}
-      lockDescription={t('Comply with internal and external security policies by tracking activities done within your account')}
+      lockDescription={t(
+        'Comply with internal and external security policies by tracking activities done within your account',
+      )}
     >
       <div className="flex flex-col  w-full">
         <div className="flex items-center justify-between flex-row">
@@ -71,7 +73,10 @@ export default function AuditLogsPage() {
             {
               accessorKey: 'performedBy',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Performed By')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Performed By')}
+                />
               ),
               cell: ({ row }) => {
                 return (

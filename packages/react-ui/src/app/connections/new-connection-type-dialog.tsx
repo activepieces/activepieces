@@ -1,6 +1,7 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
+import { t } from 'i18next';
 import React, { useEffect, useState } from 'react';
-import { t } from 'i18next'; 
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

@@ -1,7 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
-import { Check, Copy } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
 import { t } from 'i18next';
+import { Check, Copy } from 'lucide-react';
+
+import { toast } from '@/components/ui/use-toast';
 
 type CopyToClipboardInputProps = {
   textToCopy: string;

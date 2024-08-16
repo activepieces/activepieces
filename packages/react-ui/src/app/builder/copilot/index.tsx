@@ -1,5 +1,5 @@
-import { t } from 'i18next';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { ArrowUp, LoaderCircle } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import { useState, useEffect, useRef } from 'react';
@@ -33,7 +33,9 @@ interface DefaultEventsMap {
 const initialMessages: CopilotMessage[] = [
   {
     messageType: 'text',
-    content: t('Hi! I can help you writing your code. What do you need help with?'),
+    content: t(
+      'Hi! I can help you writing your code. What do you need help with?',
+    ),
     userType: 'bot',
   },
 ];
@@ -110,7 +112,9 @@ export const ChatSidebar = () => {
       return;
     }
     mutate({
-      prompt: `${inputMessage}. ${t('Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies.')}`,
+      prompt: `${inputMessage}. ${t(
+        'Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies.',
+      )}`,
       previousContext: messages.map((message) => ({
         role: message.userType === 'user' ? 'user' : 'assistant',
         content: JSON.stringify(message.content),

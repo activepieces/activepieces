@@ -1,10 +1,10 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { CopyIcon, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -160,8 +160,12 @@ export function InviteUserDialog() {
           </DialogTitle>
           <DialogDescription>
             {invitationLink
-              ? t('Please copy the link below and share it with the user you want to invite, the invitation expires in 24 hours.')
-              : t('Type the email address of the user you want to invite, the invitation expires in 24 hours.')}
+              ? t(
+                  'Please copy the link below and share it with the user you want to invite, the invitation expires in 24 hours.',
+                )
+              : t(
+                  'Type the email address of the user you want to invite, the invitation expires in 24 hours.',
+                )}
           </DialogDescription>
         </DialogHeader>
 

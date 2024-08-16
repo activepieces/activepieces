@@ -1,7 +1,7 @@
+import { t } from 'i18next';
 import { LogOut, Shield } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { t } from 'i18next';
 
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import { Button } from '@/components/ui/button';
@@ -40,11 +40,7 @@ export const Header = () => {
               <Shield className="size-4" />
             )}
             <span>
-              {t(
-                isInPlatformAdmin
-                  ? 'Exit Platform Admin'
-                  : 'Platform Admin'
-              )}
+              {t(isInPlatformAdmin ? 'Exit Platform Admin' : 'Platform Admin')}
             </span>
           </Button>
         </Link>

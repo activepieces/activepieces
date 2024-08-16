@@ -1,7 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { t } from 'i18next';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { LoadingSpinner } from '@/components/ui/spinner';
@@ -20,10 +19,16 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   const [flowVersion] = useBuilderStateContext((state) => [state.flowVersion]);
   const form = useFormContext<Action | Trigger>();
 
-  const [propertyMap, setPropertyMap] = useState<PiecePropertyMap | undefined>(undefined);
+  const [propertyMap, setPropertyMap] = useState<PiecePropertyMap | undefined>(
+    undefined,
+  );
   const newRefreshers = [...props.refreshers, 'auth'];
 
-  const { mutate, isPending } = useMutation<PiecePropertyMap, Error, Record<string, unknown>>({
+  const { mutate, isPending } = useMutation<
+    PiecePropertyMap,
+    Error,
+    Record<string, unknown>
+  >({
     mutationFn: async (input) => {
       const { settings } = form.getValues();
       const actionOrTriggerName = settings.actionName ?? settings.triggerName;
@@ -37,7 +42,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
         actionOrTriggerName: actionOrTriggerName,
         input: input,
         flowVersionId: flowVersion.id,
-        flowId: flowVersion.flowId, 
+        flowId: flowVersion.flowId,
       });
     },
     onSuccess: (response) => {

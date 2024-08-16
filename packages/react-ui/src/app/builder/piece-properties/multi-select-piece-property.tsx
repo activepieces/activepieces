@@ -1,6 +1,6 @@
 import deepEqual from 'deep-equal';
-import { useEffect, useState } from 'react';
 import { t } from 'i18next';
+import { useEffect, useState } from 'react';
 
 import {
   MultiSelect,

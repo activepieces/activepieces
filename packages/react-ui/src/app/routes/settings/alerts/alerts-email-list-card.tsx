@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Trash } from 'lucide-react';
 import { t } from 'i18next';
+import { Trash } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {

@@ -1,9 +1,9 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React, { useEffect } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -189,7 +189,9 @@ const Plans: React.FC = () => {
                       onChange={(e) => field.onChange(+e.target.value)}
                     />
                     <span className="text-sm text-muted-foreground">
-                      {t('The maximum number of tasks that can be run in a month. If you exceed the limit, the tasks will fail. This is useful to prevent unexpected costs.')}
+                      {t(
+                        'The maximum number of tasks that can be run in a month. If you exceed the limit, the tasks will fail. This is useful to prevent unexpected costs.',
+                      )}
                     </span>
                     <FormMessage />
                   </FormItem>

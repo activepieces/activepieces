@@ -1,5 +1,5 @@
-import { Copy, Download } from 'lucide-react';
 import { t } from 'i18next';
+import { Copy, Download } from 'lucide-react';
 import React from 'react';
 import ReactJson from 'react-json-view';
 

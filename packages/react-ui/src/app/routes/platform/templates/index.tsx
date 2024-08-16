@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { Pencil, Plus, Trash } from 'lucide-react';
 import { useState } from 'react';
-import { t } from 'i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -53,7 +53,9 @@ export default function TemplatesPage() {
     <LockedFeatureGuard
       locked={!isEnabled}
       lockTitle={t('Unlock Templates')}
-      lockDescription={t('Convert the most common automations into reusable templates 1 click away from your users')}
+      lockDescription={t(
+        'Convert the most common automations into reusable templates 1 click away from your users',
+      )}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/templates.mp4"
     >
       <div className="flex flex-col w-full">
@@ -128,7 +130,9 @@ export default function TemplatesPage() {
                         </Button>
                       </UpsertTemplateDialog>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom">{t('Edit template')}</TooltipContent>
+                    <TooltipContent side="bottom">
+                      {t('Edit template')}
+                    </TooltipContent>
                   </Tooltip>
                 </div>
               );
@@ -140,7 +144,9 @@ export default function TemplatesPage() {
                     <TooltipTrigger>
                       <ConfirmationDeleteDialog
                         title={t('Delete Template')}
-                        message={t('Are you sure you want to delete this template?')}
+                        message={t(
+                          'Are you sure you want to delete this template?',
+                        )}
                         entityName={`${t('Template')} ${row.name}`}
                         mutationFn={async () => {
                           deleteTemplate(row.id);

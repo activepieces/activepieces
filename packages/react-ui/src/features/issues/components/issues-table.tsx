@@ -1,7 +1,7 @@
 import { ColumnDef } from '@tanstack/react-table';
+import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
-import { t } from 'i18next';
 
 import { Authorization } from '@/components/authorization';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,9 @@ export default function IssuesTable() {
     refetch();
     toast({
       title: t('Success'),
-      description: t('Issues in {{flowDisplayName}} is marked as resolved.', { flowDisplayName }),
+      description: t('Issues in {{flowDisplayName}} is marked as resolved.', {
+        flowDisplayName,
+      }),
       duration: 3000,
     });
   };
@@ -58,7 +60,7 @@ export default function IssuesTable() {
     {
       accessorKey: 'flowName',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("Flow Name")} />
+        <DataTableColumnHeader column={column} title={t('Flow Name')} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.flowDisplayName}</div>;
@@ -67,7 +69,7 @@ export default function IssuesTable() {
     {
       accessorKey: 'count',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("Count")} />
+        <DataTableColumnHeader column={column} title={t('Count')} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.count}</div>;
@@ -76,7 +78,7 @@ export default function IssuesTable() {
     {
       accessorKey: 'created',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("First Seen")} />
+        <DataTableColumnHeader column={column} title={t('First Seen')} />
       ),
       cell: ({ row }) => {
         return (
@@ -89,7 +91,7 @@ export default function IssuesTable() {
     {
       accessorKey: 'lastOccurrence',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("Last Seen")} />
+        <DataTableColumnHeader column={column} title={t('Last Seen')} />
       ),
       cell: ({ row }) => {
         return (
@@ -153,7 +155,9 @@ export default function IssuesTable() {
         <div className="flex flex-col">
           <h1 className="text-3xl font-bold">{t('Issues')}</h1>
           <span className="text-md text-muted-foreground">
-            {t('Track failed runs grouped by flow name, and mark them as resolved when fixed.')}
+            {t(
+              'Track failed runs grouped by flow name, and mark them as resolved when fixed.',
+            )}
           </span>
         </div>
         <div className="ml-auto"></div>

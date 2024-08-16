@@ -1,6 +1,6 @@
+import { t } from 'i18next';
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { t } from 'i18next';
 
 const RedirectPage: React.FC = React.memo(() => {
   const location = useLocation();

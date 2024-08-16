@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import {
   Copy,
   CornerUpLeft,
@@ -9,7 +10,6 @@ import {
   UploadCloud,
 } from 'lucide-react';
 import React from 'react';
-import { t } from 'i18next';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
@@ -139,7 +139,9 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             ) : (
               <Copy className="h-4 w-4" />
             )}
-            <span>{isDuplicatePending ? t('Duplicating') : t('Duplicate')}</span>
+            <span>
+              {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
+            </span>
           </div>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => exportFlow()}>
@@ -166,11 +168,15 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             message={
               <>
                 <div>
-                  {t('Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.')}
+                  {t(
+                    'Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.',
+                  )}
                 </div>
                 {isDevelopmentBranch && (
                   <div className="font-bold mt-2">
-                    {t('You are on a development branch, this will not delete the flow from the remote repository.')}
+                    {t(
+                      'You are on a development branch, this will not delete the flow from the remote repository.',
+                    )}
                   </div>
                 )}
               </>

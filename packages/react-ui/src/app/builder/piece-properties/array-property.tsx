@@ -1,7 +1,7 @@
 import { DragHandleDots2Icon } from '@radix-ui/react-icons';
+import { t } from 'i18next';
 import { Plus, TrashIcon } from 'lucide-react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
-import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import { FormControl, FormField, FormItem } from '@/components/ui/form';

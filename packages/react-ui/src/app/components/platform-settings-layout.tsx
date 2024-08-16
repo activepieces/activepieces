@@ -1,5 +1,6 @@
-import { Key, Lock, Palette } from 'lucide-react';
 import { t } from 'i18next';
+import { Key, Lock, Palette } from 'lucide-react';
+
 import SidebarLayout from '@/app/components/sidebar-layout';
 
 const iconSize = 20;

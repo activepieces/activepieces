@@ -1,7 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
 import { t } from 'i18next';
+import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -89,7 +89,9 @@ const ConnectGitDialog = () => {
             <DialogHeader>
               <DialogTitle>{t('Connect Git')}</DialogTitle>
               <DialogDescription>
-                {t('Start by connecting an empty git repository to your project.')}
+                {t(
+                  'Start by connecting an empty git repository to your project.',
+                )}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -130,7 +132,9 @@ const ConnectGitDialog = () => {
                       <Input placeholder="activepieces" {...field} />
                     </FormControl>
                     <FormDescription>
-                      {t('Folder name is the name of the folder where the project will be stored or fetched.')}
+                      {t(
+                        'Folder name is the name of the folder where the project will be stored or fetched.',
+                      )}
                     </FormDescription>
                   </FormItem>
                 )}

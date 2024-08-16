@@ -1,8 +1,8 @@
 import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
 import { BaseEdge } from '@xyflow/react';
+import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
-import { t } from 'i18next';
 
 import { cn } from '@/lib/utils';
 import { StepLocationRelativeToParent, isNil } from '@activepieces/shared';

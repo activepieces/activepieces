@@ -1,7 +1,7 @@
-import { t } from 'i18next';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -76,7 +76,9 @@ export const SmtpSection = () => {
     <Card className="max-w-[60%]">
       <CardHeader className="pb-3">
         <CardTitle>{t('Mail Server')}</CardTitle>
-        <CardDescription>{t('Configure your mail server settings.')}</CardDescription>
+        <CardDescription>
+          {t('Configure your mail server settings.')}
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1 mt-4">
         <Form {...form}>

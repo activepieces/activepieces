@@ -14,7 +14,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { t } from 'i18next';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DataSelector } from '../data-selector';

@@ -1,6 +1,6 @@
+import { t } from 'i18next';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { t } from 'i18next';
 
 import { HorizontalSeparatorWithText } from '@/components/ui/seperator';
 import {

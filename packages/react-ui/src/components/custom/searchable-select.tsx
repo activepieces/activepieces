@@ -1,5 +1,5 @@
-import { t } from 'i18next';
 import deepEqual from 'deep-equal';
+import { t } from 'i18next';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 

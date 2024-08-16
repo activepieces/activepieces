@@ -1,8 +1,8 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { t } from 'i18next';
 
 import { CopyToClipboardInput } from '@/components/custom/copy-to-clipboard';
 import { Button } from '@/components/ui/button';
@@ -61,16 +61,22 @@ export const NewSigningKeyDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {signingKey ? t('Signing Key Created') : t('Create New Signing Key')}
+            {signingKey
+              ? t('Signing Key Created')
+              : t('Create New Signing Key')}
           </DialogTitle>
         </DialogHeader>
         {signingKey && (
           <div className="p-4">
             <div className="flex flex-col items-start gap-2">
               <span className="text-md">
-                {t('Please save this secret key somewhere safe and accessible. For security reasons,')}
+                {t(
+                  'Please save this secret key somewhere safe and accessible. For security reasons,',
+                )}
                 <span className="font-semibold">
-                  {t('you won\'t be able to view it again after closing this dialog.')}
+                  {t(
+                    "you won't be able to view it again after closing this dialog.",
+                  )}
                 </span>
               </span>
               <CopyToClipboardInput textToCopy={signingKey.privateKey} />

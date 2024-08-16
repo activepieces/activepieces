@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import React, { useMemo } from 'react';
 
 import { JsonViewer } from '@/components/json-viewer';
@@ -9,7 +10,6 @@ import {
   StepOutputStatus,
   TriggerType,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 
 import { TestButtonTooltip } from './test-step-tooltip';
 

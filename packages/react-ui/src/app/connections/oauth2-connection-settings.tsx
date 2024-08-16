@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -196,8 +196,14 @@ const OAuth2ConnectionSettings = ({
               control={form.control}
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <div className="text-md font-medium">{t('Client Secret')}</div>
-                  <Input {...field} type="text" placeholder={t('Client Secret')} />
+                  <div className="text-md font-medium">
+                    {t('Client Secret')}
+                  </div>
+                  <Input
+                    {...field}
+                    type="text"
+                    placeholder={t('Client Secret')}
+                  />
                   <FormMessage />
                 </FormItem>
               )}

@@ -1,6 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -38,8 +39,6 @@ import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { requestTrialApi } from '@/lib/request-trial-api';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
-
-import { t } from 'i18next';
 
 const logos = [
   'https://www.activepieces.com/logos/alan.svg',
@@ -152,8 +151,9 @@ export const RequestTrial = () => {
         case ApEdition.COMMUNITY: {
           await requestTrialApi.createKey(request);
           return {
-            message:
-              t('Please check your email for your trial key and further instructions.'),
+            message: t(
+              'Please check your email for your trial key and further instructions.',
+            ),
           };
         }
         default: {

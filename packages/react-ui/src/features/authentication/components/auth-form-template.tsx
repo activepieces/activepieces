@@ -1,4 +1,6 @@
+import { t } from 'i18next';
 import React from 'react';
+
 import {
   Card,
   CardContent,
@@ -10,7 +12,6 @@ import {
 import { SignInForm } from './sign-in-form';
 import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
-import { t } from 'i18next';
 
 const AuthFormTemplate = React.memo(
   ({ form }: { form: 'signin' | 'signup' }) => {

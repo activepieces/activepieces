@@ -1,7 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
 import { t } from 'i18next';
+import { useForm } from 'react-hook-form';
 
 import { FlagGuard } from '@/app/components/flag-guard';
 import { Button } from '@/components/ui/button';

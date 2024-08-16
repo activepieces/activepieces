@@ -1,8 +1,8 @@
-import { t } from 'i18next';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { ScrollArea } from '@radix-ui/react-scroll-area';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -110,11 +110,15 @@ const CreateOrEditConnectionDialog = React.memo(
           console.log(apError);
           if (apError.code === ErrorCode.INVALID_CLOUD_CLAIM) {
             setErrorMessage(
-              t('Could not claim the authorization code, make sure you have correct settings and try again.'),
+              t(
+                'Could not claim the authorization code, make sure you have correct settings and try again.',
+              ),
             );
           } else if (apError.code === ErrorCode.INVALID_APP_CONNECTION) {
             setErrorMessage(
-              t('Connection failed with error {{msg}}', { msg: apError.params.error }),
+              t('Connection failed with error {{msg}}', {
+                msg: apError.params.error,
+              }),
             );
           }
         } else {
@@ -135,7 +139,11 @@ const CreateOrEditConnectionDialog = React.memo(
           className="max-h-[70vh] min-w-[800px] overflow-y-auto"
         >
           <DialogHeader>
-            <DialogTitle>{t('Create {{displayName}} Connection', { displayName: piece.displayName })}</DialogTitle>
+            <DialogTitle>
+              {t('Create {{displayName}} Connection', {
+                displayName: piece.displayName,
+              })}
+            </DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <ScrollArea className="h-full">
@@ -148,7 +156,9 @@ const CreateOrEditConnectionDialog = React.memo(
                   control={form.control}
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <div className="text-md font-medium">{t('Connection Name')}</div>
+                      <div className="text-md font-medium">
+                        {t('Connection Name')}
+                      </div>
                       <Input
                         {...field}
                         type="text"

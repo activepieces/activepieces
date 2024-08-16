@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import {
   LayoutGrid,
   LogsIcon,
@@ -14,7 +15,6 @@ import { ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { Sidebar, SidebarLink } from './sidebar';
-import { t } from 'i18next';
 
 type PlatformAdminContainerProps = {
   children: React.ReactNode;

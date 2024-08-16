@@ -1,6 +1,6 @@
+import { t } from 'i18next';
 import React from 'react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
-import { t } from 'i18next';
 
 import { JsonEditor } from '@/components/custom/json-editior';
 import { ApMarkdown } from '@/components/custom/markdown';

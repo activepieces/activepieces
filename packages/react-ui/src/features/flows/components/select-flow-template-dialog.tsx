@@ -1,9 +1,9 @@
 import { DialogDescription } from '@radix-ui/react-dialog';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { ArrowLeft, Info, Workflow } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { t } from 'i18next';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';

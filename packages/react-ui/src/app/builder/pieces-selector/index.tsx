@@ -1,6 +1,6 @@
+import { t } from 'i18next';
 import { useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
-import { t } from 'i18next';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SidebarHeader } from '@/app/builder/sidebar-header';
@@ -24,6 +24,7 @@ import {
 } from '@activepieces/shared';
 
 import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
+
 import { pieceSelectorUtils } from './piece-selector-utils';
 
 const PiecesSelectorList = () => {
@@ -112,7 +113,9 @@ const PiecesSelectorList = () => {
   return (
     <>
       <SidebarHeader onClose={() => exitPieceSelector()}>
-        {selectedButton?.type === 'action' ? t('Select Action') : t('Select Trigger')}
+        {selectedButton?.type === 'action'
+          ? t('Select Action')
+          : t('Select Trigger')}
       </SidebarHeader>
       <div className="flex h-full flex-col gap-4 p-4">
         <div className="w-full">

@@ -1,8 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { Pencil, Plus, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { t } from 'i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -36,9 +36,15 @@ export default function ProjectsPage() {
       console.error(t('Validation error'), error);
       switch (error.response?.data?.params?.message) {
         case 'PROJECT_HAS_ENABLED_FLOWS':
-          return t('project ({{projectName}}) has enabled flows. Please disable them first.', { projectName });
+          return t(
+            'project ({{projectName}}) has enabled flows. Please disable them first.',
+            { projectName },
+          );
         case 'ACTIVE_PROJECT':
-          return t('project ({{projectName}}) is active. Please switch to another project first.', { projectName });
+          return t(
+            'project ({{projectName}}) is active. Please switch to another project first.',
+            { projectName },
+          );
       }
       return undefined;
     }
@@ -59,7 +65,7 @@ export default function ProjectsPage() {
       locked={!isEnabled}
       lockTitle={t('Unlock Projects')}
       lockDescription={t(
-        'Orchestrate your automation teams across projects with their own flows, connections and usage quotas'
+        'Orchestrate your automation teams across projects with their own flows, connections and usage quotas',
       )}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/projects.mp4"
     >
@@ -136,7 +142,10 @@ export default function ProjectsPage() {
             {
               accessorKey: 'externalId',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('External ID')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('External ID')}
+                />
               ),
               cell: ({ row }) => {
                 return (
@@ -166,7 +175,9 @@ export default function ProjectsPage() {
                         <Pencil className="size-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom">{t('Edit project')}</TooltipContent>
+                    <TooltipContent side="bottom">
+                      {t('Edit project')}
+                    </TooltipContent>
                   </Tooltip>
                 </div>
               );

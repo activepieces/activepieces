@@ -1,7 +1,7 @@
-import { t } from 'i18next';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -87,7 +87,9 @@ const MoveToDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Move')} {flowVersion.displayName}</DialogTitle>
+          <DialogTitle>
+            {t('Move')} {flowVersion.displayName}
+          </DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
@@ -106,7 +108,9 @@ const MoveToDialog = ({
                     <SelectContent>
                       <SelectGroup>
                         {folders && folders.length === 0 && (
-                          <SelectItem value="NULL">{t('No Folders')}</SelectItem>
+                          <SelectItem value="NULL">
+                            {t('No Folders')}
+                          </SelectItem>
                         )}
                         {folders &&
                           folders.map((folder) => (

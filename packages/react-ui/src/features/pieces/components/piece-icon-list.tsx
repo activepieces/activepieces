@@ -1,8 +1,15 @@
 import { cva } from 'class-variance-authority';
-import { flowHelper, Trigger } from '@activepieces/shared';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../../../components/ui/tooltip';
-import { piecesHooks, StepMetadata } from '../lib/pieces-hook';
 import { t } from 'i18next';
+
+import { flowHelper, Trigger } from '@activepieces/shared';
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '../../../components/ui/tooltip';
+import { piecesHooks, StepMetadata } from '../lib/pieces-hook';
+
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
@@ -69,7 +76,9 @@ export function PieceIconList({
             .map((m) => m?.displayName || '')
             .slice(0, -1)
             .join(', ') +
-            ` ${t('and')} ${uniqueMetadata[uniqueMetadata.length - 1].displayName}`}
+            ` ${t('and')} ${
+              uniqueMetadata[uniqueMetadata.length - 1].displayName
+            }`}
         {uniqueMetadata.length === 1 && uniqueMetadata[0].displayName}
       </TooltipContent>
     </Tooltip>

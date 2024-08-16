@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { t } from 'i18next';
 
 import {
   useBuilderStateContext,
@@ -84,7 +84,9 @@ const BuilderPublishButton = React.memo(() => {
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {isPublishedVersion ? t('Latest version is published') : t('Publish')}
+              {isPublishedVersion
+                ? t('Latest version is published')
+                : t('Publish')}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

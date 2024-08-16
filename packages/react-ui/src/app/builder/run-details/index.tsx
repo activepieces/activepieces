@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
@@ -16,7 +17,6 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { isNil } from '@activepieces/shared';
-import { t } from 'i18next';
 
 import { SidebarHeader } from '../sidebar-header';
 

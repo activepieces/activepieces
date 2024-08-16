@@ -1,8 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { Check, Copy } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { t } from 'i18next';
 
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';

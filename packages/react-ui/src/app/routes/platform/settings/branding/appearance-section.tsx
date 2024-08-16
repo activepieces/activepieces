@@ -1,8 +1,8 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
 import { t } from 'i18next';
+import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -173,7 +173,9 @@ export const AppearanceSection = () => {
                     <SelectContent>
                       <SelectGroup>
                         {locales.length === 0 && (
-                          <SelectItem value="NULL">{t('No Languages')}</SelectItem>
+                          <SelectItem value="NULL">
+                            {t('No Languages')}
+                          </SelectItem>
                         )}
                         {locales.map(([locale, name]) => (
                           <SelectItem key={locale} value={locale}>

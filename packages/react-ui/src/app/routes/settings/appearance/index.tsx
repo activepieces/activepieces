@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+
 import { useTheme } from '@/components/theme-provider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/seperator';
@@ -16,7 +17,9 @@ export default function AppearancePage() {
         <div>
           <h3 className="text-lg font-medium">{t('Appearance')}</h3>
           <p className="text-sm text-muted-foreground">
-            {t('Customize the appearance of the app. Automatically switch between day and night themes.')}
+            {t(
+              'Customize the appearance of the app. Automatically switch between day and night themes.',
+            )}
           </p>
         </div>
         <Separator />

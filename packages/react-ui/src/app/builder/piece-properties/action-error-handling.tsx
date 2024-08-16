@@ -1,6 +1,6 @@
+import { t } from 'i18next';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { t } from 'i18next';
 
 import {
   FormField,
@@ -35,7 +35,7 @@ const ActionErrorHandlingForm = React.memo(
       !isNil(form.getValues().settings.actionName) ||
       !isNil(form.getValues().settings.triggerName);
     const isPieceType = [ActionType.PIECE, TriggerType.PIECE].includes(
-      form.getValues().type
+      form.getValues().type,
     );
     return (
       <>
@@ -59,9 +59,15 @@ const ActionErrorHandlingForm = React.memo(
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
-                      <span className="ml-3 flex-grow">{t('Continue on Failure')}</span>
+                      <span className="ml-3 flex-grow">
+                        {t('Continue on Failure')}
+                      </span>
                     </FormLabel>
-                    <ReadMoreDescription text={t('Enable this option to skip this step and continue the flow normally if it fails.')} />
+                    <ReadMoreDescription
+                      text={t(
+                        'Enable this option to skip this step and continue the flow normally if it fails.',
+                      )}
+                    />
                   </FormItem>
                 )}
               />
@@ -86,7 +92,11 @@ const ActionErrorHandlingForm = React.memo(
                       </FormControl>
                       <span className="ml-3 grow">{t('Retry on Failure')}</span>
                     </FormLabel>
-                    <ReadMoreDescription text={t('Automatically retry up to four attempts when failed.')} />
+                    <ReadMoreDescription
+                      text={t(
+                        'Automatically retry up to four attempts when failed.',
+                      )}
+                    />
                   </FormItem>
                 )}
               />
@@ -95,7 +105,7 @@ const ActionErrorHandlingForm = React.memo(
         )}
       </>
     );
-  }
+  },
 );
 
 ActionErrorHandlingForm.displayName = 'ActionErrorHandlingForm';

@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+
 import { AuthFormTemplate } from '@/features/authentication/components/auth-form-template';
 import { theme } from '@/lib/theme';
 

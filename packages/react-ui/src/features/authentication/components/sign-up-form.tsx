@@ -2,11 +2,11 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
+import { t } from 'i18next';
 import { Check, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -26,6 +26,7 @@ import {
   AuthenticationResponse,
   SignUpRequest,
 } from '@activepieces/shared';
+
 import { generatePasswordValidation } from '../lib/password-validation-utils';
 
 const SignUpSchema = Type.Object({

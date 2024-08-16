@@ -1,5 +1,5 @@
-import { t } from 'i18next';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
 import { useAuthorization } from '@/components/authorization';

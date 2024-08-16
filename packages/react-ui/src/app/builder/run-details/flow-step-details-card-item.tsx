@@ -1,7 +1,7 @@
+import { t } from 'i18next';
 import { ChevronRight } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useUpdateEffect } from 'react-use';
-import { t } from 'i18next';
 
 import {
   StepPathWithName,

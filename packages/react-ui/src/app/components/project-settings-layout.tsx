@@ -1,5 +1,13 @@
-import { Bell, GitBranch, Puzzle, Settings, SunMoon, Users } from 'lucide-react';
 import { t } from 'i18next';
+import {
+  Bell,
+  GitBranch,
+  Puzzle,
+  Settings,
+  SunMoon,
+  Users,
+} from 'lucide-react';
+
 import SidebarLayout from '@/app/components/sidebar-layout';
 
 const iconSize = 20;

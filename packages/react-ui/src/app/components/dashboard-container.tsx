@@ -1,5 +1,5 @@
-import { AlertCircle, Link2, Logs, Workflow, Wrench } from 'lucide-react';
 import { t } from 'i18next';
+import { AlertCircle, Link2, Logs, Workflow, Wrench } from 'lucide-react';
 
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 

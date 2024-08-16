@@ -1,5 +1,6 @@
-import { useParams } from 'react-router-dom';
 import { t } from 'i18next';
+import { useParams } from 'react-router-dom';
+
 import { ShareTemplate } from '@/features/templates/components/share-template';
 import { theme } from '@/lib/theme';
 

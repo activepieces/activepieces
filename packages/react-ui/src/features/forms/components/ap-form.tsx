@@ -2,6 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Separator } from '@radix-ui/react-dropdown-menu';
 import { Static, TObject, TSchema, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -29,7 +30,6 @@ import {
 } from '@activepieces/shared';
 
 import { FormResult, FormResultTypes, formsApi } from '../lib/forms-api';
-import { t } from 'i18next';
 
 type ApFormProps = {
   form: FormResponse;
@@ -119,7 +119,9 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
         if (status === 404) {
           toast({
             title: t('Flow not found'),
-            description: t('The flow you are trying to submit to does not exist.'),
+            description: t(
+              'The flow you are trying to submit to does not exist.',
+            ),
             duration: 3000,
           });
         } else {

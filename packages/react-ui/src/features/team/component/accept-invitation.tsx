@@ -1,8 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
+import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { t } from 'i18next';
 
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -68,7 +68,9 @@ const AcceptInvitation = () => {
             {t('Team Invitation Accepted')}
           </p>
           <p className="mt-4 text-lg text-center text-gray-700">
-            {t('Thank you for accepting the invitation. We are redirecting you right now...')}
+            {t(
+              'Thank you for accepting the invitation. We are redirecting you right now...',
+            )}
           </p>
         </>
       ) : (

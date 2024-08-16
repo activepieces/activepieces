@@ -1,4 +1,3 @@
-import { t } from 'i18next';
 import {
   CollisionDetection,
   DndContext,
@@ -14,6 +13,7 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { snapCenterToCursor } from '@dnd-kit/modifiers';
+import { t } from 'i18next';
 
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { FlowOperationType, flowHelper } from '@activepieces/shared';

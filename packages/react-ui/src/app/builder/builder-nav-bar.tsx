@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { ChevronDown, History, Home, Logs } from 'lucide-react';
 import { useMemo } from 'react';
 import {
@@ -25,8 +26,6 @@ import { FlowVersionState } from '@activepieces/shared';
 import FlowActionMenu from '../components/flow-actions-menu';
 
 import { BuilderPublishButton } from './builder-publish-button';
-
-import { t } from 'i18next';
 
 export const BuilderNavBar = () => {
   const navigate = useNavigate();
@@ -68,9 +67,7 @@ export const BuilderNavBar = () => {
               </Button>
             </Link>
           </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {t('Home')}
-          </TooltipContent>
+          <TooltipContent side="bottom">{t('Home')}</TooltipContent>
         </Tooltip>
         <span>
           <TooltipProvider>
@@ -88,7 +85,9 @@ export const BuilderNavBar = () => {
                 {folderName}
               </TooltipTrigger>
               <TooltipContent>
-                <span>{t('Go to folder')} {folderName}</span>
+                <span>
+                  {t('Go to folder')} {folderName}
+                </span>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -136,9 +135,7 @@ export const BuilderNavBar = () => {
               <Logs />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {t('Run Logs')}
-          </TooltipContent>
+          <TooltipContent side="bottom">{t('Run Logs')}</TooltipContent>
         </Tooltip>
 
         <BuilderPublishButton></BuilderPublishButton>

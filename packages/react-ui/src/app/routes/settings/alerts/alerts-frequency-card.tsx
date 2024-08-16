@@ -1,7 +1,7 @@
 import { BellIcon, EyeNoneIcon, EyeOpenIcon } from '@radix-ui/react-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import React from 'react';
 import { t } from 'i18next';
+import React from 'react';
 
 import {
   Card,

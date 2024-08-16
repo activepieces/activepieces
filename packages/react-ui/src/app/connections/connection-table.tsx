@@ -1,5 +1,5 @@
-import { t } from 'i18next';
 import { ColumnDef } from '@tanstack/react-table';
+import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -66,7 +66,9 @@ const DeleteConnectionColumn = ({
       <Authorization permission={Permission.WRITE_APP_CONNECTION}>
         <ConfirmationDeleteDialog
           title={t('Delete {{name}} connection', { name: row.name })}
-          message={t('Are you sure you want to delete this connection? all steps using it will fail.')}
+          message={t(
+            'Are you sure you want to delete this connection? all steps using it will fail.',
+          )}
           mutationFn={() =>
             appConnectionsApi.delete(row.id).then((data) => {
               const newQueryParameters: URLSearchParams = new URLSearchParams();

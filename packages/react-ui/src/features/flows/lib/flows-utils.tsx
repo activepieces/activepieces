@@ -1,8 +1,10 @@
 import cronstrue from 'cronstrue/i18n';
-import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
-import { Flow, FlowVersion, TriggerType } from '@activepieces/shared';
-import { flowsApi } from './flows-api';
 import { t } from 'i18next';
+import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
+
+import { Flow, FlowVersion, TriggerType } from '@activepieces/shared';
+
+import { flowsApi } from './flows-api';
 
 const downloadFile = (
   obj: any,
@@ -42,7 +44,9 @@ export const flowsUtils = {
       }
       case TriggerType.EMPTY:
         console.error(
-          t("Flow can't be published with empty trigger {name}", { name: version.displayName }),
+          t("Flow can't be published with empty trigger {name}", {
+            name: version.displayName,
+          }),
         );
         return t('Please contact support as your published flow has a problem');
     }
@@ -60,7 +64,9 @@ export const flowsUtils = {
       }
       case TriggerType.EMPTY: {
         console.error(
-          t("Flow can't be published with empty trigger {name}", { name: version.displayName }),
+          t("Flow can't be published with empty trigger {name}", {
+            name: version.displayName,
+          }),
         );
         return <TriangleAlert className="h-4 w-4 text-destructive" />;
       }

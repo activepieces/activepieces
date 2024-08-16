@@ -1,8 +1,8 @@
-import { t } from 'i18next';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
+import { t } from 'i18next';
 import {
   EllipsisVertical,
   Folder,
@@ -135,8 +135,12 @@ const FolderItem = ({
                   </DropdownMenuItem>
                 </RenameFolderDialog>
                 <ConfirmationDeleteDialog
-                  title={t('Delete folder {{folderName}}', { folderName: folder.displayName })}
-                  message={t('If you delete this folder, we will keep its flows and move them to Uncategorized.')}
+                  title={t('Delete folder {{folderName}}', {
+                    folderName: folder.displayName,
+                  })}
+                  message={t(
+                    'If you delete this folder, we will keep its flows and move them to Uncategorized.',
+                  )}
                   mutationFn={async () => {
                     await foldersApi.delete(folder.id);
                     refetch();

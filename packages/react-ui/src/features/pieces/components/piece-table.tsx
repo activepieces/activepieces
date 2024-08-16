@@ -1,5 +1,5 @@
-import { t } from 'i18next';
 import { ColumnDef } from '@tanstack/react-table';
+import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 import { useState } from 'react';
 
@@ -75,7 +75,9 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
           <ConfirmationDeleteDialog
             title={t('Delete {{name}}', { name: row.original.name })}
             entityName={t('Piece')}
-            message={t('This will permanently delete this piece, all steps using it will fail.')}
+            message={t(
+              'This will permanently delete this piece, all steps using it will fail.',
+            )}
             mutationFn={async () => {
               row.original.delete();
               await piecesApi.delete(row.original.id!);

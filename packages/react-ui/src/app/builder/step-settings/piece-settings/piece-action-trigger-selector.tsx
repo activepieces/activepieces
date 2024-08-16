@@ -1,6 +1,6 @@
+import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { t } from 'i18next';
 
 import { FormField, FormItem } from '@/components/ui/form';
 import {

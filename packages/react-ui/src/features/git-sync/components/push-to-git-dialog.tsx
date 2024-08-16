@@ -1,6 +1,6 @@
-import { t } from 'i18next';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -87,7 +87,9 @@ const PushToGitDialog = ({ children, flowId }: PushToGitDialogProps) => {
             <DialogHeader>
               <DialogTitle>{t('Push to Git')}</DialogTitle>
               <DialogDescription>
-                {t('Enter a commit message to describe the changes you want to push.')}
+                {t(
+                  'Enter a commit message to describe the changes you want to push.',
+                )}
               </DialogDescription>
             </DialogHeader>
             <FormField

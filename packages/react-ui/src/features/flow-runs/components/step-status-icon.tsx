@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import React from 'react';
 
 import {
@@ -8,7 +9,6 @@ import {
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { cn } from '@/lib/utils';
 import { StepOutputStatus } from '@activepieces/shared';
-import { t } from 'i18next';
 
 type StepStatusIconProps = {
   status: StepOutputStatus;

@@ -1,11 +1,11 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type, Static } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { MailCheck } from 'lucide-react';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
-import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -41,7 +41,11 @@ const ResetPasswordForm = () => {
     },
   });
 
-  const { mutate, isPending } = useMutation<void, HttpError, CreateOtpRequestBody>({
+  const { mutate, isPending } = useMutation<
+    void,
+    HttpError,
+    CreateOtpRequestBody
+  >({
     mutationFn: authenticationApi.sendOtpEmail,
     onSuccess: () => setIsSent(true),
     onError: (error) => {
@@ -51,7 +55,9 @@ const ResetPasswordForm = () => {
     },
   });
 
-  const handleResendClick = (e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
+  const handleResendClick = (
+    e: React.MouseEvent<HTMLSpanElement, MouseEvent>,
+  ) => {
     e.preventDefault();
     form.handleSubmit(onSubmit)(e);
   };
@@ -72,18 +78,27 @@ const ResetPasswordForm = () => {
               <div className="gap-4 w-full flex flex-row items-center justify-center">
                 <MailCheck className="w-16 h-16" />
                 <span className="text-left w-fit">
-                  {t('We sent you a link to')} <strong>{form.getValues().email}</strong>. {t('Check your email to reset your password.')}
+                  {t('We sent you a link to')}{' '}
+                  <strong>{form.getValues().email}</strong>.{' '}
+                  {t('Check your email to reset your password.')}
                 </span>
               </div>
               <div className="flex flex-row gap-1">
                 {t("Didn't receive an email?")}
-                <span className="cursor-pointer text-primary underline" onClick={handleResendClick}>
+                <span
+                  className="cursor-pointer text-primary underline"
+                  onClick={handleResendClick}
+                >
                   {t('Resend')}
                 </span>
               </div>
             </div>
           ) : (
-            <span>{t('If the email you entered exists, you will receive an email with a link to reset your password.')}</span>
+            <span>
+              {t(
+                'If the email you entered exists, you will receive an email with a link to reset your password.',
+              )}
+            </span>
           )}
         </CardDescription>
       </CardHeader>
@@ -97,12 +112,20 @@ const ResetPasswordForm = () => {
                 render={({ field }) => (
                   <FormItem className="w-full grid space-y-2">
                     <Label htmlFor="email">{t('Email')}</Label>
-                    <Input {...field} type="text" placeholder={t('email@activepieces.com')} />
+                    <Input
+                      {...field}
+                      type="text"
+                      placeholder={t('email@activepieces.com')}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button className="w-full" loading={isPending} onClick={(e) => form.handleSubmit(onSubmit)(e)}>
+              <Button
+                className="w-full"
+                loading={isPending}
+                onClick={(e) => form.handleSubmit(onSubmit)(e)}
+              >
                 {t('Send Password Reset Link')}
               </Button>
             </form>

@@ -1,5 +1,6 @@
-import { Button } from '@/components/ui/button';
 import { t } from 'i18next';
+
+import { Button } from '@/components/ui/button';
 
 type BranchConditionToolbarProps = {
   onAnd: () => void;

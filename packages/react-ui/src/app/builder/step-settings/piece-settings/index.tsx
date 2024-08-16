@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
-import React from 'react';
 import { t } from 'i18next';
+import React from 'react';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';

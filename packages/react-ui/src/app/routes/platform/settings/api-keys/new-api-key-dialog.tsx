@@ -1,6 +1,6 @@
-import { t } from 'i18next';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -69,11 +69,11 @@ export const NewApiKeyDialog = ({
             <div className="flex flex-col items-start gap-2">
               <span className="text-md">
                 {t(
-                  'Please save this secret key somewhere safe and accessible. For security reasons,'
+                  'Please save this secret key somewhere safe and accessible. For security reasons,',
                 )}{' '}
                 <span className="font-semibold">
                   {t(
-                    "you won't be able to view it again after closing this dialog."
+                    "you won't be able to view it again after closing this dialog.",
                   )}
                 </span>
               </span>

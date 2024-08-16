@@ -44,13 +44,17 @@ const GitSyncPage = () => {
     <LockedFeatureGuard
       locked={!platform.gitSyncEnabled}
       lockTitle={t('Unlock Git Sync')}
-      lockDescription={t("Streamline your team's workflow for a seamless experience to build and deploy flows across your environments")}
+      lockDescription={t(
+        "Streamline your team's workflow for a seamless experience to build and deploy flows across your environments",
+      )}
     >
       <div className="flex w-full flex-col items-start justify-center gap-4">
         <div className="flex flex-col justify-start items-start w-full">
           <h1 className="text-2xl font-bold flex-grow">{t('Git Sync')}</h1>
           <span className="text-muted-foreground text-md">
-            {t('This feature allows for the creation of an external backup, environments, and maintaining a version history')}
+            {t(
+              'This feature allows for the creation of an external backup, environments, and maintaining a version history',
+            )}
           </span>
         </div>
         <Card className="w-full p-4">
@@ -58,9 +62,16 @@ const GitSyncPage = () => {
             {!isLoading && (
               <>
                 <div className="flex flex-grow flex-col gap-2">
-                  <p>{t('Remote URL')}: {gitSync?.remoteUrl ?? t('Not Connected')}</p>
-                  <p>{t('Branch')}: {gitSync?.branch ?? t('Not Connected')}</p>
-                  <p>{t('Folder')}: {gitSync?.slug ?? t('Not Connected')}</p>
+                  <p>
+                    {t('Remote URL')}:{' '}
+                    {gitSync?.remoteUrl ?? t('Not Connected')}
+                  </p>
+                  <p>
+                    {t('Branch')}: {gitSync?.branch ?? t('Not Connected')}
+                  </p>
+                  <p>
+                    {t('Folder')}: {gitSync?.slug ?? t('Not Connected')}
+                  </p>
                 </div>
                 <div className="flex flex-col justify-center items-center gap-2">
                   {!gitSync && <ConnectGitDialog></ConnectGitDialog>}

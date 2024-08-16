@@ -1,6 +1,6 @@
-import { t } from 'i18next';
 import { StopwatchIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { ChevronRightIcon } from 'lucide-react';
 import React from 'react';
 

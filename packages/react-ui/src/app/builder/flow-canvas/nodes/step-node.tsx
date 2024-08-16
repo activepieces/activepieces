@@ -1,9 +1,9 @@
 import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
+import { t } from 'i18next';
 import { ArrowRightLeft, CircleAlert, CopyPlus, Trash } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-import { t } from 'i18next';
 
 import {
   StepPathWithName,

@@ -1,6 +1,6 @@
+import { t } from 'i18next';
 import { SquareFunction } from 'lucide-react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
-import { t } from 'i18next';
 
 import { FormItem, FormLabel } from '@/components/ui/form';
 import { ReadMoreDescription } from '@/components/ui/read-more-description';

@@ -1,5 +1,5 @@
-import { t } from 'i18next';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { CircleMinus, Pencil, RotateCcw, Trash } from 'lucide-react';
 import { useState } from 'react';
 
@@ -112,7 +112,10 @@ export default function UsersPage() {
             {
               accessorKey: 'externalId',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('External Id')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('External Id')}
+                />
               ),
               cell: ({ row }) => {
                 return (
@@ -172,7 +175,9 @@ export default function UsersPage() {
                         </Button>
                       </UpdateUserRoleDialog>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom">{t('Edit user')}</TooltipContent>
+                    <TooltipContent side="bottom">
+                      {t('Edit user')}
+                    </TooltipContent>
                   </Tooltip>
                 </div>
               );
@@ -220,7 +225,9 @@ export default function UsersPage() {
                     <TooltipTrigger>
                       <ConfirmationDeleteDialog
                         title={t('Delete User')}
-                        message={t('Are you sure you want to delete this user?')}
+                        message={t(
+                          'Are you sure you want to delete this user?',
+                        )}
                         entityName={`${t('User')} ${row.email}`}
                         mutationFn={async () => {
                           deleteUser(row.id);
@@ -235,7 +242,9 @@ export default function UsersPage() {
                         </Button>
                       </ConfirmationDeleteDialog>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom">{t('Delete user')}</TooltipContent>
+                    <TooltipContent side="bottom">
+                      {t('Delete user')}
+                    </TooltipContent>
                   </Tooltip>
                 </div>
               );

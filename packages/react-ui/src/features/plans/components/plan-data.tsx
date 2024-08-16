@@ -1,5 +1,6 @@
-import React from 'react';
 import { t } from 'i18next';
+import React from 'react';
+
 import { formatUtils } from '@/lib/utils';
 
 type PlanDataProps = {

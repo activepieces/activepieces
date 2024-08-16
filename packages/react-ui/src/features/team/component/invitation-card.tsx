@@ -1,5 +1,5 @@
-import { t } from 'i18next';
 import { AvatarFallback } from '@radix-ui/react-avatar';
+import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
 import { UserInvitation } from '@activepieces/shared';

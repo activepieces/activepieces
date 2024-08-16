@@ -1,7 +1,7 @@
 import { useReactFlow } from '@xyflow/react';
+import { t } from 'i18next';
 import { Fullscreen, Minus, Plus, RotateCw } from 'lucide-react';
 import { useCallback } from 'react';
-import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import {

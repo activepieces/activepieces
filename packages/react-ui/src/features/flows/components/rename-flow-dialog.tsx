@@ -104,7 +104,7 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
             />
             {renameFlowForm?.formState?.errors?.root?.serverError && (
               <FormMessage>
-                {renameFlowForm.formState.errors.root.serverError.message} 
+                {renameFlowForm.formState.errors.root.serverError.message}
               </FormMessage>
             )}
             <Button loading={isPending}>{t('Confirm')}</Button>

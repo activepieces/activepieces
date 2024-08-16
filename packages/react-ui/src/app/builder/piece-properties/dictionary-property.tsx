@@ -1,5 +1,5 @@
-import { Plus, TrashIcon } from 'lucide-react';
 import { t } from 'i18next';
+import { Plus, TrashIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

@@ -2,9 +2,9 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { DialogDescription, DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React, { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -85,8 +85,16 @@ const ShareTemplateDialog: React.FC<{
         <DialogHeader>
           <DialogTitle>{t('Share Template')}</DialogTitle>
           <DialogDescription className="flex flex-col gap-2">
-            <span>{t('Generate or update a template link for the current flow to easily share it with others.')}</span>
-            <span>{t('The template will not have any credentials in connection fields, keeping sensitive information secure.')}</span>
+            <span>
+              {t(
+                'Generate or update a template link for the current flow to easily share it with others.',
+              )}
+            </span>
+            <span>
+              {t(
+                'The template will not have any credentials in connection fields, keeping sensitive information secure.',
+              )}
+            </span>
           </DialogDescription>
         </DialogHeader>
         <Form {...shareTemplateForm}>

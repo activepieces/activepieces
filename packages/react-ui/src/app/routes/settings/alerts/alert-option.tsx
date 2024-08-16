@@ -1,6 +1,6 @@
+import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import React from 'react';
-import { t } from 'i18next';
 
 type AlertOptionsProps = {
   title: string;

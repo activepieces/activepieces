@@ -1,12 +1,14 @@
 import { QuestionMarkIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React from 'react';
+
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 import { ApFlagId, FlowRun, FlowRunStatus } from '@activepieces/shared';
+
 import { flowRunUtils } from '../lib/flow-run-utils';
-import { t } from 'i18next';
 
 type RunDetailsBarProps = {
   run?: FlowRun;
@@ -29,7 +31,10 @@ function getStatusText(status: FlowRunStatus, timeout: number) {
     case FlowRunStatus.RUNNING:
       return t('Running');
     case FlowRunStatus.TIMEOUT:
-      return t('Run exceeded {{timeout}} seconds, try to optimize your steps.', { timeout });
+      return t(
+        'Run exceeded {{timeout}} seconds, try to optimize your steps.',
+        { timeout },
+      );
     case FlowRunStatus.INTERNAL_ERROR:
       return t('Run failed for an unknown reason, contact support.');
   }

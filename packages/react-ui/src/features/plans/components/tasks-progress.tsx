@@ -1,5 +1,6 @@
-import React from 'react';
 import { t } from 'i18next';
+import React from 'react';
+
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import { formatUtils } from '@/lib/utils';
 
