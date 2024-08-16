@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { UseFormReturn } from 'react-hook-form';
+import { t } from 'i18next';
 
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
@@ -21,10 +22,10 @@ type ProjectRoleSelectProps = {
 };
 
 const RolesDisplayNames: { [k: string]: string } = {
-  [ProjectMemberRole.ADMIN]: `Admin`,
-  [ProjectMemberRole.EDITOR]: `Editor`,
-  [ProjectMemberRole.OPERATOR]: `Operator`,
-  [ProjectMemberRole.VIEWER]: `Viewer`,
+  [ProjectMemberRole.ADMIN]: t('Admin'),
+  [ProjectMemberRole.EDITOR]: t('Editor'),
+  [ProjectMemberRole.OPERATOR]: t('Operator'),
+  [ProjectMemberRole.VIEWER]: t('Viewer'),
 };
 
 const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
@@ -65,14 +66,14 @@ const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
       name="projectRole"
       render={({ field }) => (
         <FormItem className="grid gap-3">
-          <Label>Project Role</Label>
+          <Label>{t('Project Role')}</Label>
           <Select onValueChange={field.onChange} defaultValue={field.value}>
             <SelectTrigger>
-              <SelectValue placeholder="Select a project role" />
+              <SelectValue placeholder={t('Select a project role')} />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>Project Role</SelectLabel>
+                <SelectLabel>{t('Project Role')}</SelectLabel>
                 {invitationRoles}
               </SelectGroup>
             </SelectContent>

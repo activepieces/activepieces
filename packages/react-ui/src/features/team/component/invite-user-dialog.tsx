@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { CopyIcon, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -53,19 +54,19 @@ import { userInvitationsHooks } from '../lib/user-invitations-hooks';
 
 const FormSchema = Type.Object({
   email: Type.String({
-    errorMessage: 'Please enter a valid email address',
+    errorMessage: t('Please enter a valid email address'),
     pattern: formatUtils.EMAIL_REGEX,
   }),
   type: Type.Enum(InvitationType, {
-    errorMessage: 'Please select invitation type',
+    errorMessage: t('Please select invitation type'),
     required: true,
   }),
   platformRole: Type.Enum(PlatformRole, {
-    errorMessage: 'Please select platform role',
+    errorMessage: t('Please select platform role'),
     required: true,
   }),
   projectRole: Type.Enum(ProjectMemberRole, {
-    errorMessage: 'Please select project role',
+    errorMessage: t('Please select project role'),
     required: true,
   }),
 });
@@ -102,7 +103,7 @@ export function InviteUserDialog() {
       } else {
         setIsOpen(false);
         toast({
-          title: 'Invitation sent successfully',
+          title: t('Invitation sent successfully'),
         });
       }
       refetch();
@@ -128,7 +129,7 @@ export function InviteUserDialog() {
   const copyInvitationLink = () => {
     navigator.clipboard.writeText(invitationLink);
     toast({
-      title: 'Invitation link copied successfully',
+      title: t('Invitation link copied successfully'),
     });
   };
 
@@ -149,21 +150,18 @@ export function InviteUserDialog() {
           className="flex items-center justify-center gap-2 w-full"
         >
           <Plus className="size-4" />
-          <span>Invite User</span>
+          <span>{t('Invite User')}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {invitationLink ? 'Invitation Link' : 'Invite User'}
+            {invitationLink ? t('Invitation Link') : t('Invite User')}
           </DialogTitle>
           <DialogDescription>
             {invitationLink
-              ? `Please copy the link below and share it with the user you want
-                to invite, the invitation expires in 24 hours.`
-              : `Type the email address of the user you want to invite, the
-                invitation expires in 24 hours.
-           `}
+              ? t('Please copy the link below and share it with the user you want to invite, the invitation expires in 24 hours.')
+              : t('Type the email address of the user you want to invite, the invitation expires in 24 hours.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -178,7 +176,7 @@ export function InviteUserDialog() {
                 name="email"
                 render={({ field }) => (
                   <FormItem className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t('Email')}</Label>
                     <Input {...field} type="text" placeholder="jon@doe.com" />
                     <FormMessage />
                   </FormItem>
@@ -190,20 +188,20 @@ export function InviteUserDialog() {
                 name="type"
                 render={({ field }) => (
                   <FormItem className="grid gap-2">
-                    <Label>Invite To</Label>
+                    <Label>{t('Invite To')}</Label>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Invite To" />
+                        <SelectValue placeholder={t('Invite To')} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <SelectLabel>Invite To</SelectLabel>
+                          <SelectLabel>{t('Invite To')}</SelectLabel>
                           {currentUser?.platformRole === PlatformRole.ADMIN && (
                             <SelectItem value={InvitationType.PLATFORM}>
-                              Entire Platform
+                              {t('Entire Platform')}
                             </SelectItem>
                           )}
                           {platform.projectRolesEnabled && (
@@ -232,7 +230,7 @@ export function InviteUserDialog() {
               )}
               <DialogFooter>
                 <Button type="submit" loading={isPending}>
-                  Invite
+                  {t('Invite')}
                 </Button>
               </DialogFooter>
             </form>
@@ -240,7 +238,7 @@ export function InviteUserDialog() {
         ) : (
           <>
             <Label htmlFor="invitationLink" className="mb-2">
-              Invitation Link
+              {t('Invitation Link')}
             </Label>
             <div className="flex">
               <Input
@@ -248,7 +246,7 @@ export function InviteUserDialog() {
                 type="text"
                 readOnly={true}
                 defaultValue={invitationLink}
-                placeholder="Invitation Link"
+                placeholder={t('Invitation Link')}
                 onFocus={(event) => {
                   event.target.select();
                   copyInvitationLink();
@@ -268,7 +266,7 @@ export function InviteUserDialog() {
                   </Button>
                 </TooltipTrigger>
 
-                <TooltipContent side="bottom">Copy</TooltipContent>
+                <TooltipContent side="bottom">{t('Copy')}</TooltipContent>
               </Tooltip>
             </div>
           </>

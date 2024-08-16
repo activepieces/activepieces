@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -49,7 +50,7 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
           <div className="flex flex-col gap-2">
             <div className="flex flex-col gap-2 items-center justify-between mb-4">
               <div className="flex flex-row w-full justify-between items-center">
-                <span>Steps in this flow</span>
+                <span>{t('Steps in this flow')}</span>
                 <PieceIconList
                   trigger={template.template.trigger}
                   maxNumberOfIconsToShow={5}
@@ -59,7 +60,7 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
                 <>
                   <Separator className="my-2" />
                   <div className="flex flex-col w-full justify-start items-start">
-                    <span className="font-semibold">Description</span>
+                    <span className="font-semibold">{t('Description')}</span>
                     <span>{template.description}</span>
                   </div>
                 </>
@@ -71,10 +72,10 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
                 className="mr-2"
                 onClick={() => navigate('/flows')}
               >
-                Cancel
+                {t('Cancel')}
               </Button>
               <Button loading={isPending} onClick={() => mutate()}>
-                Confirm
+                {t('Confirm')}
               </Button>
             </div>
           </div>

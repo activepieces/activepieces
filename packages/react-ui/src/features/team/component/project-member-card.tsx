@@ -26,6 +26,7 @@ import {
 import { Popover, PopoverTrigger } from '../../../components/ui/popover';
 import { projectMembersApi } from '../lib/project-members-api';
 import { projectMembersHooks } from '../lib/project-members-hooks';
+import { t } from 'i18next';
 
 export function ProjectMemberCard({
   member,
@@ -64,38 +65,38 @@ export function ProjectMemberCard({
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="ml-auto">
-              Member
+              {t('Member')}
               <ChevronDownIcon className="ml-2 size-4 text-muted-foreground" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="p-0" align="end">
             <Command>
-              <CommandInput placeholder="Select new role..." />
+              <CommandInput placeholder={t('Select new role...')} />
               <CommandList>
-                <CommandEmpty>No roles found.</CommandEmpty>
+                <CommandEmpty>{t('No roles found.')}</CommandEmpty>
                 <CommandGroup className="p-1.5">
                   <CommandItem className="flex flex-col items-start px-4 py-2">
-                    <p>Viewer</p>
+                    <p>{t('Viewer')}</p>
                     <p className="text-sm text-muted-foreground">
-                      Can view and comment.
+                      {t('Can view and comment.')}
                     </p>
                   </CommandItem>
                   <CommandItem className="flex flex-col items-start px-4 py-2">
-                    <p>Developer</p>
+                    <p>{t('Developer')}</p>
                     <p className="text-sm text-muted-foreground">
-                      Can view, comment and edit.
+                      {t('Can view, comment and edit.')}
                     </p>
                   </CommandItem>
                   <CommandItem className="flex flex-col items-start px-4 py-2">
-                    <p>Billing</p>
+                    <p>{t('Billing')}</p>
                     <p className="text-sm text-muted-foreground">
-                      Can view, comment and manage billing.
+                      {t('Can view, comment and manage billing.')}
                     </p>
                   </CommandItem>
                   <CommandItem className="flex flex-col items-start px-4 py-2">
-                    <p>Owner</p>
+                    <p>{t('Owner')}</p>
                     <p className="text-sm text-muted-foreground">
-                      Admin-level access to all resources.
+                      {t('Admin-level access to all resources.')}
                     </p>
                   </CommandItem>
                 </CommandGroup>
@@ -114,15 +115,15 @@ export function ProjectMemberCard({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <span>Permission Needed</span>
+                  <span>{t('Permission Needed')}</span>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           }
         >
           <ConfirmationDeleteDialog
-            title={`Remove ${member.user.firstName} ${member.user.lastName}`}
-            message="Are you sure you want to remove this member?"
+            title={`${t('Remove')} ${member.user.firstName} ${member.user.lastName}`}
+            message={t('Are you sure you want to remove this member?')}
             mutationFn={() => deleteMember()}
             entityName={`${member.user.firstName} ${member.user.lastName}`}
           >
