@@ -18,7 +18,7 @@ const StepDragOverlay = ({ step }: StepDragTemplateProps) => {
     >
       <img
         id={t('logo')}
-        className={t('object-contain left-0 right-0 static')}
+        className={'object-contain left-0 right-0 static'} 
         src={stepMetadata?.logoUrl}
         alt={t('Step Icon')}
       />
