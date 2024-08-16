@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
+import { t } from 'i18next';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SidebarHeader } from '@/app/builder/sidebar-header';
@@ -23,7 +24,6 @@ import {
 } from '@activepieces/shared';
 
 import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
-
 import { pieceSelectorUtils } from './piece-selector-utils';
 
 const PiecesSelectorList = () => {
@@ -108,16 +108,17 @@ const PiecesSelectorList = () => {
         return stepMetadata.displayName.toLowerCase();
     }
   }
+
   return (
     <>
       <SidebarHeader onClose={() => exitPieceSelector()}>
-        {selectedButton?.type === 'action' ? 'Select Action' : 'Select Trigger'}
+        {selectedButton?.type === 'action' ? t('Select Action') : t('Select Trigger')}
       </SidebarHeader>
       <div className="flex h-full flex-col gap-4 p-4">
         <div className="w-full">
           <Input
             type="text"
-            placeholder="Search for a piece"
+            placeholder={t('Search for a piece')}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
@@ -128,7 +129,7 @@ const PiecesSelectorList = () => {
         )}
         {metadata && metadata.length === 0 && (
           <div className="flex h-full grow items-center justify-center text-center">
-            No pieces found
+            {t('No pieces found')}
           </div>
         )}
         {!isLoading && metadata && metadata.length > 0 && (

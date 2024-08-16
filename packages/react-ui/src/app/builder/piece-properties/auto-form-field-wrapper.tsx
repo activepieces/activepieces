@@ -1,5 +1,6 @@
 import { SquareFunction } from 'lucide-react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
+import { t } from 'i18next';
 
 import { FormItem, FormLabel } from '@/components/ui/form';
 import { ReadMoreDescription } from '@/components/ui/read-more-description';
@@ -54,7 +55,7 @@ const AutoFormFieldWrapper = ({
       {!hideLabel && (
         <FormLabel className="flex items-center gap-1">
           {placeBeforeLabelText && !toggled && children}
-          <span>{property.displayName}</span>
+          <span>{t(property.displayName)}</span>
           {property.required && <span className="text-destructive">*</span>}
           <span className="grow"></span>
           {allowDynamicValues && (
@@ -77,7 +78,7 @@ const AutoFormFieldWrapper = ({
       )}
       {!placeBeforeLabelText && !toggled && children}
       {property.description && !hideDescription && (
-        <ReadMoreDescription text={property.description} />
+        <ReadMoreDescription text={t(property.description)} />
       )}
     </FormItem>
   );

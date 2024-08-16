@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { t } from 'i18next';
 
 import { FormField, FormItem } from '@/components/ui/form';
 import {
@@ -75,7 +76,7 @@ const PieceActionTriggerSelector = ({
             disabled={disabled}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select an option" asChild>
+              <SelectValue placeholder={t('Select an option')} asChild>
                 <>{selectedDisplayName}</>
               </SelectValue>
             </SelectTrigger>

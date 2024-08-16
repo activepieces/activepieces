@@ -1,5 +1,5 @@
 import { TSchema, Type } from '@sinclair/typebox';
-
+import { t } from 'i18next';
 import {
   CONNECTION_REGEX,
   OAuth2Props,

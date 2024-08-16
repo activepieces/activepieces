@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { t } from 'i18next';
 
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,7 @@ const TestActionSection = React.memo(
           setErrorMessage(
             testStepUtils.formatErrorMessage(
               JSON.stringify(formattedResponse) ||
-                'Failed to run test step and no error message was returned',
+                t('Failed to run test step and no error message was returned'),
             ),
           );
         }
@@ -104,7 +105,7 @@ const TestActionSection = React.memo(
                 disabled={!isValid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
-                Test Step
+                {t('Test Step')}
               </Button>
             </TestButtonTooltip>
           </div>

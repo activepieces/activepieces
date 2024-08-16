@@ -26,6 +26,8 @@ import FlowActionMenu from '../components/flow-actions-menu';
 
 import { BuilderPublishButton } from './builder-publish-button';
 
+import { t } from 'i18next';
+
 export const BuilderNavBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,7 +55,7 @@ export const BuilderNavBar = () => {
     flowVersion.state === FlowVersionState.DRAFT ||
     flowVersion.id === flow.publishedVersionId;
 
-  const folderName = folderData?.displayName ?? 'Uncategorized';
+  const folderName = folderData?.displayName ?? t('Uncategorized');
 
   return (
     <div className="items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
@@ -66,7 +68,9 @@ export const BuilderNavBar = () => {
               </Button>
             </Link>
           </TooltipTrigger>
-          <TooltipContent side="bottom">Home</TooltipContent>
+          <TooltipContent side="bottom">
+            {t('Home')}
+          </TooltipContent>
         </Tooltip>
         <span>
           <TooltipProvider>
@@ -84,7 +88,7 @@ export const BuilderNavBar = () => {
                 {folderName}
               </TooltipTrigger>
               <TooltipContent>
-                <span>Go to folder {folderName}</span>
+                <span>{t('Go to folder')} {folderName}</span>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -117,7 +121,9 @@ export const BuilderNavBar = () => {
                 <History />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">Version History</TooltipContent>
+            <TooltipContent side="bottom">
+              {t('Version History')}
+            </TooltipContent>
           </Tooltip>
         )}
 
@@ -130,7 +136,9 @@ export const BuilderNavBar = () => {
               <Logs />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">Run Logs</TooltipContent>
+          <TooltipContent side="bottom">
+            {t('Run Logs')}
+          </TooltipContent>
         </Tooltip>
 
         <BuilderPublishButton></BuilderPublishButton>

@@ -16,6 +16,7 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { isNil } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import { SidebarHeader } from '../sidebar-header';
 
@@ -62,7 +63,7 @@ const FlowRunDetails = React.memo(() => {
           >
             <ChevronLeft size={16} />
           </Button>
-          <span>Run Details</span>
+          <span>{t('Run Details')}</span>
         </div>
       </SidebarHeader>
       <ResizablePanel>

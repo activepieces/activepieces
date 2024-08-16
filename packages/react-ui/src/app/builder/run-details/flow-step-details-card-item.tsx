@@ -1,6 +1,7 @@
 import { ChevronRight } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useUpdateEffect } from 'react-use';
+import { t } from 'i18next';
 
 import {
   StepPathWithName,
@@ -168,7 +169,7 @@ const FlowStepDetailsCardItem = ({ path }: FlowStepDetailsCardProps) => {
             <div className="flex gap-1 justify-end  items-center flex-grow">
               {isLoopStep && isStepSelected && isInPath && (
                 <span className="text-sm font-semibold animate-fade">
-                  All Iterations
+                  {t('All Iterations')}
                 </span>
               )}
               {isLoopStep && !isStepSelected && isInPath && (

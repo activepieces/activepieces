@@ -9,6 +9,7 @@ import {
   StepOutputStatus,
   TriggerType,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import { TestButtonTooltip } from './test-step-tooltip';
 
@@ -49,7 +50,7 @@ const TestSampleDataViewer = React.memo(
                     status={StepOutputStatus.FAILED}
                     size="5"
                   ></StepStatusIcon>
-                  <span>Testing Failed</span>
+                  <span>{t('Testing Failed')}</span>
                 </>
               ) : (
                 <>
@@ -57,7 +58,7 @@ const TestSampleDataViewer = React.memo(
                     status={StepOutputStatus.SUCCEEDED}
                     size="5"
                   ></StepStatusIcon>
-                  <span> Tested Successfully</span>
+                  <span>{t('Tested Successfully')}</span>
                 </>
               )}
             </div>
@@ -75,13 +76,13 @@ const TestSampleDataViewer = React.memo(
               onClick={onRetest}
               loading={isTesting}
             >
-              Retest
+              {t('Retest')}
             </Button>
           </TestButtonTooltip>
         </div>
         <JsonViewer
           json={errorMessage ?? formattedData}
-          title="Output"
+          title={t('Output')}
         ></JsonViewer>
       </div>
     );

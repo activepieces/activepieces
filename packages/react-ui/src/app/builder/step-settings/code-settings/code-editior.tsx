@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { SourceCode, deepMergeAndCast } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import { AddNpmDialog } from './add-npm-dialog';
 
@@ -78,7 +79,7 @@ const CodeEditior = ({
             })}
             onClick={() => handleCodeClick()}
           >
-            Code
+            {t('Code')}
           </div>
           <div
             className={cn('text-sm cursor-pointer', {
@@ -86,7 +87,7 @@ const CodeEditior = ({
             })}
             onClick={() => handlePackageClick()}
           >
-            Dependencies
+            {t('Dependencies')}
           </div>
         </div>
         <div className="flex flex-grow"></div>
@@ -98,7 +99,7 @@ const CodeEditior = ({
             onClick={applyCodeToCurrentStep}
           >
             <BetweenHorizontalEnd className="w-3 h-3" />
-            Apply code
+            {t('Apply code')}
           </Button>
         ) : (
           <AddNpmDialog onAdd={handleAddPackages}>
@@ -109,7 +110,7 @@ const CodeEditior = ({
               onClick={() => {}}
             >
               <Package className="w-4 h-4" />
-              Add package
+              {t('Add package')}
             </Button>
           </AddNpmDialog>
         )}

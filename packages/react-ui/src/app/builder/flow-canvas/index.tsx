@@ -14,6 +14,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { t } from 'i18next';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DataSelector } from '../data-selector';
@@ -52,6 +53,7 @@ function useContainerSize(
     };
   }, [containerRef, setSize]);
 }
+
 const FlowCanvas = React.memo(() => {
   const [allowCanvasPanning, flowVersion] = useBuilderStateContext((state) => [
     state.allowCanvasPanning,
@@ -141,5 +143,6 @@ const FlowCanvas = React.memo(() => {
     </div>
   );
 });
+
 FlowCanvas.displayName = 'FlowCanvas';
 export { FlowCanvas };

@@ -1,5 +1,6 @@
 import { CollapsibleContent } from '@radix-ui/react-collapsible';
 import { useEffect, useState } from 'react';
+import { t } from 'i18next';
 
 import {
   Collapsible,

@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { ViewportPortal } from '@xyflow/react';
 import React from 'react';
-
+import { t } from 'i18next';
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -96,7 +96,7 @@ const AboveFlowWidget = React.memo(() => {
                   loading={isPending}
                   onClick={() => mutate()}
                 >
-                  Test Flow
+                  {t('Test Flow')}
                 </Button>
               )}
               {flowVersion.valid && !triggerHasSampleData && (
@@ -110,11 +110,11 @@ const AboveFlowWidget = React.memo(() => {
                       className="h-8 bg-primary-100/80 text-primary-300 hover:bg-primary-100/80 hover:text-primary-300 border-none"
                       disabled={true}
                     >
-                      Test Flow
+                      {t('Test Flow')}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    Please test the trigger first
+                    {t('Please test the trigger first')}
                   </TooltipContent>
                 </Tooltip>
               )}
@@ -125,7 +125,7 @@ const AboveFlowWidget = React.memo(() => {
                   key={'complete-flow-button'}
                   onClick={handleCompleteSettings}
                 >
-                  Complete Settings
+                  {t('Complete Settings')}
                 </Button>
               )}
             </>
@@ -138,7 +138,7 @@ const AboveFlowWidget = React.memo(() => {
               key={'complete-flow-button'}
               onClick={handleCompleteSettings}
             >
-              View Only
+              {t('View Only')}
             </Button>
           )}
         </div>

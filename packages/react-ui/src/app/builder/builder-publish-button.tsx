@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { t } from 'i18next';
 
 import {
   useBuilderStateContext,
@@ -42,8 +43,8 @@ const BuilderPublishButton = React.memo(() => {
     },
     onSuccess: (flow) => {
       toast({
-        title: 'Success',
-        description: 'Flow has been published.',
+        title: t('Success'),
+        description: t('Flow has been published.'),
         duration: 3000,
       });
       setFlow(flow);
@@ -79,11 +80,11 @@ const BuilderPublishButton = React.memo(() => {
                 disabled={isPublishedVersion || readonly}
                 onClick={() => publish()}
               >
-                Publish
+                {t('Publish')}
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {isPublishedVersion ? 'Latest version is published' : 'Publish'}
+              {isPublishedVersion ? t('Latest version is published') : t('Publish')}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -101,7 +102,7 @@ const BuilderPublishButton = React.memo(() => {
             }
           }}
         >
-          Edit Flow
+          {t('Edit Flow')}
         </Button>
       )}
     </>

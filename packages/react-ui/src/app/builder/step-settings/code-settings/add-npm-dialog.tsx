@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { t } from 'i18next';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -30,7 +31,7 @@ import { api } from '@/lib/api';
 const formSchema = Type.Object({
   packageName: Type.String({
     minLength: 1,
-    errorMessage: 'The package name is required',
+    errorMessage: t('The package name is required'),
   }),
 });
 
@@ -60,14 +61,14 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
       onAdd(packageName, version);
       setOpen(false);
       toast({
-        title: 'Success',
-        description: 'Package added successfully',
+        title: t('Success'),
+        description: t('Package added successfully'),
         duration: 3000,
       });
     },
     onError: () => {
       form.setError('root.serverError', {
-        message: 'Could not fetch package version',
+        message: t('Could not fetch package version'),
       });
     },
   });
@@ -77,9 +78,9 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add NPM Package</DialogTitle>
+          <DialogTitle>{t('Add NPM Package')}</DialogTitle>
           <DialogDescription>
-            Type the name of the npm package you want to add.
+            {t('Type the name of the npm package you want to add.')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -92,7 +93,7 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
               name="packageName"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="packageName">Package Name</Label>
+                  <Label htmlFor="packageName">{t('Package Name')}</Label>
                   <Input
                     {...field}
                     id="packageName"
@@ -105,7 +106,7 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
               )}
             />
             <FormDescription>
-              The latest version will be fetched and added
+              {t('The latest version will be fetched and added')}
             </FormDescription>
             {form?.formState?.errors?.root?.serverError && (
               <FormMessage>
@@ -117,11 +118,11 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="secondary">
-              Close
+              {t('Close')}
             </Button>
           </DialogClose>
           <Button type="submit" loading={isPending} onClick={() => mutate()}>
-            Add
+            {t('Add')}
           </Button>
         </DialogFooter>
       </DialogContent>

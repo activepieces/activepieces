@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-
+import { t } from 'i18next';
 import {
   LeftSideBarType,
   useBuilderStateContext,
@@ -35,11 +35,11 @@ const FlowVersionsList = () => {
   return (
     <>
       <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
-        Version History
+        {t('Version History')}
       </SidebarHeader>
       <CardList>
         {isLoading && <CardListItemSkeleton numberOfCards={10} />}
-        {isError && <div>Error, please try again.</div>}
+        {isError && <div>{t('Error, please try again.')}</div>}
         {flowVersionPage && flowVersionPage.data && (
           <ScrollArea className="w-full h-full">
             {flowVersionPage.data.map((flowVersion, index) => (

@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
+import { t } from 'i18next';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
@@ -28,7 +29,7 @@ const DynamicDropdownPieceProperty = React.memo(
     const newRefreshers = [...props.refreshers, 'auth'];
     const [dropdownState, setDropdownState] = useState<DropdownState<unknown>>({
       disabled: false,
-      placeholder: 'Select an option',
+      placeholder: t('Select an option'),
       options: [],
     });
 
@@ -84,7 +85,7 @@ const DynamicDropdownPieceProperty = React.memo(
     }));
     return props.multiple ? (
       <MultiSelectPieceProperty
-        placeholder={dropdownState.placeholder ?? 'Select an option'}
+        placeholder={dropdownState.placeholder ?? t('Select an option')}
         options={selectOptions}
         onChange={(value) => props.onChange(value)}
         disabled={dropdownState.disabled || props.disabled}
@@ -95,7 +96,7 @@ const DynamicDropdownPieceProperty = React.memo(
         options={selectOptions}
         disabled={dropdownState.disabled || props.disabled}
         loading={isPending}
-        placeholder={dropdownState.placeholder ?? 'Select an option'}
+        placeholder={dropdownState.placeholder ?? t('Select an option')}
         value={props.initialValue as React.Key}
         onChange={(value) => props.onChange(value)}
       />
