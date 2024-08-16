@@ -5,6 +5,7 @@ import { HttpStatusCode } from 'axios';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { t } from 'i18next';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -37,17 +38,17 @@ import { piecesApi } from '../lib/pieces-api';
 
 const FormSchema = Type.Object({
   pieceName: Type.String({
-    errorMessage: 'Please enter a piece name',
+    errorMessage: t('Please enter a piece name'),
   }),
   pieceVersion: Type.String({
-    errorMessage: 'Please enter a piece version',
+    errorMessage: t('Please enter a piece version'),
   }),
   packageType: Type.Enum(PackageType, {
-    errorMessage: 'Please select a package type',
+    errorMessage: t('Please select a package type'),
   }),
   pieceArchive: Type.Union([
     Type.Any({
-      errorMessage: 'Please upload a piece archive',
+      errorMessage: t('Please upload a piece archive'),
     }),
     Type.Null(),
   ]),
@@ -102,8 +103,8 @@ const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
       setIsOpen(false);
       onInstallPiece();
       toast({
-        title: 'Success',
-        description: 'Piece installed',
+        title: t('Success'),
+        description: t('Piece installed'),
         duration: 3000,
       });
     },
@@ -112,12 +113,12 @@ const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
         switch (error.response?.status) {
           case HttpStatusCode.Conflict:
             form.setError('root.serverError', {
-              message: 'Piece already installed.',
+              message: t('Piece already installed.'),
             });
             break;
           default:
             form.setError('root.serverError', {
-              message: 'Something went wrong, please try again later',
+              message: t('Something went wrong, please try again later'),
             });
             break;
         }
@@ -142,15 +143,15 @@ const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
       <DialogTrigger asChild>
         <Button size="sm" className="flex items-center justify-center gap-2">
           <Plus className="size-4" />
-          Install Piece
+          {t('Install Piece')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Install a piece</DialogTitle>
+          <DialogTitle>{t('Install a piece')}</DialogTitle>
           <DialogDescription>
             <ApMarkdown
-              markdown={`Use this to install a [custom piece]("https://www.activepieces.com/docs/developers/building-pieces/create-action") that you (or someone else) created. Once the piece is installed, you can use it in the flow builder.\n\nWarning: Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.`}
+              markdown={t('Use this to install a [custom piece]("https://www.activepieces.com/docs/developers/building-pieces/create-action") that you (or someone else) created. Once the piece is installed, you can use it in the flow builder.\n\nWarning: Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.')}
             />
           </DialogDescription>
         </DialogHeader>
@@ -164,7 +165,7 @@ const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="pieceName">Piece Name</Label>
+                  <Label htmlFor="pieceName">{t('Piece Name')}</Label>
                   <Input
                     {...field}
                     required
@@ -182,7 +183,7 @@ const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="pieceVersion">Piece Version</Label>
+                  <Label htmlFor="pieceVersion">{t('Piece Version')}</Label>
                   <Input
                     {...field}
                     required
@@ -200,7 +201,7 @@ const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="packageType">Package Type</Label>
+                  <Label htmlFor="packageType">{t('Package Type')}</Label>
                   <Select
                     value={field.value}
                     onValueChange={(value) => field.onChange(value)}
@@ -212,11 +213,11 @@ const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
                     <SelectContent>
                       <SelectGroup>
                         <SelectItem value={PackageType.REGISTRY}>
-                          NPM Registry
+                          {t('NPM Registry')}
                         </SelectItem>
                         {privatePiecesEnabled && (
                           <SelectItem value={PackageType.ARCHIVE}>
-                            Packed Archive (.tgz)
+                            {t('Packed Archive (.tgz)')}
                           </SelectItem>
                         )}
                       </SelectGroup>
@@ -232,12 +233,12 @@ const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
                 control={form.control}
                 render={({ field }) => (
                   <FormItem>
-                    <Label htmlFor="pieceArchive">Package Archive</Label>
+                    <Label htmlFor="pieceArchive">{t('Package Archive')}</Label>
                     <Input
                       {...field}
                       id="pieceArchive"
                       type="file"
-                      placeholder="Package archive"
+                      placeholder={t('Package archive')}
                       className="rounded-sm"
                     />
                     <FormMessage />
@@ -251,7 +252,7 @@ const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
               </FormMessage>
             )}
             <Button loading={isPending} type="submit">
-              Install
+              {t('Install')}
             </Button>
           </form>
         </FormProvider>

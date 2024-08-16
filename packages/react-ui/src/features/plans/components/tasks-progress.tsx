@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { t } from 'i18next';
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import { formatUtils } from '@/lib/utils';
 
@@ -19,10 +19,10 @@ const TasksProgress: React.FC<TasksProgressProps> = ({
       <ProgressCircularComponent data={{ plan, usage }} />
       <div className="flex flex-col gap-2">
         <span className="text-md">
-          {usage} of {plan} Tasks
+          {t('{usage} of {plan} Tasks', { usage, plan })}
         </span>
         <span className="text-md text-muted-foreground">
-          Resets at{' '}
+          {t('Resets at')}{' '}
           {`${formatUtils.formatDate(new Date(nextBillingDate)).toUpperCase()}`}
         </span>
       </div>

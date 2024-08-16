@@ -3,6 +3,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import React, { useEffect } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -17,7 +18,6 @@ import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 
 import { billingApi } from '../api/billing-api';
-import { planNameFormatter } from '../utils/plan-name-formatter';
 
 import { PlanData } from './plan-data';
 import { TasksProgress } from './tasks-progress';
@@ -30,6 +30,50 @@ type TasksSchema = Static<typeof TasksSchema>;
 
 const fetchSubscriptionInfo = async () => {
   return await billingApi.getSubscription();
+};
+
+const planNameFormatter = (planName: string | undefined) => {
+  if (!planName) {
+    return t('Free Plan');
+  }
+  const free = planName.startsWith('free');
+  if (free) {
+    return t('Free Plan');
+  }
+
+  const pro =
+    planName.startsWith('pro') ||
+    planName.startsWith('growth') ||
+    planName.startsWith('friends');
+  if (pro) {
+    return t('Pro Plan');
+  }
+
+  const ltd = planName.startsWith('ltd');
+  if (ltd) {
+    return t('Life Time Plan');
+  }
+
+  const unlimited = planName.startsWith('unlimited');
+  if (unlimited) {
+    return t('Unlimited Plan');
+  }
+
+  switch (planName) {
+    case 'appsumo_activepieces_tier1':
+      return t('AppSumo Tier 1');
+    case 'appsumo_activepieces_tier2':
+      return t('AppSumo Tier 2');
+    case 'appsumo_activepieces_tier3':
+      return t('AppSumo Tier 3');
+    case 'appsumo_activepieces_tier4':
+      return t('AppSumo Tier 4');
+    case 'appsumo_activepieces_tier5':
+      return t('AppSumo Tier 5');
+    case 'appsumo_activepieces_tier6':
+      return t('AppSumo Tier 6');
+  }
+  return planName;
 };
 
 const Plans: React.FC = () => {
@@ -64,8 +108,8 @@ const Plans: React.FC = () => {
         projectApi.update(authenticationSession.getProjectId(), request),
       onSuccess: () =>
         toast({
-          title: 'Success',
-          description: 'Your changes have been saved.',
+          title: t('Success'),
+          description: t('Your changes have been saved.'),
           duration: 3000,
         }),
       onError: () => toast(INTERNAL_ERROR_TOAST),
@@ -87,7 +131,7 @@ const Plans: React.FC = () => {
   return (
     <div className="container mx-auto flex-col py-10">
       <div className="mb-4 flex">
-        <h1 className="text-3xl font-bold">Your Automation Plan</h1>
+        <h1 className="text-3xl font-bold">{t('Your Automation Plan')}</h1>
         <div className="ml-auto"></div>
       </div>
       {project && subscriptionData && (
@@ -117,8 +161,8 @@ const Plans: React.FC = () => {
                 }
               >
                 {subscriptionData.subscription.subscriptionStatus === 'active'
-                  ? 'Manage Billing'
-                  : 'Add Payment Details'}
+                  ? t('Manage Billing')
+                  : t('Add Payment Details')}
               </Button>
             </div>
           </div>
@@ -132,22 +176,20 @@ const Plans: React.FC = () => {
                 name="tasks"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <Label htmlFor="tasks">Hard Task Limit</Label>
+                    <Label htmlFor="tasks">{t('Hard Task Limit')}</Label>
                     <Input
                       {...field}
                       required
                       id="tasks"
                       type="number"
-                      placeholder="15000"
+                      placeholder={t('15000')}
                       className="rounded-sm w-1/4"
                       max={200000}
                       min={1}
                       onChange={(e) => field.onChange(+e.target.value)}
                     />
                     <span className="text-sm text-muted-foreground">
-                      The maximum number of tasks that can be run in a month. If
-                      you exceed the limit, the tasks will fail. This is useful
-                      to prevent unexpected costs.
+                      {t('The maximum number of tasks that can be run in a month. If you exceed the limit, the tasks will fail. This is useful to prevent unexpected costs.')}
                     </span>
                     <FormMessage />
                   </FormItem>
@@ -161,7 +203,7 @@ const Plans: React.FC = () => {
                 loading={isUpdateLimitsPending}
                 onClick={(e) => form.handleSubmit(updateLimits)(e)}
               >
-                Save
+                {t('Save')}
               </Button>
             </form>
           </Form>

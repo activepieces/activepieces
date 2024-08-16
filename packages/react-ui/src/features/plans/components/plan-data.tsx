@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { t } from 'i18next';
 import { formatUtils } from '@/lib/utils';
 
 type PlanDataProps = {
@@ -17,15 +17,15 @@ const PlanData: React.FC<PlanDataProps> = ({
 
   const dataArray = [
     {
-      title: 'Sync Time',
-      data: `${minimumPollingInterval} minute${addPostfixToMinute}`,
+      title: t('Sync Time'),
+      data: `${minimumPollingInterval} ${t('minute')}${addPostfixToMinute}`,
     },
     {
-      title: 'Included Team Members',
-      data: includedUsers === -1 ? 'Unlimited' : includedUsers,
+      title: t('Included Team Members'),
+      data: includedUsers === -1 ? t('Unlimited') : includedUsers,
     },
     {
-      title: 'Included Tasks',
+      title: t('Included Tasks'),
       data: formatUtils.formatNumber(includedTasks),
     },
   ];
