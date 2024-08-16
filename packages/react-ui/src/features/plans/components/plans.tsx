@@ -182,7 +182,7 @@ const Plans: React.FC = () => {
                       required
                       id="tasks"
                       type="number"
-                      placeholder={'15000'} 
+                      placeholder={'15000'}
                       className="rounded-sm w-1/4"
                       max={200000}
                       min={1}

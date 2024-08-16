@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 
+import { LanguageSwitcher } from '@/app/routes/settings/appearance/language-switcher';
 import { useTheme } from '@/components/theme-provider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/seperator';
@@ -12,8 +13,8 @@ export default function AppearancePage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <div className="space-y-6">
+    <div className="flex flex-col items-center  gap-4">
+      <div className="space-y-6 w-full">
         <div>
           <h3 className="text-lg font-medium">{t('Appearance')}</h3>
           <p className="text-sm text-muted-foreground">
@@ -86,6 +87,8 @@ export default function AppearancePage() {
             </RadioGroup>
           </div>
         </div>
+        <Separator />
+        <LanguageSwitcher></LanguageSwitcher>
       </div>
     </div>
   );

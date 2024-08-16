@@ -110,7 +110,7 @@ export const SmtpSection = () => {
                     type="number"
                     required
                     id="smtpPort"
-                    placeholder={'587'} 
+                    placeholder={'587'}
                     className="rounded-sm"
                   />
                   <FormMessage />

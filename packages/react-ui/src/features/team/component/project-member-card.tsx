@@ -1,7 +1,6 @@
 import { AvatarFallback } from '@radix-ui/react-avatar';
-import { PopoverContent } from '@radix-ui/react-popover';
 import { t } from 'i18next';
-import { ChevronDownIcon, Trash } from 'lucide-react';
+import { Trash } from 'lucide-react';
 
 import { Authorization } from '@/components/authorization';
 import {
