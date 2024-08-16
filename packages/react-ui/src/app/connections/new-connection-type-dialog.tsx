@@ -1,6 +1,6 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import React, { useEffect, useState } from 'react';
-
+import { t } from 'i18next'; 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -69,11 +69,11 @@ const NewConnectionTypeDialog = React.memo(
           <DialogTrigger asChild>{children}</DialogTrigger>
           <DialogContent className="min-w-[700px] max-w-[700px] h-[680px] max-h-[680px] flex flex-col">
             <DialogHeader>
-              <DialogTitle>New Connection</DialogTitle>
+              <DialogTitle>{t('New Connection')}</DialogTitle>
             </DialogHeader>
             <div className="mb-4">
               <Input
-                placeholder="Search"
+                placeholder={t('Search')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -82,7 +82,7 @@ const NewConnectionTypeDialog = React.memo(
               <div className="grid grid-cols-4 gap-4">
                 {(isLoading ||
                   (filteredPieces && filteredPieces.length === 0)) && (
-                  <div className="text-center">No pieces found</div>
+                  <div className="text-center">{t('No pieces found')}</div>
                 )}
                 {!isLoading &&
                   filteredPieces &&
@@ -106,7 +106,7 @@ const NewConnectionTypeDialog = React.memo(
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="secondary">
-                  Close
+                  {t('Close')}
                 </Button>
               </DialogClose>
             </DialogFooter>

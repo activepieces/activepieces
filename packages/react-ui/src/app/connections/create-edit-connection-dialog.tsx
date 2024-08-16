@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { ScrollArea } from '@radix-ui/react-scroll-area';
 import { Static, Type } from '@sinclair/typebox';
@@ -109,11 +110,11 @@ const CreateOrEditConnectionDialog = React.memo(
           console.log(apError);
           if (apError.code === ErrorCode.INVALID_CLOUD_CLAIM) {
             setErrorMessage(
-              'Could not claim the authorization code, make sure you have correct settings and try again.',
+              t('Could not claim the authorization code, make sure you have correct settings and try again.'),
             );
           } else if (apError.code === ErrorCode.INVALID_APP_CONNECTION) {
             setErrorMessage(
-              `Connection failed with error: ${apError.params.error}`,
+              t('Connection failed with error: {{error}}', { error: apError.params.error }),
             );
           }
         } else {
@@ -134,7 +135,7 @@ const CreateOrEditConnectionDialog = React.memo(
           className="max-h-[70vh] min-w-[800px] overflow-y-auto"
         >
           <DialogHeader>
-            <DialogTitle>Create {piece.displayName} Connection</DialogTitle>
+            <DialogTitle>{t('Create {{displayName}} Connection', { displayName: piece.displayName })}</DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <ScrollArea className="h-full">
@@ -147,11 +148,11 @@ const CreateOrEditConnectionDialog = React.memo(
                   control={form.control}
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <div className="text-md font-medium">Connection Name</div>
+                      <div className="text-md font-medium">{t('Connection Name')}</div>
                       <Input
                         {...field}
                         type="text"
-                        placeholder="Connection name"
+                        placeholder={t('Connection name')}
                       />
                       <FormMessage />
                     </FormItem>
@@ -189,7 +190,7 @@ const CreateOrEditConnectionDialog = React.memo(
               disabled={!form.formState.isValid}
               loading={isPending}
             >
-              Create
+              {t('Create')}
             </Button>
           </DialogFooter>
           {errorMessage && (
