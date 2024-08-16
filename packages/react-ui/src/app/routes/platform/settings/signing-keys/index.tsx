@@ -1,6 +1,7 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Plus, Trash } from 'lucide-react';
 import { useState } from 'react';
+import { t } from 'i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { NewSigningKeyDialog } from '@/app/routes/platform/settings/signing-keys/new-signing-key-dialog';
@@ -32,7 +33,7 @@ const SigningKeysPage = () => {
     {
       accessorKey: 'id',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Id" />
+        <DataTableColumnHeader column={column} title={t('Id')} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.id}</div>;
@@ -41,7 +42,7 @@ const SigningKeysPage = () => {
     {
       accessorKey: 'displayName',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Display Name" />
+        <DataTableColumnHeader column={column} title={t('Display Name')} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.displayName}</div>;
@@ -50,7 +51,7 @@ const SigningKeysPage = () => {
     {
       accessorKey: 'created',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created" />
+        <DataTableColumnHeader column={column} title={t('Created')} />
       ),
       cell: ({ row }) => {
         return (
@@ -66,17 +67,20 @@ const SigningKeysPage = () => {
   return (
     <LockedFeatureGuard
       locked={!platform.embeddingEnabled}
-      lockTitle="Unlock Embedding Through JS SDK"
-      lockDescription="Enable signing keys to access embedding functionalities."
+      lockTitle={t('Unlock Embedding Through JS SDK')}
+      lockDescription={t(
+        'Enable signing keys to access embedding functionalities.'
+      )}
     >
       <div className="flex-col w-full">
         <div className="mb-4 flex">
           <div className="flex justify-between flex-row w-full">
             <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-bold w-full">Signing Keys</h1>
+              <h1 className="text-2xl font-bold w-full">{t('Signing Keys')}</h1>
               <span className="text-sm text-muted-foreground max-w-[500px]">
-                Use the JavaScript SDK to authenticate users with signing keys.
-                Refer the documentation for details.
+                {t(
+                  'Use the JavaScript SDK to authenticate users with signing keys. Refer the documentation for details.'
+                )}
               </span>
             </div>
             <NewSigningKeyDialog onCreate={() => setRefresh(refresh + 1)}>
@@ -85,7 +89,7 @@ const SigningKeysPage = () => {
                 className="flex items-center justify-center gap-2"
               >
                 <Plus className="size-4" />
-                New Signing Key
+                {t('New Signing Key')}
               </Button>
             </NewSigningKeyDialog>
           </div>
@@ -98,9 +102,11 @@ const SigningKeysPage = () => {
             (row) => (
               <div className="flex items-end justify-end">
                 <ConfirmationDeleteDialog
-                  title="Delete Signing Key"
-                  message="Are you sure you want to delete this signing key?"
-                  entityName="Signing Key"
+                  title={t('Delete Signing Key')}
+                  message={t(
+                    'Are you sure you want to delete this signing key?'
+                  )}
+                  entityName={t('Signing Key')}
                   mutationFn={async () => {
                     await signingKeyApi.delete(row.id);
                     setRefresh(refresh + 1);

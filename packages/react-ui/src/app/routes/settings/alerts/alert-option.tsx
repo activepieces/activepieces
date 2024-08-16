@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react';
 import React from 'react';
+import { t } from 'i18next';
 
 type AlertOptionsProps = {
   title: string;
@@ -20,8 +21,8 @@ const AlertOption = React.memo(
       >
         {icon}
         <div className="flex-grow space-y-1">
-          <p className="text-sm font-medium leading-none">{title}</p>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-sm font-medium leading-none">{t(title)}</p>
+          <p className="text-sm text-muted-foreground">{t(description)}</p>
         </div>
         <div>
           {isActive && <Check className="mr-2 size-4 text-muted-foreground" />}

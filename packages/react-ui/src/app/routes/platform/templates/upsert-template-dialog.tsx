@@ -2,6 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -65,7 +66,7 @@ export const UpsertTemplateDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Template</DialogTitle>
+          <DialogTitle>{t('Create New Template')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
@@ -73,12 +74,12 @@ export const UpsertTemplateDialog = ({
               name="template.displayName"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name">{t('Name')}</Label>
                   <Input
                     {...field}
                     required
                     id="name"
-                    placeholder="Template Name"
+                    placeholder={t('Template Name')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -89,12 +90,12 @@ export const UpsertTemplateDialog = ({
               name="description"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">{t('Description')}</Label>
                   <Input
                     {...field}
                     required
                     id="description"
-                    placeholder="Template Description"
+                    placeholder={t('Template Description')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -105,12 +106,12 @@ export const UpsertTemplateDialog = ({
               name="blogUrl"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="blogUrl">Blog URL</Label>
+                  <Label htmlFor="blogUrl">{t('Blog URL')}</Label>
                   <Input
                     {...field}
                     required
                     id="blogUrl"
-                    placeholder="Template Blog URL"
+                    placeholder={t('Template Blog URL')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -121,7 +122,7 @@ export const UpsertTemplateDialog = ({
               name="template"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="flow">Flow</Label>
+                  <Label htmlFor="flow">{t('Flow')}</Label>
                   <Input
                     type="file"
                     accept=".json"
@@ -137,7 +138,7 @@ export const UpsertTemplateDialog = ({
                     }}
                     required
                     id="flow"
-                    placeholder="Template Flow"
+                    placeholder={t('Template Flow')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -148,7 +149,7 @@ export const UpsertTemplateDialog = ({
               name="tags"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="tags">Tags</Label>
+                  <Label htmlFor="tags">{t('Tags')}</Label>
                   <TagInput
                     onChange={(tags) => field.onChange(tags)}
                     value={field.value}
@@ -173,7 +174,7 @@ export const UpsertTemplateDialog = ({
               setOpen(false);
             }}
           >
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button
             disabled={isPending || !form.formState.isValid}
@@ -184,7 +185,7 @@ export const UpsertTemplateDialog = ({
               mutate();
             }}
           >
-            Save
+            {t('Save')}
           </Button>
         </DialogFooter>
       </DialogContent>

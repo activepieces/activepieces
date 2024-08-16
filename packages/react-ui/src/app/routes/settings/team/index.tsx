@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { LoaderIcon } from 'lucide-react';
 
 import {
@@ -25,9 +26,9 @@ export default function TeamPage() {
     <div className="flex flex-col items-center justify-center gap-4">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Project Members</CardTitle>
+          <CardTitle>{t('Project Members')}</CardTitle>
           <CardDescription>
-            Invite your team members to collaborate.
+            {t('Invite your team members to collaborate.')}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 ">
@@ -39,7 +40,7 @@ export default function TeamPage() {
             )}
             {projectMembers && projectMembers.length === 0 && (
               <div className="text-center">
-                No members are added to this project.
+                {t('No members are added to this project.')}
               </div>
             )}
 
@@ -53,7 +54,7 @@ export default function TeamPage() {
           </div>
           <Separator />
           <div className="text-2xl font-bold tracking-tight">
-            Pending Invitations
+            {t('Pending Invitations')}
           </div>
           <div className="flex min-h-[35px] flex-col gap-4">
             {invitationsIsPending && (
@@ -62,7 +63,7 @@ export default function TeamPage() {
               </div>
             )}
             {invitations && invitations.length === 0 && (
-              <div className="text-center">No pending invitation.</div>
+              <div className="text-center">{t('No pending invitation.')}</div>
             )}
             {Array.isArray(invitations) &&
               invitations.map((invitation) => (

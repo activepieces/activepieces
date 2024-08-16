@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { Pencil, Plus, Trash } from 'lucide-react';
 import { useState } from 'react';
+import { t } from 'i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -37,8 +38,8 @@ export default function TemplatesPage() {
     onSuccess: () => {
       refreshData();
       toast({
-        title: 'Success',
-        description: 'Template deleted successfully',
+        title: t('Success'),
+        description: t('Template deleted successfully'),
         duration: 3000,
       });
     },
@@ -51,20 +52,20 @@ export default function TemplatesPage() {
   return (
     <LockedFeatureGuard
       locked={!isEnabled}
-      lockTitle="Unlock Templates"
-      lockDescription="Convert the most common automations into reusable templates 1 click away from your users"
+      lockTitle={t('Unlock Templates')}
+      lockDescription={t('Convert the most common automations into reusable templates 1 click away from your users')}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/templates.mp4"
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-3xl font-bold">Templates</span>
+          <span className="text-3xl font-bold">{t('Templates')}</span>
           <UpsertTemplateDialog onDone={() => refreshData()}>
             <Button
               size="sm"
               className="flex items-center justify-center gap-2"
             >
               <Plus className="size-4" />
-              New Template
+              {t('New Template')}
             </Button>
           </UpsertTemplateDialog>
         </div>
@@ -73,7 +74,7 @@ export default function TemplatesPage() {
             {
               accessorKey: 'name',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Name" />
+                <DataTableColumnHeader column={column} title={t('Name')} />
               ),
               cell: ({ row }) => {
                 return <div className="text-left">{row.original.name}</div>;
@@ -82,7 +83,7 @@ export default function TemplatesPage() {
             {
               accessorKey: 'createdAt',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Created" />
+                <DataTableColumnHeader column={column} title={t('Created')} />
               ),
               cell: ({ row }) => {
                 return (
@@ -95,7 +96,7 @@ export default function TemplatesPage() {
             {
               accessorKey: 'pieces',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Pieces" />
+                <DataTableColumnHeader column={column} title={t('Pieces')} />
               ),
               cell: ({ row }) => {
                 return (
@@ -127,7 +128,7 @@ export default function TemplatesPage() {
                         </Button>
                       </UpsertTemplateDialog>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom">Edit template</TooltipContent>
+                    <TooltipContent side="bottom">{t('Edit template')}</TooltipContent>
                   </Tooltip>
                 </div>
               );
@@ -138,9 +139,9 @@ export default function TemplatesPage() {
                   <Tooltip>
                     <TooltipTrigger>
                       <ConfirmationDeleteDialog
-                        title="Delete Template"
-                        message="Are you sure you want to delete this template?"
-                        entityName={`Template ${row.name}`}
+                        title={t('Delete Template')}
+                        message={t('Are you sure you want to delete this template?')}
+                        entityName={`${t('Template')} ${row.name}`}
                         mutationFn={async () => {
                           deleteTemplate(row.id);
                         }}
@@ -155,7 +156,7 @@ export default function TemplatesPage() {
                       </ConfirmationDeleteDialog>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      Delete template
+                      {t('Delete template')}
                     </TooltipContent>
                   </Tooltip>
                 </div>

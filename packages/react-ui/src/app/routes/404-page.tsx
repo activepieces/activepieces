@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-
+import { t } from 'i18next';
 import { Button } from '@/components/ui/button';
 
 const NotFoundPage: React.FC = () => {
@@ -11,14 +11,13 @@ const NotFoundPage: React.FC = () => {
           404
         </h1>
         <p className="mb-4 text-3xl font-bold tracking-tight text-muted-foreground md:text-4xl">
-          Something&#39;s missing.
+          {t("Something's missing.")}
         </p>
         <p className="mb-4 text-lg font-light text-muted-foreground">
-          Sorry, we can&#39;t find that page. You&#39;ll find lots to explore on
-          the home page.{' '}
+          {t("Sorry, we can't find that page. You'll find lots to explore on the home page.")}
         </p>
         <Link to="/flows">
-          <Button size="lg">Back to Homepage</Button>
+          <Button size="lg">{t("Back to Homepage")}</Button>
         </Link>
       </div>
     </div>

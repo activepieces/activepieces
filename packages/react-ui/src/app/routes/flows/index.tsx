@@ -35,20 +35,21 @@ import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
 
 const filters = [
   {
     type: 'input',
-    title: 'Flow name',
+    title: t('Flow name'),
     accessorKey: 'name',
     options: [],
     icon: CheckIcon,
   } as const,
   {
     type: 'select',
-    title: 'Status',
+    title: t('Status'),
     accessorKey: 'status',
     options: Object.values(FlowStatus).map((status) => {
       return {
@@ -88,7 +89,7 @@ const FlowsPage = () => {
     mutationFn: async () => {
       const flow = await flowsApi.create({
         projectId: authenticationSession.getProjectId(),
-        displayName: 'Untitled',
+        displayName: t('Untitled'),
       });
       return flow;
     },
@@ -102,7 +103,7 @@ const FlowsPage = () => {
     {
       accessorKey: 'name',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
+        <DataTableColumnHeader column={column} title={t('Name')} />
       ),
       cell: ({ row }) => {
         const status = row.original.version.displayName;
@@ -112,7 +113,7 @@ const FlowsPage = () => {
     {
       accessorKey: 'steps',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Steps" />
+        <DataTableColumnHeader column={column} title={t('Steps')} />
       ),
       cell: ({ row }) => {
         return (
@@ -126,7 +127,7 @@ const FlowsPage = () => {
     {
       accessorKey: 'folderId',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Folder" />
+        <DataTableColumnHeader column={column} title={t('Folder')} />
       ),
       cell: ({ row }) => {
         const folderId = row.original.folderId;
@@ -135,7 +136,7 @@ const FlowsPage = () => {
             {folderId ? (
               <FolderBadge folderId={folderId} />
             ) : (
-              <span>Uncategorized</span>
+              <span>{t('Uncategorized')}</span>
             )}
           </div>
         );
@@ -144,7 +145,7 @@ const FlowsPage = () => {
     {
       accessorKey: 'created',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created" />
+        <DataTableColumnHeader column={column} title={t('Created')} />
       ),
       cell: ({ row }) => {
         const created = row.original.created;
@@ -158,7 +159,7 @@ const FlowsPage = () => {
     {
       accessorKey: 'status',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
+        <DataTableColumnHeader column={column} title={t('Status')} />
       ),
       cell: ({ row }) => {
         return (
@@ -204,18 +205,18 @@ const FlowsPage = () => {
     <div className="flex flex-row gap-4 w-full">
       <div className="flex flex-col w-full">
         <div className="mb-4 flex">
-          <h1 className="text-3xl font-bold">Flows</h1>
+          <h1 className="text-3xl font-bold">{t('Flows')}</h1>
           <div className="ml-auto flex flex-row gap-2">
             <ImportFlowDialog>
               <Button variant="outline">
                 <Import className="w-4 h-4 mr-2" />
-                Import Flow
+                {t('Import Flow')}
               </Button>
             </ImportFlowDialog>
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="default" loading={isCreateFlowPending}>
-                  <span>New flow</span>
+                  <span>{t('New flow')}</span>
                   <ChevronDown className="h-4 w-4 ms-2" />
                 </Button>
               </DropdownMenuTrigger>
@@ -228,7 +229,7 @@ const FlowsPage = () => {
                   disabled={isCreateFlowPending}
                 >
                   <Plus className="h-4 w-4 me-2" />
-                  <span>From scratch</span>
+                  <span>{t('From scratch')}</span>
                 </DropdownMenuItem>
                 <SelectFlowTemplateDialog>
                   <DropdownMenuItem
@@ -236,7 +237,7 @@ const FlowsPage = () => {
                     disabled={isCreateFlowPending}
                   >
                     <Workflow className="h-4 w-4 me-2" />
-                    <span>Use a template</span>
+                    <span>{t('Use a template')}</span>
                   </DropdownMenuItem>
                 </SelectFlowTemplateDialog>
               </DropdownMenuContent>

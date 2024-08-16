@@ -5,6 +5,7 @@ import { HttpStatusCode } from 'axios';
 import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -28,7 +29,7 @@ import { Alert, AlertChannel } from '@activepieces/ee-shared';
 
 const FormSchema = Type.Object({
   email: Type.String({
-    errorMessage: 'Please enter a valid email address',
+    errorMessage: t('Please enter a valid email address'),
     pattern: formatUtils.EMAIL_REGEX,
   }),
 });
@@ -57,8 +58,8 @@ const AddAlertEmailDialog = React.memo(
       onSuccess: (data) => {
         onAdd(data);
         toast({
-          title: 'Success',
-          description: 'Your changes have been saved.',
+          title: t('Success'),
+          description: t('Your changes have been saved.'),
           duration: 3000,
         });
         setOpen(false);
@@ -68,7 +69,7 @@ const AddAlertEmailDialog = React.memo(
           switch (error.response?.status) {
             case HttpStatusCode.Conflict: {
               form.setError('root.serverError', {
-                message: 'The email is already added.',
+                message: t('The email is already added.'),
               });
               break;
             }
@@ -91,14 +92,14 @@ const AddAlertEmailDialog = React.memo(
             className="mt-4 flex items-center space-x-2"
           >
             <Plus className="size-4" />
-            <span>Add email</span>
+            <span>{t('Add email')}</span>
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Add Alert Email</DialogTitle>
+            <DialogTitle>{t('Add Alert Email')}</DialogTitle>
             <DialogDescription>
-              Enter the email address to receive alerts.
+              {t('Enter the email address to receive alerts.')}
             </DialogDescription>
             <Form {...form}>
               <form
@@ -115,7 +116,7 @@ const AddAlertEmailDialog = React.memo(
                   name="email"
                   render={({ field }) => (
                     <FormItem className="grid gap-3">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">{t('Email')}</Label>
                       <Input
                         {...field}
                         id="email"
@@ -133,7 +134,7 @@ const AddAlertEmailDialog = React.memo(
                 )}
                 <DialogFooter>
                   <Button type="submit" loading={isPending}>
-                    Add Email
+                    {t('Add Email')}
                   </Button>
                 </DialogFooter>
               </form>

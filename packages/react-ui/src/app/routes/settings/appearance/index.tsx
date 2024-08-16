@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { useTheme } from '@/components/theme-provider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/seperator';
@@ -13,17 +14,16 @@ export default function AppearancePage() {
     <div className="flex flex-col items-center justify-center gap-4">
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium">Appearance</h3>
+          <h3 className="text-lg font-medium">{t('Appearance')}</h3>
           <p className="text-sm text-muted-foreground">
-            Customize the appearance of the app. Automatically switch between
-            day and night themes.
+            {t('Customize the appearance of the app. Automatically switch between day and night themes.')}
           </p>
         </div>
         <Separator />
         <div className="space-y-8">
           <div className="space-y-1">
             <div className="text-sm text-muted-foreground">
-              Select the theme for the dashboard.
+              {t('Select the theme for the dashboard.')}
             </div>
             <RadioGroup
               onValueChange={handleThemeChange}
@@ -52,7 +52,7 @@ export default function AppearancePage() {
                   </div>
                 </div>
                 <span className="block w-full p-2 text-center font-normal">
-                  Light
+                  {t('Light')}
                 </span>
               </label>
               <label className="[&:has([data-state=checked])>div]:border-primary">
@@ -77,7 +77,7 @@ export default function AppearancePage() {
                   </div>
                 </div>
                 <span className="block w-full p-2 text-center font-normal">
-                  Dark
+                  {t('Dark')}
                 </span>
               </label>
             </RadioGroup>
