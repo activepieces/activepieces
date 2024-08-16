@@ -49,6 +49,7 @@ export const flowsApi = {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
     const run = await getInitialRun(socket, request.flowVersionId);
 
+    onUpdate(run);
     return new Promise<void>((resolve, reject) => {
       const handleProgress = (response: FlowRun) => {
         if (run.id !== response.id) {
