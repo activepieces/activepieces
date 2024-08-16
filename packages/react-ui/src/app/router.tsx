@@ -2,7 +2,9 @@ import { Navigate, createBrowserRouter } from 'react-router-dom';
 
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
+import { ApiKeysPage } from '@/app/routes/platform/settings/api-keys';
 import { BrandingPage } from '@/app/routes/platform/settings/branding';
+import { SigningKeysPage } from '@/app/routes/platform/settings/signing-keys';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 
 import { FlowsPage } from '../app/routes/flows';
@@ -201,6 +203,26 @@ export const router = createBrowserRouter([
     element: (
       <PlatformAdminContainer>
         <AuditLogsPage />
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/api-keys',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <ApiKeysPage />
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/signing-keys',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <SigningKeysPage />
+        </PlatformSettingsLayout>
       </PlatformAdminContainer>
     ),
   },

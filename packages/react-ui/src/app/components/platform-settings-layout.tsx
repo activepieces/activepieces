@@ -1,4 +1,4 @@
-import { Palette } from 'lucide-react';
+import { Key, Lock, Palette } from 'lucide-react';
 
 import SidebarLayout from '@/app/components/sidebar-layout';
 
@@ -9,6 +9,16 @@ const sidebarNavItems = [
     title: 'Branding',
     href: '/platform/settings/branding',
     icon: <Palette size={iconSize} />,
+  },
+  {
+    title: 'API Keys',
+    href: '/platform/api-keys',
+    icon: <Key size={iconSize} />,
+  },
+  {
+    title: 'Signing Keys',
+    href: '/platform/signing-keys',
+    icon: <Lock size={iconSize} />,
   },
 ];
 
