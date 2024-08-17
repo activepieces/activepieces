@@ -1,10 +1,11 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
-import { githubLight } from '@uiw/codemirror-theme-github';
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
 import { BetweenHorizontalEnd, Package } from 'lucide-react';
 import { useState } from 'react';
 
+import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
@@ -35,6 +36,9 @@ const CodeEditior = ({
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
   const [language, setLanguage] = useState<'typescript' | 'json'>('typescript');
   const codeApplicationEnabled = typeof applyCodeToCurrentStep === 'function';
+  const { theme } = useTheme();
+
+  const codeEditiorTheme = theme === 'dark' ? githubDark : githubLight;
 
   const extensions = [
     styleTheme,
@@ -135,7 +139,7 @@ const CodeEditior = ({
               : { code, packageJson: value },
           );
         }}
-        theme={githubLight}
+        theme={codeEditiorTheme}
         readOnly={readonly}
         extensions={extensions}
       />
