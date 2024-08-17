@@ -20,6 +20,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -85,7 +86,7 @@ export function LanguageSwitcher() {
         {t('Select the language that will be used in the dashboard.')}
       </div>
       <div className="flex flex-col">
-        <Popover modal={false} open={isOpen} onOpenChange={setIsOpen}>
+        <Popover modal={true} open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -106,30 +107,46 @@ export function LanguageSwitcher() {
             <Command>
               <CommandInput placeholder={i18n.t('Search language...')} />
               <CommandList>
-                <CommandEmpty>{i18n.t('No language found.')}</CommandEmpty>
-                <CommandGroup>
-                  {Object.entries(localesMap).map(([value, label]) => (
-                    <CommandItem
-                      value={value}
-                      key={value}
-                      onSelect={(value) => mutate(value)}
-                    >
-                      <Check
-                        className={cn(
-                          'mr-2 h-4 w-4',
-                          value === selectedLanguage
-                            ? 'opacity-100'
-                            : 'opacity-0',
-                        )}
-                      />
-                      {label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
+                <ScrollArea className="h-[300px]">
+                  <CommandEmpty>{i18n.t('No language found.')}</CommandEmpty>
+                  <CommandGroup>
+                    {Object.entries(localesMap).map(([value, label]) => (
+                      <CommandItem
+                        value={value}
+                        key={value}
+                        onSelect={(value) => mutate(value)}
+                      >
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            value === selectedLanguage
+                              ? 'opacity-100'
+                              : 'opacity-0',
+                          )}
+                        />
+                        {label}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </ScrollArea>
               </CommandList>
             </Command>
           </PopoverContent>
         </Popover>
+        <div className="text-sm text-muted-foreground mt-2">
+          {t('Help us translate Activepieces to your language.')}
+          <span
+            className="text-primary ml-2 cursor-pointer"
+            onClick={() =>
+              window.open(
+                'https://www.activepieces.com/docs/about/i18n',
+                '_blank',
+              )
+            }
+          >
+            {t('Learn more')}
+          </span>
+        </div>
       </div>
     </div>
   );
