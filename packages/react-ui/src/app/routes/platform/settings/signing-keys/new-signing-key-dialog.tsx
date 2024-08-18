@@ -1,5 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -60,18 +61,22 @@ export const NewSigningKeyDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {signingKey ? 'Signing Key Created' : 'Create New Signing Key'}
+            {signingKey
+              ? t('Signing Key Created')
+              : t('Create New Signing Key')}
           </DialogTitle>
         </DialogHeader>
         {signingKey && (
           <div className="p-4">
             <div className="flex flex-col items-start gap-2">
               <span className="text-md">
-                Please save this secret key somewhere safe and accessible. For
-                security reasons,{' '}
+                {t(
+                  'Please save this secret key somewhere safe and accessible. For security reasons,',
+                )}
                 <span className="font-semibold">
-                  you won&apos;t be able to view it again after closing this
-                  dialog.
+                  {t(
+                    "you won't be able to view it again after closing this dialog.",
+                  )}
                 </span>
               </span>
               <CopyToClipboardInput textToCopy={signingKey.privateKey} />
@@ -88,7 +93,7 @@ export const NewSigningKeyDialog = ({
                 name="displayName"
                 render={({ field }) => (
                   <FormItem className="grid space-y-4">
-                    <Label htmlFor="displayName">Signing Key Name</Label>
+                    <Label htmlFor="displayName">{t('Signing Key Name')}</Label>
                     <Input
                       {...field}
                       required
@@ -111,14 +116,14 @@ export const NewSigningKeyDialog = ({
           {!signingKey ? (
             <>
               <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                {t('Cancel')}
               </Button>
               <Button
                 disabled={isPending || !form.formState.isValid}
                 loading={isPending}
                 onClick={() => mutate()}
               >
-                Save
+                {t('Save')}
               </Button>
             </>
           ) : (
@@ -129,7 +134,7 @@ export const NewSigningKeyDialog = ({
                 setOpen(false);
               }}
             >
-              Done
+              {t('Done')}
             </Button>
           )}
         </DialogFooter>

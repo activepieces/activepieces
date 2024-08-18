@@ -1,4 +1,5 @@
 import deepEqual from 'deep-equal';
+import { t } from 'i18next';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 
@@ -107,7 +108,7 @@ export const SearchableSelect = <T extends React.Key>({
           <span className="flex text-ellipsis w-full overflow-hidden whitespace-nowrap">
             {!isNil(value)
               ? options.find((framework) => framework.value === value)?.label
-              : placeholder}
+              : t(placeholder)}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -121,14 +122,14 @@ export const SearchableSelect = <T extends React.Key>({
       >
         <Command className="w-full" shouldFilter={false}>
           <CommandInput
-            placeholder={placeholder}
+            placeholder={t(placeholder)}
             value={searchTerm}
             onValueChange={(e) => {
               setSearchTerm(e);
             }}
           />
           {filterOptionsIndices.length === 0 && (
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>{t('No results found.')}</CommandEmpty>
           )}
        
             <CommandGroup>

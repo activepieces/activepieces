@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import React from 'react';
 
 import {
@@ -25,7 +26,9 @@ const FlowVersionStateDot = React.memo(({ state }: FlowVersionStateProps) => {
         </div>
       </TooltipTrigger>
       <TooltipContent>
-        {state === FlowVersionState.DRAFT ? 'Draft Version' : 'Locked Version'}
+        {state === FlowVersionState.DRAFT
+          ? t('Draft Version')
+          : t('Locked Version')}
       </TooltipContent>
     </Tooltip>
   );

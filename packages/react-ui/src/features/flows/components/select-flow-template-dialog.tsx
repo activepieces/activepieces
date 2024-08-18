@@ -1,5 +1,6 @@
 import { DialogDescription } from '@radix-ui/react-dialog';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { ArrowLeft, Info, Workflow } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -93,7 +94,7 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
           loading={isPending}
           onClick={() => createFlow(template)}
         >
-          <Workflow className="w-4 h-4 me-2" /> Use Template
+          <Workflow className="w-4 h-4 me-2" /> {t('Use Template')}
         </Button>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -108,7 +109,7 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
             </div>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            <span className="text-sm">Learn more</span>
+            <span className="text-sm">{t('Learn more')}</span>
           </TooltipContent>
         </Tooltip>
       </div>
@@ -138,7 +139,6 @@ const SelectFlowTemplateDialog = ({
     staleTime: 0,
   });
 
-  // Filter templates if the template name or the template description contains the search query
   const filteredTemplates = templates?.filter((template) => {
     const templateName = template.name.toLowerCase();
     const templateDescription = template.description.toLowerCase();
@@ -170,7 +170,7 @@ const SelectFlowTemplateDialog = ({
                 <Workflow className="w-4 h-4" />
               )}
             </Button>
-            Browse Templates
+            {t('Browse Templates')}
           </DialogTitle>
         </DialogHeader>
         <Carousel setApi={(api) => (carousel.current = api)}>
@@ -181,7 +181,7 @@ const SelectFlowTemplateDialog = ({
                   type="text"
                   value={search}
                   onChange={handleSearchChange}
-                  placeholder="Search templates"
+                  placeholder={t('Search templates')}
                   className="mb-4"
                 />
                 <DialogDescription>
@@ -228,14 +228,14 @@ const SelectFlowTemplateDialog = ({
                     />
                     {selectedTemplate.blogUrl && (
                       <div className="mt-4">
-                        Read more about this template in{' '}
+                        {t('Read more about this template in')}{' '}
                         <a
                           href={selectedTemplate.blogUrl}
                           target="_blank"
                           className="text-primary underline underline-offset-4"
                           rel="noreferrer"
                         >
-                          this blog!
+                          {t('this blog!')}
                         </a>
                       </div>
                     )}

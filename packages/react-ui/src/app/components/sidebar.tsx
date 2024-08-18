@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { LockKeyhole } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -86,7 +87,7 @@ export function Sidebar({
             <div className="h-[48px] items-center justify-center ">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <img src={theme.logoIconUrl} alt="logo" />
+                  <img src={theme.logoIconUrl} alt={t('logo')} />
                 </TooltipTrigger>
                 <TooltipContent side="right">
                   {theme.websiteName}

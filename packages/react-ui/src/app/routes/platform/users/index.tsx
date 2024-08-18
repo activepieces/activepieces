@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { CircleMinus, Pencil, RotateCcw, Trash } from 'lucide-react';
 import { useState } from 'react';
 
@@ -36,8 +37,8 @@ export default function UsersPage() {
     onSuccess: () => {
       refreshData();
       toast({
-        title: 'Success',
-        description: 'User deleted successfully',
+        title: t('Success'),
+        description: t('User deleted successfully'),
         duration: 3000,
       });
     },
@@ -60,11 +61,11 @@ export default function UsersPage() {
       onSuccess: (data) => {
         refreshData();
         toast({
-          title: 'Success',
+          title: t('Success'),
           description:
             data.status === UserStatus.ACTIVE
-              ? 'User activated successfully'
-              : 'User deactivated successfully',
+              ? t('User activated successfully')
+              : t('User deactivated successfully'),
           duration: 3000,
         });
       },
@@ -77,19 +78,19 @@ export default function UsersPage() {
   return (
     <LockedFeatureGuard
       locked={false}
-      lockTitle="Unlock Users"
-      lockDescription="Manage your users and their access to your projects"
+      lockTitle={t('Unlock Users')}
+      lockDescription={t('Manage your users and their access to your projects')}
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-3xl font-bold">Users</span>
+          <span className="text-3xl font-bold">{t('Users')}</span>
         </div>
         <DataTable
           columns={[
             {
               accessorKey: 'email',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Email" />
+                <DataTableColumnHeader column={column} title={t('Email')} />
               ),
               cell: ({ row }) => {
                 return <div className="text-left">{row.original.email}</div>;
@@ -98,7 +99,7 @@ export default function UsersPage() {
             {
               accessorKey: 'name',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Name" />
+                <DataTableColumnHeader column={column} title={t('Name')} />
               ),
               cell: ({ row }) => {
                 return (
@@ -111,7 +112,10 @@ export default function UsersPage() {
             {
               accessorKey: 'externalId',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="External Id" />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('External Id')}
+                />
               ),
               cell: ({ row }) => {
                 return (
@@ -122,7 +126,7 @@ export default function UsersPage() {
             {
               accessorKey: 'role',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Role" />
+                <DataTableColumnHeader column={column} title={t('Role')} />
               ),
               cell: ({ row }) => {
                 return (
@@ -133,7 +137,7 @@ export default function UsersPage() {
             {
               accessorKey: 'createdAt',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Created" />
+                <DataTableColumnHeader column={column} title={t('Created')} />
               ),
               cell: ({ row }) => {
                 return (
@@ -146,7 +150,7 @@ export default function UsersPage() {
             {
               accessorKey: 'status',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Status" />
+                <DataTableColumnHeader column={column} title={t('Status')} />
               ),
               cell: ({ row }) => {
                 return <div className="text-left">{row.original.status}</div>;
@@ -171,7 +175,9 @@ export default function UsersPage() {
                         </Button>
                       </UpdateUserRoleDialog>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom">Edit user</TooltipContent>
+                    <TooltipContent side="bottom">
+                      {t('Edit user')}
+                    </TooltipContent>
                   </Tooltip>
                 </div>
               );
@@ -205,8 +211,8 @@ export default function UsersPage() {
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       {row.status === UserStatus.ACTIVE
-                        ? 'Deactivate user'
-                        : 'Activate user'}
+                        ? t('Deactivate user')
+                        : t('Activate user')}
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -218,9 +224,11 @@ export default function UsersPage() {
                   <Tooltip>
                     <TooltipTrigger>
                       <ConfirmationDeleteDialog
-                        title="Delete User"
-                        message="Are you sure you want to delete this user?"
-                        entityName={`User ${row.email}`}
+                        title={t('Delete User')}
+                        message={t(
+                          'Are you sure you want to delete this user?',
+                        )}
+                        entityName={`${t('User')} ${row.email}`}
                         mutationFn={async () => {
                           deleteUser(row.id);
                         }}
@@ -234,7 +242,9 @@ export default function UsersPage() {
                         </Button>
                       </ConfirmationDeleteDialog>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom">Delete user</TooltipContent>
+                    <TooltipContent side="bottom">
+                      {t('Delete user')}
+                    </TooltipContent>
                   </Tooltip>
                 </div>
               );

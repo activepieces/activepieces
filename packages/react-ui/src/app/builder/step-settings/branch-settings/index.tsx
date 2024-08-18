@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -61,13 +62,13 @@ const BranchSettings = React.memo(({ readonly }: BranchSettingsProps) => {
   const conditions = form.getValues().settings.conditions;
   return (
     <div className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
-      <div className="text-md">Continue If</div>
+      <div className="text-md">{t('Continue If')}</div>
       {conditions.map((fieldGroup, groupIndex) => {
         return (
           <div className="flex flex-col gap-4" key={`group-${groupIndex}`}>
             {groupIndex > 0 && (
               <HorizontalSeparatorWithText className="my-2">
-                OR
+                {t('OR')}
               </HorizontalSeparatorWithText>
             )}
             {fieldGroup.length === 0 && (
@@ -84,7 +85,7 @@ const BranchSettings = React.memo(({ readonly }: BranchSettingsProps) => {
               <React.Fragment
                 key={`condition-${groupIndex}-${conditionIndex}-${condition.operator}`}
               >
-                {conditionIndex > 0 && <div>And If</div>}
+                {conditionIndex > 0 && <div>{t('And If')}</div>}
                 <BranchSingleCondition
                   groupIndex={groupIndex}
                   readonly={readonly}

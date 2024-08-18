@@ -1,5 +1,6 @@
 import { UpdateIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { Minus, Plus } from 'lucide-react';
 import React from 'react';
 
@@ -34,7 +35,9 @@ const GitChange = React.memo(({ change }: GitChangeProps) => {
         <div className="flex gap-4 text-success-300 justify-center items-center">
           <Plus className="w-4 h-4"></Plus>
           <span className="flex-grow items-center justify-center">
-            Create &quot;{change.flow.displayName}&quot; Flow
+            {t('Create &quot;{{flowName}}&quot; Flow', {
+              flowName: change.flow.displayName,
+            })}
           </span>
         </div>
       )}
@@ -42,7 +45,9 @@ const GitChange = React.memo(({ change }: GitChangeProps) => {
         <div className="flex gap-4 text-warn-dark justify-center items-center">
           <UpdateIcon className="w-4 h-4"></UpdateIcon>
           <span className="flex-grow items-center justify-center">
-            Update &quot;{change.targetFlow.displayName}&quot; Flow
+            {t('Update &quot;{{flowName}}&quot; Flow', {
+              flowName: change.targetFlow.displayName,
+            })}
           </span>
         </div>
       )}
@@ -50,7 +55,9 @@ const GitChange = React.memo(({ change }: GitChangeProps) => {
         <div className="flex gap-4 text-destructive-300 justify-center items-center">
           <Minus className="w-4 h-4"></Minus>
           <span className="flex-grow items-center justify-center">
-            Delete &quot;{change.flow.displayName}&quot; Flow
+            {t('Delete &quot;{{flowName}}&quot; Flow', {
+              flowName: change.flow.displayName,
+            })}
           </span>
         </div>
       )}
@@ -75,8 +82,8 @@ const ReviewChangeDialog = ({ gitSync }: ReviewChangeDialogProps) => {
       if (!open) {
         if (plan.operations.length === 0) {
           toast({
-            title: 'No changes to pull',
-            description: 'There are no changes to pull',
+            title: t('No changes to pull'),
+            description: t('There are no changes to pull'),
             duration: 3000,
           });
           setSyncPlan(null);
@@ -86,8 +93,8 @@ const ReviewChangeDialog = ({ gitSync }: ReviewChangeDialogProps) => {
         }
       } else {
         toast({
-          title: 'Pulled changes',
-          description: 'Changes are applied successfully',
+          title: t('Pulled changes'),
+          description: t('Changes are applied successfully'),
           duration: 3000,
         });
         setOpen(false);
@@ -109,14 +116,14 @@ const ReviewChangeDialog = ({ gitSync }: ReviewChangeDialogProps) => {
             e.preventDefault();
           }}
         >
-          Pull from Git
+          {t('Pull from Git')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Review Changes</DialogTitle>
+          <DialogTitle>{t('Review Changes')}</DialogTitle>
           <DialogDescription>
-            These are the changes that will be pulled from the repository
+            {t('These are the changes that will be pulled from the repository')}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea>
@@ -135,7 +142,7 @@ const ReviewChangeDialog = ({ gitSync }: ReviewChangeDialogProps) => {
               setOpen(false);
             }}
           >
-            Close
+            {t('Close')}
           </Button>
           <Button
             size={'sm'}
@@ -145,7 +152,7 @@ const ReviewChangeDialog = ({ gitSync }: ReviewChangeDialogProps) => {
               e.preventDefault();
             }}
           >
-            Confirm
+            {t('Confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

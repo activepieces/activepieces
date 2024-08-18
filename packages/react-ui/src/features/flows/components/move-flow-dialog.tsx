@@ -7,6 +7,7 @@ import {
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -35,7 +36,7 @@ import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 
 const MoveFlowFormSchema = Type.Object({
   folder: Type.String({
-    errorMessage: 'Please select a folder',
+    errorMessage: t('Please select a folder'),
   }),
 });
 
@@ -76,7 +77,7 @@ const MoveFlowDialog = ({
       onMoveTo(form.getValues().folder);
       setIsDialogOpened(false);
       toast({
-        title: 'Moved flow successfully',
+        title: t('Moved flow successfully'),
       });
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
@@ -87,7 +88,9 @@ const MoveFlowDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Move {flowVersion.displayName}</DialogTitle>
+          <DialogTitle>
+            {t('Move')} {flowVersion.displayName}
+          </DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
@@ -101,12 +104,14 @@ const MoveFlowDialog = ({
                     disabled={isLoading || folders?.length === 0}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Folder" />
+                      <SelectValue placeholder={t('Select Folder')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         {folders && folders.length === 0 && (
-                          <SelectItem value="NULL">No Folders</SelectItem>
+                          <SelectItem value="NULL">
+                            {t('No Folders')}
+                          </SelectItem>
                         )}
                         {folders &&
                           folders.map((folder) => (
@@ -127,7 +132,7 @@ const MoveFlowDialog = ({
             )}
             <DialogFooter>
               <Button type="submit" loading={isPending}>
-                Confirm
+                {t('Confirm')}
               </Button>
             </DialogFooter>
           </form>

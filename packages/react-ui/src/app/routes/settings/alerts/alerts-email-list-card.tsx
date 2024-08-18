@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -45,8 +46,8 @@ export default function AlertsEmailsCard() {
         exact: true,
       });
       toast({
-        title: 'Success',
-        description: 'Your changes have been saved.',
+        title: t('Success'),
+        description: t('Your changes have been saved.'),
         duration: 3000,
       });
     },
@@ -59,9 +60,9 @@ export default function AlertsEmailsCard() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Emails</CardTitle>
+        <CardTitle>{t('Emails')}</CardTitle>
         <CardDescription>
-          Add email addresses to receive alerts.
+          {t('Add email addresses to receive alerts.')}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
@@ -71,9 +72,9 @@ export default function AlertsEmailsCard() {
               <LoadingSpinner />
             </div>
           )}
-          {isError && <div>Error, please try again.</div>}
+          {isError && <div>{t('Error, please try again.')}</div>}
           {isSuccess && data.length === 0 && (
-            <div className="text-center">No emails added yet.</div>
+            <div className="text-center">{t('No emails added yet.')}</div>
           )}
           {Array.isArray(data) &&
             data.map((alert: Alert) => (

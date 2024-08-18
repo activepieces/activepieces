@@ -1,5 +1,6 @@
 import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
 import { BaseEdge } from '@xyflow/react';
+import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -137,8 +138,8 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
           <div className="text-accent-foreground text-sm text-center bg-background">
             {props.data.stepLocationRelativeToParent ===
             StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
-              ? 'True'
-              : 'False'}
+              ? t('True')
+              : t('False')}
           </div>
         </foreignObject>
       )}

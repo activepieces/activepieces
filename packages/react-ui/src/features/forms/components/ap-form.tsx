@@ -2,6 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Separator } from '@radix-ui/react-dropdown-menu';
 import { Static, TObject, TSchema, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -105,8 +106,8 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
           break;
         default:
           toast({
-            title: 'Success',
-            description: 'Your submission was successfully received.',
+            title: t('Success'),
+            description: t('Your submission was successfully received.'),
             duration: 3000,
           });
           break;
@@ -117,14 +118,16 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
         const status = error.response?.status;
         if (status === 404) {
           toast({
-            title: 'Flow not found',
-            description: 'The flow you are trying to submit to does not exist.',
+            title: t('Flow not found'),
+            description: t(
+              'The flow you are trying to submit to does not exist.',
+            ),
             duration: 3000,
           });
         } else {
           toast({
-            title: 'Error',
-            description: 'The flow failed to execute.',
+            title: t('Error'),
+            description: t('The flow failed to execute.'),
             duration: 3000,
           });
         }
@@ -224,7 +227,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                   className="w-full mt-4"
                   loading={isPending}
                 >
-                  Submit
+                  {t('Submit')}
                 </Button>
 
                 {markdownResponse && (

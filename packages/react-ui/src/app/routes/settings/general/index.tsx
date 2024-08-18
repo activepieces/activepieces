@@ -1,5 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 
 import { FlagGuard } from '@/app/components/flag-guard';
@@ -50,8 +51,8 @@ export default function GeneralPage() {
     },
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Your changes have been saved.',
+        title: t('Success'),
+        description: t('Your changes have been saved.'),
         duration: 3000,
       });
     },
@@ -64,9 +65,9 @@ export default function GeneralPage() {
   return (
     <Card className="w-full">
       <CardHeader className="pb-3">
-        <CardTitle>General</CardTitle>
+        <CardTitle>{t('General')}</CardTitle>
         <CardDescription>
-          Manage general settings for your project.
+          {t('Manage general settings for your project.')}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1 mt-4">
@@ -76,12 +77,12 @@ export default function GeneralPage() {
               name="displayName"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="displayName">Project Name</Label>
+                  <Label htmlFor="displayName">{t('Project Name')}</Label>
                   <Input
                     {...field}
                     required
                     id="displayName"
-                    placeholder="Project Name"
+                    placeholder={t('Project Name')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -93,13 +94,13 @@ export default function GeneralPage() {
                 name="plan.tasks"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <Label htmlFor="plan.tasks">Tasks</Label>
+                    <Label htmlFor="plan.tasks">{t('Tasks')}</Label>
                     <Input
                       type="number"
                       {...field}
                       required
                       id="plan.tasks"
-                      placeholder="Tasks"
+                      placeholder={t('Tasks')}
                       className="rounded-sm"
                     />
                     <FormMessage />
@@ -122,7 +123,7 @@ export default function GeneralPage() {
               mutation.mutate(form.getValues());
             }}
           >
-            Save
+            {t('Save')}
           </Button>
         </div>
       </CardContent>

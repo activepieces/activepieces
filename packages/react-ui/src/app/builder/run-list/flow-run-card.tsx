@@ -1,5 +1,6 @@
 import { StopwatchIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { ChevronRightIcon } from 'lucide-react';
 import React from 'react';
 
@@ -83,7 +84,7 @@ const FlowRunCard = React.memo((params: FlowRunCardProps) => {
         {run.duration && (
           <p className="flex gap-1 text-xs text-muted-foreground">
             <StopwatchIcon />
-            Took {formatUtils.formatDuration(run.duration, false)}
+            {t('Took')} {formatUtils.formatDuration(run.duration, false)}
           </p>
         )}
       </div>

@@ -1,4 +1,5 @@
 import { DragHandleDots2Icon } from '@radix-ui/react-icons';
+import { t } from 'i18next';
 import { Plus, TrashIcon } from 'lucide-react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
@@ -62,7 +63,7 @@ const ArrayPieceProperty = ({
                       className="size-4 text-destructive"
                       aria-hidden="true"
                     />
-                    <span className="sr-only">Remove</span>
+                    <span className="sr-only">{t('Remove')}</span>
                   </Button>
                 </div>
                 <AutoPropertiesFormComponent
@@ -152,7 +153,7 @@ const ArrayPieceProperty = ({
                       className="size-4 text-destructive"
                       aria-hidden="true"
                     />
-                    <span className="sr-only">Remove</span>
+                    <span className="sr-only">{t('Remove')}</span>
                   </Button>
                 </div>
               </SortableItem>
@@ -169,7 +170,7 @@ const ArrayPieceProperty = ({
         }}
         type="button"
       >
-        <TextWithIcon icon={<Plus size={18} />} text="Add Item" />
+        <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
       </Button>
     </>
   );

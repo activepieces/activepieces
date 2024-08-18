@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { Pencil, Plus, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -32,12 +33,18 @@ export default function ProjectsPage() {
     error: unknown,
   ): string | undefined => {
     if (validationUtils.isValidationError(error)) {
-      console.error('Validation error', error);
+      console.error(t('Validation error'), error);
       switch (error.response?.data?.params?.message) {
         case 'PROJECT_HAS_ENABLED_FLOWS':
-          return `project (${projectName}) has enabled flows. Please disable them first.`;
+          return t(
+            'project ({{projectName}}) has enabled flows. Please disable them first.',
+            { projectName },
+          );
         case 'ACTIVE_PROJECT':
-          return `project (${projectName}) is active. Please switch to another project first.`;
+          return t(
+            'project ({{projectName}}) is active. Please switch to another project first.',
+            { projectName },
+          );
       }
       return undefined;
     }
@@ -56,20 +63,22 @@ export default function ProjectsPage() {
   return (
     <LockedFeatureGuard
       locked={!isEnabled}
-      lockTitle="Unlock Projects"
-      lockDescription="Orchestrate your automation teams across projects with their own flows, connections and usage quotas"
+      lockTitle={t('Unlock Projects')}
+      lockDescription={t(
+        'Orchestrate your automation teams across projects with their own flows, connections and usage quotas',
+      )}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/projects.mp4"
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-3xl font-bold">Projects</span>
+          <span className="text-3xl font-bold">{t('Projects')}</span>
           <NewProjectDialog onCreate={() => refreshData()}>
             <Button
               size="sm"
               className="flex items-center justify-center gap-2"
             >
               <Plus className="size-4" />
-              New Project
+              {t('New Project')}
             </Button>
           </NewProjectDialog>
         </div>
@@ -82,7 +91,7 @@ export default function ProjectsPage() {
             {
               accessorKey: 'name',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Name" />
+                <DataTableColumnHeader column={column} title={t('Name')} />
               ),
               cell: ({ row }) => {
                 return (
@@ -93,7 +102,7 @@ export default function ProjectsPage() {
             {
               accessorKey: 'createdAt',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Created" />
+                <DataTableColumnHeader column={column} title={t('Created')} />
               ),
               cell: ({ row }) => {
                 return (
@@ -106,7 +115,7 @@ export default function ProjectsPage() {
             {
               accessorKey: 'members',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Members" />
+                <DataTableColumnHeader column={column} title={t('Members')} />
               ),
               cell: ({ row }) => {
                 return (
@@ -119,7 +128,7 @@ export default function ProjectsPage() {
             {
               accessorKey: 'tasks',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Tasks" />
+                <DataTableColumnHeader column={column} title={t('Tasks')} />
               ),
               cell: ({ row }) => {
                 return (
@@ -133,7 +142,10 @@ export default function ProjectsPage() {
             {
               accessorKey: 'externalId',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="External ID" />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('External ID')}
+                />
               ),
               cell: ({ row }) => {
                 return (
@@ -163,7 +175,9 @@ export default function ProjectsPage() {
                         <Pencil className="size-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom">Edit project</TooltipContent>
+                    <TooltipContent side="bottom">
+                      {t('Edit project')}
+                    </TooltipContent>
                   </Tooltip>
                 </div>
               );
@@ -186,16 +200,16 @@ export default function ProjectsPage() {
               return (
                 <div className="flex items-end justify-end">
                   <ConfirmationDeleteDialog
-                    title="Delete Project"
-                    message="Are you sure you want to delete this project?"
-                    entityName="Project"
+                    title={t('Delete Project')}
+                    message={t('Are you sure you want to delete this project?')}
+                    entityName={t('Project')}
                     mutationFn={async () => {
                       await projectApi.delete(row.id);
                       refreshData();
                     }}
                     onError={(error) => {
                       toast({
-                        title: 'Error',
+                        title: t('Error'),
                         description: errorToastMessage(row.displayName, error),
                         duration: 3000,
                       });
@@ -206,8 +220,8 @@ export default function ProjectsPage() {
                         <TooltipTrigger>{deleteButton}</TooltipTrigger>
                         <TooltipContent side="bottom">
                           {isActiveProject
-                            ? 'Cannot delete active project'
-                            : 'Delete project'}
+                            ? t('Cannot delete active project')
+                            : t('Delete project')}
                         </TooltipContent>
                       </Tooltip>
                     ) : (

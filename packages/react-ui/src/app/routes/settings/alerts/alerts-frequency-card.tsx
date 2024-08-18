@@ -1,5 +1,6 @@
 import { BellIcon, EyeNoneIcon, EyeOpenIcon } from '@radix-ui/react-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React from 'react';
 
 import {
@@ -35,8 +36,8 @@ const AlertFrequencyCard = React.memo(() => {
     },
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Your changes have been saved.',
+        title: t('Success'),
+        description: t('Your changes have been saved.'),
         duration: 3000,
       });
     },
@@ -55,29 +56,29 @@ const AlertFrequencyCard = React.memo(() => {
   return (
     <Card className="w-full">
       <CardHeader className="pb-3">
-        <CardTitle>Alerts</CardTitle>
+        <CardTitle>{t('Alerts')}</CardTitle>
         <CardDescription>
-          Choose what you want to be notified about.
+          {t('Choose what you want to be notified about.')}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1">
         <AlertOption
-          title="Every Failed Run"
-          description="Get an email alert when a flow fails."
+          title={t('Every Failed Run')}
+          description={t('Get an email alert when a flow fails.')}
           onClick={() => onChangeStatus(NotificationStatus.ALWAYS)}
           icon={<BellIcon className="mt-px size-5" />}
           isActive={project?.notifyStatus === NotificationStatus.ALWAYS}
         />
         <AlertOption
-          title="First Seen"
-          description="Get an email alert when a new issue created."
+          title={t('First Seen')}
+          description={t('Get an email alert when a new issue created.')}
           onClick={() => onChangeStatus(NotificationStatus.NEW_ISSUE)}
           icon={<EyeOpenIcon className="mt-px size-5" />}
           isActive={project?.notifyStatus === NotificationStatus.NEW_ISSUE}
         />
         <AlertOption
-          title="Never"
-          description="Turn off email notifications."
+          title={t('Never')}
+          description={t('Turn off email notifications.')}
           onClick={() => onChangeStatus(NotificationStatus.NEVER)}
           icon={<EyeNoneIcon className="mt-px size-5" />}
           isActive={project?.notifyStatus === NotificationStatus.NEVER}

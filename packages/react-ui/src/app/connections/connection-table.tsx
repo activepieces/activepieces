@@ -1,4 +1,5 @@
 import { ColumnDef } from '@tanstack/react-table';
+import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -64,8 +65,10 @@ const DeleteConnectionColumn = ({
     <div className="flex items-end justify-end">
       <Authorization permission={Permission.WRITE_APP_CONNECTION}>
         <ConfirmationDeleteDialog
-          title={`Delete ${row.name} connection`}
-          message="Are you sure you want to delete this connection? all steps using it will fail."
+          title={t('Delete {{name}} connection', { name: row.name })}
+          message={t(
+            'Are you sure you want to delete this connection? all steps using it will fail.',
+          )}
           mutationFn={() =>
             appConnectionsApi.delete(row.id).then((data) => {
               const newQueryParameters: URLSearchParams = new URLSearchParams();
@@ -88,7 +91,7 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
   {
     accessorKey: 'pieceName',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="App" />
+      <DataTableColumnHeader column={column} title={t('App')} />
     ),
     cell: ({ row }) => {
       return (
@@ -101,7 +104,7 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
   {
     accessorKey: 'name',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
+      <DataTableColumnHeader column={column} title={t('Name')} />
     ),
     cell: ({ row }) => {
       return <div className="text-left">{row.original.name}</div>;
@@ -110,7 +113,7 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
   {
     accessorKey: 'status',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Status" />
+      <DataTableColumnHeader column={column} title={t('Status')} />
     ),
     cell: ({ row }) => {
       const status = row.original.status;
@@ -129,7 +132,7 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
   {
     accessorKey: 'created',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Created" />
+      <DataTableColumnHeader column={column} title={t('Created')} />
     ),
     cell: ({ row }) => {
       return (
@@ -142,7 +145,7 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
   {
     accessorKey: 'updated',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Updated" />
+      <DataTableColumnHeader column={column} title={t('Updated')} />
     ),
     cell: ({ row }) => {
       return (
@@ -164,7 +167,7 @@ const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
 const filters = [
   {
     type: 'select',
-    title: 'Status',
+    title: t('Status'),
     accessorKey: 'status',
     options: Object.values(AppConnectionStatus).map((status) => {
       return {
@@ -193,7 +196,7 @@ function AppConnectionsTable() {
   return (
     <div className="flex-col w-full">
       <div className="mb-4 flex">
-        <h1 className="text-3xl font-bold">Connections </h1>
+        <h1 className="text-3xl font-bold">{t('Connections')}</h1>
         <div className="ml-auto">
           <Authorization
             permission={Permission.WRITE_APP_CONNECTION}
@@ -202,11 +205,11 @@ function AppConnectionsTable() {
                 <Tooltip>
                   <TooltipTrigger>
                     <Button variant="default" disabled>
-                      New Connection
+                      {t('New Connection')}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <span>Permission Needed</span>
+                    <span>{t('Permission Needed')}</span>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -215,7 +218,7 @@ function AppConnectionsTable() {
             <NewConnectionTypeDialog
               onConnectionCreated={() => setRefresh(refresh + 1)}
             >
-              <Button variant="default">New Connection</Button>
+              <Button variant="default">{t('New Connection')}</Button>
             </NewConnectionTypeDialog>
           </Authorization>
         </div>

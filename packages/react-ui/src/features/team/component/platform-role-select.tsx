@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
 
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -23,15 +24,15 @@ export const PlatformRoleSelect = ({ form }: PlatformRoleSelectProps) => {
       name="platformRole"
       render={({ field }) => (
         <FormItem className="grid gap-3">
-          <Label>Platform Role</Label>
+          <Label>{t('Platform Role')}</Label>
           <Select onValueChange={field.onChange} defaultValue={field.value}>
             <SelectTrigger>
-              <SelectValue placeholder="Select a platform role" />
+              <SelectValue placeholder={t('Select a platform role')} />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>Platform Role</SelectLabel>
-                <SelectItem value={PlatformRole.ADMIN}>Admin</SelectItem>
+                <SelectLabel>{t('Platform Role')}</SelectLabel>
+                <SelectItem value={PlatformRole.ADMIN}>{t('Admin')}</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>

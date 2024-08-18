@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import React from 'react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
@@ -156,7 +157,7 @@ const selectRightComponent = (
             onChange={field.onChange}
             value={field.value}
             disabled={disabled}
-            placeholder={property.options.placeholder ?? 'Select an option'}
+            placeholder={property.options.placeholder ?? t('Select an option')}
           ></SearchableSelect>
         </AutoFormFieldWrapper>
       );
@@ -182,7 +183,7 @@ const selectRightComponent = (
           allowDynamicValues={allowDynamicValues}
         >
           <MultiSelectPieceProperty
-            placeholder={property.options.placeholder ?? 'Select an option'}
+            placeholder={property.options.placeholder ?? t('Select an option')}
             options={property.options.options}
             onChange={field.onChange}
             initialValues={field.value}

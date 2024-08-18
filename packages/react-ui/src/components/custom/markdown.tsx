@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { Check, Copy } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -36,7 +37,7 @@ const ApMarkdown = React.memo(
       },
       onError: () => {
         toast({
-          title: 'Failed to copy to clipboard',
+          title: t('Failed to copy to clipboard'),
           duration: 3000,
         });
       },

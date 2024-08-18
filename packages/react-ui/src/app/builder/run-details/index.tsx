@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
@@ -62,7 +63,7 @@ const FlowRunDetails = React.memo(() => {
           >
             <ChevronLeft size={16} />
           </Button>
-          <span>Run Details</span>
+          <span>{t('Run Details')}</span>
         </div>
       </SidebarHeader>
       <ResizablePanel>
