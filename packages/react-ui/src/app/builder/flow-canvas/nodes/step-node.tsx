@@ -141,11 +141,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         width: `${AP_NODE_SIZE.stepNode.width}px`,
       }}
       className={cn(
-        'transition-all border-box border rounded-sm border border-solid border-border-300 ',
+        'transition-all border-box border rounded-sm border border-solid  border-border-300 relative',
         {
           'shadow-step-container': !isDragging,
-          'shadow-selected-step-top-border-stub':
-            (isSelected || toolbarOpen) && !isDragging,
           'border-primary': toolbarOpen || isSelected,
           'bg-background': !isDragging,
           'border-none': isDragging,
@@ -166,6 +164,14 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       {...attributes}
       {...listeners}
     >
+      <div className={cn('absolute left-0 top-0 rounded-sm w-full h-full',
+        {
+          'shadow-selected-step-top-border-stub':
+            (isSelected || toolbarOpen) && !isDragging,
+        }
+      )} >
+
+      </div>
       <div className="px-2 h-full w-full  overflow-hidden">
         {!isDragging && (
           <>
