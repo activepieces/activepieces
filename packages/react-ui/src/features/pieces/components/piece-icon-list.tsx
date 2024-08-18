@@ -1,5 +1,5 @@
 import { flowHelper, Trigger } from '@activepieces/shared';
-import { cva, cva } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import { t } from 'i18next';
 
 import {
