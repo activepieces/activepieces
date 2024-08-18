@@ -1,7 +1,9 @@
 import { Pencil } from 'lucide-react';
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
+
+import { useElementSize } from '@/lib/utils';
 
 type EditableTextProps = {
   value: string | undefined;
@@ -24,22 +26,7 @@ const EditableText = ({
   const [valueOnEditingStarted, setValueOnEditingStarted] = useState('');
 
   const editableTextRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
-
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver(([entry]) => {
-      if (entry) {
-        setContainerWidth(entry.contentRect.width);
-      }
-    });
-
-    const currentContainer = containerRef.current;
-    if (currentContainer) {
-      resizeObserver.observe(currentContainer);
-    }
-
-    return () => resizeObserver.disconnect();
-  }, [containerRef, setContainerWidth]);
+  const { width: containerWidth } = useElementSize(containerRef);
 
   const emitChangedValue = useCallback(() => {
     const nodeValue = (editableTextRef.current?.textContent ?? '').trim();
@@ -84,8 +71,9 @@ const EditableText = ({
         >
           {!editing ? (
             <div
+              ref={editableTextRef}
               key={'viewed'}
-              className={`${className} truncate  overflow-hidden`}
+              className={`${className} truncate `}
               style={{
                 maxWidth: `${containerWidth - 100}px`,
               }}

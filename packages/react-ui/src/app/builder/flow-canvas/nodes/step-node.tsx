@@ -143,7 +143,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       className={cn(
         'transition-all border-box border rounded-sm border border-solid border-border-300 ',
         {
-          'shadow-step-container ': !isDragging,
+          'shadow-step-container': !isDragging,
           'shadow-selected-step-top-border-stub':
             (isSelected || toolbarOpen) && !isDragging,
           'border-primary': toolbarOpen || isSelected,
