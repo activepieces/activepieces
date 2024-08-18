@@ -74,8 +74,7 @@ export const TextInputWithMentions = ({
   );
   const stepsMetadata = piecesHooks
     .useStepsMetadata(steps)
-    .map((res) => res.data)
-    .map((metadata, index) => {
+    .map(({ data: metadata }, index) => {
       if (metadata) {
         return {
           ...metadata,
