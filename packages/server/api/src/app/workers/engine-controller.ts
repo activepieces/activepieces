@@ -1,4 +1,4 @@
-import { GetRunForWorkerRequest, JobStatus, logger, QueueName, SharedSystemProp, system, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { GetAllWebhookFlowsByProjectRequest, GetRunForWorkerRequest, JobStatus, logger, QueueName, SharedSystemProp, system, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, ExecutionState, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -138,6 +138,11 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             }),
         }
     })
+
+    app.post('/webhook-flows', GetAllWebhookFlowsByProjectParams,  async (request) => {
+        return flowService.getAllWebhookFlows(request.principal.projectId)
+    },
+    )
 
     app.post('/remove-stale-job', RemoveFlowRequest, async (request) => {
         const { flowVersionId, flowId } = request.body
@@ -346,6 +351,16 @@ const UpdateFailureCount = {
         body: UpdateFailureCountRequest,
     },
 }
+
+const GetAllWebhookFlowsByProjectParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        body: GetAllWebhookFlowsByProjectRequest,
+    },
+}
+
 
 const GetLockedVersionRequest = {
     config: {

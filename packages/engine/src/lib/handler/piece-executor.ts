@@ -111,6 +111,24 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 url.search = new URLSearchParams(params.queryParams).toString()
                 return url.toString()
             },
+            flows: {
+                list: async () => {
+                    const engineToken = constants.engineToken
+                    const projectId = constants.projectId
+
+                    const response = await fetch(`${constants.internalApiUrl}v1/engine/webhook-flows`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${engineToken}`,
+                        },
+                        body: JSON.stringify({
+                            projectId,
+                        }),
+                    })
+                    return response.json()
+                },
+            },
         }
         const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)

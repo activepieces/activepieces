@@ -77,6 +77,24 @@ export const triggerHelper = {
                 id: params.projectId,
                 externalId: constants.externalProjectId,
             },
+            flows: {
+                list: async () => {
+                    const engineToken = constants.engineToken
+                    const projectId = constants.projectId
+
+                    const response = await fetch(`${constants.internalApiUrl}v1/engine/webhook-flows`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${engineToken}`,
+                        },
+                        body: JSON.stringify({
+                            projectId,
+                        }),
+                    })
+                    return response.json()
+                },
+            },
         }
         switch (params.hookType) {
             case TriggerHookType.ON_DISABLE:

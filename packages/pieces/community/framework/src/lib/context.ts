@@ -2,6 +2,7 @@ import {
   AppConnectionValue,
   ExecutionType,
   FlowRunId,
+  PopulatedFlow,
   ProjectId,
   ResumePayload,
   TriggerPayload,
@@ -25,6 +26,9 @@ type BaseContext<
   project: {
     id: ProjectId;
     externalId: () => Promise<string | undefined>;
+  };
+  flows: {
+    list(): Promise<PopulatedFlow[]>;
   };
 };
 
@@ -101,6 +105,9 @@ export type PropertyContext = {
     externalId: () => Promise<string | undefined>;
   };
   searchValue?: string;
+  flows: {
+    list(): Promise<PopulatedFlow[]>;
+  };
 };
 
 export type ServerContext = {
