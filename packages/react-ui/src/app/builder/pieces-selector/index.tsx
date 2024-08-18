@@ -44,7 +44,12 @@ const PiecesSelectorList = () => {
     state.flowVersion,
     state.selectStepByName,
   ]);
-
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
   const { metadata, isLoading, refetch } = piecesHooks.useAllStepsMetadata({
     searchQuery,
     type: selectedButton!.type!,
@@ -121,6 +126,7 @@ const PiecesSelectorList = () => {
         <div className="w-full  mb-4 px-4">
           <Input
             type="text"
+            ref={searchInputRef}
             placeholder="Search for a piece"
             onChange={(e) => setSearchQuery(e.target.value)}
           />
