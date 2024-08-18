@@ -55,12 +55,12 @@ export const ApQueueJob = Type.Object({
     engineToken: Type.String(),
 })
 
-export const GetAllWebhookFlowsByProjectRequest = Type.Object({
+export const GetAllFlowsByProjectRequest = Type.Object({
     projectId: Type.String(),
 })
 
-export type GetAllWebhookFlowsByProjectRequest = Static<
-  typeof GetAllWebhookFlowsByProjectRequest
+export type GetAllFlowsByProjectRequest = Static<
+  typeof GetAllFlowsByProjectRequest
 >
 
 export type ApQueueJob = Static<typeof ApQueueJob>

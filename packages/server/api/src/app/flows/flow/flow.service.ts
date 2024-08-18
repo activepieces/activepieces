@@ -207,7 +207,7 @@ export const flowService = {
         return flow
     },
 
-    async getAllWebhookFlows(projectId: string): Promise<Flow[]> {
+    async getAllFlows(projectId: string): Promise<Flow[]> {
         const flows = await flowRepo().findBy({
             projectId,
             status: FlowStatus.ENABLED,

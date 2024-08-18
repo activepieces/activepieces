@@ -15,10 +15,12 @@ import {
     ExecutePropsOptions,
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
+    PopulatedFlow,
     SecretTextConnectionValue,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { getAllFlows } from '../operations'
 import { variableService } from '../services/variable-service'
 import { pieceLoader } from './piece-loader'
 
@@ -52,22 +54,7 @@ export const pieceHelper = {
                     externalId: constants.externalProjectId,
                 },
                 flows: {
-                    list: async () => {
-                        const engineToken = constants.engineToken
-                        const projectId = constants.projectId
-    
-                        const response = await fetch(`${constants.internalApiUrl}v1/engine/webhook-flows`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: `Bearer ${engineToken}`,
-                            },
-                            body: JSON.stringify({
-                                projectId,
-                            }),
-                        })
-                        return response.json()
-                    },
+                    list: (): Promise<PopulatedFlow[]> => getAllFlows(constants.internalApiUrl, constants.engineToken, constants.projectId),
                 },
             }
 

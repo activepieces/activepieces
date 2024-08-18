@@ -1,6 +1,6 @@
 
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetAllWebhookFlowsByProjectRequest, GetRunForWorkerRequest, networkUtls, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetAllFlowsByProjectRequest, GetRunForWorkerRequest, networkUtls, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, Flow, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { heartbeat } from '../utils/heartbeat'
@@ -69,8 +69,8 @@ export const engineApiService = (engineToken: string) => {
         async updateFailureCount(request: UpdateFailureCountRequest): Promise<void> {
             await client.post('/v1/engine/update-failure-count', request)
         },
-        async getAllWebhookFlows(request: GetAllWebhookFlowsByProjectRequest): Promise<Flow[]> {
-            return client.post('/v1/engine/webhook-flows', request)
+        async getAllWebhookFlows(request: GetAllFlowsByProjectRequest): Promise<Flow[]> {
+            return client.post('/v1/engine/populated-flows', request)
         },
         async getRun(request: GetRunForWorkerRequest): Promise<FlowRun> {
             return client.get<FlowRun>('/v1/engine/runs/' + request.runId, {})

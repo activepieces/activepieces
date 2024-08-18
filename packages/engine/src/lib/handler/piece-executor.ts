@@ -1,8 +1,9 @@
 import { URL } from 'url'
 import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { ActionType, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, StepOutputStatus } from '@activepieces/shared'
+import { ActionType, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, PopulatedFlow, StepOutputStatus } from '@activepieces/shared'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { pieceLoader } from '../helper/piece-loader'
+import { getAllFlows } from '../operations'
 import { createConnectionService } from '../services/connections.service'
 import { createFilesService } from '../services/files.service'
 import { createContextStore } from '../services/storage.service'
@@ -112,22 +113,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 return url.toString()
             },
             flows: {
-                list: async () => {
-                    const engineToken = constants.engineToken
-                    const projectId = constants.projectId
-
-                    const response = await fetch(`${constants.internalApiUrl}v1/engine/webhook-flows`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${engineToken}`,
-                        },
-                        body: JSON.stringify({
-                            projectId,
-                        }),
-                    })
-                    return response.json()
-                },
+                list: (): Promise<PopulatedFlow[]> => getAllFlows(constants.internalApiUrl, constants.engineToken, constants.projectId),
             },
         }
         const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
