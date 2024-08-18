@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -13,6 +13,7 @@ import {
   StepMetadata,
   piecesHooks,
 } from '@/features/pieces/lib/pieces-hook';
+import { useElementSize } from '@/lib/utils';
 import {
   Action,
   ActionType,
@@ -29,7 +30,8 @@ import { pieceSelectorUtils } from './piece-selector-utils';
 
 const PiecesSelectorList = () => {
   const [searchQuery, setSearchQuery] = useDebounce<string>('', 300);
-
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { height: containerHeight } = useElementSize(containerRef);
   const [
     exitPieceSelector,
     applyOperation,
@@ -43,7 +45,12 @@ const PiecesSelectorList = () => {
     state.flowVersion,
     state.selectStepByName,
   ]);
-
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, []);
   const { metadata, isLoading, refetch } = piecesHooks.useAllStepsMetadata({
     searchQuery,
     type: selectedButton!.type!,
@@ -112,19 +119,23 @@ const PiecesSelectorList = () => {
 
   return (
     <>
+      <div ref={containerRef}>
       <SidebarHeader onClose={() => exitPieceSelector()}>
         {selectedButton?.type === 'action'
           ? t('Select Action')
           : t('Select Trigger')}
-      </SidebarHeader>
-      <div className="flex h-full flex-col gap-4 p-4">
-        <div className="w-full">
+        </SidebarHeader>
+        <div className="w-full  mb-4 px-4">
           <Input
             type="text"
+            ref={searchInputRef}
             placeholder={t('Search for a piece')}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+      </div>
+
+      <div className="flex h-full flex-col gap-4 px-4 pb-8">
         {isLoading && (
           <div className="flex h-full grow items-center justify-center text-center">
             <LoadingSpinner />
@@ -136,8 +147,7 @@ const PiecesSelectorList = () => {
           </div>
         )}
         {!isLoading && metadata && metadata.length > 0 && (
-          // TODO check scrolling it doesn't show the last piece
-          <ScrollArea>
+          <ScrollArea style={{ height: `calc(100% - ${containerHeight}px)` }}>
             <div className="flex h-max flex-col gap-4">
               {metadata &&
                 metadata.map((stepMetadata) => (

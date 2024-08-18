@@ -3,6 +3,8 @@ import { Copy, Download } from 'lucide-react';
 import React from 'react';
 import ReactJson from 'react-json-view';
 
+import { useTheme } from '@/components/theme-provider';
+
 import { Button } from './ui/button';
 import { toast } from './ui/use-toast';
 
@@ -12,6 +14,9 @@ type JsonViewerProps = {
 };
 
 const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
+  const { theme } = useTheme();
+
+  const viewerTheme = theme === 'dark' ? 'pop' : 'rjv-default';
   const handleCopy = () => {
     navigator.clipboard.writeText(JSON.stringify(json, null, 2));
     toast({
@@ -65,6 +70,7 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
               style={{
                 overflowX: 'auto',
               }}
+              theme={viewerTheme}
               enableClipboard={false}
               groupArraysAfterLength={100}
               displayDataTypes={false}

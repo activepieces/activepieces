@@ -43,7 +43,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         name="settings.input"
         render={({ field }) => (
           <FormItem>
-            <div className="py-4">
+            <div className="pb-4">
               <ApMarkdown markdown={markdown} />
             </div>
 
