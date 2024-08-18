@@ -1,3 +1,4 @@
+import { flowHelper, isNil } from '@activepieces/shared';
 import Document from '@tiptap/extension-document';
 import HardBreak from '@tiptap/extension-hard-break';
 import History from '@tiptap/extension-history';
@@ -7,14 +8,13 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { flowHelper, isNil } from '@activepieces/shared';
-
 import './tip-tap.css';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
 import { textMentionUtils } from './text-input-utils';
+
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 
 type TextInputWithMentionsProps = {
   className?: string;
@@ -74,7 +74,16 @@ export const TextInputWithMentions = ({
   );
   const stepsMetadata = piecesHooks
     .useStepsMetadata(steps)
-    .map((res) => res.data);
+    .map((res) => res.data)
+    .map((metadata, index) => {
+      if (metadata) {
+        return {
+          ...metadata,
+          displayName: steps[index].displayName,
+        };
+      }
+      return undefined;
+    });
 
   const setInsertMentionHandler = useBuilderStateContext(
     (state) => state.setInsertMentionHandler,
