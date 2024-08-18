@@ -12,7 +12,7 @@ export const platformApi = {
     return api.get<Platform>(`/v1/platforms/${platformId}`);
   },
 
-  updatePlatform(req: UpdatePlatformRequestBody, platformId: string) {
+  update(req: UpdatePlatformRequestBody, platformId: string) {
     return api.post<void>(`/v1/platforms/${platformId}`, req);
   },
 };

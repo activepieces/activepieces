@@ -19,6 +19,9 @@ export const platformHooks = {
     });
     return {
       platform: query.data,
+      refetch: async () => {
+        await query.refetch();
+      },
     };
   },
 };

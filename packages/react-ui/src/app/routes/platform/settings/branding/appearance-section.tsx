@@ -58,7 +58,7 @@ export const AppearanceSection = () => {
 
   const { mutate: updatePlatform, isPending } = useMutation({
     mutationFn: async () =>
-      platformApi.updatePlatform(
+      platformApi.update(
         {
           name: form.getValues().name,
           fullLogoUrl: form.getValues().logoUrl,
