@@ -1,9 +1,9 @@
 import { Pencil } from 'lucide-react';
 import React, { useState, useRef, useCallback } from 'react';
 
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
-
 import { useElementSize } from '@/lib/utils';
+
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 type EditableTextProps = {
   value: string | undefined;

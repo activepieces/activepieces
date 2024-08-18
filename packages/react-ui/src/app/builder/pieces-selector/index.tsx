@@ -1,18 +1,5 @@
-import {
-  Action,
-  ActionType,
-  FlowOperationType,
-  Trigger,
-  TriggerType,
-  flowHelper,
-  isNil,
-} from '@activepieces/shared';
 import { useEffect, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
-
-import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
-
-import { pieceSelectorUtils } from './piece-selector-utils';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SidebarHeader } from '@/app/builder/sidebar-header';
@@ -26,6 +13,19 @@ import {
   piecesHooks,
 } from '@/features/pieces/lib/pieces-hook';
 import { useElementSize } from '@/lib/utils';
+import {
+  Action,
+  ActionType,
+  FlowOperationType,
+  Trigger,
+  TriggerType,
+  flowHelper,
+  isNil,
+} from '@activepieces/shared';
+
+import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
+
+import { pieceSelectorUtils } from './piece-selector-utils';
 
 const PiecesSelectorList = () => {
   const [searchQuery, setSearchQuery] = useDebounce<string>('', 300);
