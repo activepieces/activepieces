@@ -1,4 +1,5 @@
 import { ColumnDef } from '@tanstack/react-table';
+import { t } from 'i18next';
 import { Plus, Trash } from 'lucide-react';
 import { useState } from 'react';
 
@@ -32,7 +33,7 @@ const ApiKeysPage = () => {
     {
       accessorKey: 'id',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Id" />
+        <DataTableColumnHeader column={column} title={t('Id')} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.id}</div>;
@@ -41,7 +42,7 @@ const ApiKeysPage = () => {
     {
       accessorKey: 'displayName',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Display Name" />
+        <DataTableColumnHeader column={column} title={t('Display Name')} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.displayName}</div>;
@@ -50,7 +51,7 @@ const ApiKeysPage = () => {
     {
       accessorKey: 'created',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created" />
+        <DataTableColumnHeader column={column} title={t('Created')} />
       ),
       cell: ({ row }) => {
         return (
@@ -66,21 +67,23 @@ const ApiKeysPage = () => {
   return (
     <LockedFeatureGuard
       locked={!platform.apiKeysEnabled}
-      lockTitle="Enable API Keys"
-      lockDescription="Create and manage API keys to access Activepieces APIs."
+      lockTitle={t('Enable API Keys')}
+      lockDescription={t(
+        'Create and manage API keys to access Activepieces APIs.',
+      )}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/api-keys.mp4"
     >
       <div className="flex-col w-full">
         <div className="mb-4 flex">
           <div className="flex items-center justify-between flex-row w-full">
-            <span className="text-2xl font-bold w-full">API Keys</span>
+            <span className="text-2xl font-bold w-full">{t('API Keys')}</span>
             <NewApiKeyDialog onCreate={() => setRefresh(refresh + 1)}>
               <Button
                 size="sm"
                 className="flex items-center justify-center gap-2"
               >
                 <Plus className="size-4" />
-                New Api Key
+                {t('New Api Key')}
               </Button>
             </NewApiKeyDialog>
           </div>
@@ -94,9 +97,9 @@ const ApiKeysPage = () => {
               return (
                 <div className="flex items-end justify-end">
                   <ConfirmationDeleteDialog
-                    title="Delete API Key"
-                    message="Are you sure you want to delete this API key?"
-                    entityName="API Key"
+                    title={t('Delete API Key')}
+                    message={t('Are you sure you want to delete this API key?')}
+                    entityName={t('API Key')}
                     mutationFn={async () => {
                       console.log('HELLO');
                       await apiKeyApi.delete(row.id);

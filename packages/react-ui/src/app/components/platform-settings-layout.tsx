@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Key, Lock, Palette } from 'lucide-react';
 
 import SidebarLayout from '@/app/components/sidebar-layout';
@@ -6,17 +7,17 @@ const iconSize = 20;
 
 const sidebarNavItems = [
   {
-    title: 'Branding',
+    title: t('Branding'),
     href: '/platform/settings/branding',
     icon: <Palette size={iconSize} />,
   },
   {
-    title: 'API Keys',
+    title: t('API Keys'),
     href: '/platform/api-keys',
     icon: <Key size={iconSize} />,
   },
   {
-    title: 'Signing Keys',
+    title: t('Signing Keys'),
     href: '/platform/signing-keys',
     icon: <Lock size={iconSize} />,
   },
@@ -30,7 +31,7 @@ export default function PlatformSettingsLayout({
   children,
 }: SettingsLayoutProps) {
   return (
-    <SidebarLayout title="Settings" items={sidebarNavItems}>
+    <SidebarLayout title={t('Settings')} items={sidebarNavItems}>
       {children}
     </SidebarLayout>
   );

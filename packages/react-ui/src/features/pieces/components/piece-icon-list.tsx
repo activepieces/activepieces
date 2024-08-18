@@ -1,4 +1,5 @@
 import { cva } from 'class-variance-authority';
+import { t } from 'i18next';
 
 import { flowHelper, Trigger } from '@activepieces/shared';
 
@@ -75,7 +76,9 @@ export function PieceIconList({
             .map((m) => m?.displayName || '')
             .slice(0, -1)
             .join(', ') +
-            ` and ${uniqueMetadata[uniqueMetadata.length - 1].displayName}`}
+            ` ${t('and')} ${
+              uniqueMetadata[uniqueMetadata.length - 1].displayName
+            }`}
         {uniqueMetadata.length === 1 && uniqueMetadata[0].displayName}
       </TooltipContent>
     </Tooltip>

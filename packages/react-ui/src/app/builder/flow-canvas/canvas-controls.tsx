@@ -1,4 +1,5 @@
 import { useReactFlow } from '@xyflow/react';
+import { t } from 'i18next';
 import { Fullscreen, Minus, Plus, RotateCw } from 'lucide-react';
 import { useCallback } from 'react';
 
@@ -45,7 +46,7 @@ const CanvasControls = () => {
             <RotateCw className="w-5 h-5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="top">Reset Zoom</TooltipContent>
+        <TooltipContent side="top">{t('Reset Zoom')}</TooltipContent>
       </Tooltip>
 
       <Tooltip>
@@ -54,7 +55,7 @@ const CanvasControls = () => {
             <Plus className="w-5 h-5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="top">Zoom In</TooltipContent>
+        <TooltipContent side="top">{t('Zoom In')}</TooltipContent>
       </Tooltip>
 
       <Tooltip>
@@ -63,7 +64,7 @@ const CanvasControls = () => {
             <Minus className="w-5 h-5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="top">Zoom Out</TooltipContent>
+        <TooltipContent side="top">{t('Zoom Out')}</TooltipContent>
       </Tooltip>
 
       <Tooltip>
@@ -72,7 +73,7 @@ const CanvasControls = () => {
             <Fullscreen className="w-5 h-5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="top">Fit to View</TooltipContent>
+        <TooltipContent side="top">{t('Fit to View')}</TooltipContent>
       </Tooltip>
     </div>
   );

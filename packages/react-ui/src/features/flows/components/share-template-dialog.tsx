@@ -2,6 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { DialogDescription, DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React, { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
@@ -82,15 +83,17 @@ const ShareTemplateDialog: React.FC<{
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Share Template</DialogTitle>
+          <DialogTitle>{t('Share Template')}</DialogTitle>
           <DialogDescription className="flex flex-col gap-2">
             <span>
-              Generate or update a template link for the current flow to easily
-              share it with others.
+              {t(
+                'Generate or update a template link for the current flow to easily share it with others.',
+              )}
             </span>
             <span>
-              The template will not have any credentials in connection fields,
-              keeping sensitive information secure.
+              {t(
+                'The template will not have any credentials in connection fields, keeping sensitive information secure.',
+              )}
             </span>
           </DialogDescription>
         </DialogHeader>
@@ -104,12 +107,12 @@ const ShareTemplateDialog: React.FC<{
               name="description"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">{t('Description')}</Label>
                   <Input
                     {...field}
                     required
                     id="description"
-                    placeholder="A short description of the template"
+                    placeholder={t('A short description of the template')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -121,7 +124,7 @@ const ShareTemplateDialog: React.FC<{
                 {shareTemplateForm.formState.errors.root.serverError.message}
               </FormMessage>
             )}
-            <Button loading={isPending}>Confirm</Button>
+            <Button loading={isPending}>{t('Confirm')}</Button>
           </form>
         </Form>
       </DialogContent>

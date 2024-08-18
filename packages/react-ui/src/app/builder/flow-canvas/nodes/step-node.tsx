@@ -1,6 +1,7 @@
 import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
+import { t } from 'i18next';
 import { ArrowRightLeft, CircleAlert, CopyPlus, Trash } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
@@ -164,14 +165,12 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       {...attributes}
       {...listeners}
     >
-      <div className={cn('absolute left-0 top-0 rounded-sm w-full h-full',
-        {
+      <div
+        className={cn('absolute left-0 top-0 rounded-sm w-full h-full', {
           'shadow-selected-step-top-border-stub':
             (isSelected || toolbarOpen) && !isDragging,
-        }
-      )} >
-
-      </div>
+        })}
+      ></div>
       <div className="px-2 h-full w-full  overflow-hidden">
         {!isDragging && (
           <>
@@ -227,7 +226,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                         <CircleAlert className="text-warning"></CircleAlert>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        Incomplete settings
+                        {t('Incomplete settings')}
                       </TooltipContent>
                     </Tooltip>
                   )}
@@ -257,7 +256,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                                 return;
                               }
                               clickOnNewNodeButton(
-                                'trigger',
+                                t('trigger'),
                                 stepName,
                                 StepLocationRelativeToParent.AFTER,
                               );
@@ -268,7 +267,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent side="left">
-                          Replace Trigger
+                          {t('Replace Trigger')}
                         </TooltipContent>
                       </Tooltip>
                     )}
@@ -292,7 +291,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent side="left">
-                            Delete step
+                            {t('Delete step')}
                           </TooltipContent>
                         </Tooltip>
                         <Tooltip>
@@ -313,7 +312,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent side="left">
-                            Duplicate step
+                            {t('Duplicate step')}
                           </TooltipContent>
                         </Tooltip>
                       </>

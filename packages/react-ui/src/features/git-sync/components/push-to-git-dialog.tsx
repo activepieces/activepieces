@@ -1,5 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -63,8 +64,8 @@ const PushToGitDialog = ({ children, flowId }: PushToGitDialogProps) => {
     },
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Pushed successfully',
+        title: t('Success'),
+        description: t('Pushed successfully'),
         duration: 3000,
       });
       setOpen(false);
@@ -84,9 +85,11 @@ const PushToGitDialog = ({ children, flowId }: PushToGitDialogProps) => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
             <DialogHeader>
-              <DialogTitle>Push to Git</DialogTitle>
+              <DialogTitle>{t('Push to Git')}</DialogTitle>
               <DialogDescription>
-                Enter a commit message to describe the changes you want to push.
+                {t(
+                  'Enter a commit message to describe the changes you want to push.',
+                )}
               </DialogDescription>
             </DialogHeader>
             <FormField
@@ -94,7 +97,7 @@ const PushToGitDialog = ({ children, flowId }: PushToGitDialogProps) => {
               name="commitMessage"
               render={({ field }) => (
                 <FormItem className="gap-2 flex flex-col">
-                  <FormLabel>Commit Message</FormLabel>
+                  <FormLabel>{t('Commit Message')}</FormLabel>
                   <FormControl>
                     <Textarea {...field} />
                   </FormControl>
@@ -107,7 +110,7 @@ const PushToGitDialog = ({ children, flowId }: PushToGitDialogProps) => {
                 loading={isPending}
                 onClick={form.handleSubmit((data) => mutate(data))}
               >
-                Push
+                {t('Push')}
               </Button>
             </DialogFooter>
           </form>

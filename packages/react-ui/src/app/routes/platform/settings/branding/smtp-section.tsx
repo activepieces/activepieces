@@ -1,6 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -61,8 +62,8 @@ export const SmtpSection = () => {
       ),
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Your changes have been saved.',
+        title: t('Success'),
+        description: t('Your changes have been saved.'),
         duration: 3000,
       });
     },
@@ -74,8 +75,10 @@ export const SmtpSection = () => {
   return (
     <Card className="max-w-[60%]">
       <CardHeader className="pb-3">
-        <CardTitle>Mail Server</CardTitle>
-        <CardDescription>Configure your mail server settings.</CardDescription>
+        <CardTitle>{t('Mail Server')}</CardTitle>
+        <CardDescription>
+          {t('Configure your mail server settings.')}
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1 mt-4">
         <Form {...form}>
@@ -84,7 +87,7 @@ export const SmtpSection = () => {
               name="smtpHost"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="smtpHost">Host</Label>
+                  <Label htmlFor="smtpHost">{t('Host')}</Label>
                   <Input
                     {...field}
                     required
@@ -101,13 +104,13 @@ export const SmtpSection = () => {
               name="smtpPort"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="smtpPort">Port</Label>
+                  <Label htmlFor="smtpPort">{t('Port')}</Label>
                   <Input
                     {...field}
                     type="number"
                     required
                     id="smtpPort"
-                    placeholder="587"
+                    placeholder={'587'}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -119,12 +122,12 @@ export const SmtpSection = () => {
               name="smtpUser"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="smtpUser">Username</Label>
+                  <Label htmlFor="smtpUser">{t('Username')}</Label>
                   <Input
                     {...field}
                     required
                     id="smtpUser"
-                    placeholder="username"
+                    placeholder={t('username')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -136,13 +139,13 @@ export const SmtpSection = () => {
               name="smtpPassword"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="smtpPassword">Password</Label>
+                  <Label htmlFor="smtpPassword">{t('Password')}</Label>
                   <Input
                     {...field}
                     type="password"
                     required
                     id="smtpPassword"
-                    placeholder="password"
+                    placeholder={t('password')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -154,7 +157,7 @@ export const SmtpSection = () => {
               name="smtpSenderEmail"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="smtpSenderEmail">Sender Email</Label>
+                  <Label htmlFor="smtpSenderEmail">{t('Sender Email')}</Label>
                   <Input
                     {...field}
                     required
@@ -171,7 +174,7 @@ export const SmtpSection = () => {
               name="smtpUseSSL"
               render={({ field }) => (
                 <FormItem className="flex items-center gap-4">
-                  <Label htmlFor="smtpUseSSL">Use SSL</Label>
+                  <Label htmlFor="smtpUseSSL">{t('Use SSL')}</Label>
                   <Switch
                     checked={field.value}
                     onCheckedChange={field.onChange}
@@ -199,7 +202,7 @@ export const SmtpSection = () => {
             }}
             disabled={!form.formState.isDirty}
           >
-            Save
+            {t('Save')}
           </Button>
         </div>
       </CardContent>

@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 import { flowHelper } from '@activepieces/shared';
@@ -75,7 +76,7 @@ const DataSelectorNodeContent = ({
       }}
       className="w-full p-ripple select-none focus:outline-none hover:bg-accent focus:bg-accent focus:bg-opacity-75 hover:bg-opacity-75 cursor-pointer group"
     >
-      <div className="flex-grow flex items-center  gap-2 min-h-[48px] pr-3 select-none">
+      <div className="flex-grow flex items-center gap-2 min-h-[48px] pr-3 select-none">
         <div
           style={{
             minWidth: `${depth * 25 + (depth === 0 ? 0 : 25) + 18}px`,
@@ -93,12 +94,12 @@ const DataSelectorNodeContent = ({
             ></PieceIcon>
           </div>
         )}
-        <div className="flex-shrink-0"> {node.data.displayName}</div>
+        <div className="flex-shrink-0">{node.data.displayName}</div>
 
         {showNodeValue && (
           <>
             <div className="flex-shrink-0">:</div>
-            <div className="flex-1  text-primary truncate ">
+            <div className="flex-1 text-primary truncate">
               {`${node.data.value}`}
             </div>
           </>
@@ -117,11 +118,11 @@ const DataSelectorNodeContent = ({
                 }
               }}
             >
-              Insert
+              {t('Insert')}
             </Button>
           )}
           {node.children && node.children.length > 0 && (
-            <div className="flex-shrink-0  pr-5">
+            <div className="flex-shrink-0 pr-5">
               <ToggleIcon expanded={expanded}></ToggleIcon>
             </div>
           )}

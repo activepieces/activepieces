@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -84,7 +85,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
             }
           >
             <ThirdPartyIcon icon={GoogleIcon} />
-            Sign {isSignUp ? 'up' : 'in'} with Google
+            {t(`Sign in With Google`)}
           </Button>
         )}
         {thirdPartyAuthProviders?.github && (
@@ -96,7 +97,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
             }
           >
             <ThirdPartyIcon icon={Github} />
-            Sign {isSignUp ? 'up' : 'in'} with Github
+            {t('Sign in With GitHub')}
           </Button>
         )}
         {thirdPartyAuthProviders?.saml && (
@@ -106,7 +107,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
             onClick={signInWithSaml}
           >
             <ThirdPartyIcon icon={SamlIcon} />
-            Sign {isSignUp ? 'up' : 'in'} with SAML
+            {t('Sign in With SAML')}
           </Button>
         )}
       </div>
@@ -115,7 +116,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
       thirdPartyAuthProviders?.saml ? (
         <div className="my-4 flex w-full flex-row items-center">
           <div className="w-1/2 border" />
-          <span className="mx-2 text-sm">OR</span>
+          <span className="mx-2 text-sm">{t('OR')}</span>
           <div className="w-1/2 border" />
         </div>
       ) : null}

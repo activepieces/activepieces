@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
@@ -29,8 +30,8 @@ const GitSyncPage = () => {
     onSuccess: () => {
       refetch();
       toast({
-        title: 'Git Sync Disconnected',
-        description: 'You have successfully disconnected your Git Sync',
+        title: t('Git Sync Disconnected'),
+        description: t('You have successfully disconnected your Git Sync'),
         duration: 3000,
       });
     },
@@ -42,15 +43,18 @@ const GitSyncPage = () => {
   return (
     <LockedFeatureGuard
       locked={!platform.gitSyncEnabled}
-      lockTitle="Unlock Git Sync"
-      lockDescription="Streamline your team's workflow for a seamless experience to build and deploy flows across your environments"
+      lockTitle={t('Unlock Git Sync')}
+      lockDescription={t(
+        "Streamline your team's workflow for a seamless experience to build and deploy flows across your environments",
+      )}
     >
       <div className="flex w-full flex-col items-start justify-center gap-4">
         <div className="flex flex-col justify-start items-start w-full">
-          <h1 className="text-2xl font-bold flex-grow">Git Sync</h1>
+          <h1 className="text-2xl font-bold flex-grow">{t('Git Sync')}</h1>
           <span className="text-muted-foreground text-md">
-            This feature allows for the creation of an external backup,
-            environments, and maintaining a version history
+            {t(
+              'This feature allows for the creation of an external backup, environments, and maintaining a version history',
+            )}
           </span>
         </div>
         <Card className="w-full p-4">
@@ -58,9 +62,16 @@ const GitSyncPage = () => {
             {!isLoading && (
               <>
                 <div className="flex flex-grow flex-col gap-2">
-                  <p>Remote URL: {gitSync?.remoteUrl ?? 'Not Connected'}</p>
-                  <p>Branch: {gitSync?.branch ?? 'Not Connected'}</p>
-                  <p>Folder: {gitSync?.slug ?? 'Not Connected'}</p>
+                  <p>
+                    {t('Remote URL')}:{' '}
+                    {gitSync?.remoteUrl ?? t('Not Connected')}
+                  </p>
+                  <p>
+                    {t('Branch')}: {gitSync?.branch ?? t('Not Connected')}
+                  </p>
+                  <p>
+                    {t('Folder')}: {gitSync?.slug ?? t('Not Connected')}
+                  </p>
                 </div>
                 <div className="flex flex-col justify-center items-center gap-2">
                   {!gitSync && <ConnectGitDialog></ConnectGitDialog>}
@@ -71,7 +82,7 @@ const GitSyncPage = () => {
                       className="w-32 text-destructive"
                       variant={'basic'}
                     >
-                      Disconnect
+                      {t('Disconnect')}
                     </Button>
                   )}
                 </div>

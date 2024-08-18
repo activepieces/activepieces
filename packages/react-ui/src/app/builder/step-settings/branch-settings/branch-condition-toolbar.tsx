@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { Button } from '@/components/ui/button';
 
 type BranchConditionToolbarProps = {
@@ -7,6 +9,7 @@ type BranchConditionToolbarProps = {
   showAnd: boolean;
   readonly: boolean;
 };
+
 const BranchConditionToolbar = (props: BranchConditionToolbarProps) => {
   return (
     <div className="flex gap-2 text-center justify-start">
@@ -17,7 +20,7 @@ const BranchConditionToolbar = (props: BranchConditionToolbarProps) => {
           onClick={props.onAnd}
           disabled={props.readonly}
         >
-          + And
+          {t('+ And')}
         </Button>
       )}
 
@@ -28,7 +31,7 @@ const BranchConditionToolbar = (props: BranchConditionToolbarProps) => {
           onClick={props.onOr}
           disabled={props.readonly}
         >
-          + Or
+          {t('+ Or')}
         </Button>
       )}
     </div>

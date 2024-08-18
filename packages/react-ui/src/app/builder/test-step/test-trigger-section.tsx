@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import deepEqual from 'deep-equal';
+import { t } from 'i18next';
 import { AlertCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
@@ -51,6 +52,7 @@ function getSelectedId(
   }
   return undefined;
 }
+
 const TestTriggerSection = React.memo(
   ({ isSaving, flowVersionId, flowId }: TestTriggerSectionProps) => {
     const form = useFormContext<Trigger>();
@@ -124,7 +126,7 @@ const TestTriggerSection = React.memo(
         console.error(error);
         setErrorMessage(
           testStepUtils.formatErrorMessage(
-            'There is no sample data available found for this trigger.',
+            t('There is no sample data available found for this trigger.'),
           ),
         );
       },
@@ -151,7 +153,7 @@ const TestTriggerSection = React.memo(
         console.error(error);
         setErrorMessage(
           testStepUtils.formatErrorMessage(
-            'Failed to run test step, please ensure settings are correct.',
+            t('Failed to run test step, please ensure settings are correct.'),
           ),
         );
       },
@@ -226,19 +228,19 @@ const TestTriggerSection = React.memo(
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a sample data" />
+                <SelectValue placeholder={t('Select a sample data')} />
               </SelectTrigger>
               <SelectContent>
                 {pollResults &&
                   pollResults.data.map((triggerEvent, index) => (
                     <SelectItem key={triggerEvent.id} value={triggerEvent.id}>
-                      {'Result #' + (index + 1)}
+                      {t('Result #') + (index + 1)}
                     </SelectItem>
                   ))}
               </SelectContent>
             </Select>
             <span className="text-sm text-muted-foreground">
-              The sample data can be used in the next steps.
+              {t('The sample data can be used in the next steps.')}
             </span>
           </>
         )}
@@ -260,7 +262,7 @@ const TestTriggerSection = React.memo(
             <div className="flex flex-col gap-4 w-full">
               <div className="flex gap-2 items-center justify-center w-full">
                 <LoadingSpinner className="w-4 h-4"></LoadingSpinner>
-                <div>Testing Trigger</div>
+                <div>{t('Testing Trigger')}</div>
                 <div className="flex-grow"></div>
                 <Button
                   variant="outline"
@@ -270,14 +272,14 @@ const TestTriggerSection = React.memo(
                   }}
                 >
                   {' '}
-                  Cancel{' '}
+                  {t('Cancel')}{' '}
                 </Button>
               </div>
               <Alert>
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Action Required!</AlertTitle>
+                <AlertTitle>{t('Action Required!')}</AlertTitle>
                 <AlertDescription>
-                  Perform the action you want to test.
+                  {t('Perform the action you want to test.')}
                 </AlertDescription>
               </Alert>
             </div>
@@ -296,7 +298,7 @@ const TestTriggerSection = React.memo(
                   disabled={!isValid}
                 >
                   <Dot animation={true} variant={'primary'}></Dot>
-                  Test Trigger
+                  {t('Test Trigger')}
                 </Button>
               </TestButtonTooltip>
             )}
@@ -312,7 +314,7 @@ const TestTriggerSection = React.memo(
                 disabled={!isValid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
-                Load Sample Data
+                {t('Load Sample Data')}
               </Button>
             </TestButtonTooltip>
           )}

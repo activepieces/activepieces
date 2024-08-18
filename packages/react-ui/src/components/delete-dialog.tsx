@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React, { useState } from 'react';
 
 import { Button } from './ui/button';
@@ -21,6 +22,7 @@ type ConfirmationDeleteDialogProps = {
   mutationFn: () => Promise<void>;
   onError?: (error: Error) => void;
 };
+
 export function ConfirmationDeleteDialog({
   children,
   message,
@@ -34,12 +36,13 @@ export function ConfirmationDeleteDialog({
     mutationFn,
     onSuccess: () => {
       toast({
-        title: `Removed ${entityName}`,
+        title: t('Removed {{entityName}}', { entityName }),
       });
       setIsOpen(false);
     },
     onError,
   });
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -57,7 +60,7 @@ export function ConfirmationDeleteDialog({
               setIsOpen(false);
             }}
           >
-            Close
+            {t('Close')}
           </Button>
           <Button
             loading={isPending}
@@ -68,7 +71,7 @@ export function ConfirmationDeleteDialog({
               mutate();
             }}
           >
-            Remove
+            {t('Remove')}
           </Button>
         </DialogFooter>
       </DialogContent>

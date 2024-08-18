@@ -1,5 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -70,7 +71,7 @@ export const UpdateUserRoleDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Update User Role</DialogTitle>
+          <DialogTitle>{t('Update User Role')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
@@ -78,7 +79,7 @@ export const UpdateUserRoleDialog = ({
               name="role"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="role">Role</Label>
+                  <Label htmlFor="role">{t('Role')}</Label>
                   <Select
                     defaultValue={field.value}
                     onValueChange={field.onChange}
@@ -117,7 +118,7 @@ export const UpdateUserRoleDialog = ({
               setOpen(false);
             }}
           >
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button
             disabled={isPending}
@@ -128,7 +129,7 @@ export const UpdateUserRoleDialog = ({
               mutate({ platformRole: form.getValues().role });
             }}
           >
-            Save
+            {t('Save')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,28 +1,8 @@
-import { PieceMetadataModel } from '@activepieces/pieces-framework';
-import {
-  Action,
-  ActionType,
-  FlowOperationType,
-  Trigger,
-  TriggerType,
-  debounce,
-} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Value } from '@sinclair/typebox/value';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useUpdateEffect } from 'react-use';
-
-import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
-import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
-import { formUtils } from '../piece-properties/form-utils';
-import { SidebarHeader } from '../sidebar-header';
-import { TestStepContainer } from '../test-step';
-
-import { BranchSettings } from './branch-settings';
-import { CodeSettings } from './code-settings';
-import { LoopsSettings } from './loops-settings';
-import { PieceSettings } from './piece-settings';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import EditableText from '@/components/ui/editable-text';
@@ -35,6 +15,26 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { PieceMetadataModel } from '@activepieces/pieces-framework';
+import {
+  Action,
+  ActionType,
+  FlowOperationType,
+  Trigger,
+  TriggerType,
+  debounce,
+} from '@activepieces/shared';
+
+import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
+import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
+import { formUtils } from '../piece-properties/form-utils';
+import { SidebarHeader } from '../sidebar-header';
+import { TestStepContainer } from '../test-step';
+
+import { BranchSettings } from './branch-settings';
+import { CodeSettings } from './code-settings';
+import { LoopsSettings } from './loops-settings';
+import { PieceSettings } from './piece-settings';
 
 type StepSettingsContainerProps = {
   selectedStep: Action | Trigger;

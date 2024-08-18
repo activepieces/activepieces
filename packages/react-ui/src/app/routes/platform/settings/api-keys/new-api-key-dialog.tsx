@@ -1,5 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -60,18 +61,20 @@ export const NewApiKeyDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {apiKey ? 'API Key Created' : 'Create New API Key'}
+            {apiKey ? t('API Key Created') : t('Create New API Key')}
           </DialogTitle>
         </DialogHeader>
         {apiKey && (
           <div className="p-4">
             <div className="flex flex-col items-start gap-2">
               <span className="text-md">
-                Please save this secret key somewhere safe and accessible. For
-                security reasons,{' '}
+                {t(
+                  'Please save this secret key somewhere safe and accessible. For security reasons,',
+                )}{' '}
                 <span className="font-semibold">
-                  you won&apos;t be able to view it again after closing this
-                  dialog.
+                  {t(
+                    "you won't be able to view it again after closing this dialog.",
+                  )}
                 </span>
               </span>
               <CopyToClipboardInput textToCopy={apiKey.value} />
@@ -88,12 +91,12 @@ export const NewApiKeyDialog = ({
                 name="displayName"
                 render={({ field }) => (
                   <FormItem className="grid space-y-4">
-                    <Label htmlFor="displayName">API Key Name</Label>
+                    <Label htmlFor="displayName">{t('API Key Name')}</Label>
                     <Input
                       {...field}
                       required
                       id="displayName"
-                      placeholder="API Key Name"
+                      placeholder={t('API Key Name')}
                       className="rounded-sm"
                     />
                     <FormMessage />
@@ -112,14 +115,14 @@ export const NewApiKeyDialog = ({
           {!apiKey ? (
             <>
               <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                {t('Cancel')}
               </Button>
               <Button
                 disabled={isPending || !form.formState.isValid}
                 loading={isPending}
                 onClick={() => mutate()}
               >
-                Save
+                {t('Save')}
               </Button>
             </>
           ) : (
@@ -130,7 +133,7 @@ export const NewApiKeyDialog = ({
                 setOpen(false);
               }}
             >
-              Done
+              {t('Done')}
             </Button>
           )}
         </DialogFooter>

@@ -1,4 +1,5 @@
 import deepEqual from 'deep-equal';
+import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
 import {
@@ -88,7 +89,7 @@ const MultiSelectPieceProperty = ({
             </MultiSelectItem>
           ))}
           {filteredOptions.length === 0 && (
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>{t('No results found.')}</CommandEmpty>
           )}
         </MultiSelectList>
       </MultiSelectContent>

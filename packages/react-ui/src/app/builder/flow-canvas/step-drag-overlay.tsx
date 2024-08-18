@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { Action, Trigger } from '@activepieces/shared';
 
@@ -11,12 +13,16 @@ const StepDragOverlay = ({ step }: StepDragTemplateProps) => {
   });
 
   return (
-    <div className="p-4 h-[100px] opacity-75 w-[100px] flex items-center justify-center rounded-lg border border-solid border bg-white relative">
+    <div
+      className={
+        'p-4 h-[100px] opacity-75 w-[100px] flex items-center justify-center rounded-lg border border-solid border bg-white relative'
+      }
+    >
       <img
-        id="logo"
-        className="object-contain left-0 right-0  static"
+        id={t('logo')}
+        className={'object-contain left-0 right-0 static'}
         src={stepMetadata?.logoUrl}
-        alt="Step Icon"
+        alt={t('Step Icon')}
       />
     </div>
   );

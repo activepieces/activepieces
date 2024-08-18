@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -115,19 +116,20 @@ const PiecesSelectorList = () => {
         return stepMetadata.displayName.toLowerCase();
     }
   }
+
   return (
     <>
       <div ref={containerRef}>
         <SidebarHeader onClose={() => exitPieceSelector()}>
           {selectedButton?.type === 'action'
-            ? 'Select Action'
-            : 'Select Trigger'}
+            ? t('Select Action')
+            : t('Select Trigger')}
         </SidebarHeader>
         <div className="w-full  mb-4 px-4">
           <Input
             type="text"
             ref={searchInputRef}
-            placeholder="Search for a piece"
+            placeholder={t('Search for a piece')}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
@@ -141,7 +143,7 @@ const PiecesSelectorList = () => {
         )}
         {metadata && metadata.length === 0 && (
           <div className="flex h-full grow items-center justify-center text-center">
-            No pieces found
+            {t('No pieces found')}
           </div>
         )}
         {!isLoading && metadata && metadata.length > 0 && (

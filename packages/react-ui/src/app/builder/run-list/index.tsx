@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React from 'react';
 
 import {
@@ -47,13 +48,13 @@ const FlowRecentRunsList = React.memo(
     return (
       <>
         <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
-          Recent Runs
+          {t('Recent Runs')}
         </SidebarHeader>
         <CardList>
           {isLoading && <CardListItemSkeleton numberOfCards={10} />}
-          {isError && <div>Error, please try again.</div>}
+          {isError && <div>{t('Error, please try again.')}</div>}
           {flowPage && flowPage.data.length === 0 && (
-            <CardListEmpty message="No runs found" />
+            <CardListEmpty message={t('No runs found')} />
           )}
 
           <ScrollArea className="w-full h-full">

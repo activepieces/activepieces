@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { LogOut, Shield } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -20,7 +21,7 @@ export const Header = () => {
   return (
     <div className="flex h-[60px]">
       {isInPlatformAdmin ? (
-        <span className="text-xl px-4 py-2">Platform Admin</span>
+        <span className="text-xl px-4 py-2">{t('Platform Admin')}</span>
       ) : (
         <ProjectSwitcher />
       )}
@@ -39,7 +40,7 @@ export const Header = () => {
               <Shield className="size-4" />
             )}
             <span>
-              {isInPlatformAdmin ? 'Exit Platform Admin' : 'Platform Admin'}
+              {t(isInPlatformAdmin ? 'Exit Platform Admin' : 'Platform Admin')}
             </span>
           </Button>
         </Link>
@@ -77,7 +78,7 @@ const TaskLimitButton = React.memo(() => {
               {formatUtils.formatNumber(project.usage.tasks)}/
               {formatUtils.formatNumber(project.plan.tasks)}
             </strong>{' '}
-            Tasks Per Month
+            {t('Tasks Per Month')}
           </span>
         </Button>
       </Link>
