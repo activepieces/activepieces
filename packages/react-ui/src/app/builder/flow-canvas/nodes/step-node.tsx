@@ -137,23 +137,19 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     <div
       id={data.step!.name}
       style={{
-        boxShadow:
-          (isSelected || toolbarOpen) && !isDragging
-            ? 'inset 0 3px 0 hsl(var(--primary))'
-            : 'none',
-        borderRadius: '8px',
-        borderTopColor:
-          isSelected || toolbarOpen
-            ? 'hsl(var(--primary))'
-            : 'hsl(var(--border))',
         height: `${AP_NODE_SIZE.stepNode.height}px`,
         width: `${AP_NODE_SIZE.stepNode.width}px`,
       }}
-      className={cn('transition-all border-box border', {
-        'border-primary': toolbarOpen || isSelected,
-        'bg-background': !isDragging,
-        'border-none': isDragging,
-      })}
+      className={cn(
+        'transition-all border-box border rounded-sm border border-solid  border-border-300 relative',
+        {
+          'shadow-step-container': !isDragging,
+          'border-primary': toolbarOpen || isSelected,
+          'bg-background': !isDragging,
+          'border-none': isDragging,
+          'shadow-none': isDragging,
+        },
+      )}
       onClick={(e) => handleStepClick(e)}
       onMouseEnter={() => {
         setToolbarOpen(true && !readonly);
@@ -168,7 +164,15 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       {...attributes}
       {...listeners}
     >
-      <div className="px-2 h-full w-full">
+      <div className={cn('absolute left-0 top-0 rounded-sm w-full h-full',
+        {
+          'shadow-selected-step-top-border-stub':
+            (isSelected || toolbarOpen) && !isDragging,
+        }
+      )} >
+
+      </div>
+      <div className="px-2 h-full w-full  overflow-hidden">
         {!isDragging && (
           <>
             <div
@@ -186,14 +190,14 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
             </div>
 
             <div
-              className="px-2 h-full w-full "
+              className=" h-full w-full "
               onClick={() => selectStepByName(data.step?.name)}
             >
-              <div className="flex h-full items-center justify-between gap-4 w-full">
+              <div className="flex h-full items-center justify-between gap-3 w-full">
                 <div className="flex items-center justify-center min-w-[46px] h-full">
                   <ImageWithFallback
-                    width={46}
-                    height={46}
+                    width={40}
+                    height={40}
                     src={stepMetadata?.logoUrl}
                     alt={stepMetadata?.displayName}
                   />

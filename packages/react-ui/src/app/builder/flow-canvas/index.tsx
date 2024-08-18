@@ -15,6 +15,8 @@ import React, {
   useState,
 } from 'react';
 
+import { useElementSize } from '@/lib/utils';
+
 import { useBuilderStateContext } from '../builder-hooks';
 import { DataSelector } from '../data-selector';
 
@@ -29,29 +31,6 @@ import { LoopStepPlaceHolder } from './nodes/loop-step-placeholder';
 import { StepPlaceHolder } from './nodes/step-holder-placeholder';
 import { ApStepNode } from './nodes/step-node';
 
-function useContainerSize(
-  setSize: (size: { width: number; height: number }) => void,
-  containerRef: React.RefObject<HTMLDivElement>,
-) {
-  useEffect(() => {
-    const handleResize = (entries: ResizeObserverEntry[]) => {
-      if (entries[0]) {
-        const { width, height } = entries[0].contentRect;
-        setSize({ width, height });
-      }
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [containerRef, setSize]);
-}
 const FlowCanvas = React.memo(() => {
   const [allowCanvasPanning, flowVersion] = useBuilderStateContext((state) => [
     state.allowCanvasPanning,
@@ -62,8 +41,7 @@ const FlowCanvas = React.memo(() => {
   const graph = useMemo(() => {
     return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
   }, [flowVersion]);
-  const [size, setSize] = useState({ width: 0, height: 0 });
-  useContainerSize(setSize, containerRef);
+  const size = useElementSize(containerRef);
 
   const nodeTypes = useMemo(
     () => ({
