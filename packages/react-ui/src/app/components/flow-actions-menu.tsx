@@ -1,3 +1,5 @@
+import { GitBranchType } from '@activepieces/ee-shared';
+import { Flow, FlowOperationType, FlowVersion } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -9,7 +11,13 @@ import {
   Trash2,
   UploadCloud,
 } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
+
+import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
+import { RenameFlowDialog } from '../../features/flows/components/rename-flow-dialog';
+import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
+import { flowsApi } from '../../features/flows/lib/flows-api';
+import { flowsUtils } from '../../features/flows/lib/flows-utils';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
@@ -24,14 +32,6 @@ import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dial
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { GitBranchType } from '@activepieces/ee-shared';
-import { Flow, FlowOperationType, FlowVersion } from '@activepieces/shared';
-
-import { MoveToDialog } from '../../features/flows/components/move-to-dialog';
-import { RenameFlowDialog } from '../../features/flows/components/rename-flow-dialog';
-import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
-import { flowsApi } from '../../features/flows/lib/flows-api';
-import { flowsUtils } from '../../features/flows/lib/flows-utils';
 
 interface FlowActionMenuProps {
   flow: Flow;
@@ -59,7 +59,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     authenticationSession.getProjectId(),
     platform.gitSyncEnabled,
   );
-
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
 
@@ -79,7 +78,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       return updatedFlow;
     },
     onSuccess: (data) => {
-      window.open(`/flows/${data.id}`, '_blank', 'rel=noopener noreferrer');
+      window.open(`/flows/${data.id}`, '_blank', `noopener noreferrer`);
       onDuplicate();
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
@@ -98,7 +97,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   });
 
   return (
-    <DropdownMenu modal={false}>
+    <DropdownMenu modal={true}>
       <DropdownMenuTrigger
         className="rounded-full p-2 hover:bg-muted cursor-pointer"
         asChild
@@ -109,7 +108,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         {!readonly && (
           <RenameFlowDialog flowId={flow.id} onRename={onRename}>
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <div className="flex flex-row gap-2 items-center">
+              <div className="flex cursor-pointer flex-row gap-2 items-center">
                 <Pencil className="h-4 w-4" />
                 <span>{t('Rename')}</span>
               </div>
@@ -118,22 +117,26 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         )}
         <PushToGitDialog flowId={flow.id}>
           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <div className="flex flex-row gap-2 items-center">
+            <div className="flex cursor-pointer  flex-row gap-2 items-center">
               <UploadCloud className="h-4 w-4" />
               <span>{t('Push to Git')}</span>
             </div>
           </DropdownMenuItem>
         </PushToGitDialog>
-        <MoveToDialog flow={flow} flowVersion={flowVersion} onMoveTo={onMoveTo}>
+        <MoveFlowDialog
+          flow={flow}
+          flowVersion={flowVersion}
+          onMoveTo={onMoveTo}
+        >
           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <div className="flex flex-row gap-2 items-center">
+            <div className="flex cursor-pointer  flex-row gap-2 items-center">
               <CornerUpLeft className="h-4 w-4" />
               <span>{t('Move To')}</span>
             </div>
           </DropdownMenuItem>
-        </MoveToDialog>
+        </MoveFlowDialog>
         <DropdownMenuItem onClick={() => duplicateFlow()}>
-          <div className="flex flex-row gap-2 items-center">
+          <div className="flex cursor-pointer  flex-row gap-2 items-center">
             {isDuplicatePending ? (
               <LoadingSpinner />
             ) : (
@@ -145,7 +148,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           </div>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => exportFlow()}>
-          <div className="flex flex-row gap-2 items-center">
+          <div className="flex cursor-pointer  flex-row gap-2 items-center">
             {isExportPending ? (
               <LoadingSpinner />
             ) : (
@@ -156,7 +159,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         </DropdownMenuItem>
         <ShareTemplateDialog flowId={flow.id} flowVersion={flowVersion}>
           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <div className="flex flex-row gap-2 items-center">
+            <div className="flex cursor-pointer  flex-row gap-2 items-center">
               <Share2 className="h-4 w-4" />
               <span>{t('Share')}</span>
             </div>
@@ -188,7 +191,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             entityName={t('flow')}
           >
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <div className="flex flex-row gap-2 items-center">
+              <div className="flex cursor-pointer  flex-row gap-2 items-center">
                 <Trash2 className="h-4 w-4 text-destructive" />
                 <span className="text-destructive">{t('Delete')}</span>
               </div>

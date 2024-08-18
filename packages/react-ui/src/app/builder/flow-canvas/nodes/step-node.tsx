@@ -1,9 +1,20 @@
+import {
+  FlowOperationType,
+  FlowRun,
+  FlowRunStatus,
+  StepLocationRelativeToParent,
+  TriggerType,
+  flowHelper,
+  isNil,
+} from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
 import { t } from 'i18next';
 import { ArrowRightLeft, CircleAlert, CopyPlus, Trash } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+
+import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 
 import {
   StepPathWithName,
@@ -18,17 +29,6 @@ import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
-import {
-  FlowOperationType,
-  FlowRun,
-  FlowRunStatus,
-  StepLocationRelativeToParent,
-  TriggerType,
-  flowHelper,
-  isNil,
-} from '@activepieces/shared';
-
-import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 
 function getStepStatus(
   stepName: string | undefined,
@@ -166,8 +166,8 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       {...listeners}
     >
       <div
-        className={cn('absolute left-0 top-0 rounded-sm w-full h-full', {
-          'shadow-selected-step-top-border-stub':
+        className={cn('absolute left-0 top-0  rounded-sm w-full h-full', {
+          'border-t-[3px] border-primary border-solid':
             (isSelected || toolbarOpen) && !isDragging,
         })}
       ></div>

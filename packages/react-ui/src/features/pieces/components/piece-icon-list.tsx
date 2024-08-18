@@ -1,7 +1,6 @@
-import { cva } from 'class-variance-authority';
-import { t } from 'i18next';
-
 import { flowHelper, Trigger } from '@activepieces/shared';
+import { cva, cva } from 'class-variance-authority';
+import { t } from 'i18next';
 
 import {
   Tooltip,
@@ -13,7 +12,7 @@ import { piecesHooks, StepMetadata } from '../lib/pieces-hook';
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
-  'flex items-center justify-center bg-accent text-accent-foreground  p-2 rounded-full border border-solid',
+  'flex items-center justify-center bg-accent/35 text-accent-foreground  p-2 rounded-full border border-solid',
   {
     variants: {
       size: {

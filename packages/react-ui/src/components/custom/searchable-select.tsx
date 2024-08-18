@@ -131,9 +131,10 @@ export const SearchableSelect = <T extends React.Key>({
           {filterOptionsIndices.length === 0 && (
             <CommandEmpty>{t('No results found.')}</CommandEmpty>
           )}
-          <ScrollArea className="h-full" viewPortClassName={'max-h-[200px]'}>
+       
             <CommandGroup>
               <CommandList>
+              <ScrollArea className="h-full" viewPortClassName={'max-h-[200px]'}>
                 {filterOptionsIndices &&
                   filterOptionsIndices.map((filterIndex) => {
                     const option = options[filterIndex];
@@ -164,9 +165,10 @@ export const SearchableSelect = <T extends React.Key>({
                       </CommandItem>
                     );
                   })}
+          </ScrollArea>
+
               </CommandList>
             </CommandGroup>
-          </ScrollArea>
         </Command>
       </PopoverContent>
     </Popover>
