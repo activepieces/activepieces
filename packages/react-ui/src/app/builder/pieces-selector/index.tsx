@@ -120,10 +120,10 @@ const PiecesSelectorList = () => {
   return (
     <>
       <div ref={containerRef}>
-      <SidebarHeader onClose={() => exitPieceSelector()}>
-        {selectedButton?.type === 'action'
-          ? t('Select Action')
-          : t('Select Trigger')}
+        <SidebarHeader onClose={() => exitPieceSelector()}>
+          {selectedButton?.type === 'action'
+            ? t('Select Action')
+            : t('Select Trigger')}
         </SidebarHeader>
         <div className="w-full  mb-4 px-4">
           <Input

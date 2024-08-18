@@ -31,7 +31,6 @@ import { LoopStepPlaceHolder } from './nodes/loop-step-placeholder';
 import { StepPlaceHolder } from './nodes/step-holder-placeholder';
 import { ApStepNode } from './nodes/step-node';
 
-
 const FlowCanvas = React.memo(() => {
   const [allowCanvasPanning, flowVersion] = useBuilderStateContext((state) => [
     state.allowCanvasPanning,

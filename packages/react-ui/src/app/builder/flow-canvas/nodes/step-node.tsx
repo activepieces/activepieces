@@ -165,14 +165,12 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       {...attributes}
       {...listeners}
     >
-      <div className={cn('absolute left-0 top-0 rounded-sm w-full h-full',
-        {
+      <div
+        className={cn('absolute left-0 top-0 rounded-sm w-full h-full', {
           'shadow-selected-step-top-border-stub':
             (isSelected || toolbarOpen) && !isDragging,
-        }
-      )} >
-
-      </div>
+        })}
+      ></div>
       <div className="px-2 h-full w-full  overflow-hidden">
         {!isDragging && (
           <>
