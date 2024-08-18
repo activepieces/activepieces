@@ -109,7 +109,6 @@ module.exports = {
       },
       boxShadow: {
         'step-container': '0px 0px 22px hsl(var(--border))',
-        'selected-step-top-border-stub': 'inset 0 3px 0 hsl(var(--primary))'
       }
     },
   },
