@@ -1,6 +1,12 @@
+import { CodeAction } from '@activepieces/shared';
 import { Bot } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+
+import { LeftSideBarType, useBuilderStateContext } from '../../builder-hooks';
+import { DictionaryProperty } from '../../piece-properties/dictionary-property';
+
+import { CodeEditior } from './code-editior';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -10,12 +16,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { CodeAction } from '@activepieces/shared';
-
-import { LeftSideBarType, useBuilderStateContext } from '../../builder-hooks';
-import { DictionaryProperty } from '../../piece-properties/dictionary-property';
-
-import { CodeEditior } from './code-editior';
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below. 
@@ -42,7 +42,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         name="settings.input"
         render={({ field }) => (
           <FormItem>
-            <div className="py-4">
+            <div className="pb-4">
               <ApMarkdown markdown={markdown} />
             </div>
 
