@@ -11,7 +11,7 @@ import {
 const pieceIconVariants = cva('flex items-center justify-center  ', {
   variants: {
     circle: {
-      true: 'rounded-full bg-accent p-2',
+      true: 'rounded-full bg-accent/35 p-2',
     },
     size: {
       xl: 'size-[64px] p-4',
