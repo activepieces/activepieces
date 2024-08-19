@@ -8,6 +8,7 @@ import {
   useBuilderStateContext,
   useSwitchToDraft,
 } from '@/app/builder/builder-hooks';
+import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import {
   ResizableHandle,
@@ -98,7 +99,8 @@ const BuilderPage = () => {
       };
     },
   );
-
+  const middlePanelRef = useRef(null);
+  const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const rightHandleRef = useAnimateSidebar(rightSidebar);
   const leftHandleRef = useAnimateSidebar(leftSidebar);
@@ -126,7 +128,7 @@ const BuilderPage = () => {
           exitRun={switchToDraft}
         />
       )}
-      <div ref={builderNavBarContainer} className='z-30'>
+      <div ref={builderNavBarContainer} className="z-30">
         <BuilderNavBar />
       </div>
       <ReactFlowProvider>
@@ -166,8 +168,12 @@ const BuilderPage = () => {
           </>
 
           <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
-            <div className="relative h-full w-full">
+            <div ref={middlePanelRef} className="relative h-full w-full">
               <CanvasControls></CanvasControls>
+              <DataSelector
+                parentHeight={middlePanelSize.height}
+                parentWidth={middlePanelSize.width}
+              ></DataSelector>
             </div>
           </ResizablePanel>
 

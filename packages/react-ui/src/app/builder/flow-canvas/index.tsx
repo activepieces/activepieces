@@ -11,14 +11,10 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
-import { useElementSize } from '@/lib/utils';
-
 import { useBuilderStateContext } from '../builder-hooks';
-import { DataSelector } from '../data-selector';
 
 import { TestFlowWidget } from './above-flow-widget';
 import { ApEdgeWithButton } from './edges/edge-with-button';
@@ -36,11 +32,9 @@ const FlowCanvas = React.memo(() => {
     state.flowVersion,
   ]);
 
-  const containerRef = useRef<HTMLDivElement>(null);
   const graph = useMemo(() => {
     return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
   }, [flowVersion]);
-  const size = useElementSize(containerRef);
 
   const nodeTypes = useMemo(
     () => ({
@@ -76,7 +70,7 @@ const FlowCanvas = React.memo(() => {
   );
 
   return (
-    <div className="size-full relative " ref={containerRef}>
+    <div className="size-full relative ">
       <FlowDragLayer>
         <ReactFlow
           nodeTypes={nodeTypes}
@@ -110,10 +104,6 @@ const FlowCanvas = React.memo(() => {
           <Background />
         </ReactFlow>
       </FlowDragLayer>
-      <DataSelector
-        parentHeight={size.height}
-        parentWidth={size.width}
-      ></DataSelector>
     </div>
   );
 });
