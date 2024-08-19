@@ -126,7 +126,7 @@ const BuilderPage = () => {
           exitRun={switchToDraft}
         />
       )}
-      <div ref={builderNavBarContainer}>
+      <div ref={builderNavBarContainer} className='z-30'>
         <BuilderNavBar />
       </div>
       <ReactFlowProvider>
