@@ -39,7 +39,7 @@ const ColorPicker = forwardRef<
         <PopoverTrigger asChild disabled={disabled} onBlur={onBlur}>
           <Button
             {...props}
-            className={cn('block', className)}
+            className={cn('block rounded-full', className)}
             name={name}
             onClick={() => {
               setOpen(true);

@@ -7,9 +7,8 @@ import { useForm } from 'react-hook-form';
 import { LocalesEnum } from '@/app/routes/settings/appearance/language-switcher';
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -96,7 +95,7 @@ export const AppearanceSection = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <Label htmlFor="name">{t('Project Name')}</Label>
+                    <FormLabel htmlFor="name">{t('Project Name')}</FormLabel>
                     <Input
                       {...field}
                       required
@@ -113,7 +112,7 @@ export const AppearanceSection = () => {
                 name="logoUrl"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <Label htmlFor="logoUrl">{t('Logo URL')}</Label>
+                    <FormLabel htmlFor="logoUrl">{t('Logo URL')}</FormLabel>
                     <Input
                       {...field}
                       required
@@ -130,7 +129,7 @@ export const AppearanceSection = () => {
                 name="iconUrl"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <Label htmlFor="iconUrl">{t('Icon URL')}</Label>
+                    <FormLabel htmlFor="iconUrl">{t('Icon URL')}</FormLabel>
                     <Input
                       {...field}
                       required
@@ -146,7 +145,7 @@ export const AppearanceSection = () => {
                 name="faviconUrl"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <Label htmlFor="faviconUrl">{t('Favicon URL')}</Label>
+                    <FormLabel htmlFor="faviconUrl">{t('Favicon URL')}</FormLabel>
                     <Input
                       {...field}
                       required
@@ -163,7 +162,7 @@ export const AppearanceSection = () => {
                 name="language"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <Label htmlFor="language">{t('Default Language')}</Label>
+                    <FormLabel htmlFor="language">{t('Default Language')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger>
                         <SelectValue placeholder={t('Select Language')} />
@@ -191,7 +190,7 @@ export const AppearanceSection = () => {
                 name="color"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <Label htmlFor="color">{t('Primary Color')}</Label>
+                    <FormLabel htmlFor="color">{t('Primary Color')}</FormLabel>
                     <div className="flex flex-row gap-2 items-center">
                       <ColorPicker
                         value={field.value as string}
