@@ -8,7 +8,6 @@ import Text from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 
 import './tip-tap.css';
-
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
 import { flowHelper, isNil } from '@activepieces/shared';
