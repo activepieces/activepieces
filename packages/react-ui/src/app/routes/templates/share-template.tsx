@@ -16,12 +16,13 @@ const ShareTemplatePage = () => {
 
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-2">
-      <img
-        src={branding.logos.fullLogoUrl}
-        alt={t('logo')}
-        width={205}
-        height={205}
-      />
+      <div className="h-[60px]">
+        <img
+          className="h-full"
+          src={branding.logos.fullLogoUrl}
+          alt={t('logo')}
+        />
+      </div>
       <ShareTemplate templateId={templateId} />
     </div>
   );
