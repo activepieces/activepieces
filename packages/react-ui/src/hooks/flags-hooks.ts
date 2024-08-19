@@ -1,13 +1,28 @@
 import {
   QueryClient,
   usePrefetchQuery,
-  useQuery,
   useSuspenseQuery,
 } from '@tanstack/react-query';
 
 import { ApFlagId } from '@activepieces/shared';
 
 import { flagsApi, FlagsMap } from '../lib/flags-api';
+
+type WebsiteBrand = {
+  websiteName: string;
+  logos: {
+    fullLogoUrl: string;
+    favIconUrl: string;
+    logoIconUrl: string;
+  };
+  colors: {
+    primary: {
+      default: string;
+      dark: string;
+      light: string;
+    };
+  };
+};
 
 export const flagsHooks = {
   prefetchFlags: () => {
@@ -25,8 +40,15 @@ export const flagsHooks = {
       staleTime: Infinity,
     });
   },
+  useWebsiteBranding: (queryClient: QueryClient) => {
+    const { data: theme } = flagsHooks.useFlag<WebsiteBrand>(
+      ApFlagId.THEME,
+      queryClient,
+    );
+    return theme!;
+  },
   useFlag: <T>(flagId: ApFlagId, queryClient: QueryClient) => {
-    return useQuery<T | null, Error>({
+    return useSuspenseQuery<T | null, Error>({
       queryKey: ['flag', flagId],
       queryFn: async () => {
         const flags = await cacheFlagsIfNotCached(queryClient);

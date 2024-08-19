@@ -126,7 +126,8 @@ export default function AuditLogsPage() {
               },
             },
           ]}
-          fetchData={() => auditEventsApi.list({})} />
+          fetchData={() => auditEventsApi.list({})}
+        />
       </div>
     </LockedFeatureGuard>
   );

@@ -61,8 +61,12 @@ export const localesMap = {
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+
+  const languageWithoutLocale = i18n.language?.includes('-')
+    ? i18n.language.split('-')[0]
+    : i18n.language;
   const [selectedLanguage, setSelectedLanguage] = useState<string | undefined>(
-    i18n.language,
+    languageWithoutLocale ?? 'en',
   );
 
   const { mutate, isPending } = useMutation({

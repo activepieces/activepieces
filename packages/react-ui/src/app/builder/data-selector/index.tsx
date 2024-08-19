@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { Input } from '@/components/ui/input';
-import { cn, isStepFileUrl } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { Action, flowHelper, isNil, Trigger } from '@activepieces/shared';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
@@ -131,7 +131,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
   const [searchTerm, setSearchTerm] = useState('');
   const mentions = useBuilderStateContext(getAllStepsMentions);
-  const filteredMentions = filterBy(structuredClone(mentions), searchTerm)
+  const filteredMentions = filterBy(structuredClone(mentions), searchTerm);
   const [showDataSelector, setShowDataSelector] = useState(false);
 
   const checkFocus = useCallback(() => {
