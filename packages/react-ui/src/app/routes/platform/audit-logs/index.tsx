@@ -120,13 +120,13 @@ export default function AuditLogsPage() {
               cell: ({ row }) => {
                 return (
                   <div className="text-left">
-                    {formatUtils.formatDate(new Date(row.original.created))}
+                    {formatUtils.formatDate(new Date(row.original.createdAt))}
                   </div>
                 );
               },
             },
           ]}
-          fetchData={() => auditEventsApi.list({})}
+          fetchData={(_, page) => auditEventsApi.list({...page})}
         />
       </div>
     </LockedFeatureGuard>

@@ -51,9 +51,8 @@ const CustomTooltipLink = ({
           />
         )}
         <Icon
-          className={`size-10 p-2.5 hover:text-primary rounded-lg transition-colors ${
-            isActive ? 'bg-accent text-primary' : ''
-          } ${extraClasses || ''}`}
+          className={`size-10 p-2.5 hover:text-primary rounded-lg transition-colors ${isActive ? 'bg-accent text-primary' : ''
+            } ${extraClasses || ''}`}
         />
         <span className="text-[10px]">{label}</span>
         {notification && (
@@ -87,7 +86,9 @@ export function Sidebar({
             <div className="h-[48px] items-center justify-center ">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <img src={theme.logoIconUrl} alt={t('logo')} />
+                  <Link to="/">
+                    <img src={theme.logoIconUrl} alt={t('logo')} />
+                  </Link>
                 </TooltipTrigger>
                 <TooltipContent side="right">
                   {theme.websiteName}
