@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import React from 'react';
+import React, { RefObject } from 'react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
 import { JsonEditor } from '@/components/custom/json-editior';
@@ -23,6 +23,9 @@ import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property'
 import { DynamicProperties } from './dynamic-piece-property';
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
@@ -32,6 +35,26 @@ type AutoFormProps = {
   useMentionTextInput: boolean;
   disabled?: boolean;
 };
+
+const BuilderJsonEditorWrapper = ( {field,disabled}:{field:ControllerRenderProps<Record<string, any>, string>,disabled?:boolean}) => {
+  const [setInsertStateHandler,] = useBuilderStateContext((state) => [state.setInsertMentionHandler]);
+  const onFocus = (ref:RefObject<ReactCodeMirrorRef> ) => {
+      setInsertStateHandler((propertyPath: string) => {
+        if (ref.current?.view) {
+        const { view } = ref.current;
+        view.dispatch({
+          changes: {
+            from: view.state.selection.main.head,
+            insert: `{{${propertyPath}}}`,
+          },
+        });
+    }
+      });
+  }
+  return  <JsonEditor field={field} readonly={disabled?? false} onFocus={onFocus} className={textMentionUtils.inputThatUsesMentionClass}></JsonEditor>
+  
+}
+
 
 const AutoPropertiesFormComponent = React.memo(
   ({
@@ -170,7 +193,7 @@ const selectRightComponent = (
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >
-          <JsonEditor field={field} readonly={disabled}></JsonEditor>
+         {useMentionTextInput ? <BuilderJsonEditorWrapper field={field} disabled={disabled}></BuilderJsonEditorWrapper> : <JsonEditor field={field} readonly={disabled}></JsonEditor>}
         </AutoFormFieldWrapper>
       );
     case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
