@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import React from 'react';
 
 import {
@@ -15,12 +16,13 @@ type StepStatusIconProps = {
 };
 
 const statusText = {
-  [StepOutputStatus.RUNNING]: 'Step running',
-  [StepOutputStatus.PAUSED]: 'Step paused',
-  [StepOutputStatus.STOPPED]: 'Step Succeeded',
-  [StepOutputStatus.SUCCEEDED]: 'Step Succeeded',
-  [StepOutputStatus.FAILED]: 'Step Failed',
+  [StepOutputStatus.RUNNING]: t('Step running'),
+  [StepOutputStatus.PAUSED]: t('Step paused'),
+  [StepOutputStatus.STOPPED]: t('Step Stopped'),
+  [StepOutputStatus.SUCCEEDED]: t('Step Succeeded'),
+  [StepOutputStatus.FAILED]: t('Step Failed'),
 };
+
 const StepStatusIcon = React.memo(({ status, size }: StepStatusIconProps) => {
   const { variant, Icon } = flowRunUtils.getStatusIconForStep(status);
 

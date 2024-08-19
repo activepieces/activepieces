@@ -1,6 +1,8 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -32,36 +34,36 @@ import {
 
 import { flowsApi } from '../lib/flows-api';
 
-const MoveToFormSchema = Type.Object({
+const MoveFlowFormSchema = Type.Object({
   folder: Type.String({
-    errorMessage: 'Please select a folder',
+    errorMessage: t('Please select a folder'),
   }),
 });
 
-type MoveToFormSchema = Static<typeof MoveToFormSchema>;
+type MoveFlowFormSchema = Static<typeof MoveFlowFormSchema>;
 
-type MoveToDialogProps = {
+type MoveFlowDialogProps = {
   children: React.ReactNode;
   flow: Flow;
   flowVersion: FlowVersion;
   onMoveTo: (folderId: string) => void;
 };
-const MoveToDialog = ({
+const MoveFlowDialog = ({
   children,
   flow,
   flowVersion,
   onMoveTo,
-}: MoveToDialogProps) => {
-  const form = useForm<MoveToFormSchema>({
-    resolver: typeboxResolver(MoveToFormSchema),
+}: MoveFlowDialogProps) => {
+  const form = useForm<MoveFlowFormSchema>({
+    resolver: typeboxResolver(MoveFlowFormSchema),
   });
 
   const { folders, isLoading } = foldersHooks.useFolders();
-
+  const [isDialogOpened, setIsDialogOpened] = useState(false);
   const { mutate, isPending } = useMutation<
     PopulatedFlow,
     Error,
-    MoveToFormSchema
+    MoveFlowFormSchema
   >({
     mutationFn: async (data) => {
       return await flowsApi.update(flow.id, {
@@ -73,19 +75,22 @@ const MoveToDialog = ({
     },
     onSuccess: () => {
       onMoveTo(form.getValues().folder);
+      setIsDialogOpened(false);
       toast({
-        title: 'Moved flow successfully',
+        title: t('Moved flow successfully'),
       });
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
   return (
-    <Dialog>
+    <Dialog onOpenChange={setIsDialogOpened} open={isDialogOpened}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Move {flowVersion.displayName}</DialogTitle>
+          <DialogTitle>
+            {t('Move')} {flowVersion.displayName}
+          </DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
@@ -99,12 +104,14 @@ const MoveToDialog = ({
                     disabled={isLoading || folders?.length === 0}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Folder" />
+                      <SelectValue placeholder={t('Select Folder')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         {folders && folders.length === 0 && (
-                          <SelectItem value="NULL">No Folders</SelectItem>
+                          <SelectItem value="NULL">
+                            {t('No Folders')}
+                          </SelectItem>
                         )}
                         {folders &&
                           folders.map((folder) => (
@@ -125,7 +132,7 @@ const MoveToDialog = ({
             )}
             <DialogFooter>
               <Button type="submit" loading={isPending}>
-                Confirm
+                {t('Confirm')}
               </Button>
             </DialogFooter>
           </form>
@@ -134,5 +141,4 @@ const MoveToDialog = ({
     </Dialog>
   );
 };
-
-export { MoveToDialog };
+export { MoveFlowDialog };

@@ -13,6 +13,7 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { snapCenterToCursor } from '@dnd-kit/modifiers';
+import { t } from 'i18next';
 
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { FlowOperationType, flowHelper } from '@activepieces/shared';
@@ -90,8 +91,8 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
         });
         if (isPartOfInnerFlow) {
           toast({
-            title: 'Invalid Move',
-            description: 'The destination location is inside the same step',
+            title: t('Invalid Move'),
+            description: t('The destination location is inside the same step'),
             duration: 3000,
           });
           return;

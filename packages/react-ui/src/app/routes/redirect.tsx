@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -20,9 +21,9 @@ const RedirectPage: React.FC = React.memo(() => {
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <div className="text-center">
-        <h1 className="text-3xl font-bold">The redirection works!</h1>
+        <h1 className="text-3xl font-bold">{t('The redirection works!')}</h1>
         <p className="text-muted-foreground">
-          You will be redirected in a few seconds.
+          {t('You will be redirected in a few seconds.')}
         </p>
       </div>
     </div>

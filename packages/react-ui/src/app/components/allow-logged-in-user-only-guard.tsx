@@ -9,6 +9,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 
 import { authenticationSession } from '../../lib/authentication-session';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 function isJwtExpired(token: string): boolean {
   if (!token) {
@@ -39,10 +40,11 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   }
   projectHooks.prefetchProject();
   platformHooks.prefetchPlatform();
+  flagsHooks.useFlags();
   return (
     <Suspense
       fallback={
-        <div className="bg-background flex h-screen w-screen items-center justify-center ">
+        <div className=" flex h-screen w-screen items-center justify-center ">
           <LoadingSpinner size={50}></LoadingSpinner>
         </div>
       }

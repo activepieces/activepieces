@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 import { ActionType, TriggerType, LocalesEnum } from '@activepieces/shared';
@@ -166,4 +166,28 @@ export const localesMap = {
   [LocalesEnum.PORTUGUESE]: 'Português (Brasil)',
   [LocalesEnum.UKRAINIAN]: 'Українська',
   [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
+};
+
+export const useElementSize = (ref: RefObject<HTMLElement>) => {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    const handleResize = (entries: ResizeObserverEntry[]) => {
+      if (entries[0]) {
+        const { width, height } = entries[0].contentRect;
+        setSize({ width, height });
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (ref.current) {
+      resizeObserver.observe(ref.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [ref, setSize]);
+
+  return size;
 };

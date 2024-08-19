@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
 import { useAuthorization } from '@/components/authorization';
@@ -78,10 +79,10 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
         </TooltipTrigger>
         <TooltipContent side="bottom">
           {isNil(flow.publishedVersionId)
-            ? 'Please publish flow first'
+            ? t('Please publish flow first')
             : flow.status === FlowStatus.ENABLED
-            ? 'Flow is on'
-            : 'Flow is off'}
+            ? t('Flow is on')
+            : t('Flow is off')}
         </TooltipContent>
       </Tooltip>
       {isLoading ? (

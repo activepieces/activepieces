@@ -1,7 +1,10 @@
 import { Pencil } from 'lucide-react';
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
+
+import { useElementSize } from '@/lib/utils';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
+import { isNil } from '../../../../shared/src';
 
 type EditableTextProps = {
   value: string | undefined;
@@ -9,6 +12,7 @@ type EditableTextProps = {
   readonly: boolean;
   onValueChange: (value: string) => void;
   containerRef: React.RefObject<HTMLDivElement>;
+  tooltipContent?: string;
 };
 
 const EditableText = ({
@@ -17,6 +21,7 @@ const EditableText = ({
   readonly = false,
   onValueChange,
   containerRef,
+  tooltipContent
 }: EditableTextProps) => {
   const [value, setValue] = useState(initialValue);
   const [editing, setEditing] = useState(false);
@@ -24,22 +29,7 @@ const EditableText = ({
   const [valueOnEditingStarted, setValueOnEditingStarted] = useState('');
 
   const editableTextRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
-
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver(([entry]) => {
-      if (entry) {
-        setContainerWidth(entry.contentRect.width);
-      }
-    });
-
-    const currentContainer = containerRef.current;
-    if (currentContainer) {
-      resizeObserver.observe(currentContainer);
-    }
-
-    return () => resizeObserver.disconnect();
-  }, [containerRef, setContainerWidth]);
+  const { width: containerWidth } = useElementSize(containerRef);
 
   const emitChangedValue = useCallback(() => {
     const nodeValue = (editableTextRef.current?.textContent ?? '').trim();
@@ -69,8 +59,7 @@ const EditableText = ({
   };
 
   return (
-    <Tooltip>
-      <TooltipTrigger disabled={readonly || editing} asChild>
+  
         <div
           onClick={() => {
             if (readonly) return;
@@ -83,23 +72,45 @@ const EditableText = ({
           className="flex gap-2 items-center"
         >
           {!editing ? (
+          <Tooltip>
+          <TooltipTrigger disabled={readonly || editing || isNil(tooltipContent)} asChild>
             <div
-              key={'viewed'}
-              className={`${className} truncate  overflow-hidden`}
-              style={{
-                maxWidth: `${containerWidth - 100}px`,
+              onClick={() => {
+                if (readonly) return;
+                if (!editing) {
+                  setEditing(true);
+                  setValueOnEditingStarted(value ? value.trim() : '');
+                  setSelectionToValue();
+                }
               }}
-              title={
-                editableTextRef.current &&
-                editableTextRef.current.scrollWidth >
-                  editableTextRef.current.clientWidth &&
-                value
-                  ? value
-                  : ''
-              }
+              className="flex gap-2 items-center"
             >
-              {value}
-            </div>
+               <div
+                        ref={editableTextRef}
+                        key={'viewed'}
+                        className={`${className} truncate `}
+                        style={{
+                          maxWidth: `${containerWidth - 100}px`,
+                        }}
+                        title={
+                          editableTextRef.current &&
+                          editableTextRef.current.scrollWidth >
+                            editableTextRef.current.clientWidth &&
+                          value
+                            ? value
+                            : ''
+                        }
+                      >
+                        {value}
+                      </div>
+          {!editing && !readonly && <Pencil className="h-4 w-4 shrink-0" />}
+
+                      </div>
+                      </TooltipTrigger>
+                <TooltipContent className="font-normal z-50"  side="bottom">
+                  {tooltipContent}
+                </TooltipContent>
+              </Tooltip>
           ) : (
             <div
               key={'editable'}
@@ -124,15 +135,11 @@ const EditableText = ({
               {value}
             </div>
           )}
-          {!editing && !readonly && <Pencil className="h-4 w-4 shrink-0" />}
         </div>
-      </TooltipTrigger>
-      <TooltipContent className="font-normal" side="bottom">
-        Edit Step Name
-      </TooltipContent>
-    </Tooltip>
+
   );
 };
 
 EditableText.displayName = 'EditableText';
 export default EditableText;
+

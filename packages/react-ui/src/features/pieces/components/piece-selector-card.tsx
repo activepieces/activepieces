@@ -19,7 +19,7 @@ const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
     <div
       onClick={onClick}
       className={cn(
-        'flex h-[110px] items-center justify-center gap-4 rounded border border-solid cursor-pointer p-4',
+        'flex items-center justify-center gap-4 rounded border border-solid p-3.5',
         {
           'cursor-pointer hover:bg-accent hover:text-accent-foreground':
             interactive,

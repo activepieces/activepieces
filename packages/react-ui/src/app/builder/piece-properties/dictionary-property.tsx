@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Plus, TrashIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -102,7 +103,7 @@ export const DictionaryProperty = ({
             onClick={() => remove(index)}
           >
             <TrashIcon className="size-4 text-destructive" aria-hidden="true" />
-            <span className="sr-only">Remove</span>
+            <span className="sr-only">{t('Remove')}</span>
           </Button>
         </div>
       ))}
@@ -113,7 +114,7 @@ export const DictionaryProperty = ({
         type="button"
         disabled={disabled}
       >
-        <TextWithIcon icon={<Plus size={18} />} text="Add Item" />
+        <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
       </Button>
     </div>
   );

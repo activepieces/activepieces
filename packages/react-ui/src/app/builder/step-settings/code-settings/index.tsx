@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Bot } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -42,19 +43,19 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         name="settings.input"
         render={({ field }) => (
           <FormItem>
-            <div className="py-4">
+            <div className="pb-4">
               <ApMarkdown markdown={markdown} />
             </div>
 
             <div className="flex align-center justify-between">
-              <FormLabel className="pt-4">Inputs</FormLabel>
+              <FormLabel className="pt-4">{t('Inputs')}</FormLabel>
               <Button
                 variant="ghost"
                 onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}
                 className="flex items-right max-w-max"
               >
                 <Bot />
-                <span className="ml-2"> Ask AI </span>
+                <span className="ml-2">{t('Ask AI')}</span>
               </Button>
             </div>
 

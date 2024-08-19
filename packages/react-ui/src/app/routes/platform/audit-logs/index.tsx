@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Folder, Key, Link2, Logs, Users, Workflow } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -24,19 +25,21 @@ export default function AuditLogsPage() {
   return (
     <LockedFeatureGuard
       locked={!isEnabled}
-      lockTitle="Unlock Audit Logs"
-      lockDescription="Comply with internal and external security policies by tracking activities done within your account"
+      lockTitle={t('Unlock Audit Logs')}
+      lockDescription={t(
+        'Comply with internal and external security policies by tracking activities done within your account',
+      )}
     >
       <div className="flex flex-col  w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-3xl font-bold ">Audit Logs</span>
+          <span className="text-3xl font-bold ">{t('Audit Logs')}</span>
         </div>
         <DataTable
           columns={[
             {
               accessorKey: 'resource',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Resource" />
+                <DataTableColumnHeader column={column} title={t('Resource')} />
               ),
               cell: ({ row }) => {
                 const icon = convertToIcon(row.original);
@@ -57,7 +60,7 @@ export default function AuditLogsPage() {
             {
               accessorKey: 'details',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Details" />
+                <DataTableColumnHeader column={column} title={t('Details')} />
               ),
               cell: ({ row }) => {
                 return (
@@ -70,7 +73,10 @@ export default function AuditLogsPage() {
             {
               accessorKey: 'performedBy',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Performed By" />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Performed By')}
+                />
               ),
               cell: ({ row }) => {
                 return (
@@ -81,7 +87,7 @@ export default function AuditLogsPage() {
             {
               accessorKey: 'tasks',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Action" />
+                <DataTableColumnHeader column={column} title={t('Action')} />
               ),
               cell: ({ row }) => {
                 return (
@@ -94,7 +100,7 @@ export default function AuditLogsPage() {
             {
               accessorKey: 'projectDisplayName',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Project" />
+                <DataTableColumnHeader column={column} title={t('Project')} />
               ),
               cell: ({ row }) => {
                 return 'project' in row.original.data ? (
@@ -102,14 +108,14 @@ export default function AuditLogsPage() {
                     {row.original.data.project?.displayName}
                   </div>
                 ) : (
-                  <div className="text-left">N/A</div>
+                  <div className="text-left">{t('N/A')}</div>
                 );
               },
             },
             {
               accessorKey: 'createdAt',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Created" />
+                <DataTableColumnHeader column={column} title={t('Created')} />
               ),
               cell: ({ row }) => {
                 return (
@@ -140,27 +146,27 @@ function convertToIcon(event: ApplicationEvent) {
     case ApplicationEventName.FLOW_RUN_STARTED:
       return {
         icon: <Logs className="size-4" />,
-        tooltip: 'Flow Run',
+        tooltip: t('Flow Run'),
       };
     case ApplicationEventName.FLOW_CREATED:
     case ApplicationEventName.FLOW_DELETED:
     case ApplicationEventName.FLOW_UPDATED:
       return {
         icon: <Workflow className="size-4" />,
-        tooltip: 'Flow',
+        tooltip: t('Flow'),
       };
     case ApplicationEventName.FOLDER_CREATED:
     case ApplicationEventName.FOLDER_DELETED:
     case ApplicationEventName.FOLDER_UPDATED:
       return {
         icon: <Folder className="size-4" />,
-        tooltip: 'Folder',
+        tooltip: t('Folder'),
       };
     case ApplicationEventName.CONNECTION_DELETED:
     case ApplicationEventName.CONNECTION_UPSERTED:
       return {
         icon: <Link2 className="size-4" />,
-        tooltip: 'Connection',
+        tooltip: t('Connection'),
       };
     case ApplicationEventName.USER_SIGNED_UP:
     case ApplicationEventName.USER_SIGNED_IN:
@@ -168,12 +174,12 @@ function convertToIcon(event: ApplicationEvent) {
     case ApplicationEventName.USER_EMAIL_VERIFIED:
       return {
         icon: <Users className="size-4" />,
-        tooltip: 'User',
+        tooltip: t('User'),
       };
     case ApplicationEventName.SIGNING_KEY_CREATED:
       return {
         icon: <Key className="size-4" />,
-        tooltip: 'Signing Key',
+        tooltip: t('Signing Key'),
       };
   }
 }

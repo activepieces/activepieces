@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Timer } from 'lucide-react';
 import React from 'react';
 
@@ -33,13 +34,13 @@ const FlowStepInputOutput = React.memo(
             <div className="flex items-center gap-1 justify-start">
               <Timer className="w-5 h-5" />
               <span>
-                Duration:{' '}
+                {t('Duration')}:{' '}
                 {formatUtils.formatDuration(stepDetails.duration ?? 0, false)}
               </span>
             </div>
-            <JsonViewer title="Input" json={stepDetails.input} />
+            <JsonViewer title={t('Input')} json={stepDetails.input} />
             <div className="mt-4"></div>
-            <JsonViewer title="Output" json={loopStepOut} />
+            <JsonViewer title={t('Output')} json={loopStepOut} />
           </div>
         )}
       </ScrollArea>

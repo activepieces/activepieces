@@ -1,6 +1,7 @@
 import {
   QueryClient,
   usePrefetchQuery,
+  useQuery,
   useSuspenseQuery,
 } from '@tanstack/react-query';
 
@@ -25,7 +26,7 @@ export const flagsHooks = {
     });
   },
   useFlag: <T>(flagId: ApFlagId, queryClient: QueryClient) => {
-    return useSuspenseQuery<T | null, Error>({
+    return useQuery<T | null, Error>({
       queryKey: ['flag', flagId],
       queryFn: async () => {
         const flags = await cacheFlagsIfNotCached(queryClient);

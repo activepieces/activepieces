@@ -2,6 +2,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
+import { t } from 'i18next';
 import { BetweenHorizontalEnd, Package } from 'lucide-react';
 import { useState } from 'react';
 
@@ -82,7 +83,7 @@ const CodeEditior = ({
             })}
             onClick={() => handleCodeClick()}
           >
-            Code
+            {t('Code')}
           </div>
           <div
             className={cn('text-sm cursor-pointer', {
@@ -90,7 +91,7 @@ const CodeEditior = ({
             })}
             onClick={() => handlePackageClick()}
           >
-            Dependencies
+            {t('Dependencies')}
           </div>
         </div>
         <div className="flex flex-grow"></div>
@@ -102,7 +103,7 @@ const CodeEditior = ({
             onClick={applyCodeToCurrentStep}
           >
             <BetweenHorizontalEnd className="w-3 h-3" />
-            Apply code
+            {t('Apply code')}
           </Button>
         ) : (
           <AddNpmDialog onAdd={handleAddPackages}>
@@ -113,7 +114,7 @@ const CodeEditior = ({
               onClick={() => {}}
             >
               <Package className="w-4 h-4" />
-              Add package
+              {t('Add package')}
             </Button>
           </AddNpmDialog>
         )}

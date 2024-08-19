@@ -8,6 +8,8 @@ import {
   useBuilderStateContext,
   useSwitchToDraft,
 } from '@/app/builder/builder-hooks';
+import { DataSelector } from '@/app/builder/data-selector';
+import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -22,7 +24,7 @@ import {
   flowHelper,
 } from '@activepieces/shared';
 
-import { cn } from '../../lib/utils';
+import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderNavBar } from './builder-nav-bar';
 import { ChatSidebar } from './copilot';
@@ -97,11 +99,15 @@ const BuilderPage = () => {
       };
     },
   );
-
+  const middlePanelRef = useRef(null);
+  const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const rightHandleRef = useAnimateSidebar(rightSidebar);
   const leftHandleRef = useAnimateSidebar(leftSidebar);
-
+  const builderNavBarContainer = useRef<HTMLDivElement>(null);
+  const { height: builderNavbarHeight } = useElementSize(
+    builderNavBarContainer,
+  );
   const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
     name: memorizedSelectedStep?.settings.pieceName,
     version: memorizedSelectedStep?.settings.pieceVersion,
@@ -113,7 +119,7 @@ const BuilderPage = () => {
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
 
   return (
-    <div className="flex h-screen w-screen flex-col">
+    <div className="flex h-screen w-screen flex-col relative">
       {run && (
         <RunDetailsBar
           canExitRun={canExitRun}
@@ -122,75 +128,95 @@ const BuilderPage = () => {
           exitRun={switchToDraft}
         />
       )}
-      <BuilderNavBar />
-      <ResizablePanelGroup direction="horizontal">
-        <>
-          <ResizablePanel
-            id="left-sidebar"
-            defaultSize={0}
-            minSize={0}
-            maxSize={45}
-            order={1}
-            ref={leftHandleRef}
-            className={cn('min-w-0', {
-              [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
-              [animateResizeClassName]: !isDraggingHandle,
-            })}
-          >
-            {leftSidebar === LeftSideBarType.RUNS && <FlowRecentRunsList />}
-            {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
-            {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
-            {leftSidebar === LeftSideBarType.AI_COPILOT && <ChatSidebar />}
-          </ResizablePanel>
-          <ResizableHandle
-            disabled={leftSidebar === LeftSideBarType.NONE}
-            withHandle={leftSidebar !== LeftSideBarType.NONE}
-            onDragging={setIsDraggingHandle}
-          />
-        </>
-
-        <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
-          <ReactFlowProvider>
-            <FlowCanvas />
-          </ReactFlowProvider>
-        </ResizablePanel>
-
-        <>
-          <ResizableHandle
-            disabled={rightSidebar === RightSideBarType.NONE}
-            withHandle={rightSidebar !== RightSideBarType.NONE}
-            onDragging={setIsDraggingHandle}
-          />
-
-          <ResizablePanel
-            ref={rightHandleRef}
-            id="right-sidebar"
-            defaultSize={0}
-            minSize={0}
-            maxSize={60}
-            order={3}
-            className={cn('min-w-0', {
-              [minWidthOfSidebar]: rightSidebar !== RightSideBarType.NONE,
-              [animateResizeClassName]: !isDraggingHandle,
-            })}
-          >
-            {rightSidebar === RightSideBarType.PIECE_SELECTOR && (
-              <PiecesSelectorList />
-            )}
-            {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-              memorizedSelectedStep &&
-              !isPieceLoading && (
-                <StepSettingsContainer
-                  key={containerKey}
-                  pieceModel={pieceModel}
-                  selectedStep={memorizedSelectedStep}
-                />
+      <div ref={builderNavBarContainer} className="z-30">
+        <BuilderNavBar />
+      </div>
+      <ReactFlowProvider>
+        <div
+          className="absolute left-0 top-0 h-full w-full z-10 "
+          style={{ paddingTop: `${builderNavbarHeight}px` }}
+        >
+          <FlowCanvas />
+        </div>
+        <ResizablePanelGroup direction="horizontal">
+          <>
+            <ResizablePanel
+              id="left-sidebar"
+              defaultSize={0}
+              minSize={0}
+              maxSize={39}
+              order={1}
+              ref={leftHandleRef}
+              className={cn('min-w-0 bg-background z-20', {
+                [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
+                [animateResizeClassName]: !isDraggingHandle,
+              })}
+            >
+              {leftSidebar === LeftSideBarType.RUNS && <FlowRecentRunsList />}
+              {leftSidebar === LeftSideBarType.RUN_DETAILS && (
+                <FlowRunDetails />
               )}
+              {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
+              {leftSidebar === LeftSideBarType.AI_COPILOT && <ChatSidebar />}
+            </ResizablePanel>
+            <ResizableHandle
+              disabled={leftSidebar === LeftSideBarType.NONE}
+              withHandle={leftSidebar !== LeftSideBarType.NONE}
+              onDragging={setIsDraggingHandle}
+              className="z-20"
+            />
+          </>
+
+          <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
+            <div ref={middlePanelRef} className="relative h-full w-full">
+              <CanvasControls></CanvasControls>
+              <DataSelector
+                parentHeight={middlePanelSize.height}
+                parentWidth={middlePanelSize.width}
+              ></DataSelector>
+            </div>
           </ResizablePanel>
-        </>
-      </ResizablePanelGroup>
+
+          <>
+            <ResizableHandle
+              disabled={rightSidebar === RightSideBarType.NONE}
+              withHandle={rightSidebar !== RightSideBarType.NONE}
+              onDragging={setIsDraggingHandle}
+              className="z-10 "
+              
+            />
+
+            <ResizablePanel
+              ref={rightHandleRef}
+              id="right-sidebar"
+              defaultSize={0}
+              minSize={0}
+              maxSize={60}
+              order={3}
+              className={cn('min-w-0 bg-background z-30', {
+                [minWidthOfSidebar]: rightSidebar !== RightSideBarType.NONE,
+                [animateResizeClassName]: !isDraggingHandle,
+              })}
+            >
+              {rightSidebar === RightSideBarType.PIECE_SELECTOR && (
+                <PiecesSelectorList />
+              )}
+              {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
+                memorizedSelectedStep &&
+                !isPieceLoading && (
+                  <StepSettingsContainer
+                    key={containerKey}
+                    pieceModel={pieceModel}
+                    selectedStep={memorizedSelectedStep}
+                  />
+                )}
+            </ResizablePanel>
+          </>
+        </ResizablePanelGroup>
+      </ReactFlowProvider>
     </div>
   );
 };
+
 BuilderPage.displayName = 'BuilderPage';
 export { BuilderPage };

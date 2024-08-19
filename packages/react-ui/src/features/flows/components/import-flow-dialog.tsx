@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -78,7 +79,7 @@ const ImportFlowDialog = ({ children }: { children: React.ReactNode }) => {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Import Flow</DialogTitle>
+          <DialogTitle>{t('Import Flow')}</DialogTitle>
         </DialogHeader>
         <DialogFooter>
           <Input
@@ -88,7 +89,7 @@ const ImportFlowDialog = ({ children }: { children: React.ReactNode }) => {
             onChange={handleFileChange}
           />
           <Button onClick={handleSubmit} loading={isPending}>
-            Import
+            {t('Import')}
           </Button>
         </DialogFooter>
       </DialogContent>

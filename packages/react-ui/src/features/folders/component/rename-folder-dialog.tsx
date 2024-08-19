@@ -1,6 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -22,7 +23,7 @@ import { foldersApi } from '../lib/folders-api';
 
 const RenameFolderSchema = Type.Object({
   displayName: Type.String({
-    errorMessage: 'Please enter a folder name',
+    errorMessage: t('Please enter a folder name'),
   }),
 });
 
@@ -51,7 +52,7 @@ const RenameFolderDialog = ({
       setIsOpen(false);
       onRename();
       toast({
-        title: 'Renamed flow successfully',
+        title: t('Renamed flow successfully'),
       });
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
@@ -62,7 +63,7 @@ const RenameFolderDialog = ({
       <DialogTrigger className="w-full">{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Rename Folder</DialogTitle>
+          <DialogTitle>{t('Rename Folder')}</DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
@@ -74,7 +75,7 @@ const RenameFolderDialog = ({
                     {...field}
                     required
                     id="displayName"
-                    placeholder="New Folder Name"
+                    placeholder={t('New Folder Name')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -88,7 +89,7 @@ const RenameFolderDialog = ({
             )}
             <DialogFooter>
               <Button type="submit" loading={isPending}>
-                Confirm
+                {t('Confirm')}
               </Button>
             </DialogFooter>
           </form>

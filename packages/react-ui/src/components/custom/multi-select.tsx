@@ -4,6 +4,7 @@
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { Primitive } from '@radix-ui/react-primitive';
 import { useControllableState } from '@radix-ui/react-use-controllable-state';
+import { t } from 'i18next'; // Use t function from react-i18next
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import React, { ComponentPropsWithoutRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -61,7 +62,9 @@ const useMultiSelect = () => {
   const context = React.useContext(MultiSelectContext);
 
   if (!context) {
-    throw new Error('useMultiSelect must be used within MultiSelectProvider');
+    throw new Error(
+      t('useMultiSelect must be used within MultiSelectProvider'),
+    );
   }
 
   return context;
@@ -248,9 +251,11 @@ const MultiSelectValue = React.forwardRef<
     const { value, itemCache, onDeselect } = useMultiSelect();
     const [firstRendered, setFirstRendered] = React.useState(false);
 
-    const renderRemain =
+    const remainingPiecesCount =
       maxDisplay && value.length > maxDisplay ? value.length - maxDisplay : 0;
-    const renderItems = renderRemain ? value.slice(0, maxDisplay) : value;
+    const renderItems = remainingPiecesCount
+      ? value.slice(0, maxDisplay)
+      : value;
 
     React.useLayoutEffect(() => {
       setFirstRendered(true);
@@ -259,7 +264,7 @@ const MultiSelectValue = React.forwardRef<
     if (!value.length || !firstRendered) {
       return (
         <span className="pointer-events-none text-muted-foreground">
-          {placeholder}
+          {t('Your selection')}
         </span>
       );
     }
@@ -317,9 +322,11 @@ const MultiSelectValue = React.forwardRef<
 
             return el;
           })}
-          {renderRemain ? (
+          {remainingPiecesCount ? (
             <span className="text-muted-foreground text-xs leading-4 py-.5">
-              +{renderRemain}
+              {t('+{{remainingPiecesCount}} more', {
+                remainingPiecesCount: remainingPiecesCount,
+              })}
             </span>
           ) : null}
         </div>

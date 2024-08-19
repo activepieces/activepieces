@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import {
   Copy,
   CornerUpLeft,
@@ -26,7 +27,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { GitBranchType } from '@activepieces/ee-shared';
 import { Flow, FlowOperationType, FlowVersion } from '@activepieces/shared';
 
-import { MoveToDialog } from '../../features/flows/components/move-to-dialog';
+import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
 import { RenameFlowDialog } from '../../features/flows/components/rename-flow-dialog';
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
 import { flowsApi } from '../../features/flows/lib/flows-api';
@@ -58,7 +59,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     authenticationSession.getProjectId(),
     platform.gitSyncEnabled,
   );
-
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
 
@@ -78,7 +78,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       return updatedFlow;
     },
     onSuccess: (data) => {
-      window.open(`/flows/${data.id}`, '_blank', 'rel=noopener noreferrer');
+      window.open(`/flows/${data.id}`, '_blank', `noopener noreferrer`);
       onDuplicate();
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
@@ -88,8 +88,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     mutationFn: () => flowsUtils.downloadFlow(flow.id),
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Flow has been exported.',
+        title: t('Success'),
+        description: t('Flow has been exported.'),
         duration: 3000,
       });
     },
@@ -97,7 +97,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   });
 
   return (
-    <DropdownMenu modal={false}>
+    <DropdownMenu modal={true}>
       <DropdownMenuTrigger
         className="rounded-full p-2 hover:bg-muted cursor-pointer"
         asChild
@@ -108,71 +108,78 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         {!readonly && (
           <RenameFlowDialog flowId={flow.id} onRename={onRename}>
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <div className="flex flex-row gap-2 items-center">
+              <div className="flex cursor-pointer flex-row gap-2 items-center">
                 <Pencil className="h-4 w-4" />
-                <span>Rename</span>
+                <span>{t('Rename')}</span>
               </div>
             </DropdownMenuItem>
           </RenameFlowDialog>
         )}
         <PushToGitDialog flowId={flow.id}>
           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <div className="flex flex-row gap-2 items-center">
+            <div className="flex cursor-pointer  flex-row gap-2 items-center">
               <UploadCloud className="h-4 w-4" />
-              <span>Push to Git</span>
+              <span>{t('Push to Git')}</span>
             </div>
           </DropdownMenuItem>
         </PushToGitDialog>
-        <MoveToDialog flow={flow} flowVersion={flowVersion} onMoveTo={onMoveTo}>
+        <MoveFlowDialog
+          flow={flow}
+          flowVersion={flowVersion}
+          onMoveTo={onMoveTo}
+        >
           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <div className="flex flex-row gap-2 items-center">
+            <div className="flex cursor-pointer  flex-row gap-2 items-center">
               <CornerUpLeft className="h-4 w-4" />
-              <span>Move To</span>
+              <span>{t('Move To')}</span>
             </div>
           </DropdownMenuItem>
-        </MoveToDialog>
+        </MoveFlowDialog>
         <DropdownMenuItem onClick={() => duplicateFlow()}>
-          <div className="flex flex-row gap-2 items-center">
+          <div className="flex cursor-pointer  flex-row gap-2 items-center">
             {isDuplicatePending ? (
               <LoadingSpinner />
             ) : (
               <Copy className="h-4 w-4" />
             )}
-            <span>{isDuplicatePending ? 'Duplicating' : 'Duplicate'}</span>
+            <span>
+              {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
+            </span>
           </div>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => exportFlow()}>
-          <div className="flex flex-row gap-2 items-center">
+          <div className="flex cursor-pointer  flex-row gap-2 items-center">
             {isExportPending ? (
               <LoadingSpinner />
             ) : (
               <Download className="h-4 w-4" />
             )}
-            <span>{isExportPending ? 'Exporting' : 'Export'}</span>
+            <span>{isExportPending ? t('Exporting') : t('Export')}</span>
           </div>
         </DropdownMenuItem>
         <ShareTemplateDialog flowId={flow.id} flowVersion={flowVersion}>
           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <div className="flex flex-row gap-2 items-center">
+            <div className="flex cursor-pointer  flex-row gap-2 items-center">
               <Share2 className="h-4 w-4" />
-              <span>Share</span>
+              <span>{t('Share')}</span>
             </div>
           </DropdownMenuItem>
         </ShareTemplateDialog>
         {!readonly && (
           <ConfirmationDeleteDialog
-            title={`Delete flow ${flowVersion.displayName}`}
+            title={`${t('Delete flow')} ${flowVersion.displayName}`}
             message={
               <>
                 <div>
-                  Are you sure you want to delete this flow? This will
-                  permanently delete the flow, all its data and any background
-                  runs.
+                  {t(
+                    'Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.',
+                  )}
                 </div>
                 {isDevelopmentBranch && (
                   <div className="font-bold mt-2">
-                    You are on a development branch, this will not delete the
-                    flow from the remote repository.
+                    {t(
+                      'You are on a development branch, this will not delete the flow from the remote repository.',
+                    )}
                   </div>
                 )}
               </>
@@ -181,12 +188,12 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               await flowsApi.delete(flow.id);
               onDelete();
             }}
-            entityName={'flow'}
+            entityName={t('flow')}
           >
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <div className="flex flex-row gap-2 items-center">
+              <div className="flex cursor-pointer  flex-row gap-2 items-center">
                 <Trash2 className="h-4 w-4 text-destructive" />
-                <span className="text-destructive">Delete</span>
+                <span className="text-destructive">{t('Delete')}</span>
               </div>
             </DropdownMenuItem>
           </ConfirmationDeleteDialog>

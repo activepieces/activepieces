@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -39,7 +40,9 @@ const LoopIterationInput = (params: LoopIterationInputProps) => {
   return (
     <>
       {!isFocused && (
-        <div className="text-sm duration-300 animate-fade">Iteration:</div>
+        <div className="text-sm duration-300 animate-fade">
+          {t('Iteration&#58;')}
+        </div>
       )}
       <div
         dir="rtl"
@@ -73,7 +76,7 @@ const LoopIterationInput = (params: LoopIterationInputProps) => {
               e.preventDefault();
             }}
           >
-            Done
+            {t('Done')}
           </Button>
         </div>
         <Input

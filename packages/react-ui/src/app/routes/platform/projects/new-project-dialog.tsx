@@ -1,5 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -53,7 +54,7 @@ export const NewProjectDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
+          <DialogTitle>{t('Create New Project')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
@@ -61,12 +62,12 @@ export const NewProjectDialog = ({
               name="displayName"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="displayName">Project Name</Label>
+                  <Label htmlFor="displayName">{t('Project Name')}</Label>
                   <Input
                     {...field}
                     required
                     id="displayName"
-                    placeholder="Project Name"
+                    placeholder={t('Project Name')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -89,7 +90,7 @@ export const NewProjectDialog = ({
               setOpen(false);
             }}
           >
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button
             disabled={isPending || !form.formState.isValid}
@@ -100,7 +101,7 @@ export const NewProjectDialog = ({
               mutate();
             }}
           >
-            Save
+            {t('Save')}
           </Button>
         </DialogFooter>
       </DialogContent>

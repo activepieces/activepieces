@@ -1,6 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -71,8 +72,8 @@ export const AppearanceSection = () => {
       ),
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Your changes have been saved.',
+        title: t('Success'),
+        description: t('Your changes have been saved.'),
         duration: 3000,
       });
     },
@@ -84,9 +85,9 @@ export const AppearanceSection = () => {
   return (
     <Card className="max-w-[60%]">
       <CardHeader className="pb-3">
-        <CardTitle>Appearance</CardTitle>
+        <CardTitle>{t('Appearance')}</CardTitle>
         <CardDescription>
-          Change the look and feel of your projects.
+          {t('Change the look and feel of your projects.')}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1 mt-4">
@@ -96,12 +97,12 @@ export const AppearanceSection = () => {
               name="name"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="name">Project Name</Label>
+                  <Label htmlFor="name">{t('Project Name')}</Label>
                   <Input
                     {...field}
                     required
                     id="name"
-                    placeholder="Project Name"
+                    placeholder={t('Project Name')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -113,7 +114,7 @@ export const AppearanceSection = () => {
               name="logoUrl"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="logoUrl">Logo URL</Label>
+                  <Label htmlFor="logoUrl">{t('Logo URL')}</Label>
                   <Input
                     {...field}
                     required
@@ -130,7 +131,7 @@ export const AppearanceSection = () => {
               name="iconUrl"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="iconUrl">Icon URL</Label>
+                  <Label htmlFor="iconUrl">{t('Icon URL')}</Label>
                   <Input
                     {...field}
                     required
@@ -147,7 +148,7 @@ export const AppearanceSection = () => {
               name="faviconUrl"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="faviconUrl">Favicon URL</Label>
+                  <Label htmlFor="faviconUrl">{t('Favicon URL')}</Label>
                   <Input
                     {...field}
                     required
@@ -164,15 +165,17 @@ export const AppearanceSection = () => {
               name="language"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="language">Default Language</Label>
+                  <Label htmlFor="language">{t('Default Language')}</Label>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Language" />
+                      <SelectValue placeholder={t('Select Language')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
                         {locales.length === 0 && (
-                          <SelectItem value="NULL">No Languages</SelectItem>
+                          <SelectItem value="NULL">
+                            {t('No Languages')}
+                          </SelectItem>
                         )}
                         {locales.map(([locale, name]) => (
                           <SelectItem key={locale} value={locale}>
@@ -190,7 +193,7 @@ export const AppearanceSection = () => {
               name="color"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="color">Primary Color</Label>
+                  <Label htmlFor="color">{t('Primary Color')}</Label>
                   <div className="flex flex-row gap-2 items-center">
                     <ColorPicker
                       defaultValue={field.value as string}
@@ -241,7 +244,7 @@ export const AppearanceSection = () => {
             }}
             disabled={!form.formState.isDirty}
           >
-            Save
+            {t('Save')}
           </Button>
         </div>
       </CardContent>

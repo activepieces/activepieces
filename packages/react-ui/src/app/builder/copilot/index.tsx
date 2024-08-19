@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { ArrowUp, LoaderCircle } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import { useState, useEffect, useRef } from 'react';
@@ -32,8 +33,9 @@ interface DefaultEventsMap {
 const initialMessages: CopilotMessage[] = [
   {
     messageType: 'text',
-    content:
+    content: t(
       'Hi! I can help you writing your code. What do you need help with?',
+    ),
     userType: 'bot',
   },
 ];
@@ -98,7 +100,7 @@ export const ChatSidebar = () => {
     },
     onError: (error: any) => {
       toast({
-        title: 'Error generating code',
+        title: t('Error generating code'),
         description: error.message,
       });
     },
@@ -110,7 +112,9 @@ export const ChatSidebar = () => {
       return;
     }
     mutate({
-      prompt: `${inputMessage}. Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies.`,
+      prompt: `${inputMessage}. ${t(
+        'Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies.',
+      )}`,
       previousContext: messages.map((message) => ({
         role: message.userType === 'user' ? 'user' : 'assistant',
         content: JSON.stringify(message.content),
@@ -194,7 +198,7 @@ export const ChatSidebar = () => {
   return (
     <div className="flex flex-col h-full">
       <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
-        Chat
+        {t('AI Copilot')}
       </SidebarHeader>
       <div className="flex flex-col flex-grow overflow-hidden">
         <ScrollArea className="flex-grow overflow-auto">
@@ -225,7 +229,7 @@ export const ChatSidebar = () => {
           <button
             onClick={handleSendMessage}
             className="absolute right-5 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md hover:bg-gray-100 dark:hover:bg-gray-600"
-            aria-label="Send"
+            aria-label={t('Send')}
             disabled={isPending}
           >
             {isPending ? (
