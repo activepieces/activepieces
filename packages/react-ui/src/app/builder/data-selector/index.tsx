@@ -108,17 +108,6 @@ type DataSelectorProps = {
   parentWidth: number;
 };
 
-const cleanFromFileUrl = (obj: MentionTreeNode) => {
-  if (isStepFileUrl(obj.data.value)) {
-    return null
-  }
-  const clone = structuredClone(obj)
-  if (clone.children) {
-    clone.children = clone.children.filter(n => cleanFromFileUrl(n))
-  }
-  return clone
-}
-
 const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [DataSelectorSize, setDataSelectorSize] =
@@ -126,8 +115,6 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const mentions = useBuilderStateContext(getAllStepsMentions);
   const filteredMentions = filterBy(structuredClone(mentions), searchTerm)
-    .map(cleanFromFileUrl)
-    .filter(mention => mention !== null);
   const [showDataSelector, setShowDataSelector] = useState(false);
 
   const checkFocus = useCallback(() => {
@@ -173,8 +160,8 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             DataSelectorSize === DataSelectorSizeState.COLLAPSED
               ? '0px'
               : DataSelectorSize === DataSelectorSizeState.DOCKED
-                ? '450px'
-                : `${parentHeight - 100}px`,
+              ? '450px'
+              : `${parentHeight - 100}px`,
           width:
             DataSelectorSize !== DataSelectorSizeState.EXPANDED
               ? '450px'

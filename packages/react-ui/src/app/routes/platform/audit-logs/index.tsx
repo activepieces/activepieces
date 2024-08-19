@@ -113,21 +113,20 @@ export default function AuditLogsPage() {
               },
             },
             {
-              accessorKey: 'createdAt',
+              accessorKey: 'created',
               header: ({ column }) => (
                 <DataTableColumnHeader column={column} title={t('Created')} />
               ),
               cell: ({ row }) => {
                 return (
                   <div className="text-left">
-                    {formatUtils.formatDate(new Date(row.original.createdAt))}
+                    {formatUtils.formatDate(new Date(row.original.created))}
                   </div>
                 );
               },
             },
           ]}
-          fetchData={(_, page) => auditEventsApi.list({...page})}
-        />
+          fetchData={() => auditEventsApi.list({})} />
       </div>
     </LockedFeatureGuard>
   );

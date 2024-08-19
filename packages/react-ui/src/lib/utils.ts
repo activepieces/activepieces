@@ -193,5 +193,9 @@ export const useElementSize = (ref: RefObject<HTMLElement>) => {
 };
 
 export const isStepFileUrl = (json: unknown): json is string => {
-  return Boolean(json) && typeof json === 'string' && (json.includes("/api/v1/step-files/") || json.includes("file://"))
-}
+  return (
+    Boolean(json) &&
+    typeof json === 'string' &&
+    (json.includes('/api/v1/step-files/') || json.includes('file://'))
+  );
+};

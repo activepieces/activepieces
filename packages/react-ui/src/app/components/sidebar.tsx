@@ -51,8 +51,9 @@ const CustomTooltipLink = ({
           />
         )}
         <Icon
-          className={`size-10 p-2.5 hover:text-primary rounded-lg transition-colors ${isActive ? 'bg-accent text-primary' : ''
-            } ${extraClasses || ''}`}
+          className={`size-10 p-2.5 hover:text-primary rounded-lg transition-colors ${
+            isActive ? 'bg-accent text-primary' : ''
+          } ${extraClasses || ''}`}
         />
         <span className="text-[10px]">{label}</span>
         {notification && (

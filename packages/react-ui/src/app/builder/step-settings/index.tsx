@@ -1,5 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Value } from '@sinclair/typebox/value';
+import { t } from 'i18next';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useUpdateEffect } from 'react-use';
@@ -35,7 +36,6 @@ import { BranchSettings } from './branch-settings';
 import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
-import { t } from 'i18next';
 
 type StepSettingsContainerProps = {
   selectedStep: Action | Trigger;
