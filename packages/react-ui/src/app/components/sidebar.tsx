@@ -87,7 +87,9 @@ export function Sidebar({
             <div className="h-[48px] items-center justify-center ">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <img src={theme.logoIconUrl} alt={t('logo')} />
+                  <Link to="/">
+                    <img src={theme.logoIconUrl} alt={t('logo')} />
+                  </Link>
                 </TooltipTrigger>
                 <TooltipContent side="right">
                   {theme.websiteName}
