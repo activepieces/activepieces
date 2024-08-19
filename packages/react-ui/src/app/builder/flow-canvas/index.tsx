@@ -7,12 +7,7 @@ import {
   NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useBuilderStateContext } from '../builder-hooks';
 

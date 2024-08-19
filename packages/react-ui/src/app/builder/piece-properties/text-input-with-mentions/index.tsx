@@ -12,11 +12,11 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import './tip-tap.css';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
 import { textMentionUtils } from './text-input-utils';
-import { cn } from '@/lib/utils';
 
 type TextInputWithMentionsProps = {
   className?: string;
@@ -115,10 +115,11 @@ export const TextInputWithMentions = ({
     },
     editorProps: {
       attributes: {
-        class:cn(
+        class: cn(
           className ??
-          ' w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
-          textMentionUtils.inputThatUsesMentionClass)
+            ' w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
+          textMentionUtils.inputThatUsesMentionClass,
+        ),
       },
     },
     onUpdate: ({ editor }) => {

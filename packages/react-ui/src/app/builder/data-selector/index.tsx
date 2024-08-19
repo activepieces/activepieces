@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { SearchXIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Action, flowHelper, isNil, Trigger } from '@activepieces/shared';
@@ -15,7 +16,6 @@ import {
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
 import { dataSelectorUtils, MentionTreeNode } from './data-selector-utils';
-import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 
 const createTestNode = (
   step: Action | Trigger,
@@ -113,7 +113,7 @@ const doesHaveInputThatUsesMentionClass = (element: Element | null) => {
   if (isNil(element)) {
     return false;
   }
-  if(element.classList.contains(textMentionUtils.inputThatUsesMentionClass)) {
+  if (element.classList.contains(textMentionUtils.inputThatUsesMentionClass)) {
     return true;
   }
   const parent = element.parentElement;
@@ -132,12 +132,11 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const [showDataSelector, setShowDataSelector] = useState(false);
 
   const checkFocus = useCallback(() => {
-    
     const isTextMentionInputFocused =
       (!isNil(containerRef.current) &&
         containerRef.current.contains(document.activeElement)) ||
-        ( doesHaveInputThatUsesMentionClass(document.activeElement))
-        
+      doesHaveInputThatUsesMentionClass(document.activeElement);
+
     setShowDataSelector(isTextMentionInputFocused);
   }, []);
 
