@@ -90,11 +90,11 @@ const parseTextAndHardBreakNodes = (item: string) => {
       return hardBreak;
     });
 };
-
+type StepMetadataWithDisplayName = StepMetadata & {stepDisplayName:string}
 const getStepMetadataFromPath = (
   path: string,
   steps: (Action | Trigger)[],
-  stepsMetadata: (StepMetadata | undefined)[],
+  stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ) => {
   const stepPath = removeIntroplationBrackets(path);
   const stepName = textMentionUtils.keysWithinPath(stepPath)[0];
@@ -108,7 +108,7 @@ const getStepMetadataFromPath = (
 function convertTextToTipTapJsonContent(
   userInputText: string,
   steps: (Action | Trigger)[],
-  stepsMetadata: (StepMetadata | undefined)[],
+  stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ): {
   type: TipTapNodeTypes.paragraph;
   content: JSONContent[];
@@ -129,7 +129,7 @@ function convertTextToTipTapJsonContent(
     if (isMentionNodeText(node)) {
       return parseMentionNodeFromText({
         path: node,
-        stepDisplayName: stepMetadata?.displayName ?? '',
+        stepDisplayName: stepMetadata?.stepDisplayName ?? '',
         stepLogoUrl: stepMetadata?.logoUrl ?? '',
         stepDfsIndex: dfsIndex + 1,
       });

@@ -79,7 +79,7 @@ export const TextInputWithMentions = ({
       if (metadata) {
         return {
           ...metadata,
-          displayName: steps[index].displayName,
+          stepDisplayName: steps[index].displayName,
         };
       }
       return undefined;
