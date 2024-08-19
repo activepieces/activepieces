@@ -17,7 +17,6 @@ import {
     FlowRunResponse,
     GenericStepOutput,
     isNil,
-    PopulatedFlow,
     StepOutputStatus,
     TriggerHookType } from '@activepieces/shared'
 import { EngineConstants } from './handler/context/engine-constants'
@@ -175,19 +174,3 @@ export async function execute(operationType: EngineOperationType, operation: Eng
         }
     }
 }
-
-export async function getAllFlows(internalApiUrl: string, engineToken: string, projectId: string): Promise<PopulatedFlow[]> {
-    const response = await fetch(`${internalApiUrl}v1/engine/populated-flows`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${engineToken}`,
-        },
-        body: JSON.stringify({
-            projectId,
-        }),
-    })
-    return response.json()
-}
-
-

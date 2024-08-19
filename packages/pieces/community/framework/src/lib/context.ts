@@ -5,6 +5,7 @@ import {
   PopulatedFlow,
   ProjectId,
   ResumePayload,
+  SeekPage,
   TriggerPayload,
 } from '@activepieces/shared';
 import { TriggerStrategy } from './trigger/trigger';
@@ -28,7 +29,7 @@ type BaseContext<
     externalId: () => Promise<string | undefined>;
   };
   flows: {
-    list(): Promise<PopulatedFlow[]>;
+    list(): Promise<SeekPage<PopulatedFlow>>;
   };
 };
 
@@ -106,7 +107,7 @@ export type PropertyContext = {
   };
   searchValue?: string;
   flows: {
-    list(): Promise<PopulatedFlow[]>;
+    list(): Promise<SeekPage<PopulatedFlow>>;
   };
 };
 

@@ -1,7 +1,7 @@
 {
-  "name": "pieces-flow-invoke",
+  "name": "pieces-flows",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/flow-invoke/src",
+  "sourceRoot": "packages/pieces/community/flows/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -19,12 +19,12 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/flow-invoke",
-        "tsConfig": "packages/pieces/community/flow-invoke/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/flow-invoke/package.json",
-        "main": "packages/pieces/community/flow-invoke/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/flows",
+        "tsConfig": "packages/pieces/community/flows/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/flows/package.json",
+        "main": "packages/pieces/community/flows/src/index.ts",
         "assets": [
-          "packages/pieces/community/flow-invoke/*.md"
+          "packages/pieces/community/flows/*.md"
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

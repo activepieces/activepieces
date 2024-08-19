@@ -17,10 +17,11 @@ import {
     ExecuteValidateAuthResponse,
     PopulatedFlow,
     SecretTextConnectionValue,
+    SeekPage,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { getAllFlows } from '../operations'
+import { getAllEnabledPopulatedFlows } from '../services/flows.service'
 import { variableService } from '../services/variable-service'
 import { pieceLoader } from './piece-loader'
 
@@ -54,7 +55,7 @@ export const pieceHelper = {
                     externalId: constants.externalProjectId,
                 },
                 flows: {
-                    list: (): Promise<PopulatedFlow[]> => getAllFlows(constants.internalApiUrl, constants.engineToken, constants.projectId),
+                    list: (): Promise<SeekPage<PopulatedFlow>> => getAllEnabledPopulatedFlows(constants.internalApiUrl, constants.engineToken, constants.projectId),
                 },
             }
 

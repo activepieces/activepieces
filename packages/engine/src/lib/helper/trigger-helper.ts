@@ -1,10 +1,10 @@
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, PieceTrigger, PopulatedFlow, ScheduleOptions, TriggerHookType } from '@activepieces/shared'
+import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, PieceTrigger, PopulatedFlow, ScheduleOptions, SeekPage, TriggerHookType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { getAllFlows } from '../operations'
 import { createFilesService } from '../services/files.service'
+import { getAllEnabledPopulatedFlows } from '../services/flows.service'
 import { createContextStore } from '../services/storage.service'
 import { variableService } from '../services/variable-service'
 import { pieceLoader } from './piece-loader'
@@ -79,7 +79,7 @@ export const triggerHelper = {
                 externalId: constants.externalProjectId,
             },
             flows: {
-                list: (): Promise<PopulatedFlow[]> => getAllFlows(constants.internalApiUrl, constants.engineToken, constants.projectId),
+                list: (): Promise<SeekPage<PopulatedFlow>> => getAllEnabledPopulatedFlows(constants.internalApiUrl, constants.engineToken, constants.projectId),
             },
         }
         switch (params.hookType) {

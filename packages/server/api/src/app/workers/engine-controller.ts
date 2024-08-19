@@ -140,7 +140,14 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/populated-flows', GetAllFlowsByProjectParams,  async (request) => {
-        return flowService.getAllFlows(request.principal.projectId)
+        return flowService.list({
+            projectId: request.principal.projectId,
+            limit: 1000000,
+            cursorRequest: null,
+            folderId: undefined,
+            status: [FlowStatus.ENABLED],
+            name: '',
+        })
     },
     )
 

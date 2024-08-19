@@ -1,11 +1,9 @@
-import { AuthenticationType } from '@activepieces/pieces-common';
 import {
   createAction,
   Property,
 } from '@activepieces/pieces-framework';
 
 export const executeFlow = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'executeFlow',
   displayName: 'Execute Flow',
   description: 'executes the specified flow, and returns its response',
@@ -17,7 +15,7 @@ export const executeFlow = createAction({
       options: async (propsValue, context) => {
         const flows = await context.flows.list();
         return {
-          options: flows.map(flow => ({
+          options: flows.data.map(flow => ({
             value: flow.id,
             label: flow.version.displayName,
           }))
@@ -29,7 +27,6 @@ export const executeFlow = createAction({
     const headers = {
       'Content-Type': 'application/json',
     };
-    // get selected option
     const flowId = context.propsValue.flowId;
 
     const response = await fetch(`${context.serverUrl}v1/webhooks/${flowId}`, {
