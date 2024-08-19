@@ -3,6 +3,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { FlowStatus } from '@activepieces/shared';
 
 
 
@@ -16,9 +17,9 @@ export const executeFlow = createAction({
       description: 'The Name of the flow to execute',
       required: true,
       options: async (propsValue, context) => {
-        const flows = await context.flows.list();
+        const flows = (await context.flows.list()).data.filter(flow => flow.status === FlowStatus.ENABLED);
         return {
-          options: flows.data.map(flow => ({
+          options: flows.map(flow => ({
             value: flow.id,
             label: flow.version.displayName,
           }))

@@ -207,28 +207,6 @@ export const flowService = {
         return flow
     },
 
-    async getAllFlows(projectId: string): Promise<Flow[]> {
-        const flows = await flowRepo().findBy({
-            projectId,
-            status: FlowStatus.ENABLED,
-        })
-
-
-        const populatedFlows = await Promise.all(flows.map(async (flow) => {
-            const version = await flowVersionService.getFlowVersionOrThrow({
-                flowId: flow.id,
-                versionId: undefined,
-            })
-            return {
-                ...flow,
-                version,
-            }
-        }))
-
-        return populatedFlows
-
-    },
-
     async update({
         id,
         userId,

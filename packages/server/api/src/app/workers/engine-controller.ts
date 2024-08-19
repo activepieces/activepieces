@@ -145,8 +145,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             limit: 1000000,
             cursorRequest: null,
             folderId: undefined,
-            status: [FlowStatus.ENABLED],
-            name: '',
+            status: undefined,
+            name: undefined,
         })
     },
     )
