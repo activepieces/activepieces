@@ -18,6 +18,7 @@ import {
 
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
+import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
 import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
@@ -170,7 +171,14 @@ const selectRightComponent = (
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >
-          <JsonEditor field={field} readonly={disabled}></JsonEditor>
+          {useMentionTextInput ? (
+            <BuilderJsonEditorWrapper
+              field={field}
+              disabled={disabled}
+            ></BuilderJsonEditorWrapper>
+          ) : (
+            <JsonEditor field={field} readonly={disabled}></JsonEditor>
+          )}
         </AutoFormFieldWrapper>
       );
     case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
