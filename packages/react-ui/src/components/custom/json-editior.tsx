@@ -37,7 +37,6 @@ const tryParseJson = (value: unknown): unknown => {
 type JsonEditorProps = {
   field: ControllerRenderProps<Record<string, any>, string>;
   readonly: boolean;
-  insideBuilder?: boolean;
   onFocus?: (ref: RefObject<ReactCodeMirrorRef>) => void;
   className?: string;
 };
@@ -75,13 +74,7 @@ const JsonEditor = React.memo(
           }}
           theme={githubLight}
           readOnly={readonly}
-          onFocus={
-            onFocus
-              ? () => {
-                  onFocus(ref);
-                }
-              : undefined
-          }
+          onFocus={() => onFocus?.(ref)}
           extensions={extensions}
         />
       </div>

@@ -109,7 +109,9 @@ type DataSelectorProps = {
   parentWidth: number;
 };
 
-const doesHaveInputThatUsesMentionClass = (element: Element | null) => {
+const doesHaveInputThatUsesMentionClass = (
+  element: Element | null,
+): boolean => {
   if (isNil(element)) {
     return false;
   }
@@ -122,6 +124,7 @@ const doesHaveInputThatUsesMentionClass = (element: Element | null) => {
   }
   return false;
 };
+
 const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [DataSelectorSize, setDataSelectorSize] =

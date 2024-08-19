@@ -1,10 +1,7 @@
-import { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { t } from 'i18next';
-import React, { RefObject } from 'react';
+import React from 'react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { JsonEditor } from '@/components/custom/json-editior';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
@@ -21,6 +18,7 @@ import {
 
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
+import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
 import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
@@ -34,39 +32,6 @@ type AutoFormProps = {
   markdownVariables?: Record<string, string>;
   useMentionTextInput: boolean;
   disabled?: boolean;
-};
-
-const BuilderJsonEditorWrapper = ({
-  field,
-  disabled,
-}: {
-  field: ControllerRenderProps<Record<string, any>, string>;
-  disabled?: boolean;
-}) => {
-  const [setInsertStateHandler] = useBuilderStateContext((state) => [
-    state.setInsertMentionHandler,
-  ]);
-  const onFocus = (ref: RefObject<ReactCodeMirrorRef>) => {
-    setInsertStateHandler((propertyPath: string) => {
-      if (ref.current?.view) {
-        const { view } = ref.current;
-        view.dispatch({
-          changes: {
-            from: view.state.selection.main.head,
-            insert: `{{${propertyPath}}}`,
-          },
-        });
-      }
-    });
-  };
-  return (
-    <JsonEditor
-      field={field}
-      readonly={disabled ?? false}
-      onFocus={onFocus}
-      className={textMentionUtils.inputThatUsesMentionClass}
-    ></JsonEditor>
-  );
 };
 
 const AutoPropertiesFormComponent = React.memo(
