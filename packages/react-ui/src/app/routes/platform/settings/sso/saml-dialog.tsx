@@ -1,6 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -65,8 +66,8 @@ export const ConfigureSamlDialog = ({
     },
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Single sign-on settings updated',
+        title: t('Success'),
+        description: t('Single sign-on settings updated'),
         duration: 3000,
       });
       setOpen(false);
@@ -104,7 +105,7 @@ export const ConfigureSamlDialog = ({
               e.preventDefault();
             }}
           >
-            Disable
+            {t('Disable')}
           </Button>
         ) : (
           <Button
@@ -113,29 +114,32 @@ export const ConfigureSamlDialog = ({
             variant={'basic'}
             onClick={() => setOpen(true)}
           >
-            Enable
+            {t('Enable')}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Configure SAML 2.0 SSO</DialogTitle>
+          <DialogTitle>{t('Configure SAML 2.0 SSO')}</DialogTitle>
         </DialogHeader>
         <div className="mb-4">
           <ApMarkdown
-            markdown={`
+            markdown={t(
+              `
 **Setup Instructions**:
 Please check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)
 
 **Single sign-on URL**:
 \`\`\`text
-${samlAcs}
+{{samlAcs}}
 \`\`\`
 **Audience URI (SP Entity ID)**:
 \`\`\`text
 Activepieces
 \`\`\`
-`}
+`,
+              { samlAcs },
+            )}
           />
         </div>
 
@@ -155,7 +159,7 @@ Activepieces
               name="idpMetadata"
               render={({ field }) => (
                 <FormItem className="grid space-y-4">
-                  <Label htmlFor="idpMetadata">IDP Metadata</Label>
+                  <Label htmlFor="idpMetadata">{t('IDP Metadata')}</Label>
                   <Input
                     {...field}
                     required
@@ -170,7 +174,7 @@ Activepieces
               name="idpCertificate"
               render={({ field }) => (
                 <FormItem className="grid space-y-4">
-                  <Label htmlFor="idpCertificate">IDP Certificate</Label>
+                  <Label htmlFor="idpCertificate">{t('IDP Certificate')}</Label>
                   <Textarea
                     {...field}
                     required
@@ -189,14 +193,14 @@ Activepieces
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                {t('Cancel')}
               </Button>
               <Button
                 loading={isPending}
                 disabled={!form.formState.isValid}
                 type="submit"
               >
-                Save
+                {t('Save')}
               </Button>
             </DialogFooter>
           </form>

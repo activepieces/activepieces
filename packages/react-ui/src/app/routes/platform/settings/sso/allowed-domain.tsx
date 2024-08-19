@@ -1,11 +1,11 @@
-import { Platform, UpdatePlatformRequestBody } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 
-import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,7 +19,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformApi } from '@/lib/platforms-api';
-import { X } from 'lucide-react';
+import { Platform, UpdatePlatformRequestBody } from '@activepieces/shared';
 
 type AllowedDomainDialogProps = {
   platform: Platform;
@@ -44,9 +44,11 @@ export const AllowedDomainDialog = ({
   const [open, setOpen] = useState(false);
   const form = useForm<AllowedDomainsFormValues>({
     defaultValues: {
-      allowedAuthDomains: (platform?.allowedAuthDomains ?? []).map((domain) => ({
-        domain,
-      })),
+      allowedAuthDomains: (platform?.allowedAuthDomains ?? []).map(
+        (domain) => ({
+          domain,
+        }),
+      ),
     },
     resolver: typeboxResolver(AllowedDomainsFormValues),
   });
@@ -63,8 +65,8 @@ export const AllowedDomainDialog = ({
     },
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Allowed domains updated',
+        title: t('Success'),
+        description: t('Allowed domains updated'),
         duration: 3000,
       });
       setOpen(false);
@@ -92,12 +94,12 @@ export const AllowedDomainDialog = ({
           variant={'basic'}
           onClick={() => setOpen(true)}
         >
-          {platform.allowedAuthDomains.length > 0 ? 'Update' : 'Enable'}
+          {platform.allowedAuthDomains.length > 0 ? t('Update') : t('Enable')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Configure Allowed Domains</DialogTitle>
+          <DialogTitle>{t('Configure Allowed Domains')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -107,13 +109,16 @@ export const AllowedDomainDialog = ({
                 allowedAuthDomains: data.allowedAuthDomains.map(
                   (d) => d.domain,
                 ),
-                enforceAllowedAuthDomains: data.allowedAuthDomains.length === 0 ? false : true,
+                enforceAllowedAuthDomains:
+                  data.allowedAuthDomains.length === 0 ? false : true,
               });
             })}
           >
-            <div className='flex flex-col gap-1'>
-              <div className='text-muted-foreground text-sm'>
-                Enter the allowed domains for the users to authenticate with, Empty list will allow all domains.
+            <div className="flex flex-col gap-1">
+              <div className="text-muted-foreground text-sm">
+                {t(
+                  'Enter the allowed domains for the users to authenticate with, Empty list will allow all domains.',
+                )}
               </div>
             </div>
             {fields.map((field, index) => (
@@ -133,7 +138,7 @@ export const AllowedDomainDialog = ({
                         onClick={() => remove(index)}
                         variant="outline"
                         size="sm"
-                        className='h-10'
+                        className="h-10"
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -148,7 +153,7 @@ export const AllowedDomainDialog = ({
               variant="outline"
               size="sm"
             >
-              Add Domain
+              {t('Add Domain')}
             </Button>
             {form?.formState?.errors?.root?.serverError && (
               <FormMessage>
@@ -157,15 +162,19 @@ export const AllowedDomainDialog = ({
             )}
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)} type='button'>
-                Cancel
+              <Button
+                variant="outline"
+                onClick={() => setOpen(false)}
+                type="button"
+              >
+                {t('Cancel')}
               </Button>
               <Button
                 loading={isPending}
                 disabled={!form.formState.isValid}
                 type="submit"
               >
-                Save
+                {t('Save')}
               </Button>
             </DialogFooter>
           </form>

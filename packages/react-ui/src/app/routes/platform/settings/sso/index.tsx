@@ -1,21 +1,23 @@
-import { isNil } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { LockIcon, MailIcon, Earth } from 'lucide-react';
 import React from 'react';
-
-import GithubIcon from '../../../../../assets/img/custom/auth/github.svg';
-import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
+import { useTranslation } from 'react-i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AllowedDomainDialog } from '@/app/routes/platform/settings/sso/allowed-domain';
 import { NewOAuth2Dialog } from '@/app/routes/platform/settings/sso/oauth2-dialog';
 import { ConfigureSamlDialog } from '@/app/routes/platform/settings/sso/saml-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
-import { Badge } from '@/components/ui/badge';
+import { isNil } from '@activepieces/shared';
+
+import GithubIcon from '../../../../../assets/img/custom/auth/github.svg';
+import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
 
 type ProviderCardProps = {
   providerName: string;
@@ -29,8 +31,9 @@ const ProviderCard = ({
   providerIcon,
   providerDescription,
   button,
-  badgesText
+  badgesText,
 }: ProviderCardProps) => {
+  const { t } = useTranslation();
   return (
     <Card className="w-full px-4 py-4">
       <div className="flex w-full gap-2 justify-center items-center">
@@ -41,16 +44,20 @@ const ProviderCard = ({
           <div className="text-lg">{providerName}</div>
           <div className="text-sm text-muted-foreground">
             {providerDescription ??
-              `Allow logins through ${providerName.toLowerCase()}'s single sign-on functionality.`}
+              t(
+                "Allow logins through {{providerName}}'s single sign-on functionality.",
+                { providerName: providerName.toLowerCase() },
+              )}
           </div>
-          {badgesText && <div className='mt-2 gap-2 flex '>
-            {badgesText.map((text, index) => (
-              <Badge key={index} variant={"outline"}>
-                {text}
-              </Badge>
-            ))}
-          </div>}
-
+          {badgesText && (
+            <div className="mt-2 gap-2 flex ">
+              {badgesText.map((text, index) => (
+                <Badge key={index} variant={'outline'}>
+                  {text}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex flex-col justify-center items-center">
           {button}
@@ -80,8 +87,8 @@ const SSOPage = () => {
     },
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Email authentication updated',
+        title: t('Success'),
+        description: t('Email authentication updated'),
         duration: 3000,
       });
     },
@@ -93,21 +100,27 @@ const SSOPage = () => {
   return (
     <LockedFeatureGuard
       locked={!platform.ssoEnabled}
-      lockTitle="Enable Single Sign On"
-      lockDescription="Let your users sign in with your current SSO provider or give them self serve sign up access"
+      lockTitle={t('Enable Single Sign On')}
+      lockDescription={t(
+        'Let your users sign in with your current SSO provider or give them self serve sign up access',
+      )}
     >
       <div className="flex-col w-full">
         <div className="mb-4 flex">
           <div className="flex justify-between flex-row w-full">
             <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-bold w-full">Single Sign On</h1>
+              <h1 className="text-2xl font-bold w-full">
+                {t('Single Sign On')}
+              </h1>
             </div>
           </div>
         </div>
         <div className="flex flex-col gap-4">
           <ProviderCard
-            providerName="Allowed Domains"
-            providerDescription={`Allow users to authenticate with specific domains. Leave empty to allow all domains.`}
+            providerName={t('Allowed Domains')}
+            providerDescription={t(
+              'Allow users to authenticate with specific domains. Leave empty to allow all domains.',
+            )}
             providerIcon={<Earth className="w-[32px] h-[32px]" />}
             badgesText={platform?.allowedAuthDomains ?? []}
             button={
@@ -130,7 +143,7 @@ const SSOPage = () => {
             }
           />
           <ProviderCard
-            providerName="GitHub"
+            providerName="Github"
             providerIcon={
               <img src={GithubIcon} alt="icon" width={32} height={32} />
             }
@@ -145,7 +158,7 @@ const SSOPage = () => {
             }
           />
           <ProviderCard
-            providerName="SAML 2.0"
+            providerName={t('SAML 2.0')}
             providerIcon={<LockIcon className="w-[32px] h-[32px]" />}
             button={
               <ConfigureSamlDialog
@@ -156,8 +169,8 @@ const SSOPage = () => {
             }
           />
           <ProviderCard
-            providerName="Allowed Email Login"
-            providerDescription="Allow logins through email and password."
+            providerName={t('Allowed Email Login')}
+            providerDescription={t('Allow logins through email and password.')}
             providerIcon={<MailIcon className="w-[32px] h-[32px]" />}
             button={
               <Switch

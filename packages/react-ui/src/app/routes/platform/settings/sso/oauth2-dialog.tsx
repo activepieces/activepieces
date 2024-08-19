@@ -1,6 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -58,8 +59,8 @@ export const NewOAuth2Dialog = ({
     },
     onSuccess: () => {
       toast({
-        title: 'Success',
-        description: 'Single sign on settings updated',
+        title: t('Success'),
+        description: t('Single sign on settings updated'),
         duration: 3000,
       });
       setOpen(false);
@@ -97,7 +98,7 @@ export const NewOAuth2Dialog = ({
               e.preventDefault();
             }}
           >
-            Disable
+            {t('Disable')}
           </Button>
         ) : (
           <Button
@@ -106,20 +107,22 @@ export const NewOAuth2Dialog = ({
             variant={'basic'}
             onClick={() => setOpen(true)}
           >
-            Enable
+            {t('Enable')}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Configure {providerDisplayName} SSO</DialogTitle>
+          <DialogTitle>
+            {t('Configure {{provider}} SSO', { provider: providerDisplayName })}
+          </DialogTitle>
         </DialogHeader>
         <div className="mb-4">
           <ApMarkdown
-            markdown={`
-Read more information about how to configure ${providerDisplayName} SSO
-[here](https://www.activepieces.com/docs/security/sso).
-`}
+            markdown={t(
+              'Read more information about how to configure {{provider}} SSO [here](https://www.activepieces.com/docs/security/sso).',
+              { provider: providerDisplayName },
+            )}
           />
         </div>
 
@@ -140,7 +143,9 @@ Read more information about how to configure ${providerDisplayName} SSO
               render={({ field }) => (
                 <FormItem className="grid space-y-4">
                   <Label htmlFor="clientId">
-                    {providerDisplayName} Client ID
+                    {t('{{provider}} Client ID', {
+                      provider: providerDisplayName,
+                    })}
                   </Label>
                   <Input
                     {...field}
@@ -157,7 +162,9 @@ Read more information about how to configure ${providerDisplayName} SSO
               render={({ field }) => (
                 <FormItem className="grid space-y-4">
                   <Label htmlFor="clientSecret">
-                    {providerDisplayName} Client Secret
+                    {t('{{provider}} Client Secret', {
+                      provider: providerDisplayName,
+                    })}
                   </Label>
                   <Input
                     {...field}
@@ -177,14 +184,14 @@ Read more information about how to configure ${providerDisplayName} SSO
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                {t('Cancel')}
               </Button>
               <Button
                 loading={isPending}
                 disabled={!form.formState.isValid}
                 type="submit"
               >
-                Save
+                {t('Save')}
               </Button>
             </DialogFooter>
           </form>
