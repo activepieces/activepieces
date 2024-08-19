@@ -15,6 +15,7 @@ import {
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
 import { dataSelectorUtils, MentionTreeNode } from './data-selector-utils';
+import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 
 const createTestNode = (
   step: Action | Trigger,
@@ -108,6 +109,19 @@ type DataSelectorProps = {
   parentWidth: number;
 };
 
+const doesHaveInputThatUsesMentionClass = (element: Element | null) => {
+  if (isNil(element)) {
+    return false;
+  }
+  if(element.classList.contains(textMentionUtils.inputThatUsesMentionClass)) {
+    return true;
+  }
+  const parent = element.parentElement;
+  if (parent) {
+    return doesHaveInputThatUsesMentionClass(parent);
+  }
+  return false;
+};
 const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [DataSelectorSize, setDataSelectorSize] =
@@ -118,11 +132,12 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const [showDataSelector, setShowDataSelector] = useState(false);
 
   const checkFocus = useCallback(() => {
+    
     const isTextMentionInputFocused =
       (!isNil(containerRef.current) &&
         containerRef.current.contains(document.activeElement)) ||
-      (document.activeElement?.classList.contains('ap-text-with-mentions') ??
-        false);
+        ( doesHaveInputThatUsesMentionClass(document.activeElement))
+        
     setShowDataSelector(isTextMentionInputFocused);
   }, []);
 

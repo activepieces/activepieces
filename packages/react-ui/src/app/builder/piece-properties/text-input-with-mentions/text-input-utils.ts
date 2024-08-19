@@ -197,9 +197,11 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   return mentionElement;
 };
 
+const inputThatUsesMentionClass = 'ap-text-with-mentions';
 export const textMentionUtils = {
   convertTextToTipTapJsonContent,
   convertTiptapJsonToText,
   generateMentionHtmlElement,
   keysWithinPath,
+  inputThatUsesMentionClass
 };
