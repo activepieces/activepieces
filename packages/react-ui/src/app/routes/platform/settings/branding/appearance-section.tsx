@@ -53,8 +53,8 @@ export const AppearanceSection = () => {
   const { toast } = useToast();
 
   const { mutate: updatePlatform, isPending } = useMutation({
-    mutationFn: async () => {
-      await platformApi.updatePlatform(
+    mutationFn: async () =>{
+      platformApi.update(
         {
           name: form.getValues().name,
           fullLogoUrl: form.getValues().logoUrl,

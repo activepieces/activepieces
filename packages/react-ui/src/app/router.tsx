@@ -5,6 +5,7 @@ import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { ApiKeysPage } from '@/app/routes/platform/settings/api-keys';
 import { BrandingPage } from '@/app/routes/platform/settings/branding';
 import { SigningKeysPage } from '@/app/routes/platform/settings/signing-keys';
+import { SSOPage } from '@/app/routes/platform/settings/sso';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 
 import { FlowsPage } from '../app/routes/flows';
@@ -207,26 +208,6 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/platform/api-keys',
-    element: (
-      <PlatformAdminContainer>
-        <PlatformSettingsLayout>
-          <ApiKeysPage />
-        </PlatformSettingsLayout>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/signing-keys',
-    element: (
-      <PlatformAdminContainer>
-        <PlatformSettingsLayout>
-          <SigningKeysPage />
-        </PlatformSettingsLayout>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
     path: '/platform/pieces',
     element: (
       <PlatformAdminContainer>
@@ -272,6 +253,36 @@ export const router = createBrowserRouter([
       <PlatformAdminContainer>
         <PlatformSettingsLayout>
           <BrandingPage />
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/api-keys',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <ApiKeysPage />
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/signing-keys',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <SigningKeysPage />
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/sso',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <SSOPage />
         </PlatformSettingsLayout>
       </PlatformAdminContainer>
     ),

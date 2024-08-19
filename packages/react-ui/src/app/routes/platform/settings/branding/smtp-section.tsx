@@ -51,7 +51,7 @@ export const SmtpSection = () => {
 
   const { mutate: updatePlatform, isPending } = useMutation({
     mutationFn: async () =>
-      platformApi.updatePlatform(
+      platformApi.update(
         {
           smtpHost: form.getValues().smtpHost,
           smtpPort: form.getValues().smtpPort,
