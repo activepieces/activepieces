@@ -15,6 +15,8 @@ import React, {
   useState,
 } from 'react';
 
+import { useElementSize } from '@/lib/utils';
+
 import { useBuilderStateContext } from '../builder-hooks';
 import { DataSelector } from '../data-selector';
 
@@ -27,8 +29,6 @@ import { ApBigButton } from './nodes/big-button';
 import { LoopStepPlaceHolder } from './nodes/loop-step-placeholder';
 import { StepPlaceHolder } from './nodes/step-holder-placeholder';
 import { ApStepNode } from './nodes/step-node';
-
-import { useElementSize } from '@/lib/utils';
 
 const FlowCanvas = React.memo(() => {
   const [allowCanvasPanning, flowVersion] = useBuilderStateContext((state) => [
