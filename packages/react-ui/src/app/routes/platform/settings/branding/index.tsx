@@ -2,8 +2,8 @@ import { t } from 'i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AppearanceSection } from '@/app/routes/platform/settings/branding/appearance-section';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { SmtpSection } from '@/app/routes/platform/settings/branding/smtp-section';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 export const BrandingPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();

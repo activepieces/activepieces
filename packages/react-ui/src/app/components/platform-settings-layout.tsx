@@ -13,12 +13,12 @@ const sidebarNavItems = [
   },
   {
     title: t('API Keys'),
-    href: '/platform/api-keys',
+    href: '/platform/settings/api-keys',
     icon: <Key size={iconSize} />,
   },
   {
     title: t('Signing Keys'),
-    href: '/platform/signing-keys',
+    href: '/platform/settings/signing-keys',
     icon: <Lock size={iconSize} />,
   },
   {
