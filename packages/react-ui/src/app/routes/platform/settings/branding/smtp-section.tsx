@@ -89,7 +89,7 @@ export const SmtpSection = () => {
   return (
     <>
       <Separator className="my-2" />
-      <Card className="w-full px-4 py-4 max-w-[600px]">
+      <Card className="w-full px-4 py-4">
         <div className="flex w-full gap-2 justify-center items-center">
           <div className="flex flex-col gap-2 text-center mr-2">
             <Mailbox className="w-8 h-8" />
