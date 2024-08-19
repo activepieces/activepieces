@@ -15,13 +15,10 @@ import React, {
   useState,
 } from 'react';
 
-import { useElementSize } from '@/lib/utils';
-
 import { useBuilderStateContext } from '../builder-hooks';
 import { DataSelector } from '../data-selector';
 
 import { TestFlowWidget } from './above-flow-widget';
-import { CanvasControls } from './canvas-controls';
 import { ApEdgeWithButton } from './edges/edge-with-button';
 import { ReturnLoopedgeButton } from './edges/return-loop-edge';
 import { ApEdge, ApNode, flowCanvasUtils } from './flow-canvas-utils';
@@ -30,6 +27,8 @@ import { ApBigButton } from './nodes/big-button';
 import { LoopStepPlaceHolder } from './nodes/loop-step-placeholder';
 import { StepPlaceHolder } from './nodes/step-holder-placeholder';
 import { ApStepNode } from './nodes/step-node';
+
+import { useElementSize } from '@/lib/utils';
 
 const FlowCanvas = React.memo(() => {
   const [allowCanvasPanning, flowVersion] = useBuilderStateContext((state) => [
@@ -77,7 +76,7 @@ const FlowCanvas = React.memo(() => {
   );
 
   return (
-    <div className="size-full grow relative" ref={containerRef}>
+    <div className="size-full relative " ref={containerRef}>
       <FlowDragLayer>
         <ReactFlow
           nodeTypes={nodeTypes}
@@ -108,7 +107,6 @@ const FlowCanvas = React.memo(() => {
           }}
         >
           <TestFlowWidget></TestFlowWidget>
-          <CanvasControls></CanvasControls>
           <Background />
         </ReactFlow>
       </FlowDragLayer>

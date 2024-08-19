@@ -1,6 +1,23 @@
+import {
+  ActionType,
+  PieceTrigger,
+  TriggerType,
+  flowHelper,
+} from '@activepieces/shared';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
+
+import { cn, useElementSize } from '../../lib/utils';
+
+import { BuilderNavBar } from './builder-nav-bar';
+import { ChatSidebar } from './copilot';
+import { FlowCanvas } from './flow-canvas';
+import { FlowVersionsList } from './flow-versions';
+import { PiecesSelectorList } from './pieces-selector';
+import { FlowRunDetails } from './run-details';
+import { FlowRecentRunsList } from './run-list';
+import { StepSettingsContainer } from './step-settings';
 
 import {
   LeftSideBarType,
@@ -15,23 +32,7 @@ import {
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import {
-  ActionType,
-  PieceTrigger,
-  TriggerType,
-  flowHelper,
-} from '@activepieces/shared';
-
-import { cn } from '../../lib/utils';
-
-import { BuilderNavBar } from './builder-nav-bar';
-import { ChatSidebar } from './copilot';
-import { FlowCanvas } from './flow-canvas';
-import { FlowVersionsList } from './flow-versions';
-import { PiecesSelectorList } from './pieces-selector';
-import { FlowRunDetails } from './run-details';
-import { FlowRecentRunsList } from './run-list';
-import { StepSettingsContainer } from './step-settings';
+import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -101,7 +102,8 @@ const BuilderPage = () => {
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const rightHandleRef = useAnimateSidebar(rightSidebar);
   const leftHandleRef = useAnimateSidebar(leftSidebar);
-
+  const builderNavBarContainer = useRef<HTMLDivElement>(null);
+  const {height:builderNavbarHeight} = useElementSize(builderNavBarContainer);
   const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
     name: memorizedSelectedStep?.settings.pieceName,
     version: memorizedSelectedStep?.settings.pieceVersion,
@@ -113,7 +115,7 @@ const BuilderPage = () => {
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
 
   return (
-    <div className="flex h-screen w-screen flex-col">
+    <div className="flex h-screen w-screen flex-col relative">
       {run && (
         <RunDetailsBar
           canExitRun={canExitRun}
@@ -122,21 +124,31 @@ const BuilderPage = () => {
           exitRun={switchToDraft}
         />
       )}
+      <div ref={builderNavBarContainer}>
       <BuilderNavBar />
+
+      </div>
+      <ReactFlowProvider>
+      <div className='absolute left-0 top-0 h-full w-full z-10 '
+      style={{paddingTop:`${builderNavbarHeight}px`}}>
+            <FlowCanvas />
+      </div>
       <ResizablePanelGroup direction="horizontal">
         <>
           <ResizablePanel
             id="left-sidebar"
             defaultSize={0}
             minSize={0}
-            maxSize={45}
+            maxSize={39}
             order={1}
             ref={leftHandleRef}
-            className={cn('min-w-0', {
+            className={cn('min-w-0 bg-background z-20', {
               [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
               [animateResizeClassName]: !isDraggingHandle,
             })}
           >
+             
+
             {leftSidebar === LeftSideBarType.RUNS && <FlowRecentRunsList />}
             {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
             {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
@@ -146,13 +158,14 @@ const BuilderPage = () => {
             disabled={leftSidebar === LeftSideBarType.NONE}
             withHandle={leftSidebar !== LeftSideBarType.NONE}
             onDragging={setIsDraggingHandle}
+                className='z-20'
           />
         </>
 
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
-          <ReactFlowProvider>
-            <FlowCanvas />
-          </ReactFlowProvider>
+          <div className='relative h-full w-full'>
+          <CanvasControls></CanvasControls>
+          </div>
         </ResizablePanel>
 
         <>
@@ -160,6 +173,7 @@ const BuilderPage = () => {
             disabled={rightSidebar === RightSideBarType.NONE}
             withHandle={rightSidebar !== RightSideBarType.NONE}
             onDragging={setIsDraggingHandle}
+            className='z-30'
           />
 
           <ResizablePanel
@@ -169,7 +183,7 @@ const BuilderPage = () => {
             minSize={0}
             maxSize={60}
             order={3}
-            className={cn('min-w-0', {
+            className={cn('min-w-0 bg-background z-20', {
               [minWidthOfSidebar]: rightSidebar !== RightSideBarType.NONE,
               [animateResizeClassName]: !isDraggingHandle,
             })}
@@ -186,9 +200,12 @@ const BuilderPage = () => {
                   selectedStep={memorizedSelectedStep}
                 />
               )}
+           
           </ResizablePanel>
         </>
       </ResizablePanelGroup>
+    </ReactFlowProvider>
+
     </div>
   );
 };

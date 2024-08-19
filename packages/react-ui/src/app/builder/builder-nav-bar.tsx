@@ -1,3 +1,4 @@
+import { FlowVersionState } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, History, Home, Logs } from 'lucide-react';
 import { useMemo } from 'react';
@@ -7,6 +8,10 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom';
+
+import FlowActionMenu from '../components/flow-actions-menu';
+
+import { BuilderPublishButton } from './builder-publish-button';
 
 import {
   LeftSideBarType,
@@ -21,11 +26,6 @@ import {
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { FlowVersionState } from '@activepieces/shared';
-
-import FlowActionMenu from '../components/flow-actions-menu';
-
-import { BuilderPublishButton } from './builder-publish-button';
 
 export const BuilderNavBar = () => {
   const navigate = useNavigate();
@@ -57,7 +57,8 @@ export const BuilderNavBar = () => {
   const folderName = folderData?.displayName ?? t('Uncategorized');
 
   return (
-    <div className="items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
+    <div className='bg-background z-20'>
+  <div className=" items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
       <div className="flex h-full items-center justify-center gap-2">
         <Tooltip>
           <TooltipTrigger asChild>
@@ -142,5 +143,7 @@ export const BuilderNavBar = () => {
         <UserAvatar></UserAvatar>
       </div>
     </div>
+    </div>
+   
   );
 };
