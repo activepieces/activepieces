@@ -11,10 +11,8 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
-
 
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -72,7 +70,7 @@ const FlowCanvas = React.memo(() => {
   );
 
   return (
-    <div className="size-full relative " >
+    <div className="size-full relative ">
       <FlowDragLayer>
         <ReactFlow
           nodeTypes={nodeTypes}
@@ -106,7 +104,6 @@ const FlowCanvas = React.memo(() => {
           <Background />
         </ReactFlow>
       </FlowDragLayer>
-   
     </div>
   );
 });

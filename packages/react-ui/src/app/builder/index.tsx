@@ -8,6 +8,7 @@ import {
   useBuilderStateContext,
   useSwitchToDraft,
 } from '@/app/builder/builder-hooks';
+import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import {
   ResizableHandle,
@@ -33,7 +34,6 @@ import { PiecesSelectorList } from './pieces-selector';
 import { FlowRunDetails } from './run-details';
 import { FlowRecentRunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
-import { DataSelector } from '@/app/builder/data-selector';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -128,7 +128,7 @@ const BuilderPage = () => {
           exitRun={switchToDraft}
         />
       )}
-      <div ref={builderNavBarContainer} className='z-30'>
+      <div ref={builderNavBarContainer} className="z-30">
         <BuilderNavBar />
       </div>
       <ReactFlowProvider>
@@ -173,7 +173,7 @@ const BuilderPage = () => {
               <DataSelector
                 parentHeight={middlePanelSize.height}
                 parentWidth={middlePanelSize.width}
-      ></DataSelector>
+              ></DataSelector>
             </div>
           </ResizablePanel>
 
