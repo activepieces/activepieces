@@ -1,5 +1,3 @@
-import { flowHelper, isNil } from '@activepieces/shared';
-
 import Document from '@tiptap/extension-document';
 import HardBreak from '@tiptap/extension-hard-break';
 import History from '@tiptap/extension-history';
@@ -12,6 +10,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import './tip-tap.css';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { flowHelper, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 

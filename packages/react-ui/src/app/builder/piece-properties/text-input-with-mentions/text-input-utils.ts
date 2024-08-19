@@ -90,7 +90,7 @@ const parseTextAndHardBreakNodes = (item: string) => {
       return hardBreak;
     });
 };
-type StepMetadataWithDisplayName = StepMetadata & {stepDisplayName:string}
+type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
 const getStepMetadataFromPath = (
   path: string,
   steps: (Action | Trigger)[],
