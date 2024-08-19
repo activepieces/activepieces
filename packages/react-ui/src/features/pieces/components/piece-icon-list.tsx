@@ -1,6 +1,7 @@
-import { flowHelper, Trigger } from '@activepieces/shared';
 import { cva } from 'class-variance-authority';
 import { t } from 'i18next';
+
+import { flowHelper, Trigger } from '@activepieces/shared';
 
 import {
   Tooltip,
