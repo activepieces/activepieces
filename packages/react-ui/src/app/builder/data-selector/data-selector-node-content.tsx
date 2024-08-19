@@ -74,9 +74,9 @@ const DataSelectorNodeContent = ({
           insertMention(node.data.propertyPath);
         }
       }}
-      className="w-full p-ripple select-none focus:outline-none hover:bg-accent focus:bg-accent focus:bg-opacity-75 hover:bg-opacity-75 cursor-pointer group"
+      className="w-full max-w-full select-none focus:outline-none hover:bg-accent focus:bg-accent focus:bg-opacity-75 hover:bg-opacity-75 cursor-pointer group"
     >
-      <div className="flex-grow flex items-center gap-2 min-h-[48px] pr-3 select-none">
+      <div className="flex-grow  max-w-full flex items-center gap-2 min-h-[48px] pr-3 select-none">
         <div
           style={{
             minWidth: `${depth * 25 + (depth === 0 ? 0 : 25) + 18}px`,
@@ -94,7 +94,7 @@ const DataSelectorNodeContent = ({
             ></PieceIcon>
           </div>
         )}
-        <div className="flex-shrink-0">{node.data.displayName}</div>
+        <div className=" truncate">{node.data.displayName}</div>
 
         {showNodeValue && (
           <>
