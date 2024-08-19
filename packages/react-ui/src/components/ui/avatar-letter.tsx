@@ -37,7 +37,7 @@ const AvatarLetter = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="icon">
-              <span className="text-xs">
+              <span className="text-xs text-background">
                 {email.charAt(0).toLocaleUpperCase()}
               </span>
             </Button>
@@ -50,7 +50,7 @@ const AvatarLetter = ({
         </Tooltip>
       )}
       {disablePopup && (
-        <span className="text-xs">{email.charAt(0).toLocaleUpperCase()}</span>
+        <span className="text-xs text-background">{email.charAt(0).toLocaleUpperCase()}</span>
       )}
     </AvatarFallback>
   </Avatar>
