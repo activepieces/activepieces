@@ -33,6 +33,7 @@ import { PiecesSelectorList } from './pieces-selector';
 import { FlowRunDetails } from './run-details';
 import { FlowRecentRunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+import { DataSelector } from '@/app/builder/data-selector';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -98,7 +99,8 @@ const BuilderPage = () => {
       };
     },
   );
-
+  const middlePanelRef = useRef(null);
+  const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const rightHandleRef = useAnimateSidebar(rightSidebar);
   const leftHandleRef = useAnimateSidebar(leftSidebar);
@@ -166,8 +168,12 @@ const BuilderPage = () => {
           </>
 
           <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
-            <div className="relative h-full w-full">
+            <div ref={middlePanelRef} className="relative h-full w-full">
               <CanvasControls></CanvasControls>
+              <DataSelector
+                parentHeight={middlePanelSize.height}
+                parentWidth={middlePanelSize.width}
+      ></DataSelector>
             </div>
           </ResizablePanel>
 

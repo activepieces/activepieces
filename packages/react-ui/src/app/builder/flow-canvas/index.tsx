@@ -110,10 +110,7 @@ const FlowCanvas = React.memo(() => {
           <Background />
         </ReactFlow>
       </FlowDragLayer>
-      <DataSelector
-        parentHeight={size.height}
-        parentWidth={size.width}
-      ></DataSelector>
+   
     </div>
   );
 });
