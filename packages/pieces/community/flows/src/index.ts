@@ -1,6 +1,7 @@
 
     import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
     import { executeFlow } from "./lib/actions/execute-flow";
+    import { callableFlow } from "./lib/triggers/callable-flow";
     
     export const flows = createPiece({
       displayName: "Call Flow",
@@ -10,6 +11,6 @@
       logoUrl: "https://cdn.activepieces.com/pieces/flows.svg",
       authors: ['hazemadelkhalel'],
       actions: [executeFlow],
-      triggers: [],
+      triggers: [callableFlow],
     });
     
