@@ -100,7 +100,7 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
               </TooltipProvider>
             ) : (
               <div className="flex items-center gap-0">
-                <Button variant="default" size="sm" onClick={() => handleDownloadFile(fileUrl)} className="flex items-center gap-2 p-2 max-h-[20px] text-xs">
+                <Button variant="ghost" size="sm" onClick={() => handleDownloadFile(fileUrl)} className="flex items-center gap-2 p-2 max-h-[20px] text-xs">
                   <Eye className="w-4 h-4" />
                   {t('View File')}
                 </Button>
