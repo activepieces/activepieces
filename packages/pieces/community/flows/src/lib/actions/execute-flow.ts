@@ -2,6 +2,9 @@ import {
   createAction,
   Property,
 } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+
+
 
 export const executeFlow = createAction({
   name: 'executeFlow',
@@ -29,16 +32,18 @@ export const executeFlow = createAction({
     };
     const flowId = context.propsValue.flowId;
 
-    const response = await fetch(`${context.serverUrl}v1/webhooks/${flowId}`, {
-      method: 'POST',
+    const request: HttpRequest = {
+      method: HttpMethod.POST,
+      url: `${context.serverUrl}v1/webhooks/${flowId}`,
       headers,
-      body: JSON.stringify({}),
-    });
+      body: JSON.stringify({})
+    };
+    const response = await httpClient.sendRequest(request);
 
     if (!response) {
       throw new Error('Failed to execute flow');
     }
 
-    return response.json();
+    return response;
   },
 });
