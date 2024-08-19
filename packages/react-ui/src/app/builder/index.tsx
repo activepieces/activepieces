@@ -182,7 +182,8 @@ const BuilderPage = () => {
               disabled={rightSidebar === RightSideBarType.NONE}
               withHandle={rightSidebar !== RightSideBarType.NONE}
               onDragging={setIsDraggingHandle}
-              className="z-30"
+              className="z-10 "
+              
             />
 
             <ResizablePanel
@@ -192,7 +193,7 @@ const BuilderPage = () => {
               minSize={0}
               maxSize={60}
               order={3}
-              className={cn('min-w-0 bg-background z-20', {
+              className={cn('min-w-0 bg-background z-30', {
                 [minWidthOfSidebar]: rightSidebar !== RightSideBarType.NONE,
                 [animateResizeClassName]: !isDraggingHandle,
               })}

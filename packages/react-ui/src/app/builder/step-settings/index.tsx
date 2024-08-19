@@ -35,6 +35,7 @@ import { BranchSettings } from './branch-settings';
 import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
+import { t } from 'i18next';
 
 type StepSettingsContainerProps = {
   selectedStep: Action | Trigger;
@@ -245,6 +246,7 @@ const StepSettingsContainer = React.memo(
                 }}
                 readonly={readonly}
                 value={modifiedStep.displayName}
+                tooltipContent={t('Edit Step Name')}
               ></EditableText>
             </SidebarHeader>
           </div>

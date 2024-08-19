@@ -44,7 +44,7 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   return (
     <Suspense
       fallback={
-        <div className="bg-[red] flex h-screen w-screen items-center justify-center ">
+        <div className=" flex h-screen w-screen items-center justify-center ">
           <LoadingSpinner size={50}></LoadingSpinner>
         </div>
       }
