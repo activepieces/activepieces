@@ -1,76 +1,68 @@
 'use client';
 
-import ContrastColor from 'contrast-color';
-import { Check } from 'lucide-react';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useMemo, useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
 
-import { useForwardedRef } from '@/lib/utils';
-
-import { Button } from './button';
-import { Input } from './input';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import type { ButtonProps } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { useForwardedRef, cn } from '@/lib/utils';
 
 interface ColorPickerProps {
-  onClose?: () => void;
-  onSave?: (value: string) => void;
-  defaultValue?: string;
-  children: React.ReactNode[];
-  disabled?: boolean;
-  className?: string;
+  value: string;
+  onChange: (value: string) => void;
+  onBlur?: () => void;
 }
 
-const ColorPicker = forwardRef<HTMLInputElement, ColorPickerProps>(
+const ColorPicker = forwardRef<
+  HTMLInputElement,
+  Omit<ButtonProps, 'value' | 'onChange' | 'onBlur'> & ColorPickerProps
+>(
   (
-    { disabled, onClose, onSave, defaultValue, children, className },
+    { disabled, value, onChange, onBlur, name, className, ...props },
     forwardedRef,
   ) => {
-    const [color, setColor] = useState(defaultValue || '#FFFFFF');
-    const [, setSavedColor] = useState(defaultValue || '#FFFFFF');
     const ref = useForwardedRef(forwardedRef);
     const [open, setOpen] = useState(false);
 
+    const parsedValue = useMemo(() => {
+      return value || '#FFFFFF';
+    }, [value]);
+
     return (
       <Popover onOpenChange={setOpen} open={open}>
-        <PopoverTrigger asChild disabled={disabled} onBlur={onClose}>
-          <div
-            className={className}
+        <PopoverTrigger asChild disabled={disabled} onBlur={onBlur}>
+          <Button
+            {...props}
+            className={cn('block', className)}
+            name={name}
             onClick={() => {
               setOpen(true);
             }}
+            size="icon"
+            style={{
+              backgroundColor: parsedValue,
+            }}
+            variant="outline"
           >
-            {children}
-          </div>
+            <div />
+          </Button>
         </PopoverTrigger>
-        <PopoverContent className="flex flex-col gap-3 items-center max-w-min">
-          <HexColorPicker color={color} onChange={setColor} />
-          <div className="flex flex-row gap-2 items-center">
-            <Input
-              maxLength={7}
-              onChange={(e) => {
-                setColor(e?.currentTarget?.value);
-              }}
-              ref={ref}
-              value={color}
-              color={color}
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full px-3"
-              onClick={() => {
-                onSave?.(color);
-                setSavedColor(color);
-                setOpen(false);
-              }}
-              style={{
-                backgroundColor: color,
-                color: ContrastColor.contrastColor({ bgColor: color }),
-              }}
-            >
-              <Check className="size-4" />
-            </Button>
-          </div>
+        <PopoverContent className="w-full">
+          <HexColorPicker color={parsedValue} onChange={onChange} />
+          <Input
+            maxLength={7}
+            onChange={(e) => {
+              onChange(e?.currentTarget?.value);
+            }}
+            ref={ref}
+            value={parsedValue}
+          />
         </PopoverContent>
       </Popover>
     );

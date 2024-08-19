@@ -115,7 +115,7 @@ const ResetPasswordForm = () => {
                     <Input
                       {...field}
                       type="text"
-                      placeholder={t('email@activepieces.com')}
+                      placeholder={'email@example.com'}
                     />
                     <FormMessage />
                   </FormItem>

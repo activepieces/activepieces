@@ -197,7 +197,7 @@ const SignUpForm: React.FC = () => {
                   required
                   id="email"
                   type="email"
-                  placeholder={'email@activepieces.com'}
+                  placeholder={'email@example.com'}
                   className="rounded-sm"
                 />
                 <FormMessage />
