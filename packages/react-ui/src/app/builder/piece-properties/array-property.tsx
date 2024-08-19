@@ -69,7 +69,7 @@ const ArrayPieceProperty = ({
                 <AutoPropertiesFormComponent
                   prefixValue={`${inputName}.${index}`}
                   props={arrayProperty.properties!}
-                  useMentionTextInput={false}
+                  useMentionTextInput={useMentionTextInput}
                   allowDynamicValues={false}
                 ></AutoPropertiesFormComponent>
               </div>
@@ -123,7 +123,6 @@ const ArrayPieceProperty = ({
                               <TextInputWithMentions
                                 initialValue={field.value}
                                 onChange={field.onChange}
-                                className="grow"
                               />
                             ) : (
                               <Input
