@@ -18,6 +18,7 @@ import {
   PieceTrigger,
   TriggerType,
 } from '@activepieces/shared';
+import { SearchableSelect } from '@/components/custom/searchable-select';
 
 type PieceActionTriggerSelectorProps = {
   piece: PieceMetadataModel;
@@ -62,7 +63,11 @@ const PieceActionTriggerSelector = ({
     }
   }, [watchedForm]);
 
-  const options = type === ActionType.PIECE ? piece?.actions : piece?.triggers;
+  const options = Object.values(((type === ActionType.PIECE ? piece?.actions : piece?.triggers)?? {})).map((actionOrTrigger) => ({
+    label: actionOrTrigger.displayName,
+    value: actionOrTrigger.name,
+    description: actionOrTrigger.description,
+  }));
 
   return (
     <FormField
@@ -70,41 +75,15 @@ const PieceActionTriggerSelector = ({
       control={form.control}
       render={({ field }) => (
         <FormItem>
-          <Select
-            defaultValue={field.value}
-            onValueChange={field.onChange}
-            disabled={disabled}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={t('Select an option')} asChild>
-                <>{selectedDisplayName}</>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="w-full">
-              {isLoading ? (
-                <LoadingSpinner />
-              ) : (
-                Object.values(options ?? {}).map((actionOrTrigger) => {
-                  return (
-                    <SelectItem
-                      value={actionOrTrigger.name}
-                      key={actionOrTrigger.name}
-                      className="w-full"
-                    >
-                      <div className="flex flex-col gap-1 w-full">
-                        <span className="truncate">
-                          {actionOrTrigger.displayName}
-                        </span>
-                        <span className="text-xs text-muted-foreground break-words">
-                          {actionOrTrigger.description}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  );
-                })
-              )}
-            </SelectContent>
-          </Select>
+           <SearchableSelect
+                disabled={disabled}
+                value={field.value}
+                options={options}
+                loading={isLoading}
+                placeholder={type === ActionType.PIECE? 'Select an action' : 'Select a trigger'}
+                onChange={(e) => field.onChange(e)}
+              />
+       
         </FormItem>
       )}
     />

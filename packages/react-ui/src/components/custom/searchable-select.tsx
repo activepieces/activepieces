@@ -25,6 +25,7 @@ import { ScrollArea } from '../ui/scroll-area';
 type SelectOption<T> = {
   value: T;
   label: string;
+  description?: string; 
 };
 
 type SearchableSelectProps<T> = {
@@ -69,10 +70,11 @@ export const SearchableSelect = <T extends React.Key>({
             label: option.label,
             value: option.value,
             index: index,
+            description: option.description?? '',
           };
         })
         .filter((option) => {
-          return option.label.toLowerCase().includes(searchTerm.toLowerCase());
+          return option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||   option.description.toLowerCase().includes(searchTerm.toLowerCase());
         });
       setFilteredOptions(filteredOptions.map((op) => op.index));
     }
@@ -107,8 +109,8 @@ export const SearchableSelect = <T extends React.Key>({
         >
           <span className="flex text-ellipsis w-full overflow-hidden whitespace-nowrap">
             {!isNil(value)
-              ? options.find((framework) => framework.value === value)?.label
-              : t(placeholder)}
+              ? options.find((option) => option.value === value)?.label 
+              : placeholder}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -152,19 +154,19 @@ export const SearchableSelect = <T extends React.Key>({
                           setOpen(false);
                           onSelect(currentValue);
                         }}
-                        className="flex gap-2 items-center"
+                        className="flex gap-2 flex-col items-start"
                       >
+                        <div className='flex gap-2 items-center'>
                         <Check
-                          width={16}
-                          height={16}
+                      
                           className={cn(
-                            'flex-shrink-0',
-                            selectedIndex === filterIndex
-                              ? 'opacity-100'
-                              : 'opacity-0',
+                            'flex-shrink-0 w-4 h-4',
+                           { 'hidden': selectedIndex !== filterIndex },
                           )}
                         />
                         {option.label}
+                        </div>
+                        {option.description && <div className='text-sm text-muted-foreground'>{option.description}</div>}
                       </CommandItem>
                     );
                   })}
