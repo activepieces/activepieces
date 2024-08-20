@@ -46,7 +46,8 @@ const SignInForm: React.FC = () => {
     onError: (error) => {
       if (api.isError(error)) {
         switch (error.response?.status) {
-          case HttpStatusCode.Unauthorized: {
+          case HttpStatusCode.Unauthorized:
+          case HttpStatusCode.BadRequest: {
             form.setError('root.serverError', {
               message: t('Invalid email or password'),
             });
