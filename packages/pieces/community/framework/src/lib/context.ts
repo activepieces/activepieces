@@ -19,6 +19,7 @@ type BaseContext<
   PieceAuth extends PieceAuthProperty,
   Props extends InputPropertyMap
 > = {
+  flow: FlowContext;
   auth: PiecePropValueSchema<PieceAuth>;
   propsValue: StaticPropsValue<Props>;
   store: Store;
@@ -94,14 +95,16 @@ export type PauseHook = (params: {
   pauseMetadata: DelayPauseMetadata | Omit<WebhookPauseMetadata, 'requestId'>
 }) => void;
 
+export type FlowContext = {
+  id: string;
+  version: {
+    id: string;
+  };
+}
+
 export type PropertyContext = {
   server: ServerContext;
-  flow: {
-    id: string;
-    version: {
-      id: string;
-    };
-  };
+  flow: FlowContext;
   project: {
     id: ProjectId;
     externalId: () => Promise<string | undefined>;
