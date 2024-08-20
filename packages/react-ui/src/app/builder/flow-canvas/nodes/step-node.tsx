@@ -29,6 +29,7 @@ import {
 } from '@activepieces/shared';
 
 import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
+import { InvalidStepIcon } from '@/components/custom/alert-icon';
 
 function getStepStatus(
   stepName: string | undefined,
@@ -97,7 +98,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     step: data.step!,
   });
 
-  const [toolbarOpen, setToolbarOpen] = useState(false);
+  const [showStepActionsList, setToolbarOpen] = useState(false);
 
   const isTrigger = flowHelper.isTrigger(data.step!.type);
   const isAction = flowHelper.isAction(data.step!.type);
@@ -145,7 +146,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         'transition-all border-box border rounded-sm border border-solid  border-border-300 relative',
         {
           'shadow-step-container': !isDragging,
-          'border-primary': toolbarOpen || isSelected,
+          'border-primary': showStepActionsList || isSelected,
           'bg-background': !isDragging,
           'border-none': isDragging,
           'shadow-none': isDragging,
@@ -168,18 +169,18 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       <div
         className={cn('absolute left-0 top-0  rounded-sm w-full h-full', {
           'border-t-[3px] border-primary border-solid':
-            (isSelected || toolbarOpen) && !isDragging,
+            (isSelected || showStepActionsList) && !isDragging,
         })}
       ></div>
-      <div className="px-2 h-full w-full  overflow-hidden">
+      <div className="px-3 h-full w-full  overflow-hidden">
         {!isDragging && (
           <>
             <div
               className={cn(
                 'w-[40px] h-[70px] absolute right-[-50px] top-[20px] transition-opacity duration-300',
                 {
-                  'opacity-0': !toolbarOpen,
-                  'opacity-100': toolbarOpen,
+                  'opacity-0': !showStepActionsList,
+                  'opacity-100': showStepActionsList,
                 },
               )}
             >
@@ -205,11 +206,11 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                   <div className="text-sm text-ellipsis overflow-hidden whitespace-nowrap w-full">
                     {data.step?.displayName}
                   </div>
-                  <div className="text-xs text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
-                    {stepMetadata?.displayName}
+                  <div className='flex justify-between w-full items-center'>
+                     <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
+                    {stepMetadata?.displayName} 
                   </div>
-                </div>
-                <div className="w-4 flex items-center justify-center">
+                  <div className="w-4 flex items-center justify-center">
                   {statusInfo &&
                     React.createElement(statusInfo.Icon, {
                       className: cn('', {
@@ -223,7 +224,8 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                   {!data.step?.valid && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <CircleAlert className="text-warning"></CircleAlert>
+                        <InvalidStepIcon    size={16} viewBox='0 0 16 16'
+                         className='stroke-0 animate-fade'></InvalidStepIcon>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
                         {t('Incomplete settings')}
@@ -231,14 +233,18 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                     </Tooltip>
                   )}
                 </div>
+                  </div>
+                 
+                </div>
+            
               </div>
 
               <div
                 className={cn(
                   'w-[40px] h-[70px] absolute left-[-40px] top-[0px] transition-opacity duration-300',
                   {
-                    'opacity-0 pointer-events-none': !toolbarOpen,
-                    'opacity-100': toolbarOpen,
+                    'opacity-0 pointer-events-none': !showStepActionsList,
+                    'opacity-100': showStepActionsList,
                   },
                 )}
               >
@@ -252,7 +258,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                             size="icon"
                             className="rounded-full"
                             onClick={(e) => {
-                              if (!toolbarOpen) {
+                              if (!showStepActionsList) {
                                 return;
                               }
                               clickOnNewNodeButton(
@@ -280,7 +286,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                               size="icon"
                               className="rounded-full"
                               onClick={(e) => {
-                                if (!toolbarOpen) {
+                                if (!showStepActionsList) {
                                   return;
                                 }
                                 deleteStep();
@@ -301,7 +307,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                               size="icon"
                               className="rounded-full"
                               onClick={(e) => {
-                                if (!toolbarOpen) {
+                                if (!showStepActionsList) {
                                   return;
                                 }
                                 duplicateStep();
