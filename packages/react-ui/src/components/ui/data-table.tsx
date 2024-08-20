@@ -188,7 +188,7 @@ export function DataTable<
         newParams.set('cursor', currentCursor);
       }
       return newParams;
-    });
+    }, {replace: true});
   }, [currentCursor]);
 
   useEffect(() => {

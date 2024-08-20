@@ -87,10 +87,7 @@ export function Sidebar({ children, links }: SidebarProps) {
       <aside className=" border-r sticky  top-0 h-screen bg-muted/50 w-[65px] ">
         <ScrollArea>
           <nav className="flex flex-col items-center h-screen  sm:py-5  gap-5 p-2 ">
-            <div
-              className="h-[48px] items-center justify-center cursor-pointer"
-              onClick={() => navigate('/flows')}
-            >
+            <Link to="/flows" className="h-[48px] items-center justify-center " >
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link to="/">
@@ -103,10 +100,10 @@ export function Sidebar({ children, links }: SidebarProps) {
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent side="right">
-                  {branding.websiteName}
+                  {t('Home')}
                 </TooltipContent>
               </Tooltip>
-            </div>
+            </Link>
             {links.map((link, index) => (
               <CustomTooltipLink
                 to={link.to}

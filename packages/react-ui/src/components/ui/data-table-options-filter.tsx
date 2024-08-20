@@ -61,7 +61,7 @@ export function DataTableFacetedFilter<TData, TValue>({
         }
 
         return newParams;
-      });
+      }, {replace: true});
 
       if (Array.isArray(filterValue)) {
         column?.setFilterValue(filterValue.length ? filterValue : undefined);

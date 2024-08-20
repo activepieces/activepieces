@@ -46,6 +46,7 @@ export const router = createBrowserRouter([
         <FlowsPage />
       </DashboardContainer>
     ),
+    
   },
   {
     path: '/flows/:flowId',
@@ -111,7 +112,7 @@ export const router = createBrowserRouter([
     path: '/settings',
     element: (
       <DashboardContainer>
-        <Navigate to="/settings/general" />
+        <Navigate to="/settings/general" replace />
       </DashboardContainer>
     ),
   },
@@ -291,16 +292,14 @@ export const router = createBrowserRouter([
     path: '/platform/settings',
     element: (
       <PlatformAdminContainer>
-        <Navigate to="/platform/settings/branding" />
+        <Navigate to="/platform/settings/branding" replace />
       </PlatformAdminContainer>
     ),
   },
   {
     path: '/*',
     element: (
-      <DashboardContainer>
         <Navigate to="/flows" replace />
-      </DashboardContainer>
     ),
   },
 ]);
