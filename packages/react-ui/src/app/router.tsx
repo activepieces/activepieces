@@ -27,7 +27,6 @@ import PlatformPiecesPage from './routes/platform/pieces';
 import ProjectsPage from './routes/platform/projects';
 import TemplatesPage from './routes/platform/templates';
 import UsersPage from './routes/platform/users';
-import FlowsRunPage from './routes/runs';
 import { FlowRunPage } from './routes/runs/id';
 import AlertsPage from './routes/settings/alerts';
 import AppearancePage from './routes/settings/appearance';
@@ -38,6 +37,7 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+import { FlowRunsPage } from '@/app/routes/runs';
 
 export const router = createBrowserRouter([
   {
@@ -93,7 +93,7 @@ export const router = createBrowserRouter([
     element: (
       <DashboardContainer>
         <PageTitle title="Runs">
-          <FlowsRunPage />
+          <FlowRunsPage />
         </PageTitle>
       </DashboardContainer>
     ),

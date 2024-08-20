@@ -256,7 +256,13 @@ const FlowsPage = () => {
               fetchData={fetchData}
               filters={filters}
               refresh={refresh}
-              onRowClick={(row) => navigate(`/flows/${row.id}`)}
+              onRowClick={(row, e) => {
+                if (e.ctrlKey) {
+                  window.open(`/flows/${row.id}`, '_blank');
+                } else {
+                  navigate(`/flows/${row.id}`)
+                }
+              }}
             />
           </div>
         </div>

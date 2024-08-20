@@ -73,7 +73,7 @@ interface DataTableProps<
     filters: FilterRecord<Keys, F>,
     pagination: PaginationParams,
   ) => Promise<SeekPage<TData>>;
-  onRowClick?: (row: RowDataWithActions<TData>) => void;
+  onRowClick?: (row: RowDataWithActions<TData>, e: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => void;
   filters?: [...F];
   refresh?: number;
   actions?: DataTableAction<TData>[];
@@ -257,7 +257,7 @@ export function DataTable<
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
-                  onClick={() => onRowClick?.(row.original)}
+                  onClick={(e) => onRowClick?.(row.original, e)}
                   key={row.id}
                   className={onRowClick ? 'cursor-pointer' : ''}
                   data-state={row.getIsSelected() && 'selected'}
