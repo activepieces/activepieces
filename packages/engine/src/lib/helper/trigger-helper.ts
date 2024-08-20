@@ -69,6 +69,14 @@ export const triggerHelper = {
                     failureCount: request.failureCount ?? 0,
                 }
             },
+            flows: {
+                current: {
+                    id: params.flowVersion.flowId,
+                    version: {
+                        id: params.flowVersion.id,
+                    },
+                },
+            },
             webhookUrl: params.webhookUrl,
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             propsValue: processedInput,
