@@ -14,7 +14,7 @@ import {
   takeUntil,
   tap,
 } from 'rxjs';
-import { TriggerType } from '@activepieces/shared';
+import { isNil, TriggerType } from '@activepieces/shared';
 import { FormControl } from '@angular/forms';
 import deepEqual from 'deep-equal';
 import { TestStepCoreComponent } from '../test-steps-core.component';
@@ -101,6 +101,9 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
               )
               .pipe(
                 map((piece) => {
+                  if (isNil(step.settings.triggerName)) {
+                    return null;
+                  }
                   return piece.triggers[step.settings.triggerName].sampleData;
                 })
               );
@@ -247,6 +250,9 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
                   ) {
                     return `Call your webhook url.`;
                   }
+                  if (isNil(res.settings.triggerName)) {
+                    return null;
+                  }
                   const trigger = metaData.triggers[res.settings.triggerName];
                   return `Please go to ${metaData.displayName} and trigger ${trigger.displayName}.`;
                 })
@@ -274,6 +280,9 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
                 )
                 .pipe(
                   map((piece) => {
+                    if (isNil(step.settings.triggerName)) {
+                      return null;
+                    }
                     return piece.triggers[step.settings.triggerName].sampleData;
                   }),
                   switchMap((mockdata) => {

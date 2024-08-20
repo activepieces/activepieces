@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { combineLatest, map, Observable, of, Subject, tap } from 'rxjs';
-import { PieceTrigger, TriggerType } from '@activepieces/shared';
+import { PieceTrigger, TriggerType, isNil } from '@activepieces/shared';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   FIRST_LEVEL_PADDING_IN_MENTIONS_LIST,
@@ -119,7 +119,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
       .pipe(
         map((res) => {
           return (
-            res.triggers[this._stepMention.step.settings.triggerName]?.type ===
+            !isNil(this._stepMention.step.settings.triggerName) && res.triggers[this._stepMention.step.settings.triggerName]?.type ===
             TriggerStrategy.POLLING
           );
         })
