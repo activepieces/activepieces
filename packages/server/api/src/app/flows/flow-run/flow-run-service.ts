@@ -1,4 +1,4 @@
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -26,6 +26,7 @@ import {
     spreadIfDefined,
     TelemetryEventName,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
@@ -45,6 +46,7 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { logSerializer } from './log-serializer'
 
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
+const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
 const getFlowRunOrCreate = async (
     params: GetOrCreateParams,
@@ -378,6 +380,24 @@ export const flowRunService = {
         return {
             ...flowRun,
             steps,
+        }
+    },
+    async deleteLogsFilesOlderThanRetentionDate(): Promise<void> {
+        const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toDate()
+        const logsFileIds = await flowRunRepo().createQueryBuilder('flow_run')
+            .select(['flow_run.logsFileId', 'flow_run.id', 'flow_run.projectId'])
+            .where('flow_run.created <= :retentionDateBoundary AND flow_run.logsFileId IS NOT NULL', {
+                retentionDateBoundary,
+            })
+            .getRawMany()
+        for (const log of logsFileIds) {
+            await fileService.delete({
+                fileId: log.flow_run_logsFileId,
+                projectId: log.flow_run_projectId,
+            })
+            await flowRunRepo().update(log.flow_run_id, {
+                logsFileId: null,
+            })
         }
     },
 }
