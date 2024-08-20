@@ -27,7 +27,10 @@ import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
 
-export type RowDataWithActions<TData> = TData & {
+export type DataWithId ={
+  id: string;
+};
+export type RowDataWithActions<TData extends DataWithId> = TData & {
   delete: () => void;
 };
 
@@ -49,7 +52,7 @@ export type DataTableFilter<Keys extends string> = {
   }[];
 };
 
-type DataTableAction<TData> = (row: RowDataWithActions<TData>) => JSX.Element;
+type DataTableAction<TData extends DataWithId> = (row: RowDataWithActions<TData>) => JSX.Element;
 
 export type PaginationParams = {
   cursor?: string;
@@ -59,7 +62,7 @@ export type PaginationParams = {
 };
 
 interface DataTableProps<
-  TData,
+  TData extends DataWithId,
   TValue,
   Keys extends string,
   F extends DataTableFilter<Keys>[],
@@ -76,7 +79,7 @@ interface DataTableProps<
 }
 
 export function DataTable<
-  TData,
+  TData extends DataWithId,
   TValue,
   Keys extends string,
   F extends DataTableFilter<Keys>[],
@@ -203,7 +206,7 @@ export function DataTable<
       tableData.filter(
         (row) =>
           !deletedRows.some((deletedRow) =>
-            deepEqual(deletedRow, row, { strict: true }),
+            deletedRow.id === row.id,
           ),
       ),
     );
