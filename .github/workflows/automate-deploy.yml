@@ -31,8 +31,6 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          build-args: |
-            ENVIRONMENT=cloud
           platforms: |
             linux/amd64
           push: true

@@ -1,7 +1,8 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LockKeyhole } from 'lucide-react';
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -9,7 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { theme } from '@/lib/theme';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { Header } from './header';
 type Link = {
@@ -72,13 +73,15 @@ export type SidebarLink = {
   locked?: boolean;
 };
 
-export function Sidebar({
-  children,
-  links,
-}: {
+type SidebarProps = {
   children: React.ReactNode;
   links: SidebarLink[];
-}) {
+};
+export function Sidebar({ children, links }: SidebarProps) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const branding = flagsHooks.useWebsiteBranding(queryClient);
+
   return (
     <div className="flex min-h-screen w-full  ">
       <aside className=" border-r sticky  top-0 h-screen bg-muted/50 w-[65px] ">
@@ -87,7 +90,14 @@ export function Sidebar({
             <Link to="/flows" className="h-[48px] items-center justify-center " >
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <img src={theme.logoIconUrl} alt={t('logo')} />
+                  <Link to="/">
+                    <img
+                      src={branding.logos.logoIconUrl}
+                      alt={t('logo')}
+                      width={28}
+                      height={28}
+                    />
+                  </Link>
                 </TooltipTrigger>
                 <TooltipContent side="right">
                   {t('Home')}

@@ -90,7 +90,7 @@ const parseTextAndHardBreakNodes = (item: string) => {
       return hardBreak;
     });
 };
-type StepMetadataWithDisplayName = StepMetadata & {stepDisplayName:string}
+type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
 const getStepMetadataFromPath = (
   path: string,
   steps: (Action | Trigger)[],
@@ -197,9 +197,11 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   return mentionElement;
 };
 
+const inputThatUsesMentionClass = 'ap-text-with-mentions';
 export const textMentionUtils = {
   convertTextToTipTapJsonContent,
   convertTiptapJsonToText,
   generateMentionHtmlElement,
   keysWithinPath,
+  inputThatUsesMentionClass,
 };

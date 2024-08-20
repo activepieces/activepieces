@@ -50,7 +50,9 @@ const AvatarLetter = ({
         </Tooltip>
       )}
       {disablePopup && (
-        <span className="text-xs text-background">{email.charAt(0).toLocaleUpperCase()}</span>
+        <span className="text-xs text-background">
+          {email.charAt(0).toLocaleUpperCase()}
+        </span>
       )}
     </AvatarFallback>
   </Avatar>
