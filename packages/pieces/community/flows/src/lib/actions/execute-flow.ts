@@ -65,16 +65,14 @@ export const callFlow = createAction({
     }),
   },
   async run(context) {
-    await httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}${context.propsValue.waitForResponse ? '/test' : ''}`,
+      url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}${context.propsValue.waitForResponse ? '/sync' : ''}`,
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(context.propsValue.flowProps['exampleData'])
     });
-    return {
-      success: true,
-    }
+    return response.body;
   },
 });
