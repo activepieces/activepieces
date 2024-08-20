@@ -5,7 +5,6 @@ import { continueIfFailureHandler, handleExecutionError, runWithExponentialBacko
 import { pieceLoader } from '../helper/piece-loader'
 import { createConnectionService } from '../services/connections.service'
 import { createFilesService } from '../services/files.service'
-import { getAllEnabledPopulatedFlows } from '../services/flows.service'
 import { createContextStore } from '../services/storage.service'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
@@ -111,10 +110,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 const url = new URL(`${constants.publicUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}`)
                 url.search = new URLSearchParams(params.queryParams).toString()
                 return url.toString()
-            },
-            flows: {
-                list: (): Promise<SeekPage<PopulatedFlow>> => getAllEnabledPopulatedFlows(constants.internalApiUrl, constants.engineToken, constants.projectId),
-            },
+            }
         }
         const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)

@@ -1,16 +1,22 @@
+import { FlowsContext } from '@activepieces/pieces-framework'
 import { PopulatedFlow, SeekPage } from '@activepieces/shared'
 
-export async function getAllEnabledPopulatedFlows(internalApiUrl: string, engineToken: string, projectId: string): Promise<SeekPage<PopulatedFlow>> {
-    const response = await fetch(`${internalApiUrl}v1/engine/populated-flows`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${engineToken}`,
-        },
-        body: JSON.stringify({
-            projectId,
-        }),
-    })
-    return response.json()
-}
 
+type CreateFlowsServiceParams = {
+    engineToken: string
+    internalApiUrl: string
+}
+export const createFlowsContext = ({ engineToken, internalApiUrl }: CreateFlowsServiceParams): FlowsContext => {
+    return {
+        async list(): Promise<SeekPage<PopulatedFlow>> {
+            const response = await fetch(`${internalApiUrl}v1/engine/populated-flows`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${engineToken}`,
+                },
+            })
+            return response.json()
+        }
+    }
+}

@@ -1,4 +1,4 @@
-import { GetAllFlowsByProjectRequest, GetRunForWorkerRequest, JobStatus, logger, QueueName, SharedSystemProp, system, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { GetRunForWorkerRequest, JobStatus, logger, QueueName, SharedSystemProp, system, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, ExecutionState, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -139,7 +139,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         }
     })
 
-    app.post('/populated-flows', GetAllFlowsByProjectParams,  async (request) => {
+    app.get('/populated-flows', GetAllFlowsByProjectParams,  async (request) => {
         return flowService.list({
             projectId: request.principal.projectId,
             limit: 1000000,
@@ -148,8 +148,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             status: undefined,
             name: undefined,
         })
-    },
-    )
+    })
 
     app.post('/remove-stale-job', RemoveFlowRequest, async (request) => {
         const { flowVersionId, flowId } = request.body
@@ -363,9 +362,7 @@ const GetAllFlowsByProjectParams = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE],
     },
-    schema: {
-        body: GetAllFlowsByProjectRequest,
-    },
+    schema: {},
 }
 
 

@@ -4,7 +4,6 @@ import { isValidCron } from 'cron-validator'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFilesService } from '../services/files.service'
-import { getAllEnabledPopulatedFlows } from '../services/flows.service'
 import { createContextStore } from '../services/storage.service'
 import { variableService } from '../services/variable-service'
 import { pieceLoader } from './piece-loader'
@@ -77,10 +76,7 @@ export const triggerHelper = {
             project: {
                 id: params.projectId,
                 externalId: constants.externalProjectId,
-            },
-            flows: {
-                list: (): Promise<SeekPage<PopulatedFlow>> => getAllEnabledPopulatedFlows(constants.internalApiUrl, constants.engineToken, constants.projectId),
-            },
+            }
         }
         switch (params.hookType) {
             case TriggerHookType.ON_DISABLE:

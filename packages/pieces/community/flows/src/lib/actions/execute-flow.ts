@@ -1,74 +1,80 @@
 import {
   createAction,
   DynamicProp,
-  DynamicPropsValue,
   Property,
-  PropertyContext,
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
-import { FlowStatus } from '@activepieces/shared';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { FlowStatus, isNil, TriggerType } from '@activepieces/shared';
 
+type FlowValue = {
+  id: string
+  exampleData: unknown
+}
 
-
-export const executeFlow = createAction({
-  name: 'executeFlow',
-  displayName: 'Execute Flow',
-  description: 'executes the specified flow, and returns its response',
+export const callFlow = createAction({
+  name: 'callFlow',
+  displayName: 'Call Flow',
+  description: 'call another sub flow',
   props: {
-    flowId: Property.Dropdown({ 
+    flow: Property.Dropdown<FlowValue>({
       displayName: 'Flow Title',
       description: 'The Name of the flow to execute',
       required: true,
-      options: async (propsValue, context) => {
-        const flows = (await context.flows.list()).data.filter(flow => flow.status === FlowStatus.ENABLED);
+      options: async (_, context) => {
+        const allFlows = (await context.flows.list()).data;
+        const flows = allFlows.filter(flow => flow.status === FlowStatus.ENABLED
+          && flow.version.trigger.type === TriggerType.PIECE
+          && flow.version.trigger.settings.pieceName == '@activepieces/piece-flows');
         return {
           options: flows.map(flow => ({
-            value: flow.id,
+            value: {
+              id: flow.id,
+              exampleData: flow.version.trigger.settings.input.exampleData,
+            },
             label: flow.version.displayName,
           }))
         };
       },
-      refreshers: ['flows'],
-  }),
-  sampleData: Property.DynamicProperties({
-    description: 'The schema to be passed to the flow',
-    displayName: 'Sample Data',
-    required: true,
-    refreshers: ['flows'],
-    props: async (propsValue, context) => {
-        const flow = (await context.flows.list()).data.find(flow => flow.id === propsValue['flowId'] as unknown as string);
-
-        const properties = {
-            exampleData: Property.Json({
+      refreshers: [],
+    }),
+    flowProps: Property.DynamicProperties({
+      description: '',
+      displayName: '',
+      required: true,
+      refreshers: ['flow'],
+      props: async (propsValue) => {
+        const props: Record<string, DynamicProp> = {};
+        const castedFlowValue = propsValue['flow'] as unknown as FlowValue;
+        if (!isNil(castedFlowValue)) {
+          props['exampleData'] = Property.Json({
             displayName: 'Sample Data',
-            description: 'The schema to be passed to the flow',
+            description: 'Provide the sample data to be passed to the flow, It will be used for testing purposes',
             required: true,
-            defaultValue: flow?.version.trigger.settings?.input.exampleData,
-          }) as unknown as DynamicProp,
-        };
+            defaultValue: castedFlowValue.exampleData as unknown as object,
+          })
+        }
+        return props;
 
-        return properties;
-    },
-  }),
+      },
+    }),
+    waitForResponse: Property.Checkbox({
+      displayName: 'Wait for Response',
+      description: 'Wait for the response from the called flow',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run(context) {
-    const headers = {
-      'Content-Type': 'application/json',
-    };
-    const flowId = context.propsValue.flowId;
-
-    const request: HttpRequest = {
+    await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.serverUrl}v1/webhooks/${flowId}`,
-      headers,
-      body: JSON.stringify({})
-    };
-    const response = await httpClient.sendRequest(request);
-
-    if (!response) {
-      throw new Error('Failed to execute flow');
+      url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}${context.propsValue.waitForResponse ? '/test' : ''}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(context.propsValue.flowProps['exampleData'])
+    });
+    return {
+      success: true,
     }
-
-    return response;
   },
 });

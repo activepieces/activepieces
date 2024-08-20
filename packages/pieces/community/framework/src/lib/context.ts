@@ -28,9 +28,6 @@ type BaseContext<
     id: ProjectId;
     externalId: () => Promise<string | undefined>;
   };
-  flows: {
-    list(): Promise<SeekPage<PopulatedFlow>>;
-  };
 };
 
 type AppWebhookTriggerHookContext<
@@ -99,6 +96,10 @@ export type PauseHook = (params: {
   pauseMetadata: DelayPauseMetadata | Omit<WebhookPauseMetadata, 'requestId'>
 }) => void;
 
+export type FlowsContext = {
+  list(): Promise<SeekPage<PopulatedFlow>>;
+}
+
 export type PropertyContext = {
   server: ServerContext;
   project: {
@@ -106,9 +107,7 @@ export type PropertyContext = {
     externalId: () => Promise<string | undefined>;
   };
   searchValue?: string;
-  flows: {
-    list(): Promise<SeekPage<PopulatedFlow>>;
-  };
+  flows:FlowsContext;
 };
 
 export type ServerContext = {

@@ -1,7 +1,7 @@
 
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+
 export const callableFlow = createTrigger({
-    // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
     name: 'callableFlow',
     displayName: 'Callable Flow',
     description: 'Waiting to be triggered from another flow',
@@ -12,9 +12,7 @@ export const callableFlow = createTrigger({
             required: true,
         }),
     },
-    sampleData: {
-        
-    },
+    sampleData: null,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(){
         // ignore

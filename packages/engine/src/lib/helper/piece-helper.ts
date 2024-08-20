@@ -15,15 +15,13 @@ import {
     ExecutePropsOptions,
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
-    PopulatedFlow,
     SecretTextConnectionValue,
-    SeekPage,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { getAllEnabledPopulatedFlows } from '../services/flows.service'
 import { variableService } from '../services/variable-service'
 import { pieceLoader } from './piece-loader'
+import { createFlowsContext } from '../services/flows.service'
 
 export const pieceHelper = {
     async executeProps({ params, piecesSource, executionState, constants, searchValue }: { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, piecesSource: string, constants: EngineConstants }) {
@@ -54,9 +52,7 @@ export const pieceHelper = {
                     id: params.projectId,
                     externalId: constants.externalProjectId,
                 },
-                flows: {
-                    list: (): Promise<SeekPage<PopulatedFlow>> => getAllEnabledPopulatedFlows(constants.internalApiUrl, constants.engineToken, constants.projectId),
-                },
+                flows: createFlowsContext(constants),
             }
 
             if (property.type === PropertyType.DYNAMIC) {

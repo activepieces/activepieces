@@ -20,7 +20,7 @@ import {
     ProjectId,
     SeekPage, TelemetryEventName, UserId,
 } from '@activepieces/shared'
-import { EntityManager, In, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull, Like } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { emailService } from '../../ee/helper/email/email-service'
 import { acquireLock } from '../../helper/lock'
@@ -110,6 +110,9 @@ export const flowService = {
         if (status !== undefined) {
             queryWhere.status = In(status)
         }
+        if (name !== undefined) {
+            queryWhere.name = Like(`%${name}%`)
+        }
 
         const paginationResult = await paginator.paginate(
             flowRepo().createQueryBuilder('flow').where(queryWhere),
@@ -128,14 +131,7 @@ export const flowService = {
         })
 
         const populatedFlows = await Promise.all(populatedFlowPromises)
-
-        let filteredPopulatedFlows = populatedFlows
-        
-        if (name) {
-            filteredPopulatedFlows = populatedFlows.filter((flow) => flow.version.displayName.match(new RegExp(`^.*${name}.*`, 'i')))
-        }
-
-        return paginationHelper.createPage(filteredPopulatedFlows, paginationResult.cursor)
+        return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
     },
 
     async getOneById(id: string): Promise<Flow | null> {
@@ -329,22 +325,22 @@ export const flowService = {
             id: flowId,
             projectId,
         })
-        
-        const { schedule } = flow
-        const skipUpdateFlowCount = isNil(schedule) || flow.status === FlowStatus.DISABLED 
 
-        if ( skipUpdateFlowCount ) {
+        const { schedule } = flow
+        const skipUpdateFlowCount = isNil(schedule) || flow.status === FlowStatus.DISABLED
+
+        if (skipUpdateFlowCount) {
             return
         }
         const newFailureCount = success ? 0 : (schedule.failureCount ?? 0) + 1
-        
+
         if (newFailureCount >= TRIGGER_FAILURES_THRESHOLD) {
             await this.updateStatus({
                 id: flowId,
                 projectId,
                 newStatus: FlowStatus.DISABLED,
             })
-            
+
             await emailService.sendExceedFailureThresholdAlert(projectId, flow.version.displayName)
             rejectedPromiseHandler(telemetry.trackProject(projectId, {
                 name: TelemetryEventName.TRIGGER_FAILURES_EXCEEDED,
@@ -419,7 +415,7 @@ export const flowService = {
                 id,
                 projectId,
             })
-            
+
             await flowSideEffects.preDelete({
                 flowToDelete,
             })

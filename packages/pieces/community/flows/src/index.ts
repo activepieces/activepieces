@@ -1,16 +1,16 @@
 
-    import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-    import { executeFlow } from "./lib/actions/execute-flow";
-    import { callableFlow } from "./lib/triggers/callable-flow";
-    
-    export const flows = createPiece({
-      displayName: "Call Flow",
-      description: "Trigger and run another predefined workflow.",
-      auth: PieceAuth.None(),
-      minimumSupportedRelease: '0.20.0',
-      logoUrl: "https://cdn.activepieces.com/pieces/flows.svg",
-      authors: ['hazemadelkhalel'],
-      actions: [executeFlow],
-      triggers: [callableFlow],
-    });
-    
+import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { callFlow } from "./lib/actions/execute-flow";
+import { callableFlow } from "./lib/triggers/callable-flow";
+import { response } from "./lib/actions/respond";
+
+export const flows = createPiece({
+  displayName: "Sub Flows",
+  description: "Trigger and call another sub flow.",
+  auth: PieceAuth.None(),
+  minimumSupportedRelease: '0.30.0',
+  logoUrl: "https://cdn.activepieces.com/pieces/flows.svg",
+  authors: ['hazemadelkhalel'],
+  actions: [callFlow, response],
+  triggers: [callableFlow],
+});
