@@ -35,7 +35,7 @@ export const triggerUtils = {
             name: trigger.settings.pieceName,
             version: trigger.settings.pieceVersion,
         })
-        if (isNil(piece)) {
+        if (isNil(piece) || isNil(trigger.settings.triggerName)) {
             return null
         }
         const pieceTrigger = piece.triggers[trigger.settings.triggerName]

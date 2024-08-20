@@ -56,7 +56,7 @@ export const PieceActionSettings = Type.Object({
     pieceName: Type.String({}),
     pieceVersion: VersionType,
     actionName: Type.Optional(Type.String({})),
-    input: Type.Record(Type.String({}), Type.Any()),
+    input: Type.Record(Type.String({}), Type.Unknown()),
     inputUiInfo: SampleDataSettingsObject,
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
