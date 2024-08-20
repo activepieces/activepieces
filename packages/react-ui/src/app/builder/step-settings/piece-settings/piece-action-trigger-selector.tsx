@@ -79,7 +79,8 @@ const PieceActionTriggerSelector = ({
                 disabled={disabled}
                 value={field.value}
                 options={options}
-                placeholder={type === ActionType.PIECE? t('Select an action') : t('Select a trigger')}
+                loading={isLoading}
+                placeholder={type === ActionType.PIECE? 'Select an action' : 'Select a trigger'}
                 onChange={(e) => field.onChange(e)}
               />
        

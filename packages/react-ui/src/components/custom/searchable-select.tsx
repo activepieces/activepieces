@@ -109,8 +109,8 @@ export const SearchableSelect = <T extends React.Key>({
         >
           <span className="flex text-ellipsis w-full overflow-hidden whitespace-nowrap">
             {!isNil(value)
-              ? options.find((framework) => framework.value === value)?.label
-              : t(placeholder)}
+              ? options.find((option) => option.value === value)?.label 
+              : placeholder}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
