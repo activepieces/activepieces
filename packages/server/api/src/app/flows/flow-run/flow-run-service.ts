@@ -1,3 +1,4 @@
+import { assert } from 'node:console'
 import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -27,7 +28,7 @@ import {
     TelemetryEventName,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { In } from 'typeorm'
+import { In, IsNull, LessThanOrEqual, Not } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
     APArrayContains,
@@ -383,21 +384,27 @@ export const flowRunService = {
         }
     },
     async deleteLogsFilesOlderThanRetentionDate(): Promise<void> {
-        const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toDate()
-        const logsFileIds = await flowRunRepo().createQueryBuilder('flow_run')
-            .select(['flow_run.logsFileId', 'flow_run.id', 'flow_run.projectId'])
-            .where('flow_run.created <= :retentionDateBoundary AND flow_run.logsFileId IS NOT NULL', {
-                retentionDateBoundary,
-            })
-            .getRawMany()
+        const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').format('YYYY-MM-DDTHH:mm:ssZ')
+        const logsFileIds = await flowRunRepo().find({
+            select: ['logsFileId', 'id', 'projectId', 'created'],
+            where: {
+                created: LessThanOrEqual(retentionDateBoundary),
+                logsFileId: Not(IsNull()),
+            },
+            take: 5000,
+        })
         for (const log of logsFileIds) {
-            await fileService.delete({
-                fileId: log.flow_run_logsFileId,
-                projectId: log.flow_run_projectId,
-            })
-            await flowRunRepo().update(log.flow_run_id, {
-                logsFileId: null,
-            })
+            const assertValue = dayjs(log.created).isBefore(retentionDateBoundary) || dayjs(log.created).isSame(retentionDateBoundary)
+            assert(assertValue, 'Logs file is not older than retention date')
+            if (!isNil(log.logsFileId)) {
+                await fileService.delete({
+                    fileId: log.logsFileId,
+                    projectId: log.projectId,
+                })
+                await flowRunRepo().update(log.id, {
+                    logsFileId: null,
+                })
+            }
         }
     },
 }
