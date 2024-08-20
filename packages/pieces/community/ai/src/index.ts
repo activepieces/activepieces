@@ -3,6 +3,8 @@ import { PieceCategory } from '@activepieces/shared';
 import { chatCompletionAction } from './lib/actions/chat-completion.action';
 import { generateImageAction } from './lib/actions/generate-image.action';
 import { extractStructuredDataAction } from './lib/actions/extract-structured-data.action';
+import { summarizeTextAction } from './lib/actions/summarize-text.action';
+import { textToSpeechAction } from './lib/actions/text-to-speech.action';
 
 export const afforai = createPiece({
   displayName: 'AI by Activepieces',
@@ -15,6 +17,8 @@ export const afforai = createPiece({
     chatCompletionAction,
     extractStructuredDataAction,
     generateImageAction,
+    summarizeTextAction,
+    textToSpeechAction,
   ],
   triggers: [],
 });
