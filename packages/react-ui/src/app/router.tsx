@@ -46,7 +46,6 @@ export const router = createBrowserRouter([
         <FlowsPage />
       </DashboardContainer>
     ),
-    
   },
   {
     path: '/flows/:flowId',
@@ -298,8 +297,6 @@ export const router = createBrowserRouter([
   },
   {
     path: '/*',
-    element: (
-        <Navigate to="/flows" replace />
-    ),
+    element: <Navigate to="/flows" replace />,
   },
 ]);

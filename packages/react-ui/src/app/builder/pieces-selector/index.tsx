@@ -1,9 +1,13 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { SearchXIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SidebarHeader } from '@/app/builder/sidebar-header';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
@@ -13,6 +17,7 @@ import {
   StepMetadata,
   piecesHooks,
 } from '@/features/pieces/lib/pieces-hook';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { useElementSize } from '@/lib/utils';
 import {
   Action,
@@ -29,14 +34,12 @@ import {
 import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
 
 import { pieceSelectorUtils } from './piece-selector-utils';
-import { SearchXIcon } from 'lucide-react';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
 
 const PiecesSelectorList = () => {
-  const showCommunity = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COMMUNITY, useQueryClient());
+  const showCommunity = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_COMMUNITY,
+    useQueryClient(),
+  );
   const [searchQuery, setSearchQuery] = useDebounce<string>('', 300);
   const containerRef = useRef<HTMLDivElement>(null);
   const { height: containerHeight } = useElementSize(containerRef);
@@ -152,12 +155,16 @@ const PiecesSelectorList = () => {
         {metadata && metadata.length === 0 && (
           <div className="flex h-full gap-2 flex-col  grow items-center justify-center text-center">
             <SearchXIcon className="h-10 w-10"></SearchXIcon>
-            {t('Ooops, we didn\'t find any results')}
-            {
-              showCommunity && <Link to={`${supportUrl}/c/feature-requests/9`} target="_blank" rel="noopener noreferrer">
-               <Button variant="default" >Request Piece</Button>
+            {t("Ooops, we didn't find any results")}
+            {showCommunity && (
+              <Link
+                to={`${supportUrl}/c/feature-requests/9`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="default">Request Piece</Button>
               </Link>
-            }
+            )}
           </div>
         )}
         {!isLoading && metadata && metadata.length > 0 && (

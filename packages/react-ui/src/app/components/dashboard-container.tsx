@@ -44,7 +44,9 @@ export function DashboardContainer({
 
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
-      <Sidebar isHomeDashboard={true} links={links}>{children}</Sidebar>
+      <Sidebar isHomeDashboard={true} links={links}>
+        {children}
+      </Sidebar>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

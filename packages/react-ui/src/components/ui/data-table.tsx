@@ -182,13 +182,16 @@ export function DataTable<
   }, []);
 
   useEffect(() => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      if (currentCursor) {
-        newParams.set('cursor', currentCursor);
-      }
-      return newParams;
-    }, {replace: true});
+    setSearchParams(
+      (prev) => {
+        const newParams = new URLSearchParams(prev);
+        if (currentCursor) {
+          newParams.set('cursor', currentCursor);
+        }
+        return newParams;
+      },
+      { replace: true },
+    );
   }, [currentCursor]);
 
   useEffect(() => {

@@ -29,39 +29,42 @@ export function DataTableFacetedFilter<TData, TValue>({
 
   const handleFilterChange = React.useCallback(
     (filterValue: string | string[] | DateRange | undefined) => {
-      setSearchParams((prev) => {
-        const newParams = new URLSearchParams(prev);
-        newParams.delete(column?.id as string);
-        newParams.delete(`${column?.id}After`);
-        newParams.delete(`${column?.id}Before`);
+      setSearchParams(
+        (prev) => {
+          const newParams = new URLSearchParams(prev);
+          newParams.delete(column?.id as string);
+          newParams.delete(`${column?.id}After`);
+          newParams.delete(`${column?.id}Before`);
 
-        if (!filterValue) {
+          if (!filterValue) {
+            return newParams;
+          }
+
+          if (Array.isArray(filterValue)) {
+            filterValue.forEach((value) =>
+              newParams.append(column?.id as string, value),
+            );
+          } else if (typeof filterValue === 'object' && filterValue !== null) {
+            if (filterValue.from) {
+              newParams.append(
+                `${column?.id}After`,
+                filterValue.from.toISOString(),
+              );
+            }
+            if (filterValue.to) {
+              newParams.append(
+                `${column?.id}Before`,
+                filterValue.to.toISOString(),
+              );
+            }
+          } else {
+            newParams.append(column?.id as string, filterValue);
+          }
+
           return newParams;
-        }
-
-        if (Array.isArray(filterValue)) {
-          filterValue.forEach((value) =>
-            newParams.append(column?.id as string, value),
-          );
-        } else if (typeof filterValue === 'object' && filterValue !== null) {
-          if (filterValue.from) {
-            newParams.append(
-              `${column?.id}After`,
-              filterValue.from.toISOString(),
-            );
-          }
-          if (filterValue.to) {
-            newParams.append(
-              `${column?.id}Before`,
-              filterValue.to.toISOString(),
-            );
-          }
-        } else {
-          newParams.append(column?.id as string, filterValue);
-        }
-
-        return newParams;
-      }, {replace: true});
+        },
+        { replace: true },
+      );
 
       if (Array.isArray(filterValue)) {
         column?.setFilterValue(filterValue.length ? filterValue : undefined);

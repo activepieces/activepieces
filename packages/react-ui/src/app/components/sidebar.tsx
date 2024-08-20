@@ -1,3 +1,4 @@
+import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { FileTextIcon, LockKeyhole } from 'lucide-react';
@@ -11,10 +12,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApFlagId, supportUrl } from '@activepieces/shared';
 
 import { Header } from './header';
-import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
-import { ApFlagId, supportUrl } from '../../../../shared/src';
 type Link = {
   icon: React.ReactNode;
   label: string;
@@ -45,7 +45,11 @@ const CustomTooltipLink = ({
   const isActive = location.pathname.startsWith(to);
 
   return (
-    <Link to={to} target={newWindow ? '_blank' : ''} rel={newWindow ? 'noopener noreferrer' : ''}>
+    <Link
+      to={to}
+      target={newWindow ? '_blank' : ''}
+      rel={newWindow ? 'noopener noreferrer' : ''}
+    >
       <div
         className={`relative flex flex-col items-center justify-center gap-1`}
       >
@@ -83,16 +87,18 @@ type SidebarProps = {
   isHomeDashboard?: boolean;
 };
 export function Sidebar({ children, links, isHomeDashboard }: SidebarProps) {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const branding = flagsHooks.useWebsiteBranding(queryClient);
-  const showSupportAndDocs = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COMMUNITY, queryClient);
+  const showSupportAndDocs = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_COMMUNITY,
+    queryClient,
+  );
   return (
     <div className="flex min-h-screen w-full  ">
       <aside className=" border-r sticky  top-0 h-screen bg-muted/50 w-[65px] ">
         <ScrollArea>
           <nav className="flex flex-col items-center h-screen  sm:py-5  gap-5 p-2 ">
-            <Link to="/flows" className="h-[48px] items-center justify-center " >
+            <Link to="/flows" className="h-[48px] items-center justify-center ">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link to="/">
@@ -104,9 +110,7 @@ export function Sidebar({ children, links, isHomeDashboard }: SidebarProps) {
                     />
                   </Link>
                 </TooltipTrigger>
-                <TooltipContent side="right">
-                  {t('Home')}
-                </TooltipContent>
+                <TooltipContent side="right">{t('Home')}</TooltipContent>
               </Tooltip>
             </Link>
             {links.map((link, index) => (
@@ -119,9 +123,9 @@ export function Sidebar({ children, links, isHomeDashboard }: SidebarProps) {
               />
             ))}
 
-            <div className='grow'></div>
-            {
-              isHomeDashboard && showSupportAndDocs &&( <>
+            <div className="grow"></div>
+            {isHomeDashboard && showSupportAndDocs && (
+              <>
                 <CustomTooltipLink
                   to={supportUrl}
                   label={t('Support')}
@@ -134,9 +138,8 @@ export function Sidebar({ children, links, isHomeDashboard }: SidebarProps) {
                   Icon={FileTextIcon}
                   newWindow={true}
                 />
-            
-              </>)
-            }
+              </>
+            )}
           </nav>
         </ScrollArea>
       </aside>

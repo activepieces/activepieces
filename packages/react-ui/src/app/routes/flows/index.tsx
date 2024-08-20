@@ -208,14 +208,18 @@ const FlowsPage = () => {
           <h1 className="text-3xl font-bold">{t('Flows')}</h1>
           <div className="ml-auto flex flex-row gap-2">
             <ImportFlowDialog>
-              <Button variant="outline"  className='flex gap-2 items-center'>
+              <Button variant="outline" className="flex gap-2 items-center">
                 <Import className="w-4 h-4" />
                 {t('Import Flow')}
               </Button>
             </ImportFlowDialog>
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <Button variant="default" className='flex gap-2 items-center' loading={isCreateFlowPending}>
+                <Button
+                  variant="default"
+                  className="flex gap-2 items-center"
+                  loading={isCreateFlowPending}
+                >
                   <span>{t('New Flow')}</span>
                   <ChevronDown className="h-4 w-4 " />
                 </Button>
