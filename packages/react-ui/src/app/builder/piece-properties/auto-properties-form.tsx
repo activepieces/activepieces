@@ -45,7 +45,7 @@ const AutoPropertiesFormComponent = React.memo(
     const form = useFormContext();
 
     return (
-      <div className="flex flex-col gap-4 p-1 w-full">
+      <div className="flex flex-col gap-4 w-full">
         {Object.entries(props).map(([key]) => {
           return (
             <FormField
@@ -125,6 +125,7 @@ const selectRightComponent = (
           disabled={disabled}
           field={field}
           allowDynamicValues={allowDynamicValues}
+          placeBeforeLabelText={true}
         >
           <FormControl>
             <Switch
