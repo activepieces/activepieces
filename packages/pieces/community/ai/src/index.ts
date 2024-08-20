@@ -5,6 +5,7 @@ import { generateImageAction } from './lib/actions/generate-image.action';
 import { extractStructuredDataAction } from './lib/actions/extract-structured-data.action';
 import { summarizeTextAction } from './lib/actions/summarize-text.action';
 import { textToSpeechAction } from './lib/actions/text-to-speech.action';
+import { analyzeImageContentAction } from './lib/actions/analyze-image-content.action';
 
 export const afforai = createPiece({
   displayName: 'AI by Activepieces',
@@ -14,6 +15,7 @@ export const afforai = createPiece({
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: [],
   actions: [
+    analyzeImageContentAction,
     chatCompletionAction,
     extractStructuredDataAction,
     generateImageAction,
