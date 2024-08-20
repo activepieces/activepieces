@@ -41,7 +41,7 @@ const LoopIterationInput = (params: LoopIterationInputProps) => {
     <>
       {!isFocused && (
         <div className="text-sm duration-300 animate-fade">
-          {t('Iteration&#58;')}
+          {t('Iteration')}
         </div>
       )}
       <div
@@ -54,6 +54,7 @@ const LoopIterationInput = (params: LoopIterationInputProps) => {
           width: isFocused
             ? '100%'
             : (inputRef.current?.value.length || 1) * 2.6 + 1 + 'ch',
+          minWidth: isFocused ? '100px' : undefined,
         }}
       >
         <div

@@ -144,6 +144,7 @@ const FlowStepDetailsCardItem = ({ path }: FlowStepDetailsCardProps) => {
           <div
             style={{
               minWidth: `${path.path.length * 25}px`,
+              display:  path.path.length === 0 ? 'none' : 'flex',
             }}
           ></div>
           <div className="flex items-center  w-full gap-3">
@@ -164,7 +165,7 @@ const FlowStepDetailsCardItem = ({ path }: FlowStepDetailsCardProps) => {
               </Button>
             )}
             <img className="w-6 h-6" src={stepMetadata?.logoUrl} />
-            <div>{step?.displayName}</div>
+            <div className='break-all truncate'>{step?.displayName}</div>
             <div className="w-2"></div>
             <div className="flex gap-1 justify-end  items-center flex-grow">
               {isLoopStep && isStepSelected && isInPath && (
@@ -181,7 +182,7 @@ const FlowStepDetailsCardItem = ({ path }: FlowStepDetailsCardProps) => {
               )}
               {(!isLoopStep || (isLoopStep && !isInPath)) && (
                 <div className="flex gap-1 animate-fade">
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-muted-foreground text-xs break-normal whitespace-nowrap">
                     {formatUtils.formatDuration(
                       stepOutput?.duration ?? 0,
                       true,
