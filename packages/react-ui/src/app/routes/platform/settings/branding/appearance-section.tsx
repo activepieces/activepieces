@@ -7,7 +7,13 @@ import { useForm } from 'react-hook-form';
 import { LocalesEnum } from '@/app/routes/settings/appearance/language-switcher';
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
-import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -145,7 +151,9 @@ export const AppearanceSection = () => {
                 name="faviconUrl"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <FormLabel htmlFor="faviconUrl">{t('Favicon URL')}</FormLabel>
+                    <FormLabel htmlFor="faviconUrl">
+                      {t('Favicon URL')}
+                    </FormLabel>
                     <Input
                       {...field}
                       required
@@ -162,7 +170,9 @@ export const AppearanceSection = () => {
                 name="language"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <FormLabel htmlFor="language">{t('Default Language')}</FormLabel>
+                    <FormLabel htmlFor="language">
+                      {t('Default Language')}
+                    </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger>
                         <SelectValue placeholder={t('Select Language')} />

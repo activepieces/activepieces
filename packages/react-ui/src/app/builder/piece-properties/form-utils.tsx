@@ -16,7 +16,9 @@ import {
   CodeActionSchema,
   LoopOnItemsActionSchema,
   PieceActionSchema,
+  PieceActionSettings,
   PieceTrigger,
+  PieceTriggerSettings,
   Trigger,
   TriggerType,
   ValidBranchCondition,
@@ -167,14 +169,17 @@ export const formUtils = {
               )
             : Type.Object({});
         return Type.Composite([
-          PieceActionSchema,
+          Type.Omit(PieceActionSchema, ['settings']),
           Type.Object({
-            settings: Type.Object({
-              actionName: Type.String({
-                minLength: 1,
+            settings: Type.Composite([
+              Type.Omit(PieceActionSettings, ['input', 'actionName']),
+              Type.Object({
+                actionName: Type.String({
+                  minLength: 1,
+                }),
+                input: inputSchema,
               }),
-              input: inputSchema,
-            }),
+            ]),
           }),
         ]);
       }
@@ -188,14 +193,17 @@ export const formUtils = {
               )
             : Type.Object({});
         return Type.Composite([
-          PieceTrigger,
+          Type.Omit(PieceTrigger, ['settings']),
           Type.Object({
-            settings: Type.Object({
-              triggerName: Type.String({
-                minLength: 1,
+            settings: Type.Composite([
+              Type.Omit(PieceTriggerSettings, ['input', 'triggerName']),
+              Type.Object({
+                triggerName: Type.String({
+                  minLength: 1,
+                }),
+                input: formSchema,
               }),
-              input: formSchema,
-            }),
+            ]),
           }),
         ]);
       }

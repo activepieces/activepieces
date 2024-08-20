@@ -115,6 +115,7 @@ const StepSettingsContainer = React.memo(
 
     useEffect(() => {
       form.reset(defaultValues);
+      form.trigger();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshPieceFormSettings]);
 
