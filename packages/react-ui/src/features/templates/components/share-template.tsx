@@ -25,8 +25,8 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
       const updatedFlow = await flowsApi.update(flow.id, {
         type: FlowOperationType.IMPORT_FLOW,
         request: {
-          displayName: flow.version.displayName,
-          trigger: flow.version.trigger,
+          displayName: template.template.displayName,
+          trigger: template.template.trigger,
         },
       });
       return updatedFlow;
@@ -75,7 +75,7 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
                 {t('Cancel')}
               </Button>
               <Button loading={isPending} onClick={() => mutate()}>
-                {t('Confirm')}
+                {t('Import')}
               </Button>
             </div>
           </div>

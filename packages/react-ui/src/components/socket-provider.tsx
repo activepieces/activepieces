@@ -24,8 +24,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       socket.disconnect();
     }
-
-
   });
 
   return (
