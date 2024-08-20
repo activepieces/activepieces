@@ -124,9 +124,13 @@ export const flowRunService = {
 
         let query = flowRunRepo().createQueryBuilder('flow_run').where({
             projectId,
-            ...spreadIfDefined('flowId', flowId),
             environment: RunEnvironment.PRODUCTION,
         })
+        if (flowId) {
+            query = query.andWhere({
+                flowId: In(flowId),
+            })
+        }
         if (status) {
             query = query.andWhere({
                 status: In(status),
@@ -432,7 +436,7 @@ type GetOrCreateParams = {
 
 type ListParams = {
     projectId: ProjectId
-    flowId: FlowId | undefined
+    flowId: FlowId[] | undefined
     status: FlowRunStatus[] | undefined
     cursor: Cursor | null
     tags?: string[]
