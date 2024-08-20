@@ -119,6 +119,7 @@ export function Sidebar({ children, links, isHomeDashboard }: SidebarProps) {
                 label={link.label}
                 Icon={link.icon}
                 key={index}
+                notification={link.notification}
                 locked={link.locked}
               />
             ))}
