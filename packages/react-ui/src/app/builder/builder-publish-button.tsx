@@ -58,6 +58,8 @@ const BuilderPublishButton = React.memo(() => {
   const isPublishedVersion =
     flow.publishedVersionId === flowVersion.id &&
     flowVersion.state === FlowVersionState.LOCKED;
+
+  const isValid = flowVersion.valid
   return (
     <>
       {!readonly && flow.publishedVersionId && (
@@ -77,7 +79,7 @@ const BuilderPublishButton = React.memo(() => {
               <Button
                 size={'sm'}
                 loading={isSaving || isPublishingPending}
-                disabled={isPublishedVersion || readonly}
+                disabled={isPublishedVersion || readonly || !isValid}
                 onClick={() => publish()}
               >
                 {t('Publish')}

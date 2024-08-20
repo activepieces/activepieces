@@ -232,7 +232,7 @@ const selectRightComponent = (
           field={field}
           propertyKey={key}
           disabled={disabled}
-          allowDynamicValues={allowDynamicValues}
+          allowDynamicValues={false}
         >
           {useMentionTextInput ? (
             <TextInputWithMentions
