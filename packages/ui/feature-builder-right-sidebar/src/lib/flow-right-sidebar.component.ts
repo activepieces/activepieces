@@ -24,6 +24,7 @@ import {
   ApFlagId,
   TriggerTestStrategy,
   TriggerType,
+  isNil,
 } from '@activepieces/shared';
 import {
   BuilderSelectors,
@@ -68,10 +69,10 @@ export class FlowRightSidebarComponent implements OnInit {
   shouldShowTestStepArea$: Observable<boolean>;
   currentStepPieceVersion$: Observable<
     | {
-        version: string | undefined;
-        latest: boolean;
-        tooltipText: string;
-      }
+      version: string | undefined;
+      latest: boolean;
+      tooltipText: string;
+    }
     | undefined
   >;
   constructor(
@@ -83,7 +84,7 @@ export class FlowRightSidebarComponent implements OnInit {
     private pieceMetadataService: PieceMetadataService,
     public builderService: FlowBuilderService,
     private builderAutocompleteMentionsDropdownService: BuilderAutocompleteMentionsDropdownService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.showDocs$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_DOCS);
@@ -131,6 +132,9 @@ export class FlowRightSidebarComponent implements OnInit {
             )
             .pipe(
               map((res) => {
+                if (isNil(step.settings.triggerName)) {
+                  return false;
+                }
                 const pieceTrigger = res.triggers[step.settings.triggerName];
                 return pieceTrigger?.testStrategy === strategy;
               })

@@ -42,6 +42,14 @@ export const pieceHelper = {
             })
             const ctx = {
                 searchValue,
+                flows: {
+                    current: {
+                        id: params.flowVersion.flowId,
+                        version: {
+                            id: params.flowVersion.id,
+                        },
+                    },
+                },
                 server: {
                     token: params.engineToken,
                     apiUrl: constants.internalApiUrl,
