@@ -69,10 +69,12 @@ export const triggerHelper = {
                     failureCount: request.failureCount ?? 0,
                 }
             },
-            flow: {
-                id: params.flowVersion.flowId,
-                version: {
-                    id: params.flowVersion.id,
+            flows: {
+                current: {
+                    id: params.flowVersion.flowId,
+                    version: {
+                        id: params.flowVersion.id,
+                    },
                 },
             },
             webhookUrl: params.webhookUrl,

@@ -42,10 +42,12 @@ export const pieceHelper = {
             })
             const ctx = {
                 searchValue,
-                flow: {
-                    id: params.flowVersion.flowId,
-                    version: {
-                        id: params.flowVersion.id,
+                flows: {
+                    current: {
+                        id: params.flowVersion.flowId,
+                        version: {
+                            id: params.flowVersion.id,
+                        },
                     },
                 },
                 server: {
