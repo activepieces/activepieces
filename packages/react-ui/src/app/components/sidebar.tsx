@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { FileTextIcon, LockKeyhole } from 'lucide-react';
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
