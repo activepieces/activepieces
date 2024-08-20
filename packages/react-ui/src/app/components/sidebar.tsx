@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { LockKeyhole } from 'lucide-react';
+import { FileTextIcon, LockKeyhole } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -13,6 +13,8 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { Header } from './header';
+import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
+import { ApFlagId, supportUrl } from '../../../../shared/src';
 type Link = {
   icon: React.ReactNode;
   label: string;
@@ -27,6 +29,7 @@ type CustomTooltipLinkProps = {
   extraClasses?: string;
   notification?: boolean;
   locked?: boolean;
+  newWindow?: boolean;
 };
 const CustomTooltipLink = ({
   to,
@@ -35,13 +38,14 @@ const CustomTooltipLink = ({
   extraClasses,
   notification,
   locked,
+  newWindow,
 }: CustomTooltipLinkProps) => {
   const location = useLocation();
 
   const isActive = location.pathname.startsWith(to);
 
   return (
-    <Link to={to}>
+    <Link to={to} target={newWindow ? '_blank' : ''} rel={newWindow ? 'noopener noreferrer' : ''}>
       <div
         className={`relative flex flex-col items-center justify-center gap-1`}
       >
@@ -76,12 +80,13 @@ export type SidebarLink = {
 type SidebarProps = {
   children: React.ReactNode;
   links: SidebarLink[];
+  isHomeDashboard?: boolean;
 };
-export function Sidebar({ children, links }: SidebarProps) {
+export function Sidebar({ children, links, isHomeDashboard }: SidebarProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const branding = flagsHooks.useWebsiteBranding(queryClient);
-
+  const showSupportAndDocs = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COMMUNITY, queryClient);
   return (
     <div className="flex min-h-screen w-full  ">
       <aside className=" border-r sticky  top-0 h-screen bg-muted/50 w-[65px] ">
@@ -93,7 +98,7 @@ export function Sidebar({ children, links }: SidebarProps) {
                   <Link to="/">
                     <img
                       src={branding.logos.logoIconUrl}
-                      alt={t('logo')}
+                      alt={t('home')}
                       width={28}
                       height={28}
                     />
@@ -113,6 +118,25 @@ export function Sidebar({ children, links }: SidebarProps) {
                 locked={link.locked}
               />
             ))}
+
+            <div className='grow'></div>
+            {
+              isHomeDashboard && showSupportAndDocs &&( <>
+                <CustomTooltipLink
+                  to={supportUrl}
+                  label={t('Support')}
+                  Icon={QuestionMarkCircledIcon}
+                  newWindow={true}
+                />
+                <CustomTooltipLink
+                  to="https://activepieces.com/docs"
+                  label={t('Docs')}
+                  Icon={FileTextIcon}
+                  newWindow={true}
+                />
+            
+              </>)
+            }
           </nav>
         </ScrollArea>
       </aside>

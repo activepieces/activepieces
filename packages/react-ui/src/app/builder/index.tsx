@@ -26,7 +26,7 @@ import {
 
 import { cn, useElementSize } from '../../lib/utils';
 
-import { BuilderNavBar } from './builder-nav-bar';
+import { BuilderHeader } from './builder-header';
 import { ChatSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
@@ -128,8 +128,8 @@ const BuilderPage = () => {
           exitRun={switchToDraft}
         />
       )}
-      <div ref={builderNavBarContainer} className="z-30">
-        <BuilderNavBar />
+      <div ref={builderNavBarContainer} className="z-50">
+        <BuilderHeader />
       </div>
       <ReactFlowProvider>
         <div

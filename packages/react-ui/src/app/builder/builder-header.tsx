@@ -21,15 +21,19 @@ import {
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { FlowVersionState } from '@activepieces/shared';
+import { ApFlagId, FlowVersionState, supportUrl } from '@activepieces/shared';
 
 import FlowActionMenu from '../components/flow-actions-menu';
 
 import { BuilderPublishButton } from './builder-publish-button';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { useQueryClient } from '@tanstack/react-query';
+import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 
-export const BuilderNavBar = () => {
+export const BuilderHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const showSupport = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COMMUNITY, useQueryClient());
   const isInRunsPage = useMemo(
     () => location.pathname.startsWith('/runs'),
     [location.pathname],
@@ -111,6 +115,23 @@ export const BuilderNavBar = () => {
         </div>
         <div className="grow"></div>
         <div className="flex items-center justify-center gap-4">
+          
+        {
+          showSupport && 
+          <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              onClick={() => window.open(supportUrl, '_blank', 'noopener noreferrer')}
+            >
+              <QuestionMarkCircledIcon className='w-6 h-6'></QuestionMarkCircledIcon>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{t('Support')}</TooltipContent>
+        </Tooltip>
+        }
+       
+
           {!isInRunsPage && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -118,7 +139,7 @@ export const BuilderNavBar = () => {
                   variant="ghost"
                   onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
                 >
-                  <History />
+                  <History  className='w-6 h-6'/>
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
@@ -133,7 +154,7 @@ export const BuilderNavBar = () => {
                 variant="ghost"
                 onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
               >
-                <Logs />
+                <Logs className='w-6 h-6' />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('Run Logs')}</TooltipContent>

@@ -17,18 +17,26 @@ import { useElementSize } from '@/lib/utils';
 import {
   Action,
   ActionType,
+  ApFlagId,
   FlowOperationType,
   Trigger,
   TriggerType,
   flowHelper,
   isNil,
+  supportUrl,
 } from '@activepieces/shared';
 
 import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
 
 import { pieceSelectorUtils } from './piece-selector-utils';
+import { SearchXIcon } from 'lucide-react';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const PiecesSelectorList = () => {
+  const showCommunity = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COMMUNITY, useQueryClient());
   const [searchQuery, setSearchQuery] = useDebounce<string>('', 300);
   const containerRef = useRef<HTMLDivElement>(null);
   const { height: containerHeight } = useElementSize(containerRef);
@@ -142,8 +150,14 @@ const PiecesSelectorList = () => {
           </div>
         )}
         {metadata && metadata.length === 0 && (
-          <div className="flex h-full grow items-center justify-center text-center">
-            {t('No pieces found')}
+          <div className="flex h-full gap-2 flex-col  grow items-center justify-center text-center">
+            <SearchXIcon className="h-10 w-10"></SearchXIcon>
+            {t('Ooops, we didn\'t find any results')}
+            {
+              showCommunity && <Link to={`${supportUrl}/c/feature-requests/9`} target="_blank" rel="noopener noreferrer">
+               <Button variant="default" >Request Piece</Button>
+              </Link>
+            }
           </div>
         )}
         {!isLoading && metadata && metadata.length > 0 && (
