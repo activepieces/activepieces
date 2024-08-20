@@ -5,11 +5,11 @@ import { Navigate } from 'react-router-dom';
 
 import { SocketProvider } from '@/components/socket-provider';
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 
 import { authenticationSession } from '../../lib/authentication-session';
-import { flagsHooks } from '@/hooks/flags-hooks';
 
 function isJwtExpired(token: string): boolean {
   if (!token) {

@@ -11,7 +11,8 @@
     "async-mutex": "0.4.0",
     "axios-retry": "4.4.1",
     "write-file-atomic": "5.0.1",
-    "nanoid": "3.3.6"
+    "nanoid": "3.3.6",
+    "axios": "1.7.4"
   },
   "type": "commonjs",
   "main": "./src/index.js",

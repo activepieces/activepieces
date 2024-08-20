@@ -113,7 +113,7 @@ export default function AuditLogsPage() {
               },
             },
             {
-              accessorKey: 'createdAt',
+              accessorKey: 'created',
               header: ({ column }) => (
                 <DataTableColumnHeader column={column} title={t('Created')} />
               ),

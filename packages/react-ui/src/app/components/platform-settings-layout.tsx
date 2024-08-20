@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Key, Lock, Palette } from 'lucide-react';
+import { Key, Lock, Palette, ShieldPlus } from 'lucide-react';
 
 import SidebarLayout from '@/app/components/sidebar-layout';
 
@@ -13,13 +13,18 @@ const sidebarNavItems = [
   },
   {
     title: t('API Keys'),
-    href: '/platform/api-keys',
+    href: '/platform/settings/api-keys',
     icon: <Key size={iconSize} />,
   },
   {
     title: t('Signing Keys'),
-    href: '/platform/signing-keys',
+    href: '/platform/settings/signing-keys',
     icon: <Lock size={iconSize} />,
+  },
+  {
+    title: 'Single Sign On',
+    href: '/platform/settings/sso',
+    icon: <ShieldPlus size={iconSize} />,
   },
 ];
 

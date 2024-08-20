@@ -87,7 +87,7 @@ const SignInForm: React.FC = () => {
                   required
                   id="email"
                   type="text"
-                  placeholder={t('email@activepieces.com')}
+                  placeholder={'email@example.com'}
                   className="rounded-sm"
                 />
                 <FormMessage />
