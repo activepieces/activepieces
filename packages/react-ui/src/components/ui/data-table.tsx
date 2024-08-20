@@ -6,7 +6,6 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import deepEqual from 'deep-equal';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -27,7 +26,7 @@ import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
 
-export type DataWithId ={
+export type DataWithId = {
   id: string;
 };
 export type RowDataWithActions<TData extends DataWithId> = TData & {
@@ -52,7 +51,9 @@ export type DataTableFilter<Keys extends string> = {
   }[];
 };
 
-type DataTableAction<TData extends DataWithId> = (row: RowDataWithActions<TData>) => JSX.Element;
+type DataTableAction<TData extends DataWithId> = (
+  row: RowDataWithActions<TData>,
+) => JSX.Element;
 
 export type PaginationParams = {
   cursor?: string;
@@ -204,10 +205,7 @@ export function DataTable<
   useEffect(() => {
     setTableData(
       tableData.filter(
-        (row) =>
-          !deletedRows.some((deletedRow) =>
-            deletedRow.id === row.id,
-          ),
+        (row) => !deletedRows.some((deletedRow) => deletedRow.id === row.id),
       ),
     );
   }, [deletedRows]);

@@ -59,7 +59,7 @@ const BuilderPublishButton = React.memo(() => {
     flow.publishedVersionId === flowVersion.id &&
     flowVersion.state === FlowVersionState.LOCKED;
 
-  const isValid = flowVersion.valid
+  const isValid = flowVersion.valid;
   return (
     <>
       {!readonly && flow.publishedVersionId && (

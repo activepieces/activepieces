@@ -39,11 +39,10 @@ const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
           <div className="flex-grow">{piece.displayName}</div>
           {(piece.type === ActionType.PIECE ||
             piece.type === TriggerType.PIECE) && (
-              <div className="text-xs text-muted-foreground flex justify-center items-center">
-                v{(piece as PieceStepMetadata).pieceVersion}
-              </div>
-
-            )}
+            <div className="text-xs text-muted-foreground flex justify-center items-center">
+              v{(piece as PieceStepMetadata).pieceVersion}
+            </div>
+          )}
         </div>
         <div className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
           {piece.description}

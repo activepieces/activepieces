@@ -2,7 +2,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
 import { t } from 'i18next';
-import { ArrowRightLeft, CircleAlert, CopyPlus, Trash } from 'lucide-react';
+import { ArrowRightLeft, CopyPlus, Trash } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import {
@@ -11,6 +11,7 @@ import {
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import ImageWithFallback from '@/app/components/image-with-fallback';
+import { InvalidStepIcon } from '@/components/custom/alert-icon';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
@@ -29,7 +30,6 @@ import {
 } from '@activepieces/shared';
 
 import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
-import { InvalidStepIcon } from '@/components/custom/alert-icon';
 
 function getStepStatus(
   stepName: string | undefined,
@@ -191,7 +191,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
             <div
               className=" h-full w-full "
-              onClick={() => selectStepByName(data.step?.name)}
+              onClick={() => selectStepByName(data.step!.name)}
             >
               <div className="flex h-full items-center justify-between gap-3 w-full">
                 <div className="flex items-center justify-center min-w-[46px] h-full">
@@ -206,37 +206,40 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                   <div className="text-sm text-ellipsis overflow-hidden whitespace-nowrap w-full">
                     {data.step?.displayName}
                   </div>
-                  <div className='flex justify-between w-full items-center'>
-                     <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
-                    {stepMetadata?.displayName} 
+                  <div className="flex justify-between w-full items-center">
+                    <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
+                      {stepMetadata?.displayName}
+                    </div>
+                    <div className="w-4 flex items-center justify-center">
+                      {statusInfo &&
+                        React.createElement(statusInfo.Icon, {
+                          className: cn('', {
+                            'text-success-300':
+                              statusInfo.variant === 'success',
+                            'text-destructive-300':
+                              statusInfo.variant === 'error',
+                          }),
+                        })}
+                      {showRunningIcon && (
+                        <LoadingSpinner className="w-4 h-4 text-primary"></LoadingSpinner>
+                      )}
+                      {!data.step?.valid && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <InvalidStepIcon
+                              size={16}
+                              viewBox="0 0 16 16"
+                              className="stroke-0 animate-fade"
+                            ></InvalidStepIcon>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom">
+                            {t('Incomplete settings')}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
                   </div>
-                  <div className="w-4 flex items-center justify-center">
-                  {statusInfo &&
-                    React.createElement(statusInfo.Icon, {
-                      className: cn('', {
-                        'text-success-300': statusInfo.variant === 'success',
-                        'text-destructive-300': statusInfo.variant === 'error',
-                      }),
-                    })}
-                  {showRunningIcon && (
-                    <LoadingSpinner className="w-4 h-4 text-primary"></LoadingSpinner>
-                  )}
-                  {!data.step?.valid && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <InvalidStepIcon    size={16} viewBox='0 0 16 16'
-                         className='stroke-0 animate-fade'></InvalidStepIcon>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        {t('Incomplete settings')}
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
                 </div>
-                  </div>
-                 
-                </div>
-            
               </div>
 
               <div

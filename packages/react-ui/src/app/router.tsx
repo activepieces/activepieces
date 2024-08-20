@@ -1,5 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 
+import { PageTitle } from '@/app/components/page-title';
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { ApiKeysPage } from '@/app/routes/platform/settings/api-keys';
@@ -43,7 +44,9 @@ export const router = createBrowserRouter([
     path: '/flows',
     element: (
       <DashboardContainer>
-        <FlowsPage />
+        <PageTitle title="Flows">
+          <FlowsPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   },
@@ -51,19 +54,27 @@ export const router = createBrowserRouter([
     path: '/flows/:flowId',
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
-        <FlowBuilderPage />
+        <PageTitle title="Builder">
+          <FlowBuilderPage />
+        </PageTitle>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
   {
     path: '/forms/:flowId',
-    element: <FormPage />,
+    element: (
+      <PageTitle title="Forms">
+        <FormPage />
+      </PageTitle>
+    ),
   },
   {
     path: '/runs/:runId',
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
-        <FlowRunPage />
+        <PageTitle title="Flow Run">
+          <FlowRunPage />
+        </PageTitle>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
@@ -71,7 +82,9 @@ export const router = createBrowserRouter([
     path: '/templates/:templateId',
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
-        <ShareTemplatePage />
+        <PageTitle title="Share Template">
+          <ShareTemplatePage />
+        </PageTitle>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
@@ -79,7 +92,9 @@ export const router = createBrowserRouter([
     path: '/runs',
     element: (
       <DashboardContainer>
-        <FlowsRunPage />
+        <PageTitle title="Runs">
+          <FlowsRunPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   },
@@ -87,7 +102,9 @@ export const router = createBrowserRouter([
     path: '/issues',
     element: (
       <DashboardContainer>
-        <IssuesPage />
+        <PageTitle title="Issues">
+          <IssuesPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   },
@@ -95,7 +112,9 @@ export const router = createBrowserRouter([
     path: '/connections',
     element: (
       <DashboardContainer>
-        <AppConnectionsPage />
+        <PageTitle title="Connections">
+          <AppConnectionsPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   },
@@ -103,7 +122,9 @@ export const router = createBrowserRouter([
     path: '/plans',
     element: (
       <DashboardContainer>
-        <PlansPage />
+        <PageTitle title="Plans">
+          <PlansPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   },
@@ -117,26 +138,44 @@ export const router = createBrowserRouter([
   },
   {
     path: '/forget-password',
-    element: <ResetPasswordPage />,
+    element: (
+      <PageTitle title="Forget Password">
+        <ResetPasswordPage />
+      </PageTitle>
+    ),
   },
   {
     path: '/reset-password',
-    element: <ChangePasswordPage />,
+    element: (
+      <PageTitle title="Reset Password">
+        <ChangePasswordPage />
+      </PageTitle>
+    ),
   },
   {
     path: '/sign-in',
-    element: <SignInPage />,
+    element: (
+      <PageTitle title="Sign In">
+        <SignInPage />
+      </PageTitle>
+    ),
   },
   {
     path: '/sign-up',
-    element: <SignUpPage />,
+    element: (
+      <PageTitle title="Sign Up">
+        <SignUpPage />
+      </PageTitle>
+    ),
   },
   {
     path: '/settings/alerts',
     element: (
       <DashboardContainer>
         <ProjectSettingsLayout>
-          <AlertsPage></AlertsPage>
+          <PageTitle title="Alerts">
+            <AlertsPage />
+          </PageTitle>
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
@@ -146,7 +185,9 @@ export const router = createBrowserRouter([
     element: (
       <DashboardContainer>
         <ProjectSettingsLayout>
-          <AppearancePage></AppearancePage>
+          <PageTitle title="Appearance">
+            <AppearancePage />
+          </PageTitle>
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
@@ -156,7 +197,9 @@ export const router = createBrowserRouter([
     element: (
       <DashboardContainer>
         <ProjectSettingsLayout>
-          <GeneralPage />
+          <PageTitle title="General">
+            <GeneralPage />
+          </PageTitle>
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
@@ -166,7 +209,9 @@ export const router = createBrowserRouter([
     element: (
       <DashboardContainer>
         <ProjectSettingsLayout>
-          <PiecesPage></PiecesPage>
+          <PageTitle title="Pieces">
+            <PiecesPage />
+          </PageTitle>
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
@@ -176,7 +221,9 @@ export const router = createBrowserRouter([
     element: (
       <DashboardContainer>
         <ProjectSettingsLayout>
-          <TeamPage></TeamPage>
+          <PageTitle title="Team">
+            <TeamPage />
+          </PageTitle>
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
@@ -186,24 +233,36 @@ export const router = createBrowserRouter([
     element: (
       <DashboardContainer>
         <ProjectSettingsLayout>
-          <GitSyncPage></GitSyncPage>
+          <PageTitle title="Git Sync">
+            <GitSyncPage />
+          </PageTitle>
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
   },
   {
     path: '/invitation',
-    element: <AcceptInvitation />,
+    element: (
+      <PageTitle title="Accept Invitation">
+        <AcceptInvitation />
+      </PageTitle>
+    ),
   },
   {
     path: '/404',
-    element: <NotFoundPage />,
+    element: (
+      <PageTitle title="Not Found">
+        <NotFoundPage />
+      </PageTitle>
+    ),
   },
   {
     path: '/platform/audit-logs',
     element: (
       <PlatformAdminContainer>
-        <AuditLogsPage />
+        <PageTitle title="Audit Logs">
+          <AuditLogsPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -211,7 +270,9 @@ export const router = createBrowserRouter([
     path: '/platform/pieces',
     element: (
       <PlatformAdminContainer>
-        <PlatformPiecesPage />
+        <PageTitle title="Platform Pieces">
+          <PlatformPiecesPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -219,7 +280,9 @@ export const router = createBrowserRouter([
     path: '/platform/projects',
     element: (
       <PlatformAdminContainer>
-        <ProjectsPage />
+        <PageTitle title="Projects">
+          <ProjectsPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -227,7 +290,9 @@ export const router = createBrowserRouter([
     path: '/platform/templates',
     element: (
       <PlatformAdminContainer>
-        <TemplatesPage />
+        <PageTitle title="Templates">
+          <TemplatesPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -235,7 +300,9 @@ export const router = createBrowserRouter([
     path: '/platform/users',
     element: (
       <PlatformAdminContainer>
-        <UsersPage />
+        <PageTitle title="Users">
+          <UsersPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -243,7 +310,9 @@ export const router = createBrowserRouter([
     path: '/platform',
     element: (
       <PlatformAdminContainer>
-        <Navigate to="/platform/projects" />
+        <PageTitle title="Platform">
+          <Navigate to="/platform/projects" />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -252,7 +321,9 @@ export const router = createBrowserRouter([
     element: (
       <PlatformAdminContainer>
         <PlatformSettingsLayout>
-          <BrandingPage />
+          <PageTitle title="Branding">
+            <BrandingPage />
+          </PageTitle>
         </PlatformSettingsLayout>
       </PlatformAdminContainer>
     ),
@@ -262,7 +333,9 @@ export const router = createBrowserRouter([
     element: (
       <PlatformAdminContainer>
         <PlatformSettingsLayout>
-          <ApiKeysPage />
+          <PageTitle title="API Keys">
+            <ApiKeysPage />
+          </PageTitle>
         </PlatformSettingsLayout>
       </PlatformAdminContainer>
     ),
@@ -272,7 +345,9 @@ export const router = createBrowserRouter([
     element: (
       <PlatformAdminContainer>
         <PlatformSettingsLayout>
-          <SigningKeysPage />
+          <PageTitle title="Signing Keys">
+            <SigningKeysPage />
+          </PageTitle>
         </PlatformSettingsLayout>
       </PlatformAdminContainer>
     ),
@@ -282,7 +357,9 @@ export const router = createBrowserRouter([
     element: (
       <PlatformAdminContainer>
         <PlatformSettingsLayout>
-          <SSOPage />
+          <PageTitle title="SSO">
+            <SSOPage />
+          </PageTitle>
         </PlatformSettingsLayout>
       </PlatformAdminContainer>
     ),
@@ -291,12 +368,18 @@ export const router = createBrowserRouter([
     path: '/platform/settings',
     element: (
       <PlatformAdminContainer>
-        <Navigate to="/platform/settings/branding" replace />
+        <PageTitle title="Platform Settings">
+          <Navigate to="/platform/settings/branding" replace />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
   {
     path: '/*',
-    element: <Navigate to="/flows" replace />,
+    element: (
+      <PageTitle title="Redirect">
+        <Navigate to="/flows" replace />
+      </PageTitle>
+    ),
   },
 ]);
