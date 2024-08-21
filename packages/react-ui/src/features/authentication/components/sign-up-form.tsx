@@ -27,22 +27,28 @@ import {
   SignUpRequest,
 } from '@activepieces/shared';
 
-import { generatePasswordValidation } from '../lib/password-validation-utils';
+import {
+  emailRegex,
+  passwordRules,
+  passwordValidation,
+} from '../lib/password-validation-utils';
 
 const SignUpSchema = Type.Object({
   firstName: Type.String({
-    errorMessage: 'First name is required',
+    minLength: 1,
+    errorMessage: t('First name is required'),
   }),
   lastName: Type.String({
-    errorMessage: 'Last name is required',
+    minLength: 1,
+    errorMessage: t('Last name is required'),
   }),
   email: Type.String({
-    errorMessage: 'Email is invalid',
-    pattern:
-      '^[a-zA-Z0-9.!#$%&’+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)$',
+    errorMessage: t('Email is invalid'),
+    pattern: emailRegex.source,
   }),
   password: Type.String({
-    errorMessage: 'Password is required',
+    minLength: 1,
+    errorMessage: t('Password is required'),
   }),
   trackEvents: Type.Boolean(),
   newsLetter: Type.Boolean(),
@@ -51,14 +57,12 @@ const SignUpSchema = Type.Object({
 type SignUpSchema = Static<typeof SignUpSchema>;
 
 const PasswordValidator = ({ password }: { password: string }) => {
-  const { rules } = generatePasswordValidation(password);
-
   return (
     <>
-      {rules.map((rule, index) => {
+      {passwordRules.map((rule, index) => {
         return (
           <div key={index} className="flex flex-row gap-2">
-            {rule.condition ? (
+            {rule.condition(password) ? (
               <Check className="text-success" />
             ) : (
               <X className="text-destructive" />
@@ -74,7 +78,6 @@ const PasswordValidator = ({ password }: { password: string }) => {
 const SignUpForm: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const { t } = useTranslation();
   const { data: isCloudPlatform } = flagsHooks.useFlag<boolean>(
     ApFlagId.IS_CLOUD_PLATFORM,
     queryClient,
@@ -94,10 +97,8 @@ const SignUpForm: React.FC = () => {
     password: '',
     email: searchParams.get('email') || '',
   };
-
   const form = useForm<SignUpSchema>({
     defaultValues,
-    resolver: typeboxResolver(SignUpSchema),
   });
 
   const navigate = useNavigate();
@@ -142,7 +143,6 @@ const SignUpForm: React.FC = () => {
 
   const [isPasswordFocused, setPasswordFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { formValidationObject } = generatePasswordValidation('');
 
   return (
     <>
@@ -152,6 +152,9 @@ const SignUpForm: React.FC = () => {
             <FormField
               control={form.control}
               name="firstName"
+              rules={{
+                required: t('First name is required'),
+              }}
               render={({ field }) => (
                 <FormItem className="w-full grid space-y-2">
                   <Label htmlFor="firstName">{t('First Name')}</Label>
@@ -170,6 +173,9 @@ const SignUpForm: React.FC = () => {
             <FormField
               control={form.control}
               name="lastName"
+              rules={{
+                required: t('Last name is required'),
+              }}
               render={({ field }) => (
                 <FormItem className="w-full grid space-y-2">
                   <Label htmlFor="lastName">{t('Last Name')}</Label>
@@ -189,6 +195,11 @@ const SignUpForm: React.FC = () => {
           <FormField
             control={form.control}
             name="email"
+            rules={{
+              required: t('Email is required'),
+              validate: (email: string) =>
+                emailRegex.test(email) || t('Email is invalid'),
+            }}
             render={({ field }) => (
               <FormItem className="grid space-y-2">
                 <Label htmlFor="email">{t('Email')}</Label>
@@ -207,6 +218,10 @@ const SignUpForm: React.FC = () => {
           <FormField
             control={form.control}
             name="password"
+            rules={{
+              required: t('Password is required'),
+              validate: passwordValidation,
+            }}
             render={({ field }) => (
               <FormItem
                 className="grid space-y-2"
@@ -218,7 +233,6 @@ const SignUpForm: React.FC = () => {
                   <PopoverTrigger asChild>
                     <Input
                       {...field}
-                      {...form.register('password', formValidationObject)}
                       required
                       id="password"
                       type="password"
@@ -229,7 +243,7 @@ const SignUpForm: React.FC = () => {
                       onChange={(e) => field.onChange(e)}
                     />
                   </PopoverTrigger>
-                  <PopoverContent className="absolute border-2 bg-white p-2 rounded-md right-60 -bottom-16 flex flex-col">
+                  <PopoverContent className="absolute border-2 bg-background p-2 rounded-md right-60 -bottom-16 flex flex-col">
                     <PasswordValidator password={form.getValues().password} />
                   </PopoverContent>
                 </Popover>
