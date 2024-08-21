@@ -1,29 +1,23 @@
-import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useMutation } from '@tanstack/react-query';
-import {
-  FlowRun,
-  FlowVersion,
-  isNil,
-  TriggerType,
-} from '../../../../../../shared/src';
+import { t } from 'i18next';
+
 import { useSocket } from '@/components/socket-provider';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Button } from '@/components/ui/button';
-import { t } from 'i18next';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { FlowRun, FlowVersion, isNil, TriggerType } from '@activepieces/shared';
 
 type TestFlowWidgetPorps = {
   flowVersion: FlowVersion;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
 };
-export const TestFlowWidget: React.FC<TestFlowWidgetPorps> = ({
-  flowVersion,
-  setRun,
-}) => {
+
+const TestFlowWidget = ({ flowVersion, setRun }: TestFlowWidgetPorps) => {
   const socket = useSocket();
 
   const triggerHasSampleData =
@@ -73,3 +67,5 @@ export const TestFlowWidget: React.FC<TestFlowWidgetPorps> = ({
 };
 
 TestFlowWidget.displayName = 'TestFlowWidget';
+
+export { TestFlowWidget };

@@ -260,7 +260,7 @@ const FlowsPage = () => {
                 if (e.ctrlKey) {
                   window.open(`/flows/${row.id}`, '_blank');
                 } else {
-                  navigate(`/flows/${row.id}`)
+                  navigate(`/flows/${row.id}`);
                 }
               }}
             />
