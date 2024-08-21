@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { ShowPoweredBy } from '@/components/show-powered-by';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
@@ -202,71 +203,70 @@ const FlowsPage = () => {
   ];
 
   return (
-    <div className="flex flex-row gap-4 w-full">
-      <div className="flex flex-col w-full">
-        <div className="mb-4 flex">
-          <h1 className="text-3xl font-bold">{t('Flows')}</h1>
-          <div className="ml-auto flex flex-row gap-2">
-            <ImportFlowDialog>
-              <Button variant="outline" className="flex gap-2 items-center">
-                <Import className="w-4 h-4" />
-                {t('Import Flow')}
+    <div className="flex flex-col gap-4 w-full">
+      <div className="mb-4 flex">
+        <h1 className="text-3xl font-bold">{t('Flows')}</h1>
+        <div className="ml-auto flex flex-row gap-2">
+          <ImportFlowDialog>
+            <Button variant="outline" className="flex gap-2 items-center">
+              <Import className="w-4 h-4" />
+              {t('Import Flow')}
+            </Button>
+          </ImportFlowDialog>
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="default"
+                className="flex gap-2 items-center"
+                loading={isCreateFlowPending}
+              >
+                <span>{t('New Flow')}</span>
+                <ChevronDown className="h-4 w-4 " />
               </Button>
-            </ImportFlowDialog>
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="default"
-                  className="flex gap-2 items-center"
-                  loading={isCreateFlowPending}
-                >
-                  <span>{t('New Flow')}</span>
-                  <ChevronDown className="h-4 w-4 " />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  createFlow();
+                }}
+                disabled={isCreateFlowPending}
+              >
+                <Plus className="h-4 w-4 me-2" />
+                <span>{t('From scratch')}</span>
+              </DropdownMenuItem>
+              <SelectFlowTemplateDialog>
                 <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    createFlow();
-                  }}
+                  onSelect={(e) => e.preventDefault()}
                   disabled={isCreateFlowPending}
                 >
-                  <Plus className="h-4 w-4 me-2" />
-                  <span>{t('From scratch')}</span>
+                  <Workflow className="h-4 w-4 me-2" />
+                  <span>{t('Use a template')}</span>
                 </DropdownMenuItem>
-                <SelectFlowTemplateDialog>
-                  <DropdownMenuItem
-                    onSelect={(e) => e.preventDefault()}
-                    disabled={isCreateFlowPending}
-                  >
-                    <Workflow className="h-4 w-4 me-2" />
-                    <span>{t('Use a template')}</span>
-                  </DropdownMenuItem>
-                </SelectFlowTemplateDialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-        <div className="flex flex-row gap-4">
-          <FolderFilterList />
-          <div className="w-full">
-            <DataTable
-              columns={columns}
-              fetchData={fetchData}
-              filters={filters}
-              refresh={refresh}
-              onRowClick={(row, e) => {
-                if (e.ctrlKey) {
-                  window.open(`/flows/${row.id}`, '_blank');
-                } else {
-                  navigate(`/flows/${row.id}`);
-                }
-              }}
-            />
-          </div>
+              </SelectFlowTemplateDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+      <div className="flex flex-row gap-4">
+        <FolderFilterList />
+        <div className="w-full">
+          <DataTable
+            columns={columns}
+            fetchData={fetchData}
+            filters={filters}
+            refresh={refresh}
+            onRowClick={(row, e) => {
+              if (e.ctrlKey) {
+                window.open(`/flows/${row.id}`, '_blank');
+              } else {
+                navigate(`/flows/${row.id}`);
+              }
+            }}
+          />
+        </div>
+      </div>
+      <ShowPoweredBy />
     </div>
   );
 };

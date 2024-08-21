@@ -96,6 +96,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         {...props}
+        onClick={(e) => {
+          loading ? e.stopPropagation() : props.onClick && props.onClick(e);
+        }}
       >
         {loading ? (
           <LoadingSpinner />

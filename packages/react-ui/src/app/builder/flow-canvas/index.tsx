@@ -5,13 +5,13 @@ import {
   applyEdgeChanges,
   EdgeChange,
   NodeChange,
+  getNodesBounds,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { TestFlowWidget } from './above-flow-widget';
 import { ApEdgeWithButton } from './edges/edge-with-button';
 import { ReturnLoopedgeButton } from './edges/return-loop-edge';
 import { ApEdge, ApNode, flowCanvasUtils } from './flow-canvas-utils';
@@ -20,6 +20,7 @@ import { ApBigButton } from './nodes/big-button';
 import { LoopStepPlaceHolder } from './nodes/loop-step-placeholder';
 import { StepPlaceHolder } from './nodes/step-holder-placeholder';
 import { ApStepNode } from './nodes/step-node';
+import { AboveFlowWidgets, BelowFlowWidget } from './widgets';
 
 const FlowCanvas = React.memo(() => {
   const [allowCanvasPanning, flowVersion] = useBuilderStateContext((state) => [
@@ -30,7 +31,9 @@ const FlowCanvas = React.memo(() => {
   const graph = useMemo(() => {
     return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
   }, [flowVersion]);
-
+  const graphHeight = useMemo(() => {
+    return getNodesBounds(graph.nodes);
+  }, [graph]);
   const nodeTypes = useMemo(
     () => ({
       stepNode: ApStepNode,
@@ -52,7 +55,6 @@ const FlowCanvas = React.memo(() => {
     setNodes(graph.nodes);
     setEdges(graph.edges);
   }, [graph]);
-
   const onNodesChange = useCallback(
     (changes: NodeChange<ApNode>[]) =>
       setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -95,8 +97,10 @@ const FlowCanvas = React.memo(() => {
             duration: 0,
           }}
         >
-          <TestFlowWidget></TestFlowWidget>
+          <AboveFlowWidgets></AboveFlowWidgets>
           <Background />
+
+          <BelowFlowWidget graphHeight={graphHeight.height}></BelowFlowWidget>
         </ReactFlow>
       </FlowDragLayer>
     </div>
