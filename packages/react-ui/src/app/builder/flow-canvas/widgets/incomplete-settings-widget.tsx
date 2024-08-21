@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   FlowVersion,
@@ -20,6 +20,12 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
   selectStepByName,
   clickOnNewNodeButton,
 }) => {
+  const invalidSteps = useMemo(
+    () =>
+      flowHelper.getAllSteps(flowVersion.trigger).filter((step) => !step.valid)
+        .length,
+    [flowVersion],
+  );
   function onClick() {
     const invalidSteps = flowHelper
       .getAllSteps(flowVersion.trigger)
@@ -46,7 +52,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
         key={'complete-flow-button'}
         onClick={onClick}
       >
-        {t('Incomplete Settings')}
+        {t('incompleteSteps', { invalidSteps: invalidSteps })}
       </Button>
     )
   );
