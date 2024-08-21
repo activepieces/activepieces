@@ -8,6 +8,7 @@ import { BrandingPage } from '@/app/routes/platform/settings/branding';
 import { SigningKeysPage } from '@/app/routes/platform/settings/signing-keys';
 import { SSOPage } from '@/app/routes/platform/settings/sso';
 import { FlowRunsPage } from '@/app/routes/runs';
+import { SwitchToBetaPage } from '@/app/routes/switch-to-beta';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 
 import { FlowsPage } from '../app/routes/flows';
@@ -38,7 +39,6 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
-import { SwitchToBetaPage } from '@/app/routes/switch-to-beta';
 
 export const router = createBrowserRouter([
   {

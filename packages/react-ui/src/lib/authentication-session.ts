@@ -1,6 +1,10 @@
-import { projectApi } from '@/lib/project-api';
-import { AuthenticationResponse, assertNotNullOrUndefined } from '@activepieces/shared';
 import { jwtDecode } from 'jwt-decode';
+
+import { projectApi } from '@/lib/project-api';
+import {
+  AuthenticationResponse,
+  assertNotNullOrUndefined,
+} from '@activepieces/shared';
 
 const currentUserKey = 'currentUser';
 const tokenKey = 'token';
