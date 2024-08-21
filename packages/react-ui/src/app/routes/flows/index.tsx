@@ -32,7 +32,7 @@ import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FolderBadge } from '@/features/folders/component/folder-badge';
-import { FolderFilterList } from '@/features/folders/component/folder-filter-list';
+import { FolderFilterList } from '@/features/folders/component/folder-filter-list/index';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';

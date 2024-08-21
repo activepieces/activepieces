@@ -4,18 +4,13 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import {
-  EllipsisVertical,
   Folder,
-  FolderOpen,
-  Pencil,
   PlusIcon,
-  Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,12 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -44,11 +34,11 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { FolderDto } from '@activepieces/shared';
 
-import { foldersApi } from '../lib/folders-api';
-import { foldersHooks } from '../lib/folders-hooks';
-import { foldersUtils } from '../lib/folders-utils';
+import { foldersApi } from '../../lib/folders-api';
+import { foldersHooks } from '../../lib/folders-hooks';
+import { foldersUtils } from '../../lib/folders-utils';
 
-import { RenameFolderDialog } from './rename-folder-dialog';
+import { FolderItem } from '@/features/folders/component/folder-filter-list/folder-item';
 
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
@@ -58,110 +48,6 @@ const CreateFolderFormSchema = Type.Object({
 
 type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>;
 
-type FolderItemProps = {
-  folder: FolderDto;
-  refetch: () => void;
-  updateSearchParams: (folderId: string | undefined) => void;
-  selectedFolderId: string | null;
-};
-const FolderItem = ({
-  folder,
-  refetch,
-  updateSearchParams,
-  selectedFolderId,
-}: FolderItemProps) => {
-  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
-  return (
-    <div key={folder.id} className="group py-1">
-      <Button
-        variant="ghost"
-        className={cn('w-full  items-center justify-start gap-2', {
-          'bg-muted': selectedFolderId === folder.id,
-        })}
-        onClick={() => updateSearchParams(folder.id)}
-      >
-        <TextWithIcon
-          className="flex-grow"
-          icon={
-            selectedFolderId === folder.id ? (
-              <FolderOpen
-                size={'18px'}
-                className="fill-muted-foreground/75 border-0 text-muted-foreground flex-shrink-0"
-              />
-            ) : (
-              <Folder
-                size={'18px'}
-                className="fill-muted-foreground border-0 text-muted-foreground flex-shrink-0"
-              />
-            )
-          }
-          text={
-            <div className="flex-grow whitespace-break-spaces break-all text-start truncate">
-              {folder.displayName}
-            </div>
-          }
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="flex flex-row -space-x-4 min-w-5"
-          >
-            <DropdownMenu onOpenChange={setIsActionMenuOpen} modal={false}>
-              <DropdownMenuTrigger
-                asChild
-                className={cn('invisible group-hover:visible', {
-                  visible: isActionMenuOpen,
-                })}
-              >
-                <EllipsisVertical className="h-5 w-5" />
-              </DropdownMenuTrigger>
-              <span
-                className={cn(
-                  'text-muted-foreground self-end group-hover:invisible',
-                  { invisible: isActionMenuOpen },
-                )}
-              >
-                {folder.numberOfFlows}
-              </span>
-              <DropdownMenuContent>
-                <RenameFolderDialog
-                  folderId={folder.id}
-                  onRename={() => refetch()}
-                >
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <div className="flex flex-row gap-2 items-center">
-                      <Pencil className="h-4 w-4" />
-                      <span>{t('Rename')}</span>
-                    </div>
-                  </DropdownMenuItem>
-                </RenameFolderDialog>
-                <ConfirmationDeleteDialog
-                  title={t('Delete folder {{folderName}}', {
-                    folderName: folder.displayName,
-                  })}
-                  message={t(
-                    'If you delete this folder, we will keep its flows and move them to Uncategorized.',
-                  )}
-                  mutationFn={async () => {
-                    await foldersApi.delete(folder.id);
-                    refetch();
-                  }}
-                  entityName={folder.displayName}
-                >
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <div className="flex flex-row gap-2 items-center">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                      <span className="text-destructive">{t('Delete')}</span>
-                    </div>
-                  </DropdownMenuItem>
-                </ConfirmationDeleteDialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </TextWithIcon>
-      </Button>
-    </div>
-  );
-};
 
 const FolderFilterList = () => {
   const location = useLocation();
@@ -283,32 +169,26 @@ const FolderFilterList = () => {
         </div>
       </div>
       <div className="flex w-[270px] h-full flex-col space-y-1">
-        <Button
-          variant="secondary"
-          className={cn('flex w-full justify-start bg-background', {
-            'bg-muted': !selectedFolderId,
-          })}
-          onClick={() => updateSearchParams(undefined)}
-        >
-          <TextWithIcon icon={<Folder size={18} />} text={t('All flows')} />
-          <div className="grow"></div>
-          <span className="text-muted-foreground">{allFlowsCount}</span>
-        </Button>
-        <Button
-          variant="ghost"
-          className={cn('flex w-full justify-start bg-background', {
-            'bg-muted': selectedFolderId === 'NULL',
-          })}
-          onClick={() => updateSearchParams('NULL')}
-        >
-          <TextWithIcon icon={<Folder size={18} />} text={t('Uncategorized')} />
-          <div className="grow"></div>
-          <div className="flex flex-row -space-x-4">
-            <span className="visible text-muted-foreground group-hover:invisible">
-              {foldersUtils.extractUncategorizedFlows(allFlowsCount, folders)}
-            </span>
-          </div>
-        </Button>
+    
+        <FolderItem
+          folderDisplayName={t('All flows')}
+          numberOfFlows={foldersUtils.extractUncategorizedFlows(allFlowsCount, folders)}
+          refetch={refetch}
+          folderId={undefined}
+          disableMenu={true}
+          selectedFolderId={selectedFolderId}
+          updateSearchParams={updateSearchParams}
+        />
+        <FolderItem
+          folderDisplayName={t('Uncategorized')}
+          numberOfFlows={foldersUtils.extractUncategorizedFlows(allFlowsCount, folders)}
+          folderId="NULL"
+          refetch={refetch}
+          disableMenu={true}
+          selectedFolderId={selectedFolderId}
+          updateSearchParams={updateSearchParams}
+        />
+ 
         <Separator className="my-6" />
         <ScrollArea type="auto">
           <div className="flex flex-col w-full max-h-[590px]">
@@ -324,8 +204,11 @@ const FolderFilterList = () => {
                 return (
                   <FolderItem
                     key={folder.id}
-                    folder={folder}
+                    folderDisplayName={folder.displayName}
+                    numberOfFlows={folder.numberOfFlows}
+                    folderId={folder.id}
                     refetch={refetch}
+                    disableMenu={false}
                     selectedFolderId={selectedFolderId}
                     updateSearchParams={updateSearchParams}
                   />
