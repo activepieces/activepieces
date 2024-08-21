@@ -151,7 +151,7 @@ export const SearchableSelect = <T extends React.Key>({
                     }
                     return (
                       <CommandItem
-                        key={option.label}
+                        key={filterIndex}
                         value={String(filterIndex)}
                         onSelect={(currentValue) => {
                           setOpen(false);

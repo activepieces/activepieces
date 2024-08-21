@@ -160,17 +160,19 @@ const ArrayPieceProperty = ({
           </Sortable>
         )}
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={disabled}
-        onClick={() => {
-          append(isComplexArray ? {} : '');
-        }}
-        type="button"
-      >
-        <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
-      </Button>
+      {!disabled && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-2"
+          onClick={() => {
+            append(isComplexArray ? {} : '');
+          }}
+          type="button"
+        >
+          <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
+        </Button>
+      )}
     </>
   );
 };

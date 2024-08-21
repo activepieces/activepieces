@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { LoadingSpinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
@@ -27,26 +27,23 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   const { mutate, isPending } = useMutation<
     PiecePropertyMap,
     Error,
-    Record<string, unknown>
+    { input: Record<string, unknown> }
   >({
-    mutationFn: async (input) => {
+    mutationFn: async ({ input }) => {
       const { settings } = form.getValues();
       const actionOrTriggerName = settings.actionName ?? settings.triggerName;
       const { pieceName, pieceVersion, pieceType, packageType } = settings;
-      return piecesApi.options({
+      return piecesApi.options<PiecePropertyMap>({
         pieceName,
         pieceVersion,
         pieceType,
         packageType,
         propertyName: props.propertyName,
-        actionOrTriggerName: actionOrTriggerName,
-        input: input,
+        actionOrTriggerName,
+        input,
         flowVersionId: flowVersion.id,
         flowId: flowVersion.flowId,
       });
-    },
-    onSuccess: (response) => {
-      setPropertyMap(response);
     },
     onError: (error) => {
       console.error(error);
@@ -63,16 +60,32 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   /* eslint-enable react-hooks/rules-of-hooks */
 
   useEffect(() => {
-    const record: Record<string, unknown> = {};
+    const input: Record<string, unknown> = {};
     newRefreshers.forEach((refresher, index) => {
-      record[refresher] = refresherValues[index];
+      input[refresher] = refresherValues[index];
     });
-    mutate(record);
+    form.setValue(`settings.input.${props.propertyName}` as const, undefined, {
+      shouldValidate: true,
+    });
+    mutate(
+      { input },
+      {
+        onSuccess: (response) => {
+          setPropertyMap(response);
+        },
+      },
+    );
   }, refresherValues);
 
   return (
     <>
-      {isPending && <LoadingSpinner></LoadingSpinner>}
+      {isPending && (
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="w-full h-4" />
+          ))}
+        </div>
+      )}
       {!isPending && propertyMap && (
         <AutoPropertiesFormComponent
           prefixValue={`settings.input.${props.propertyName}`}

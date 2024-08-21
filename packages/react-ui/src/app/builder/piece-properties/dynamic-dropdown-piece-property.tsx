@@ -32,17 +32,16 @@ const DynamicDropdownPieceProperty = React.memo(
       placeholder: t('Select an option'),
       options: [],
     });
-
     const { mutate, isPending } = useMutation<
       DropdownState<unknown>,
       Error,
-      Record<string, unknown>
+      { input: Record<string, unknown> }
     >({
-      mutationFn: async (input) => {
+      mutationFn: async ({ input }) => {
         const { settings } = form.getValues();
         const actionOrTriggerName = settings.actionName ?? settings.triggerName;
         const { pieceName, pieceVersion, pieceType, packageType } = settings;
-        return piecesApi.options({
+        const response = piecesApi.options<DropdownState<unknown>>({
           pieceName,
           pieceVersion,
           pieceType,
@@ -53,9 +52,7 @@ const DynamicDropdownPieceProperty = React.memo(
           flowVersionId: flowVersion.id,
           flowId: flowVersion.flowId,
         });
-      },
-      onSuccess: (response) => {
-        setDropdownState(response);
+        return response;
       },
       onError: (error) => {
         console.error(error);
@@ -72,11 +69,21 @@ const DynamicDropdownPieceProperty = React.memo(
     /* eslint-enable react-hooks/rules-of-hooks */
 
     useEffect(() => {
-      const record: Record<string, unknown> = {};
+      const input: Record<string, unknown> = {};
       newRefreshers.forEach((refresher, index) => {
-        record[refresher] = refresherValues[index];
+        input[refresher] = refresherValues[index];
       });
-      mutate(record);
+
+      props.onChange(undefined);
+
+      mutate(
+        { input },
+        {
+          onSuccess: (response) => {
+            setDropdownState(response);
+          },
+        },
+      );
     }, refresherValues);
 
     const selectOptions = dropdownState.options.map((option) => ({
