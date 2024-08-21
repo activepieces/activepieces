@@ -21,7 +21,7 @@ export class TelemetryService {
   productFruitsInitialized = false;
   analytics: AnalyticsBrowser;
 
-  constructor(private flagService: FlagService, private http: HttpClient) {}
+  constructor(private flagService: FlagService, private http: HttpClient) { }
 
   init(user: UserWithoutPassword) {
     this.flagService.getAllFlags().subscribe((flags) => {
@@ -57,6 +57,31 @@ export class TelemetryService {
             capture_pageview: false,
             segment: (window as any).analytics,
             loaded: () => this.analytics.page(),
+          });
+
+          posthog.identify(user.id, {
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            activepiecesVersion: currentVersion,
+            activepiecesEnvironment: environment,
+          });
+
+          posthog.onFeatureFlags((featureFlags) => {
+            if (featureFlags.includes('beta-react')) {
+              console.log('featureFlags', featureFlags);
+              const token = window.localStorage.getItem('token'); // Fetch the token
+              const currentUser = window.localStorage.getItem('currentUser'); // Fetch the currentUser
+              setTimeout(() => {
+                if (token && currentUser) {
+                  const currentUserEncoded = encodeURIComponent(currentUser);
+                  // Redirect to beta.activepieces.com with token and currentUser as query params
+                  window.location.href = `https://beta.activepieces.com/switch-to-beta?token=${token}&currentUser=${currentUserEncoded}`;
+                } else {
+                  console.error('Token or currentUser is missing.');
+                }
+              }, 2000);
+            }
           });
         });
       }
