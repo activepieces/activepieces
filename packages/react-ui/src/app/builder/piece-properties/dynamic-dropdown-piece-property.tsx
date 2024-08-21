@@ -74,8 +74,6 @@ const DynamicDropdownPieceProperty = React.memo(
         input[refresher] = refresherValues[index];
       });
 
-      props.onChange(undefined);
-
       mutate(
         { input },
         {

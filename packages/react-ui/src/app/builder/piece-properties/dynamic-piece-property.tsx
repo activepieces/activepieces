@@ -64,9 +64,6 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
     newRefreshers.forEach((refresher, index) => {
       input[refresher] = refresherValues[index];
     });
-    form.setValue(`settings.input.${props.propertyName}` as const, undefined, {
-      shouldValidate: true,
-    });
     mutate(
       { input },
       {
