@@ -10,6 +10,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
+import { ShowPoweredBy } from '@/components/show-powered-by';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -170,6 +171,7 @@ const BuilderPage = () => {
           <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
             <div ref={middlePanelRef} className="relative h-full w-full">
               <CanvasControls></CanvasControls>
+              <ShowPoweredBy />
               <DataSelector
                 parentHeight={middlePanelSize.height}
                 parentWidth={middlePanelSize.width}

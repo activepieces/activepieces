@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
+import { ShowPoweredBy } from '@/components/show-powered-by';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -238,6 +239,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                 )}
               </CardContent>
             </Card>
+            <ShowPoweredBy />
           </form>
         </Form>
       </div>
