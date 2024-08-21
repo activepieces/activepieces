@@ -3,7 +3,6 @@ import { jwtDecode } from 'jwt-decode';
 import { projectApi } from '@/lib/project-api';
 import {
   AuthenticationResponse,
-  assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
 
@@ -37,9 +36,7 @@ export const authenticationSession = {
     localStorage.setItem(tokenKey, result.token);
   },
   isLoggedIn(): boolean {
-    return (
-      !!this.getToken() && !!this.getCurrentUser()
-    );
+    return !!this.getToken() && !!this.getCurrentUser();
   },
   LogOut() {
     localStorage.removeItem(tokenKey);

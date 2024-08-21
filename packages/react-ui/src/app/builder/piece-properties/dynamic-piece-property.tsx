@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
-import React, { useEffect, useState } from 'react';
+import deepEqual from 'deep-equal';
+import React, { useEffect, useState, useRef } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -18,6 +19,9 @@ type DynamicPropertiesProps = {
 const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   const [flowVersion] = useBuilderStateContext((state) => [state.flowVersion]);
   const form = useFormContext<Action | Trigger>();
+
+  const isFirstRender = useRef(true);
+  const previousValues = useRef<undefined | unknown[]>(undefined);
 
   const [propertyMap, setPropertyMap] = useState<PiecePropertyMap | undefined>(
     undefined,
@@ -64,6 +68,23 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
     newRefreshers.forEach((refresher, index) => {
       input[refresher] = refresherValues[index];
     });
+
+    if (
+      !isFirstRender.current &&
+      !deepEqual(previousValues.current, refresherValues)
+    ) {
+      form.setValue(
+        `settings.input.${props.propertyName}` as const,
+        undefined,
+        {
+          shouldValidate: true,
+        },
+      );
+    }
+
+    previousValues.current = refresherValues;
+    isFirstRender.current = false;
+
     mutate(
       { input },
       {

@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
+import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -25,6 +26,8 @@ const DynamicDropdownPieceProperty = React.memo(
       state.flowVersion,
     ]);
     const form = useFormContext<Action | Trigger>();
+    const isFirstRender = useRef(true);
+    const previousValues = useRef<undefined | unknown[]>(undefined);
 
     const newRefreshers = [...props.refreshers, 'auth'];
     const [dropdownState, setDropdownState] = useState<DropdownState<unknown>>({
@@ -73,6 +76,16 @@ const DynamicDropdownPieceProperty = React.memo(
       newRefreshers.forEach((refresher, index) => {
         input[refresher] = refresherValues[index];
       });
+
+      if (
+        !isFirstRender.current &&
+        !deepEqual(previousValues.current, refresherValues)
+      ) {
+        props.onChange(undefined);
+      }
+
+      previousValues.current = refresherValues;
+      isFirstRender.current = false;
 
       mutate(
         { input },
