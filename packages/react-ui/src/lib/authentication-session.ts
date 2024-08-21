@@ -1,10 +1,7 @@
 import { jwtDecode } from 'jwt-decode';
 
 import { projectApi } from '@/lib/project-api';
-import {
-  AuthenticationResponse,
-  isNil,
-} from '@activepieces/shared';
+import { AuthenticationResponse, isNil } from '@activepieces/shared';
 
 const currentUserKey = 'currentUser';
 const tokenKey = 'token';

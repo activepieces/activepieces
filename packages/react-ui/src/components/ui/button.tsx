@@ -80,7 +80,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       const isCtrlWithShortcut =
         keyboardShortcut &&
         event.key === keyboardShortcut.toLocaleLowerCase() &&
-        event.ctrlKey;
+        (isMac ? event.metaKey : event.ctrlKey);
       if (isEscapePressed || isCtrlWithShortcut) {
         event.preventDefault();
         event.stopPropagation();
