@@ -4,6 +4,7 @@ import { projectApi } from '@/lib/project-api';
 import {
   AuthenticationResponse,
   assertNotNullOrUndefined,
+  isNil,
 } from '@activepieces/shared';
 
 const currentUserKey = 'currentUser';
@@ -17,9 +18,11 @@ export const authenticationSession = {
   getToken(): string | null {
     return localStorage.getItem(tokenKey) ?? null;
   },
-  getProjectId(): string {
+  getProjectId(): string | null {
     const token = this.getToken();
-    assertNotNullOrUndefined(token, 'token');
+    if (isNil(token)) {
+      return null;
+    }
     const decodedJwt = jwtDecode<{ projectId: string }>(token);
     return decodedJwt.projectId;
   },
@@ -35,7 +38,7 @@ export const authenticationSession = {
   },
   isLoggedIn(): boolean {
     return (
-      !!this.getToken() && !!this.getCurrentUser() && !!this.getProjectId()
+      !!this.getToken() && !!this.getCurrentUser()
     );
   },
   LogOut() {
