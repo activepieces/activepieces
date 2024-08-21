@@ -167,10 +167,13 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       {...listeners}
     >
       <div
-        className={cn('absolute left-0 top-0  rounded-sm w-full h-full', {
-          'border-t-[3px] border-primary border-solid':
-            (isSelected || showStepActionsList) && !isDragging,
-        })}
+        className={cn(
+          'absolute left-0 top-0 pointer-events-none  rounded-sm w-full h-full',
+          {
+            'border-t-[3px] border-primary border-solid':
+              (isSelected || showStepActionsList) && !isDragging,
+          },
+        )}
       ></div>
       <div className="px-3 h-full w-full  overflow-hidden">
         {!isDragging && (
@@ -287,7 +290,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                             <Button
                               variant="outline"
                               size="icon"
-                              className="rounded-full"
+                              className="rounded-full min-w-9 min-h-9 max-w-9 max-h-9 p-1"
                               onClick={(e) => {
                                 if (!showStepActionsList) {
                                   return;
@@ -308,7 +311,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                             <Button
                               variant="outline"
                               size="icon"
-                              className="rounded-full"
+                              className="rounded-full min-w-9 min-h-9 max-w-9 max-h-9 p-1"
                               onClick={(e) => {
                                 if (!showStepActionsList) {
                                   return;
