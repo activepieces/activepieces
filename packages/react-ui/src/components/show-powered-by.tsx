@@ -5,14 +5,17 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApFlagId } from '@activepieces/shared';
 
-const ShowPoweredBy = () => {
+type ShowPoweredByProps = {
+  showOnCloud?: boolean;
+};
+const ShowPoweredBy = (props: ShowPoweredByProps) => {
   const [hover, setHover] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
-  const showPlatformDemo = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_PLATFORM_DEMO,
+  const { data: isCloudPlatform } = flagsHooks.useFlag<boolean>(
+    ApFlagId.IS_CLOUD_PLATFORM,
     useQueryClient(),
   );
-  if (!platform?.showPoweredBy && !showPlatformDemo) {
+  if (!platform?.showPoweredBy && !(props.showOnCloud && isCloudPlatform)) {
     return null;
   }
 
