@@ -47,18 +47,18 @@ const AutoPropertiesFormComponent = React.memo(
 
     return (
       <div className="flex flex-col gap-4 w-full">
-        {Object.entries(props).map(([key]) => {
+        {Object.entries(props).map(([propertyName]) => {
           return (
             <FormField
-              key={key}
-              name={prefixValue + '.' + key}
+              key={propertyName}
+              name={prefixValue + '.' + propertyName}
               control={form.control}
               render={({ field }) =>
                 selectRightComponent(
                   field,
-                  key,
-                  prefixValue + '.' + key,
-                  props[key],
+                  propertyName,
+                  prefixValue + '.' + propertyName,
+                  props[propertyName],
                   allowDynamicValues,
                   markdownVariables ?? {},
                   useMentionTextInput,
@@ -75,7 +75,7 @@ const AutoPropertiesFormComponent = React.memo(
 
 const selectRightComponent = (
   field: ControllerRenderProps<Record<string, any>, string>,
-  key: string,
+  propertyName: string,
   inputName: string,
   property: PieceProperty,
   allowDynamicValues: boolean,
@@ -88,7 +88,7 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
-          propertyKey={key}
+          propertyName={propertyName}
           field={field}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
@@ -105,7 +105,7 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
-          propertyKey={key}
+          propertyName={propertyName}
           field={field}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
@@ -122,7 +122,7 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
-          propertyKey={key}
+          propertyName={propertyName}
           disabled={disabled}
           field={field}
           allowDynamicValues={allowDynamicValues}
@@ -130,7 +130,7 @@ const selectRightComponent = (
         >
           <FormControl>
             <Switch
-              id={key}
+              id={propertyName}
               checked={field.value}
               disabled={disabled}
               onCheckedChange={field.onChange}
@@ -149,7 +149,7 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
-          propertyKey={key}
+          propertyName={propertyName}
           field={field}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
@@ -166,7 +166,7 @@ const selectRightComponent = (
     case PropertyType.JSON:
       return (
         <AutoFormFieldWrapper
-          propertyKey={key}
+          propertyName={propertyName}
           property={property}
           field={field}
           disabled={disabled}
@@ -186,7 +186,7 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
-          propertyKey={key}
+          propertyName={propertyName}
           field={field}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
@@ -205,7 +205,7 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
-          propertyKey={key}
+          propertyName={propertyName}
           field={field}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
@@ -215,7 +215,7 @@ const selectRightComponent = (
             initialValue={field.value}
             onChange={field.onChange}
             disabled={disabled}
-            propertyName={key}
+            propertyName={propertyName}
             multiple={property.type === PropertyType.MULTI_SELECT_DROPDOWN}
           ></DynamicDropdownPieceProperty>
         </AutoFormFieldWrapper>
@@ -230,7 +230,7 @@ const selectRightComponent = (
         <AutoFormFieldWrapper
           property={property}
           field={field}
-          propertyKey={key}
+          propertyName={propertyName}
           disabled={disabled}
           allowDynamicValues={false}
         >
@@ -251,20 +251,11 @@ const selectRightComponent = (
       );
     case PropertyType.DYNAMIC:
       return (
-        <AutoFormFieldWrapper
-          propertyKey={key}
-          property={property}
-          field={field}
-          hideLabel={true}
+        <DynamicProperties
+          refreshers={property.refreshers}
+          propertyName={propertyName}
           disabled={disabled}
-          allowDynamicValues={allowDynamicValues}
-        >
-          <DynamicProperties
-            refreshers={property.refreshers}
-            propertyName={key}
-            disabled={disabled}
-          ></DynamicProperties>
-        </AutoFormFieldWrapper>
+        ></DynamicProperties>
       );
     case PropertyType.CUSTOM_AUTH:
     case PropertyType.BASIC_AUTH:
