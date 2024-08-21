@@ -2,7 +2,6 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LockIcon, MailIcon, Earth } from 'lucide-react';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AllowedDomainDialog } from '@/app/routes/platform/settings/sso/allowed-domain';
@@ -33,7 +32,6 @@ const ProviderCard = ({
   button,
   badgesText,
 }: ProviderCardProps) => {
-  const { t } = useTranslation();
   return (
     <Card className="w-full px-4 py-4">
       <div className="flex w-full gap-2 justify-center items-center">

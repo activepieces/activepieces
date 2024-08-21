@@ -74,7 +74,6 @@ const PasswordValidator = ({ password }: { password: string }) => {
 const SignUpForm: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const { t } = useTranslation();
   const { data: isCloudPlatform } = flagsHooks.useFlag<boolean>(
     ApFlagId.IS_CLOUD_PLATFORM,
     queryClient,
