@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -32,17 +32,17 @@ const DynamicDropdownPieceProperty = React.memo(
       placeholder: t('Select an option'),
       options: [],
     });
-
+    const latestCallId = useRef<number>(0);
     const { mutate, isPending } = useMutation<
       DropdownState<unknown>,
       Error,
-      Record<string, unknown>
+      { input: Record<string, unknown>; callId: number }
     >({
-      mutationFn: async (input) => {
+      mutationFn: async ({ input, callId }) => {
         const { settings } = form.getValues();
         const actionOrTriggerName = settings.actionName ?? settings.triggerName;
         const { pieceName, pieceVersion, pieceType, packageType } = settings;
-        return piecesApi.options({
+        const response = piecesApi.options<DropdownState<unknown>>({
           pieceName,
           pieceVersion,
           pieceType,
@@ -53,12 +53,18 @@ const DynamicDropdownPieceProperty = React.memo(
           flowVersionId: flowVersion.id,
           flowId: flowVersion.flowId,
         });
+        if (latestCallId.current !== callId) {
+          throw new Error('Stale request');
+        }
+        return response;
       },
       onSuccess: (response) => {
         setDropdownState(response);
       },
       onError: (error) => {
-        console.error(error);
+        if (error.message !== 'Stale request') {
+          console.error(error);
+        }
       },
     });
 
@@ -72,11 +78,13 @@ const DynamicDropdownPieceProperty = React.memo(
     /* eslint-enable react-hooks/rules-of-hooks */
 
     useEffect(() => {
-      const record: Record<string, unknown> = {};
+      const input: Record<string, unknown> = {};
       newRefreshers.forEach((refresher, index) => {
-        record[refresher] = refresherValues[index];
+        input[refresher] = refresherValues[index];
       });
-      mutate(record);
+      const callId = ++latestCallId.current;
+      mutate({ input, callId });
+      props.onChange(undefined);
     }, refresherValues);
 
     const selectOptions = dropdownState.options.map((option) => ({
