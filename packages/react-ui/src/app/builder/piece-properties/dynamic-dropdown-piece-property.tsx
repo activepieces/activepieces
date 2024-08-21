@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -32,13 +32,12 @@ const DynamicDropdownPieceProperty = React.memo(
       placeholder: t('Select an option'),
       options: [],
     });
-    const latestCallId = useRef<number>(0);
     const { mutate, isPending } = useMutation<
       DropdownState<unknown>,
       Error,
-      { input: Record<string, unknown>; callId: number }
+      { input: Record<string, unknown> }
     >({
-      mutationFn: async ({ input, callId }) => {
+      mutationFn: async ({ input }) => {
         const { settings } = form.getValues();
         const actionOrTriggerName = settings.actionName ?? settings.triggerName;
         const { pieceName, pieceVersion, pieceType, packageType } = settings;
@@ -53,18 +52,10 @@ const DynamicDropdownPieceProperty = React.memo(
           flowVersionId: flowVersion.id,
           flowId: flowVersion.flowId,
         });
-        if (latestCallId.current !== callId) {
-          throw new Error('Stale request');
-        }
         return response;
       },
-      onSuccess: (response) => {
-        setDropdownState(response);
-      },
       onError: (error) => {
-        if (error.message !== 'Stale request') {
-          console.error(error);
-        }
+        console.error(error);
       },
     });
 
@@ -82,9 +73,17 @@ const DynamicDropdownPieceProperty = React.memo(
       newRefreshers.forEach((refresher, index) => {
         input[refresher] = refresherValues[index];
       });
-      const callId = ++latestCallId.current;
-      mutate({ input, callId });
+
       props.onChange(undefined);
+
+      mutate(
+        { input },
+        {
+          onSuccess: (response) => {
+            setDropdownState(response);
+          },
+        },
+      );
     }, refresherValues);
 
     const selectOptions = dropdownState.options.map((option) => ({

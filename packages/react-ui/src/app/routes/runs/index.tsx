@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -36,8 +37,6 @@ import {
   Permission,
   isFailedState,
 } from '@activepieces/shared';
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-
 
 const fetchData = async (
   params: {
@@ -261,13 +260,13 @@ const FlowRunsPage = () => {
           if (e.ctrlKey) {
             window.open(`/runs/${row.id}`, '_blank');
           } else {
-            navigate(`/runs/${row.id}`)
+            navigate(`/runs/${row.id}`);
           }
         }}
       />
     </div>
   );
-}
+};
 
 FlowRunsPage.displayName = 'FlowRunsTable';
 export { FlowRunsPage };

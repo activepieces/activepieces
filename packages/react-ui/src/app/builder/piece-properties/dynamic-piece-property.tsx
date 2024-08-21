@@ -1,14 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { Skeleton } from '@/components/ui/skeleton';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
 import { AutoPropertiesFormComponent } from './auto-properties-form';
-import { Skeleton } from '@/components/ui/skeleton';
 
 type DynamicPropertiesProps = {
   refreshers: string[];
@@ -24,20 +24,16 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   );
   const newRefreshers = [...props.refreshers, 'auth'];
 
-  const latestCallId = useRef<number>(0);
-
   const { mutate, isPending } = useMutation<
     PiecePropertyMap,
     Error,
-    { input: Record<string, unknown>; callId: number }
+    { input: Record<string, unknown> }
   >({
-    mutationFn: async ({ input, callId }) => {
+    mutationFn: async ({ input }) => {
       const { settings } = form.getValues();
       const actionOrTriggerName = settings.actionName ?? settings.triggerName;
       const { pieceName, pieceVersion, pieceType, packageType } = settings;
-
-      // Perform the API request inside the mutation function
-      const response = await piecesApi.options<PiecePropertyMap>({
+      return piecesApi.options<PiecePropertyMap>({
         pieceName,
         pieceVersion,
         pieceType,
@@ -48,21 +44,9 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
         flowVersionId: flowVersion.id,
         flowId: flowVersion.flowId,
       });
-
-      // If this isn't the latest call, ignore the result
-      if (latestCallId.current !== callId) {
-        throw new Error('Stale request');
-      }
-
-      return response;
-    },
-    onSuccess: (response) => {
-      setPropertyMap(response);
     },
     onError: (error) => {
-      if (error.message !== 'Stale request') {
-        console.error(error);
-      }
+      console.error(error);
     },
   });
 
@@ -80,12 +64,17 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
     newRefreshers.forEach((refresher, index) => {
       input[refresher] = refresherValues[index];
     });
-
-    const callId = ++latestCallId.current;
-    mutate({ input, callId });
     form.setValue(`settings.input.${props.propertyName}` as const, undefined, {
       shouldValidate: true,
     });
+    mutate(
+      { input },
+      {
+        onSuccess: (response) => {
+          setPropertyMap(response);
+        },
+      },
+    );
   }, refresherValues);
 
   return (
