@@ -9,6 +9,7 @@ import { TestFlowWidget } from '@/app/builder/flow-canvas/widgets/test-flow-widg
 import IncompleteSettingsButton from '@/app/builder/flow-canvas/widgets/incomplete-settings-widget';
 import FlowEndWidget from '@/app/builder/flow-canvas/widgets/flow-end-widget';
 import { AP_NODE_SIZE } from '@/app/builder/flow-canvas/flow-canvas-utils';
+import ViewOnlyWidget from '@/app/builder/flow-canvas/widgets/view-only-widget';
 
 const AboveFlowWidgets = React.memo(() => {
   const [
@@ -50,16 +51,7 @@ const AboveFlowWidgets = React.memo(() => {
               ></IncompleteSettingsButton>
             </>
           )}
-          {readonly && (
-            <Button
-              variant="ghost"
-              className="h-8 bg-muted text-accent-foreground border-none disabled:opacity-100"
-              disabled={true}
-              key={'view-only-button'}
-            >
-              {t('View Only')}
-            </Button>
-          )}
+          {readonly && <ViewOnlyWidget></ViewOnlyWidget>}
         </div>
       </div>
     </ViewportPortal>
