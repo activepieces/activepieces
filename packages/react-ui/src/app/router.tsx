@@ -38,8 +38,14 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+import { SwitchToBetaPage } from '@/app/routes/switch-to-beta';
 
 export const router = createBrowserRouter([
+  {
+    // TODO remove after react is launched
+    path: '/switch-to-beta',
+    element: <SwitchToBetaPage />,
+  },
   {
     path: '/flows',
     element: (
