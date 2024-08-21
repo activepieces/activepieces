@@ -1,4 +1,5 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
+import { StatusCodes } from "http-status-codes";
 
 export const response = createAction({
     name: 'returnResponse',
@@ -12,7 +13,10 @@ export const response = createAction({
     },
     async run(context) {
         context.run.stop({
-            response: context.propsValue.response,
+            response: {
+                body: context.propsValue.response,
+                status: StatusCodes.OK,
+            }
         });
         return context.propsValue.response;
     },
