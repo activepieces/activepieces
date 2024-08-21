@@ -138,7 +138,7 @@ const SignUpForm: React.FC = () => {
     form.setError('root.serverError', {
       message: undefined,
     });
-    mutate(data);
+    mutate({ ...data, email: data.email.trim().toLowerCase() });
   };
 
   const [isPasswordFocused, setPasswordFocused] = useState(false);
