@@ -21,7 +21,7 @@ export class TelemetryService {
   productFruitsInitialized = false;
   analytics: AnalyticsBrowser;
 
-  constructor(private flagService: FlagService, private http: HttpClient) { }
+  constructor(private flagService: FlagService, private http: HttpClient) {}
 
   init(user: UserWithoutPassword) {
     this.flagService.getAllFlags().subscribe((flags) => {

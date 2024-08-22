@@ -5,7 +5,7 @@ import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFilesService } from '../services/files.service'
 import { createContextStore } from '../services/storage.service'
-import { variableService } from '../services/variable-service'
+import { variableService } from '../variables/variable-service'
 import { pieceLoader } from './piece-loader'
 
 type Listener = {
