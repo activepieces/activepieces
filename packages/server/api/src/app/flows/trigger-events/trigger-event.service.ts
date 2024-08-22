@@ -8,6 +8,7 @@ import {
     PieceTrigger,
     PopulatedFlow,
     ProjectId,
+    sanitizeObjectForPostgress,
     SeekPage,
     Trigger,
     TriggerEvent,
@@ -44,6 +45,8 @@ export const triggerEventService = {
         })
 
         const sourceName = getSourceName(flow.version.trigger)
+        
+        payload = JSON.parse(sanitizeObjectForPostgress(JSON.stringify(payload)))
 
         return triggerEventRepo().save({
             id: apId(),

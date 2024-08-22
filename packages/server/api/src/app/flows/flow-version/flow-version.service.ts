@@ -21,7 +21,7 @@ import {
     PieceActionSettings,
     PieceCategory,
     PieceTriggerSettings,
-    ProjectId, SeekPage, TriggerType, UserId,
+    ProjectId, sanitizeObjectForPostgress, SeekPage, TriggerType, UserId,
 } from '@activepieces/shared'
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
@@ -83,6 +83,8 @@ export const flowVersionService = {
         userOperation,
         entityManager,
     }: ApplyOperationParams): Promise<FlowVersion> {
+        flowVersion.trigger = JSON.parse(sanitizeObjectForPostgress(JSON.stringify(flowVersion.trigger)))
+
         let operations: FlowOperationRequest[] = []
         let mutatedFlowVersion: FlowVersion = flowVersion
 

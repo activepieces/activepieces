@@ -8,6 +8,7 @@ import {
     FlowVersionTemplate,
     isNil,
     ListFlowTemplatesRequest,
+    sanitizeObjectForPostgress,
     SeekPage,
     TemplateType,
 } from '@activepieces/shared'
@@ -31,6 +32,7 @@ export const flowTemplateService = {
             id,
         }: CreateFlowTemplateRequest,
     ): Promise<FlowTemplate> => {
+        template = JSON.parse(sanitizeObjectForPostgress(JSON.stringify(template)))
         const flowTemplate: FlowVersionTemplate = template
         const newTags = tags ?? []
         const newId = id ?? apId()
