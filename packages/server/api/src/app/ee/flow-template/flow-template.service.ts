@@ -32,8 +32,7 @@ export const flowTemplateService = {
             id,
         }: CreateFlowTemplateRequest,
     ): Promise<FlowTemplate> => {
-        template = JSON.parse(sanitizeObjectForPostgresql(JSON.stringify(template)))
-        const flowTemplate: FlowVersionTemplate = template
+        const flowTemplate: FlowVersionTemplate = sanitizeObjectForPostgresql(template)
         const newTags = tags ?? []
         const newId = id ?? apId()
         await templateRepo().upsert(

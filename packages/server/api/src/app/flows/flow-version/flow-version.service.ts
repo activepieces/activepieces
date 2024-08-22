@@ -83,8 +83,6 @@ export const flowVersionService = {
         userOperation,
         entityManager,
     }: ApplyOperationParams): Promise<FlowVersion> {
-        flowVersion.trigger = JSON.parse(sanitizeObjectForPostgresql(JSON.stringify(flowVersion.trigger)))
-
         let operations: FlowOperationRequest[] = []
         let mutatedFlowVersion: FlowVersion = flowVersion
 
@@ -148,7 +146,7 @@ export const flowVersionService = {
         if (userId) {
             mutatedFlowVersion.updatedBy = userId
         }
-        return flowVersionRepo(entityManager).save(mutatedFlowVersion)
+        return flowVersionRepo(entityManager).save(sanitizeObjectForPostgresql(mutatedFlowVersion))
     },
 
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {
