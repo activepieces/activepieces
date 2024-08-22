@@ -21,7 +21,7 @@ import {
     PieceActionSettings,
     PieceCategory,
     PieceTriggerSettings,
-    ProjectId, SeekPage, TriggerType, UserId,
+    ProjectId, sanitizeObjectForPostgresql, SeekPage, TriggerType, UserId,
 } from '@activepieces/shared'
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
@@ -146,7 +146,7 @@ export const flowVersionService = {
         if (userId) {
             mutatedFlowVersion.updatedBy = userId
         }
-        return flowVersionRepo(entityManager).save(mutatedFlowVersion)
+        return flowVersionRepo(entityManager).save(sanitizeObjectForPostgresql(mutatedFlowVersion))
     },
 
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {

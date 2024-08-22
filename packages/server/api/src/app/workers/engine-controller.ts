@@ -175,7 +175,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 
-async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePrincipal: EnginePrincipal, error: unknown | undefined): Promise<void> {
+async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePrincipal: EnginePrincipal, error: unknown): Promise<void> {
     switch (status) {
         case FlowRunStatus.FAILED:
         case FlowRunStatus.TIMEOUT:
