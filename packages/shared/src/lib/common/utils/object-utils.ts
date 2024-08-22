@@ -35,10 +35,9 @@ export function deleteProps<T extends Record<string, unknown>, K extends keyof T
 export function sanitizeObjectForPostgresql<T>(input: T): T {
     return applyFunctionToValuesSync<T>(input, (str) => {
         if (isString(str)) {
-            // Remove control characters (ASCII 0-31 and 127) and the null character (\u0000)
             // eslint-disable-next-line no-control-regex
-            const controlCharsRegex = /[\u0000-\u001F\u007F]/g
-            return str.replace(controlCharsRegex, '')
+            const controlCharsRegex = /\u0000/g
+            return str.replace(controlCharsRegex, '')            
         }
         return str
     })
