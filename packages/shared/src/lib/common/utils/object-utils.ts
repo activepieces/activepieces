@@ -32,7 +32,7 @@ export function deleteProps<T extends Record<string, unknown>, K extends keyof T
     return newObj
 }
 
-export function sanitizeObjectForPostgress(input: string): string {
+export function sanitizeObjectForPostgresql(input: string): string {
     return applyFunctionToValuesSync(input, (str) => {
         if (isString(str)) {
             // Remove control characters (ASCII 0-31 and 127) and the null character (\u0000)

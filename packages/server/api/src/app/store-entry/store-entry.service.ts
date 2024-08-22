@@ -2,7 +2,7 @@ import {
     apId,
     ProjectId,
     PutStoreEntryRequest,
-    sanitizeObjectForPostgress,
+    sanitizeObjectForPostgresql,
     StoreEntry,
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
@@ -12,7 +12,7 @@ const storeEntryRepo = repoFactory<StoreEntry>(StoreEntryEntity)
 
 export const storeEntryService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: PutStoreEntryRequest }): Promise<StoreEntry | null> {
-        const value = sanitizeObjectForPostgress(request.value)
+        const value = sanitizeObjectForPostgresql(request.value)
         const insertResult = await storeEntryRepo().upsert({
             id: apId(),
             key: request.key,
