@@ -1,5 +1,7 @@
 import { t } from 'i18next';
 import { Plus, TrashIcon } from 'lucide-react';
+import { nanoid } from 'nanoid';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +12,7 @@ import { TextInputWithMentions } from './text-input-with-mentions';
 type DictionaryInputItem = {
   key: string;
   value: string;
+  id: string;
 };
 
 type DictionaryInputProps = {
@@ -25,18 +28,24 @@ export const DictionaryProperty = ({
   disabled,
   useMentionTextInput,
 }: DictionaryInputProps) => {
-  const formValue = Object.entries(values ?? {}).map(([key, value]) => ({
-    key,
-    value,
-  }));
+  const [formValue, setFormValue] = useState<DictionaryInputItem[]>(() => {
+    return Object.entries(values ?? {}).map(([key, value]) => ({
+      key,
+      value,
+      id: nanoid(),
+    }));
+  });
 
   const remove = (index: number) => {
     const newValues = formValue.filter((_, i) => i !== index);
+    setFormValue(newValues);
     updateValue(newValues);
   };
 
   const add = () => {
-    updateValue([...formValue, { key: '', value: '' }]);
+    const newValues = [...formValue, { key: '', value: '', id: nanoid() }];
+    updateValue(newValues);
+    setFormValue(newValues);
   };
 
   const onChangeValue = (
@@ -65,9 +74,9 @@ export const DictionaryProperty = ({
 
   return (
     <div className="flex w-full flex-col gap-4">
-      {formValue.map(({ key, value }, index) => (
+      {formValue.map(({ key, value, id }, index) => (
         <div
-          key={'dictionary-input-' + key + '-' + index}
+          key={'dictionary-input-' + id}
           className="flex items-center gap-3 items-center"
         >
           <Input
