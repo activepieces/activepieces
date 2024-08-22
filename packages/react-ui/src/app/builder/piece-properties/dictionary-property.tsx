@@ -67,7 +67,7 @@ export const DictionaryProperty = ({
     <div className="flex w-full flex-col gap-4">
       {formValue.map(({ key, value }, index) => (
         <div
-          key={'dictionary-input-' + index}
+          key={'dictionary-input-' + key + '-' + index}
           className="flex items-center gap-3 items-center"
         >
           <Input
