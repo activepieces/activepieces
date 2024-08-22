@@ -78,7 +78,6 @@ export const createInvoice = createAction({
       displayName: 'Invoice due date',
       description: 'e.g., 2024-01-20',
       required: false,
-      processors: [],
       validators: [Validators.datetimeIso],
     }),
   },

@@ -16,7 +16,6 @@ export const createEvent = createAction({
       displayName: 'Email',
       description: undefined,
       required: true,
-      processors: [],
       validators: [Validators.email],
     }),
     event_category: Property.ShortText({

@@ -16,7 +16,6 @@ export const createPurchase = createAction({
       displayName: 'Email',
       description: undefined,
       required: true,
-      processors: [],
       validators: [Validators.email],
     }),
     order_number: Property.ShortText({
