@@ -64,7 +64,7 @@ async function handleUrlFile(path: string): Promise<ApFile | null> {
 function getFileName(path: string, disposition: string | null, mimeType: string | undefined): string | null {
     const url = new URL(path)
     if (isNil(disposition)) {
-        const fileNameFromUrl = url.pathname.includes('/') && url.pathname.split('/').pop()!.includes('.') ? url.pathname.split('/').pop()! : null
+        const fileNameFromUrl = url.pathname.includes('/') && url.pathname.split('/').pop()?.includes('.') ? url.pathname.split('/').pop() : null
         if (!isNil(fileNameFromUrl)) {
             return fileNameFromUrl
         }
