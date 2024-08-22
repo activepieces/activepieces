@@ -24,6 +24,7 @@ import {
   Trigger,
   TriggerType,
   debounce,
+  isNil,
 } from '@activepieces/shared';
 
 import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
@@ -172,16 +173,26 @@ const StepSettingsContainer = React.memo(
       pieceModel: PieceMetadataModel | undefined,
     ) => {
       if (step.type === TriggerType.PIECE) {
-        return (
-          pieceModel?.triggers[step.settings.triggerName]?.displayName ??
-          step.displayName
-        );
+        const triggerName = step.settings.triggerName;
+        if (isNil(triggerName)) {
+          return step.displayName;
+        }
+        const trigger = pieceModel?.triggers[triggerName];
+        if (isNil(trigger)) {
+          return step.displayName;
+        }
+        return trigger.displayName;
       }
       if (step.type === ActionType.PIECE) {
-        return (
-          pieceModel?.actions[step.settings.actionName]?.displayName ??
-          step.displayName
-        );
+        const actionName = step.settings.actionName;
+        if (isNil(actionName)) {
+          return step.displayName;
+        }
+        const action = pieceModel?.actions[actionName];
+        if (isNil(action)) {
+          return step.displayName;
+        }
+        return action.displayName;
       }
       return step.displayName;
     };
@@ -288,18 +299,18 @@ const StepSettingsContainer = React.memo(
                   {[ActionType.CODE, ActionType.PIECE].includes(
                     modifiedStep.type as ActionType,
                   ) && (
-                    <ActionErrorHandlingForm
-                      hideContinueOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.continueOnFailure?.hide
-                      }
-                      disabled={readonly}
-                      hideRetryOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.retryOnFailure?.hide
-                      }
-                    ></ActionErrorHandlingForm>
-                  )}
+                      <ActionErrorHandlingForm
+                        hideContinueOnFailure={
+                          modifiedStep.settings.errorHandlingOptions
+                            ?.continueOnFailure?.hide
+                        }
+                        disabled={readonly}
+                        hideRetryOnFailure={
+                          modifiedStep.settings.errorHandlingOptions
+                            ?.retryOnFailure?.hide
+                        }
+                      ></ActionErrorHandlingForm>
+                    )}
                 </div>
               </ScrollArea>
             </ResizablePanel>
