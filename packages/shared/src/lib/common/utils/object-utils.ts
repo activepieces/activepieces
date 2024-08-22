@@ -36,11 +36,13 @@ export function sanitizeObjectForPostgresql<T>(input: T): T {
     return applyFunctionToValuesSync<T>(input, (str) => {
         if (isString(str)) {
             // Remove control characters (ASCII 0-31 and 127) and the null character (\u0000)
-            return str.replace(/[\x00-\x1F\x7F\u0000]/g, '')
+            // eslint-disable-next-line no-control-regex
+            const controlCharsRegex = /[\u0000-\u001F\u007F]/g
+            return str.replace(controlCharsRegex, '')
         }
         return str
     })
-} 
+}
 
 export function applyFunctionToValuesSync<T>(obj: unknown, apply: (str: unknown) => unknown): T {
     if (isNil(obj)) {
