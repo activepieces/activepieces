@@ -1,5 +1,6 @@
 import fs from 'fs/promises'
 import { ApFile, FilesService } from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
 
 const FILE_PREFIX_URL = 'file://'
 const MEMORY_PREFIX_URL = 'memory://'
@@ -97,9 +98,6 @@ async function writeDbFile({ stepName, flowId, fileName, data, engineToken, apiU
     return result.url
 }
 
-
-
-
 async function writeLocalFile({ stepName, fileName, data }: { stepName: string, fileName: string, data: Buffer }): Promise<string> {
     const path = 'tmp/' + stepName + '/' + fileName
     await fs.mkdir('tmp/' + stepName, { recursive: true })
@@ -111,7 +109,10 @@ async function writeLocalFile({ stepName, fileName, data }: { stepName: string, 
 async function readLocalFile(absolutePath: string): Promise<ApFile> {
     const path = 'tmp/' + absolutePath.replace(FILE_PREFIX_URL, '')
     const buffer = await fs.readFile(path)
-    const filename = absolutePath.split('/').pop()!
-    const extension = filename.split('.').pop()!
+    const filename = absolutePath.split('/').pop()
+    if (isNil(filename)) {
+        throw new Error('Invalid file path')
+    }
+    const extension = filename.split('.').pop()
     return new ApFile(filename, buffer, extension)
 }

@@ -269,4 +269,5 @@ export class VariableService {
 
 }
 
-export const variableService = ({ projectId, engineToken, apiUrl }: { projectId: string, engineToken: string, apiUrl: string }) => new VariableService({ projectId, engineToken, apiUrl })
+export const variableService = ({ projectId, engineToken, apiUrl }: { projectId: string, engineToken: string, apiUrl: string }): VariableService => 
+    new VariableService({ projectId, engineToken, apiUrl })
