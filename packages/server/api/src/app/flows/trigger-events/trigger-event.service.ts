@@ -46,14 +46,12 @@ export const triggerEventService = {
 
         const sourceName = getSourceName(flow.version.trigger)
         
-        payload = JSON.parse(sanitizeObjectForPostgresql(JSON.stringify(payload)))
-
         return triggerEventRepo().save({
             id: apId(),
             projectId,
             flowId: flow.id,
             sourceName,
-            payload,
+            payload: sanitizeObjectForPostgresql(payload),
         })
     },
 
