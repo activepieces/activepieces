@@ -1,17 +1,18 @@
-import { isNil } from "@activepieces/shared";
-import { ProcessorFn } from "packages/engine/src/lib/variables/processors";
+import { isNil } from '@activepieces/shared'
+import { ProcessorFn } from './types'
 
 export const jsonProcessor: ProcessorFn = (_property, value) => {
-  if (isNil(value)) {
-    return value;
-  }
-  try {
-    if (typeof value === 'object') {
-      return value;
+    if (isNil(value)) {
+        return value
     }
-    return JSON.parse(value);
-  } catch (error) {
-    console.error(error);
-    return undefined;
-  }
+    try {
+        if (typeof value === 'object') {
+            return value
+        }
+        return JSON.parse(value)
+    }
+    catch (error) {
+        console.error(error)
+        return undefined
+    }
 }

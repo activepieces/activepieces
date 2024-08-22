@@ -1,5 +1,5 @@
 import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, TriggerHookType } from '@activepieces/shared'
-import { VariableService } from 'packages/engine/src/lib/variables/variable-service'
+import { VariableService } from '../../variables/variable-service'
 
 type RetryConstants = {
     maxAttempts: number

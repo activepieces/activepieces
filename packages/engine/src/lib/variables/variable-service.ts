@@ -6,23 +6,18 @@ import {
     PieceAuthProperty,
     PiecePropertyMap,
     PropertyType,
-    StaticPropsValue
+    StaticPropsValue,
 } from '@activepieces/pieces-framework'
 import {
     AUTHENTICATION_PROPERTY_NAME,
     isNil,
-    isString
+    isString,
 } from '@activepieces/shared'
-import { ProcessorFn } from 'packages/engine/src/lib/variables/processors'
-import { dateTimeProcessor } from 'packages/engine/src/lib/variables/processors/date-time'
-import { fileProcessor } from 'packages/engine/src/lib/variables/processors/file'
-import { jsonProcessor } from 'packages/engine/src/lib/variables/processors/json'
-import { numberProcessor } from 'packages/engine/src/lib/variables/processors/number'
-import { textProcessor } from 'packages/engine/src/lib/variables/processors/text'
 import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionService } from '../services/connections.service'
+import { processors } from './processors'
 
 type VariableValidationError = {
     [key: string]: string[] | VariableValidationError
@@ -179,9 +174,9 @@ export class VariableService {
         unresolvedInput: unknown
         executionState: FlowExecutorContext
     }): Promise<{
-        resolvedInput: T
-        censoredInput: unknown
-    }> {
+            resolvedInput: T
+            censoredInput: unknown
+        }> {
         const { unresolvedInput, executionState } = params
 
         if (isNil(unresolvedInput)) {
@@ -215,13 +210,13 @@ export class VariableService {
         const processedInput = { ...resolvedInput }
         const errors: VariableValidationError = {}
 
-        if (auth && (auth.type === PropertyType.CUSTOM_AUTH || auth.type === PropertyType.OAUTH2)) {
-            const { processedInput: authProcessedInput, errors: authErrors } =
-                await this.applyProcessorsAndValidators(
-                    resolvedInput[AUTHENTICATION_PROPERTY_NAME],
-                    auth.props,
-                    undefined,
-                )
+        const isAuthenticationProperty = auth && (auth.type === PropertyType.CUSTOM_AUTH || auth.type === PropertyType.OAUTH2)
+        if (isAuthenticationProperty) {
+            const { processedInput: authProcessedInput, errors: authErrors } = await this.applyProcessorsAndValidators(
+                resolvedInput[AUTHENTICATION_PROPERTY_NAME],
+                auth.props,
+                undefined,
+            )
             processedInput.auth = authProcessedInput
             if (Object.keys(authErrors).length > 0) {
                 errors.auth = authErrors
@@ -230,31 +225,18 @@ export class VariableService {
 
         for (const [key, value] of Object.entries(resolvedInput)) {
             const property = props[key]
-            if (key === AUTHENTICATION_PROPERTY_NAME) {
+            if (isNil(property)) {
                 continue
             }
-
-            const validators = [
-                ...(property.defaultValidators ?? []),
-                ...(property.validators ?? []),
-            ]
-
-            const processors: Partial<Record<string, ProcessorFn>> = {
-                JSON: jsonProcessor,
-                NUMBER: numberProcessor,
-                LONG_TEXT: textProcessor,
-                SHORT_TEXT: textProcessor,
-                SECRET_TEXT: textProcessor,
-                DATE_TIME: dateTimeProcessor,
-                FILE: fileProcessor({ apiUrl: this.apiUrl, engineToken: this.engineToken })
-            }
-
             const processor = processors[property.type]
             if (processor) {
                 processedInput[key] = await processor(property, value)
             }
 
-            const propErrors = []
+            const shouldValidate = key !== AUTHENTICATION_PROPERTY_NAME && property.type !== PropertyType.MARKDOWN
+            if (!shouldValidate) {
+                continue
+            }
             // Short Circuit
             // If the value is required, we don't allow it to be undefined or null
             if (isNil(value) && property.required) {
@@ -264,11 +246,21 @@ export class VariableService {
                 continue
             }
             // If the value is not required, we allow it to be undefined or null
-            if (isNil(value) && !property.required) continue
+            if (isNil(value) && !property.required) {
+                continue
+            }
 
+            const validators = [
+                ...(property.defaultValidators ?? []),
+                ...(property.validators ?? []),
+            ]
+
+            const propErrors = []
             for (const validator of validators) {
                 const error = validator.fn(property, processedInput[key], value)
-                if (!isNil(error)) propErrors.push(error)
+                if (!isNil(error)) {
+                    propErrors.push(error)
+                }
             }
             if (propErrors.length) errors[key] = propErrors
         }
@@ -277,4 +269,4 @@ export class VariableService {
 
 }
 
-export const variableService = ({ projectId, engineToken, apiUrl }: { projectId: string, engineToken: string, apiUrl: string, }) => new VariableService({ projectId, engineToken, apiUrl })
+export const variableService = ({ projectId, engineToken, apiUrl }: { projectId: string, engineToken: string, apiUrl: string }) => new VariableService({ projectId, engineToken, apiUrl })

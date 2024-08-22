@@ -246,6 +246,23 @@ describe('Variable Service', () => {
         })
     })
 
+    it('should return images for image url', async () => {
+        const input = {
+            file: 'https://cdn.activepieces.com/brand/logo.svg?token=123',
+        }
+        const props = {
+            file: Property.File({
+                displayName: 'File',
+                required: true,
+            }),
+        }
+        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
+        expect(processedInput.file).toBeDefined()
+        expect(processedInput.file.extension).toBe('svg')
+        expect(processedInput.file.filename).toBe('logo.svg')
+        expect(errors).toEqual({})
+    })
+
     // Test with invalid url
     it('should return error for invalid data', async () => {
         const input = {
@@ -268,13 +285,14 @@ describe('Variable Service', () => {
             }),
         }
         const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
-        expect(processedInput).toEqual({
-            file: null,
-            nullFile: null,
-            nullOptionalFile: null,
-        })
+
+        expect(processedInput.file).toBeDefined()
+        expect(processedInput.file.extension).toBe('html')
+        expect(processedInput.file.filename).toBe('unknown.html')
+        expect(processedInput.nullFile).toBeNull()
+        expect(processedInput.nullOptionalFile).toBeNull()
+
         expect(errors).toEqual({
-            'file': ['Expected file url or base64 with mimeType, but found value: https://google.com'],
             'nullFile': [
                 'Expected value, but found value: null',
             ],

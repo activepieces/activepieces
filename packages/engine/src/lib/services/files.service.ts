@@ -1,9 +1,6 @@
 import fs from 'fs/promises'
 import { ApFile, FilesService } from '@activepieces/pieces-framework'
-import { isString } from '@activepieces/shared'
-import axios from 'axios'
 
-const DB_PREFIX_URL = 'db://'
 const FILE_PREFIX_URL = 'file://'
 const MEMORY_PREFIX_URL = 'memory://'
 const MAXIMUM = 4 * 1024 * 1024
@@ -29,80 +26,21 @@ export function createFilesService({ stepName, type, flowId, engineToken, apiUrl
     }
 }
 
-export function isMemoryFilePath(dbPath: unknown): boolean {
-    if (!isString(dbPath)) {
-        return false
-    }
-
-    return dbPath.startsWith(MEMORY_PREFIX_URL)
+export const apFileUtils = {
+    readApFile,
 }
 
-export function isApFilePath(dbPath: unknown): dbPath is string {
-    if (!isString(dbPath)) {
-        return false
-    }
-    return dbPath.startsWith(FILE_PREFIX_URL) || dbPath.startsWith(DB_PREFIX_URL) || dbPath.startsWith(MEMORY_PREFIX_URL)
-}
 
-// TODO move to files service as a `read` method .. currently can't be done since the files service requires a flowId and stepName
-export async function handleAPFile({ engineToken, path, apiUrl }: { engineToken: string, path: string, apiUrl: string }) {
+async function readApFile(path: string): Promise<ApFile | null> {
     if (path.startsWith(MEMORY_PREFIX_URL)) {
         return readMemoryFile(path)
-    } else if (path.startsWith(DB_PREFIX_URL)) { // TODO REMOVE DB AS IT NOW GENERATES A SIGNED URL
-        return readDbFile({ engineToken, absolutePath: path, apiUrl })
-    } else if (path.startsWith(FILE_PREFIX_URL)) {
+    }
+    if (path.startsWith(FILE_PREFIX_URL)) {
         return readLocalFile(path)
-    } else {
-        const fileResponse = await axios.get(path, {
-            responseType: 'arraybuffer',
-        });
-
-        // Default filename: last part of the URL.
-        let filename = path.substring(path.lastIndexOf('/') + 1);
-
-        // Check for filename in the Content-Disposition header.
-        const contentDisposition = fileResponse.headers['content-disposition'];
-        if (contentDisposition) {
-            const contentDispositionFilename = getContentDispositionFileName(contentDisposition);
-            if (contentDispositionFilename) {
-                filename = contentDispositionFilename;
-            }
-        }
-
-        // Return the ApFile object
-        return new ApFile(
-            filename,
-            Buffer.from(fileResponse.data, 'binary'),
-            // Only take the extension when there is a dot in the filename.
-            filename.split('.').length > 1 ? filename.split('.').pop() : undefined,
-        );
     }
+    return null
 }
 
-function getContentDispositionFileName(disposition: string): string | null {
-    const utf8FilenameRegex = /filename\*=UTF-8''([\w%\-.]+)(?:; ?|$)/i;
-    const asciiFilenameRegex = /^filename=(["']?)(.*?[^\\])\1(?:; ?|$)/i;
-
-    let fileName: string | null = null;
-    if (utf8FilenameRegex.test(disposition)) {
-        const result = utf8FilenameRegex.exec(disposition);
-        if (result && result.length > 1) {
-            fileName = decodeURIComponent(result[1]);
-        }
-    } else {
-        // prevent ReDos attacks by anchoring the ascii regex to string start and
-        // slicing off everything before 'filename='
-        const filenameStart = disposition.toLowerCase().indexOf('filename=');
-        if (filenameStart >= 0) {
-            const partialDisposition = disposition.slice(filenameStart);
-            const matches = asciiFilenameRegex.exec(partialDisposition);
-            if (matches != null && matches[2]) {
-                fileName = matches[2];
-            }
-        }
-    }
-    return fileName;
-}
 
 async function writeMemoryFile({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> {
     try {
@@ -159,25 +97,6 @@ async function writeDbFile({ stepName, flowId, fileName, data, engineToken, apiU
     return result.url
 }
 
-async function readDbFile({ engineToken, absolutePath, apiUrl }: { engineToken: string, absolutePath: string, apiUrl: string }): Promise<ApFile> {
-    const fileId = absolutePath.replace(DB_PREFIX_URL, '')
-    const response = await fetch(`${apiUrl}v1/step-files/${encodeURIComponent(fileId)}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + engineToken,
-        },
-    })
-    if (!response.ok) {
-        throw new Error(`error=db_file_not_found id=${absolutePath}`)
-    }
-    const arrayBuffer = await response.arrayBuffer()
-    const contentDisposition = response.headers.get('Content-Disposition')
-    const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
-    const filename = filenameMatch ? filenameMatch[1] : 'unknown'
-    const extension = filename.split('.').pop()!
-    return new ApFile(filename, Buffer.from(arrayBuffer), extension)
-}
 
 
 
