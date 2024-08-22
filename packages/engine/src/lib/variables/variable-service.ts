@@ -4,18 +4,29 @@ import {
     formatErrorMessage,
     InputPropertyMap,
     PieceAuthProperty,
+    PiecePropertyMap,
     PropertyType,
+    StaticPropsValue
 } from '@activepieces/pieces-framework'
 import {
     AUTHENTICATION_PROPERTY_NAME,
     isNil,
-    isString,
+    isString
 } from '@activepieces/shared'
+import { ProcessorFn } from 'packages/engine/src/lib/variables/processors'
+import { dateTimeProcessor } from 'packages/engine/src/lib/variables/processors/date-time'
+import { fileProcessor } from 'packages/engine/src/lib/variables/processors/file'
+import { jsonProcessor } from 'packages/engine/src/lib/variables/processors/json'
+import { numberProcessor } from 'packages/engine/src/lib/variables/processors/number'
+import { textProcessor } from 'packages/engine/src/lib/variables/processors/text'
 import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { createConnectionService } from './connections.service'
-import { handleAPFile, isApFilePath } from './files.service'
+import { createConnectionService } from '../services/connections.service'
+
+type VariableValidationError = {
+    [key: string]: string[] | VariableValidationError
+}
 
 export class VariableService {
     private static readonly VARIABLE_PATTERN = RegExp('\\{\\{(.*?)\\}\\}', 'g')
@@ -24,6 +35,7 @@ export class VariableService {
     private engineToken: string
     private projectId: string
     private apiUrl: string
+
     constructor(data: { engineToken: string, projectId: string, apiUrl: string }) {
         this.engineToken = data.engineToken
         this.projectId = data.projectId
@@ -167,9 +179,9 @@ export class VariableService {
         unresolvedInput: unknown
         executionState: FlowExecutorContext
     }): Promise<{
-            resolvedInput: T
-            censoredInput: unknown
-        }> {
+        resolvedInput: T
+        censoredInput: unknown
+    }> {
         const { unresolvedInput, executionState } = params
 
         if (isNil(unresolvedInput)) {
@@ -196,14 +208,14 @@ export class VariableService {
     }
 
     async applyProcessorsAndValidators(
-        resolvedInput: Record<string, any>,
+        resolvedInput: StaticPropsValue<PiecePropertyMap>,
         props: InputPropertyMap,
         auth: PieceAuthProperty | undefined,
-    ): Promise<{ processedInput: any, errors: any }> {
+    ): Promise<{ processedInput: StaticPropsValue<PiecePropertyMap>, errors: VariableValidationError }> {
         const processedInput = { ...resolvedInput }
-        const errors: Record<string, unknown> = {}
+        const errors: VariableValidationError = {}
 
-        if (auth && auth.type === PropertyType.CUSTOM_AUTH) {
+        if (auth && (auth.type === PropertyType.CUSTOM_AUTH || auth.type === PropertyType.OAUTH2)) {
             const { processedInput: authProcessedInput, errors: authErrors } =
                 await this.applyProcessorsAndValidators(
                     resolvedInput[AUTHENTICATION_PROPERTY_NAME],
@@ -215,34 +227,31 @@ export class VariableService {
                 errors.auth = authErrors
             }
         }
+
         for (const [key, value] of Object.entries(resolvedInput)) {
             const property = props[key]
             if (key === AUTHENTICATION_PROPERTY_NAME) {
                 continue
             }
-            if (property.type === PropertyType.MARKDOWN) {
-                continue
-            }
-            const processors = [
-                ...(property.defaultProcessors ?? []),
-                ...(property.processors ?? []),
-            ]
+
             const validators = [
                 ...(property.defaultValidators ?? []),
                 ...(property.validators ?? []),
             ]
-            // TODO remove the hard coding part
-            if (property.type === PropertyType.FILE && isApFilePath(value)) {
-                processedInput[key] = await handleAPFile({
-                    apiUrl: this.apiUrl,
-                    path: value.trim(),
-                    engineToken: this.engineToken,
-                })
+
+            const processors: Partial<Record<string, ProcessorFn>> = {
+                JSON: jsonProcessor,
+                NUMBER: numberProcessor,
+                LONG_TEXT: textProcessor,
+                SHORT_TEXT: textProcessor,
+                SECRET_TEXT: textProcessor,
+                DATE_TIME: dateTimeProcessor,
+                FILE: fileProcessor({ apiUrl: this.apiUrl, engineToken: this.engineToken })
             }
-            else {
-                for (const processor of processors) {
-                    processedInput[key] = await processor(property, value)
-                }
+
+            const processor = processors[property.type]
+            if (processor) {
+                processedInput[key] = await processor(property, value)
             }
 
             const propErrors = []
@@ -268,4 +277,4 @@ export class VariableService {
 
 }
 
-export const variableService = ({ projectId, engineToken, apiUrl }: { projectId: string, engineToken: string, apiUrl: string }) => new VariableService({ projectId, engineToken, apiUrl })
+export const variableService = ({ projectId, engineToken, apiUrl }: { projectId: string, engineToken: string, apiUrl: string, }) => new VariableService({ projectId, engineToken, apiUrl })

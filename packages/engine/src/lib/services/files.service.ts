@@ -1,6 +1,7 @@
 import fs from 'fs/promises'
-import { ApFile } from '@activepieces/pieces-framework'
+import { ApFile, FilesService } from '@activepieces/pieces-framework'
 import { isString } from '@activepieces/shared'
+import axios from 'axios'
 
 const DB_PREFIX_URL = 'db://'
 const FILE_PREFIX_URL = 'file://'
@@ -10,7 +11,9 @@ const MAXIMUM_MB = MAXIMUM / 1024 / 1024
 
 export type DefaultFileSystem = 'db' | 'local' | 'memory'
 
-export function createFilesService({ stepName, type, flowId, engineToken, apiUrl }: { apiUrl: string, stepName: string, type: DefaultFileSystem, flowId: string, engineToken: string }) {
+type CreateFilesServiceParams = { apiUrl: string, stepName: string, type: DefaultFileSystem, flowId: string, engineToken: string }
+
+export function createFilesService({ stepName, type, flowId, engineToken, apiUrl }: CreateFilesServiceParams): FilesService {
     return {
         async write({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> {
             switch (type) {
@@ -41,20 +44,64 @@ export function isApFilePath(dbPath: unknown): dbPath is string {
     return dbPath.startsWith(FILE_PREFIX_URL) || dbPath.startsWith(DB_PREFIX_URL) || dbPath.startsWith(MEMORY_PREFIX_URL)
 }
 
+// TODO move to files service as a `read` method .. currently can't be done since the files service requires a flowId and stepName
 export async function handleAPFile({ engineToken, path, apiUrl }: { engineToken: string, path: string, apiUrl: string }) {
     if (path.startsWith(MEMORY_PREFIX_URL)) {
         return readMemoryFile(path)
-    }
-    // TODO REMOVE DB AS IT NOW GENERATES A SIGNED URL
-    else if (path.startsWith(DB_PREFIX_URL)) {
+    } else if (path.startsWith(DB_PREFIX_URL)) { // TODO REMOVE DB AS IT NOW GENERATES A SIGNED URL
         return readDbFile({ engineToken, absolutePath: path, apiUrl })
-    }
-    else if (path.startsWith(FILE_PREFIX_URL)) {
+    } else if (path.startsWith(FILE_PREFIX_URL)) {
         return readLocalFile(path)
+    } else {
+        const fileResponse = await axios.get(path, {
+            responseType: 'arraybuffer',
+        });
+
+        // Default filename: last part of the URL.
+        let filename = path.substring(path.lastIndexOf('/') + 1);
+
+        // Check for filename in the Content-Disposition header.
+        const contentDisposition = fileResponse.headers['content-disposition'];
+        if (contentDisposition) {
+            const contentDispositionFilename = getContentDispositionFileName(contentDisposition);
+            if (contentDispositionFilename) {
+                filename = contentDispositionFilename;
+            }
+        }
+
+        // Return the ApFile object
+        return new ApFile(
+            filename,
+            Buffer.from(fileResponse.data, 'binary'),
+            // Only take the extension when there is a dot in the filename.
+            filename.split('.').length > 1 ? filename.split('.').pop() : undefined,
+        );
     }
-    else {
-        throw new Error(`error=local_file_not_found absolute_path=${path}`)
+}
+
+function getContentDispositionFileName(disposition: string): string | null {
+    const utf8FilenameRegex = /filename\*=UTF-8''([\w%\-.]+)(?:; ?|$)/i;
+    const asciiFilenameRegex = /^filename=(["']?)(.*?[^\\])\1(?:; ?|$)/i;
+
+    let fileName: string | null = null;
+    if (utf8FilenameRegex.test(disposition)) {
+        const result = utf8FilenameRegex.exec(disposition);
+        if (result && result.length > 1) {
+            fileName = decodeURIComponent(result[1]);
+        }
+    } else {
+        // prevent ReDos attacks by anchoring the ascii regex to string start and
+        // slicing off everything before 'filename='
+        const filenameStart = disposition.toLowerCase().indexOf('filename=');
+        if (filenameStart >= 0) {
+            const partialDisposition = disposition.slice(filenameStart);
+            const matches = asciiFilenameRegex.exec(partialDisposition);
+            if (matches != null && matches[2]) {
+                fileName = matches[2];
+            }
+        }
     }
+    return fileName;
 }
 
 async function writeMemoryFile({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> {
