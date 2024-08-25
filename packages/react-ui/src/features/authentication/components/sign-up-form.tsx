@@ -1,15 +1,20 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { Check, X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -22,6 +27,7 @@ import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
+  ApEdition,
   ApFlagId,
   AuthenticationResponse,
   SignUpRequest,
@@ -32,6 +38,8 @@ import {
   passwordRules,
   passwordValidation,
 } from '../lib/password-validation-utils';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 const SignUpSchema = Type.Object({
   firstName: Type.String({
@@ -78,10 +86,7 @@ const PasswordValidator = ({ password }: { password: string }) => {
 const SignUpForm: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const { data: isCloudPlatform } = flagsHooks.useFlag<boolean>(
-    ApFlagId.IS_CLOUD_PLATFORM,
-    queryClient,
-  );
+
   const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(
     ApFlagId.TERMS_OF_SERVICE_URL,
     queryClient,
@@ -100,7 +105,34 @@ const SignUpForm: React.FC = () => {
   const form = useForm<SignUpSchema>({
     defaultValues,
   });
-
+  const websiteName = flagsHooks.useWebsiteBranding(queryClient)?.websiteName;
+  const edition = flagsHooks.useFlag<ApEdition>(
+    ApFlagId.EDITION,
+    queryClient,
+  ).data;
+  const showNewsLetterCheckbox = useMemo(() => {
+    if (!edition || !websiteName) {
+      return false;
+    }
+    switch (edition) {
+      case ApEdition.CLOUD: {
+        if (
+          typeof websiteName === 'string' &&
+          websiteName.toLowerCase() === 'activepieces'
+        ) {
+          form.setValue('newsLetter', true);
+          return true;
+        }
+        return false;
+      }
+      case ApEdition.ENTERPRISE:
+        return false;
+      case ApEdition.COMMUNITY: {
+        form.setValue('newsLetter', true);
+        return true;
+      }
+    }
+  }, [edition, websiteName]);
   const navigate = useNavigate();
 
   const { mutate, isPending } = useMutation<
@@ -251,6 +283,29 @@ const SignUpForm: React.FC = () => {
               </FormItem>
             )}
           />
+          {showNewsLetterCheckbox && (
+            <FormField
+              control={form.control}
+              name="newsLetter"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-2 ">
+                  <FormControl>
+                    <Checkbox
+                      id="newsLetter"
+                      className="!m-0"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    ></Checkbox>
+                  </FormControl>
+                  <Label htmlFor="newsLetter" className="cursor-pointer">
+                    {t(`Receive updates and newsletters from activepieces`)}
+                  </Label>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
           {form?.formState?.errors?.root?.serverError && (
             <FormMessage>
               {form.formState.errors.root.serverError.message}
@@ -264,9 +319,15 @@ const SignUpForm: React.FC = () => {
           </Button>
         </form>
       </Form>
-      {isCloudPlatform && (
-        <div className="mt-4 text-center text-sm">
-          {t('By creating an account, you agree to our')}
+
+      <div
+        className={cn('text-center text-sm', {
+          'mt-4': termsOfServiceUrl || privacyPolicyUrl,
+        })}
+      >
+        {(termsOfServiceUrl || privacyPolicyUrl) &&
+          t('By creating an account, you agree to our')}
+        {termsOfServiceUrl && (
           <Link
             to={termsOfServiceUrl || ''}
             target="_blank"
@@ -274,7 +335,9 @@ const SignUpForm: React.FC = () => {
           >
             {t('terms of service')}
           </Link>
-          {t('and')}
+        )}
+        {termsOfServiceUrl && privacyPolicyUrl && t('and')}
+        {privacyPolicyUrl && (
           <Link
             to={privacyPolicyUrl || ''}
             target="_blank"
@@ -282,9 +345,9 @@ const SignUpForm: React.FC = () => {
           >
             {t('privacy policy')}
           </Link>
-          .
-        </div>
-      )}
+        )}
+        .
+      </div>
       <div className="mt-4 text-center text-sm">
         {t('Have an account?')}
         <Link
