@@ -1,5 +1,3 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { SubmitHandler, useForm } from 'react-hook-form';
@@ -16,30 +14,31 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { HttpError, api } from '@/lib/api';
+import { toast } from '@/components/ui/use-toast';
+import { HttpError } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { ResetPasswordRequestBody } from '@activepieces/ee-shared';
-
-const FormSchema = Type.Object({
-  otp: Type.String(),
-  userId: Type.String(),
-  newPassword: Type.String({
-    errorMessage: t('Please enter your password'),
-  }),
-});
-
-type FormSchema = Static<typeof FormSchema>;
+import { useRef, useState } from 'react';
+import { passwordValidation } from '@/features/authentication/lib/password-validation-utils';
+import { Popover } from '@radix-ui/react-popover';
+import { PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { PasswordValidator } from '@/features/authentication/components/password-validator';
 
 const ChangePasswordForm = () => {
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(window.location.search);
-
-  const form = useForm<FormSchema>({
-    resolver: typeboxResolver(FormSchema),
+  const [serverError, setServerError] = useState('');
+  const [isPasswordFocused, setPasswordFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const form = useForm<{
+    otp: string;
+    userId: string;
+    newPassword: string;
+  }>({
     defaultValues: {
       otp: queryParams.get('otpcode') || '',
       userId: queryParams.get('userId') || '',
+      newPassword: '',
     },
   });
 
@@ -52,15 +51,16 @@ const ChangePasswordForm = () => {
     onSuccess: () => {
       toast({
         title: t('Success'),
-        description: t('Your password was changed!'),
+        description: t('Your password was changed successfully'),
         duration: 3000,
       });
       navigate('/sign-in');
     },
     onError: (error) => {
-      if (api.isError(error)) {
-        toast(INTERNAL_ERROR_TOAST);
-      }
+      setServerError(
+        t('Your password reset request has expired, please request a new one'),
+      );
+      console.error(error);
     },
   });
 
@@ -80,14 +80,42 @@ const ChangePasswordForm = () => {
             <FormField
               control={form.control}
               name="newPassword"
+              rules={{
+                required: t('Password is required'),
+                validate: passwordValidation,
+              }}
               render={({ field }) => (
-                <FormItem className="w-full grid space-y-2">
+                <FormItem
+                  className="grid space-y-2"
+                  onClick={() => inputRef?.current?.focus()}
+                  onFocus={() => setPasswordFocused(true)}
+                >
                   <Label htmlFor="newPassword">{t('Password')}</Label>
-                  <Input {...field} type="password" placeholder="********" />
+                  <Popover open={isPasswordFocused}>
+                    <PopoverTrigger asChild>
+                      <Input
+                        {...field}
+                        required
+                        id="newPassword"
+                        type="password"
+                        placeholder={'********'}
+                        className="rounded-sm"
+                        ref={inputRef}
+                        onBlur={() => setPasswordFocused(false)}
+                        onChange={(e) => field.onChange(e)}
+                      />
+                    </PopoverTrigger>
+                    <PopoverContent className="absolute border-2 bg-background p-2 rounded-md right-60 -bottom-16 flex flex-col">
+                      <PasswordValidator
+                        password={form.getValues().newPassword}
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            {serverError && <FormMessage>{serverError}</FormMessage>}
             <Button
               className="w-full"
               loading={isPending}
