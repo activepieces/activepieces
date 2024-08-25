@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
+import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormLabel } from '@/components/ui/form';
 import {
   Select,
@@ -22,7 +23,6 @@ import {
 import { PieceAction, PieceTrigger } from '@activepieces/shared';
 
 import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
-import { Button } from '@/components/ui/button';
 
 type ConnectionSelectProps = {
   disabled: boolean;

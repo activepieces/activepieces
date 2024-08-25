@@ -3,8 +3,8 @@ import { ScrollArea } from '@radix-ui/react-scroll-area';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import React, { useEffect, useMemo, useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -32,7 +32,6 @@ import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   BasicAuthProperty,
-  CONNECTION_REGEX,
   CustomAuthProperty,
   OAuth2Property,
   OAuth2Props,
