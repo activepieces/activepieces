@@ -33,7 +33,7 @@ export function UserAvatar() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[200px]">
         <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => authenticationSession.LogOut()}>
+        <DropdownMenuItem onClick={() => authenticationSession.logOut()}>
           <TextWithIcon
             icon={<LogOut size={18} className="text-destructive" />}
             text={<span className="text-destructive">Logout</span>}

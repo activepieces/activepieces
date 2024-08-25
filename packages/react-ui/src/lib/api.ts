@@ -15,6 +15,7 @@ export const API_URL = `${API_BASE_URL}/api`;
 const disallowedRoutes = [
   '/v1/authentication/sign-in',
   '/v1/authentication/sign-up',
+  '/v1/authn/local/verify-email',
   '/v1/flags',
   '/v1/authn/federated/login',
   '/v1/authn/federated/claim',

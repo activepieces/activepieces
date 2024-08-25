@@ -39,6 +39,7 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+import { VerifyEmail } from '@/features/authentication/components/verify-email';
 
 export const router = createBrowserRouter([
   {
@@ -167,6 +168,14 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/verify-email',
+    element: (
+      <PageTitle title="Verify Email">
+        <VerifyEmail />
+      </PageTitle>
+    ),
+  },
+  {
     path: '/sign-up',
     element: (
       <PageTitle title="Sign Up">
@@ -254,6 +263,7 @@ export const router = createBrowserRouter([
       </PageTitle>
     ),
   },
+
   {
     path: '/404',
     element: (
@@ -384,7 +394,7 @@ export const router = createBrowserRouter([
     path: '/*',
     element: (
       <PageTitle title="Redirect">
-        <Navigate to="/flows" replace />
+        <Navigate to="/404" replace />
       </PageTitle>
     ),
   },

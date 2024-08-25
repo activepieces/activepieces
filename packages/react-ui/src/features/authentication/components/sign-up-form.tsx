@@ -1,15 +1,19 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
-import { Check, X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -22,62 +26,39 @@ import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
+  ApEdition,
   ApFlagId,
   AuthenticationResponse,
   SignUpRequest,
 } from '@activepieces/shared';
 
-import { generatePasswordValidation } from '../lib/password-validation-utils';
+import {
+  emailRegex,
+  passwordValidation,
+} from '../lib/password-validation-utils';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
+import { PasswordValidator } from '@/features/authentication/components/password-validator';
+import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
+import { OtpType } from '../../../../../ee/shared/src';
 
-const SignUpSchema = Type.Object({
-  firstName: Type.String({
-    errorMessage: 'First name is required',
-  }),
-  lastName: Type.String({
-    errorMessage: 'Last name is required',
-  }),
-  email: Type.String({
-    errorMessage: 'Email is invalid',
-    pattern:
-      '^[a-zA-Z0-9.!#$%&’+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)$',
-  }),
-  password: Type.String({
-    errorMessage: 'Password is required',
-  }),
-  trackEvents: Type.Boolean(),
-  newsLetter: Type.Boolean(),
-});
-
-type SignUpSchema = Static<typeof SignUpSchema>;
-
-const PasswordValidator = ({ password }: { password: string }) => {
-  const { rules } = generatePasswordValidation(password);
-
-  return (
-    <>
-      {rules.map((rule, index) => {
-        return (
-          <div key={index} className="flex flex-row gap-2">
-            {rule.condition ? (
-              <Check className="text-success" />
-            ) : (
-              <X className="text-destructive" />
-            )}
-            <span>{t(rule.label)}</span>
-          </div>
-        );
-      })}
-    </>
-  );
+type SignUpSchema = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  newsLetter: boolean;
 };
 
-const SignUpForm: React.FC = () => {
+const SignUpForm = ({
+  showCheckYourEmailNote,
+  setShowCheckYourEmailNote,
+}: {
+  showCheckYourEmailNote: boolean;
+  setShowCheckYourEmailNote: (value: boolean) => void;
+}) => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const { data: isCloudPlatform } = flagsHooks.useFlag<boolean>(
-    ApFlagId.IS_CLOUD_PLATFORM,
-    queryClient,
-  );
   const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(
     ApFlagId.TERMS_OF_SERVICE_URL,
     queryClient,
@@ -87,18 +68,41 @@ const SignUpForm: React.FC = () => {
     queryClient,
   );
 
-  const defaultValues = {
-    trackEvents: true,
-    newsLetter: false,
-    password: '',
-    email: searchParams.get('email') || '',
-  };
-
   const form = useForm<SignUpSchema>({
-    defaultValues,
-    resolver: typeboxResolver(SignUpSchema),
+    defaultValues: {
+      newsLetter: false,
+      password: '',
+      email: searchParams.get('email') || '',
+    },
   });
-
+  const websiteName = flagsHooks.useWebsiteBranding(queryClient)?.websiteName;
+  const edition = flagsHooks.useFlag<ApEdition>(
+    ApFlagId.EDITION,
+    queryClient,
+  ).data;
+  const showNewsLetterCheckbox = useMemo(() => {
+    if (!edition || !websiteName) {
+      return false;
+    }
+    switch (edition) {
+      case ApEdition.CLOUD: {
+        if (
+          typeof websiteName === 'string' &&
+          websiteName.toLowerCase() === 'activepieces'
+        ) {
+          form.setValue('newsLetter', true);
+          return true;
+        }
+        return false;
+      }
+      case ApEdition.ENTERPRISE:
+        return false;
+      case ApEdition.COMMUNITY: {
+        form.setValue('newsLetter', true);
+        return true;
+      }
+    }
+  }, [edition, websiteName]);
   const navigate = useNavigate();
 
   const { mutate, isPending } = useMutation<
@@ -108,8 +112,12 @@ const SignUpForm: React.FC = () => {
   >({
     mutationFn: authenticationApi.signUp,
     onSuccess: (data) => {
-      authenticationSession.saveResponse(data);
-      navigate('/flows');
+      if (data.verified) {
+        authenticationSession.saveResponse(data);
+        navigate('/flows');
+      } else {
+        setShowCheckYourEmailNote(true);
+      }
     },
     onError: (error) => {
       if (api.isError(error)) {
@@ -132,18 +140,28 @@ const SignUpForm: React.FC = () => {
     },
   });
 
-  const onSubmit: SubmitHandler<SignUpRequest> = (data) => {
+  const onSubmit: SubmitHandler<SignUpSchema> = (data) => {
     form.setError('root.serverError', {
       message: undefined,
     });
-    mutate(data);
+    mutate({
+      ...data,
+      email: data.email.trim().toLowerCase(),
+      trackEvents: true,
+    });
   };
 
   const [isPasswordFocused, setPasswordFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { formValidationObject } = generatePasswordValidation('');
 
-  return (
+  return showCheckYourEmailNote ? (
+    <div className="pt-6">
+      <CheckEmailNote
+        email={form.getValues().email.trim().toLowerCase()}
+        type={OtpType.EMAIL_VERIFICATION}
+      />
+    </div>
+  ) : (
     <>
       <Form {...form}>
         <form className="grid space-y-4">
@@ -151,6 +169,9 @@ const SignUpForm: React.FC = () => {
             <FormField
               control={form.control}
               name="firstName"
+              rules={{
+                required: t('First name is required'),
+              }}
               render={({ field }) => (
                 <FormItem className="w-full grid space-y-2">
                   <Label htmlFor="firstName">{t('First Name')}</Label>
@@ -169,6 +190,9 @@ const SignUpForm: React.FC = () => {
             <FormField
               control={form.control}
               name="lastName"
+              rules={{
+                required: t('Last name is required'),
+              }}
               render={({ field }) => (
                 <FormItem className="w-full grid space-y-2">
                   <Label htmlFor="lastName">{t('Last Name')}</Label>
@@ -188,6 +212,11 @@ const SignUpForm: React.FC = () => {
           <FormField
             control={form.control}
             name="email"
+            rules={{
+              required: t('Email is required'),
+              validate: (email: string) =>
+                emailRegex.test(email) || t('Email is invalid'),
+            }}
             render={({ field }) => (
               <FormItem className="grid space-y-2">
                 <Label htmlFor="email">{t('Email')}</Label>
@@ -206,29 +235,35 @@ const SignUpForm: React.FC = () => {
           <FormField
             control={form.control}
             name="password"
+            rules={{
+              required: t('Password is required'),
+              validate: passwordValidation,
+            }}
             render={({ field }) => (
               <FormItem
                 className="grid space-y-2"
                 onClick={() => inputRef?.current?.focus()}
-                onFocus={() => setPasswordFocused(true)}
+                onFocus={() => {
+                  setPasswordFocused(true);
+                  setTimeout(() => inputRef?.current?.focus());
+                }}
+                onBlur={() => setPasswordFocused(false)}
               >
                 <Label htmlFor="password">{t('Password')}</Label>
                 <Popover open={isPasswordFocused}>
                   <PopoverTrigger asChild>
                     <Input
                       {...field}
-                      {...form.register('password', formValidationObject)}
                       required
                       id="password"
                       type="password"
                       placeholder={'********'}
                       className="rounded-sm"
                       ref={inputRef}
-                      onBlur={() => setPasswordFocused(false)}
                       onChange={(e) => field.onChange(e)}
                     />
                   </PopoverTrigger>
-                  <PopoverContent className="absolute border-2 bg-white p-2 rounded-md right-60 -bottom-16 flex flex-col">
+                  <PopoverContent className="absolute border-2 bg-background p-2 !pointer-events-none rounded-md right-60 -bottom-16 flex flex-col">
                     <PasswordValidator password={form.getValues().password} />
                   </PopoverContent>
                 </Popover>
@@ -236,6 +271,29 @@ const SignUpForm: React.FC = () => {
               </FormItem>
             )}
           />
+          {showNewsLetterCheckbox && (
+            <FormField
+              control={form.control}
+              name="newsLetter"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-2 ">
+                  <FormControl>
+                    <Checkbox
+                      id="newsLetter"
+                      className="!m-0"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    ></Checkbox>
+                  </FormControl>
+                  <Label htmlFor="newsLetter">
+                    {t(`Receive updates and newsletters from activepieces`)}
+                  </Label>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
           {form?.formState?.errors?.root?.serverError && (
             <FormMessage>
               {form.formState.errors.root.serverError.message}
@@ -249,9 +307,15 @@ const SignUpForm: React.FC = () => {
           </Button>
         </form>
       </Form>
-      {isCloudPlatform && (
-        <div className="mt-4 text-center text-sm">
-          {t('By creating an account, you agree to our')}
+
+      <div
+        className={cn('text-center text-sm', {
+          'mt-4': termsOfServiceUrl || privacyPolicyUrl,
+        })}
+      >
+        {(termsOfServiceUrl || privacyPolicyUrl) &&
+          t('By creating an account, you agree to our')}
+        {termsOfServiceUrl && (
           <Link
             to={termsOfServiceUrl || ''}
             target="_blank"
@@ -259,7 +323,9 @@ const SignUpForm: React.FC = () => {
           >
             {t('terms of service')}
           </Link>
-          {t('and')}
+        )}
+        {termsOfServiceUrl && privacyPolicyUrl && t('and')}
+        {privacyPolicyUrl && (
           <Link
             to={privacyPolicyUrl || ''}
             target="_blank"
@@ -267,11 +333,11 @@ const SignUpForm: React.FC = () => {
           >
             {t('privacy policy')}
           </Link>
-          .
-        </div>
-      )}
+        )}
+        .
+      </div>
       <div className="mt-4 text-center text-sm">
-        {t('Have an account?')}
+        {t('Already have an account?')}
         <Link
           to="/sign-in"
           className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"

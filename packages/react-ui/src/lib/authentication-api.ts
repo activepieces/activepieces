@@ -2,6 +2,7 @@ import { api } from '@/lib/api';
 import {
   CreateOtpRequestBody,
   ResetPasswordRequestBody,
+  VerifyEmailRequestBody,
 } from '@activepieces/ee-shared';
 import {
   AuthenticationResponse,
@@ -41,5 +42,8 @@ export const authenticationApi = {
   },
   resetPassword(request: ResetPasswordRequestBody) {
     return api.post<void>('/v1/authn/local/reset-password', request);
+  },
+  verifyEmail(request: VerifyEmailRequestBody) {
+    return api.post<void>('/v1/authn/local/verify-email', request);
   },
 };

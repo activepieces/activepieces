@@ -14,12 +14,15 @@ import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { AuthenticationResponse, SignInRequest } from '@activepieces/shared';
+import { emailRegex } from '@/features/authentication/lib/password-validation-utils';
 
 const SignInSchema = Type.Object({
   email: Type.String({
-    errorMessage: t('Email is required'),
+    pattern: emailRegex.source,
+    errorMessage: t('Email is invalid'),
   }),
   password: Type.String({
+    minLength: 1,
     errorMessage: t('Password is required'),
   }),
 });
@@ -29,6 +32,7 @@ type SignInSchema = Static<typeof SignInSchema>;
 const SignInForm: React.FC = () => {
   const form = useForm<SignInSchema>({
     resolver: typeboxResolver(SignInSchema),
+    mode: 'onChange',
   });
 
   const navigate = useNavigate();
