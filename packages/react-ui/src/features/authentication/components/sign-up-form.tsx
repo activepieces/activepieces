@@ -28,12 +28,12 @@ import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
+import { OtpType } from '@activepieces/ee-shared';
 import {
   ApEdition,
   ApFlagId,
   AuthenticationResponse,
   SignUpRequest,
-  OtpType,
 } from '@activepieces/shared';
 
 import {
