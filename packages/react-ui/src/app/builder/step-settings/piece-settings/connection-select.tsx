@@ -94,7 +94,7 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
                 disabled={params.disabled}
               >
                 <div className="relative">
-                  {field.value && (
+                  {field.value && !field.disabled && (
                     <Button
                       variant="ghost"
                       size="xs"
