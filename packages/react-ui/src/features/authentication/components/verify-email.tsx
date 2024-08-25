@@ -1,9 +1,10 @@
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { MailCheck, MailX } from 'lucide-react';
@@ -16,6 +17,8 @@ const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
   const otp = searchParams.get('otpcode');
   const userId = searchParams.get('userId');
+  const queryClient = useQueryClient();
+  const branding = flagsHooks.useWebsiteBranding(queryClient);
   if (!otp || !userId) {
     return <Navigate to="/sign-in" replace />;
   }
@@ -48,7 +51,15 @@ const VerifyEmail = () => {
   });
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center">
+    <div className="h-screen w-screen flex flex-col  items-center justify-center gap-2">
+      <div className="h-[60px]">
+        <img
+          className="h-full"
+          src={branding.logos.fullLogoUrl}
+          alt={t('logo')}
+        />
+      </div>
+
       <Card className="w-[28rem] rounded-sm drop-shadow-xl p-4">
         <div className="gap-2 w-full flex flex-col">
           <div className="gap-4 w-full flex flex-row items-center justify-center">

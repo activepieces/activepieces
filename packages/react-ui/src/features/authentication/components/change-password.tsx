@@ -117,7 +117,7 @@ const ChangePasswordForm = () => {
             />
             {serverError && <FormMessage>{serverError}</FormMessage>}
             <Button
-              className="w-full"
+              className="w-full mt-2"
               loading={isPending}
               onClick={(e) => form.handleSubmit(onSubmit)(e)}
             >
