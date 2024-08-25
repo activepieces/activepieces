@@ -101,7 +101,7 @@ export function Sidebar({ children, links, isHomeDashboard }: SidebarProps) {
             <Link to="/flows" className="h-[48px] items-center justify-center ">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link to="/">
+                  <Link to="/flows">
                     <img
                       src={branding.logos.logoIconUrl}
                       alt={t('home')}
