@@ -19,7 +19,7 @@ import {
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { variableService } from '../services/variable-service'
+import { variableService } from '../variables/variable-service'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {

@@ -69,10 +69,10 @@ export class FlowRightSidebarComponent implements OnInit {
   shouldShowTestStepArea$: Observable<boolean>;
   currentStepPieceVersion$: Observable<
     | {
-      version: string | undefined;
-      latest: boolean;
-      tooltipText: string;
-    }
+        version: string | undefined;
+        latest: boolean;
+        tooltipText: string;
+      }
     | undefined
   >;
   constructor(
@@ -84,7 +84,7 @@ export class FlowRightSidebarComponent implements OnInit {
     private pieceMetadataService: PieceMetadataService,
     public builderService: FlowBuilderService,
     private builderAutocompleteMentionsDropdownService: BuilderAutocompleteMentionsDropdownService
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.showDocs$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_DOCS);

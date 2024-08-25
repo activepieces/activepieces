@@ -52,7 +52,7 @@ export const createIssue = createAction({
     }),
     parentKey: Property.ShortText({
       displayName: 'Parent Key',
-      description: 'If this issue is a subtask, insert the parent issue key',
+      description: 'If you would like to attach the issue to a parent, insert the parent issue key',
       required: false,
     }),
   },

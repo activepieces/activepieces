@@ -119,8 +119,9 @@ export class PieceTriggerMentionItemComponent implements OnInit {
       .pipe(
         map((res) => {
           return (
-            !isNil(this._stepMention.step.settings.triggerName) && res.triggers[this._stepMention.step.settings.triggerName]?.type ===
-            TriggerStrategy.POLLING
+            !isNil(this._stepMention.step.settings.triggerName) &&
+            res.triggers[this._stepMention.step.settings.triggerName]?.type ===
+              TriggerStrategy.POLLING
           );
         })
       );

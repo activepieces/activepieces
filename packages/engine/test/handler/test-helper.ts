@@ -1,6 +1,6 @@
 import { Action, ActionErrorHandlingOptions, ActionType, BranchAction, BranchCondition, CodeAction, FlowVersionState, LoopOnItemsAction, PackageType, PieceAction, PieceType, ProgressUpdateType } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
-import { VariableService } from '../../src/lib/services/variable-service'
+import { VariableService } from '../../src/lib/variables/variable-service'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
     return new EngineConstants(

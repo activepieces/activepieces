@@ -5,7 +5,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { Image, linkedinCommon } from '../common';
+import { Image, linkedinCommon, santizeText } from '../common';
 import { linkedinAuth } from '../..';
 
 export const createCompanyUpdate = createAction({
@@ -34,7 +34,7 @@ export const createCompanyUpdate = createAction({
       image?: Image | undefined;
     } = {
       urn: `organization:${context.propsValue.company}`,
-      text: context.propsValue.text,
+      text: santizeText(context.propsValue.text),
       link: context.propsValue.link,
       linkDescription: context.propsValue.linkDescription,
       linkTitle: context.propsValue.linkTitle,

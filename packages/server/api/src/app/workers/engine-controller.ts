@@ -105,7 +105,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             })
         }
 
-        await markJobAsCompleted(populatedRun.status, populatedRun.id, request.principal as unknown as EnginePrincipal)
+        await markJobAsCompleted(populatedRun.status, populatedRun.id, request.principal as unknown as EnginePrincipal, runDetails.error)
         return {}
     })
 
@@ -175,7 +175,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 
-async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePrincipal: EnginePrincipal): Promise<void> {
+async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePrincipal: EnginePrincipal, error: unknown): Promise<void> {
     switch (status) {
         case FlowRunStatus.FAILED:
         case FlowRunStatus.TIMEOUT:
@@ -188,7 +188,7 @@ async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePr
         case FlowRunStatus.RUNNING:
             break
         case FlowRunStatus.INTERNAL_ERROR:
-            await flowConsumer.update({ jobId, queueName: QueueName.ONE_TIME, status: JobStatus.FAILED, token: enginePrincipal.queueToken!, message: 'Flow failed with internal error reported by engine' })
+            await flowConsumer.update({ jobId, queueName: QueueName.ONE_TIME, status: JobStatus.FAILED, token: enginePrincipal.queueToken!, message: `Internal error reported by engine: ${JSON.stringify(error)}` })
     }
 }
 

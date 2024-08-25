@@ -4,7 +4,9 @@ import {
     formatErrorMessage,
     InputPropertyMap,
     PieceAuthProperty,
+    PiecePropertyMap,
     PropertyType,
+    StaticPropsValue,
 } from '@activepieces/pieces-framework'
 import {
     AUTHENTICATION_PROPERTY_NAME,
@@ -14,8 +16,12 @@ import {
 import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { createConnectionService } from './connections.service'
-import { handleAPFile, isApFilePath } from './files.service'
+import { createConnectionService } from '../services/connections.service'
+import { processors } from './processors'
+
+type VariableValidationError = {
+    [key: string]: string[] | VariableValidationError
+}
 
 export class VariableService {
     private static readonly VARIABLE_PATTERN = RegExp('\\{\\{(.*?)\\}\\}', 'g')
@@ -24,6 +30,7 @@ export class VariableService {
     private engineToken: string
     private projectId: string
     private apiUrl: string
+
     constructor(data: { engineToken: string, projectId: string, apiUrl: string }) {
         this.engineToken = data.engineToken
         this.projectId = data.projectId
@@ -196,56 +203,40 @@ export class VariableService {
     }
 
     async applyProcessorsAndValidators(
-        resolvedInput: Record<string, any>,
+        resolvedInput: StaticPropsValue<PiecePropertyMap>,
         props: InputPropertyMap,
         auth: PieceAuthProperty | undefined,
-    ): Promise<{ processedInput: any, errors: any }> {
+    ): Promise<{ processedInput: StaticPropsValue<PiecePropertyMap>, errors: VariableValidationError }> {
         const processedInput = { ...resolvedInput }
-        const errors: Record<string, unknown> = {}
+        const errors: VariableValidationError = {}
 
-        if (auth && auth.type === PropertyType.CUSTOM_AUTH) {
-            const { processedInput: authProcessedInput, errors: authErrors } =
-                await this.applyProcessorsAndValidators(
-                    resolvedInput[AUTHENTICATION_PROPERTY_NAME],
-                    auth.props,
-                    undefined,
-                )
+        const isAuthenticationProperty = auth && (auth.type === PropertyType.CUSTOM_AUTH || auth.type === PropertyType.OAUTH2) && !isNil(auth.props)
+        if (isAuthenticationProperty) {
+            const { processedInput: authProcessedInput, errors: authErrors } = await this.applyProcessorsAndValidators(
+                resolvedInput[AUTHENTICATION_PROPERTY_NAME],
+                auth.props,
+                undefined,
+            )
             processedInput.auth = authProcessedInput
             if (Object.keys(authErrors).length > 0) {
                 errors.auth = authErrors
             }
         }
+
         for (const [key, value] of Object.entries(resolvedInput)) {
             const property = props[key]
-            if (key === AUTHENTICATION_PROPERTY_NAME) {
+            if (isNil(property)) {
                 continue
             }
-            if (property.type === PropertyType.MARKDOWN) {
-                continue
-            }
-            const processors = [
-                ...(property.defaultProcessors ?? []),
-                ...(property.processors ?? []),
-            ]
-            const validators = [
-                ...(property.defaultValidators ?? []),
-                ...(property.validators ?? []),
-            ]
-            // TODO remove the hard coding part
-            if (property.type === PropertyType.FILE && isApFilePath(value)) {
-                processedInput[key] = await handleAPFile({
-                    apiUrl: this.apiUrl,
-                    path: value.trim(),
-                    engineToken: this.engineToken,
-                })
-            }
-            else {
-                for (const processor of processors) {
-                    processedInput[key] = await processor(property, value)
-                }
+            const processor = processors[property.type]
+            if (processor) {
+                processedInput[key] = await processor(property, value)
             }
 
-            const propErrors = []
+            const shouldValidate = key !== AUTHENTICATION_PROPERTY_NAME && property.type !== PropertyType.MARKDOWN
+            if (!shouldValidate) {
+                continue
+            }
             // Short Circuit
             // If the value is required, we don't allow it to be undefined or null
             if (isNil(value) && property.required) {
@@ -255,11 +246,21 @@ export class VariableService {
                 continue
             }
             // If the value is not required, we allow it to be undefined or null
-            if (isNil(value) && !property.required) continue
+            if (isNil(value) && !property.required) {
+                continue
+            }
 
+            const validators = [
+                ...(property.defaultValidators ?? []),
+                ...(property.validators ?? []),
+            ]
+
+            const propErrors = []
             for (const validator of validators) {
                 const error = validator.fn(property, processedInput[key], value)
-                if (!isNil(error)) propErrors.push(error)
+                if (!isNil(error)) {
+                    propErrors.push(error)
+                }
             }
             if (propErrors.length) errors[key] = propErrors
         }
@@ -268,4 +269,5 @@ export class VariableService {
 
 }
 
-export const variableService = ({ projectId, engineToken, apiUrl }: { projectId: string, engineToken: string, apiUrl: string }) => new VariableService({ projectId, engineToken, apiUrl })
+export const variableService = ({ projectId, engineToken, apiUrl }: { projectId: string, engineToken: string, apiUrl: string }): VariableService => 
+    new VariableService({ projectId, engineToken, apiUrl })
