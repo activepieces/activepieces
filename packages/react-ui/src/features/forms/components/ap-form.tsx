@@ -239,7 +239,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                 )}
               </CardContent>
             </Card>
-            <ShowPoweredBy />
+            <ShowPoweredBy showOnCloud={true} />
           </form>
         </Form>
       </div>

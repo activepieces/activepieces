@@ -8,7 +8,7 @@ export const InvalidStepIcon = createLucideIcon('InvalidStepIcon', [
       cy: '8.26868',
       r: '7.5',
       fill: '#FFC048',
-      'fill-opacity': '0.3',
+      fillOpacity: '0.3',
     },
   ],
   [

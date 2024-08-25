@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
+import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -25,6 +26,8 @@ const DynamicDropdownPieceProperty = React.memo(
       state.flowVersion,
     ]);
     const form = useFormContext<Action | Trigger>();
+    const isFirstRender = useRef(true);
+    const previousValues = useRef<undefined | unknown[]>(undefined);
 
     const newRefreshers = [...props.refreshers, 'auth'];
     const [dropdownState, setDropdownState] = useState<DropdownState<unknown>>({
@@ -32,17 +35,16 @@ const DynamicDropdownPieceProperty = React.memo(
       placeholder: t('Select an option'),
       options: [],
     });
-
     const { mutate, isPending } = useMutation<
       DropdownState<unknown>,
       Error,
-      Record<string, unknown>
+      { input: Record<string, unknown> }
     >({
-      mutationFn: async (input) => {
+      mutationFn: async ({ input }) => {
         const { settings } = form.getValues();
         const actionOrTriggerName = settings.actionName ?? settings.triggerName;
         const { pieceName, pieceVersion, pieceType, packageType } = settings;
-        return piecesApi.options({
+        const response = piecesApi.options<DropdownState<unknown>>({
           pieceName,
           pieceVersion,
           pieceType,
@@ -53,9 +55,7 @@ const DynamicDropdownPieceProperty = React.memo(
           flowVersionId: flowVersion.id,
           flowId: flowVersion.flowId,
         });
-      },
-      onSuccess: (response) => {
-        setDropdownState(response);
+        return response;
       },
       onError: (error) => {
         console.error(error);
@@ -72,11 +72,29 @@ const DynamicDropdownPieceProperty = React.memo(
     /* eslint-enable react-hooks/rules-of-hooks */
 
     useEffect(() => {
-      const record: Record<string, unknown> = {};
+      const input: Record<string, unknown> = {};
       newRefreshers.forEach((refresher, index) => {
-        record[refresher] = refresherValues[index];
+        input[refresher] = refresherValues[index];
       });
-      mutate(record);
+
+      if (
+        !isFirstRender.current &&
+        !deepEqual(previousValues.current, refresherValues)
+      ) {
+        props.onChange(undefined);
+      }
+
+      previousValues.current = refresherValues;
+      isFirstRender.current = false;
+
+      mutate(
+        { input },
+        {
+          onSuccess: (response) => {
+            setDropdownState(response);
+          },
+        },
+      );
     }, refresherValues);
 
     const selectOptions = dropdownState.options.map((option) => ({

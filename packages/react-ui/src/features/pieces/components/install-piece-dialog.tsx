@@ -92,7 +92,7 @@ const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
       formData.set('pieceName', data.pieceName);
       formData.set('pieceVersion', data.pieceVersion);
       formData.set('scope', PieceScope.PROJECT);
-      formData.set('projectId', authenticationSession.getProjectId());
+      formData.set('projectId', authenticationSession.getProjectId()!);
       const pieceArchive = data.pieceArchive;
       if (pieceArchive) {
         formData.set('pieceArchive', pieceArchive);

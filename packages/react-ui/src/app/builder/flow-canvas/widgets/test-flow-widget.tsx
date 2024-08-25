@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useEffect } from 'react';
 
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
@@ -12,13 +13,15 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FlowRun, FlowVersion, isNil, TriggerType } from '@activepieces/shared';
 
-type TestFlowWidgetPorps = {
+type TestFlowWidgetProps = {
   flowVersion: FlowVersion;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
 };
 
-const TestFlowWidget = ({ flowVersion, setRun }: TestFlowWidgetPorps) => {
+const TestFlowWidget = ({ flowVersion, setRun }: TestFlowWidgetProps) => {
   const socket = useSocket();
+
+  const isMac = /(Mac)/i.test(navigator.userAgent);
 
   const triggerHasSampleData =
     flowVersion.trigger.type === TriggerType.PIECE &&
@@ -35,12 +38,33 @@ const TestFlowWidget = ({ flowVersion, setRun }: TestFlowWidgetPorps) => {
           setRun(run, flowVersion);
         },
       ),
-    onSuccess: () => {},
     onError: (error) => {
       console.log(error);
       toast(INTERNAL_ERROR_TOAST);
     },
   });
+
+  useEffect(() => {
+    const keydownHandler = (event: KeyboardEvent) => {
+      if (
+        (isMac && event.metaKey && event.key.toLocaleLowerCase() === 'd') ||
+        (!isMac && event.ctrlKey && event.key.toLocaleLowerCase() === 'd')
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!isPending && triggerHasSampleData) {
+          mutate();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', keydownHandler, { capture: true });
+
+    return () => {
+      window.removeEventListener('keydown', keydownHandler, { capture: true });
+    };
+  }, [isMac, isPending, triggerHasSampleData, mutate]);
 
   return (
     flowVersion.valid && (
@@ -53,7 +77,12 @@ const TestFlowWidget = ({ flowVersion, setRun }: TestFlowWidgetPorps) => {
             loading={isPending}
             onClick={() => mutate()}
           >
-            {t('Test Flow')}
+            <div className="flex justify-center items-center gap-2">
+              {t('Test Flow')}
+              <span className="text-[10px] tracking-widest whitespace-nowrap">
+                {isMac ? '⌘ D' : 'Ctrl D'}
+              </span>
+            </div>
           </Button>
         </TooltipTrigger>
         {!triggerHasSampleData && (

@@ -81,7 +81,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       const isCtrlWithShortcut =
         keyboardShortcut &&
         event.key === keyboardShortcut.toLocaleLowerCase() &&
-        event.ctrlKey;
+        (isMac ? event.metaKey : event.ctrlKey);
       if (isEscapePressed || isCtrlWithShortcut) {
         event.preventDefault();
         event.stopPropagation();
@@ -95,7 +95,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         className={cn(buttonVariants({ variant, size, className }), {})}
         ref={ref}
-        disabled={disabled}
+        disabled={disabled || loading}
         {...props}
         onClick={(e) => {
           loading ? e.stopPropagation() : props.onClick && props.onClick(e);
