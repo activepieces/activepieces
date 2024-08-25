@@ -150,7 +150,7 @@ const CreateOrEditConnectionDialog = React.memo(
             );
           } else if (apError.code === ErrorCode.INVALID_APP_CONNECTION) {
             setErrorMessage(
-              t('Connection failed with error {{msg}}', {
+              t('Connection failed with error {msg}', {
                 msg: apError.params.error,
               }),
             );

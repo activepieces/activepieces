@@ -32,6 +32,16 @@ export function deleteProps<T extends Record<string, unknown>, K extends keyof T
     return newObj
 }
 
+export function sanitizeObjectForPostgresql<T>(input: T): T {
+    return applyFunctionToValuesSync<T>(input, (str) => {
+        if (isString(str)) {
+            // eslint-disable-next-line no-control-regex
+            const controlCharsRegex = /\u0000/g
+            return str.replace(controlCharsRegex, '')            
+        }
+        return str
+    })
+}
 
 export function applyFunctionToValuesSync<T>(obj: unknown, apply: (str: unknown) => unknown): T {
     if (isNil(obj)) {

@@ -1,16 +1,16 @@
-import { Card } from '@/components/ui/card';
-import { FullLogo } from '@/components/ui/full-logo';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { api } from '@/lib/api';
-import { authenticationApi } from '@/lib/authentication-api';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { MailCheck, MailX } from 'lucide-react';
 import { useLayoutEffect, useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+
+import { Card } from '@/components/ui/card';
+import { FullLogo } from '@/components/ui/full-logo';
+import { LoadingSpinner } from '@/components/ui/spinner';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { api } from '@/lib/api';
+import { authenticationApi } from '@/lib/authentication-api';
 
 const VerifyEmail = () => {
   const [isExpired, setIsExpired] = useState(false);
@@ -18,19 +18,14 @@ const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
   const otp = searchParams.get('otpcode');
   const userId = searchParams.get('userId');
-  const queryClient = useQueryClient();
-  const branding = flagsHooks.useWebsiteBranding(queryClient);
-  if (!otp || !userId) {
-    return <Navigate to="/sign-in" replace />;
-  }
   useLayoutEffect(() => {
     mutate();
   }, []);
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       return await authenticationApi.verifyEmail({
-        otp,
-        userId,
+        otp: otp!,
+        userId: userId!,
       });
     },
     onSuccess: () => {
@@ -51,6 +46,9 @@ const VerifyEmail = () => {
     },
   });
 
+  if (!otp || !userId) {
+    return <Navigate to="/sign-in" replace />;
+  }
   return (
     <div className="h-screen w-screen flex flex-col  items-center justify-center gap-2">
       <FullLogo />

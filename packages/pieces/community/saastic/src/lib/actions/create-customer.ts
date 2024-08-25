@@ -33,7 +33,6 @@ export const createCustomer = createAction({
       displayName: 'Email',
       description: "The customer's email address.",
       required: true,
-      processors: [],
       validators: [Validators.email],
     }),
     phone: Property.LongText({
@@ -45,7 +44,6 @@ export const createCustomer = createAction({
       displayName: 'Signup Date',
       description: 'The date the customer signed up.',
       required: false,
-      processors: [],
       validators: [Validators.datetimeIso],
     }),
   },

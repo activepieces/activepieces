@@ -1,4 +1,3 @@
-import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
@@ -7,6 +6,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -21,10 +21,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
+import { PasswordValidator } from '@/features/authentication/components/password-validator';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { cn } from '@/lib/utils';
+import { OtpType } from '@activepieces/ee-shared';
 import {
   ApEdition,
   ApFlagId,
@@ -36,11 +40,6 @@ import {
   emailRegex,
   passwordValidation,
 } from '../lib/password-validation-utils';
-import { Checkbox } from '@/components/ui/checkbox';
-import { cn } from '@/lib/utils';
-import { PasswordValidator } from '@/features/authentication/components/password-validator';
-import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
-import { OtpType } from '../../../../../ee/shared/src';
 
 type SignUpSchema = {
   email: string;

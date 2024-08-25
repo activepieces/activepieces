@@ -18,6 +18,7 @@
     "create-trigger": "npx ts-node packages/cli/src/index.ts triggers create",
     "sync-pieces": "npx ts-node packages/cli/src/index.ts pieces sync",
     "publish-piece": "npx ts-node tools/scripts/pieces/publish-piece.ts",
+    "pull-i18n": "crowdin pull --config crowdin.yml",
     "push-i18n": "crowdin upload sources",
     "i18n:extract": "i18next --config packages/react-ui/i18next-parser.config.js && jq 'to_entries | map({(.key): .key}) | add' packages/react-ui/public/locales/en/translation.json > packages/react-ui/public/locales/en/translation.tmp.json && mv packages/react-ui/public/locales/en/translation.tmp.json packages/react-ui/public/locales/en/translation.json"
   },

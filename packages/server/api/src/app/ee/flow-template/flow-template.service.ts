@@ -8,6 +8,7 @@ import {
     FlowVersionTemplate,
     isNil,
     ListFlowTemplatesRequest,
+    sanitizeObjectForPostgresql,
     SeekPage,
     TemplateType,
 } from '@activepieces/shared'
@@ -31,7 +32,7 @@ export const flowTemplateService = {
             id,
         }: CreateFlowTemplateRequest,
     ): Promise<FlowTemplate> => {
-        const flowTemplate: FlowVersionTemplate = template
+        const flowTemplate: FlowVersionTemplate = sanitizeObjectForPostgresql(template)
         const newTags = tags ?? []
         const newId = id ?? apId()
         await templateRepo().upsert(

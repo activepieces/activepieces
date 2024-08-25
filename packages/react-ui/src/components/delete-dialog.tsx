@@ -36,7 +36,7 @@ export function ConfirmationDeleteDialog({
     mutationFn,
     onSuccess: () => {
       toast({
-        title: t('Removed {{entityName}}', { entityName }),
+        title: t('Removed {entityName}', { entityName }),
       });
       setIsOpen(false);
     },

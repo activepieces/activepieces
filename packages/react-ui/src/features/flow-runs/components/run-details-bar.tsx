@@ -31,10 +31,9 @@ function getStatusText(status: FlowRunStatus, timeout: number) {
     case FlowRunStatus.RUNNING:
       return t('Running');
     case FlowRunStatus.TIMEOUT:
-      return t(
-        'Run exceeded {{timeout}} seconds, try to optimize your steps.',
-        { timeout },
-      );
+      return t('Run exceeded {timeout} seconds, try to optimize your steps.', {
+        timeout,
+      });
     case FlowRunStatus.INTERNAL_ERROR:
       return t('Run failed for an unknown reason, contact support.');
   }

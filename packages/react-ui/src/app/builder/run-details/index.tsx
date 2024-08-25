@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Info } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import {
@@ -51,6 +51,15 @@ const FlowRunDetails = React.memo(() => {
       : [];
     setStepPaths(paths);
   }, [run]);
+  if (isNil(run))
+    return (
+      <div className="flex flex-col justify-center items-center gap-4 w-full h-full">
+        <Info size={36} className="text-muted-foreground" />
+        <h4 className="px-6 text-sm text-center text-muted-foreground ">
+          Logs are kept for 14 days after execution and then deleted.
+        </h4>
+      </div>
+    );
 
   return (
     <ResizablePanelGroup direction="vertical">

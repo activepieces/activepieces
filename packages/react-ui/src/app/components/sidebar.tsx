@@ -113,6 +113,7 @@ export function Sidebar({ children, links, isHomeDashboard }: SidebarProps) {
                 <TooltipContent side="right">{t('Home')}</TooltipContent>
               </Tooltip>
             </Link>
+
             {links.map((link, index) => (
               <CustomTooltipLink
                 to={link.to}

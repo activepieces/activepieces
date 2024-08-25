@@ -1,8 +1,7 @@
 import { Static, TObject, TSchema, Type } from "@sinclair/typebox";
-import { PropertyType } from "./property-type";
-import { ProcessorFn } from "../../processors/types";
 import { TypedValidatorFn, ValidationInputType } from "../../validators/types";
 import { ApFile } from "./file-property";
+import { PropertyType } from "./property-type";
 
 
 export const BasePropertySchema = Type.Object({
@@ -27,8 +26,6 @@ export type TPropertyValue<
   valueSchema: T;
   type: U;
   required: REQUIRED;
-  defaultProcessors?: ProcessorFn[];
-  processors?: ProcessorFn[];
   validators?: TypedValidatorFn<VALIDATION_INPUT>[];
   defaultValidators?: TypedValidatorFn<VALIDATION_INPUT>[];
   // TODO this should be T or undefined

@@ -1,6 +1,7 @@
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 const FullLogo = () => {
   const queryClient = useQueryClient();
