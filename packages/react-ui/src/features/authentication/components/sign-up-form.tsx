@@ -349,7 +349,7 @@ const SignUpForm: React.FC = () => {
         .
       </div>
       <div className="mt-4 text-center text-sm">
-        {t('Have an account?')}
+        {t('Already have an account?')}
         <Link
           to="/sign-in"
           className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"

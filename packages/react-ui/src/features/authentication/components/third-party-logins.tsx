@@ -18,6 +18,7 @@ import { flagsHooks } from '../../../hooks/flags-hooks';
 import { authenticationApi } from '../../../lib/authentication-api';
 import { authenticationSession } from '../../../lib/authentication-session';
 import { oauth2Utils } from '../../../lib/oauth2-utils';
+import { HorizontalSeparatorWithText } from '@/components/ui/seperator';
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
@@ -114,11 +115,9 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
       {thirdPartyAuthProviders?.google ||
       thirdPartyAuthProviders?.github ||
       thirdPartyAuthProviders?.saml ? (
-        <div className="my-4 flex w-full flex-row items-center">
-          <div className="w-1/2 border" />
-          <span className="mx-2 text-sm">{t('OR')}</span>
-          <div className="w-1/2 border" />
-        </div>
+        <HorizontalSeparatorWithText className="my-4">
+          {t('OR')}
+        </HorizontalSeparatorWithText>
       ) : null}
     </>
   );
