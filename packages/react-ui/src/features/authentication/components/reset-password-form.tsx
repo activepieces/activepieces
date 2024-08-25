@@ -22,6 +22,7 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
+import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -74,29 +75,14 @@ const ResetPasswordForm = () => {
         </CardTitle>
         <CardDescription>
           {isSent ? (
-            <div className="gap-2 w-full flex flex-col">
-              <div className="gap-4 w-full flex flex-row items-center justify-center">
-                <MailCheck className="w-16 h-16" />
-                <span className="text-left w-fit">
-                  {t('We sent you a link to')}{' '}
-                  <strong>{form.getValues().email}</strong>.{' '}
-                  {t('Check your email to reset your password.')}
-                </span>
-              </div>
-              <div className="flex flex-row gap-1">
-                {t("Didn't receive an email?")}
-                <span
-                  className="cursor-pointer text-primary underline"
-                  onClick={handleResendClick}
-                >
-                  {t('Resend')}
-                </span>
-              </div>
-            </div>
+            <CheckEmailNote
+              email={form.getValues().email.trim().toLocaleLowerCase()}
+              type={OtpType.PASSWORD_RESET}
+            />
           ) : (
             <span>
               {t(
-                'If the email you entered exists, you will receive an email with a link to reset your password.',
+                `If the user exists we'll send you an email with a link to reset your password.`,
               )}
             </span>
           )}
@@ -105,7 +91,7 @@ const ResetPasswordForm = () => {
       <CardContent>
         {!isSent && (
           <Form {...form}>
-            <form className="grid gap-2">
+            <form className="grid ">
               <FormField
                 control={form.control}
                 name="email"
@@ -122,7 +108,7 @@ const ResetPasswordForm = () => {
                 )}
               />
               <Button
-                className="w-full"
+                className="w-full mt-4"
                 loading={isPending}
                 onClick={(e) => form.handleSubmit(onSubmit)(e)}
               >
@@ -131,7 +117,7 @@ const ResetPasswordForm = () => {
             </form>
           </Form>
         )}
-        <div className="mt-2 text-center text-sm">
+        <div className="mt-4 text-center text-sm">
           <Link to="/sign-in" className="text-muted-foreground">
             {t('Back to sign in')}
           </Link>
