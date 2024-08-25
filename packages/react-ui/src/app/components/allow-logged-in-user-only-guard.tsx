@@ -35,7 +35,8 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
     return <Navigate to="/sign-in" replace />;
   }
   const token = authenticationSession.getToken();
-  if (token && isJwtExpired(token)) {
+  if (!token || isJwtExpired(token)) {
+    authenticationSession.logOut();
     return <Navigate to="/sign-in" replace />;
   }
   projectHooks.prefetchProject();

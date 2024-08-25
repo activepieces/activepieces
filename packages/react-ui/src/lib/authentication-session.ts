@@ -34,7 +34,7 @@ export const authenticationSession = {
       !!this.getToken() && !!this.getCurrentUser() && !!this.getProjectId()
     );
   },
-  LogOut() {
+  logOut() {
     localStorage.removeItem(tokenKey);
     localStorage.removeItem(currentUserKey);
     localStorage.removeItem(projectIdKey);
