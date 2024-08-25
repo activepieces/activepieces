@@ -1,6 +1,6 @@
-import { passwordRules } from '@/features/authentication/lib/password-validation-utils';
-import { t } from 'i18next';
 import { Check, X } from 'lucide-react';
+
+import { passwordRules } from '@/features/authentication/lib/password-validation-utils';
 
 const PasswordValidator = ({ password }: { password: string }) => {
   return (

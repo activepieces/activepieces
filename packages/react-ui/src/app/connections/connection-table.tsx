@@ -65,7 +65,7 @@ const DeleteConnectionColumn = ({
     <div className="flex items-end justify-end">
       <Authorization permission={Permission.WRITE_APP_CONNECTION}>
         <ConfirmationDeleteDialog
-          title={t('Delete {{name}} connection', { name: row.name })}
+          title={t('Delete {name} connection', { name: row.name })}
           message={t(
             'Are you sure you want to delete this connection? all steps using it will fail.',
           )}

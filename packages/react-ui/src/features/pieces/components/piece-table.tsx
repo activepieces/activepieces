@@ -73,7 +73,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
       ) {
         return (
           <ConfirmationDeleteDialog
-            title={t('Delete {{name}}', { name: row.original.name })}
+            title={t('Delete {name}', { name: row.original.name })}
             entityName={t('Piece')}
             message={t(
               'This will permanently delete this piece, all steps using it will fail.',

@@ -1,9 +1,8 @@
 import { t } from 'i18next';
 import { useParams } from 'react-router-dom';
 
-import { ShareTemplate } from '@/features/templates/components/share-template';
-
 import { FullLogo } from '@/components/ui/full-logo';
+import { ShareTemplate } from '@/features/templates/components/share-template';
 
 const ShareTemplatePage = () => {
   const { templateId } = useParams<{ templateId: string }>();

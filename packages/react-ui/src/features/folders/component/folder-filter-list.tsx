@@ -135,7 +135,7 @@ const FolderItem = ({
                   </DropdownMenuItem>
                 </RenameFolderDialog>
                 <ConfirmationDeleteDialog
-                  title={t('Delete folder {{folderName}}', {
+                  title={t('Delete folder {folderName}', {
                     folderName: folder.displayName,
                   })}
                   message={t(

@@ -1,8 +1,9 @@
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { authenticationApi } from '@/lib/authentication-api';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { MailCheck } from 'lucide-react';
+
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { authenticationApi } from '@/lib/authentication-api';
 import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
 
 const CheckEmailNote = ({ email, type }: CreateOtpRequestBody) => {

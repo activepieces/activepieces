@@ -88,14 +88,15 @@ export const formUtils = {
         };
       }
       case ActionType.PIECE: {
+        const actionName = selectedStep?.settings?.actionName;
         const props =
-          piece?.actions?.[selectedStep?.settings?.actionName]?.props ?? {};
+          actionName !== undefined ? piece?.actions?.[actionName]?.props : {};
         const input = (selectedStep?.settings?.input ?? {}) as Record<
           string,
           unknown
         >;
         const defaultValues = getDefaultValueForStep(
-          props,
+          props ?? {},
           includeCurrentInput ? input : {},
         );
         return {
@@ -108,14 +109,17 @@ export const formUtils = {
         };
       }
       case TriggerType.PIECE: {
+        const triggerName = selectedStep?.settings?.triggerName;
         const props =
-          piece?.triggers?.[selectedStep?.settings?.triggerName]?.props ?? {};
+          triggerName !== undefined
+            ? piece?.triggers?.[triggerName]?.props
+            : {};
         const input = (selectedStep?.settings?.input ?? {}) as Record<
           string,
           unknown
         >;
         const defaultValues = getDefaultValueForStep(
-          props,
+          props ?? {},
           includeCurrentInput ? input : {},
         );
 

@@ -4,6 +4,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import { HorizontalSeparatorWithText } from '@/components/ui/seperator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {
   ApFlagId,
@@ -18,7 +19,6 @@ import { flagsHooks } from '../../../hooks/flags-hooks';
 import { authenticationApi } from '../../../lib/authentication-api';
 import { authenticationSession } from '../../../lib/authentication-session';
 import { oauth2Utils } from '../../../lib/oauth2-utils';
-import { HorizontalSeparatorWithText } from '@/components/ui/seperator';
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;

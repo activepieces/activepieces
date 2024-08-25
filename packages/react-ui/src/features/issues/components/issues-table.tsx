@@ -31,7 +31,7 @@ const fetchData = async (
   pagination: PaginationParams,
 ) => {
   return issuesApi.list({
-    projectId: authenticationSession.getProjectId(),
+    projectId: authenticationSession.getProjectId()!,
     cursor: pagination.cursor,
     limit: pagination.limit,
   });
@@ -49,7 +49,7 @@ export default function IssuesTable() {
     refetch();
     toast({
       title: t('Success'),
-      description: t('Issues in {{flowDisplayName}} is marked as resolved.', {
+      description: t('Issues in {{flowDisplayName} is marked as resolved.', {
         flowDisplayName,
       }),
       duration: 3000,
