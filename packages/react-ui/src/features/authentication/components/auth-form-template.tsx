@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import React from 'react';
+import React, { useState } from 'react';
 
 import {
   Card,
@@ -16,7 +16,7 @@ import { ThirdPartyLogin } from './third-party-logins';
 const AuthFormTemplate = React.memo(
   ({ form }: { form: 'signin' | 'signup' }) => {
     const isSignUp = form === 'signup';
-
+    const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
     const data = {
       signin: {
         title: t('Welcome Back!'),
@@ -32,13 +32,24 @@ const AuthFormTemplate = React.memo(
 
     return (
       <Card className="w-[28rem] rounded-sm drop-shadow-xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">{data.title}</CardTitle>
-          <CardDescription>{data.description}</CardDescription>
-        </CardHeader>
+        {!showCheckYourEmailNote && (
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">{data.title}</CardTitle>
+            <CardDescription>{data.description}</CardDescription>
+          </CardHeader>
+        )}
+
         <CardContent>
-          <ThirdPartyLogin isSignUp={isSignUp} />
-          {isSignUp ? <SignUpForm /> : <SignInForm />}
+          {!showCheckYourEmailNote && <ThirdPartyLogin isSignUp={isSignUp} />}
+
+          {isSignUp ? (
+            <SignUpForm
+              setShowCheckYourEmailNote={setShowCheckYourEmailNote}
+              showCheckYourEmailNote={showCheckYourEmailNote}
+            />
+          ) : (
+            <SignInForm />
+          )}
         </CardContent>
       </Card>
     );

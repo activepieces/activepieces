@@ -2,7 +2,6 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
-import { Check, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -35,58 +34,31 @@ import {
 
 import {
   emailRegex,
-  passwordRules,
   passwordValidation,
 } from '../lib/password-validation-utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { PasswordValidator } from '@/features/authentication/components/password-validator';
+import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
+import { OtpType } from '../../../../../ee/shared/src';
 
-const SignUpSchema = Type.Object({
-  firstName: Type.String({
-    minLength: 1,
-    errorMessage: t('First name is required'),
-  }),
-  lastName: Type.String({
-    minLength: 1,
-    errorMessage: t('Last name is required'),
-  }),
-  email: Type.String({
-    errorMessage: t('Email is invalid'),
-    pattern: emailRegex.source,
-  }),
-  password: Type.String({
-    minLength: 1,
-    errorMessage: t('Password is required'),
-  }),
-  trackEvents: Type.Boolean(),
-  newsLetter: Type.Boolean(),
-});
-
-type SignUpSchema = Static<typeof SignUpSchema>;
-
-const PasswordValidator = ({ password }: { password: string }) => {
-  return (
-    <>
-      {passwordRules.map((rule, index) => {
-        return (
-          <div key={index} className="flex flex-row gap-2">
-            {rule.condition(password) ? (
-              <Check className="text-success" />
-            ) : (
-              <X className="text-destructive" />
-            )}
-            <span>{t(rule.label)}</span>
-          </div>
-        );
-      })}
-    </>
-  );
+type SignUpSchema = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  newsLetter: boolean;
 };
 
-const SignUpForm: React.FC = () => {
+const SignUpForm = ({
+  showCheckYourEmailNote,
+  setShowCheckYourEmailNote,
+}: {
+  showCheckYourEmailNote: boolean;
+  setShowCheckYourEmailNote: (value: boolean) => void;
+}) => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-
   const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(
     ApFlagId.TERMS_OF_SERVICE_URL,
     queryClient,
@@ -96,14 +68,12 @@ const SignUpForm: React.FC = () => {
     queryClient,
   );
 
-  const defaultValues = {
-    trackEvents: true,
-    newsLetter: false,
-    password: '',
-    email: searchParams.get('email') || '',
-  };
   const form = useForm<SignUpSchema>({
-    defaultValues,
+    defaultValues: {
+      newsLetter: false,
+      password: '',
+      email: searchParams.get('email') || '',
+    },
   });
   const websiteName = flagsHooks.useWebsiteBranding(queryClient)?.websiteName;
   const edition = flagsHooks.useFlag<ApEdition>(
@@ -142,8 +112,12 @@ const SignUpForm: React.FC = () => {
   >({
     mutationFn: authenticationApi.signUp,
     onSuccess: (data) => {
-      authenticationSession.saveResponse(data);
-      navigate('/flows');
+      if (data.verified) {
+        authenticationSession.saveResponse(data);
+        navigate('/flows');
+      } else {
+        setShowCheckYourEmailNote(true);
+      }
     },
     onError: (error) => {
       if (api.isError(error)) {
@@ -166,17 +140,28 @@ const SignUpForm: React.FC = () => {
     },
   });
 
-  const onSubmit: SubmitHandler<SignUpRequest> = (data) => {
+  const onSubmit: SubmitHandler<SignUpSchema> = (data) => {
     form.setError('root.serverError', {
       message: undefined,
     });
-    mutate({ ...data, email: data.email.trim().toLowerCase() });
+    mutate({
+      ...data,
+      email: data.email.trim().toLowerCase(),
+      trackEvents: true,
+    });
   };
 
   const [isPasswordFocused, setPasswordFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  return (
+  return showCheckYourEmailNote ? (
+    <div className="pt-6">
+      <CheckEmailNote
+        email={form.getValues().email.trim().toLowerCase()}
+        type={OtpType.EMAIL_VERIFICATION}
+      />
+    </div>
+  ) : (
     <>
       <Form {...form}>
         <form className="grid space-y-4">
@@ -258,7 +243,11 @@ const SignUpForm: React.FC = () => {
               <FormItem
                 className="grid space-y-2"
                 onClick={() => inputRef?.current?.focus()}
-                onFocus={() => setPasswordFocused(true)}
+                onFocus={() => {
+                  setPasswordFocused(true);
+                  setTimeout(() => inputRef?.current?.focus());
+                }}
+                onBlur={() => setPasswordFocused(false)}
               >
                 <Label htmlFor="password">{t('Password')}</Label>
                 <Popover open={isPasswordFocused}>
@@ -271,11 +260,10 @@ const SignUpForm: React.FC = () => {
                       placeholder={'********'}
                       className="rounded-sm"
                       ref={inputRef}
-                      onBlur={() => setPasswordFocused(false)}
                       onChange={(e) => field.onChange(e)}
                     />
                   </PopoverTrigger>
-                  <PopoverContent className="absolute border-2 bg-background p-2 rounded-md right-60 -bottom-16 flex flex-col">
+                  <PopoverContent className="absolute border-2 bg-background p-2 !pointer-events-none rounded-md right-60 -bottom-16 flex flex-col">
                     <PasswordValidator password={form.getValues().password} />
                   </PopoverContent>
                 </Popover>
@@ -297,7 +285,7 @@ const SignUpForm: React.FC = () => {
                       onCheckedChange={field.onChange}
                     ></Checkbox>
                   </FormControl>
-                  <Label htmlFor="newsLetter" className="cursor-pointer">
+                  <Label htmlFor="newsLetter">
                     {t(`Receive updates and newsletters from activepieces`)}
                   </Label>
                   <FormMessage />
