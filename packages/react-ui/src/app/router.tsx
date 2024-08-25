@@ -394,7 +394,7 @@ export const router = createBrowserRouter([
     path: '/*',
     element: (
       <PageTitle title="Redirect">
-        <Navigate to="/404" replace />
+        <Navigate to="/flows" replace />
       </PageTitle>
     ),
   },
