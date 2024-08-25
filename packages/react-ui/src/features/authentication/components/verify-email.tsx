@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/card';
+import { FullLogo } from '@/components/ui/full-logo';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -52,13 +53,7 @@ const VerifyEmail = () => {
 
   return (
     <div className="h-screen w-screen flex flex-col  items-center justify-center gap-2">
-      <div className="h-[60px]">
-        <img
-          className="h-full"
-          src={branding.logos.fullLogoUrl}
-          alt={t('logo')}
-        />
-      </div>
+      <FullLogo />
 
       <Card className="w-[28rem] rounded-sm drop-shadow-xl p-4">
         <div className="gap-2 w-full flex flex-col">
