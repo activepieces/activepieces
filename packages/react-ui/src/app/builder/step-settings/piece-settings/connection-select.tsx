@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
@@ -22,11 +22,18 @@ import {
 import { PieceAction, PieceTrigger } from '@activepieces/shared';
 
 import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
+import { Button } from '@/components/ui/button';
 
 type ConnectionSelectProps = {
   disabled: boolean;
   piece: PieceMetadataModelSummary | PieceMetadataModel;
 };
+const addBrackets = (str: string) => `{{connections['${str}']}}`;
+const removeBrackets = (str: string) =>
+  str.replace(
+    /\{\{connections\['(.*?)'\]\}\}/g,
+    (_, connectionName) => connectionName,
+  );
 const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
   const [connectionDialogOpen, setConnectionDialogOpen] = React.useState(false);
   const [selectConnectionOpen, setSelectConnectionOpen] = React.useState(false);
@@ -40,41 +47,87 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
     pieceName: params.piece.name,
     cursor: undefined,
     limit: 100,
-    projectId: authenticationSession.getProjectId(),
+    projectId: authenticationSession.getProjectId() ?? '',
   });
-
-  const addBrackets = (str: string) => `{{connections['${str}']}}`;
+  const currentlySelectedConnection = useMemo(() => {
+    const connectionName = removeBrackets(
+      form.getValues().settings.input.auth ?? '',
+    );
+    return (
+      connectionsPage?.data?.find(
+        (connection) => connection.name === connectionName,
+      ) ?? null
+    );
+  }, [connectionsPage?.data, form.getValues().settings.input.auth]);
 
   return (
     <FormField
       control={form.control}
       name={'settings.input.auth'}
       render={({ field }) => (
-        <FormItem>
-          <CreateOrEditConnectionDialog
-            piece={params.piece}
-            onConnectionCreated={(connectionName) => {
-              refetch();
-              field.onChange(addBrackets(connectionName));
-            }}
-            open={connectionDialogOpen}
-            setOpen={setConnectionDialogOpen}
-          ></CreateOrEditConnectionDialog>
-          <FormLabel>{t('Connection')}</FormLabel>
-          <Select
-            open={selectConnectionOpen}
-            onOpenChange={setSelectConnectionOpen}
-            defaultValue={field.value as string | undefined}
-            onValueChange={field.onChange}
-            disabled={params.disabled}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t('Select a connection')} />
-            </SelectTrigger>
-            <SelectContent>
-              {isLoading && <SelectLoader />}
-              {!isLoading && (
-                <>
+        <>
+          {isLoading && (
+            <Select disabled={params.disabled}>
+              <SelectContent>
+                <SelectLoader />
+              </SelectContent>
+            </Select>
+          )}
+          {!isLoading && (
+            <FormItem>
+              <CreateOrEditConnectionDialog
+                reconnectConnection={currentlySelectedConnection}
+                piece={params.piece}
+                onConnectionCreated={(connectionName) => {
+                  refetch();
+                  field.onChange(addBrackets(connectionName));
+                }}
+                open={connectionDialogOpen}
+                setOpen={setConnectionDialogOpen}
+              ></CreateOrEditConnectionDialog>
+              <FormLabel>{t('Connection')}</FormLabel>
+              <Select
+                open={selectConnectionOpen}
+                onOpenChange={setSelectConnectionOpen}
+                defaultValue={field.value as string | undefined}
+                onValueChange={field.onChange}
+                disabled={params.disabled}
+              >
+                <div className="relative">
+                  {field.value && (
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      className="z-50 absolute right-8 top-2 "
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectConnectionOpen(false);
+                        setConnectionDialogOpen(true);
+                      }}
+                    >
+                      {t('Reconnect')}
+                    </Button>
+                  )}
+
+                  <SelectTrigger className="flex gap-2 items-center">
+                    <>
+                      <SelectValue placeholder={t('Select a connection')} />
+                      <div className="grow"></div>
+                      {/* Hidden Button to take same space as shown button */}
+                      {field.value && (
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          className="z-50 hidden "
+                        >
+                          {t('Reconnect')}
+                        </Button>
+                      )}
+                    </>
+                  </SelectTrigger>
+                </div>
+
+                <SelectContent>
                   <SelectAction
                     onClick={() => {
                       setSelectConnectionOpen(false);
@@ -98,11 +151,11 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
                         </SelectItem>
                       );
                     })}
-                </>
-              )}
-            </SelectContent>
-          </Select>
-        </FormItem>
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+        </>
       )}
     ></FormField>
   );

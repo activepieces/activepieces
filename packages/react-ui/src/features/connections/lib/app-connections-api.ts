@@ -1,6 +1,7 @@
 import { api } from '@/lib/api';
 import {
   AppConnection,
+  AppConnectionWithoutSensitiveData,
   ListAppConnectionsRequestQuery,
   SeekPage,
   UpsertAppConnectionRequestBody,
@@ -9,8 +10,8 @@ import {
 export const appConnectionsApi = {
   list(
     request: ListAppConnectionsRequestQuery,
-  ): Promise<SeekPage<AppConnection>> {
-    return api.get<SeekPage<AppConnection>>('/v1/app-connections', request);
+  ): Promise<SeekPage<AppConnectionWithoutSensitiveData>> {
+    return api.get<SeekPage<AppConnectionWithoutSensitiveData>>('/v1/app-connections', request);
   },
   upsert(request: UpsertAppConnectionRequestBody): Promise<AppConnection> {
     return api.post<AppConnection>('/v1/app-connections', request);
