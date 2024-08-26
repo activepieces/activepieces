@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -45,7 +45,7 @@ const DynamicDropdownPieceProperty = React.memo(
         const { settings } = form.getValues();
         const actionOrTriggerName = settings.actionName ?? settings.triggerName;
         const { pieceName, pieceVersion, pieceType, packageType } = settings;
-        const response = piecesApi.options<DropdownState<unknown>>({
+        return piecesApi.options<DropdownState<unknown>>({
           pieceName,
           pieceVersion,
           pieceType,
@@ -56,7 +56,6 @@ const DynamicDropdownPieceProperty = React.memo(
           flowVersionId: flowVersion.id,
           flowId: flowVersion.flowId,
         });
-        return response;
       },
       onError: (error) => {
         console.error(error);
@@ -71,13 +70,22 @@ const DynamicDropdownPieceProperty = React.memo(
       }),
     );
     /* eslint-enable react-hooks/rules-of-hooks */
-
-    useEffect(() => {
+    const refresh = () => {
       const input: Record<string, unknown> = {};
       newRefreshers.forEach((refresher, index) => {
         input[refresher] = refresherValues[index];
       });
+      mutate(
+        { input },
+        {
+          onSuccess: (response) => {
+            setDropdownState(response);
+          },
+        },
+      );
+    };
 
+    useEffect(() => {
       if (
         !isFirstRender.current &&
         !deepEqual(previousValues.current, refresherValues)
@@ -87,15 +95,7 @@ const DynamicDropdownPieceProperty = React.memo(
 
       previousValues.current = refresherValues;
       isFirstRender.current = false;
-
-      mutate(
-        { input },
-        {
-          onSuccess: (response) => {
-            setDropdownState(response);
-          },
-        },
-      );
+      refresh();
     }, refresherValues);
 
     const selectOptions = dropdownState.options.map((option) => ({
@@ -106,6 +106,7 @@ const DynamicDropdownPieceProperty = React.memo(
       <MultiSelectPieceProperty
         placeholder={dropdownState.placeholder ?? t('Select an option')}
         options={selectOptions}
+        loading={isPending}
         onChange={(value) => props.onChange(value)}
         disabled={dropdownState.disabled || props.disabled}
         initialValues={props.value as unknown[]}
@@ -117,6 +118,8 @@ const DynamicDropdownPieceProperty = React.memo(
           !props.disabled &&
           !dropdownState.disabled
         }
+        showRefresh={!props.disabled && !dropdownState.disabled}
+        onRefresh={refresh}
       />
     ) : (
       <SearchableSelect

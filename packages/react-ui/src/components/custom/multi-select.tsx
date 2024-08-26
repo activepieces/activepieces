@@ -5,7 +5,7 @@ import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { Primitive } from '@radix-ui/react-primitive';
 import { useControllableState } from '@radix-ui/react-use-controllable-state';
 import { t } from 'i18next'; // Use t function from react-i18next
-import { Check, ChevronsUpDown, X } from 'lucide-react';
+import { Check, ChevronsUpDown, RefreshCcw, X } from 'lucide-react';
 import React, { ComponentPropsWithoutRef } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -198,7 +198,12 @@ type MultiSelectTriggerElement = React.ElementRef<typeof Primitive.div>;
 
 type MultiSelectTriggerProps = ComponentPropsWithoutRef<
   typeof Primitive.div
-> & { showDeselect?: boolean; onDeselect?: () => void };
+> & {
+  showDeselect?: boolean;
+  onDeselect?: () => void;
+  showRefresh?: boolean;
+  onRefresh?: () => void;
+};
 
 const PreventClick = (e: React.MouseEvent | React.TouchEvent) => {
   e.preventDefault();
@@ -223,26 +228,43 @@ const MultiSelectTrigger = React.forwardRef<
           data-disabled={disabled}
           {...props}
           className={cn(
-            'flex h-full min-h-10 w-full items-center cursor-pointer gap-2 whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring [&>span]:line-clamp-1',
-            disabled ? 'cursor-not-allowed opacity-50' : 'cursor-text',
+            'flex h-full min-h-10 w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring [&>span]:line-clamp-1',
+            {
+              'cursor-not-allowed opacity-80': disabled,
+              'cursor-pointer': !disabled,
+            },
             className,
           )}
           onClick={disabled ? PreventClick : props.onClick}
           onTouchStart={disabled ? PreventClick : props.onTouchStart}
         >
           {children}
-          <div className="flex-grow"></div>
-          {showDeselect && (
-            <Button
-              variant="ghost"
-              className=" opacity-50 shrink-0 h-6 w-6 rounded-xs"
-              size={'icon'}
-              onClick={onDeselect}
-            >
-              <X className="h-4 w-4"></X>
-            </Button>
-          )}
-          <ChevronsUpDown aria-hidden className="h-4 w-4 opacity-50 shrink-0" />
+          <div className="flex gap-2 items-center">
+            {showDeselect && (
+              <Button
+                variant="ghost"
+                className="opacity-50 shrink-0 h-6 w-6 rounded-xs"
+                size={'icon'}
+                onClick={onDeselect}
+              >
+                <X className="h-4 w-4"></X>
+              </Button>
+            )}
+            {props.showRefresh && (
+              <Button
+                variant="ghost"
+                className="opacity-50 shrink-0 h-6 w-6 rounded-xs"
+                size={'icon'}
+                onClick={props.onRefresh}
+              >
+                <RefreshCcw className="h-4 w-4"></RefreshCcw>
+              </Button>
+            )}
+            <ChevronsUpDown
+              aria-hidden
+              className="h-4 w-4 opacity-50 shrink-0"
+            />
+          </div>
         </div>
       </PopoverPrimitive.Trigger>
     );
@@ -281,8 +303,8 @@ const MultiSelectValue = React.forwardRef<
 
     if (!value.length || !firstRendered) {
       return (
-        <span className="pointer-events-none text-muted-foreground">
-          {t('Your selection')}
+        <span className="pointer-events-none text-muted-foreground opacity-80">
+          {placeholder}
         </span>
       );
     }

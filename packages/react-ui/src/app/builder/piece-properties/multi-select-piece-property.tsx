@@ -1,6 +1,6 @@
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   MultiSelect,
@@ -12,7 +12,7 @@ import {
   MultiSelectValue,
 } from '@/components/custom/multi-select';
 import { CommandEmpty } from '@/components/ui/command';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 type MultiSelectPiecePropertyProps = {
   placeholder: string;
@@ -24,6 +24,9 @@ type MultiSelectPiecePropertyProps = {
   initialValues?: unknown[];
   disabled?: boolean;
   showDeselect?: boolean;
+  showRefresh?: boolean;
+  loading?: boolean;
+  onRefresh?: () => void;
 };
 
 const MultiSelectPieceProperty = ({
@@ -33,24 +36,22 @@ const MultiSelectPieceProperty = ({
   disabled,
   initialValues,
   showDeselect,
+  showRefresh,
+  onRefresh,
+  loading,
 }: MultiSelectPiecePropertyProps) => {
-  const [originalOptionsWithIndexes] = useState(
-    options.map((option, index) => ({
-      ...option,
-      originalIndex: index,
-    })),
-  );
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredOptions, setFilteredOptions] = useState(
-    originalOptionsWithIndexes,
-  );
-  useEffect(() => {
-    setFilteredOptions(
-      originalOptionsWithIndexes.filter((option) => {
+  const filteredOptions = useMemo(() => {
+    return options
+      .map((option, index) => ({
+        ...option,
+        originalIndex: index,
+      }))
+      .filter((option) => {
         return option.label.toLowerCase().includes(searchTerm.toLowerCase());
-      }),
-    );
-  }, [searchTerm, originalOptionsWithIndexes]);
+      });
+  }, [options, searchTerm]);
+
   const selectedIndicies = initialValues
     ? initialValues
         .map((value) =>
@@ -66,7 +67,7 @@ const MultiSelectPieceProperty = ({
     onChange(newSelectedIndicies.map((index) => options[Number(index)].value));
   };
 
-  return (
+  return !loading ? (
     <MultiSelect
       modal={true}
       value={selectedIndicies}
@@ -75,9 +76,10 @@ const MultiSelectPieceProperty = ({
       onSearch={(searchTerm) => setSearchTerm(searchTerm ?? '')}
     >
       <MultiSelectTrigger
-        className={cn('w-full', { 'cursor-pointer': !disabled })}
         showDeselect={showDeselect && !disabled}
         onDeselect={() => onChange([])}
+        showRefresh={showRefresh && !disabled}
+        onRefresh={onRefresh}
       >
         <MultiSelectValue placeholder={placeholder} />
       </MultiSelectTrigger>
@@ -98,6 +100,14 @@ const MultiSelectPieceProperty = ({
         </MultiSelectList>
       </MultiSelectContent>
     </MultiSelect>
+  ) : (
+    <Button
+      variant="outline"
+      disabled={disabled}
+      role="combobox"
+      loading={true}
+      className="w-full justify-between w-full"
+    ></Button>
   );
 };
 
