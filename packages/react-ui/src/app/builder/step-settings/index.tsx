@@ -70,31 +70,29 @@ const StepSettingsContainer = React.memo(
     });
 
     const { toast } = useToast();
-    const updateTrigger = (newTrigger: Trigger) => {
-      applyOperation(
-        {
-          type: FlowOperationType.UPDATE_TRIGGER,
-          request: newTrigger,
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
-    };
+
     const debouncedTrigger = useMemo(() => {
-      return debounce(updateTrigger, 200);
+      return debounce((newTrigger: Trigger) => {
+        applyOperation(
+          {
+            type: FlowOperationType.UPDATE_TRIGGER,
+            request: newTrigger,
+          },
+          () => toast(UNSAVED_CHANGES_TOAST),
+        );
+      }, 200);
     }, [applyOperation]);
 
-    const updateAction = (newAction: Action) => {
-      applyOperation(
-        {
-          type: FlowOperationType.UPDATE_ACTION,
-          request: newAction,
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
-    };
-
     const debouncedAction = useMemo(() => {
-      return debounce(updateAction, 200);
+      return debounce((newAction: Action) => {
+        applyOperation(
+          {
+            type: FlowOperationType.UPDATE_ACTION,
+            request: newAction,
+          },
+          () => toast(UNSAVED_CHANGES_TOAST),
+        );
+      }, 200);
     }, [applyOperation]);
 
     const actionOrTriggerName =
@@ -206,9 +204,9 @@ const StepSettingsContainer = React.memo(
       );
       defaultValues.displayName = getDefaultName(defaultValues, pieceModel);
       if (defaultValues.type === TriggerType.PIECE) {
-        updateTrigger(defaultValues);
+        debouncedTrigger(defaultValues);
       } else {
-        updateAction(defaultValues as Action);
+        debouncedAction(defaultValues as Action);
       }
     }, [actionName, triggerName]);
 
@@ -299,18 +297,18 @@ const StepSettingsContainer = React.memo(
                   {[ActionType.CODE, ActionType.PIECE].includes(
                     modifiedStep.type as ActionType,
                   ) && (
-                    <ActionErrorHandlingForm
-                      hideContinueOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.continueOnFailure?.hide
-                      }
-                      disabled={readonly}
-                      hideRetryOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.retryOnFailure?.hide
-                      }
-                    ></ActionErrorHandlingForm>
-                  )}
+                      <ActionErrorHandlingForm
+                        hideContinueOnFailure={
+                          modifiedStep.settings.errorHandlingOptions
+                            ?.continueOnFailure?.hide
+                        }
+                        disabled={readonly}
+                        hideRetryOnFailure={
+                          modifiedStep.settings.errorHandlingOptions
+                            ?.retryOnFailure?.hide
+                        }
+                      ></ActionErrorHandlingForm>
+                    )}
                 </div>
               </ScrollArea>
             </ResizablePanel>
