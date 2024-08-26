@@ -1,18 +1,7 @@
-import {
-  PieceMetadataModel,
-  PieceMetadataModelSummary,
-} from '@activepieces/pieces-framework';
-import {
-  AppConnectionWithoutSensitiveData,
-  PieceAction,
-  PieceTrigger,
-} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
-import { memo, useMemo, useState } from 'react';
+import { memo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-
-import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { Button } from '@/components/ui/button';
@@ -27,6 +16,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { authenticationSession } from '@/lib/authentication-session';
+import {
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+} from '@activepieces/pieces-framework';
+import {
+  AppConnectionWithoutSensitiveData,
+  PieceAction,
+  PieceTrigger,
+} from '@activepieces/shared';
+
+import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
 
 type ConnectionSelectProps = {
   disabled: boolean;
