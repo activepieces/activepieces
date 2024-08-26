@@ -1,6 +1,6 @@
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, X } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 
 import {
@@ -30,11 +30,12 @@ type SelectOption<T> = {
 
 type SearchableSelectProps<T> = {
   options: SelectOption<T>[];
-  onChange: (value: T) => void;
+  onChange: (value: T | null) => void;
   value: T | undefined;
   placeholder: string;
   disabled?: boolean;
   loading?: boolean;
+  showDeselect?: boolean;
 };
 
 export const SearchableSelect = <T extends React.Key>({
@@ -44,6 +45,7 @@ export const SearchableSelect = <T extends React.Key>({
   placeholder,
   disabled,
   loading,
+  showDeselect,
 }: SearchableSelectProps<T>) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -101,22 +103,38 @@ export const SearchableSelect = <T extends React.Key>({
   return (
     <Popover modal={true} open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          ref={triggerRef}
-          variant="outline"
-          disabled={disabled}
-          role="combobox"
-          loading={loading}
-          aria-expanded={open}
-          className="w-full justify-between w-full"
-        >
-          <span className="flex text-ellipsis w-full overflow-hidden whitespace-nowrap">
-            {!isNil(value)
-              ? options.find((option) => option.value === value)?.label
-              : placeholder}
-          </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
+        <div className="relative">
+          <Button
+            ref={triggerRef}
+            variant="outline"
+            disabled={disabled}
+            role="combobox"
+            loading={loading}
+            aria-expanded={open}
+            className="w-full justify-between w-full"
+          >
+            <span className="flex text-ellipsis w-full overflow-hidden whitespace-nowrap">
+              {!isNil(value)
+                ? options.find((option) => option.value === value)?.label
+                : placeholder}
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+          {showDeselect && !disabled && value && (
+            <Button
+              variant="outline"
+              role="deselect"
+              size="icon"
+              className="absolute z-50 h-6 w-6 rounded-xs opacity-50 right-10 top-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(null);
+              }}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
       </PopoverTrigger>
       <PopoverContent
         style={{

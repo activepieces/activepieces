@@ -161,6 +161,7 @@ const selectRightComponent = (
             value={field.value}
             disabled={disabled}
             placeholder={property.options.placeholder ?? t('Select an option')}
+            showDeselect={!property.required}
           ></SearchableSelect>
         </AutoFormFieldWrapper>
       );
