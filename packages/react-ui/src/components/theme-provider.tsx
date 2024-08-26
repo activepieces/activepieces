@@ -1,5 +1,9 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useContext, useEffect, useState } from 'react';
 import * as RippleHook from 'use-ripple-hook';
+
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { colorsUtils } from '@/lib/color-util';
 
 type Theme = 'dark' | 'light' | 'system';
 
@@ -25,6 +29,18 @@ const extractSystemTheme = () => {
     ? 'dark'
     : 'light';
 };
+
+const setFavicon = (url: string) => {
+  let link: HTMLLinkElement | null =
+    document.querySelector("link[rel*='icon']");
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'shortcut icon';
+    document.head.appendChild(link);
+  }
+  link.href = url;
+};
+
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
@@ -35,18 +51,52 @@ export function ThemeProvider({
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
 
+  const queryClient = useQueryClient();
+  const branding = flagsHooks.useWebsiteBranding(queryClient);
   useEffect(() => {
-    const root = window.document.documentElement;
-
-    root.classList.remove('light', 'dark');
-
-    if (theme === 'system') {
-      root.classList.add(extractSystemTheme());
+    if (!branding) {
+      console.warn('Website brand is not defined');
       return;
     }
+    const root = window.document.documentElement;
 
-    root.classList.add(theme);
-  }, [theme]);
+    const resolvedTheme = theme === 'system' ? extractSystemTheme() : theme;
+    root.classList.remove('light', 'dark');
+    document.title = branding.websiteName;
+    document.documentElement.style.setProperty(
+      '--primary',
+      colorsUtils.hexToHslString(branding.colors.primary.default),
+    );
+    setFavicon(branding.logos.favIconUrl);
+    switch (resolvedTheme) {
+      case 'light': {
+        document.documentElement.style.setProperty(
+          '--primary-100',
+          colorsUtils.hexToHslString(branding.colors.primary.light),
+        );
+        document.documentElement.style.setProperty(
+          '--primary-300',
+          colorsUtils.hexToHslString(branding.colors.primary.dark),
+        );
+        break;
+      }
+      case 'dark': {
+        document.documentElement.style.setProperty(
+          '--primary-100',
+          colorsUtils.hexToHslString(branding.colors.primary.dark),
+        );
+        document.documentElement.style.setProperty(
+          '--primary-300',
+          colorsUtils.hexToHslString(branding.colors.primary.light),
+        );
+        break;
+      }
+      default:
+        break;
+    }
+
+    root.classList.add(resolvedTheme);
+  }, [theme, branding]);
 
   const value = {
     theme,

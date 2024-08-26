@@ -1,4 +1,5 @@
 import { DragHandleDots2Icon } from '@radix-ui/react-icons';
+import { t } from 'i18next';
 import { Plus, TrashIcon } from 'lucide-react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
@@ -14,7 +15,7 @@ import { TextWithIcon } from '@/components/ui/text-with-icon';
 import { ArrayProperty } from '@activepieces/pieces-framework';
 
 import { AutoPropertiesFormComponent } from './auto-properties-form';
-import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
+import { TextInputWithMentions } from './text-input-with-mentions';
 
 type ArrayPropertyProps = {
   inputName: string;
@@ -62,13 +63,13 @@ const ArrayPieceProperty = ({
                       className="size-4 text-destructive"
                       aria-hidden="true"
                     />
-                    <span className="sr-only">Remove</span>
+                    <span className="sr-only">{t('Remove')}</span>
                   </Button>
                 </div>
                 <AutoPropertiesFormComponent
                   prefixValue={`${inputName}.${index}`}
                   props={arrayProperty.properties!}
-                  useMentionTextInput={false}
+                  useMentionTextInput={useMentionTextInput}
                   allowDynamicValues={false}
                 ></AutoPropertiesFormComponent>
               </div>
@@ -122,7 +123,6 @@ const ArrayPieceProperty = ({
                               <TextInputWithMentions
                                 initialValue={field.value}
                                 onChange={field.onChange}
-                                className="grow"
                               />
                             ) : (
                               <Input
@@ -152,7 +152,7 @@ const ArrayPieceProperty = ({
                       className="size-4 text-destructive"
                       aria-hidden="true"
                     />
-                    <span className="sr-only">Remove</span>
+                    <span className="sr-only">{t('Remove')}</span>
                   </Button>
                 </div>
               </SortableItem>
@@ -160,17 +160,19 @@ const ArrayPieceProperty = ({
           </Sortable>
         )}
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={disabled}
-        onClick={() => {
-          append(isComplexArray ? {} : '');
-        }}
-        type="button"
-      >
-        <TextWithIcon icon={<Plus size={18} />} text="Add Item" />
-      </Button>
+      {!disabled && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-2"
+          onClick={() => {
+            append(isComplexArray ? {} : '');
+          }}
+          type="button"
+        >
+          <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
+        </Button>
+      )}
     </>
   );
 };

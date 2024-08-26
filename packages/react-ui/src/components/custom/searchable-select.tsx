@@ -1,5 +1,7 @@
+import deepEqual from 'deep-equal';
+import { t } from 'i18next';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import {
   Command,
@@ -23,6 +25,7 @@ import { ScrollArea } from '../ui/scroll-area';
 type SelectOption<T> = {
   value: T;
   label: string;
+  description?: string;
 };
 
 type SearchableSelectProps<T> = {
@@ -42,17 +45,18 @@ export const SearchableSelect = <T extends React.Key>({
   disabled,
   loading,
 }: SearchableSelectProps<T>) => {
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [open, setOpen] = useState(false);
   const [filterOptionsIndices, setFilteredOptions] = useState<number[]>([]);
-
+  const triggerWidth = `${triggerRef.current?.clientWidth ?? 0}px`;
   const [selectedIndex, setSelectedIndex] = useState(
-    options.findIndex((option) => option.value === value) ?? -1,
+    options.findIndex((option) => deepEqual(option.value, value)) ?? -1,
   );
 
   useEffect(() => {
     setSelectedIndex(
-      options.findIndex((option) => option.value === value) ?? -1,
+      options.findIndex((option) => deepEqual(option.value, value)) ?? -1,
     );
   }, [value, options]);
 
@@ -66,10 +70,14 @@ export const SearchableSelect = <T extends React.Key>({
             label: option.label,
             value: option.value,
             index: index,
+            description: option.description ?? '',
           };
         })
         .filter((option) => {
-          return option.label.toLowerCase().includes(searchTerm.toLowerCase());
+          return (
+            option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            option.description.toLowerCase().includes(searchTerm.toLowerCase())
+          );
         });
       setFilteredOptions(filteredOptions.map((op) => op.index));
     }
@@ -91,9 +99,10 @@ export const SearchableSelect = <T extends React.Key>({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover modal={true} open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          ref={triggerRef}
           variant="outline"
           disabled={disabled}
           role="combobox"
@@ -103,27 +112,37 @@ export const SearchableSelect = <T extends React.Key>({
         >
           <span className="flex text-ellipsis w-full overflow-hidden whitespace-nowrap">
             {!isNil(value)
-              ? options.find((framework) => framework.value === value)?.label
+              ? options.find((option) => option.value === value)?.label
               : placeholder}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="min-w-full w-full p-0">
+      <PopoverContent
+        style={{
+          maxWidth: triggerWidth,
+          minWidth: triggerWidth,
+        }}
+        className="min-w-full w-full p-0"
+      >
         <Command className="w-full" shouldFilter={false}>
           <CommandInput
-            placeholder={placeholder}
+            placeholder={t(placeholder)}
             value={searchTerm}
             onValueChange={(e) => {
               setSearchTerm(e);
             }}
           />
           {filterOptionsIndices.length === 0 && (
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>{t('No results found.')}</CommandEmpty>
           )}
-          <ScrollArea className="h-full" viewPortClassName={'max-h-[200px]'}>
-            <CommandGroup>
-              <CommandList className={'min-h-[12000px]'}>
+
+          <CommandGroup>
+            <CommandList>
+              <ScrollArea
+                className="h-full"
+                viewPortClassName={'max-h-[200px]'}
+              >
                 {filterOptionsIndices &&
                   filterOptionsIndices.map((filterIndex) => {
                     const option = options[filterIndex];
@@ -132,28 +151,33 @@ export const SearchableSelect = <T extends React.Key>({
                     }
                     return (
                       <CommandItem
-                        key={option.label}
+                        key={filterIndex}
                         value={String(filterIndex)}
                         onSelect={(currentValue) => {
                           setOpen(false);
                           onSelect(currentValue);
                         }}
+                        className="flex gap-2 flex-col items-start"
                       >
-                        <Check
-                          className={cn(
-                            'mr-2 h-4 w-4',
-                            selectedIndex === filterIndex
-                              ? 'opacity-100'
-                              : 'opacity-0',
-                          )}
-                        />
-                        {option.label}
+                        <div className="flex gap-2 items-center">
+                          <Check
+                            className={cn('flex-shrink-0 w-4 h-4', {
+                              hidden: selectedIndex !== filterIndex,
+                            })}
+                          />
+                          {option.label}
+                        </div>
+                        {option.description && (
+                          <div className="text-sm text-muted-foreground">
+                            {option.description}
+                          </div>
+                        )}
                       </CommandItem>
                     );
                   })}
-              </CommandList>
-            </CommandGroup>
-          </ScrollArea>
+              </ScrollArea>
+            </CommandList>
+          </CommandGroup>
         </Command>
       </PopoverContent>
     </Popover>

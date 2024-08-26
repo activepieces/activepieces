@@ -1,7 +1,9 @@
 import { DropdownState } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
-import React, { useEffect, useState } from 'react';
+import deepEqual from 'deep-equal';
+import { t } from 'i18next';
+import React, { useEffect, useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
@@ -13,7 +15,7 @@ import { piecesApi } from '@/features/pieces/lib/pieces-api';
 type SelectPiecePropertyProps = {
   refreshers: string[];
   propertyName: string;
-  initialValue: unknown;
+  initialValue?: unknown;
   multiple?: boolean;
   disabled: boolean;
   enableSelectOrClear?: boolean;
@@ -25,24 +27,25 @@ const DynamicDropdownPieceProperty = React.memo(
       state.flowVersion,
     ]);
     const form = useFormContext<Action | Trigger>();
+    const isFirstRender = useRef(true);
+    const previousValues = useRef<undefined | unknown[]>(undefined);
 
     const newRefreshers = [...props.refreshers, 'auth'];
     const [dropdownState, setDropdownState] = useState<DropdownState<unknown>>({
       disabled: false,
-      placeholder: 'Select an option',
+      placeholder: t('Select an option'),
       options: [],
     });
-
     const { mutate, isPending } = useMutation<
       DropdownState<unknown>,
       Error,
-      Record<string, unknown>
+      { input: Record<string, unknown> }
     >({
-      mutationFn: async (input) => {
+      mutationFn: async ({ input }) => {
         const { settings } = form.getValues();
         const actionOrTriggerName = settings.actionName ?? settings.triggerName;
         const { pieceName, pieceVersion, pieceType, packageType } = settings;
-        return piecesApi.options({
+        const response = piecesApi.options<DropdownState<unknown>>({
           pieceName,
           pieceVersion,
           pieceType,
@@ -53,9 +56,7 @@ const DynamicDropdownPieceProperty = React.memo(
           flowVersionId: flowVersion.id,
           flowId: flowVersion.flowId,
         });
-      },
-      onSuccess: (response) => {
-        setDropdownState(response);
+        return response;
       },
       onError: (error) => {
         console.error(error);
@@ -72,45 +73,53 @@ const DynamicDropdownPieceProperty = React.memo(
     /* eslint-enable react-hooks/rules-of-hooks */
 
     useEffect(() => {
-      const record: Record<string, unknown> = {};
+      const input: Record<string, unknown> = {};
       newRefreshers.forEach((refresher, index) => {
-        record[refresher] = refresherValues[index];
+        input[refresher] = refresherValues[index];
       });
-      mutate(record);
+
+      if (
+        !isFirstRender.current &&
+        !deepEqual(previousValues.current, refresherValues)
+      ) {
+        props.onChange(undefined);
+      }
+
+      previousValues.current = refresherValues;
+      isFirstRender.current = false;
+
+      mutate(
+        { input },
+        {
+          onSuccess: (response) => {
+            setDropdownState(response);
+          },
+        },
+      );
     }, refresherValues);
 
-    const selectOptions =
-      dropdownState.options?.map((option) => ({
-        label: option.label,
-        value: option.value as React.Key,
-      })) || [];
-
-    const placeHolder = isPending
-      ? 'Loading...'
-      : dropdownState.placeholder ?? 'Select an option';
-
-    return (
-      <>
-        {props.multiple ? (
-          <MultiSelectPieceProperty
-            initialValues={props.initialValue as unknown[]}
-            placeholder={placeHolder}
-            options={selectOptions}
-            onChange={(value) => props.onChange(value)}
-            disabled={dropdownState.disabled || props.disabled}
-            enableSelectOrClear={props.enableSelectOrClear}
-          />
-        ) : (
-          <SearchableSelect
-            options={selectOptions}
-            disabled={dropdownState.disabled || props.disabled}
-            loading={isPending}
-            placeholder={placeHolder}
-            value={props.initialValue as React.Key}
-            onChange={(value) => props.onChange(value)}
-          />
-        )}
-      </>
+    const selectOptions = dropdownState.options.map((option) => ({
+      label: option.label,
+      value: option.value as React.Key,
+    }));
+    return props.multiple ? (
+      <MultiSelectPieceProperty
+        placeholder={dropdownState.placeholder ?? t('Select an option')}
+        options={selectOptions}
+        onChange={(value) => props.onChange(value)}
+        disabled={dropdownState.disabled || props.disabled}
+        initialValues={props.initialValue as unknown[]}
+        enableSelectOrClear={false}
+      />
+    ) : (
+      <SearchableSelect
+        options={selectOptions}
+        disabled={dropdownState.disabled || props.disabled}
+        loading={isPending}
+        placeholder={dropdownState.placeholder ?? t('Select an option')}
+        value={props.initialValue as React.Key}
+        onChange={(value) => props.onChange(value)}
+      />
     );
   },
 );

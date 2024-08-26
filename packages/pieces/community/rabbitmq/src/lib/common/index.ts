@@ -15,5 +15,10 @@ export async function rabbitmqConnect(
 }
 
 function createAmqpURI(auth: PiecePropValueSchema<typeof rabbitmqAuth>): string {
-  return `amqp://${auth.username}:${auth.password}@${auth.host}:${auth.port}`;
+  const uri = `amqp://${auth.username}:${auth.password}@${auth.host}:${auth.port}`;
+
+  if (!auth.vhost) {
+    return uri;
+  }
+  return `${uri}/${auth.vhost}`;
 }

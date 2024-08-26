@@ -21,7 +21,7 @@ import {
     PieceActionSettings,
     PieceCategory,
     PieceTriggerSettings,
-    ProjectId, SeekPage, TriggerType, UserId,
+    ProjectId, sanitizeObjectForPostgresql, SeekPage, TriggerType, UserId,
 } from '@activepieces/shared'
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
@@ -146,7 +146,7 @@ export const flowVersionService = {
         if (userId) {
             mutatedFlowVersion.updatedBy = userId
         }
-        return flowVersionRepo(entityManager).save(mutatedFlowVersion)
+        return flowVersionRepo(entityManager).save(sanitizeObjectForPostgresql(mutatedFlowVersion))
     },
 
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {
@@ -602,7 +602,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
                 break
             case PropertyType.NUMBER:
                 // Because it could be a variable
-                propsSchema[name] = Type.String({})
+                propsSchema[name] = Type.Union([Type.String({}), Type.Number({})])
                 break
             case PropertyType.STATIC_DROPDOWN:
                 propsSchema[name] = nonNullableUnknownPropType

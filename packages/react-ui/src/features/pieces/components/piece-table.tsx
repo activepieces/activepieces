@@ -1,4 +1,5 @@
 import { ColumnDef } from '@tanstack/react-table';
+import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 import { useState } from 'react';
 
@@ -18,7 +19,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
     accessorKey: 'name',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="App" />
+      <DataTableColumnHeader column={column} title={t('App')} />
     ),
     cell: ({ row }) => {
       return (
@@ -38,7 +39,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
     accessorKey: 'displayName',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Display Name" />
+      <DataTableColumnHeader column={column} title={t('Display Name')} />
     ),
     cell: ({ row }) => {
       return <div className="text-left">{row.original.displayName}</div>;
@@ -47,7 +48,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
     accessorKey: 'packageName',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Package Name" />
+      <DataTableColumnHeader column={column} title={t('Package Name')} />
     ),
     cell: ({ row }) => {
       return <div className="text-left">{row.original.name}</div>;
@@ -56,7 +57,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
     accessorKey: 'version',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Version" />
+      <DataTableColumnHeader column={column} title={t('Version')} />
     ),
     cell: ({ row }) => {
       return <div className="text-left">{row.original.version}</div>;
@@ -72,9 +73,11 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
       ) {
         return (
           <ConfirmationDeleteDialog
-            title={`Delete ${row.original.name}`}
-            entityName="Piece"
-            message="This will permanently delete this piece, all steps using it will fail."
+            title={t('Delete {name}', { name: row.original.name })}
+            entityName={t('Piece')}
+            message={t(
+              'This will permanently delete this piece, all steps using it will fail.',
+            )}
             mutationFn={async () => {
               row.original.delete();
               await piecesApi.delete(row.original.id!);
@@ -92,6 +95,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
     },
   },
 ];
+
 const fetchData = async () => {
   const pieces = await piecesApi.list({
     includeHidden: true,
@@ -109,7 +113,7 @@ export default function PiecesTable() {
   return (
     <div className="mx-auto w-full flex-col">
       <div className="mb-4 flex">
-        <h1 className="text-3xl font-bold">Pieces </h1>
+        <h1 className="text-3xl font-bold">{t('Pieces')}</h1>
         <div className="ml-auto">
           <InstallPieceDialog onInstallPiece={() => setRefresh(refresh + 1)} />
         </div>

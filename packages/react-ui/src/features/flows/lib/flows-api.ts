@@ -41,39 +41,71 @@ export const flowsApi = {
       params: request,
     });
   },
-  testFlow(
+  async testFlow(
     socket: Socket,
     request: TestFlowRunRequestBody,
     onUpdate: (response: FlowRun) => void,
   ) {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
+    const run = await getInitialRun(socket, request.flowVersionId);
+
+    onUpdate(run);
     return new Promise<void>((resolve, reject) => {
-      socket.on(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, (response) => {
+      const handleProgress = (response: FlowRun) => {
+        if (run.id !== response.id) {
+          return;
+        }
         onUpdate(response);
         if (response.status !== FlowRunStatus.RUNNING) {
+          socket.off(
+            WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS,
+            handleProgress,
+          );
+          socket.off('error', handleError);
           resolve();
         }
-      });
-      socket.on('error', (error) => {
+      };
+
+      const handleError = (error: any) => {
+        socket.off(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, handleProgress);
+        socket.off('error', handleError);
         reject(error);
-      });
+      };
+
+      socket.on(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, handleProgress);
+      socket.on('error', handleError);
     });
   },
-  testStep(socket: Socket, request: Omit<CreateStepRunRequestBody, 'id'>) {
+  testStep(
+    socket: Socket,
+    request: Omit<CreateStepRunRequestBody, 'id'>,
+  ): Promise<StepRunResponse> {
     const id = nanoid();
     socket.emit(WebsocketServerEvent.TEST_STEP_RUN, {
       ...request,
       id,
     });
+
     return new Promise<StepRunResponse>((resolve, reject) => {
-      socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, (response) => {
+      const handleStepFinished = (response: StepRunResponse) => {
         if (response.id === id) {
+          socket.off(
+            WebsocketClientEvent.TEST_STEP_FINISHED,
+            handleStepFinished,
+          );
+          socket.off('error', handleError);
           resolve(response);
         }
-      });
-      socket.on('error', (error) => {
+      };
+
+      const handleError = (error: any) => {
+        socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
+        socket.off('error', handleError);
         reject(error);
-      });
+      };
+
+      socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
+      socket.on('error', handleError);
     });
   },
   get(
@@ -98,3 +130,20 @@ export const flowsApi = {
     return api.get<number>('/v1/flows/count');
   },
 };
+
+function getInitialRun(
+  socket: Socket,
+  flowVersionId: string,
+): Promise<FlowRun> {
+  return new Promise<FlowRun>((resolve) => {
+    const onRunStarted = (run: FlowRun) => {
+      if (run.flowVersionId !== flowVersionId) {
+        return;
+      }
+      socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+      resolve(run);
+    };
+
+    socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+  });
+}

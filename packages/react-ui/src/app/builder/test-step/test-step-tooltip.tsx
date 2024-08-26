@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import {
   Tooltip,
   TooltipContent,
@@ -9,6 +11,7 @@ type TestButtonTooltipProps = {
   children: React.ReactNode;
   disabled: boolean;
 };
+
 const TestButtonTooltip = ({ children, disabled }: TestButtonTooltipProps) => {
   return (
     <TooltipProvider>
@@ -17,7 +20,7 @@ const TestButtonTooltip = ({ children, disabled }: TestButtonTooltipProps) => {
           {children}
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          {disabled ? 'Please fix inputs first' : ''}
+          {disabled ? t('Please fix inputs first') : ''}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

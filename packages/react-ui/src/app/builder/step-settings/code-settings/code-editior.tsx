@@ -1,10 +1,12 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
-import { githubLight } from '@uiw/codemirror-theme-github';
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
-import { Package } from 'lucide-react';
+import { t } from 'i18next';
+import { BetweenHorizontalEnd, Package } from 'lucide-react';
 import { useState } from 'react';
 
+import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
@@ -22,12 +24,22 @@ type CodeEditorProps = {
   sourceCode: SourceCode;
   onChange: (sourceCode: SourceCode) => void;
   readonly: boolean;
+  applyCodeToCurrentStep?: () => void;
 };
 
-const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
+const CodeEditior = ({
+  sourceCode,
+  readonly,
+  onChange,
+  applyCodeToCurrentStep,
+}: CodeEditorProps) => {
   const { code, packageJson } = sourceCode;
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
   const [language, setLanguage] = useState<'typescript' | 'json'>('typescript');
+  const codeApplicationEnabled = typeof applyCodeToCurrentStep === 'function';
+  const { theme } = useTheme();
+
+  const codeEditiorTheme = theme === 'dark' ? githubDark : githubLight;
 
   const extensions = [
     styleTheme,
@@ -71,7 +83,7 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
             })}
             onClick={() => handleCodeClick()}
           >
-            Code
+            {t('Code')}
           </div>
           <div
             className={cn('text-sm cursor-pointer', {
@@ -79,21 +91,33 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
             })}
             onClick={() => handlePackageClick()}
           >
-            Dependencies
+            {t('Dependencies')}
           </div>
         </div>
         <div className="flex flex-grow"></div>
-        <AddNpmDialog onAdd={handleAddPackages}>
+        {codeApplicationEnabled ? (
           <Button
             variant="outline"
             className="flex gap-2"
             size={'sm'}
-            onClick={() => {}}
+            onClick={applyCodeToCurrentStep}
           >
-            <Package className="w-4 h-4" />
-            Add Package
+            <BetweenHorizontalEnd className="w-3 h-3" />
+            {t('Apply code')}
           </Button>
-        </AddNpmDialog>
+        ) : (
+          <AddNpmDialog onAdd={handleAddPackages}>
+            <Button
+              variant="outline"
+              className="flex gap-2"
+              size={'sm'}
+              onClick={() => {}}
+            >
+              <Package className="w-4 h-4" />
+              {t('Add package')}
+            </Button>
+          </AddNpmDialog>
+        )}
       </div>
       <CodeMirror
         value={activeTab === 'code' ? code : packageJson}
@@ -116,7 +140,7 @@ const CodeEditior = ({ sourceCode, readonly, onChange }: CodeEditorProps) => {
               : { code, packageJson: value },
           );
         }}
-        theme={githubLight}
+        theme={codeEditiorTheme}
         readOnly={readonly}
         extensions={extensions}
       />

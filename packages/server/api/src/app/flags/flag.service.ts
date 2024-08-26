@@ -8,6 +8,8 @@ import { defaultTheme } from './theme'
 
 const flagRepo = repoFactory(FlagEntity)
 
+let cachedVersion: string | undefined
+
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {
         return flagRepo().save({
@@ -228,7 +230,7 @@ export const flagService = {
                 created,
                 updated,
             },
-            
+
         )
 
         return flags
@@ -254,9 +256,16 @@ export const flagService = {
     },
     async getLatestRelease(): Promise<string> {
         try {
+            if (cachedVersion) {
+                return cachedVersion
+            }
             const response = await axios.get<PackageJson>(
                 'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
+                {
+                    timeout: 5000,
+                },
             )
+            cachedVersion = response.data.version
             return response.data.version
         }
         catch (ex) {

@@ -1,4 +1,5 @@
 import { AvatarFallback } from '@radix-ui/react-avatar';
+import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
 import { UserInvitation } from '@activepieces/shared';
@@ -22,7 +23,7 @@ export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
     >
       <div className="flex items-center space-x-4">
         <Avatar className="hidden size-9 sm:flex">
-          <AvatarImage src="/avatars/05.png" alt="Avatar" />
+          <AvatarImage src="/avatars/05.png" alt={t('Avatar')} />
           <AvatarFallback className="justify-center items-center flex">
             <span className="p-2">
               {invitation.email.charAt(0).toLocaleUpperCase()}
@@ -37,8 +38,8 @@ export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
         <ConfirmationDeleteDialog
           mutationFn={() => deleteInvitation()}
           entityName={invitation.email}
-          title={`Remove ${invitation.email}`}
-          message="Are you sure you want to remove this invitation?"
+          title={t('Remove {email}', { email: invitation.email })}
+          message={t('Are you sure you want to remove this invitation?')}
         >
           <Button variant="ghost" className="size-8 p-0">
             <Trash className="bg-destructive-500 size-4" />

@@ -12,17 +12,16 @@ import {
 } from '@/components/custom/multi-select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-
-type MultiSelectOption = {
-  label: string;
-  value: unknown;
-};
+import { cn } from '@/lib/utils';
 
 type MultiSelectPiecePropertyProps = {
   placeholder: string;
-  options: MultiSelectOption[];
+  options: {
+    value: unknown;
+    label: string;
+  }[];
   onChange: (value: unknown[]) => void;
-  initialValues: unknown[];
+  initialValues?: unknown[];
   disabled?: boolean;
   enableSelectOrClear?: boolean;
 };
@@ -55,14 +54,16 @@ const MultiSelectPieceProperty = ({
       disabled={disabled}
       filter={true}
     >
-      <MultiSelectTrigger className="w-full">
+      <MultiSelectTrigger
+        className={cn('w-full', { 'cursor-pointer': !disabled })}
+      >
         <MultiSelectValue placeholder={placeholder} />
       </MultiSelectTrigger>
       <MultiSelectContent>
         <MultiSelectSearch />
         {selectClearEnabled && (
           <SelectOrClear
-            selectedCount={initialValues.length}
+            selectedCount={initialValues?.length || 0}
             totalCount={options.length}
             sendChanges={onSelectOrClearChanged}
           />

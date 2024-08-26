@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import { t } from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { formatUtils } from '@/lib/utils';
 import { Action, StepRunResponse, isNil } from '@activepieces/shared';
 
 import { TestSampleDataViewer } from './test-sample-data-viewer';
@@ -38,8 +40,7 @@ const TestActionSection = React.memo(
       formValues.settings.inputUiInfo?.lastTestDate,
     );
     const { currentSelectedData } = formValues.settings.inputUiInfo ?? {};
-    const sampleDataExists =
-      !isNil(currentSelectedData) || !isNil(errorMessage);
+    const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
     const socket = useSocket();
 
@@ -55,11 +56,16 @@ const TestActionSection = React.memo(
         });
       },
       onSuccess: (stepResponse) => {
+        const formattedResponse = formatUtils.formatStepInputAndOutput(
+          stepResponse.output,
+          null,
+        );
         if (stepResponse.success) {
           setErrorMessage(undefined);
+
           form.setValue(
             'settings.inputUiInfo.currentSelectedData',
-            stepResponse.output,
+            formattedResponse,
             { shouldValidate: true },
           );
           form.setValue(
@@ -70,8 +76,8 @@ const TestActionSection = React.memo(
         } else {
           setErrorMessage(
             testStepUtils.formatErrorMessage(
-              stepResponse.output?.toString() ||
-                'Failed to run test step and no error message was returned',
+              JSON.stringify(formattedResponse) ||
+                t('Failed to run test step and no error message was returned'),
             ),
           );
         }
@@ -86,7 +92,6 @@ const TestActionSection = React.memo(
 
     return (
       <>
-        <div className="text-md font-semibold">Generate Sample Data</div>
         {!sampleDataExists && (
           <div className="flex-grow flex justify-center items-center w-full h-full">
             <TestButtonTooltip disabled={!isValid}>
@@ -100,7 +105,7 @@ const TestActionSection = React.memo(
                 disabled={!isValid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
-                Test Step
+                {t('Test Step')}
               </Button>
             </TestButtonTooltip>
           </div>

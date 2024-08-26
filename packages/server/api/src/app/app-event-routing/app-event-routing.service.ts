@@ -6,20 +6,14 @@ import {
     AppEventRoutingEntity,
 } from './app-event-routing.entity'
 
-const appEventRoutingRepo = repoFactory(
-    AppEventRoutingEntity,
-)
+const appEventRoutingRepo = repoFactory(AppEventRoutingEntity)
 
 export const appEventRoutingService = {
     async listListeners({
         appName,
         event,
         identifierValue,
-    }: {
-        appName: string
-        event: string
-        identifierValue: string
-    }): Promise<AppEventRouting[]> {
+    }: ListParams): Promise<AppEventRouting[]> {
         return appEventRoutingRepo().findBy({ appName, event, identifierValue })
     },
     async createListeners({
@@ -28,16 +22,14 @@ export const appEventRoutingService = {
         identifierValue,
         flowId,
         projectId,
-    }: {
-        appName: string
-        events: string[]
-        identifierValue: string
-        flowId: FlowId
-        projectId: ProjectId
-    }): Promise<void> {
-        logger.info(
-            `Creating listeners for ${appName}, events=${events}, identifierValue=${identifierValue}`,
-        )
+    }: CreateParams): Promise<void> {
+        logger.info({
+            appName,
+            events,
+            identifierValue,
+            flowId,
+            projectId,
+        }, '[AppEventRoutingService#createListeners] create')
         const upsertCommands: Promise<unknown>[] = []
         events.forEach((event) => {
             const upsert = appEventRoutingRepo().upsert(
@@ -49,7 +41,7 @@ export const appEventRoutingService = {
                     flowId,
                     projectId,
                 },
-                ['appName', 'event', 'identifierValue', 'projectId'],
+                ['appName', 'event', 'identifierValue', 'projectId', 'flowId'],
             )
             upsertCommands.push(upsert)
         })
@@ -58,13 +50,28 @@ export const appEventRoutingService = {
     async deleteListeners({
         projectId,
         flowId,
-    }: {
-        projectId: ProjectId
-        flowId: FlowId
-    }): Promise<void> {
+    }: DeleteParams): Promise<void> {
         await appEventRoutingRepo().delete({
             projectId,
             flowId,
         })
     },
+}
+
+type ListParams = {
+    appName: string
+    event: string
+    identifierValue: string
+}
+type DeleteParams = {
+    projectId: ProjectId
+    flowId: FlowId
+}
+
+type CreateParams = {
+    appName: string
+    events: string[]
+    identifierValue: string
+    flowId: FlowId
+    projectId: ProjectId
 }

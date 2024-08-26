@@ -1,10 +1,15 @@
 import { ColumnDef } from '@tanstack/react-table';
+import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 
 import { Authorization } from '@/components/authorization';
 import { Button } from '@/components/ui/button';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
+import {
+  DataTable,
+  PaginationParams,
+  RowDataWithActions,
+} from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import {
   Tooltip,
@@ -21,17 +26,12 @@ import { FlowRunStatus, Permission } from '@activepieces/shared';
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
 
-const fetchData = async (queryParams: URLSearchParams) => {
-  const pagination: {
-    cursor?: string;
-    limit?: number;
-  } = {
-    cursor: queryParams.get('cursor') ?? undefined,
-    limit: parseInt(queryParams.get('limit') ?? '10'),
-  };
-
+const fetchData = async (
+  _params: Record<string, string>,
+  pagination: PaginationParams,
+) => {
   return issuesApi.list({
-    projectId: authenticationSession.getProjectId(),
+    projectId: authenticationSession.getProjectId()!,
     cursor: pagination.cursor,
     limit: pagination.limit,
   });
@@ -44,14 +44,14 @@ export default function IssuesTable() {
   const handleMarkAsResolved = async (
     flowDisplayName: string,
     issueId: string,
-    deleteRow: () => void,
   ) => {
-    deleteRow();
     await issuesApi.resolve(issueId);
     refetch();
     toast({
-      title: 'Success',
-      description: `Issues in ${flowDisplayName} is marked as resolved.`,
+      title: t('Success'),
+      description: t('Issues in {{flowDisplayName} is marked as resolved.', {
+        flowDisplayName,
+      }),
       duration: 3000,
     });
   };
@@ -60,7 +60,7 @@ export default function IssuesTable() {
     {
       accessorKey: 'flowName',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Flow Name" />
+        <DataTableColumnHeader column={column} title={t('Flow Name')} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.flowDisplayName}</div>;
@@ -69,7 +69,7 @@ export default function IssuesTable() {
     {
       accessorKey: 'count',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Count" />
+        <DataTableColumnHeader column={column} title={t('Count')} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.count}</div>;
@@ -78,7 +78,7 @@ export default function IssuesTable() {
     {
       accessorKey: 'created',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="First Seen" />
+        <DataTableColumnHeader column={column} title={t('First Seen')} />
       ),
       cell: ({ row }) => {
         return (
@@ -91,7 +91,7 @@ export default function IssuesTable() {
     {
       accessorKey: 'lastOccurrence',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Last Seen" />
+        <DataTableColumnHeader column={column} title={t('Last Seen')} />
       ),
       cell: ({ row }) => {
         return (
@@ -117,11 +117,11 @@ export default function IssuesTable() {
                     <TooltipTrigger>
                       <Button disabled className="gap-2" size={'sm'}>
                         <Check className="size-4" />
-                        Mark as Resolved
+                        {t('Mark as Resolved')}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <span>Permission Needed</span>
+                      <span>{t('Permission Needed')}</span>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -131,16 +131,16 @@ export default function IssuesTable() {
                 className="gap-2"
                 size={'sm'}
                 onClick={(e) => {
+                  row.original.delete();
                   handleMarkAsResolved(
                     row.original.flowDisplayName,
                     row.original.id,
-                    row.original.delete,
                   );
                   e.stopPropagation();
                 }}
               >
                 <Check className="size-4" />
-                Mark as Resolved
+                {t('Mark as Resolved')}
               </Button>
             </Authorization>
           </div>
@@ -153,10 +153,11 @@ export default function IssuesTable() {
     <div className="flex-col w-full">
       <div className="mb-4 flex">
         <div className="flex flex-col">
-          <h1 className="text-3xl font-bold">Issues </h1>
+          <h1 className="text-3xl font-bold">{t('Issues')}</h1>
           <span className="text-md text-muted-foreground">
-            Track failed runs grouped by flow name, and mark them as resolved
-            when fixed.
+            {t(
+              'Track failed runs grouped by flow name, and mark them as resolved when fixed.',
+            )}
           </span>
         </div>
         <div className="ml-auto"></div>

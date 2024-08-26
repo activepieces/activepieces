@@ -5,6 +5,7 @@ import { Navigate } from 'react-router-dom';
 
 import { SocketProvider } from '@/components/socket-provider';
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 
@@ -34,15 +35,17 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
     return <Navigate to="/sign-in" replace />;
   }
   const token = authenticationSession.getToken();
-  if (token && isJwtExpired(token)) {
+  if (!token || isJwtExpired(token)) {
+    authenticationSession.logOut();
     return <Navigate to="/sign-in" replace />;
   }
   projectHooks.prefetchProject();
   platformHooks.prefetchPlatform();
+  flagsHooks.useFlags();
   return (
     <Suspense
       fallback={
-        <div className="bg-background flex h-screen w-screen items-center justify-center ">
+        <div className=" flex h-screen w-screen items-center justify-center ">
           <LoadingSpinner size={50}></LoadingSpinner>
         </div>
       }

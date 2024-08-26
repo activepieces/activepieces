@@ -1,108 +1,105 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 /* You can add global styles to this file, and also import other style files */
 
-
 @layer base {
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-          -webkit-appearance: none;
-          margin: 0;
-        }
-    :root {
-        --background: 0 0% 100%;
-        --foreground: 224 71.4% 4.1%;
-        --card: 0 0% 100%;
-        --card-foreground: 224 71.4% 4.1%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 224 71.4% 4.1%;
-        --secondary: 220 14.3% 95.9%;
-        --secondary-foreground: 220.9 39.3% 11%;
-        --muted: 220 14.3% 95.9%;
-        --muted-foreground: 220 8.9% 46.1%;
-        --accent: 220 14.3% 95.9%;
-        --accent-foreground: 220.9 39.3% 11%;
-        --border: 220 13% 91%;
-        --input: 220 13% 91%;
-        --ring: 262.1 83.3% 57.8%;
-        --radius: 0.75rem;
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220.9 39.3% 11%;
+    --border: 220 13% 91%;
+    --border-300: 212, 14%, 79%;
+    --input: 220 13% 91%;
+    --ring: 262.1 83.3% 57.8%;
+    --radius: 0.75rem;
 
-        --primary-100: 257 75% 85%;
-        --primary: 257 74% 57%;
-        --primary-300: 257 74% 25%;
-        --primary-foreground: 210 20% 98%;
+    --primary-100: 257 75% 85%;
+    --primary: 257 74% 57%;
+    --primary-300: 257 74% 25%;
+    --primary-foreground: 210 20% 98%;
 
-        --destructive-100: 0 84.2% 90%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-300: 0 84.2% 40%;
+    --destructive-100: 0 84.2% 90%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-300: 0 84.2% 40%;
 
-        --success-100: 148 48% 90%;
-        --success: 148 48% 46%;
-        --success-300: 148 48% 40%;
+    --success-100: 148 48% 90%;
+    --success: 148 48% 46%;
+    --success-300: 148 48% 40%;
 
-        --warning-100: 52 96% 70%; 
-        --warning: 47 96% 53%;
-        --warning-300: 28 80% 31%;
-    }
+    --warning-100: 51.72, 93.55%, 93.92%;
+    --warning: 47 96% 53%;
+    --warning-300: 28 80% 31%;
+  }
 
-    .dark {
-        --background: 224 71.4% 4.1%;
-        --foreground: 210 20% 98%;
-        --card: 224 71.4% 4.1%;
-        --card-foreground: 210 20% 98%;
-        --popover: 224 71.4% 4.1%;
-        --popover-foreground: 210 20% 98%;
+  .dark {
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
 
-        --secondary: 215 27.9% 16.9%;
-        --secondary-foreground: 210 20% 98%;
-        --muted: 215 27.9% 16.9%;
-        --muted-foreground: 217.9 10.6% 64.9%;
-        --accent: 215 27.9% 16.9%;
-        --accent-foreground: 210 20% 98%;
-        --border: 215 27.9% 16.9%;
-        --input: 215 27.9% 16.9%;
-        --ring: 263.4 70% 50.4%;
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 20% 98%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 263.4 70% 50.4%;
 
-        --primary-100: 257 74% 25%;
-        --primary: 257 74% 57%;
-        --primary-300: 257 75% 85%;
-        --primary-foreground: 210 20% 98%;
+    --primary-100: 257 74% 25%;
+    --primary: 257 74% 57%;
+    --primary-300: 257 75% 85%;
+    --primary-foreground: 210 20% 98%;
 
-        --destructive-100: 0 62.8% 20%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-300: 0 62.8% 60%;
+    --destructive-100: 0 73.7% 41.8%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-300: 0 96.3% 89.4%;
 
-        --success-100: 166 97% 20%;
-        --success: 166 97% 14%;
-        --success-300: 166 97% 60%;
+    --success-100: 166 97% 20%;
+    --success: 166 97% 14%;
+    --success-300: 166 97% 60%;
 
-        --warning-100: 28 80% 31%;
-        --warning: 47 96% 53%;
-        --warning-300: 52 96% 70%; 
-    }
+    --warning-100: 51.72, 93.55%, 17.92%;
+    --warning: 47 96% 53%;
+    --warning-300: 52 96% 70%;
+  }
 }
 
-
-
 @layer base {
-    * {
-        @apply border-border;
-    }
+  * {
+    @apply border-border;
+  }
 
-    body {
-        @apply bg-background text-foreground;
-        font-feature-settings: "rlig" 1, "calt" 1;
-    }
-
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
 }
 
 .react-flow__panel.react-flow__attribution.bottom.right {
-    display: none;
+  display: none;
 }
 .react-flow {
-    --xy-edge-stroke-selected-default: #b1b1b7 !important;
-    --node-boxshadow-selected-default: 0 0 0 0 #b1b1b7;  
-    --selection-border-default: 0px solid #b1b1b7;
-    --node-border-default: 0px solid #b1b1b7;
+  --xy-edge-stroke-selected-default: #b1b1b7 !important;
+  --node-boxshadow-selected-default: 0 0 0 0 #b1b1b7;
+  --selection-border-default: 0px solid #b1b1b7;
+  --node-border-default: 0px solid #b1b1b7;
 }

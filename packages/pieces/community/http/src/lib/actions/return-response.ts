@@ -78,7 +78,7 @@ export const httpReturnResponse = createAction({
     };
 
     if (body_type == 'json') {
-      response.body = JSON.parse(bodyInput);
+      response.body = praseToJson(bodyInput)
     } else {
       response.body = bodyInput;
     }
@@ -89,3 +89,10 @@ export const httpReturnResponse = createAction({
     return response;
   },
 });
+
+function praseToJson(body: unknown) {
+  if (typeof body === 'string') {
+    return JSON.parse(body);
+  }
+  return JSON.parse(JSON.stringify(body));
+}

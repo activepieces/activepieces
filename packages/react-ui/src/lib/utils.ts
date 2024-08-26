@@ -1,8 +1,10 @@
+import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
+import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-import { ActionType, TriggerType } from '@activepieces/shared';
+import { ActionType, TriggerType, LocalesEnum } from '@activepieces/shared';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,27 +13,44 @@ export function cn(...inputs: ClassValue[]) {
 const EMAIL_REGEX =
   '^[a-zA-Z0-9_.+]+(?<!^[0-9]*)@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$';
 
+const cleanResponse = (response: unknown): unknown => {
+  if (Number.isNaN(response)) {
+    return 'NaN';
+  }
+  if (response === null) {
+    return 'null';
+  }
+  if (response === undefined) {
+    return 'undefined';
+  }
+  if (response === 0) {
+    return '0';
+  }
+  if (response === false) {
+    return 'false';
+  }
+  return response;
+};
+
 export const formatUtils = {
   EMAIL_REGEX,
   formatStepInputAndOutput(
     sampleData: unknown,
     type: ActionType | TriggerType | null,
   ) {
-    if (sampleData === undefined) {
-      return 'undefined';
-    }
+    const cleanedSampleData = cleanResponse(sampleData);
     const shouldRemoveIterations =
       type === ActionType.LOOP_ON_ITEMS &&
-      sampleData &&
-      typeof sampleData === 'object' &&
-      'iterations' in sampleData;
+      cleanedSampleData &&
+      typeof cleanedSampleData === 'object' &&
+      'iterations' in cleanedSampleData;
     if (shouldRemoveIterations) {
       return {
-        ...sampleData,
+        ...cleanedSampleData,
         iterations: undefined,
       };
     }
-    return sampleData;
+    return cleanedSampleData;
   },
   convertEnumToHumanReadable(str: string) {
     const words = str.split('_');
@@ -102,4 +121,81 @@ export const formatUtils = {
 
     return short ? `${seconds} s` : `${seconds} seconds`;
   },
+};
+
+export const validationUtils = {
+  isValidationError: (
+    error: unknown,
+  ): error is AxiosError<{ code?: string; params?: { message?: string } }> => {
+    console.error('isValidationError', error);
+    return (
+      error instanceof AxiosError &&
+      error.response?.status === 409 &&
+      error.response?.data?.code === 'VALIDATION'
+    );
+  },
+};
+
+export function useForwardedRef<T>(ref: React.ForwardedRef<T>) {
+  const innerRef = useRef<T>(null);
+
+  useEffect(() => {
+    if (!ref) return;
+    if (typeof ref === 'function') {
+      ref(innerRef.current);
+    } else {
+      ref.current = innerRef.current;
+    }
+  });
+
+  return innerRef;
+}
+
+export const localesMap = {
+  [LocalesEnum.BULGARIAN]: 'Български',
+  [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',
+  [LocalesEnum.INDONESIAN]: 'Bahasa Indonesia',
+  [LocalesEnum.GERMAN]: 'Deutsch',
+  [LocalesEnum.ENGLISH]: 'English',
+  [LocalesEnum.SPANISH]: 'Español',
+  [LocalesEnum.FRENCH]: 'Français',
+  [LocalesEnum.ITALIAN]: 'Italiano',
+  [LocalesEnum.JAPANESE]: '日本語',
+  [LocalesEnum.HUNGARIAN]: 'Magyar',
+  [LocalesEnum.DUTCH]: 'Nederlands',
+  [LocalesEnum.PORTUGUESE]: 'Português (Brasil)',
+  [LocalesEnum.UKRAINIAN]: 'Українська',
+  [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
+};
+
+export const useElementSize = (ref: RefObject<HTMLElement>) => {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    const handleResize = (entries: ResizeObserverEntry[]) => {
+      if (entries[0]) {
+        const { width, height } = entries[0].contentRect;
+        setSize({ width, height });
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (ref.current) {
+      resizeObserver.observe(ref.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [ref, setSize]);
+
+  return size;
+};
+
+export const isStepFileUrl = (json: unknown): json is string => {
+  return (
+    Boolean(json) &&
+    typeof json === 'string' &&
+    (json.includes('/api/v1/step-files/') || json.includes('file://'))
+  );
 };

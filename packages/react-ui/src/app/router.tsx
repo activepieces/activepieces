@@ -1,6 +1,15 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 
-import ProjectSettingsLayout from '@/app/project-dashboard/project-settings-layout';
+import { PageTitle } from '@/app/components/page-title';
+import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
+import ProjectSettingsLayout from '@/app/components/project-settings-layout';
+import { ApiKeysPage } from '@/app/routes/platform/settings/api-keys';
+import { BrandingPage } from '@/app/routes/platform/settings/branding';
+import { SigningKeysPage } from '@/app/routes/platform/settings/signing-keys';
+import { SSOPage } from '@/app/routes/platform/settings/sso';
+import { FlowRunsPage } from '@/app/routes/runs';
+import { SwitchToBetaPage } from '@/app/routes/switch-to-beta';
+import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 
 import { FlowsPage } from '../app/routes/flows';
@@ -13,17 +22,19 @@ import { ChangePasswordPage } from './routes/change-password';
 import AppConnectionsPage from './routes/connections';
 import { FlowBuilderPage } from './routes/flows/id';
 import { ResetPasswordPage } from './routes/forget-password';
+import { FormPage } from './routes/forms';
 import IssuesPage from './routes/issues';
 import PlansPage from './routes/plans';
-import PlatformAppearancePage from './routes/platform/appearance';
+import AuditLogsPage from './routes/platform/audit-logs';
 import PlatformPiecesPage from './routes/platform/pieces';
 import ProjectsPage from './routes/platform/projects';
 import TemplatesPage from './routes/platform/templates';
 import UsersPage from './routes/platform/users';
-import FlowsRunPage from './routes/runs';
 import { FlowRunPage } from './routes/runs/id';
 import AlertsPage from './routes/settings/alerts';
 import AppearancePage from './routes/settings/appearance';
+import GeneralPage from './routes/settings/general';
+import { GitSyncPage } from './routes/settings/git-sync';
 import PiecesPage from './routes/settings/pieces';
 import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
@@ -32,14 +43,17 @@ import { ShareTemplatePage } from './routes/templates/share-template';
 
 export const router = createBrowserRouter([
   {
-    path: '/',
-    element: <Navigate to="/flows" />,
+    // TODO remove after react is launched
+    path: '/switch-to-beta',
+    element: <SwitchToBetaPage />,
   },
   {
     path: '/flows',
     element: (
       <DashboardContainer>
-        <FlowsPage />
+        <PageTitle title="Flows">
+          <FlowsPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   },
@@ -47,15 +61,27 @@ export const router = createBrowserRouter([
     path: '/flows/:flowId',
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
-        <FlowBuilderPage />
+        <PageTitle title="Builder">
+          <FlowBuilderPage />
+        </PageTitle>
       </AllowOnlyLoggedInUserOnlyGuard>
+    ),
+  },
+  {
+    path: '/forms/:flowId',
+    element: (
+      <PageTitle title="Forms">
+        <FormPage />
+      </PageTitle>
     ),
   },
   {
     path: '/runs/:runId',
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
-        <FlowRunPage />
+        <PageTitle title="Flow Run">
+          <FlowRunPage />
+        </PageTitle>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
@@ -63,7 +89,9 @@ export const router = createBrowserRouter([
     path: '/templates/:templateId',
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
-        <ShareTemplatePage />
+        <PageTitle title="Share Template">
+          <ShareTemplatePage />
+        </PageTitle>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
@@ -71,7 +99,9 @@ export const router = createBrowserRouter([
     path: '/runs',
     element: (
       <DashboardContainer>
-        <FlowsRunPage />
+        <PageTitle title="Runs">
+          <FlowRunsPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   },
@@ -79,7 +109,9 @@ export const router = createBrowserRouter([
     path: '/issues',
     element: (
       <DashboardContainer>
-        <IssuesPage />
+        <PageTitle title="Issues">
+          <IssuesPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   },
@@ -87,7 +119,9 @@ export const router = createBrowserRouter([
     path: '/connections',
     element: (
       <DashboardContainer>
-        <AppConnectionsPage />
+        <PageTitle title="Connections">
+          <AppConnectionsPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   },
@@ -95,7 +129,9 @@ export const router = createBrowserRouter([
     path: '/plans',
     element: (
       <DashboardContainer>
-        <PlansPage />
+        <PageTitle title="Plans">
+          <PlansPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   },
@@ -103,32 +139,58 @@ export const router = createBrowserRouter([
     path: '/settings',
     element: (
       <DashboardContainer>
-        <Navigate to="/settings/alerts" />
+        <Navigate to="/settings/general" replace />
       </DashboardContainer>
     ),
   },
   {
     path: '/forget-password',
-    element: <ResetPasswordPage />,
+    element: (
+      <PageTitle title="Forget Password">
+        <ResetPasswordPage />
+      </PageTitle>
+    ),
   },
   {
     path: '/reset-password',
-    element: <ChangePasswordPage />,
+    element: (
+      <PageTitle title="Reset Password">
+        <ChangePasswordPage />
+      </PageTitle>
+    ),
   },
   {
     path: '/sign-in',
-    element: <SignInPage />,
+    element: (
+      <PageTitle title="Sign In">
+        <SignInPage />
+      </PageTitle>
+    ),
+  },
+  {
+    path: '/verify-email',
+    element: (
+      <PageTitle title="Verify Email">
+        <VerifyEmail />
+      </PageTitle>
+    ),
   },
   {
     path: '/sign-up',
-    element: <SignUpPage />,
+    element: (
+      <PageTitle title="Sign Up">
+        <SignUpPage />
+      </PageTitle>
+    ),
   },
   {
     path: '/settings/alerts',
     element: (
       <DashboardContainer>
         <ProjectSettingsLayout>
-          <AlertsPage></AlertsPage>
+          <PageTitle title="Alerts">
+            <AlertsPage />
+          </PageTitle>
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
@@ -138,7 +200,21 @@ export const router = createBrowserRouter([
     element: (
       <DashboardContainer>
         <ProjectSettingsLayout>
-          <AppearancePage></AppearancePage>
+          <PageTitle title="Appearance">
+            <AppearancePage />
+          </PageTitle>
+        </ProjectSettingsLayout>
+      </DashboardContainer>
+    ),
+  },
+  {
+    path: '/settings/general',
+    element: (
+      <DashboardContainer>
+        <ProjectSettingsLayout>
+          <PageTitle title="General">
+            <GeneralPage />
+          </PageTitle>
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
@@ -148,7 +224,9 @@ export const router = createBrowserRouter([
     element: (
       <DashboardContainer>
         <ProjectSettingsLayout>
-          <PiecesPage></PiecesPage>
+          <PageTitle title="Pieces">
+            <PiecesPage />
+          </PageTitle>
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
@@ -158,32 +236,49 @@ export const router = createBrowserRouter([
     element: (
       <DashboardContainer>
         <ProjectSettingsLayout>
-          <TeamPage></TeamPage>
+          <PageTitle title="Team">
+            <TeamPage />
+          </PageTitle>
+        </ProjectSettingsLayout>
+      </DashboardContainer>
+    ),
+  },
+  {
+    path: '/settings/git-sync',
+    element: (
+      <DashboardContainer>
+        <ProjectSettingsLayout>
+          <PageTitle title="Git Sync">
+            <GitSyncPage />
+          </PageTitle>
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
   },
   {
     path: '/invitation',
-    element: <AcceptInvitation />,
-  },
-  {
-    path: '/*',
     element: (
-      <DashboardContainer>
-        <Navigate to="/flows" replace />
-      </DashboardContainer>
+      <PageTitle title="Accept Invitation">
+        <AcceptInvitation />
+      </PageTitle>
+    ),
+  },
+
+  {
+    path: '/404',
+    element: (
+      <PageTitle title="Not Found">
+        <NotFoundPage />
+      </PageTitle>
     ),
   },
   {
-    path: '/404',
-    element: <NotFoundPage />,
-  },
-  {
-    path: '/platform/appearance',
+    path: '/platform/audit-logs',
     element: (
       <PlatformAdminContainer>
-        <PlatformAppearancePage />
+        <PageTitle title="Audit Logs">
+          <AuditLogsPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -191,7 +286,9 @@ export const router = createBrowserRouter([
     path: '/platform/pieces',
     element: (
       <PlatformAdminContainer>
-        <PlatformPiecesPage />
+        <PageTitle title="Platform Pieces">
+          <PlatformPiecesPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -199,7 +296,9 @@ export const router = createBrowserRouter([
     path: '/platform/projects',
     element: (
       <PlatformAdminContainer>
-        <ProjectsPage />
+        <PageTitle title="Projects">
+          <ProjectsPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -207,7 +306,9 @@ export const router = createBrowserRouter([
     path: '/platform/templates',
     element: (
       <PlatformAdminContainer>
-        <TemplatesPage />
+        <PageTitle title="Templates">
+          <TemplatesPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -215,7 +316,9 @@ export const router = createBrowserRouter([
     path: '/platform/users',
     element: (
       <PlatformAdminContainer>
-        <UsersPage />
+        <PageTitle title="Users">
+          <UsersPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -223,8 +326,76 @@ export const router = createBrowserRouter([
     path: '/platform',
     element: (
       <PlatformAdminContainer>
-        <Navigate to="/platform/projects" />
+        <PageTitle title="Platform">
+          <Navigate to="/platform/projects" />
+        </PageTitle>
       </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/branding',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <PageTitle title="Branding">
+            <BrandingPage />
+          </PageTitle>
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/api-keys',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <PageTitle title="API Keys">
+            <ApiKeysPage />
+          </PageTitle>
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/signing-keys',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <PageTitle title="Signing Keys">
+            <SigningKeysPage />
+          </PageTitle>
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/sso',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <PageTitle title="SSO">
+            <SSOPage />
+          </PageTitle>
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Platform Settings">
+          <Navigate to="/platform/settings/branding" replace />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/*',
+    element: (
+      <PageTitle title="Redirect">
+        <Navigate to="/flows" replace />
+      </PageTitle>
     ),
   },
 ]);

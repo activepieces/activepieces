@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { Check, Copy } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -36,7 +37,7 @@ const ApMarkdown = React.memo(
       },
       onError: () => {
         toast({
-          title: 'Failed to copy to clipboard',
+          title: t('Failed to copy to clipboard'),
           duration: 3000,
         });
       },
@@ -44,7 +45,7 @@ const ApMarkdown = React.memo(
 
     const Container = ({ children }: { children: React.ReactNode }) =>
       withBorder ? (
-        <Alert>
+        <Alert className="rounded">
           <AlertDescription>{children}</AlertDescription>
         </Alert>
       ) : (
@@ -71,13 +72,13 @@ const ApMarkdown = React.memo(
                 <div className="relative py-2">
                   <input
                     type="text"
-                    className="col-span-6 bg-background border border-solid text-sm rounded-lg block w-full p-2.5"
+                    className="col-span-6 bg-background border border-solid text-sm rounded block w-full p-2.5"
                     value={codeContent}
                     disabled
                   />
                   <Button
                     variant="ghost"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-background rounded-lg p-2 inline-flex items-center justify-center"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-background rounded p-2 inline-flex items-center justify-center"
                     onClick={() => copyToClipboard(codeContent)}
                   >
                     {isCopying ? (

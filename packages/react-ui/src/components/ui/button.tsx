@@ -7,13 +7,14 @@ import { cn } from '@/lib/utils';
 import { LoadingSpinner } from './spinner';
 
 const buttonVariants = cva(
-  'ring-offset-background focus-visible:ring-ring inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'ring-offset-background stroke-foreground focus-visible:ring-ring inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        default:
+          'bg-primary stroke-background text-primary-foreground hover:bg-primary/90',
         basic: 'text-primary underline-offset-4 hover:bg-accent',
-        destructive: 'bg-destructive text-foreground hover:bg-destructive/90',
+        destructive: 'bg-destructive text-background hover:bg-destructive/90',
         outline:
           'border-input bg-background hover:bg-accent hover:text-accent-foreground border',
         secondary:
@@ -64,7 +65,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : 'button';
 
     const isMac = /(Mac)/i.test(navigator.userAgent);
-
+    const isEscape = keyboardShortcut?.toLocaleLowerCase() === 'esc';
     React.useEffect(() => {
       if (keyboardShortcut) {
         document.addEventListener('keydown', handleKeyDown);
@@ -76,10 +77,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     }, [keyboardShortcut, disabled]);
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.key === keyboardShortcut?.toLocaleLowerCase() &&
-        (event.metaKey || event.ctrlKey)
-      ) {
+      const isEscapePressed = event.key === 'Escape' && isEscape;
+      const isCtrlWithShortcut =
+        keyboardShortcut &&
+        event.key === keyboardShortcut.toLocaleLowerCase() &&
+        (isMac ? event.metaKey : event.ctrlKey);
+      if (isEscapePressed || isCtrlWithShortcut) {
         event.preventDefault();
         event.stopPropagation();
         if (onKeyboardShortcut && !disabled) {
@@ -92,18 +95,21 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         className={cn(buttonVariants({ variant, size, className }), {})}
         ref={ref}
-        disabled={disabled}
+        disabled={disabled || loading}
         {...props}
+        onClick={(e) => {
+          loading ? e.stopPropagation() : props.onClick && props.onClick(e);
+        }}
       >
         {loading ? (
-          <LoadingSpinner />
+          <LoadingSpinner className="stroke-inherit" />
         ) : (
           <>
             {keyboardShortcut && (
               <div className="flex justify-center items-center gap-2">
                 {children}
                 <span className="flex-grow text-xs tracking-widest text-muted-foreground">
-                  {isMac ? '⌘' : 'Ctrl'}{' '}
+                  {!isEscape && (isMac ? '⌘' : 'Ctrl')}{' '}
                   {keyboardShortcut.toString().toLocaleUpperCase()}
                 </span>
               </div>

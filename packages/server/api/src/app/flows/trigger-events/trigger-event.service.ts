@@ -8,6 +8,7 @@ import {
     PieceTrigger,
     PopulatedFlow,
     ProjectId,
+    sanitizeObjectForPostgresql,
     SeekPage,
     Trigger,
     TriggerEvent,
@@ -44,13 +45,13 @@ export const triggerEventService = {
         })
 
         const sourceName = getSourceName(flow.version.trigger)
-
+        
         return triggerEventRepo().save({
             id: apId(),
             projectId,
             flowId: flow.id,
             sourceName,
-            payload,
+            payload: sanitizeObjectForPostgresql(payload),
         })
     },
 
@@ -80,6 +81,7 @@ export const triggerEventService = {
                         flowId: flow.id,
                         simulate: true,
                     }),
+                    test: true, 
                     projectId,
                 })
                 await triggerEventRepo().delete({

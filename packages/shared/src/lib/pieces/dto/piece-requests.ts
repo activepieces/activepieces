@@ -12,8 +12,6 @@ export const ExactVersionType = Type.String({
 export const VersionType = Type.String({
     pattern: VERSION_PATTERN,
 })
-
-
 export enum SuggestionType {
     ACTION = 'ACTION',
     TRIGGER = 'TRIGGER',

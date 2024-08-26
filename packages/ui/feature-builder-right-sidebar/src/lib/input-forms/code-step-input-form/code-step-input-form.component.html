@@ -10,19 +10,7 @@
     </div>
     <div>
       <div class="ap-mb-2 ap-flex ap-justify-end ap-items-center">
-        
-        <ng-container *ngIf="showGenerateCode$ | async as showCode">
-          <ap-button btnStyle="stroked" btnSize="medium" (buttonClicked)="openCodeWriterDialog()"
-            [disabled]="(generateCodeEnabled$ | async) === false"
-            [tooltipText]="(generateCodeEnabled$ | async) ? codeGeneratorTooltip: disabledCodeGeneratorTooltip"
-            i18n-tooltipText>
-            <div class="ap-flex ap-gap-3 ap-items-center" i18n>
-              <svg-icon src="assets/img/custom/AI.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
-                [applyClass]="true"></svg-icon>
-              Ask AI
-            </div>
-          </ap-button>
-        </ng-container>
+      
 
       </div>
       <app-code-artifact-form-control (openCodeWriterDialog)="openCodeWriterDialog()"

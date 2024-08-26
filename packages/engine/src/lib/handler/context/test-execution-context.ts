@@ -1,5 +1,5 @@
 import { ActionType, BranchStepOutput, flowHelper, FlowVersion, GenericStepOutput, LoopStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
-import { variableService } from '../../services/variable-service'
+import { variableService } from '../../variables/variable-service'
 import { FlowExecutorContext } from './flow-execution-context'
 
 export const testExecutionContext = {

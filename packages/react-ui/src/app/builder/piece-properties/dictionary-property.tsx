@@ -1,15 +1,18 @@
+import { t } from 'i18next';
 import { Plus, TrashIcon } from 'lucide-react';
+import { nanoid } from 'nanoid';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
 
-import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
+import { TextInputWithMentions } from './text-input-with-mentions';
 
 type DictionaryInputItem = {
   key: string;
   value: string;
+  id: string;
 };
 
 type DictionaryInputProps = {
@@ -25,17 +28,24 @@ export const DictionaryProperty = ({
   disabled,
   useMentionTextInput,
 }: DictionaryInputProps) => {
-  const [formValue, setFormValue] = useState<DictionaryInputItem[]>(
-    Object.entries(values ?? {}).map(([key, value]) => ({ key, value })),
-  );
+  const [formValue, setFormValue] = useState<DictionaryInputItem[]>(() => {
+    return Object.entries(values ?? {}).map(([key, value]) => ({
+      key,
+      value,
+      id: nanoid(),
+    }));
+  });
 
   const remove = (index: number) => {
     const newValues = formValue.filter((_, i) => i !== index);
+    setFormValue(newValues);
     updateValue(newValues);
   };
 
   const add = () => {
-    updateValue([...formValue, { key: '', value: '' }]);
+    const newValues = [...formValue, { key: '', value: '', id: nanoid() }];
+    updateValue(newValues);
+    setFormValue(newValues);
   };
 
   const onChangeValue = (
@@ -54,7 +64,6 @@ export const DictionaryProperty = ({
   };
 
   const updateValue = (items: DictionaryInputItem[]) => {
-    setFormValue(items);
     onChange(
       items.reduce(
         (acc, current) => ({ ...acc, [current.key]: current.value }),
@@ -65,9 +74,9 @@ export const DictionaryProperty = ({
 
   return (
     <div className="flex w-full flex-col gap-4">
-      {formValue.map(({ key, value }, index) => (
+      {formValue.map(({ key, value, id }, index) => (
         <div
-          key={'dictionary-input-' + index}
+          key={'dictionary-input-' + id}
           className="flex items-center gap-3 items-center"
         >
           <Input
@@ -103,7 +112,7 @@ export const DictionaryProperty = ({
             onClick={() => remove(index)}
           >
             <TrashIcon className="size-4 text-destructive" aria-hidden="true" />
-            <span className="sr-only">Remove</span>
+            <span className="sr-only">{t('Remove')}</span>
           </Button>
         </div>
       ))}
@@ -114,7 +123,7 @@ export const DictionaryProperty = ({
         type="button"
         disabled={disabled}
       >
-        <TextWithIcon icon={<Plus size={18} />} text="Add Item" />
+        <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
       </Button>
     </div>
   );

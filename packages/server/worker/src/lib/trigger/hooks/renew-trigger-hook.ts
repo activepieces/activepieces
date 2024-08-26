@@ -11,6 +11,7 @@ export async function renewWebhook(params: Params): Promise<void> {
             flowId: flowVersion.flowId,
             simulate,
         }),
+        test: simulate,
         projectId,
     })
 }

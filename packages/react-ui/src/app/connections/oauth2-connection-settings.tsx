@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -73,6 +74,7 @@ const OAuth2ConnectionSettings = ({
 
   const hasCode = form.getValues().request.value.code;
 
+  const predefinedClientId = pieceToClientIdMap?.[piece.name]?.clientId;
   useEffect(() => {
     if (isNil(currentOAuth2Type) && !isNil(pieceToClientIdMap)) {
       setOAuth2Type(
@@ -95,11 +97,12 @@ const OAuth2ConnectionSettings = ({
       currentOAuth2Type === AppConnectionType.OAUTH2 ? '' : 'FAKE_SECRET',
       { shouldValidate: true },
     );
+
     form.setValue(
       'request.value.client_id',
       currentOAuth2Type === AppConnectionType.OAUTH2
         ? ''
-        : pieceToClientIdMap?.[piece.name].clientId ?? '',
+        : predefinedClientId ?? '',
       { shouldValidate: true },
     );
     form.setValue('request.value.code', '', { shouldValidate: true });
@@ -182,8 +185,8 @@ const OAuth2ConnectionSettings = ({
               control={form.control}
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <div className="text-md font-medium">Client ID</div>
-                  <Input {...field} type="text" placeholder="Client ID" />
+                  <div className="text-md font-medium">{t('Client ID')}</div>
+                  <Input {...field} type="text" placeholder={t('Client ID')} />
                   <FormMessage />
                 </FormItem>
               )}
@@ -193,8 +196,14 @@ const OAuth2ConnectionSettings = ({
               control={form.control}
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <div className="text-md font-medium">Client Secret</div>
-                  <Input {...field} type="text" placeholder="Client Secret" />
+                  <div className="text-md font-medium">
+                    {t('Client Secret')}
+                  </div>
+                  <Input
+                    {...field}
+                    type="text"
+                    placeholder={t('Client Secret')}
+                  />
                   <FormMessage />
                 </FormItem>
               )}
@@ -229,7 +238,7 @@ const OAuth2ConnectionSettings = ({
                 )
               }
             >
-              Connect
+              {t('Connect')}
             </Button>
           )}
           {hasCode && (
@@ -246,7 +255,7 @@ const OAuth2ConnectionSettings = ({
                 });
               }}
             >
-              Disconnect
+              {t('Disconnect')}
             </Button>
           )}
         </div>
@@ -259,22 +268,23 @@ const OAuth2ConnectionSettings = ({
               className="text-xs"
               onClick={() => setOAuth2Type(AppConnectionType.OAUTH2)}
             >
-              I would like to use my own App Credentials
+              {t('I would like to use my own App Credentials')}
             </Button>
           </div>
         )}
-        {currentOAuth2Type === AppConnectionType.OAUTH2 && (
-          <div>
-            <Button
-              size="sm"
-              variant={'link'}
-              className="text-xs"
-              onClick={() => setOAuth2Type(AppConnectionType.CLOUD_OAUTH2)}
-            >
-              I would like to use predefined App Credentials
-            </Button>
-          </div>
-        )}
+        {currentOAuth2Type === AppConnectionType.OAUTH2 &&
+          predefinedClientId && (
+            <div>
+              <Button
+                size="sm"
+                variant={'link'}
+                className="text-xs"
+                onClick={() => setOAuth2Type(AppConnectionType.CLOUD_OAUTH2)}
+              >
+                {t('I would like to use predefined App Credentials')}
+              </Button>
+            </div>
+          )}
       </form>
     </Form>
   );

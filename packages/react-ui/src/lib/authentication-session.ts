@@ -1,22 +1,26 @@
+import { jwtDecode } from 'jwt-decode';
+
 import { projectApi } from '@/lib/project-api';
-import { AuthenticationResponse } from '@activepieces/shared';
+import { AuthenticationResponse, isNil } from '@activepieces/shared';
 
 const currentUserKey = 'currentUser';
 const tokenKey = 'token';
-const projectIdKey = 'projectId';
 export const platformCacheKey = 'platform';
 export const authenticationSession = {
   saveResponse(response: AuthenticationResponse) {
     localStorage.setItem(tokenKey, response.token);
     localStorage.setItem(currentUserKey, JSON.stringify(response));
-    localStorage.setItem(projectIdKey, response.projectId);
   },
   getToken(): string | null {
     return localStorage.getItem(tokenKey) ?? null;
   },
-  getProjectId(): string {
-    const currentProjectId = localStorage.getItem(projectIdKey)!;
-    return currentProjectId;
+  getProjectId(): string | null {
+    const token = this.getToken();
+    if (isNil(token)) {
+      return null;
+    }
+    const decodedJwt = jwtDecode<{ projectId: string }>(token);
+    return decodedJwt.projectId;
   },
   getPlatformId(): string | null {
     return this.getCurrentUser()?.platformId ?? null;
@@ -27,17 +31,13 @@ export const authenticationSession = {
   async switchToSession(projectId: string) {
     const result = await projectApi.getTokenForProject(projectId);
     localStorage.setItem(tokenKey, result.token);
-    localStorage.setItem(projectIdKey, projectId);
   },
   isLoggedIn(): boolean {
-    return (
-      !!this.getToken() && !!this.getCurrentUser() && !!this.getProjectId()
-    );
+    return !!this.getToken() && !!this.getCurrentUser();
   },
-  LogOut() {
+  logOut() {
     localStorage.removeItem(tokenKey);
     localStorage.removeItem(currentUserKey);
-    localStorage.removeItem(projectIdKey);
     window.location.href = '/sign-in';
   },
   getCurrentUser(): AuthenticationResponse | null {

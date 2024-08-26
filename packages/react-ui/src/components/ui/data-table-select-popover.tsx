@@ -20,7 +20,7 @@ import { Separator } from './seperator';
 type DataTableSelectPopoverProps = {
   title?: string;
   selectedValues: Set<string>;
-  options: {
+  options: readonly {
     label: string;
     value: string;
     icon?: React.ComponentType<{ className?: string }>;

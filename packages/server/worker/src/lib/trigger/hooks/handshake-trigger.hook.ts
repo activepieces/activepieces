@@ -24,7 +24,11 @@ export async function tryHandshake(
     const pieceMetadata = await engineApiService(engineToken).getPiece(settings.pieceName, {
         version: settings.pieceVersion,
     })
-    const handshakeConfig = pieceMetadata.triggers?.[settings.triggerName]?.handshakeConfiguration
+    const tirggerName = settings.triggerName
+    if (isNil(tirggerName)) {
+        return null
+    }
+    const handshakeConfig = pieceMetadata.triggers?.[tirggerName]?.handshakeConfiguration
     if (isNil(handshakeConfig)) {
         return null
     }
@@ -92,6 +96,7 @@ async function executeHandshake(
             flowId: flowVersion.flowId,
             simulate: false,
         }),
+        test: false,
         projectId,
     })
     if (!result.success || result.response === undefined) {

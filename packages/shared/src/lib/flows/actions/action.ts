@@ -52,7 +52,7 @@ export const PieceActionSettings = Type.Object({
     pieceType: Type.Enum(PieceType),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
-    actionName: Type.String({}),
+    actionName: Type.Optional(Type.String({})),
     input: Type.Record(Type.String({}), Type.Unknown()),
     inputUiInfo: SampleDataSettingsObject,
     errorHandlingOptions: ActionErrorHandlingOptions,

@@ -1,4 +1,4 @@
-import { ApFile, Property, ProcessorFn } from '@activepieces/pieces-framework';
+import { ApFile, Property } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
   httpClient,
@@ -7,7 +7,7 @@ import {
 
 import FormData from 'form-data';
 
-const processText: ProcessorFn<any, string> = (property, text) => {
+export const santizeText = (text: string) => {
   // LinkedIn Posts API has a list of characters that need to be escaped since it's type is "LittleText"
   // https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api?view=li-lms-2023-11&tabs=http
   // https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/little-text-format?view=li-lms-2023-11
@@ -22,7 +22,6 @@ export const linkedinCommon = {
   },
   text: Property.LongText({
     displayName: 'Text',
-    processors: [processText],
     required: true,
   }),
   imageUrl: Property.File({

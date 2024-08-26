@@ -1,16 +1,20 @@
-import { LockKeyhole } from 'lucide-react';
+import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
+import { useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { FileTextIcon, LockKeyhole } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { theme } from '@/lib/theme';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApFlagId, supportUrl } from '@activepieces/shared';
 
 import { Header } from './header';
-
 type Link = {
   icon: React.ReactNode;
   label: string;
@@ -18,6 +22,15 @@ type Link = {
   notification?: boolean;
 };
 
+type CustomTooltipLinkProps = {
+  to: string;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  extraClasses?: string;
+  notification?: boolean;
+  locked?: boolean;
+  newWindow?: boolean;
+};
 const CustomTooltipLink = ({
   to,
   label,
@@ -25,20 +38,18 @@ const CustomTooltipLink = ({
   extraClasses,
   notification,
   locked,
-}: {
-  to: string;
-  label: string;
-  Icon: React.ElementType;
-  extraClasses?: string;
-  notification?: boolean;
-  locked?: boolean;
-}) => {
+  newWindow,
+}: CustomTooltipLinkProps) => {
   const location = useLocation();
 
   const isActive = location.pathname.startsWith(to);
 
   return (
-    <Link to={to}>
+    <Link
+      to={to}
+      target={newWindow ? '_blank' : ''}
+      rel={newWindow ? 'noopener noreferrer' : ''}
+    >
       <div
         className={`relative flex flex-col items-center justify-center gap-1`}
       >
@@ -70,35 +81,69 @@ export type SidebarLink = {
   locked?: boolean;
 };
 
-export function Sidebar({
-  children,
-  links,
-}: {
+type SidebarProps = {
   children: React.ReactNode;
   links: SidebarLink[];
-}) {
+  isHomeDashboard?: boolean;
+};
+export function Sidebar({ children, links, isHomeDashboard }: SidebarProps) {
+  const queryClient = useQueryClient();
+  const branding = flagsHooks.useWebsiteBranding(queryClient);
+  const showSupportAndDocs = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_COMMUNITY,
+    queryClient,
+  );
   return (
-    <div className="flex min-h-screen w-full ">
-      <aside className="flex flex-col border-r bg-muted/50">
-        <nav className="flex flex-col items-center gap-5 px-1.5 sm:py-5">
-          <div className="h-[48px] items-center justify-center p-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <img src={theme.logoIconUrl} alt="logo" />
-              </TooltipTrigger>
-              <TooltipContent side="right">{theme.websiteName}</TooltipContent>
-            </Tooltip>
-          </div>
-          {links.map((link, index) => (
-            <CustomTooltipLink
-              to={link.to}
-              label={link.label}
-              Icon={link.icon}
-              key={index}
-              locked={link.locked}
-            />
-          ))}
-        </nav>
+    <div className="flex min-h-screen w-full  ">
+      <aside className=" border-r sticky  top-0 h-screen bg-muted/50 w-[65px] ">
+        <ScrollArea>
+          <nav className="flex flex-col items-center h-screen  sm:py-5  gap-5 p-2 ">
+            <Link to="/flows" className="h-[48px] items-center justify-center ">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link to="/flows">
+                    <img
+                      src={branding.logos.logoIconUrl}
+                      alt={t('home')}
+                      width={28}
+                      height={28}
+                    />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">{t('Home')}</TooltipContent>
+              </Tooltip>
+            </Link>
+
+            {links.map((link, index) => (
+              <CustomTooltipLink
+                to={link.to}
+                label={link.label}
+                Icon={link.icon}
+                key={index}
+                notification={link.notification}
+                locked={link.locked}
+              />
+            ))}
+
+            <div className="grow"></div>
+            {isHomeDashboard && showSupportAndDocs && (
+              <>
+                <CustomTooltipLink
+                  to={supportUrl}
+                  label={t('Support')}
+                  Icon={QuestionMarkCircledIcon}
+                  newWindow={true}
+                />
+                <CustomTooltipLink
+                  to="https://activepieces.com/docs"
+                  label={t('Docs')}
+                  Icon={FileTextIcon}
+                  newWindow={true}
+                />
+              </>
+            )}
+          </nav>
+        </ScrollArea>
       </aside>
       <div className="flex-1 p-4">
         <div className="flex flex-col">

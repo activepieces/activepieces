@@ -1,18 +1,19 @@
+import { t } from 'i18next';
 import { SquareFunction } from 'lucide-react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
 import { FormItem, FormLabel } from '@/components/ui/form';
+import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Toggle } from '@/components/ui/toggle';
 import { PieceProperty } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
-import { ReadMoreDescription } from './read-more-description';
-import { TextInputWithMentions } from './text-input-with-mentions/text-input-with-mentions';
+import { TextInputWithMentions } from './text-input-with-mentions';
 
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;
   allowDynamicValues: boolean;
-  propertyKey: string;
+  propertyName: string;
   property: PieceProperty;
   hideDescription?: boolean;
   placeBeforeLabelText?: boolean;
@@ -25,22 +26,26 @@ const AutoFormFieldWrapper = ({
   children,
   hideDescription,
   allowDynamicValues,
-  propertyKey,
+  propertyName,
   property,
   disabled,
   field,
 }: AutoFormFieldWrapperProps) => {
   const form = useFormContext<Action | Trigger>();
   const toggled =
-    form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyKey];
+    form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyName];
 
   function handleChange(pressed: boolean) {
-    form.setValue(`settings.input.${propertyKey}` as const, '', {
-      shouldValidate: true,
-    });
     form.setValue(
-      `settings.inputUiInfo.customizedInputs.${propertyKey}` as const,
+      `settings.inputUiInfo.customizedInputs.${propertyName}` as const,
       pressed,
+      {
+        shouldValidate: true,
+      },
+    );
+    form.setValue(
+      `settings.input.${propertyName}` as const,
+      property.defaultValue,
       {
         shouldValidate: true,
       },
@@ -51,7 +56,7 @@ const AutoFormFieldWrapper = ({
     <FormItem className="flex flex-col gap-1">
       <FormLabel className="flex items-center gap-1">
         {placeBeforeLabelText && !toggled && children}
-        <span>{property.displayName}</span>
+        <span>{t(property.displayName)}</span>
         {property.required && <span className="text-destructive">*</span>}
         <span className="grow"></span>
         {allowDynamicValues && (
@@ -60,20 +65,21 @@ const AutoFormFieldWrapper = ({
             onPressedChange={(e) => handleChange(e)}
             disabled={disabled}
           >
-            <SquareFunction />
+            <SquareFunction className="stroke-foreground" />
           </Toggle>
         )}
       </FormLabel>
+
       {allowDynamicValues && toggled && (
         <TextInputWithMentions
           disabled={disabled}
           onChange={field.onChange}
-          initialValue={field.value}
+          initialValue={property.defaultValue}
         ></TextInputWithMentions>
       )}
-      {!placeBeforeLabelText && !toggled && children}
+      {!placeBeforeLabelText && !toggled && <div>{children}</div>}
       {property.description && !hideDescription && (
-        <ReadMoreDescription text={property.description} />
+        <ReadMoreDescription text={t(property.description)} />
       )}
     </FormItem>
   );

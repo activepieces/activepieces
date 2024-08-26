@@ -19,7 +19,7 @@
 			]
 		}
 	},
-	"forwardPorts": [3000, 4200],
+	"forwardPorts": [3000, 4200, 5432],
 	"postAttachCommand": "/bin/bash .devcontainer/setup.sh",
 	"hostRequirements": {
   	  "cpus": 4,

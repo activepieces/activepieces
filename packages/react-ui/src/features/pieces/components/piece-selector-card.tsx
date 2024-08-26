@@ -1,8 +1,9 @@
 import React from 'react';
 
 import { cn } from '@/lib/utils';
+import { ActionType, TriggerType } from '@activepieces/shared';
 
-import { StepMetadata } from '../lib/pieces-hook';
+import { PieceStepMetadata, StepMetadata } from '../lib/pieces-hook';
 
 type PieceCardInfoProps = {
   piece: StepMetadata;
@@ -19,7 +20,7 @@ const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
     <div
       onClick={onClick}
       className={cn(
-        'flex h-[110px] items-center justify-center gap-4 rounded border border-solid cursor-pointer p-4',
+        'flex items-center justify-center gap-4 rounded border border-solid p-3.5',
         {
           'cursor-pointer hover:bg-accent hover:text-accent-foreground':
             interactive,
@@ -34,7 +35,15 @@ const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
         />
       </div>
       <div className="flex h-full grow flex-col justify-center gap-1 text-start">
-        <div className="text-base ">{piece.displayName}</div>
+        <div className="text-base flex justify-center">
+          <div className="flex-grow">{piece.displayName}</div>
+          {(piece.type === ActionType.PIECE ||
+            piece.type === TriggerType.PIECE) && (
+            <div className="text-xs text-muted-foreground flex justify-center items-center">
+              v{(piece as PieceStepMetadata).pieceVersion}
+            </div>
+          )}
+        </div>
         <div className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
           {piece.description}
         </div>

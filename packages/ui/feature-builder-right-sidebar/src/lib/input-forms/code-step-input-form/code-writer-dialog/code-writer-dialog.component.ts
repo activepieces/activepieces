@@ -1,5 +1,5 @@
 import { ApEdition } from '@activepieces/shared';
-import { FlagService, HighlightService } from '@activepieces/ui/common';
+import { FlagService } from '@activepieces/ui/common';
 import { CodeService } from '@activepieces/ui/feature-builder-store';
 import {
   ChangeDetectionStrategy,
@@ -50,7 +50,6 @@ export class CodeWriterDialogComponent {
     private dialogRef: MatDialogRef<CodeWriterDialogComponent>,
     private codeWriterService: CodeWriterService,
     private flagService: FlagService,
-    private highlightService: HighlightService,
     @Inject(MAT_DIALOG_DATA)
     public data: CodeWriterDialogData,
     private codeService: CodeService
@@ -80,45 +79,9 @@ export class CodeWriterDialogComponent {
       this.promptOperation$ = this.codeWriterService
         .prompt({
           prompt,
+          previousContext: [],
         })
-        .pipe(
-          tap((response) => {
-            this.promptForm.enable();
-            this.promptForm.controls.prompt.removeValidators(
-              Validators.required
-            );
-            this.promptForm.controls.prompt.setValue('');
-            try {
-              const result: {
-                code: string;
-                inputs: {
-                  key: string;
-                  value: unknown;
-                }[];
-                packages: string[];
-              } = JSON.parse(response.result);
-              this.receivedCode$.next(
-                result.code.replace(/\*\*\*NEW_LINE\*\*\*/g, '\n')
-              );
-              this.receivedInputs = result.inputs;
-              this.receivedPackages = result.packages;
-              this.receivedPackages.forEach((pkg) => {
-                this.lookForNpmPackage(pkg);
-              });
-              if (this.stepper.selected) {
-                this.stepper.selected.completed = true;
-                this.stepper.next();
-              }
-              this.prisimFix = !this.prisimFix;
-              this.highlightPrism();
-            } catch (e) {
-              console.error('Copilot response not valid JSON.');
-              console.error((e as Error).message);
-            }
-            this.loading$.next(false);
-          }),
-          map(() => void 0)
-        );
+        .pipe(map(() => void 0));
     }
   }
 
@@ -147,10 +110,5 @@ export class CodeWriterDialogComponent {
       packages: this.packageVersions,
     });
     this.reset();
-  }
-  private highlightPrism() {
-    setTimeout(() => {
-      this.highlightService.highlightAll();
-    }, 10);
   }
 }

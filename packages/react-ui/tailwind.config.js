@@ -30,7 +30,10 @@ module.exports = {
           100: 'hsl(var(--warning-100))',
           300: 'hsl(var(--warning-300))',
         },
-        border: 'hsl(var(--border))',
+        border: {
+          DEFAULT: 'hsl(var(--border))',
+          300: 'hsl(var(--border-300))',
+        },
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
@@ -104,6 +107,9 @@ module.exports = {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'fade': 'fade 0.2s ease-out',
       },
+      boxShadow: {
+        'step-container': '0px 0px 22px hsl(var(--border))',
+      }
     },
   },
   plugins: [require('tailwindcss-animate')],

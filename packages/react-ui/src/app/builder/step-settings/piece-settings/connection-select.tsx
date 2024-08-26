@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -59,7 +60,7 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
             open={connectionDialogOpen}
             setOpen={setConnectionDialogOpen}
           ></CreateOrEditConnectionDialog>
-          <FormLabel>Connection</FormLabel>
+          <FormLabel>{t('Connection')}</FormLabel>
           <Select
             open={selectConnectionOpen}
             onOpenChange={setSelectConnectionOpen}
@@ -68,7 +69,7 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
             disabled={params.disabled}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select a connection" />
+              <SelectValue placeholder={t('Select a connection')} />
             </SelectTrigger>
             <SelectContent>
               {isLoading && <SelectLoader />}
@@ -82,7 +83,7 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
                   >
                     <span className="flex items-center gap-1 text-primary w-full">
                       <Plus size={16} />
-                      Create Connection
+                      {t('Create Connection')}
                     </span>
                   </SelectAction>
 

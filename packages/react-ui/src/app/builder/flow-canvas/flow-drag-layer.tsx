@@ -13,6 +13,7 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { snapCenterToCursor } from '@dnd-kit/modifiers';
+import { t } from 'i18next';
 
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { FlowOperationType, flowHelper } from '@activepieces/shared';
@@ -76,39 +77,49 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
     setActiveDraggingStep(null);
   };
   const handleDragEnd = (e: DragEndEvent) => {
-    const collision = e?.collisions?.[0]?.data?.['droppableContainer'].data
-      .current as ApEdge['data'];
     setActiveDraggingStep(null);
-    if (collision && collision.parentStep && draggedStep) {
-      const isPartOfInnerFlow = flowHelper.isPartOfInnerFlow({
-        parentStep: draggedStep,
-        childName: collision.parentStep,
-      });
-      if (isPartOfInnerFlow) {
-        toast({
-          title: 'Invalid Move',
-          description: 'The destination location is inside the same step',
-          duration: 3000,
+    if (
+      e.over &&
+      e.over.data.current &&
+      e.over.data.current.accepts === e.active.data?.current?.type
+    ) {
+      const edgeData: ApEdge['data'] = e.over.data.current as ApEdge['data'];
+      if (edgeData && edgeData.parentStep && draggedStep) {
+        const isPartOfInnerFlow = flowHelper.isPartOfInnerFlow({
+          parentStep: draggedStep,
+          childName: edgeData.parentStep,
         });
-        return;
-      }
-      applyOperation(
-        {
-          type: FlowOperationType.MOVE_ACTION,
-          request: {
-            name: draggedStep.name,
-            newParentStep: collision.parentStep,
-            stepLocationRelativeToNewParent:
-              collision.stepLocationRelativeToParent,
+        if (isPartOfInnerFlow) {
+          toast({
+            title: t('Invalid Move'),
+            description: t('The destination location is inside the same step'),
+            duration: 3000,
+          });
+          return;
+        }
+        applyOperation(
+          {
+            type: FlowOperationType.MOVE_ACTION,
+            request: {
+              name: draggedStep.name,
+              newParentStep: edgeData.parentStep,
+              stepLocationRelativeToNewParent:
+                edgeData.stepLocationRelativeToParent,
+            },
           },
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
+          () => toast(UNSAVED_CHANGES_TOAST),
+        );
+      }
     }
   };
 
   const sensors = useSensors(
-    useSensor(MouseSensor),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        delay: 50,
+        tolerance: 1,
+      },
+    }),
     useSensor(PointerSensor, {
       activationConstraint: {
         delay: 150,

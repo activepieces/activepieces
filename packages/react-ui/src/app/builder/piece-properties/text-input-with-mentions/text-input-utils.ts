@@ -90,11 +90,11 @@ const parseTextAndHardBreakNodes = (item: string) => {
       return hardBreak;
     });
 };
-
+type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
 const getStepMetadataFromPath = (
   path: string,
   steps: (Action | Trigger)[],
-  stepsMetadata: (StepMetadata | undefined)[],
+  stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ) => {
   const stepPath = removeIntroplationBrackets(path);
   const stepName = textMentionUtils.keysWithinPath(stepPath)[0];
@@ -108,7 +108,7 @@ const getStepMetadataFromPath = (
 function convertTextToTipTapJsonContent(
   userInputText: string,
   steps: (Action | Trigger)[],
-  stepsMetadata: (StepMetadata | undefined)[],
+  stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ): {
   type: TipTapNodeTypes.paragraph;
   content: JSONContent[];
@@ -129,7 +129,7 @@ function convertTextToTipTapJsonContent(
     if (isMentionNodeText(node)) {
       return parseMentionNodeFromText({
         path: node,
-        stepDisplayName: stepMetadata?.displayName ?? '',
+        stepDisplayName: stepMetadata?.stepDisplayName ?? '',
         stepLogoUrl: stepMetadata?.logoUrl ?? '',
         stepDfsIndex: dfsIndex + 1,
       });
@@ -168,7 +168,7 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
     mentionAttrs.label || '{}',
   );
   mentionElement.className =
-    'inline-flex bg-muted/10  my-1 mx-[1px] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px] text-muted-foreground ';
+    'inline-flex bg-muted/10 break-all my-1 mx-[1px] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px] text-muted-foreground ';
   assertNotNullOrUndefined(mentionAttrs.label, 'mentionAttrs.label');
   assertNotNullOrUndefined(mentionAttrs.id, 'mentionAttrs.id');
   assertNotNullOrUndefined(
@@ -197,9 +197,11 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   return mentionElement;
 };
 
+const inputThatUsesMentionClass = 'ap-text-with-mentions';
 export const textMentionUtils = {
   convertTextToTipTapJsonContent,
   convertTiptapJsonToText,
   generateMentionHtmlElement,
   keysWithinPath,
+  inputThatUsesMentionClass,
 };

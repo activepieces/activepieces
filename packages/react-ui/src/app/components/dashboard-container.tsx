@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { AlertCircle, Link2, Logs, Workflow, Wrench } from 'lucide-react';
 
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
@@ -15,35 +16,37 @@ export function DashboardContainer({
   const links: SidebarLink[] = [
     {
       to: '/flows',
-      label: 'Flows',
+      label: t('Flows'),
       icon: Workflow,
     },
     {
       to: '/runs',
-      label: 'Runs',
+      label: t('Runs'),
       icon: Logs,
     },
     {
       to: '/issues',
-      label: 'Issues',
+      label: t('Issues'),
       icon: AlertCircle,
       notification: showIssuesNotification,
     },
     {
       to: '/connections',
-      label: 'Connections',
+      label: t('Connections'),
       icon: Link2,
     },
     {
       to: '/settings',
-      label: 'Settings',
+      label: t('Settings'),
       icon: Wrench,
     },
   ];
 
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
-      <Sidebar links={links}>{children}</Sidebar>
+      <Sidebar isHomeDashboard={true} links={links}>
+        {children}
+      </Sidebar>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

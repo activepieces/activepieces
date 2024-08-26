@@ -183,7 +183,7 @@ ErrorCode.PIECE_TRIGGER_NOT_FOUND,
 {
     pieceName: string
     pieceVersion: string
-    triggerName: string
+    triggerName: string | undefined
 }
 >
 

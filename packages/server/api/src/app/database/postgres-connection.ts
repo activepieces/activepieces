@@ -31,6 +31,7 @@ import { AddTriggerTestStrategy1707087022764 } from './migration/common/17070870
 import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-migrate-webhook'
 import { RemoveShowActivityLog1716105958530 } from './migration/common/1716105958530-RemoveShowActivityLog'
 import { AddDurationForRuns1716725027424 } from './migration/common/1716725027424-AddDurationForRuns'
+import { ChangeEventRoutingConstraint1723549873495 } from './migration/common/1723549873495-ChangeEventRoutingConstraint'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -139,6 +140,7 @@ import { AddPremiumPiecesColumnPostgres1717370717678 } from './migration/postgre
 import { AddUserInvitation1717960689650 } from './migration/postgres/1717960689650-AddUserInvitation'
 import { ModifyProjectMembers1717961669938 } from './migration/postgres/1717961669938-ModifyProjectMembers'
 import { AddWorkerMachine1720101280025 } from './migration/postgres/1720101280025-AddWorkerMachine'
+import { MigrateAuditEventSchema1723489038729 } from './migration/postgres/1723489038729-MigrateAuditEventSchema'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -229,6 +231,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddUserInvitation1717960689650,
         AddPremiumPiecesColumnPostgres1717370717678,
         AddWorkerMachine1720101280025,
+        ChangeEventRoutingConstraint1723549873495,
     ]
 
     const edition = system.getEdition()
@@ -301,6 +304,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 
                 // New Migration After Unifying
                 ModifyProjectMembers1717961669938,
+                MigrateAuditEventSchema1723489038729,
             )
             break
         case ApEdition.COMMUNITY:

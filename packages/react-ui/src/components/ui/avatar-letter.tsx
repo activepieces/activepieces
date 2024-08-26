@@ -21,25 +21,39 @@ type AvatarLetterProps = VariantProps<typeof avatarLetterVariants> & {
   name: string;
   email: string;
   className?: string;
+  disablePopup?: boolean;
 };
 
-const AvatarLetter = ({ name, email, className, size }: AvatarLetterProps) => (
+const AvatarLetter = ({
+  name,
+  email,
+  className,
+  size,
+  disablePopup,
+}: AvatarLetterProps) => (
   <Avatar className={cn(className, avatarLetterVariants({ size }))}>
     <AvatarFallback>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon">
+      {!disablePopup && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <span className="text-xs text-background">
+                {email.charAt(0).toLocaleUpperCase()}
+              </span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
             <span className="text-xs">
-              {email.charAt(0).toLocaleUpperCase()}
+              {name} <br />({email})
             </span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <span className="text-xs">
-            {name} <br />({email})
-          </span>
-        </TooltipContent>
-      </Tooltip>
+          </TooltipContent>
+        </Tooltip>
+      )}
+      {disablePopup && (
+        <span className="text-xs text-background">
+          {email.charAt(0).toLocaleUpperCase()}
+        </span>
+      )}
     </AvatarFallback>
   </Avatar>
 );

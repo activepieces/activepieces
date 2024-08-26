@@ -1,5 +1,6 @@
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { Eye, EyeIcon, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -64,23 +65,26 @@ const UseAsDraftDropdownMenuOption = ({
           }}
         >
           <Pencil className="mr-2 h-4 w-4" />
-          <span>Use as Draft</span>
+          <span>{t('Use as Draft')}</span>
         </DropdownMenuItem>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Are you sure?</DialogTitle>
+          <DialogTitle>{t('Are you sure?')}</DialogTitle>
           <DialogDescription>
-            Your current draft version will be overwritten with{' '}
-            <span className="font-semibold">version #{versionIndex + 1}</span>
+            {t('Your current draft version will be overwritten with')}{' '}
+            <span className="font-semibold">
+              {t('version #')}
+              {versionIndex + 1}
+            </span>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="justify-end">
           <DialogClose asChild>
-            <Button variant={'outline'}>Cancel</Button>
+            <Button variant={'outline'}>{t('Cancel')}</Button>
           </DialogClose>
           <DialogClose asChild>
-            <Button onClick={() => onConfirm()}>Confirm</Button>
+            <Button onClick={() => onConfirm()}>{t('Confirm')}</Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>
@@ -173,7 +177,7 @@ const FlowVersionDetailsCard = React.memo(
             {formatUtils.formatDate(new Date(flowVersion.created))}
           </p>
           <p className="flex gap-1 text-xs text-muted-foreground">
-            Version {index + 1}
+            {t('Version')} {index + 1}
           </p>
         </div>
         <div className="flex-grow"></div>
@@ -185,7 +189,7 @@ const FlowVersionDetailsCard = React.memo(
                   <EyeIcon className="w-5 h-5 "></EyeIcon>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Viewing</TooltipContent>
+              <TooltipContent>{t('Viewing')}</TooltipContent>
             </Tooltip>
           )}
 
@@ -220,14 +224,14 @@ const FlowVersionDetailsCard = React.memo(
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-40">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('Actions')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => mutate(flowVersion)}
                 className="w-full"
               >
                 <Eye className="mr-2 h-4 w-4" />
-                <span>View</span>
+                <span>{t('View')}</span>
               </DropdownMenuItem>
               {flowVersion.state !== FlowVersionState.DRAFT && (
                 <UseAsDraftDropdownMenuOption

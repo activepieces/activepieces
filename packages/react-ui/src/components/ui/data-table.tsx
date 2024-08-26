@@ -6,7 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -20,41 +20,103 @@ import {
 import { SeekPage } from '@activepieces/shared';
 
 import { Button } from './button';
+import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableFacetedFilter } from './data-table-options-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
 
-export type RowDataWithActions<TData> = TData & {
+export type DataWithId = {
+  id: string;
+};
+export type RowDataWithActions<TData extends DataWithId> = TData & {
   delete: () => void;
 };
 
-export type DataTableFilter = {
+type FilterRecord<Keys extends string, F extends DataTableFilter<Keys>[]> = {
+  [K in F[number] as K['accessorKey']]: K['type'] extends 'select'
+    ? K['options'][number]['value'][]
+    : K['options'][number]['value'];
+};
+
+export type DataTableFilter<Keys extends string> = {
   type: 'select' | 'input' | 'date';
   title: string;
-  accessorKey: string;
+  accessorKey: Keys;
   icon: React.ComponentType<{ className?: string }>;
-  options: {
+  options: readonly {
     label: string;
     value: string;
     icon?: React.ComponentType<{ className?: string }>;
   }[];
 };
-interface DataTableProps<TData, TValue> {
+
+type DataTableAction<TData extends DataWithId> = (
+  row: RowDataWithActions<TData>,
+) => JSX.Element;
+
+export type PaginationParams = {
+  cursor?: string;
+  limit?: number;
+  createdAfter?: string;
+  createdBefore?: string;
+};
+
+interface DataTableProps<
+  TData extends DataWithId,
+  TValue,
+  Keys extends string,
+  F extends DataTableFilter<Keys>[],
+> {
   columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
-  fetchData: (queryParams: URLSearchParams) => Promise<SeekPage<TData>>;
-  onRowClick?: (row: RowDataWithActions<TData>) => void;
-  filters?: DataTableFilter[];
+  fetchData: (
+    filters: FilterRecord<Keys, F>,
+    pagination: PaginationParams,
+  ) => Promise<SeekPage<TData>>;
+  onRowClick?: (
+    row: RowDataWithActions<TData>,
+    e: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
+  ) => void;
+  filters?: [...F];
   refresh?: number;
+  actions?: DataTableAction<TData>[];
 }
 
-export function DataTable<TData, TValue>({
-  columns,
+export function DataTable<
+  TData extends DataWithId,
+  TValue,
+  Keys extends string,
+  F extends DataTableFilter<Keys>[],
+>({
+  columns: columnsInitial,
   fetchData,
   onRowClick,
   filters,
   refresh,
-}: DataTableProps<TData, TValue>) {
+  actions = [],
+}: DataTableProps<TData, TValue, Keys, F>) {
+  const columns = columnsInitial.concat([
+    {
+      accessorKey: '__actions',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="" />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-end justify-end gap-4">
+            {actions.map((action, index) => {
+              return (
+                <React.Fragment key={index}>
+                  {action(row.original)}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        );
+      },
+    },
+  ]);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
@@ -74,7 +136,24 @@ export function DataTable<TData, TValue>({
     setLoading(true);
     setTableData([]);
     try {
-      const response = await fetchData(params);
+      const limit = params.get('limit') ?? undefined;
+      const filterNames = (filters ?? []).map((filter) => filter.accessorKey);
+      const paramsObject = filterNames
+        .map((key) => [key, params.getAll(key)] as const)
+        .reduce((acc, [key, values]) => {
+          const value = values.length === 1 ? values?.[0] || undefined : values;
+          if (!value) {
+            return acc;
+          }
+          return { ...acc, [key]: value };
+        }, {} as FilterRecord<Keys, F>);
+
+      const response = await fetchData(paramsObject, {
+        cursor: params.get('cursor') ?? undefined,
+        limit: limit ? parseInt(limit) : undefined,
+        createdAfter: params.get('createdAfter') ?? undefined,
+        createdBefore: params.get('createdBefore') ?? undefined,
+      });
       const newData = response.data.map((row) => ({
         ...row,
         delete: () => {
@@ -85,6 +164,7 @@ export function DataTable<TData, TValue>({
       setNextPageCursor(response.next ?? undefined);
       setPreviousPageCursor(response.previous ?? undefined);
     } catch (error) {
+      console.error(error);
       toast(INTERNAL_ERROR_TOAST);
     } finally {
       setLoading(false);
@@ -109,13 +189,16 @@ export function DataTable<TData, TValue>({
   }, []);
 
   useEffect(() => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      if (currentCursor) {
-        newParams.set('cursor', currentCursor);
-      }
-      return newParams;
-    });
+    setSearchParams(
+      (prev) => {
+        const newParams = new URLSearchParams(prev);
+        if (currentCursor) {
+          newParams.set('cursor', currentCursor);
+        }
+        return newParams;
+      },
+      { replace: true },
+    );
   }, [currentCursor]);
 
   useEffect(() => {
@@ -125,10 +208,7 @@ export function DataTable<TData, TValue>({
   useEffect(() => {
     setTableData(
       tableData.filter(
-        (row) =>
-          !deletedRows.some(
-            (deletedRow) => JSON.stringify(deletedRow) === JSON.stringify(row),
-          ),
+        (row) => !deletedRows.some((deletedRow) => deletedRow.id === row.id),
       ),
     );
   }, [deletedRows]);
@@ -180,7 +260,7 @@ export function DataTable<TData, TValue>({
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
-                  onClick={() => onRowClick?.(row.original)}
+                  onClick={(e) => onRowClick?.(row.original, e)}
                   key={row.id}
                   className={onRowClick ? 'cursor-pointer' : ''}
                   data-state={row.getIsSelected() && 'selected'}

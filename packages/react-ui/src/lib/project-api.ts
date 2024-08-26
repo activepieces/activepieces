@@ -1,6 +1,9 @@
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
+import {
+  CreatePlatformProjectRequest,
+  UpdateProjectPlatformRequest,
+} from '@activepieces/ee-shared';
 import {
   ListProjectRequestForUserQueryParams,
   ProjectWithLimits,
@@ -28,5 +31,11 @@ export const projectApi = {
         projectId,
       },
     );
+  },
+  create: async (request: CreatePlatformProjectRequest) => {
+    return api.post<ProjectWithLimits>('/v1/projects', request);
+  },
+  delete: async (projectId: string) => {
+    return api.delete<void>(`/v1/projects/${projectId}`);
   },
 };

@@ -17,12 +17,14 @@ export const projectHooks = {
     usePrefetchQuery<ProjectWithLimits, Error>({
       queryKey: ['current-project'],
       queryFn: projectApi.current,
+      staleTime: Infinity,
     });
   },
   useCurrentProject: () => {
     const query = useSuspenseQuery<ProjectWithLimits, Error>({
       queryKey: ['current-project'],
       queryFn: projectApi.current,
+      staleTime: Infinity,
     });
     return {
       ...query,
@@ -58,13 +60,14 @@ const updateProject = async (
 const setCurrentProject = async (
   queryClient: QueryClient,
   project: ProjectWithLimits,
+  shouldReload = true,
 ) => {
   const projectChanged = authenticationSession.getProjectId() !== project.id;
   if (projectChanged) {
     await authenticationSession.switchToSession(project.id);
   }
   queryClient.setQueryData(['current-project'], project);
-  if (projectChanged) {
+  if (projectChanged && shouldReload) {
     window.location.reload();
   }
 };

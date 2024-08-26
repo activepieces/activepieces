@@ -1,18 +1,18 @@
+import { t } from 'i18next';
 import { useParams } from 'react-router-dom';
 
+import { FullLogo } from '@/components/ui/full-logo';
 import { ShareTemplate } from '@/features/templates/components/share-template';
-import { theme } from '@/lib/theme';
 
 const ShareTemplatePage = () => {
   const { templateId } = useParams<{ templateId: string }>();
-
   if (!templateId) {
-    return <div>Error: templateId is missing</div>;
+    return <div>{t('templateId is missing')}</div>;
   }
 
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-2">
-      <img src={theme.fullLogoUrl} alt="logo" width={205} height={205} />
+      <FullLogo />
       <ShareTemplate templateId={templateId} />
     </div>
   );

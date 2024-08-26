@@ -1,4 +1,5 @@
-import { Badge } from '@/components/ui/badge';
+import { t } from 'i18next';
+
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { foldersHooks } from '../lib/folders-hooks';
@@ -13,11 +14,12 @@ const FolderBadge = ({ folderId }: FolderBadgeProps) => {
   return (
     <div>
       {data ? (
-        <Badge variant={'outline'}>
-          <span>{data.displayName}</span>
-        </Badge>
+        <span>{data.displayName}</span>
       ) : (
-        <Skeleton className="rounded-full h-6 w-24" />
+        <Skeleton
+          className="rounded-full h-6 w-24"
+          aria-label={t('Loading...')}
+        />
       )}
     </div>
   );

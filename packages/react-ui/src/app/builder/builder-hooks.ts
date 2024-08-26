@@ -1,6 +1,8 @@
+import { useMutation } from '@tanstack/react-query';
 import { createContext, useContext } from 'react';
 import { create, useStore } from 'zustand';
 
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
@@ -10,6 +12,7 @@ import {
   FlowOperationRequest,
   FlowRun,
   FlowVersion,
+  FlowVersionState,
   StepLocationRelativeToParent,
   StepOutput,
   flowHelper,
@@ -38,6 +41,7 @@ export enum LeftSideBarType {
   RUNS = 'runs',
   VERSIONS = 'versions',
   RUN_DETAILS = 'run-details',
+  AI_COPILOT = 'chat',
   NONE = 'none',
 }
 
@@ -68,6 +72,8 @@ export type BuilderState = {
   allowCanvasPanning: boolean;
   selectedButton: SelectedButtonType | null;
   saving: boolean;
+  refreshPieceFormSettings: boolean;
+  refreshSettings: () => void;
   exitRun: () => void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
@@ -109,16 +115,27 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set) => ({
     flow: initialState.flow,
     flowVersion: initialState.flowVersion,
-    leftSidebar: LeftSideBarType.NONE,
+    leftSidebar: initialState.run
+      ? LeftSideBarType.RUN_DETAILS
+      : LeftSideBarType.NONE,
     readonly: initialState.readonly,
     run: initialState.run,
     saving: false,
-    selectedStep: null,
+    selectedStep: initialState.run
+      ? {
+          path: [],
+          stepName: initialState.flowVersion.trigger.name,
+        }
+      : null,
     canExitRun: initialState.canExitRun,
     activeDraggingStep: null,
     allowCanvasPanning: true,
-    rightSidebar: RightSideBarType.NONE,
+    rightSidebar: initialState.run
+      ? RightSideBarType.PIECE_SETTINGS
+      : RightSideBarType.NONE,
     selectedButton: null,
+    refreshPieceFormSettings: false,
+
     removeStepSelection: () =>
       set({ selectedStep: null, rightSidebar: RightSideBarType.NONE }),
     setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
@@ -265,11 +282,25 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         flowUpdatesQueue.add(updateRequest);
         return { flowVersion: newFlowVersion };
       }),
-    setVersion: (flowVersion: FlowVersion) => set({ flowVersion, run: null }),
+    setVersion: (flowVersion: FlowVersion) => {
+      set((state) => ({
+        flowVersion,
+        run: null,
+        readonly:
+          state.flow.publishedVersionId !== flowVersion.id &&
+          flowVersion.state === FlowVersionState.LOCKED,
+        leftSidebar: LeftSideBarType.NONE,
+        rightSidebar: RightSideBarType.NONE,
+      }));
+    },
     insertMention: null,
     setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
       set({ insertMention });
     },
+    refreshSettings: () =>
+      set((state) => ({
+        refreshPieceFormSettings: !state.refreshPieceFormSettings,
+      })),
   }));
 
 export const stepPathToKeyString = (path: StepPathWithName): string => {
@@ -320,4 +351,29 @@ function constructCurrentStateForEachStep(
 }
 export const builderSelectors = {
   getStepOutputFromExecutionPath,
+};
+
+export const useSwitchToDraft = () => {
+  const [flowVersion, setVersion] = useBuilderStateContext((state) => [
+    state.flowVersion,
+    state.setVersion,
+  ]);
+
+  const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
+    useMutation({
+      mutationFn: async () => {
+        const flow = await flowsApi.get(flowVersion.flowId);
+        return flow;
+      },
+      onSuccess: (flow) => {
+        setVersion(flow.version);
+      },
+      onError: () => {
+        toast(INTERNAL_ERROR_TOAST);
+      },
+    });
+  return {
+    switchToDraft,
+    isSwitchingToDraftPending,
+  };
 };

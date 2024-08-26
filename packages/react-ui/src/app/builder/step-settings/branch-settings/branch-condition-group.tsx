@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 
@@ -14,24 +15,26 @@ import {
   BranchAction,
 } from '@activepieces/shared';
 
-import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions/text-input-with-mentions';
+import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
 
 const textToBranchOperation: Record<BranchOperator, string> = {
-  [BranchOperator.TEXT_CONTAINS]: '(Text) Contains',
-  [BranchOperator.TEXT_DOES_NOT_CONTAIN]: '(Text) Does not contain',
-  [BranchOperator.TEXT_EXACTLY_MATCHES]: '(Text) Exactly matches',
-  [BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH]: '(Text) Does not exactly match',
-  [BranchOperator.TEXT_STARTS_WITH]: '(Text) Starts with',
-  [BranchOperator.TEXT_DOES_NOT_START_WITH]: '(Text) Does not start with',
-  [BranchOperator.TEXT_ENDS_WITH]: '(Text) Ends with',
-  [BranchOperator.TEXT_DOES_NOT_END_WITH]: '(Text) Does not end with',
-  [BranchOperator.NUMBER_IS_GREATER_THAN]: '(Number) Is greater than',
-  [BranchOperator.NUMBER_IS_LESS_THAN]: '(Number) Is less than',
-  [BranchOperator.NUMBER_IS_EQUAL_TO]: '(Number) Is equal to',
-  [BranchOperator.BOOLEAN_IS_TRUE]: '(Boolean) Is true',
-  [BranchOperator.BOOLEAN_IS_FALSE]: '(Boolean) Is false',
-  [BranchOperator.EXISTS]: 'Exists',
-  [BranchOperator.DOES_NOT_EXIST]: 'Does not exist',
+  [BranchOperator.TEXT_CONTAINS]: t('(Text) Contains'),
+  [BranchOperator.TEXT_DOES_NOT_CONTAIN]: t('(Text) Does not contain'),
+  [BranchOperator.TEXT_EXACTLY_MATCHES]: t('(Text) Exactly matches'),
+  [BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH]: t(
+    '(Text) Does not exactly match',
+  ),
+  [BranchOperator.TEXT_STARTS_WITH]: t('(Text) Starts with'),
+  [BranchOperator.TEXT_DOES_NOT_START_WITH]: t('(Text) Does not start with'),
+  [BranchOperator.TEXT_ENDS_WITH]: t('(Text) Ends with'),
+  [BranchOperator.TEXT_DOES_NOT_END_WITH]: t('(Text) Does not end with'),
+  [BranchOperator.NUMBER_IS_GREATER_THAN]: t('(Number) Is greater than'),
+  [BranchOperator.NUMBER_IS_LESS_THAN]: t('(Number) Is less than'),
+  [BranchOperator.NUMBER_IS_EQUAL_TO]: t('(Number) Is equal to'),
+  [BranchOperator.BOOLEAN_IS_TRUE]: t('(Boolean) Is true'),
+  [BranchOperator.BOOLEAN_IS_FALSE]: t('(Boolean) Is false'),
+  [BranchOperator.EXISTS]: t('Exists'),
+  [BranchOperator.DOES_NOT_EXIST]: t('Does not exist'),
 };
 const operationOptions = Object.keys(textToBranchOperation).map((operator) => {
   return {
@@ -78,7 +81,7 @@ const BranchSingleCondition = ({
             <FormItem>
               <TextInputWithMentions
                 disabled={readonly}
-                placeholder="First value"
+                placeholder={t('First value')}
                 onChange={field.onChange}
                 initialValue={field.value}
               ></TextInputWithMentions>
@@ -109,7 +112,7 @@ const BranchSingleCondition = ({
             render={({ field }) => (
               <FormItem>
                 <TextInputWithMentions
-                  placeholder="Second value"
+                  placeholder={t('Second value')}
                   disabled={readonly}
                   initialValue={field.value}
                   onChange={field.onChange}
@@ -135,7 +138,7 @@ const BranchSingleCondition = ({
                     checked={field.value}
                     onCheckedChange={(e) => field.onChange(e)}
                   />
-                  <Label htmlFor="case-sensitive">Case sensitive</Label>
+                  <Label htmlFor="case-sensitive">{t('Case sensitive')}</Label>
                 </div>
                 <FormMessage />
               </FormItem>
@@ -146,7 +149,7 @@ const BranchSingleCondition = ({
         <div>
           {showDelete && (
             <Button variant={'basic'} size={'sm'} onClick={deleteClick}>
-              <Trash className="w-4 h-4"></Trash> Remove
+              <Trash className="w-4 h-4"></Trash> {t('Remove')}
             </Button>
           )}
         </div>

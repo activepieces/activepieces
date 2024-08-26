@@ -1,5 +1,5 @@
 
-import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { IsNull, MoreThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -83,8 +83,10 @@ export const userInvitationsService = {
             platformId,
             projectId: isNil(projectId) ? IsNull() : projectId,
         })
+        const platform = await platformService.getOneOrThrow(platformId)
+
         if (!isNil(invitation)) {
-            return invitation
+            return enrichWithInvitationLink( platform, invitation )
         }
         const id = apId()
         await repo().upsert({
@@ -102,19 +104,8 @@ export const userInvitationsService = {
             id,
             platformId,
         })
-        const invitationLink = await generateInvitationLink(userInvitation)
-        await emailService.sendInvitation({
-            userInvitation,
-            invitationLink,
-        })
-        const platform = await platformService.getOneOrThrow(platformId)
-        if (!smtpEmailSender.isSmtpConfigured(platform)) {
-            return {
-                ...userInvitation,
-                link: invitationLink,
-            }
-        }
-        return userInvitation
+        
+        return enrichWithInvitationLink( platform, userInvitation )
     },
     async list(params: ListUserParams): Promise<SeekPage<UserInvitation>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursor ?? null)
@@ -216,6 +207,20 @@ async function generateInvitationLink(userInvitation: UserInvitation): Promise<s
         platformId: userInvitation.platformId,
         path: `invitation?token=${token}&email=${encodeURIComponent(userInvitation.email)}`,
     })
+}
+const enrichWithInvitationLink = async (  platform: Platform, userInvitation: UserInvitation ) => {
+    const invitationLink = await generateInvitationLink(userInvitation)
+    if (!smtpEmailSender.isSmtpConfigured(platform)) {
+        return {
+            ...userInvitation,
+            link: invitationLink,
+        }
+    }
+    await emailService.sendInvitation({
+        userInvitation,
+        invitationLink,
+    })
+    return userInvitation
 }
 type ListUserParams = {
     platformId: string

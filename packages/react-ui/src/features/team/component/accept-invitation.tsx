@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
+import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -64,16 +65,17 @@ const AcceptInvitation = () => {
       {isInvitationLinkValid ? (
         <>
           <p className="text-2xl font-bold text-center">
-            Team Invitation Accepted
+            {t('Team Invitation Accepted')}
           </p>
           <p className="mt-4 text-lg text-center text-gray-700">
-            Thank you for accepting the invitation. We are redirecting you right
-            now...
+            {t(
+              'Thank you for accepting the invitation. We are redirecting you right now...',
+            )}
           </p>
         </>
       ) : (
         <p className="mt-4 text-lg text-center text-red-500">
-          Invalid invitation token. Please try again.
+          {t('Invalid invitation token. Please try again.')}
         </p>
       )}
     </div>
