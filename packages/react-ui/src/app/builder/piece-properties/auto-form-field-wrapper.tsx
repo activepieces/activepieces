@@ -5,15 +5,15 @@ import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 import { FormItem, FormLabel } from '@/components/ui/form';
 import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Toggle } from '@/components/ui/toggle';
-import { PieceProperty } from '@activepieces/pieces-framework';
-import { Action, Trigger } from '@activepieces/shared';
-
-import { TextInputWithMentions } from './text-input-with-mentions';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { PieceProperty } from '@activepieces/pieces-framework';
+import { Action, Trigger } from '@activepieces/shared';
+
+import { TextInputWithMentions } from './text-input-with-mentions';
 
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;

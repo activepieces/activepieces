@@ -15,6 +15,7 @@ import {
   PropertyType,
   ArraySubProps,
 } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/shared';
 
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
@@ -24,7 +25,6 @@ import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property'
 import { DynamicProperties } from './dynamic-piece-property';
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
-import { isNil } from '../../../../../shared/src';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;

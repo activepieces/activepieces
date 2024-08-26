@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Check, ChevronsUpDown, RefreshCcw, X } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 
+import { SelectUtilButton } from '@/components/custom/select-util-button';
 import {
   Command,
   CommandEmpty,
@@ -21,7 +22,6 @@ import { isNil } from '@activepieces/shared';
 
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
-import { SelectUtilButton } from '@/components/custom/select-util-button';
 
 type SelectOption<T> = {
   value: T;
