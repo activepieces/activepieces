@@ -136,7 +136,7 @@ export const SearchableSelect = <T extends React.Key>({
           <div className="right-10 top-2 absolute flex gap-2  z-50 items-center">
             {showDeselect && !disabled && value && !loading && (
               <Button
-                variant="outline"
+                variant="ghost"
                 role="deselect"
                 size="icon"
                 className="h-6 w-6 cursor-pointer rounded-xs opacity-50"
@@ -151,7 +151,7 @@ export const SearchableSelect = <T extends React.Key>({
             )}
             {showRefresh && !loading && (
               <Button
-                variant="outline"
+                variant="ghost"
                 role="refresh"
                 size="icon"
                 className="h-6 w-6  rounded-xs opacity-50"
