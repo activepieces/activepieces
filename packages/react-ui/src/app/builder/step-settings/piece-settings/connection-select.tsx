@@ -1,7 +1,18 @@
+import {
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+} from '@activepieces/pieces-framework';
+import {
+  AppConnectionWithoutSensitiveData,
+  PieceAction,
+  PieceTrigger,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
-import React, { useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+
+import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
 
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { Button } from '@/components/ui/button';
@@ -16,13 +27,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  PieceMetadataModel,
-  PieceMetadataModelSummary,
-} from '@activepieces/pieces-framework';
-import { PieceAction, PieceTrigger } from '@activepieces/shared';
-
-import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
 
 type ConnectionSelectProps = {
   disabled: boolean;
@@ -34,10 +38,11 @@ const removeBrackets = (str: string) =>
     /\{\{connections\['(.*?)'\]\}\}/g,
     (_, connectionName) => connectionName,
   );
-const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
-  const [connectionDialogOpen, setConnectionDialogOpen] = React.useState(false);
-  const [selectConnectionOpen, setSelectConnectionOpen] = React.useState(false);
-
+const ConnectionSelect = memo((params: ConnectionSelectProps) => {
+  const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
+  const [selectConnectionOpen, setSelectConnectionOpen] = useState(false);
+  const [reconnectConnection, setReconnectConnection] =
+    useState<AppConnectionWithoutSensitiveData | null>(null);
   const form = useFormContext<PieceAction | PieceTrigger>();
   const {
     data: connectionsPage,
@@ -49,16 +54,6 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
     limit: 100,
     projectId: authenticationSession.getProjectId() ?? '',
   });
-  const currentlySelectedConnection = useMemo(() => {
-    const connectionName = removeBrackets(
-      form.getValues().settings.input.auth ?? '',
-    );
-    return (
-      connectionsPage?.data?.find(
-        (connection) => connection.name === connectionName,
-      ) ?? null
-    );
-  }, [connectionsPage?.data, form.getValues().settings.input.auth]);
 
   return (
     <FormField
@@ -76,7 +71,8 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
           {!isLoading && (
             <FormItem>
               <CreateOrEditConnectionDialog
-                reconnectConnection={currentlySelectedConnection}
+                reconnectConnection={reconnectConnection}
+                key={reconnectConnection?.name || 'newConnection'}
                 piece={params.piece}
                 onConnectionCreated={(connectionName) => {
                   refetch();
@@ -101,6 +97,15 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
                       className="z-50 absolute right-8 top-2 "
                       onClick={(e) => {
                         e.stopPropagation();
+                        setReconnectConnection(
+                          connectionsPage?.data?.find(
+                            (connection) =>
+                              connection.name ===
+                              removeBrackets(
+                                form.getValues().settings.input.auth ?? '',
+                              ),
+                          ) ?? null,
+                        );
                         setSelectConnectionOpen(false);
                         setConnectionDialogOpen(true);
                       }}
@@ -111,14 +116,17 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
 
                   <SelectTrigger className="flex gap-2 items-center">
                     <>
-                      <SelectValue placeholder={t('Select a connection')} />
+                      <SelectValue
+                        className="truncate"
+                        placeholder={t('Select a connection')}
+                      />
                       <div className="grow"></div>
                       {/* Hidden Button to take same space as shown button */}
                       {field.value && (
                         <Button
                           variant="ghost"
                           size="xs"
-                          className="z-50 hidden "
+                          className="z-50 opacity-0 pointer-events-none"
                         >
                           {t('Reconnect')}
                         </Button>
@@ -130,6 +138,7 @@ const ConnectionSelect = React.memo((params: ConnectionSelectProps) => {
                 <SelectContent>
                   <SelectAction
                     onClick={() => {
+                      setReconnectConnection(null);
                       setSelectConnectionOpen(false);
                       setConnectionDialogOpen(true);
                     }}

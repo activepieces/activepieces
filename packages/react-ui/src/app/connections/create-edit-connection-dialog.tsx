@@ -1,3 +1,22 @@
+import {
+  BasicAuthProperty,
+  CustomAuthProperty,
+  OAuth2Property,
+  OAuth2Props,
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+  PropertyType,
+  SecretTextProperty,
+} from '@activepieces/pieces-framework';
+import {
+  ApErrorParams,
+  AppConnection,
+  AppConnectionType,
+  AppConnectionWithoutSensitiveData,
+  ErrorCode,
+  isNil,
+  UpsertAppConnectionRequestBody,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { ScrollArea } from '@radix-ui/react-scroll-area';
 import { Static, Type } from '@sinclair/typebox';
@@ -5,6 +24,13 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+
+import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
+
+import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
+import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
+import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
+import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
 import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -30,32 +56,6 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  BasicAuthProperty,
-  CustomAuthProperty,
-  OAuth2Property,
-  OAuth2Props,
-  PieceMetadataModel,
-  PieceMetadataModelSummary,
-  PropertyType,
-  SecretTextProperty,
-} from '@activepieces/pieces-framework';
-import {
-  ApErrorParams,
-  AppConnection,
-  AppConnectionType,
-  AppConnectionWithoutSensitiveData,
-  ErrorCode,
-  isNil,
-  UpsertAppConnectionRequestBody,
-} from '@activepieces/shared';
-
-import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
-
-import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
-import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
-import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
-import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
 type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
@@ -109,7 +109,7 @@ const CreateOrEditConnectionDialog = React.memo(
       } else {
         form.setValue('request.name', appConnectionUtils.findName(piece.name));
       }
-    }, [reconnectConnection]);
+    }, []);
 
     const form = useForm<Static<typeof formSchema>>({
       defaultValues: {
@@ -173,10 +173,10 @@ const CreateOrEditConnectionDialog = React.memo(
           <DialogHeader>
             <DialogTitle>
               {reconnectConnection
-                ? t('Reconnect {{displayName}} Connection', {
+                ? t('Reconnect {displayName} Connection', {
                     displayName: reconnectConnection.name,
                   })
-                : t('Create {{displayName}} Connection', {
+                : t('Create {displayName} Connection', {
                     displayName: piece.displayName,
                   })}
             </DialogTitle>
