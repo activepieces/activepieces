@@ -27,7 +27,7 @@ import { DataTableToolbar } from './data-table-toolbar';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
 
 export type DataWithId = {
-  id: string;
+  id?: string;
 };
 export type RowDataWithActions<TData extends DataWithId> = TData & {
   delete: () => void;

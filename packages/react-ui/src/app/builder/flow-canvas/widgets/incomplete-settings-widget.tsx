@@ -53,7 +53,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
         key={'complete-flow-button'}
         onClick={onClick}
       >
-        {t('incompleteSteps', { invalidSteps: invalidSteps })}
+        {t('{invalidSteps, plural, =0 {no incomplete steps} =1 {Complete 1 step} other {Complete # steps}}', { invalidSteps: invalidSteps })}
       </Button>
     )
   );

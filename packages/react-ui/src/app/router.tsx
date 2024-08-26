@@ -26,7 +26,6 @@ import { FormPage } from './routes/forms';
 import IssuesPage from './routes/issues';
 import PlansPage from './routes/plans';
 import AuditLogsPage from './routes/platform/audit-logs';
-import PlatformPiecesPage from './routes/platform/pieces';
 import ProjectsPage from './routes/platform/projects';
 import TemplatesPage from './routes/platform/templates';
 import UsersPage from './routes/platform/users';
@@ -35,11 +34,12 @@ import AlertsPage from './routes/settings/alerts';
 import AppearancePage from './routes/settings/appearance';
 import GeneralPage from './routes/settings/general';
 import { GitSyncPage } from './routes/settings/git-sync';
-import PiecesPage from './routes/settings/pieces';
 import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
+import { PlatformPiecesPage } from '@/app/routes/platform/pieces';
 
 export const router = createBrowserRouter([
   {
@@ -225,7 +225,7 @@ export const router = createBrowserRouter([
       <DashboardContainer>
         <ProjectSettingsLayout>
           <PageTitle title="Pieces">
-            <PiecesPage />
+            <ProjectPiecesPage />
           </PageTitle>
         </ProjectSettingsLayout>
       </DashboardContainer>

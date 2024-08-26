@@ -98,7 +98,9 @@ export const AddPieceRequestBody = Type.Union([
     Type.Object({
         packageType: Type.Literal(PackageType.ARCHIVE),
         scope: Type.Enum(PieceScope),
-        pieceName: Type.String(),
+        pieceName: Type.String({
+            minLength: 1,
+        }),
         pieceVersion: ExactVersionType,
         pieceArchive: Type.Unknown(),
     }, {
@@ -107,7 +109,9 @@ export const AddPieceRequestBody = Type.Union([
     Type.Object({
         packageType: Type.Literal(PackageType.REGISTRY),
         scope: Type.Enum(PieceScope),
-        pieceName: Type.String(),
+        pieceName: Type.String({
+            minLength: 1,
+        }),
         pieceVersion: ExactVersionType,
     }, {
         title: 'NPM Piece',
