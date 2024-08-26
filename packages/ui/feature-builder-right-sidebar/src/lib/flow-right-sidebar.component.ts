@@ -24,6 +24,7 @@ import {
   ApFlagId,
   TriggerTestStrategy,
   TriggerType,
+  isNil,
 } from '@activepieces/shared';
 import {
   BuilderSelectors,
@@ -131,6 +132,9 @@ export class FlowRightSidebarComponent implements OnInit {
             )
             .pipe(
               map((res) => {
+                if (isNil(step.settings.triggerName)) {
+                  return false;
+                }
                 const pieceTrigger = res.triggers[step.settings.triggerName];
                 return pieceTrigger?.testStrategy === strategy;
               })

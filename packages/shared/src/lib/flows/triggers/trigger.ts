@@ -29,7 +29,7 @@ export const PieceTriggerSettings = Type.Object({
     pieceVersion: VersionType,
     pieceType: Type.Enum(PieceType),
     packageType: Type.Enum(PackageType),
-    triggerName: Type.String({}),
+    triggerName: Type.Optional(Type.String({})),
     input: Type.Record(Type.String({}), Type.Any()),
     inputUiInfo: SampleDataSettingsObject,
 })

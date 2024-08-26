@@ -21,6 +21,8 @@ import { newFile } from './lib/triggers/new-file';
 import { newFolder } from './lib/triggers/new-folder';
 import { setPublicAccess } from './lib/action/set-public-access';
 import { moveFileAction } from './lib/action/move-file';
+import { googleDriveDeleteFile } from './lib/action/delete-file';
+import { googleDriveTrashFile } from './lib/action/send-to-trash';
 
 export const googleDriveAuth = PieceAuth.OAuth2({
   description: '',
@@ -64,6 +66,8 @@ export const googleDrive = createPiece({
     deletePermission,
     setPublicAccess,
     moveFileAction,
+    googleDriveDeleteFile,
+    googleDriveTrashFile,
     createCustomApiCallAction({
       baseUrl: () => 'https://www.googleapis.com/drive/v3',
       auth: googleDriveAuth,
