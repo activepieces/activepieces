@@ -103,19 +103,15 @@ const CreateOrEditConnectionDialog = React.memo(
       overrideSchema,
     ]);
 
-    useEffect(() => {
-      if (reconnectConnection) {
-        form.setValue('request.name', reconnectConnection.name);
-      } else {
-        form.setValue('request.name', appConnectionUtils.findName(piece.name));
-      }
-    }, []);
-
     const form = useForm<Static<typeof formSchema>>({
       defaultValues: {
-        request: createDefaultValues(piece),
+        request: createDefaultValues(
+          piece,
+          reconnectConnection
+            ? reconnectConnection.name
+            : appConnectionUtils.findName(piece.name),
+        ),
       },
-
       resolver: typeboxResolver(formSchema),
     });
 
@@ -265,8 +261,8 @@ export { CreateOrEditConnectionDialog };
 
 function createDefaultValues(
   piece: PieceMetadataModelSummary | PieceMetadataModel,
+  suggestedConnectionName: string,
 ): Partial<UpsertAppConnectionRequestBody> {
-  const suggestedConnectionName = appConnectionUtils.findName(piece.name);
   switch (piece.auth?.type) {
     case PropertyType.SECRET_TEXT:
       return {
