@@ -29,6 +29,7 @@ import {
   TooltipTrigger,
 } from '../ui/tooltip';
 import { Button } from '@/components/ui/button';
+import { SelectUtilButton } from '@/components/custom/select-util-button';
 
 export interface MultiSelectOptionItem {
   value: unknown;
@@ -241,24 +242,18 @@ const MultiSelectTrigger = React.forwardRef<
           {children}
           <div className="flex gap-2 items-center">
             {showDeselect && (
-              <Button
-                variant="ghost"
-                className="opacity-50 shrink-0 h-6 w-6 rounded-xs"
-                size={'icon'}
+              <SelectUtilButton
+                tooltipText={t('Unset')}
                 onClick={onDeselect}
-              >
-                <X className="h-4 w-4"></X>
-              </Button>
+                Icon={X}
+              ></SelectUtilButton>
             )}
             {props.showRefresh && (
-              <Button
-                variant="ghost"
-                className="opacity-50 shrink-0 h-6 w-6 rounded-xs"
-                size={'icon'}
+              <SelectUtilButton
+                tooltipText={t('Refresh')}
                 onClick={props.onRefresh}
-              >
-                <RefreshCcw className="h-4 w-4"></RefreshCcw>
-              </Button>
+                Icon={RefreshCcw}
+              ></SelectUtilButton>
             )}
             <ChevronsUpDown
               aria-hidden

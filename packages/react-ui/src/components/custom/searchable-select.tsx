@@ -21,6 +21,7 @@ import { isNil } from '@activepieces/shared';
 
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
+import { SelectUtilButton } from '@/components/custom/select-util-button';
 
 type SelectOption<T> = {
   value: T;
@@ -135,26 +136,19 @@ export const SearchableSelect = <T extends React.Key>({
           </Button>
           <div className="right-10 top-2 absolute flex gap-2  z-50 items-center">
             {showDeselect && !disabled && value && !loading && (
-              <Button
-                variant="ghost"
-                role="deselect"
-                size="icon"
-                className="h-6 w-6 cursor-pointer rounded-xs opacity-50"
+              <SelectUtilButton
+                tooltipText={t('Unset')}
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
                   onChange(null);
                 }}
-              >
-                <X className="w-4 h-4" />
-              </Button>
+                Icon={X}
+              ></SelectUtilButton>
             )}
             {showRefresh && !loading && (
-              <Button
-                variant="ghost"
-                role="refresh"
-                size="icon"
-                className="h-6 w-6  rounded-xs opacity-50"
+              <SelectUtilButton
+                tooltipText={t('Refresh')}
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -162,9 +156,8 @@ export const SearchableSelect = <T extends React.Key>({
                     onRefresh();
                   }
                 }}
-              >
-                <RefreshCcw className="w-4 h-4" />
-              </Button>
+                Icon={RefreshCcw}
+              ></SelectUtilButton>
             )}
           </div>
         </div>

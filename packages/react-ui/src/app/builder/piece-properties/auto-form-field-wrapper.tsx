@@ -9,6 +9,11 @@ import { PieceProperty } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
 import { TextInputWithMentions } from './text-input-with-mentions';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;
@@ -60,13 +65,18 @@ const AutoFormFieldWrapper = ({
         {property.required && <span className="text-destructive">*</span>}
         <span className="grow"></span>
         {allowDynamicValues && (
-          <Toggle
-            pressed={toggled}
-            onPressedChange={(e) => handleChange(e)}
-            disabled={disabled}
-          >
-            <SquareFunction className="stroke-foreground" />
-          </Toggle>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Toggle
+                pressed={toggled}
+                onPressedChange={(e) => handleChange(e)}
+                disabled={disabled}
+              >
+                <SquareFunction className="stroke-foreground" />
+              </Toggle>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('Dynamic value')}</TooltipContent>
+          </Tooltip>
         )}
       </FormLabel>
 
