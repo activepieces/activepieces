@@ -1,29 +1,13 @@
-import { ReactFlowProvider } from '@xyflow/react';
-import { useEffect, useRef, useState } from 'react';
-import { ImperativePanelHandle } from 'react-resizable-panels';
-
-import {
-  LeftSideBarType,
-  RightSideBarType,
-  useBuilderStateContext,
-  useSwitchToDraft,
-} from '@/app/builder/builder-hooks';
-import { DataSelector } from '@/app/builder/data-selector';
-import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
-import { ShowPoweredBy } from '@/components/show-powered-by';
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from '@/components/ui/resizable-panel';
-import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
   ActionType,
   PieceTrigger,
   TriggerType,
+  WebsocketClientEvent,
   flowHelper,
 } from '@activepieces/shared';
+import { ReactFlowProvider } from '@xyflow/react';
+import { useEffect, useRef, useState } from 'react';
+import { ImperativePanelHandle } from 'react-resizable-panels';
 
 import { cn, useElementSize } from '../../lib/utils';
 
@@ -35,6 +19,24 @@ import { PiecesSelectorList } from './pieces-selector';
 import { FlowRunDetails } from './run-details';
 import { FlowRecentRunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+
+import {
+  LeftSideBarType,
+  RightSideBarType,
+  useBuilderStateContext,
+  useSwitchToDraft,
+} from '@/app/builder/builder-hooks';
+import { DataSelector } from '@/app/builder/data-selector';
+import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
+import { ShowPoweredBy } from '@/components/show-powered-by';
+import { useSocket } from '@/components/socket-provider';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable-panel';
+import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -109,13 +111,25 @@ const BuilderPage = () => {
   const { height: builderNavbarHeight } = useElementSize(
     builderNavBarContainer,
   );
-  const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
+  const {
+    pieceModel,
+    isLoading: isPieceLoading,
+    refetch: refetchPiece,
+  } = piecesHooks.usePiece({
     name: memorizedSelectedStep?.settings.pieceName,
     version: memorizedSelectedStep?.settings.pieceVersion,
     enabled:
       memorizedSelectedStep?.type === ActionType.PIECE ||
       memorizedSelectedStep?.type === TriggerType.PIECE,
   });
+
+  const socket = useSocket();
+
+  useEffect(() => {
+    socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
+      refetchPiece();
+    });
+  }, [socket, refetchPiece]);
 
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
 

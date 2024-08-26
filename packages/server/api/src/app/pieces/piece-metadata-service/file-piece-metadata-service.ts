@@ -15,6 +15,7 @@ import {
     PieceType,
     ProjectId,
 } from '@activepieces/shared'
+import clearModule from 'clear-module'
 import { nanoid } from 'nanoid'
 import {
     PieceMetadataSchema,
@@ -52,6 +53,7 @@ async function loadPieceFromFolder(
     folderPath: string,
 ): Promise<PieceMetadata | null> {
     try {
+        clearModule(join(folderPath, 'src', 'index'))
         const packageJson = importFresh<Record<string, string>>(
             join(folderPath, 'package.json'),
         )
