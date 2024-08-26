@@ -132,6 +132,8 @@ const DynamicDropdownPieceProperty = React.memo(
         showDeselect={
           props.showDeselect && !isNil(props.value) && !props.disabled
         }
+        onRefresh={refresh}
+        showRefresh={!props.disabled && !dropdownState.disabled}
       />
     );
   },

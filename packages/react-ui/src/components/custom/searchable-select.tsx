@@ -1,6 +1,6 @@
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import { Check, ChevronsUpDown, X } from 'lucide-react';
+import { Check, ChevronsUpDown, RefreshCcw, X } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 
 import {
@@ -36,6 +36,8 @@ type SearchableSelectProps<T> = {
   disabled?: boolean;
   loading?: boolean;
   showDeselect?: boolean;
+  onRefresh?: () => void;
+  showRefresh?: boolean;
 };
 
 export const SearchableSelect = <T extends React.Key>({
@@ -46,6 +48,8 @@ export const SearchableSelect = <T extends React.Key>({
   disabled,
   loading,
   showDeselect,
+  onRefresh,
+  showRefresh,
 }: SearchableSelectProps<T>) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,7 +59,10 @@ export const SearchableSelect = <T extends React.Key>({
   const [selectedIndex, setSelectedIndex] = useState(
     options.findIndex((option) => deepEqual(option.value, value)) ?? -1,
   );
-
+  const PreventClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
   useEffect(() => {
     setSelectedIndex(
       options.findIndex((option) => deepEqual(option.value, value)) ?? -1,
@@ -102,7 +109,13 @@ export const SearchableSelect = <T extends React.Key>({
 
   return (
     <Popover modal={true} open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger
+        asChild
+        className={cn('', {
+          'cursor-not-allowed opacity-80 ': disabled,
+        })}
+        onClick={disabled ? PreventClick : undefined}
+      >
         <div className="relative">
           <Button
             ref={triggerRef}
@@ -113,27 +126,47 @@ export const SearchableSelect = <T extends React.Key>({
             aria-expanded={open}
             className="w-full justify-between w-full"
           >
-            <span className="flex text-ellipsis w-full overflow-hidden whitespace-nowrap">
+            <span className="flex w-full truncate select-none">
               {!isNil(value)
                 ? options.find((option) => option.value === value)?.label
                 : placeholder}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
-          {showDeselect && !disabled && value && !loading && (
-            <Button
-              variant="outline"
-              role="deselect"
-              size="icon"
-              className="absolute z-50 h-6 w-6 rounded-xs opacity-50 right-10 top-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                onChange(null);
-              }}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          )}
+          <div className="right-10 top-2 absolute flex gap-2  z-50 items-center">
+            {showDeselect && !disabled && value && !loading && (
+              <Button
+                variant="outline"
+                role="deselect"
+                size="icon"
+                className="h-6 w-6 cursor-pointer rounded-xs opacity-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onChange(null);
+                }}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+            {showRefresh && !loading && (
+              <Button
+                variant="outline"
+                role="refresh"
+                size="icon"
+                className="h-6 w-6  rounded-xs opacity-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  if (onRefresh) {
+                    onRefresh();
+                  }
+                }}
+              >
+                <RefreshCcw className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </PopoverTrigger>
       <PopoverContent
