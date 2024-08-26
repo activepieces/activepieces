@@ -120,7 +120,7 @@ export const SearchableSelect = <T extends React.Key>({
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
-          {showDeselect && !disabled && value && (
+          {showDeselect && !disabled && value && !loading && (
             <Button
               variant="outline"
               role="deselect"

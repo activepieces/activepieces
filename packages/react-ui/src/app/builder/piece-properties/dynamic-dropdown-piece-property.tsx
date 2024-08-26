@@ -8,17 +8,18 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { DropdownState } from '@activepieces/pieces-framework';
-import { Action, Trigger } from '@activepieces/shared';
+import { Action, isNil, Trigger } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
 
 type SelectPiecePropertyProps = {
   refreshers: string[];
   propertyName: string;
-  initialValue?: unknown;
+  value?: unknown;
   multiple?: boolean;
   disabled: boolean;
   onChange: (value: unknown | undefined) => void;
+  showDeselect?: boolean;
 };
 const DynamicDropdownPieceProperty = React.memo(
   (props: SelectPiecePropertyProps) => {
@@ -107,7 +108,15 @@ const DynamicDropdownPieceProperty = React.memo(
         options={selectOptions}
         onChange={(value) => props.onChange(value)}
         disabled={dropdownState.disabled || props.disabled}
-        initialValues={props.initialValue as unknown[]}
+        initialValues={props.value as unknown[]}
+        showDeselect={
+          props.showDeselect &&
+          !isNil(props.value) &&
+          Array.isArray(props.value) &&
+          props.value.length > 0 &&
+          !props.disabled &&
+          !dropdownState.disabled
+        }
       />
     ) : (
       <SearchableSelect
@@ -115,8 +124,11 @@ const DynamicDropdownPieceProperty = React.memo(
         disabled={dropdownState.disabled || props.disabled}
         loading={isPending}
         placeholder={dropdownState.placeholder ?? t('Select an option')}
-        value={props.initialValue as React.Key}
+        value={props.value as React.Key}
         onChange={(value) => props.onChange(value)}
+        showDeselect={
+          props.showDeselect && !isNil(props.value) && !props.disabled
+        }
       />
     );
   },

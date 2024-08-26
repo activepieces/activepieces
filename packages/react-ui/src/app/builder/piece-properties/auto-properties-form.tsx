@@ -219,11 +219,12 @@ const selectRightComponent = (
         >
           <DynamicDropdownPieceProperty
             refreshers={property.refreshers}
-            initialValue={field.value}
+            value={field.value}
             onChange={field.onChange}
             disabled={disabled}
             propertyName={propertyName}
             multiple={property.type === PropertyType.MULTI_SELECT_DROPDOWN}
+            showDeselect={!property.required}
           ></DynamicDropdownPieceProperty>
         </AutoFormFieldWrapper>
       );
