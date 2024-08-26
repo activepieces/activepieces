@@ -23,6 +23,7 @@ type MultiSelectPiecePropertyProps = {
   onChange: (value: unknown[]) => void;
   initialValues?: unknown[];
   disabled?: boolean;
+  showDeselect?: boolean;
 };
 
 const MultiSelectPieceProperty = ({
@@ -31,6 +32,7 @@ const MultiSelectPieceProperty = ({
   onChange,
   disabled,
   initialValues,
+  showDeselect,
 }: MultiSelectPiecePropertyProps) => {
   const [originalOptionsWithIndexes] = useState(
     options.map((option, index) => ({
@@ -74,6 +76,8 @@ const MultiSelectPieceProperty = ({
     >
       <MultiSelectTrigger
         className={cn('w-full', { 'cursor-pointer': !disabled })}
+        showDeselect={showDeselect && !disabled}
+        onDeselect={() => onChange([])}
       >
         <MultiSelectValue placeholder={placeholder} />
       </MultiSelectTrigger>

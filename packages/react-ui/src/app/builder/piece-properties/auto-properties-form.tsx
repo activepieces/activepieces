@@ -24,6 +24,7 @@ import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property'
 import { DynamicProperties } from './dynamic-piece-property';
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
+import { isNil } from '../../../../../shared/src';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
@@ -197,6 +198,11 @@ const selectRightComponent = (
             onChange={field.onChange}
             initialValues={field.value}
             disabled={disabled}
+            showDeselect={
+              !isNil(field.value) &&
+              field.value.length > 0 &&
+              !property.required
+            }
           ></MultiSelectPieceProperty>
         </AutoFormFieldWrapper>
       );

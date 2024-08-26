@@ -28,6 +28,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
+import { Button } from '@/components/ui/button';
 
 export interface MultiSelectOptionItem {
   value: unknown;
@@ -193,11 +194,11 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 
 MultiSelect.displayName = 'MultiSelect';
 
-type MultiSelectTriggerElement = React.ElementRef<typeof Primitive.button>;
+type MultiSelectTriggerElement = React.ElementRef<typeof Primitive.div>;
 
 type MultiSelectTriggerProps = ComponentPropsWithoutRef<
-  typeof Primitive.button
->;
+  typeof Primitive.div
+> & { showDeselect?: boolean; onDeselect?: () => void };
 
 const PreventClick = (e: React.MouseEvent | React.TouchEvent) => {
   e.preventDefault();
@@ -207,29 +208,46 @@ const PreventClick = (e: React.MouseEvent | React.TouchEvent) => {
 const MultiSelectTrigger = React.forwardRef<
   MultiSelectTriggerElement,
   MultiSelectTriggerProps
->(({ className, children, ...props }, forwardedRef) => {
-  const { disabled } = useMultiSelect();
+>(
+  (
+    { className, children, showDeselect, onDeselect, ...props },
+    forwardedRef,
+  ) => {
+    const { disabled } = useMultiSelect();
 
-  return (
-    <PopoverPrimitive.Trigger ref={forwardedRef as any} asChild>
-      <button
-        aria-disabled={disabled}
-        data-disabled={disabled}
-        {...props}
-        className={cn(
-          'flex h-full min-h-10 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring [&>span]:line-clamp-1',
-          disabled ? 'cursor-not-allowed opacity-50' : 'cursor-text',
-          className,
-        )}
-        onClick={disabled ? PreventClick : props.onClick}
-        onTouchStart={disabled ? PreventClick : props.onTouchStart}
-      >
-        {children}
-        <ChevronsUpDown aria-hidden className="h-4 w-4 opacity-50 shrink-0" />
-      </button>
-    </PopoverPrimitive.Trigger>
-  );
-});
+    return (
+      <PopoverPrimitive.Trigger ref={forwardedRef as any} asChild>
+        <div
+          role="combobox"
+          aria-disabled={disabled}
+          data-disabled={disabled}
+          {...props}
+          className={cn(
+            'flex h-full min-h-10 w-full items-center cursor-pointer gap-2 whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring [&>span]:line-clamp-1',
+            disabled ? 'cursor-not-allowed opacity-50' : 'cursor-text',
+            className,
+          )}
+          onClick={disabled ? PreventClick : props.onClick}
+          onTouchStart={disabled ? PreventClick : props.onTouchStart}
+        >
+          {children}
+          <div className="flex-grow"></div>
+          {showDeselect && (
+            <Button
+              variant="ghost"
+              className=" opacity-50 shrink-0 h-6 w-6 rounded-xs"
+              size={'icon'}
+              onClick={onDeselect}
+            >
+              <X className="h-4 w-4"></X>
+            </Button>
+          )}
+          <ChevronsUpDown aria-hidden className="h-4 w-4 opacity-50 shrink-0" />
+        </div>
+      </PopoverPrimitive.Trigger>
+    );
+  },
+);
 
 MultiSelectTrigger.displayName = 'MultiSelectTrigger';
 
