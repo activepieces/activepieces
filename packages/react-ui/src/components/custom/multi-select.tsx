@@ -9,8 +9,6 @@ import { Check, ChevronsUpDown, X } from 'lucide-react';
 import React, { ComponentPropsWithoutRef } from 'react';
 import { createPortal } from 'react-dom';
 
-import { cn } from '@/lib/utils';
-
 import { Badge } from '../ui/badge';
 import {
   Command,
@@ -28,6 +26,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
+
+import { cn } from '@/lib/utils';
 
 export interface MultiSelectOptionItem {
   value: unknown;

@@ -1,5 +1,4 @@
-import deepEqual from 'deep-equal';
-import { t } from 'i18next';
+import { CheckedState } from '@radix-ui/react-checkbox';
 import { useEffect, useState } from 'react';
 
 import {
@@ -11,7 +10,8 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from '@/components/custom/multi-select';
-import { CommandEmpty } from '@/components/ui/command';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 type MultiSelectPiecePropertyProps = {
@@ -23,7 +23,10 @@ type MultiSelectPiecePropertyProps = {
   onChange: (value: unknown[]) => void;
   initialValues?: unknown[];
   disabled?: boolean;
+  enableSelectOrClear?: boolean;
 };
+
+const SELECT_OR_CLEAR_MIN_OPTIONS = 3;
 
 const MultiSelectPieceProperty = ({
   placeholder,
@@ -31,46 +34,25 @@ const MultiSelectPieceProperty = ({
   onChange,
   disabled,
   initialValues,
+  enableSelectOrClear,
 }: MultiSelectPiecePropertyProps) => {
-  const [originalOptionsWithIndexes] = useState(
-    options.map((option, index) => ({
-      ...option,
-      originalIndex: index,
-    })),
-  );
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filteredOptions, setFilteredOptions] = useState(
-    originalOptionsWithIndexes,
-  );
-  useEffect(() => {
-    setFilteredOptions(
-      originalOptionsWithIndexes.filter((option) => {
-        return option.label.toLowerCase().includes(searchTerm.toLowerCase());
-      }),
-    );
-  }, [searchTerm, originalOptionsWithIndexes]);
-  const selectedIndicies = initialValues
-    ? initialValues
-        .map((value) =>
-          options.findIndex((option) => deepEqual(option.value, value)),
-        )
-        .filter((index) => index > -1)
-        .map((index) => String(index))
-    : [];
-  const sendChanges = (indicides: string[]) => {
-    const newSelectedIndicies = indicides.filter(
-      (index) => index !== undefined,
-    );
-    onChange(newSelectedIndicies.map((index) => options[Number(index)].value));
+  const selectClearEnabled =
+    enableSelectOrClear && options.length > SELECT_OR_CLEAR_MIN_OPTIONS;
+
+  const onSelectOrClearChanged = (changeType: SelectOrClearChangeType) => {
+    if (changeType === 'selectAll') {
+      onChange(options.map((o) => String(o.value)));
+    } else {
+      onChange([]);
+    }
   };
 
   return (
     <MultiSelect
-      modal={true}
-      value={selectedIndicies}
-      onValueChange={sendChanges}
+      value={initialValues as string[]}
+      onValueChange={onChange}
       disabled={disabled}
-      onSearch={(searchTerm) => setSearchTerm(searchTerm ?? '')}
+      filter={true}
     >
       <MultiSelectTrigger
         className={cn('w-full', { 'cursor-pointer': !disabled })}
@@ -78,22 +60,75 @@ const MultiSelectPieceProperty = ({
         <MultiSelectValue placeholder={placeholder} />
       </MultiSelectTrigger>
       <MultiSelectContent>
-        <MultiSelectSearch placeholder={placeholder} />
+        <MultiSelectSearch />
+        {selectClearEnabled && (
+          <SelectOrClear
+            selectedCount={initialValues?.length || 0}
+            totalCount={options.length}
+            sendChanges={onSelectOrClearChanged}
+          />
+        )}
         <MultiSelectList>
-          {filteredOptions.map((opt) => (
+          {options.map((option) => (
             <MultiSelectItem
-              key={opt.originalIndex}
-              value={String(opt.originalIndex)}
+              key={String(option.value)}
+              value={String(option.value)}
             >
-              {opt.label}
+              {option.label}
             </MultiSelectItem>
           ))}
-          {filteredOptions.length === 0 && (
-            <CommandEmpty>{t('No results found.')}</CommandEmpty>
-          )}
         </MultiSelectList>
       </MultiSelectContent>
     </MultiSelect>
+  );
+};
+
+type SelectOrClearChangeType = 'selectAll' | 'clear';
+type SelectOrClearProps = {
+  selectedCount: number;
+  totalCount: number;
+  sendChanges: (changeType: SelectOrClearChangeType) => void;
+};
+
+const SelectOrClear = ({
+  selectedCount,
+  totalCount,
+  sendChanges,
+}: SelectOrClearProps) => {
+  const allSelected = selectedCount === totalCount;
+  const indeterminate = selectedCount > 0 && selectedCount < totalCount;
+
+  const dataState = allSelected
+    ? true
+    : indeterminate
+    ? 'indeterminate'
+    : false;
+
+  const [checkedState, setCheckedState] = useState<CheckedState>(dataState);
+
+  useEffect(() => {
+    setCheckedState(dataState);
+  }, [dataState]);
+
+  const onCheckedChange = () => {
+    const nextState = checkedState === 'indeterminate' ? false : !checkedState;
+    sendChanges(nextState ? 'selectAll' : 'clear');
+    setCheckedState(nextState);
+  };
+
+  return (
+    <div className="flex justify-start items-center py-2 px-1">
+      <Checkbox
+        id="select-all"
+        checked={checkedState}
+        onCheckedChange={onCheckedChange}
+      />
+      <Label className="text-sm ml-2" onClick={onCheckedChange}>
+        {allSelected || dataState === 'indeterminate'
+          ? 'Clear all'
+          : 'Select All'}
+      </Label>
+    </div>
   );
 };
 

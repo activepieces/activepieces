@@ -197,6 +197,7 @@ const selectRightComponent = (
             onChange={field.onChange}
             initialValues={field.value}
             disabled={disabled}
+            enableSelectOrClear={false}
           ></MultiSelectPieceProperty>
         </AutoFormFieldWrapper>
       );
