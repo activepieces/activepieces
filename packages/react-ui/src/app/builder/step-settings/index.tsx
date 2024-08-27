@@ -170,29 +170,9 @@ const StepSettingsContainer = React.memo(
       step: Action | Trigger,
       pieceModel: PieceMetadataModel | undefined,
     ) => {
-      if (step.type === TriggerType.PIECE) {
-        const triggerName = step.settings.triggerName;
-        if (isNil(triggerName)) {
-          return step.displayName;
-        }
-        const trigger = pieceModel?.triggers[triggerName];
-        if (isNil(trigger)) {
-          return step.displayName;
-        }
-        return trigger.displayName;
-      }
-      if (step.type === ActionType.PIECE) {
-        const actionName = step.settings.actionName;
-        if (isNil(actionName)) {
-          return step.displayName;
-        }
-        const action = pieceModel?.actions[actionName];
-        if (isNil(action)) {
-          return step.displayName;
-        }
-        return action.displayName;
-      }
-      return step.displayName;
+      const name = step.type === TriggerType.PIECE ? step.settings.triggerName : step.settings.actionName;
+      const item = step.type === TriggerType.PIECE ? pieceModel?.triggers[name] : pieceModel?.actions[name];
+      return isNil(name) || isNil(item) ? step.displayName : item.displayName;
     };
 
     useUpdateEffect(() => {

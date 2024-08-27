@@ -14,7 +14,6 @@ import {
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
 
 import { ConnectionSelect } from './connection-select';
-import { PieceActionTriggerSelector } from './piece-action-trigger-selector';
 
 type PieceSettingsProps = {
   step: PieceAction | PieceTrigger;
@@ -70,12 +69,6 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     <div className="flex flex-col gap-4 w-full">
       {pieceModel && (
         <>
-          <PieceActionTriggerSelector
-            piece={pieceModel}
-            isLoading={isLoading}
-            type={props.step.type}
-            disabled={props.readonly}
-          ></PieceActionTriggerSelector>
           {pieceModel.auth &&
             (selectedAction?.requireAuth || selectedTrigger) && (
               <ConnectionSelect

@@ -2,8 +2,8 @@ import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
 import { t } from 'i18next';
-import { ArrowRightLeft, CopyPlus, Trash } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { ArrowRightLeft, CopyPlus, EllipsisVertical, Trash, User } from 'lucide-react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 
 import {
   StepPathWithName,
@@ -30,6 +30,7 @@ import {
 } from '@activepieces/shared';
 
 import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 function getStepStatus(
   stepName: string | undefined,
@@ -96,8 +97,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     step: data.step!,
   });
 
-  const [showStepActionsList, setToolbarOpen] = useState(false);
-
+  const [stepActionsMenu, setStepActionsMenu] = useState<boolean>(false);
   const [openTriggerMenu, setOpenTriggerMenu] = useState(false);
 
   const isTrigger = flowHelper.isTrigger(data.step!.type);
@@ -136,6 +136,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     e.stopPropagation();
   };
 
+
   return (
     <div
       id={data.step!.name}
@@ -147,7 +148,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         'transition-all border-box border rounded-sm border border-solid  border-border-300 relative',
         {
           'shadow-step-container': !isDragging,
-          'border-primary': showStepActionsList || isSelected,
+          'border-primary': isSelected,
           'bg-background': !isDragging,
           'border-none': isDragging,
           'shadow-none': isDragging,
@@ -155,11 +156,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       )}
       onClick={(e) => handleStepClick(e)}
       onMouseEnter={() => {
-        setToolbarOpen(true && !readonly);
         setAllowCanvasPanning(false);
       }}
       onMouseLeave={() => {
-        setToolbarOpen(false);
         setAllowCanvasPanning(true);
       }}
       key={data.step?.name}
@@ -172,30 +171,30 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
           'absolute left-0 top-0 pointer-events-none  rounded-sm w-full h-full',
           {
             'border-t-[3px] border-primary border-solid':
-              (isSelected || showStepActionsList) && !isDragging,
+              (isSelected) && !isDragging,
           },
         )}
       ></div>
       <div className="px-3 h-full w-full  overflow-hidden">
         {!isDragging && (
-          <>
+          <PieceSelectors
+            type={isTrigger ? 'trigger' : 'action'}
+            open={openTriggerMenu}
+            onOpenChange={(open) => {
+              setOpenTriggerMenu(open);
+              if (open) {
+                setStepActionsMenu(false);
+              }
+            }}
+            asChild={true}
+          >
             <div
-              className={cn(
-                'w-[40px] h-[70px] absolute right-[-50px] top-[20px] transition-opacity duration-300',
-                {
-                  'opacity-0': !showStepActionsList,
-                  'opacity-100': showStepActionsList,
-                },
-              )}
-            >
-              <span className="text-sm text-muted-foreground">
-                {data.step?.name}
-              </span>
-            </div>
-
-            <div
-              className=" h-full w-full "
-              onClick={(e) => handleStepClick(e)}
+              className="flex h-full w-full"
+              onClick={(e) => {
+                if (!openTriggerMenu) {
+                  handleStepClick(e);
+                }
+              }}
             >
               <div className="flex h-full items-center justify-between gap-3 w-full">
                 <div className="flex items-center justify-center min-w-[46px] h-full">
@@ -207,14 +206,82 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                   />
                 </div>
                 <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
-                  <div className="text-sm text-ellipsis overflow-hidden whitespace-nowrap w-full">
+                  <div className="text-sm text-ellipsis overflow-hidden whitespace-nowrap w-full flex items-center justify-between">
+
                     {data.step?.displayName}
+
+                    {!readonly && (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu
+                          modal={true}
+                          open={stepActionsMenu}
+                          onOpenChange={(open) => {
+                            setStepActionsMenu(open);
+                            if (open) {
+                              setOpenTriggerMenu(false);
+                            }
+                          }}
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-1 size-7 "
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                              }}
+                            >
+                              <EllipsisVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-44 absolute">
+                            {isAction && (
+                              <DropdownMenuItem onSelect={(e) => {
+                                e.preventDefault();
+                                duplicateStep();
+                                setStepActionsMenu(false);
+                              }}>
+                                <CopyPlus className="mr-2 h-4 w-4 " />
+                                {t('Duplicate')}
+                              </DropdownMenuItem>
+                            )}
+                            {isTrigger && (
+                              <DropdownMenuItem
+                                onSelect={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setStepActionsMenu(false);
+                                  setOpenTriggerMenu(true);
+                                }}
+                              >
+                                <ArrowRightLeft className="mr-2 h-4 w-4 " />
+                                <span>Replace</span>
+                              </DropdownMenuItem>
+                            )}
+                            {isAction && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onSelect={(e) => {
+                                  e.preventDefault();
+                                  deleteStep();
+                                  setStepActionsMenu(false);
+                                }}>
+                                  <Trash className="mr-2 h-4 w-4 text-destructive" />
+                                  <span className='text-destructive'>Delete</span>
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    )}
                   </div>
                   <div className="flex justify-between w-full items-center">
                     <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
                       {stepMetadata?.displayName}
                     </div>
-                    <div className="w-4 flex items-center justify-center">
+                    <div className="w-7 flex items-center justify-center">
                       {statusInfo &&
                         React.createElement(statusInfo.Icon, {
                           className: cn('', {
@@ -245,100 +312,8 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                   </div>
                 </div>
               </div>
-
-              <div
-                className={cn(
-                  'w-[40px] h-[70px] absolute left-[-40px] top-[0px] transition-opacity duration-300',
-                  {
-                    'opacity-0 pointer-events-none': !showStepActionsList,
-                    'opacity-100': showStepActionsList,
-                  },
-                )}
-              >
-                {!readonly && (
-                  <PieceSelectors
-                    type="trigger"
-                    open={openTriggerMenu}
-                    onOpenChange={setOpenTriggerMenu}
-                  >
-                    <div className="flex flex-col gap-2 items-center justify-center mr-4 h-full">
-                      {isTrigger && stepName && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="rounded-full"
-                              onClick={(e) => {
-                                if (!showStepActionsList) {
-                                  return;
-                                }
-                                setOpenTriggerMenu(true);
-                                e.preventDefault();
-                                e.stopPropagation();
-                              }}
-                            >
-                              <ArrowRightLeft className="w-4 h-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="left">
-                            {t('Replace Trigger')}
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-
-                      {isAction && (
-                        <>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="rounded-full min-w-9 min-h-9 max-w-9 max-h-9 p-1"
-                                onClick={(e) => {
-                                  if (!showStepActionsList) {
-                                    return;
-                                  }
-                                  deleteStep();
-                                  e.stopPropagation();
-                                }}
-                              >
-                                <Trash className="w-4 h-4 text-destructive" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left">
-                              {t('Delete step')}
-                            </TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="rounded-full min-w-9 min-h-9 max-w-9 max-h-9 p-1"
-                                onClick={(e) => {
-                                  if (!showStepActionsList) {
-                                    return;
-                                  }
-                                  duplicateStep();
-                                  e.stopPropagation();
-                                }}
-                              >
-                                <CopyPlus className="w-4 h-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left">
-                              {t('Duplicate step')}
-                            </TooltipContent>
-                          </Tooltip>
-                        </>
-                      )}
-                    </div>
-                  </PieceSelectors>
-                )}
-              </div>
             </div>
-          </>
+          </PieceSelectors>
         )}
 
         <Handle

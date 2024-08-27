@@ -59,6 +59,7 @@ type PieceSelectorsProps = {
   children: React.ReactNode;
   type: 'action' | 'trigger';
   open: boolean;
+  asChild?: boolean;
   onOpenChange: (open: boolean) => void;
   actionLocation?: {
     parentStep: string;
@@ -70,6 +71,7 @@ const PieceSelectors = ({
   children,
   type,
   open,
+  asChild = true,
   onOpenChange,
   actionLocation,
 }: PieceSelectorsProps) => {
@@ -232,8 +234,8 @@ const PieceSelectors = ({
         onOpenChange(open);
       }}
     >
-      <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-[600px] p-0 shadow-lg">
+      <PopoverTrigger asChild={asChild} >{children}</PopoverTrigger>
+      <PopoverContent className="w-[600px] p-0 shadow-lg" onClick={(e) => e.stopPropagation()}>
         <div className="p-2">
           <Input
             className="border-none"
