@@ -14,9 +14,10 @@ import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
   const [isIsStepInsideDropzone, setIsStepInsideDropzone] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
-  const [readonly, activeDraggingStep, selectedButton] = useBuilderStateContext(
-    (state) => [state.readonly, state.activeDraggingStep, state.selectedButton],
-  );
+  const [readonly, activeDraggingStep] = useBuilderStateContext((state) => [
+    state.readonly,
+    state.activeDraggingStep,
+  ]);
   const id = useId();
   const { setNodeRef } = useDroppable({
     id,
@@ -26,11 +27,6 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
     },
   });
   const showDropIndicator = !isNil(activeDraggingStep);
-  const isSelected =
-    selectedButton &&
-    selectedButton.type === 'action' &&
-    selectedButton?.stepname === data?.parentStep &&
-    selectedButton?.relativeLocation === data.stepLocationRelativeToParent;
 
   useDndMonitor({
     onDragMove(event: DragMoveEvent) {
@@ -53,13 +49,13 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
         >
           <div
             className={cn('w-[50px] h-[50px]  rounded transition-all', {
-              'bg-accent': !isSelected && !showDropIndicator,
-              'bg-primary': isSelected || showDropIndicator,
+              'bg-accent': !actionMenuOpen && !showDropIndicator,
+              'bg-primary/80': showDropIndicator || actionMenuOpen,
             })}
             style={{
               boxShadow:
-                isIsStepInsideDropzone || isSelected
-                  ? '0 0 0 6px hsl(var(--primary-100))'
+                isIsStepInsideDropzone || actionMenuOpen
+                  ? '0 0 0 6px hsl(var(--primary-100) / 0.5)'
                   : 'none',
             }}
           >
@@ -77,13 +73,12 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
                 <Button
                   variant="transparent"
                   className="w-full h-full hover:bg-transparent"
-                  disabled={readonly}
                 >
                   <Plus
                     className={cn(
                       'w-6 h-6 text-accent-foreground transition-all',
                       {
-                        'opacity-0': showDropIndicator || isSelected,
+                        'opacity-0': showDropIndicator || actionMenuOpen,
                       },
                     )}
                   />

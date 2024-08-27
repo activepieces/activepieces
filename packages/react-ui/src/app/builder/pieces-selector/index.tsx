@@ -37,10 +37,12 @@ import {
   Action,
   ActionType,
   FlowOperationType,
+  isNil,
   StepLocationRelativeToParent,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
+import { MoveLeft } from 'lucide-react';
 
 type ItemListMetadata = {
   name: string;
@@ -69,10 +71,10 @@ const PieceSelectors = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
 
-  const [selectedMetadata, setSelectedMetadata] = useState<
+  const [selectedPieceMetadata, setSelectedMetadata] = useState<
     StepMetadata | undefined
   >(undefined);
-  const [selectedSubItems, setSelectedSubItems] = useState<
+  const [actionsOrTriggers, setSelectedSubItems] = useState<
     ItemListMetadata[] | undefined
   >(undefined);
 
@@ -86,7 +88,7 @@ const PieceSelectors = ({
       state.flowVersion,
     ]);
 
-  const { metadata, isLoading: isLoadingPiecesList } =
+  const { metadata, isLoading: isLoadingPieces } =
     piecesHooks.useAllStepsMetadata({
       searchQuery: debouncedQuery,
       type,
@@ -99,15 +101,21 @@ const PieceSelectors = ({
     setSelectedTag(undefined);
   };
 
-  const handleSelect = (piece: StepMetadata | undefined) => {
+  const handleSelect = (
+    piece: StepMetadata | undefined,
+    item: ItemListMetadata,
+  ) => {
     if (!piece) {
       return;
     }
     resetField();
     onOpenChange(false);
-
     const stepName = pieceSelectorUtils.getStepName(piece, flowVersion);
-    const defaultStep = pieceSelectorUtils.getDefaultStep(stepName, piece);
+    const defaultStep = pieceSelectorUtils.getDefaultStep(
+      stepName,
+      piece,
+      item.name,
+    );
 
     if (piece.type === TriggerType.PIECE) {
       applyOperation(
@@ -134,7 +142,7 @@ const PieceSelectors = ({
     }
   };
 
-  const { mutate, isPending: isLoadingPieceMetadata } = useMutation({
+  const { mutate, isPending: isLoadingSelectedPieceMetadata } = useMutation({
     mutationFn: async (stepMetadata: StepMetadata) => {
       switch (stepMetadata.type) {
         case TriggerType.PIECE:
@@ -162,16 +170,18 @@ const PieceSelectors = ({
           return [
             {
               name: 'loop',
-              displayName: stepMetadata.description,
-              description: '',
+              displayName: t('Loop on Items'),
+              description: stepMetadata.description,
             },
           ];
         case ActionType.BRANCH:
           return [
             {
               name: 'branch',
-              displayName: t('Branch on Condition'),
-              description: '',
+              displayName: t('Branch'),
+              description: t(
+                'Split your flow into branches depedning on condition(s)',
+              ),
             },
           ];
         case TriggerType.EMPTY:
@@ -224,6 +234,7 @@ const PieceSelectors = ({
             onChange={(e) => {
               setSearchQuery(e.target.value);
               setSelectedTag(undefined);
+              setSelectedSubItems(undefined);
             }}
           />
         </div>
@@ -239,54 +250,56 @@ const PieceSelectors = ({
         <div className="flex overflow-y-auto max-h-[300px] h-[300px]">
           <CardList className="w-[250px] min-w-[250px]">
             <ScrollArea>
-              {isLoadingPiecesList && (
+              {isLoadingPieces && (
                 <CardListItemSkeleton numberOfCards={5} withCircle={false} />
               )}
-              {!isLoadingPiecesList &&
+              {!isLoadingPieces &&
                 piecesMetadata &&
-                piecesMetadata.map((stepMetadata) => (
+                piecesMetadata.map((pieceMetadata) => (
                   <CardListItem
                     className="p-3"
-                    key={pieceSelectorUtils.toKey(stepMetadata)}
+                    key={pieceSelectorUtils.toKey(pieceMetadata)}
                     onClick={(e) => {
-                      setSelectedMetadata(stepMetadata);
-                      mutate(stepMetadata);
+                      setSelectedMetadata(pieceMetadata);
+                      mutate(pieceMetadata);
                       e.stopPropagation();
                       e.preventDefault();
                     }}
                   >
                     <div>
                       <img
-                        src={stepMetadata.logoUrl}
-                        alt={stepMetadata.displayName}
+                        src={pieceMetadata.logoUrl}
+                        alt={pieceMetadata.displayName}
                         className="size-[24px] object-contain"
                       />
                     </div>
                     <div className="flex-grow h-full flex items-center justify-left text-sm">
-                      {stepMetadata.displayName}
+                      {pieceMetadata.displayName}
                     </div>
                   </CardListItem>
                 ))}
             </ScrollArea>
           </CardList>
           <Separator orientation="vertical" className="h-full" />
-          <ScrollArea>
-            <CardList className="w-[350px] min-w-[350px]">
-              {!isLoadingPiecesList && (
+          <ScrollArea className="h-full">
+            <CardList className="w-[350px] min-w-[350px] h-full">
+              {!isLoadingPieces && (
                 <>
-                  {isLoadingPieceMetadata && (
+                  {isLoadingSelectedPieceMetadata && (
                     <CardListItemSkeleton
                       numberOfCards={5}
                       withCircle={false}
                     />
                   )}
-                  {!isLoadingPieceMetadata &&
-                    selectedSubItems &&
-                    selectedSubItems.map((item) => (
+                  {!isLoadingSelectedPieceMetadata &&
+                    actionsOrTriggers &&
+                    actionsOrTriggers.map((item) => (
                       <CardListItem
                         className="p-2 w-full"
                         key={item.name}
-                        onClick={() => handleSelect(selectedMetadata)}
+                        onClick={() =>
+                          handleSelect(selectedPieceMetadata, item)
+                        }
                       >
                         <div className="flex flex-col gap-0.5">
                           <div className="text-sm">{item.displayName}</div>
@@ -296,6 +309,16 @@ const PieceSelectors = ({
                         </div>
                       </CardListItem>
                     ))}
+
+                  {isNil(actionsOrTriggers) &&
+                    !isLoadingSelectedPieceMetadata && (
+                      <div className="flex flex-col gap-2 items-center justify-center h-[300px]">
+                        <MoveLeft className="w-10 h-10 rtl:rotate-180" />
+                        <div className="text-sm">
+                          {t('Please select a piece first')}
+                        </div>
+                      </div>
+                    )}
                 </>
               )}
             </CardList>

@@ -15,7 +15,7 @@ const tags: Record<
     color: 'pink',
   },
   [PieceTagEnum.AI]: {
-    title: '🪄 AI',
+    title: '✨ AI',
     color: 'purple',
   },
   [PieceTagEnum.APPS]: {

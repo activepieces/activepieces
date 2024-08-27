@@ -65,6 +65,7 @@ const isAppPiece = (piece: StepMetadata) =>
 const getDefaultStep = (
   stepName: string,
   piece: StepMetadata,
+  actionOrTriggerName?: string,
 ): Action | Trigger => {
   const errorHandlingOptions = {
     continueOnFailure: {
@@ -146,7 +147,7 @@ const getDefaultStep = (
             pieceName: pieceStepMetadata.pieceName,
             pieceType: pieceStepMetadata.pieceType,
             packageType: pieceStepMetadata.packageType,
-            actionName: undefined,
+            actionName: actionOrTriggerName,
             pieceVersion: pieceStepMetadata.pieceVersion,
             input: {},
             errorHandlingOptions: errorHandlingOptions,
@@ -164,7 +165,7 @@ const getDefaultStep = (
             pieceName: pieceStepMetadata.pieceName,
             pieceType: pieceStepMetadata.pieceType,
             packageType: pieceStepMetadata.packageType,
-            triggerName: undefined,
+            triggerName: actionOrTriggerName,
             pieceVersion: pieceStepMetadata.pieceVersion,
             input: {},
           },
