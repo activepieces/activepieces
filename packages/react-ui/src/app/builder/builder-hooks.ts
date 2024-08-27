@@ -47,7 +47,6 @@ export enum LeftSideBarType {
 
 export enum RightSideBarType {
   NONE = 'none',
-  PIECE_SELECTOR = 'piece-selector',
   PIECE_SETTINGS = 'piece-settings',
 }
 
@@ -96,11 +95,6 @@ export type BuilderState = {
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
   setReadOnly: (readOnly: boolean) => void;
-  clickOnNewNodeButton: (
-    type: 'action' | 'trigger',
-    stepname: string,
-    relativeLocation: StepLocationRelativeToParent,
-  ) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
 };
 
@@ -210,20 +204,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       set({
         selectedButton: null,
         rightSidebar: RightSideBarType.NONE,
-      }),
-    clickOnNewNodeButton: (
-      type: 'action' | 'trigger',
-      stepname: string,
-      relativeLocation: StepLocationRelativeToParent,
-    ) =>
-      set({
-        selectedStep: null,
-        selectedButton: {
-          stepname,
-          type,
-          relativeLocation,
-        },
-        rightSidebar: RightSideBarType.PIECE_SELECTOR,
       }),
     selectStepByPath: (path: StepPathWithName) =>
       set((state) => {

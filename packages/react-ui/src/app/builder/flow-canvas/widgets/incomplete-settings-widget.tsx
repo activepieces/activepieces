@@ -1,11 +1,11 @@
 import { t } from 'i18next';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { BuilderState } from '@/app/builder/builder-hooks';
+import { PieceSelectors } from '@/app/builder/pieces-selector';
 import { Button } from '@/components/ui/button';
 import {
   FlowVersion,
-  StepLocationRelativeToParent,
   TriggerType,
   flowHelper,
 } from '@activepieces/shared';
@@ -13,14 +13,13 @@ import {
 type IncompleteSettingsButtonProps = {
   flowVersion: FlowVersion;
   selectStepByName: BuilderState['selectStepByName'];
-  clickOnNewNodeButton: BuilderState['clickOnNewNodeButton'];
 };
 
 const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
   flowVersion,
   selectStepByName,
-  clickOnNewNodeButton,
 }) => {
+  const [openTriggerMenu, setOpenTriggerMenu] = useState(false);
   const invalidSteps = useMemo(
     () =>
       flowHelper.getAllSteps(flowVersion.trigger).filter((step) => !step.valid)
@@ -33,11 +32,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
       .filter((step) => !step.valid);
     if (invalidSteps.length > 0) {
       if (invalidSteps[0].type === TriggerType.EMPTY) {
-        clickOnNewNodeButton(
-          'trigger',
-          invalidSteps[0].name,
-          StepLocationRelativeToParent.AFTER,
-        );
+        setOpenTriggerMenu(true);
       } else {
         selectStepByName(invalidSteps[0].name);
       }
@@ -47,14 +42,24 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
 
   return (
     !flowVersion.valid && (
-      <Button
-        variant="ghost"
-        className="h-8 bg-warning-100 text-warning-300 hover:bg-warning-100 hover:border-warning hover:text-warning-300 border border-solid border border-warning/50 rounded-full animate-fade"
-        key={'complete-flow-button'}
-        onClick={onClick}
+      <PieceSelectors
+        type="trigger"
+        open={openTriggerMenu}
+        onOpenChange={setOpenTriggerMenu}
       >
-        {t('incompleteSteps', { invalidSteps: invalidSteps })}
-      </Button>
+        <Button
+          variant="ghost"
+          className="h-8 bg-warning-100 text-warning-300 hover:bg-warning-100 hover:border-warning hover:text-warning-300 border border-solid border border-warning/50 rounded-full animate-fade"
+          key={'complete-flow-button'}
+          onClick={(e) => {
+            onClick()
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
+          {t('incompleteSteps', { invalidSteps: invalidSteps })}
+        </Button>
+      </PieceSelectors>
     )
   );
 };

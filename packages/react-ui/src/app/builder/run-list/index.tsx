@@ -38,7 +38,7 @@ const FlowRecentRunsList = React.memo(
       queryKey: ['flow-runs', flow.id],
       queryFn: () =>
         flowRunsApi.list({
-          flowId: flow.id,
+          flowId: [flow.id],
           limit: recentRuns,
           cursor: undefined,
         }),

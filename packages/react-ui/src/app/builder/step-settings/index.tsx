@@ -297,18 +297,18 @@ const StepSettingsContainer = React.memo(
                   {[ActionType.CODE, ActionType.PIECE].includes(
                     modifiedStep.type as ActionType,
                   ) && (
-                      <ActionErrorHandlingForm
-                        hideContinueOnFailure={
-                          modifiedStep.settings.errorHandlingOptions
-                            ?.continueOnFailure?.hide
-                        }
-                        disabled={readonly}
-                        hideRetryOnFailure={
-                          modifiedStep.settings.errorHandlingOptions
-                            ?.retryOnFailure?.hide
-                        }
-                      ></ActionErrorHandlingForm>
-                    )}
+                    <ActionErrorHandlingForm
+                      hideContinueOnFailure={
+                        modifiedStep.settings.errorHandlingOptions
+                          ?.continueOnFailure?.hide
+                      }
+                      disabled={readonly}
+                      hideRetryOnFailure={
+                        modifiedStep.settings.errorHandlingOptions
+                          ?.retryOnFailure?.hide
+                      }
+                    ></ActionErrorHandlingForm>
+                  )}
                 </div>
               </ScrollArea>
             </ResizablePanel>

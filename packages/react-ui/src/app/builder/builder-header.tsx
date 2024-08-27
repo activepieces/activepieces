@@ -133,7 +133,6 @@ export const BuilderHeader = () => {
               <TooltipContent side="bottom">{t('Support')}</TooltipContent>
             </Tooltip>
           )}
-
           {!isInRunsPage && (
             <Tooltip>
               <TooltipTrigger asChild>

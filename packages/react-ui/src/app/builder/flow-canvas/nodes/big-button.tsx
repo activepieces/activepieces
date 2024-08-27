@@ -3,6 +3,7 @@ import { Handle, Position } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 import React, { useId, useState } from 'react';
 
+import { PieceSelectors } from '@/app/builder/pieces-selector';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
@@ -12,13 +13,10 @@ import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 
 const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
   const [isIsStepInsideDropzone, setIsStepInsideDropzone] = useState(false);
-  const [clickOnNewNodeButton, readonly, activeDraggingStep, selectedButton] =
-    useBuilderStateContext((state) => [
-      state.clickOnNewNodeButton,
-      state.readonly,
-      state.activeDraggingStep,
-      state.selectedButton,
-    ]);
+  const [actionMenuOpen, setActionMenuOpen] = useState(false);
+  const [readonly, activeDraggingStep, selectedButton] = useBuilderStateContext(
+    (state) => [state.readonly, state.activeDraggingStep, state.selectedButton],
+  );
   const id = useId();
   const { setNodeRef } = useDroppable({
     id,
@@ -66,27 +64,31 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
             }}
           >
             {!showDropIndicator && (
-              <Button
-                variant="transparent"
-                className="w-full h-full hover:bg-transparent"
-                disabled={readonly}
-                onClick={(e) => {
-                  clickOnNewNodeButton(
-                    'action',
-                    data.parentStep!,
+              <PieceSelectors
+                type="action"
+                open={actionMenuOpen}
+                onOpenChange={setActionMenuOpen}
+                actionLocation={{
+                  parentStep: data.parentStep!,
+                  stepLocationRelativeToParent:
                     data.stepLocationRelativeToParent!,
-                  );
                 }}
               >
-                <Plus
-                  className={cn(
-                    'w-6 h-6 text-accent-foreground transition-all',
-                    {
-                      'opacity-0': showDropIndicator || isSelected,
-                    },
-                  )}
-                />
-              </Button>
+                <Button
+                  variant="transparent"
+                  className="w-full h-full hover:bg-transparent"
+                  disabled={readonly}
+                >
+                  <Plus
+                    className={cn(
+                      'w-6 h-6 text-accent-foreground transition-all',
+                      {
+                        'opacity-0': showDropIndicator || isSelected,
+                      },
+                    )}
+                  />
+                </Button>
+              </PieceSelectors>
             )}
           </div>
           {showDropIndicator && (

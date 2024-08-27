@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { PieceSelectors } from '@/app/builder/pieces-selector';
 import { cn } from '@/lib/utils';
 import { StepLocationRelativeToParent, isNil } from '@activepieces/shared';
 
@@ -80,13 +81,9 @@ function getEdgePath({
 
 const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
   const [setIsStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
-  const [activeDraggingStep, clickOnNewNodeButton, selectedButton, readonly] =
-    useBuilderStateContext((state) => [
-      state.activeDraggingStep,
-      state.clickOnNewNodeButton,
-      state.selectedButton,
-      state.readonly,
-    ]);
+  const [activeDraggingStep, selectedButton, readonly] = useBuilderStateContext(
+    (state) => [state.activeDraggingStep, state.selectedButton, state.readonly],
+  );
   const { edgePath, buttonPosition } = getEdgePath(props);
   const { setNodeRef } = useDroppable({
     id: props.id,
@@ -95,6 +92,8 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
       ...props.data,
     },
   });
+
+  const [actionMenuOpen, setActionMenuOpen] = useState(false);
 
   const showDropIndicator = !isNil(activeDraggingStep);
   const isSelected =
@@ -183,36 +182,40 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
         </foreignObject>
       )}
       {!showDropIndicator && props.data?.addButton && !readonly && (
-        <foreignObject
-          width={18}
-          height={18}
-          x={buttonPosition.x}
-          y={buttonPosition.y}
-          style={{
-            borderRadius: '2px',
-            boxShadow: isSelected
-              ? '0 0 0 6px hsl(var(--primary-100))'
-              : 'none',
-          }}
-          onClick={() =>
-            clickOnNewNodeButton(
-              'action',
-              props.data.parentStep!,
+        <PieceSelectors
+          type="action"
+          open={actionMenuOpen}
+          onOpenChange={setActionMenuOpen}
+          actionLocation={{
+            parentStep: props.data.parentStep!,
+            stepLocationRelativeToParent:
               props.data.stepLocationRelativeToParent,
-            )
-          }
+          }}
         >
-          <div
-            className={cn(
-              'bg-[#a6b1bf] w-[18px] h-[18px] flex items-center justify-center  transition-all duration-300 ease-in-out',
-              {
-                'bg-primary ': isSelected,
-              },
-            )}
+          <foreignObject
+            width={18}
+            height={18}
+            x={buttonPosition.x}
+            y={buttonPosition.y}
+            style={{
+              borderRadius: '2px',
+              boxShadow: isSelected
+                ? '0 0 0 6px hsl(var(--primary-100))'
+                : 'none',
+            }}
           >
-            {!isSelected && <Plus className="w-3 h-3 text-white" />}
-          </div>
-        </foreignObject>
+            <div
+              className={cn(
+                'bg-[#a6b1bf] w-[18px] h-[18px] flex items-center justify-center  transition-all duration-300 ease-in-out',
+                {
+                  'bg-primary ': isSelected,
+                },
+              )}
+            >
+              {!isSelected && <Plus className="w-3 h-3 text-white" />}
+            </div>
+          </foreignObject>
+        </PieceSelectors>
       )}
     </>
   );
