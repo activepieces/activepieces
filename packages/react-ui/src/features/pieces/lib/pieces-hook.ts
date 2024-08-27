@@ -7,6 +7,7 @@ import {
   ActionType,
   PackageType,
   PieceType,
+  SuggestionType,
   Trigger,
   TriggerType,
   isNil,
@@ -53,6 +54,7 @@ export type PieceStepMetadata = BaseStepMetadata & {
   type: ActionType.PIECE | TriggerType.PIECE;
   pieceName: string;
   pieceVersion: string;
+  categories: string[];
   packageType: PackageType;
   pieceType: PieceType;
 };
@@ -119,9 +121,13 @@ export const piecesHooks = {
   },
   useAllStepsMetadata: ({ searchQuery, type, enabled }: UseMetadataProps) => {
     const query = useQuery<StepMetadata[], Error>({
-      queryKey: ['pieces-metadata', searchQuery],
+      queryKey: ['pieces-metadata', searchQuery, type],
       queryFn: async () => {
-        const pieces = await piecesApi.list({ searchQuery });
+        const pieces = await piecesApi.list({
+          searchQuery,
+          suggestionType:
+            type === 'action' ? SuggestionType.ACTION : SuggestionType.TRIGGER,
+        });
         const piecesMetadata = pieces
           .filter(
             (piece) =>

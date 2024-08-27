@@ -16,7 +16,7 @@ import {
   TriggerType,
 } from '@activepieces/shared';
 
-import { StepMetadata } from './pieces-hook';
+import { PieceStepMetadata, StepMetadata } from './pieces-hook';
 
 export const PRIMITIVE_STEP_METADATA = {
   [ActionType.CODE]: {
@@ -64,7 +64,7 @@ export const piecesApi = {
   mapToMetadata(
     type: 'action' | 'trigger',
     piece: PieceMetadataModelSummary | PieceMetadataModel,
-  ): StepMetadata {
+  ): PieceStepMetadata {
     return {
       displayName: piece.displayName,
       logoUrl: piece.logoUrl,
@@ -73,6 +73,7 @@ export const piecesApi = {
       pieceType: piece.pieceType,
       pieceName: piece.name,
       pieceVersion: piece.version,
+      categories: piece.categories ?? [],
       packageType: piece.packageType,
     };
   },

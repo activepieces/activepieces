@@ -15,7 +15,6 @@ import { BuilderHeader } from './builder-header';
 import { ChatSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
-import { PiecesSelectorList } from './pieces-selector';
 import { FlowRunDetails } from './run-details';
 import { FlowRecentRunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
@@ -213,9 +212,6 @@ const BuilderPage = () => {
                 [animateResizeClassName]: !isDraggingHandle,
               })}
             >
-              {rightSidebar === RightSideBarType.PIECE_SELECTOR && (
-                <PiecesSelectorList />
-              )}
               {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
                 memorizedSelectedStep &&
                 !isPieceLoading && (
