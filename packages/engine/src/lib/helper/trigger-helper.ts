@@ -186,7 +186,7 @@ export const triggerHelper = {
                         engineToken: params.engineToken!,
                         flowId: params.flowVersion.flowId,
                         stepName: triggerName,
-                        type: 'memory',
+                        type: 'db',
                     }),
                 })
                 if (!Array.isArray(items)) {
