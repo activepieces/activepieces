@@ -21,7 +21,7 @@ async function handleFileChange(piecePackageName: string, io: Server): Promise<v
     try {
         await mutex.acquire()
 
-        const cmd = `nx run-many -t build --projects=${piecePackageName} --skip-nx-cache`
+        const cmd = `nx run-many -t build --projects=${piecePackageName}`
         logger.info(chalk.yellow.bold('🤌 Building pieces... 🤌'))
         logger.info(chalk.yellow('Running Command ' + cmd))
 
