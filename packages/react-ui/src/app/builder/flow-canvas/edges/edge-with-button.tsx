@@ -144,13 +144,12 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
           height={AP_NODE_SIZE.smallButton.height}
           x={buttonPosition.x - LINE_WIDTH / 2}
           y={buttonPosition.y}
-          className="transition-all overflow-visible relative"
-          style={{
-            borderRadius: '2px',
-            boxShadow: isStepInsideDropZone
-              ? '0 0 0 6px hsl(var(--primary-100)  / 0.5)'
-              : 'none',
-          }}
+          className={cn(
+            'transition-all overflow-visible relative rounded-xss',
+            {
+              'shadow-add-button': isStepInsideDropZone,
+            },
+          )}
         >
           <div
             style={{
@@ -172,7 +171,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
           </div>
           <div
             className={cn(
-              'bg-primary/90 w-[18px] h-[18px] rounded-[3px] box-content ',
+              'bg-primary/90 w-[18px] h-[18px] rounded-xss box-content ',
             )}
           ></div>
         </foreignObject>
@@ -193,12 +192,9 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
             height={18}
             x={buttonPosition.x - LINE_WIDTH / 2}
             y={buttonPosition.y}
-            style={{
-              borderRadius: '2px',
-              boxShadow: actionMenuOpen
-                ? '0 0 0 6px hsl(var(--primary-100) / 0.5)'
-                : 'none',
-            }}
+            className={cn('rounded-xss transition-all', {
+              'shadow-add-button': actionMenuOpen,
+            })}
           >
             <div
               className={cn(
