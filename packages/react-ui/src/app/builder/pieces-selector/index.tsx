@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { MoveLeft } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -44,7 +45,7 @@ import {
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
-import { MoveLeft, SearchX } from 'lucide-react';
+import { SearchX } from 'lucide-react';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
