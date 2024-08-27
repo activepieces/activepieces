@@ -86,8 +86,8 @@ const PieceSelectors = ({
     ItemListMetadata[] | undefined
   >(undefined);
 
-  const [selectedTag, setSelectedTag] = useState<undefined | PieceTagEnum>(
-    undefined,
+  const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
+    PieceTagEnum.ALL,
   );
   const [applyOperation, selectStepByName, flowVersion] =
     useBuilderStateContext((state) => [
@@ -106,7 +106,7 @@ const PieceSelectors = ({
     setSearchQuery('');
     setSelectedSubItems(undefined);
     setSelectedMetadata(undefined);
-    setSelectedTag(undefined);
+    setSelectedTag(PieceTagEnum.ALL);
   };
 
   const handleSelect = (
@@ -208,7 +208,6 @@ const PieceSelectors = ({
   const piecesMetadata = useMemo(
     () =>
       metadata?.filter((stepMetadata) => {
-        if (!selectedTag) return true;
         switch (selectedTag) {
           case PieceTagEnum.CORE:
             return pieceSelectorUtils.isCorePiece(stepMetadata);
@@ -216,6 +215,8 @@ const PieceSelectors = ({
             return pieceSelectorUtils.isAiPiece(stepMetadata);
           case PieceTagEnum.APPS:
             return pieceSelectorUtils.isAppPiece(stepMetadata);
+          case PieceTagEnum.ALL:
+            return true;
         }
       }),
     [metadata, selectedTag],
@@ -230,7 +231,6 @@ const PieceSelectors = ({
         }
         onOpenChange(open);
       }}
-      modal={true}
     >
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent className="w-[600px] p-0 shadow-lg">
@@ -272,10 +272,15 @@ const PieceSelectors = ({
                       selectedPieceMetadata?.displayName
                     }
                     onClick={(e) => {
-                      setSelectedMetadata(pieceMetadata);
-                      mutate(pieceMetadata);
-                      e.stopPropagation();
-                      e.preventDefault();
+                      if (
+                        pieceMetadata.displayName !==
+                        selectedPieceMetadata?.displayName
+                      ) {
+                        setSelectedMetadata(pieceMetadata);
+                        mutate(pieceMetadata);
+                        e.stopPropagation();
+                        e.preventDefault();
+                      }
                     }}
                   >
                     <div>
