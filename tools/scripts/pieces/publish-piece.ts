@@ -2,9 +2,9 @@ import assert from 'node:assert'
 import { argv } from 'node:process'
 import { exec } from '../utils/exec'
 import { readPackageJson, readProjectJson } from '../utils/files'
+import { findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
 import { isNil } from '../../../packages/shared/src'
 import chalk from 'chalk'
-import { findAllPiecesDirectoryInSource } from '../../../packages/server/shared/src/lib/pieces/file-pieces-utils'
 
 export const publishPiece = async (name: string): Promise<void> => {
   assert(name, '[publishPiece] parameter "name" is required')
