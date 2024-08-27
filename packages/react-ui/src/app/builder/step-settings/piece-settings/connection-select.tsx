@@ -76,7 +76,6 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                 piece={params.piece}
                 onConnectionCreated={(connectionName) => {
                   refetch();
-                  console.log("SELECT " + connectionName)
                   field.onChange(addBrackets(connectionName));
                 }}
                 open={connectionDialogOpen}
