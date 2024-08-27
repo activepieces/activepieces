@@ -204,6 +204,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                     height={40}
                     src={stepMetadata?.logoUrl}
                     alt={stepMetadata?.displayName}
+                    className="dark:bg-foreground"
                   />
                 </div>
                 <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
