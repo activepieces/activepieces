@@ -1,9 +1,9 @@
+import { ActionType, TriggerType } from '@activepieces/shared';
 import React from 'react';
 
-import { cn } from '@/lib/utils';
-import { ActionType, TriggerType } from '@activepieces/shared';
-
 import { PieceStepMetadata, StepMetadata } from '../lib/pieces-hook';
+
+import { cn } from '@/lib/utils';
 
 type PieceCardInfoProps = {
   piece: StepMetadata;
@@ -31,7 +31,7 @@ const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
         <img
           src={piece.logoUrl}
           alt={piece.displayName}
-          className="size-[48px] object-contain"
+          className="size-[48px] object-contain dark:bg-foreground"
         />
       </div>
       <div className="flex h-full grow flex-col justify-center gap-1 text-start">
