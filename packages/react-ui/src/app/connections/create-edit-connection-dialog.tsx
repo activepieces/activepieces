@@ -17,7 +17,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/seperator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -38,7 +44,10 @@ import {
   ApErrorParams,
   AppConnection,
   AppConnectionType,
+  AppConnectionWithoutSensitiveData,
+  assertNotNullOrUndefined,
   ErrorCode,
+  isNil,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
 
@@ -51,14 +60,20 @@ import { SecretTextConnectionSettings } from './secret-text-connection-settings'
 
 type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
-  connectionName?: string;
   open: boolean;
   onConnectionCreated: (name: string) => void;
   setOpen: (open: boolean) => void;
+  reconnectConnection: AppConnectionWithoutSensitiveData | null;
 };
 
 const CreateOrEditConnectionDialog = React.memo(
-  ({ piece, open, setOpen, onConnectionCreated }: ConnectionDialogProps) => {
+  ({
+    piece,
+    open,
+    setOpen,
+    onConnectionCreated,
+    reconnectConnection,
+  }: ConnectionDialogProps) => {
     const { auth } = piece;
 
     const overrideSchema =
@@ -74,14 +89,29 @@ const CreateOrEditConnectionDialog = React.memo(
 
     const formSchema = Type.Composite([
       Type.Object({
-        request: UpsertAppConnectionRequestBody,
+        request: Type.Intersect([
+          UpsertAppConnectionRequestBody,
+          Type.Object({
+            name: Type.String({
+              pattern: '^[A-Za-z0-9_\\-@\\+\\.]*$',
+              errorMessage: t(
+                ' Name can only contain letters, numbers and underscores',
+              ),
+            }),
+          }),
+        ]),
       }),
       overrideSchema,
     ]);
 
     const form = useForm<Static<typeof formSchema>>({
       defaultValues: {
-        request: createDefaultValues(piece),
+        request: createDefaultValues(
+          piece,
+          reconnectConnection
+            ? reconnectConnection.name
+            : appConnectionUtils.findName(piece.name),
+        ),
       },
       resolver: typeboxResolver(formSchema),
     });
@@ -127,7 +157,6 @@ const CreateOrEditConnectionDialog = React.memo(
         }
       },
     });
-
     return (
       <Dialog
         open={open}
@@ -140,9 +169,13 @@ const CreateOrEditConnectionDialog = React.memo(
         >
           <DialogHeader>
             <DialogTitle>
-              {t('Create {displayName} Connection', {
-                displayName: piece.displayName,
-              })}
+              {reconnectConnection
+                ? t('Reconnect {displayName} Connection', {
+                    displayName: reconnectConnection.name,
+                  })
+                : t('Create {displayName} Connection', {
+                    displayName: piece.displayName,
+                  })}
             </DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
@@ -150,20 +183,27 @@ const CreateOrEditConnectionDialog = React.memo(
             <ApMarkdown markdown={auth?.description}></ApMarkdown>
             {auth?.description && <Separator className="my-4" />}
             <Form {...form}>
-              <div className="flex flex-col gap-4">
+              <form
+                onSubmit={() => console.log('submitted')}
+                className="flex flex-col gap-4"
+              >
                 <FormField
                   name="request.name"
                   control={form.control}
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <div className="text-md font-medium">
+                    <FormItem className="flex flex-col gap-2">
+                      <FormLabel htmlFor="name">
                         {t('Connection Name')}
-                      </div>
+                      </FormLabel>
                       <Input
+                        disabled={!isNil(reconnectConnection)}
                         {...field}
+                        required
+                        id="name"
                         type="text"
                         placeholder={t('Connection name')}
                       />
+
                       <FormMessage />
                     </FormItem>
                   )}
@@ -187,22 +227,25 @@ const CreateOrEditConnectionDialog = React.memo(
                   <OAuth2ConnectionSettings
                     authProperty={piece.auth as OAuth2Property<OAuth2Props>}
                     piece={piece}
+                    reconnectConnection={reconnectConnection}
                   />
                 )}
-              </div>
+
+                <DialogFooter>
+                  <Button
+                    onClick={(e) => form.handleSubmit(() => mutate())(e)}
+                    className="w-full"
+                    loading={isPending}
+                    type="submit"
+                    disabled={!form.formState.isValid}
+                  >
+                    {t('Save')}
+                  </Button>
+                </DialogFooter>
+              </form>
             </Form>
           </ScrollArea>
 
-          <DialogFooter>
-            <Button
-              onClick={() => mutate()}
-              className="w-full"
-              disabled={!form.formState.isValid}
-              loading={isPending}
-            >
-              {t('Create')}
-            </Button>
-          </DialogFooter>
           {errorMessage && (
             <div className="text-left text-sm text-destructive text-sm mt-4">
               {errorMessage}
@@ -219,14 +262,16 @@ export { CreateOrEditConnectionDialog };
 
 function createDefaultValues(
   piece: PieceMetadataModelSummary | PieceMetadataModel,
+  suggestedConnectionName: string,
 ): Partial<UpsertAppConnectionRequestBody> {
-  const suggestedConnectionName = appConnectionUtils.findName(piece.name);
+  const projectId = authenticationSession.getProjectId();
+  assertNotNullOrUndefined(projectId, 'projectId');
   switch (piece.auth?.type) {
     case PropertyType.SECRET_TEXT:
       return {
         name: suggestedConnectionName,
         pieceName: piece.name,
-        projectId: authenticationSession.getProjectId(),
+        projectId,
         type: AppConnectionType.SECRET_TEXT,
         value: {
           type: AppConnectionType.SECRET_TEXT,
@@ -237,7 +282,7 @@ function createDefaultValues(
       return {
         name: suggestedConnectionName,
         pieceName: piece.name,
-        projectId: authenticationSession.getProjectId(),
+        projectId,
         type: AppConnectionType.BASIC_AUTH,
         value: {
           type: AppConnectionType.BASIC_AUTH,
@@ -249,7 +294,7 @@ function createDefaultValues(
       return {
         name: suggestedConnectionName,
         pieceName: piece.name,
-        projectId: authenticationSession.getProjectId(),
+        projectId,
         type: AppConnectionType.CUSTOM_AUTH,
         value: {
           type: AppConnectionType.CUSTOM_AUTH,
@@ -260,7 +305,7 @@ function createDefaultValues(
       return {
         name: suggestedConnectionName,
         pieceName: piece.name,
-        projectId: authenticationSession.getProjectId(),
+        projectId,
         type: AppConnectionType.CLOUD_OAUTH2,
         value: {
           type: AppConnectionType.CLOUD_OAUTH2,
