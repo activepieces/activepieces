@@ -7,7 +7,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 
 const pieceIconVariants = cva('flex items-center justify-center  ', {
   variants: {
@@ -46,12 +45,7 @@ const PieceIcon = React.memo(
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className={cn(
-              pieceIconVariants({ border, size, circle }),
-              'dark:bg-foreground',
-            )}
-          >
+          <div className={pieceIconVariants({ border, size, circle })}>
             {logoUrl ? (
               <img src={logoUrl} className="object-contain" alt={displayName} />
             ) : (
