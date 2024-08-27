@@ -61,8 +61,13 @@ const OAuth2ConnectionSettings = ({
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
     queryClient,
   );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(
+    ApFlagId.EDITION,
+    queryClient,
+  );
   const { data: pieceToClientIdMap } = oauth2AppsHooks.usePieceToClientIdMap(
     platform.cloudAuthEnabled,
+    edition!
   );
   const { data: ownAuthEnabled } = flagsHooks.useFlag<ApEdition>(
     ApFlagId.OWN_AUTH2_ENABLED,
@@ -76,9 +81,9 @@ const OAuth2ConnectionSettings = ({
 
   const form = useFormContext<{
     request:
-      | UpsertCloudOAuth2Request
-      | UpsertOAuth2Request
-      | UpsertPlatformOAuth2Request;
+    | UpsertCloudOAuth2Request
+    | UpsertOAuth2Request
+    | UpsertPlatformOAuth2Request;
   }>();
 
   const hasCode = form.getValues().request.value.code;
@@ -132,7 +137,7 @@ const OAuth2ConnectionSettings = ({
     const hasClientSecret = !isNil(clientSecret);
     setReadyToConect(
       baseCriteria &&
-        (currentOAuth2Type !== AppConnectionType.OAUTH2 || hasClientSecret),
+      (currentOAuth2Type !== AppConnectionType.OAUTH2 || hasClientSecret),
     );
   }, [watchedForm]);
 
