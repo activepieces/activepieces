@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { MoveLeft } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -42,7 +43,6 @@ import {
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
-import { MoveLeft } from 'lucide-react';
 
 type ItemListMetadata = {
   name: string;

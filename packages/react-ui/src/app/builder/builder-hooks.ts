@@ -13,7 +13,6 @@ import {
   FlowRun,
   FlowVersion,
   FlowVersionState,
-  StepLocationRelativeToParent,
   StepOutput,
   flowHelper,
   isNil,
@@ -51,7 +50,6 @@ export enum RightSideBarType {
 }
 
 type InsertMentionHandler = (propertyPath: string) => void;
-
 
 export type BuilderState = {
   flow: Flow;
@@ -188,13 +186,11 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       }),
     exitStepSettings: () =>
       set({
-  
         rightSidebar: RightSideBarType.NONE,
         selectedStep: null,
       }),
     exitPieceSelector: () =>
       set({
-
         rightSidebar: RightSideBarType.NONE,
       }),
     selectStepByPath: (path: StepPathWithName) =>

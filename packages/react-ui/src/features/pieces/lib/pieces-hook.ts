@@ -123,7 +123,11 @@ export const piecesHooks = {
     const query = useQuery<StepMetadata[], Error>({
       queryKey: ['pieces-metadata', searchQuery, type],
       queryFn: async () => {
-        const pieces = await piecesApi.list({ searchQuery, suggestionType: type === 'action' ? SuggestionType.ACTION : SuggestionType.TRIGGER });
+        const pieces = await piecesApi.list({
+          searchQuery,
+          suggestionType:
+            type === 'action' ? SuggestionType.ACTION : SuggestionType.TRIGGER,
+        });
         const piecesMetadata = pieces
           .filter(
             (piece) =>
