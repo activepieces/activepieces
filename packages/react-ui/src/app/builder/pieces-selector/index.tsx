@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
@@ -36,13 +36,18 @@ import {
 import {
   Action,
   ActionType,
+  ApFlagId,
   FlowOperationType,
   isNil,
   StepLocationRelativeToParent,
+  supportUrl,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
-import { MoveLeft } from 'lucide-react';
+import { MoveLeft, SearchX } from 'lucide-react';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 type ItemListMetadata = {
   name: string;
@@ -70,7 +75,10 @@ const PieceSelectors = ({
 }: PieceSelectorsProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
-
+  const showRequestPieceButton = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_COMMUNITY,
+    useQueryClient(),
+  ).data;
   const [selectedPieceMetadata, setSelectedMetadata] = useState<
     StepMetadata | undefined
   >(undefined);
@@ -222,10 +230,10 @@ const PieceSelectors = ({
         }
         onOpenChange(open);
       }}
-      modal={false}
+      modal={true}
     >
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-[600px] p-0">
+      <PopoverContent className="w-[600px] p-0 shadow-lg">
         <div className="p-2">
           <Input
             className="border-none"
@@ -259,6 +267,10 @@ const PieceSelectors = ({
                   <CardListItem
                     className="p-3"
                     key={pieceSelectorUtils.toKey(pieceMetadata)}
+                    selected={
+                      pieceMetadata.displayName ===
+                      selectedPieceMetadata?.displayName
+                    }
                     onClick={(e) => {
                       setSelectedMetadata(pieceMetadata);
                       mutate(pieceMetadata);
@@ -278,6 +290,26 @@ const PieceSelectors = ({
                     </div>
                   </CardListItem>
                 ))}
+
+              {!isLoadingPieces &&
+                (!piecesMetadata || piecesMetadata.length === 0) && (
+                  <div className="flex flex-col gap-2 items-center justify-center h-[300px] ">
+                    <SearchX className="w-10 h-10" />
+                    <div className="text-sm ">{t('No pieces found')}</div>
+                    <div className="text-sm ">
+                      {t('Try adjusting your search')}
+                    </div>
+                    {showRequestPieceButton && (
+                      <Link
+                        to={`${supportUrl}/c/feature-requests/9`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button className="h-8 px-2 ">Request Piece</Button>
+                      </Link>
+                    )}
+                  </div>
+                )}
             </ScrollArea>
           </CardList>
           <Separator orientation="vertical" className="h-full" />
@@ -292,6 +324,7 @@ const PieceSelectors = ({
                     />
                   )}
                   {!isLoadingSelectedPieceMetadata &&
+                    selectedPieceMetadata &&
                     actionsOrTriggers &&
                     actionsOrTriggers.map((item) => (
                       <CardListItem
@@ -301,25 +334,30 @@ const PieceSelectors = ({
                           handleSelect(selectedPieceMetadata, item)
                         }
                       >
-                        <div className="flex flex-col gap-0.5">
-                          <div className="text-sm">{item.displayName}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {item.description}
+                        <div className="flex gap-2 items-center">
+                          <img
+                            src={selectedPieceMetadata.logoUrl}
+                            alt={selectedPieceMetadata.displayName}
+                            className="size-[24px] object-contain"
+                          />
+                          <div className="flex flex-col gap-0.5">
+                            <div className="text-sm">{item.displayName}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {item.description}
+                            </div>
                           </div>
                         </div>
                       </CardListItem>
                     ))}
-
-                  {isNil(actionsOrTriggers) &&
-                    !isLoadingSelectedPieceMetadata && (
-                      <div className="flex flex-col gap-2 items-center justify-center h-[300px]">
-                        <MoveLeft className="w-10 h-10 rtl:rotate-180" />
-                        <div className="text-sm">
-                          {t('Please select a piece first')}
-                        </div>
-                      </div>
-                    )}
                 </>
+              )}
+              {(isNil(actionsOrTriggers) || isLoadingPieces) && (
+                <div className="flex flex-col gap-2 items-center justify-center h-[300px]">
+                  <MoveLeft className="w-10 h-10 rtl:rotate-180" />
+                  <div className="text-sm">
+                    {t('Please select a piece first')}
+                  </div>
+                </div>
               )}
             </CardList>
           </ScrollArea>

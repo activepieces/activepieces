@@ -26,9 +26,14 @@ const cardItemListVariants = cva('flex items-center gap-4 w-full p-4 ', {
       true: 'cursor-pointer hover:bg-accent hover:text-accent-foreground',
       false: 'cursor-default',
     },
+    selected: {
+      true: 'bg-accent text-accent-foreground',
+      false: '',
+    },
   },
   defaultVariants: {
     interactive: true,
+    selected: false,
   },
 });
 
@@ -38,12 +43,15 @@ type CardListItemProps = React.HTMLAttributes<HTMLDivElement> &
   };
 
 const CardListItem = React.forwardRef<HTMLDivElement, CardListItemProps>(
-  ({ children, onClick, className, interactive, ...props }, ref) => {
+  ({ children, onClick, className, interactive, selected, ...props }, ref) => {
     return (
       <div
         onClick={onClick}
         ref={ref}
-        className={cn(cardItemListVariants({ interactive }), className)}
+        className={cn(
+          cardItemListVariants({ interactive, selected }),
+          className,
+        )}
         {...props}
       >
         {children}
