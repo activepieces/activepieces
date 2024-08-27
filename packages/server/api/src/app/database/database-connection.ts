@@ -46,6 +46,7 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
+import { ProxyConfigEntity } from '../proxy/proxy-config-entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -75,6 +76,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AlertEntity,
         UserInvitationEntity,
         WorkerMachineEntity,
+        ProxyConfigEntity,
     ]
 
     switch (edition) {
@@ -163,3 +165,6 @@ export function APArrayContains<T extends ObjectLiteral>(
             throw new Error(`Unsupported database type: ${databaseType}`)
     }
 }
+
+// Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
+// export const exportedConnection = databaseConnection()
