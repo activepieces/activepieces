@@ -45,6 +45,7 @@ import {
   AppConnection,
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
+  assertNotNullOrUndefined,
   ErrorCode,
   isNil,
   UpsertAppConnectionRequestBody,
@@ -263,12 +264,14 @@ function createDefaultValues(
   piece: PieceMetadataModelSummary | PieceMetadataModel,
   suggestedConnectionName: string,
 ): Partial<UpsertAppConnectionRequestBody> {
+  const projectId = authenticationSession.getProjectId();
+  assertNotNullOrUndefined(projectId, 'projectId');
   switch (piece.auth?.type) {
     case PropertyType.SECRET_TEXT:
       return {
         name: suggestedConnectionName,
         pieceName: piece.name,
-        projectId: authenticationSession.getProjectId(),
+        projectId,
         type: AppConnectionType.SECRET_TEXT,
         value: {
           type: AppConnectionType.SECRET_TEXT,
@@ -279,7 +282,7 @@ function createDefaultValues(
       return {
         name: suggestedConnectionName,
         pieceName: piece.name,
-        projectId: authenticationSession.getProjectId(),
+        projectId,
         type: AppConnectionType.BASIC_AUTH,
         value: {
           type: AppConnectionType.BASIC_AUTH,
@@ -291,7 +294,7 @@ function createDefaultValues(
       return {
         name: suggestedConnectionName,
         pieceName: piece.name,
-        projectId: authenticationSession.getProjectId(),
+        projectId,
         type: AppConnectionType.CUSTOM_AUTH,
         value: {
           type: AppConnectionType.CUSTOM_AUTH,
@@ -302,7 +305,7 @@ function createDefaultValues(
       return {
         name: suggestedConnectionName,
         pieceName: piece.name,
-        projectId: authenticationSession.getProjectId(),
+        projectId,
         type: AppConnectionType.CLOUD_OAUTH2,
         value: {
           type: AppConnectionType.CLOUD_OAUTH2,

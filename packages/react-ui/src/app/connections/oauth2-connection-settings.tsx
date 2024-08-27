@@ -299,7 +299,6 @@ const OAuth2ConnectionSettings = ({
             </div>
           )}
       </form>
-      {isNil(reconnectConnection) && 'is Nil'}
     </Form>
   );
 };
