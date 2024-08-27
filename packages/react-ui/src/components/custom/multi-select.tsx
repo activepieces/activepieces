@@ -5,10 +5,11 @@ import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { Primitive } from '@radix-ui/react-primitive';
 import { useControllableState } from '@radix-ui/react-use-controllable-state';
 import { t } from 'i18next'; // Use t function from react-i18next
-import { Check, ChevronsUpDown, X } from 'lucide-react';
+import { Check, ChevronsUpDown, RefreshCcw, X } from 'lucide-react';
 import React, { ComponentPropsWithoutRef } from 'react';
 import { createPortal } from 'react-dom';
 
+import { SelectUtilButton } from '@/components/custom/select-util-button';
 import { cn } from '@/lib/utils';
 
 import { Badge } from '../ui/badge';
@@ -193,11 +194,16 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 
 MultiSelect.displayName = 'MultiSelect';
 
-type MultiSelectTriggerElement = React.ElementRef<typeof Primitive.button>;
+type MultiSelectTriggerElement = React.ElementRef<typeof Primitive.div>;
 
 type MultiSelectTriggerProps = ComponentPropsWithoutRef<
-  typeof Primitive.button
->;
+  typeof Primitive.div
+> & {
+  showDeselect?: boolean;
+  onDeselect?: () => void;
+  showRefresh?: boolean;
+  onRefresh?: () => void;
+};
 
 const PreventClick = (e: React.MouseEvent | React.TouchEvent) => {
   e.preventDefault();
@@ -207,29 +213,57 @@ const PreventClick = (e: React.MouseEvent | React.TouchEvent) => {
 const MultiSelectTrigger = React.forwardRef<
   MultiSelectTriggerElement,
   MultiSelectTriggerProps
->(({ className, children, ...props }, forwardedRef) => {
-  const { disabled } = useMultiSelect();
+>(
+  (
+    { className, children, showDeselect, onDeselect, ...props },
+    forwardedRef,
+  ) => {
+    const { disabled } = useMultiSelect();
 
-  return (
-    <PopoverPrimitive.Trigger ref={forwardedRef as any} asChild>
-      <button
-        aria-disabled={disabled}
-        data-disabled={disabled}
-        {...props}
-        className={cn(
-          'flex h-full min-h-10 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring [&>span]:line-clamp-1',
-          disabled ? 'cursor-not-allowed opacity-50' : 'cursor-text',
-          className,
-        )}
-        onClick={disabled ? PreventClick : props.onClick}
-        onTouchStart={disabled ? PreventClick : props.onTouchStart}
-      >
-        {children}
-        <ChevronsUpDown aria-hidden className="h-4 w-4 opacity-50 shrink-0" />
-      </button>
-    </PopoverPrimitive.Trigger>
-  );
-});
+    return (
+      <PopoverPrimitive.Trigger ref={forwardedRef as any} asChild>
+        <div
+          role="combobox"
+          aria-disabled={disabled}
+          data-disabled={disabled}
+          {...props}
+          className={cn(
+            'flex h-full min-h-10 w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap rounded-md border border-input bg-transparent px-4 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring [&>span]:line-clamp-1',
+            {
+              'cursor-not-allowed opacity-80': disabled,
+              'cursor-pointer': !disabled,
+            },
+            className,
+          )}
+          onClick={disabled ? PreventClick : props.onClick}
+          onTouchStart={disabled ? PreventClick : props.onTouchStart}
+        >
+          {children}
+          <div className="flex gap-2 items-center">
+            {showDeselect && (
+              <SelectUtilButton
+                tooltipText={t('Unset')}
+                onClick={onDeselect}
+                Icon={X}
+              ></SelectUtilButton>
+            )}
+            {props.showRefresh && (
+              <SelectUtilButton
+                tooltipText={t('Refresh')}
+                onClick={props.onRefresh}
+                Icon={RefreshCcw}
+              ></SelectUtilButton>
+            )}
+            <ChevronsUpDown
+              aria-hidden
+              className="h-4 w-4 opacity-50 shrink-0"
+            />
+          </div>
+        </div>
+      </PopoverPrimitive.Trigger>
+    );
+  },
+);
 
 MultiSelectTrigger.displayName = 'MultiSelectTrigger';
 
@@ -248,7 +282,7 @@ const MultiSelectValue = React.forwardRef<
     { className, placeholder, maxDisplay, maxItemLength, ...props },
     forwardRef,
   ) => {
-    const { value, itemCache, onDeselect } = useMultiSelect();
+    const { value, itemCache, onDeselect, disabled } = useMultiSelect();
     const [firstRendered, setFirstRendered] = React.useState(false);
 
     const remainingPiecesCount =
@@ -263,8 +297,8 @@ const MultiSelectValue = React.forwardRef<
 
     if (!value.length || !firstRendered) {
       return (
-        <span className="pointer-events-none text-muted-foreground">
-          {t('Your selection')}
+        <span className="pointer-events-none text-muted-foreground opacity-80">
+          {placeholder}
         </span>
       );
     }
@@ -293,7 +327,10 @@ const MultiSelectValue = React.forwardRef<
               <Badge
                 variant="outline"
                 key={value}
-                className="pr-1.5 group/multi-select-badge cursor-pointer rounded-full"
+                className={cn('pr-1.5 group/multi-select-badge rounded-full', {
+                  'cursor-pointer': !disabled,
+                  'cursor-not-allowed opacity-80': disabled,
+                })}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -301,7 +338,9 @@ const MultiSelectValue = React.forwardRef<
                 }}
               >
                 <span>{child}</span>
-                <X className="h-3 w-3 ml-1 text-muted-foreground group-hover/multi-select-badge:text-foreground" />
+                {!disabled && (
+                  <X className="h-3 w-3 ml-1 text-muted-foreground group-hover/multi-select-badge:text-foreground" />
+                )}
               </Badge>
             );
 
