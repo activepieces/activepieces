@@ -40,7 +40,7 @@
   "logo": "logo",
   "Step Icon": "Step Icon",
   "End": "End",
-  "incompleteSteps": "incompleteSteps",
+  "incompleteSteps": "{invalidSteps, plural, =0 {no incomplete steps} =1 {Complete 1 step} other {Complete # steps}}",
   "Test Flow": "Testablauf",
   "Please test the trigger first": "Please test the trigger first",
   "View Only": "Nur Ansicht",
