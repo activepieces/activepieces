@@ -1,19 +1,16 @@
 import { execSync } from 'child_process'
 import { Server } from 'http'
 import { resolve } from 'path'
-import { logger } from '@activepieces/server-shared'
+import { AppSystemProp, findPieceDirectoryInSource, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, debounce, WebsocketClientEvent } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import chalk from 'chalk'
 import chokidar from 'chokidar'
-import { config } from 'dotenv'
-import { findPieceDirectoryInSource } from '../utils/pieces-builder-utils'
-
-config({ path: 'packages/server/api/.env' })
 
 const mutex = new Mutex()
-const packages = process.env['AP_DEV_PIECES']?.split(',') || []
+const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
 const processes: Record<string, any> = {}
+const isFilePieces = system.getOrThrow(SharedSystemProp.PIECES_SOURCE) === 'FILE'
 
 async function handleFileChange(piecePackageName: string, io: Server): Promise<void> {
     logger.info(
@@ -52,6 +49,9 @@ async function handleFileChange(piecePackageName: string, io: Server): Promise<v
 }
 
 export async function piecesBuilder(io: Server): Promise<void> {
+    // Only run this script if the pieces source is file
+    if (!isFilePieces) return
+
     for (const packageName of packages) {
         logger.info(chalk.blue(`Starting watch for package: ${packageName}`))
         
@@ -66,7 +66,7 @@ export async function piecesBuilder(io: Server): Promise<void> {
 
         chokidar.watch(resolve(pieceDirectory), { ignored: /^\./, persistent: true }).on('all', (event, path) => {
             if (path.endsWith('.ts')) {
-                logger.info(`Event type: ${event}. Changed file: ${path}`)
+                logger.info(chalk.yellow(`[PiecesFileWatcher]: Event type => ${event}. Changed file => ${path}`))
                 debouncedHandleFileChange()
             }
         })

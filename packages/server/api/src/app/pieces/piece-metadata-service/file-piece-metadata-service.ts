@@ -53,12 +53,13 @@ async function loadPieceFromFolder(
     folderPath: string,
 ): Promise<PieceMetadata | null> {
     try {
-        clearModule(join(folderPath, 'src', 'index'))
+        const indexPath = join(folderPath, 'src', 'index')
+        clearModule(indexPath)
         const packageJson = importFresh<Record<string, string>>(
             join(folderPath, 'package.json'),
         )
         const module = importFresh<Record<string, unknown>>(
-            join(folderPath, 'src', 'index'),
+            indexPath,
         )
 
         const { name: pieceName, version: pieceVersion } = packageJson
