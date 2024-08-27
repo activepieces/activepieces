@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { MoveLeft } from 'lucide-react';
+import { MoveLeft, SearchX } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -10,6 +11,7 @@ import {
   PieceTagEnum,
   PieceTagGroup,
 } from '@/app/builder/pieces-selector/piece-tag-group';
+import { Button } from '@/components/ui/button';
 import {
   CardList,
   CardListItemSkeleton,
@@ -34,6 +36,7 @@ import {
   StepMetadata,
   piecesHooks,
 } from '@/features/pieces/lib/pieces-hook';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   Action,
   ActionType,
@@ -45,10 +48,6 @@ import {
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
-import { SearchX } from 'lucide-react';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 
 type ItemListMetadata = {
   name: string;
@@ -242,7 +241,7 @@ const PieceSelectors = ({
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
-              setSelectedTag(undefined);
+              setSelectedTag(PieceTagEnum.ALL);
               setSelectedSubItems(undefined);
             }}
           />

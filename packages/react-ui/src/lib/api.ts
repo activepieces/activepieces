@@ -2,11 +2,27 @@ import axios, {
   AxiosError,
   AxiosRequestConfig,
   AxiosResponse,
+  HttpStatusCode,
   isAxiosError,
 } from 'axios';
 import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
+
+// Add global error handler for 401 errors
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      error.response &&
+      error.response.status === HttpStatusCode.Unauthorized
+    ) {
+      console.log('JWT expired logging out');
+      authenticationSession.logOut();
+    }
+    return Promise.reject(error);
+  },
+);
 
 export const API_BASE_URL = 'https://cloud.activepieces.com';
 // export const API_BASE_URL = 'http://localhost:4200';

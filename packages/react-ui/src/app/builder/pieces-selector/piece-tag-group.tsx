@@ -1,8 +1,8 @@
 import { PieceTag } from '@/app/builder/pieces-selector/piece-tag';
 // icons from google font noto
-import magic from '@/assets/img/custom/magic.png';
-import link from '@/assets/img/custom/link.png';
 import construction from '@/assets/img/custom/construction.png';
+import link from '@/assets/img/custom/link.png';
+import magic from '@/assets/img/custom/magic.png';
 export enum PieceTagEnum {
   CORE = 'CORE',
   AI = 'AI',
@@ -14,13 +14,13 @@ const tags: Record<
   PieceTagEnum,
   {
     title: string;
-    color: 'green' | 'blue' | 'purple' | 'yellow';
+    color: 'green' | 'blue' | 'purple' | 'yellow' | 'pink';
     icon?: string;
   }
 > = {
   [PieceTagEnum.ALL]: {
     title: 'All',
-    color: 'green',
+    color: 'blue',
   },
   [PieceTagEnum.AI]: {
     icon: magic,
@@ -30,7 +30,7 @@ const tags: Record<
   [PieceTagEnum.CORE]: {
     icon: construction,
     title: 'Core',
-    color: 'blue',
+    color: 'pink',
   },
 
   [PieceTagEnum.APPS]: {
@@ -42,7 +42,7 @@ const tags: Record<
 type PieceTagGroupProps = {
   type: 'action' | 'trigger';
   selectedTag?: PieceTagEnum;
-  onSelectTag: (tag: PieceTagEnum | undefined) => void;
+  onSelectTag: (tag: PieceTagEnum) => void;
 };
 
 const PieceTagGroup = ({
@@ -57,9 +57,10 @@ const PieceTagGroup = ({
         .map(([tag, tagData]) => (
           <PieceTag
             key={tagData.title}
+            variant={tagData.color}
             onClick={(e) => {
               onSelectTag(
-                selectedTag === tag ? undefined : (tag as PieceTagEnum),
+                selectedTag === tag ? PieceTagEnum.ALL : (tag as PieceTagEnum),
               );
               e.stopPropagation();
             }}
