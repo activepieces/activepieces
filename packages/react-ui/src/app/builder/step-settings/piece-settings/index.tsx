@@ -1,5 +1,4 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
 import React from 'react';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
@@ -87,7 +86,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
           {selectedAction && (
             <AutoPropertiesFormComponent
               key={selectedAction.name}
-              prefixValue={t('settings.input')}
+              prefixValue={'settings.input'}
               props={actionPropsWithoutAuth}
               allowDynamicValues={true}
               disabled={props.readonly}
@@ -98,7 +97,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
           {selectedTrigger && (
             <AutoPropertiesFormComponent
               key={selectedTrigger.name}
-              prefixValue={t('settings.input')}
+              prefixValue={'settings.input'}
               props={triggerPropsWithoutAuth}
               useMentionTextInput={true}
               allowDynamicValues={true}

@@ -5,6 +5,11 @@ import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 import { FormItem, FormLabel } from '@/components/ui/form';
 import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Toggle } from '@/components/ui/toggle';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { PieceProperty } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
@@ -60,13 +65,18 @@ const AutoFormFieldWrapper = ({
         {property.required && <span className="text-destructive">*</span>}
         <span className="grow"></span>
         {allowDynamicValues && (
-          <Toggle
-            pressed={toggled}
-            onPressedChange={(e) => handleChange(e)}
-            disabled={disabled}
-          >
-            <SquareFunction className="stroke-foreground" />
-          </Toggle>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Toggle
+                pressed={toggled}
+                onPressedChange={(e) => handleChange(e)}
+                disabled={disabled}
+              >
+                <SquareFunction className="stroke-foreground" />
+              </Toggle>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('Dynamic value')}</TooltipContent>
+          </Tooltip>
         )}
       </FormLabel>
 

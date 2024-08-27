@@ -1,5 +1,3 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
-
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -14,6 +12,7 @@ import {
   TriggerType,
   isNil,
 } from '@activepieces/shared';
+import { useQueries, useQuery } from '@tanstack/react-query';
 
 import { PRIMITIVE_STEP_METADATA, piecesApi } from './pieces-api';
 
@@ -78,6 +77,7 @@ export const piecesHooks = {
       pieceModel: query.data,
       isLoading: query.isLoading,
       isSuccess: query.isSuccess,
+      refetch: query.refetch,
     };
   },
   useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {

@@ -7,7 +7,7 @@ import { JsonViewer } from '@/components/json-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
-import { StepOutput } from '@activepieces/shared';
+import { flowHelper, StepOutput } from '@activepieces/shared';
 
 const FlowStepInputOutput = React.memo(
   ({ stepDetails }: { stepDetails: StepOutput | undefined }) => {
@@ -18,8 +18,13 @@ const FlowStepInputOutput = React.memo(
         )
       : {};
 
-    const flowVersion = useBuilderStateContext((state) => state.flowVersion);
-
+    const [flowVersion, selectedStepName] = useBuilderStateContext((state) => [
+      state.flowVersion,
+      state.selectedStep,
+    ]);
+    const selectedStep = selectedStepName
+      ? flowHelper.getStep(flowVersion, selectedStepName.stepName)
+      : undefined;
     return (
       <ScrollArea className="h-full p-4 ">
         {stepDetails && (
@@ -29,7 +34,7 @@ const FlowStepInputOutput = React.memo(
                 status={stepDetails.status}
                 size="5"
               ></StepStatusIcon>
-              <div>{flowVersion.displayName}</div>
+              <div>{selectedStep?.displayName}</div>
             </div>
             <div className="flex items-center gap-1 justify-start">
               <Timer className="w-5 h-5" />

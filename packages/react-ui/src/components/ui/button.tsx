@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { LoadingSpinner } from './spinner';
 
 const buttonVariants = cva(
-  'ring-offset-background stroke-foreground focus-visible:ring-ring inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'ring-offset-background  focus-visible:ring-ring inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
@@ -28,6 +28,7 @@ const buttonVariants = cva(
         default: 'h-10 px-4 py-2',
         sm: 'h-9 rounded-md px-3',
         lg: 'h-11 rounded-md px-8',
+        xs: 'h-6 p-2',
         icon: 'size-10',
       },
     },
@@ -103,7 +104,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         }}
       >
         {loading ? (
-          <LoadingSpinner className="stroke-inherit" />
+          <LoadingSpinner
+            className={
+              variant === 'default' ? 'stroke-background' : 'stroke-foreground'
+            }
+          />
         ) : (
           <>
             {keyboardShortcut && (
