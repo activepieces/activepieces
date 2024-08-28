@@ -128,13 +128,25 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
         props.data.stepLocationRelativeToParent ===
           StepLocationRelativeToParent.INSIDE_TRUE_BRANCH) && (
         <foreignObject
-          width={35}
-          height={100}
-          className="z-50 relative"
-          x={buttonPosition.x - 100 * labelDirectionSign}
-          y={buttonPosition.y - 25}
+          width={
+            props.data.stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+              ? 30
+              : 35
+          }
+          height={25}
+          className="z-50 relative pointer-events-none cursor-default"
+          x={
+            buttonPosition.x -
+            (props.data.stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+              ? 100
+              : 116) *
+              labelDirectionSign
+          }
+          y={buttonPosition.y - 27}
         >
-          <div className="text-accent-foreground text-sm text-center bg-background">
+          <div className="text-accent-foreground text-sm text-center bg-background select-none cursor-default">
             {props.data.stepLocationRelativeToParent ===
             StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
               ? t('True')
@@ -170,9 +182,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
             }}
             className="absolute"
             ref={setNodeRef}
-          >
-            {' '}
-          </div>
+          ></div>
           <div
             className={cn(
               'bg-primary/90 w-[18px] h-[18px] rounded-xss box-content ',
