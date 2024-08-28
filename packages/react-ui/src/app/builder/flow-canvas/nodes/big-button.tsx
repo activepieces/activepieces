@@ -48,10 +48,11 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
           className="border cursor-auto border-solid border-none flex items-center justify-center relative "
         >
           <div
-            className={cn('w-[50px] h-[50px]  rounded transition-all', {
-              'bg-accent': !actionMenuOpen && !showDropIndicator,
+            className={cn('w-[50px] h-[50px]  rounded bg-accent', {
               'bg-primary/80': showDropIndicator || actionMenuOpen,
               'shadow-add-button': isIsStepInsideDropzone || actionMenuOpen,
+              'transition-all':
+                isIsStepInsideDropzone || actionMenuOpen || showDropIndicator,
             })}
           >
             {!showDropIndicator && (
@@ -72,12 +73,9 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
                   className="w-full h-full hover:bg-accent-foreground rounded"
                 >
                   <Plus
-                    className={cn(
-                      'w-6 h-6 text-accent-foreground transition-all',
-                      {
-                        'opacity-0': showDropIndicator || actionMenuOpen,
-                      },
-                    )}
+                    className={cn('w-6 h-6 text-accent-foreground ', {
+                      'opacity-0': showDropIndicator || actionMenuOpen,
+                    })}
                   />
                 </Button>
               </PieceSelector>
