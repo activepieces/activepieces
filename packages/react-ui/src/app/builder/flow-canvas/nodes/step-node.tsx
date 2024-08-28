@@ -206,7 +206,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         {!isDragging && (
           <PieceSelector
             operation={{
-              type: pieceSelectorOperation.current,
+              type: isEmptyTriggerSelected
+                ? FlowOperationType.UPDATE_TRIGGER
+                : pieceSelectorOperation.current,
               stepName: data.step!.name!,
             }}
             open={openPieceSelector || isEmptyTriggerSelected}
