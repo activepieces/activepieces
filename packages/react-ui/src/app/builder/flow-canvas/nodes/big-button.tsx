@@ -3,10 +3,10 @@ import { Handle, Position } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 import React, { useId, useState } from 'react';
 
-import { PieceSelectors } from '@/app/builder/pieces-selector';
+import { PieceSelector } from '@/app/builder/pieces-selector';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { FlowOperationType, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
@@ -55,15 +55,17 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
             })}
           >
             {!showDropIndicator && (
-              <PieceSelectors
-                type="action"
+              <PieceSelector
+                operation={{
+                  type: FlowOperationType.ADD_ACTION,
+                  actionLocation: {
+                    parentStep: data.parentStep!,
+                    stepLocationRelativeToParent:
+                      data.stepLocationRelativeToParent!,
+                  },
+                }}
                 open={actionMenuOpen}
                 onOpenChange={setActionMenuOpen}
-                actionLocation={{
-                  parentStep: data.parentStep!,
-                  stepLocationRelativeToParent:
-                    data.stepLocationRelativeToParent!,
-                }}
               >
                 <Button
                   variant="transparent"
@@ -78,7 +80,7 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
                     )}
                   />
                 </Button>
-              </PieceSelectors>
+              </PieceSelector>
             )}
           </div>
           {showDropIndicator && (

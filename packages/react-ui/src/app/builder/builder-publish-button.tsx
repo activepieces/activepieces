@@ -88,6 +88,8 @@ const BuilderPublishButton = React.memo(() => {
             <TooltipContent side="bottom">
               {isPublishedVersion
                 ? t('Latest version is published')
+                : !isValid
+                ? t('Your flow has incomplete steps')
                 : t('Publish')}
             </TooltipContent>
           </Tooltip>

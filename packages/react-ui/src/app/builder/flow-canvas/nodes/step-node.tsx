@@ -16,7 +16,7 @@ import {
   builderSelectors,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { PieceSelectors } from '@/app/builder/pieces-selector';
+import { PieceSelector } from '@/app/builder/pieces-selector';
 import ImageWithFallback from '@/app/components/image-with-fallback';
 import { InvalidStepIcon } from '@/components/custom/alert-icon';
 import { Button } from '@/components/ui/button';
@@ -77,6 +77,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     selectedStep,
     run,
     readonly,
+    exitStepSettings,
   ] = useBuilderStateContext((state) => [
     state.selectStepByName,
     state.setAllowCanvasPanning,
@@ -85,8 +86,11 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     state.selectedStep,
     state.run,
     state.readonly,
+    state.exitStepSettings,
   ]);
-
+  const pieceSelectorOperation = useRef<
+    FlowOperationType.UPDATE_ACTION | FlowOperationType.UPDATE_TRIGGER
+  >(FlowOperationType.UPDATE_ACTION);
   const deleteStep = useBuilderStateContext((state) => () => {
     state.applyOperation(
       {
@@ -121,8 +125,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   const isTrigger = flowHelper.isTrigger(data.step!.type);
   const isAction = flowHelper.isAction(data.step!.type);
-
-  const stepName = data?.step?.name;
+  const isEmptyTriggerSelected =
+    selectedStep?.stepName === 'trigger' &&
+    data.step?.type === TriggerType.EMPTY;
 
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: data.step!.name,
@@ -133,8 +138,8 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   });
 
   const stepOutputStatus = useMemo(
-    () => getStepStatus(stepName, selectedStep, run),
-    [stepName, selectedStep, run],
+    () => getStepStatus(data.step?.name, selectedStep, run),
+    [data.step?.name, selectedStep, run],
   );
 
   const showRunningIcon =
@@ -144,13 +149,8 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     : flowRunUtils.getStatusIconForStep(stepOutputStatus);
 
   const handleStepClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    const { type, name } = data.step!;
-    if (type === TriggerType.EMPTY) {
-      setOpenPieceSelector(true);
-      return;
-    } else {
-      selectStepByName(name);
-    }
+    const { name } = data.step!;
+    selectStepByName(name);
     e.preventDefault();
     e.stopPropagation();
   };
@@ -163,7 +163,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         width: `${AP_NODE_SIZE.stepNode.width}px`,
       }}
       className={cn(
-        'transition-all border-box border rounded-sm border border-solid  border-border-300 relative',
+        'transition-all border-box border rounded-sm border border-solid  border-border-300 relative hover:border-primary group',
         {
           'shadow-step-container': !isDragging,
           'border-primary': isSelected,
@@ -185,6 +185,15 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       {...listeners}
     >
       <div
+        className="absolute text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
+        style={{
+          top: `${AP_NODE_SIZE.stepNode.height / 2 - 12}px`,
+          right: `-${AP_NODE_SIZE.stepNode.width / 5}px`,
+        }}
+      >
+        {data.step?.name}
+      </div>
+      <div
         className={cn(
           'absolute left-0 top-0 pointer-events-none  rounded-sm w-full h-full',
           {
@@ -195,13 +204,18 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       ></div>
       <div className="px-3 h-full w-full  overflow-hidden">
         {!isDragging && (
-          <PieceSelectors
-            type={isTrigger ? 'trigger' : 'action'}
-            open={openPieceSelector}
+          <PieceSelector
+            operation={{
+              type: pieceSelectorOperation.current,
+              stepName: data.step?.name!,
+            }}
+            open={openPieceSelector || isEmptyTriggerSelected}
             onOpenChange={(open) => {
               setOpenPieceSelector(open);
               if (open) {
                 setOpenStepActionsMenu(false);
+              } else if (data.step?.type === TriggerType.EMPTY) {
+                exitStepSettings();
               }
             }}
             asChild={true}
@@ -255,6 +269,24 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                             className="w-44 absolute"
                             onCloseAutoFocus={(e) => e.preventDefault()}
                           >
+                            <DropdownMenuItem
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                pieceSelectorOperation.current = isAction
+                                  ? FlowOperationType.UPDATE_ACTION
+                                  : FlowOperationType.UPDATE_TRIGGER;
+                                setOpenStepActionsMenu(false);
+                                setOpenPieceSelector(true);
+                                selectStepByName(data.step?.name!);
+                              }}
+                            >
+                              <StepActionWrapper>
+                                <ArrowRightLeft className=" h-4 w-4 " />
+                                <span>Replace</span>
+                              </StepActionWrapper>
+                            </DropdownMenuItem>
+
                             {isAction && (
                               <DropdownMenuItem
                                 onSelect={(e) => {
@@ -264,29 +296,12 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                                 }}
                               >
                                 <StepActionWrapper>
-                                  <CopyPlus className=" h-4 w-4 " />
+                                  <CopyPlus className="h-4 w-4" />
                                   {t('Duplicate')}
                                 </StepActionWrapper>
                               </DropdownMenuItem>
                             )}
 
-                            {isTrigger && (
-                              <DropdownMenuItem
-                                onSelect={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setOpenStepActionsMenu(false);
-                                  setTimeout(() => {
-                                    setOpenPieceSelector(true);
-                                  });
-                                }}
-                              >
-                                <StepActionWrapper>
-                                  <ArrowRightLeft className=" h-4 w-4 " />
-                                  <span>Replace</span>
-                                </StepActionWrapper>
-                              </DropdownMenuItem>
-                            )}
                             {isAction && (
                               <>
                                 <DropdownMenuSeparator />
@@ -350,7 +365,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 </div>
               </div>
             </div>
-          </PieceSelectors>
+          </PieceSelector>
         )}
 
         <Handle

@@ -88,7 +88,7 @@ const getDefaultStep = ({
   };
   const common = {
     name: stepName,
-    valid: false,
+    valid:piece.type === ActionType.CODE || piece.type === ActionType.LOOP_ON_ITEMS,
     displayName: displayName,
     settings: {
       inputUiInfo: {
@@ -96,6 +96,7 @@ const getDefaultStep = ({
       },
     },
   };
+ 
   switch (piece.type) {
     case ActionType.CODE:
       return deepMergeAndCast<CodeAction>(
@@ -112,6 +113,7 @@ const getDefaultStep = ({
             },
             errorHandlingOptions: errorHandlingOptions,
           },
+         
         },
         common,
       );
