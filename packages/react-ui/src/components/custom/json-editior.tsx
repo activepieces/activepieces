@@ -1,4 +1,5 @@
 import { json } from '@codemirror/lang-json';
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, {
   EditorState,
   EditorView,
@@ -6,9 +7,9 @@ import CodeMirror, {
 } from '@uiw/react-codemirror';
 import React, { RefObject, useRef, useState } from 'react';
 import { ControllerRenderProps } from 'react-hook-form';
-import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
-import { cn } from '@/lib/utils';
+
 import { useTheme } from '@/components/theme-provider';
+import { cn } from '@/lib/utils';
 
 const styleTheme = EditorView.baseTheme({
   '&.cm-editor.cm-focused': {

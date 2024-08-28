@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
@@ -67,6 +68,13 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
 
   return (
     <div className="flex flex-col gap-4 w-full">
+      {isLoading && (
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="w-full h-8" />
+          ))}
+        </div>
+      )}
       {pieceModel && (
         <>
           {pieceModel.auth &&

@@ -7,9 +7,8 @@ import {
   CopyPlus,
   EllipsisVertical,
   Trash,
-  User,
 } from 'lucide-react';
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 
 import {
   StepPathWithName,
@@ -67,6 +66,7 @@ const StepActionWrapper = React.memo(
     );
   },
 );
+StepActionWrapper.displayName = 'StepActionWrapper';
 const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { toast } = useToast();
   const [
@@ -207,7 +207,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
           <PieceSelector
             operation={{
               type: pieceSelectorOperation.current,
-              stepName: data.step?.name!,
+              stepName: data.step!.name!,
             }}
             open={openPieceSelector || isEmptyTriggerSelected}
             onOpenChange={(open) => {
@@ -278,7 +278,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                                   : FlowOperationType.UPDATE_TRIGGER;
                                 setOpenStepActionsMenu(false);
                                 setOpenPieceSelector(true);
-                                selectStepByName(data.step?.name!);
+                                selectStepByName(data.step!.name!);
                               }}
                             >
                               <StepActionWrapper>
