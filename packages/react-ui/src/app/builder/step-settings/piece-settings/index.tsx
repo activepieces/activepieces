@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
@@ -14,7 +15,6 @@ import {
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
 
 import { ConnectionSelect } from './connection-select';
-import { PieceActionTriggerSelector } from './piece-action-trigger-selector';
 
 type PieceSettingsProps = {
   step: PieceAction | PieceTrigger;
@@ -68,14 +68,15 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
 
   return (
     <div className="flex flex-col gap-4 w-full">
+      {isLoading && (
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="w-full h-8" />
+          ))}
+        </div>
+      )}
       {pieceModel && (
         <>
-          <PieceActionTriggerSelector
-            piece={pieceModel}
-            isLoading={isLoading}
-            type={props.step.type}
-            disabled={props.readonly}
-          ></PieceActionTriggerSelector>
           {pieceModel.auth &&
             (selectedAction?.requireAuth || selectedTrigger) && (
               <ConnectionSelect

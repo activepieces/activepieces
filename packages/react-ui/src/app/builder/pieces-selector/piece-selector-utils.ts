@@ -62,11 +62,17 @@ const isAiPiece = (piece: StepMetadata) =>
 const isAppPiece = (piece: StepMetadata) =>
   !isAiPiece(piece) && !isCorePiece(piece);
 
-const getDefaultStep = (
-  stepName: string,
-  piece: StepMetadata,
-  actionOrTriggerName?: string,
-): Action | Trigger => {
+const getDefaultStep = ({
+  stepName,
+  piece,
+  actionOrTriggerName,
+  displayName,
+}: {
+  stepName: string;
+  piece: StepMetadata;
+  displayName: string;
+  actionOrTriggerName?: string;
+}): Action | Trigger => {
   const errorHandlingOptions = {
     continueOnFailure: {
       hide: true,
@@ -79,14 +85,16 @@ const getDefaultStep = (
   };
   const common = {
     name: stepName,
-    valid: false,
-    displayName: piece.displayName,
+    valid:
+      piece.type === ActionType.CODE || piece.type === ActionType.LOOP_ON_ITEMS,
+    displayName: displayName,
     settings: {
       inputUiInfo: {
         customizedInputs: {},
       },
     },
   };
+
   switch (piece.type) {
     case ActionType.CODE:
       return deepMergeAndCast<CodeAction>(

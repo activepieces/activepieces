@@ -56,7 +56,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
 }) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
-    authenticationSession.getProjectId(),
+    authenticationSession.getProjectId()!,
     platform.gitSyncEnabled,
   );
   const isDevelopmentBranch =
@@ -66,7 +66,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     mutationFn: async () => {
       const createdFlow = await flowsApi.create({
         displayName: flowVersion.displayName,
-        projectId: authenticationSession.getProjectId(),
+        projectId: authenticationSession.getProjectId()!,
       });
       const updatedFlow = await flowsApi.update(createdFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,

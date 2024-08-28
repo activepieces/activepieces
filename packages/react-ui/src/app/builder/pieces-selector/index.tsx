@@ -55,24 +55,33 @@ type ItemListMetadata = {
   description: string;
 };
 
-type PieceSelectorsProps = {
+type PieceSelectorProps = {
   children: React.ReactNode;
-  type: 'action' | 'trigger';
+  operation:
+    | {
+        type: FlowOperationType.ADD_ACTION;
+        actionLocation: {
+          parentStep: string;
+          stepLocationRelativeToParent: StepLocationRelativeToParent;
+        };
+      }
+    | { type: FlowOperationType.UPDATE_TRIGGER }
+    | {
+        type: FlowOperationType.UPDATE_ACTION;
+        stepName: string;
+      };
   open: boolean;
+  asChild?: boolean;
   onOpenChange: (open: boolean) => void;
-  actionLocation?: {
-    parentStep: string;
-    stepLocationRelativeToParent: StepLocationRelativeToParent;
-  };
 };
 
-const PieceSelectors = ({
+const PieceSelector = ({
   children,
-  type,
   open,
+  asChild = true,
   onOpenChange,
-  actionLocation,
-}: PieceSelectorsProps) => {
+  operation,
+}: PieceSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
   const showRequestPieceButton = flagsHooks.useFlag<boolean>(
@@ -99,7 +108,10 @@ const PieceSelectors = ({
   const { metadata, isLoading: isLoadingPieces } =
     piecesHooks.useAllStepsMetadata({
       searchQuery: debouncedQuery,
-      type,
+      type:
+        operation.type === FlowOperationType.UPDATE_TRIGGER
+          ? 'trigger'
+          : 'action',
     });
 
   const resetField = () => {
@@ -118,35 +130,59 @@ const PieceSelectors = ({
     }
     resetField();
     onOpenChange(false);
-    const stepName = pieceSelectorUtils.getStepName(piece, flowVersion);
-    const defaultStep = pieceSelectorUtils.getDefaultStep(
-      stepName,
+    const newStepName = pieceSelectorUtils.getStepName(piece, flowVersion);
+    const stepData = pieceSelectorUtils.getDefaultStep({
+      stepName: newStepName,
       piece,
-      item.name,
-    );
+      actionOrTriggerName: item.name,
+      displayName: item.displayName,
+    });
 
-    if (piece.type === TriggerType.PIECE) {
-      applyOperation(
-        {
-          type: FlowOperationType.UPDATE_TRIGGER,
-          request: defaultStep as Trigger,
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
-    } else if (actionLocation) {
-      applyOperation(
-        {
-          type: FlowOperationType.ADD_ACTION,
-          request: {
-            parentStep: actionLocation.parentStep,
-            stepLocationRelativeToParent:
-              actionLocation.stepLocationRelativeToParent,
-            action: defaultStep as Action,
+    switch (operation.type) {
+      case FlowOperationType.UPDATE_TRIGGER: {
+        applyOperation(
+          {
+            type: FlowOperationType.UPDATE_TRIGGER,
+            request: stepData as Trigger,
           },
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
-      selectStepByName(defaultStep.name);
+          () => toast(UNSAVED_CHANGES_TOAST),
+        );
+        selectStepByName('trigger');
+        break;
+      }
+      case FlowOperationType.ADD_ACTION: {
+        applyOperation(
+          {
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+              parentStep: operation.actionLocation.parentStep,
+              stepLocationRelativeToParent:
+                operation.actionLocation.stepLocationRelativeToParent,
+              action: stepData as Action,
+            },
+          },
+          () => toast(UNSAVED_CHANGES_TOAST),
+        );
+        selectStepByName(stepData.name);
+        break;
+      }
+      case FlowOperationType.UPDATE_ACTION: {
+        applyOperation(
+          {
+            type: FlowOperationType.UPDATE_ACTION,
+            request: {
+              type: (stepData as Action).type,
+              displayName: stepData.displayName,
+              name: operation.stepName,
+              settings: {
+                ...stepData.settings,
+              },
+              valid: stepData.valid,
+            },
+          },
+          () => toast(UNSAVED_CHANGES_TOAST),
+        );
+      }
     }
   };
 
@@ -159,11 +195,13 @@ const PieceSelectors = ({
             name: (stepMetadata as PieceStepMetadata).pieceName,
           });
           return Object.entries(
-            type === 'action' ? pieceMetadata.actions : pieceMetadata.triggers,
-          ).map(([actionName, action]) => ({
-            name: actionName,
-            displayName: action.displayName,
-            description: action.description,
+            operation.type === FlowOperationType.UPDATE_TRIGGER
+              ? pieceMetadata.triggers
+              : pieceMetadata.actions,
+          ).map(([actionOrTriggerName, actionOrTrigger]) => ({
+            name: actionOrTriggerName,
+            displayName: actionOrTrigger.displayName,
+            description: actionOrTrigger.description,
           }));
         }
         case ActionType.CODE:
@@ -225,6 +263,7 @@ const PieceSelectors = ({
   return (
     <Popover
       open={open}
+      modal={true}
       onOpenChange={(open) => {
         if (!open) {
           resetField();
@@ -232,8 +271,11 @@ const PieceSelectors = ({
         onOpenChange(open);
       }}
     >
-      <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-[600px] p-0 shadow-lg">
+      <PopoverTrigger asChild={asChild}>{children}</PopoverTrigger>
+      <PopoverContent
+        className="w-[600px] p-0 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-2">
           <Input
             className="border-none"
@@ -248,7 +290,11 @@ const PieceSelectors = ({
         </div>
         <PieceTagGroup
           selectedTag={selectedTag}
-          type={type}
+          type={
+            operation.type === FlowOperationType.UPDATE_TRIGGER
+              ? 'trigger'
+              : 'action'
+          }
           onSelectTag={(value) => {
             setSelectedTag(value);
             setSelectedSubItems(undefined);
@@ -372,4 +418,4 @@ const PieceSelectors = ({
   );
 };
 
-export { PieceSelectors };
+export { PieceSelector };
