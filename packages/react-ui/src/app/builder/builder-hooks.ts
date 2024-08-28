@@ -160,7 +160,11 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               .map((p) => [p.name, 0]),
             stepName,
           },
-          rightSidebar: stepName==="trigger" && state.flowVersion.trigger.type === TriggerType.EMPTY ? RightSideBarType.NONE: RightSideBarType.PIECE_SETTINGS ,
+          rightSidebar:
+            stepName === 'trigger' &&
+            state.flowVersion.trigger.type === TriggerType.EMPTY
+              ? RightSideBarType.NONE
+              : RightSideBarType.PIECE_SETTINGS,
           leftSidebar: !isNil(state.run)
             ? LeftSideBarType.RUN_DETAILS
             : LeftSideBarType.NONE,

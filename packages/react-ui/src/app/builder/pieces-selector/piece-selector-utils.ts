@@ -66,16 +66,13 @@ const getDefaultStep = ({
   stepName,
   piece,
   actionOrTriggerName,
-  displayName
-}:
-  {stepName: string,
-  piece: StepMetadata,
-  displayName: string,
-  actionOrTriggerName?: string
-}
-
-
-): Action | Trigger => {
+  displayName,
+}: {
+  stepName: string;
+  piece: StepMetadata;
+  displayName: string;
+  actionOrTriggerName?: string;
+}): Action | Trigger => {
   const errorHandlingOptions = {
     continueOnFailure: {
       hide: true,
@@ -88,7 +85,8 @@ const getDefaultStep = ({
   };
   const common = {
     name: stepName,
-    valid:piece.type === ActionType.CODE || piece.type === ActionType.LOOP_ON_ITEMS,
+    valid:
+      piece.type === ActionType.CODE || piece.type === ActionType.LOOP_ON_ITEMS,
     displayName: displayName,
     settings: {
       inputUiInfo: {
@@ -96,7 +94,7 @@ const getDefaultStep = ({
       },
     },
   };
- 
+
   switch (piece.type) {
     case ActionType.CODE:
       return deepMergeAndCast<CodeAction>(
@@ -113,7 +111,6 @@ const getDefaultStep = ({
             },
             errorHandlingOptions: errorHandlingOptions,
           },
-         
         },
         common,
       );

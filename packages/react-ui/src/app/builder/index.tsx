@@ -1,23 +1,6 @@
-import {
-  ActionType,
-  PieceTrigger,
-  TriggerType,
-  WebsocketClientEvent,
-  flowHelper,
-} from '@activepieces/shared';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
-
-import { cn, useElementSize } from '../../lib/utils';
-
-import { BuilderHeader } from './builder-header';
-import { ChatSidebar } from './copilot';
-import { FlowCanvas } from './flow-canvas';
-import { FlowVersionsList } from './flow-versions';
-import { FlowRunDetails } from './run-details';
-import { FlowRecentRunsList } from './run-list';
-import { StepSettingsContainer } from './step-settings';
 
 import {
   LeftSideBarType,
@@ -36,6 +19,23 @@ import {
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import {
+  ActionType,
+  PieceTrigger,
+  TriggerType,
+  WebsocketClientEvent,
+  flowHelper,
+} from '@activepieces/shared';
+
+import { cn, useElementSize } from '../../lib/utils';
+
+import { BuilderHeader } from './builder-header';
+import { ChatSidebar } from './copilot';
+import { FlowCanvas } from './flow-canvas';
+import { FlowVersionsList } from './flow-versions';
+import { FlowRunDetails } from './run-details';
+import { FlowRecentRunsList } from './run-list';
+import { StepSettingsContainer } from './step-settings';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;

@@ -20,6 +20,13 @@ import { PieceSelector } from '@/app/builder/pieces-selector';
 import ImageWithFallback from '@/app/components/image-with-fallback';
 import { InvalidStepIcon } from '@/components/custom/alert-icon';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
@@ -36,13 +43,6 @@ import {
 } from '@activepieces/shared';
 
 import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 function getStepStatus(
   stepName: string | undefined,

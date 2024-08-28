@@ -20,7 +20,8 @@ const buttonVariants = cva(
           'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
         secondary:
           'bg-secondary text-secondary-foreground enabled:hover:bg-secondary/80',
-        ghost: 'enabled:hover:bg-accent enabled:hover:text-accent-foreground focus-visible:ring-0',
+        ghost:
+          'enabled:hover:bg-accent enabled:hover:text-accent-foreground focus-visible:ring-0',
         link: 'text-primary underline-offset-4 enabled:hover:underline',
         transparent: 'text-primary enabled:hover:bg-transparent',
       },

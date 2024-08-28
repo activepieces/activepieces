@@ -170,8 +170,14 @@ const StepSettingsContainer = React.memo(
       step: Action | Trigger,
       pieceModel: PieceMetadataModel | undefined,
     ) => {
-      const name = step.type === TriggerType.PIECE ? step.settings.triggerName : step.settings.actionName;
-      const item = step.type === TriggerType.PIECE ? pieceModel?.triggers[name] : pieceModel?.actions[name];
+      const name =
+        step.type === TriggerType.PIECE
+          ? step.settings.triggerName
+          : step.settings.actionName;
+      const item =
+        step.type === TriggerType.PIECE
+          ? pieceModel?.triggers[name]
+          : pieceModel?.actions[name];
       return isNil(name) || isNil(item) ? step.displayName : item.displayName;
     };
 
