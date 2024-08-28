@@ -2,7 +2,13 @@ import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, Position } from '@xyflow/react';
 import { t } from 'i18next';
-import { ArrowRightLeft, CopyPlus, EllipsisVertical, Trash, User } from 'lucide-react';
+import {
+  ArrowRightLeft,
+  CopyPlus,
+  EllipsisVertical,
+  Trash,
+  User,
+} from 'lucide-react';
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 
 import {
@@ -30,7 +36,13 @@ import {
 } from '@activepieces/shared';
 
 import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 function getStepStatus(
   stepName: string | undefined,
@@ -48,6 +60,13 @@ function getStepStatus(
   return state?.status;
 }
 
+const StepActionWrapper = React.memo(
+  ({ children }: { children: React.ReactNode }) => {
+    return (
+      <div className="flex items-center gap-2 cursor-pointer">{children}</div>
+    );
+  },
+);
 const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const { toast } = useToast();
   const [
@@ -97,8 +116,8 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     step: data.step!,
   });
 
-  const [stepActionsMenu, setStepActionsMenu] = useState<boolean>(false);
-  const [openTriggerMenu, setOpenTriggerMenu] = useState(false);
+  const [openStepActionsMenu, setOpenStepActionsMenu] = useState(false);
+  const [openPieceSelector, setOpenPieceSelector] = useState(false);
 
   const isTrigger = flowHelper.isTrigger(data.step!.type);
   const isAction = flowHelper.isAction(data.step!.type);
@@ -127,7 +146,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const handleStepClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const { type, name } = data.step!;
     if (type === TriggerType.EMPTY) {
-      setOpenTriggerMenu(true);
+      setOpenPieceSelector(true);
       return;
     } else {
       selectStepByName(name);
@@ -135,7 +154,6 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     e.preventDefault();
     e.stopPropagation();
   };
-
 
   return (
     <div
@@ -171,7 +189,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
           'absolute left-0 top-0 pointer-events-none  rounded-sm w-full h-full',
           {
             'border-t-[3px] border-primary border-solid':
-              (isSelected) && !isDragging,
+              isSelected && !isDragging,
           },
         )}
       ></div>
@@ -179,11 +197,11 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         {!isDragging && (
           <PieceSelectors
             type={isTrigger ? 'trigger' : 'action'}
-            open={openTriggerMenu}
+            open={openPieceSelector}
             onOpenChange={(open) => {
-              setOpenTriggerMenu(open);
+              setOpenPieceSelector(open);
               if (open) {
-                setStepActionsMenu(false);
+                setOpenStepActionsMenu(false);
               }
             }}
             asChild={true}
@@ -191,7 +209,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
             <div
               className="flex h-full w-full"
               onClick={(e) => {
-                if (!openTriggerMenu) {
+                if (!openPieceSelector) {
                   handleStepClick(e);
                 }
               }}
@@ -206,21 +224,19 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                   />
                 </div>
                 <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
-                  <div className="text-sm text-ellipsis overflow-hidden whitespace-nowrap w-full flex items-center justify-between">
-
-                    {data.step?.displayName}
+                  <div className=" flex items-center justify-between min-w-0 w-full">
+                    <div className="text-sm truncate grow shrink ">
+                      {data.step?.displayName}
+                    </div>
 
                     {!readonly && (
-                      <div onClick={(e) => e.stopPropagation()}>
+                      <div onClick={(e) => e.stopPropagation()} className=" ">
                         <DropdownMenu
-                          modal={true}
-                          open={stepActionsMenu}
+                          open={openStepActionsMenu}
                           onOpenChange={(open) => {
-                            setStepActionsMenu(open);
-                            if (open) {
-                              setOpenTriggerMenu(false);
-                            }
+                            setOpenStepActionsMenu(open);
                           }}
+                          modal={true}
                         >
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -235,40 +251,58 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                               <EllipsisVertical className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent className="w-44 absolute">
+                          <DropdownMenuContent
+                            className="w-44 absolute"
+                            onCloseAutoFocus={(e) => e.preventDefault()}
+                          >
                             {isAction && (
-                              <DropdownMenuItem onSelect={(e) => {
-                                e.preventDefault();
-                                duplicateStep();
-                                setStepActionsMenu(false);
-                              }}>
-                                <CopyPlus className="mr-2 h-4 w-4 " />
-                                {t('Duplicate')}
+                              <DropdownMenuItem
+                                onSelect={(e) => {
+                                  e.preventDefault();
+                                  duplicateStep();
+                                  setOpenStepActionsMenu(false);
+                                }}
+                              >
+                                <StepActionWrapper>
+                                  <CopyPlus className=" h-4 w-4 " />
+                                  {t('Duplicate')}
+                                </StepActionWrapper>
                               </DropdownMenuItem>
                             )}
+
                             {isTrigger && (
                               <DropdownMenuItem
                                 onSelect={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  setStepActionsMenu(false);
-                                  setOpenTriggerMenu(true);
+                                  setOpenStepActionsMenu(false);
+                                  setTimeout(() => {
+                                    setOpenPieceSelector(true);
+                                  });
                                 }}
                               >
-                                <ArrowRightLeft className="mr-2 h-4 w-4 " />
-                                <span>Replace</span>
+                                <StepActionWrapper>
+                                  <ArrowRightLeft className=" h-4 w-4 " />
+                                  <span>Replace</span>
+                                </StepActionWrapper>
                               </DropdownMenuItem>
                             )}
                             {isAction && (
                               <>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onSelect={(e) => {
-                                  e.preventDefault();
-                                  deleteStep();
-                                  setStepActionsMenu(false);
-                                }}>
-                                  <Trash className="mr-2 h-4 w-4 text-destructive" />
-                                  <span className='text-destructive'>Delete</span>
+                                <DropdownMenuItem
+                                  onSelect={(e) => {
+                                    e.preventDefault();
+                                    deleteStep();
+                                    setOpenStepActionsMenu(false);
+                                  }}
+                                >
+                                  <StepActionWrapper>
+                                    <Trash className="mr-2 h-4 w-4 text-destructive" />
+                                    <span className="text-destructive">
+                                      Delete
+                                    </span>
+                                  </StepActionWrapper>
                                 </DropdownMenuItem>
                               </>
                             )}
@@ -277,6 +311,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                       </div>
                     )}
                   </div>
+
                   <div className="flex justify-between w-full items-center">
                     <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
                       {stepMetadata?.displayName}
@@ -297,11 +332,13 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                       {!data.step?.valid && (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <InvalidStepIcon
-                              size={16}
-                              viewBox="0 0 16 16"
-                              className="stroke-0 animate-fade"
-                            ></InvalidStepIcon>
+                            <div className="mx-2">
+                              <InvalidStepIcon
+                                size={16}
+                                viewBox="0 0 16 16"
+                                className="stroke-0 animate-fade"
+                              ></InvalidStepIcon>
+                            </div>
                           </TooltipTrigger>
                           <TooltipContent side="bottom">
                             {t('Incomplete settings')}

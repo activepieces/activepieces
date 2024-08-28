@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { MoveLeft, SearchX } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
@@ -121,11 +121,12 @@ const PieceSelectors = ({
     resetField();
     onOpenChange(false);
     const stepName = pieceSelectorUtils.getStepName(piece, flowVersion);
-    const defaultStep = pieceSelectorUtils.getDefaultStep(
+    const defaultStep = pieceSelectorUtils.getDefaultStep({
       stepName,
       piece,
-      item.name,
-    );
+      actionOrTriggerName: item.name,
+      displayName: item.displayName,
+    });
 
     if (piece.type === TriggerType.PIECE) {
       applyOperation(
@@ -135,6 +136,7 @@ const PieceSelectors = ({
         },
         () => toast(UNSAVED_CHANGES_TOAST),
       );
+      selectStepByName('trigger');
     } else if (actionLocation) {
       applyOperation(
         {
@@ -227,6 +229,7 @@ const PieceSelectors = ({
   return (
     <Popover
       open={open}
+      modal={true}
       onOpenChange={(open) => {
         if (!open) {
           resetField();
@@ -234,8 +237,11 @@ const PieceSelectors = ({
         onOpenChange(open);
       }}
     >
-      <PopoverTrigger asChild={asChild} >{children}</PopoverTrigger>
-      <PopoverContent className="w-[600px] p-0 shadow-lg" onClick={(e) => e.stopPropagation()}>
+      <PopoverTrigger asChild={asChild}>{children}</PopoverTrigger>
+      <PopoverContent
+        className="w-[600px] p-0 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-2">
           <Input
             className="border-none"

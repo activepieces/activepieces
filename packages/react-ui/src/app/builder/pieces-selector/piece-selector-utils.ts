@@ -62,10 +62,19 @@ const isAiPiece = (piece: StepMetadata) =>
 const isAppPiece = (piece: StepMetadata) =>
   !isAiPiece(piece) && !isCorePiece(piece);
 
-const getDefaultStep = (
-  stepName: string,
+const getDefaultStep = ({
+  stepName,
+  piece,
+  actionOrTriggerName,
+  displayName
+}:
+  {stepName: string,
   piece: StepMetadata,
-  actionOrTriggerName?: string,
+  displayName: string,
+  actionOrTriggerName?: string
+}
+
+
 ): Action | Trigger => {
   const errorHandlingOptions = {
     continueOnFailure: {
@@ -80,7 +89,7 @@ const getDefaultStep = (
   const common = {
     name: stepName,
     valid: false,
-    displayName: piece.displayName,
+    displayName: displayName,
     settings: {
       inputUiInfo: {
         customizedInputs: {},
