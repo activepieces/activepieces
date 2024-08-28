@@ -1,5 +1,4 @@
 import { json } from '@codemirror/lang-json';
-import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, {
   EditorState,
   EditorView,
@@ -7,8 +6,9 @@ import CodeMirror, {
 } from '@uiw/react-codemirror';
 import React, { RefObject, useRef, useState } from 'react';
 import { ControllerRenderProps } from 'react-hook-form';
-
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/components/theme-provider';
 
 const styleTheme = EditorView.baseTheme({
   '&.cm-editor.cm-focused': {
@@ -44,6 +44,8 @@ type JsonEditorProps = {
 const JsonEditor = React.memo(
   ({ field, readonly, onFocus, className }: JsonEditorProps) => {
     const [value, setValue] = useState(convertToString(field.value));
+    const { theme } = useTheme();
+    const ediitorTheme = theme === 'dark' ? githubDark : githubLight;
     const extensions = [
       styleTheme,
       EditorState.readOnly.of(readonly),
@@ -72,7 +74,7 @@ const JsonEditor = React.memo(
             setValue(value);
             field.onChange(tryParseJson(value));
           }}
-          theme={githubLight}
+          theme={ediitorTheme}
           readOnly={readonly}
           onFocus={() => onFocus?.(ref)}
           extensions={extensions}
