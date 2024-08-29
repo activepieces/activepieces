@@ -2,11 +2,19 @@ import React from 'react';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { rolePermissions } from '@activepieces/ee-shared';
-import { Permission } from '@activepieces/shared';
+import {
+  ApFlagId,
+  Permission,
+  PlatformRole,
+  ProjectMemberRole,
+} from '@activepieces/shared';
 import { t } from 'i18next';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const useAuthorization = () => {
   const role = authenticationSession.getUserProjectRole();
+
   const checkAccess = React.useCallback(
     (permission: Permission) => {
       if (!role) return true;
@@ -17,6 +25,15 @@ export const useAuthorization = () => {
   );
 
   return { checkAccess, role };
+};
+
+export const useShowPlatformAdminDashboard = () => {
+  const platformRole = authenticationSession.getUserPlatformRole();
+  const { data: isPlatfromDemo } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_PLATFORM_DEMO,
+    useQueryClient(),
+  );
+  return isPlatfromDemo || platformRole === PlatformRole.ADMIN;
 };
 
 type AuthorizationProps = {

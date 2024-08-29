@@ -13,11 +13,12 @@ import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
 
 import { FlagGuard } from './flag-guard';
+import { useShowPlatformAdminDashboard } from '@/components/authorization';
 
 export const Header = () => {
   const history = useLocation();
   const isInPlatformAdmin = history.pathname.startsWith('/platform');
-
+  const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   return (
     <div className="flex h-[60px]">
       {isInPlatformAdmin ? (
@@ -28,22 +29,27 @@ export const Header = () => {
       <div className="grow"></div>
       <div className="flex items-center justify-center gap-4">
         <InviteUserDialog></InviteUserDialog>
-        <Link to={isInPlatformAdmin ? '/' : '/platform'}>
-          <Button
-            variant={'outline'}
-            size="sm"
-            className="flex items-center justify-center gap-2"
-          >
-            {isInPlatformAdmin ? (
-              <LogOut className="size-4" />
-            ) : (
-              <Shield className="size-4" />
-            )}
-            <span>
-              {t(isInPlatformAdmin ? 'Exit Platform Admin' : 'Platform Admin')}
-            </span>
-          </Button>
-        </Link>
+        {showPlatformAdminDashboard && (
+          <Link to={isInPlatformAdmin ? '/' : '/platform'}>
+            <Button
+              variant={'outline'}
+              size="sm"
+              className="flex items-center justify-center gap-2"
+            >
+              {isInPlatformAdmin ? (
+                <LogOut className="size-4" />
+              ) : (
+                <Shield className="size-4" />
+              )}
+              <span>
+                {t(
+                  isInPlatformAdmin ? 'Exit Platform Admin' : 'Platform Admin',
+                )}
+              </span>
+            </Button>
+          </Link>
+        )}
+
         <TaskLimitButton />
         <UserAvatar />
       </div>

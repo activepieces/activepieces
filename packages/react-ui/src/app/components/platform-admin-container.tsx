@@ -15,6 +15,8 @@ import { ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { Sidebar, SidebarLink } from './sidebar';
+import { useShowPlatformAdminDashboard } from '@/components/authorization';
+import { Navigate } from 'react-router-dom';
 
 type PlatformAdminContainerProps = {
   children: React.ReactNode;
@@ -31,6 +33,7 @@ export function PlatformAdminContainer({
     queryClient,
   );
 
+  const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   const isLocked = (locked: boolean) => locked || (showPlatformDemo ?? false);
 
   const links: SidebarLink[] = [
@@ -73,7 +76,11 @@ export function PlatformAdminContainer({
 
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
-      <Sidebar links={links}>{children}</Sidebar>
+      {showPlatformAdminDashboard ? (
+        <Sidebar links={links}>{children}</Sidebar>
+      ) : (
+        <Navigate to="/flows" />
+      )}
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }
