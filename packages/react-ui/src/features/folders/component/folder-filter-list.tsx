@@ -42,13 +42,15 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { FolderDto } from '@activepieces/shared';
+import { FolderDto, Permission } from '@activepieces/shared';
 
 import { foldersApi } from '../lib/folders-api';
 import { foldersHooks } from '../lib/folders-hooks';
 import { foldersUtils } from '../lib/folders-utils';
 
 import { RenameFolderDialog } from './rename-folder-dialog';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
+import { useAuthorization } from '@/components/authorization';
 
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
@@ -63,12 +65,14 @@ type FolderItemProps = {
   refetch: () => void;
   updateSearchParams: (folderId: string | undefined) => void;
   selectedFolderId: string | null;
+  userHasPermissionToUpdateFolders: boolean;
 };
 const FolderItem = ({
   folder,
   refetch,
   updateSearchParams,
   selectedFolderId,
+  userHasPermissionToUpdateFolders,
 }: FolderItemProps) => {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   return (
@@ -127,12 +131,19 @@ const FolderItem = ({
                   folderId={folder.id}
                   onRename={() => refetch()}
                 >
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <div className="flex flex-row gap-2 items-center">
-                      <Pencil className="h-4 w-4" />
-                      <span>{t('Rename')}</span>
-                    </div>
-                  </DropdownMenuItem>
+                  <PermissionNeededWrapper
+                    hasPermission={userHasPermissionToUpdateFolders}
+                  >
+                    <DropdownMenuItem
+                      disabled={!userHasPermissionToUpdateFolders}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <div className="flex flex-row gap-2 items-center">
+                        <Pencil className="h-4 w-4" />
+                        <span>{t('Rename')}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  </PermissionNeededWrapper>
                 </RenameFolderDialog>
                 <ConfirmationDeleteDialog
                   title={t('Delete folder {folderName}', {
@@ -147,12 +158,19 @@ const FolderItem = ({
                   }}
                   entityName={folder.displayName}
                 >
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <div className="flex flex-row gap-2 items-center">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                      <span className="text-destructive">{t('Delete')}</span>
-                    </div>
-                  </DropdownMenuItem>
+                  <PermissionNeededWrapper
+                    hasPermission={userHasPermissionToUpdateFolders}
+                  >
+                    <DropdownMenuItem
+                      disabled={!userHasPermissionToUpdateFolders}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <div className="flex flex-row gap-2 items-center">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <span className="text-destructive">{t('Delete')}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  </PermissionNeededWrapper>
                 </ConfirmationDeleteDialog>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -165,7 +183,8 @@ const FolderItem = ({
 
 const FolderFilterList = () => {
   const location = useLocation();
-
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FLOW);
   const [searchParams, setSearchParams] = useSearchParams(location.search);
   const selectedFolderId = searchParams.get('folderId');
 
@@ -240,9 +259,16 @@ const FolderFilterList = () => {
         <div className="flex items-center justify-center">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="ghost">
-                <PlusIcon size={18} />
-              </Button>
+              <PermissionNeededWrapper
+                hasPermission={userHasPermissionToUpdateFolders}
+              >
+                <Button
+                  variant="ghost"
+                  disabled={!userHasPermissionToUpdateFolders}
+                >
+                  <PlusIcon size={18} />
+                </Button>
+              </PermissionNeededWrapper>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -323,6 +349,9 @@ const FolderFilterList = () => {
               folders.map((folder) => {
                 return (
                   <FolderItem
+                    userHasPermissionToUpdateFolders={
+                      userHasPermissionToUpdateFolders
+                    }
                     key={folder.id}
                     folder={folder}
                     refetch={refetch}
