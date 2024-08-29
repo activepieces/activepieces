@@ -26,7 +26,7 @@ implements MigrationInterface {
             UPDATE "project_member" SET "email" = "user"."email", "platformId" = "user"."platformId" FROM "user" WHERE "project_member"."userId" = "user"."id"
         `)
         await queryRunner.query(`
-            UPDATE user SET "email" = CONCAT("email", 'deleted') WHERE "status" = 'INVITED';
+            UPDATE "user" SET "email" = CONCAT("email", 'deleted') WHERE "status" = 'INVITED';
         `)
         await queryRunner.query(`
             ALTER TABLE "project_member"
