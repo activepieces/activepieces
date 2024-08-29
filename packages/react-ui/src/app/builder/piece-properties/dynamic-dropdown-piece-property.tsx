@@ -8,17 +8,18 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { DropdownState } from '@activepieces/pieces-framework';
-import { Action, Trigger } from '@activepieces/shared';
+import { Action, isNil, Trigger } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from './multi-select-piece-property';
 
 type SelectPiecePropertyProps = {
   refreshers: string[];
   propertyName: string;
-  initialValue?: unknown;
+  value?: unknown;
   multiple?: boolean;
   disabled: boolean;
   onChange: (value: unknown | undefined) => void;
+  showDeselect?: boolean;
 };
 const DynamicDropdownPieceProperty = React.memo(
   (props: SelectPiecePropertyProps) => {
@@ -44,7 +45,7 @@ const DynamicDropdownPieceProperty = React.memo(
         const { settings } = form.getValues();
         const actionOrTriggerName = settings.actionName ?? settings.triggerName;
         const { pieceName, pieceVersion, pieceType, packageType } = settings;
-        const response = piecesApi.options<DropdownState<unknown>>({
+        return piecesApi.options<DropdownState<unknown>>({
           pieceName,
           pieceVersion,
           pieceType,
@@ -55,7 +56,6 @@ const DynamicDropdownPieceProperty = React.memo(
           flowVersionId: flowVersion.id,
           flowId: flowVersion.flowId,
         });
-        return response;
       },
       onError: (error) => {
         console.error(error);
@@ -70,13 +70,22 @@ const DynamicDropdownPieceProperty = React.memo(
       }),
     );
     /* eslint-enable react-hooks/rules-of-hooks */
-
-    useEffect(() => {
+    const refresh = () => {
       const input: Record<string, unknown> = {};
       newRefreshers.forEach((refresher, index) => {
         input[refresher] = refresherValues[index];
       });
+      mutate(
+        { input },
+        {
+          onSuccess: (response) => {
+            setDropdownState(response);
+          },
+        },
+      );
+    };
 
+    useEffect(() => {
       if (
         !isFirstRender.current &&
         !deepEqual(previousValues.current, refresherValues)
@@ -86,15 +95,7 @@ const DynamicDropdownPieceProperty = React.memo(
 
       previousValues.current = refresherValues;
       isFirstRender.current = false;
-
-      mutate(
-        { input },
-        {
-          onSuccess: (response) => {
-            setDropdownState(response);
-          },
-        },
-      );
+      refresh();
     }, refresherValues);
 
     const selectOptions = dropdownState.options.map((option) => ({
@@ -105,9 +106,20 @@ const DynamicDropdownPieceProperty = React.memo(
       <MultiSelectPieceProperty
         placeholder={dropdownState.placeholder ?? t('Select an option')}
         options={selectOptions}
+        loading={isPending}
         onChange={(value) => props.onChange(value)}
         disabled={dropdownState.disabled || props.disabled}
-        initialValues={props.initialValue as unknown[]}
+        initialValues={props.value as unknown[]}
+        showDeselect={
+          props.showDeselect &&
+          !isNil(props.value) &&
+          Array.isArray(props.value) &&
+          props.value.length > 0 &&
+          !props.disabled &&
+          !dropdownState.disabled
+        }
+        showRefresh={!props.disabled && !dropdownState.disabled}
+        onRefresh={refresh}
       />
     ) : (
       <SearchableSelect
@@ -115,8 +127,13 @@ const DynamicDropdownPieceProperty = React.memo(
         disabled={dropdownState.disabled || props.disabled}
         loading={isPending}
         placeholder={dropdownState.placeholder ?? t('Select an option')}
-        value={props.initialValue as React.Key}
+        value={props.value as React.Key}
         onChange={(value) => props.onChange(value)}
+        showDeselect={
+          props.showDeselect && !isNil(props.value) && !props.disabled
+        }
+        onRefresh={refresh}
+        showRefresh={!props.disabled && !dropdownState.disabled}
       />
     );
   },

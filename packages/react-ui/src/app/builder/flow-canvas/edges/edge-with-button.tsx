@@ -4,8 +4,13 @@ import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { PieceSelector } from '@/app/builder/pieces-selector';
 import { cn } from '@/lib/utils';
-import { StepLocationRelativeToParent, isNil } from '@activepieces/shared';
+import {
+  FlowOperationType,
+  StepLocationRelativeToParent,
+  isNil,
+} from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import {
@@ -24,6 +29,7 @@ interface ApEdgeWithButtonProps {
   targetY: number;
   data: ApEdge['data'];
 }
+const LINE_WIDTH = 1.5;
 
 const BUTTON_SIZE = {
   width: 16,
@@ -79,14 +85,11 @@ function getEdgePath({
 }
 
 const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
-  const [setIsStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
-  const [activeDraggingStep, clickOnNewNodeButton, selectedButton, readonly] =
-    useBuilderStateContext((state) => [
-      state.activeDraggingStep,
-      state.clickOnNewNodeButton,
-      state.selectedButton,
-      state.readonly,
-    ]);
+  const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
+  const [activeDraggingStep, readonly] = useBuilderStateContext((state) => [
+    state.activeDraggingStep,
+    state.readonly,
+  ]);
   const { edgePath, buttonPosition } = getEdgePath(props);
   const { setNodeRef } = useDroppable({
     id: props.id,
@@ -96,13 +99,9 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
     },
   });
 
+  const [actionMenuOpen, setActionMenuOpen] = useState(false);
+
   const showDropIndicator = !isNil(activeDraggingStep);
-  const isSelected =
-    selectedButton &&
-    selectedButton.type === 'action' &&
-    selectedButton?.stepname === props.data?.parentStep &&
-    selectedButton?.relativeLocation ===
-      props.data.stepLocationRelativeToParent;
 
   useDndMonitor({
     onDragMove(event: DragMoveEvent) {
@@ -122,20 +121,32 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
       <BaseEdge
         interactionWidth={0}
         path={edgePath}
-        style={{ strokeWidth: 1.5 }}
+        style={{ strokeWidth: `${LINE_WIDTH}px` }}
       />
       {(props.data.stepLocationRelativeToParent ===
         StepLocationRelativeToParent.INSIDE_FALSE_BRANCH ||
         props.data.stepLocationRelativeToParent ===
           StepLocationRelativeToParent.INSIDE_TRUE_BRANCH) && (
         <foreignObject
-          width={35}
-          height={100}
-          className="z-50 relative"
-          x={buttonPosition.x - 100 * labelDirectionSign}
-          y={buttonPosition.y - 25}
+          width={
+            props.data.stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+              ? 30
+              : 35
+          }
+          height={25}
+          className="z-50 relative pointer-events-none cursor-default"
+          x={
+            buttonPosition.x -
+            (props.data.stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+              ? 100
+              : 116) *
+              labelDirectionSign
+          }
+          y={buttonPosition.y - 27}
         >
-          <div className="text-accent-foreground text-sm text-center bg-background">
+          <div className="text-accent-foreground text-sm text-center bg-background select-none cursor-default">
             {props.data.stepLocationRelativeToParent ===
             StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
               ? t('True')
@@ -147,15 +158,14 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
         <foreignObject
           width={AP_NODE_SIZE.smallButton.width}
           height={AP_NODE_SIZE.smallButton.height}
-          x={buttonPosition.x}
+          x={buttonPosition.x - LINE_WIDTH / 2}
           y={buttonPosition.y}
-          className="transition-all overflow-visible relative"
-          style={{
-            borderRadius: '2px',
-            boxShadow: setIsStepInsideDropZone
-              ? '0 0 0 6px hsl(var(--primary-100))'
-              : 'none',
-          }}
+          className={cn(
+            'transition-all overflow-visible relative rounded-xss',
+            {
+              'shadow-add-button': isStepInsideDropZone,
+            },
+          )}
         >
           <div
             style={{
@@ -172,47 +182,48 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
             }}
             className="absolute"
             ref={setNodeRef}
-          >
-            {' '}
-          </div>
+          ></div>
           <div
             className={cn(
-              'bg-primary w-[18px] h-[18px] rounded-[3px] box-content opacity-90',
+              'bg-primary/90 w-[18px] h-[18px] rounded-xss box-content ',
             )}
           ></div>
         </foreignObject>
       )}
       {!showDropIndicator && props.data?.addButton && !readonly && (
-        <foreignObject
-          width={18}
-          height={18}
-          x={buttonPosition.x}
-          y={buttonPosition.y}
-          style={{
-            borderRadius: '2px',
-            boxShadow: isSelected
-              ? '0 0 0 6px hsl(var(--primary-100))'
-              : 'none',
+        <PieceSelector
+          operation={{
+            type: FlowOperationType.ADD_ACTION,
+            actionLocation: {
+              parentStep: props.data.parentStep!,
+              stepLocationRelativeToParent:
+                props.data.stepLocationRelativeToParent!,
+            },
           }}
-          onClick={() =>
-            clickOnNewNodeButton(
-              'action',
-              props.data.parentStep!,
-              props.data.stepLocationRelativeToParent,
-            )
-          }
+          open={actionMenuOpen}
+          onOpenChange={setActionMenuOpen}
         >
-          <div
-            className={cn(
-              'bg-[#a6b1bf] w-[18px] h-[18px] flex items-center justify-center  transition-all duration-300 ease-in-out',
-              {
-                'bg-primary ': isSelected,
-              },
-            )}
+          <foreignObject
+            width={18}
+            height={18}
+            x={buttonPosition.x - LINE_WIDTH / 2}
+            y={buttonPosition.y}
+            className={cn('rounded-xss transition-all', {
+              'shadow-add-button': actionMenuOpen,
+            })}
           >
-            {!isSelected && <Plus className="w-3 h-3 text-white" />}
-          </div>
-        </foreignObject>
+            <div
+              className={cn(
+                'bg-[#a6b1bf] w-[18px] h-[18px] flex items-center justify-center  transition-all duration-300 ease-in-out',
+                {
+                  'bg-primary ': actionMenuOpen,
+                },
+              )}
+            >
+              {!actionMenuOpen && <Plus className="w-3 h-3 text-white" />}
+            </div>
+          </foreignObject>
+        </PieceSelector>
       )}
     </>
   );

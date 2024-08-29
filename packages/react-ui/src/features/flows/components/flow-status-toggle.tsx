@@ -80,7 +80,7 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
         <TooltipContent side="bottom">
           {isNil(flow.publishedVersionId)
             ? t('Please publish flow first')
-            : flow.status === FlowStatus.ENABLED
+            : isChecked
             ? t('Flow is on')
             : t('Flow is off')}
         </TooltipContent>

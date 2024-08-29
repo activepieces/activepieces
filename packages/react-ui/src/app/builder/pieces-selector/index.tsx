@@ -1,190 +1,423 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { SearchXIcon } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { MoveLeft, SearchX } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { SidebarHeader } from '@/app/builder/sidebar-header';
+import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
+import {
+  PieceTagEnum,
+  PieceTagGroup,
+} from '@/app/builder/pieces-selector/piece-tag-group';
 import { Button } from '@/components/ui/button';
+import {
+  CardList,
+  CardListItemSkeleton,
+  CardListItem,
+} from '@/components/ui/card-list';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { UNSAVED_CHANGES_TOAST, toast } from '@/components/ui/use-toast';
+import { Separator } from '@/components/ui/seperator';
+import {
+  INTERNAL_ERROR_TOAST,
+  UNSAVED_CHANGES_TOAST,
+  toast,
+} from '@/components/ui/use-toast';
+import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import {
   PieceStepMetadata,
   StepMetadata,
   piecesHooks,
 } from '@/features/pieces/lib/pieces-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { useElementSize } from '@/lib/utils';
 import {
   Action,
   ActionType,
   ApFlagId,
   FlowOperationType,
+  isNil,
+  StepLocationRelativeToParent,
+  supportUrl,
   Trigger,
   TriggerType,
-  flowHelper,
-  isNil,
-  supportUrl,
 } from '@activepieces/shared';
 
-import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
+type ItemListMetadata = {
+  name: string;
+  displayName: string;
+  description: string;
+};
 
-import { pieceSelectorUtils } from './piece-selector-utils';
+type PieceSelectorProps = {
+  children: React.ReactNode;
+  operation:
+    | {
+        type: FlowOperationType.ADD_ACTION;
+        actionLocation: {
+          parentStep: string;
+          stepLocationRelativeToParent: StepLocationRelativeToParent;
+        };
+      }
+    | { type: FlowOperationType.UPDATE_TRIGGER }
+    | {
+        type: FlowOperationType.UPDATE_ACTION;
+        stepName: string;
+      };
+  open: boolean;
+  asChild?: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
-const PiecesSelectorList = () => {
-  const showCommunity = flagsHooks.useFlag<boolean>(
+const PieceSelector = ({
+  children,
+  open,
+  asChild = true,
+  onOpenChange,
+  operation,
+}: PieceSelectorProps) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery] = useDebounce(searchQuery, 300);
+  const showRequestPieceButton = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
-    useQueryClient(),
+  ).data;
+  const [selectedPieceMetadata, setSelectedMetadata] = useState<
+    StepMetadata | undefined
+  >(undefined);
+  const [actionsOrTriggers, setSelectedSubItems] = useState<
+    ItemListMetadata[] | undefined
+  >(undefined);
+
+  const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
+    PieceTagEnum.ALL,
   );
-  const [searchQuery, setSearchQuery] = useDebounce<string>('', 300);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { height: containerHeight } = useElementSize(containerRef);
-  const [
-    exitPieceSelector,
-    applyOperation,
-    selectedButton,
-    flowVersion,
-    selectStepByName,
-  ] = useBuilderStateContext((state) => [
-    state.exitPieceSelector,
-    state.applyOperation,
-    state.selectedButton,
-    state.flowVersion,
-    state.selectStepByName,
-  ]);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, []);
-  const { metadata, isLoading, refetch } = piecesHooks.useAllStepsMetadata({
-    searchQuery,
-    type: selectedButton!.type!,
-    enabled: !isNil(selectedButton),
-  });
+  const [applyOperation, selectStepByName, flowVersion] =
+    useBuilderStateContext((state) => [
+      state.applyOperation,
+      state.selectStepByName,
+      state.flowVersion,
+    ]);
 
-  useEffect(() => {
-    refetch();
-  }, [selectedButton]);
+  const { metadata, isLoading: isLoadingPieces } =
+    piecesHooks.useAllStepsMetadata({
+      searchQuery: debouncedQuery,
+      type:
+        operation.type === FlowOperationType.UPDATE_TRIGGER
+          ? 'trigger'
+          : 'action',
+    });
 
-  function getStepName(piece: StepMetadata) {
-    if (piece.type === TriggerType.PIECE) {
-      return 'trigger';
-    }
-    const baseName = 'step_';
-    let number = 1;
-    const steps = flowHelper.getAllSteps(flowVersion.trigger);
-    while (steps.some((step) => step.name === `${baseName}${number}`)) {
-      number++;
-    }
-    return `${baseName}${number}`;
-  }
+  const resetField = () => {
+    setSearchQuery('');
+    setSelectedSubItems(undefined);
+    setSelectedMetadata(undefined);
+    setSelectedTag(PieceTagEnum.ALL);
+  };
 
-  function handleClick(piece: StepMetadata) {
-    if (!selectedButton) {
+  const handleSelect = (
+    piece: StepMetadata | undefined,
+    item: ItemListMetadata,
+  ) => {
+    if (!piece) {
       return;
     }
-    const stepName = getStepName(piece);
-    const defaultStep = pieceSelectorUtils.getDefaultStep(stepName, piece);
-    if (piece.type === TriggerType.PIECE) {
-      applyOperation(
-        {
-          type: FlowOperationType.UPDATE_TRIGGER,
-          request: defaultStep as Trigger,
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
-    } else {
-      applyOperation(
-        {
-          type: FlowOperationType.ADD_ACTION,
-          request: {
-            parentStep: selectedButton.stepname,
-            stepLocationRelativeToParent: selectedButton.relativeLocation,
-            action: defaultStep as Action,
-          },
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
-    }
-    selectStepByName(defaultStep.name);
-  }
+    resetField();
+    onOpenChange(false);
+    const newStepName = pieceSelectorUtils.getStepName(piece, flowVersion);
+    const stepData = pieceSelectorUtils.getDefaultStep({
+      stepName: newStepName,
+      piece,
+      actionOrTriggerName: item.name,
+      displayName: item.displayName,
+    });
 
-  function toKey(stepMetadata: StepMetadata): string {
-    switch (stepMetadata.type) {
-      case ActionType.PIECE:
-      case TriggerType.PIECE: {
-        const pieceMetadata: PieceStepMetadata =
-          stepMetadata as PieceStepMetadata;
-        return `${stepMetadata.type}-${pieceMetadata.pieceName}-${pieceMetadata.pieceVersion}`;
+    switch (operation.type) {
+      case FlowOperationType.UPDATE_TRIGGER: {
+        applyOperation(
+          {
+            type: FlowOperationType.UPDATE_TRIGGER,
+            request: stepData as Trigger,
+          },
+          () => toast(UNSAVED_CHANGES_TOAST),
+        );
+        selectStepByName('trigger');
+        break;
       }
-      default:
-        return stepMetadata.displayName.toLowerCase();
+      case FlowOperationType.ADD_ACTION: {
+        applyOperation(
+          {
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+              parentStep: operation.actionLocation.parentStep,
+              stepLocationRelativeToParent:
+                operation.actionLocation.stepLocationRelativeToParent,
+              action: stepData as Action,
+            },
+          },
+          () => toast(UNSAVED_CHANGES_TOAST),
+        );
+        selectStepByName(stepData.name);
+        break;
+      }
+      case FlowOperationType.UPDATE_ACTION: {
+        applyOperation(
+          {
+            type: FlowOperationType.UPDATE_ACTION,
+            request: {
+              type: (stepData as Action).type,
+              displayName: stepData.displayName,
+              name: operation.stepName,
+              settings: {
+                ...stepData.settings,
+              },
+              valid: stepData.valid,
+            },
+          },
+          () => toast(UNSAVED_CHANGES_TOAST),
+        );
+      }
     }
-  }
+  };
+
+  const { mutate, isPending: isLoadingSelectedPieceMetadata } = useMutation({
+    mutationFn: async (stepMetadata: StepMetadata) => {
+      switch (stepMetadata.type) {
+        case TriggerType.PIECE:
+        case ActionType.PIECE: {
+          const pieceMetadata = await piecesApi.get({
+            name: (stepMetadata as PieceStepMetadata).pieceName,
+          });
+          return Object.entries(
+            operation.type === FlowOperationType.UPDATE_TRIGGER
+              ? pieceMetadata.triggers
+              : pieceMetadata.actions,
+          ).map(([actionOrTriggerName, actionOrTrigger]) => ({
+            name: actionOrTriggerName,
+            displayName: actionOrTrigger.displayName,
+            description: actionOrTrigger.description,
+          }));
+        }
+        case ActionType.CODE:
+          return [
+            {
+              name: 'code',
+              displayName: t('Custom Javascript Code'),
+              description: stepMetadata.description,
+            },
+          ];
+        case ActionType.LOOP_ON_ITEMS:
+          return [
+            {
+              name: 'loop',
+              displayName: t('Loop on Items'),
+              description: stepMetadata.description,
+            },
+          ];
+        case ActionType.BRANCH:
+          return [
+            {
+              name: 'branch',
+              displayName: t('Branch'),
+              description: t(
+                'Split your flow into branches depedning on condition(s)',
+              ),
+            },
+          ];
+        case TriggerType.EMPTY:
+          throw new Error('Unsupported type: ' + stepMetadata.type);
+      }
+    },
+    onSuccess: (items) => {
+      setSelectedSubItems(items);
+    },
+    onError: (e) => {
+      console.error(e);
+      toast(INTERNAL_ERROR_TOAST);
+    },
+  });
+
+  const piecesMetadata = useMemo(
+    () =>
+      metadata?.filter((stepMetadata) => {
+        switch (selectedTag) {
+          case PieceTagEnum.CORE:
+            return pieceSelectorUtils.isCorePiece(stepMetadata);
+          case PieceTagEnum.AI:
+            return pieceSelectorUtils.isAiPiece(stepMetadata);
+          case PieceTagEnum.APPS:
+            return pieceSelectorUtils.isAppPiece(stepMetadata);
+          case PieceTagEnum.ALL:
+            return true;
+        }
+      }),
+    [metadata, selectedTag],
+  );
 
   return (
-    <>
-      <div ref={containerRef}>
-        <SidebarHeader onClose={() => exitPieceSelector()}>
-          {selectedButton?.type === 'action'
-            ? t('Select Action')
-            : t('Select Trigger')}
-        </SidebarHeader>
-        <div className="w-full  mb-4 px-4">
+    <Popover
+      open={open}
+      modal={true}
+      onOpenChange={(open) => {
+        if (!open) {
+          resetField();
+        }
+        onOpenChange(open);
+      }}
+    >
+      <PopoverTrigger asChild={asChild}>{children}</PopoverTrigger>
+      <PopoverContent
+        className="w-[600px] p-0 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-2">
           <Input
-            type="text"
-            ref={searchInputRef}
-            placeholder={t('Search for a piece')}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            className="border-none"
+            placeholder={t('Search')}
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setSelectedTag(PieceTagEnum.ALL);
+              setSelectedSubItems(undefined);
+            }}
           />
         </div>
-      </div>
-
-      <div className="flex h-full flex-col gap-4 px-4 pb-8">
-        {isLoading && (
-          <div className="flex h-full grow items-center justify-center text-center">
-            <LoadingSpinner />
-          </div>
-        )}
-        {metadata && metadata.length === 0 && (
-          <div className="flex h-full gap-2 flex-col  grow items-center justify-center text-center">
-            <SearchXIcon className="h-10 w-10"></SearchXIcon>
-            {t("Ooops, we didn't find any results")}
-            {showCommunity && (
-              <Link
-                to={`${supportUrl}/c/feature-requests/9`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button variant="default">Request Piece</Button>
-              </Link>
-            )}
-          </div>
-        )}
-        {!isLoading && metadata && metadata.length > 0 && (
-          <ScrollArea style={{ height: `calc(100% - ${containerHeight}px)` }}>
-            <div className="flex h-max flex-col gap-4">
-              {metadata &&
-                metadata.map((stepMetadata) => (
-                  <PieceCardInfo
-                    piece={stepMetadata}
-                    key={toKey(stepMetadata)}
-                    interactive={true}
-                    onClick={() => handleClick(stepMetadata)}
-                  />
+        <PieceTagGroup
+          selectedTag={selectedTag}
+          type={
+            operation.type === FlowOperationType.UPDATE_TRIGGER
+              ? 'trigger'
+              : 'action'
+          }
+          onSelectTag={(value) => {
+            setSelectedTag(value);
+            setSelectedSubItems(undefined);
+          }}
+        />
+        <Separator orientation="horizontal" />
+        <div className="flex overflow-y-auto max-h-[300px] h-[300px]">
+          <CardList className="w-[250px] min-w-[250px]">
+            <ScrollArea>
+              {isLoadingPieces && (
+                <CardListItemSkeleton numberOfCards={5} withCircle={false} />
+              )}
+              {!isLoadingPieces &&
+                piecesMetadata &&
+                piecesMetadata.map((pieceMetadata) => (
+                  <CardListItem
+                    className="p-3"
+                    key={pieceSelectorUtils.toKey(pieceMetadata)}
+                    selected={
+                      pieceMetadata.displayName ===
+                      selectedPieceMetadata?.displayName
+                    }
+                    onClick={(e) => {
+                      if (
+                        pieceMetadata.displayName !==
+                        selectedPieceMetadata?.displayName
+                      ) {
+                        setSelectedMetadata(pieceMetadata);
+                        mutate(pieceMetadata);
+                        e.stopPropagation();
+                        e.preventDefault();
+                      }
+                    }}
+                  >
+                    <div>
+                      <PieceIcon
+                        logoUrl={pieceMetadata.logoUrl}
+                        displayName={pieceMetadata.displayName}
+                        showTooltip={false}
+                        size={'sm'}
+                      ></PieceIcon>
+                    </div>
+                    <div className="flex-grow h-full flex items-center justify-left text-sm">
+                      {pieceMetadata.displayName}
+                    </div>
+                  </CardListItem>
                 ))}
-            </div>
+
+              {!isLoadingPieces &&
+                (!piecesMetadata || piecesMetadata.length === 0) && (
+                  <div className="flex flex-col gap-2 items-center justify-center h-[300px] ">
+                    <SearchX className="w-10 h-10" />
+                    <div className="text-sm ">{t('No pieces found')}</div>
+                    <div className="text-sm ">
+                      {t('Try adjusting your search')}
+                    </div>
+                    {showRequestPieceButton && (
+                      <Link
+                        to={`${supportUrl}/c/feature-requests/9`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button className="h-8 px-2 ">Request Piece</Button>
+                      </Link>
+                    )}
+                  </div>
+                )}
+            </ScrollArea>
+          </CardList>
+          <Separator orientation="vertical" className="h-full" />
+          <ScrollArea className="h-full">
+            <CardList className="w-[350px] min-w-[350px] h-full">
+              {!isLoadingPieces && (
+                <>
+                  {isLoadingSelectedPieceMetadata && (
+                    <CardListItemSkeleton
+                      numberOfCards={5}
+                      withCircle={false}
+                    />
+                  )}
+                  {!isLoadingSelectedPieceMetadata &&
+                    selectedPieceMetadata &&
+                    actionsOrTriggers &&
+                    actionsOrTriggers.map((item) => (
+                      <CardListItem
+                        className="p-2 w-full"
+                        key={item.name}
+                        onClick={() =>
+                          handleSelect(selectedPieceMetadata, item)
+                        }
+                      >
+                        <div className="flex gap-2 items-center">
+                          <PieceIcon
+                            logoUrl={selectedPieceMetadata.logoUrl}
+                            displayName={selectedPieceMetadata.displayName}
+                            showTooltip={false}
+                            size={'sm'}
+                          ></PieceIcon>
+                          <div className="flex flex-col gap-0.5">
+                            <div className="text-sm">{item.displayName}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {item.description}
+                            </div>
+                          </div>
+                        </div>
+                      </CardListItem>
+                    ))}
+                </>
+              )}
+              {(isNil(actionsOrTriggers) || isLoadingPieces) && (
+                <div className="flex flex-col gap-2 items-center justify-center h-[300px]">
+                  <MoveLeft className="w-10 h-10 rtl:rotate-180" />
+                  <div className="text-sm">
+                    {t('Please select a piece first')}
+                  </div>
+                </div>
+              )}
+            </CardList>
           </ScrollArea>
-        )}
-      </div>
-    </>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 
-export { PiecesSelectorList };
+export { PieceSelector };

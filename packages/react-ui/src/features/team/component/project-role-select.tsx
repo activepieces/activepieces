@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
 
@@ -29,12 +28,10 @@ const RolesDisplayNames: { [k: string]: string } = {
 };
 
 const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
-  const queryClient = useQueryClient();
   const { project } = projectHooks.useCurrentProject();
 
   const { data: isCloudPlatform } = flagsHooks.useFlag<boolean>(
     ApFlagId.IS_CLOUD_PLATFORM,
-    queryClient,
   );
 
   const invitationRoles = Object.values(ProjectMemberRole)

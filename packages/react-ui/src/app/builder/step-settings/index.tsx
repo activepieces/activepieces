@@ -70,31 +70,29 @@ const StepSettingsContainer = React.memo(
     });
 
     const { toast } = useToast();
-    const updateTrigger = (newTrigger: Trigger) => {
-      applyOperation(
-        {
-          type: FlowOperationType.UPDATE_TRIGGER,
-          request: newTrigger,
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
-    };
+
     const debouncedTrigger = useMemo(() => {
-      return debounce(updateTrigger, 200);
+      return debounce((newTrigger: Trigger) => {
+        applyOperation(
+          {
+            type: FlowOperationType.UPDATE_TRIGGER,
+            request: newTrigger,
+          },
+          () => toast(UNSAVED_CHANGES_TOAST),
+        );
+      }, 200);
     }, [applyOperation]);
 
-    const updateAction = (newAction: Action) => {
-      applyOperation(
-        {
-          type: FlowOperationType.UPDATE_ACTION,
-          request: newAction,
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
-    };
-
     const debouncedAction = useMemo(() => {
-      return debounce(updateAction, 200);
+      return debounce((newAction: Action) => {
+        applyOperation(
+          {
+            type: FlowOperationType.UPDATE_ACTION,
+            request: newAction,
+          },
+          () => toast(UNSAVED_CHANGES_TOAST),
+        );
+      }, 200);
     }, [applyOperation]);
 
     const actionOrTriggerName =
@@ -172,29 +170,15 @@ const StepSettingsContainer = React.memo(
       step: Action | Trigger,
       pieceModel: PieceMetadataModel | undefined,
     ) => {
-      if (step.type === TriggerType.PIECE) {
-        const triggerName = step.settings.triggerName;
-        if (isNil(triggerName)) {
-          return step.displayName;
-        }
-        const trigger = pieceModel?.triggers[triggerName];
-        if (isNil(trigger)) {
-          return step.displayName;
-        }
-        return trigger.displayName;
-      }
-      if (step.type === ActionType.PIECE) {
-        const actionName = step.settings.actionName;
-        if (isNil(actionName)) {
-          return step.displayName;
-        }
-        const action = pieceModel?.actions[actionName];
-        if (isNil(action)) {
-          return step.displayName;
-        }
-        return action.displayName;
-      }
-      return step.displayName;
+      const name =
+        step.type === TriggerType.PIECE
+          ? step.settings.triggerName
+          : step.settings.actionName;
+      const item =
+        step.type === TriggerType.PIECE
+          ? pieceModel?.triggers[name]
+          : pieceModel?.actions[name];
+      return isNil(name) || isNil(item) ? step.displayName : item.displayName;
     };
 
     useUpdateEffect(() => {
@@ -206,9 +190,9 @@ const StepSettingsContainer = React.memo(
       );
       defaultValues.displayName = getDefaultName(defaultValues, pieceModel);
       if (defaultValues.type === TriggerType.PIECE) {
-        updateTrigger(defaultValues);
+        debouncedTrigger(defaultValues);
       } else {
-        updateAction(defaultValues as Action);
+        debouncedAction(defaultValues as Action);
       }
     }, [actionName, triggerName]);
 

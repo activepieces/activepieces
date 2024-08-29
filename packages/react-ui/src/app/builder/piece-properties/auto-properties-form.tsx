@@ -15,6 +15,7 @@ import {
   PropertyType,
   ArraySubProps,
 } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/shared';
 
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
@@ -160,6 +161,7 @@ const selectRightComponent = (
             value={field.value}
             disabled={disabled}
             placeholder={property.options.placeholder ?? t('Select an option')}
+            showDeselect={!property.required}
           ></SearchableSelect>
         </AutoFormFieldWrapper>
       );
@@ -197,6 +199,11 @@ const selectRightComponent = (
             onChange={field.onChange}
             initialValues={field.value}
             disabled={disabled}
+            showDeselect={
+              !isNil(field.value) &&
+              field.value.length > 0 &&
+              !property.required
+            }
           ></MultiSelectPieceProperty>
         </AutoFormFieldWrapper>
       );
@@ -212,11 +219,12 @@ const selectRightComponent = (
         >
           <DynamicDropdownPieceProperty
             refreshers={property.refreshers}
-            initialValue={field.value}
+            value={field.value}
             onChange={field.onChange}
             disabled={disabled}
             propertyName={propertyName}
             multiple={property.type === PropertyType.MULTI_SELECT_DROPDOWN}
+            showDeselect={!property.required}
           ></DynamicDropdownPieceProperty>
         </AutoFormFieldWrapper>
       );

@@ -11,6 +11,7 @@ import {
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { ShowPoweredBy } from '@/components/show-powered-by';
+import { useSocket } from '@/components/socket-provider';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -22,6 +23,7 @@ import {
   ActionType,
   PieceTrigger,
   TriggerType,
+  WebsocketClientEvent,
   flowHelper,
 } from '@activepieces/shared';
 
@@ -31,7 +33,6 @@ import { BuilderHeader } from './builder-header';
 import { ChatSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
-import { PiecesSelectorList } from './pieces-selector';
 import { FlowRunDetails } from './run-details';
 import { FlowRecentRunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
@@ -109,13 +110,25 @@ const BuilderPage = () => {
   const { height: builderNavbarHeight } = useElementSize(
     builderNavBarContainer,
   );
-  const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
+  const {
+    pieceModel,
+    isLoading: isPieceLoading,
+    refetch: refetchPiece,
+  } = piecesHooks.usePiece({
     name: memorizedSelectedStep?.settings.pieceName,
     version: memorizedSelectedStep?.settings.pieceVersion,
     enabled:
       memorizedSelectedStep?.type === ActionType.PIECE ||
       memorizedSelectedStep?.type === TriggerType.PIECE,
   });
+
+  const socket = useSocket();
+
+  useEffect(() => {
+    socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
+      refetchPiece();
+    });
+  }, [socket, refetchPiece]);
 
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
 
@@ -199,9 +212,6 @@ const BuilderPage = () => {
                 [animateResizeClassName]: !isDraggingHandle,
               })}
             >
-              {rightSidebar === RightSideBarType.PIECE_SELECTOR && (
-                <PiecesSelectorList />
-              )}
               {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
                 memorizedSelectedStep &&
                 !isPieceLoading && (

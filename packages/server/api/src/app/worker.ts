@@ -3,17 +3,17 @@ import { isNil, WorkerMachineType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { flowWorker } from 'server-worker'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
+import { piecesBuilder } from './pieces/piece-metadata-service/pieces-builder'
 
 
 export const setupWorker = async (app: FastifyInstance): Promise<void> => {
 
     const workerToken = await generateWorkerToken()
     await flowWorker.init(workerToken)
-
     app.addHook('onClose', async () => {
         await flowWorker.close()
     })
-
+    await piecesBuilder(app.io)
 }
 export async function workerPostBoot(): Promise<void> {
     logger.info('Worker started')

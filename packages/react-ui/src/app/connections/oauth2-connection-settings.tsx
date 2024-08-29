@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -19,6 +18,7 @@ import {
   ApEdition,
   ApFlagId,
   AppConnectionType,
+  AppConnectionWithoutSensitiveData,
   UpsertCloudOAuth2Request,
   UpsertOAuth2Request,
   UpsertPlatformOAuth2Request,
@@ -32,32 +32,39 @@ import { formUtils } from '../builder/piece-properties/form-utils';
 type OAuth2ConnectionSettingsProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   authProperty: OAuth2Property<OAuth2Props>;
+  reconnectConnection: AppConnectionWithoutSensitiveData | null;
 };
 
 const OAuth2ConnectionSettings = ({
   authProperty,
   piece,
+  reconnectConnection,
 }: OAuth2ConnectionSettingsProps) => {
-  const queryClient = useQueryClient();
   const { platform } = platformHooks.useCurrentPlatform();
-  const [readyToConect, setReadyToConect] = useState(false);
+  const [readyToConnect, setReadyToConnect] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const [currentOAuth2Type, setOAuth2Type] = useState<
     | AppConnectionType.CLOUD_OAUTH2
     | AppConnectionType.OAUTH2
     | AppConnectionType.PLATFORM_OAUTH2
     | undefined
-  >(undefined);
+  >(
+    reconnectConnection?.type === AppConnectionType.CLOUD_OAUTH2 ||
+      reconnectConnection?.type === AppConnectionType.OAUTH2 ||
+      reconnectConnection?.type === AppConnectionType.PLATFORM_OAUTH2
+      ? reconnectConnection?.type
+      : undefined,
+  );
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-    queryClient,
   );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { data: pieceToClientIdMap } = oauth2AppsHooks.usePieceToClientIdMap(
     platform.cloudAuthEnabled,
+    edition!,
   );
   const { data: ownAuthEnabled } = flagsHooks.useFlag<ApEdition>(
     ApFlagId.OWN_AUTH2_ENABLED,
-    queryClient,
   );
 
   const redirectUrl =
@@ -121,7 +128,7 @@ const OAuth2ConnectionSettings = ({
     const clientSecret = (form.getValues().request as UpsertOAuth2Request)
       ?.value?.client_secret;
     const hasClientSecret = !isNil(clientSecret);
-    setReadyToConect(
+    setReadyToConnect(
       baseCriteria &&
         (currentOAuth2Type !== AppConnectionType.OAUTH2 || hasClientSecret),
     );
@@ -229,7 +236,8 @@ const OAuth2ConnectionSettings = ({
             <Button
               size={'sm'}
               variant={'basic'}
-              disabled={!readyToConect}
+              disabled={!readyToConnect}
+              type="button"
               onClick={async () =>
                 openPopup(
                   redirectUrl!,
@@ -260,19 +268,22 @@ const OAuth2ConnectionSettings = ({
           )}
         </div>
 
-        {ownAuthEnabled && currentOAuth2Type !== AppConnectionType.OAUTH2 && (
-          <div>
-            <Button
-              size="sm"
-              variant={'link'}
-              className="text-xs"
-              onClick={() => setOAuth2Type(AppConnectionType.OAUTH2)}
-            >
-              {t('I would like to use my own App Credentials')}
-            </Button>
-          </div>
-        )}
+        {ownAuthEnabled &&
+          isNil(reconnectConnection) &&
+          currentOAuth2Type !== AppConnectionType.OAUTH2 && (
+            <div>
+              <Button
+                size="sm"
+                variant={'link'}
+                className="text-xs"
+                onClick={() => setOAuth2Type(AppConnectionType.OAUTH2)}
+              >
+                {t('I would like to use my own App Credentials')}
+              </Button>
+            </div>
+          )}
         {currentOAuth2Type === AppConnectionType.OAUTH2 &&
+          isNil(reconnectConnection) &&
           predefinedClientId && (
             <div>
               <Button

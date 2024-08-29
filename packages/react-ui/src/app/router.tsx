@@ -1,16 +1,29 @@
-import { Navigate, createBrowserRouter } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
+import {
+  Navigate,
+  RouterProvider,
+  createBrowserRouter,
+  createMemoryRouter,
+} from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
+import { EmbedPage } from '@/app/routes/embed';
 import { ApiKeysPage } from '@/app/routes/platform/settings/api-keys';
 import { BrandingPage } from '@/app/routes/platform/settings/branding';
 import { SigningKeysPage } from '@/app/routes/platform/settings/signing-keys';
 import { SSOPage } from '@/app/routes/platform/settings/sso';
 import { FlowRunsPage } from '@/app/routes/runs';
 import { SwitchToBetaPage } from '@/app/routes/switch-to-beta';
+import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
+import {
+  ActivepiecesClientEventName,
+  ActivepiecesVendorEventName,
+  ActivepiecesVendorRouteChanged,
+} from 'ee-embed-sdk';
 
 import { FlowsPage } from '../app/routes/flows';
 
@@ -41,7 +54,11 @@ import { ShareTemplatePage } from './routes/templates/share-template';
 import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { PlatformPiecesPage } from '@/app/routes/platform/pieces';
 
-export const router = createBrowserRouter([
+const routes = [
+  {
+    path: '/embed',
+    element: <EmbedPage></EmbedPage>,
+  },
   {
     // TODO remove after react is launched
     path: '/switch-to-beta',
@@ -398,4 +415,60 @@ export const router = createBrowserRouter([
       </PageTitle>
     ),
   },
-]);
+];
+const ApRouter = () => {
+  const { embedState } = useEmbedding();
+
+  const router = useMemo(() => {
+    return embedState.isEmbedded
+      ? createMemoryRouter(routes, {
+          initialEntries: [window.location.pathname],
+        })
+      : createBrowserRouter(routes);
+  }, [embedState.isEmbedded]);
+
+  useEffect(() => {
+    if (!embedState.isEmbedded) {
+      return;
+    }
+
+    const handleVendorRouteChange = (
+      event: MessageEvent<ActivepiecesVendorRouteChanged>,
+    ) => {
+      if (
+        event.source === window.parent &&
+        event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
+      ) {
+        const targetRoute = event.data.data.vendorRoute;
+        router.navigate(targetRoute);
+      }
+    };
+
+    window.addEventListener('message', handleVendorRouteChange);
+
+    return () => {
+      window.removeEventListener('message', handleVendorRouteChange);
+    };
+  }, [embedState.isEmbedded, router.navigate]);
+
+  useEffect(() => {
+    if (!embedState.isEmbedded) {
+      return;
+    }
+    router.subscribe((state) => {
+      window.parent.postMessage(
+        {
+          type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
+          data: {
+            route: state.location.pathname,
+          },
+        },
+        '*',
+      );
+    });
+  }, [router, embedState.isEmbedded]);
+
+  return <RouterProvider router={router}></RouterProvider>;
+};
+
+export { ApRouter };
