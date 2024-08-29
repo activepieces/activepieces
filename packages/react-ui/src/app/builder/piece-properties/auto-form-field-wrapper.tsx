@@ -14,6 +14,7 @@ import { PieceProperty } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
 import { TextInputWithMentions } from './text-input-with-mentions';
+import { cn } from '@/lib/utils';
 
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;
@@ -72,10 +73,13 @@ const AutoFormFieldWrapper = ({
                 onPressedChange={(e) => handleChange(e)}
                 disabled={disabled}
               >
-                <SquareFunction className="stroke-foreground" />
+                <SquareFunction className={cn("size-5", {
+                  "text-foreground": toggled,
+                  "text-muted-foreground": !toggled
+                })} />
               </Toggle>
             </TooltipTrigger>
-            <TooltipContent side="bottom">{t('Dynamic value')}</TooltipContent>
+            <TooltipContent side="top" className='bg-background'>{t('Dynamic value')}</TooltipContent>
           </Tooltip>
         )}
       </FormLabel>
