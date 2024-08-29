@@ -14,6 +14,7 @@ const FlowBuilderPage = () => {
     queryKey: ['flow', flowId],
     queryFn: () => flowsApi.get(flowId!),
     gcTime: 0,
+    refetchOnWindowFocus: false,
   });
 
   if (isLoading) {
