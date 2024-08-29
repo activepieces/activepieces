@@ -10,7 +10,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Authorization } from '@/components/authorization';
+import { Authorization, useAuthorization } from '@/components/authorization';
 import {
   DataTable,
   PaginationParams,
@@ -37,6 +37,7 @@ import {
   Permission,
   isFailedState,
 } from '@activepieces/shared';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 
 const fetchData = async (
   params: {
@@ -67,7 +68,8 @@ const FlowRunsPage = () => {
   });
 
   const flows = data?.data;
-
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToRetryRun = checkAccess(Permission.RETRY_RUN);
   const { mutate } = useMutation<
     void,
     Error,
@@ -148,20 +150,23 @@ const FlowRunsPage = () => {
         ),
         cell: ({ row }) => {
           return (
-            <Authorization permission={Permission.RETRY_RUN}>
-              <div
-                className="flex items-end justify-end"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger
-                    asChild
-                    className="rounded-full p-2 hover:bg-muted cursor-pointer"
+            <div
+              className="flex items-end justify-end"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger
+                  asChild
+                  className="rounded-full p-2 hover:bg-muted cursor-pointer"
+                >
+                  <EllipsisVertical className="h-10 w-10" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <PermissionNeededWrapper
+                    hasPermission={userHasPermissionToRetryRun}
                   >
-                    <EllipsisVertical className="h-10 w-10" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
                     <DropdownMenuItem
+                      disabled={!userHasPermissionToRetryRun}
                       onClick={() =>
                         mutate({
                           runId: row.original.id,
@@ -174,8 +179,14 @@ const FlowRunsPage = () => {
                         <span>{t('Retry on latest version')}</span>
                       </div>
                     </DropdownMenuItem>
-                    {isFailedState(row.original.status) && (
+                  </PermissionNeededWrapper>
+
+                  {isFailedState(row.original.status) && (
+                    <PermissionNeededWrapper
+                      hasPermission={userHasPermissionToRetryRun}
+                    >
                       <DropdownMenuItem
+                        disabled={!userHasPermissionToRetryRun}
                         onClick={() =>
                           mutate({
                             runId: row.original.id,
@@ -188,11 +199,11 @@ const FlowRunsPage = () => {
                           <span>{t('Retry from failed step')}</span>
                         </div>
                       </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </Authorization>
+                    </PermissionNeededWrapper>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           );
         },
       },
