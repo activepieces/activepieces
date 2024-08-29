@@ -1,6 +1,7 @@
 import { VariantProps, cva } from 'class-variance-authority';
 import React from 'react';
 
+import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -8,7 +9,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import ImageWithFallback from '@/app/components/image-with-fallback';
 
 const pieceIconVariants = cva('flex items-center justify-center   ', {
   variants: {

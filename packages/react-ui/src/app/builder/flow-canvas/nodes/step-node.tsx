@@ -11,13 +11,13 @@ import {
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { PieceSelectors } from '@/app/builder/pieces-selector';
-import ImageWithFallback from '@/app/components/image-with-fallback';
 import { InvalidStepIcon } from '@/components/custom/alert-icon';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
 import {
@@ -30,7 +30,6 @@ import {
 } from '@activepieces/shared';
 
 import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
 
 function getStepStatus(
   stepName: string | undefined,

@@ -17,13 +17,16 @@ export const oauth2AppsHooks = {
     return useQuery<PieceToClientIdMap, Error>({
       queryKey: ['oauth-apps'],
       queryFn: async () => {
-        const apps = edition === ApEdition.COMMUNITY ? {
-          data: []
-        } : await oauthAppsApi.listOAuthAppsCredentials({
-          limit: 1000000,
-          cursor: undefined,
-          projectId: authenticationSession.getProjectId()!,
-        });
+        const apps =
+          edition === ApEdition.COMMUNITY
+            ? {
+                data: [],
+              }
+            : await oauthAppsApi.listOAuthAppsCredentials({
+                limit: 1000000,
+                cursor: undefined,
+                projectId: authenticationSession.getProjectId()!,
+              });
         const cloudApps = !cloudAuthEnabled
           ? {}
           : await oauthAppsApi.listCloudOAuthApps();

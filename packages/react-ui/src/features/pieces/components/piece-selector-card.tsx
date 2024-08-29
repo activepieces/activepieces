@@ -1,10 +1,10 @@
-import { ActionType, TriggerType } from '@activepieces/shared';
 import React from 'react';
 
-import { PieceStepMetadata, StepMetadata } from '../lib/pieces-hook';
-
-import { cn } from '@/lib/utils';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { cn } from '@/lib/utils';
+import { ActionType, TriggerType } from '@activepieces/shared';
+
+import { PieceStepMetadata, StepMetadata } from '../lib/pieces-hook';
 
 type PieceCardInfoProps = {
   piece: StepMetadata;

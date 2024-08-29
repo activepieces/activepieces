@@ -30,6 +30,7 @@ import {
   UNSAVED_CHANGES_TOAST,
   toast,
 } from '@/components/ui/use-toast';
+import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import {
   PieceStepMetadata,
@@ -48,7 +49,6 @@ import {
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
 
 type ItemListMetadata = {
   name: string;
