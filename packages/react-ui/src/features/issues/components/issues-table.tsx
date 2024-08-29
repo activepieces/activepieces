@@ -18,10 +18,16 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { PopulatedIssue } from '@activepieces/ee-shared';
-import { FlowRunStatus, Permission } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  FlowRunStatus,
+  Permission,
+} from '@activepieces/shared';
 
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
@@ -39,7 +45,8 @@ const fetchData = async (
 
 export default function IssuesTable() {
   const navigate = useNavigate();
-  const { refetch } = issueHooks.useIssuesNotification();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { refetch } = issueHooks.useIssuesNotification(edition);
 
   const handleMarkAsResolved = async (
     flowDisplayName: string,

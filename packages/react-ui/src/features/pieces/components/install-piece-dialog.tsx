@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
@@ -61,11 +61,9 @@ type InstallPieceDialogProps = {
 };
 const InstallPieceDialog = ({ onInstallPiece }: InstallPieceDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const queryClient = useQueryClient();
 
   const { data: privatePiecesEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.PRIVATE_PIECES_ENABLED,
-    queryClient,
   );
 
   const form = useForm<FormSchema>({

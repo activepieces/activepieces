@@ -12,6 +12,7 @@ import {
 import React from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { useEmbedding } from '@/components/embed-provider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,6 +60,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     authenticationSession.getProjectId()!,
     platform.gitSyncEnabled,
   );
+
+  const { embedState } = useEmbedding();
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
 
@@ -123,18 +126,20 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </div>
           </DropdownMenuItem>
         </PushToGitDialog>
-        <MoveFlowDialog
-          flow={flow}
-          flowVersion={flowVersion}
-          onMoveTo={onMoveTo}
-        >
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <div className="flex cursor-pointer  flex-row gap-2 items-center">
-              <CornerUpLeft className="h-4 w-4" />
-              <span>{t('Move To')}</span>
-            </div>
-          </DropdownMenuItem>
-        </MoveFlowDialog>
+        {!embedState.hideFolders && (
+          <MoveFlowDialog
+            flow={flow}
+            flowVersion={flowVersion}
+            onMoveTo={onMoveTo}
+          >
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                <CornerUpLeft className="h-4 w-4" />
+                <span>{t('Move To')}</span>
+              </div>
+            </DropdownMenuItem>
+          </MoveFlowDialog>
+        )}
         <DropdownMenuItem onClick={() => duplicateFlow()}>
           <div className="flex cursor-pointer  flex-row gap-2 items-center">
             {isDuplicatePending ? (
@@ -157,14 +162,16 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             <span>{isExportPending ? t('Exporting') : t('Export')}</span>
           </div>
         </DropdownMenuItem>
-        <ShareTemplateDialog flowId={flow.id} flowVersion={flowVersion}>
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <div className="flex cursor-pointer  flex-row gap-2 items-center">
-              <Share2 className="h-4 w-4" />
-              <span>{t('Share')}</span>
-            </div>
-          </DropdownMenuItem>
-        </ShareTemplateDialog>
+        {!embedState.isEmbedded && (
+          <ShareTemplateDialog flowId={flow.id} flowVersion={flowVersion}>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                <Share2 className="h-4 w-4" />
+                <span>{t('Share')}</span>
+              </div>
+            </DropdownMenuItem>
+          </ShareTemplateDialog>
+        )}
         {!readonly && (
           <ConfirmationDeleteDialog
             title={`${t('Delete flow')} ${flowVersion.displayName}`}

@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 
 import { Skeleton } from '@/components/ui/skeleton';
@@ -51,15 +50,12 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     selectedTrigger?.props ?? {},
   );
 
-  const queryClient = useQueryClient();
   const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
     ApFlagId.WEBHOOK_URL_PREFIX,
-    queryClient,
   );
 
   const { data: frontendUrl } = flagsHooks.useFlag<string>(
     ApFlagId.FRONTEND_URL,
-    queryClient,
   );
   const markdownVariables = {
     webhookUrl: `${webhookPrefixUrl}/${props.flowId}`,

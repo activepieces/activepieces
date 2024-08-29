@@ -191,7 +191,7 @@ export const SearchableSelect = <T extends React.Key>({
                   filterOptionsIndices.map((filterIndex) => {
                     const option = options[filterIndex];
                     if (!option) {
-                      return <></>;
+                      return null;
                     }
                     return (
                       <CommandItem

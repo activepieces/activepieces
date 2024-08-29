@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { MoveLeft, SearchX } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -86,7 +86,6 @@ const PieceSelector = ({
   const [debouncedQuery] = useDebounce(searchQuery, 300);
   const showRequestPieceButton = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
-    useQueryClient(),
   ).data;
   const [selectedPieceMetadata, setSelectedMetadata] = useState<
     StepMetadata | undefined

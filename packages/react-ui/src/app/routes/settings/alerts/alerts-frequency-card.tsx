@@ -32,7 +32,7 @@ const AlertFrequencyCard = React.memo(() => {
   >({
     mutationFn: (request) => {
       updateProject(queryClient, request);
-      return projectApi.update(authenticationSession.getProjectId(), request);
+      return projectApi.update(authenticationSession.getProjectId()!, request);
     },
     onSuccess: () => {
       toast({

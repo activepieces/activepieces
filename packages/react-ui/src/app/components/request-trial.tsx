@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -128,11 +128,7 @@ export const RequestTrial = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
-  const queryClient = useQueryClient();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(
-    ApFlagId.EDITION,
-    queryClient,
-  );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const { mutate, isPending } = useMutation<
     { message?: string },

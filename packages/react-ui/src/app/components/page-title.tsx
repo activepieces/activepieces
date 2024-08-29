@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -9,8 +8,7 @@ type PageTitleProps = {
 };
 
 const PageTitle = ({ title, children }: PageTitleProps) => {
-  const queryClient = useQueryClient();
-  const websiteBranding = flagsHooks.useWebsiteBranding(queryClient);
+  const websiteBranding = flagsHooks.useWebsiteBranding();
 
   useEffect(() => {
     document.title = `${title} | ${websiteBranding.websiteName}`;
