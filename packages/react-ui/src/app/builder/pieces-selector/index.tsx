@@ -48,6 +48,7 @@ import {
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
+import { PieceIcon } from '@/features/pieces/components/piece-icon';
 
 type ItemListMetadata = {
   name: string;
@@ -284,11 +285,12 @@ const PieceSelectors = ({
                     }}
                   >
                     <div>
-                      <img
-                        src={pieceMetadata.logoUrl}
-                        alt={pieceMetadata.displayName}
-                        className="size-[24px] object-contain"
-                      />
+                      <PieceIcon
+                        logoUrl={pieceMetadata.logoUrl}
+                        displayName={pieceMetadata.displayName}
+                        showTooltip={false}
+                        size={'sm'}
+                      ></PieceIcon>
                     </div>
                     <div className="flex-grow h-full flex items-center justify-left text-sm">
                       {pieceMetadata.displayName}
@@ -340,11 +342,12 @@ const PieceSelectors = ({
                         }
                       >
                         <div className="flex gap-2 items-center">
-                          <img
-                            src={selectedPieceMetadata.logoUrl}
-                            alt={selectedPieceMetadata.displayName}
-                            className="size-[24px] object-contain"
-                          />
+                          <PieceIcon
+                            logoUrl={selectedPieceMetadata.logoUrl}
+                            displayName={selectedPieceMetadata.displayName}
+                            showTooltip={false}
+                            size={'sm'}
+                          ></PieceIcon>
                           <div className="flex flex-col gap-0.5">
                             <div className="text-sm">{item.displayName}</div>
                             <div className="text-xs text-muted-foreground">

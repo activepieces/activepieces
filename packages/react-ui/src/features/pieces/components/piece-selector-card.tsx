@@ -4,6 +4,7 @@ import React from 'react';
 import { PieceStepMetadata, StepMetadata } from '../lib/pieces-hook';
 
 import { cn } from '@/lib/utils';
+import { PieceIcon } from '@/features/pieces/components/piece-icon';
 
 type PieceCardInfoProps = {
   piece: StepMetadata;
@@ -28,11 +29,13 @@ const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
       )}
     >
       <div className="flex h-full min-w-[48px] items-center justify-center">
-        <img
-          src={piece.logoUrl}
-          alt={piece.displayName}
-          className="size-[48px] object-contain dark:bg-foreground"
-        />
+        <PieceIcon
+          logoUrl={piece.logoUrl}
+          displayName={piece.displayName}
+          showTooltip={false}
+          border={false}
+          size={'xl'}
+        ></PieceIcon>
       </div>
       <div className="flex h-full grow flex-col justify-center gap-1 text-start">
         <div className="text-base flex justify-center">

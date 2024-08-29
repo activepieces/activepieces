@@ -30,6 +30,7 @@ import {
 } from '@activepieces/shared';
 
 import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
+import { PieceIcon } from '@/features/pieces/components/piece-icon';
 
 function getStepStatus(
   stepName: string | undefined,
@@ -199,13 +200,12 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
             >
               <div className="flex h-full items-center justify-between gap-3 w-full">
                 <div className="flex items-center justify-center min-w-[46px] h-full">
-                  <ImageWithFallback
-                    width={40}
-                    height={40}
-                    src={stepMetadata?.logoUrl}
-                    alt={stepMetadata?.displayName}
-                    className="dark:bg-foreground"
-                  />
+                  <PieceIcon
+                    logoUrl={stepMetadata?.logoUrl}
+                    displayName={stepMetadata?.displayName}
+                    showTooltip={false}
+                    size={'lg'}
+                  ></PieceIcon>
                 </div>
                 <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
                   <div className="text-sm text-ellipsis overflow-hidden whitespace-nowrap w-full">
