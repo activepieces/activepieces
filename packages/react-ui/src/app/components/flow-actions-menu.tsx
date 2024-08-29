@@ -25,13 +25,20 @@ import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { GitBranchType } from '@activepieces/ee-shared';
-import { Flow, FlowOperationType, FlowVersion } from '@activepieces/shared';
+import {
+  Flow,
+  FlowOperationType,
+  FlowVersion,
+  Permission,
+} from '@activepieces/shared';
 
 import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
 import { RenameFlowDialog } from '../../features/flows/components/rename-flow-dialog';
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
 import { flowsApi } from '../../features/flows/lib/flows-api';
 import { flowsUtils } from '../../features/flows/lib/flows-utils';
+import { useAuthorization } from '@/components/authorization';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 
 interface FlowActionMenuProps {
   flow: Flow;
@@ -59,6 +66,9 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     authenticationSession.getProjectId()!,
     platform.gitSyncEnabled,
   );
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
+  const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
 
@@ -106,47 +116,69 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {!readonly && (
-          <RenameFlowDialog flowId={flow.id} onRename={onRename}>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <div className="flex cursor-pointer flex-row gap-2 items-center">
-                <Pencil className="h-4 w-4" />
-                <span>{t('Rename')}</span>
-              </div>
-            </DropdownMenuItem>
-          </RenameFlowDialog>
+          <PermissionNeededWrapper
+            hasPermission={userHasPermissionToUpdateFlow}
+          >
+            <RenameFlowDialog flowId={flow.id} onRename={onRename}>
+              <DropdownMenuItem disabled={!userHasPermissionToUpdateFlow}>
+                <div className="flex cursor-pointer flex-row gap-2 items-center">
+                  <Pencil className="h-4 w-4" />
+                  <span>{t('Rename')}</span>
+                </div>
+              </DropdownMenuItem>
+            </RenameFlowDialog>
+          </PermissionNeededWrapper>
         )}
         <PushToGitDialog flowId={flow.id}>
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <div className="flex cursor-pointer  flex-row gap-2 items-center">
-              <UploadCloud className="h-4 w-4" />
-              <span>{t('Push to Git')}</span>
-            </div>
-          </DropdownMenuItem>
+          <PermissionNeededWrapper hasPermission={userHasPermissionToPushToGit}>
+            <DropdownMenuItem
+              disabled={!userHasPermissionToPushToGit}
+              onSelect={(e) => e.preventDefault()}
+            >
+              <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                <UploadCloud className="h-4 w-4" />
+                <span>{t('Push to Git')}</span>
+              </div>
+            </DropdownMenuItem>
+          </PermissionNeededWrapper>
         </PushToGitDialog>
         <MoveFlowDialog
           flow={flow}
           flowVersion={flowVersion}
           onMoveTo={onMoveTo}
         >
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+          <PermissionNeededWrapper
+            hasPermission={userHasPermissionToUpdateFlow}
+          >
+            <DropdownMenuItem
+              disabled={!userHasPermissionToUpdateFlow}
+              onSelect={(e) => e.preventDefault()}
+            >
+              <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                <CornerUpLeft className="h-4 w-4" />
+                <span>{t('Move To')}</span>
+              </div>
+            </DropdownMenuItem>
+          </PermissionNeededWrapper>
+        </MoveFlowDialog>
+        <PermissionNeededWrapper hasPermission={userHasPermissionToUpdateFlow}>
+          <DropdownMenuItem
+            disabled={!userHasPermissionToUpdateFlow}
+            onClick={() => duplicateFlow()}
+          >
             <div className="flex cursor-pointer  flex-row gap-2 items-center">
-              <CornerUpLeft className="h-4 w-4" />
-              <span>{t('Move To')}</span>
+              {isDuplicatePending ? (
+                <LoadingSpinner />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              <span>
+                {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
+              </span>
             </div>
           </DropdownMenuItem>
-        </MoveFlowDialog>
-        <DropdownMenuItem onClick={() => duplicateFlow()}>
-          <div className="flex cursor-pointer  flex-row gap-2 items-center">
-            {isDuplicatePending ? (
-              <LoadingSpinner />
-            ) : (
-              <Copy className="h-4 w-4" />
-            )}
-            <span>
-              {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
-            </span>
-          </div>
-        </DropdownMenuItem>
+        </PermissionNeededWrapper>
+
         <DropdownMenuItem onClick={() => exportFlow()}>
           <div className="flex cursor-pointer  flex-row gap-2 items-center">
             {isExportPending ? (
@@ -157,6 +189,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             <span>{isExportPending ? t('Exporting') : t('Export')}</span>
           </div>
         </DropdownMenuItem>
+
         <ShareTemplateDialog flowId={flow.id} flowVersion={flowVersion}>
           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
             <div className="flex cursor-pointer  flex-row gap-2 items-center">
@@ -165,6 +198,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </div>
           </DropdownMenuItem>
         </ShareTemplateDialog>
+
         {!readonly && (
           <ConfirmationDeleteDialog
             title={`${t('Delete flow')} ${flowVersion.displayName}`}
@@ -190,12 +224,19 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             }}
             entityName={t('flow')}
           >
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                <Trash2 className="h-4 w-4 text-destructive" />
-                <span className="text-destructive">{t('Delete')}</span>
-              </div>
-            </DropdownMenuItem>
+            <PermissionNeededWrapper
+              hasPermission={userHasPermissionToUpdateFlow}
+            >
+              <DropdownMenuItem
+                disabled={!userHasPermissionToUpdateFlow}
+                onSelect={(e) => e.preventDefault()}
+              >
+                <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                  <span className="text-destructive">{t('Delete')}</span>
+                </div>
+              </DropdownMenuItem>
+            </PermissionNeededWrapper>
           </ConfirmationDeleteDialog>
         )}
       </DropdownMenuContent>
