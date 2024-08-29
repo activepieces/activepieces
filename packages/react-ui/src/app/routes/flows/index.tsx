@@ -36,9 +36,11 @@ import { FolderFilterList } from '@/features/folders/component/folder-filter-lis
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
+import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
+import { useAuthorization } from '@/components/authorization';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 
 const filters = [
   {
@@ -63,6 +65,8 @@ const filters = [
 ];
 
 const FlowsPage = () => {
+  const { checkAccess } = useAuthorization();
+  const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
 
@@ -208,21 +212,37 @@ const FlowsPage = () => {
         <h1 className="text-3xl font-bold">{t('Flows')}</h1>
         <div className="ml-auto flex flex-row gap-2">
           <ImportFlowDialog>
-            <Button variant="outline" className="flex gap-2 items-center">
-              <Import className="w-4 h-4" />
-              {t('Import Flow')}
-            </Button>
+            <PermissionNeededWrapper
+              hasPermission={doesUserHavePermissionToWriteFlow}
+            >
+              <Button
+                disabled={!doesUserHavePermissionToWriteFlow}
+                variant="outline"
+                className="flex gap-2 items-center"
+              >
+                <Import className="w-4 h-4" />
+                {t('Import Flow')}
+              </Button>
+            </PermissionNeededWrapper>
           </ImportFlowDialog>
           <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="default"
-                className="flex gap-2 items-center"
-                loading={isCreateFlowPending}
+            <DropdownMenuTrigger
+              disabled={!doesUserHavePermissionToWriteFlow}
+              asChild
+            >
+              <PermissionNeededWrapper
+                hasPermission={doesUserHavePermissionToWriteFlow}
               >
-                <span>{t('New Flow')}</span>
-                <ChevronDown className="h-4 w-4 " />
-              </Button>
+                <Button
+                  disabled={!doesUserHavePermissionToWriteFlow}
+                  variant="default"
+                  className="flex gap-2 items-center"
+                  loading={isCreateFlowPending}
+                >
+                  <span>{t('New Flow')}</span>
+                  <ChevronDown className="h-4 w-4 " />
+                </Button>
+              </PermissionNeededWrapper>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem

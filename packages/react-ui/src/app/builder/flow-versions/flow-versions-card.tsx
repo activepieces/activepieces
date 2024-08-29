@@ -59,11 +59,15 @@ const UseAsDraftDropdownMenuOption = ({
   onConfirm,
 }: UseAsDraftOptionProps) => {
   const { checkAccess } = useAuthorization();
-  const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
+  const userHasPermissionToWriteFlow =
+    checkAccess(Permission.WRITE_FLOW) && false;
 
   return (
     <Dialog>
-      <DialogTrigger className="w-full">
+      <DialogTrigger
+        disabled={!userHasPermissionToWriteFlow}
+        className="w-full"
+      >
         <PermissionNeededWrapper hasPermission={userHasPermissionToWriteFlow}>
           <DropdownMenuItem
             className="w-full"
