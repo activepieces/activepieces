@@ -14,6 +14,8 @@ import { PieceProperty } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
 import { TextInputWithMentions } from './text-input-with-mentions';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ApMarkdown } from '@/components/custom/markdown';
 
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;
@@ -61,7 +63,21 @@ const AutoFormFieldWrapper = ({
     <FormItem className="flex flex-col gap-1">
       <FormLabel className="flex items-center gap-1">
         {placeBeforeLabelText && !toggled && children}
-        <span>{t(property.displayName)}</span>
+        {property.description && !hideDescription ? (
+          <Popover>
+            <PopoverTrigger>
+              <span className="border-b border-dashed border-foreground">{t(property.displayName)}</span>
+            </PopoverTrigger>
+            <PopoverContent side="top" align='start' className='mb-1 bg-foreground/85 text-background'>
+              <div className='text-xs'>
+                <ApMarkdown markdown={property.description} withBorder={false} />
+              </div>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <span>{t(property.displayName)}</span>
+        )}
+
         {property.required && <span className="text-destructive">*</span>}
         <span className="grow"></span>
         {allowDynamicValues && (
@@ -88,9 +104,7 @@ const AutoFormFieldWrapper = ({
         ></TextInputWithMentions>
       )}
       {!placeBeforeLabelText && !toggled && <div>{children}</div>}
-      {property.description && !hideDescription && (
-        <ReadMoreDescription text={t(property.description)} />
-      )}
+
     </FormItem>
   );
 };
