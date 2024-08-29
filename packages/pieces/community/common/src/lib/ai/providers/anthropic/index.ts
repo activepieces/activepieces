@@ -16,37 +16,38 @@ export const anthropic = ({
     underlying: sdk,
     provider: "ANTHROPIC" as const,
     chat: {
-      completions: {
-        create: async (params) => {
-          const completion = await sdk.messages.create({
-            model: params.model,
-            messages: params.messages.map((message) => ({
-              role: message.role === 'user' ? 'user' : 'assistant',
-              content: message.content,
-            })),
-            temperature: params.temperature,
-            top_p: params.topP,
-            max_tokens: params.maxTokens ?? 2000,
-          })
+      text: async (params) => {
+        const concatenatedSystemMessage = params.messages.filter(message => message.role === 'system').map(message => message.content).join('\n');
+        const completion = await sdk.messages.create({
+          model: params.model,
+          messages: params.messages.map((message) => ({
+            role: message.role === 'user' ? 'user' : 'assistant',
+            content: message.content,
+          })),
+          temperature: params.temperature,
+          top_k: params.topK,
+          top_p: params.topP,
+          stop_sequences: params.stop,
+          system: concatenatedSystemMessage,
+          stream: false,
+          max_tokens: params.maxTokens ?? 2000,
+        })
 
-          return {
-            choices: completion.content.map(choice => {
-              return {
-                content: choice.text,
-                role: AIChatRole.ASSISTANT,
-              }
-            }),
-            created: new Date().getTime(),
-            id: completion.id,
-            model: completion.model,
-            usage: {
-              completionTokens: completion.usage.output_tokens,
-              promptTokens: completion.usage.input_tokens,
-              totalTokens: completion.usage.output_tokens + completion.usage.input_tokens,
-            },
-          }
-        },
-      },
+        return {
+          choices: completion.content.map(choice => ({
+            content: choice.text,
+            role: AIChatRole.ASSISTANT,
+          })),
+          created: new Date().getTime(),
+          id: completion.id,
+          model: completion.model,
+          usage: {
+            completionTokens: completion.usage.output_tokens,
+            promptTokens: completion.usage.input_tokens,
+            totalTokens: completion.usage.output_tokens + completion.usage.input_tokens,
+          },
+        }
+      }
     },
   }
 };

@@ -1,29 +1,26 @@
-export interface AI<SDK> {
+export type AI<SDK> = {
   provider: string;
   chat: AIChat;
   underlying: SDK;
 }
 
-export interface AIChat {
-  completions: AIChatCompletions;
+export type AIChat = {
+  text: (params: AIChatCompletionsCreateParams) => Promise<AIChatCompletion>;
 }
 
-export interface AIChatCompletions {
-  create: (params: AIChatCompletionsCreateParams) => Promise<AIChatCompletion>;
-}
-
-export interface AIChatCompletionsCreateParams {
+export type AIChatCompletionsCreateParams = {
   model: string;
   messages: AIChatMessage[];
   temperature?: number;
   maxTokens?: number;
   topP?: number;
+  topK?: number;
   frequencyPenalty?: number;
   presencePenalty?: number;
   stop?: string[];
 }
 
-export interface AIChatCompletion {
+export type AIChatCompletion = {
   id: string;
   created: number;
   model: string;
@@ -31,13 +28,13 @@ export interface AIChatCompletion {
   usage?: AIChatCompletionUsage;
 }
 
-export interface AIChatCompletionUsage {
+export type AIChatCompletionUsage = {
   promptTokens: number;
   completionTokens: number;
   totalTokens: number;
 }
 
-export interface AIChatMessage {
+export type AIChatMessage = {
   role: AIChatRole;
   content: string;
 }
