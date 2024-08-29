@@ -13,7 +13,7 @@ import {
 
 export const projectApi = {
   current: async () => {
-    return projectApi.get(authenticationSession.getProjectId());
+    return projectApi.get(authenticationSession.getProjectId()!);
   },
   list(request: ListProjectRequestForUserQueryParams) {
     return api.get<SeekPage<ProjectWithLimits>>('/v1/users/projects', request);

@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -21,10 +20,8 @@ export const LockedFeatureGuard = ({
   lockDescription,
   lockVideoUrl,
 }: LockedFeatureGuardProps) => {
-  const queryClient = useQueryClient();
   const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_PLATFORM_DEMO,
-    queryClient,
   );
 
   if (!locked && !showPlatformDemo) {

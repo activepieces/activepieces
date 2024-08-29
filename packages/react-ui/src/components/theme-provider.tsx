@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useContext, useEffect, useState } from 'react';
 import * as RippleHook from 'use-ripple-hook';
 
@@ -50,9 +49,7 @@ export function ThemeProvider({
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
-
-  const queryClient = useQueryClient();
-  const branding = flagsHooks.useWebsiteBranding(queryClient);
+  const branding = flagsHooks.useWebsiteBranding();
   useEffect(() => {
     if (!branding) {
       console.warn('Website brand is not defined');

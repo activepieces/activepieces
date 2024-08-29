@@ -1,4 +1,6 @@
+import { t } from 'i18next';
 import { LogOut, SunMoon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -12,8 +14,6 @@ import {
   DropdownMenuItem,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
-import { t } from 'i18next';
-import { Link } from 'react-router-dom';
 
 export function UserAvatar() {
   const user = authenticationSession.getCurrentUser();

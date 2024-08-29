@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -13,7 +12,6 @@ const ShowPoweredBy = (props: ShowPoweredByProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: isCloudPlatform } = flagsHooks.useFlag<boolean>(
     ApFlagId.IS_CLOUD_PLATFORM,
-    useQueryClient(),
   );
   if (!platform?.showPoweredBy && !(props.showOnCloud && isCloudPlatform)) {
     return null;
