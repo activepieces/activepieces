@@ -19,12 +19,16 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
-import { ApFlagId, ProjectWithLimits } from '@activepieces/shared';
+import {
+  ApFlagId,
+  ProjectMemberRole,
+  ProjectWithLimits,
+} from '@activepieces/shared';
 
 export default function GeneralPage() {
   const queryClient = useQueryClient();
   const { project, updateProject } = projectHooks.useCurrentProject();
-
+  const projectRole = authenticationSession.getUserProjectRole();
   const { toast } = useToast();
 
   const form = useForm({
@@ -34,6 +38,7 @@ export default function GeneralPage() {
         tasks: project?.plan?.tasks,
       },
     },
+    disabled: projectRole !== ProjectMemberRole.ADMIN,
     resolver: typeboxResolver(ProjectWithLimits),
   });
 
@@ -47,7 +52,7 @@ export default function GeneralPage() {
   >({
     mutationFn: (request) => {
       updateProject(queryClient, request);
-      return projectApi.update(authenticationSession.getProjectId(), request);
+      return projectApi.update(authenticationSession.getProjectId()!, request);
     },
     onSuccess: () => {
       toast({
@@ -115,17 +120,19 @@ export default function GeneralPage() {
             )}
           </form>
         </Form>
-        <div className="flex gap-2 justify-end mt-4">
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              mutation.mutate(form.getValues());
-            }}
-          >
-            {t('Save')}
-          </Button>
-        </div>
+        {projectRole === ProjectMemberRole.ADMIN && (
+          <div className="flex gap-2 justify-end mt-4">
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                mutation.mutate(form.getValues());
+              }}
+            >
+              {t('Save')}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

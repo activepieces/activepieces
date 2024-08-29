@@ -2,13 +2,7 @@ import React from 'react';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { rolePermissions } from '@activepieces/ee-shared';
-import {
-  ApFlagId,
-  Permission,
-  PlatformRole,
-  ProjectMemberRole,
-} from '@activepieces/shared';
-import { t } from 'i18next';
+import { ApFlagId, Permission, PlatformRole } from '@activepieces/shared';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useQueryClient } from '@tanstack/react-query';
 
