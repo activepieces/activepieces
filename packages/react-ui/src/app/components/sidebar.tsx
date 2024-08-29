@@ -66,7 +66,7 @@ const CustomTooltipLink = ({
         />
         <span className="text-[10px]">{label}</span>
         {notification && (
-          <span className="bg-destructive absolute right-[-3px] top-[-3px] size-2 rounded-full"></span>
+          <span className="bg-destructive absolute right-[1px] top-[3px] size-2 rounded-full"></span>
         )}
       </div>
     </Link>

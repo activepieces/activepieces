@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 
-import { Authorization } from '@/components/authorization';
+import { useAuthorization } from '@/components/authorization';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
@@ -11,12 +11,6 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
@@ -25,6 +19,7 @@ import { FlowRunStatus, Permission } from '@activepieces/shared';
 
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 
 const fetchData = async (
   _params: Record<string, string>,
@@ -55,7 +50,10 @@ export default function IssuesTable() {
       duration: 3000,
     });
   };
-
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToMarkAsResolved = checkAccess(
+    Permission.WRITE_ISSUES,
+  );
   const columns: ColumnDef<RowDataWithActions<PopulatedIssue>>[] = [
     {
       accessorKey: 'flowName',
@@ -109,40 +107,27 @@ export default function IssuesTable() {
       cell: ({ row }) => {
         return (
           <div className="flex items-end justify-end">
-            <Authorization
-              permission={Permission.WRITE_ISSUES}
-              forbiddenFallback={
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Button disabled className="gap-2" size={'sm'}>
-                        <Check className="size-4" />
-                        {t('Mark as Resolved')}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <span>{t('Permission Needed')}</span>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              }
+            <PermissionNeededWrapper
+              hasPermission={userHasPermissionToMarkAsResolved}
             >
               <Button
+                disabled={!userHasPermissionToMarkAsResolved}
                 className="gap-2"
                 size={'sm'}
                 onClick={(e) => {
+                  e.stopPropagation();
+                  console.log('resolved');
                   row.original.delete();
                   handleMarkAsResolved(
                     row.original.flowDisplayName,
                     row.original.id,
                   );
-                  e.stopPropagation();
                 }}
               >
                 <Check className="size-4" />
                 {t('Mark as Resolved')}
               </Button>
-            </Authorization>
+            </PermissionNeededWrapper>
           </div>
         );
       },
