@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const tagVariants = cva(
-  'text-xs font-semibold me-2 px-2.5 py-0.5 rounded-full cursor-pointer border border-transparent',
+  'text-xs font-semibold me-2 px-2.5 py-0.5 rounded-full cursor-pointer border border-transparent dark:border-[2px]',
   {
     variants: {
       variant: {

@@ -117,9 +117,15 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                   <SelectTrigger className="flex gap-2 items-center">
                     <>
                       <SelectValue
-                        className="truncate"
+                        className="truncate flex-grow flex-shrink"
                         placeholder={t('Select a connection')}
-                      />
+                      >
+                        {field.value ? (
+                          <div className="truncate flex-grow flex-shrink">
+                            {removeBrackets(field.value)}
+                          </div>
+                        ) : null}
+                      </SelectValue>
                       <div className="grow"></div>
                       {/* Hidden Button to take same space as shown button */}
                       {field.value && (

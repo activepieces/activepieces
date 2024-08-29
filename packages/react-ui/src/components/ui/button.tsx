@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { LoadingSpinner } from './spinner';
 
 const buttonVariants = cva(
-  'ring-offset-background  focus-visible:ring-ring inline-flex items-center justify-center whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'ring-offset-background inline-flex items-center justify-center whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
@@ -20,7 +20,8 @@ const buttonVariants = cva(
           'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
         secondary:
           'bg-secondary text-secondary-foreground enabled:hover:bg-secondary/80',
-        ghost: 'enabled:hover:bg-accent enabled:hover:text-accent-foreground',
+        ghost:
+          'enabled:hover:bg-accent enabled:hover:text-accent-foreground focus-visible:ring-0',
         link: 'text-primary underline-offset-4 enabled:hover:underline',
         transparent: 'text-primary enabled:hover:bg-transparent',
       },

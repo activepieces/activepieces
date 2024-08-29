@@ -4,9 +4,13 @@ import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { PieceSelectors } from '@/app/builder/pieces-selector';
+import { PieceSelector } from '@/app/builder/pieces-selector';
 import { cn } from '@/lib/utils';
-import { StepLocationRelativeToParent, isNil } from '@activepieces/shared';
+import {
+  FlowOperationType,
+  StepLocationRelativeToParent,
+  isNil,
+} from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import {
@@ -124,13 +128,25 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
         props.data.stepLocationRelativeToParent ===
           StepLocationRelativeToParent.INSIDE_TRUE_BRANCH) && (
         <foreignObject
-          width={35}
-          height={100}
-          className="z-50 relative"
-          x={buttonPosition.x - 100 * labelDirectionSign}
-          y={buttonPosition.y - 25}
+          width={
+            props.data.stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+              ? 30
+              : 35
+          }
+          height={25}
+          className="z-50 relative pointer-events-none cursor-default"
+          x={
+            buttonPosition.x -
+            (props.data.stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+              ? 100
+              : 116) *
+              labelDirectionSign
+          }
+          y={buttonPosition.y - 27}
         >
-          <div className="text-accent-foreground text-sm text-center bg-background">
+          <div className="text-accent-foreground text-sm text-center bg-background select-none cursor-default">
             {props.data.stepLocationRelativeToParent ===
             StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
               ? t('True')
@@ -166,9 +182,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
             }}
             className="absolute"
             ref={setNodeRef}
-          >
-            {' '}
-          </div>
+          ></div>
           <div
             className={cn(
               'bg-primary/90 w-[18px] h-[18px] rounded-xss box-content ',
@@ -177,15 +191,17 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
         </foreignObject>
       )}
       {!showDropIndicator && props.data?.addButton && !readonly && (
-        <PieceSelectors
-          type="action"
+        <PieceSelector
+          operation={{
+            type: FlowOperationType.ADD_ACTION,
+            actionLocation: {
+              parentStep: props.data.parentStep!,
+              stepLocationRelativeToParent:
+                props.data.stepLocationRelativeToParent!,
+            },
+          }}
           open={actionMenuOpen}
           onOpenChange={setActionMenuOpen}
-          actionLocation={{
-            parentStep: props.data.parentStep!,
-            stepLocationRelativeToParent:
-              props.data.stepLocationRelativeToParent,
-          }}
         >
           <foreignObject
             width={18}
@@ -207,7 +223,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
               {!actionMenuOpen && <Plus className="w-3 h-3 text-white" />}
             </div>
           </foreignObject>
-        </PieceSelectors>
+        </PieceSelector>
       )}
     </>
   );

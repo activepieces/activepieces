@@ -215,12 +215,9 @@
       ]
     },
     {
-      "group": "Getting Started",
-      "pages": ["developers/overview"]
-    },
-    {
       "group": "Build a Piece",
       "pages": [
+        "developers/building-pieces/overview",
         "developers/building-pieces/start-building",
         "developers/building-pieces/setup-fork",
         {

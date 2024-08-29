@@ -3,10 +3,10 @@ import { Handle, Position } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 import React, { useId, useState } from 'react';
 
-import { PieceSelectors } from '@/app/builder/pieces-selector';
+import { PieceSelector } from '@/app/builder/pieces-selector';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { FlowOperationType, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
@@ -48,37 +48,37 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
           className="border cursor-auto border-solid border-none flex items-center justify-center relative "
         >
           <div
-            className={cn('w-[50px] h-[50px]  rounded transition-all', {
-              'bg-accent': !actionMenuOpen && !showDropIndicator,
+            className={cn('w-[50px] h-[50px]  rounded bg-accent', {
               'bg-primary/80': showDropIndicator || actionMenuOpen,
               'shadow-add-button': isIsStepInsideDropzone || actionMenuOpen,
+              'transition-all':
+                isIsStepInsideDropzone || actionMenuOpen || showDropIndicator,
             })}
           >
             {!showDropIndicator && (
-              <PieceSelectors
-                type="action"
+              <PieceSelector
+                operation={{
+                  type: FlowOperationType.ADD_ACTION,
+                  actionLocation: {
+                    parentStep: data.parentStep!,
+                    stepLocationRelativeToParent:
+                      data.stepLocationRelativeToParent!,
+                  },
+                }}
                 open={actionMenuOpen}
                 onOpenChange={setActionMenuOpen}
-                actionLocation={{
-                  parentStep: data.parentStep!,
-                  stepLocationRelativeToParent:
-                    data.stepLocationRelativeToParent!,
-                }}
               >
                 <Button
                   variant="transparent"
                   className="w-full h-full hover:bg-accent-foreground rounded"
                 >
                   <Plus
-                    className={cn(
-                      'w-6 h-6 text-accent-foreground transition-all',
-                      {
-                        'opacity-0': showDropIndicator || actionMenuOpen,
-                      },
-                    )}
+                    className={cn('w-6 h-6 text-accent-foreground ', {
+                      'opacity-0': showDropIndicator || actionMenuOpen,
+                    })}
                   />
                 </Button>
-              </PieceSelectors>
+              </PieceSelector>
             )}
           </div>
           {showDropIndicator && (
