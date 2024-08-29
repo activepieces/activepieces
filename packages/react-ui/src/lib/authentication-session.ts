@@ -5,7 +5,6 @@ import { AuthenticationResponse, isNil } from '@activepieces/shared';
 
 const currentUserKey = 'currentUser';
 const tokenKey = 'token';
-export const platformCacheKey = 'platform';
 export const authenticationSession = {
   saveResponse(response: AuthenticationResponse) {
     localStorage.setItem(tokenKey, response.token);

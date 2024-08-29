@@ -232,6 +232,10 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/team',
+    element: <Navigate to="/settings/team" replace></Navigate>,
+  },
+  {
     path: '/settings/team',
     element: (
       <DashboardContainer>
@@ -327,7 +331,7 @@ export const router = createBrowserRouter([
     element: (
       <PlatformAdminContainer>
         <PageTitle title="Platform">
-          <Navigate to="/platform/projects" />
+          <Navigate to="/platform/projects" replace />
         </PageTitle>
       </PlatformAdminContainer>
     ),
