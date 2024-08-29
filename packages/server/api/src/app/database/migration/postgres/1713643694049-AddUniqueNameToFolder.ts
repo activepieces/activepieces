@@ -16,7 +16,7 @@ export class AddUniqueNameToFolder1713643694049 implements MigrationInterface {
             )
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_folder_project_id"
+            DROP INDEX "idx_folder_project_id"
         `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_folder_project_id_display_name" ON "folder" ("projectId", "displayName")
@@ -25,7 +25,7 @@ export class AddUniqueNameToFolder1713643694049 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_folder_project_id_display_name"
+            DROP INDEX "idx_folder_project_id_display_name"
         `)
         await queryRunner.query(`
             CREATE INDEX "idx_folder_project_id" ON "folder" ("projectId")

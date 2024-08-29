@@ -5,7 +5,7 @@ export class SetNotNullOnPlatform1709505632771 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_project_platform_id_external_id"
+            DROP INDEX "idx_project_platform_id_external_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "project"
@@ -19,7 +19,7 @@ export class SetNotNullOnPlatform1709505632771 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_project_platform_id_external_id"
+            DROP INDEX "idx_project_platform_id_external_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "project"
