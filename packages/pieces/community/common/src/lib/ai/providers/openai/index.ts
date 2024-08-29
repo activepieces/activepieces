@@ -1,77 +1,57 @@
+import OpenAI from 'openai';
 import { AI, AIChatRole } from "../..";
-import { httpClient, HttpMethod } from "../../../http";
-
-export type OpenAIChatModel =
-  | "gpt-3.5-turbo-instruct"
-  | "gpt-3.5-turbo-1106"
-  | "gpt-3.5-turbo"
-  | "gpt-3.5-turbo-0125"
-  | "gpt-4-0613"
-  | "gpt-4"
-  | "gpt-4-1106-preview"
-  | "gpt-4-0125-preview"
-  | "gpt-4-turbo-preview"
-  | "gpt-4-turbo-2024-04-09"
-  | "gpt-4-turbo"
-  | "gpt-4o-mini-2024-07-18"
-  | "gpt-4o-mini"
-  | "chatgpt-4o-latest"
-  | "gpt-4o-2024-08-06"
-  | "gpt-4o-2024-05-13"
-  | "gpt-4o"
 
 export const openai = ({
   serverUrl,
   engineToken,
-}: { serverUrl: string, engineToken: string }): AI<"OPENAI", OpenAIChatModel> => ({
-  provider: "OPENAI",
-  chat: {
-    completions: {
-      create: async (params) => {
-        const openaiEndpoint = '/v1/chat/completions';
-        const proxyUrl = `${serverUrl}v1/proxy/openai`
-        const response = await httpClient.sendRequest({
-          method: HttpMethod.POST,
-          url: `${proxyUrl}${openaiEndpoint}`,
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${engineToken}`,
-          },
-          body: {
+}: { serverUrl: string, engineToken: string }): AI<OpenAI> => {
+  const openaiEndpoint = '/v1/chat/completions';
+  const proxyUrl = `${serverUrl}v1/proxy/openai`
+  const sdk = new OpenAI({
+    apiKey: engineToken,
+    baseURL: `${proxyUrl}${openaiEndpoint}`,
+    defaultHeaders: {
+      'X-AP-TOTAL-USAGE-BODY-PATH': 'usage.total_tokens',
+    },
+  });
+  return {
+    underlying: sdk,
+    provider: "OPENAI" as const,
+    chat: {
+      completions: {
+        create: async (params) => {
+          const completion = await sdk.chat.completions.create({
             model: params.model,
-            messages: params.messages,
+            messages: params.messages.map((message) => ({
+              role: message.role === 'user' ? 'user' : 'assistant',
+              content: message.content,
+            })),
             temperature: params.temperature,
             max_tokens: params.maxTokens,
             top_p: params.topP,
             frequency_penalty: params.frequencyPenalty,
             presence_penalty: params.presencePenalty,
             stop: params.stop,
-          },
-        });
+          })
 
-        const choices = (response.body.choices as Array<{ message: { role: string, content: string }, finish_reason: string }>)
-
-        return {
-          choices: choices.map((choice) => {
-            return {
-              message: {
-                role: choice.message.role as AIChatRole,
-                content: choice.message.content,
-              },
-              finishReason: choice.finish_reason,
-            }
-          }),
-          created: response.body.created,
-          id: response.body.id,
-          model: response.body.model,
-          object: "chat.completion",
-          usage: {
-            completionTokens: response.body.usage.completion_tokens,
-            promptTokens: response.body.usage.prompt_tokens,
-            totalTokens: response.body.usage.total_tokens,
-          },
-        }
+          return {
+            choices: completion.choices.map((choice) => {
+              return {
+                role: AIChatRole.ASSISTANT,
+                content: choice.message.content ?? "",
+              }
+            }),
+            created: completion.created,
+            id: completion.id,
+            model: completion.model,
+            usage: completion.usage && {
+              completionTokens: completion.usage.completion_tokens,
+              promptTokens: completion.usage.prompt_tokens,
+              totalTokens: completion.usage.total_tokens,
+            },
+          }
+        },
       },
     },
-  },
-});
+  }
+};

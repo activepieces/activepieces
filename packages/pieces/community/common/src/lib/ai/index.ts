@@ -1,18 +1,19 @@
-export interface AI<P extends string, ChatModel extends string> {
-  provider: P;
-  chat: AIChat<ChatModel>;
+export interface AI<SDK> {
+  provider: string;
+  chat: AIChat;
+  underlying: SDK;
 }
 
-export interface AIChat<ChatModel extends string> {
-  completions: AIChatCompletions<ChatModel>;
+export interface AIChat {
+  completions: AIChatCompletions;
 }
 
-export interface AIChatCompletions<ChatModel extends string> {
-  create: (params: AIChatCompletionsCreateParams<ChatModel>) => Promise<AIChatCompletion>;
+export interface AIChatCompletions {
+  create: (params: AIChatCompletionsCreateParams) => Promise<AIChatCompletion>;
 }
 
-export interface AIChatCompletionsCreateParams<ChatModel> {
-  model: ChatModel;
+export interface AIChatCompletionsCreateParams {
+  model: string;
   messages: AIChatMessage[];
   temperature?: number;
   maxTokens?: number;
@@ -24,16 +25,10 @@ export interface AIChatCompletionsCreateParams<ChatModel> {
 
 export interface AIChatCompletion {
   id: string;
-  object: string;
   created: number;
   model: string;
-  choices: AIChatCompletionChoice[];
-  usage: AIChatCompletionUsage;
-}
-
-export interface AIChatCompletionChoice {
-  message: AIChatMessage;
-  finishReason: string;
+  choices: AIChatMessage[];
+  usage?: AIChatCompletionUsage;
 }
 
 export interface AIChatCompletionUsage {
