@@ -13,7 +13,7 @@ const FlowBuilderPage = () => {
   const { data: flow, isLoading } = useQuery<PopulatedFlow, Error>({
     queryKey: ['flow', flowId],
     queryFn: () => flowsApi.get(flowId!),
-    staleTime: Infinity,
+    gcTime: 0,
   });
 
   if (isLoading) {
