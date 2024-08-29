@@ -16,7 +16,6 @@ import {
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
-import ImageWithFallback from '@/app/components/image-with-fallback';
 import { InvalidStepIcon } from '@/components/custom/alert-icon';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +29,7 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
 import {
@@ -232,12 +232,12 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
             >
               <div className="flex h-full items-center justify-between gap-3 w-full">
                 <div className="flex items-center justify-center min-w-[46px] h-full">
-                  <ImageWithFallback
-                    width={40}
-                    height={40}
-                    src={stepMetadata?.logoUrl}
-                    alt={stepMetadata?.displayName}
-                  />
+                  <PieceIcon
+                    logoUrl={stepMetadata?.logoUrl}
+                    displayName={stepMetadata?.displayName}
+                    showTooltip={false}
+                    size={'lg'}
+                  ></PieceIcon>
                 </div>
                 <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
                   <div className=" flex items-center justify-between min-w-0 w-full">
