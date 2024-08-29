@@ -13,6 +13,7 @@ import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
 
 import { FlagGuard } from './flag-guard';
+import { ReportBugsButton } from '@/components/ui/report-bugs-button';
 
 export const Header = () => {
   const history = useLocation();
@@ -27,6 +28,7 @@ export const Header = () => {
       )}
       <div className="grow"></div>
       <div className="flex items-center justify-center gap-4">
+        <ReportBugsButton variant="outline"></ReportBugsButton>
         <InviteUserDialog></InviteUserDialog>
         <Link to={isInPlatformAdmin ? '/' : '/platform'}>
           <Button

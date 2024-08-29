@@ -1,7 +1,7 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, History, Home, Logs } from 'lucide-react';
+import { Bug, ChevronDown, History, Home, Logs } from 'lucide-react';
 import { useMemo } from 'react';
 import {
   createSearchParams,
@@ -29,6 +29,7 @@ import { ApFlagId, FlowVersionState, supportUrl } from '@activepieces/shared';
 import FlowActionMenu from '../components/flow-actions-menu';
 
 import { BuilderPublishButton } from './builder-publish-button';
+import { ReportBugsButton } from '@/components/ui/report-bugs-button';
 
 export const BuilderHeader = () => {
   const navigate = useNavigate();
@@ -118,6 +119,7 @@ export const BuilderHeader = () => {
         </div>
         <div className="grow"></div>
         <div className="flex items-center justify-center gap-4">
+          <ReportBugsButton variant="ghost"></ReportBugsButton>
           {showSupport && (
             <Tooltip>
               <TooltipTrigger asChild>
