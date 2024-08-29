@@ -3,10 +3,10 @@ import React from 'react';
 import { authenticationSession } from '@/lib/authentication-session';
 import { rolePermissions } from '@activepieces/ee-shared';
 import { Permission } from '@activepieces/shared';
+import { t } from 'i18next';
 
 export const useAuthorization = () => {
   const role = authenticationSession.getUserProjectRole();
-
   const checkAccess = React.useCallback(
     (permission: Permission) => {
       if (!role) return true;

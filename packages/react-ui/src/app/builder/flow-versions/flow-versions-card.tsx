@@ -44,8 +44,11 @@ import {
   FlowVersion,
   FlowVersionMetadata,
   FlowVersionState,
+  Permission,
   PopulatedFlow,
 } from '@activepieces/shared';
+import { useAuthorization } from '@/components/authorization';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 
 type UseAsDraftOptionProps = {
   versionIndex: number;
@@ -55,18 +58,24 @@ const UseAsDraftDropdownMenuOption = ({
   versionIndex,
   onConfirm,
 }: UseAsDraftOptionProps) => {
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
+
   return (
     <Dialog>
       <DialogTrigger className="w-full">
-        <DropdownMenuItem
-          className="w-full"
-          onSelect={(e) => {
-            e.preventDefault();
-          }}
-        >
-          <Pencil className="mr-2 h-4 w-4" />
-          <span>{t('Use as Draft')}</span>
-        </DropdownMenuItem>
+        <PermissionNeededWrapper hasPermission={userHasPermissionToWriteFlow}>
+          <DropdownMenuItem
+            className="w-full"
+            onSelect={(e) => {
+              e.preventDefault();
+            }}
+            disabled={!userHasPermissionToWriteFlow}
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            <span>{t('Use as Draft')}</span>
+          </DropdownMenuItem>
+        </PermissionNeededWrapper>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
