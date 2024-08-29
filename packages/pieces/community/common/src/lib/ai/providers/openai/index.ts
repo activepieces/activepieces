@@ -37,7 +37,16 @@ export const openai = ({
             'Content-Type': 'application/json',
             Authorization: `Bearer ${engineToken}`,
           },
-          body: params,
+          body: {
+            model: params.model,
+            messages: params.messages,
+            temperature: params.temperature,
+            max_tokens: params.maxTokens,
+            top_p: params.topP,
+            frequency_penalty: params.frequencyPenalty,
+            presence_penalty: params.presencePenalty,
+            stop: params.stop,
+          },
         });
 
         const choices = (response.body.choices as Array<{ message: { role: string, content: string }, finish_reason: string }>)
@@ -45,7 +54,6 @@ export const openai = ({
         return {
           choices: choices.map((choice) => {
             return {
-              index: 0,
               message: {
                 role: choice.message.role as AIChatRole,
                 content: choice.message.content,

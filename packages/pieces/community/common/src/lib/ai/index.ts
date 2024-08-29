@@ -32,7 +32,6 @@ export interface AIChatCompletion {
 }
 
 export interface AIChatCompletionChoice {
-  index: number;
   message: AIChatMessage;
   finishReason: string;
 }
