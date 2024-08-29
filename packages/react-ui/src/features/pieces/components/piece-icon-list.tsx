@@ -13,12 +13,13 @@ import { piecesHooks, StepMetadata } from '../lib/pieces-hook';
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
-  'flex items-center justify-center bg-accent/35 text-accent-foreground  p-2 rounded-full border border-solid',
+  'flex items-center justify-center bg-accent/35 text-accent-foreground  p-2 rounded-full border border-solid dark:bg-accent-foreground/25 dark:text-foreground select-none',
   {
     variants: {
       size: {
-        xl: 'size-[64px]',
-        lg: 'size-[48px]',
+        xxl: 'size-[64px]',
+        xl: 'size-[48px]',
+        lg: 'size-[40px]',
         md: 'size-[36px]',
         sm: 'size-[25px]',
       },
@@ -34,7 +35,7 @@ export function PieceIconList({
 }: {
   trigger: Trigger;
   maxNumberOfIconsToShow: number;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 }) {
   const steps = flowHelper.getAllSteps(trigger);
   const stepsMetadata: StepMetadata[] = piecesHooks
