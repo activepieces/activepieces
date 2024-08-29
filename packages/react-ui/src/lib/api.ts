@@ -24,8 +24,10 @@ axios.interceptors.response.use(
   },
 );
 
-export const API_BASE_URL = 'https://cloud.activepieces.com';
-//export const API_BASE_URL = 'http://localhost:4200';
+export const API_BASE_URL =
+  import.meta.env.VITE_MODE === 'cloud'
+    ? 'https://cloud.activepieces.com'
+    : 'http://localhost:4200';
 export const API_URL = `${API_BASE_URL}/api`;
 
 const disallowedRoutes = [
