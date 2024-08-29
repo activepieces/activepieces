@@ -15,7 +15,7 @@ import {
   builderSelectors,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { PieceSelectors } from '@/app/builder/pieces-selector';
+import { PieceSelector } from '@/app/builder/pieces-selector';
 import { InvalidStepIcon } from '@/components/custom/alert-icon';
 import { Button } from '@/components/ui/button';
 import {
