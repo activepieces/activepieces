@@ -101,6 +101,9 @@ export const piecesApi = {
       }
     }
   },
+  syncFromCloud() {
+    return api.post<void>(`/v1/pieces/sync`, {});
+  },
   install(params: AddPieceRequestBody) {
     const formData = new FormData();
     formData.set('packageType', params.packageType);

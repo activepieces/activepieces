@@ -1,6 +1,10 @@
 import { api } from '@/lib/api';
-import { OAuthApp, UpsertOAuth2AppRequest } from '@activepieces/ee-shared';
-import { ListAppConnectionsRequestQuery, SeekPage } from '@activepieces/shared';
+import {
+  ListOAuth2AppRequest,
+  OAuthApp,
+  UpsertOAuth2AppRequest,
+} from '@activepieces/ee-shared';
+import { SeekPage } from '@activepieces/shared';
 
 export const oauthAppsApi = {
   listCloudOAuthApps(): Promise<Record<string, { clientId: string }>> {
@@ -8,7 +12,7 @@ export const oauthAppsApi = {
       'https://secrets.activepieces.com/apps',
     );
   },
-  listOAuthAppsCredentials(request: ListAppConnectionsRequestQuery) {
+  listOAuthAppsCredentials(request: ListOAuth2AppRequest) {
     return api.get<SeekPage<OAuthApp>>('/v1/oauth-apps', request);
   },
   delete(credentialId: string) {

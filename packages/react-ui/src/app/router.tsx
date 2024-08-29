@@ -10,11 +10,13 @@ import { PageTitle } from '@/app/components/page-title';
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { EmbedPage } from '@/app/routes/embed';
+import { PlatformPiecesPage } from '@/app/routes/platform/pieces';
 import { ApiKeysPage } from '@/app/routes/platform/settings/api-keys';
 import { BrandingPage } from '@/app/routes/platform/settings/branding';
 import { SigningKeysPage } from '@/app/routes/platform/settings/signing-keys';
 import { SSOPage } from '@/app/routes/platform/settings/sso';
 import { FlowRunsPage } from '@/app/routes/runs';
+import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { SwitchToBetaPage } from '@/app/routes/switch-to-beta';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
@@ -51,8 +53,6 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
-import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
-import { PlatformPiecesPage } from '@/app/routes/platform/pieces';
 
 const routes = [
   {

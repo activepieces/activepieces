@@ -5,7 +5,7 @@ import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -17,9 +17,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -31,11 +35,14 @@ import {
 import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
-import { AddPieceRequestBody, ApFlagId, PackageType, PieceScope } from '@activepieces/shared';
+import {
+  AddPieceRequestBody,
+  ApFlagId,
+  PackageType,
+  PieceScope,
+} from '@activepieces/shared';
 
 import { piecesApi } from '../lib/pieces-api';
-
-
 
 const FormSchema = Type.Object({
   pieceName: Type.String({
@@ -57,7 +64,10 @@ type InstallPieceDialogProps = {
   onInstallPiece: () => void;
   scope: PieceScope;
 };
-const InstallPieceDialog = ({ onInstallPiece, scope }: InstallPieceDialogProps) => {
+const InstallPieceDialog = ({
+  onInstallPiece,
+  scope,
+}: InstallPieceDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const { data: privatePiecesEnabled } = flagsHooks.useFlag<boolean>(
@@ -72,7 +82,6 @@ const InstallPieceDialog = ({ onInstallPiece, scope }: InstallPieceDialogProps) 
     },
   });
 
-  console.log(form.formState.errors)
   const { mutate, isPending } = useMutation<void, Error, AddPieceRequestBody>({
     mutationFn: async (data) => {
       form.setError('root.serverError', {
@@ -106,8 +115,6 @@ const InstallPieceDialog = ({ onInstallPiece, scope }: InstallPieceDialogProps) 
       }
     },
   });
-
-
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
@@ -156,7 +163,9 @@ const InstallPieceDialog = ({ onInstallPiece, scope }: InstallPieceDialogProps) 
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="pieceVersion">{t('Piece Version')}</FormLabel>
+                  <FormLabel htmlFor="pieceVersion">
+                    {t('Piece Version')}
+                  </FormLabel>
                   <Input
                     {...field}
                     required
@@ -174,7 +183,9 @@ const InstallPieceDialog = ({ onInstallPiece, scope }: InstallPieceDialogProps) 
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="packageType">{t('Package Type')}</FormLabel>
+                  <FormLabel htmlFor="packageType">
+                    {t('Package Type')}
+                  </FormLabel>
                   <Select
                     value={field.value}
                     onValueChange={(value) => field.onChange(value)}
@@ -205,7 +216,9 @@ const InstallPieceDialog = ({ onInstallPiece, scope }: InstallPieceDialogProps) 
                 control={form.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel htmlFor="pieceArchive">{t('Package Archive')}</FormLabel>
+                    <FormLabel htmlFor="pieceArchive">
+                      {t('Package Archive')}
+                    </FormLabel>
                     <Input
                       {...field}
                       id="pieceArchive"
