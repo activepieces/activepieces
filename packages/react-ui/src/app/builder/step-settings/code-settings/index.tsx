@@ -23,7 +23,7 @@ To use data from previous steps in your code, include them as pairs of keys and 
 
 You can access these inputs in your code using \`inputs.key\`, where \`key\` is the name you assigned below.  
 
-**⚠️ Warning: "const code" is the entry to the code. If it is removed or renamed, your step will fail.** 
+**Warning: "const code" is the entry to the code. If it is removed or renamed, your step will fail.** 
 `;
 
 type CodeSettingsProps = {

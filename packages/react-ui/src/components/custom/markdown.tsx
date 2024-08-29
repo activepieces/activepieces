@@ -28,7 +28,7 @@ const ApMarkdown = React.memo(
     const [copiedText, setCopiedText] = useState<string | null>(null);
     const { toast } = useToast();
 
-    const { mutate: copyToClipboard } = useMutation({
+  const { mutate: copyToClipboard } = useMutation({
       mutationFn: async (text: string) => {
         await navigator.clipboard.writeText(text);
         setCopiedText(text);
@@ -45,7 +45,7 @@ const ApMarkdown = React.memo(
 
     const Container = ({ children }: { children: React.ReactNode }) =>
       withBorder ? (
-        <Alert className="rounded">
+        <Alert className="rounded-md bg-primary-100/20 border border-primary-300">
           <AlertDescription>{children}</AlertDescription>
         </Alert>
       ) : (
