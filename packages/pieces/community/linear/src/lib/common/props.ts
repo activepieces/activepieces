@@ -27,6 +27,7 @@ export const props = {
         do {
           const teams = await client.listTeams({
             orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+            first: 100,
             after: cursor,
           });
 
@@ -73,6 +74,7 @@ export const props = {
                 },
               },
             },
+            first: 100,
             after: cursor,
           };
           const statusList = await client.listIssueStates(filter);
@@ -114,6 +116,7 @@ export const props = {
         do {
           const labels = await client.listIssueLabels({
             orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+            first: 100,
             after: cursor,
           });
 
@@ -154,6 +157,7 @@ export const props = {
         do {
           const users = await client.listUsers({
             orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+            first: 100,
             after: cursor,
           });
 
@@ -261,6 +265,7 @@ export const props = {
         do {
           const projects = await client.listProjects({
             orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+            first: 100,
             after: cursor,
           });
 
@@ -303,6 +308,7 @@ export const props = {
             LinearDocument.Team_TemplatesQueryVariables,
             'id'
           > = {
+            first: 100,
             after: cursor,
             orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
           };
