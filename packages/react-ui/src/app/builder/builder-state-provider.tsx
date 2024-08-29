@@ -17,10 +17,11 @@ export function BuilderStateProvider({
 }: BuilderStateProviderProps) {
   const storeRef = useRef<BuilderStore>();
   const { checkAccess } = useAuthorization();
+
   if (!storeRef.current) {
     storeRef.current = createBuilderStore({
       ...props,
-      readonly: !checkAccess(Permission.UPDATE_FLOW_STATUS) || props.readonly,
+      readonly: !checkAccess(Permission.WRITE_FLOW) || props.readonly,
     });
   }
   return (
