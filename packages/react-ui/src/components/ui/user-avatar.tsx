@@ -1,4 +1,4 @@
-import { LogOut } from 'lucide-react';
+import { LogOut, SunMoon } from 'lucide-react';
 
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -12,6 +12,8 @@ import {
   DropdownMenuItem,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
+import { t } from 'i18next';
+import { Link } from 'react-router-dom';
 
 export function UserAvatar() {
   const user = authenticationSession.getCurrentUser();
@@ -31,12 +33,29 @@ export function UserAvatar() {
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[200px]">
-        <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => authenticationSession.logOut()}>
+      <DropdownMenuContent align="end" className="w-[220px]">
+        <DropdownMenuLabel>
+          <div className="flex">
+            <div className="flex-grow flex-shrink truncate">{user.email}</div>
+          </div>
+        </DropdownMenuLabel>
+        <Link to="/settings/appearance">
+          <DropdownMenuItem className="cursor-pointer">
+            <TextWithIcon
+              icon={<SunMoon size={18} />}
+              text={t('Appearance')}
+              className="cursor-pointer"
+            />
+          </DropdownMenuItem>
+        </Link>
+
+        <DropdownMenuItem
+          onClick={() => authenticationSession.logOut()}
+          className="cursor-pointer"
+        >
           <TextWithIcon
             icon={<LogOut size={18} className="text-destructive" />}
-            text={<span className="text-destructive">Logout</span>}
+            text={<span className="text-destructive">{t('Logout')}</span>}
             className="cursor-pointer"
           />
         </DropdownMenuItem>
