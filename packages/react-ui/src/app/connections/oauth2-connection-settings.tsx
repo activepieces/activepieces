@@ -41,7 +41,7 @@ const OAuth2ConnectionSettings = ({
   reconnectConnection,
 }: OAuth2ConnectionSettingsProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [readyToConect, setReadyToConect] = useState(false);
+  const [readyToConnect, setReadyToConnect] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const [currentOAuth2Type, setOAuth2Type] = useState<
     | AppConnectionType.CLOUD_OAUTH2
@@ -128,7 +128,7 @@ const OAuth2ConnectionSettings = ({
     const clientSecret = (form.getValues().request as UpsertOAuth2Request)
       ?.value?.client_secret;
     const hasClientSecret = !isNil(clientSecret);
-    setReadyToConect(
+    setReadyToConnect(
       baseCriteria &&
         (currentOAuth2Type !== AppConnectionType.OAUTH2 || hasClientSecret),
     );
@@ -236,7 +236,7 @@ const OAuth2ConnectionSettings = ({
             <Button
               size={'sm'}
               variant={'basic'}
-              disabled={!readyToConect}
+              disabled={!readyToConnect}
               type="button"
               onClick={async () =>
                 openPopup(
