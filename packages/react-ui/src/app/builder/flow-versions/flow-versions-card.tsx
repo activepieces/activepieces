@@ -237,8 +237,6 @@ const FlowVersionDetailsCard = React.memo(
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-40">
-              <DropdownMenuLabel>{t('Actions')}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => mutate(flowVersion)}
                 className="w-full"
