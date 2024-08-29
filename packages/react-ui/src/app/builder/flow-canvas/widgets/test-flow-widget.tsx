@@ -72,7 +72,7 @@ const TestFlowWidget = ({ flowVersion, setRun }: TestFlowWidgetProps) => {
         <TooltipTrigger asChild>
           <Button
             variant="ghost"
-            className="h-8 bg-primary-100/80 text-primary-300 hover:bg-primary-100/80 disabled:pointer-events-auto hover:border-primary hover:text-primary-300 border-primary/50 border border-solid rounded-full animate-fade"
+            className="h-8 !bg-primary-100/80 text-primary-300 disabled:pointer-events-auto hover:!border-primary hover:!text-primary-300 border-primary/50 border border-solid rounded-full animate-fade"
             disabled={!triggerHasSampleData}
             loading={isPending}
             onClick={() => mutate()}

@@ -59,18 +59,18 @@ type ItemListMetadata = {
 type PieceSelectorProps = {
   children: React.ReactNode;
   operation:
-    | {
-        type: FlowOperationType.ADD_ACTION;
-        actionLocation: {
-          parentStep: string;
-          stepLocationRelativeToParent: StepLocationRelativeToParent;
-        };
-      }
-    | { type: FlowOperationType.UPDATE_TRIGGER }
-    | {
-        type: FlowOperationType.UPDATE_ACTION;
-        stepName: string;
-      };
+  | {
+    type: FlowOperationType.ADD_ACTION;
+    actionLocation: {
+      parentStep: string;
+      stepLocationRelativeToParent: StepLocationRelativeToParent;
+    };
+  }
+  | { type: FlowOperationType.UPDATE_TRIGGER }
+  | {
+    type: FlowOperationType.UPDATE_ACTION;
+    stepName: string;
+  };
   open: boolean;
   asChild?: boolean;
   onOpenChange: (open: boolean) => void;
@@ -386,13 +386,15 @@ const PieceSelector = ({
                           handleSelect(selectedPieceMetadata, item)
                         }
                       >
-                        <div className="flex gap-2 items-center">
-                          <PieceIcon
-                            logoUrl={selectedPieceMetadata.logoUrl}
-                            displayName={selectedPieceMetadata.displayName}
-                            showTooltip={false}
-                            size={'sm'}
-                          ></PieceIcon>
+                        <div className="flex gap-3 items-center">
+                          <div>
+                            <PieceIcon
+                              logoUrl={selectedPieceMetadata.logoUrl}
+                              displayName={selectedPieceMetadata.displayName}
+                              showTooltip={false}
+                              size={'sm'}
+                            ></PieceIcon>
+                          </div>
                           <div className="flex flex-col gap-0.5">
                             <div className="text-sm">{item.displayName}</div>
                             <div className="text-xs text-muted-foreground">
