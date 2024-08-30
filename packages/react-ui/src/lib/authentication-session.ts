@@ -5,8 +5,7 @@ import { projectApi } from '@/lib/project-api';
 import { AuthenticationResponse, isNil } from '@activepieces/shared';
 
 const tokenKey = 'token';
-export const currentUserKey = 'currentUser';
-export const platformCacheKey = 'platform';
+const currentUserKey = 'currentUser';
 export const authenticationSession = {
   saveResponse(response: AuthenticationResponse) {
     localStorage.setItem(tokenKey, response.token);
