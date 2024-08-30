@@ -24,6 +24,7 @@ export default function AuditLogsPage() {
   const isEnabled = platform.auditLogEnabled;
   return (
     <LockedFeatureGuard
+      featureKey="AUDIT_LOGS"
       locked={!isEnabled}
       lockTitle={t('Unlock Audit Logs')}
       lockDescription={t(

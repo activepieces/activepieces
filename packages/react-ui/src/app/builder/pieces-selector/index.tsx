@@ -59,18 +59,18 @@ type ItemListMetadata = {
 type PieceSelectorProps = {
   children: React.ReactNode;
   operation:
-  | {
-    type: FlowOperationType.ADD_ACTION;
-    actionLocation: {
-      parentStep: string;
-      stepLocationRelativeToParent: StepLocationRelativeToParent;
-    };
-  }
-  | { type: FlowOperationType.UPDATE_TRIGGER }
-  | {
-    type: FlowOperationType.UPDATE_ACTION;
-    stepName: string;
-  };
+    | {
+        type: FlowOperationType.ADD_ACTION;
+        actionLocation: {
+          parentStep: string;
+          stepLocationRelativeToParent: StepLocationRelativeToParent;
+        };
+      }
+    | { type: FlowOperationType.UPDATE_TRIGGER }
+    | {
+        type: FlowOperationType.UPDATE_ACTION;
+        stepName: string;
+      };
   open: boolean;
   asChild?: boolean;
   onOpenChange: (open: boolean) => void;

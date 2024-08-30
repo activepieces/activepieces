@@ -9,6 +9,7 @@ export default function PlatformPiecesPage() {
   const isEnabled = platform.managePiecesEnabled;
   return (
     <LockedFeatureGuard
+      featureKey="PIECES"
       locked={!isEnabled}
       lockTitle={t('Control Pieces')}
       lockDescription={t(

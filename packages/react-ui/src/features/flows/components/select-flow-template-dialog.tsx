@@ -59,7 +59,7 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
     mutationFn: async (template: FlowTemplate) => {
       const newFlow = await flowsApi.create({
         displayName: template.name,
-        projectId: authenticationSession.getProjectId(),
+        projectId: authenticationSession.getProjectId()!,
       });
       return await flowsApi.update(newFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,
