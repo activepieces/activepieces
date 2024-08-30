@@ -4,6 +4,7 @@ import {
   Copy,
   CornerUpLeft,
   Download,
+  Import,
   Pencil,
   Share2,
   Trash2,
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -43,6 +45,7 @@ interface FlowActionMenuProps {
   onMoveTo: (folderId: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  insideBuilder: boolean;
 }
 
 const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
@@ -50,6 +53,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   flowVersion,
   children,
   readonly,
+  insideBuilder,
   onRename,
   onMoveTo,
   onDuplicate,
@@ -152,6 +156,16 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </span>
           </div>
         </DropdownMenuItem>
+        {!readonly && (
+          <ImportFlowDialog insideBuilder={insideBuilder}>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <div className="flex cursor-pointer flex-row gap-2 items-center">
+                <Import className="w-4 h-4" />
+                {t('Import')}
+              </div>
+            </DropdownMenuItem>
+          </ImportFlowDialog>
+        )}
         <DropdownMenuItem onClick={() => exportFlow()}>
           <div className="flex cursor-pointer  flex-row gap-2 items-center">
             {isExportPending ? (

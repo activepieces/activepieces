@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useTelemetry } from '@/components/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,12 +20,20 @@ import {
   FlowOperationType,
   FlowTemplate,
   PopulatedFlow,
+  TelemetryEventName,
 } from '@activepieces/shared';
 
 import { flowsApi } from '../lib/flows-api';
 
-const ImportFlowDialog = ({ children }: { children: React.ReactNode }) => {
+const ImportFlowDialog = ({
+  children,
+  insideBuilder,
+}: {
+  children: React.ReactNode;
+  insideBuilder: boolean;
+}) => {
   const navigate = useNavigate();
+  const { capture } = useTelemetry();
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,7 +45,13 @@ const ImportFlowDialog = ({ children }: { children: React.ReactNode }) => {
     mutationFn: async (template: FlowTemplate) => {
       const newFlow = await flowsApi.create({
         displayName: template.name,
-        projectId: authenticationSession.getProjectId(),
+        projectId: authenticationSession.getProjectId()!,
+      });
+      capture({
+        name: TelemetryEventName.FLOW_IMPORTED_USING_FILE,
+        payload: {
+          location: insideBuilder ? 'inside the builder' : 'inside dashboard',
+        },
       });
       return await flowsApi.update(newFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,

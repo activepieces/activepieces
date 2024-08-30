@@ -1,6 +1,6 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { Bug, ChevronDown, History, Home, Logs } from 'lucide-react';
+import { ChevronDown, History, Home, Logs } from 'lucide-react';
 import { useMemo } from 'react';
 import {
   createSearchParams,
@@ -15,6 +15,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
+import { ReportBugsButton } from '@/components/ui/report-bugs-button';
 import {
   Tooltip,
   TooltipContent,
@@ -29,7 +30,6 @@ import { ApFlagId, FlowVersionState, supportUrl } from '@activepieces/shared';
 import FlowActionMenu from '../components/flow-actions-menu';
 
 import { BuilderPublishButton } from './builder-publish-button';
-import { ReportBugsButton } from '@/components/ui/report-bugs-button';
 
 export const BuilderHeader = () => {
   const navigate = useNavigate();
@@ -113,6 +113,7 @@ export const BuilderHeader = () => {
           <FlowActionMenu
             flow={flow}
             flowVersion={flowVersion}
+            insideBuilder={true}
             readonly={!isLatestVersion}
             onDelete={() => {
               navigate('/flows');

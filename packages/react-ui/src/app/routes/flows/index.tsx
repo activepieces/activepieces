@@ -190,6 +190,7 @@ const FlowsPage = () => {
         return (
           <div onClick={(e) => e.stopPropagation()}>
             <FlowActionMenu
+              insideBuilder={false}
               flow={flow}
               readonly={false}
               flowVersion={flow.version}
@@ -211,7 +212,7 @@ const FlowsPage = () => {
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">{t('Flows')}</h1>
         <div className="ml-auto flex flex-row gap-2">
-          <ImportFlowDialog>
+          <ImportFlowDialog insideBuilder={false}>
             <Button variant="outline" className="flex gap-2 items-center">
               <Import className="w-4 h-4" />
               {t('Import Flow')}

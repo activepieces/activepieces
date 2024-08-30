@@ -5,6 +5,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import { Button } from '@/components/ui/button';
+import { ReportBugsButton } from '@/components/ui/report-bugs-button';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
@@ -13,7 +14,6 @@ import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
 
 import { FlagGuard } from './flag-guard';
-import { ReportBugsButton } from '@/components/ui/report-bugs-button';
 
 export const Header = () => {
   const history = useLocation();

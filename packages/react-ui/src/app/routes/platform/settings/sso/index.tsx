@@ -97,6 +97,7 @@ const SSOPage = () => {
 
   return (
     <LockedFeatureGuard
+      featureKey="SSO"
       locked={!platform.ssoEnabled}
       lockTitle={t('Enable Single Sign On')}
       lockDescription={t(

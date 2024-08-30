@@ -1,8 +1,9 @@
-import { Button } from '@/components/ui/button';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { t } from 'i18next';
 import { Bug } from 'lucide-react';
-import { ApFlagId } from '../../../../shared/src';
+
+import { Button } from '@/components/ui/button';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApFlagId } from '@activepieces/shared';
 //TODO: remove after release
 export const ReportBugsButton = ({
   variant,
@@ -10,9 +11,7 @@ export const ReportBugsButton = ({
   variant: 'outline' | 'ghost';
 }) => {
   const reportBugsUrl = `https://community.activepieces.com/t/new-ui-open-beta-testing/5743?u=abdul`;
-  const showSupport = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
-  );
+  const showSupport = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COMMUNITY);
   return (
     showSupport && (
       <Button

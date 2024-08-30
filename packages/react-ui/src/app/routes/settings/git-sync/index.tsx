@@ -42,6 +42,7 @@ const GitSyncPage = () => {
 
   return (
     <LockedFeatureGuard
+      featureKey="GIT_SYNC"
       locked={!platform.gitSyncEnabled}
       lockTitle={t('Unlock Git Sync')}
       lockDescription={t(

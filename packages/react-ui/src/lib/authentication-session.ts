@@ -4,13 +4,14 @@ import { jwtDecode } from 'jwt-decode';
 import { projectApi } from '@/lib/project-api';
 import { AuthenticationResponse, isNil } from '@activepieces/shared';
 
-const currentUserKey = 'currentUser';
 const tokenKey = 'token';
+export const currentUserKey = 'currentUser';
 export const platformCacheKey = 'platform';
 export const authenticationSession = {
   saveResponse(response: AuthenticationResponse) {
     localStorage.setItem(tokenKey, response.token);
     localStorage.setItem(currentUserKey, JSON.stringify(response));
+    window.dispatchEvent(new Event('storage'));
   },
   getToken(): string | null {
     return localStorage.getItem(tokenKey) ?? null;
