@@ -41,7 +41,10 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
           e.preventDefault();
         }}
       >
-        {t('incompleteSteps', { invalidSteps: invalidSteps })}
+        {t(
+          '{invalidSteps, plural, =0 {no incomplete steps} =1 {Complete 1 step} other {Complete # steps}}',
+          { invalidSteps: invalidSteps },
+        )}
       </Button>
     )
   );

@@ -10,11 +10,13 @@ import { PageTitle } from '@/app/components/page-title';
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { EmbedPage } from '@/app/routes/embed';
+import { PlatformPiecesPage } from '@/app/routes/platform/pieces';
 import { ApiKeysPage } from '@/app/routes/platform/settings/api-keys';
 import { BrandingPage } from '@/app/routes/platform/settings/branding';
 import { SigningKeysPage } from '@/app/routes/platform/settings/signing-keys';
 import { SSOPage } from '@/app/routes/platform/settings/sso';
 import { FlowRunsPage } from '@/app/routes/runs';
+import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { SwitchToBetaPage } from '@/app/routes/switch-to-beta';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
@@ -39,7 +41,6 @@ import { FormPage } from './routes/forms';
 import IssuesPage from './routes/issues';
 import PlansPage from './routes/plans';
 import AuditLogsPage from './routes/platform/audit-logs';
-import PlatformPiecesPage from './routes/platform/pieces';
 import ProjectsPage from './routes/platform/projects';
 import TemplatesPage from './routes/platform/templates';
 import UsersPage from './routes/platform/users';
@@ -48,7 +49,6 @@ import AlertsPage from './routes/settings/alerts';
 import AppearancePage from './routes/settings/appearance';
 import GeneralPage from './routes/settings/general';
 import { GitSyncPage } from './routes/settings/git-sync';
-import PiecesPage from './routes/settings/pieces';
 import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
@@ -242,7 +242,7 @@ const routes = [
       <DashboardContainer>
         <ProjectSettingsLayout>
           <PageTitle title="Pieces">
-            <PiecesPage />
+            <ProjectPiecesPage />
           </PageTitle>
         </ProjectSettingsLayout>
       </DashboardContainer>

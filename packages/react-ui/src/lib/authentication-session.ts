@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import { jwtDecode } from 'jwt-decode';
 
 import { projectApi } from '@/lib/project-api';
@@ -34,17 +33,7 @@ export const authenticationSession = {
     localStorage.setItem(tokenKey, result.token);
   },
   isLoggedIn(): boolean {
-    const token = this.getToken();
-    if (isNil(token)) {
-      return false;
-    }
-    const decodedJwt = jwtDecode(token);
-    const isExpired =
-      isNil(decodedJwt.exp) || dayjs.unix(decodedJwt.exp).isBefore(dayjs());
-    if (isExpired) {
-      return false;
-    }
-    return !!this.getCurrentUser();
+    return !!this.getToken() && !!this.getCurrentUser();
   },
   logOut() {
     localStorage.removeItem(tokenKey);
