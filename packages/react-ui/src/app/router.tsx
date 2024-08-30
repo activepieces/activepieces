@@ -53,6 +53,7 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+import AnalyticsPage from '@/app/routes/platform/analytics';
 
 const routes = [
   {
@@ -318,6 +319,16 @@ const routes = [
         </PageTitle>
       </PlatformAdminContainer>
     ),
+  },
+  {
+    path: '/platform/analytics',
+    element: (
+      <PlatformAdminContainer>  
+        <PageTitle title="Analytics"> 
+          <AnalyticsPage />
+        </PageTitle>
+      </PlatformAdminContainer>
+    )
   },
   {
     path: '/platform/templates',
