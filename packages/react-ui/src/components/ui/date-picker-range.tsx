@@ -1,6 +1,6 @@
 'use client';
 
-import { format } from 'date-fns';
+import { format, subDays, addDays } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import * as React from 'react';
 import { DateRange } from 'react-day-picker';
@@ -13,12 +13,22 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 type DatePickerWithRangeProps = {
   onChange: (date: DateRange) => void;
   className?: string;
   from?: string;
   to?: string;
+  maxDate?: Date;
+  minDate?: Date;
+  presetType: 'past' | 'future';
 };
 
 export function DatePickerWithRange({
@@ -26,6 +36,9 @@ export function DatePickerWithRange({
   onChange,
   from,
   to,
+  maxDate = new Date(),
+  minDate,
+  presetType = 'past',
 }: DatePickerWithRangeProps) {
   const [date, setDate] = React.useState<DateRange | undefined>();
 
@@ -43,6 +56,31 @@ export function DatePickerWithRange({
     }
   };
 
+  const handlePresetChange = (value: string) => {
+    const today = new Date();
+    let newDate: DateRange;
+
+    switch (value) {
+      case 'week':
+        newDate = { from: subDays(today, 7), to: today };
+        break;
+      case 'month':
+        newDate = { from: subDays(today, 30), to: today };
+        break;
+      case '3months':
+        newDate = { from: subDays(today, 90), to: today };
+        break;
+      case '6months':
+        newDate = { from: subDays(today, 180), to: today };
+        break;
+      default:
+        newDate = { from: today, to: addDays(today, parseInt(value)) };
+    }
+
+    setDate(newDate);
+    onChange(newDate);
+  };
+
   return (
     <div className={cn('grid gap-2', className)}>
       <Popover>
@@ -51,7 +89,7 @@ export function DatePickerWithRange({
             id="date"
             variant={'outline'}
             className={cn(
-              'w-[260px] h-8 border-dashed justify-start text-left font-normal',
+              'w-[300px] h-8 border-dashed justify-start text-left font-normal',
               !date && 'text-muted-foreground',
             )}
           >
@@ -66,11 +104,35 @@ export function DatePickerWithRange({
                 format(date.from, 'LLL dd, y')
               )
             ) : (
-              <span>Pick a date</span>
+              <span>Pick a date range</span>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto p-2" align="start">
+          <div className="flex space-x-2 mb-2">
+            <Select onValueChange={handlePresetChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select preset" />
+              </SelectTrigger>
+              <SelectContent>
+                {presetType === 'past' ? (
+                  <>
+                    <SelectItem value="week">Last Week</SelectItem>
+                    <SelectItem value="month">Last Month</SelectItem>
+                    <SelectItem value="3months">Last 3 Months</SelectItem>
+                    <SelectItem value="6months">Last 6 Months</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="7">Next 7 days</SelectItem>
+                    <SelectItem value="30">Next 30 days</SelectItem>
+                    <SelectItem value="90">Next 90 days</SelectItem>
+                    <SelectItem value="180">Next 180 days</SelectItem>
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
           <Calendar
             initialFocus
             mode="range"
@@ -80,7 +142,8 @@ export function DatePickerWithRange({
             numberOfMonths={2}
             min={2}
             weekStartsOn={1}
-            toDate={new Date()}
+            toDate={maxDate}
+            fromDate={minDate}
           />
         </PopoverContent>
       </Popover>

@@ -49,7 +49,7 @@ const fetchData = async (
   const status = params.status;
   return flowRunsApi.list({
     status,
-    projectId: authenticationSession.getProjectId(),
+    projectId: authenticationSession.getProjectId()!,
     flowId: params.flowId,
     cursor: pagination.cursor,
     limit: pagination.limit ?? 10,

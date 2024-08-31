@@ -4,32 +4,48 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { Metrics } from '@/app/routes/platform/analytics/metrics';
 import { TaskUsage } from '@/app/routes/platform/analytics/task-usage';
 import { Reports } from '@/app/routes/platform/analytics/reports';
+import { analyticsApi } from '@/features/platform-admin-panel/lib/analytics-api';
+import { useQuery } from '@tanstack/react-query';
+import { Separator } from '@/components/ui/seperator';
 
 export default function AnalyticsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const isEnabled = platform.manageProjectsEnabled;
+  const { data, isLoading } = useQuery({
+    queryKey: ['analytics'],
+    queryFn: analyticsApi.get,  
+    staleTime: 60 * 1000,
+  });
+
+  const isEnabled = platform.analyticsEnabled;
+
+  if (isLoading || !data) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <span className="text-xl font-semibold">{t('Hold on, this may take a little longer')}</span>
+      </div>
+    );
+  }
+
   return (
     <LockedFeatureGuard
-      featureKey="PROJECTS"
+      featureKey="ANALYTICS"
       locked={!isEnabled}
-      lockTitle={t('Unlock Projects')}
+      lockTitle={t('Unlock Analytics')}
       lockDescription={t(
-        'Orchestrate your automation teams across projects with their own flows, connections and usage quotas',
+        'Get insights into your platform usage and performance with our analytics dashboard',
       )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/projects.mp4"
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-3xl font-bold">{t('Analytics')}</span>
+          <span className="text-3xl font-bold">{t('Platform Overview')}</span>
         </div>
         <div className="mt-8 flex gap-8 flex-col">
-          <Metrics />
-          <TaskUsage />
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">{t('Reports')}</h2>
-            <Reports />
-          </div>
+          <Metrics report={data} />
+          <Separator/>
+          <TaskUsage report={data} />
+          <Separator/>
+          <Reports report={data} />
         </div>
       </div>
     </LockedFeatureGuard>

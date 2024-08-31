@@ -25,7 +25,7 @@ export class ApplyTagsComponent {
   openDialog$: Observable<void> | undefined;
 
   constructor(private tagsService: TagsService, private authenticationService: AuthenticationService, private matDialog: MatDialog) {
-    this.tags$ = this.tagsService.list({ limit: 1000, platformId: this.authenticationService.getPlatformId()! }).pipe(map(page => page.data));
+    this.tags$ = this.tagsService.list({ limit: 1000 }).pipe(map(page => page.data));
     this.changedTags = new Set();
   }
 
@@ -54,7 +54,7 @@ export class ApplyTagsComponent {
     const dialog = this.matDialog.open(CreateTagDialogComponent);
     this.openDialog$ = dialog.afterClosed().pipe(
       tap(() => {
-        this.tags$ = this.tagsService.list({ limit: 1000, platformId: this.authenticationService.getPlatformId()! }).pipe(map(page => page.data))
+        this.tags$ = this.tagsService.list({ limit: 1000 }).pipe(map(page => page.data))
       })
     )
   }
