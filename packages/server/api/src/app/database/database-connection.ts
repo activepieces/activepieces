@@ -135,7 +135,6 @@ export const databaseConnection = () => {
     return _databaseConnection
 }
 
-
 export function APArrayContains<T extends ObjectLiteral>(
     columnName: string,
     values: string[],

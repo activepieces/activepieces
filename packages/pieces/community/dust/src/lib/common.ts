@@ -62,9 +62,15 @@ export const timezoneProp = Property.ShortText({
   required: true,
   defaultValue: 'Europe/Paris',
 });
+export const timeoutProp = Property.Number({
+  displayName: 'Timeout (seconds)',
+  required: true,
+  defaultValue: 120,
+});
 
 export async function getConversationContent(
   conversationId: string,
+  timeout: number,
   auth: DustAuthType
 ) {
   const getConversation = async (conversationId: string) => {
@@ -85,7 +91,7 @@ export async function getConversationContent(
     !['succeeded', 'errored'].includes(
       getConversationStatus(conversation.body)
     ) &&
-    retries < 12 // 2mn
+    retries < timeout / 10
   ) {
     await new Promise((f) => setTimeout(f, 10000));
 
