@@ -299,7 +299,7 @@ export const airtableCommon = {
       if (!AirtableEnterpriseFields.includes(field.type)) {
         const key = field.id;
 
-        if (field.type === 'multipleAttachments') {
+        if (field.type === 'multipleAttachments' && fields[key]) {
           newFields[key] = [
             {
               url: fields[key] as string,

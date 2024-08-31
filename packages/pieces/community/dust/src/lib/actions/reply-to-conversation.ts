@@ -9,6 +9,7 @@ import {
   assistantProp,
   DUST_BASE_URL,
   getConversationContent,
+  timeoutProp,
   timezoneProp,
   usernameProp,
 } from '../common';
@@ -28,6 +29,7 @@ export const replyToConversation = createAction({
     query: Property.LongText({ displayName: 'Query', required: true }),
     username: usernameProp,
     timezone: timezoneProp,
+    timeout: timeoutProp,
   },
   async run({ auth, propsValue }) {
     const request: HttpRequest = {
@@ -53,6 +55,10 @@ export const replyToConversation = createAction({
       ),
     };
     await httpClient.sendRequest(request);
-    return await getConversationContent(propsValue.conversationId, auth);
+    return await getConversationContent(
+      propsValue.conversationId,
+      propsValue.timeout,
+      auth
+    );
   },
 });

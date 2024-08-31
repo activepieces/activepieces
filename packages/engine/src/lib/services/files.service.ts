@@ -7,7 +7,7 @@ const MEMORY_PREFIX_URL = 'memory://'
 const MAXIMUM = 4 * 1024 * 1024
 const MAXIMUM_MB = MAXIMUM / 1024 / 1024
 
-export type DefaultFileSystem = 'db' | 'local' | 'memory'
+export type DefaultFileSystem = 'db' | 'local'
 
 type CreateFilesServiceParams = { apiUrl: string, stepName: string, type: DefaultFileSystem, flowId: string, engineToken: string }
 
@@ -20,8 +20,6 @@ export function createFilesService({ stepName, type, flowId, engineToken, apiUrl
                     return writeDbFile({ stepName, flowId, fileName, data, engineToken, apiUrl })
                 case 'local':
                     return writeLocalFile({ stepName, fileName, data })
-                case 'memory':
-                    return writeMemoryFile({ fileName, data })
             }
         },
     }
@@ -42,18 +40,7 @@ async function readApFile(path: string): Promise<ApFile | null> {
     return null
 }
 
-
-async function writeMemoryFile({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> {
-    try {
-        const base64Data = data.toString('base64')
-        const base64String = JSON.stringify({ fileName, data: base64Data })
-        return `memory://${base64String}`
-    }
-    catch (error) {
-        throw new Error(`Error reading file: ${error}`)
-    }
-}
-
+// TODO remove this as memory write is removed
 async function readMemoryFile(absolutePath: string): Promise<ApFile> {
     try {
         const base64String = absolutePath.replace(MEMORY_PREFIX_URL, '')

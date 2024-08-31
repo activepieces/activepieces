@@ -116,6 +116,7 @@ export const licenseKeysService = {
                 flowIssuesEnabled: key.flowIssuesEnabled,
                 alertsEnabled: key.alertsEnabled,
                 premiumPieces: key.premiumPieces,
+                analyticsEnabled: key.analyticsEnabled,
             })
         }
 
@@ -172,6 +173,7 @@ async function downgradeToFreePlan(platformId: string): Promise<void> {
 
 const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt' | 'activatedAt' | 'isTrial' | 'email' | 'customerName' | 'key'> = {
     ssoEnabled: false,
+    analyticsEnabled: false,
     gitSyncEnabled: false,
     showPoweredBy: false,
     embeddingEnabled: false,
