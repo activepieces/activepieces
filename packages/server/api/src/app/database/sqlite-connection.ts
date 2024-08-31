@@ -13,6 +13,7 @@ import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-mi
 import { RemoveShowActivityLog1716105958530 } from './migration/common/1716105958530-RemoveShowActivityLog'
 import { AddDurationForRuns1716725027424 } from './migration/common/1716725027424-AddDurationForRuns'
 import { ChangeEventRoutingConstraint1723549873495 } from './migration/common/1723549873495-ChangeEventRoutingConstraint'
+import { AddAnalyticsToPlatform1725113652923 } from './migration/common/1725113652923-AddAnalyticsToPlatform'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -120,6 +121,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPremiumPiecesColumnSqlite1717443603235,
         AddWorkerMachineSqlite1720100928449,
         ChangeEventRoutingConstraint1723549873495,
+        AddAnalyticsToPlatform1725113652923,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

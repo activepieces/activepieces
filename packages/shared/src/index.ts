@@ -23,6 +23,7 @@ export * from './lib/authentication/dto/authentication-response'
 export { SignUpRequest } from './lib/authentication/dto/sign-up-request'
 export { SignInRequest } from './lib/authentication/dto/sign-in-request'
 export * from './lib/authentication/model/principal-type'
+export * from './lib/analytics'
 export {
     Principal,
     WorkerPrincipal,

@@ -17,7 +17,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
 
-const repo = repoFactory(ProjectEntity)
+export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
@@ -26,7 +26,7 @@ export const projectService = {
             ...params,
             notifyStatus: NotificationStatus.ALWAYS,
         }
-        const savedProject = await repo().save(newProject)
+        const savedProject = await projectRepo().save(newProject)
         rejectedPromiseHandler(projectHooks.getHooks().postCreate(savedProject))
         return savedProject
     },
@@ -36,14 +36,14 @@ export const projectService = {
             return null
         }
 
-        return repo().findOneBy({
+        return projectRepo().findOneBy({
             id: projectId,
             deleted: IsNull(),
         })
     },
 
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
-        await repo().update(
+        await projectRepo().update(
             {
                 id: projectId,
                 deleted: IsNull(),
@@ -57,7 +57,7 @@ export const projectService = {
     },
 
     async getPlatformId(projectId: ProjectId): Promise<string> {
-        const result =  await repo().createQueryBuilder('project').select('"platformId"').where({
+        const result =  await projectRepo().createQueryBuilder('project').select('"platformId"').where({
             id: projectId,
         }).getRawOne()
         const platformId = result?.platformId
@@ -84,13 +84,13 @@ export const projectService = {
         assertNotNullOrUndefined(user.platformId, 'user.platformId')
         switch (user.platformRole) {
             case PlatformRole.ADMIN: {
-                return repo().findOneBy({
+                return projectRepo().findOneBy({
                     platformId: user.platformId,
                     deleted: IsNull(),
                 })
             }
             case PlatformRole.MEMBER: {
-                return repo().findOneBy({
+                return projectRepo().findOneBy({
                     ownerId: user.id,
                     platformId: user.platformId,
                     deleted: IsNull(),
@@ -100,7 +100,7 @@ export const projectService = {
     },
 
     async getUserProjectOrThrow(ownerId: UserId): Promise<Project> {
-        const project = await repo().findOneBy({
+        const project = await projectRepo().findOneBy({
             ownerId,
             deleted: IsNull(),
         })
@@ -128,14 +128,14 @@ export const projectService = {
             platformId,
         }
 
-        await repo().update(query, update)
+        await projectRepo().update(query, update)
     },
 
     async getByPlatformIdAndExternalId({
         platformId,
         externalId,
     }: GetByPlatformIdAndExternalIdParams): Promise<Project | null> {
-        return repo().findOneBy({
+        return projectRepo().findOneBy({
             platformId,
             externalId,
             deleted: IsNull(),
