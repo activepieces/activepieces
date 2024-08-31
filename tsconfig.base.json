@@ -27,6 +27,9 @@
       "@activepieces/piece-activepieces": [
         "packages/pieces/community/activepieces/src/index.ts"
       ],
+      "@activepieces/piece-activepieces-ai": [
+        "packages/pieces/community/activepieces-ai/src/index.ts"
+      ],
       "@activepieces/piece-actualbudget": [
         "packages/pieces/community/actualbudget/src/index.ts"
       ],
@@ -36,6 +39,7 @@
       "@activepieces/piece-afforai": [
         "packages/pieces/community/afforai/src/index.ts"
       ],
+      "@activepieces/piece-ai": ["packages/pieces/community/ai/src/index.ts"],
       "@activepieces/piece-airtable": [
         "packages/pieces/community/airtable/src/index.ts"
       ],
@@ -59,6 +63,9 @@
       ],
       "@activepieces/piece-asana": [
         "packages/pieces/community/asana/src/index.ts"
+      ],
+      "@activepieces/piece-ask-ai": [
+        "packages/pieces/community/ask-ai/src/index.ts"
       ],
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"

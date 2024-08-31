@@ -10,6 +10,7 @@ import {
   usernameProp,
   timezoneProp,
   getConversationContent,
+  timeoutProp,
 } from '../common';
 import { dustAuth } from '../..';
 
@@ -29,6 +30,7 @@ export const createConversation = createAction({
       displayName: 'Fragment name',
       required: false,
     }),
+    timeout: timeoutProp,
   },
   async run({ auth, propsValue }) {
     const payload: Record<string, any> = {
@@ -69,6 +71,10 @@ export const createConversation = createAction({
     };
     const body = (await httpClient.sendRequest(request)).body;
     const conversationId = body['conversation']['sId'];
-    return await getConversationContent(conversationId, auth);
+    return await getConversationContent(
+      conversationId,
+      propsValue.timeout,
+      auth
+    );
   },
 });
