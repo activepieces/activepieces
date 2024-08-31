@@ -105,6 +105,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
         },
+        analyticsEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
         apiKeysEnabled: {
             type: Boolean,
             nullable: false,
