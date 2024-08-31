@@ -11,6 +11,9 @@ export const anthropic = ({
   const sdk = new Anthropic({
     apiKey: engineToken,
     baseURL: `${proxyUrl}${anthropicEndpoint}`,
+    defaultHeaders: {
+      'X-AP-TOTAL-USAGE-BODY-PATH': 'usage.total_tokens',
+    },
   })
   return {
     underlying: sdk,
@@ -24,9 +27,7 @@ export const anthropic = ({
             role: message.role === 'user' ? 'user' : 'assistant',
             content: message.content,
           })),
-          temperature: params.temperature,
-          top_k: params.topK,
-          top_p: params.topP,
+          temperature: Math.tanh(params.creativity ?? 100),
           stop_sequences: params.stop,
           system: concatenatedSystemMessage,
           stream: false,

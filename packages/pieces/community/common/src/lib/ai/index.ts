@@ -1,3 +1,7 @@
+import { ServerContext } from '@activepieces/pieces-framework';
+import { anthropic } from './providers/anthropic';
+import { openai } from './providers/openai';
+
 export type AI<SDK> = {
   provider: string;
   chat: AIChat;
@@ -11,12 +15,8 @@ export type AIChat = {
 export type AIChatCompletionsCreateParams = {
   model: string;
   messages: AIChatMessage[];
-  temperature?: number;
+  creativity?: number;
   maxTokens?: number;
-  topP?: number;
-  topK?: number;
-  frequencyPenalty?: number;
-  presencePenalty?: number;
   stop?: string[];
 }
 
@@ -43,4 +43,18 @@ export enum AIChatRole {
   SYSTEM = 'system',
   USER = 'user',
   ASSISTANT = 'assistant',
+}
+
+export const AI = ({
+  provider,
+  server
+}: { provider: "openai" | "anthropic", server: ServerContext }) => {
+  switch (provider) {
+    case 'openai':
+      return openai({ serverUrl: server.apiUrl, engineToken: server.token })
+    case 'anthropic':
+      return anthropic({ serverUrl: server.apiUrl, engineToken: server.token })
+    default:
+      throw new Error(`AI provider ${provider} not supported`)
+  }
 }

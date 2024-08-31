@@ -6,7 +6,7 @@ export const openai = ({
   engineToken,
 }: { serverUrl: string, engineToken: string }): AI<OpenAI> => {
   const openaiEndpoint = '/v1/chat/completions';
-  const proxyUrl = `${serverUrl}v1/proxy/openai`
+  const proxyUrl = `${serverUrl}api/v1/proxy/openai`
   const sdk = new OpenAI({
     apiKey: engineToken,
     baseURL: `${proxyUrl}${openaiEndpoint}`,
@@ -16,7 +16,7 @@ export const openai = ({
   });
   return {
     underlying: sdk,
-    provider: "OPENAI" as const,
+    provider: "OPENAI",
     chat: {
       text: async (params) => {
         const completion = await sdk.chat.completions.create({
@@ -25,11 +25,8 @@ export const openai = ({
             role: message.role === 'user' ? 'user' : 'assistant',
             content: message.content,
           })),
-          temperature: params.temperature,
+          temperature: Math.tanh(params.creativity ?? 100),
           max_tokens: params.maxTokens,
-          top_p: params.topP,
-          frequency_penalty: params.frequencyPenalty,
-          presence_penalty: params.presencePenalty,
           stop: params.stop,
         })
 
