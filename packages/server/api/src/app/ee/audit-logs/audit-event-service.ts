@@ -21,7 +21,6 @@ import { AuditEventEntity } from './audit-event-entity'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)
 
-
 export const auditLogService = {
     sendUserEvent(request: FastifyRequest, params: AuditEventParam): void {
         if ([PrincipalType.UNKNOWN, PrincipalType.WORKER].includes(request.principal.type)) {

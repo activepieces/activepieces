@@ -56,7 +56,7 @@ async function analyzeProjects(flows: PopulatedFlow[]) {
             displayName,
             totalFlows,
         })),
-        activeProjects: Object.values(projectUsage).filter(project => project.activeFlows > 0).length
+        activeProjects: Object.values(projectUsage).filter(project => project.activeFlows > 0).length,
     }
 }
 

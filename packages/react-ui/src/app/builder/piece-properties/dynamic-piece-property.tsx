@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
@@ -89,7 +90,17 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
       { input },
       {
         onSuccess: (response) => {
+          const currentValue = form.getValues(
+            `settings.input.${props.propertyName}`,
+          );
+          const defaultValue = formUtils.getDefaultValueForStep(
+            response,
+            currentValue ?? {},
+          );
           setPropertyMap(response);
+          form.setValue(`settings.input.${props.propertyName}`, defaultValue, {
+            shouldValidate: true,
+          });
         },
       },
     );
