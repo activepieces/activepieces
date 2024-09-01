@@ -28,9 +28,6 @@ export const authenticationSession = {
   getUserProjectRole() {
     return this.getCurrentUser()?.projectRole ?? null;
   },
-  getUserPlatformRole() {
-    return this.getCurrentUser()?.platformRole ?? null;
-  },
   async switchToSession(projectId: string) {
     const result = await projectApi.getTokenForProject(projectId);
     localStorage.setItem(tokenKey, result.token);

@@ -20,22 +20,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { GitBranchType } from '@activepieces/ee-shared';
-import {
-  Flow,
-  FlowOperationType,
-  FlowVersion,
-  Permission,
-} from '@activepieces/shared';
+import { Flow, FlowOperationType, FlowVersion } from '@activepieces/shared';
 
 import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
 import { RenameFlowDialog } from '../../features/flows/components/rename-flow-dialog';
@@ -71,9 +64,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     authenticationSession.getProjectId()!,
     platform.gitSyncEnabled,
   );
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);
 
   const { embedState } = useEmbedding();
   const isDevelopmentBranch =
@@ -123,31 +113,22 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {!readonly && (
-          <PermissionNeededTooltip
-            hasPermission={userHasPermissionToUpdateFlow}
-          >
-            <RenameFlowDialog flowId={flow.id} onRename={onRename}>
-              <DropdownMenuItem disabled={!userHasPermissionToUpdateFlow}>
-                <div className="flex cursor-pointer flex-row gap-2 items-center">
-                  <Pencil className="h-4 w-4" />
-                  <span>{t('Rename')}</span>
-                </div>
-              </DropdownMenuItem>
-            </RenameFlowDialog>
-          </PermissionNeededTooltip>
-        )}
-        <PushToGitDialog flowId={flow.id}>
-          <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
-            <DropdownMenuItem
-              disabled={!userHasPermissionToPushToGit}
-              onSelect={(e) => e.preventDefault()}
-            >
-              <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                <UploadCloud className="h-4 w-4" />
-                <span>{t('Push to Git')}</span>
+          <RenameFlowDialog flowId={flow.id} onRename={onRename}>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <div className="flex cursor-pointer flex-row gap-2 items-center">
+                <Pencil className="h-4 w-4" />
+                <span>{t('Rename')}</span>
               </div>
             </DropdownMenuItem>
-          </PermissionNeededTooltip>
+          </RenameFlowDialog>
+        )}
+        <PushToGitDialog flowId={flow.id}>
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <div className="flex cursor-pointer  flex-row gap-2 items-center">
+              <UploadCloud className="h-4 w-4" />
+              <span>{t('Push to Git')}</span>
+            </div>
+          </DropdownMenuItem>
         </PushToGitDialog>
         {!embedState.hideFolders && (
           <MoveFlowDialog
@@ -155,54 +136,34 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             flowVersion={flowVersion}
             onMoveTo={onMoveTo}
           >
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToUpdateFlow}
-            >
-              <DropdownMenuItem
-                disabled={!userHasPermissionToUpdateFlow}
-                onSelect={(e) => e.preventDefault()}
-              >
-                <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                  <CornerUpLeft className="h-4 w-4" />
-                  <span>{t('Move To')}</span>
-                </div>
-              </DropdownMenuItem>
-            </PermissionNeededTooltip>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                <CornerUpLeft className="h-4 w-4" />
+                <span>{t('Move To')}</span>
+              </div>
+            </DropdownMenuItem>
           </MoveFlowDialog>
         )}
-        <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFlow}>
-          <DropdownMenuItem
-            disabled={!userHasPermissionToUpdateFlow}
-            onClick={() => duplicateFlow()}
-          >
-            <div className="flex cursor-pointer  flex-row gap-2 items-center">
-              {isDuplicatePending ? (
-                <LoadingSpinner />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-              <span>
-                {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
-              </span>
-            </div>
-          </DropdownMenuItem>
-        </PermissionNeededTooltip>
-
+        <DropdownMenuItem onClick={() => duplicateFlow()}>
+          <div className="flex cursor-pointer  flex-row gap-2 items-center">
+            {isDuplicatePending ? (
+              <LoadingSpinner />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+            <span>
+              {isDuplicatePending ? t('Duplicating') : t('Duplicate')}
+            </span>
+          </div>
+        </DropdownMenuItem>
         {!readonly && (
           <ImportFlowDialog insideBuilder={insideBuilder}>
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToUpdateFlow}
-            >
-              <DropdownMenuItem
-                disabled={!userHasPermissionToUpdateFlow}
-                onSelect={(e) => e.preventDefault()}
-              >
-                <div className="flex cursor-pointer flex-row gap-2 items-center">
-                  <Import className="w-4 h-4" />
-                  {t('Import')}
-                </div>
-              </DropdownMenuItem>
-            </PermissionNeededTooltip>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <div className="flex cursor-pointer flex-row gap-2 items-center">
+                <Import className="w-4 h-4" />
+                {t('Import')}
+              </div>
+            </DropdownMenuItem>
           </ImportFlowDialog>
         )}
         <DropdownMenuItem onClick={() => exportFlow()}>
@@ -250,19 +211,12 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             }}
             entityName={t('flow')}
           >
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToUpdateFlow}
-            >
-              <DropdownMenuItem
-                disabled={!userHasPermissionToUpdateFlow}
-                onSelect={(e) => e.preventDefault()}
-              >
-                <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                  <span className="text-destructive">{t('Delete')}</span>
-                </div>
-              </DropdownMenuItem>
-            </PermissionNeededTooltip>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                <Trash2 className="h-4 w-4 text-destructive" />
+                <span className="text-destructive">{t('Delete')}</span>
+              </div>
+            </DropdownMenuItem>
           </ConfirmationDeleteDialog>
         )}
       </DropdownMenuContent>

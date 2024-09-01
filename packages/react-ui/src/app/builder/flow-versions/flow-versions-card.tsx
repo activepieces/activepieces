@@ -25,9 +25,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
@@ -37,14 +38,12 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { formatUtils } from '@/lib/utils';
 import {
   FlowOperationType,
   FlowVersion,
   FlowVersionMetadata,
   FlowVersionState,
-  Permission,
   PopulatedFlow,
 } from '@activepieces/shared';
 
@@ -56,28 +55,18 @@ const UseAsDraftDropdownMenuOption = ({
   versionIndex,
   onConfirm,
 }: UseAsDraftOptionProps) => {
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToWriteFlow =
-    checkAccess(Permission.WRITE_FLOW) && false;
-
   return (
     <Dialog>
-      <DialogTrigger
-        disabled={!userHasPermissionToWriteFlow}
-        className="w-full"
-      >
-        <PermissionNeededTooltip hasPermission={userHasPermissionToWriteFlow}>
-          <DropdownMenuItem
-            className="w-full"
-            onSelect={(e) => {
-              e.preventDefault();
-            }}
-            disabled={!userHasPermissionToWriteFlow}
-          >
-            <Pencil className="mr-2 h-4 w-4" />
-            <span>{t('Use as Draft')}</span>
-          </DropdownMenuItem>
-        </PermissionNeededTooltip>
+      <DialogTrigger className="w-full">
+        <DropdownMenuItem
+          className="w-full"
+          onSelect={(e) => {
+            e.preventDefault();
+          }}
+        >
+          <Pencil className="mr-2 h-4 w-4" />
+          <span>{t('Use as Draft')}</span>
+        </DropdownMenuItem>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -235,6 +224,8 @@ const FlowVersionDetailsCard = React.memo(
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-40">
+              <DropdownMenuLabel>{t('Actions')}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => mutate(flowVersion)}
                 className="w-full"

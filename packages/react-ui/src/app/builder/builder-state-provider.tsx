@@ -6,7 +6,7 @@ import {
   BuilderStore,
   createBuilderStore,
 } from '@/app/builder/builder-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
+import { useAuthorization } from '@/components/authorization';
 import { Permission } from '@activepieces/shared';
 
 type BuilderStateProviderProps = React.PropsWithChildren<BuilderInitialState>;
@@ -17,11 +17,10 @@ export function BuilderStateProvider({
 }: BuilderStateProviderProps) {
   const storeRef = useRef<BuilderStore>();
   const { checkAccess } = useAuthorization();
-
   if (!storeRef.current) {
     storeRef.current = createBuilderStore({
       ...props,
-      readonly: !checkAccess(Permission.WRITE_FLOW) || props.readonly,
+      readonly: !checkAccess(Permission.UPDATE_FLOW_STATUS) || props.readonly,
     });
   }
   return (

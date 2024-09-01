@@ -11,15 +11,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
-import {
-  NotificationStatus,
-  ProjectMemberRole,
-  ProjectWithLimits,
-} from '@activepieces/shared';
+import { NotificationStatus, ProjectWithLimits } from '@activepieces/shared';
 
 import { AlertOption } from './alert-option';
 
@@ -27,7 +22,7 @@ const AlertFrequencyCard = React.memo(() => {
   const queryClient = useQueryClient();
   const { project, updateProject } = projectHooks.useCurrentProject();
   const { toast } = useToast();
-  const { role } = useAuthorization();
+
   const mutation = useMutation<
     ProjectWithLimits,
     Error,
@@ -63,13 +58,7 @@ const AlertFrequencyCard = React.memo(() => {
       <CardHeader className="pb-3">
         <CardTitle>{t('Alerts')}</CardTitle>
         <CardDescription>
-          <p>{t('Choose what you want to be notified about.')}</p>
-          {role !== ProjectMemberRole.ADMIN && (
-            <p>
-              <span className="text-destructive">*</span>{' '}
-              {t('Only project admins can change this setting.')}
-            </p>
-          )}
+          {t('Choose what you want to be notified about.')}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1">
@@ -79,7 +68,6 @@ const AlertFrequencyCard = React.memo(() => {
           onClick={() => onChangeStatus(NotificationStatus.ALWAYS)}
           icon={<BellIcon className="mt-px size-5" />}
           isActive={project?.notifyStatus === NotificationStatus.ALWAYS}
-          disabled={role !== ProjectMemberRole.ADMIN}
         />
         <AlertOption
           title={t('First Seen')}
@@ -87,7 +75,6 @@ const AlertFrequencyCard = React.memo(() => {
           onClick={() => onChangeStatus(NotificationStatus.NEW_ISSUE)}
           icon={<EyeOpenIcon className="mt-px size-5" />}
           isActive={project?.notifyStatus === NotificationStatus.NEW_ISSUE}
-          disabled={role !== ProjectMemberRole.ADMIN}
         />
         <AlertOption
           title={t('Never')}
@@ -95,7 +82,6 @@ const AlertFrequencyCard = React.memo(() => {
           onClick={() => onChangeStatus(NotificationStatus.NEVER)}
           icon={<EyeNoneIcon className="mt-px size-5" />}
           isActive={project?.notifyStatus === NotificationStatus.NEVER}
-          disabled={role !== ProjectMemberRole.ADMIN}
         />
       </CardContent>
     </Card>

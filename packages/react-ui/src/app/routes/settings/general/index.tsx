@@ -16,20 +16,15 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
-import {
-  ApFlagId,
-  ProjectMemberRole,
-  ProjectWithLimits,
-} from '@activepieces/shared';
+import { ApFlagId, ProjectWithLimits } from '@activepieces/shared';
 
 export default function GeneralPage() {
   const queryClient = useQueryClient();
   const { project, updateProject } = projectHooks.useCurrentProject();
-  const { role } = useAuthorization();
+
   const { toast } = useToast();
 
   const form = useForm({
@@ -39,7 +34,6 @@ export default function GeneralPage() {
         tasks: project?.plan?.tasks,
       },
     },
-    disabled: role !== ProjectMemberRole.ADMIN,
     resolver: typeboxResolver(ProjectWithLimits),
   });
 
@@ -74,12 +68,6 @@ export default function GeneralPage() {
         <CardTitle>{t('General')}</CardTitle>
         <CardDescription>
           {t('Manage general settings for your project.')}
-          {role !== ProjectMemberRole.ADMIN && (
-            <p>
-              <span className="text-destructive">*</span>{' '}
-              {t('Only project admins can change this setting.')}
-            </p>
-          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-1 mt-4">
@@ -127,19 +115,17 @@ export default function GeneralPage() {
             )}
           </form>
         </Form>
-        {role === ProjectMemberRole.ADMIN && (
-          <div className="flex gap-2 justify-end mt-4">
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                mutation.mutate(form.getValues());
-              }}
-            >
-              {t('Save')}
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2 justify-end mt-4">
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              mutation.mutate(form.getValues());
+            }}
+          >
+            {t('Save')}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

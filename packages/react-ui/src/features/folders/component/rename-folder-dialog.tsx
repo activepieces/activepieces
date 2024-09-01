@@ -60,9 +60,7 @@ const RenameFolderDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger className="w-full" asChild>
-        {children}
-      </DialogTrigger>
+      <DialogTrigger className="w-full">{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Rename Folder')}</DialogTitle>

@@ -8,7 +8,6 @@ import {
   useSwitchToDraft,
 } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import {
   Tooltip,
   TooltipContent,
@@ -19,18 +18,11 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import {
-  FlowOperationType,
-  FlowVersionState,
-  Permission,
-} from '@activepieces/shared';
+import { FlowOperationType, FlowVersionState } from '@activepieces/shared';
 
 const BuilderPublishButton = React.memo(() => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
   const [flowVersion, flow, isSaving, setVersion, setFlow, readonly] =
     useBuilderStateContext((state) => [
       state.flowVersion,
@@ -104,23 +96,20 @@ const BuilderPublishButton = React.memo(() => {
         </TooltipProvider>
       )}
       {readonly && (
-        <PermissionNeededTooltip hasPermission={userHasPermissionToEditFlow}>
-          <Button
-            disabled={!userHasPermissionToEditFlow}
-            size={'sm'}
-            variant={'outline'}
-            loading={isSwitchingToDraftPending || isSaving}
-            onClick={() => {
-              if (location.pathname.includes('/runs')) {
-                navigate(`/flows/${flow.id}`);
-              } else {
-                switchToDraft();
-              }
-            }}
-          >
-            {t('Edit Flow')}
-          </Button>
-        </PermissionNeededTooltip>
+        <Button
+          size={'sm'}
+          variant={'outline'}
+          loading={isSwitchingToDraftPending || isSaving}
+          onClick={() => {
+            if (location.pathname.includes('/runs')) {
+              navigate(`/flows/${flow.id}`);
+            } else {
+              switchToDraft();
+            }
+          }}
+        >
+          {t('Edit Flow')}
+        </Button>
       )}
     </>
   );
