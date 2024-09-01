@@ -1,17 +1,19 @@
-import { Platform, Project, ProxyConfig } from '@activepieces/shared'
+import { ApId, Platform, ProxyConfig } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart, JSON_COLUMN_TYPE } from '../database/database-common'
 
 export type ProxySchema = ProxyConfig & {
-    project: Project | null,
-    platform: Platform
+    platform: Platform,
 }
-
 
 export const ProxyConfigEntity = new EntitySchema<ProxySchema>({
     name: 'proxy_config',
     columns: {
         ...BaseColumnSchemaPart,
+        platformId: {
+            type: String,
+            nullable: false,
+        },
         defaultHeaders: {
             type: JSON_COLUMN_TYPE,
             nullable: false,
@@ -26,26 +28,15 @@ export const ProxyConfigEntity = new EntitySchema<ProxySchema>({
         }
     },
     indices: [
-        { name: 'idx_proxy_config_provider', columns: ['provider'] },
-        { name: 'idx_proxy_config_project_id', columns: ['project'] },
-        { name: 'idx_proxy_config_platform_id', columns: ['platform'] },
+        { name: 'idx_proxy_config_platform_id_provider', columns: ['platformId', 'provider'], unique: true },
     ],
-    relations: {
-        project: {
-            type: "one-to-one",
-            target: "project",
-            nullable: true,
-            joinColumn: {
-                name: "project_id",
-                foreignKeyConstraintName: "fk_proxy_config_project_id",
-            },
-        },
+    relations: { 
         platform: {
             type: "one-to-one",
             target: "platform",
             nullable: false,
             joinColumn: {
-                name: "platform_id",
+                name: "platformId",
                 foreignKeyConstraintName: "fk_proxy_config_platform_id",
             },
         },

@@ -93,6 +93,7 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { webhookResponseWatcher } from './workers/helper/webhook-response-watcher'
 import { workerModule } from './workers/worker-module'
+import { projectProxyController, proxyModule } from 'packages/server/api/src/app/proxy/proxy-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -218,6 +219,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(alertsModule)
     await app.register(invitationModule)
     await app.register(workerModule)
+    await app.register(proxyModule)
 
     app.get(
         '/redirect',

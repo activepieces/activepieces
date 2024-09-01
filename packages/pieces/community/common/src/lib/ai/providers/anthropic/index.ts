@@ -6,13 +6,13 @@ export const anthropic = ({
   serverUrl,
   engineToken,
 }: { serverUrl: string, engineToken: string }): AI<Anthropic> => {
-  const anthropicEndpoint = '/v1/chat/completions';
   const proxyUrl = `${serverUrl}v1/proxy/anthropic`
   const sdk = new Anthropic({
     apiKey: engineToken,
-    baseURL: `${proxyUrl}${anthropicEndpoint}`,
+    baseURL: proxyUrl,
     defaultHeaders: {
       'X-AP-TOTAL-USAGE-BODY-PATH': 'usage.total_tokens',
+      'Authorization': `Bearer ${engineToken}`,
     },
   })
   return {

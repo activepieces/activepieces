@@ -5,8 +5,8 @@ export const openai = ({
   serverUrl,
   engineToken,
 }: { serverUrl: string, engineToken: string }): AI<OpenAI> => {
-  const openaiEndpoint = '/v1/chat/completions';
-  const proxyUrl = `${serverUrl}api/v1/proxy/openai`
+  const openaiEndpoint = '/v1';
+  const proxyUrl = `${serverUrl}v1/proxy/openai`
   const sdk = new OpenAI({
     apiKey: engineToken,
     baseURL: `${proxyUrl}${openaiEndpoint}`,

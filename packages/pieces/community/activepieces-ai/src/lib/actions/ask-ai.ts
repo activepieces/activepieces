@@ -21,6 +21,10 @@ export const askAi = createAction({
             label: 'gpt-4o',
             value: 'gpt-4o',
           },
+          {
+            label: 'claude-3-5-sonnet-20240620',
+            value: 'claude-3-5-sonnet-20240620',
+          }
         ],
       },
     }),
