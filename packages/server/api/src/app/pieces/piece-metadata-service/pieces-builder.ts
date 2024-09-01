@@ -1,6 +1,6 @@
+import { spawn } from 'child_process'
 import { Server } from 'http'
 import { resolve } from 'path'
-import { spawn } from 'child_process'
 import { AppSystemProp, filePiecesUtils, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, debounce, WebsocketClientEvent } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
@@ -48,7 +48,8 @@ async function runCommandWithLiveOutput(cmd: string): Promise<void> {
         child.on('close', code => {
             if (code === 0) {
                 resolve()
-            } else {
+            }
+            else {
                 reject(new Error(`Process exited with code ${code}`))
             }
         })

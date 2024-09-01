@@ -8,9 +8,8 @@ import clearModule from 'clear-module'
 import { exceptionHandler } from '../exception-handler'
 import { logger } from '../logger'
 import { system } from '../system/system'
-import { AppSystemProp, SharedSystemProp } from '../system/system-prop'
+import { AppSystemProp } from '../system/system-prop'
 
-const isFilePieces = system.getOrThrow(SharedSystemProp.PIECES_SOURCE) === 'FILE'
 const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
 
 
@@ -81,10 +80,7 @@ async function findAllPieces(): Promise<PieceMetadata[]> {
 
 async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
     try {
-        let paths = await filePiecesUtils.findAllPiecesFolder(folderPath)
-        if (isFilePieces) {
-            paths = paths.filter((p) => packages.some((packageName) => p.includes(packageName)))
-        }
+        const paths = (await filePiecesUtils.findAllPiecesFolder(folderPath)).filter(p => packages.some(packageName => p.includes(packageName)))
         const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
         return pieces.filter((p): p is PieceMetadata => p !== null)
     }
