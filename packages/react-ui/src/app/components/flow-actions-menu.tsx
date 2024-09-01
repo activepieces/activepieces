@@ -190,12 +190,19 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
 
         {!readonly && (
           <ImportFlowDialog insideBuilder={insideBuilder}>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <div className="flex cursor-pointer flex-row gap-2 items-center">
-                <Import className="w-4 h-4" />
-                {t('Import')}
-              </div>
-            </DropdownMenuItem>
+            <PermissionNeededWrapper
+              hasPermission={userHasPermissionToUpdateFlow}
+            >
+              <DropdownMenuItem
+                disabled={!userHasPermissionToUpdateFlow}
+                onSelect={(e) => e.preventDefault()}
+              >
+                <div className="flex cursor-pointer flex-row gap-2 items-center">
+                  <Import className="w-4 h-4" />
+                  {t('Import')}
+                </div>
+              </DropdownMenuItem>
+            </PermissionNeededWrapper>
           </ImportFlowDialog>
         )}
         <DropdownMenuItem onClick={() => exportFlow()}>
