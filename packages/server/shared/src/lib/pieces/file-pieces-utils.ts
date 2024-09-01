@@ -6,8 +6,10 @@ import importFresh from '@activepieces/import-fresh-webpack'
 import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
 import clearModule from 'clear-module'
 import { system } from '../system/system'
-import { ApEdition, extractPieceFromModule } from '@activepieces/shared'
-import { exceptionHandler} from '../exception-handler'
+import { AppSystemProp, SharedSystemProp } from 'packages/server/shared/src/lib/system/system-prop'
+
+const isFilePieces = system.getOrThrow(SharedSystemProp.PIECES_SOURCE) === 'FILE'
+const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
 
 async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
     const paths = []
@@ -73,9 +75,13 @@ async function findAllPieces(): Promise<PieceMetadata[]> {
     return [...pieces, ...enterprisePieces]
 }
 
+
 async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
     try {
         const paths = await filePiecesUtils.findAllPiecesFolder(folderPath)
+        if (isFilePieces) {
+            paths.filter((p) => packages.some((packageName) => p.includes(packageName)))
+        }
         const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
         return pieces.filter((p): p is PieceMetadata => p !== null)
     }
