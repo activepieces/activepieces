@@ -80,7 +80,7 @@ async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]
     try {
         const paths = await filePiecesUtils.findAllPiecesFolder(folderPath)
         if (isFilePieces) {
-            paths.filter((p) => packages.some((packageName) => p.includes(packageName)))
+            paths = paths.filter((p) => packages.some((packageName) => p.includes(packageName)))
         }
         const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
         return pieces.filter((p): p is PieceMetadata => p !== null)
