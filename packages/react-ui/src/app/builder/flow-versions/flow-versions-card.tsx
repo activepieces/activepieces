@@ -8,6 +8,7 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
+import { useAuthorization } from '@/components/authorization';
 import { AvatarLetter } from '@/components/ui/avatar-letter';
 import { Button } from '@/components/ui/button';
 import { CardListItem } from '@/components/ui/card-list';
@@ -29,6 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
@@ -47,8 +49,6 @@ import {
   Permission,
   PopulatedFlow,
 } from '@activepieces/shared';
-import { useAuthorization } from '@/components/authorization';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 
 type UseAsDraftOptionProps = {
   versionIndex: number;

@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
+import { useAuthorization } from '@/components/authorization';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +34,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/seperator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -49,8 +51,6 @@ import { foldersHooks } from '../lib/folders-hooks';
 import { foldersUtils } from '../lib/folders-utils';
 
 import { RenameFolderDialog } from './rename-folder-dialog';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
-import { useAuthorization } from '@/components/authorization';
 
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({

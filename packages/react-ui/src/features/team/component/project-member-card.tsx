@@ -3,7 +3,8 @@ import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
 import { useAuthorization } from '@/components/authorization';
-
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
+import { projectHooks } from '@/hooks/project-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { Permission } from '@activepieces/shared';
 
@@ -12,8 +13,6 @@ import { Avatar, AvatarImage } from '../../../components/ui/avatar';
 import { Button } from '../../../components/ui/button';
 import { projectMembersApi } from '../lib/project-members-api';
 import { projectMembersHooks } from '../lib/project-members-hooks';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
-import { projectHooks } from '@/hooks/project-hooks';
 
 export function ProjectMemberCard({
   member,

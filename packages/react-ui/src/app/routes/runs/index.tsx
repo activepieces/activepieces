@@ -23,6 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
@@ -37,7 +38,6 @@ import {
   Permission,
   isFailedState,
 } from '@activepieces/shared';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 
 const fetchData = async (
   params: {

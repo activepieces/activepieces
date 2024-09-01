@@ -1,10 +1,10 @@
+import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { rolePermissions } from '@activepieces/ee-shared';
 import { ApFlagId, Permission, PlatformRole } from '@activepieces/shared';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { useQueryClient } from '@tanstack/react-query';
 
 export const useAuthorization = () => {
   const role = authenticationSession.getUserProjectRole();

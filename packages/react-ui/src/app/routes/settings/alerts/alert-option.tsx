@@ -1,7 +1,8 @@
-import { cn } from '@/lib/utils';
 import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import React from 'react';
+
+import { cn } from '@/lib/utils';
 
 type AlertOptionsProps = {
   title: string;

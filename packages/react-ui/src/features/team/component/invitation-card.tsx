@@ -2,6 +2,8 @@ import { AvatarFallback } from '@radix-ui/react-avatar';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
+import { useAuthorization } from '@/components/authorization';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 import { Permission, UserInvitation } from '@activepieces/shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
@@ -9,8 +11,6 @@ import { Avatar, AvatarImage } from '../../../components/ui/avatar';
 import { Button } from '../../../components/ui/button';
 import { userInvitationApi } from '../lib/user-invitation';
 import { userInvitationsHooks } from '../lib/user-invitations-hooks';
-import { useAuthorization } from '@/components/authorization';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 
 export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
   const { refetch } = userInvitationsHooks.useInvitations();

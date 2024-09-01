@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
+import { useAuthorization } from '@/components/authorization';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,19 +12,18 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { alertsApi } from '@/features/alerts/lib/alerts-api';
-import { authenticationSession } from '@/lib/authentication-session';
-import { Alert } from '@activepieces/ee-shared';
-
-import { AddAlertEmailDialog } from './add-alert-email-dialog';
-import { useAuthorization } from '@/components/authorization';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { alertsApi } from '@/features/alerts/lib/alerts-api';
+import { authenticationSession } from '@/lib/authentication-session';
+import { Alert } from '@activepieces/ee-shared';
 import { ProjectMemberRole } from '@activepieces/shared';
+
+import { AddAlertEmailDialog } from './add-alert-email-dialog';
 
 const fetchData = async () => {
   const page = await alertsApi.list({

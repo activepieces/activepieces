@@ -3,6 +3,7 @@ import { LogOut, Shield } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { useShowPlatformAdminDashboard } from '@/components/authorization';
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import { Button } from '@/components/ui/button';
 import { ReportBugsButton } from '@/components/ui/report-bugs-button';
@@ -14,7 +15,6 @@ import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
 
 import { FlagGuard } from './flag-guard';
-import { useShowPlatformAdminDashboard } from '@/components/authorization';
 
 export const Header = () => {
   const history = useLocation();

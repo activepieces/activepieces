@@ -1,10 +1,11 @@
+import { t } from 'i18next';
+import React from 'react';
+
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { t } from 'i18next';
-import React from 'react';
 
 export const PermissionNeededWrapper = React.forwardRef(
   (
@@ -28,3 +29,5 @@ export const PermissionNeededWrapper = React.forwardRef(
     );
   },
 );
+
+PermissionNeededWrapper.displayName = 'PermissionNeededWrapper';

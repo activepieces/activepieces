@@ -13,8 +13,8 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
@@ -29,7 +29,6 @@ import {
 import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
 
 import { NewConnectionTypeDialog } from './new-connection-type-dialog';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 
 type PieceIconWithPieceNameProps = {
   pieceName: string;

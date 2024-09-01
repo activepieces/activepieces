@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
 
+import { useAuthorization } from '@/components/authorization';
 import {
   Card,
   CardContent,
@@ -21,7 +22,6 @@ import {
 } from '@activepieces/shared';
 
 import { AlertOption } from './alert-option';
-import { useAuthorization } from '@/components/authorization';
 
 const AlertFrequencyCard = React.memo(() => {
   const queryClient = useQueryClient();

@@ -6,6 +6,7 @@ import { CopyIcon, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { useAuthorization } from '@/components/authorization';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -52,7 +53,6 @@ import {
 } from '@activepieces/shared';
 
 import { userInvitationsHooks } from '../lib/user-invitations-hooks';
-import { useAuthorization } from '@/components/authorization';
 
 const FormSchema = Type.Object({
   email: Type.String({

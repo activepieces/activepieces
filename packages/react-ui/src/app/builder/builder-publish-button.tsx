@@ -7,7 +7,9 @@ import {
   useBuilderStateContext,
   useSwitchToDraft,
 } from '@/app/builder/builder-hooks';
+import { useAuthorization } from '@/components/authorization';
 import { Button } from '@/components/ui/button';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 import {
   Tooltip,
   TooltipContent,
@@ -23,8 +25,6 @@ import {
   FlowVersionState,
   Permission,
 } from '@activepieces/shared';
-import { useAuthorization } from '@/components/authorization';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 
 const BuilderPublishButton = React.memo(() => {
   const location = useLocation();

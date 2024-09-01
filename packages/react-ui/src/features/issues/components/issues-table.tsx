@@ -11,6 +11,7 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -25,7 +26,6 @@ import {
 
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 
 const fetchData = async (
   _params: Record<string, string>,

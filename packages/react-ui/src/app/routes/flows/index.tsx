@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useAuthorization } from '@/components/authorization';
 import { useEmbedding } from '@/components/embed-provider';
 import { ShowPoweredBy } from '@/components/show-powered-by';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
@@ -40,8 +42,6 @@ import { formatUtils } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
-import { useAuthorization } from '@/components/authorization';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 
 const filters = [
   {

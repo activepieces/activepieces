@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 
 import { FlagGuard } from '@/app/components/flag-guard';
+import { useAuthorization } from '@/components/authorization';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -24,7 +25,6 @@ import {
   ProjectMemberRole,
   ProjectWithLimits,
 } from '@activepieces/shared';
-import { useAuthorization } from '@/components/authorization';
 
 export default function GeneralPage() {
   const queryClient = useQueryClient();

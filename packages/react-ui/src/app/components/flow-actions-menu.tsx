@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import { useAuthorization } from '@/components/authorization';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useEmbedding } from '@/components/embed-provider';
 import {
@@ -20,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
@@ -40,8 +42,6 @@ import { RenameFlowDialog } from '../../features/flows/components/rename-flow-di
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
 import { flowsApi } from '../../features/flows/lib/flows-api';
 import { flowsUtils } from '../../features/flows/lib/flows-utils';
-import { useAuthorization } from '@/components/authorization';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
 
 interface FlowActionMenuProps {
   flow: Flow;

@@ -7,15 +7,15 @@ import {
   Workflow,
   Wrench,
 } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 
+import { useShowPlatformAdminDashboard } from '@/components/authorization';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { Sidebar, SidebarLink } from './sidebar';
-import { useShowPlatformAdminDashboard } from '@/components/authorization';
-import { Navigate } from 'react-router-dom';
 
 type PlatformAdminContainerProps = {
   children: React.ReactNode;
