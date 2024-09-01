@@ -18,8 +18,8 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
-const auditLogRepo = repoFactory(AuditEventEntity)
 
+export const auditLogRepo = repoFactory(AuditEventEntity)
 
 export const auditLogService = {
     sendUserEvent(request: FastifyRequest, params: AuditEventParam): void {

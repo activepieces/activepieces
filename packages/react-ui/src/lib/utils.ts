@@ -13,32 +13,13 @@ export function cn(...inputs: ClassValue[]) {
 const EMAIL_REGEX =
   '^[a-zA-Z0-9_.+]+(?<!^[0-9]*)@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$';
 
-const cleanResponse = (response: unknown): unknown => {
-  if (Number.isNaN(response)) {
-    return 'NaN';
-  }
-  if (response === null) {
-    return 'null';
-  }
-  if (response === undefined) {
-    return 'undefined';
-  }
-  if (response === 0) {
-    return '0';
-  }
-  if (response === false) {
-    return 'false';
-  }
-  return response;
-};
-
 export const formatUtils = {
   EMAIL_REGEX,
   formatStepInputAndOutput(
     sampleData: unknown,
     type: ActionType | TriggerType | null,
   ) {
-    const cleanedSampleData = cleanResponse(sampleData);
+    const cleanedSampleData = sampleData;
     const shouldRemoveIterations =
       type === ActionType.LOOP_ON_ITEMS &&
       cleanedSampleData &&

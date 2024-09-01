@@ -19,7 +19,6 @@ export const PieceTag = Type.Object({
 export type PieceTag = Static<typeof PieceTag>
 
 export const ListTagsRequest = Type.Object({
-    platformId: Type.String(),
     limit: Type.Optional(Type.Number()),
     cursor: Type.Optional(Type.String()),
 })

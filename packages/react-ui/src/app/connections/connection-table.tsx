@@ -80,7 +80,7 @@ const DeleteConnectionColumn = ({
           entityName={row.name}
         >
           <Button variant="ghost" className="size-8 p-0">
-            <Trash className="size-4" />
+            <Trash className="size-4 stroke-destructive" />
           </Button>
         </ConfirmationDeleteDialog>
       </Authorization>

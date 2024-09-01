@@ -1,7 +1,6 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
 import React from 'react';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
@@ -15,7 +14,6 @@ import {
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
 
 import { ConnectionSelect } from './connection-select';
-import { PieceActionTriggerSelector } from './piece-action-trigger-selector';
 
 type PieceSettingsProps = {
   step: PieceAction | PieceTrigger;
@@ -52,15 +50,12 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     selectedTrigger?.props ?? {},
   );
 
-  const queryClient = useQueryClient();
   const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
     ApFlagId.WEBHOOK_URL_PREFIX,
-    queryClient,
   );
 
   const { data: frontendUrl } = flagsHooks.useFlag<string>(
     ApFlagId.FRONTEND_URL,
-    queryClient,
   );
   const markdownVariables = {
     webhookUrl: `${webhookPrefixUrl}/${props.flowId}`,
@@ -69,14 +64,15 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
 
   return (
     <div className="flex flex-col gap-4 w-full">
+      {isLoading && (
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="w-full h-8" />
+          ))}
+        </div>
+      )}
       {pieceModel && (
         <>
-          <PieceActionTriggerSelector
-            piece={pieceModel}
-            isLoading={isLoading}
-            type={props.step.type}
-            disabled={props.readonly}
-          ></PieceActionTriggerSelector>
           {pieceModel.auth &&
             (selectedAction?.requireAuth || selectedTrigger) && (
               <ConnectionSelect
@@ -87,7 +83,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
           {selectedAction && (
             <AutoPropertiesFormComponent
               key={selectedAction.name}
-              prefixValue={t('settings.input')}
+              prefixValue={'settings.input'}
               props={actionPropsWithoutAuth}
               allowDynamicValues={true}
               disabled={props.readonly}
@@ -98,7 +94,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
           {selectedTrigger && (
             <AutoPropertiesFormComponent
               key={selectedTrigger.name}
-              prefixValue={t('settings.input')}
+              prefixValue={'settings.input'}
               props={triggerPropsWithoutAuth}
               useMentionTextInput={true}
               allowDynamicValues={true}

@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { SocketProvider } from '@/components/socket-provider';
+import { useTelemetry } from '@/components/telemetry-provider';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -26,17 +27,21 @@ function isJwtExpired(token: string): boolean {
   }
 }
 
+type AllowOnlyLoggedInUserOnlyGuardProps = {
+  children: React.ReactNode;
+};
 export const AllowOnlyLoggedInUserOnlyGuard = ({
   children,
-}: {
-  children: React.ReactNode;
-}) => {
+}: AllowOnlyLoggedInUserOnlyGuardProps) => {
+  const { reset } = useTelemetry();
+
   if (!authenticationSession.isLoggedIn()) {
     return <Navigate to="/sign-in" replace />;
   }
   const token = authenticationSession.getToken();
   if (!token || isJwtExpired(token)) {
     authenticationSession.logOut();
+    reset();
     return <Navigate to="/sign-in" replace />;
   }
   projectHooks.prefetchProject();

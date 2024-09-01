@@ -1,5 +1,4 @@
 import { QuestionMarkIcon } from '@radix-ui/react-icons';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
 
@@ -45,10 +44,8 @@ const RunDetailsBar = React.memo(
       ? flowRunUtils.getStatusIcon(run.status)
       : { Icon: QuestionMarkIcon, variant: 'default' };
 
-    const queryClient = useQueryClient();
     const { data: timeoutSeconds } = flagsHooks.useFlag<number>(
       ApFlagId.FLOW_RUN_TIME_SECONDS,
-      queryClient,
     );
 
     if (!run) {

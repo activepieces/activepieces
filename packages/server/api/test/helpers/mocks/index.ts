@@ -176,6 +176,7 @@ export const createMockGitRepo = (gitRepo?: Partial<GitRepo>): GitRepo => {
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
     return {
         id: platform?.id ?? apId(),
+        analyticsEnabled: platform?.analyticsEnabled ?? false,
         created: platform?.created ?? faker.date.recent().toISOString(),
         updated: platform?.updated ?? faker.date.recent().toISOString(),
         ownerId: platform?.ownerId ?? apId(),

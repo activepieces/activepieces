@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   LayoutGrid,
@@ -25,10 +24,8 @@ export function PlatformAdminContainer({
 }: PlatformAdminContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const queryClient = useQueryClient();
   const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_PLATFORM_DEMO,
-    queryClient,
   );
 
   const isLocked = (locked: boolean) => locked || (showPlatformDemo ?? false);

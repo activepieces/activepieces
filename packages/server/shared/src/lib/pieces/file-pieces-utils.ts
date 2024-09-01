@@ -1,15 +1,18 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
-import { logger } from '../logger'
 import importFresh from '@activepieces/import-fresh-webpack'
 import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
+import { ApEdition, extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
+import { exceptionHandler } from '../exception-handler'
+import { logger } from '../logger'
 import { system } from '../system/system'
 import { AppSystemProp, SharedSystemProp } from 'packages/server/shared/src/lib/system/system-prop'
 
 const isFilePieces = system.getOrThrow(SharedSystemProp.PIECES_SOURCE) === 'FILE'
 const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
+
 
 async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
     const paths = []

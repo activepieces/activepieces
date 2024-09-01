@@ -3,12 +3,12 @@ import { Suspense } from 'react';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
-export const InitialDataGuard = ({
-  children,
-}: {
+type InitialDataGuardProps = {
   children: React.ReactNode;
-}) => {
+};
+export const InitialDataGuard = ({ children }: InitialDataGuardProps) => {
   flagsHooks.prefetchFlags();
+
   return (
     <Suspense
       fallback={

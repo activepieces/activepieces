@@ -1,8 +1,4 @@
-import {
-  QueryClient,
-  usePrefetchQuery,
-  useSuspenseQuery,
-} from '@tanstack/react-query';
+import { usePrefetchQuery, useSuspenseQuery } from '@tanstack/react-query';
 
 import { ApFlagId } from '@activepieces/shared';
 
@@ -40,22 +36,16 @@ export const flagsHooks = {
       staleTime: Infinity,
     });
   },
-  useWebsiteBranding: (queryClient: QueryClient) => {
-    const { data: theme } = flagsHooks.useFlag<WebsiteBrand>(
-      ApFlagId.THEME,
-      queryClient,
-    );
+  useWebsiteBranding: () => {
+    const { data: theme } = flagsHooks.useFlag<WebsiteBrand>(ApFlagId.THEME);
     return theme!;
   },
-  useFlag: <T>(flagId: ApFlagId, queryClient: QueryClient) => {
-    const data = useSuspenseQuery<FlagsMap, Error>(
-      {
-        queryKey: ['flags'],
-        queryFn: flagsApi.getAll,
-        staleTime: Infinity,
-      },
-      queryClient,
-    ).data?.[flagId] as T | null;
+  useFlag: <T>(flagId: ApFlagId) => {
+    const data = useSuspenseQuery<FlagsMap, Error>({
+      queryKey: ['flags'],
+      queryFn: flagsApi.getAll,
+      staleTime: Infinity,
+    }).data?.[flagId] as T | null;
     return {
       data,
     };
