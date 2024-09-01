@@ -29,25 +29,3 @@ export const useShowPlatformAdminDashboard = () => {
   );
   return isPlatfromDemo || platformRole === PlatformRole.ADMIN;
 };
-
-type AuthorizationProps = {
-  forbiddenFallback?: React.ReactNode;
-  children: React.ReactNode;
-  permission: Permission;
-};
-
-export const Authorization = ({
-  permission,
-  forbiddenFallback = null,
-  children,
-}: AuthorizationProps) => {
-  const { checkAccess } = useAuthorization();
-
-  let canAccess = false;
-
-  if (permission) {
-    canAccess = checkAccess(permission);
-  }
-
-  return <>{canAccess ? children : forbiddenFallback}</>;
-};
