@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
-import { useShowPlatformAdminDashboard } from '@/components/authorization';
+import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApFlagId } from '@activepieces/shared';

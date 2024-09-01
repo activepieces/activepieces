@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
 
-import { useAuthorization } from '@/components/authorization';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   Card,
   CardContent,

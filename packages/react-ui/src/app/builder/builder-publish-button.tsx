@@ -7,9 +7,9 @@ import {
   useBuilderStateContext,
   useSwitchToDraft,
 } from '@/app/builder/builder-hooks';
-import { useAuthorization } from '@/components/authorization';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Button } from '@/components/ui/button';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import {
   Tooltip,
   TooltipContent,
@@ -104,7 +104,7 @@ const BuilderPublishButton = React.memo(() => {
         </TooltipProvider>
       )}
       {readonly && (
-        <PermissionNeededWrapper hasPermission={userHasPermissionToEditFlow}>
+        <PermissionNeededTooltip hasPermission={userHasPermissionToEditFlow}>
           <Button
             disabled={!userHasPermissionToEditFlow}
             size={'sm'}
@@ -120,7 +120,7 @@ const BuilderPublishButton = React.memo(() => {
           >
             {t('Edit Flow')}
           </Button>
-        </PermissionNeededWrapper>
+        </PermissionNeededTooltip>
       )}
     </>
   );

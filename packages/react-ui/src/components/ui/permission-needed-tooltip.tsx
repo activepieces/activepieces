@@ -7,7 +7,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-export const PermissionNeededWrapper = React.forwardRef(
+export const PermissionNeededTooltip = React.forwardRef(
   (
     {
       children,
@@ -30,4 +30,4 @@ export const PermissionNeededWrapper = React.forwardRef(
   },
 );
 
-PermissionNeededWrapper.displayName = 'PermissionNeededWrapper';
+PermissionNeededTooltip.displayName = 'PermissionNeededWrapper';

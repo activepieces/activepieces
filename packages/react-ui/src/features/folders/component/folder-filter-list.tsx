@@ -15,7 +15,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
-import { useAuthorization } from '@/components/authorization';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/seperator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -131,7 +131,7 @@ const FolderItem = ({
                   folderId={folder.id}
                   onRename={() => refetch()}
                 >
-                  <PermissionNeededWrapper
+                  <PermissionNeededTooltip
                     hasPermission={userHasPermissionToUpdateFolders}
                   >
                     <DropdownMenuItem
@@ -143,7 +143,7 @@ const FolderItem = ({
                         <span>{t('Rename')}</span>
                       </div>
                     </DropdownMenuItem>
-                  </PermissionNeededWrapper>
+                  </PermissionNeededTooltip>
                 </RenameFolderDialog>
                 <ConfirmationDeleteDialog
                   title={t('Delete folder {folderName}', {
@@ -158,7 +158,7 @@ const FolderItem = ({
                   }}
                   entityName={folder.displayName}
                 >
-                  <PermissionNeededWrapper
+                  <PermissionNeededTooltip
                     hasPermission={userHasPermissionToUpdateFolders}
                   >
                     <DropdownMenuItem
@@ -170,7 +170,7 @@ const FolderItem = ({
                         <span className="text-destructive">{t('Delete')}</span>
                       </div>
                     </DropdownMenuItem>
-                  </PermissionNeededWrapper>
+                  </PermissionNeededTooltip>
                 </ConfirmationDeleteDialog>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -259,7 +259,7 @@ const FolderFilterList = () => {
         <div className="flex items-center justify-center">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <PermissionNeededWrapper
+              <PermissionNeededTooltip
                 hasPermission={userHasPermissionToUpdateFolders}
               >
                 <Button
@@ -268,7 +268,7 @@ const FolderFilterList = () => {
                 >
                   <PlusIcon size={18} />
                 </Button>
-              </PermissionNeededWrapper>
+              </PermissionNeededTooltip>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>

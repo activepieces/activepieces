@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
-import { useAuthorization } from '@/components/authorization';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Button } from '@/components/ui/button';
 import {
   Card,

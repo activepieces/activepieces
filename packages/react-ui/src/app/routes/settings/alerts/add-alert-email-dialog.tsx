@@ -7,7 +7,7 @@ import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { useAuthorization } from '@/components/authorization';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

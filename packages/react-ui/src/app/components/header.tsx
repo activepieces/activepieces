@@ -3,7 +3,7 @@ import { LogOut, Shield } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { useShowPlatformAdminDashboard } from '@/components/authorization';
+import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import { Button } from '@/components/ui/button';
 import { ReportBugsButton } from '@/components/ui/report-bugs-button';

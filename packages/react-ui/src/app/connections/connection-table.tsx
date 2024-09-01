@@ -4,7 +4,7 @@ import { CheckIcon, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { useAuthorization } from '@/components/authorization';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,7 +13,7 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
@@ -62,7 +62,7 @@ const DeleteConnectionColumn = ({
   );
   return (
     <div className="flex items-end justify-end">
-      <PermissionNeededWrapper
+      <PermissionNeededTooltip
         hasPermission={userHasPermissionToWriteAppConnection}
       >
         <ConfirmationDeleteDialog
@@ -88,7 +88,7 @@ const DeleteConnectionColumn = ({
             <Trash className="size-4 stroke-destructive" />
           </Button>
         </ConfirmationDeleteDialog>
-      </PermissionNeededWrapper>
+      </PermissionNeededTooltip>
     </div>
   );
 };
@@ -206,7 +206,7 @@ function AppConnectionsTable() {
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">{t('Connections')}</h1>
         <div className="ml-auto">
-          <PermissionNeededWrapper
+          <PermissionNeededTooltip
             hasPermission={userHasPermissionToWriteAppConnection}
           >
             <NewConnectionTypeDialog
@@ -219,7 +219,7 @@ function AppConnectionsTable() {
                 {t('New Connection')}
               </Button>
             </NewConnectionTypeDialog>
-          </PermissionNeededWrapper>
+          </PermissionNeededTooltip>
         </div>
       </div>
       <DataTable

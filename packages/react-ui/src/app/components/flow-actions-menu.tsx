@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import { useAuthorization } from '@/components/authorization';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useEmbedding } from '@/components/embed-provider';
 import {
@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
@@ -123,7 +123,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {!readonly && (
-          <PermissionNeededWrapper
+          <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
           >
             <RenameFlowDialog flowId={flow.id} onRename={onRename}>
@@ -134,10 +134,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                 </div>
               </DropdownMenuItem>
             </RenameFlowDialog>
-          </PermissionNeededWrapper>
+          </PermissionNeededTooltip>
         )}
         <PushToGitDialog flowId={flow.id}>
-          <PermissionNeededWrapper hasPermission={userHasPermissionToPushToGit}>
+          <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
             <DropdownMenuItem
               disabled={!userHasPermissionToPushToGit}
               onSelect={(e) => e.preventDefault()}
@@ -147,7 +147,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                 <span>{t('Push to Git')}</span>
               </div>
             </DropdownMenuItem>
-          </PermissionNeededWrapper>
+          </PermissionNeededTooltip>
         </PushToGitDialog>
         {!embedState.hideFolders && (
           <MoveFlowDialog
@@ -155,7 +155,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             flowVersion={flowVersion}
             onMoveTo={onMoveTo}
           >
-            <PermissionNeededWrapper
+            <PermissionNeededTooltip
               hasPermission={userHasPermissionToUpdateFlow}
             >
               <DropdownMenuItem
@@ -167,10 +167,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   <span>{t('Move To')}</span>
                 </div>
               </DropdownMenuItem>
-            </PermissionNeededWrapper>
+            </PermissionNeededTooltip>
           </MoveFlowDialog>
         )}
-        <PermissionNeededWrapper hasPermission={userHasPermissionToUpdateFlow}>
+        <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFlow}>
           <DropdownMenuItem
             disabled={!userHasPermissionToUpdateFlow}
             onClick={() => duplicateFlow()}
@@ -186,11 +186,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               </span>
             </div>
           </DropdownMenuItem>
-        </PermissionNeededWrapper>
+        </PermissionNeededTooltip>
 
         {!readonly && (
           <ImportFlowDialog insideBuilder={insideBuilder}>
-            <PermissionNeededWrapper
+            <PermissionNeededTooltip
               hasPermission={userHasPermissionToUpdateFlow}
             >
               <DropdownMenuItem
@@ -202,7 +202,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   {t('Import')}
                 </div>
               </DropdownMenuItem>
-            </PermissionNeededWrapper>
+            </PermissionNeededTooltip>
           </ImportFlowDialog>
         )}
         <DropdownMenuItem onClick={() => exportFlow()}>
@@ -250,7 +250,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             }}
             entityName={t('flow')}
           >
-            <PermissionNeededWrapper
+            <PermissionNeededTooltip
               hasPermission={userHasPermissionToUpdateFlow}
             >
               <DropdownMenuItem
@@ -262,7 +262,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   <span className="text-destructive">{t('Delete')}</span>
                 </div>
               </DropdownMenuItem>
-            </PermissionNeededWrapper>
+            </PermissionNeededTooltip>
           </ConfirmationDeleteDialog>
         )}
       </DropdownMenuContent>

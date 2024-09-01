@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 
 import { FlagGuard } from '@/app/components/flag-guard';
-import { useAuthorization } from '@/components/authorization';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Button } from '@/components/ui/button';
 import {
   Card,

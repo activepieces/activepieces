@@ -8,7 +8,7 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { useAuthorization } from '@/components/authorization';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { AvatarLetter } from '@/components/ui/avatar-letter';
 import { Button } from '@/components/ui/button';
 import { CardListItem } from '@/components/ui/card-list';
@@ -30,7 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
@@ -68,7 +68,7 @@ const UseAsDraftDropdownMenuOption = ({
         disabled={!userHasPermissionToWriteFlow}
         className="w-full"
       >
-        <PermissionNeededWrapper hasPermission={userHasPermissionToWriteFlow}>
+        <PermissionNeededTooltip hasPermission={userHasPermissionToWriteFlow}>
           <DropdownMenuItem
             className="w-full"
             onSelect={(e) => {
@@ -79,7 +79,7 @@ const UseAsDraftDropdownMenuOption = ({
             <Pencil className="mr-2 h-4 w-4" />
             <span>{t('Use as Draft')}</span>
           </DropdownMenuItem>
-        </PermissionNeededWrapper>
+        </PermissionNeededTooltip>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

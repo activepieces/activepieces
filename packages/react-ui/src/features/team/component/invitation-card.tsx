@@ -2,8 +2,8 @@ import { AvatarFallback } from '@radix-ui/react-avatar';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
-import { useAuthorization } from '@/components/authorization';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { Permission, UserInvitation } from '@activepieces/shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
@@ -41,7 +41,7 @@ export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
         </div>
       </div>
       <div className="flex gap-2">
-        <PermissionNeededWrapper
+        <PermissionNeededTooltip
           hasPermission={userHasPermissionToRemoveInvitation}
         >
           <ConfirmationDeleteDialog
@@ -58,7 +58,7 @@ export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
               <Trash className="text-destructive size-4" />
             </Button>
           </ConfirmationDeleteDialog>
-        </PermissionNeededWrapper>
+        </PermissionNeededTooltip>
       </div>
     </div>
   );

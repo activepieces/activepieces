@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 
-import { useAuthorization } from '@/components/authorization';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
@@ -11,7 +11,7 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -114,7 +114,7 @@ export default function IssuesTable() {
       cell: ({ row }) => {
         return (
           <div className="flex items-end justify-end">
-            <PermissionNeededWrapper
+            <PermissionNeededTooltip
               hasPermission={userHasPermissionToMarkAsResolved}
             >
               <Button
@@ -134,7 +134,7 @@ export default function IssuesTable() {
                 <Check className="size-4" />
                 {t('Mark as Resolved')}
               </Button>
-            </PermissionNeededWrapper>
+            </PermissionNeededTooltip>
           </div>
         );
       },

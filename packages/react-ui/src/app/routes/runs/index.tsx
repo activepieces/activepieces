@@ -10,7 +10,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Authorization, useAuthorization } from '@/components/authorization';
+import { Authorization, useAuthorization } from '@/hooks/authorization-hooks';
 import {
   DataTable,
   PaginationParams,
@@ -23,7 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
@@ -162,7 +162,7 @@ const FlowRunsPage = () => {
                   <EllipsisVertical className="h-10 w-10" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <PermissionNeededWrapper
+                  <PermissionNeededTooltip
                     hasPermission={userHasPermissionToRetryRun}
                   >
                     <DropdownMenuItem
@@ -179,10 +179,10 @@ const FlowRunsPage = () => {
                         <span>{t('Retry on latest version')}</span>
                       </div>
                     </DropdownMenuItem>
-                  </PermissionNeededWrapper>
+                  </PermissionNeededTooltip>
 
                   {isFailedState(row.original.status) && (
-                    <PermissionNeededWrapper
+                    <PermissionNeededTooltip
                       hasPermission={userHasPermissionToRetryRun}
                     >
                       <DropdownMenuItem
@@ -199,7 +199,7 @@ const FlowRunsPage = () => {
                           <span>{t('Retry from failed step')}</span>
                         </div>
                       </DropdownMenuItem>
-                    </PermissionNeededWrapper>
+                    </PermissionNeededTooltip>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>

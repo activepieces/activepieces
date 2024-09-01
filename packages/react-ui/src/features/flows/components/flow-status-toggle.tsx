@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
-import { useAuthorization } from '@/components/authorization';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {

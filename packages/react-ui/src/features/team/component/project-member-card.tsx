@@ -2,8 +2,8 @@ import { AvatarFallback } from '@radix-ui/react-avatar';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
-import { useAuthorization } from '@/components/authorization';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { projectHooks } from '@/hooks/project-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { Permission } from '@activepieces/shared';
@@ -53,7 +53,7 @@ export function ProjectMemberCard({
       </div>
       <div className="flex gap-2">
         {project.ownerId !== member.userId && (
-          <PermissionNeededWrapper
+          <PermissionNeededTooltip
             hasPermission={userHasPermissionToRemoveMember}
           >
             <ConfirmationDeleteDialog
@@ -72,7 +72,7 @@ export function ProjectMemberCard({
                 <Trash className="text-destructive size-4" />
               </Button>
             </ConfirmationDeleteDialog>
-          </PermissionNeededWrapper>
+          </PermissionNeededTooltip>
         )}
       </div>
     </div>

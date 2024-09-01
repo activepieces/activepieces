@@ -12,7 +12,7 @@ import {
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useAuthorization } from '@/components/authorization';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { useEmbedding } from '@/components/embed-provider';
 import { ShowPoweredBy } from '@/components/show-powered-by';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PermissionNeededWrapper } from '@/components/ui/permission-needed-wrapper';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
@@ -217,7 +217,7 @@ const FlowsPage = () => {
         <h1 className="text-3xl font-bold">{t('Flows')}</h1>
         <div className="ml-auto flex flex-row gap-2">
           <ImportFlowDialog insideBuilder={false}>
-            <PermissionNeededWrapper
+            <PermissionNeededTooltip
               hasPermission={doesUserHavePermissionToWriteFlow}
             >
               <Button
@@ -228,14 +228,14 @@ const FlowsPage = () => {
                 <Import className="w-4 h-4" />
                 {t('Import Flow')}
               </Button>
-            </PermissionNeededWrapper>
+            </PermissionNeededTooltip>
           </ImportFlowDialog>
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger
               disabled={!doesUserHavePermissionToWriteFlow}
               asChild
             >
-              <PermissionNeededWrapper
+              <PermissionNeededTooltip
                 hasPermission={doesUserHavePermissionToWriteFlow}
               >
                 <Button
@@ -247,7 +247,7 @@ const FlowsPage = () => {
                   <span>{t('New Flow')}</span>
                   <ChevronDown className="h-4 w-4 " />
                 </Button>
-              </PermissionNeededWrapper>
+              </PermissionNeededTooltip>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem
