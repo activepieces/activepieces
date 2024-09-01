@@ -15,7 +15,7 @@ export const PermissionNeededWrapper = React.forwardRef(
     ref,
   ) => {
     return (
-      <Tooltip>
+      <Tooltip delayDuration={100}>
         <TooltipTrigger asChild disabled={!hasPermission}>
           <div>{children}</div>
         </TooltipTrigger>
