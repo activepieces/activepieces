@@ -17,10 +17,17 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { Alert } from '@activepieces/ee-shared';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
+import { useAuthorization } from '@/components/authorization';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { ProjectMemberRole } from '@activepieces/shared';
 
 const fetchData = async () => {
   const page = await alertsApi.list({
-    projectId: authenticationSession.getProjectId(),
+    projectId: authenticationSession.getProjectId()!,
     limit: 100,
   });
   return page.data;
@@ -37,7 +44,7 @@ export default function AlertsEmailsCard() {
     queryKey: ['alerts-email-list'],
     queryFn: fetchData,
   });
-
+  const { role } = useAuthorization();
   const deleteMutation = useMutation<void, Error, Alert>({
     mutationFn: (alert) => alertsApi.delete(alert.id),
     onSuccess: () => {
@@ -89,13 +96,25 @@ export default function AlertsEmailsCard() {
                     </p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  className="size-8 p-0"
-                  onClick={() => deleteMutation.mutate(alert)}
-                >
-                  <Trash className="size-4 text-destructive" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        variant="ghost"
+                        className="size-8 p-0"
+                        onClick={() => deleteMutation.mutate(alert)}
+                        disabled={role !== ProjectMemberRole.ADMIN}
+                      >
+                        <Trash className="size-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {role !== ProjectMemberRole.ADMIN && (
+                    <TooltipContent side="bottom">
+                      {t('Only project admins can do this')}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
               </div>
             ))}
         </div>

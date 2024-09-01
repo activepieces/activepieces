@@ -24,11 +24,12 @@ import {
   ProjectMemberRole,
   ProjectWithLimits,
 } from '@activepieces/shared';
+import { useAuthorization } from '@/components/authorization';
 
 export default function GeneralPage() {
   const queryClient = useQueryClient();
   const { project, updateProject } = projectHooks.useCurrentProject();
-  const projectRole = authenticationSession.getUserProjectRole();
+  const { role } = useAuthorization();
   const { toast } = useToast();
 
   const form = useForm({
@@ -38,7 +39,7 @@ export default function GeneralPage() {
         tasks: project?.plan?.tasks,
       },
     },
-    disabled: projectRole !== ProjectMemberRole.ADMIN,
+    disabled: role !== ProjectMemberRole.ADMIN,
     resolver: typeboxResolver(ProjectWithLimits),
   });
 
@@ -120,7 +121,7 @@ export default function GeneralPage() {
             )}
           </form>
         </Form>
-        {projectRole === ProjectMemberRole.ADMIN && (
+        {role === ProjectMemberRole.ADMIN && (
           <div className="flex gap-2 justify-end mt-4">
             <Button
               onClick={(e) => {

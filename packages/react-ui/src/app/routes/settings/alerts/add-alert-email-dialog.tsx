@@ -26,6 +26,13 @@ import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { Alert, AlertChannel } from '@activepieces/ee-shared';
+import { useAuthorization } from '@/components/authorization';
+import { ProjectMemberRole } from '../../../../../../shared/src';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -47,12 +54,13 @@ const AddAlertEmailDialog = React.memo(
       resolver: typeboxResolver(FormSchema),
       defaultValues: {},
     });
+    const { role } = useAuthorization();
 
     const { mutate, isPending } = useMutation<Alert, Error, { email: string }>({
       mutationFn: async (params) =>
         alertsApi.create({
           receiver: params.email,
-          projectId: authenticationSession.getProjectId(),
+          projectId: authenticationSession.getProjectId()!,
           channel: AlertChannel.EMAIL,
         }),
       onSuccess: (data) => {
@@ -87,13 +95,25 @@ const AddAlertEmailDialog = React.memo(
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button
-            variant="outline"
-            className="mt-4 flex items-center space-x-2"
-          >
-            <Plus className="size-4" />
-            <span>{t('Add email')}</span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button
+                  variant="outline"
+                  className="mt-4 w-full flex items-center space-x-2"
+                  disabled={role !== ProjectMemberRole.ADMIN}
+                >
+                  <Plus className="size-4" />
+                  <span>{t('Add email')}</span>
+                </Button>
+              </div>
+            </TooltipTrigger>
+            {role !== ProjectMemberRole.ADMIN && (
+              <TooltipContent side="bottom">
+                {t('Only project admins can do this')}
+              </TooltipContent>
+            )}
+          </Tooltip>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
