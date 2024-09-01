@@ -58,7 +58,6 @@ const ArrayPieceProperty = ({
                     onClick={() => {
                       remove(index);
                     }}
-                    disabled={disabled}
                   >
                     <TrashIcon
                       className="size-4 text-destructive"
@@ -72,7 +71,6 @@ const ArrayPieceProperty = ({
                   props={arrayProperty.properties!}
                   useMentionTextInput={useMentionTextInput}
                   allowDynamicValues={false}
-                  disabled={disabled}
                 ></AutoPropertiesFormComponent>
               </div>
             ))}
@@ -97,7 +95,6 @@ const ArrayPieceProperty = ({
                   <SortableDragHandle
                     variant="outline"
                     size="icon"
-                    disabled={disabled}
                     className="size-8 shrink-0"
                   >
                     <DragHandleDots2Icon
@@ -112,7 +109,6 @@ const ArrayPieceProperty = ({
                         props={arrayProperty.properties}
                         useMentionTextInput={useMentionTextInput}
                         allowDynamicValues={false}
-                        disabled={disabled}
                       ></AutoPropertiesFormComponent>
                     </div>
                   )}
@@ -127,7 +123,6 @@ const ArrayPieceProperty = ({
                               <TextInputWithMentions
                                 initialValue={field.value}
                                 onChange={field.onChange}
-                                disabled={disabled}
                               />
                             ) : (
                               <Input

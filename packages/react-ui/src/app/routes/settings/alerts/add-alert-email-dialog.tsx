@@ -20,19 +20,12 @@ import {
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { alertsApi } from '@/features/alerts/lib/alerts-api';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { Alert, AlertChannel } from '@activepieces/ee-shared';
-import { ProjectMemberRole } from '@activepieces/shared';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -54,13 +47,12 @@ const AddAlertEmailDialog = React.memo(
       resolver: typeboxResolver(FormSchema),
       defaultValues: {},
     });
-    const { role } = useAuthorization();
 
     const { mutate, isPending } = useMutation<Alert, Error, { email: string }>({
       mutationFn: async (params) =>
         alertsApi.create({
           receiver: params.email,
-          projectId: authenticationSession.getProjectId()!,
+          projectId: authenticationSession.getProjectId(),
           channel: AlertChannel.EMAIL,
         }),
       onSuccess: (data) => {
@@ -95,25 +87,13 @@ const AddAlertEmailDialog = React.memo(
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <Button
-                  variant="outline"
-                  className="mt-4 w-full flex items-center space-x-2"
-                  disabled={role !== ProjectMemberRole.ADMIN}
-                >
-                  <Plus className="size-4" />
-                  <span>{t('Add email')}</span>
-                </Button>
-              </div>
-            </TooltipTrigger>
-            {role !== ProjectMemberRole.ADMIN && (
-              <TooltipContent side="bottom">
-                {t('Only project admins can do this')}
-              </TooltipContent>
-            )}
-          </Tooltip>
+          <Button
+            variant="outline"
+            className="mt-4 flex items-center space-x-2"
+          >
+            <Plus className="size-4" />
+            <span>{t('Add email')}</span>
+          </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

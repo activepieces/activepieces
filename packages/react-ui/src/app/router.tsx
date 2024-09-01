@@ -249,10 +249,6 @@ const routes = [
     ),
   },
   {
-    path: '/team',
-    element: <Navigate to="/settings/team" replace></Navigate>,
-  },
-  {
     path: '/settings/team',
     element: (
       <DashboardContainer>
@@ -348,7 +344,7 @@ const routes = [
     element: (
       <PlatformAdminContainer>
         <PageTitle title="Platform">
-          <Navigate to="/platform/projects" replace />
+          <Navigate to="/platform/projects" />
         </PageTitle>
       </PlatformAdminContainer>
     ),

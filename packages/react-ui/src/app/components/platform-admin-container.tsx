@@ -7,9 +7,7 @@ import {
   Workflow,
   Wrench,
 } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
 
-import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApFlagId } from '@activepieces/shared';
@@ -30,7 +28,6 @@ export function PlatformAdminContainer({
     ApFlagId.SHOW_PLATFORM_DEMO,
   );
 
-  const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   const isLocked = (locked: boolean) => locked || (showPlatformDemo ?? false);
 
   const links: SidebarLink[] = [
@@ -73,11 +70,7 @@ export function PlatformAdminContainer({
 
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
-      {showPlatformAdminDashboard ? (
-        <Sidebar links={links}>{children}</Sidebar>
-      ) : (
-        <Navigate to="/flows" />
-      )}
+      <Sidebar links={links}>{children}</Sidebar>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

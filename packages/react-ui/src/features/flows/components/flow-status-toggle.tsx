@@ -2,9 +2,9 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
+import { useAuthorization } from '@/components/authorization';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   Flow,
   FlowOperationType,
@@ -30,13 +30,11 @@ type FlowStatusToggleProps = {
 };
 
 const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
-  const [isFlowPublished, setIsChecked] = useState(
+  const [isChecked, setIsChecked] = useState(
     flow.status === FlowStatus.ENABLED,
   );
+
   const { checkAccess } = useAuthorization();
-  const userHasPermissionToToggleFlowStatus = checkAccess(
-    Permission.UPDATE_FLOW_STATUS,
-  );
 
   useEffect(() => {
     setIsChecked(flow.status === FlowStatus.ENABLED);
@@ -51,7 +49,7 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
       return flowsApi.applyOperation(flow.id, {
         type: FlowOperationType.CHANGE_STATUS,
         request: {
-          status: isFlowPublished ? FlowStatus.DISABLED : FlowStatus.ENABLED,
+          status: isChecked ? FlowStatus.DISABLED : FlowStatus.ENABLED,
         },
       });
     },
@@ -69,30 +67,28 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
         <TooltipTrigger asChild>
           <div className="flex items-center justify-center">
             <Switch
-              checked={isFlowPublished}
+              checked={isChecked}
               onCheckedChange={() => changeStatus()}
               disabled={
                 isLoading ||
-                !userHasPermissionToToggleFlowStatus ||
+                !checkAccess(Permission.UPDATE_FLOW_STATUS) ||
                 isNil(flow.publishedVersionId)
               }
             />
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          {userHasPermissionToToggleFlowStatus
-            ? isNil(flow.publishedVersionId)
-              ? t('Please publish flow first')
-              : isFlowPublished
-              ? t('Flow is on')
-              : t('Flow is off')
-            : t('Permission Needed')}
+          {isNil(flow.publishedVersionId)
+            ? t('Please publish flow first')
+            : isChecked
+            ? t('Flow is on')
+            : t('Flow is off')}
         </TooltipContent>
       </Tooltip>
       {isLoading ? (
         <LoadingSpinner />
       ) : (
-        isFlowPublished && (
+        isChecked && (
           <Tooltip>
             <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
               <div className="p-2 rounded-full ">

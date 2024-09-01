@@ -2,39 +2,22 @@ import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import React from 'react';
 
-import { cn } from '@/lib/utils';
-
 type AlertOptionsProps = {
   title: string;
   description: string;
   icon: React.ReactNode;
   isActive?: boolean;
-  onClick: () => void;
-  disabled: boolean;
+  onClick?: () => void;
 };
 
 const AlertOption = React.memo(
-  ({
-    title,
-    description,
-    icon,
-    isActive,
-    onClick,
-    disabled,
-  }: AlertOptionsProps) => {
+  ({ title, description, icon, isActive, onClick }: AlertOptionsProps) => {
     return (
       <div
-        onClick={() => (disabled ? undefined : onClick())}
-        role="toggle"
-        className={cn(
-          `-mx-2 flex items-center space-x-4 rounded-md p-2 transition-all cursor-default `,
-          {
-            'hover:bg-accent hover:text-accent-foreground  cursor-pointer ':
-              !disabled,
-            'bg-secondary text-secondary-foreground': isActive && !disabled,
-            'opacity-50 cursor-not-allowed ': disabled,
-          },
-        )}
+        onClick={onClick}
+        className={`-mx-2 flex cursor-pointer items-center space-x-4 rounded-md p-2 transition-all hover:bg-accent hover:text-accent-foreground ${
+          isActive ? 'bg-secondary text-secondary-foreground' : ''
+        }`}
       >
         {icon}
         <div className="flex-grow space-y-1">
