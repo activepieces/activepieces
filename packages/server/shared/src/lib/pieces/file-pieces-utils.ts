@@ -1,12 +1,14 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
-import { logger } from '../logger'
 import importFresh from '@activepieces/import-fresh-webpack'
 import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
+import { ApEdition, extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
+import { exceptionHandler } from '../exception-handler'
+import { logger } from '../logger'
 import { system } from '../system/system'
-import { AppSystemProp, SharedSystemProp } from 'packages/server/shared/src/lib/system/system-prop'
+import { AppSystemProp, SharedSystemProp } from '../system/system-prop'
 
 const isFilePieces = system.getOrThrow(SharedSystemProp.PIECES_SOURCE) === 'FILE'
 const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
@@ -78,7 +80,7 @@ async function findAllPieces(): Promise<PieceMetadata[]> {
 
 async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
     try {
-        const paths = await filePiecesUtils.findAllPiecesFolder(folderPath)
+        let paths = await filePiecesUtils.findAllPiecesFolder(folderPath)
         if (isFilePieces) {
             paths = paths.filter((p) => packages.some((packageName) => p.includes(packageName)))
         }
