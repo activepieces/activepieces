@@ -2,14 +2,13 @@ import dayjs, { OpUnitType } from 'dayjs';
 import { ErrorMessages } from './errors';
 import {
   TypedValidatorFn,
-  ValidationErrors,
   ValidationInputType,
 } from './types';
 import { formatErrorMessage } from './utils';
 import { ApFile } from '../property';
 import { isEmpty, isNil, isString } from '@activepieces/shared';
 
-class Validators {
+export class Validators {
   static pattern(
     regex: string | RegExp
   ): TypedValidatorFn<ValidationInputType.STRING> {
@@ -386,5 +385,3 @@ class Validators {
     };
   }
 }
-
-export { ErrorMessages, ValidationErrors, Validators, formatErrorMessage };

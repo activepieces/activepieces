@@ -23,7 +23,7 @@ import {
 import { EntityManager, In, IsNull, Like } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { emailService } from '../../ee/helper/email/email-service'
-import { acquireLock } from '../../helper/lock'
+import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { telemetry } from '../../helper/telemetry.utils'
@@ -211,7 +211,7 @@ export const flowService = {
         lock = true,
     }: UpdateParams): Promise<PopulatedFlow> {
         const flowLock = lock
-            ? await acquireLock({
+            ? await distributedLock.acquireLock({
                 key: id,
                 timeout: 30000,
             })
@@ -405,7 +405,7 @@ export const flowService = {
     },
 
     async delete({ id, projectId }: DeleteParams): Promise<void> {
-        const lock = await acquireLock({
+        const lock = await distributedLock.acquireLock({
             key: id,
             timeout: 10000,
         })

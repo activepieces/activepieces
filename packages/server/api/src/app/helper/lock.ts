@@ -48,7 +48,7 @@ type AcquireLockParams = {
     timeout?: number
 }
 
-export const acquireLock = async ({
+const acquireLock = async ({
     key,
     timeout = 3000,
 }: AcquireLockParams): Promise<ApLock> => {
@@ -60,4 +60,8 @@ export const acquireLock = async ({
         default:
             throw new Error(`Unknown queue mode: ${queueMode}`)
     }
+}
+
+export const distributedLock = {
+    acquireLock,
 }

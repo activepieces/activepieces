@@ -8,6 +8,7 @@ import {
     FlowOperationRequest,
     FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
+    GetFlowTemplateRequestQuery,
     isNil,
     ListFlowsRequest,
     Permission,
@@ -25,6 +26,7 @@ import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/rbac/rbac-middleware'
+import { gitRepoService } from '../../ee/git-repos/git-repo.service'
 import { eventsHooks } from '../../helper/application-events'
 import { projectService } from '../../project/project-service'
 import { flowService } from './flow.service'
@@ -121,6 +123,11 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
                 flow,
                 flowVersion: flow.version,
             },
+        })
+        await gitRepoService.onFlowDeleted({
+            flowId: request.params.id,
+            userId: request.principal.id,
+            projectId: request.principal.projectId,
         })
         await flowService.delete({
             id: request.params.id,
@@ -219,6 +226,7 @@ const GetFlowTemplateRequestOptions = {
         params: Type.Object({
             id: ApId,
         }),
+        querystring: GetFlowTemplateRequestQuery,
         response: {
             [StatusCodes.OK]: FlowTemplateWithoutProjectInformation,
         },

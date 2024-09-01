@@ -3,7 +3,6 @@ import { PieceAuthProperty } from './authentication';
 import { Type } from '@sinclair/typebox';
 
 // EXPORTED
-
 export { ApFile } from './input/file-property';
 export { DropdownProperty, MultiSelectDropdownProperty } from './input/dropdown/dropdown-prop';
 export { DropdownState } from './input/dropdown/common';
@@ -16,7 +15,7 @@ export { DropdownOption } from './input/dropdown/common';
 export { OAuth2PropertyValue } from './authentication/oauth2-prop';
 export { PieceAuthProperty } from './authentication';
 export { ShortTextProperty } from './input/text-property';
-export { ArrayProperty } from './input/array-property';
+export { ArrayProperty, ArraySubProps } from './input/array-property';
 export { BasePropertySchema } from './input/common';
 export { CheckboxProperty } from './input/checkbox-property';
 export { DateTimeProperty } from './input/date-time-property';
@@ -28,13 +27,12 @@ export { OAuth2AuthorizationMethod } from './authentication/oauth2-prop';
 export { BasicAuthPropertyValue } from './authentication/basic-auth-prop';
 export { StaticMultiSelectDropdownProperty } from './input/dropdown/static-dropdown';
 export { StaticDropdownProperty } from './input/dropdown/static-dropdown';
-export { CustomAuthProps } from './authentication/custom-auth-prop';
+export * from './authentication/custom-auth-prop';
 export { OAuth2Property } from './authentication/oauth2-prop';
 export { FileProperty } from './input/file-property';
 export { BasicAuthProperty } from './authentication/basic-auth-prop';
 export { SecretTextProperty } from './authentication/secret-text-property'
 export { CustomAuthProperty } from './authentication/custom-auth-prop';
-
 export { JsonProperty } from './input/json-property'
 export const PieceProperty = Type.Union([InputProperty, PieceAuthProperty])
 export type PieceProperty = InputProperty | PieceAuthProperty;

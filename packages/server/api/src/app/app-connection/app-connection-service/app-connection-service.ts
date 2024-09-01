@@ -26,7 +26,7 @@ import { Equal, FindOperator, ILike, In } from 'typeorm'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
-import { acquireLock } from '../../helper/lock'
+import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import {
@@ -363,7 +363,7 @@ async function lockAndRefreshConnection({
     projectId: ProjectId
     name: string
 }) {
-    const refreshLock = await acquireLock({
+    const refreshLock = await distributedLock.acquireLock({
         key: `${projectId}_${name}`,
         timeout: 20000,
     })
