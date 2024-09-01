@@ -1,9 +1,13 @@
+import { Building, User, Workflow, Puzzle, Bot, Info } from 'lucide-react';
 import React from 'react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building, User, Workflow, Puzzle, Bot } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { AnalyticsReportResponse } from '@activepieces/shared';
-import { Info } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type MetricProps = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -31,9 +35,7 @@ const MultipleMetrics = ({ icon: Icon, title, submetrics }: MetricProps) => {
                   <TooltipTrigger asChild>
                     <Info className="h-4 w-4 text-muted-foreground cursor-pointer ml-1" />
                   </TooltipTrigger>
-                  <TooltipContent>
-                    {submetric.description}
-                  </TooltipContent>
+                  <TooltipContent>{submetric.description}</TooltipContent>
                 </Tooltip>
               </div>
               <div className="flex items-baseline gap-1 text-xl font-bold tabular-nums leading-none">
@@ -52,9 +54,14 @@ type SingleMetricsProps = {
   title: string;
   value: React.ReactNode;
   description: string;
-}
+};
 
-const Metric = ({ icon: Icon, title, value, description }: SingleMetricsProps) => {
+const Metric = ({
+  icon: Icon,
+  title,
+  value,
+  description,
+}: SingleMetricsProps) => {
   return (
     <Card x-chunk="dashboard-01-chunk-0">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -64,9 +71,7 @@ const Metric = ({ icon: Icon, title, value, description }: SingleMetricsProps) =
             <TooltipTrigger asChild>
               <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
             </TooltipTrigger>
-            <TooltipContent>
-              {description}
-            </TooltipContent>
+            <TooltipContent>{description}</TooltipContent>
           </Tooltip>
         </div>
         <Icon className="h-6 w-6 text-primary" />
@@ -79,8 +84,8 @@ const Metric = ({ icon: Icon, title, value, description }: SingleMetricsProps) =
 };
 
 type MetricsProps = {
-  report: AnalyticsReportResponse
-}
+  report: AnalyticsReportResponse;
+};
 export function Metrics({ report }: MetricsProps) {
   return (
     <div>
@@ -91,15 +96,15 @@ export function Metrics({ report }: MetricsProps) {
           title="Flow"
           submetrics={[
             {
-              title: "Active Flows",
+              title: 'Active Flows',
               value: report.activeFlows,
-              description: 'The number of active flows in the platform'
+              description: 'The number of active flows in the platform',
             },
             {
-              title: "Total Flows",
+              title: 'Total Flows',
               value: report.totalFlows,
-              description: 'The total number of flows in the platform'
-            }
+              description: 'The total number of flows in the platform',
+            },
           ]}
         />
         <MultipleMetrics
@@ -107,15 +112,15 @@ export function Metrics({ report }: MetricsProps) {
           title="Project"
           submetrics={[
             {
-              title: "Active Projects",
+              title: 'Active Projects',
               value: report.activeProjects,
-              description: 'The number of active projects in the platform'
+              description: 'The number of active projects in the platform',
             },
             {
-              title: "Total Projects",
+              title: 'Total Projects',
               value: report.totalProjects,
-              description: 'The total number of projects in the platform'
-            }
+              description: 'The total number of projects in the platform',
+            },
           ]}
         />
         <MultipleMetrics
@@ -123,15 +128,15 @@ export function Metrics({ report }: MetricsProps) {
           title="Users"
           submetrics={[
             {
-              title: "Active Users",
+              title: 'Active Users',
               value: report.activeUsers,
-              description: 'The number of users logged in the last 30 days'
+              description: 'The number of users logged in the last 30 days',
             },
             {
-              title: "Total Users",
+              title: 'Total Users',
               value: report.totalUsers,
-              description: 'The total number of users in the platform'
-            }
+              description: 'The total number of users in the platform',
+            },
           ]}
         />
 
@@ -139,13 +144,13 @@ export function Metrics({ report }: MetricsProps) {
           icon={Puzzle}
           title="Pieces Used"
           value={report.uniquePiecesUsed}
-          description='The number of unique pieces used across all flows'
+          description="The number of unique pieces used across all flows"
         />
         <Metric
           icon={Bot}
           title="Flows with AI"
           value={report.activeFlowsWithAI}
-          description='The number of flows that incorporate AI components'
+          description="The number of flows that incorporate AI components"
         />
       </div>
     </div>

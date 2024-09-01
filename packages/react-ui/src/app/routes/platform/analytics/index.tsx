@@ -1,19 +1,20 @@
-import { t } from 'i18next';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { Metrics } from '@/app/routes/platform/analytics/metrics';
-import { TaskUsage } from '@/app/routes/platform/analytics/task-usage';
-import { Reports } from '@/app/routes/platform/analytics/reports';
-import { analyticsApi } from '@/features/platform-admin-panel/lib/analytics-api';
 import { useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
+
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { Metrics } from '@/app/routes/platform/analytics/metrics';
+import { Reports } from '@/app/routes/platform/analytics/reports';
+import { TaskUsage } from '@/app/routes/platform/analytics/task-usage';
 import { Separator } from '@/components/ui/seperator';
+import { analyticsApi } from '@/features/platform-admin-panel/lib/analytics-api';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 export default function AnalyticsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const { data, isLoading } = useQuery({
     queryKey: ['analytics'],
-    queryFn: analyticsApi.get,  
+    queryFn: analyticsApi.get,
     staleTime: 60 * 1000,
   });
 
@@ -22,7 +23,9 @@ export default function AnalyticsPage() {
   if (isLoading || !data) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <span className="text-xl font-semibold">{t('Hold on, this may take a little longer')}</span>
+        <span className="text-xl font-semibold">
+          {t('Hold on, this may take a little longer')}
+        </span>
       </div>
     );
   }
@@ -42,9 +45,9 @@ export default function AnalyticsPage() {
         </div>
         <div className="mt-8 flex gap-8 flex-col">
           <Metrics report={data} />
-          <Separator/>
+          <Separator />
           <TaskUsage report={data} />
-          <Separator/>
+          <Separator />
           <Reports report={data} />
         </div>
       </div>

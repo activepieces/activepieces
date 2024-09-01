@@ -1,10 +1,11 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
 import { t } from 'i18next';
-import { AnalyticsReportResponse } from '@activepieces/shared';
+import { Download } from 'lucide-react';
+import React from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { AnalyticsReportResponse } from '@activepieces/shared';
 
 type ReportItem = {
   name: React.ReactNode;
@@ -44,9 +45,13 @@ function Report({ title, data, downloadCSV }: ReportProps) {
 const downloadCSV = (data: Record<string, unknown>[], title: string) => {
   const csvContent = [
     Object.keys(data[0]).join(','),
-    ...data.map(item => Object.values(item).map(value =>
-      typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value
-    ).join(','))
+    ...data.map((item) =>
+      Object.values(item)
+        .map((value) =>
+          typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value,
+        )
+        .join(','),
+    ),
   ].join('\n');
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -64,30 +69,50 @@ const downloadCSV = (data: Record<string, unknown>[], title: string) => {
 };
 
 type ReportsProps = {
-  report: AnalyticsReportResponse
-}
+  report: AnalyticsReportResponse;
+};
 
 function Reports({ report }: ReportsProps) {
+  const topPiecesData: ReportItem[] = report.topPieces
+    .sort((a, b) => b.usageCount - a.usageCount)
+    .map((piece) => ({
+      name: (
+        <div className="flex items-center gap-3">
+          <PieceIcon
+            logoUrl={piece.logoUrl}
+            displayName={piece.displayName}
+            showTooltip={false}
+            circle={true}
+            border={true}
+            size="md"
+          />{' '}
+          {piece.displayName}
+        </div>
+      ),
+      value: piece.usageCount,
+    }));
 
-  const topPiecesData: ReportItem[] = report.topPieces.sort((a, b) => b.usageCount - a.usageCount).map((piece) => ({
-    name: <div className="flex items-center gap-3"><PieceIcon logoUrl={piece.logoUrl} displayName={piece.displayName} showTooltip={false} circle={true} border={true} size="md" /> {piece.displayName}</div>,
-    value: piece.usageCount,
-  }));
-
-  const topProjectsData: ReportItem[] = report.topProjects.sort((a, b) => b.activeFlows - a.activeFlows).map((project) => ({
-    name: <>
-      {project.displayName}
-    </>,
-    value: project.activeFlows,
-  }));
-
+  const topProjectsData: ReportItem[] = report.topProjects
+    .sort((a, b) => b.activeFlows - a.activeFlows)
+    .map((project) => ({
+      name: <>{project.displayName}</>,
+      value: project.activeFlows,
+    }));
 
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">{t('Reports')}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Report title="Top 10 Pieces by Flow Count" data={topPiecesData} downloadCSV={() => downloadCSV(report.topPieces, "top-pieces")} />
-        <Report title="Top 10 Projects by Task Count" data={topProjectsData} downloadCSV={() => downloadCSV(report.topProjects, "top-projects")} />
+        <Report
+          title="Top 10 Pieces by Flow Count"
+          data={topPiecesData}
+          downloadCSV={() => downloadCSV(report.topPieces, 'top-pieces')}
+        />
+        <Report
+          title="Top 10 Projects by Task Count"
+          data={topProjectsData}
+          downloadCSV={() => downloadCSV(report.topProjects, 'top-projects')}
+        />
       </div>
     </div>
   );

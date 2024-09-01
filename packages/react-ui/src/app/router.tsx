@@ -10,6 +10,7 @@ import { PageTitle } from '@/app/components/page-title';
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { EmbedPage } from '@/app/routes/embed';
+import AnalyticsPage from '@/app/routes/platform/analytics';
 import { PlatformPiecesPage } from '@/app/routes/platform/pieces';
 import { ApiKeysPage } from '@/app/routes/platform/settings/api-keys';
 import { BrandingPage } from '@/app/routes/platform/settings/branding';
@@ -53,7 +54,6 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
-import AnalyticsPage from '@/app/routes/platform/analytics';
 
 const routes = [
   {
@@ -323,12 +323,12 @@ const routes = [
   {
     path: '/platform/analytics',
     element: (
-      <PlatformAdminContainer>  
-        <PageTitle title="Analytics"> 
+      <PlatformAdminContainer>
+        <PageTitle title="Analytics">
           <AnalyticsPage />
         </PageTitle>
       </PlatformAdminContainer>
-    )
+    ),
   },
   {
     path: '/platform/templates',

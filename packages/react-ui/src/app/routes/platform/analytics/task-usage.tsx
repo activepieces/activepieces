@@ -1,59 +1,59 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { BarChart, CartesianGrid, XAxis, Bar } from "recharts"
+import dayjs from 'dayjs';
+import * as React from 'react';
+import { DateRange } from 'react-day-picker';
+import { BarChart, CartesianGrid, XAxis, Bar } from 'recharts';
+
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
-import { DatePickerWithRange } from "@/components/ui/date-picker-range"
-import { DateRange } from "react-day-picker"
-import dayjs from "dayjs"
-import { AnalyticsReportResponse } from "@activepieces/shared"
+} from '@/components/ui/chart';
+import { DatePickerWithRange } from '@/components/ui/date-picker-range';
+import { AnalyticsReportResponse } from '@activepieces/shared';
 
 type TaskUsageProps = {
-  report: AnalyticsReportResponse
-}
+  report: AnalyticsReportResponse;
+};
 
 export function TaskUsage({ report }: TaskUsageProps) {
-  const [selectedDateRange, setSelectedDateRange] = React.useState<DateRange | undefined>({
-    from: dayjs().subtract(3, "months").toDate(),
+  const [selectedDateRange, setSelectedDateRange] = React.useState<
+    DateRange | undefined
+  >({
+    from: dayjs().subtract(3, 'months').toDate(),
     to: dayjs().toDate(),
-  })
+  });
 
   const chartData = report.tasksUsage.map((data) => ({
     date: data.day,
     tasks: data.totalTasks,
-  }))
-
+  }));
 
   const chartConfig = {
     views: {
-      label: "Executed Tasks",
+      label: 'Executed Tasks',
     },
     tasks: {
-      color: "hsl(var(--chart-2))",
+      color: 'hsl(var(--chart-2))',
     },
-  } satisfies ChartConfig
+  } satisfies ChartConfig;
 
   const filteredData = chartData.filter((data) => {
     if (!selectedDateRange?.from || !selectedDateRange?.to) {
-      return true
+      return true;
     }
-    const date = new Date(data.date)
-    return date >= selectedDateRange.from && date <= selectedDateRange.to
-  })
+    const date = new Date(data.date);
+    return date >= selectedDateRange.from && date <= selectedDateRange.to;
+  });
 
   return (
     <>
       <div className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <div className="text-xl font-semibold ">Executed Tasks</div>
-          <p>
-            Showing total executed tasks for specified time range
-          </p>
+          <p>Showing total executed tasks for specified time range</p>
         </div>
         <DatePickerWithRange
           onChange={setSelectedDateRange}
@@ -83,11 +83,11 @@ export function TaskUsage({ report }: TaskUsageProps) {
               tickMargin={8}
               minTickGap={32}
               tickFormatter={(value) => {
-                const date = new Date(value)
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })
+                const date = new Date(value);
+                return date.toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                });
               }}
             />
             <ChartTooltip
@@ -96,19 +96,19 @@ export function TaskUsage({ report }: TaskUsageProps) {
                   className="w-[150px]"
                   nameKey="views"
                   labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })
+                    return new Date(value).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    });
                   }}
                 />
               }
             />
-            <Bar dataKey={"tasks"} fill={`var(--color-tasks)`} />
+            <Bar dataKey={'tasks'} fill={`var(--color-tasks)`} />
           </BarChart>
         </ChartContainer>
       </div>
     </>
-  )
+  );
 }
