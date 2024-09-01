@@ -51,6 +51,7 @@ export default function TemplatesPage() {
   const isEnabled = platform.manageTemplatesEnabled;
   return (
     <LockedFeatureGuard
+      featureKey="TEMPLATES"
       locked={!isEnabled}
       lockTitle={t('Unlock Templates')}
       lockDescription={t(

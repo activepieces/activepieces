@@ -22,6 +22,9 @@
       ],
       "@activepieces/pieces-framework": [
         "../../packages/pieces/community/framework/src" 
+      ],
+      "ee-embed-sdk": [
+        "../../packages/ee/ui/embed-sdk/src"
       ]
     }
   },

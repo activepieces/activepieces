@@ -62,6 +62,7 @@ export default function ProjectsPage() {
   const isEnabled = platform.manageProjectsEnabled;
   return (
     <LockedFeatureGuard
+      featureKey="PROJECTS"
       locked={!isEnabled}
       lockTitle={t('Unlock Projects')}
       lockDescription={t(

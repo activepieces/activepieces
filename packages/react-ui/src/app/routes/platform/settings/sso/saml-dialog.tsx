@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -54,10 +54,8 @@ export const ConfigureSamlDialog = ({
     resolver: typeboxResolver(Saml2FormValues),
   });
 
-  const queryClient = useQueryClient();
   const { data: samlAcs } = flagsHooks.useFlag<string>(
     ApFlagId.SAML_AUTH_ACS_URL,
-    queryClient,
   );
   const { mutate, isPending } = useMutation({
     mutationFn: async (request: UpdatePlatformRequestBody) => {

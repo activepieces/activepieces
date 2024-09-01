@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -24,18 +23,15 @@ const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
 };
 
-const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
-  const queryClient = useQueryClient();
+const ThirdPartyLogin = React.memo(() => {
   const navigate = useNavigate();
 
   const { data: thirdPartyAuthProviders } =
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
       ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
-      queryClient,
     );
   const { data: thirdPartyRedirectUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-    queryClient,
   );
 
   const handleProviderClick = async (

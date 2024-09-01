@@ -4,6 +4,7 @@ import {
   Copy,
   CornerUpLeft,
   Download,
+  Import,
   Pencil,
   Share2,
   Trash2,
@@ -12,6 +13,7 @@ import {
 import React from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { useEmbedding } from '@/components/embed-provider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -42,6 +45,7 @@ interface FlowActionMenuProps {
   onMoveTo: (folderId: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  insideBuilder: boolean;
 }
 
 const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
@@ -49,6 +53,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   flowVersion,
   children,
   readonly,
+  insideBuilder,
   onRename,
   onMoveTo,
   onDuplicate,
@@ -56,9 +61,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
 }) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
-    authenticationSession.getProjectId(),
+    authenticationSession.getProjectId()!,
     platform.gitSyncEnabled,
   );
+
+  const { embedState } = useEmbedding();
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
 
@@ -66,7 +73,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     mutationFn: async () => {
       const createdFlow = await flowsApi.create({
         displayName: flowVersion.displayName,
-        projectId: authenticationSession.getProjectId(),
+        projectId: authenticationSession.getProjectId()!,
       });
       const updatedFlow = await flowsApi.update(createdFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,
@@ -123,18 +130,20 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </div>
           </DropdownMenuItem>
         </PushToGitDialog>
-        <MoveFlowDialog
-          flow={flow}
-          flowVersion={flowVersion}
-          onMoveTo={onMoveTo}
-        >
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <div className="flex cursor-pointer  flex-row gap-2 items-center">
-              <CornerUpLeft className="h-4 w-4" />
-              <span>{t('Move To')}</span>
-            </div>
-          </DropdownMenuItem>
-        </MoveFlowDialog>
+        {!embedState.hideFolders && (
+          <MoveFlowDialog
+            flow={flow}
+            flowVersion={flowVersion}
+            onMoveTo={onMoveTo}
+          >
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                <CornerUpLeft className="h-4 w-4" />
+                <span>{t('Move To')}</span>
+              </div>
+            </DropdownMenuItem>
+          </MoveFlowDialog>
+        )}
         <DropdownMenuItem onClick={() => duplicateFlow()}>
           <div className="flex cursor-pointer  flex-row gap-2 items-center">
             {isDuplicatePending ? (
@@ -147,6 +156,16 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </span>
           </div>
         </DropdownMenuItem>
+        {!readonly && (
+          <ImportFlowDialog insideBuilder={insideBuilder}>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <div className="flex cursor-pointer flex-row gap-2 items-center">
+                <Import className="w-4 h-4" />
+                {t('Import')}
+              </div>
+            </DropdownMenuItem>
+          </ImportFlowDialog>
+        )}
         <DropdownMenuItem onClick={() => exportFlow()}>
           <div className="flex cursor-pointer  flex-row gap-2 items-center">
             {isExportPending ? (
@@ -157,14 +176,16 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             <span>{isExportPending ? t('Exporting') : t('Export')}</span>
           </div>
         </DropdownMenuItem>
-        <ShareTemplateDialog flowId={flow.id} flowVersion={flowVersion}>
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <div className="flex cursor-pointer  flex-row gap-2 items-center">
-              <Share2 className="h-4 w-4" />
-              <span>{t('Share')}</span>
-            </div>
-          </DropdownMenuItem>
-        </ShareTemplateDialog>
+        {!embedState.isEmbedded && (
+          <ShareTemplateDialog flowId={flow.id} flowVersion={flowVersion}>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                <Share2 className="h-4 w-4" />
+                <span>{t('Share')}</span>
+              </div>
+            </DropdownMenuItem>
+          </ShareTemplateDialog>
+        )}
         {!readonly && (
           <ConfirmationDeleteDialog
             title={`${t('Delete flow')} ${flowVersion.displayName}`}

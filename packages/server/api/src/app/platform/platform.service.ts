@@ -42,6 +42,7 @@ export const platformService = {
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             embeddingEnabled: false,
+            analyticsEnabled: false,
             defaultLocale: LocalesEnum.ENGLISH,
             emailAuthEnabled: true,
             auditLogEnabled: false,
@@ -99,6 +100,7 @@ export const platformService = {
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
             ...spreadIfDefined('smtpHost', params.smtpHost),
             ...spreadIfDefined('smtpPort', params.smtpPort),
+            ...spreadIfDefined('analyticsEnabled', params.analyticsEnabled),
             ...spreadIfDefined(
                 'federatedAuthProviders',
                 params.federatedAuthProviders,
@@ -188,6 +190,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
     manageTemplatesEnabled?: boolean
     apiKeysEnabled?: boolean
     projectRolesEnabled?: boolean
-    alertsEnabled?: boolean   
+    alertsEnabled?: boolean 
+    analyticsEnabled?: boolean  
     premiumPieces?: string[]
 }

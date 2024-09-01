@@ -13,6 +13,7 @@ import { AppSystemProp, SharedSystemProp } from '../system/system-prop'
 const isFilePieces = system.getOrThrow(SharedSystemProp.PIECES_SOURCE) === 'FILE'
 const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
 
+
 async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
     const paths = []
     const files = await readdir(folderPath)

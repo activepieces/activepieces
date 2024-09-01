@@ -8,15 +8,18 @@ import {
 import {
   Action,
   ActionType,
+  AddPieceRequestBody,
   GetPieceRequestParams,
   GetPieceRequestQuery,
   ListPiecesRequestQuery,
+  PackageType,
   PieceOptionRequest,
+  PieceScope,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
 
-import { StepMetadata } from './pieces-hook';
+import { PieceStepMetadata, StepMetadata } from './pieces-hook';
 
 export const PRIMITIVE_STEP_METADATA = {
   [ActionType.CODE]: {
@@ -64,7 +67,7 @@ export const piecesApi = {
   mapToMetadata(
     type: 'action' | 'trigger',
     piece: PieceMetadataModelSummary | PieceMetadataModel,
-  ): StepMetadata {
+  ): PieceStepMetadata {
     return {
       displayName: piece.displayName,
       logoUrl: piece.logoUrl,
@@ -73,6 +76,7 @@ export const piecesApi = {
       pieceType: piece.pieceType,
       pieceName: piece.name,
       pieceVersion: piece.version,
+      categories: piece.categories ?? [],
       packageType: piece.packageType,
     };
   },
@@ -97,7 +101,18 @@ export const piecesApi = {
       }
     }
   },
-  installCommunityPiece(params: FormData) {
+  syncFromCloud() {
+    return api.post<void>(`/v1/pieces/sync`, {});
+  },
+  install(params: AddPieceRequestBody) {
+    const formData = new FormData();
+    formData.set('packageType', params.packageType);
+    formData.set('pieceName', params.pieceName);
+    formData.set('pieceVersion', params.pieceVersion);
+    formData.set('scope', PieceScope.PROJECT);
+    if (params.packageType === PackageType.ARCHIVE) {
+      formData.set('pieceArchive', params.pieceArchive as any);
+    }
     return api.post<PieceMetadataModel>(`/v1/pieces`, params);
   },
   delete(id: string) {

@@ -10,19 +10,13 @@ import ViewOnlyWidget from '@/app/builder/flow-canvas/widgets/view-only-widget';
 import { useBuilderStateContext } from '../../builder-hooks';
 
 const AboveFlowWidgets = React.memo(() => {
-  const [
-    flowVersion,
-    setRun,
-    selectStepByName,
-    clickOnNewNodeButton,
-    readonly,
-  ] = useBuilderStateContext((state) => [
-    state.flowVersion,
-    state.setRun,
-    state.selectStepByName,
-    state.clickOnNewNodeButton,
-    state.readonly,
-  ]);
+  const [flowVersion, setRun, selectStepByName, readonly] =
+    useBuilderStateContext((state) => [
+      state.flowVersion,
+      state.setRun,
+      state.selectStepByName,
+      state.readonly,
+    ]);
 
   return (
     <ViewportPortal>
@@ -44,7 +38,6 @@ const AboveFlowWidgets = React.memo(() => {
               ></TestFlowWidget>
               <IncompleteSettingsButton
                 flowVersion={flowVersion}
-                clickOnNewNodeButton={clickOnNewNodeButton}
                 selectStepByName={selectStepByName}
               ></IncompleteSettingsButton>
             </>

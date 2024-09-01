@@ -3,14 +3,15 @@ import {
   SetErrorFunction,
 } from '@sinclair/typebox/errors';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { RouterProvider } from 'react-router-dom';
 
+import { EmbeddingProvider } from '@/components/embed-provider';
+import TelemetryProvider from '@/components/telemetry-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 import { InitialDataGuard } from './components/intial-data-guard';
-import { router } from './router';
+import { ApRouter } from './router';
 
 const queryClient = new QueryClient();
 let typesFormatsAdded = false;
@@ -25,14 +26,18 @@ if (!typesFormatsAdded) {
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <InitialDataGuard>
-        <TooltipProvider>
-          <ThemeProvider storageKey="vite-ui-theme">
-            <RouterProvider router={router} />
-            <Toaster />
-          </ThemeProvider>
-        </TooltipProvider>
-      </InitialDataGuard>
+      <EmbeddingProvider>
+        <InitialDataGuard>
+          <TelemetryProvider>
+            <TooltipProvider>
+              <ThemeProvider storageKey="vite-ui-theme">
+                <ApRouter />
+                <Toaster />
+              </ThemeProvider>
+            </TooltipProvider>
+          </TelemetryProvider>
+        </InitialDataGuard>
+      </EmbeddingProvider>
     </QueryClientProvider>
   );
 }

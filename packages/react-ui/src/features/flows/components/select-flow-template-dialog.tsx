@@ -1,7 +1,7 @@
 import { DialogDescription } from '@radix-ui/react-dialog';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ArrowLeft, Info, Workflow } from 'lucide-react';
+import { ArrowLeft, Info, SearchX } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -59,7 +59,7 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
     mutationFn: async (template: FlowTemplate) => {
       const newFlow = await flowsApi.create({
         displayName: template.name,
-        projectId: authenticationSession.getProjectId(),
+        projectId: authenticationSession.getProjectId()!,
       });
       return await flowsApi.update(newFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,
@@ -87,14 +87,15 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
           maxNumberOfIconsToShow={2}
         />
       </div>
-      <div className="text-sm font-medium px-4">{template.name}</div>
-      <div className="p-2 flex">
+      <div className="text-sm font-medium px-4 min-h-16">{template.name}</div>
+      <div className="py-2 px-4 gap-1 flex items-center">
         <Button
-          variant="basic"
+          variant="default"
           loading={isPending}
+          className="px-2 h-8"
           onClick={() => createFlow(template)}
         >
-          <Workflow className="w-4 h-4 me-2" /> {t('Use Template')}
+          {t('Use Template')}
         </Button>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -162,63 +163,73 @@ const SelectFlowTemplateDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:min-w-[850px] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex flex-row items-center justify-start gap-2 items-center h-full">
-            <Button variant="ghost" size="sm" onClick={unselectTemplate}>
-              {selectedTemplate ? (
+          <DialogTitle className="flex min-h-9 flex-row items-center justify-start gap-2 items-center h-full">
+            {selectedTemplate && (
+              <Button variant="ghost" size="sm" onClick={unselectTemplate}>
                 <ArrowLeft className="w-4 h-4" />
-              ) : (
-                <Workflow className="w-4 h-4" />
-              )}
-            </Button>
+              </Button>
+            )}
+
             {t('Browse Templates')}
           </DialogTitle>
         </DialogHeader>
         <Carousel setApi={(api) => (carousel.current = api)}>
-          <CarouselContent>
+          <CarouselContent className="h-[680px] max-h-[680px] ">
             <CarouselItem key="templates">
-              <div className="p-1">
-                <Input
-                  type="text"
-                  value={search}
-                  onChange={handleSearchChange}
-                  placeholder={t('Search templates')}
-                  className="mb-4"
-                />
+              <div>
+                <div className="p-0.5">
+                  <Input
+                    type="text"
+                    value={search}
+                    onChange={handleSearchChange}
+                    placeholder={t('Search templates')}
+                    className="mb-4"
+                  />
+                </div>
+
                 <DialogDescription>
                   {isLoading ? (
-                    <div className="h-[680px] max-h-[680px] overflow-y-auto flex justify-center items-center">
+                    <div className="h-[620px] max-h-[620px] overflow-y-auto flex justify-center items-center">
                       <LoadingSpinner />
                     </div>
                   ) : (
-                    <ScrollArea className="h-[680px] max-h-[680px] overflow-y-auto">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredTemplates?.map((template) => (
-                          <TemplateCard
-                            key={template.id}
-                            template={template}
-                            onSelectTemplate={(template) => {
-                              setSelectedTemplate(template);
-                              carousel.current?.scrollNext();
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </ScrollArea>
+                    <>
+                      {filteredTemplates?.length === 0 && (
+                        <div className="flex flex-col items-center justify-center gap-2 text-center ">
+                          <SearchX className="w-10 h-10" />
+                          {t('No templates found, try adjusting your search')}
+                        </div>
+                      )}
+                      <ScrollArea className="h-[620px] max-h-[620px] overflow-y-auto px-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {filteredTemplates?.map((template) => (
+                            <TemplateCard
+                              key={template.id}
+                              template={template}
+                              onSelectTemplate={(template) => {
+                                setSelectedTemplate(template);
+                                carousel.current?.scrollNext();
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </>
                   )}
                 </DialogDescription>
               </div>
             </CarouselItem>
             <CarouselItem key="template-details">
-              {selectedTemplate ? (
-                <div className="px-2">
+              {selectedTemplate && (
+                <div className="px-2 ">
                   <div className="mb-4 p-8 flex items-center justify-center gap-2 width-full bg-green-300 rounded-lg">
                     <PieceIconList
-                      size="xl"
+                      size="xxl"
                       trigger={selectedTemplate.template.trigger}
                       maxNumberOfIconsToShow={3}
                     />
                   </div>
-                  <div className="px-2">
+                  <ScrollArea className="px-2 h-[520px] max-h-[520px]">
                     <div className="mb-4 text-lg font-medium font-black">
                       {selectedTemplate?.name}
                     </div>
@@ -226,6 +237,7 @@ const SelectFlowTemplateDialog = ({
                       markdown={selectedTemplate?.description}
                       withBorder={false}
                     />
+
                     {selectedTemplate.blogUrl && (
                       <div className="mt-4">
                         {t('Read more about this template in')}{' '}
@@ -239,9 +251,9 @@ const SelectFlowTemplateDialog = ({
                         </a>
                       </div>
                     )}
-                  </div>
+                  </ScrollArea>
                 </div>
-              ) : null}
+              )}
             </CarouselItem>
           </CarouselContent>
         </Carousel>

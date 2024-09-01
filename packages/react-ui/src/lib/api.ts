@@ -8,11 +8,14 @@ import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
 
-//export const API_BASE_URL = 'https://cloud.activepieces.com';
-export const API_BASE_URL = 'http://localhost:4200';
+export const API_BASE_URL =
+  import.meta.env.MODE === 'cloud'
+    ? 'https://cloud.activepieces.com'
+    : 'http://localhost:4200';
 export const API_URL = `${API_BASE_URL}/api`;
 
 const disallowedRoutes = [
+  '/v1/managed-authn/external-token',
   '/v1/authentication/sign-in',
   '/v1/authentication/sign-up',
   '/v1/authn/local/verify-email',

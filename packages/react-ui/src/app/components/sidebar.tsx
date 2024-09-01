@@ -1,5 +1,4 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { FileTextIcon, LockKeyhole } from 'lucide-react';
 import React from 'react';
@@ -15,6 +14,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId, supportUrl } from '@activepieces/shared';
 
 import { Header } from './header';
+
 type Link = {
   icon: React.ReactNode;
   label: string;
@@ -85,66 +85,74 @@ type SidebarProps = {
   children: React.ReactNode;
   links: SidebarLink[];
   isHomeDashboard?: boolean;
+  hideSideNav?: boolean;
 };
-export function Sidebar({ children, links, isHomeDashboard }: SidebarProps) {
-  const queryClient = useQueryClient();
-  const branding = flagsHooks.useWebsiteBranding(queryClient);
+export function Sidebar({
+  children,
+  links,
+  isHomeDashboard,
+  hideSideNav = false,
+}: SidebarProps) {
+  const branding = flagsHooks.useWebsiteBranding();
   const showSupportAndDocs = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
-    queryClient,
   );
+
   return (
     <div className="flex min-h-screen w-full  ">
-      <aside className=" border-r sticky  top-0 h-screen bg-muted/50 w-[65px] ">
-        <ScrollArea>
-          <nav className="flex flex-col items-center h-screen  sm:py-5  gap-5 p-2 ">
-            <Link to="/flows" className="h-[48px] items-center justify-center ">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link to="/flows">
+      {!hideSideNav && (
+        <aside className=" border-r sticky  top-0 h-screen bg-muted/50 w-[65px] ">
+          <ScrollArea>
+            <nav className="flex flex-col items-center h-screen  sm:py-5  gap-5 p-2 ">
+              <Link
+                to="/flows"
+                className="h-[48px] items-center justify-center "
+              >
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <img
                       src={branding.logos.logoIconUrl}
                       alt={t('home')}
                       width={28}
                       height={28}
                     />
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">{t('Home')}</TooltipContent>
-              </Tooltip>
-            </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{t('Home')}</TooltipContent>
+                </Tooltip>
+              </Link>
 
-            {links.map((link, index) => (
-              <CustomTooltipLink
-                to={link.to}
-                label={link.label}
-                Icon={link.icon}
-                key={index}
-                notification={link.notification}
-                locked={link.locked}
-              />
-            ))}
+              {links.map((link, index) => (
+                <CustomTooltipLink
+                  to={link.to}
+                  label={link.label}
+                  Icon={link.icon}
+                  key={index}
+                  notification={link.notification}
+                  locked={link.locked}
+                />
+              ))}
 
-            <div className="grow"></div>
-            {isHomeDashboard && showSupportAndDocs && (
-              <>
-                <CustomTooltipLink
-                  to={supportUrl}
-                  label={t('Support')}
-                  Icon={QuestionMarkCircledIcon}
-                  newWindow={true}
-                />
-                <CustomTooltipLink
-                  to="https://activepieces.com/docs"
-                  label={t('Docs')}
-                  Icon={FileTextIcon}
-                  newWindow={true}
-                />
-              </>
-            )}
-          </nav>
-        </ScrollArea>
-      </aside>
+              <div className="grow"></div>
+              {isHomeDashboard && showSupportAndDocs && (
+                <>
+                  <CustomTooltipLink
+                    to={supportUrl}
+                    label={t('Support')}
+                    Icon={QuestionMarkCircledIcon}
+                    newWindow={true}
+                  />
+                  <CustomTooltipLink
+                    to="https://activepieces.com/docs"
+                    label={t('Docs')}
+                    Icon={FileTextIcon}
+                    newWindow={true}
+                  />
+                </>
+              )}
+            </nav>
+          </ScrollArea>
+        </aside>
+      )}
       <div className="flex-1 p-4">
         <div className="flex flex-col">
           <Header />

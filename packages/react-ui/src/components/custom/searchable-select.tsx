@@ -1,8 +1,9 @@
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, RefreshCcw, X } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 
+import { SelectUtilButton } from '@/components/custom/select-util-button';
 import {
   Command,
   CommandEmpty,
@@ -30,11 +31,14 @@ type SelectOption<T> = {
 
 type SearchableSelectProps<T> = {
   options: SelectOption<T>[];
-  onChange: (value: T) => void;
+  onChange: (value: T | null) => void;
   value: T | undefined;
   placeholder: string;
   disabled?: boolean;
   loading?: boolean;
+  showDeselect?: boolean;
+  onRefresh?: () => void;
+  showRefresh?: boolean;
 };
 
 export const SearchableSelect = <T extends React.Key>({
@@ -44,6 +48,9 @@ export const SearchableSelect = <T extends React.Key>({
   placeholder,
   disabled,
   loading,
+  showDeselect,
+  onRefresh,
+  showRefresh,
 }: SearchableSelectProps<T>) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,7 +60,10 @@ export const SearchableSelect = <T extends React.Key>({
   const [selectedIndex, setSelectedIndex] = useState(
     options.findIndex((option) => deepEqual(option.value, value)) ?? -1,
   );
-
+  const PreventClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
   useEffect(() => {
     setSelectedIndex(
       options.findIndex((option) => deepEqual(option.value, value)) ?? -1,
@@ -100,23 +110,57 @@ export const SearchableSelect = <T extends React.Key>({
 
   return (
     <Popover modal={true} open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          ref={triggerRef}
-          variant="outline"
-          disabled={disabled}
-          role="combobox"
-          loading={loading}
-          aria-expanded={open}
-          className="w-full justify-between w-full"
-        >
-          <span className="flex text-ellipsis w-full overflow-hidden whitespace-nowrap">
-            {!isNil(value)
-              ? options.find((option) => option.value === value)?.label
-              : placeholder}
-          </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
+      <PopoverTrigger
+        asChild
+        className={cn('', {
+          'cursor-not-allowed opacity-80 ': disabled,
+        })}
+        onClick={disabled ? PreventClick : undefined}
+      >
+        <div className="relative">
+          <Button
+            ref={triggerRef}
+            variant="outline"
+            disabled={disabled}
+            role="combobox"
+            loading={loading}
+            aria-expanded={open}
+            className="w-full justify-between w-full"
+          >
+            <span className="flex w-full truncate select-none">
+              {!isNil(value)
+                ? options.find((option) => option.value === value)?.label
+                : placeholder}
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+          <div className="right-10 top-2 absolute flex gap-2  z-50 items-center">
+            {showDeselect && !disabled && value && !loading && (
+              <SelectUtilButton
+                tooltipText={t('Unset')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onChange(null);
+                }}
+                Icon={X}
+              ></SelectUtilButton>
+            )}
+            {showRefresh && !loading && (
+              <SelectUtilButton
+                tooltipText={t('Refresh')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  if (onRefresh) {
+                    onRefresh();
+                  }
+                }}
+                Icon={RefreshCcw}
+              ></SelectUtilButton>
+            )}
+          </div>
+        </div>
       </PopoverTrigger>
       <PopoverContent
         style={{
@@ -147,7 +191,7 @@ export const SearchableSelect = <T extends React.Key>({
                   filterOptionsIndices.map((filterIndex) => {
                     const option = options[filterIndex];
                     if (!option) {
-                      return <></>;
+                      return null;
                     }
                     return (
                       <CommandItem

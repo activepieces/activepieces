@@ -1,10 +1,9 @@
-import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId } from '@activepieces/shared';
 
-import { RequestTrial } from './request-trial';
+import { FeatureKey, RequestTrial } from './request-trial';
 
 type LockedFeatureGuardProps = {
   children: React.ReactNode;
@@ -12,6 +11,7 @@ type LockedFeatureGuardProps = {
   lockTitle: string;
   lockDescription: string;
   lockVideoUrl?: string;
+  featureKey: FeatureKey;
 };
 
 export const LockedFeatureGuard = ({
@@ -20,11 +20,10 @@ export const LockedFeatureGuard = ({
   lockTitle,
   lockDescription,
   lockVideoUrl,
+  featureKey,
 }: LockedFeatureGuardProps) => {
-  const queryClient = useQueryClient();
   const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_PLATFORM_DEMO,
-    queryClient,
   );
 
   if (!locked && !showPlatformDemo) {
@@ -41,7 +40,7 @@ export const LockedFeatureGuard = ({
           </p>
 
           <div className="my-4">
-            <RequestTrial />
+            <RequestTrial featureKey={featureKey} />
           </div>
         </div>
 

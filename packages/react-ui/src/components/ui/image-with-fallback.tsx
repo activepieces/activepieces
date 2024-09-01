@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 
+import { cn } from '@/lib/utils';
+
 interface ImageWithFallbackProps
   extends React.ImgHTMLAttributes<HTMLImageElement> {
   fallback?: React.ReactNode;
@@ -23,6 +25,8 @@ const ImageWithFallback = ({
     setIsLoading(false);
   };
 
+  const { className, ...rest } = props;
+
   return (
     <div className="relative inline-block">
       {isLoading && !hasError && (
@@ -36,10 +40,15 @@ const ImageWithFallback = ({
           alt={alt}
           onLoad={handleLoad}
           onError={handleError}
-          className={`transition-opacity duration-500 ${
-            isLoading ? 'opacity-0' : 'opacity-100'
-          }`}
-          {...props}
+          className={cn(
+            `transition-opacity duration-500`,
+            {
+              'opacity-0': isLoading,
+              'opacity-100': !isLoading,
+            },
+            className,
+          )}
+          {...rest}
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">

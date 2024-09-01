@@ -1,5 +1,4 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Value } from '@sinclair/typebox/value';
 import { t } from 'i18next';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -170,29 +169,15 @@ const StepSettingsContainer = React.memo(
       step: Action | Trigger,
       pieceModel: PieceMetadataModel | undefined,
     ) => {
-      if (step.type === TriggerType.PIECE) {
-        const triggerName = step.settings.triggerName;
-        if (isNil(triggerName)) {
-          return step.displayName;
-        }
-        const trigger = pieceModel?.triggers[triggerName];
-        if (isNil(trigger)) {
-          return step.displayName;
-        }
-        return trigger.displayName;
-      }
-      if (step.type === ActionType.PIECE) {
-        const actionName = step.settings.actionName;
-        if (isNil(actionName)) {
-          return step.displayName;
-        }
-        const action = pieceModel?.actions[actionName];
-        if (isNil(action)) {
-          return step.displayName;
-        }
-        return action.displayName;
-      }
-      return step.displayName;
+      const name =
+        step.type === TriggerType.PIECE
+          ? step.settings.triggerName
+          : step.settings.actionName;
+      const item =
+        step.type === TriggerType.PIECE
+          ? pieceModel?.triggers[name]
+          : pieceModel?.actions[name];
+      return isNil(name) || isNil(item) ? step.displayName : item.displayName;
     };
 
     useUpdateEffect(() => {
@@ -211,22 +196,11 @@ const StepSettingsContainer = React.memo(
     }, [actionName, triggerName]);
 
     useUpdateEffect(() => {
-      const currentStep = JSON.parse(JSON.stringify(form.getValues()));
-      const actionOrTriggerName =
-        currentStep.settings.actionName ?? currentStep.settings.triggerName;
-      const formSchema = formUtils.buildPieceSchema(
-        currentStep.type,
-        actionOrTriggerName,
-        pieceModel!,
-      );
-      const castedForm = Value.Clean(
-        formSchema,
-        JSON.parse(JSON.stringify(form.getValues())),
-      ) as Action | Trigger;
+      const currentStep = form.getValues();
       if (currentStep.type === TriggerType.PIECE) {
-        debouncedTrigger(castedForm as Trigger);
+        debouncedTrigger(currentStep as Trigger);
       } else {
-        debouncedAction(castedForm as Action);
+        debouncedAction(currentStep as Action);
       }
     }, [
       inputChanges,
@@ -297,18 +271,18 @@ const StepSettingsContainer = React.memo(
                   {[ActionType.CODE, ActionType.PIECE].includes(
                     modifiedStep.type as ActionType,
                   ) && (
-                      <ActionErrorHandlingForm
-                        hideContinueOnFailure={
-                          modifiedStep.settings.errorHandlingOptions
-                            ?.continueOnFailure?.hide
-                        }
-                        disabled={readonly}
-                        hideRetryOnFailure={
-                          modifiedStep.settings.errorHandlingOptions
-                            ?.retryOnFailure?.hide
-                        }
-                      ></ActionErrorHandlingForm>
-                    )}
+                    <ActionErrorHandlingForm
+                      hideContinueOnFailure={
+                        modifiedStep.settings.errorHandlingOptions
+                          ?.continueOnFailure?.hide
+                      }
+                      disabled={readonly}
+                      hideRetryOnFailure={
+                        modifiedStep.settings.errorHandlingOptions
+                          ?.retryOnFailure?.hide
+                      }
+                    ></ActionErrorHandlingForm>
+                  )}
                 </div>
               </ScrollArea>
             </ResizablePanel>

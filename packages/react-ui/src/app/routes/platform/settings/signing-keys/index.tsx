@@ -66,6 +66,7 @@ const SigningKeysPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   return (
     <LockedFeatureGuard
+      featureKey="SIGNING_KEYS"
       locked={!platform.embeddingEnabled}
       lockTitle={t('Unlock Embedding Through JS SDK')}
       lockDescription={t(

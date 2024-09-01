@@ -44,6 +44,7 @@
     --warning-100: 51.72, 93.55%, 93.92%;
     --warning: 47 96% 53%;
     --warning-300: 28 80% 31%;
+    --add-button-shadow: 0px 0px 0px 6px hsl(var(--primary-100));
   }
 
   .dark {
@@ -80,6 +81,7 @@
     --warning-100: 51.72, 93.55%, 17.92%;
     --warning: 47 96% 53%;
     --warning-300: 52 96% 70%;
+    --add-button-shadow: 0px 0px 0px 6px hsl(var(--primary-100) / 0.5);
   }
 }
 
