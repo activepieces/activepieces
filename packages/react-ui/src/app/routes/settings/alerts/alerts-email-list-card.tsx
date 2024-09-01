@@ -2,7 +2,6 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -19,6 +18,7 @@ import {
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { alertsApi } from '@/features/alerts/lib/alerts-api';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { Alert } from '@activepieces/ee-shared';
 import { ProjectMemberRole } from '@activepieces/shared';

@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
 
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   Card,
   CardContent,
@@ -12,6 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';

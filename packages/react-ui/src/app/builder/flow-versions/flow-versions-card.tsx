@@ -8,7 +8,6 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { AvatarLetter } from '@/components/ui/avatar-letter';
 import { Button } from '@/components/ui/button';
 import { CardListItem } from '@/components/ui/card-list';
@@ -26,8 +25,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
@@ -40,6 +37,7 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { formatUtils } from '@/lib/utils';
 import {
   FlowOperationType,

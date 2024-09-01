@@ -10,7 +10,6 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { Authorization, useAuthorization } from '@/hooks/authorization-hooks';
 import {
   DataTable,
   PaginationParams,
@@ -29,6 +28,7 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
@@ -50,7 +50,7 @@ const fetchData = async (
   const status = params.status;
   return flowRunsApi.list({
     status,
-    projectId: authenticationSession.getProjectId(),
+    projectId: authenticationSession.getProjectId()!,
     flowId: params.flowId,
     cursor: pagination.cursor,
     limit: pagination.limit ?? 10,

@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
@@ -13,6 +12,7 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { toast } from '@/components/ui/use-toast';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';

@@ -12,7 +12,6 @@ import {
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { useEmbedding } from '@/components/embed-provider';
 import { ShowPoweredBy } from '@/components/show-powered-by';
 import { Button } from '@/components/ui/button';
@@ -37,6 +36,7 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FolderBadge } from '@/features/folders/component/folder-badge';
 import { FolderFilterList } from '@/features/folders/component/folder-filter-list';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';

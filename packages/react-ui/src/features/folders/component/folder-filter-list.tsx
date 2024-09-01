@@ -15,7 +15,6 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +40,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';

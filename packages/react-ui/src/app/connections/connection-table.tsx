@@ -4,7 +4,6 @@ import { CheckIcon, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +17,7 @@ import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {

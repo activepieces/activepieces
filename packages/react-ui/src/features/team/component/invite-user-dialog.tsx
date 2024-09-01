@@ -6,7 +6,6 @@ import { CopyIcon, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -38,6 +37,7 @@ import { toast } from '@/components/ui/use-toast';
 import { PlatformRoleSelect } from '@/features/team/component/platform-role-select';
 import { ProjectRoleSelect } from '@/features/team/component/project-role-select';
 import { userInvitationApi } from '@/features/team/lib/user-invitation';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { HttpError } from '@/lib/api';

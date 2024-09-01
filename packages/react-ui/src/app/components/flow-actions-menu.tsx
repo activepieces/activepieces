@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useEmbedding } from '@/components/embed-provider';
 import {
@@ -27,6 +26,7 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { GitBranchType } from '@activepieces/ee-shared';

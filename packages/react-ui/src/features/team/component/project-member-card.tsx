@@ -2,8 +2,8 @@ import { AvatarFallback } from '@radix-ui/react-avatar';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { Permission } from '@activepieces/shared';
