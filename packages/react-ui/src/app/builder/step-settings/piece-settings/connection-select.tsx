@@ -24,6 +24,7 @@ import {
   AppConnectionWithoutSensitiveData,
   PieceAction,
   PieceTrigger,
+  isNil,
 } from '@activepieces/shared';
 
 import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
@@ -69,7 +70,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
             </Select>
           )}
           {!isLoading && (
-            <FormItem>
+            <FormItem key={field.value}>
               <CreateOrEditConnectionDialog
                 reconnectConnection={reconnectConnection}
                 key={reconnectConnection?.name || 'newConnection'}
@@ -115,29 +116,27 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                   )}
 
                   <SelectTrigger className="flex gap-2 items-center">
-                    <>
-                      <SelectValue
-                        className="truncate flex-grow flex-shrink"
-                        placeholder={t('Select a connection')}
+                    <SelectValue
+                      className="truncate flex-grow flex-shrink"
+                      placeholder={t('Select a connection')}
+                    >
+                      {!isNil(field.value) ? (
+                        <div className="truncate flex-grow flex-shrink">
+                          {removeBrackets(field.value)}
+                        </div>
+                      ) : null}
+                    </SelectValue>
+                    <div className="grow"></div>
+                    {/* Hidden Button to take same space as shown button */}
+                    {field.value && (
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        className="z-50 opacity-0 pointer-events-none"
                       >
-                        {field.value ? (
-                          <div className="truncate flex-grow flex-shrink">
-                            {removeBrackets(field.value)}
-                          </div>
-                        ) : null}
-                      </SelectValue>
-                      <div className="grow"></div>
-                      {/* Hidden Button to take same space as shown button */}
-                      {field.value && (
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          className="z-50 opacity-0 pointer-events-none"
-                        >
-                          {t('Reconnect')}
-                        </Button>
-                      )}
-                    </>
+                        {t('Reconnect')}
+                      </Button>
+                    )}
                   </SelectTrigger>
                 </div>
 

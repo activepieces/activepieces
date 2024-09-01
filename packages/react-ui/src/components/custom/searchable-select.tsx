@@ -18,7 +18,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
 
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
@@ -128,8 +127,9 @@ export const SearchableSelect = <T extends React.Key>({
             className="w-full justify-between w-full"
           >
             <span className="flex w-full truncate select-none">
-              {selectedIndex !== -1 ? options[selectedIndex].label : placeholder}
-
+              {selectedIndex !== -1
+                ? options[selectedIndex].label
+                : placeholder}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
