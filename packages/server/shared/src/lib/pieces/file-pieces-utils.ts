@@ -8,6 +8,10 @@ import clearModule from 'clear-module'
 import { exceptionHandler } from '../exception-handler'
 import { logger } from '../logger'
 import { system } from '../system/system'
+import { AppSystemProp } from '../system/system-prop'
+
+const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
+
 
 async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
     const paths = []
@@ -73,9 +77,10 @@ async function findAllPieces(): Promise<PieceMetadata[]> {
     return [...pieces, ...enterprisePieces]
 }
 
+
 async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
     try {
-        const paths = await filePiecesUtils.findAllPiecesFolder(folderPath)
+        const paths = (await filePiecesUtils.findAllPiecesFolder(folderPath)).filter(p => packages.some(packageName => p.includes(packageName)))
         const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
         return pieces.filter((p): p is PieceMetadata => p !== null)
     }
