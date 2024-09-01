@@ -128,9 +128,8 @@ export const SearchableSelect = <T extends React.Key>({
             className="w-full justify-between w-full"
           >
             <span className="flex w-full truncate select-none">
-              {!isNil(value)
-                ? options.find((option) => option.value === value)?.label
-                : placeholder}
+              {selectedIndex !== -1 ? options[selectedIndex].label : placeholder}
+
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
