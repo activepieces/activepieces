@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { authenticationSession } from '@/lib/authentication-session';
 import { ApEdition, AppConnectionType } from '@activepieces/shared';
 
 import { oauthAppsApi } from './oauth2-apps-api';
@@ -13,6 +12,25 @@ type PieceToClientIdMap = {
 };
 
 export const oauth2AppsHooks = {
+  useOAuth2AppConfigured(pieceId: string) {
+    const query = useQuery({
+      queryKey: ['oauth2-apps-configured'],
+      queryFn: async () => {
+        const response = await oauthAppsApi.listOAuthAppsCredentials({
+          limit: 1000000,
+        });
+        return response.data;
+      },
+      select: (data) => {
+        return data.find((app) => app.pieceName === pieceId);
+      },
+      staleTime: Infinity,
+    });
+    return {
+      refetch: query.refetch,
+      oauth2App: query.data,
+    };
+  },
   usePieceToClientIdMap(cloudAuthEnabled: boolean, edition: ApEdition) {
     return useQuery<PieceToClientIdMap, Error>({
       queryKey: ['oauth-apps'],
@@ -25,7 +43,6 @@ export const oauth2AppsHooks = {
             : await oauthAppsApi.listOAuthAppsCredentials({
                 limit: 1000000,
                 cursor: undefined,
-                projectId: authenticationSession.getProjectId()!,
               });
         const cloudApps = !cloudAuthEnabled
           ? {}

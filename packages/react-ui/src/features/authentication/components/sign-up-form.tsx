@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useMemo, useRef, useState } from 'react';
@@ -56,15 +56,12 @@ const SignUpForm = ({
   showCheckYourEmailNote: boolean;
   setShowCheckYourEmailNote: (value: boolean) => void;
 }) => {
-  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(
     ApFlagId.TERMS_OF_SERVICE_URL,
-    queryClient,
   );
   const { data: privacyPolicyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.PRIVACY_POLICY_URL,
-    queryClient,
   );
 
   const form = useForm<SignUpSchema>({
@@ -74,11 +71,8 @@ const SignUpForm = ({
       email: searchParams.get('email') || '',
     },
   });
-  const websiteName = flagsHooks.useWebsiteBranding(queryClient)?.websiteName;
-  const edition = flagsHooks.useFlag<ApEdition>(
-    ApFlagId.EDITION,
-    queryClient,
-  ).data;
+  const websiteName = flagsHooks.useWebsiteBranding()?.websiteName;
+  const edition = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION).data;
   const showNewsLetterCheckbox = useMemo(() => {
     if (!edition || !websiteName) {
       return false;

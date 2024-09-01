@@ -1,11 +1,12 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { useTelemetry } from '@/components/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -38,7 +39,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { requestTrialApi } from '@/lib/request-trial-api';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
 
 const logos = [
   'https://www.activepieces.com/logos/alan.svg',
@@ -46,6 +47,19 @@ const logos = [
   'https://www.activepieces.com/logos/plivo.svg',
   'https://www.activepieces.com/logos/clickup.svg',
 ];
+
+export type FeatureKey =
+  | 'PROJECTS'
+  | 'BRANDING'
+  | 'PIECES'
+  | 'TEMPLATES'
+  | 'API'
+  | 'SSO'
+  | 'AUDIT_LOGS'
+  | 'GIT_SYNC'
+  | 'ISSUES'
+  | 'ALERTS'
+  | 'ENTERPRISE_PIECES';
 
 const features = [
   {
@@ -114,7 +128,11 @@ const formSchema = Type.Object({
 });
 type FormSchema = Static<typeof formSchema>;
 
-export const RequestTrial = () => {
+type RequestTrialProps = {
+  featureKey: FeatureKey;
+};
+export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
+  const { capture } = useTelemetry();
   const currentUser = authenticationSession.getCurrentUser();
   const form = useForm<FormSchema>({
     resolver: typeboxResolver(formSchema),
@@ -128,11 +146,7 @@ export const RequestTrial = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
-  const queryClient = useQueryClient();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(
-    ApFlagId.EDITION,
-    queryClient,
-  );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const { mutate, isPending } = useMutation<
     { message?: string },
@@ -141,6 +155,10 @@ export const RequestTrial = () => {
   >({
     mutationFn: async (request) => {
       await requestTrialApi.contactSales(request);
+      capture({
+        name: TelemetryEventName.REQUEST_TRIAL_SUBMITTED,
+        payload: request,
+      });
       switch (edition) {
         case ApEdition.CLOUD: {
           return {
@@ -167,6 +185,7 @@ export const RequestTrial = () => {
         description: response.message,
         duration: 3000,
       });
+
       setIsOpen(false);
     },
     onError: (error) => {
@@ -187,7 +206,18 @@ export const RequestTrial = () => {
       onOpenChange={(open) => setIsOpen(open)}
     >
       <DrawerTrigger asChild>
-        <Button>{t('Request Trial')}</Button>
+        <Button
+          onClick={() =>
+            capture({
+              name: TelemetryEventName.REQUEST_TRIAL_CLICKED,
+              payload: {
+                location: featureKey,
+              },
+            })
+          }
+        >
+          {t('Request Trial')}
+        </Button>
       </DrawerTrigger>
       <DrawerContent className="h-screen top-0 right-0 left-auto mt-0 w-[600px] rounded-none py-2 px-6 gap-6 flex">
         <DrawerHeader className="mt-4">

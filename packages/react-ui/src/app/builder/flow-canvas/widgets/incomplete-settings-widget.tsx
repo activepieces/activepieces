@@ -33,7 +33,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
     !flowVersion.valid && (
       <Button
         variant="ghost"
-        className="h-8 bg-warning-100 text-warning-300 hover:!bg-warning-100 hover:border-warning hover:text-warning-300 border border-solid border border-warning/50 rounded-full animate-fade"
+        className="h-8 bg-warning-100 text-warning-300 hover:!bg-warning-100 hover:!border-warning hover:!text-warning-300 border border-solid border border-warning/50 rounded-full animate-fade"
         key={'complete-flow-button'}
         onClick={(e) => {
           onClick();
@@ -41,7 +41,10 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
           e.preventDefault();
         }}
       >
-        {t('incompleteSteps', { invalidSteps: invalidSteps })}
+        {t(
+          '{invalidSteps, plural, =0 {no incomplete steps} =1 {Complete 1 step} other {Complete # steps}}',
+          { invalidSteps: invalidSteps },
+        )}
       </Button>
     )
   );

@@ -77,6 +77,7 @@ export default function UsersPage() {
 
   return (
     <LockedFeatureGuard
+      featureKey="USERS"
       locked={false}
       lockTitle={t('Unlock Users')}
       lockDescription={t('Manage your users and their access to your projects')}

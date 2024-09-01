@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { MoveLeft, SearchX } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -87,7 +87,6 @@ const PieceSelector = ({
   const [debouncedQuery] = useDebounce(searchQuery, 300);
   const showRequestPieceButton = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
-    useQueryClient(),
   ).data;
   const [selectedPieceMetadata, setSelectedMetadata] = useState<
     StepMetadata | undefined
@@ -387,13 +386,15 @@ const PieceSelector = ({
                           handleSelect(selectedPieceMetadata, item)
                         }
                       >
-                        <div className="flex gap-2 items-center">
-                          <PieceIcon
-                            logoUrl={selectedPieceMetadata.logoUrl}
-                            displayName={selectedPieceMetadata.displayName}
-                            showTooltip={false}
-                            size={'sm'}
-                          ></PieceIcon>
+                        <div className="flex gap-3 items-center">
+                          <div>
+                            <PieceIcon
+                              logoUrl={selectedPieceMetadata.logoUrl}
+                              displayName={selectedPieceMetadata.displayName}
+                              showTooltip={false}
+                              size={'sm'}
+                            ></PieceIcon>
+                          </div>
                           <div className="flex flex-col gap-0.5">
                             <div className="text-sm">{item.displayName}</div>
                             <div className="text-xs text-muted-foreground">

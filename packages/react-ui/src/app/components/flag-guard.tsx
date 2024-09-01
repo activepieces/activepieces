@@ -1,5 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
-
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId } from '@activepieces/shared';
 
@@ -8,9 +6,8 @@ type FlagGuardProps = {
   flag: ApFlagId;
 };
 const FlagGuard = ({ children, flag }: FlagGuardProps) => {
-  const queryClient = useQueryClient();
-  const flagQuery = flagsHooks.useFlag<boolean>(flag, queryClient);
-  if (flagQuery.isLoading || flagQuery.error || !flagQuery.data) {
+  const { data: flagValue } = flagsHooks.useFlag<boolean>(flag);
+  if (!flagValue) {
     return null;
   }
   return children;

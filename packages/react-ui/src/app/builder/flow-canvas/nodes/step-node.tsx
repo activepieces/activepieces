@@ -333,7 +333,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                     <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
                       {stepMetadata?.displayName}
                     </div>
-                    <div className="w-7 flex items-center justify-center">
+                    <div className="w-4 flex items-center justify-center">
                       {statusInfo &&
                         React.createElement(statusInfo.Icon, {
                           className: cn('w-4 h-4', {

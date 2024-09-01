@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
@@ -34,7 +34,6 @@ const fetchData = async () => {
 };
 
 export default function AlertsEmailsCard() {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data, isLoading, isError, isSuccess, refetch } = useQuery<
     Alert[],
@@ -48,10 +47,7 @@ export default function AlertsEmailsCard() {
   const deleteMutation = useMutation<void, Error, Alert>({
     mutationFn: (alert) => alertsApi.delete(alert.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['alerts-email-list'],
-        exact: true,
-      });
+      refetch();
       toast({
         title: t('Success'),
         description: t('Your changes have been saved.'),

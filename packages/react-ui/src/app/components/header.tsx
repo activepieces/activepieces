@@ -5,6 +5,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import { Button } from '@/components/ui/button';
+import { ReportBugsButton } from '@/components/ui/report-bugs-button';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
@@ -28,6 +29,7 @@ export const Header = () => {
       )}
       <div className="grow"></div>
       <div className="flex items-center justify-center gap-4">
+        <ReportBugsButton variant="outline"></ReportBugsButton>
         <InviteUserDialog></InviteUserDialog>
         {showPlatformAdminDashboard && (
           <Link to={isInPlatformAdmin ? '/' : '/platform'}>

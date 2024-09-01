@@ -1,5 +1,4 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Value } from '@sinclair/typebox/value';
 import { t } from 'i18next';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -197,22 +196,11 @@ const StepSettingsContainer = React.memo(
     }, [actionName, triggerName]);
 
     useUpdateEffect(() => {
-      const currentStep = JSON.parse(JSON.stringify(form.getValues()));
-      const actionOrTriggerName =
-        currentStep.settings.actionName ?? currentStep.settings.triggerName;
-      const formSchema = formUtils.buildPieceSchema(
-        currentStep.type,
-        actionOrTriggerName,
-        pieceModel!,
-      );
-      const castedForm = Value.Clean(
-        formSchema,
-        JSON.parse(JSON.stringify(form.getValues())),
-      ) as Action | Trigger;
+      const currentStep = form.getValues();
       if (currentStep.type === TriggerType.PIECE) {
-        debouncedTrigger(castedForm as Trigger);
+        debouncedTrigger(currentStep as Trigger);
       } else {
-        debouncedAction(castedForm as Action);
+        debouncedAction(currentStep as Action);
       }
     }, [
       inputChanges,

@@ -1,13 +1,13 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
-import { logger } from '../logger'
 import importFresh from '@activepieces/import-fresh-webpack'
 import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
-import clearModule from 'clear-module'
-import { system } from '../system/system'
 import { ApEdition, extractPieceFromModule } from '@activepieces/shared'
-import { exceptionHandler} from '../exception-handler'
+import clearModule from 'clear-module'
+import { exceptionHandler } from '../exception-handler'
+import { logger } from '../logger'
+import { system } from '../system/system'
 
 async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
     const paths = []

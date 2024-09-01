@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -41,9 +40,8 @@ const OAuth2ConnectionSettings = ({
   piece,
   reconnectConnection,
 }: OAuth2ConnectionSettingsProps) => {
-  const queryClient = useQueryClient();
   const { platform } = platformHooks.useCurrentPlatform();
-  const [readyToConect, setReadyToConect] = useState(false);
+  const [readyToConnect, setReadyToConnect] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const [currentOAuth2Type, setOAuth2Type] = useState<
     | AppConnectionType.CLOUD_OAUTH2
@@ -59,19 +57,14 @@ const OAuth2ConnectionSettings = ({
   );
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-    queryClient,
   );
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(
-    ApFlagId.EDITION,
-    queryClient,
-  );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { data: pieceToClientIdMap } = oauth2AppsHooks.usePieceToClientIdMap(
     platform.cloudAuthEnabled,
     edition!,
   );
   const { data: ownAuthEnabled } = flagsHooks.useFlag<ApEdition>(
     ApFlagId.OWN_AUTH2_ENABLED,
-    queryClient,
   );
 
   const redirectUrl =
@@ -135,7 +128,7 @@ const OAuth2ConnectionSettings = ({
     const clientSecret = (form.getValues().request as UpsertOAuth2Request)
       ?.value?.client_secret;
     const hasClientSecret = !isNil(clientSecret);
-    setReadyToConect(
+    setReadyToConnect(
       baseCriteria &&
         (currentOAuth2Type !== AppConnectionType.OAUTH2 || hasClientSecret),
     );
@@ -243,7 +236,7 @@ const OAuth2ConnectionSettings = ({
             <Button
               size={'sm'}
               variant={'basic'}
-              disabled={!readyToConect}
+              disabled={!readyToConnect}
               type="button"
               onClick={async () =>
                 openPopup(

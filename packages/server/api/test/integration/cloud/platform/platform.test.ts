@@ -103,6 +103,7 @@ describe('Platform API', () => {
             expect(responseBody.federatedAuthProviders).toStrictEqual({})
             expect(responseBody.smtpSenderEmail).toBe('updated smtp sender email')
             expect(responseBody.smtpUseSSL).toBe(true)
+            expect(responseBody.analyticsEnabled).toBe(false)
             expect(responseBody.cloudAuthEnabled).toBe(false)
             expect(responseBody.embeddingEnabled).toBe(false)
             expect(responseBody.defaultLocale).toBe(LocalesEnum.ENGLISH)
@@ -217,7 +218,7 @@ describe('Platform API', () => {
             const responseBody = response?.json()
 
 
-            expect(Object.keys(responseBody).length).toBe(39)
+            expect(Object.keys(responseBody).length).toBe(40)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwnerUser.id)
             expect(responseBody.name).toBe(mockPlatform.name)

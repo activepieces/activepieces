@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { ShowPoweredBy } from '@/components/show-powered-by';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,6 +68,7 @@ const filters = [
 const FlowsPage = () => {
   const { checkAccess } = useAuthorization();
   const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
+  const { embedState } = useEmbedding();
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
 
@@ -77,7 +79,7 @@ const FlowsPage = () => {
     pagination: PaginationParams,
   ) {
     return flowsApi.list({
-      projectId: authenticationSession.getProjectId(),
+      projectId: authenticationSession.getProjectId()!,
       cursor: pagination.cursor,
       limit: pagination.limit ?? 10,
       status: params.status,
@@ -93,7 +95,7 @@ const FlowsPage = () => {
   >({
     mutationFn: async () => {
       const flow = await flowsApi.create({
-        projectId: authenticationSession.getProjectId(),
+        projectId: authenticationSession.getProjectId()!,
         displayName: t('Untitled'),
       });
       return flow;
@@ -104,7 +106,9 @@ const FlowsPage = () => {
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const columns: ColumnDef<RowDataWithActions<PopulatedFlow>>[] = [
+  const columns: (ColumnDef<RowDataWithActions<PopulatedFlow>> & {
+    accessorKey: string;
+  })[] = [
     {
       accessorKey: 'name',
       header: ({ column }) => (
@@ -190,6 +194,7 @@ const FlowsPage = () => {
         return (
           <div onClick={(e) => e.stopPropagation()}>
             <FlowActionMenu
+              insideBuilder={false}
               flow={flow}
               readonly={false}
               flowVersion={flow.version}
@@ -211,7 +216,7 @@ const FlowsPage = () => {
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">{t('Flows')}</h1>
         <div className="ml-auto flex flex-row gap-2">
-          <ImportFlowDialog>
+          <ImportFlowDialog insideBuilder={false}>
             <PermissionNeededWrapper
               hasPermission={doesUserHavePermissionToWriteFlow}
             >
@@ -269,10 +274,13 @@ const FlowsPage = () => {
         </div>
       </div>
       <div className="flex flex-row gap-4">
-        <FolderFilterList />
+        {!embedState.hideFolders && <FolderFilterList />}
         <div className="w-full">
           <DataTable
-            columns={columns}
+            columns={columns.filter(
+              (column) =>
+                !embedState.hideFolders || column.accessorKey !== 'folderId',
+            )}
             fetchData={fetchData}
             filters={filters}
             refresh={refresh}

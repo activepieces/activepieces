@@ -1,5 +1,8 @@
+import { t } from 'i18next';
 import { LogOut, SunMoon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
+import { useTelemetry } from '@/components/telemetry-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { Avatar, AvatarFallback } from './avatar';
@@ -12,10 +15,9 @@ import {
   DropdownMenuItem,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
-import { t } from 'i18next';
-import { Link } from 'react-router-dom';
 
 export function UserAvatar() {
+  const { reset } = useTelemetry();
   const user = authenticationSession.getCurrentUser();
   if (!user) {
     return null;
@@ -50,7 +52,10 @@ export function UserAvatar() {
         </Link>
 
         <DropdownMenuItem
-          onClick={() => authenticationSession.logOut()}
+          onClick={() => {
+            authenticationSession.logOut();
+            reset();
+          }}
           className="cursor-pointer"
         >
           <TextWithIcon

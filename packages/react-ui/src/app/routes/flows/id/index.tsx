@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder';
 import { BuilderStateProvider } from '@/app/builder/builder-state-provider';
@@ -10,12 +10,21 @@ import { PopulatedFlow } from '@activepieces/shared';
 const FlowBuilderPage = () => {
   const { flowId } = useParams();
 
-  const { data: flow, isLoading } = useQuery<PopulatedFlow, Error>({
+  const {
+    data: flow,
+    isLoading,
+    isError,
+  } = useQuery<PopulatedFlow, Error>({
     queryKey: ['flow', flowId],
     queryFn: () => flowsApi.get(flowId!),
     gcTime: 0,
+    retry: false,
     refetchOnWindowFocus: false,
   });
+
+  if (isError) {
+    return <Navigate to="/404" />;
+  }
 
   if (isLoading) {
     return (

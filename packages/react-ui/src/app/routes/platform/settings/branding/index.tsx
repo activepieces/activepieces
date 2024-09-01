@@ -10,6 +10,7 @@ export const BrandingPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   return (
     <LockedFeatureGuard
+      featureKey="BRANDING"
       locked={!platform.customAppearanceEnabled}
       lockTitle={t('Brand Activepieces')}
       lockDescription={t(

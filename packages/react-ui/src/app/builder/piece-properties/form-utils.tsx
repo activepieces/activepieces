@@ -287,7 +287,9 @@ export const formUtils = {
             : formUtils.buildSchema(property.properties);
           // Only accepts connections variable.
           propsSchema[name] = Type.Union([
-            Type.Array(arraySchema),
+            Type.Array(arraySchema, {
+              minItems: property.required ? 1 : undefined,
+            }),
             Type.String({
               minLength: property.required ? 1 : undefined,
             }),

@@ -1,5 +1,4 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronDown, History, Home, Logs } from 'lucide-react';
 import { useMemo } from 'react';
@@ -14,7 +13,9 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
+import { ReportBugsButton } from '@/components/ui/report-bugs-button';
 import {
   Tooltip,
   TooltipContent,
@@ -33,10 +34,7 @@ import { BuilderPublishButton } from './builder-publish-button';
 export const BuilderHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const showSupport = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
-    useQueryClient(),
-  );
+  const showSupport = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COMMUNITY);
   const isInRunsPage = useMemo(
     () => location.pathname.startsWith('/runs'),
     [location.pathname],
@@ -55,6 +53,8 @@ export const BuilderHeader = () => {
     state.moveToFolderClientSide,
   ]);
 
+  const { embedState } = useEmbedding();
+
   const { data: folderData } = foldersHooks.useFolder(flow.folderId ?? 'NULL');
 
   const isLatestVersion =
@@ -67,44 +67,53 @@ export const BuilderHeader = () => {
     <div className="bg-background ">
       <div className=" items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
         <div className="flex h-full items-center justify-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link to="/flows">
-                <Button variant="ghost" size={'icon'} className="p-2.5">
-                  <Home />
-                </Button>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">{t('Home')}</TooltipContent>
-          </Tooltip>
+          {!embedState.disableNavigationInBuilder && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link to="/flows">
+                  <Button variant="ghost" size={'icon'} className="p-2.5">
+                    <Home />
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t('Home')}</TooltipContent>
+            </Tooltip>
+          )}
           <span>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger
-                  onClick={() =>
-                    navigate({
-                      pathname: '/flows',
-                      search: createSearchParams({
-                        folderId: folderData?.id ?? 'NULL',
-                      }).toString(),
-                    })
-                  }
-                >
-                  {folderName}
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span>
-                    {t('Go to folder')} {folderName}
-                  </span>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            {' / '}
-            <strong>{flowVersion.displayName}</strong>
+            {!embedState.hideFolders && (
+              <>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger
+                      onClick={() =>
+                        navigate({
+                          pathname: '/flows',
+                          search: createSearchParams({
+                            folderId: folderData?.id ?? 'NULL',
+                          }).toString(),
+                        })
+                      }
+                    >
+                      {folderName}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <span>
+                        {t('Go to folder')} {folderName}
+                      </span>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                {' / '}
+              </>
+            )}
+            {!embedState.hideFlowNameInBuilder && (
+              <strong>{flowVersion.displayName}</strong>
+            )}
           </span>
           <FlowActionMenu
             flow={flow}
             flowVersion={flowVersion}
+            insideBuilder={true}
             readonly={!isLatestVersion}
             onDelete={() => {
               navigate('/flows');
@@ -118,6 +127,7 @@ export const BuilderHeader = () => {
         </div>
         <div className="grow"></div>
         <div className="flex items-center justify-center gap-4">
+          <ReportBugsButton variant="ghost"></ReportBugsButton>
           {showSupport && (
             <Tooltip>
               <TooltipTrigger asChild>

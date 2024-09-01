@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-table';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useDeepCompareEffect } from 'react-use';
 
 import {
   Table,
@@ -27,7 +28,7 @@ import { DataTableToolbar } from './data-table-toolbar';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
 
 export type DataWithId = {
-  id: string;
+  id?: string;
 };
 export type RowDataWithActions<TData extends DataWithId> = TData & {
   delete: () => void;
@@ -79,6 +80,7 @@ interface DataTableProps<
   ) => void;
   filters?: [...F];
   refresh?: number;
+  onSelectedRowsChange?: (rows: RowDataWithActions<TData>[]) => void;
   actions?: DataTableAction<TData>[];
 }
 
@@ -94,6 +96,7 @@ export function DataTable<
   filters,
   refresh,
   actions = [],
+  onSelectedRowsChange,
 }: DataTableProps<TData, TValue, Keys, F>) {
   const columns = columnsInitial.concat([
     {
@@ -187,6 +190,12 @@ export function DataTable<
       }
     });
   }, []);
+
+  useDeepCompareEffect(() => {
+    onSelectedRowsChange?.(
+      table.getSelectedRowModel().rows.map((row) => row.original),
+    );
+  }, [table.getSelectedRowModel().rows]);
 
   useEffect(() => {
     setSearchParams(
