@@ -85,11 +85,10 @@ RUN cd /usr/src/app/dist/packages/server/api/ && npm install --production --forc
 # 
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/packages packages
-
-LABEL service=activepieces
-
 # Copy frontend files to Nginx document root directory from build stage
 COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
+
+LABEL service=activepieces
 
 # Set up entrypoint script
 COPY docker-entrypoint.sh .
