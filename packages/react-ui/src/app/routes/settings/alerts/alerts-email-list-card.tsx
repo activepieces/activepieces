@@ -11,10 +11,17 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { alertsApi } from '@/features/alerts/lib/alerts-api';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { Alert } from '@activepieces/ee-shared';
+import { ProjectMemberRole } from '@activepieces/shared';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
 
@@ -36,7 +43,7 @@ export default function AlertsEmailsCard() {
     queryKey: ['alerts-email-list'],
     queryFn: fetchData,
   });
-
+  const { role } = useAuthorization();
   const deleteMutation = useMutation<void, Error, Alert>({
     mutationFn: (alert) => alertsApi.delete(alert.id),
     onSuccess: () => {
@@ -85,13 +92,25 @@ export default function AlertsEmailsCard() {
                     </p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  className="size-8 p-0"
-                  onClick={() => deleteMutation.mutate(alert)}
-                >
-                  <Trash className="size-4 text-destructive" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        variant="ghost"
+                        className="size-8 p-0"
+                        onClick={() => deleteMutation.mutate(alert)}
+                        disabled={role !== ProjectMemberRole.ADMIN}
+                      >
+                        <Trash className="size-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {role !== ProjectMemberRole.ADMIN && (
+                    <TooltipContent side="bottom">
+                      {t('Only project admins can do this')}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
               </div>
             ))}
         </div>
