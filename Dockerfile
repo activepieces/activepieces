@@ -49,8 +49,8 @@ COPY . .
 COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
-RUN npx nx run-many --target=build --projects=server-api --configuration production --skip-nx-cache
-RUN npx nx run-many --target=build --projects=ui-core --configuration production --skip-nx-cache
+RUN npx nx run-many --target=build --projects=server-api --configuration production
+RUN npx nx run-many --target=build --projects=react-ui 
 
 # Install backend production dependencies
 RUN cd dist/packages/server/api && npm install --production --force
@@ -89,7 +89,7 @@ COPY --from=build /usr/src/app/packages packages
 LABEL service=activepieces
 
 # Copy frontend files to Nginx document root directory from build stage
-COPY --from=base /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
+COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
 
 # Set up entrypoint script
 COPY docker-entrypoint.sh .
