@@ -17,6 +17,6 @@ export const createFlowsContext = ({ engineToken, internalApiUrl }: CreateFlowsS
                 },
             })
             return response.json()
-        }
+        },
     }
 }

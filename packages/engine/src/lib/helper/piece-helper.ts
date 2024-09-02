@@ -19,9 +19,9 @@ import {
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { createFlowsContext } from '../services/flows.service'
 import { variableService } from '../variables/variable-service'
 import { pieceLoader } from './piece-loader'
-import { createFlowsContext } from '../services/flows.service'
 
 export const pieceHelper = {
     async executeProps({ params, piecesSource, executionState, constants, searchValue }: { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, piecesSource: string, constants: EngineConstants }) {
@@ -43,7 +43,7 @@ export const pieceHelper = {
             })
             const ctx = {
                 searchValue,
-                flows: {
+                flow: {
                     current: {
                         id: params.flowVersion.flowId,
                         version: {
