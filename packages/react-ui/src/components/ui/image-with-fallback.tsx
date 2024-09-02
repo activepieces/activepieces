@@ -28,11 +28,11 @@ const ImageWithFallback = ({
   const { className, ...rest } = props;
 
   return (
-    <div className="relative inline-block">
+    <span className="relative inline-block">
       {isLoading && !hasError && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          {fallback ?? <div className="w-full h-full bg-muted"></div>}
-        </div>
+        <span className="absolute inset-0 flex items-center justify-center">
+          {fallback ?? <span className="w-full h-full bg-muted"></span>}
+        </span>
       )}
       {!hasError ? (
         <img
@@ -51,11 +51,11 @@ const ImageWithFallback = ({
           {...rest}
         />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center">
-          {fallback ?? <div className="w-full h-full bg-muted"></div>}
-        </div>
+        <span className="absolute inset-0 flex items-center justify-center">
+          {fallback ?? <span className="w-full h-full bg-muted"></span>}
+        </span>
       )}
-    </div>
+    </span>
   );
 };
 

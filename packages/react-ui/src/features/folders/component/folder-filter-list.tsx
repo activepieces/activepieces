@@ -33,16 +33,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/seperator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { FolderDto } from '@activepieces/shared';
+import { FolderDto, Permission } from '@activepieces/shared';
 
 import { foldersApi } from '../lib/folders-api';
 import { foldersHooks } from '../lib/folders-hooks';
@@ -63,12 +65,14 @@ type FolderItemProps = {
   refetch: () => void;
   updateSearchParams: (folderId: string | undefined) => void;
   selectedFolderId: string | null;
+  userHasPermissionToUpdateFolders: boolean;
 };
 const FolderItem = ({
   folder,
   refetch,
   updateSearchParams,
   selectedFolderId,
+  userHasPermissionToUpdateFolders,
 }: FolderItemProps) => {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   return (
@@ -105,7 +109,7 @@ const FolderItem = ({
             onClick={(e) => e.stopPropagation()}
             className="flex flex-row -space-x-4 min-w-5"
           >
-            <DropdownMenu onOpenChange={setIsActionMenuOpen} modal={false}>
+            <DropdownMenu onOpenChange={setIsActionMenuOpen} modal={true}>
               <DropdownMenuTrigger
                 asChild
                 className={cn('invisible group-hover:visible', {
@@ -123,37 +127,52 @@ const FolderItem = ({
                 {folder.numberOfFlows}
               </span>
               <DropdownMenuContent>
-                <RenameFolderDialog
-                  folderId={folder.id}
-                  onRename={() => refetch()}
+                <PermissionNeededTooltip
+                  hasPermission={userHasPermissionToUpdateFolders}
                 >
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <div className="flex flex-row gap-2 items-center">
-                      <Pencil className="h-4 w-4" />
-                      <span>{t('Rename')}</span>
-                    </div>
-                  </DropdownMenuItem>
-                </RenameFolderDialog>
-                <ConfirmationDeleteDialog
-                  title={t('Delete folder {folderName}', {
-                    folderName: folder.displayName,
-                  })}
-                  message={t(
-                    'If you delete this folder, we will keep its flows and move them to Uncategorized.',
-                  )}
-                  mutationFn={async () => {
-                    await foldersApi.delete(folder.id);
-                    refetch();
-                  }}
-                  entityName={folder.displayName}
+                  <RenameFolderDialog
+                    folderId={folder.id}
+                    name={folder.displayName}
+                    onRename={() => refetch()}
+                  >
+                    <DropdownMenuItem
+                      disabled={!userHasPermissionToUpdateFolders}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <div className="flex flex-row gap-2 items-center">
+                        <Pencil className="h-4 w-4" />
+                        <span>{t('Rename')}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  </RenameFolderDialog>
+                </PermissionNeededTooltip>
+                <PermissionNeededTooltip
+                  hasPermission={userHasPermissionToUpdateFolders}
                 >
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <div className="flex flex-row gap-2 items-center">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                      <span className="text-destructive">{t('Delete')}</span>
-                    </div>
-                  </DropdownMenuItem>
-                </ConfirmationDeleteDialog>
+                  <ConfirmationDeleteDialog
+                    title={t('Delete {folderName}', {
+                      folderName: folder.displayName,
+                    })}
+                    message={t(
+                      'If you delete this folder, we will keep its flows and move them to Uncategorized.',
+                    )}
+                    mutationFn={async () => {
+                      await foldersApi.delete(folder.id);
+                      refetch();
+                    }}
+                    entityName={folder.displayName}
+                  >
+                    <DropdownMenuItem
+                      disabled={!userHasPermissionToUpdateFolders}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <div className="flex flex-row gap-2 items-center">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <span className="text-destructive">{t('Delete')}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  </ConfirmationDeleteDialog>
+                </PermissionNeededTooltip>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -165,7 +184,8 @@ const FolderItem = ({
 
 const FolderFilterList = () => {
   const location = useLocation();
-
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FLOW);
   const [searchParams, setSearchParams] = useSearchParams(location.search);
   const selectedFolderId = searchParams.get('folderId');
 
@@ -240,9 +260,16 @@ const FolderFilterList = () => {
         <div className="flex items-center justify-center">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="ghost">
-                <PlusIcon size={18} />
-              </Button>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToUpdateFolders}
+              >
+                <Button
+                  variant="ghost"
+                  disabled={!userHasPermissionToUpdateFolders}
+                >
+                  <PlusIcon size={18} />
+                </Button>
+              </PermissionNeededTooltip>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -323,6 +350,9 @@ const FolderFilterList = () => {
               folders.map((folder) => {
                 return (
                   <FolderItem
+                    userHasPermissionToUpdateFolders={
+                      userHasPermissionToUpdateFolders
+                    }
                     key={folder.id}
                     folder={folder}
                     refetch={refetch}

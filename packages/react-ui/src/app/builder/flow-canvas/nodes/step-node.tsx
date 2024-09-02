@@ -336,7 +336,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                     <div className="w-4 flex items-center justify-center">
                       {statusInfo &&
                         React.createElement(statusInfo.Icon, {
-                          className: cn('', {
+                          className: cn('w-4 h-4', {
                             'text-success-300':
                               statusInfo.variant === 'success',
                             'text-destructive-300':

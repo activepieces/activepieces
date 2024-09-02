@@ -37,6 +37,7 @@ import { toast } from '@/components/ui/use-toast';
 import { PlatformRoleSelect } from '@/features/team/component/platform-role-select';
 import { ProjectRoleSelect } from '@/features/team/component/project-role-select';
 import { userInvitationApi } from '@/features/team/lib/user-invitation';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { HttpError } from '@/lib/api';
@@ -44,6 +45,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
   InvitationType,
+  Permission,
   PlatformRole,
   ProjectMemberRole,
   SendUserInvitationRequest,
@@ -80,6 +82,10 @@ export function InviteUserDialog() {
   const { refetch } = userInvitationsHooks.useInvitations();
   const { project } = projectHooks.useCurrentProject();
   const currentUser = authenticationSession.getCurrentUser();
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToInviteUser = checkAccess(
+    Permission.WRITE_INVITATION,
+  );
 
   const { mutate, isPending } = useMutation<
     UserInvitationWithLink,
@@ -134,149 +140,151 @@ export function InviteUserDialog() {
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        setIsOpen(open);
-        if (open) {
-          form.reset();
-          setInvitationLink('');
-        }
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button
-          variant={'outline'}
-          size={'sm'}
-          className="flex items-center justify-center gap-2 w-full"
-        >
-          <Plus className="size-4" />
-          <span>{t('Invite User')}</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>
-            {invitationLink ? t('Invitation Link') : t('Invite User')}
-          </DialogTitle>
-          <DialogDescription>
-            {invitationLink
-              ? t(
-                  'Please copy the link below and share it with the user you want to invite, the invitation expires in 24 hours.',
-                )
-              : t(
-                  'Type the email address of the user you want to invite, the invitation expires in 24 hours.',
+    userHasPermissionToInviteUser && (
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          setIsOpen(open);
+          if (open) {
+            form.reset();
+            setInvitationLink('');
+          }
+        }}
+      >
+        <DialogTrigger asChild>
+          <Button
+            variant={'outline'}
+            className="flex items-center justify-center gap-2 w-full"
+          >
+            <Plus className="size-4" />
+            <span>{t('Invite User')}</span>
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>
+              {invitationLink ? t('Invitation Link') : t('Invite User')}
+            </DialogTitle>
+            <DialogDescription>
+              {invitationLink
+                ? t(
+                    'Please copy the link below and share it with the user you want to invite, the invitation expires in 24 hours.',
+                  )
+                : t(
+                    'Type the email address of the user you want to invite, the invitation expires in 24 hours.',
+                  )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {!invitationLink ? (
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit((data) => mutate(data))}
+                className="flex flex-col gap-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-2">
+                      <Label htmlFor="email">{t('Email')}</Label>
+                      <Input {...field} type="text" placeholder="jon@doe.com" />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem className="grid gap-2">
+                      <Label>{t('Invite To')}</Label>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('Invite To')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>{t('Invite To')}</SelectLabel>
+                            {currentUser?.platformRole ===
+                              PlatformRole.ADMIN && (
+                              <SelectItem value={InvitationType.PLATFORM}>
+                                {t('Entire Platform')}
+                              </SelectItem>
+                            )}
+                            {platform.projectRolesEnabled && (
+                              <SelectItem value={InvitationType.PROJECT}>
+                                {project.displayName} (Current)
+                              </SelectItem>
+                            )}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                ></FormField>
+                {form.getValues().type === InvitationType.PLATFORM && (
+                  <PlatformRoleSelect form={form} />
                 )}
-          </DialogDescription>
-        </DialogHeader>
-
-        {!invitationLink ? (
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit((data) => mutate(data))}
-              className="flex flex-col gap-4"
-            >
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem className="grid gap-2">
-                    <Label htmlFor="email">{t('Email')}</Label>
-                    <Input {...field} type="text" placeholder="jon@doe.com" />
-                    <FormMessage />
-                  </FormItem>
+                {form.getValues().type === InvitationType.PROJECT && (
+                  <ProjectRoleSelect form={form} />
                 )}
-              />
 
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem className="grid gap-2">
-                    <Label>{t('Invite To')}</Label>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('Invite To')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>{t('Invite To')}</SelectLabel>
-                          {currentUser?.platformRole === PlatformRole.ADMIN && (
-                            <SelectItem value={InvitationType.PLATFORM}>
-                              {t('Entire Platform')}
-                            </SelectItem>
-                          )}
-                          {platform.projectRolesEnabled && (
-                            <SelectItem value={InvitationType.PROJECT}>
-                              {project.displayName} (Current)
-                            </SelectItem>
-                          )}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+                {form?.formState?.errors?.root?.serverError && (
+                  <FormMessage>
+                    {form.formState.errors.root.serverError.message}
+                  </FormMessage>
                 )}
-              ></FormField>
-              {form.getValues().type === InvitationType.PLATFORM && (
-                <PlatformRoleSelect form={form} />
-              )}
-              {form.getValues().type === InvitationType.PROJECT && (
-                <ProjectRoleSelect form={form} />
-              )}
-
-              {form?.formState?.errors?.root?.serverError && (
-                <FormMessage>
-                  {form.formState.errors.root.serverError.message}
-                </FormMessage>
-              )}
-              <DialogFooter>
-                <Button type="submit" loading={isPending}>
-                  {t('Invite')}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        ) : (
-          <>
-            <Label htmlFor="invitationLink" className="mb-2">
-              {t('Invitation Link')}
-            </Label>
-            <div className="flex">
-              <Input
-                name="invitationLink"
-                type="text"
-                readOnly={true}
-                defaultValue={invitationLink}
-                placeholder={t('Invitation Link')}
-                onFocus={(event) => {
-                  event.target.select();
-                  copyInvitationLink();
-                }}
-                className=" rounded-l-md rounded-r-none focus-visible:!ring-0 focus-visible:!ring-offset-0"
-              />
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant={'outline'}
-                    className=" rounded-l-none rounded-r-md"
-                    onClick={copyInvitationLink}
-                  >
-                    <CopyIcon height={15} width={15}></CopyIcon>
+                <DialogFooter>
+                  <Button type="submit" loading={isPending}>
+                    {t('Invite')}
                   </Button>
-                </TooltipTrigger>
+                </DialogFooter>
+              </form>
+            </Form>
+          ) : (
+            <>
+              <Label htmlFor="invitationLink" className="mb-2">
+                {t('Invitation Link')}
+              </Label>
+              <div className="flex">
+                <Input
+                  name="invitationLink"
+                  type="text"
+                  readOnly={true}
+                  defaultValue={invitationLink}
+                  placeholder={t('Invitation Link')}
+                  onFocus={(event) => {
+                    event.target.select();
+                    copyInvitationLink();
+                  }}
+                  className=" rounded-l-md rounded-r-none focus-visible:!ring-0 focus-visible:!ring-offset-0"
+                />
 
-                <TooltipContent side="bottom">{t('Copy')}</TooltipContent>
-              </Tooltip>
-            </div>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant={'outline'}
+                      className=" rounded-l-none rounded-r-md"
+                      onClick={copyInvitationLink}
+                    >
+                      <CopyIcon height={15} width={15}></CopyIcon>
+                    </Button>
+                  </TooltipTrigger>
+
+                  <TooltipContent side="bottom">{t('Copy')}</TooltipContent>
+                </Tooltip>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    )
   );
 }
