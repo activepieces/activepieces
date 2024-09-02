@@ -6,6 +6,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import mime from 'mime-types';
 
 export const addFragmentToConversation = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -26,6 +27,11 @@ export const addFragmentToConversation = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    const mimeType = propsValue.fragmentName
+      ? mime.lookup(propsValue.fragmentName) ||
+        mime.lookup(propsValue.fragment.filename)
+      : mime.lookup(propsValue.fragment.filename);
+
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${DUST_BASE_URL}/${auth.workspaceId}/assistant/conversations/${propsValue.conversationId}/content_fragments`,
@@ -37,7 +43,7 @@ export const addFragmentToConversation = createAction({
         {
           content: propsValue.fragment.data.toString('utf-8'),
           title: propsValue.fragmentName || propsValue.fragment.filename,
-          contentType: 'file_attachment',
+          contentType: mimeType || 'text/plain',
           context: null,
           url: null,
         },
