@@ -74,9 +74,13 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
       !isFirstRender.current &&
       !deepEqual(previousValues.current, refresherValues)
     ) {
-      form.setValue(`settings.input.${props.propertyName}` as const, null, {
-        shouldValidate: true,
-      });
+      form.setValue(
+        `settings.input.${props.propertyName}` as const,
+        undefined,
+        {
+          shouldValidate: true,
+        },
+      );
     }
 
     previousValues.current = refresherValues;

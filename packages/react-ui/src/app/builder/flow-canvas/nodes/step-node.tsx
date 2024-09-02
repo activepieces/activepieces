@@ -78,9 +78,6 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     run,
     readonly,
     exitStepSettings,
-    applyOperation,
-    removeStepSelection,
-    flowVersion,
   ] = useBuilderStateContext((state) => [
     state.selectStepByName,
     state.setAllowCanvasPanning,
@@ -90,15 +87,12 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     state.run,
     state.readonly,
     state.exitStepSettings,
-    state.applyOperation,
-    state.removeStepSelection,
-    state.flowVersion,
   ]);
   const pieceSelectorOperation = useRef<
     FlowOperationType.UPDATE_ACTION | FlowOperationType.UPDATE_TRIGGER
   >(FlowOperationType.UPDATE_ACTION);
-  const deleteStep = () => {
-    applyOperation(
+  const deleteStep = useBuilderStateContext((state) => () => {
+    state.applyOperation(
       {
         type: FlowOperationType.DELETE_ACTION,
         request: {
@@ -107,11 +101,11 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       },
       () => toast(UNSAVED_CHANGES_TOAST),
     );
-    removeStepSelection();
-  };
+    state.removeStepSelection();
+  });
 
-  const duplicateStep = () =>
-    applyOperation(
+  const duplicateStep = useBuilderStateContext((state) => () => {
+    state.applyOperation(
       {
         type: FlowOperationType.DUPLICATE_ACTION,
         request: {
@@ -120,14 +114,11 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       },
       () => toast(UNSAVED_CHANGES_TOAST),
     );
+  });
 
   const { stepMetadata } = piecesHooks.useStepMetadata({
     step: data.step!,
   });
-  const stepIndex = useMemo(() => {
-    const steps = flowHelper.getAllSteps(flowVersion.trigger);
-    return steps.findIndex((step) => step.name === data.step!.name) + 1;
-  }, [data, flowVersion]);
 
   const [openStepActionsMenu, setOpenStepActionsMenu] = useState(false);
   const [openPieceSelector, setOpenPieceSelector] = useState(false);
@@ -251,7 +242,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
                   <div className=" flex items-center justify-between min-w-0 w-full">
                     <div className="text-sm truncate grow shrink ">
-                      {stepIndex}. {data.step?.displayName}
+                      {data.step?.displayName}
                     </div>
 
                     {!readonly && (
@@ -342,7 +333,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                     <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
                       {stepMetadata?.displayName}
                     </div>
-                    <div className="w-4 flex mt-0.5 items-center justify-center">
+                    <div className="w-4 flex items-center justify-center">
                       {statusInfo &&
                         React.createElement(statusInfo.Icon, {
                           className: cn('w-4 h-4', {
@@ -358,7 +349,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                       {!data.step?.valid && (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="mr-3">
+                            <div className="mx-2">
                               <InvalidStepIcon
                                 size={16}
                                 viewBox="0 0 16 16"

@@ -90,7 +90,7 @@ const DynamicDropdownPieceProperty = React.memo(
         !isFirstRender.current &&
         !deepEqual(previousValues.current, refresherValues)
       ) {
-        props.onChange(null);
+        props.onChange(undefined);
       }
 
       previousValues.current = refresherValues;

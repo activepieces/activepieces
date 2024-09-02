@@ -106,6 +106,7 @@ export const SearchableSelect = <T extends React.Key>({
     const option = options[optionIndex];
     onChange(option.value);
   };
+
   return (
     <Popover modal={true} open={open} onOpenChange={setOpen}>
       <PopoverTrigger
@@ -126,7 +127,7 @@ export const SearchableSelect = <T extends React.Key>({
             className="w-full justify-between w-full"
           >
             <span className="flex w-full truncate select-none">
-              {selectedIndex > -1 && options[selectedIndex]
+              {selectedIndex !== -1
                 ? options[selectedIndex].label
                 : placeholder}
             </span>
