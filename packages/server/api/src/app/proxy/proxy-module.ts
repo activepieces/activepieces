@@ -21,9 +21,6 @@ const ProxyRequest = {
       provider: Type.String(),
       '*': Type.String(),
     }),
-    response: {
-      [StatusCodes.OK]: Type.Unknown(),
-    }
   },
 }
 
@@ -40,13 +37,7 @@ export const projectProxyController: FastifyPluginCallbackTypebox = (
 
       const provider = request.params.provider
 
-      console.log("XXXXXXXXXX projectId", projectId)
-      console.log("XXXXXXXXXX provider", provider)
-      console.log("XXXXXXXXXX platformId", platformId)
-
       const config = await proxyConfigService.getOrThrow({ platformId, provider: provider })
-
-      console.log("XXXXXXXXXX config", config)
 
       if (!config) {
         reply.code(400).send({ error: `Proxy config not found for provider ${provider} and platform ${platformId}` });
@@ -54,10 +45,6 @@ export const projectProxyController: FastifyPluginCallbackTypebox = (
       }
 
       const targetUrl = new URL(`${config.baseUrl}/${request.params['*']}`);
-
-      console.log("XXXXXXXXXX request.method", request.method)
-      console.log("XXXXXXXXXX request.url", request.url)
-      console.log("XXXXXXXXXX targetUrl", targetUrl)
 
       const requestHeaders = structuredClone({ ...request.headers })
 
@@ -83,18 +70,16 @@ export const projectProxyController: FastifyPluginCallbackTypebox = (
         body: JSON.stringify(request.body),
       }
 
-      console.log("XXXXXXXXXX req", req)
-
       const response = await fetch(targetUrl, req)
 
-      const data = await response.text()
+      const data = await response.json()
 
-      console.log("XXXXXXXXXX response", response)
-      console.log("XXXXXXXXXX data", data)
-      reply.headers(response.headers).code(response.status).send(data);
+      await reply
+        .code(response.status)
+        .send(data);
     } catch (error) {
       fastify.log.error(error);
-      reply.code(500).send({ error: 'Proxy error' });
+      await reply.code(500).send({ error: 'Proxy error' });
     }
   })
 
