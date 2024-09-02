@@ -66,7 +66,7 @@ const DeleteConnectionColumn = ({
         hasPermission={userHasPermissionToWriteAppConnection}
       >
         <ConfirmationDeleteDialog
-          title={t('Delete {name} connection', { name: row.name })}
+          title={t('Delete {name}', { name: row.name })}
           message={t(
             'Are you sure you want to delete this connection? all steps using it will fail.',
           )}
