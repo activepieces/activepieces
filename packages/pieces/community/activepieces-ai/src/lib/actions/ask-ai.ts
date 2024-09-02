@@ -93,6 +93,11 @@ export const askAi = createAction({
       })
 
       conversation.messages.push({
+        role: AIChatRole.USER,
+        content: context.propsValue.prompt,
+      })
+
+      conversation.messages.push({
         role: AIChatRole.ASSISTANT,
         content: response.choices[0].content,
       })
