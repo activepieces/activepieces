@@ -35,7 +35,7 @@ jobs:
             linux/amd64
           push: true
           tags: |
-            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}
+            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}.beta
 
       - name: Configure SSH
         run: |
@@ -54,11 +54,11 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
 
-      - name: Deploy Web
+      - name: Deploy React
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }} --config-file=config/web.yml --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/react.yml --skip-push; exit"'
 
-      - name: Deploy Workers
-        run: |
-          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }} --config-file=config/workers.yml --skip-push; exit"'
+#      - name: Deploy Workers
+#        run: |
+#          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }} --config-file=config/workers.yml --skip-push; exit"'
 
