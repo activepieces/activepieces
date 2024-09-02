@@ -3,13 +3,13 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
+  FormControl,
   FormDescription,
   FormField,
   FormItem,
-  FormMessage,
+  FormLabel,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { BasicAuthProperty } from '@activepieces/pieces-framework';
 import { UpsertBasicAuthRequest } from '@activepieces/shared';
 
@@ -31,14 +31,13 @@ const BasicAuthConnectionSettings = React.memo(
           control={form.control}
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <Label htmlFor="username">
-                {authProperty.username.displayName}
-              </Label>
-              <Input {...field} type="text" />
+              <FormLabel>{authProperty.username.displayName}</FormLabel>
+              <FormControl>
+                <Input {...field} type="text" />
+              </FormControl>
               <FormDescription>
                 {authProperty.username.description}
               </FormDescription>
-              <FormMessage />
             </FormItem>
           )}
         ></FormField>
@@ -47,14 +46,13 @@ const BasicAuthConnectionSettings = React.memo(
           control={form.control}
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <Label htmlFor="password">
-                {authProperty.password.displayName}
-              </Label>
-              <Input {...field} type="password" />
+              <FormLabel>{authProperty.password.displayName}</FormLabel>
+              <FormControl>
+                <Input {...field} type="password" />
+              </FormControl>
               <FormDescription>
                 {authProperty.password.description}
               </FormDescription>
-              <FormMessage />
             </FormItem>
           )}
         ></FormField>
